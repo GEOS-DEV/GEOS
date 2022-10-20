@@ -20,7 +20,7 @@
 #include <gtest/gtest.h>
 
 using namespace geosx;
-using namespace geosx::SinglePhaseBaseKernels;
+using namespace geosx::singlePhaseBaseKernels;
 
 // Sphinx start after test mobility
 
@@ -52,50 +52,6 @@ TEST( SinglePhaseBaseKernels, mobility )
 }
 
 // Sphinx end before test mobility
-
-/**
- * @brief Test the assembly of accumulation contribution
- *
- * @note This only tests uncoupled version.
- */
-TEST( SinglePhaseBaseKernels, accumulation )
-{
-  int constexpr NTEST = 3;
-
-  real64 const densOld[NTEST]       = { 700.0, 1200.0, 1500.0 };
-  real64 const densNew[NTEST]       = { 800.0, 1000.0, 1500.0 };
-  real64 const dDens_dPres[NTEST]   = { 1e-5, 1e-10, 0.0   };
-  real64 const poroOld[NTEST]       = { 6e-2, 1e-1, 2e-1   };
-  real64 const poroNew[NTEST]       = { 7e-2, 2e-1, 3e-1   };
-  real64 const dPoro_dPres[NTEST]   = { 0.0, 1e-1, 2e-1   };
-  real64 const volume               = 1.0;
-
-
-  for( int i = 0; i < NTEST; ++i )
-  {
-    SCOPED_TRACE( "Input # " + std::to_string( i ) );
-
-    real64 accum;
-    real64 accumJacobian;
-
-    real64 const poreVolumeNew = volume * poroNew[i];
-    real64 const poreVolumeOld = volume * poroOld[i];
-    real64 const dPoreVol_dPres = dPoro_dPres[i] * volume;
-
-
-    AccumulationKernel::compute( densNew[i], densOld[i], dDens_dPres[i],
-                                 poreVolumeNew, poreVolumeOld, dPoreVol_dPres,
-                                 accum, accumJacobian );
-
-    // compute etalon
-    real64 const accum_et = poroNew[i] * densNew[i] * volume - poroOld[i] * densOld[i] * volume;
-    real64 const accumJacobian_et = dPoreVol_dPres * densNew[i] + dDens_dPres[i] * poreVolumeNew;
-
-    EXPECT_DOUBLE_EQ( accum, accum_et );
-    EXPECT_DOUBLE_EQ( accumJacobian, accumJacobian_et );
-  }
-}
-
 
 int main( int argc, char * * argv )
 {

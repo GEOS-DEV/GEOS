@@ -84,14 +84,6 @@ public:
   void initializationOrder( string_array & order ) override final;
 
   /**
-   * @brief Build all the sets of the DomainPartition.
-   *
-   * A domain contain sets of nodes or elements (that can be used to defined boundary conditions, etc.).
-   * This member functions build those sets.
-   */
-  void generateSets();
-
-  /**
    * @name MPI functionality
    */
   ///@{
@@ -189,6 +181,9 @@ public:
    * @return Reference to a const MeshBody instance matching @p key.
    */
   template< typename KEY_TYPE >
+// TODO uncomment these to disallow using a non string or char const * key
+//            std::enable_if_t< std::is_same< T, string >::value ||
+//                              std::is_same< T, const char * >::value, bool > = false >
   MeshBody const & getMeshBody( KEY_TYPE const & key ) const
   { return getMeshBodies().getGroup< MeshBody >( key ); }
 
@@ -199,8 +194,50 @@ public:
    * @return Reference to a const MeshBody instance matching @p key.
    */
   template< typename KEY_TYPE >
+//  std::enable_if_t< std::is_same< T, string >::value ||
+//                    std::is_same< T, const char * >::value, bool > = false >
   MeshBody & getMeshBody( KEY_TYPE const & key )
   { return getMeshBodies().getGroup< MeshBody >( key ); }
+
+
+  /**
+   * @brief Apply the given functor to all meshBodies.
+   * @tparam FUNCTION the type of functor to call
+   * @param[in] function  the functor to call
+   */
+  template< typename FUNCTION >
+  void forMeshBodies( FUNCTION && function ) const
+  {
+    getMeshBodies().forSubGroups< MeshBody >( std::forward< FUNCTION >( function ) );
+  }
+
+  /**
+   * @copydoc forMeshBodies(FUNCTION &&) const
+   */
+  template< typename FUNCTION >
+  void forMeshBodies( FUNCTION && function )
+  {
+    getMeshBodies().forSubGroups< MeshBody >( std::forward< FUNCTION >( function ) );
+  }
+
+  /**
+   * @copydoc forMeshBodies(FUNCTION &&) const
+   */
+  template< typename FUNCTION >
+  void forMeshBodiesIndex( FUNCTION && function ) const
+  {
+    getMeshBodies().forSubGroupsIndex< MeshBody >( std::forward< FUNCTION >( function ) );
+  }
+
+  /**
+   * @copydoc forMeshBodies(FUNCTION &&) const
+   */
+  template< typename FUNCTION >
+  void forMeshBodiesIndex( FUNCTION && function )
+  {
+    getMeshBodies().forSubGroupsIndex< MeshBody >( std::forward< FUNCTION >( function ) );
+  }
+
 
   /**
    * @brief Get the metis neighbors indices.  @see DomainPartition#m_metisNeighborList

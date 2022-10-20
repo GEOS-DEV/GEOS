@@ -9,13 +9,15 @@
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
       logLevel="1"
-      activeSetMaxIter="10"
+      discretization="FE1"
       targetRegions="{ Region, Fracture }"
-      contactRelationName="fractureMaterial">
+      contactRelationName="fractureMaterial"
+      fractureRegionName="Fracture">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         logLevel="2"
         newtonMaxIter="10"
+        maxNumConfigurationAttempts="10"
         lineSearchAction="Require"
         lineSearchMaxCuts="2"
         maxTimeStepCuts="2"/>
@@ -31,7 +33,7 @@
       logLevel="0"
       discretization="FE1"
       targetRegions="{ Region, Fracture }"
-      solidMaterialNames="{ rock }">
+      >
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="5"/>
@@ -45,7 +47,6 @@
       logLevel="0"
       fractureRegion="Fracture"
       targetRegions="{ Region }"
-      solidMaterialNames="{ rock }"
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
   </Solvers>
@@ -80,9 +81,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="TPFAstabilization"
-        fieldName="traction"
-        coefficientName="custom"/>
+        name="TPFAstabilization"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -95,6 +94,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
+      faceBlock="faceElementSubRegion"
       defaultAperture="0.0"
       materialList="{ fractureMaterial, rock }"/>
   </ElementRegions>
@@ -137,7 +137,7 @@
     <FieldSpecification
       name="xconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xpos, xneg }"/>
@@ -145,7 +145,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ ypos, yneg }"/>
@@ -153,7 +153,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zpos, zneg }"/>
@@ -187,7 +187,7 @@
      <VTK
       name="vtkOutput"
       plotLevel="2"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
     <TimeHistory
       name="timeHistoryOutput"

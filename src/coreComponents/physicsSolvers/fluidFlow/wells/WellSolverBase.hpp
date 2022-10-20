@@ -38,6 +38,9 @@ class WellSolverBase : public SolverBase
 {
 public:
 
+  /// String used to form the solverName used to register single-physics solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "well"; }
+
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
@@ -121,14 +124,14 @@ public:
   /**
    * @brief getter for the well controls associated to this well subRegion
    * @param subRegion the well subRegion whose controls are requested
-   * @return a pointer to the controls
+   * @return a reference to the controls
    */
   WellControls & getWellControls( WellElementSubRegion const & subRegion );
 
   /**
    * @brief const getter for the well controls associated to this well subRegion
    * @param subRegion the well subRegion whose controls are requested
-   * @return a pointer to the const controls
+   * @return a reference to the const controls
    */
   WellControls const & getWellControls( WellElementSubRegion const & subRegion ) const;
 
@@ -147,6 +150,18 @@ public:
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
                                   DomainPartition & domain ) override;
+
+  virtual void implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
+
+  virtual void applyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                        real64 const GEOSX_UNUSED_PARAM( dt ),
+                                        DomainPartition & GEOSX_UNUSED_PARAM( domain ),
+                                        DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                        CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
+                                        arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) ) override {}
+
 
   /**@}*/
 
@@ -219,6 +234,22 @@ public:
                                           arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
+   * @brief apply a special treatment to the wells that are shut
+   * @param time_n the time at the previous converged time step
+   * @param dt the time step size
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void shutDownWell( real64 const time_n,
+                             real64 const dt,
+                             DomainPartition const & domain,
+                             DofManager const & dofManager,
+                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                             arrayView1d< real64 > const & localRhs ) = 0;
+
+  /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
@@ -226,21 +257,15 @@ public:
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param meshLevel the mesh level
    * @param subRegion the well subRegion containing the well elements and their associated fields
-   * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void updateSubRegionState( MeshLevel const & meshLevel, WellElementSubRegion & subRegion, localIndex const targetIndex ) = 0;
+  virtual void updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
 
   /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param mesh reference to the mesh
+   * @brief Recompute the perforation rates for all the wells
+   * @param domain the domain containing the mesh and fields
    */
-  virtual void backupFields( MeshLevel & mesh ) const = 0;
-
-  arrayView1d< string const > const fluidModelNames() const { return m_fluidModelNames; }
-
-  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
+  virtual void computePerforationRates( DomainPartition & domain ) = 0;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -255,10 +280,12 @@ private:
    */
   void precomputeData( DomainPartition & domain );
 
-protected:
-  virtual void postProcessInput() override;
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
-  virtual void initializePreSubGroups() override;
+
+protected:
+
+  virtual void postProcessInput() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
@@ -268,17 +295,9 @@ protected:
    */
   virtual void initializeWells( DomainPartition & domain ) = 0;
 
-  /**
-   * @brief Check if the controls are viable; if not, switch the controls
-   * @param domain the domain containing the well manager to access individual wells
-   */
-  //virtual void CheckWellControlSwitch( DomainPartition & domain ) = 0;
 
   /// name of the flow solver
   string m_flowSolverName;
-
-  /// names of the fluid constitutive models
-  array1d< string > m_fluidModelNames;
 
   /// the number of Degrees of Freedom per well element
   integer m_numDofPerWellElement;

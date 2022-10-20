@@ -8,9 +8,9 @@
 
 <!-- SPHINX_MESH -->
   <Mesh>
-    <PAMELAMeshGenerator
+    <VTKMesh
       name="CubeHex"
-      file="crackInPlane_smoke.msh"/>
+      file="crackInPlane_smoke.vtu"/>
   </Mesh>
 
   <Geometry>
@@ -82,7 +82,6 @@
     <PeriodicEvent
       name="solverApplications"
       beginTime="0.0"
-      endTime="1.0"
       forceDt="1.0"
       target="/Solvers/lagrangiancontact"/>
 

@@ -10,8 +10,7 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Region2 }"
-      solidMaterialNames="{ shale }">
+      targetRegions="{ Region2 }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -104,7 +103,7 @@
     <FieldSpecification
       name="xnegconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xneg }"/>
@@ -112,7 +111,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ xneg }"/>
@@ -120,7 +119,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>
@@ -128,7 +127,6 @@
     <FieldSpecification
       name="xposconstraint"
       objectPath="faceManager"
-      fieldName="Traction"
       component="1"
       scale="1.0e6"
       functionName="timeFunction"

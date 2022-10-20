@@ -139,6 +139,9 @@ Thus, the generated mesh will be :
    :align: center
    :width: 500
 
+
+.. _ExternalMeshUsage:
+
 **************************
 Using an External Mesh
 **************************
@@ -186,8 +189,8 @@ The mesh block has the following syntax:
 .. code-block:: xml
 
   <Mesh>
-    <PAMELAMeshGenerator name="MyMeshName"
-                         file="/path/to/the/mesh/file.msh"/>
+    <PAMELAMesh name="MyMeshName"
+                file="/path/to/the/mesh/file.msh"/>
   </Mesh>
 
 We advise users to use absolute path to the mesh file.

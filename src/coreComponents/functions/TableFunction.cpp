@@ -17,7 +17,9 @@
  */
 
 #include "TableFunction.hpp"
+#include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
+
 #include <algorithm>
 
 namespace geosx
@@ -55,34 +57,17 @@ TableFunction::TableFunction( const string & name,
     setApplyDefaultValue( m_interpolationMethod );
 }
 
-template< typename T >
-void TableFunction::parseFile( string const & filename, array1d< T > & target )
+void TableFunction::readFile( string const & filename, array1d< real64 > & target )
 {
-  std::ifstream inputStream( filename.c_str() );
-  GEOSX_THROW_IF( !inputStream, catalogName() << " " << getName() << ": could not read input file " << filename, InputError );
-
-  // Read the file
-  // TODO: Update this to handle large parallel jobs
-  string lineString;
-  while( std::getline( inputStream, lineString ) )
+  auto const skipped = []( char const c ){ return std::isspace( c ) || c == ','; };
+  try
   {
-    std::istringstream ss( lineString );
-    while( ss.peek() == ',' || ss.peek() == ' ' )
-    {
-      ss.ignore();
-    }
-    T value;
-    while( ss >> value )
-    {
-      target.emplace_back( value );
-      while( ss.peek() == ',' || ss.peek() == ' ' )
-      {
-        ss.ignore();
-      }
-    }
+    parseFile( filename, target, skipped );
   }
-
-  inputStream.close();
+  catch( std::runtime_error const & e )
+  {
+    GEOSX_THROW( GEOSX_FMT( "{} {}: {}", catalogName(), getName(), e.what() ), InputError );
+  }
 }
 
 void TableFunction::setInterpolationMethod( InterpolationType const method )
@@ -99,7 +84,8 @@ void TableFunction::setTableCoordinates( array1d< real64_array > const & coordin
     for( localIndex j = 1; j < coordinates[i].size(); ++j )
     {
       GEOSX_THROW_IF( coordinates[i][j] - coordinates[i][j-1] <= 0,
-                      catalogName() << " " << getName() << ": coordinates must be strictly increasing, but axis " << i << " is not",
+                      GEOSX_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
+                                 catalogName(), getName(), i ),
                       InputError );
     }
     m_coordinates.appendArray( coordinates[i].begin(), coordinates[i].end() );
@@ -126,20 +112,24 @@ void TableFunction::initializeFunction()
     // 1D Table
     m_coordinates.appendArray( m_tableCoordinates1D.begin(), m_tableCoordinates1D.end() );
     GEOSX_THROW_IF_NE_MSG( m_tableCoordinates1D.size(), m_values.size(),
-                           catalogName() << " " << getName() << ": 1D table function coordinates and values must have the same length",
+                           GEOSX_FMT( "{} {}: 1D table function coordinates and values must have the same length",
+                                      catalogName(), getName() ),
                            InputError );
   }
   else
   {
-    // ND Table
-    parseFile( m_voxelFile, m_values );
     array1d< real64 > tmp;
+    localIndex numValues = 1;
     for( localIndex ii = 0; ii < m_coordinateFiles.size(); ++ii )
     {
       tmp.clear();
-      parseFile( m_coordinateFiles[ii], tmp );
+      readFile( m_coordinateFiles[ii], tmp );
       m_coordinates.appendArray( tmp.begin(), tmp.end() );
+      numValues *= tmp.size();
     }
+    // ND Table
+    m_values.reserve( numValues );
+    readFile( m_voxelFile, m_values );
   }
 
   reInitializeFunction();
@@ -156,7 +146,8 @@ void TableFunction::reInitializeFunction()
   if( m_coordinates.size() > 0 && !m_values.empty() ) // coordinates and values have been set
   {
     GEOSX_THROW_IF_NE_MSG( increment, m_values.size(),
-                           catalogName() << " " << getName() << ": number of values does not match total number of table coordinates",
+                           GEOSX_FMT( "{} {}: number of values does not match total number of table coordinates",
+                                      catalogName(), getName() ),
                            InputError );
   }
 
@@ -166,9 +157,9 @@ void TableFunction::reInitializeFunction()
 
 TableFunction::KernelWrapper TableFunction::createKernelWrapper() const
 {
-  return KernelWrapper( m_interpolationMethod,
-                        m_coordinates.toViewConst(),
-                        m_values.toViewConst() );
+  return { m_interpolationMethod,
+           m_coordinates.toViewConst(),
+           m_values.toViewConst() };
 }
 
 real64 TableFunction::evaluate( real64 const * const input ) const
@@ -187,4 +178,4 @@ TableFunction::KernelWrapper::KernelWrapper( InterpolationType const interpolati
 
 REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, string const &, Group * const )
 
-} /* namespace ANST */
+} // end of namespace geosx

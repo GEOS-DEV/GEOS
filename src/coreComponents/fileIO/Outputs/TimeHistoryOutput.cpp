@@ -14,6 +14,12 @@
 
 #include "TimeHistoryOutput.hpp"
 
+#include "fileIO/timeHistory/HDFFile.hpp"
+
+#if defined(GEOSX_USE_PYGEOSX)
+#include "fileIO/python/PyHistoryOutputType.hpp"
+#endif
+
 namespace geosx
 {
 TimeHistoryOutput::TimeHistoryOutput( string const & name,
@@ -47,67 +53,61 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
 
 }
 
-void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, HistoryCollection & collector )
+void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, HistoryCollection & collector )
 {
+  GEOSX_ASSERT( m_io.empty() );
+
   bool const freshInit = ( m_recordCount == 0 );
 
   string const outputDirectory = getOutputDirectory();
   string const outputFile = joinPath( outputDirectory, m_filename );
 
-  localIndex ioCount = 0;
-  for( localIndex ii = 0; ii < collector.getCollectionCount( ); ++ii )
+  auto registerBufferCalls = [&]( HistoryCollection & hc, string prefix = "" )
   {
-    HistoryMetadata metadata = collector.getMetadata( domain, ii );
-    m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
-    collector.registerBufferCall( ii, [this, ii, ioCount, &domain, &collector]()
+    for( localIndex collectorIdx = 0; collectorIdx < hc.numCollectors(); ++collectorIdx )
     {
-      collector.updateSetsIndices( domain );
-      HistoryMetadata md = collector.getMetadata( domain, ii );
-      m_io[ioCount]->updateCollectingCount( md.getDims( )[0] );
-      return m_io[ioCount]->getBufferHead( );
-    } );
-    m_io.back()->init( !freshInit );
-    ++ioCount;
-  }
+      HistoryMetadata metadata = hc.getMetaData( domain, collectorIdx );
 
-  localIndex metaCollectorCount = collector.getNumMetaCollectors( );
-  for( localIndex metaIdx = 0; metaIdx < metaCollectorCount; ++metaIdx )
-  {
-    HistoryCollection & metaCollector = collector.getMetaCollector( metaIdx );
-    for( localIndex ii = 0; ii < metaCollector.getCollectionCount( ); ++ii )
-    {
-      HistoryMetadata metaMetadata = metaCollector.getMetadata( domain, ii );
-      metaMetadata.setName( collector.getTargetName() + " " + metaMetadata.getName( ) );
-      m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metaMetadata, m_recordCount ) );
-      metaCollector.registerBufferCall( ii, [this, ii, ioCount, &domain, &metaCollector] ()
+      if( !prefix.empty() )
       {
-        metaCollector.updateSetsIndices( domain );
-        HistoryMetadata md = metaCollector.getMetadata( domain, ii );
-        m_io[ ioCount ]->updateCollectingCount( md.getDims()[0] );
-        return m_io[ ioCount ]->getBufferHead( );
+        metadata.setName( prefix + metadata.getName() );
+      }
+
+      m_io.emplace_back( std::make_unique< HDFHistoryIO >( outputFile, metadata, m_recordCount ) );
+      hc.registerBufferProvider( collectorIdx, [this, idx = m_io.size() - 1]( localIndex count )
+      {
+        m_io[idx]->updateCollectingCount( count );
+        return m_io[idx]->getBufferHead();
       } );
       m_io.back()->init( !freshInit );
-      ++ioCount;
     }
+  };
 
+  // FIXME Why stop (pseudo) recursion at one single level?
+  registerBufferCalls( collector );
+
+  for( localIndex metaIdx = 0; metaIdx < collector.numMetaDataCollectors(); ++metaIdx )
+  {
+    registerBufferCalls( collector.getMetaDataCollector( metaIdx ), collector.getTargetName() + " " );
   }
 
-  // do the time output last so its at the end of the m_io list, since writes are parallel we need
-  //  the rest of the collectors to share position in the list across the world comm
+  // Do the time output last so its at the end of the m_io list, since writes are parallel
+  // we need the rest of the collectors to share position in the list across the world comm
 
   // rank == 0 does time output for the collector
-  if( MpiWrapper::commRank( ) == 0 )
+  if( MpiWrapper::commRank() == 0 )
   {
-    HistoryMetadata timeMetadata = collector.getTimeMetadata( );
-    m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, timeMetadata, m_recordCount, 1, 2, MPI_COMM_SELF ) );
-    collector.registerTimeBufferCall( [this]() { return m_io.back()->getBufferHead( ); } );
+    HistoryMetadata timeMetadata = collector.getTimeMetaData();
+    m_io.emplace_back( std::make_unique< HDFHistoryIO >( outputFile, timeMetadata, m_recordCount, 1, 2, MPI_COMM_SELF ) );
+    // We copy the back `idx` not to rely on possible future appends to `m_io`.
+    collector.registerTimeBufferProvider( [this, idx = m_io.size() - 1]() { return m_io[idx]->getBufferHead(); } );
     m_io.back()->init( !freshInit );
   }
 
   MpiWrapper::barrier( MPI_COMM_GEOSX );
 }
 
-void TimeHistoryOutput::initializePostSubGroups()
+void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
 {
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses
@@ -128,6 +128,18 @@ void TimeHistoryOutput::initializePostSubGroups()
     collector.initializePostSubGroups();
     initCollectorParallel( domain, collector );
   }
+}
+
+void TimeHistoryOutput::setFileName( string const & root )
+{
+  m_filename = root;
+}
+
+void TimeHistoryOutput::reinit()
+{
+  m_recordCount = 0;
+  m_io.clear();
+  initializePostInitialConditionsPostSubGroups();
 }
 
 bool TimeHistoryOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
@@ -160,6 +172,11 @@ void TimeHistoryOutput::cleanup( real64 const time_n,
     th_io->compressInFile();
   }
 }
+
+#if defined(GEOSX_USE_PYGEOSX)
+PyTypeObject * TimeHistoryOutput::getPythonType() const
+{ return python::getPyHistoryOutputType(); }
+#endif
 
 REGISTER_CATALOG_ENTRY( OutputBase, TimeHistoryOutput, string const &, Group * const )
 }

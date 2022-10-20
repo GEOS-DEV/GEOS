@@ -90,11 +90,6 @@ public:
                                         DofManager const & dofManager,
                                         arrayView1d< real64 const > const & localRhs ) override;
 
-  virtual void solveSystem( DofManager const & dofManager,
-                            ParallelMatrix & matrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution ) override;
-
   virtual void applySystemSolution( DofManager const & dofManager,
                                     arrayView1d< real64 const > const & localSolution,
                                     real64 const scalingFactor,
@@ -122,6 +117,11 @@ public:
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs );
 
+  void applyIrreversibilityConstraint( DofManager const & dofManager,
+                                       DomainPartition & domain,
+                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       arrayView1d< real64 > const & localRhs );
+
   enum class timeIntegrationOption
   {
     SteadyState,
@@ -131,9 +131,10 @@ public:
 
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
-//    static constexpr auto coeffFieldName = "coeffFieldName";
     static constexpr char const * coeffNameString() { return "coeffField"; }
     static constexpr char const * localDissipationOptionString() { return "localDissipation"; }
+    static constexpr char const * irreversibilityFlagString() { return "irreversibilityFlag"; }
+    static constexpr char const * damageUpperBoundString() { return "damageUpperBound"; }
     static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
 
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
@@ -150,11 +151,6 @@ public:
     return m_matrix.numGlobalRows();
   }
 
-//  void setSolidModelName( string const & name )
-//  {
-//    m_solidModelName = name;
-//  }
-
   string const & getFieldName() const
   {
     return m_fieldName;
@@ -168,10 +164,10 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
-  array1d< string > m_solidModelNames;
+  integer m_irreversibilityFlag;
+  real64 m_damageUpperBound;
 
   array1d< real64 > m_coeff;
-  //  string m_coeffFieldName;
 
   PhaseFieldDamageFEM();
 };

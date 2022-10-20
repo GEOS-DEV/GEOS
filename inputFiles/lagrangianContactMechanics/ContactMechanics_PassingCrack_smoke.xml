@@ -7,9 +7,9 @@
   </Included>
 
   <Mesh>
-    <PAMELAMeshGenerator
+    <VTKMesh
       name="CubeHex"
-      file="passingCrack_smoke.msh"/>
+      file="passingCrack_smoke.vtu"/>
   </Mesh>
 
   <Geometry>

@@ -6,10 +6,8 @@
     <MultiphasePoromechanics
       name="MultiphasePoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
-      fluidSolverName="TwoPhaseFlowSolver"
-      porousMaterialNames="{ porousRock }"
+      flowSolverName="TwoPhaseFlowSolver"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
@@ -24,18 +22,13 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain }"
-      solidMaterialNames="{ skeleton }"/>
+      targetRegions="{ Domain }"/>
 
     <CompositionalMultiphaseFVM
       name="TwoPhaseFlowSolver"
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Domain }"
-      fluidNames="{ fluid1 }"
-      solidNames="{ porousRock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="300"/>
   </Solvers>
 
@@ -72,7 +65,7 @@
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
-      name="outputs"
+      name="vtkOutput"
       timeFrequency="1e5"
       target="/Outputs/vtkOutput"/>
 
@@ -89,6 +82,15 @@
       target="/Solvers/MultiphasePoroelasticitySolver"/>
 
     <PeriodicEvent
+      name="LinearElasticityStatistics"
+      timeFrequency="1e5"
+      target="/Tasks/LinearElasticityStatistics"/>
+    <PeriodicEvent
+      name="TwoPhaseFlowStatistics"
+      timeFrequency="1e5"
+      target="/Tasks/TwoPhaseFlowStatistics"/>
+
+    <PeriodicEvent
       name="restarts"
       timeFrequency="3e5"
       target="/Outputs/restartOutput"/>
@@ -103,9 +105,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -263,7 +263,7 @@
     <FieldSpecification
       name="xconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xneg, xpos }"/>
@@ -271,7 +271,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ yneg, ypos }"/>
@@ -279,18 +279,35 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zneg }"/>
   </FieldSpecifications>
 
+  <Tasks>
+    <SolidMechanicsStatistics
+      name="LinearElasticityStatistics"
+      solidSolverName="LinearElasticitySolver"
+      logLevel="1"/>
+    <CompositionalMultiphaseStatistics
+      name="TwoPhaseFlowStatistics"
+      flowSolverName="TwoPhaseFlowSolver"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
+  </Tasks>
+  
   <Outputs>
+
     <Silo
-      name="siloOutput"/>
+      name="siloOutput"
+      fieldNames="{ totalDisplacement, pressure, skeleton_stress, deltaPressure }"/>
 
     <VTK
-      name="vtkOutput"/>
+      name="vtkOutput"
+      onlyPlotSpecifiedFieldNames="1"
+      fieldNames="{ totalDisplacement, pressure, skeleton_stress, skeleton_density }"/>
 
     <Restart
       name="restartOutput"/>

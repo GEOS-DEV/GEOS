@@ -5,10 +5,8 @@
     <SinglePhasePoromechanics
       name="PoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
-      fluidSolverName="SinglePhaseFlowSolver"
-      porousMaterialNames="{ porousRock }"
+      flowSolverName="SinglePhaseFlowSolver"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Domain }">
       <LinearSolverParameters
         directParallel="0"/>
@@ -19,17 +17,13 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain }"
-      solidMaterialNames="{ skeleton }"/>
+      targetRegions="{ Domain }"/>
 
     <SinglePhaseFVM
       name="SinglePhaseFlowSolver"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain }"
-      fluidNames="{ fluid }"
-      solidNames="{ porousRock }"
-      permeabilityNames="{ skeletonPerm }"/>
+      targetRegions="{ Domain }"/>
   </Solvers>
 
   <!-- SPHINX_POROELASTIC_SOLVER_END -->
@@ -45,10 +39,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ skeletonPerm }"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -110,32 +101,32 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"/>
 
     <FieldSpecification
-      name="xInitialDisplacement"
+      name="yInitialDisplacement"
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"/>
 
     <FieldSpecification
-      name="xInitialDisplacement"
+      name="zInitialDisplacement"
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"/>
 
     <FieldSpecification
       name="xnegconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xpos }"/>
@@ -143,7 +134,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ yneg, ypos }"/>
@@ -151,7 +142,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>

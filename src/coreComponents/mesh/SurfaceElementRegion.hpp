@@ -84,11 +84,11 @@ public:
    * @brief Get the key name for the SurfaceElementRegion in the object catalog.
    * @return A string containing the key name.
    */
-  static const string catalogName()
+  static string catalogName()
   { return "SurfaceElementRegion"; }
 
-  virtual const string getCatalogName() const override final
-  { return SurfaceElementRegion::catalogName(); }
+  virtual string getCatalogName() const override final
+  { return catalogName(); }
 
   ///@}
 
@@ -98,23 +98,19 @@ public:
    */
   ///@{
 
-  virtual void generateMesh( Group & ) override;
+  virtual void generateMesh( Group & faceBlocks ) override;
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh.
    * @param time_np1 rupture time
-   * @param edgeManager pointer to the EdgeManager object.
    * @param faceManager pointer to the FaceManager object.
    * @param originalFaceToEdges face-to-edge map before the rupture.
-   * @param subRegionName the name of the FaceElementSubRegion to insert the new entries.
    * @param faceIndices the local indices of the new faces that define the face element.
    * @return the local index of the new FaceElement entry.
    */
   localIndex addToFractureMesh( real64 const time_np1,
-                                EdgeManager * const edgeManager,
                                 FaceManager const * const faceManager,
                                 ArrayOfArraysView< localIndex const > const & originalFaceToEdges,
-                                string const & subRegionName,
                                 localIndex const faceIndices[2] );
 
   ///@}
@@ -137,6 +133,29 @@ public:
    */
   SurfaceSubRegionType subRegionType() const { return m_subRegionType; }
 
+  /**
+   * @brief Returns the unique sub-region of type @p SUBREGION_TYPE for the current @p SurfaceElementRegion.
+   * @tparam SUBREGION_TYPE The type of the sub region we're looking for.
+   * @return The unique sub region.
+   * @note Kills the simulation if the sub-region is not unique.
+   */
+  template< typename SUBREGION_TYPE >
+  SUBREGION_TYPE & getUniqueSubRegion()
+  {
+    return getSubRegion< SUBREGION_TYPE >( getUniqueSubRegionName< SUBREGION_TYPE >() );
+  }
+
+  /**
+   * @brief Returns the unique sub-region of type @p SUBREGION_TYPE for the current @p SurfaceElementRegion.
+   * @tparam SUBREGION_TYPE The type of the sub region we're looking for.
+   * @return The unique sub region.
+   * @note Kills the simulation if the sub-region is not unique.
+   */
+  template< typename SUBREGION_TYPE >
+  SUBREGION_TYPE const & getUniqueSubRegion() const
+  {
+    return getSubRegion< SUBREGION_TYPE >( getUniqueSubRegionName< SUBREGION_TYPE >() );
+  }
 
   ///@}
 
@@ -157,6 +176,9 @@ public:
 
     /// @return Rupture time string
     static constexpr char const * ruptureTimeString() { return "ruptureTime"; }
+
+    /// @return Face block string
+    static constexpr char const * faceBlockString() { return "faceBlock"; }
   };
 
 protected:
@@ -164,10 +186,35 @@ protected:
 
 private:
 
+  /**
+   * @brief Returns the name of the unique sub-region.
+   * @tparam SUBREGION_TYPE The type of the sub region we're looking for.
+   * @return The name unique sub region.
+   * @note Kills the simulation if the sub-region is not unique.
+   */
+  template< typename SUBREGION_TYPE >
+  string getUniqueSubRegionName() const
+  {
+    std::vector< string > subRegionNames;
+    forElementSubRegions< SUBREGION_TYPE >( [&]( SUBREGION_TYPE const & sr )
+    {
+      subRegionNames.push_back( sr.getName() );
+    } );
+    GEOSX_ERROR_IF( subRegionNames.size() != 1,
+                    "Surface region \"" << getName() << "\" should have one unique sub region. \"" << subRegionNames.size() << "\" found." );
+    return subRegionNames.front();
+  }
+
   SurfaceSubRegionType m_subRegionType;
 
   real64 m_defaultAperture;
 
+  /**
+   * @brief One @p SurfaceElementRegion being made of one single sub-region,
+   * we get the name of the corresponding @p FaceBlockABC
+   * that will contain the mesh data to be imported.
+   */
+  string m_faceBlockName;
 };
 
 /// Declare strings associated with enumeration values.

@@ -26,7 +26,7 @@ namespace geosx
 {
 
 /// Namespace to contain the solid mechanics kernels.
-namespace SolidMechanicsLagrangianFEMKernels
+namespace solidMechanicsLagrangianFEMKernels
 {
 
 /// If UPDATE_STRESS is undef, uses total displacement and stress is not
@@ -72,9 +72,10 @@ public:
                                           3,
                                           3 >;
 
-  /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
@@ -103,14 +104,14 @@ public:
                        FE_TYPE const & finiteElementSpace,
                        CONSTITUTIVE_TYPE & inputConstitutiveType,
                        real64 const dt,
-                       string const & elementListName ):
+                       string const elementListName ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
     m_X( nodeManager.referencePosition()),
-    m_u( nodeManager.totalDisplacement()),
-    m_vel( nodeManager.velocity()),
-    m_acc( nodeManager.acceleration() ),
+    m_u( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
+    m_vel( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::velocity >() ),
+    m_acc( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::acceleration >() ),
     m_dt( dt ),
     m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( elementListName ).toViewConst() )
   {
@@ -342,9 +343,9 @@ protected:
 /// The factory used to construct a ExplicitSmallStrain kernel.
 using ExplicitSmallStrainFactory = finiteElement::KernelFactory< ExplicitSmallStrain,
                                                                  real64,
-                                                                 string const & >;
+                                                                 string const >;
 
-} // namespace SolidMechanicsLagrangianFEMKernels
+} // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
 

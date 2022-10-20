@@ -5,14 +5,14 @@
     <TriaxialDriver
       name="triaxialDriver"
       material="DE"
-      mode="mixedControl" 
+      mode="mixedControl"
       axialControl="strainFunction"
       radialControl="stressFunction"
       initialStress="-1.0"
       steps="50"
       logLevel="0"
-      baseline = "testTriaxial_delftEggUseLinear.txt"
-      output="none" />
+      baseline="testTriaxial_delftEggUseLinear.txt"
+      output="none"/>
   </Tasks>
 
   <Events
@@ -23,7 +23,6 @@
   </Events>
 
   <Constitutive>
-
     <DelftEgg
       name="DE"
       defaultDensity="2700"
@@ -34,7 +33,6 @@
       defaultCslSlope="1.2"
       defaultVirginCompressionIndex="0.003"
       defaultRecompressionIndex="0.002"/>
-
   </Constitutive>
 
   <Functions>
@@ -42,7 +40,8 @@
       name="strainFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0 }"
-      values="{ 0, -0.005}"/>
+      values="{ 0, -0.005 }"/>
+
     <TableFunction
       name="stressFunction"
       inputVarNames="{ time }"
@@ -64,4 +63,10 @@
       cellBlockNames="{ cellBlock01 }"/>
   </Mesh>
 
+  <ElementRegions>
+    <CellElementRegion
+      name="dummy"
+      cellBlocks="{ cellBlock01 }"
+      materialList="{ dummy }"/>
+  </ElementRegions>
 </Problem>

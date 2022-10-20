@@ -35,20 +35,16 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::fieldNameString(), &m_fieldName ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::FALSE ).
     setDescription( "Name of primary solution field" );
 
   registerWrapper( viewKeyStruct::coeffNameString(), &m_coeffName ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::FALSE ).
     setDescription( "Name of coefficient field" );
 
   registerWrapper( viewKeyStruct::targetRegionsString(), &m_targetRegions ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::FALSE ).
     setDescription( "List of regions to build the stencil for" );
-
-  registerWrapper( viewKeyStruct::coefficientModelNamesString(), &m_coefficientModelNames ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "List of constitutive models that contain the coefficient used to build the stencil" );
 
   registerWrapper( viewKeyStruct::areaRelativeToleranceString(), &m_areaRelTol ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -63,63 +59,32 @@ FluxApproximationBase::getCatalog()
   return catalog;
 }
 
-void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
+void FluxApproximationBase::initializePreSubGroups()
 {
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
-    meshBody.forSubGroups< MeshLevel >( [&]( MeshLevel & mesh )
+    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
     {
-      // Group structure: mesh1/finiteVolumeStencils/myTPFA
-
-      Group & stencilParentGroup = mesh.hasGroup( groupKeyStruct::stencilMeshGroupString() ) ?
-                                   mesh.getGroup( groupKeyStruct::stencilMeshGroupString() ) :
-                                   mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() );
-
-      Group & stencilGroup = stencilParentGroup.hasGroup( getName() ) ?
-                             stencilParentGroup.getGroup( getName() ) :
-                             stencilParentGroup.registerGroup( getName() );
-
-      registerCellStencil( stencilGroup );
-
-      registerFractureStencil( stencilGroup );
-
-      // For each face-based Dirichlet boundary condition on target field, create a boundary stencil
-      // TODO: Apply() should take a MeshLevel directly
-      fsManager.apply( 0.0,
-                       dynamicCast< DomainPartition & >( meshBodies.getParent() ),
-                       "faceManager",
-                       m_fieldName,
-                       [&] ( FieldSpecificationBase const &,
-                             string const & setName,
-                             SortedArrayView< localIndex const > const &,
-                             Group const &,
-                             string const & )
+      // Proceed with regular procedure only if the MeshLevel is not a shallow copy
+      if( !(mesh.isShallowCopy() ) )
       {
-        registerBoundaryStencil( stencilGroup, setName );
-      } );
+        // Group structure: mesh1/finiteVolumeStencils/myTPFA
 
-      // For each aquifer boundary condition, create a boundary stencil
-      fsManager.apply< AquiferBoundaryCondition >( 0.0,
-                                                   dynamicCast< DomainPartition & >( meshBodies.getParent() ),
-                                                   "faceManager",
-                                                   AquiferBoundaryCondition::catalogName(),
-                                                   [&] ( AquiferBoundaryCondition const &,
-                                                         string const & setName,
-                                                         SortedArrayView< localIndex const > const &,
-                                                         Group const &,
-                                                         string const & )
+        Group & stencilParentGroup = mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() );
+        Group & stencilGroup = stencilParentGroup.registerGroup( getName() );
+
+        registerCellStencil( stencilGroup );
+
+        registerFractureStencil( stencilGroup );
+      }
+      else
       {
-        registerAquiferStencil( stencilGroup, setName );
-      } );
-
-      FaceManager & faceManager = mesh.getFaceManager();
-      faceManager.registerWrapper< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() ).
-        setApplyDefaultValue( 1.0 ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "An array that holds the transmissibility multipliers" );
-
+        Group & parentMesh = mesh.getShallowParent();
+        Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
+        mesh.registerGroup( groupKeyStruct::stencilMeshGroupString(), &parentStencilParentGroup );
+      }
     } );
   } );
 }
@@ -131,34 +96,82 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  domain.getMeshBodies().forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+  domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
     m_lengthScale = meshBody.getGlobalLengthScale();
-
-    meshBody.forSubGroups< MeshLevel >( [&]( MeshLevel & mesh )
+    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
     {
-      // Compute the main cell-based stencil
-      computeCellStencil( mesh );
 
-      // For each face-based boundary condition on target field, compute the boundary stencil weights
-      fsManager.apply( 0.0,
-                       domain,
-                       "faceManager",
-                       m_fieldName,
-                       [&] ( FieldSpecificationBase const &,
-                             string const & setName,
-                             SortedArrayView< localIndex const > const & faceSet,
-                             Group const &,
-                             string const & )
+      if( !(mesh.isShallowCopy() ) )
       {
-        computeBoundaryStencil( mesh, setName, faceSet );
-      } );
+        // Group structure: mesh1/finiteVolumeStencils/myTPFA
 
-      // Compute the aquifer stencil weights
-      computeAquiferStencil( domain, mesh );
+        Group & stencilParentGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
+        Group & stencilGroup = stencilParentGroup.getGroup( getName() );
+        // For each face-based Dirichlet boundary condition on target field, create a boundary stencil
+        // TODO: Apply() should take a MeshLevel directly
+        fsManager.apply< FaceManager >( 0.0, // time = 0
+                                        mesh,
+                                        m_fieldName,
+                                        [&] ( FieldSpecificationBase const &,
+                                              string const & setName,
+                                              SortedArrayView< localIndex const > const &,
+                                              FaceManager const &,
+                                              string const & )
+        {
+          registerBoundaryStencil( stencilGroup, setName );
+        } );
 
+        // For each aquifer boundary condition, create a boundary stencil
+        fsManager.apply< FaceManager,
+                         AquiferBoundaryCondition >( 0.0, // time = 0
+                                                     mesh,
+                                                     AquiferBoundaryCondition::catalogName(),
+                                                     [&] ( AquiferBoundaryCondition const &,
+                                                           string const & setName,
+                                                           SortedArrayView< localIndex const > const &,
+                                                           FaceManager const &,
+                                                           string const & )
+        {
+          registerAquiferStencil( stencilGroup, setName );
+        } );
+
+        // Compute the main cell-based stencil
+        computeCellStencil( mesh );
+
+        // Compute the fracture related stencils (within the fracture itself,
+        // but between the fracture and the matrix as well).
+        computeFractureStencil( mesh );
+
+        // For each face-based boundary condition on target field, compute the boundary stencil weights
+        fsManager.apply< FaceManager >( 0.0,
+                                        mesh,
+                                        m_fieldName,
+                                        [&] ( FieldSpecificationBase const &,
+                                              string const & setName,
+                                              SortedArrayView< localIndex const > const & faceSet,
+                                              FaceManager const &,
+                                              string const & )
+        {
+          computeBoundaryStencil( mesh, setName, faceSet );
+        } );
+
+        // Compute the aquifer stencil weights
+        computeAquiferStencil( domain, mesh );
+      }
     } );
   } );
 }
+
+void FluxApproximationBase::setFieldName( string const & name )
+{
+  m_fieldName = name;
+}
+
+void FluxApproximationBase::setCoeffName( string const & name )
+{
+  m_coeffName = name;
+}
+
 
 } //namespace geosx

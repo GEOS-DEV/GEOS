@@ -61,6 +61,7 @@ public:
     BHP,  /**< The well operates at a specified bottom hole pressure (BHP) */
     PHASEVOLRATE, /**< The well operates at a specified phase volumetric flow rate */
     TOTALVOLRATE, /**< The well operates at a specified total volumetric flow rate */
+    UNINITIALIZED, /**< This is the current well control before postProcessInput (needed to restart from file properly) */
   };
 
 
@@ -115,12 +116,6 @@ public:
    * @name Getters / Setters
    */
   ///@{
-
-  /**
-   * @brief Get the well type (injector or producer).
-   * @return a well Type enum
-   */
-  Type getType() const { return m_type; }
 
   /**
    * @brief Set the control type to BHP and set a numerical value for the control.
@@ -227,11 +222,35 @@ public:
   const real64 & getSurfaceTemperature() const { return m_surfaceTemp; }
 
   /**
-   * @brief Getter for the status of the well (open or shut)
-   * @param[in] currentTime the current time
-   * @return a flag equal to true if the well is open, and false otherwise
+   * @brief Is the well an injector?
+   * @return a boolean
    */
-  bool wellIsOpen( real64 const & currentTime ) const;
+  bool isInjector() const { return ( m_type == Type::INJECTOR ); }
+
+  /**
+   * @brief Is the well a producer?
+   * @return a boolean
+   */
+  bool isProducer() const { return ( m_type == Type::PRODUCER ); }
+
+  /**
+   * @brief Is the well open (or shut) at @p currentTime?
+   * @param[in] currentTime the current time
+   * @return a boolean
+   */
+  bool isWellOpen( real64 const & currentTime ) const;
+
+  /**
+   * @brief Getter for the flag to enable crossflow
+   * @return the flag deciding whether crossflow is allowed or not
+   */
+  bool isCrossflowEnabled() const { return m_isCrossflowEnabled; }
+
+  /**
+   * @brief Getter for the initial pressure coefficient
+   * @return the initial pressure coefficient
+   */
+  real64 getInitialPressureCoefficient() const { return m_initialPressureCoefficient; }
 
   ///@}
 
@@ -245,8 +264,10 @@ public:
     static constexpr char const * refElevString() { return "referenceElevation"; }
     /// String key for the well type
     static constexpr char const * typeString() { return "type"; }
-    /// String key for the well control
-    static constexpr char const * controlString() { return "control"; }
+    /// String key for the well input control
+    static constexpr char const * inputControlString() { return "control"; }
+    /// String key for the well current control
+    static constexpr char const * currentControlString() { return "currentControl"; }
     /// String key for the well target BHP
     static constexpr char const * targetBHPString() { return "targetBHP"; }
     /// String key for the well target rate
@@ -271,6 +292,11 @@ public:
     static constexpr char const * targetPhaseRateTableNameString() { return "targetPhaseRateTableName"; }
     /// string key for BHP table name
     static constexpr char const * targetBHPTableNameString() { return "targetBHPTableName"; }
+    /// string key for the crossflow flag
+    static constexpr char const * enableCrossflowString() { return "enableCrossflow"; }
+    /// string key for the initial pressure coefficient
+    static constexpr char const * initialPressureCoefficientString() { return "initialPressureCoefficient"; }
+
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -278,6 +304,8 @@ public:
 protected:
 
   virtual void postProcessInput() override;
+
+  virtual void initializePreSubGroups() override;
 
 private:
 
@@ -289,6 +317,9 @@ private:
 
   /// Gravity coefficient of the reference elevation
   real64 m_refGravCoef;
+
+  /// Input well controls as a Control enum
+  Control m_inputControl;
 
   /// Well controls as a Control enum
   Control m_currentControl;
@@ -329,6 +360,12 @@ private:
   /// BHP table name
   string m_targetBHPTableName;
 
+  /// Flag to enable crossflow
+  integer m_isCrossflowEnabled;
+
+  /// Tuning coefficient for the initial well pressure
+  real64 m_initialPressureCoefficient;
+
   /// Total rate table
   TableFunction * m_targetTotalRateTable;
 
@@ -346,7 +383,9 @@ ENUM_STRINGS( WellControls::Type,
 ENUM_STRINGS( WellControls::Control,
               "BHP",
               "phaseVolRate",
-              "totalVolRate" );
+              "totalVolRate",
+              "uninitialized" );
+
 
 } //namespace geosx
 

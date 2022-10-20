@@ -1,17 +1,24 @@
-
 from geosx_xml_tools.attribute_coverage import parse_schema
 from geosx_xml_tools.xml_formatter import format_file
-from lxml import etree as ElementTree
+from lxml import etree as ElementTree    # type: ignore[import]
 import os
 from pathlib import Path
-import argparse
+from geosx_xml_tools import command_line_parsers
+from typing import Iterable, Dict, Any
 
 
-def check_redundancy_level(local_schema, node, whitelist=['component']):
+def check_redundancy_level(local_schema: Dict[str, Any],
+                           node: ElementTree.Element,
+                           whitelist: Iterable[str] = ['component']) -> int:
     """Check xml redundancy at the current level
 
-    @arg local_schema dict containing schema definitions
-    @arg node current xml node
+    Args:
+        local_schema (dict): Schema definitions
+        node (lxml.etree.Element): current xml node
+        whitelist (list): always match nodes containing these attributes
+
+    Returns:
+        int: Number of required attributes in the node and its children
     """
     node_is_required = 0
     for ka in node.attrib.keys():
@@ -29,8 +36,7 @@ def check_redundancy_level(local_schema, node, whitelist=['component']):
     for child in node:
         # Comments will not appear in the schema
         if child.tag in local_schema['children']:
-            child_is_required = check_redundancy_level(local_schema['children'][child.tag],
-                                                       child)
+            child_is_required = check_redundancy_level(local_schema['children'][child.tag], child)
             node_is_required += child_is_required
             if not child_is_required:
                 node.remove(child)
@@ -38,11 +44,12 @@ def check_redundancy_level(local_schema, node, whitelist=['component']):
     return node_is_required
 
 
-def check_xml_redundancy(schema, fname):
+def check_xml_redundancy(schema: Dict[str, Any], fname: str) -> None:
     """Check redundancy in an xml file
 
-    @arg schema dict containing schema definitions
-    @arg fname name of the target file
+    Args:
+        schema (dict): Schema definitions
+        fname (str): Name of the target file
     """
     xml_tree = ElementTree.parse(fname)
     xml_root = xml_tree.getroot()
@@ -51,10 +58,11 @@ def check_xml_redundancy(schema, fname):
     format_file(fname)
 
 
-def process_xml_files(geosx_root):
+def process_xml_files(geosx_root: str) -> None:
     """Test for xml redundancy
 
-    @arg geosx_root GEOSX root directory
+    Args:
+        geosx_root (str): GEOSX root directory
     """
 
     # Parse the schema
@@ -71,15 +79,15 @@ def process_xml_files(geosx_root):
             check_xml_redundancy(schema, str(f))
 
 
-def main():
+def main() -> None:
     """Entry point for the xml attribute usage test script
 
-    @arg -r/--root GEOSX root directory
+    Args:
+        -r/--root (str): GEOSX root directory
     """
 
     # Parse the user arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-r', '--root', type=str, help='GEOSX root', default='')
+    parser = command_line_parsers.build_xml_redundancy_input_parser()
     args = parser.parse_args()
 
     # Parse the xml files

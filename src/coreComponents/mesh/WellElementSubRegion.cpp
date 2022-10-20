@@ -45,15 +45,12 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
 
   registerGroup( groupKeyStruct::perforationDataString(), &m_perforationData );
 
-  this->setNumNodesPerElement( 2 );
-  this->setNumFacesPerElement( 0 );
+  excludeWrappersFromPacking( { viewKeyStruct::nodeListString() } );
+
+  m_numNodesPerElement = 2;
+  m_numFacesPerElement = 0;
   m_toNodesRelation.resizeDimension< 1 >( this->numNodesPerElement() );
 }
-
-
-WellElementSubRegion::~WellElementSubRegion()
-{}
-
 
 void WellElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mesh )
 {
@@ -115,43 +112,12 @@ void collectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry,
 }
 
 /**
- * @brief Check if "location" is contained in reservoir element ei
- * @param[in] subRegion the subRegion of reservoir element ei
- * @param[in] ei the index of the reservoir element
- * @return true if "location" is contained in reservoir element ei, false otherwise
- */
-bool isPointInsideElement( NodeManager const & nodeManager,
-                           R1Tensor const & location,
-                           CellBlock const & subRegion,
-                           localIndex ei )
-{
-  bool isInsideElement = false;
-
-  array1d< array1d< localIndex > > faceNodes( subRegion.numFacesPerElement() );
-
-  // collect the faces for this element
-  for( localIndex kf = 0; kf < subRegion.numFacesPerElement(); ++kf )
-  {
-    subRegion.getFaceNodes( ei, kf, faceNodes[kf] );
-  }
-
-  // if the point is in the element, save the indices and stop the search
-  if( computationalGeometry::isPointInsidePolyhedron( nodeManager.referencePosition(),
-                                                      faceNodes.toNestedViewConst(),
-                                                      location ))
-  {
-    isInsideElement = true;
-  }
-  return isInsideElement;
-}
-
-/**
  * @brief Collect the nodes of reservoir element ei
  * @param[in] subRegion the subRegion of reservoir element ei
  * @param[in] ei the index of the reservoir element
  * @param[inout] nodes the nodes that have already been visited
  */
-void collectElementNodes( CellBlock const & subRegion,
+void collectElementNodes( CellElementSubRegion const & subRegion,
                           localIndex ei,
                           SortedArray< localIndex > & nodes )
 {
@@ -181,7 +147,7 @@ void collectElementNodes( CellBlock const & subRegion,
  * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
  */
 bool visitNeighborElements( MeshLevel const & mesh,
-                            R1Tensor const & location,
+                            real64 const (&location)[3],
                             SortedArray< localIndex > & nodes,
                             SortedArray< globalIndex > & elements,
                             localIndex & erMatched,
@@ -190,10 +156,16 @@ bool visitNeighborElements( MeshLevel const & mesh,
 {
   ElementRegionManager const & elemManager = mesh.getElemManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
 
   ArrayOfArraysView< localIndex const > const & toElementRegionList    = nodeManager.elementRegionList();
   ArrayOfArraysView< localIndex const > const & toElementSubRegionList = nodeManager.elementSubRegionList();
   ArrayOfArraysView< localIndex const > const & toElementList          = nodeManager.elementList();
+
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const referencePosition =
+    nodeManager.referencePosition().toViewConst();
+
+  ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
   bool matched = false;
 
@@ -220,7 +192,10 @@ bool visitNeighborElements( MeshLevel const & mesh,
       localIndex const eiLocal = toElementList[currNode][b];
 
       CellElementRegion const & region = elemManager.getRegion< CellElementRegion >( er );
-      CellBlock const & subRegion = region.getSubRegion< CellElementSubRegion >( esr );
+      CellElementSubRegion const & subRegion = region.getSubRegion< CellElementSubRegion >( esr );
+      arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
+      arrayView2d< real64 const > const elemCenters = subRegion.getElementCenter();
+
       globalIndex const eiGlobal = subRegion.localToGlobalMap()[eiLocal];
 
       // if this element has not been visited yet, save it
@@ -228,9 +203,17 @@ bool visitNeighborElements( MeshLevel const & mesh,
       {
         elements.insert( eiGlobal );
 
+        real64 const elemCenter[3] = { elemCenters[eiLocal][0],
+                                       elemCenters[eiLocal][1],
+                                       elemCenters[eiLocal][2] };
+
         // perform the test to see if the point is in this reservoir element
         // if the point is in the resevoir element, save the indices and stop the search
-        if( isPointInsideElement( nodeManager, location, subRegion, eiLocal ))
+        if( computationalGeometry::isPointInsidePolyhedron( referencePosition,
+                                                            elemsToFaces[eiLocal],
+                                                            facesToNodes,
+                                                            elemCenter,
+                                                            location ) )
         {
           erMatched  = er;
           esrMatched = esr;
@@ -268,7 +251,7 @@ bool visitNeighborElements( MeshLevel const & mesh,
  * @param[inout] eiInit the element index of the reservoir element from which we start the search
  */
 void initializeLocalSearch( MeshLevel const & mesh,
-                            R1Tensor const & location,
+                            real64 const (&location)[3],
                             localIndex & erInit,
                             localIndex & esrInit,
                             localIndex & eiInit )
@@ -282,7 +265,7 @@ void initializeLocalSearch( MeshLevel const & mesh,
                                                 localIndex const esr,
                                                 localIndex const ei )
   {
-    R1Tensor v = location;
+    real64 v[3] = { location[0], location[1], location[2] };
     LvArray::tensorOps::subtract< 3 >( v, resElemCenter[er][esr][ei] );
     return LvArray::tensorOps::l2Norm< 3 >( v );
   } );
@@ -292,6 +275,7 @@ void initializeLocalSearch( MeshLevel const & mesh,
   erInit  = std::get< 0 >( ret.second );
   esrInit = std::get< 1 >( ret.second );
   eiInit  = std::get< 2 >( ret.second );
+
 }
 
 /**
@@ -307,7 +291,7 @@ void initializeLocalSearch( MeshLevel const & mesh,
  * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
  */
 bool searchLocalElements( MeshLevel const & mesh,
-                          R1Tensor const & location,
+                          real64 const (&location)[3],
                           localIndex const & searchDepth,
                           localIndex const & erInit,
                           localIndex const & esrInit,
@@ -321,7 +305,7 @@ bool searchLocalElements( MeshLevel const & mesh,
   bool resElemFound = false;
 
   CellElementRegion const & region = mesh.getElemManager().getRegion< CellElementRegion >( erInit );
-  CellBlock const & subRegion = region.getSubRegion< CellBlock >( esrInit );
+  CellElementSubRegion const & subRegion = region.getSubRegion< CellElementSubRegion >( esrInit );
 
   SortedArray< localIndex >  nodes;
   SortedArray< globalIndex > elements;
@@ -464,7 +448,9 @@ void WellElementSubRegion::assignUnownedElementsInReservoir( MeshLevel & mesh,
   // then the well element is assigned to rank k
   for( globalIndex currGlobal : unownedElems )
   {
-    R1Tensor const location = LVARRAY_TENSOROPS_INIT_LOCAL_3( wellElemCoordsGlobal[currGlobal] );
+    real64 const location[3] = { wellElemCoordsGlobal[currGlobal][0],
+                                 wellElemCoordsGlobal[currGlobal][1],
+                                 wellElemCoordsGlobal[currGlobal][2] };
 
     // this will contain the indices of the reservoir element
     // in which the center of the well element is located
@@ -744,7 +730,7 @@ void WellElementSubRegion::updateNodeManagerNodeToElementMap( MeshLevel & mesh )
   string const & elemRegionName = elemRegion.getName();
 
   localIndex const iregion    = elemManager.getRegions().getIndex( elemRegionName );
-  localIndex const isubRegion = elemRegion.getSubRegions().getIndex( getName() );
+  localIndex const isubRegion = elemRegion.getSubRegions().getSubGroupIndex( getName() );
 
   // for each (new) well element
   for( localIndex iwelemLocal = 0; iwelemLocal < size(); ++iwelemLocal )
@@ -779,7 +765,9 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
   // loop over all the perforations
   for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size( 0 ); ++iperfGlobal )
   {
-    R1Tensor const location = LVARRAY_TENSOROPS_INIT_LOCAL_3( perfCoordsGlobal[iperfGlobal] );
+    real64 const location[3] = { perfCoordsGlobal[iperfGlobal][0],
+                                 perfCoordsGlobal[iperfGlobal][1],
+                                 perfCoordsGlobal[iperfGlobal][2] };
 
     localIndex erMatched  = -1;
     localIndex esrMatched = -1;
@@ -857,36 +845,31 @@ bool WellElementSubRegion::isLocallyOwned() const
   return m_topRank == MpiWrapper::commRank( MPI_COMM_GEOSX );
 }
 
-void WellElementSubRegion::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
-{
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString() ));
-}
 
 localIndex WellElementSubRegion::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsImpl< false >( junk, packList );
 }
 
 localIndex WellElementSubRegion::packUpDownMaps( buffer_unit_type * & buffer,
                                                  arrayView1d< localIndex const > const & packList ) const
 {
-  return packUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsImpl< true >( buffer, packList );
 }
 
-template< bool DOPACK >
-localIndex WellElementSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                                        arrayView1d< localIndex const > const & packList ) const
+template< bool DO_PACKING >
+localIndex WellElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                                     arrayView1d< localIndex const > const & packList ) const
 {
   arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
   arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeList().relatedObjectLocalToGlobal();
-  return bufferOps::Pack< DOPACK >( buffer,
-                                    nodeList().base().toViewConst(),
-                                    m_unmappedGlobalIndicesInNodelist,
-                                    packList,
-                                    localToGlobal.toSliceConst(),
-                                    nodeLocalToGlobal );
+  return bufferOps::Pack< DO_PACKING >( buffer,
+                                        nodeList().base().toViewConst(),
+                                        m_unmappedGlobalIndicesInNodelist,
+                                        packList,
+                                        localToGlobal.toSliceConst(),
+                                        nodeLocalToGlobal );
 }
 
 localIndex WellElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & buffer,

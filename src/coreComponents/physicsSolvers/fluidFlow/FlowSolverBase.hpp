@@ -33,6 +33,10 @@ namespace geosx
 class FlowSolverBase : public SolverBase
 {
 public:
+
+  /// String used to form the solverName used to register single-physics solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "flow"; }
+
 /**
  * @brief main constructor for Group Objects
  * @param name the name of this instantiation of Group in the repository
@@ -57,23 +61,7 @@ public:
   /// deleted move operator
   FlowSolverBase & operator=( FlowSolverBase && ) = delete;
 
-  /**
-   * @brief default destructor
-   */
-  virtual ~FlowSolverBase() override;
-
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
-
-  void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
-
-  void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
-
-  arrayView1d< string const > fluidModelNames() const { return m_fluidModelNames; }
-
-  arrayView1d< string const > permeabilityModelNames() const { return m_permeabilityModelNames; }
-
-  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
-
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }
 
@@ -87,14 +75,15 @@ public:
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
+    static constexpr char const * isThermalString() { return "isThermal"; }
+    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
+
   };
 
-  void updatePorosityAndPermeability( CellElementSubRegion & subRegion,
-                                      localIndex const targetIndex ) const;
+  void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 
-  virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
-                                              localIndex const targetIndex ) const;
+  virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
 
 
   /**
@@ -108,6 +97,20 @@ public:
                                                std::map< string, localIndex > const & equilNameToEquilId,
                                                arrayView1d< real64 > const & maxElevation,
                                                arrayView1d< real64 > const & minElevation ) const;
+
+  /**
+   * @brief For each source flux boundary condition, loop over all the target cells and sum the owned cells
+   * @param[in] time the time at the beginning of the time step
+   * @param[in] dt the time step size
+   * @param[in] domain the domain partition
+   * @param[in] bcNameToBcId the map from the name of the boundary condition to the boundary condition index
+   * @param[out] bcAllSetsSize the total number of owned cells for each source flux boundary condition
+   */
+  void computeSourceFluxSizeScalingFactor( real64 const & time,
+                                           real64 const & dt,
+                                           DomainPartition & domain, // cannot be const...
+                                           std::map< string, localIndex > const & bcNameToBcId,
+                                           arrayView1d< globalIndex > const & bcAllSetsSize ) const;
 
 
 protected:
@@ -125,33 +128,26 @@ protected:
                                           real64 const & dt,
                                           DomainPartition & domain );
 
-  virtual void precomputeData( MeshLevel & mesh );
-
-  virtual void postProcessInput() override;
+  virtual void precomputeData( MeshLevel & mesh,
+                               arrayView1d< string const > const & regionNames );
 
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  /// name of the fluid constitutive model
-  array1d< string > m_fluidModelNames;
-
-  /// name of the solid constitutive model
-  array1d< string > m_solidModelNames;
-
-  /// name of the permeability constituive model
-  array1d< string > m_permeabilityModelNames;
-
-  /// flag to determine whether or not coupled with solid solver
-  integer m_poroElasticFlag;
-
-  /// flag to determine whether or not coupled with wells
-  integer m_coupledWellsFlag;
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
   /// the number of Degrees of Freedom per cell
   integer m_numDofPerCell;
 
+  /// flag to determine whether or not this is a thermal simulation
+  integer m_isThermal;
+
   real64 m_fluxEstimate;
+
+
+private:
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 
 };

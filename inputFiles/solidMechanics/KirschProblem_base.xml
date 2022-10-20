@@ -65,7 +65,7 @@
     <FieldSpecification 
       name="xconstraint"    
       objectPath="nodeManager" 
-      fieldName="TotalDisplacement" 
+      fieldName="totalDisplacement" 
       component="0" 
       scale="0.0" 
       setNames="{xneg, xpos}"
@@ -74,7 +74,7 @@
     <FieldSpecification 
       name="yconstraint"    
       objectPath="nodeManager" 
-      fieldName="TotalDisplacement" 
+      fieldName="totalDisplacement" 
       component="1" 
       scale="0.0" 
       setNames="{tneg, tpos, ypos}"
@@ -83,7 +83,7 @@
     <FieldSpecification 
       name="zconstraint" 
       objectPath="nodeManager" 
-      fieldName="TotalDisplacement" 
+      fieldName="totalDisplacement" 
       component="2" 
       scale="0.0" 
       setNames="{zneg, zpos}"
@@ -101,7 +101,7 @@
     <PackCollection
       name="displacementCollection"
       objectPath="nodeManager" 
-      fieldName="TotalDisplacement"/>      
+      fieldName="totalDisplacement"/>      
   </Tasks>
 <!-- SPHINX_TASKS_END -->
 
@@ -140,14 +140,13 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{Omega}"
-      solidMaterialNames="{rock}">
+      targetRegions="{Omega}">
       <NonlinearSolverParameters
         newtonTol = "1.0e-5"
         newtonMaxIter = "15"
       />
       <LinearSolverParameters
-        solverType = "direct"/>
+        directParallel="0"/>
     </SolidMechanics_LagrangianFEM>
   </Solvers>
 <!-- SPHINX_SOLVER_END -->

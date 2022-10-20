@@ -1,0 +1,178 @@
+<Problem>
+
+  <Geometry>
+    <Box name="core0"
+         xMin="{-1.0000000,  0.0074990, -0.0012510}"
+         xMax="{ 1.0000000,  0.0075810, -0.0012490}"/>
+
+    <Box name="core1"
+         xMin="{-1.0000000,  0.0074990,  0.0012490}"
+         xMax="{ 1.0000000,  0.0075810,  0.0012510}"/>
+
+    <Box name="core2"
+         xMin="{-1.0000000,  0.0074990, -0.0012510}"
+         xMax="{ 1.0000000,  0.0075010,  0.0012510}"/>
+
+    <Box name="core3"
+         xMin="{-1.0000000,  0.0075790, -0.0012510}"
+         xMax="{ 1.0000000,  0.0075810,  0.0012510}"/>
+
+    <Box name="coreline"
+         xMin="{-1.0000000,  0.0075010, -0.0010000}"
+         xMax="{ 1.0000000,  0.0075790,  0.0010000}"/>
+
+    <Box name="source"
+         xMin="{-1.0000000,  0.0074990, -0.0020000}"
+         xMax="{ 0.0011000,  0.0076000,  0.0020000}"/>
+  </Geometry>
+
+  <ElementRegions>
+    <CellElementRegion name="Domain"
+                   cellBlocks="{cb1}"
+                   materialList="{water, rock}"/>
+
+    <CellElementRegion name="void"
+                   cellBlocks="{void}"
+                   materialList="{water,rock}"/>
+
+    <SurfaceElementRegion name="Fracture"
+                       defaultAperture="0.02e-3"
+                       materialList="{water, rock, fractureFilling,  fractureContact}"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid name="water"
+                                  defaultDensity="1000"
+                                  defaultViscosity="1.0e-6"
+                                  referencePressure="0.0"
+                                  referenceDensity="1000"
+                                  compressibility="5e-13"
+                                  referenceViscosity="1.0e-6"
+                                  viscosibility="0.0"/>
+
+    <ElasticIsotropic name="rock"
+                      defaultDensity="2700"
+                      defaultBulkModulus="20.0e9"
+                      defaultShearModulus="12.0e9"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
+
+    <FrictionlessContact
+      name="fractureContact"
+      penaltyStiffness="1.0e0" 
+      apertureTableName="aperTable"/>
+  </Constitutive>
+
+  <Outputs>
+      <VTK name="siloOutput"
+            plotFileRoot="walshQuarter"
+            plotLevel="3"
+            parallelThreads="48"/>
+      <Restart name="sidreRestart"/>
+
+      <!-- ChomboIO name="chomboCoupling"
+       beginCycle="1"
+       outputPath="geosxToChombo.hdf5"
+       waitForInput="1"
+       inputPath="chomboToGeosx.hdf5"
+       useChomboPressures="1" /-->
+  </Outputs>
+
+  <NumericalMethods>
+    <FiniteElements>
+        <FiniteElementSpace name="FE1" order="1" />
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <FieldSpecifications>
+    <FieldSpecification name="waterDensity"
+               initialCondition="1"
+               setNames="{fracture}"
+               objectPath="ElementRegions"
+               fieldName="water_density"
+               scale="1000"/>
+
+    <FieldSpecification name="frac"
+               initialCondition="1"
+               setNames="{core0, core1, core2, core3}"
+               objectPath="faceManager"
+               fieldName="ruptureState"
+               scale="1"/>
+
+    <FieldSpecification name="yconstraint"
+               objectPath="nodeManager"
+               fieldName="totalDisplacement"
+               component="1"
+               scale="0.0"
+               setNames="{yneg, ypos}"/>
+
+    <FieldSpecification name="zconstraint"
+               objectPath="nodeManager"
+               fieldName="totalDisplacement"
+               component="2"
+               scale="0.0"
+               setNames="{zneg, zpos}"/>
+
+    <FieldSpecification name="xconstraint"
+               objectPath="nodeManager"
+               fieldName="totalDisplacement"
+               component="0"
+               scale="0.0"
+               setNames="{xneg, xpos}"/>
+
+    <FieldSpecification name="coreLine0"
+                        objectPath="nodeManager"
+                        fieldName="totalDisplacement"
+                        component="0"
+                        scale="0.0"
+                        setNames="{coreline}"/>
+
+    <FieldSpecification name="coreLine1"
+                        objectPath="nodeManager"
+                        fieldName="totalDisplacement"
+                        component="1"
+                        scale="0.0"
+                        setNames="{coreline}"/>
+
+    <FieldSpecification name="coreLine2"
+                        objectPath="nodeManager"
+                        fieldName="totalDisplacement"
+                        component="2"
+                        scale="0.0"
+                        setNames="{coreline}"/>
+
+    <FieldSpecification name="source"
+               objectPath="ElementRegions/Fracture"
+               fieldName="pressure"
+               scale="1.0e6"
+               setNames="{all}"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="aperTable"
+      coordinates = "{ -1.0e-3, 0.0}"
+      values      = "{  0.002e-3, 0.02e-3}"
+      />
+  </Functions>
+</Problem>

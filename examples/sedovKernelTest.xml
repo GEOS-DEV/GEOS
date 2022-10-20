@@ -11,8 +11,7 @@
       name="lagsolve"
       cflFactor="0.25"
       discretization="FE1"
-      targetRegions="{ Region2 }"
-      solidMaterialNames="{ shale }"/>
+      targetRegions="{ Region2 }"/>
   </Solvers>
 
   <Mesh>
@@ -104,7 +103,7 @@
     <FieldSpecification
       name="xconstraint"
       objectPath="nodeManager"
-      fieldName="Velocity"
+      fieldName="velocity"
       component="0"
       scale="1.0"
       setNames="{ xneg }"/>
@@ -112,7 +111,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="Velocity"
+      fieldName="velocity"
       component="1"
       scale="0.0"
       setNames="{ yneg }"/>
@@ -120,7 +119,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="Velocity"
+      fieldName="velocity"
       component="2"
       scale="0.0"
       setNames="{ zneg }"/>

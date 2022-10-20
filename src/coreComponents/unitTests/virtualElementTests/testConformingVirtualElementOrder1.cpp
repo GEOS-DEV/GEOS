@@ -15,7 +15,7 @@
 // Source includes
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
-#include "virtualElement/ConformingVirtualElementOrder1.hpp"
+#include "finiteElement/elementFormulations/ConformingVirtualElementOrder1.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/MeshManager.hpp"
@@ -39,8 +39,8 @@ static void checkIntegralMeanConsistency( FiniteElementBase const & feBase,
                                           real64 & sumBasisFunctions )
 {
   static constexpr localIndex
-    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
-  real64 basisFunctionsIntegralMean[maxSupportPoints]{};
+    maxSupportPoints = VEM::maxSupportPoints;
+  real64 basisFunctionsIntegralMean[maxSupportPoints];
   VEM::calcN( 0, stack, basisFunctionsIntegralMean );
   sumBasisFunctions = 0;
   for( localIndex iBasisFun = 0;
@@ -60,7 +60,7 @@ checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
                                          real64 & sumZDerivatives )
 {
   static constexpr localIndex
-    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
+    maxSupportPoints = VEM::maxSupportPoints;
   real64 const dummy[VEM::numNodes][3] { { 0.0 } };
   localIndex const k = 0;
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
@@ -85,14 +85,14 @@ static void
 checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
                                                    nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                                       localIndex const & cellIndex,
-                                      traits::ViewTypeConst< CellBlock::NodeMapType > const & cellToNodes,
+                                      traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const & cellToNodes,
                                       arrayView2d< real64 const > const & cellCenters,
                                       FiniteElementBase const & feBase,
                                       typename VEM::StackVariables const & stack,
                                       arraySlice1d< real64 > & stabTimeMonomialDofsNorm )
 {
   static constexpr localIndex
-    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
+    maxSupportPoints = VEM::maxSupportPoints;
   localIndex const numCellPoints = cellToNodes[cellIndex].size();
 
   real64 cellDiameter = 0;
@@ -159,7 +159,7 @@ static void checkSumOfQuadratureWeights( typename VEM::StackVariables stack,
                                          real64 & sumOfQuadratureWeights )
 {
   static constexpr localIndex
-    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
+    maxSupportPoints = VEM::maxSupportPoints;
   sumOfQuadratureWeights = 0.0;
   real64 const dummy[maxSupportPoints][3]{};
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
@@ -185,13 +185,13 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   // Get geometric properties to be passed as inputs.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
-  traits::ViewTypeConst< CellBlock::NodeMapType > const & cellToNodeMap = cellSubRegion.nodeList();
+  traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const & cellToNodeMap = cellSubRegion.nodeList();
   arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
   arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
 
   // Allocate and fill a VEM::MeshData struct.
   using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
-  typename VEM::MeshData meshData;
+  typename VEM::template MeshData< CellElementSubRegion > meshData;
   FiniteElementBase::initialize< VEM >( nodeManager, edgeManager,
                                         faceManager, cellSubRegion,
                                         meshData );
@@ -297,7 +297,7 @@ TEST( ConformingVirtualElementOrder1, hexahedra )
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys
                                                                         .meshManager );
   meshManager.generateMeshLevels( domain );
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   ElementRegionManager & elementManager = mesh.getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
   elementManager.processInputFileRecursive( topLevelNode );
@@ -350,7 +350,7 @@ TEST( ConformingVirtualElementOrder1, wedges )
   MeshManager & meshManager = problemManager.getGroup< MeshManager >
                                 ( problemManager.groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   ElementRegionManager & elementManager = mesh.getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
   elementManager.processInputFileRecursive( topLevelNode );

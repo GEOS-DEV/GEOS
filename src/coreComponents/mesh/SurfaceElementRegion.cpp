@@ -34,6 +34,11 @@ SurfaceElementRegion::SurfaceElementRegion( string const & name, Group * const p
     setApplyDefaultValue( m_subRegionType ).
     setDescription( "Type of surface element subregion. Valid options:\n* " + EnumStrings< SurfaceSubRegionType >::concat( "\n* " ) );
 
+  registerWrapper( viewKeyStruct::faceBlockString(), &m_faceBlockName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( "FractureSubRegion" ).
+    setDescription( "The name of the face block in the mesh, or the embedded surface." );
+
   registerWrapper( viewKeyStruct::defaultApertureString(), &m_defaultAperture ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "The default aperture of newly formed surface elements." );
@@ -43,19 +48,26 @@ SurfaceElementRegion::~SurfaceElementRegion()
 {}
 
 
-void SurfaceElementRegion::generateMesh( Group & cellBlocks )
+void SurfaceElementRegion::generateMesh( Group & faceBlocks )
 {
-  GEOSX_UNUSED_VAR( cellBlocks );
-
   Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
 
   if( m_subRegionType == SurfaceSubRegionType::embeddedElement )
   {
-    elementSubRegions.registerGroup< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
+    elementSubRegions.registerGroup< EmbeddedSurfaceSubRegion >( m_faceBlockName );
   }
   else if( m_subRegionType == SurfaceSubRegionType::faceElement )
   {
-    elementSubRegions.registerGroup< FaceElementSubRegion >( "faceElementSubRegion" );
+    FaceElementSubRegion & subRegion = elementSubRegions.registerGroup< FaceElementSubRegion >( m_faceBlockName );
+    if( faceBlocks.hasGroup( m_faceBlockName ) )
+    {
+      FaceBlockABC const & source = faceBlocks.getGroup< FaceBlockABC >( m_faceBlockName );
+      subRegion.copyFromCellBlock( source );
+    }
+    else
+    {
+      GEOSX_INFO( "No face block \"" << m_faceBlockName << "\" was found in the mesh. Empty surface region was created." );
+    }
   }
 }
 
@@ -69,10 +81,8 @@ void SurfaceElementRegion::initializePreSubGroups()
 }
 
 localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
-                                                    EdgeManager * const edgeManager,
                                                     FaceManager const * const faceManager,
                                                     ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
-                                                    string const & subRegionName,
                                                     localIndex const faceIndices[2] )
 {
   localIndex rval = -1;
@@ -83,17 +93,14 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   arrayView2d< localIndex const > const faceToElementSubRegion = faceManager->elementSubRegionList();
   arrayView2d< localIndex const > const faceToElementIndex = faceManager->elementList();
 
-  Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
-
-  FaceElementSubRegion & subRegion = elementSubRegions.getGroup< FaceElementSubRegion >( subRegionName );
+  FaceElementSubRegion & subRegion = this->getUniqueSubRegion< FaceElementSubRegion >();
   subRegion.resize( subRegion.size() + 1 );
   rval = subRegion.size() - 1;
 
 
-  arrayView1d< real64 > const ruptureTime = subRegion.getExtrinsicData< extrinsicMeshData::RuptureTime >();
+  arrayView1d< real64 > const ruptureTime = subRegion.getExtrinsicData< extrinsicMeshData::ruptureTime >();
 
-  arrayView1d< real64 > const
-  creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
+  arrayView1d< real64 > const creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
 
   arrayView2d< real64 const > const faceCenter = faceManager->faceCenter();
   arrayView2d< real64 > const elemCenter = subRegion.getElementCenter();
@@ -146,13 +153,13 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
 
   // Add the edges that compose the faceElement to the edge map. This is essentially a copy of
   // the facesToEdges entry.
-  localIndex const faceID = faceIndices[0];
-  localIndex const numEdges = originalFaceToEdgeMap.sizeOfArray( faceID );
+  localIndex const faceIndex = faceIndices[0];
+  localIndex const numEdges = originalFaceToEdgeMap.sizeOfArray( faceIndex );
   edgeMap.resizeArray( kfe, numEdges );
   for( localIndex a=0; a<numEdges; ++a )
   {
-    edgeMap[kfe][a] = originalFaceToEdgeMap( faceID, a );
-    connectedEdges.insert( originalFaceToEdgeMap( faceID, a ) );
+    edgeMap[kfe][a] = originalFaceToEdgeMap( faceIndex, a );
+    connectedEdges.insert( originalFaceToEdgeMap( faceIndex, a ) );
   }
 
   // Add the cell region/subregion/index to the faceElementToCells map
@@ -169,26 +176,25 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   for( auto const & edge : connectedEdges )
   {
     // check to see if the edgesToFractureConnectors already have an entry
-    if( edgeManager->m_edgesToFractureConnectorsEdges.count( edge )==0 )
+    if( subRegion.m_edgesToFractureConnectorsEdges.count( edge )==0 )
     {
       // if not, then fill increase the size of the fractureConnectors to face elements map and
       // fill the fractureConnectorsToEdges map with the current edge....and the inverse map too.
-      edgeManager->m_fractureConnectorEdgesToFaceElements.appendArray( 0 );
-      edgeManager->m_fractureConnectorsEdgesToEdges.emplace_back( edge );
-      edgeManager->m_edgesToFractureConnectorsEdges[edge] = edgeManager->m_fractureConnectorsEdgesToEdges.size()-1;
+      subRegion.m_fractureConnectorEdgesToFaceElements.appendArray( 0 );
+      subRegion.m_fractureConnectorsEdgesToEdges.emplace_back( edge );
+      subRegion.m_edgesToFractureConnectorsEdges[edge] = subRegion.m_fractureConnectorsEdgesToEdges.size()-1;
     }
     // now fill the fractureConnectorsToFaceElements map. This is analogous to the edge to face map
-    localIndex const connectorIndex = edgeManager->m_edgesToFractureConnectorsEdges[edge];
-    localIndex const numCells = edgeManager->m_fractureConnectorEdgesToFaceElements.sizeOfArray( connectorIndex ) + 1;
-    edgeManager->m_fractureConnectorEdgesToFaceElements.resizeArray( connectorIndex, numCells );
-    edgeManager->m_fractureConnectorEdgesToFaceElements[connectorIndex][ numCells-1 ] = kfe;
+    localIndex const connectorIndex = subRegion.m_edgesToFractureConnectorsEdges[edge];
+    localIndex const numCells = subRegion.m_fractureConnectorEdgesToFaceElements.sizeOfArray( connectorIndex ) + 1;
+    subRegion.m_fractureConnectorEdgesToFaceElements.resizeArray( connectorIndex, numCells );
+    subRegion.m_fractureConnectorEdgesToFaceElements[connectorIndex][ numCells-1 ] = kfe;
 
     // And fill the list of connectors that will need stencil modifications
-    edgeManager->m_recalculateFractureConnectorEdges.insert( connectorIndex );
+    subRegion.m_recalculateFractureConnectorEdges.insert( connectorIndex );
   }
 
-
-  subRegion.CalculateElementGeometricQuantities( kfe, faceManager->faceArea() );
+  subRegion.calculateSingleElementGeometricQuantities( kfe, faceManager->faceArea() );
 
   creationMass[kfe] *= elemArea[kfe];
 
@@ -199,8 +205,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
     SortedArray< localIndex > & faceElementSet = subRegion.sets().registerWrapper< SortedArray< localIndex > >( setIter.first ).reference();
     for( localIndex a=0; a<faceMap.size( 0 ); ++a )
     {
-      localIndex const faceIndex = faceMap[a][0];
-      if( faceSet.count( faceIndex ) )
+      if( faceSet.count( faceMap[a][0] ) )
       {
         faceElementSet.insert( a );
       }

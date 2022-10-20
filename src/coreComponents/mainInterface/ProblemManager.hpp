@@ -28,6 +28,8 @@ namespace geosx
 class PhysicsSolverManager;
 class DomainPartition;
 class GeometricObjectManager;
+class FiniteElementDiscretization;
+class MeshLevel;
 namespace constitutive
 {
 class ConstitutiveManager;
@@ -35,6 +37,7 @@ class ConstitutiveManager;
 class FunctionManager;
 class FieldSpecificationManager;
 struct CommandLineOptions;
+class CellBlockManagerABC;
 
 /**
  * @class ProblemManager
@@ -303,6 +306,14 @@ public:
     return *m_fieldSpecificationManager;
   }
 
+
+  /**
+   * @brief Returns the const EventManager.
+   * @return The const EventManager.
+   */
+  EventManager & getEventManager()
+  {return *m_eventManager;}
+
 protected:
   /**
    * @brief Post process the command line input
@@ -313,26 +324,36 @@ private:
 
   /**
    * @brief Determine the number of quadrature points required for each
-   *   subregion.
+   *   MeshBody/Region/SubRegion.
    * @param meshBodies Reference to the mesh bodies object.
-   * @return A map containing the number of quadrature points for every
-   *   region/subregion key pair.
+   * @return A tuple containing the number of quadrature points for every
+   *   MeshBody/region/subregion combination.
    *
    * Checks all physics solvers for targetRegions and constitutive models to
    * determine the minimum number of quadrature points for each subregion.
    */
-  map< std::pair< string, string >, localIndex > calculateRegionQuadrature( Group & meshBodies );
+  map< std::tuple< string, string, string, string >, localIndex > calculateRegionQuadrature( Group & meshBodies );
+
+
+  map< std::pair< string, Group const * const >, arrayView1d< string const > const >
+  getDiscretizations() const;
+
+  void generateMeshLevel( MeshLevel & meshLevel,
+                          CellBlockManagerABC & cellBlockManager,
+                          Group const * const discretization,
+                          arrayView1d< string const > const & targetRegions );
 
   /**
    * @brief Allocate constitutive relations on each subregion with appropriate
    *   number of quadrature point.
    * @param meshBodies Reference to the mesh bodies object.
    * @param constitutiveManager The constitutive manager object.
-   * @param regionQuadrature The map containing the number of quadrature points for every subregion.
+   * @param regionQuadrature The map containing the number of quadrature points for every
+   *  MeshBody/ElementRegion/ElementSubRegion.
    */
   void setRegionQuadrature( Group & meshBodies,
                             constitutive::ConstitutiveManager const & constitutiveManager,
-                            map< std::pair< string, string >, localIndex > const & regionQuadrature );
+                            map< std::tuple< string, string, string, string >, localIndex > const & regionQuadrature );
 
   /// The PhysicsSolverManager
   PhysicsSolverManager * m_physicsSolverManager;

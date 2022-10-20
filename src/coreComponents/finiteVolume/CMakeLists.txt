@@ -10,7 +10,6 @@ set( finiteVolume_headers
      FaceElementToCellStencil.hpp
      FiniteVolumeManager.hpp
      FluxApproximationBase.hpp
-     FluxStencil.hpp
      ProjectionEDFMHelper.hpp
      HybridMimeticDiscretization.hpp
      MimeticInnerProductDispatch.hpp 
@@ -45,6 +44,10 @@ set( dependencyList mesh codingUtilities fieldSpecification )
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
+endif()
+
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
 endif()
 
 blt_add_library( NAME       finiteVolume

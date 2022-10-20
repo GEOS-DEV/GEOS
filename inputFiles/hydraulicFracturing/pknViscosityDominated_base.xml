@@ -1,70 +1,7 @@
 <?xml version="1.0" ?>
 
-<!--# # -->
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, -0.0 }">
-    <Hydrofracture
-      name="hydrofracture"
-      solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
-      surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{ fractureFilling }"
-      couplingTypeOption="FIM"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ Domain, Fracture }"
-      contactRelationName="fractureContact"
-      maxNumResolves="5"
-      initialDt="0.1">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-4"
-        newtonMaxIter="50"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"
-        logLevel="1"
-        krylovAdaptiveTol="1"/>
-    </Hydrofracture>
-
-    <SolidMechanicsLagrangianSSLE
-      name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
-      discretization="FE1"
-      targetRegions="{ Domain, Fracture }"
-      solidMaterialNames="{ rock }"
-      contactRelationName="fractureContact">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-10"/>
-    </SolidMechanicsLagrangianSSLE>
-
-    <SinglePhaseFVM
-      name="SinglePhaseFlow"
-      discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }"
-      inputFluxEstimate="1.0">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-5"
-        newtonMaxIter="10"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-12"/>
-    </SinglePhaseFVM>
-
-    <SurfaceGenerator
-      name="SurfaceGen"
-      targetRegions="{ Domain }"
-      nodeBasedSIF="1"
-      solidMaterialNames="{ rock }"
-      rockToughness="0.1e6"/>
-  </Solvers>
-
+  <!-- SPHINX_ELEMENTREGIONS -->
   <ElementRegions>
     <CellElementRegion
       name="Domain"
@@ -74,9 +11,11 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock, fractureFilling }"/>
+      materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
+  <!-- SPHINX_ELEMENTREGIONS_END -->
 
+  <!-- SPHINX_MATERIAL -->
   <Constitutive>
     <CompressibleSinglePhaseFluid
       name="water"
@@ -115,27 +54,10 @@
       name="fractureContact"
       penaltyStiffness="1.0e0"
       apertureTableName="apertureTable"/>
-
   </Constitutive>
+  <!-- SPHINX_MATERIAL_END -->
 
-  <Functions>
-    <TableFunction
-      name="apertureTable"
-      coordinates="{ -1.0e-3, 0.0 }"
-      values="{ 0.002e-3, 0.02e-3 }"/>
-  </Functions>
-    
-  <Outputs>
-    <Silo
-      name="siloOutput"
-      plotFileRoot="zeroToughness"
-      plotLevel="3"
-      parallelThreads="48"/>
-
-    <Restart
-      name="sidreRestart"/>
-  </Outputs>
-
+  <!-- SPHINX_NUMERICAL -->
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
@@ -146,12 +68,13 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ fracPerm }"/>
+        meanPermCoefficient="0.8"
+        />
     </FiniteVolume>
   </NumericalMethods>
+  <!-- SPHINX_NUMERICAL_END -->
 
+  <!-- SPHINX_BC -->
   <FieldSpecifications>   
     <FieldSpecification
       name="waterDensity"
@@ -180,7 +103,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ yneg, ypos }"/>
@@ -188,7 +111,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>
@@ -196,7 +119,7 @@
     <FieldSpecification
       name="xconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xneg, xpos }"/>
@@ -207,4 +130,54 @@
       scale="-6.625"
       setNames="{ source }"/>
   </FieldSpecifications>
+  <!-- SPHINX_BC_END -->
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -0.01, -1.0e-3, 0.0 }"
+      values="{ 0.005e-3, 0.01e-3, 0.02e-3 }"/>
+  </Functions>
+
+  <!-- SPHINX_TASKS -->
+  <Tasks>
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="pressure"/>
+
+    <PackCollection
+      name="apertureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="elementAperture"/> 
+
+    <PackCollection
+      name="hydraulicApertureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="hydraulicAperture"/>  
+
+    <PackCollection
+      name="areaCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="elementArea"/> 
+  </Tasks>
+  <!-- SPHINX_TASKS_END -->
+
+  <!-- SPHINX_OUTPUT -->         
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="zeroToughness"
+      plotLevel="3"
+      parallelThreads="48"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/pressureCollection, /Tasks/apertureCollection, /Tasks/hydraulicApertureCollection, /Tasks/areaCollection}"
+      filename="pknViscosityDominated_output" />  
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+  <!-- SPHINX_OUTPUT_END -->
 </Problem>

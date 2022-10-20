@@ -56,21 +56,22 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  virtual void updateFromPressureStrain( localIndex const k,
-                                         localIndex const q,
-                                         real64 const & pressure,
-                                         real64 const & volStrain ) const
-  {
-    GEOSX_UNUSED_VAR( k, q, pressure, volStrain );
-  }
-
-  GEOSX_HOST_DEVICE
   virtual void updateFromAperture( localIndex const k,
                                    localIndex const q,
                                    real64 const & oldHydraulicAperture,
                                    real64 const & newHydraulicAperture ) const
   {
     GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture );
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual void updateFromApertureAndShearDisplacement( localIndex const k,
+                                                       localIndex const q,
+                                                       real64 const & oldHydraulicAperture,
+                                                       real64 const & newHydraulicAperture,
+                                                       real64 const ( &dispJump )[3] ) const
+  {
+    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, dispJump );
   }
 
   GEOSX_HOST_DEVICE
@@ -97,7 +98,6 @@ protected:
   arrayView3d< real64 > m_dPerm_dPressure;
 };
 
-
 class PermeabilityBase : public ConstitutiveBase
 {
 public:
@@ -114,14 +114,36 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  /**
+   * @brief Const/non-mutable accessor for permeability.
+   * @return Accessor
+   */
   arrayView3d< real64 const > permeability() const { return m_permeability; }
 
+  /**
+   * @brief Const/non-mutable accessor for dPerm_dPressure.
+   * @return Accessor
+   */
   arrayView3d< real64 const > dPerm_dPressure() const { return m_dPerm_dPressure; }
+
+  /**
+   * @brief Utility function to scale the horizontal permeability (for instance, by net-to-gross)
+   * @param[in] scalingFactors the vector of scaling factors (one value per cell) for the horizontal permeability
+   */
+  void scaleHorizontalPermeability( arrayView1d< real64 const > scalingFactors ) const;
+
+  /**
+   * @brief Initialize the permeability state
+   */
+  virtual void initializeState() const
+  {}
 
 protected:
 
+  /// Vector of absolute permeability
   array3d< real64 > m_permeability;
 
+  /// Vector of derivative of permeability wrt pressure
   array3d< real64 > m_dPerm_dPressure;
 };
 

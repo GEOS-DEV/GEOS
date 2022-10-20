@@ -9,11 +9,7 @@
       name="ProppantTransport"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      proppantNames="{ sand }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"
@@ -37,10 +33,7 @@
       name="SinglePhaseFVM"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"
@@ -54,7 +47,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Fracture }"
-      solidMaterialNames="{ granite }"
       rockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>
@@ -94,10 +86,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ fracturePerm }"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

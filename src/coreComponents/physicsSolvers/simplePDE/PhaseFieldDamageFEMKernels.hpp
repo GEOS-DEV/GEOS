@@ -77,8 +77,10 @@ public:
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
 
-  /// The number of nodes per element.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
   /**
    * @brief Constructor
@@ -93,11 +95,11 @@ public:
                           SUBREGION_TYPE const & elementSubRegion,
                           FE_TYPE const & finiteElementSpace,
                           CONSTITUTIVE_TYPE & inputConstitutiveType,
-                          arrayView1d< globalIndex const > const & inputDofNumber,
+                          arrayView1d< globalIndex const > const inputDofNumber,
                           globalIndex const rankOffset,
-                          CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-                          arrayView1d< real64 > const & inputRhs,
-                          string const & fieldName,
+                          CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                          arrayView1d< real64 > const inputRhs,
+                          string const fieldName,
                           int const localDissipationOption ):
     Base( nodeManager,
           edgeManager,
@@ -112,6 +114,8 @@ public:
           inputRhs ),
     m_X( nodeManager.referencePosition()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
+    m_quadDamage( inputConstitutiveType.getDamage() ),
+    m_quadExtDrivingForce( inputConstitutiveType.getExtDrivingForce() ),
     m_localDissipationOption( localDissipationOption )
   {}
 
@@ -189,14 +193,7 @@ public:
     real64 const strainEnergyDensity = m_constitutiveUpdate.getStrainEnergyDensity( k, q );
     real64 const ell = m_constitutiveUpdate.getRegularizationLength();
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
-    real64 const threshold = m_constitutiveUpdate.getEnergyThreshold();
-
-    real64 D = 0;                                                                   //max between threshold and
-                                                                                    // Elastic energy
-    if( m_localDissipationOption == 1 )
-    {
-      D = fmax( threshold, strainEnergyDensity );
-    }
+    real64 const threshold = m_constitutiveUpdate.getEnergyThreshold( k, q );
 
     //Interpolate d and grad_d
     real64 N[ numNodesPerElem ];
@@ -208,36 +205,41 @@ public:
     real64 qp_grad_damage[3] = {0, 0, 0};
     FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
 
+    real64 D = 0;                                                                   //max between threshold and
+                                                                                    // Elastic energy
+    if( m_localDissipationOption == 1 )
+    {
+      D = fmax( threshold, strainEnergyDensity );
+    }
+
     for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       if( m_localDissipationOption == 1 )
       {
-        stack.localResidual[ a ] += detJ * ( -3 * N[a] / 16  -
-                                             0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) -
-                                             (0.5 * ell * D/Gc) * N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ));
+        stack.localResidual[ a ] -= detJ * ( 3 * N[a] / 16
+                                             + 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
+                                             + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * N[a]
+                                             + 0.5 * ell * m_quadExtDrivingForce[k][q]/Gc * N[a] );
       }
       else
       {
-        stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage +
-                                             (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) +
-                                              N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) );
+        stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage
+                                             + ( ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
+                                                 + N[a] * (ell*strainEnergyDensity/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) ) );
 
       }
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
         if( m_localDissipationOption == 1 )
         {
-          stack.localJacobian[ a ][ b ] -= detJ *
-                                           (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
-                                            (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * N[a] * N[b]);
+          stack.localJacobian[ a ][ b ] -= detJ * ( 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
+                                                    + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * N[a] * N[b] );
 
         }
         else
         {
-          stack.localJacobian[ a ][ b ] -= detJ *
-                                           ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
-                                             N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * ell*strainEnergyDensity/Gc )
-                                           );
+          stack.localJacobian[ a ][ b ] -= detJ * ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
+                                                    + N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * ell * strainEnergyDensity/Gc ) );
         }
       }
     }
@@ -283,16 +285,22 @@ protected:
   /// The global primary field array.
   arrayView1d< real64 const > const m_nodalDamage;
 
+  /// The array containing the damage on each quadrature point of all elements
+  arrayView2d< real64 const > const m_quadDamage;
+
+  /// The array containing the external driving force on each quadrature point of all elements
+  arrayView2d< real64 const > const m_quadExtDrivingForce;
+
   int const m_localDissipationOption;
 
 };
 
 using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDamageKernel,
-                                                                    arrayView1d< globalIndex const > const &,
+                                                                    arrayView1d< globalIndex const > const,
                                                                     globalIndex,
-                                                                    CRSMatrixView< real64, globalIndex const > const &,
-                                                                    arrayView1d< real64 > const &,
-                                                                    string const &,
+                                                                    CRSMatrixView< real64, globalIndex const > const,
+                                                                    arrayView1d< real64 > const,
+                                                                    string const,
                                                                     int >;
 
 } // namespace geosx

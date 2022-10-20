@@ -120,6 +120,9 @@ stringToInputVariable( T & target, string const & value )
 {
   std::istringstream ss( value );
   ss >> target;
+  GEOSX_THROW_IF( ss.fail() || !ss.eof(),
+                  "Error detected while parsing string: \"" << value << "\"",
+                  InputError );
 }
 
 /**
@@ -186,14 +189,18 @@ static void equate( Array< T, NDIM, PERM > const & lhs, T const & rhs )
 ///@{
 
 /**
- * @brief Stub that for unreadable types that errors out.
- * @return false.
+ * @brief Extract attribute in an xml tree, and translate its value into a typed variable.
+ *        This SFINAE implementation is used if the value is not parsable.
+ * @tparam T             the type of variable fill with xml attribute.
+ * @tparam U             type of the default value for @p rval
+ * @param[in] name       the name of the xml attribute to process
+ * @return false
  */
 template< typename T, typename U >
 std::enable_if_t< !internal::canParseVariable< T >, bool >
-readAttributeAsType( T &, string const &, xmlNode const &, U const & )
+readAttributeAsType( T &, string const & name, xmlNode const &, U const & )
 {
-  GEOSX_THROW( "Cannot parse the given type " << LvArray::system::demangleType< T >(), InputError );
+  GEOSX_THROW( "Cannot parse key with name ("<<name<<") with the given type " << LvArray::system::demangleType< T >(), InputError );
 }
 
 /**
@@ -204,7 +211,7 @@ readAttributeAsType( T &, string const &, xmlNode const &, U const & )
  * @param[in] name       the name of the xml attribute to process
  * @param[in] targetNode the xml node that should contain the attribute
  * @param[in] defVal     default value of @p rval (or entries of @p rval, if it is an array)
- * @return boolean value indicating whether the value was successfully read from XML.
+ * @return true
  */
 template< typename T, typename T_DEF = T >
 std::enable_if_t< internal::canParseVariable< T >, bool >

@@ -61,7 +61,7 @@ protected:
     state( std::make_unique< CommandLineOptions >() )
   {
     geosx::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
-    mesh = &state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 );
+    mesh = &state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
   }
 
   GeosxState state;
@@ -95,16 +95,21 @@ TYPED_TEST_P( LAIHelperFunctionsTest, nodalVectorPermutation )
   using Vector = typename TypeParam::ParallelVector;
 
   DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
-  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
   NodeManager const & nodeManager = meshLevel.getNodeManager();
 
   string const fieldName = "nodalVariable";
   integer constexpr numDofPerNode = 3;
 
   DofManager dofManager( "test" );
-  dofManager.setMesh( meshLevel );
-  dofManager.addField( fieldName, DofManager::Location::Node, numDofPerNode );
-  dofManager.addCoupling( fieldName, fieldName, DofManager::Connector::Elem );
+  dofManager.setDomain( domain );
+
+  std::vector< DofManager::Regions > regions;
+  DofManager::Regions region = { "mesh1", "Level0", {"region1"} };
+  regions.emplace_back( region );
+
+  dofManager.addField( "nodalVariable", FieldLocation::Node, 3, regions );
+  dofManager.addCoupling( "nodalVariable", "nodalVariable", DofManager::Connector::Elem );
   dofManager.reorderByRank();
 
   Vector nodalVariable;
@@ -141,15 +146,20 @@ TYPED_TEST_P( LAIHelperFunctionsTest, cellCenteredVectorPermutation )
   using Vector = typename TypeParam::ParallelVector;
 
   DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
-  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
   ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
   string const fieldName = "cellCenteredVariable";
   integer constexpr numDofPerCell = 3;
 
   DofManager dofManager( "test" );
-  dofManager.setMesh( meshLevel );
-  dofManager.addField( fieldName, DofManager::Location::Elem, numDofPerCell );
+  dofManager.setDomain( domain );
+
+  std::vector< DofManager::Regions > regions;
+  DofManager::Regions region = { "mesh1", "Level0", {"region1"} };
+  regions.emplace_back( region );
+
+  dofManager.addField( fieldName, FieldLocation::Elem, numDofPerCell, regions );
   dofManager.addCoupling( fieldName, fieldName, DofManager::Connector::Face );
   dofManager.reorderByRank();
 

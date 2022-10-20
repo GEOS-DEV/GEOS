@@ -17,7 +17,7 @@
  */
 
 #include "TableRelativePermeability.hpp"
-
+#include "constitutive/relativePermeability/TableRelativePermeabilityHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 
 namespace geosx
@@ -65,7 +65,7 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setSizedFromParent( 0 );
 
-  registerWrapper( "relPermWrappers", &m_relPermKernelWrappers ).
+  registerWrapper( viewKeyStruct::relPermKernelWrappersString(), &m_relPermKernelWrappers ).
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
 }
@@ -74,7 +74,7 @@ void TableRelativePermeability::postProcessInput()
 {
   RelativePermeabilityBase::postProcessInput();
 
-  localIndex const numPhases = m_phaseNames.size();
+  integer const numPhases = m_phaseNames.size();
   GEOSX_THROW_IF( numPhases != 2 && numPhases != 3,
                   GEOSX_FMT( "{}: the expected number of fluid phases is either two, or three",
                              getFullName() ),
@@ -126,8 +126,13 @@ void TableRelativePermeability::initializePreSubGroups()
 {
   RelativePermeabilityBase::initializePreSubGroups();
 
-  localIndex const numPhases = m_phaseNames.size();
+  integer const numPhases = m_phaseNames.size();
   m_phaseMinVolumeFraction.resize( MAX_NUM_PHASES );
+
+  string const fullName = getFullName();
+  real64 phaseMinVolFrac = 0.0;
+  real64 phaseMaxVolFrac = 0.0;
+  real64 phaseRelPermEndPoint = 0.0;
 
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
@@ -141,16 +146,21 @@ void TableRelativePermeability::initializePreSubGroups()
                                  m_wettingNonWettingRelPermTableNames[ip] ),
                       InputError );
       TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( m_wettingNonWettingRelPermTableNames[ip] );
-      real64 const minVolPhaseFrac = validateRelativePermeabilityTable( relPermTable );
+      TableRelativePermeabilityHelpers::
+        validateRelativePermeabilityTable( relPermTable, // input
+                                           fullName,
+                                           phaseMinVolFrac, // output
+                                           phaseMaxVolFrac,
+                                           phaseRelPermEndPoint );
       if( ip == 0 ) // wetting phase is either water, or oil (for two-phase oil-gas systems)
       {
-        localIndex const ipWetting = ( m_phaseOrder[PhaseType::WATER] >= 0 ) ? m_phaseOrder[PhaseType::WATER] : m_phaseOrder[PhaseType::OIL];
-        m_phaseMinVolumeFraction[ipWetting] = minVolPhaseFrac;
+        integer const ipWetting = ( m_phaseOrder[PhaseType::WATER] >= 0 ) ? m_phaseOrder[PhaseType::WATER] : m_phaseOrder[PhaseType::OIL];
+        m_phaseMinVolumeFraction[ipWetting] = phaseMinVolFrac;
       }
       else if( ip == 1 ) // non-wetting phase is either oil (for two-phase oil-water systems), or gas
       {
-        localIndex const ipNonWetting = ( m_phaseOrder[PhaseType::GAS] >= 0 ) ? m_phaseOrder[PhaseType::GAS] : m_phaseOrder[PhaseType::OIL];
-        m_phaseMinVolumeFraction[ipNonWetting] = minVolPhaseFrac;
+        integer const ipNonWetting = ( m_phaseOrder[PhaseType::GAS] >= 0 ) ? m_phaseOrder[PhaseType::GAS] : m_phaseOrder[PhaseType::OIL];
+        m_phaseMinVolumeFraction[ipNonWetting] = phaseMinVolFrac;
       }
     }
   }
@@ -164,15 +174,20 @@ void TableRelativePermeability::initializePreSubGroups()
                                  m_wettingIntermediateRelPermTableNames[ip] ),
                       InputError );
       TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( m_wettingIntermediateRelPermTableNames[ip] );
-      real64 const minVolPhaseFrac = validateRelativePermeabilityTable( relPermTable );
+      TableRelativePermeabilityHelpers::
+        validateRelativePermeabilityTable( relPermTable, // input
+                                           fullName,
+                                           phaseMinVolFrac, // output
+                                           phaseMaxVolFrac,
+                                           phaseRelPermEndPoint );
 
       if( ip == 0 ) // wetting phase is water
       {
-        m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::WATER]] = minVolPhaseFrac;
+        m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::WATER]] = phaseMinVolFrac;
       }
       else if( ip == 1 ) // intermediate phase is oil
       {
-        m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = minVolPhaseFrac;
+        m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
       }
     }
     for( integer ip = 0; ip < m_nonWettingIntermediateRelPermTableNames.size(); ++ip )
@@ -183,15 +198,20 @@ void TableRelativePermeability::initializePreSubGroups()
                                  m_nonWettingIntermediateRelPermTableNames[ip] ),
                       InputError );
       TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( m_nonWettingIntermediateRelPermTableNames[ip] );
-      real64 const minVolPhaseFrac = validateRelativePermeabilityTable( relPermTable );
+      TableRelativePermeabilityHelpers::
+        validateRelativePermeabilityTable( relPermTable, // input
+                                           fullName,
+                                           phaseMinVolFrac, // output
+                                           phaseMaxVolFrac,
+                                           phaseRelPermEndPoint );
 
       if( ip == 0 ) // non-wetting phase is gas
       {
-        m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::GAS]] = minVolPhaseFrac;
+        m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::GAS]] = phaseMinVolFrac;
       }
       else if( ip == 1 ) // intermediate phase is oil
       {
-        m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = minVolPhaseFrac;
+        m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
       }
     }
   }
@@ -201,7 +221,7 @@ void TableRelativePermeability::createAllTableKernelWrappers()
 {
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
-  localIndex const numPhases = m_phaseNames.size();
+  integer const numPhases = m_phaseNames.size();
 
   // we want to make sure that the wrappers are always up-to-date, so we recreate them everytime
 
@@ -229,63 +249,21 @@ void TableRelativePermeability::createAllTableKernelWrappers()
   }
 }
 
-real64 TableRelativePermeability::validateRelativePermeabilityTable( TableFunction const & relPermTable ) const
-{
-  ArrayOfArraysView< real64 const > coords = relPermTable.getCoordinates();
-
-  GEOSX_THROW_IF_NE_MSG( relPermTable.getInterpolationMethod(), TableFunction::InterpolationType::Linear,
-                         GEOSX_FMT( "{}: in table '{}' interpolation method must be linear", getFullName(), relPermTable.getName() ),
-                         InputError );
-  GEOSX_THROW_IF_NE_MSG( relPermTable.numDimensions(), 1,
-                         GEOSX_FMT( "{}: table '{}' must have a single independent coordinate", getFullName(), relPermTable.getName() ),
-                         InputError );
-  GEOSX_THROW_IF_LT_MSG( coords.sizeOfArray( 0 ), 2,
-                         GEOSX_FMT( "{}: table `{}` must contain at least two values", getFullName(), relPermTable.getName() ),
-                         InputError );
-
-  arraySlice1d< real64 const > phaseVolFrac = coords[0];
-  arrayView1d< real64 const > const relPerm = relPermTable.getValues();
-  real64 minVolFraction = phaseVolFrac[0];
-
-  // note that the TableFunction class has already checked that coords.sizeOfArray( 0 ) == relPerm.size()
-  GEOSX_THROW_IF( !isZero( relPerm[0] ),
-                  GEOSX_FMT( "{}: in table '{}' the first value must be equal to 0", getFullName(), relPermTable.getName() ),
-                  InputError );
-  for( localIndex i = 1; i < coords.sizeOfArray( 0 ); ++i )
-  {
-    // check phase volume fraction
-    GEOSX_THROW_IF( phaseVolFrac[i] < 0 || phaseVolFrac[i] > 1,
-                    GEOSX_FMT( "{}: in table '{}' values must be between 0 and 1", getFullName(), relPermTable.getName() ),
-                    InputError );
-
-    // note that the TableFunction class has already checked that the coordinates are monotone
-
-    // check phase relative permeability
-    GEOSX_THROW_IF( !isZero( relPerm[i] ) && (relPerm[i] - relPerm[i-1]) < 1e-10,
-                    GEOSX_FMT( "{}: in table '{}' values must be strictly increasing", getFullName(), relPermTable.getName() ),
-                    InputError );
-
-    if( isZero( relPerm[i-1] ) && !isZero( relPerm[i] ) )
-    {
-      minVolFraction = phaseVolFrac[i-1];
-    }
-  }
-  return minVolFraction;
-}
-
 TableRelativePermeability::KernelWrapper::
   KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & relPermKernelWrappers,
                  arrayView1d< real64 const > const & phaseMinVolumeFraction,
                  arrayView1d< integer const > const & phaseTypes,
                  arrayView1d< integer const > const & phaseOrder,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                 arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
+                 arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+                 arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
   : RelativePermeabilityBaseUpdate( phaseTypes,
                                     phaseOrder,
                                     phaseRelPerm,
-                                    dPhaseRelPerm_dPhaseVolFrac ),
-  m_relPermKernelWrappers( relPermKernelWrappers ),
-  m_phaseMinVolumeFraction( phaseMinVolumeFraction )
+                                    dPhaseRelPerm_dPhaseVolFrac,
+                                    phaseTrappedVolFrac ),
+  m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
+  m_relPermKernelWrappers( relPermKernelWrappers )
 {}
 
 TableRelativePermeability::KernelWrapper
@@ -301,7 +279,8 @@ TableRelativePermeability::createKernelWrapper()
                         m_phaseTypes,
                         m_phaseOrder,
                         m_phaseRelPerm,
-                        m_dPhaseRelPerm_dPhaseVolFrac );
+                        m_dPhaseRelPerm_dPhaseVolFrac,
+                        m_phaseTrappedVolFrac );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, TableRelativePermeability, std::string const &, Group * const )

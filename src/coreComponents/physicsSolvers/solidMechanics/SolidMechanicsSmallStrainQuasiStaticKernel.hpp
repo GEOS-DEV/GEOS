@@ -23,7 +23,7 @@
 namespace geosx
 {
 
-namespace SolidMechanicsLagrangianFEMKernels
+namespace solidMechanicsLagrangianFEMKernels
 {
 
 /**
@@ -68,9 +68,10 @@ public:
                                                   3,
                                                   3 >;
 
-  /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
@@ -94,10 +95,10 @@ public:
                SUBREGION_TYPE const & elementSubRegion,
                FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE & inputConstitutiveType,
-               arrayView1d< globalIndex const > const & inputDofNumber,
+               arrayView1d< globalIndex const > const inputDofNumber,
                globalIndex const rankOffset,
-               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-               arrayView1d< real64 > const & inputRhs,
+               CRSMatrixView< real64, globalIndex const > const inputMatrix,
+               arrayView1d< real64 > const inputRhs,
                real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
@@ -111,8 +112,8 @@ public:
           inputMatrix,
           inputRhs ),
     m_X( nodeManager.referencePosition()),
-    m_disp( nodeManager.totalDisplacement()),
-    m_uhat( nodeManager.incrementalDisplacement()),
+    m_disp( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
+    m_uhat( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::incrementalDisplacement >() ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_density( inputConstitutiveType.getDensity() )
   {}
@@ -330,13 +331,13 @@ protected:
 
 /// The factory used to construct a QuasiStatic kernel.
 using QuasiStaticFactory = finiteElement::KernelFactory< QuasiStatic,
-                                                         arrayView1d< globalIndex const > const &,
+                                                         arrayView1d< globalIndex const > const,
                                                          globalIndex,
-                                                         CRSMatrixView< real64, globalIndex const > const &,
-                                                         arrayView1d< real64 > const &,
+                                                         CRSMatrixView< real64, globalIndex const > const,
+                                                         arrayView1d< real64 > const,
                                                          real64 const (&)[3] >;
 
-} // namespace SolidMechanicsLagrangianFEMKernels
+} // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
 

@@ -40,13 +40,6 @@ using array2dLayoutComp = array2d< real64, compflow::LAYOUT_COMP >;
 using array3dLayoutComp_dC = array3d< real64, compflow::LAYOUT_COMP_DC >;
 using array3dLayoutPhaseComp = array3d< real64, compflow::LAYOUT_PHASE_COMP >;
 
-EXTRINSIC_MESH_DATA_TRAIT( temperature,
-                           "wellTemperature",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Temperature" );
 
 EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity,
                            "globalCompDensity",
@@ -56,13 +49,13 @@ EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity,
                            WRITE_AND_READ,
                            "Global component density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaGlobalCompDensity,
-                           "deltaGlobalCompDensity",
+EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity_n,
+                           "globalCompDensity_n",
                            array2dLayoutComp,
                            0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Accumulated global component density updates" );
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Global component density at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( mixtureConnectionRate,
                            "wellElementMixtureConnectionRate",
@@ -72,14 +65,13 @@ EXTRINSIC_MESH_DATA_TRAIT( mixtureConnectionRate,
                            WRITE_AND_READ,
                            "Mixture connection rate" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaMixtureConnectionRate,
-                           "deltaWellElementMixtureConnectionRate",
+EXTRINSIC_MESH_DATA_TRAIT( mixtureConnectionRate_n,
+                           "wellElementMixtureConnectionRate_n",
                            array1d< real64 >,
                            0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Accumulated mixture connection rate updates" );
-
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Mixture connection rate at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( globalCompFraction,
                            "globalCompFraction",
@@ -105,53 +97,21 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseVolumeFraction,
                            WRITE_AND_READ,
                            "Phase volume fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseVolumeFraction_dPressure,
-                           "dPhaseVolumeFraction_dPressure",
-                           array2dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase volume fraction with respect to pressure" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseVolumeFraction_dGlobalCompDensity,
-                           "dPhaseVolumeFraction_dGlobalCompDensity",
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseVolumeFraction,
+                           "dPhaseVolumeFraction",
                            array3dLayoutPhase_dC,
                            0,
                            NOPLOT,
                            NO_WRITE,
-                           "Derivative of phase volume fraction with respect to global component density" );
+                           "Derivative of phase volume fraction with respect to pressure, temperature, and global component density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseVolumeFractionOld,
-                           "phaseVolumeFractionOld",
+EXTRINSIC_MESH_DATA_TRAIT( phaseVolumeFraction_n,
+                           "phaseVolumeFraction_n",
                            array2dLayoutPhase,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Phase volume fraction at the previous converged time step" );
-
-EXTRINSIC_MESH_DATA_TRAIT( phaseDensityOld,
-                           "phaseDensityOld",
-                           array2dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase density at the previous converged time step" );
-
-EXTRINSIC_MESH_DATA_TRAIT( totalDensityOld,
-                           "totalDensityOld",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Total density at the previous converged time step" );
-
-EXTRINSIC_MESH_DATA_TRAIT( phaseComponentFractionOld,
-                           "phaseComponentFractionOld",
-                           array3dLayoutPhaseComp,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase component fraction at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( totalMassDensity,
                            "totalMassDensity",

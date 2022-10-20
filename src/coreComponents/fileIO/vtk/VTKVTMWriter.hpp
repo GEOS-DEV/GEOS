@@ -21,6 +21,7 @@ namespace geosx
 {
 namespace vtk
 {
+
 /*!
  * @brief VTM Writer class.
  * @details a VTM file is the root file for one time step. It will contain
@@ -38,43 +39,31 @@ public:
   /*!
    * @brief Triggers the file output
    */
-  void save() const;
+  void write() const;
 
   /*!
-   * @brief Add a block to the VTM file
-   * @details The first level of block is for the ElementRegion (\p blockName can
-   * be CellElementRegion, FaceElementRegion or WellElementREgion)
-   * @param[in] blockName Name of the block
+   * @brief Add a dataset block to the VTM file
+   * @param[in] blockPath path consisting of intermediate block names that will be created on demand
+   * @param[in] dataSetName name of the dataset (leaf level in the multi-block tree)
+   * @param[in] filePath path to the dataset file
    */
-  void addBlock( string const & blockName ) const;
-
-  /*!
-   * @brief Add a subblock to the VTM file
-   * @details The second level of block is for the different Regions
-   * @param[in] blockName Name of the parent block
-   * @param[in] subBlockName Name of the subBlock (usually the name of the Region)
-   */
-  void addSubBlock( string const & blockName, string const & subBlockName ) const;
-
-  /*!
-   * @brief Add data to the subblock \p subBlockName
-   * @details The final level : paths to the vtu file per rank
-   * @param[in] blockName Name of the parent block
-   * @param[in] subBlockName Name of the subBlock (usually the name of the Region)
-   * @param[in] filePath path to the vtu file containing the unstructured mesh
-   * @param[in] mpiRank the mpi rank.
-   */
-  void addDataToSubBlock( string const & blockName, string const & subBlockName, string const & filePath, int mpiRank ) const;
+  void addDataSet( std::vector< string > const & blockPath,
+                   string const & dataSetName,
+                   string const & filePath ) const;
 
 private:
 
   /// VTM XML file
-  xmlWrapper::xmlDocument m_vtmFile;
+  xmlWrapper::xmlDocument m_document;
+
+  /// Handle to the block root node
+  xmlWrapper::xmlNode m_blockRoot;
 
   /// Path to the XML File
-  string const m_filePath;
+  string m_filePath;
 };
-}
-}
+
+} // namespace vtk
+} // namespace geosx
 
 #endif

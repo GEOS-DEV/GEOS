@@ -21,6 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/utilities/ComponentMask.hpp"
+#include "mesh/FieldIdentifiers.hpp"
 
 #include <numeric>
 
@@ -60,21 +61,21 @@ public:
   };
 
   /**
-   * @brief Enumeration of geometric objects for support location. Note that this
-   * enum is nearly identical to Connectivity, but we keep both for code readability
-   * in function calls.
+   * @brief Describes field support on a single mesh body/level
    */
-  enum class Location
+  struct Regions
   {
-    Elem, //!< location is element (like pressure in finite volumes)
-    Face, //!< location is face (like flux in mixed finite elements)
-    Edge, //!< location is edge (like flux between fracture elements)
-    Node  //!< location is node (like displacements in finite elements)
+    /// name of the mesh body
+    string meshBodyName;
+    /// name of the mesh level
+    string meshLevelName;
+    /// list of the region names
+    std::vector< string > regionNames;
   };
 
   /**
    * @brief Enumeration of geometric objects for connectivity type. Note that this
-   * enum is nearly identical to Location, but we keep both for code readability
+   * enum is nearly identical to FieldLocation, but we keep both for code readability
    * in function calls.
    */
   enum class Connector
@@ -117,24 +118,19 @@ public:
   DofManager & operator=( DofManager && ) = default;
 
   /**
-   * @brief Destructor.
-   */
-  ~DofManager() = default;
-
-  /**
    * @brief Remove all fields and couplings and re-enable addition of new fields.
    */
   void clear();
 
   /**
-   * @brief Assign a mesh.
-   * @param mesh the target mesh (non-const access required for allocating index arrays)
+   * @brief Assign a domain.
+   * @param domain the target domain (non-const access required for allocating index arrays)
    * @note Calling this function unconditionally removes all previously defined fields and couplings.
-   *       The user should only call this when they actually want to replace the mesh with a new one,
+   *       The user should only call this when they actually want to replace the domain with a new one,
    *       or they think the mesh topology might have changed and so the DOFs need to be re-numbered.
    *       They must then re-add all fields and couplings, and call reorderByRank() again.
    */
-  void setMesh( MeshLevel & mesh );
+  void setDomain( DomainPartition & domain );
 
   /**
    * @brief Add a new field and enumerate its degrees-of-freedom.
@@ -145,19 +141,19 @@ public:
    * @param [in] regions list of region names the field is defined on (if empty, selects all regions)
    */
   void addField( string const & fieldName,
-                 Location location,
+                 FieldLocation location,
                  integer components,
-                 std::vector< string > const & regions = {} );
+                 std::vector< Regions > const & regions = {} );
 
   /**
-   * @copydoc addField(string const &, Location, integer, std::vector< string > const &)
+   * @copydoc addField(string const &, FieldLocation, integer, std::vector< Regions > const &)
    *
-   * Overload for arrayView1d<string> input used by physics solvers.
+   * Overload for  map< string, array1d< string > > bodyRegions used by physics solvers.
    */
   void addField( string const & fieldName,
-                 Location location,
+                 FieldLocation location,
                  integer components,
-                 arrayView1d< string const > const & regions );
+                 map< std::pair< string, string >, array1d< string > > const & regions );
 
   /**
    * @brief Add coupling between two fields.
@@ -185,18 +181,15 @@ public:
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
                     Connector connectivity,
-                    std::vector< string > const & regions = {},
+                    std::vector< Regions > const & regions = {},
                     bool symmetric = true );
-
   /**
-   * @copydoc addCoupling(string const &, string const &, Connector, std::vector< string > const &, bool)
-   *
-   * Overload for arrayView1d<string> input used by physics solvers.
+   * @copydoc addCoupling( string const & ,string const & ,Connector , std::vector< Regions > const & , bool  );
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
                     Connector connectivity,
-                    arrayView1d< string const > const & regions,
+                    map< std::pair< string, string >, array1d< string > > const & regions,
                     bool symmetric = true );
 
   /**
@@ -217,7 +210,7 @@ public:
    * It adjusts DoF index arrays to account for presence of other fields (in a global monolithic fashion).
    *
    * @note After DofManager has been closed, new fields and coupling cannot be added, until
-   *       @ref clear or @ref setMesh is called.
+   *       @ref clear or @ref setDomain is called.
    *
    * @note After reorderByRank() is called, the meaning of FieldDescription::globalOffset changes from
    *       "global offset of field's block in a global field-wise ordered (block) system" to
@@ -290,13 +283,7 @@ public:
    * @param [in] fieldName name of the field
    * @return support location type
    */
-  Location location( string const & fieldName ) const;
-
-  /**
-   * @brief @return The list of region names in field's domain.
-   * @param fieldName name of the field
-   */
-  std::vector< string > const & regions( string const & fieldName ) const;
+  FieldLocation location( string const & fieldName ) const;
 
   /**
    * @brief @return global offset of field's block on current processor in the system matrix.
@@ -458,8 +445,8 @@ private:
     string name;                   ///< field name
     string key;                    ///< string key for index array
     string docstring;              ///< documentation string
-    std::vector< string > regions; ///< list of support region names
-    Location location;             ///< support location
+    std::vector< Regions > support;///< list of mesh body/level/region supports
+    FieldLocation location;             ///< support location
     integer numComponents = 1;     ///< number of vector components
     localIndex numLocalDof = 0;    ///< number of local rows
     globalIndex numGlobalDof = 0;  ///< number of global rows
@@ -474,7 +461,7 @@ private:
   struct CouplingDescription
   {
     Connector connector = Connector::None;  //!< geometric object defining dof connections
-    std::vector< string > regions; //!< list of region names
+    std::vector< Regions > support; //!< list of region names
     FluxApproximationBase const * stencils = nullptr; //!< pointer to flux stencils for stencil based connections
   };
 
@@ -571,7 +558,7 @@ private:
   string m_name;
 
   /// Pointer to corresponding MeshLevel
-  MeshLevel * m_mesh = nullptr;
+  DomainPartition * m_domain = nullptr;
 
   /// Array of field descriptions
   std::vector< FieldDescription > m_fields;
@@ -580,7 +567,7 @@ private:
   std::map< std::pair< localIndex, localIndex >, CouplingDescription > m_coupling;
 
   /// Flag indicating that DOFs have been reordered rank-wise.
-  bool m_reordered;
+  bool m_reordered = false;
 };
 
 } /* namespace geosx */

@@ -36,6 +36,13 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
                     "* Attempt - Use line search. Allow exit from line search without achieving smaller residual than starting residual.\n"
                     "* Require - Use line search. If smaller residual than starting resdual is not achieved, cut time step." );
 
+  registerWrapper( viewKeysStruct::lineSearchInterpolationTypeString, &m_lineSearchInterpType ).
+    setApplyDefaultValue( LineSearchInterpolationType::Linear ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Strategy to cut the solution update during the line search. Options are: \n "
+                    "* Linear\n"
+                    "* Parabolic" );
+
   registerWrapper( viewKeysStruct::lineSearchMaxCutsString, &m_lineSearchMaxCuts ).
     setApplyDefaultValue( 4 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -67,6 +74,11 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Number of Newton's iterations." );
 
+  registerWrapper( viewKeysStruct::maxAllowedResidualNormString, &m_maxAllowedResidualNorm ).
+    setApplyDefaultValue( 1e9 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Maximum value of residual norm that is allowed in a Newton loop" );
+
 
   registerWrapper( viewKeysStruct::allowNonConvergedString, &m_allowNonConverged ).
     setApplyDefaultValue( 0 ).
@@ -74,15 +86,25 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setDescription( "Allow non-converged solution to be accepted. "
                     "(i.e. exit from the Newton loop without achieving the desired tolerance)" );
 
-  registerWrapper( viewKeysStruct::dtCutIterLimString, &m_dtCutIterLimit ).
+  registerWrapper( viewKeysStruct::timeStepDecreaseIterLimString, &m_timeStepDecreaseIterLimit ).
     setApplyDefaultValue( 0.7 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Fraction of the Max Newton iterations above which the solver asks for the time-step to be cut for the next dt." );
+    setDescription( "Fraction of the max Newton iterations above which the solver asks for the time-step to be decreased for the next time step." );
 
-  registerWrapper( viewKeysStruct::dtIncIterLimString, &m_dtIncIterLimit ).
+  registerWrapper( viewKeysStruct::timeStepIncreaseIterLimString, &m_timeStepIncreaseIterLimit ).
     setApplyDefaultValue( 0.4 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Fraction of the Max Newton iterations below which the solver asks for the time-step to be doubled for the next dt." );
+    setDescription( "Fraction of the max Newton iterations below which the solver asks for the time-step to be increased for the next time step." );
+
+  registerWrapper( viewKeysStruct::timeStepDecreaseFactorString, &m_timeStepDecreaseFactor ).
+    setApplyDefaultValue( 0.5 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Factor by which the time step is decreased when the number of Newton iterations is large." );
+
+  registerWrapper( viewKeysStruct::timeStepIncreaseFactorString, &m_timeStepIncreaseFactor ).
+    setApplyDefaultValue( 2.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Factor by which the time step is increased when the number of Newton iterations is small." );
 
   registerWrapper( viewKeysStruct::timeStepCutFactorString, &m_timeStepCutFactor ).
     setApplyDefaultValue( 0.5 ).
@@ -99,15 +121,18 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum number of time sub-steps allowed for the solver" );
 
-
+  registerWrapper( viewKeysStruct::maxNumConfigurationAttemptsString, &m_maxNumConfigurationAttempts ).
+    setApplyDefaultValue( 10 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Max number of times that the configuration can be changed" );
 
 }
 
 void NonlinearSolverParameters::postProcessInput()
 {
-  if( m_dtCutIterLimit <= m_dtIncIterLimit )
+  if( m_timeStepDecreaseIterLimit <= m_timeStepIncreaseIterLimit )
   {
-    GEOSX_ERROR( " dtIncIterLimit should be smaller than dtCutIterLimit!!" );
+    GEOSX_ERROR( " timeStepIncreaseIterLimit should be smaller than timeStepDecreaseIterLimit!!" );
   }
 }
 

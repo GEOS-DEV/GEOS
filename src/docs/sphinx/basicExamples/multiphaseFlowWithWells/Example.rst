@@ -18,7 +18,7 @@ of the original test case.
 In this example, we re-use many GEOSX features already presented in
 :ref:`TutorialDeadOilBottomLayersSPE10`, but we now focus on:
 
-- how to import an external mesh with embedded geological properties (permeability) in the GMSH format (``.msh``),
+- how to import an external mesh with embedded geological properties (permeability) in the VTK format (``.vtu``),
 - how to set up the wells.
 
 **Input file**
@@ -90,8 +90,8 @@ Any solver information specified in the single-physics XML blocks will not be ta
 Here, we instruct GEOSX to perform at most ``newtonMaxIter = "10"`` Newton iterations. 
 GEOSX will adjust the time step size as follows:
 
-- if the Newton solver converges in ``dtIncIterLimit x newtonMaxIter = 5`` iterations or fewer, GEOSX will double the time step size for the next time step,
-- if the Newton solver converges in ``dtCutIterLimit x newtonMaxIter = 8`` iterations or more, GEOSX will reduce the time step size for the next time step by a factor ``timestepCutFactor = 0.1``,
+- if the Newton solver converges in ``timeStepIncreaseIterLimit x newtonMaxIter = 5`` iterations or fewer, GEOSX will double the time step size for the next time step,
+- if the Newton solver converges in ``timeStepDecreaseIterLimit x newtonMaxIter = 8`` iterations or more, GEOSX will reduce the time step size for the next time step by a factor ``timestepCutFactor = 0.1``,
 - if the Newton solver fails to converge in ``newtonMaxIter = 10``, GEOSX will cut the time step size by a factor ``timestepCutFactor = 0.1`` and restart from the previous converged time step.
 
 The maximum number of time step cuts is specified by the attribute ``maxTimeStepCuts``.
@@ -118,10 +118,10 @@ Mesh definition and well geometry
 
 In the presence of wells, the **Mesh** block of the XML input file includes two parts:
 
- - a sub-block **PAMELAMeshGenerator** defining the reservoir mesh (see :ref:`TutorialSinglePhaseFlowExternalMesh` for more on this),
+ - a sub-block **VTKMesh** defining the reservoir mesh (see :ref:`TutorialSinglePhaseFlowExternalMesh` for more on this),
  - a collection of sub-blocks **InternalWell** defining the geometry of the wells.
 
-The reservoir mesh is imported from a ``.msh`` file that contains the mesh geometry
+The reservoir mesh is imported from a ``.vtu`` file that contains the mesh geometry
 and also includes the permeability values in the x, y, and z directions.
 These quantities must be specified using the metric unit system, i.e., in meters
 for the well geometry and square meters for the permeability field.
@@ -220,10 +220,10 @@ In this section of the input file, we follow the procedure already described in
 
 We associate a **CellElementRegion** named ``reservoir`` to the reservoir mesh.
 Since we have imported a mesh with one region consisting of hexahedral cells, we
-must set the attribute ``cellBlocks`` to ``DEFAULT_HEX``.
+must set the attribute ``cellBlocks`` to ``hexahedra``.
 
 .. note::
-        If you use a name that is not ``DEFAULT_HEX`` for this attribute, GEOSX will throw an error at the beginning of the simulation.
+        If you use a name that is not ``hexahedra`` for this attribute, GEOSX will throw an error at the beginning of the simulation.
 
 We also associate a **WellElementRegion** to each well. As the **CellElementRegion**,
 it contains a ``materialList`` that must point (by name) to the constitutive models
@@ -279,7 +279,7 @@ attribute (here, 0 or 1) is used to point to a specific entry of the ``phaseName
 in the **DeadOilFluid** block. 
 
 Note that we also define the uniform porosity field here since it is not included in the mesh file
-imported by the **PAMELAMeshGenerator**.
+imported by the **VTKMesh**.
 
 .. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_base_iterative.xml
   :language: xml
@@ -329,10 +329,7 @@ The first few lines appearing to the console are indicating that the XML element
 
 .. code-block:: console
 
-  Adding Solver of type CompositionalMultiphaseReservoir, named coupledFlowAndWells
-  Adding Solver of type CompositionalMultiphaseFVM, named compositionalMultiphaseFlow
-  Adding Solver of type CompositionalMultiphaseWell, named compositionalMultiphaseWell
-  Adding Mesh: PAMELAMeshGenerator, mesh
+  Adding Mesh: VTKMesh, mesh
   Adding Mesh: InternalWell, wellProducer1
   Adding Mesh: InternalWell, wellProducer2
   Adding Mesh: InternalWell, wellProducer3
@@ -345,9 +342,26 @@ The first few lines appearing to the console are indicating that the XML element
   Adding Mesh: InternalWell, wellInjector6
   Adding Mesh: InternalWell, wellInjector7
   Adding Mesh: InternalWell, wellInjector8
-  Adding Event: PeriodicEvent, solverApplications
+  Adding Solver of type CompositionalMultiphaseReservoir, named coupledFlowAndWells
+  Adding Solver of type CompositionalMultiphaseFVM, named compositionalMultiphaseFlow
+  Adding Solver of type CompositionalMultiphaseWell, named compositionalMultiphaseWell
   Adding Event: PeriodicEvent, vtk
+  Adding Event: PeriodicEvent, timeHistoryOutput1
+  Adding Event: PeriodicEvent, timeHistoryOutput2
+  Adding Event: PeriodicEvent, timeHistoryOutput3
+  Adding Event: PeriodicEvent, timeHistoryOutput4
+  Adding Event: PeriodicEvent, solverApplications
+  Adding Event: PeriodicEvent, timeHistoryCollection1
+  Adding Event: PeriodicEvent, timeHistoryCollection2
+  Adding Event: PeriodicEvent, timeHistoryCollection3
+  Adding Event: PeriodicEvent, timeHistoryCollection4
+  Adding Event: PeriodicEvent, restarts
   Adding Output: VTK, vtkOutput
+  Adding Output: TimeHistory, timeHistoryOutput1
+  Adding Output: TimeHistory, timeHistoryOutput2
+  Adding Output: TimeHistory, timeHistoryOutput3
+  Adding Output: TimeHistory, timeHistoryOutput4
+  Adding Output: Restart, restartOutput
   Adding Object CellElementRegion named reservoir from ObjectManager::Catalog.
   Adding Object WellElementRegion named wellRegion1 from ObjectManager::Catalog.
   Adding Object WellElementRegion named wellRegion2 from ObjectManager::Catalog.
@@ -358,64 +372,34 @@ The first few lines appearing to the console are indicating that the XML element
   Adding Object WellElementRegion named wellRegion7 from ObjectManager::Catalog.
   Adding Object WellElementRegion named wellRegion8 from ObjectManager::Catalog.
   Adding Object WellElementRegion named wellRegion9 from ObjectManager::Catalog.
-  Adding Object WellElementRegion named wellRegion10 from ObjectManager::Catalog. 
+  Adding Object WellElementRegion named wellRegion10 from ObjectManager::Catalog.
   Adding Object WellElementRegion named wellRegion11 from ObjectManager::Catalog.
   Adding Object WellElementRegion named wellRegion12 from ObjectManager::Catalog.
                 
-This is followed by the creation of the 18553 hexahedral cells of the imported mesh:  
-
-.. code-block:: console
-
-  0 >>> **********************************************************************
-  0 >>>                          PAMELA Library Import tool                   
-  0 >>> **********************************************************************
-  0 >>> GMSH FORMAT IDENTIFIED
-  0 >>> *** Importing Gmsh mesh format...
-  0 >>> Reading nodes...
-  0 >>> Done0
-  0 >>> Reading elements...
-  0 >>> Reading element data...
-  0 >>> Number of nodes = 22227
-  0 >>> Number of triangles = 0
-  0 >>> Number of quadrilaterals = 0
-  0 >>> Number of tetrahedra = 0
-  0 >>> Number of hexahedra = 18553
-  0 >>> Number of pyramids = 0
-  0 >>> Number of prisms = 0
-  0 >>> *** Done
-  0 >>> *** Creating Polygons from Polyhedra...
-  0 >>> 59205 polygons have been created
-  0 >>> *** Done
-  0 >>> *** Perform partitioning...
-  0 >>> TRIVIAL partitioning...
-  0 >>> Ghost elements...
-  0 >>> Clean mesh...
-  0 >>> *** Done...
-  0 >>> Clean Adjacency...
-  0 >>> *** Done...
-                
+This is followed by the creation of the 18553 hexahedral cells of the imported mesh.
 At this point, we are done with the case set-up and
 the code steps into the execution of the simulation itself:
 
 .. code-block:: console
 
   Time: 0s, dt:10000s, Cycle: 0
-
-    Attempt:  0, NewtonIter:  0
-    ( Rfluid ) = (9.39e+01) ;     ( R ) = ( 1.06e+02 ) ; 
-    Attempt:  0, NewtonIter:  1
-    ( Rfluid ) = (2.14e+00) ;     ( R ) = ( 2.20e+00 ) ; 
-    Last LinSolve(iter,res) = (   2, 3.62e-03 ) ; 
-    Attempt:  0, NewtonIter:  2
-    ( Rfluid ) = (3.23e-01) ;     ( R ) = ( 3.37e-01 ) ; 
-    Last LinSolve(iter,res) = (   4, 1.82e-03 ) ; 
-    Attempt:  0, NewtonIter:  3
-    ( Rfluid ) = (1.07e-02) ;     ( R ) = ( 1.16e-02 ) ; 
-    Last LinSolve(iter,res) = (   2, 6.13e-03 ) ; 
-    Attempt:  0, NewtonIter:  4
-    ( Rfluid ) = (7.46e-05) ;     ( R ) = ( 7.50e-05 ) ; 
-    Last LinSolve(iter,res) = (   3, 5.09e-03 ) ;
-    
+      Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+      ( Rflow ) = ( 1.01e+01 ) ;     ( Rwell ) = ( 4.96e+00 ) ;     ( R ) = ( 1.13e+01 ) ; 
+      Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+      ( Rflow ) = ( 1.96e+00 ) ;     ( Rwell ) = ( 8.07e-01 ) ;     ( R ) = ( 2.12e+00 ) ; 
+      Last LinSolve(iter,res) = (  44, 8.96e-03 ) ; 
+      Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+      ( Rflow ) = ( 4.14e-01 ) ;     ( Rwell ) = ( 1.19e-01 ) ;     ( R ) = ( 4.31e-01 ) ; 
+      Last LinSolve(iter,res) = (  44, 9.50e-03 ) ; 
+      Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+      ( Rflow ) = ( 1.77e-02 ) ;     ( Rwell ) = ( 9.38e-03 ) ;     ( R ) = ( 2.00e-02 ) ; 
+      Last LinSolve(iter,res) = (  47, 8.69e-03 ) ; 
+      Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+      ( Rflow ) = ( 1.13e-04 ) ;     ( Rwell ) = ( 5.09e-05 ) ;     ( R ) = ( 1.24e-04 ) ; 
+      Last LinSolve(iter,res) = (  50, 9.54e-03 ) ; 
+      Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+      ( Rflow ) = ( 2.17e-08 ) ;     ( Rwell ) = ( 1.15e-07 ) ;     ( R ) = ( 1.17e-07 ) ; 
+      Last LinSolve(iter,res) = (  55, 2.71e-04 ) ; 
   coupledFlowAndWells: Newton solver converged in less than 15 iterations, time-step required will be doubled.
 
 ------------------------------------
@@ -440,55 +424,7 @@ We have instructed GEOSX to output the time series of rates for each producer.
 The data contained in the corresponding hdf5 files can be extracted and plotted
 as shown below.
 
-.. plot::
-
-   import matplotlib
-   import matplotlib.pyplot as plt
-   import numpy as np
-   import h5py
-
-   def main():
-
-       numWells = 4
-       iplt = -1
-       cmap = plt.get_cmap("tab10")
-    
-       # Loop over the four producers 
-       for iw in range(1,numWells+1):
-
-           # File path
-           hdf5FilePath = 'wellRateHistory'+str(iw)+'.hdf5'    
-
-           # Read HDF5
-           hf = h5py.File(hdf5FilePath, 'r')
-           time = hf.get('Time')
-           time = np.array(time)
-           massRate = hf.get('wellElementMixtureConnectionRate')
-           massRate = np.array(massRate)
-
-           # Some comments about the computation of the volumetric rate here:
-           # A proper oil rate constraint for individual wells is currently being implemented
-           # In the meantime, the volume rate is (wrongly) computed by dividing
-           # the total mass rate by the surface oil density 
-        
-           # Conversions
-           inCubicMeters = 1/848.9
-           inDays = 1.0 / (24 * 3600)
-        
-           # Plot HDF5 content (here, the rate at the well)
-           iplt += 1
-           plt.plot(time[:,0]*inDays, abs(massRate[:,0])*inCubicMeters/inDays, '-o', color=cmap(iplt), label='Producer #'+str(iw))
-
-       plt.xlim( -1, 175)
-       plt.ylim( 0, 3800)        
-       plt.grid()
-       plt.xlabel('time [days]')
-       plt.ylabel('total rate [cubic meters per day]')
-       plt.legend(bbox_to_anchor=(0.025, 0.975), loc='upper left', borderaxespad=0.)
-       plt.show()
-
-   if __name__ == "__main__":
-       main()
+.. plot:: docs/sphinx/basicExamples/multiphaseFlowWithWells/multiphaseFlowWithWellsFigure.py
 
 	   
 ------------------------------------

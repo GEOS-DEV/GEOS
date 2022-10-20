@@ -17,13 +17,22 @@
  */
 
 #include "PVTDriver.hpp"
+
+#include "common/MpiWrapper.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multiFluidSelector.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
+#include "functions/FunctionManager.hpp"
+#include "functions/TableFunction.hpp"
+
+#include <fstream>
 
 namespace geosx
 {
+
 using namespace dataRepository;
 using namespace constitutive;
-
 
 PVTDriver::PVTDriver( const string & name,
                       Group * const parent ):
@@ -61,11 +70,6 @@ PVTDriver::PVTDriver( const string & name,
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
 }
-
-
-PVTDriver::~PVTDriver()
-{}
-
 
 void PVTDriver::postProcessInput()
 {
@@ -181,70 +185,6 @@ bool PVTDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 }
 
 
-template< typename FLUID_TYPE >
-void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > & table )
-{
-  // get number of phases and components
-
-  localIndex const NC = fluid.numFluidComponents();
-  localIndex const NP = fluid.numFluidPhases();
-
-  // prefer output in mass
-
-  fluid.setMassFlag( true );
-
-  // get output data views
-
-  arrayView2d< real64 const, multifluid::USD_FLUID > totalDensity   = fluid.totalDensity();
-  arrayView3d< real64 const, multifluid::USD_PHASE > phaseFraction  = fluid.phaseFraction();
-  arrayView3d< real64 const, multifluid::USD_PHASE > phaseDensity   = fluid.phaseDensity();
-  arrayView3d< real64 const, multifluid::USD_PHASE > phaseViscosity = fluid.phaseViscosity();
-
-  // create kernel wrapper
-
-  typename FLUID_TYPE::KernelWrapper kernelWrapper = fluid.createKernelWrapper();
-
-  // set composition to user specified feed
-  // it is more convenient to provide input in molar, so perform molar to mass conversion here
-
-  GEOSX_ASSERT_EQ( NC, m_feed.size() );
-  array2d< real64, compflow::LAYOUT_COMP > compositionValues( 1, NC );
-
-  real64 sum = 0.0;
-  for( localIndex i = 0; i < NC; ++i )
-  {
-    compositionValues[0][i] = m_feed[i] * fluid.componentMolarWeights()[i];
-    sum += compositionValues[0][i];
-  }
-  for( localIndex i = 0; i < NC; ++i )
-  {
-    compositionValues[0][i] /= sum;
-  }
-
-  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const composition = compositionValues[0];
-
-  // perform fluid update using table (P,T) and save resulting total density, etc.
-  // note: column indexing should be kept consistent with output file header below.
-
-  using ExecPolicy = typename FLUID_TYPE::exec_policy;
-  forAll< ExecPolicy >( 1, [=]  GEOSX_HOST_DEVICE ( integer const ei )
-  {
-    for( integer n=0; n<=m_numSteps; ++n )
-    {
-      kernelWrapper.update( ei, 0, table( n, PRES ), table( n, TEMP ), composition );
-      table( n, TEMP+1 ) = totalDensity( ei, 0 );
-
-      for( integer p=0; p<NP; ++p )
-      {
-        table( n, TEMP+2+p ) = phaseFraction( ei, 0, p );
-        table( n, TEMP+2+p+NP ) = phaseDensity( ei, 0, p );
-        table( n, TEMP+2+p+2*NP ) = phaseViscosity( ei, 0, p );
-      }
-    }
-  } );
-
-}
-
 
 void PVTDriver::outputResults()
 {
@@ -294,8 +234,6 @@ void PVTDriver::compareWithBaseline()
   // specific.
 
   real64 value;
-  real64 error;
-
   for( integer row=0; row < m_table.size( 0 ); ++row )
   {
     for( integer col=0; col < m_table.size( 1 ); ++col )
@@ -303,7 +241,7 @@ void PVTDriver::compareWithBaseline()
       GEOSX_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
       file >> value;
 
-      error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
+      real64 const error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
       GEOSX_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
                                                                                           << " (row " << row+m_numColumns << " with header)"
                                                                                           << " and column " << col+1, std::runtime_error );

@@ -21,31 +21,62 @@
 
 namespace geosx
 {
+
 using namespace dataRepository;
 
 MeshBody::MeshBody( string const & name,
                     Group * const parent ):
   Group( name, parent ),
+  m_meshLevels( registerGroup( groupStructKeys::meshLevelsString() ) ),
   m_globalLengthScale( 0 )
+{}
+
+MeshLevel & MeshBody::createMeshLevel( localIndex const newLevel )
 {
-  registerWrapper< integer >( viewKeys.meshLevels );
+  return m_meshLevels.registerGroup< MeshLevel >( intToMeshLevelString( newLevel ) );
 }
 
-MeshBody::~MeshBody()
+MeshLevel & MeshBody::createMeshLevel( string const & name )
 {
-  // TODO Auto-generated destructor stub
+  return m_meshLevels.registerGroup< MeshLevel >( name );
 }
 
-
-
-MeshLevel & MeshBody::createMeshLevel( localIndex const GEOSX_UNUSED_PARAM( newLevel ) )
+MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
+                                       string const & newLevelName,
+                                       int const order )
 {
-  return this->registerGroup< MeshLevel >( "Level0" );
+  MeshLevel const & sourceMeshLevel = this->getMeshLevel( sourceLevelName );
+  return m_meshLevels.registerGroup( newLevelName,
+                                     std::make_unique< MeshLevel >( newLevelName,
+                                                                    this,
+                                                                    sourceMeshLevel,
+                                                                    order ) );
 }
+
+MeshLevel & MeshBody::createShallowMeshLevel( string const & sourceLevelName,
+                                              string const & newLevelName )
+{
+  MeshLevel & sourceMeshLevel = this->getMeshLevel( sourceLevelName );
+
+  MeshLevel & rval = m_meshLevels.registerGroup( newLevelName,
+                                                 std::make_unique< MeshLevel >( newLevelName,
+                                                                                this,
+                                                                                sourceMeshLevel ) );
+  rval.setRestartFlags( RestartFlags::NO_WRITE );
+
+  return rval;
+}
+
 
 void MeshBody::setGlobalLengthScale( real64 scale )
 {
   m_globalLengthScale = scale;
 }
+
+string MeshBody::intToMeshLevelString( localIndex const meshLevel )
+{
+  return GEOSX_FMT( "Level{}", meshLevel );
+}
+
 
 } /* namespace geosx */

@@ -53,16 +53,16 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string catalogName()
+  static string catalogName()
   { return "SurfaceElementSubRegion"; }
 
   /**
    * @brief Get catalog name.
    * @return the catalog name
    */
-  virtual const string getCatalogName() const override
+  virtual string getCatalogName() const override
   {
-    return SurfaceElementSubRegion::catalogName();
+    return catalogName();
   }
 
   ///@}
@@ -83,6 +83,15 @@ public:
 
   /// @brief Destructor
   virtual ~SurfaceElementSubRegion() override;
+
+  /**
+   * @brief Compute the center of each element in the subregion.
+   * @param[in] X an arrayView of (const) node positions
+   */
+  void calculateElementCenters( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+  {
+    ElementSubRegionBase::calculateElementCenters( m_toNodesRelation, X );
+  }
 
   ///@}
 
@@ -218,13 +227,13 @@ public:
     constexpr static char const * surfaceElementToParentPlaneString() { return "surfaceElementToParentPlane"; }
   };
 
+protected:
+
   /// Map between the surface elements and the cells
   FixedToManyElementRelation m_surfaceElementsToCells;
 
   /// Unmapped surface elements to nodes map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
-
-protected:
 
   /// list of nodes
   NodeMapType m_toNodesRelation;

@@ -21,6 +21,7 @@
 
 #include "mesh/ElementType.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
@@ -95,6 +96,17 @@ public:
    */
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) { GEOSX_UNUSED_VAR( clearIfUnmapped ); }
 
+
+  /**
+   * @brief Set all "perElement" values for this subregion.
+   * @param numNodesPerElement The number of nodes per elem in this subregion.
+   * @param numEdgesPerElement The number of edges per elem in this subregion.
+   * @param numFacesPerElement The number of faces per elem in this subregion.
+   */
+  virtual void resizePerElementValues( localIndex const numNodesPerElement,
+                                       localIndex const numEdgesPerElement,
+                                       localIndex const numFacesPerElement );
+
   ///@}
 
   /**
@@ -109,54 +121,17 @@ public:
   localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
 
   /**
+   * @brief Set the number of nodes per element in the subregion.
+   * @param input The new number of nodes per element in the subregion.
+   */
+  void setNumNodesPerElement( localIndex const input ) { m_numNodesPerElement = input; }
+
+  /**
    * @brief Get the number of nodes per element.
    * @param[in] k cell index (not used)
    * @return number of nodes per element
    */
   virtual localIndex numNodesPerElement( localIndex const k ) const { GEOSX_UNUSED_VAR( k ); return m_numNodesPerElement; }
-
-  /**
-   * @brief Set the number of nodes per element.
-   * @param[in] numNodes the number of nodes per element
-   */
-  void setNumNodesPerElement( localIndex numNodes )
-  {
-    m_numNodesPerElement = numNodes;
-  }
-
-  /**
-   * @brief Get the number of independent nodes per element.
-   * @return numNodes the number of independent nodes per element
-   *
-   * Currently, the number of independent nodes per element is always
-   * equal to the number of nodes per element, except for the case
-   * of a triangular prism
-   */
-  localIndex const & numIndependentNodesPerElement() const { return m_numIndependentNodesPerElement; }
-
-  /**
-   * @brief Set the number of independent nodes per element.
-   * @param[in] numNodes the number of independent nodes per element
-   */
-  void setNumIndependentNodesPerElement( localIndex const numNodes )
-  {
-    m_numIndependentNodesPerElement = numNodes;
-  }
-
-  /**
-   * @brief Get the number of edges per element.
-   * @return the number of edges per element
-   */
-  localIndex const & numEdgesPerElement() const { return m_numEdgesPerElement; }
-
-  /**
-   * @brief Set the number of edges per element.
-   * @param[in] numEdges the number of edges per element
-   */
-  void setNumEdgesPerElement( localIndex const numEdges )
-  {
-    m_numEdgesPerElement = numEdges;
-  }
 
   /**
    * @brief Get the number of faces per element.
@@ -165,11 +140,24 @@ public:
   localIndex const & numFacesPerElement() const { return m_numFacesPerElement; }
 
   /**
-   * @brief Set the number of faces per element.
-   * @param[in] numFaces the number of faces per element
+   * @brief Sets the number of faces per element.
+   * @param input The number of faces per element to set for this ElementSubRegion.
    */
-  void setNumFacesPerElement( localIndex const numFaces )
-  { m_numFacesPerElement = numFaces; }
+  void setNumFacesPerElement( localIndex const input ) { m_numFacesPerElement = input; }
+
+  /**
+   * @brief Gets the number of edges per element.
+   * @return input The number of edges per element in this ElementSubRegion.
+   */
+  localIndex const & numEdgesPerElement() const { return m_numEdgesPerElement; }
+
+  /**
+   * @brief Sets the number of edges per element.
+   * @param input The number of edges per element to set for this ElementSubRegion.
+   */
+  void setNumEdgesPerElement( localIndex const input ) { m_numEdgesPerElement = input; }
+
+
 
   /**
    * @brief Get the center of each element in this subregion.
@@ -181,7 +169,7 @@ public:
   /**
    * @copydoc getElementCenter() const
    */
-  arrayView2d< real64 > getElementCenter()
+  array2d< real64 > & getElementCenter()
   { return m_elementCenter; }
 
   /**
@@ -221,7 +209,6 @@ public:
   T & getConstitutiveModel( string const & name )
   { return m_constitutiveModels.getGroup< T >( name ); }
 
-
   /**
    * @brief Get the type of element in this subregion.
    * @return the type of element in this subregion
@@ -230,11 +217,12 @@ public:
   { return m_elementType; }
 
   /**
-   * @brief Set the type of element in this subregion.
-   * @param[in] elementType the element type
+   * @brief Setter for m_elementType
+   * @param elemType They type of element for this ElementSubRegion.
    */
-  virtual void setElementType( ElementType const elementType )
-  { m_elementType = elementType; }
+  void setElementType( ElementType const elemType )
+  { m_elementType = elemType; }
+
 
   ///@}
 
@@ -280,9 +268,6 @@ protected:
   /// Number of nodes per element in this subregion.
   localIndex m_numNodesPerElement;
 
-  /// Number of independent nodes per element in this subregion.
-  localIndex m_numIndependentNodesPerElement;
-
   /// Number of edges per element in this subregion.
   localIndex m_numEdgesPerElement;
 
@@ -297,8 +282,33 @@ protected:
 
   /// Type of element in this subregion.
   ElementType m_elementType;
-};
 
+  /**
+   * @brief Compute the center of each element in the subregion.
+   * @tparam NODE_MAP Type of the element to node mapping.
+   * @param toNodesRelation Element to node mapping
+   * @param X Node positions.
+   */
+  template< class NODE_MAP >
+  void calculateElementCenters( NODE_MAP const & toNodesRelation,
+                                arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+  {
+    arrayView2d< real64 > const & elementCenters = m_elementCenter;
+    localIndex const nNodes = numNodesPerElement();
+    auto const e2n = toNodesRelation.toViewConst();
+
+    forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
+    {
+      LvArray::tensorOps::copy< 3 >( elementCenters[k], X[e2n( k, 0 )] );
+      for( localIndex a = 1; a < nNodes; ++a )
+      {
+        LvArray::tensorOps::add< 3 >( elementCenters[k], X[e2n( k, a )] );
+      }
+
+      LvArray::tensorOps::scale< 3 >( elementCenters[k], 1.0 / nNodes );
+    } );
+  }
+};
 
 } /* namespace geosx */
 

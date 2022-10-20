@@ -7,14 +7,18 @@
       name="lagrangiancontact"
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
+      discretization="FE1"
       targetRegions="{ Region, Fracture }"
-      contactRelationName="fractureMaterial">
+      contactRelationName="fractureMaterial"
+      fractureRegionName="Fracture"
+      logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         logLevel="2"
         newtonMaxIter="10"
         lineSearchAction="Require"
-        lineSearchMaxCuts="2"/>
+        lineSearchMaxCuts="2"
+        lineSearchInterpolationType="Parabolic"/>
       <LinearSolverParameters
         directParallel="0"/>
     </LagrangianContact>
@@ -23,8 +27,7 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Region, Fracture }"
-      solidMaterialNames="{ rock }">
+      targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
@@ -34,7 +37,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Region }"
-      solidMaterialNames="{ rock }"
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
   </Solvers>
@@ -48,9 +50,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="TPFAstabilization"
-        fieldName="traction"
-        coefficientName="custom"/>
+        name="TPFAstabilization"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -100,7 +100,7 @@
     <FieldSpecification
       name="xconstraintBack"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ back }"/>
@@ -108,7 +108,7 @@
     <FieldSpecification
       name="yconstraintBack"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ back }"/>
@@ -116,7 +116,7 @@
     <FieldSpecification
       name="zconstraintBack"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ back }"/>
@@ -124,7 +124,7 @@
     <FieldSpecification
       name="xconstraintBottom"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ bottom }"/>
@@ -132,7 +132,7 @@
     <FieldSpecification
       name="yconstraintBottom"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ bottom }"/>
@@ -140,7 +140,7 @@
     <FieldSpecification
       name="zconstraintBottom"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ bottom }"/>

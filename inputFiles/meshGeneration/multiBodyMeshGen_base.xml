@@ -1,0 +1,114 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <!-- SPHINX_BeamBendingMeshEnd -->
+  <Events
+    maxTime="10.0">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <!-- SPHINX_Execution -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/lagsolve"/>
+
+    <!-- SPHINX_ExecutionEnd -->
+    <!-- This event is applied every 5.0e-5s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/siloOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1e99"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <!-- SPHINX_FEDiscretization -->
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <!-- SPHINX_FEDiscretizationEnd -->
+  <ElementRegions>
+    <CellElementRegion
+      name="Region2"
+      cellBlocks="{ cb1 }"
+      materialList="{ shale }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <!-- SPHINX_Material -->
+    <ElasticIsotropic
+      name="shale"
+      defaultDensity="2700"
+      defaultBulkModulus="5.5556e9"
+      defaultShearModulus="4.16667e9"/>
+
+    <!-- SPHINX_MaterialEnd -->
+  </Constitutive>
+
+  <!-- SPHINX_BoundaryConditions -->
+  <FieldSpecifications>
+    <FieldSpecification
+      name="xnegconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+
+    <Traction
+      name="xposconstraint"
+      objectPath="faceManager"
+      scale="1.0e6"
+      direction="{ 0, 1, 0 }"
+      functionName="timeFunction"
+      setNames="{ xpos }"/>
+  </FieldSpecifications>
+
+  <!-- SPHINX_BoundaryConditionsEnd -->
+  <!-- SPHINX_TableFunction -->
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 10.0 }"
+      values="{ 0.0, 10.0 }"/>
+  </Functions>
+
+  <!-- SPHINX_TableFunctionEnd -->
+  <Outputs>
+    <Silo
+      name="siloOutput"
+      parallelThreads="32"
+      childDirectory="sub"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

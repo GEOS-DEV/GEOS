@@ -82,11 +82,6 @@ public:
   /**@{*/
 
   virtual void
-  implicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition & domain ) override;
-
-  virtual void
   setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
@@ -103,12 +98,6 @@ public:
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
-  virtual bool
-  checkSystemSolution( DomainPartition const & domain,
-                       DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor ) override;
-
   virtual void
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
@@ -119,9 +108,9 @@ public:
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
-  implicitStepComplete( real64 const & time,
-                        real64 const & dt,
-                        DomainPartition & domain ) override;
+  implicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition & domain ) override;
 
   virtual void
   assembleFluxTerms( real64 const time_n,

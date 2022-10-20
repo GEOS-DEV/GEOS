@@ -27,16 +27,18 @@
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+
 
 namespace geosx
 {
 
-namespace CompositionalMultiphaseHybridFVMKernels
+namespace compositionalMultiphaseHybridFVMKernels
 {
 
 using namespace constitutive;
+
 
 // struct to specify local and neighbor derivatives
 struct Pos
@@ -65,15 +67,13 @@ struct UpwindingHelper
    * @param[in] localIds region, subRegion, and element indices of the local element
    * @param[in] neighborIds region, subRegion, and element indices of the neigbhbor element
    * @param[in] phaseDens the phase densities in the domain (non-local)
-   * @param[in] dPhaseDens_dPres the derivatives of the phase densities in the domain wrt pressure (non-local)
-   * @param[in] dPhaseDens_dCompFrac the derivatives of the phase densities in the domain wrt component fraction (non-local)
+   * @param[in] dPhaseDens the derivatives of the phase densities in the domain wrt pressure and component fractions (non-local)
    * @param[in] phaseMob the phase mobilities in the domain (non-local)
-   * @param[in] dPhaseMob_dPres the derivatives of the phase mobilities in the domain wrt pressure (non-local)
-   * @param[in] dPhaseMob_dCompDens the derivatives of the phase mobilities in the domain wrt component fraction (non-local)
+   * @param[in] dPhaseMob the derivatives of the phase mobilities in the domain (non-local)
    * @param[in] dCompFrac_dCompDens the derivatives of the component fraction in the domain wrt component density (non-local)
    * @param[in] phaseCompFrac the phase component fractions in the domain (non-local)
-   * @param[in] dPhaseCompFrac_dPres the derivatives of the phase component fractions in the domain wrt pressure (non-local)
-   * @param[in] dPhaseCompFrac_dCompFrac the derivatives of the phase component fractions in the domain wrt component fraction (non-local)
+   * @param[in] dPhaseCompFrac the derivatives of the phase component fractions in the domain wrt pressure and component fractions
+   *(non-local)
    * @param[in] elemDofNumber the dof number of the cell centered pressures (non-local)
    * @param[in] oneSidedVolFlux the total volumetric flux at this face
    * @param[out] upwPhaseViscCoef the upwind viscous transport coef at this face
@@ -87,15 +87,12 @@ struct UpwindingHelper
     upwindViscousCoefficient( localIndex const (&localIds)[ 3 ],
                               localIndex const (&neighborIds)[ 3 ],
                               ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
-                              ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres,
-                              ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dCompFrac,
+                              ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
                               ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
-                              ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
-                              ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dCompDens,
+                              ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
                               ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
                               ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
-                              ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres,
-                              ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dCompFrac,
+                              ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
                               ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
                               real64 const & oneSidedVolFlux,
                               real64 ( &upwPhaseViscCoef )[ NP ][ NC ],
@@ -109,15 +106,15 @@ struct UpwindingHelper
    * @param[in] neighborIds region, subRegion, and element indices of the neigbhbor element
    * @param[in] transGravCoef
    * @param[in] phaseDens the phase densities in the domain (non-local)
-   * @param[in] dPhaseDens_dPres the derivatives of the phase densities in the domain wrt pressure (non-local)
-   * @param[in] dPhaseDens_dCompFrac the derivatives of the phase densities in the domain wrt component fraction (non-local)
+   * @param[in] dPhaseDens the derivatives of the phase densities in the domain wrt pressure and component fractions (non-local)
+   * @param[in] phaseMassDens the phase mass densities in the domain (non-local)
+   * @param[in] dPhaseMassDens the derivatives of the phase mass densities in the domain wrt pressure and component fractions (non-local)
    * @param[in] phaseMob the phase mobilities in the domain (non-local)
-   * @param[in] dPhaseMob_dPres the derivatives of the phase mobilities in the domain wrt pressure (non-local)
-   * @param[in] dPhaseMob_dCompDens the derivatives of the phase mobilities in the domain wrt component fraction (non-local)
+   * @param[in] dPhaseMob the derivatives of the phase mobilities in the domain (non-local)
    * @param[in] dCompFrac_dCompDens the derivatives of the component fraction in the domain wrt component density (non-local)
    * @param[in] phaseCompFrac the phase component fractions in the domain (non-local)
-   * @param[in] dPhaseCompFrac_dPres the derivatives of the phase component fractions in the domain wrt pressure (non-local)
-   * @param[in] dPhaseCompFrac_dCompFrac the derivatives of the phase component fractions in the domain wrt component fraction (non-local)
+   * @param[in] dPhaseCompFrac the derivatives of the phase component fractions in the domain wrt pressure and component fractions
+   *(non-local)
    * @param[in] elemDofNumber the dof number of the cell centered pressures (non-local)
    * @param[inout] phaseGravTerm the gravCoef multiplied by the difference in phase densities
    * @param[inout] dPhaseGravTerm_dPres the derivatives of the gravCoef multiplied by the difference in phase densities wrt pressure
@@ -134,18 +131,14 @@ struct UpwindingHelper
                                localIndex const (&neighborIds)[ 3 ],
                                real64 const & transGravCoef,
                                ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
-                               ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres,
-                               ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dCompFrac,
+                               ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
                                ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
-                               ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
-                               ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dCompFrac,
+                               ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
                                ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
-                               ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
-                               ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dCompDens,
+                               ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
                                ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
                                ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
-                               ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres,
-                               ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dCompFrac,
+                               ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
                                real64 ( &phaseGravTerm )[ NP ][ NP-1 ],
                                real64 ( &dPhaseGravTerm_dPres )[ NP ][ NP-1 ][ 2 ],
                                real64 ( &dPhaseGravTerm_dCompDens )[ NP ][ NP-1 ][ 2 ][ NC ],
@@ -160,8 +153,7 @@ struct UpwindingHelper
    * @param[in] neighborIds region, subRegion, and element indices of the neigbhbor element
    * @param[in] transGravCoef
    * @param[in] phaseDens the phase densities in the domain (non-local)
-   * @param[in] dPhaseDens_dPres the derivatives of the phase densities in the domain wrt pressure (non-local)
-   * @param[in] dPhaseDens_dCompFrac the derivatives of the phase densities in the domain wrt component fraction (non-local)
+   * @param[in] dPhaseDens the derivatives of the phase densities in the domain wrt pressure and component fractions (non-local)
    * @param[in] dCompFrac_dCompDens the derivatives of the component fraction in the domain wrt component density (non-local)
    * @param[inout] phaseGravTerm the gravCoef multiplied by the difference in phase densities
    * @param[inout] dPhaseGravTerm_dPres the derivatives of the gravCoef multiplied by the difference in phase densities wrt pressure
@@ -175,8 +167,7 @@ struct UpwindingHelper
                           localIndex const (&neighborIds)[ 3 ],
                           real64 const & transGravCoef,
                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
-                          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
-                          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dCompFrac,
+                          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
                           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
                           real64 ( &phaseGravTerm )[ NP ][ NP-1 ],
                           real64 ( &dPhaseGravTerm_dPres )[ NP ][ NP-1 ][ 2 ],
@@ -187,8 +178,7 @@ struct UpwindingHelper
    * @param[in] localIds region, subRegion, and element indices of the local element
    * @param[in] neighborIds region, subRegion, and element indices of the neigbhbor element
    * @param[in] phaseMob the phase mobilities in the domain (non-local)
-   * @param[in] dPhaseMob_dPres the derivatives of the phase mobilities in the domain wrt pressure (non-local)
-   * @param[in] dPhaseMob_dCompDens the derivatives of the phase mobilities in the domain wrt component fraction (non-local)
+   * @param[in] dPhaseMob the derivatives of the phase mobilities in the domain (non-local)
    * @param[in] phaseGravTerm the gravCoef multiplied by the difference in phase densities
    * @param[inout] totalMob the upwinded total mobility
    * @param[inout] dTotalMob_dPres the derivative of the upwinded total mobility wrt pressure
@@ -200,8 +190,7 @@ struct UpwindingHelper
     computeUpwindedTotalMobility( localIndex const (&localIds)[ 3 ],
                                   localIndex const (&neighborIds)[ 3 ],
                                   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
-                                  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
-                                  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dCompDens,
+                                  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
                                   real64 const (&phaseGravTerm)[ NP ][ NP-1 ],
                                   real64 & totalMob,
                                   real64 ( &dTotalMob_dPres )[ 2 ],
@@ -268,18 +257,14 @@ struct AssemblerKernelHelper
   /**
    * @brief In a given element, compute the transmissibility-weighted pressure gradients in the cell
    * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
-   * @param[in] dFacePres the accumulated pressure updates at the mesh face
    * @param[in] faceGravCoef the depth at the mesh facesb
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
-   * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravCoef the depth at this element's center
    * @param[in] phaseDens the phase densities in the element
-   * @param[in] dPhaseDens_dPres the derivatives of the phase densities in the element wrt pressure
-   * @param[in] dPhaseDens_dCompFrac the derivatives of the phase densities in the element wrt component fraction
+   * @param[in] dPhaseDens the derivatives of the phase densities in the element wrt pressure and component fractions
    * @param[in] phaseMob the phase mobilities in the element
-   * @param[in] dPhaseMob_dPres the derivatives of the phase mobilities in the element wrt pressure
-   * @param[in] dPhaseMob_dCompDens the derivatives of the phase mobilities in the element wrt component fraction
+   * @param[in] dPhaseMob the derivatives of the phase mobilities in the element
    * @param[in] dCompFrac_dCompDens the derivatives of the component fraction in the element wrt component density
    * @param[in] transMatrix the transmissibility matrix in this element
    * @param[out] oneSidedVolFlux the volumetric fluxes at this element's faces
@@ -291,18 +276,14 @@ struct AssemblerKernelHelper
   GEOSX_HOST_DEVICE
   static void
     applyGradient( arrayView1d< real64 const > const & facePres,
-                   arrayView1d< real64 const > const & dFacePres,
                    arrayView1d< real64 const > const & faceGravCoef,
                    arraySlice1d< localIndex const > const & elemToFaces,
                    real64 const & elemPres,
-                   real64 const & dElemPres,
                    real64 const & elemGravCoef,
                    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & elemPhaseMassDens,
-                   arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & dElemPhaseMassDens_dPres,
-                   arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dElemPhaseMassDens_dCompFrac,
+                   arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dElemPhaseMassDens,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & elemPhaseMob,
-                   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dElemPhaseMob_dPres,
-                   arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dElemPhaseMob_dCompDens,
+                   arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dElemPhaseMob,
                    arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dElemCompFrac_dCompDens,
                    arraySlice2d< real64 const > const & transMatrix,
                    real64 ( &oneSidedVolFlux )[ NF ],
@@ -321,15 +302,12 @@ struct AssemblerKernelHelper
    * @param[in] regionFilter set of target regions of the solver
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] phaseDens phaseDens the phase densities in the domain
-   * @param[in] dPhaseDens_dPres the derivatives of the phase densities wrt pressure
-   * @param[in] dPhaseDens_dCompFrac the derivatives of the phase densities wrt component fraction
+   * @param[in] dPhaseDens the derivatives of the phase densities wrt pressure and component fractions
    * @param[in] phaseMob the phase mobilities in the domain
-   * @param[in] dPhaseMob_dPres the derivatives of the phase mobilities in the element wrt pressure
-   * @param[in] dPhaseMob_dCompDens the derivatives of the phase mobilities in the element wrt component density
+   * @param[in] dPhaseMob the derivatives of the phase mobilities in the element
    * @param[in] dCompFrac_dCompDens the derivatives of the component fractions wrt component density
    * @param[in] phaseCompFrac the phase component fractions in the domain
-   * @param[in] dPhaseCompFrac_dPres the derivatives of the phase component fractions wrt pressure
-   * @param[in] dPhaseCompFrac_dCompFrac the derivatives of the phase component fractions wrt component fractions
+   * @param[in] dPhaseCompFrac the derivatives of the phase component fractions wrt pressure and component fractions
    * @param[in] elemDofNumber the dof numbers of the element in the domain
    * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces
    * @param[in] dOneSidedVolFlux_dPres the derivatives of the vol fluxes wrt to this element's cell centered pressure
@@ -353,18 +331,14 @@ struct AssemblerKernelHelper
                           arraySlice1d< localIndex const > const & elemToFaces,
                           real64 const & elemGravCoef,
                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
-                          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres,
-                          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dCompFrac,
+                          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
-                          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
-                          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dCompFrac,
+                          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
                           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
-                          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
-                          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dCompDens,
+                          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
                           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
                           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
-                          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres,
-                          ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dCompFrac,
+                          ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
                           ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
                           arraySlice2d< real64 const > const & transMatrixGrav,
                           real64 const (&oneSidedVolFlux)[ NF ],
@@ -506,22 +480,18 @@ struct AssemblerKernel
    * @param[in] faceDofNumber the dof numbers of the face pressures
    * @param[in] faceGhostRank ghost rank of each face
    * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
-   * @param[in] dFacePres the accumulated pressure updates at the mesh face
    * @param[in] faceGravCoef the depth at the mesh faces
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
-   * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravCoef the depth at this element's center
    * @param[in] phaseDens the phase densities in the domain (non-local)
-   * @param[in] dPhaseDens_dPres the derivatives of the phase densities in the domain wrt pressure (non-local)
-   * @param[in] dPhaseDens_dCompFrac the derivatives of the phase densities in the domain wrt component fraction (non-local)
+   * @param[in] dPhaseDens the derivatives of the phase densities in the domain wrt pressure and component fractions (non-local)
    * @param[in] phaseMob the phase mobilities in the domain (non-local)
-   * @param[in] dPhaseMob_dPres the derivatives of the phase mobilities in the domain wrt pressure (non-local)
-   * @param[in] dPhaseMob_dCompDens the derivatives of the phase mobilities in the domain wrt component fraction (non-local)
+   * @param[in] dPhaseMob the derivatives of the phase mobilities in the domain (non-local)
    * @param[in] dCompFrac_dCompDens the derivatives of the component fraction in the domain wrt component density (non-local)
    * @param[in] phaseCompFrac the phase component fractions in the domain (non-local)
-   * @param[in] dPhaseCompFrac_dPres the derivatives of the phase component fractions in the domain wrt pressure (non-local)
-   * @param[in] dPhaseCompFrac_dCompFrac the derivatives of the phase component fractions in the domain wrt component fraction (non-local)
+   * @param[in] dPhaseCompFrac the derivatives of the phase component fractions in the domain wrt pressure and component fractions
+   *(non-local)
    * @param[in] elemDofNumber the dof number of the cell centered pressures (non-local)
    * @param[in] elemGhostRank the ghost rank of the element in which we assemble the fluxes
    * @param[in] rankOffset the offset of this rank
@@ -542,26 +512,20 @@ struct AssemblerKernel
            arrayView1d< globalIndex const > const & faceDofNumber,
            arrayView1d< integer const > const & faceGhostRank,
            arrayView1d< real64 const > const & facePres,
-           arrayView1d< real64 const > const & dFacePres,
            arrayView1d< real64 const > const & faceGravCoef,
            arrayView1d< real64 const > const & mimFaceGravCoef,
            arraySlice1d< localIndex const > const & elemToFaces,
            real64 const & elemPres,
-           real64 const & dElemPres,
            real64 const & elemGravCoef,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
-           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres,
-           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dCompFrac,
+           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
-           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
-           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dCompFrac,
+           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
-           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
-           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dCompDens,
+           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
            ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
-           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres,
-           ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dCompFrac,
+           ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
            ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
            integer const elemGhostRank,
            globalIndex const rankOffset,
@@ -590,20 +554,17 @@ struct FluxKernel
 
   using CompFlowAccessors =
     StencilAccessors< extrinsicMeshData::flow::phaseMobility,
-                      extrinsicMeshData::flow::dPhaseMobility_dPressure,
-                      extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity,
+                      extrinsicMeshData::flow::dPhaseMobility,
                       extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
-    StencilAccessors< extrinsicMeshData::multifluid::phaseDensity,
-                      extrinsicMeshData::multifluid::dPhaseDensity_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction,
-                      extrinsicMeshData::multifluid::phaseMassDensity,
-                      extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction,
-                      extrinsicMeshData::multifluid::phaseCompFraction,
-                      extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
+    StencilMaterialAccessors< MultiFluidBase,
+                              extrinsicMeshData::multifluid::phaseDensity,
+                              extrinsicMeshData::multifluid::dPhaseDensity,
+                              extrinsicMeshData::multifluid::phaseMassDensity,
+                              extrinsicMeshData::multifluid::dPhaseMassDensity,
+                              extrinsicMeshData::multifluid::phaseCompFraction,
+                              extrinsicMeshData::multifluid::dPhaseCompFraction >;
 
 
   /**
@@ -621,22 +582,18 @@ struct FluxKernel
    * @param[in] faceDofNumber the dof numbers of the face pressures
    * @param[in] faceGhostRank  the ghost ranks of the face pressures
    * @param[in] facePres the pressures at the mesh faces at the beginning of the time step
-   * @param[in] dFacePres the accumulated pressure updates at the mesh face
    * @param[in] faceGravDepth the depth at the mesh faces
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
-   * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravDepth the depth at this element's center
    * @param[in] phaseDens the phase densities in the domain (non-local)
-   * @param[in] dPhaseDens_dPres the derivatives of the phase densities in the domain wrt pressure (non-local)
-   * @param[in] dPhaseDens_dCompFrac the derivatives of the phase densities in the domain wrt component fraction (non-local)
+   * @param[in] dPhaseDens the derivatives of the phase densities in the domain wrt pressure and component fractions (non-local)
    * @param[in] phaseMob the phase mobilities in the domain (non-local)
-   * @param[in] dPhaseMob_dPres the derivatives of the phase mobilities in the domain wrt pressure (non-local)
-   * @param[in] dPhaseMob_dCompDens the derivatives of the phase mobilities in the domain wrt component fraction (non-local)
+   * @param[in] dPhaseMob the derivatives of the phase mobilities in the domain (non-local)
    * @param[in] dCompFrac_dCompDens the derivatives of the component fraction in the domain wrt component density (non-local)
    * @param[in] phaseCompFrac the phase component fractions in the domain (non-local)
-   * @param[in] dPhaseCompFrac_dPres the derivatives of the phase component fractions in the domain wrt pressure (non-local)
-   * @param[in] dPhaseCompFrac_dCompFrac the derivatives of the phase component fractions in the domain wrt component fraction (non-local)
+   * @param[in] dPhaseCompFrac the derivatives of the phase component fractions in the domain wrt pressure and component fractions
+   *(non-local)
    * @param[in] elemDofNumber the dof number of the cell centered pressures (non-local)
    * @param[in] rankOffset the offset of this rank
    * @param[in] lengthTolerance tolerance used in the transmissibility matrix computation
@@ -658,23 +615,18 @@ struct FluxKernel
           arrayView1d< globalIndex const > const & faceDofNumber,
           arrayView1d< integer const > const & faceGhostRank,
           arrayView1d< real64 const > const & facePres,
-          arrayView1d< real64 const > const & dFacePres,
           arrayView1d< real64 const > const & faceGravCoef,
           arrayView1d< real64 const > const & mimFaceGravCoef,
           arrayView1d< real64 const > const & transMultiplier,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
-          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
-          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dCompDens,
+          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
-          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres,
-          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dCompFrac,
+          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
-          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
-          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dCompFrac,
+          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
-          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres,
-          ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dCompFrac,
+          ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
           ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
           globalIndex const rankOffset,
           real64 const lengthTolerance,
@@ -694,11 +646,11 @@ struct FluxKernel
  * @brief Define the interface for the property kernel in charge of computing the phase mobilities
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class PhaseMobilityKernel : public CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
+class PhaseMobilityKernel : public isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
 {
 public:
 
-  using Base = CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
+  using Base = isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
   using Base::numComp;
 
   /// Compile time value for the number of phases
@@ -715,17 +667,14 @@ public:
                        RelativePermeabilityBase const & relperm )
     : Base(),
     m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >() ),
-    m_dPhaseVolFrac_dComp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >() ),
+    m_dPhaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
     m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseVisc( fluid.phaseViscosity() ),
-    m_dPhaseVisc_dPres( fluid.dPhaseViscosity_dPressure() ),
-    m_dPhaseVisc_dComp( fluid.dPhaseViscosity_dGlobalCompFraction() ),
+    m_dPhaseVisc( fluid.dPhaseViscosity() ),
     m_phaseRelPerm( relperm.phaseRelPerm() ),
     m_dPhaseRelPerm_dPhaseVolFrac( relperm.dPhaseRelPerm_dPhaseVolFraction() ),
     m_phaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >() ),
-    m_dPhaseMob_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dPressure >() ),
-    m_dPhaseMob_dComp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity >() )
+    m_dPhaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility >() )
   {}
 
   /**
@@ -734,23 +683,22 @@ public:
    * @param[in] ei the element index
    * @param[in] phaseMobilityKernelOp the function used to customize the kernel
    */
-  template< typename FUNC = CompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
   void compute( localIndex const ei,
-                FUNC && phaseMobilityKernelOp = CompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                FUNC && phaseMobilityKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
+    using Deriv = multifluid::DerivativeOffset;
+
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseVisc = m_phaseVisc[ei][0];
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const dPhaseVisc_dPres = m_dPhaseVisc_dPres[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc_dComp = m_dPhaseVisc_dComp[ei][0];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc = m_dPhaseVisc[ei][0];
     arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > const phaseRelPerm = m_phaseRelPerm[ei][0];
     arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[ei][0];
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const phaseVolFrac = m_phaseVolFrac[ei];
-    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
-    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac_dComp = m_dPhaseVolFrac_dComp[ei];
+    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dPhaseVolFrac[ei];
     arraySlice1d< real64, compflow::USD_PHASE - 1 > const phaseMob = m_phaseMob[ei];
-    arraySlice1d< real64, compflow::USD_PHASE - 1 > const dPhaseMob_dPres = m_dPhaseMob_dPres[ei];
-    arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseMob_dComp = m_dPhaseMob_dComp[ei];
+    arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseMob = m_dPhaseMob[ei];
 
     real64 dRelPerm_dC[numComp]{};
     real64 dVisc_dC[numComp]{};
@@ -762,17 +710,16 @@ public:
       if( !phaseExists )
       {
         phaseMob[ip] = 0.;
-        dPhaseMob_dPres[ip] = 0.;
-        for( integer jc = 0; jc < numComp; ++jc )
+        for( integer jc = 0; jc < numComp + 2; ++jc )
         {
-          dPhaseMob_dComp[ip][jc] = 0.;
+          dPhaseMob[ip][jc] = 0.;
         }
         continue;
       }
 
       real64 const viscosity = phaseVisc[ip];
-      real64 const dVisc_dP = dPhaseVisc_dPres[ip];
-      applyChainRule( numComp, dCompFrac_dCompDens, dPhaseVisc_dComp[ip], dVisc_dC );
+      real64 const dVisc_dP = dPhaseVisc[ip][Deriv::dP];
+      applyChainRule( numComp, dCompFrac_dCompDens, dPhaseVisc[ip], dVisc_dC, Deriv::dC );
 
       real64 const relPerm = phaseRelPerm[ip];
       real64 dRelPerm_dP = 0.0;
@@ -784,30 +731,30 @@ public:
       for( integer jp = 0; jp < numPhase; ++jp )
       {
         real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[ip][jp];
-        dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac_dPres[jp];
+        dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac[jp][Deriv::dP];
 
         for( integer jc = 0; jc < numComp; ++jc )
         {
-          dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac_dComp[jp][jc];
+          dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac[jp][Deriv::dC+jc];
         }
       }
 
       real64 const mobility = relPerm / viscosity;
 
       phaseMob[ip] = mobility;
-      dPhaseMob_dPres[ip] = dRelPerm_dP / viscosity
-                            - mobility * dVisc_dP / viscosity;
+      dPhaseMob[ip][Deriv::dP] = dRelPerm_dP / viscosity
+                                 - mobility * dVisc_dP / viscosity;
 
       // compositional derivatives
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dPhaseMob_dComp[ip][jc] = dRelPerm_dC[jc] / viscosity
-                                  - mobility * dVisc_dC[jc] / viscosity;
+        dPhaseMob[ip][Deriv::dC+jc] = dRelPerm_dC[jc] / viscosity
+                                      - mobility * dVisc_dC[jc] / viscosity;
       }
 
       // call the lambda in the phase loop to allow the reuse of the relperm, viscosity, and mobility
       // possible use: assemble the derivatives wrt temperature
-      phaseMobilityKernelOp( ip, phaseMob[ip], dPhaseMob_dPres[ip], dPhaseMob_dComp[ip] );
+      phaseMobilityKernelOp( ip, phaseMob[ip], dPhaseMob[ip] );
     }
   }
 
@@ -818,14 +765,12 @@ protected:
 
   /// Views on the phase volume fractions
   arrayView2d< real64 const, compflow::USD_PHASE > m_phaseVolFrac;
-  arrayView2d< real64 const, compflow::USD_PHASE > m_dPhaseVolFrac_dPres;
-  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dPhaseVolFrac_dComp;
+  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dPhaseVolFrac;
   arrayView3d< real64 const, compflow::USD_COMP_DC > m_dCompFrac_dCompDens;
 
   /// Views on the phase viscosities
   arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseVisc;
-  arrayView3d< real64 const, multifluid::USD_PHASE > m_dPhaseVisc_dPres;
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseVisc_dComp;
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseVisc;
 
   /// Views on the phase relative permeabilities
   arrayView3d< real64 const, relperm::USD_RELPERM > m_phaseRelPerm;
@@ -835,8 +780,7 @@ protected:
 
   /// Views on the phase mobilities
   arrayView2d< real64, compflow::USD_PHASE > m_phaseMob;
-  arrayView2d< real64, compflow::USD_PHASE > m_dPhaseMob_dPres;
-  arrayView3d< real64, compflow::USD_PHASE_DC > m_dPhaseMob_dComp;
+  arrayView3d< real64, compflow::USD_PHASE_DC > m_dPhaseMob;
 
 };
 
@@ -866,7 +810,7 @@ public:
   {
     if( numPhase == 2 )
     {
-      CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 2 > kernel( subRegion, fluid, relperm );
@@ -875,7 +819,7 @@ public:
     }
     else if( numPhase == 3 )
     {
-      CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 3 > kernel( subRegion, fluid, relperm );
@@ -892,7 +836,7 @@ struct ResidualNormKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  template< typename POLICY, typename REDUCE_POLICY >
+  template< typename POLICY >
   static void
   launch( arrayView1d< real64 const > const & localResidual,
           globalIndex const rankOffset,
@@ -904,10 +848,10 @@ struct ResidualNormKernel
           arrayView2d< localIndex const > const & elemSubRegionList,
           arrayView2d< localIndex const > const & elemList,
           ElementViewConst< arrayView1d< real64 const > > const & elemVolume,
-          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMobOld,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob_n,
           real64 & localResidualNorm )
   {
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > sumScaled( 0.0 );
 
     forAll< POLICY >( facePresDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
     {
@@ -928,20 +872,20 @@ struct ResidualNormKernel
           if( !onBoundary && isInTarget )
           {
             // compute a normalizer to obtain a dimensionless norm
-            real64 sumMobOld = 0.0;
+            real64 sumMob_n = 0.0;
             for( integer ip = 0; ip < numPhases; ++ip )
             {
-              sumMobOld += phaseMobOld[er][esr][ei][ip];
+              sumMob_n += phaseMob_n[er][esr][ei][ip];
             }
-            real64 const totalMobOld = ( sumMobOld < 1e-3 ) ? 1e-3 : sumMobOld;
-            normalizer += elemVolume[er][esr][ei] / totalMobOld;
+            real64 const totalMob_n = ( sumMob_n < 1e-3 ) ? 1e-3 : sumMob_n;
+            normalizer += elemVolume[er][esr][ei] / totalMob_n;
             elemCounter++;
           }
         }
         normalizer /= elemCounter;
 
         localIndex const lid = LvArray::integerConversion< localIndex >( facePresDofNumber[iface] - rankOffset );
-        // note: unit of localResidual[lid] * totalMobOld: m^3, so this is dimensionless
+        // note: unit of localResidual[lid] * totalMob_n: m^3, so this is dimensionless
         real64 const val = localResidual[lid] / normalizer;
         sumScaled += val * val;
       }
@@ -957,17 +901,16 @@ struct ResidualNormKernel
 struct SolutionCheckKernel
 {
 
-  template< typename POLICY, typename REDUCE_POLICY >
+  template< typename POLICY >
   static localIndex
   launch( arrayView1d< real64 const > const & localSolution,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & ghostRank,
           arrayView1d< real64 const > const & facePres,
-          arrayView1d< real64 const > const & dFacePres,
           real64 const scalingFactor )
   {
-    RAJA::ReduceMin< REDUCE_POLICY, integer > check( 1 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > check( 1 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
     {
@@ -975,7 +918,7 @@ struct SolutionCheckKernel
       {
         localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[iface] - rankOffset );
         {
-          real64 const newFacePres = facePres[iface] + dFacePres[iface] + scalingFactor * localSolution[localRow];
+          real64 const newFacePres = facePres[iface] + scalingFactor * localSolution[localRow];
           check.min( newFacePres >= 0.0 );
         }
       }
@@ -1046,7 +989,7 @@ namespace internal
 {
 
 template< typename T, typename LAMBDA >
-void KernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
+void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 {
   static_assert( std::is_integral< T >::value, "KernelLaunchSelectorFaceSwitch: type should be integral" );
 
@@ -1064,30 +1007,40 @@ void KernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 
 } // namespace internal
 
+template< typename KERNELWRAPPER, typename INNER_PRODUCT, typename ... ARGS >
+void simpleKernelLaunchSelector( localIndex numFacesInElem, ARGS && ... args )
+{
+  internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NUM_FACES )
+  {
+    KERNELWRAPPER::template launch< INNER_PRODUCT, NUM_FACES() >( std::forward< ARGS >( args )... );
+  } );
+}
+
+
 template< typename KERNELWRAPPER, typename IP_TYPE, typename ... ARGS >
-void KernelLaunchSelector( integer numFacesInElem, integer numComps, integer numPhases, ARGS && ... args )
+void kernelLaunchSelector( integer numFacesInElem, integer numComps, integer numPhases, ARGS && ... args )
 {
   // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
   if( numPhases == 2 )
   {
     if( numComps == 2 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 2, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 3 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 3, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 4 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 4, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 5 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 5, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else
@@ -1099,22 +1052,22 @@ void KernelLaunchSelector( integer numFacesInElem, integer numComps, integer num
   {
     if( numComps == 2 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 2, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 3 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 3, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 4 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 4, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 5 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 5, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else
@@ -1128,7 +1081,7 @@ void KernelLaunchSelector( integer numFacesInElem, integer numComps, integer num
   }
 }
 
-} // namespace CompositionalMultiphaseHybridFVMKernels
+} // namespace compositionalMultiphaseHybridFVMKernels
 
 } // namespace geosx
 

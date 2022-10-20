@@ -1,7 +1,7 @@
 #
 # Performance portability
 #
-message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
+message("in tpls.cmake GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
 
 if(EXISTS ${GEOSX_TPL_DIR}/raja)
   set(RAJA_DIR ${GEOSX_TPL_DIR}/raja CACHE PATH "" FORCE)
@@ -17,6 +17,7 @@ endif()
 #
 if(EXISTS ${GEOSX_TPL_DIR}/hdf5)
   set(HDF5_DIR ${GEOSX_TPL_DIR}/hdf5 CACHE PATH "" FORCE)
+  message(STATUS "HDF5_DIR = ${HDF5_DIR}")
 endif()
 
 if(EXISTS ${GEOSX_TPL_DIR}/conduit)
@@ -72,6 +73,10 @@ endif()
 
 if(EXISTS ${GEOSX_TPL_DIR}/hypre)
   set(HYPRE_DIR ${GEOSX_TPL_DIR}/hypre CACHE PATH "" FORCE)
+endif()
+
+if(EXISTS ${GEOSX_TPL_DIR}/scotch)
+  set(SCOTCH_DIR ${GEOSX_TPL_DIR}/scotch CACHE PATH "" FORCE)
 endif()
 
 if(EXISTS ${GEOSX_TPL_DIR}/petsc AND (NOT DEFINED ENABLE_PETSC OR ENABLE_PETSC))

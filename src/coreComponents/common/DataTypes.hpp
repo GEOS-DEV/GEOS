@@ -190,6 +190,8 @@ using StackArray = LvArray::StackArray< T, NDIM, PERMUTATION, localIndex, MAXSIZ
 
 /// Alias for a local (stack-based) rank-1 tensor type
 using R1Tensor = Tensor< real64, 3 >;
+/// Alias for a local (stack-based) rank-1 tensor type using 32 bits integers
+using R1Tensor32 = Tensor< real32, 3 >;
 
 /// Alias for a local (stack-based) rank-2 Voigt tensor type
 using R2SymTensor = Tensor< real64, 6 >;
@@ -302,20 +304,20 @@ using SortedArrayView = LvArray::SortedArrayView< T, localIndex, LvArray::ChaiBu
 ///@{
 
 /// Array of variable-sized arrays. See LvArray::ArrayOfArrays for details.
-template< typename T >
-using ArrayOfArrays = LvArray::ArrayOfArrays< T, localIndex, LvArray::ChaiBuffer >;
+template< typename T, typename INDEX_TYPE=localIndex >
+using ArrayOfArrays = LvArray::ArrayOfArrays< T, INDEX_TYPE, LvArray::ChaiBuffer >;
 
 /// View of array of variable-sized arrays. See LvArray::ArrayOfArraysView for details.
-template< typename T, bool CONST_SIZES=std::is_const< T >::value >
-using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, localIndex const, CONST_SIZES, LvArray::ChaiBuffer >;
+template< typename T, typename INDEX_TYPE=localIndex, bool CONST_SIZES=std::is_const< T >::value >
+using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, INDEX_TYPE const, CONST_SIZES, LvArray::ChaiBuffer >;
 
 /// Array of variable-sized sets. See LvArray::ArrayOfSets for details.
-template< typename T >
-using ArrayOfSets = LvArray::ArrayOfSets< T, localIndex, LvArray::ChaiBuffer >;
+template< typename T, typename INDEX_TYPE=localIndex >
+using ArrayOfSets = LvArray::ArrayOfSets< T, INDEX_TYPE, LvArray::ChaiBuffer >;
 
 /// View of array of variable-sized sets. See LvArray::ArrayOfSetsView for details.
-template< typename T >
-using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const, LvArray::ChaiBuffer >;
+template< typename T, typename INDEX_TYPE=localIndex >
+using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, INDEX_TYPE const, LvArray::ChaiBuffer >;
 
 /// Alias for Sparsity pattern class.
 template< typename COL_INDEX, typename INDEX_TYPE=localIndex >
@@ -511,6 +513,7 @@ public:
       {std::type_index( typeid(localIndex)), "localIndex"},
       {std::type_index( typeid(globalIndex)), "globalIndex"},
       {std::type_index( typeid(R1Tensor)), "R1Tensor"},
+      {std::type_index( typeid(R1Tensor32)), "R1Tensor32"},
       {std::type_index( typeid(R2SymTensor)), "R2SymTensor"},
       {std::type_index( typeid(integer_array)), "integer_array"},
       {std::type_index( typeid(real32_array)), "real32_array"},
@@ -648,6 +651,7 @@ private:
       {"real32", rr},
       {"real64", rr},
       {"R1Tensor", r1},
+      {"R1Tensor32", r1},
       {"R2SymTensor", r2s},
       {"integer_array", constructArrayRegex( ri, 1 )},
       {"localIndex_array", constructArrayRegex( ri, 1 )},

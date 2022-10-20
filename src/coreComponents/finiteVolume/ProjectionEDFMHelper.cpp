@@ -21,7 +21,7 @@ ProjectionEDFMHelper::ProjectionEDFMHelper( MeshLevel const & mesh,
   m_faceToCells( mesh.getFaceManager().elementList() ),
   m_faceToEdges( mesh.getFaceManager().edgeList().toViewConst() ),
   m_faceToNodes( mesh.getFaceManager().nodeList().toViewConst() ),
-  m_cellCenters( m_elementManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() ) ),
+  m_cellCenters( m_elementManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() ) ),
   m_cellStencil( cellStencil ),
   m_edfmStencil( edfmStencil ),
   m_embeddedSurfaceRegionName( embeddedSurfaceRegionName )
@@ -30,7 +30,7 @@ ProjectionEDFMHelper::ProjectionEDFMHelper( MeshLevel const & mesh,
 void ProjectionEDFMHelper::addNonNeighboringConnections() const
 {
   SurfaceElementRegion const & fractureRegion = m_elementManager.getRegion< SurfaceElementRegion >( m_embeddedSurfaceRegionName );
-  EmbeddedSurfaceSubRegion const & fractureSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
+  EmbeddedSurfaceSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< EmbeddedSurfaceSubRegion >();
 
   arrayView1d< integer const > const ghostRank = fractureSubRegion.ghostRank();
   FixedToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();

@@ -8,7 +8,7 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Region2 }"
-      solidMaterialNames="{ granite }">
+      >
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
         newtonMaxIter="8"/>
@@ -18,7 +18,6 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      solidMaterialNames="{ granite }"
       rockToughness="1e6"
       nodeBasedSIF="1"
       logLevel="1"
@@ -63,12 +62,6 @@
       name="solverApplications"
       forceDt="0.5"
       target="/Solvers/lagSolve"/>
-
-    <PeriodicEvent
-      name="outputs"
-      timeFrequency="0.5"
-      targetExactTimestep="0"
-      target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="restarts"
@@ -126,7 +119,7 @@
       name="x"
       component="0"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       scale="0.0"
       setNames="{ xneg, xpos }"/>
 
@@ -134,7 +127,7 @@
       name="y"
       component="1"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       scale="0.0"
       setNames="{ yneg, ypos }"/>
 
@@ -142,7 +135,7 @@
       name="zposconstraint"
       component="2"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       scale="0.001"
       setNames="{ zpos }"/>
 
@@ -150,7 +143,7 @@
       name="znegconstraint"
       component="2"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       setNames="{ zneg }"/>
   </FieldSpecifications>
 

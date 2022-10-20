@@ -13,9 +13,9 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         newtonMaxIter="25"
-        dtCutIterLimit="0.9"
-        dtIncIterLimit="0.6"
-        timestepCutFactor="0.1"
+        timeStepDecreaseIterLimit="0.9"
+        timeStepIncreaseIterLimit="0.6"
+        timeStepCutFactor="0.1"
         maxTimeStepCuts="10"
         lineSearchAction="None"/>
       <LinearSolverParameters
@@ -27,11 +27,9 @@
       name="compositionalMultiphaseFlow"
       targetRegions="{ reservoir }"
       discretization="fluidTPFA"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="297.15"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
       maxCompFractionChange="0.3"
       logLevel="1"
       useMass="1"/>
@@ -39,8 +37,6 @@
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       targetRegions="{ wellRegion1, wellRegion2, wellRegion3, wellRegion4, wellRegion5, wellRegion6, wellRegion7, wellRegion8, wellRegion9, wellRegion10, wellRegion11, wellRegion12 }"
-      fluidNames="{ fluid }"
-      relPermNames="{ relperm }"
       maxCompFractionChange="0.5"
       logLevel="1"
       useMass="1">
@@ -220,9 +216,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -387,22 +381,22 @@
   <Tasks>
     <PackCollection
       name="wellRateCollection1"
-      objectPath="ElementRegions/wellRegion1/wellRegion1uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion1/wellRegion1UniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate"/>
 
     <PackCollection
       name="wellRateCollection2"
-      objectPath="ElementRegions/wellRegion2/wellRegion2uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion2/wellRegion2UniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate"/>
 
     <PackCollection
       name="wellRateCollection3"
-      objectPath="ElementRegions/wellRegion3/wellRegion3uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion3/wellRegion3UniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate"/>
 
     <PackCollection
       name="wellRateCollection4"
-      objectPath="ElementRegions/wellRegion4/wellRegion4uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion4/wellRegion4UniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate"/>
   </Tasks>
 

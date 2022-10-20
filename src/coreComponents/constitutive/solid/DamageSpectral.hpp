@@ -42,12 +42,19 @@ public:
   template< typename ... PARAMS >
   DamageSpectralUpdates( arrayView2d< real64 > const & inputDamage,
                          arrayView2d< real64 > const & inputStrainEnergyDensity,
+                         arrayView2d< real64 > const & inputExtDrivingForce,
                          real64 const & inputLengthScale,
                          real64 const & inputCriticalFractureEnergy,
                          real64 const & inputcriticalStrainEnergy,
+                         real64 const & inputDegradationLowerLimit,
+                         int const & inputExtDrivingForceFlag,
+                         real64 const & inputTensileStrength,
+                         real64 const & inputCompressStrength,
+                         real64 const & inputDeltaCoefficient,
                          PARAMS && ... baseParams ):
-    DamageUpdates< UPDATE_BASE >( inputDamage, inputStrainEnergyDensity, inputLengthScale,
-                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy,
+    DamageUpdates< UPDATE_BASE >( inputDamage, inputStrainEnergyDensity, inputExtDrivingForce, inputLengthScale,
+                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputExtDrivingForceFlag,
+                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient,
                                   std::forward< PARAMS >( baseParams )... )
   {}
 
@@ -63,9 +70,16 @@ public:
 
   using DamageUpdates< UPDATE_BASE >::m_strainEnergyDensity;
   using DamageUpdates< UPDATE_BASE >::m_criticalStrainEnergy;
+  using DamageUpdates< UPDATE_BASE >::m_extDrivingForce;
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
   using DamageUpdates< UPDATE_BASE >::m_damage;
+  using DamageUpdates< UPDATE_BASE >::m_extDrivingForceFlag;
+  using DamageUpdates< UPDATE_BASE >::m_tensileStrength;
+  using DamageUpdates< UPDATE_BASE >::m_compressStrength;
+  using DamageUpdates< UPDATE_BASE >::m_deltaCoefficient;
+  using DamageUpdates< UPDATE_BASE >::m_disableInelasticity;
+
 
   using UPDATE_BASE::m_bulkModulus;  // TODO: model below strongly assumes iso elasticity, templating not so useful
   using UPDATE_BASE::m_shearModulus;
@@ -126,6 +140,11 @@ public:
 
     UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );  // elastic trial update
 
+    if( m_disableInelasticity )
+    {
+      return;
+    }
+
     // get undamaged elastic strain
 
     real64 strain[6];
@@ -138,7 +157,7 @@ public:
     real64 traceOfStrain = strain[0] + strain[1] + strain[2];
 
     real64 mu = m_shearModulus[k];
-    real64 lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], mu );
+    real64 lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], mu );
     real64 damageFactor = getDegradationValue( k, q );
 
     // get eigenvalues and eigenvectors
@@ -250,8 +269,12 @@ public:
 
 
   GEOSX_HOST_DEVICE
-  virtual real64 getEnergyThreshold() const override final
+  virtual real64 getEnergyThreshold( localIndex const k,
+                                     localIndex const q ) const override final
   {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+
     return m_criticalStrainEnergy;
   }
 
@@ -267,9 +290,15 @@ public:
 
   using Damage< BASE >::m_damage;
   using Damage< BASE >::m_strainEnergyDensity;
+  using Damage< BASE >::m_extDrivingForce;
   using Damage< BASE >::m_criticalFractureEnergy;
   using Damage< BASE >::m_lengthScale;
   using Damage< BASE >::m_criticalStrainEnergy;
+  using Damage< BASE >::m_degradationLowerLimit;
+  using Damage< BASE >::m_extDrivingForceFlag;
+  using Damage< BASE >::m_tensileStrength;
+  using Damage< BASE >::m_compressStrength;
+  using Damage< BASE >::m_deltaCoefficient;
 
   DamageSpectral( string const & name, dataRepository::Group * const parent );
   virtual ~DamageSpectral() override;
@@ -283,9 +312,15 @@ public:
   {
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
                                                                        m_strainEnergyDensity.toView(),
+                                                                       m_extDrivingForce.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
-                                                                       m_criticalStrainEnergy );
+                                                                       m_criticalStrainEnergy,
+                                                                       m_degradationLowerLimit,
+                                                                       m_extDrivingForceFlag,
+                                                                       m_tensileStrength,
+                                                                       m_compressStrength,
+                                                                       m_deltaCoefficient );
   }
 
 };

@@ -10,15 +10,13 @@
       name="SinglePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
       targetRegions="{ mainRegion }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
         solverType="gmres"
+	preconditionerType="amg" 
         krylovTol="1.0e-10"/>
     </SinglePhaseFVM>
   </Solvers>
@@ -43,9 +41,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        />
     </FiniteVolume>
   </NumericalMethods>
 
@@ -96,20 +92,20 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cellBlock"
+      objectPath="ElementRegions/mainRegion/cellBlock"
       fieldName="pressure"
       scale="5e6"/>
 
     <FieldSpecification
       name="sourceTerm"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cellBlock"
+      objectPath="ElementRegions/mainRegion/cellBlock"
       fieldName="pressure"
       scale="1e7"
       setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkTerm"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cellBlock"
+      objectPath="ElementRegions/mainRegion/cellBlock"
       fieldName="pressure"
       scale="0.0"
       setNames="{ sink }"/>

@@ -5,12 +5,20 @@ set( PYTHON_INTERP_INCLUDE_DIRS
      ${PYTHON_DIR}/lib/python2.7/site-packages/numpy/core/include/
    )
 
+# Set python style targets
+# set( python_sources modules/geosx_mesh_tools_package/geosx_mesh_tools/abaqus_converter.py )
+
 
 # If an explicit python post-processing target is not set, then try
-# using the python being used with cmake.  Note: the target python must
-# have the virtualenv package available.
+# using the python being used with cmake.  Note: if the user does not have
+# write permissions, the virtualenv package is required to create a new
+# virtual environment
 if( NOT PYTHON_POST_EXECUTABLE )
-    set( PYTHON_POST_EXECUTABLE ${PYTHON_EXECUTABLE} CACHE PATH "" FORCE )
+     if( ENABLE_PYGEOSX )
+          set( PYTHON_POST_EXECUTABLE ${CMAKE_BINARY_DIR}/lib/PYGEOSX/bin/python CACHE PATH "" FORCE )
+     else()
+          set( PYTHON_POST_EXECUTABLE ${PYTHON_EXECUTABLE} CACHE PATH "" FORCE )
+     endif()
 endif()
 
 
@@ -29,11 +37,7 @@ set( GEOSX_XML_TOOLS_BINS
 
 
 add_custom_command( OUTPUT ${GEOSX_XML_TOOLS_BINS}
-                    COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupVirtualPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -o ${CMAKE_BINARY_DIR}/python
-                    COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/preprocess_xml ${CMAKE_BINARY_DIR}/bin/preprocess_xml
-                    COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/format_xml ${CMAKE_BINARY_DIR}/bin/format_xml
-                    COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/python ${CMAKE_BINARY_DIR}/bin/python
-                    COMMAND ln -s ${CMAKE_SOURCE_DIR}/../scripts/automatic_xml_preprocess.sh ${CMAKE_BINARY_DIR}/bin/geosx_preprocessed
+                    COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin
                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                   )
 
@@ -52,4 +56,24 @@ add_custom_target( geosx_format_all_xml_files
                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                    DEPENDS geosx_xml_tools 
                  )
+
+
+# Python formatting
+if ( ENABLE_YAPF )
+     set( python_module_sources )
+     file( GLOB_RECURSE python_module_sources "*py" )
+
+     # Note: blt throws an error if sources doesn't include a c-file, so include dummy.cpp
+     blt_add_code_checks( PREFIX  python_modules_yapf_style
+                          SOURCES ${python_module_sources} ${CMAKE_SOURCE_DIR}/coreComponents/dummy.cpp
+                          YAPF_CFG_FILE ${PROJECT_SOURCE_DIR}/yapf.cfg )
+
+     set( python_script_sources )
+     file( GLOB_RECURSE python_script_sources "${CMAKE_SOURCE_DIR}/../scripts/*py" )
+
+     blt_add_code_checks( PREFIX  python_scripts_yapf_style
+                          SOURCES ${python_script_sources} ${CMAKE_SOURCE_DIR}/coreComponents/dummy.cpp
+                          YAPF_CFG_FILE ${PROJECT_SOURCE_DIR}/yapf.cfg )
+endif()
+
 

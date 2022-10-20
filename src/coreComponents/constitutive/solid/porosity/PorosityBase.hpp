@@ -45,12 +45,12 @@ public:
   localIndex numGauss() const { return m_newPorosity.size( 1 ); }
 
   PorosityBaseUpdates( arrayView2d< real64 > const & newPorosity,
-                       arrayView2d< real64 > const & oldPorosity,
+                       arrayView2d< real64 > const & porosity_n,
                        arrayView2d< real64 > const & dPorosity_dPressure,
                        arrayView2d< real64 > const & initialPorosity,
                        arrayView1d< real64 > const & referencePorosity ):
     m_newPorosity( newPorosity ),
-    m_oldPorosity( oldPorosity ),
+    m_porosity_n( porosity_n ),
     m_dPorosity_dPressure( dPorosity_dPressure ),
     m_initialPorosity( initialPorosity ),
     m_referencePorosity ( referencePorosity )
@@ -87,10 +87,10 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  real64 getOldPorosity( localIndex const k,
-                         localIndex const q ) const
+  real64 getPorosity_n( localIndex const k,
+                        localIndex const q ) const
   {
-    return m_oldPorosity[k][q];
+    return m_porosity_n[k][q];
   }
 
   GEOSX_HOST_DEVICE
@@ -114,7 +114,7 @@ public:
 protected:
   arrayView2d< real64 > m_newPorosity;
 
-  arrayView2d< real64 > m_oldPorosity;
+  arrayView2d< real64 > m_porosity_n;
 
   arrayView2d< real64 > m_dPorosity_dPressure;
 
@@ -138,12 +138,7 @@ public:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr char const * newPorosityString() { return "porosity"; }
-    static constexpr char const * oldPorosityString() { return "oldPorosity"; }
-    static constexpr char const * dPorosity_dPressureString() { return "dPorosity_dPressure"; }
-    static constexpr char const * initialPorosityString() { return "initialPorosity"; }
-    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
-    static constexpr char const * defaultRefererencePorosityString() { return "defaultReferencePorosity"; }
+    static constexpr char const * defaultReferencePorosityString() { return "defaultReferencePorosity"; }
   } viewKeys;
 
   /**
@@ -152,7 +147,7 @@ public:
    */
   localIndex numElem() const
   {
-    return m_oldPorosity.size( 0 );
+    return m_porosity_n.size( 0 );
   }
 
   /**
@@ -161,7 +156,7 @@ public:
    */
   localIndex numQuad() const
   {
-    return m_oldPorosity.size( 1 );
+    return m_porosity_n.size( 1 );
   }
 
 
@@ -172,17 +167,17 @@ public:
   arrayView2d< real64 const > const  getPorosity() const { return m_newPorosity; }
 
   /**
-   * @brief Const/non-mutable accessor for oldPorosity.
+   * @brief Const/non-mutable accessor for porosity_n.
    * @return Accessor
    */
-  arrayView2d< real64 const > const  getOldPorosity() const { return m_oldPorosity; }
+  arrayView2d< real64 const > const  getPorosity_n() const { return m_porosity_n; }
 
 
   /**
-   * @brief Non-Const/mutable accessor for oldPorosity
+   * @brief Non-Const/mutable accessor for porosity_n
    * @return Accessor
    */
-  arrayView2d< real64 > const getOldPorosity() { return m_oldPorosity; }
+  arrayView2d< real64 > const getPorosity_n() { return m_porosity_n; }
 
 
   /**
@@ -198,11 +193,17 @@ public:
    */
   arrayView2d< real64 const > const  dPorosity_dPressure() const { return m_dPorosity_dPressure; }
 
+  /**
+   * @brief Utility function to scale the reference porosity (for instance, by net-to-gross)
+   * @param[in] scalingFactors the vector of scaling factors (one value per cell) for the reference porosity
+   */
+  void scaleReferencePorosity( arrayView1d< real64 const > scalingFactors ) const;
+
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;
 
   /**
-   * @brief Initialize newPorosity and oldPorosity.
+   * @brief Initialize newPorosity and porosity_n.
    */
   virtual void initializeState() const;
 
@@ -215,7 +216,7 @@ public:
   KernelWrapper createKernelUpdates()
   {
     return KernelWrapper( m_newPorosity,
-                          m_oldPorosity,
+                          m_porosity_n,
                           m_dPorosity_dPressure,
                           m_initialPorosity,
                           m_referencePorosity );
@@ -227,7 +228,7 @@ protected:
 
   array2d< real64 > m_newPorosity;
 
-  array2d< real64 > m_oldPorosity;
+  array2d< real64 > m_porosity_n;
 
   array2d< real64 > m_dPorosity_dPressure;
 

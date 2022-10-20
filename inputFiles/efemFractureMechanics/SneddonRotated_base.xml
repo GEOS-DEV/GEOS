@@ -17,9 +17,8 @@
         newtonMaxIter="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"
-        amgAggresiveCoarseningLevels="1"
+        directParallel="0"
+        solverType="direct"
         logLevel="0"/>
     </SolidMechanicsEmbeddedFractures>
 
@@ -29,11 +28,11 @@
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"/>
+      />
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
-      solidMaterialNames="{ rock }"
+      discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="1"
@@ -57,7 +56,7 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{ rock }"
+      materialList="{ fractureContact }"
       defaultAperture="1e-3"/>
   </ElementRegions>
 
@@ -78,7 +77,7 @@
     <FieldSpecification
       name="xnegconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xneg, xpos }"/>
@@ -86,7 +85,7 @@
     <FieldSpecification
       name="yposconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ ypos }"/>
@@ -94,7 +93,7 @@
     <FieldSpecification
       name="ynegconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="-0.0"
       setNames="{ yneg }"/>
@@ -102,7 +101,7 @@
     <FieldSpecification
       name="zposconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zpos }"/>
@@ -110,16 +109,24 @@
     <FieldSpecification
       name="znegconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="-0.0"
       setNames="{ zneg }"/>
 
     <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+
+    <FieldSpecification
       name="Traction"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="fractureTraction"
+      objectPath="ElementRegions/Fracture"
+      fieldName="traction"
       component="0"
       scale="-1.00e5"/>
   </FieldSpecifications>
@@ -130,13 +137,13 @@
       coordinates="{ -1.0e-3, 0.0 }"
       values="{ 1.0e-6, 1.0e-4 }"/>
   </Functions>
-      
+  
   <Outputs>
     <VTK
       name="vtkOutput"
       plotFileRoot="SneddonRotated"
       plotLevel="3"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
     <Restart
       name="restartOutput"/>

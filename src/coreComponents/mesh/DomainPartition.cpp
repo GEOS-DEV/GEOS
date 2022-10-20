@@ -45,7 +45,6 @@ DomainPartition::DomainPartition( string const & name,
 
   registerGroup( groupKeys.meshBodies );
   registerGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
-  registerGroup< CellBlockManager >( keys::cellManager );
 }
 
 
@@ -56,8 +55,8 @@ void DomainPartition::initializationOrder( string_array & order )
 {
   SortedArray< string > usedNames;
   {
-    order.emplace_back( keys::ConstitutiveManager );
-    usedNames.insert( keys::ConstitutiveManager );
+    order.emplace_back( string( groupKeysStruct::constitutiveManagerString() ) );
+    usedNames.insert( groupKeysStruct::constitutiveManagerString() );
   }
 
   {
@@ -74,74 +73,6 @@ void DomainPartition::initializationOrder( string_array & order )
     }
   }
 }
-
-
-void DomainPartition::generateSets()
-{
-  GEOSX_MARK_FUNCTION;
-
-  MeshLevel & mesh = this->getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager const & nodeManager = mesh.getNodeManager();
-
-  dataRepository::Group const & nodeSets = nodeManager.sets();
-
-  map< string, array1d< bool > > nodeInSet; // map to contain indicator of whether a node is in a set.
-  string_array setNames; // just a holder for the names of the sets
-
-  // loop over all wrappers and fill the nodeIndSet arrays for each set
-  for( auto & wrapper : nodeSets.wrappers() )
-  {
-    string const & name = wrapper.second->getName();
-    nodeInSet[name].resize( nodeManager.size() );
-    nodeInSet[name].setValues< serialPolicy >( false );
-
-    if( nodeSets.hasWrapper( name ) )
-    {
-      setNames.emplace_back( name );
-      SortedArrayView< localIndex const > const & set = nodeSets.getReference< SortedArray< localIndex > >( name );
-      for( localIndex const a : set )
-      {
-        nodeInSet[name][a] = true;
-      }
-    }
-  }
-
-
-  ElementRegionManager & elementRegionManager = mesh.getElemManager();
-  elementRegionManager.forElementSubRegions( [&]( auto & subRegion )
-  {
-    dataRepository::Group & elementSets = subRegion.sets();
-
-    auto const & elemToNodeMap = subRegion.nodeList();
-
-    for( string const & setName : setNames )
-    {
-      arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
-
-      SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName ).reference();
-      for( localIndex k = 0; k < subRegion.size(); ++k )
-      {
-        localIndex const numNodes = subRegion.numNodesPerElement( k );
-
-        localIndex elementInSet = true;
-        for( localIndex i = 0; i < numNodes; ++i )
-        {
-          if( !nodeInCurSet( elemToNodeMap[ k ][ i ] ) )
-          {
-            elementInSet = false;
-            break;
-          }
-        }
-
-        if( elementInSet )
-        {
-          targetSet.insert( k );
-        }
-      }
-    }
-  } );
-}
-
 
 void DomainPartition::setupCommunications( bool use_nonblocking )
 {
@@ -174,7 +105,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
   {
     for( integer const neighborRank : m_metisNeighborList )
     {
-      m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
+      m_neighbors.emplace_back( neighborRank );
     }
   }
 
@@ -215,40 +146,51 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 
   for( integer const neighborRank : secondNeighborRanks )
   {
-    m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
+    m_neighbors.emplace_back( neighborRank );
   }
 
   MpiWrapper::waitAll( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
 
 #endif
 
-  MeshLevel & meshLevel = getMeshBody( 0 ).getMeshLevel( 0 );
-
-  for( NeighborCommunicator const & neighbor : m_neighbors )
+  forMeshBodies( [&]( MeshBody & meshBody )
   {
-    neighbor.addNeighborGroupToMesh( meshLevel );
-  }
 
-  NodeManager & nodeManager = meshLevel.getNodeManager();
-  FaceManager & faceManager = meshLevel.getFaceManager();
-  EdgeManager & edgeManager = meshLevel.getEdgeManager();
+    MeshLevel & meshLevel = meshBody.getBaseDiscretization();
 
-  nodeManager.setMaxGlobalIndex();
+    for( NeighborCommunicator const & neighbor : m_neighbors )
+    {
+      neighbor.addNeighborGroupToMesh( meshLevel );
+    }
 
-  CommunicationTools::getInstance().assignGlobalIndices( faceManager, nodeManager, m_neighbors );
+    NodeManager & nodeManager = meshLevel.getNodeManager();
+    FaceManager & faceManager = meshLevel.getFaceManager();
+    EdgeManager & edgeManager = meshLevel.getEdgeManager();
 
-  CommunicationTools::getInstance().assignGlobalIndices( edgeManager, nodeManager, m_neighbors );
+    nodeManager.setMaxGlobalIndex();
 
-  CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
-                                                                         m_neighbors );
+    CommunicationTools::getInstance().assignGlobalIndices( faceManager,
+                                                           nodeManager,
+                                                           m_neighbors );
 
-  CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
-                                                                         m_neighbors );
+    CommunicationTools::getInstance().assignGlobalIndices( edgeManager,
+                                                           nodeManager,
+                                                           m_neighbors );
 
-  CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
+                                                                           m_neighbors );
 
-  faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
-  faceManager.computeGeometry( nodeManager );
+    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
+                                                                           m_neighbors );
+
+    CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+
+    faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
+    faceManager.computeGeometry( nodeManager );
+
+//    meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+//    {} );
+  } );
 }
 
 void DomainPartition::addNeighbors( const unsigned int idim,

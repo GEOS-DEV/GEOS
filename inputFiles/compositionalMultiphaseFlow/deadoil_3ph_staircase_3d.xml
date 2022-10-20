@@ -7,16 +7,13 @@
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"      
       targetRegions="{ Channel }"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
-      maxCompFractionChange="0.3"
       temperature="300">
       <NonlinearSolverParameters
         newtonTol="1.0e-10"
-        newtonMaxIter="15"/>
+        newtonMaxIter="40"/>
       <LinearSolverParameters
         directParallel="0"/>
     </CompositionalMultiphaseFVM>
@@ -42,13 +39,13 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{ 8.99, -0.01, 7.49 }"
-      xMax="{ 10.01, 1.01, 10.01 }"/>
+      xMin="{ 7.99, -0.01, 9.99 }"
+      xMax="{ 10.01, 2.01, 10.01 }"/>
 
     <Box
       name="sink"
-      xMin="{ 8.99, -0.01, -0.01 }"
-      xMax="{ 10.01, 1.01, 2.51 }"/>
+      xMin="{ 7.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 2.01, 0.01 }"/>
   </Geometry>
 
   <!-- END_SPHINX_INCLUDE_GEOM_BLOCK -->
@@ -56,9 +53,13 @@
   <Events
     maxTime="2e8">
     <PeriodicEvent
-      name="outputs"
+      name="siloOutputs"
       timeFrequency="1e7"
       target="/Outputs/siloOutput"/>
+    <PeriodicEvent
+      name="vtkOutputs"
+      timeFrequency="1e7"
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications1"
@@ -105,10 +106,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        targetRegions="{ Channel }"
-        coefficientName="permeability"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -168,9 +166,9 @@
       setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="pressure"
-      scale="5e6"/>
+      scale="7.5e6"/>
 
-    <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
+    <!-- Initial composition -->
     <FieldSpecification
       name="initialComposition_oil"
       initialCondition="1"
@@ -179,7 +177,6 @@
       fieldName="globalCompFraction"
       component="0"
       scale="0.6"/>
-
     <FieldSpecification
       name="initialComposition_gas"
       initialCondition="1"
@@ -188,7 +185,6 @@
       fieldName="globalCompFraction"
       component="1"
       scale="0.399"/>
-
     <FieldSpecification
       name="initialComposition_water"
       initialCondition="1"
@@ -203,65 +199,76 @@
     <!-- Injection pressure: ~100 bar -->
     <FieldSpecification
       name="sourceTermPressure"
-      objectPath="ElementRegions/Channel"
+      logLevel="1"
+      objectPath="faceManager"
       fieldName="pressure"
       scale="1e7"
       setNames="{ source }"/>
-
+    <!-- Injection temperature -->
+    <FieldSpecification
+      name="sourceTermTemperature"
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="300"
+      setNames="{ source }"/>
     <!-- Injection stream: mostly water -->
     <FieldSpecification
       name="sourceTermComposition_oil"
       setNames="{ source }"
-      objectPath="ElementRegions/Channel"
+      objectPath="faceManager"
       fieldName="globalCompFraction"
       component="0"
       scale="0.1"/>
-
     <FieldSpecification
       name="sourceTermComposition_gas"
       setNames="{ source }"
-      objectPath="ElementRegions/Channel"
+      objectPath="faceManager"
       fieldName="globalCompFraction"
       component="1"
       scale="0.1"/>
-
     <FieldSpecification
       name="sourceTermComposition_water"
       setNames="{ source }"
-      objectPath="ElementRegions/Channel"
+      objectPath="faceManager"
       fieldName="globalCompFraction"
       component="2"
       scale="0.8"/>
 
+    
     <!-- Production pressure: ~50 bar, -->
     <FieldSpecification
-      name="sinkTerm"
-      objectPath="ElementRegions/Channel"
+      name="sinkTermPressure"
+      logLevel="1"
+      objectPath="faceManager"
       fieldName="pressure"
       scale="5e6"
       setNames="{ sink }"/>
-
+    <!-- Production temperature -->
+    <FieldSpecification
+      name="sinkTermTemperature"
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="300"
+      setNames="{ sink }"/>
     <!-- Production stream: same as initial (should not matter due to upwinding) -->
     <FieldSpecification
       name="sinkTermComposition_oil"
       setNames="{ sink }"
-      objectPath="ElementRegions/Channel"
+      objectPath="faceManager"
       fieldName="globalCompFraction"
       component="0"
       scale="0.6"/>
-
     <FieldSpecification
       name="sinkTermComposition_gas"
       setNames="{ sink }"
-      objectPath="ElementRegions/Channel"
+      objectPath="faceManager"
       fieldName="globalCompFraction"
       component="1"
       scale="0.399"/>
-
     <FieldSpecification
       name="sinkTermComposition_water"
       setNames="{ sink }"
-      objectPath="ElementRegions/Channel"
+      objectPath="faceManager"
       fieldName="globalCompFraction"
       component="2"
       scale="0.001"/>
@@ -271,13 +278,13 @@
   <Functions>
     <TableFunction
       name="B_o_table"
-      coordinateFiles="{ pres_pvdo.txt }"
-      voxelFile="B_o_pvdo.txt"/>
+      coordinates="{ 2068000, 5516000, 55160000 }"
+      values="{ 1.05, 1.02, 1.01 }"/>
 
     <TableFunction
       name="visc_o_table"
-      coordinateFiles="{ pres_pvdo.txt }"
-      voxelFile="visc_pvdo.txt"/>
+      coordinates="{ 2068000, 5516000, 55160000 }"
+      values="{ 0.00285, 0.00299, 0.003 }"/>
 
     <TableFunction
       name="B_g_table"
@@ -295,6 +302,8 @@
     <Silo
       name="siloOutput"
       plotLevel="3"/>
+    <VTK
+      name="vtkOutput"/>
 
     <Restart
       name="restartOutput"/>

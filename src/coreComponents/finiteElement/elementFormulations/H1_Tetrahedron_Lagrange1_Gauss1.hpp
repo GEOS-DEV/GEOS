@@ -20,6 +20,7 @@
 #define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1TETRAHEDRONLAGRANGE1GAUSS1
 
 #include "FiniteElementBase.hpp"
+#include "LagrangeBasis1.hpp"
 
 
 namespace geosx
@@ -47,6 +48,10 @@ namespace finiteElement
 class H1_Tetrahedron_Lagrange1_Gauss1 final : public FiniteElementBase
 {
 public:
+
+  /// The type of basis used for this element
+  using BASIS = LagrangeBasis1;
+
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = 4;
   /// The maximum number of support points per element.
@@ -83,6 +88,12 @@ public:
     return numNodes;
   }
 
+  GEOSX_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override
+  {
+    return maxSupportPoints;
+  }
+
   /**
    * @brief Get the number of support points.
    * @param stack Object that holds stack variables.
@@ -103,11 +114,12 @@ public:
    * @param cellSubRegion The cell sub-region for which the element has to be initialized.
    * @param meshData MeshData struct to be filled.
    */
+  template< typename SUBREGION_TYPE >
   static void fillMeshData( NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
-                            CellElementSubRegion const & cellSubRegion,
-                            MeshData & meshData );
+                            SUBREGION_TYPE const & cellSubRegion,
+                            MeshData< SUBREGION_TYPE > & meshData );
 
   /**
    * @brief Empty setup method.
@@ -115,11 +127,22 @@ public:
    * @param meshData MeshData struct filled by @ref fillMeshData.
    * @param stack Object that holds stack variables.
    */
+  template< typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void setupStack( localIndex const & cellIndex,
-                          MeshData const & meshData,
+                          MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack );
+
+
+  /**
+   * @brief Calculate shape functions values at a single point.
+   * @param[in] coords The parent coordinates at which to evaluate the shape function value
+   * @param[out] N The shape function values.
+   */
+  GEOSX_HOST_DEVICE
+  static void calcN( real64 const (&coords)[3],
+                     real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -238,20 +261,22 @@ private:
 
 /// @cond Doxygen_Suppress
 
+template< typename SUBREGION_TYPE >
 GEOSX_FORCE_INLINE
 void H1_Tetrahedron_Lagrange1_Gauss1::
   fillMeshData( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                 EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
                 FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
-                CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
-                MeshData & GEOSX_UNUSED_PARAM( initialization ) )
+                SUBREGION_TYPE const & GEOSX_UNUSED_PARAM( cellSubRegion ),
+                MeshData< SUBREGION_TYPE > & GEOSX_UNUSED_PARAM( initialization ) )
 {}
 
+template< typename SUBREGION_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_Tetrahedron_Lagrange1_Gauss1::
   setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
-              MeshData const & GEOSX_UNUSED_PARAM( meshData ),
+              MeshData< SUBREGION_TYPE > const & GEOSX_UNUSED_PARAM( meshData ),
               StackVariables & GEOSX_UNUSED_PARAM( stack ) )
 {}
 
@@ -275,6 +300,25 @@ H1_Tetrahedron_Lagrange1_Gauss1::
 }
 
 //*************************************************************************************************
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+H1_Tetrahedron_Lagrange1_Gauss1::
+  calcN( real64 const (&coords)[3],
+         real64 (& N)[numNodes] )
+{
+  real64 const r = coords[0];
+  real64 const s = coords[1];
+  real64 const t = coords[2];
+
+  // single quadrature point (centroid), i.e.  r = s = t = 1/4
+  N[0] = 1 - r - s - t;
+  N[1] = r;
+  N[2] = s;
+  N[3] = t;
+}
+
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE

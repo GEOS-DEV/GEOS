@@ -7,12 +7,10 @@
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="2">
@@ -29,22 +27,17 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
-      solidMaterialNames="{ rock }"
       contactRelationName="fractureContact"/>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }"/>
+      targetRegions="{ Fracture }"/>
 
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
-      solidMaterialNames="{ rock }"
       rockToughness="10.0e6"
       mpiCommOrder="1"/>
   <!-- SPHINX_SNEDDON_SOLVER_END -->
@@ -79,8 +72,6 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
         meanPermCoefficient="0.8"/>
     </FiniteVolume>
   </NumericalMethods>
@@ -94,6 +85,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
+      faceBlock="faceElementSubRegion"
       defaultAperture="0.02e-3"
       materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
@@ -133,12 +125,6 @@
 
     <ParallelPlatesPermeability
       name="fracturePerm"/>
-
-    <ElasticIsotropic
-      name="rock"
-      defaultDensity="2700"
-      defaultBulkModulus="16.66666666666666e9"
-      defaultShearModulus="1.0e10"/>
 
     <FrictionlessContact
       name="fractureContact"
@@ -183,7 +169,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ yneg, ypos }"/>
@@ -191,7 +177,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ all }"/>
@@ -199,7 +185,7 @@
     <FieldSpecification
       name="xConstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xneg, xpos }"/>
@@ -226,7 +212,7 @@
      <VTK
       name="vtkOutput"
       plotLevel="2"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
      <TimeHistory
       name="timeHistoryOutput"

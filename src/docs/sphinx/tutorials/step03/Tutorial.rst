@@ -45,7 +45,7 @@ This mesh contains three continuous regions:
   .. image:: reservoir_transparent.png
      :width: 600px
 
-The mesh is defined using the GMSH file format (see :ref:`Meshes` for more information on
+The mesh is defined using the VTK file format (see :ref:`Meshes` for more information on
 the supported mesh file format). Each tetrahedron is associated to a unique tag.
 
 The XML file considered here follows the typical structure of the GEOSX input files:
@@ -82,8 +82,7 @@ with the two-point flux approximation
 as will be defined in the **NumericalMethods** tag.
 The ``targetRegions`` refers only
 to the Reservoir region because we only solve for flow in this region.
-The ``fluidNames`` and ``solidNames`` refer the materials defined
-in the **Constitutive** tag.
+
 
 The ``NonlinearSolverParameters`` and ``LinearSolverParameters`` are used to set usual
 numerical solver parameters such as the linear and nonlinear tolerances, the preconditioner and solver types or the maximum number of nonlinear iterations.
@@ -95,7 +94,7 @@ numerical solver parameters such as the linear and nonlinear tolerances, the pre
 Mesh
 -------
 
-Here, we use the ``PAMELAMeshGenerator`` to load the mesh (see :ref:`ImportingExternalMesh`).
+Here, we use the ``VTKMesh`` to load the mesh (see :ref:`ImportingExternalMesh`).
 The syntax to import external meshes is simple : in the XML file,
 the mesh ``file`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified ``name`` label for the mesh object.
 
@@ -160,11 +159,6 @@ Defining the numerical method used in the solver, we will provide information on
   :start-after: <!-- SPHINX_FIELD_CASE_NUMERICAL -->
   :end-before: <!-- SPHINX_FIELD_CASE_NUMERICAL_END -->
 
-The ``TwoPointFluxApproximation`` node should specify
-the primary field to solve for as ``fieldName``.
-For a flow problem, this field is the pressure.
-Here we specified ``targetRegions`` as we only solve flow for reservoir.
-The field under ``coefficientName`` is used during TPFA transmissibilities construction.
 
 .. _ElementRegions_tag_field_case:
 
@@ -182,13 +176,13 @@ There are two methods to achieve this regional solve.
         .. code-block:: xml
 
                 <ElementRegions>
-                  <CellElementRegion 
+                  <CellElementRegion
                     name="Reservoir"
-                    cellBlocks="{Reservoir_TETRA}"
+                    cellBlocks="{2_tetrahedra}"
                     materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
                 </ElementRegions>
 
-- The second solution is to define all the ``CellElementRegions`` as they are in the GMSH file, but defining the solvers only on the reservoir layer. In this case, the **ElementRegions** tag is :
+- The second solution is to define all the ``CellElementRegions`` as they are in the VTK file, but defining the solvers only on the reservoir layer. In this case, the **ElementRegions** tag is :
 
         .. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
                 :language: xml
@@ -300,20 +294,20 @@ The simulation can be launched with:
 
 .. code-block:: console
 
-  geosx -i FieldCaseTutorial1.xml
+  geosx -i FieldCaseTutorial3_smoke.xml
 
 One can notice the correct load of the field function among the starting output messages
 
 .. code-block:: console
 
-        Adding Mesh: PAMELAMeshGenerator, SyntheticMesh
+        Adding Mesh: VTKMesh, SyntheticMesh
+        Adding Event: PeriodicEvent, solverApplications
+        Adding Event: PeriodicEvent, outputs
         Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
         Adding Geometric Object: Box, all
         Adding Geometric Object: Box, source
         Adding Geometric Object: Box, sink
-        Adding Output: VTK, syntheticReservoirVizFile
-        Adding Event: PeriodicEvent, solverApplications
-        Adding Event: PeriodicEvent, outputs
+        Adding Output: VTK, reservoir_with_properties
            TableFunction: timeInj
            TableFunction: initialPressureFunc
            TableFunction: permxFunc
@@ -327,18 +321,16 @@ Visualization of results
 ------------------------------------
 
 We can open the file `syntheticReservoirVizFile.pvd` with Paraview to visualize the simulation
-results. The initial pressure field in the reservoir region is provided below as an example.
-
-.. image:: pressure_initial.png
-   :width: 600px
-
-Since, in the event block, we have asked for the output to be generated at regular
-intervals throughout the simulation, we can also visualize the pressure
+results. In the event block, we have asked for the output to be generated at regular
+intervals throughout the simulation, we can thus visualize the pressure
 distribution at different simulation times, showing the variation in the injection control.
 
 
-.. image:: pressure_5e8.png
+.. image:: pressure_1e7.png
    :width: 600px
+
+.. image:: pressure_1e8.png
+  :width: 600px
 
 -----------------------------------
 To go further

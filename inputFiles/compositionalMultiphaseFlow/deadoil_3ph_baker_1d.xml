@@ -7,12 +7,7 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ region }"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
-      temperature="300"
-      computeCFLNumbers="1">
+      temperature="300">
       <NonlinearSolverParameters
         newtonTol="1.0e-10"
         newtonMaxIter="15"
@@ -67,6 +62,11 @@
       target="/Solvers/compflow"/>
 
     <PeriodicEvent
+      name="statistics"
+      timeFrequency="1e6"
+      target="/Tasks/compflowStatistics"/>
+
+    <PeriodicEvent
       name="restarts"
       timeFrequency="1e7"
       targetExactTimestep="0"
@@ -76,9 +76,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -238,4 +236,14 @@
     <Restart
       name="restartOutput"/>
   </Outputs>
+  
+  <Tasks>
+    <CompositionalMultiphaseStatistics
+      name="compflowStatistics"
+      flowSolverName="compflow"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
+  </Tasks>
+  
 </Problem>
