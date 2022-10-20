@@ -240,7 +240,7 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
 
   SurfaceElementStencil & fractureStencil = getStencil< SurfaceElementStencil >( mesh, viewKeyStruct::fractureStencilString() );
   fractureStencil.setMeanPermCoefficient( m_meanPermCoefficient );
-  fractureStencil.move( LvArray::MemorySpace::host );
+  fractureStencil.move( hostMemorySpace );
 
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( faceElementRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();

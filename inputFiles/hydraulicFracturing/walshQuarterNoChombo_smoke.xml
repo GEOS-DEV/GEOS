@@ -19,7 +19,7 @@
                                    cb1,  cb1, cb1 }"/>
   </Mesh>
 
-  <Solvers 
+  <Solvers
     gravityVector="{0.0,0.0,-0.0}">
 
     <Hydrofracture
@@ -71,7 +71,7 @@
       mpiCommOrder="1">
     </SurfaceGenerator>
   </Solvers>
-  
+
    <Events maxTime="0.001">
     <SoloEvent
       name="preFracture"
@@ -99,5 +99,5 @@
                    targetExactTimestep="1"
                    target="/Outputs/sidreRestart" />
   </Events>
-  
+
 </Problem>

@@ -76,9 +76,9 @@
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
-    <!-- <SoloEvent
+    <SoloEvent
       name="postFracOuput"
-      target="/Outputs/siloOutput"/> -->
+      target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="solverApplications1"
@@ -87,16 +87,16 @@
       forceDt="1.0e-4"
       target="/Solvers/hydrofracture" />
 
-    <!-- <PeriodicEvent name="outputs2"
+    <PeriodicEvent name="outputs2"
                    beginTime="0.0"
                    timeFrequency="0.0001"
                    targetExactTimestep="0"
-                   target="/Outputs/siloOutput" /> -->
+                   target="/Outputs/siloOutput" />
 
-    <PeriodicEvent name="chomboCoupling"
+    <!-- <PeriodicEvent name="chomboCoupling"
                    cycleFrequency="1"
                    targetExactTimestep="0"
-                   target="/Outputs/chomboCoupling" />
+                   target="/Outputs/chomboCoupling" /> -->
   </Events>
 
 

@@ -129,7 +129,8 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
                                    N,
                                    gravityForce,
                                    reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
-  stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
+  stiffness.template BTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian ); // need to use full BTDB compute for hip
+  //stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
 }
 
 
@@ -145,7 +146,8 @@ real64 ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYP
   real64 maxForce = 0;
 
   // TODO: Does this work if BTDB is non-symmetric?
-  CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
+  // the lower-fill causes a segfault on amd gpus with hip as of rocm@5.1.0 and cce@14.0.1
+  // CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
   for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
   {

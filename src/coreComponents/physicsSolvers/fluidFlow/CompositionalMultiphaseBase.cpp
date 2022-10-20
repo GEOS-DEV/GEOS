@@ -566,16 +566,16 @@ void CompositionalMultiphaseBase::updateRelPermModel( ObjectManagerBase & dataGr
   string const & relPermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
   RelativePermeabilityBase & relPerm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relPermName );
 
-  constitutive::constitutiveUpdatePassThru( relPerm, [&] ( auto & castedRelPerm )
-  {
-    typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
+  // constitutive::constitutiveUpdatePassThru( relPerm, [&] ( auto & castedRelPerm )
+  // {
+  //   typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
 
-    isothermalCompositionalMultiphaseBaseKernels::
-      RelativePermeabilityUpdateKernel::
-      launch< parallelDevicePolicy<> >( dataGroup.size(),
-                                        relPermWrapper,
-                                        phaseVolFrac );
-  } );
+  //   isothermalCompositionalMultiphaseBaseKernels::
+  //     RelativePermeabilityUpdateKernel::
+  //     launch< parallelDevicePolicy<> >( dataGroup.size(),
+  //                                       relPermWrapper,
+  //                                       phaseVolFrac );
+  // } );
 }
 
 void CompositionalMultiphaseBase::updateCapPressureModel( ObjectManagerBase & dataGroup ) const
@@ -590,16 +590,16 @@ void CompositionalMultiphaseBase::updateCapPressureModel( ObjectManagerBase & da
     string const & cappresName = dataGroup.getReference< string >( viewKeyStruct::capPressureNamesString() );
     CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( dataGroup, cappresName );
 
-    constitutive::constitutiveUpdatePassThru( capPressure, [&] ( auto & castedCapPres )
-    {
-      typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
+    // constitutive::constitutiveUpdatePassThru( capPressure, [&] ( auto & castedCapPres )
+    // {
+    //   typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
 
-      isothermalCompositionalMultiphaseBaseKernels::
-        CapillaryPressureUpdateKernel::
-        launch< parallelDevicePolicy<> >( dataGroup.size(),
-                                          capPresWrapper,
-                                          phaseVolFrac );
-    } );
+    //   isothermalCompositionalMultiphaseBaseKernels::
+    //     CapillaryPressureUpdateKernel::
+    //     launch< parallelDevicePolicy<> >( dataGroup.size(),
+    //                                       capPresWrapper,
+    //                                       phaseVolFrac );
+    // } );
   }
 }
 
@@ -952,47 +952,47 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
       // Step 3.4: compute the hydrostatic pressure values
 
-      constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-      {
-        using FluidType = TYPEOFREF( castedFluid );
-        typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+      // constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+      // {
+      //   using FluidType = TYPEOFREF( castedFluid );
+      //   typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-        // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
-        isothermalCompositionalMultiphaseBaseKernels::
-          HydrostaticPressureKernel::ReturnType const returnValue =
-          isothermalCompositionalMultiphaseBaseKernels::
-            HydrostaticPressureKernel::launch( numPointsInTable,
-                                               numComps,
-                                               numPhases,
-                                               ipInit,
-                                               maxNumEquilIterations,
-                                               equilTolerance,
-                                               gravVector,
-                                               minElevation,
-                                               elevationIncrement,
-                                               datumElevation,
-                                               datumPressure,
-                                               fluidWrapper,
-                                               compFracTableWrappers.toViewConst(),
-                                               tempTableWrapper,
-                                               elevationValues.toNestedView(),
-                                               pressureValues.toView() );
+      //   // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
+      //   isothermalCompositionalMultiphaseBaseKernels::
+      //     HydrostaticPressureKernel::ReturnType const returnValue =
+      //     isothermalCompositionalMultiphaseBaseKernels::
+      //       HydrostaticPressureKernel::launch( numPointsInTable,
+      //                                          numComps,
+      //                                          numPhases,
+      //                                          ipInit,
+      //                                          maxNumEquilIterations,
+      //                                          equilTolerance,
+      //                                          gravVector,
+      //                                          minElevation,
+      //                                          elevationIncrement,
+      //                                          datumElevation,
+      //                                          datumPressure,
+      //                                          fluidWrapper,
+      //                                          compFracTableWrappers.toViewConst(),
+      //                                          tempTableWrapper,
+      //                                          elevationValues.toNestedView(),
+      //                                          pressureValues.toView() );
 
-        GEOSX_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
-                        CompositionalMultiphaseBase::catalogName() << " " << getName()
-                                                                   << ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n"
-                                                                   << "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n"
-                                                                   << "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
-                        std::runtime_error );
+      //   GEOSX_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
+      //                   CompositionalMultiphaseBase::catalogName() << " " << getName()
+      //                                                              << ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n"
+      //                                                              << "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n"
+      //                                                              << "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
+      //                   std::runtime_error );
 
-        GEOSX_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
-                             CompositionalMultiphaseBase::catalogName() << " " << getName()
-                                                                        << ": currently, GEOSX assumes that there is only one mobile phase when computing the hydrostatic pressure. \n"
-                                                                        << "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n"
-                                                                        << "Please make sure that only one phase is mobile at the beginning of the simulation. \n"
-                                                                        << "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
+      //   GEOSX_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
+      //                        CompositionalMultiphaseBase::catalogName() << " " << getName()
+      //                                                                   << ": currently, GEOSX assumes that there is only one mobile phase when computing the hydrostatic pressure. \n"
+      //                                                                   << "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n"
+      //                                                                   << "Please make sure that only one phase is mobile at the beginning of the simulation. \n"
+      //                                                                   << "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
 
-      } );
+      // } );
 
       // Step 3.5: create hydrostatic pressure table
 
@@ -1618,20 +1618,20 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
       arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
         subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( extrinsicMeshData::flow::globalCompFraction::key() );
 
-      constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-      {
-        using FluidType = TYPEOFREF( castedFluid );
-        using ExecPolicy = typename FluidType::exec_policy;
-        typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+      // constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+      // {
+      //   using FluidType = TYPEOFREF( castedFluid );
+      //   using ExecPolicy = typename FluidType::exec_policy;
+      //   typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-        thermalCompositionalMultiphaseBaseKernels::
-          FluidUpdateKernel::
-          launch< ExecPolicy >( targetSet,
-                                fluidWrapper,
-                                bcPres,
-                                bcTemp,
-                                compFrac );
-      } );
+      //   thermalCompositionalMultiphaseBaseKernels::
+      //     FluidUpdateKernel::
+      //     launch< ExecPolicy >( targetSet,
+      //                           fluidWrapper,
+      //                           bcPres,
+      //                           bcTemp,
+      //                           compFrac );
+      // } );
 
       arrayView1d< integer const > const ghostRank =
         subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
