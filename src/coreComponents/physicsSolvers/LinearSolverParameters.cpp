@@ -161,8 +161,7 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
   registerWrapper( viewKeyStruct::amgAggressiveNumLevelsString(), &m_parameters.amg.aggressiveNumLevels ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG number levels for aggressive coarsening \n"
-                    "Available options are: TODO" );
+    setDescription( "AMG number of levels for aggressive coarsening \n" );
 
   registerWrapper( viewKeyStruct::amgAggressiveInterpTypeString(), &m_parameters.amg.aggressiveInterpType ).
     setApplyDefaultValue( 0 ).
