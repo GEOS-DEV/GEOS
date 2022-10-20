@@ -512,18 +512,18 @@ struct StressComputation
          real64 gradN[ numNodesPerElem ][ 3 ];
      
      
-         real32 uelemxx[numNodesPerElem] = {{0.0}};
-         real32 uelemyy[numNodesPerElem] = {{0.0}};
-         real32 uelemzz[numNodesPerElem] = {{0.0}};
-         real32 uelemxy[numNodesPerElem] = {{0.0}};
-         real32 uelemxz[numNodesPerElem] = {{0.0}};
-         real32 uelemyz[numNodesPerElem] = {{0.0}};
-         real32 auxx[numNodesPerElem] = {{0.0}};
-         real32 auyy[numNodesPerElem] = {{0.0}};
-         real32 auzz[numNodesPerElem] = {{0.0}};
-         real32 auxy[numNodesPerElem] = {{0.0}};
-         real32 auxz[numNodesPerElem] = {{0.0}};
-         real32 auyz[numNodesPerElem] = {{0.0}};
+         real32 uelemxx[numNodesPerElem] = {0.0};
+         real32 uelemyy[numNodesPerElem] = {0.0};
+         real32 uelemzz[numNodesPerElem] = {0.0};
+         real32 uelemxy[numNodesPerElem] = {0.0};
+         real32 uelemxz[numNodesPerElem] = {0.0};
+         real32 uelemyz[numNodesPerElem]= {0.0};
+         real32 auxx[numNodesPerElem] = {0.0};
+         real32 auyy[numNodesPerElem] = {0.0};
+         real32 auzz[numNodesPerElem] = {0.0};
+         real32 auxy[numNodesPerElem] = {0.0};
+         real32 auxz[numNodesPerElem] = {0.0};
+         real32 auyz[numNodesPerElem] = {0.0};
      
      
          FE_TYPE::calcN( q, N );
@@ -665,12 +665,12 @@ struct VelocityComputation
           FE_TYPE::calcN( q, N );
           real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
       
-          real32 uelemx[numNodesPerElem] = {{0.0}};
-          real32 uelemy[numNodesPerElem] = {{0.0}};
-          real32 uelemz[numNodesPerElem] = {{0.0}};
-          real32 flowx[numNodesPerElem] = {{0.0}};
-          real32 flowy[numNodesPerElem] = {{0.0}};
-          real32 flowz[numNodesPerElem] = {{0.0}};
+          real32 uelemx[numNodesPerElem] = {0.0};
+          real32 uelemy[numNodesPerElem] = {0.0};
+          real32 uelemz[numNodesPerElem] = {0.0};
+          real32 flowx[numNodesPerElem] = {0.0};
+          real32 flowy[numNodesPerElem] = {0.0};
+          real32 flowz[numNodesPerElem] = {0.0};
                 
           // Stiffness part
           for (localIndex j = 0; j < numNodesPerElem; ++j)
