@@ -769,10 +769,9 @@ INPUT = @PROJECT_SOURCE_DIR@/coreComponents/common \
         @PROJECT_SOURCE_DIR@/coreComponents/finiteElement/kernelInterface \
         @PROJECT_SOURCE_DIR@/coreComponents/mesh/ExtrinsicMeshData.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp \
-        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp \
-        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp \
-        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp \
-        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/kernels/ExplicitFiniteStrain.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/kernels/ExplicitSmallStrain.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/finiteVolume \
         @PROJECT_SOURCE_DIR@/coreComponents/functions \
         @PROJECT_SOURCE_DIR@/coreComponents/fieldSpecification \
