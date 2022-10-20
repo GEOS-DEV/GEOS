@@ -8,19 +8,15 @@
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
-      fluidNames="{ fluid }"
-      solidNames="{ rock, rock, rockWell, rockWell }"
-      permeabilityNames="{ rockPerm, rockPerm, rockPermWell, rockPermWell }"
-      relPermNames="{ relperm }"
-      capPressureNames="{ cappres }"
       temperature="307.15"
       initialDt="1"
       useMass="1"
-      computeCFLNumbers="1"
       targetRegions="{ aquiferTop, aquiferBottom, injectionWell, leakyWell }">
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
-        newtonMaxIter="100"
+        newtonMaxIter="20"
+	timeStepIncreaseIterLimit="0.5"
+	timeStepDecreaseIterLimit="0.9"	
         maxTimeStepCuts="5"
         lineSearchAction="Attempt"/>
       <LinearSolverParameters
@@ -107,17 +103,13 @@
     <PeriodicEvent
       name="solverApplications2"
       beginTime="1e4"	
-      forceDt="1e4"
       target="/Solvers/compflow"/>
-    
   </Events>
 
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -147,6 +139,15 @@
       name="leakyWell"
       cellBlocks="{ aquiferTop11, aquitard11, aquiferBottom11 }"
       materialList="{ fluid, rockWell, relperm, cappres }"/>
+    <CellElementRegion
+      name="barrier"
+      cellBlocks="{ aquitard00, aquitard01, aquitard02,
+                    aquitard10,             aquitard12,
+                    aquitard20, aquitard21, aquitard22,
+                    aquitard30, aquitard31, aquitard32,
+                    aquitard40, aquitard41, aquitard42,
+                    aquiferTop31 }"
+      materialList="{ }"/>
   </ElementRegions>
   <!-- SPHINX_ELEMENT_REGIONS_END -->    
   
@@ -225,32 +226,119 @@
       setNames="{ source }"/>
     <!-- SPHINX_SOURCE_BC_END -->                      
     
-    <!-- SPHINX_DIRICHLET_BC -->                  
+    <!-- SPHINX_DIRICHLET_BC -->
     <FieldSpecification   
-      name="bcPressure"
-      objectPath="ElementRegions"
+      name="bcPressureAquiferBottom"
+      objectPath="ElementRegions/aquiferBottom"
       setNames="{ east, west, south, north }"
       fieldName="pressure"
       functionName="pressureFunction"
       scale="1"/>
     <FieldSpecification
-      name="bcTemperature"
-      objectPath="ElementRegions"
+      name="bcTemperatureAquiferBottom"
+      objectPath="ElementRegions/aquiferBottom"
       setNames="{ east, west, south, north }"
       fieldName="temperature"
       functionName="initTempTable"
       scale="1"/>
     <FieldSpecification
-      name="bcCompositionCO2"
+      name="bcCompositionCO2AquiferBottom"
       setNames="{ east, west, south, north }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/aquiferBottom"
       fieldName="globalCompFraction"
       component="0"
       scale="0.000001"/>
     <FieldSpecification
-      name="bcCompositionWater"
+      name="bcCompositionWaterAquiferBottom"
       setNames="{ east, west, south, north }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/aquiferBottom"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.999999"/>
+
+    <FieldSpecification   
+      name="bcPressureAquiferTop"
+      objectPath="ElementRegions/aquiferTop"
+      setNames="{ east, west, south, north }"
+      fieldName="pressure"
+      functionName="pressureFunction"
+      scale="1"/>
+    <FieldSpecification
+      name="bcTemperatureAquiferTop"
+      objectPath="ElementRegions/aquiferTop"
+      setNames="{ east, west, south, north }"
+      fieldName="temperature"
+      functionName="initTempTable"
+      scale="1"/>
+    <FieldSpecification
+      name="bcCompositionCO2AquiferTop"
+      setNames="{ east, west, south, north }"
+      objectPath="ElementRegions/aquiferTop"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.000001"/>
+    <FieldSpecification
+      name="bcCompositionWaterAquiferTop"
+      setNames="{ east, west, south, north }"
+      objectPath="ElementRegions/aquiferTop"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.999999"/>
+
+    <FieldSpecification   
+      name="bcPressureLeakyWell"
+      objectPath="ElementRegions/leakyWell"
+      setNames="{ east, west, south, north }"
+      fieldName="pressure"
+      functionName="pressureFunction"
+      scale="1"/>
+    <FieldSpecification
+      name="bcTemperatureLeakyWell"
+      objectPath="ElementRegions/leakyWell"
+      setNames="{ east, west, south, north }"
+      fieldName="temperature"
+      functionName="initTempTable"
+      scale="1"/>
+    <FieldSpecification
+      name="bcCompositionCO2LeakyWell"
+      setNames="{ east, west, south, north }"
+      objectPath="ElementRegions/leakyWell"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.000001"/>
+    <FieldSpecification
+      name="bcCompositionWaterLeakyWell"
+      setNames="{ east, west, south, north }"
+      objectPath="ElementRegions/leakyWell"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.999999"/>
+
+    <FieldSpecification   
+      name="bcPressureInjectionWell"
+      objectPath="ElementRegions/injectionWell"
+      setNames="{ east, west, south, north }"
+      fieldName="pressure"
+      functionName="pressureFunction"
+      scale="1"/>
+    <FieldSpecification
+      name="bcTemperatureInjectionWell"
+      objectPath="ElementRegions/injectionWell"
+      setNames="{ east, west, south, north }"
+      fieldName="temperature"
+      functionName="initTempTable"
+      scale="1"/>
+    <FieldSpecification
+      name="bcCompositionCO2InjectionWell"
+      setNames="{ east, west, south, north }"
+      objectPath="ElementRegions/injectionWell"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.000001"/>
+    <FieldSpecification
+      name="bcCompositionWaterInjectionWell"
+      setNames="{ east, west, south, north }"
+      objectPath="ElementRegions/injectionWell"
       fieldName="globalCompFraction"
       component="1"
       scale="0.999999"/>

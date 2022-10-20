@@ -26,7 +26,7 @@ This benchmark test is based on the XML file located below:
 
 .. code-block:: console
 
-  ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_benchmark.xml
+  inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_benchmark.xml
 
 ------------------------------------------------------------------------
 Problem description
