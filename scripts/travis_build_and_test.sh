@@ -74,10 +74,25 @@ fi
 
 # "Make" target check (builds geosx executable target only if true)
 # Use one process to prevent out-of-memory error
+echo "================== DISK USAGE INFO =================="
+echo "                     Before make                     "
+echo "Disk space availability:" 
+df -h .
+echo "Current directory size:"
+dh -hs
+dh -hs
+echo "================ END DISK USAGE INFO ================"
 if [[ "$*" == *--build-exe-only* ]]; then
   or_die make -j 1 geosx VERBOSE=1
 else
   or_die make -j $(nproc) VERBOSE=1
+echo "================== DISK USAGE INFO =================="
+echo "                      After make                     "
+echo "Disk space availability:" 
+df -h .
+echo "Current directory size:"
+dh -hs
+echo "================ END DISK USAGE INFO ================"
 
   # Verbosity check for installation to prevent hitting Travis log limit
   if [[ "$*" == *--reduce-install-logs* ]]; then
