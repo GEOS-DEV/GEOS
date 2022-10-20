@@ -78,7 +78,8 @@ if [[ "$*" == *--build-exe-only* ]]; then
   or_die make -j $(nproc) geosx
 else
   or_die make -j $(nproc) geosx
-  or_die make -j $(nproc)
+  make -j $(nproc)
+  or_die make -j 2
 
   # Verbosity check for installation to prevent hitting Travis log limit
   if [[ "$*" == *--reduce-install-logs* ]]; then
