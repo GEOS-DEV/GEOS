@@ -12,7 +12,6 @@ free -m
 function or_die () {
     "$@"
     local status=$?
-    df -h
 
     if [[ $status != 0 ]] ; then
         echo ERROR $status command: $@
@@ -78,6 +77,7 @@ fi
 if [[ "$*" == *--build-exe-only* ]]; then
   or_die make -j $(nproc) geosx
 else
+  or_die make -j $(nproc) geosx
   or_die make -j $(nproc)
 
   # Verbosity check for installation to prevent hitting Travis log limit
