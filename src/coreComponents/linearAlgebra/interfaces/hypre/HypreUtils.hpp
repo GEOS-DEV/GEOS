@@ -305,6 +305,52 @@ inline HYPRE_Int getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType
 }
 
 /**
+ * @brief Returns hypre's identifier of the AMG interpolation type.
+ * @param type AMG interpolation type
+ * @return hypre AMG interpolation type identifier code
+ */
+inline HYPRE_Int getAMGInterpolationType( LinearSolverParameters::AMG::InterpType const & type )
+{
+  static map< LinearSolverParameters::AMG::InterpType, HYPRE_Int > const typeMap =
+  {
+    { LinearSolverParameters::AMG::InterpType::default_, -1 },
+    { LinearSolverParameters::AMG::InterpType::modClass, 0 },
+    { LinearSolverParameters::AMG::InterpType::direct, 3 },
+    { LinearSolverParameters::AMG::InterpType::multipass, 4 },
+    { LinearSolverParameters::AMG::InterpType::extI, 6 },
+    { LinearSolverParameters::AMG::InterpType::std, 8 },
+    { LinearSolverParameters::AMG::InterpType::ext, 14 },
+    { LinearSolverParameters::AMG::InterpType::dirBAMG, 15 },
+    { LinearSolverParameters::AMG::InterpType::modExt, 16 },
+    { LinearSolverParameters::AMG::InterpType::modExtI, 17 },
+    { LinearSolverParameters::AMG::InterpType::modExtE, 18 },
+  };
+  return findOption( typeMap, type, "multigrid interpolation", "HyprePreconditioner" );
+}
+
+/**
+ * @brief Returns hypre's identifier of the AMG aggressive interpolation type.
+ * @param type AMG aggressive interpolation type
+ * @return hypre AMG aggressive interpolation type identifier code
+ */
+inline HYPRE_Int getAMGAggressiveInterpolationType( LinearSolverParameters::AMG::AggInterpType const & type )
+{
+  static map< LinearSolverParameters::AMG::AggInterpType, HYPRE_Int > const typeMap =
+  {
+    { LinearSolverParameters::AMG::InterpType::default_, -1 },
+    { LinearSolverParameters::AMG::InterpType::extIStg2, 1 },
+    { LinearSolverParameters::AMG::InterpType::stdStg2, 2 },
+    { LinearSolverParameters::AMG::InterpType::extStg2, 3 },
+    { LinearSolverParameters::AMG::InterpType::multipass, 4 },
+    { LinearSolverParameters::AMG::InterpType::modExt, 5 },
+    { LinearSolverParameters::AMG::InterpType::modExtI, 6 },
+    { LinearSolverParameters::AMG::InterpType::modExtE, 7 },
+    { LinearSolverParameters::AMG::InterpType::modMultipass, 8 },
+  };
+  return findOption( typeMap, type, "multigrid aggressive interpolation", "HyprePreconditioner" );
+}
+
+/**
  * @brief Returns hypre's identifier of the AMG ILU smoother type.
  * @param type AMG ILU smoother type
  * @return hypre AMG ILU smoother type identifier code

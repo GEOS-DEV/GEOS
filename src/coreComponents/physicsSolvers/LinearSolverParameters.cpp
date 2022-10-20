@@ -142,10 +142,10 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
                     "Available options are: TODO" );
 
   registerWrapper( viewKeyStruct::amgInterpolationString(), &m_parameters.amg.interpolationType ).
-    setApplyDefaultValue( 6 ).
+    setApplyDefaultValue( m_parameters.amg.interpolationType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG interpolation algorithm\n"
-                    "Available options are: TODO" );
+    setDescription( "AMG interpolation algorithm. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::AMG::InterpType >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::amgInterpMaxNonZerosString(), &m_parameters.amg.interpolationMaxNonZeros ).
     setApplyDefaultValue( 4 ).
@@ -164,10 +164,10 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setDescription( "AMG number of levels for aggressive coarsening \n" );
 
   registerWrapper( viewKeyStruct::amgAggressiveInterpTypeString(), &m_parameters.amg.aggressiveInterpType ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( m_parameters.amg.aggressiveInterpType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG interpolation type for aggressive coarsening \n"
-                    "Available options are: TODO" );
+    setDescription( "AMG aggressive interpolation algorithm. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::AMG::AggInterpType >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::amgThresholdString(), &m_parameters.amg.threshold ).
     setApplyDefaultValue( m_parameters.amg.threshold ).

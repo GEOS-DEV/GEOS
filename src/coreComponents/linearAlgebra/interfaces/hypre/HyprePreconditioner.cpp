@@ -163,16 +163,22 @@ void createAMG( LinearSolverParameters const & params,
   // Coarsening options: Only PMIS is supported on GPU
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( precond.ptr, hypre::getAMGCoarseningType( params.amg.coarseningType ) ) );
 
-  // Interpolation options: Use options 3, 6, 14 or 15.
-  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( precond.ptr, params.amg.interpolationType ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPMaxElmts( precond.ptr, params.amg.interpolationMaxNonZeros ) );
+  // Interpolation options
+  {
+     HYPRE_Int const interpType = hypre::getAMGInterpolationType( params.amg.interpolationType );
+
+     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( precond.ptr, interpType );
+     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPMaxElmts( precond.ptr, params.amg.interpolationMaxNonZeros ) );
+  }
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( precond.ptr, params.amg.numFunctions ) );
 
   if( params.amg.aggressiveNumLevels )
   {
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( precond.ptr, params.amg.aggressiveNumLevels ) ); // agg_num_levels = 1
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggInterpType( precond.ptr, params.amg.aggressiveInterpType) );
+    HYPRE_Int const aggInterpType = hypre::getAMGAggressiveInterpolationType( params.amg.aggressiveInterpType );
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( precond.ptr, params.amg.aggressiveNumLevels ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggInterpType( precond.ptr, aggInterpType );
   }
 
   // Set coarsest level solver

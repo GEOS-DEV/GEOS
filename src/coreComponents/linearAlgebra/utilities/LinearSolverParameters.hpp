@@ -114,21 +114,21 @@ struct LinearSolverParameters
   /// Krylov-method parameters
   struct Krylov
   {
-    real64 relTolerance = 1e-6;       ///< Relative convergence tolerance for iterative solvers
+    real64  relTolerance = 1e-6;      ///< Relative convergence tolerance for iterative solvers
     integer maxIterations = 200;      ///< Max iterations before declaring convergence failure
     integer maxRestart = 200;         ///< Max number of vectors in Krylov basis before restarting
     integer useAdaptiveTol = false;   ///< Use Eisenstat-Walker adaptive tolerance
-    real64 weakestTol = 1e-3;         ///< Weakest allowed tolerance when using adaptive method
+    real64  weakestTol = 1e-3;        ///< Weakest allowed tolerance when using adaptive method
   }
   krylov;                             ///< Krylov-method parameter struct
 
   /// Matrix-scaling parameters
   struct Scaling
   {
-    integer useRowScaling = false;      ///< Apply row scaling
-    integer useRowColScaling = false;   ///< Apply row and column scaling (not yet implemented)
+    integer useRowScaling = false;    ///< Apply row scaling
+    integer useRowColScaling = false; ///< Apply row and column scaling (not yet implemented)
   }
-  scaling;                              ///< Matrix-scaling parameter struct
+  scaling;                            ///< Matrix-scaling parameter struct
 
   /// Algebraic multigrid parameters
   struct AMG
@@ -165,6 +165,36 @@ struct LinearSolverParameters
       ict,       ///< Incomplete Cholesky with thresholding
     };
 
+    /// AMG interpolation type
+    enum class InterpType : integer
+    {
+      default_,  ///< Use LAI's default option
+      modClass,  ///< Modified classical
+      direct,    ///< Direct (GPU support in hypre)
+      multipass, ///< Multipass (GPU support in hypre)
+      extI,      ///< Extended+i (GPU support in hypre)
+      std,       ///< Standard
+      ext,       ///< Extended classical (GPU support in hypre)
+      dirBAMG,   ///< Direct with separation of weights (GPU support in hypre)
+      modExt,    ///< Modularized extended classical (GPU support in hypre)
+      modExtI,   ///< Modularized extended+i (GPU support in hypre)
+      modExtE,   ///< Modularized extended+e (GPU support in hypre)
+    };
+
+    /// AMG interpolation type for aggressive coarsening levels (HYPRE only)
+    enum class AggInterpType : integer
+    {
+      default_,     ///< Use LAI's default option
+      extIStg2,     ///< Extended+i 2-stage (GPU support) - 1
+      stdStg2,      ///< Standard 2-stage - 2
+      extStg2,      ///< Extended 2-stage (GPU support) - 3
+      multipass,    ///< Multipass (GPU support) - 4
+      modExt,       ///< Modularized Extended (GPU support) - 5
+      modExtI,      ///< Modularized Extended+i (GPU support) - 6
+      modExtE,      ///< Modularized Extended+e (GPU support) - 7
+      modMultipass, ///< Modularized Multipass (GPU support) - 8
+    };
+
     /// AMG coarse solver type
     enum class CoarseType : integer
     {
@@ -186,21 +216,21 @@ struct LinearSolverParameters
       rigidBodyModes, ///< Rigid body modes
     };
 
-    integer maxLevels = 20;                         ///< Maximum number of coarsening levels
-    CycleType cycleType = CycleType::V;             ///< AMG cycle type
-    SmootherType smootherType = SmootherType::fgs;  ///< Smoother type
-    real64 relaxWeight = 1.0;                       ///< Relaxation weight for the smoother
-    CoarseType coarseType = CoarseType::direct;     ///< Coarse-level solver/smoother
-    string coarseningType = "HMIS";                 ///< Coarsening algorithm
-    integer interpolationType = 6;                  ///< Interpolation algorithm
-    integer interpolationMaxNonZeros = 4;           ///< Interpolation - Maximum number of nonzeros per row
-    integer numSweeps = 2;                          ///< Number of smoother sweeps
-    integer numFunctions = 1;                       ///< Number of amg functions
-    integer aggressiveNumLevels = 0;                ///< Number of levels for aggressive coarsening.
-    integer aggressiveInterpType = 4;               ///< Interpolation type for aggressive coarsening.
-    PreOrPost preOrPostSmoothing = PreOrPost::both; ///< Pre and/or post smoothing
-    real64 threshold = 0.0;                         ///< Threshold for "strong connections" (for classical and smoothed-aggregation AMG)
-    integer separateComponents = false;             ///< Apply a separate component filter before AMG construction
+    integer       maxLevels = 20;                         ///< Maximum number of coarsening levels
+    CycleType     cycleType = CycleType::V;               ///< AMG cycle type
+    SmootherType  smootherType = SmootherType::fgs;       ///< Smoother type
+    real64        relaxWeight = 1.0;                      ///< Relaxation weight for the smoother
+    CoarseType    coarseType = CoarseType::direct;        ///< Coarse-level solver/smoother
+    string        coarseningType = "HMIS";                ///< Coarsening algorithm
+    InterpType    interpolationType = InterpType::extI;   ///< Interpolation algorithm
+    integer       interpolationMaxNonZeros = 4;           ///< Interpolation - Max. nonzeros/row
+    integer       numSweeps = 2;                          ///< Number of smoother sweeps
+    integer       numFunctions = 1;                       ///< Number of amg functions
+    integer       aggressiveNumLevels = 0;                ///< Number of lvls for agg. coarsening.
+    AggInterpType aggressiveInterpType = AggInterpType::multipass; ///< Interp. type for agg. coarsening.
+    PreOrPost     preOrPostSmoothing = PreOrPost::both;   ///< Pre and/or post smoothing
+    real64        threshold = 0.0;                        ///< Threshold for "strong connections" (for classical and smoothed-aggregation AMG)
+    integer       separateComponents = false;             ///< Apply a separate component filter before AMG construction
     NullSpaceType nullSpaceType = NullSpaceType::constantModes; ///< Null space type [constantModes,rigidBodyModes]
   }
   amg;                                              ///< Algebraic Multigrid (AMG) parameters
@@ -343,6 +373,31 @@ ENUM_STRINGS( LinearSolverParameters::AMG::SmootherType,
               "ilut",
               "ic0",
               "ict" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::AMG::InterpType,
+              "default",
+              "modclass",
+              "direct",
+              "multipass",
+              "extI",
+              "std",
+              "ext",
+              "modExt",
+              "modExtI",
+              "modExtE" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::AMG::AggInterpType,
+              "default",
+              "extIStg2",
+              "stdStg2",
+              "extStg2",
+              "multipass",
+              "modExt",
+              "modExtI",
+              "modExtE",
+              "modMultipass" );
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::CoarseType,
