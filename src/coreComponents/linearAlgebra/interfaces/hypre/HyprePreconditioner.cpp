@@ -178,7 +178,7 @@ void createAMG( LinearSolverParameters const & params,
     HYPRE_Int const aggInterpType = hypre::getAMGAggressiveInterpolationType( params.amg.aggressiveInterpType );
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( precond.ptr, params.amg.aggressiveNumLevels ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggInterpType( precond.ptr, aggInterpType );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggInterpType( precond.ptr, aggInterpType ) );
   }
 
   // Set coarsest level solver
