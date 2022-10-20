@@ -21,12 +21,12 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
+#include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 
 namespace geosx
 {

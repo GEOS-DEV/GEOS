@@ -1,0 +1,31 @@
+
+
+#include "physicsSolvers/solidMechanics/kernels/ExplicitSmallStrain_impl.hpp"
+#include "physicsSolvers/solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp"
+#include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainNewmark_impl.hpp"
+#include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic_impl.hpp"
+#include "policies.hpp"
+
+
+#define INSTANTIATION( NAME )\
+template class NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >; \
+template real64 NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >::kernelLaunch< NAME##Policy, \
+                                                                                        NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > > \
+                                                                                      ( localIndex const, \
+                                                                                        NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > const & ); \
+
+
+namespace geosx
+{
+using namespace constitutive;
+using namespace finiteElement;
+namespace solidMechanicsLagrangianFEMKernels
+{
+  INSTANTIATION( ExplicitSmallStrain )
+  INSTANTIATION( ExplicitFiniteStrain )
+  INSTANTIATION( ImplicitSmallStrainNewmark )
+  INSTANTIATION( ImplicitSmallStrainQuasiStatic )
+}
+}
+
+#undef INSTANTIATION
