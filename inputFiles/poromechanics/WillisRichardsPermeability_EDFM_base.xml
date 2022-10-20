@@ -5,10 +5,10 @@
     gravityVector="{0.0, 0.0, 0.0}">
     <SinglePhasePoromechanicsEmbeddedFractures
       name="poroSolver"
-      targetRegions="{ Domain, Fracture }"
+      targetRegions="{ Domain, Fracture }"      
       initialDt="1e-3"
       fracturesSolverName="fractureMechSolver"
-      fluidSolverName="flowSolver"
+      flowSolverName="flowSolver"
       solidSolverName="matrixMechSolver"      
       logLevel="1">
       <NonlinearSolverParameters
@@ -40,7 +40,8 @@
       />
 
     <EmbeddedSurfaceGenerator
-      name="SurfaceGenerator"      
+      name="SurfaceGenerator" 
+      discretization="FE1"     
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="2"
@@ -69,6 +70,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
+      faceBlock="embeddedSurfaceSubRegion"
       subRegionType="embeddedElement"
       materialList="{ water, fractureFilling, fractureContact }"
       defaultAperture="1e-3"/>
