@@ -90,7 +90,9 @@ else
   df -h
   du -hs .
   or_die make -j $(nproc) VERBOSE=1
-
+  echo "DEBUG checking disk space"
+  df -h
+  du -hs .
   # Verbosity check for installation to prevent hitting Travis log limit
   if [[ "$*" == *--reduce-install-logs* ]]; then
     or_die make install
