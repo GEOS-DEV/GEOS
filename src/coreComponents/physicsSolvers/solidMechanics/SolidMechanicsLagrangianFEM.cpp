@@ -17,10 +17,10 @@
  */
 
 #include "SolidMechanicsLagrangianFEM.hpp"
-#include "SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
-#include "SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp"
-#include "SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
-#include "SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp"
+#include "kernels/ImplicitSmallStrainNewmark.hpp"
+#include "kernels/ImplicitSmallStrainQuasiStatic.hpp"
+#include "kernels/ExplicitSmallStrain.hpp"
+#include "kernels/ExplicitFiniteStrain.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -119,6 +119,7 @@ void SolidMechanicsLagrangianFEM::postProcessInput()
   linParams.isSymmetric = true;
   linParams.dofsPerNode = 3;
   linParams.amg.separateComponents = true;
+
 }
 
 SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
@@ -906,22 +907,22 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
 
       finiteElement::
         fillSparsity< FaceElementSubRegion,
-                      solidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
-                                                                         allFaceElementRegions,
-                                                                         this->getDiscretizationName(),
-                                                                         dofNumber,
-                                                                         dofManager.rankOffset(),
-                                                                         sparsityPattern );
+                      solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
+                                                                                            allFaceElementRegions,
+                                                                                            this->getDiscretizationName(),
+                                                                                            dofNumber,
+                                                                                            dofManager.rankOffset(),
+                                                                                            sparsityPattern );
 
     }
     finiteElement::
       fillSparsity< CellElementSubRegion,
-                    solidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
-                                                                       regionNames,
-                                                                       this->getDiscretizationName(),
-                                                                       dofNumber,
-                                                                       dofManager.rankOffset(),
-                                                                       sparsityPattern );
+                    solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
+                                                                                          regionNames,
+                                                                                          this->getDiscretizationName(),
+                                                                                          dofNumber,
+                                                                                          dofManager.rankOffset(),
+                                                                                          sparsityPattern );
 
 
   } );

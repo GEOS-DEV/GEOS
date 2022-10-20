@@ -82,11 +82,16 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsExtrinsicData.hpp
      solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
-     solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
-     solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
-     solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
-     solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
+     solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp
+     solidMechanics/kernels/ExplicitFiniteStrain.hpp
+     solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp
+     solidMechanics/kernels/ExplicitSmallStrain.hpp
+     solidMechanics/kernels/ExplicitSmallStrain_impl.hpp
+     solidMechanics/kernels/ImplicitSmallStrainNewmark.hpp
+     solidMechanics/kernels/ImplicitSmallStrainNewmark_impl.hpp
+     solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp
+     solidMechanics/kernels/ImplicitSmallStrainQuasiStatic_impl.hpp
      solidMechanics/SolidMechanicsStateReset.hpp
      solidMechanics/SolidMechanicsStatistics.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
@@ -160,13 +165,16 @@ set( physicsSolvers_sources
      wavePropagation/ElasticWaveEquationSEM.cpp
    )
 
+  include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
+
 set( dependencyList ${parallelDeps} constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers
-	python/PySolver.hpp
-	python/PySolverType.hpp )
+        python/PySolver.hpp
+        python/PySolverType.hpp )
   list( APPEND physicsSolvers_sources
-	python/PySolver.cpp )
+        python/PySolver.cpp )
+
   list( APPEND dependencyList Python3::Python pylvarray )
 endif()
 
