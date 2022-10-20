@@ -683,8 +683,8 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
           density,
           sourceConstants,
           sourceValue,
-          sourceElem,
           sourceIsAccessible,
+          sourceElem,
           dt,
           cycleNumber,
           p_np1 );
