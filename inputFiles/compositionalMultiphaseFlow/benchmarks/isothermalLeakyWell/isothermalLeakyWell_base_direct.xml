@@ -10,8 +10,9 @@
       discretization="fluidTPFA"
       temperature="313.15"
       initialDt="1"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
       useMass="1"
-      computeCFLNumbers="1"
       targetRegions="{ aquiferTop, aquiferBottom, injectionWell, leakyWell }">
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
@@ -54,6 +55,10 @@
       timeFrequency="4.32e6"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
+    <PeriodicEvent
+      name="statistics"
+      forceDt="1e6"
+      target="/Tasks/compflowStatistics"/>
   </Events>
 
   <NumericalMethods>
@@ -313,6 +318,12 @@
       name="phaseOutfluxCollection"
       objectPath="ElementRegions/leakyWell/aquitard11"
       fieldName="phaseOutflux"/>
+    <CompositionalMultiphaseStatistics
+      name="compflowStatistics"
+      flowSolverName="compflow"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
   </Tasks>
   
 </Problem>

@@ -23,6 +23,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
+#include "mesh/generators/VTKUtilities.hpp"
 #include "mesh/FieldIdentifiers.hpp"
 
 // TODO can we remove this and use unique_ptr to hold mesh?
@@ -31,9 +32,7 @@
 #include <map>
 #include <unordered_map>
 
-class vtkUnstructuredGrid;
-class vtkDataArray;
-
+class vtkDataSet;
 namespace geosx
 {
 
@@ -67,14 +66,14 @@ public:
    * @param[in] domain the DomainPartition to be written
    * @details This method leverages the VTK library to load the meshes.
    * The supported formats are the official VTK ones dedicated to
-   * unstructured grids (.vtu, .pvtu and .vtk).
+   * unstructured grids (.vtu, .pvtu and .vtk) and structured grids (.vts, .vti and .pvts).
    *
    * Please note that this mesh generator works only with a number of MPI processes than
    * can be decomposed into a power of 2.
    *
-   * - If a .vtu of .vtk file is used, the root MPI process will load it.
+   * - If a .vtu, .vts, .vti or .vtk file is used, the root MPI process will load it.
    *   The mesh will be then redistribute among all the available MPI processes
-   * - If a .pvtu file is used, it means that the mesh is pre-partionned in the file system.
+   * - If a .pvtu or .pvts file is used, it means that the mesh is pre-partionned in the file system.
    *   The available MPI processes will load the pre-partionned mesh. The mesh will be then
    *   redistributed among ALL the available MPI processes.
    *
@@ -104,35 +103,16 @@ public:
 
   virtual void freeResources() override;
 
-  /**
-   * @brief Type of map used to store cell lists.
-   *
-   * This should be an unordered_map, but some outdated standard libraries on some systems
-   * do not provide std::hash specialization for enums. This is not performance critical though.
-   */
-  using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector< vtkIdType > > >;
-
 private:
-
-  real64 writeNodes( CellBlockManager & cellBlockManager ) const;
-
-  void writeCells( CellBlockManager & cellBlockManager ) const;
-
-  void writeSurfaces( CellBlockManager & cellBlockManager ) const;
-
-  void importFieldOnCellElementSubRegion( int const regionId,
-                                          ElementType const elemType,
-                                          std::vector< vtkIdType > const & cellIds,
-                                          ElementRegionManager & elemManager,
-                                          arrayView1d< string const > const & fieldNames,
-                                          std::vector< vtkDataArray * > const & srcArrays,
-                                          FieldIdentifiers & fieldsToBeSync ) const;
 
   ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
+    constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
+    constexpr static char const * partitionMethodString() { return "partitionMethod"; }
+    constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
   };
   /// @endcond
 
@@ -140,16 +120,25 @@ private:
    * @brief The VTK mesh to be imported into GEOSX.
    * @note We keep this smart pointer as a member for use in @p importFields().
    */
-  vtkSmartPointer< vtkUnstructuredGrid > m_vtkMesh;
+  vtkSmartPointer< vtkDataSet > m_vtkMesh;
 
   /// Name of VTK dataset attribute used to mark regions
   string m_attributeName;
 
+  /// Names of VTK nodesets to import
+  string_array m_nodesetNames;
+
   /// Number of graph partitioning refinement iterations
   integer m_partitionRefinement = 0;
 
+  /// Whether global id arrays should be used, if available
+  integer m_useGlobalIds = 0;
+
+  /// Method (library) used to partition the mesh
+  vtk::PartitionMethod m_partitionMethod = vtk::PartitionMethod::parmetis;
+
   /// Lists of VTK cell ids, organized by element type, then by region
-  CellMapType m_cellMap;
+  vtk::CellMapType m_cellMap;
 };
 
 } // namespace geosx

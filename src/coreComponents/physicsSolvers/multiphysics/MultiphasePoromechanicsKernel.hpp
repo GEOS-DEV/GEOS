@@ -113,8 +113,8 @@ public:
           inputMatrix,
           inputRhs ),
     m_X( nodeManager.referencePosition() ),
-    m_disp( nodeManager.totalDisplacement() ),
-    m_uhat( nodeManager.incrementalDisplacement() ),
+    m_disp( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
+    m_uhat( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::incrementalDisplacement >() ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
@@ -157,8 +157,7 @@ public:
       m_fluidPhaseSaturation_n = elementSubRegion.template getExtrinsicData< phaseVolumeFraction_n >();
 
       m_fluidPhaseSaturation = elementSubRegion.template getExtrinsicData< phaseVolumeFraction >();
-      m_dFluidPhaseSaturation_dPressure = elementSubRegion.template getExtrinsicData< dPhaseVolumeFraction_dPressure >();
-      m_dFluidPhaseSaturation_dGlobalCompDensity = elementSubRegion.template getExtrinsicData< dPhaseVolumeFraction_dGlobalCompDensity >();
+      m_dFluidPhaseSaturation = elementSubRegion.template getExtrinsicData< dPhaseVolumeFraction >();
 
       m_dGlobalCompFraction_dGlobalCompDensity =
         elementSubRegion.template getExtrinsicData< dGlobalCompFraction_dGlobalCompDensity >();
@@ -337,8 +336,7 @@ public:
                                                       m_dFluidPhaseMassDensity[k][q],
                                                       m_fluidPhaseSaturation[k],
                                                       m_fluidPhaseSaturation_n[k],
-                                                      m_dFluidPhaseSaturation_dPressure[k],
-                                                      m_dFluidPhaseSaturation_dGlobalCompDensity[k],
+                                                      m_dFluidPhaseSaturation[k],
                                                       m_dGlobalCompFraction_dGlobalCompDensity[k],
                                                       totalStress,
                                                       dTotalStress_dPressure,
@@ -643,8 +641,7 @@ protected:
 
   arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseSaturation;
   arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseSaturation_n;
-  arrayView2d< real64 const, compflow::USD_PHASE > m_dFluidPhaseSaturation_dPressure;
-  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dFluidPhaseSaturation_dGlobalCompDensity;
+  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dFluidPhaseSaturation;
 
   arrayView3d< real64 const, compflow::USD_COMP_DC > m_dGlobalCompFraction_dGlobalCompDensity;
 
