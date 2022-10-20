@@ -62,8 +62,7 @@ TableRelativePermeability                   node         :ref:`XML_TableRelative
 TableRelativePermeabilityHysteresis         node         :ref:`XML_TableRelativePermeabilityHysteresis`         
 ThermalCompressibleSinglePhaseFluid         node         :ref:`XML_ThermalCompressibleSinglePhaseFluid`         
 VanGenuchtenBakerRelativePermeability       node         :ref:`XML_VanGenuchtenBakerRelativePermeability`       
-VanGenuchtenCapillaryPressure               node         :ref:`XML_VanGenuchtenCapillaryPressure`               
-VolumeWeightedThermalConductivity           node         :ref:`XML_VolumeWeightedThermalConductivity` 
+VanGenuchtenCapillaryPressure               node         :ref:`XML_VanGenuchtenCapillaryPressure`             
 WillisRichardsPermeability                  node         :ref:`XML_WillisRichardsPermeability`          
 =========================================== ==== ======= ====================================================== 
 

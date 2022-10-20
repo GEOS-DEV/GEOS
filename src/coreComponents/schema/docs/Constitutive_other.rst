@@ -63,7 +63,6 @@ TableRelativePermeabilityHysteresis         node :ref:`DATASTRUCTURE_TableRelati
 ThermalCompressibleSinglePhaseFluid         node :ref:`DATASTRUCTURE_ThermalCompressibleSinglePhaseFluid`         
 VanGenuchtenBakerRelativePermeability       node :ref:`DATASTRUCTURE_VanGenuchtenBakerRelativePermeability`       
 VanGenuchtenCapillaryPressure               node :ref:`DATASTRUCTURE_VanGenuchtenCapillaryPressure`               
-VolumeWeightedThermalConductivity           node :ref:`DATASTRUCTURE_VolumeWeightedThermalConductivity`
 WillisRichardsPermeability                  node :ref:`DATASTRUCTURE_WillisRichardsPermeability`         
 =========================================== ==== ================================================================ 
 

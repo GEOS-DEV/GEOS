@@ -1086,13 +1086,6 @@ Element: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
-.. _XML_VolumeWeightedThermalConductivity:
-
-Element: VolumeWeightedThermalConductivity
-==========================================
-.. include:: ../../coreComponents/schema/docs/VolumeWeightedThermalConductivity.rst
-
-
 .. _XML_WillisRichardsPermeability:
 
 Element: WillisRichardsPermeability
@@ -2236,13 +2229,6 @@ Datastructure: VanGenuchtenBakerRelativePermeability
 Datastructure: VanGenuchtenCapillaryPressure
 ============================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
-
-
-.. _DATASTRUCTURE_VolumeWeightedThermalConductivity:
-
-Datastructure: VolumeWeightedThermalConductivity
-================================================
-.. include:: ../../coreComponents/schema/docs/VolumeWeightedThermalConductivity_other.rst
 
 
 .. _DATASTRUCTURE_WillisRichardsPermeability:
