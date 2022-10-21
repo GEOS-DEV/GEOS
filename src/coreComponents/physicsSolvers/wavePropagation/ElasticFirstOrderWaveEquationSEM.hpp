@@ -33,13 +33,13 @@ class ElasticFirstOrderWaveEquationSEM : public WaveSolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >; 
+  using EXEC_POLICY = parallelDevicePolicy< 32 >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
   static constexpr real64 epsilonLoc = 1e-8;
- 
+
   ElasticFirstOrderWaveEquationSEM( const std::string & name,
-                           Group * const parent );
+                                    Group * const parent );
 
   virtual ~ElasticFirstOrderWaveEquationSEM() override;
 
@@ -78,13 +78,13 @@ public:
 
   /**@}*/
 
-   /**
+  /**
    * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
    * @param cycleNumber the cycle number/step number of evaluation of the source
    * @param rhs the right hand side vector to be computed
    */
   void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
-  
+
   /**
    * TODO: move implementation into WaveSolverBase
    * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
@@ -141,7 +141,7 @@ public:
     static constexpr char const * receiverNodeIdsString() { return "receiverNodeIds"; }
     static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
     static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
-    
+
     static constexpr char const * displacementxNp1AtReceiversString() { return "displacementxNp1AtReceivers"; }
     static constexpr char const * displacementyNp1AtReceiversString() { return "displacementyNp1AtReceivers"; }
     static constexpr char const * displacementzNp1AtReceiversString() { return "displacementzNp1AtReceivers"; }
@@ -169,7 +169,7 @@ protected:
 
 private:
 
-    /**
+  /**
    * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
@@ -224,7 +224,7 @@ private:
   array2d< real32 > m_displacementzNp1AtReceivers;
 
   /// Array containing the elements which contain a source
-  array1d < localIndex > m_sourceElem;
+  array1d< localIndex > m_sourceElem;
 
 
 };
@@ -287,7 +287,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Stresstensorxy,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "xy-components of the stress tensor (symetric of yx-component).");
+                           "xy-components of the stress tensor (symetric of yx-component)." );
 
 EXTRINSIC_MESH_DATA_TRAIT( Stresstensorxz,
                            "stresstensorxz",
@@ -313,7 +313,7 @@ EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS,
                            NOPLOT,
                            WRITE_AND_READ,
                            "RHS" );
-                          
+
 EXTRINSIC_MESH_DATA_TRAIT( MassVector,
                            "massVector",
                            array1d< real32 >,
