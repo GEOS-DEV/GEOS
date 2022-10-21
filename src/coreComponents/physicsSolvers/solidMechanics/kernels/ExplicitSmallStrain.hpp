@@ -13,13 +13,14 @@
  */
 
 /**
- * @file SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
+ * @file ExplicitSmallStrain.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINEXPLICITNEWMARK_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINEXPLICITNEWMARK_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITSMALLSTRAIN_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITSMALLSTRAIN_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
 
 
 namespace geosx
@@ -104,21 +105,7 @@ public:
                        FE_TYPE const & finiteElementSpace,
                        CONSTITUTIVE_TYPE & inputConstitutiveType,
                        real64 const dt,
-                       string const elementListName ):
-    Base( elementSubRegion,
-          finiteElementSpace,
-          inputConstitutiveType ),
-    m_X( nodeManager.referencePosition()),
-    m_u( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
-    m_vel( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::velocity >() ),
-    m_acc( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::acceleration >() ),
-    m_dt( dt ),
-    m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( elementListName ).toViewConst() )
-  {
-    GEOSX_UNUSED_VAR( edgeManager );
-    GEOSX_UNUSED_VAR( faceManager );
-    GEOSX_UNUSED_VAR( targetRegionIndex );
-  }
+                       string const elementListName );
 
   //*****************************************************************************
   /**
@@ -160,27 +147,8 @@ public:
    * Copies the primary variable, and position into the local stack array.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void setup( localIndex const k,
-              StackVariables & stack ) const
-  {
-    for( localIndex a=0; a< numNodesPerElem; ++a )
-    {
-      localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int i=0; i<numDofPerTrialSupportPoint; ++i )
-      {
-#if defined(CALC_FEM_SHAPE_IN_KERNEL)
-        stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
-#endif
-
-#if UPDATE_STRESS==2
-        stack.varLocal[ a ][ i ] = m_vel[ nodeIndex ][ i ] * m_dt;
-#else
-        stack.varLocal[ a ][ i ] = m_u[ nodeIndex ][ i ];
-#endif
-      }
-    }
-  }
+              StackVariables & stack ) const;
 
   /**
    * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
@@ -192,71 +160,9 @@ public:
    * to allow for some variable reuse.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
-                              StackVariables & stack ) const
-  {
-//#define USE_JACOBIAN
-#if !defined( USE_JACOBIAN )
-    real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
-    /// Macro to substitute in the shape function derivatives.
-    real64 strain[6] = {0};
-    FE_TYPE::symmetricGradient( dNdX, stack.varLocal, strain );
-
-    real64 stressLocal[ 6 ] = {0};
-#if UPDATE_STRESS == 2
-    m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, strain, stressLocal );
-#else
-    m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
-#endif
-
-    for( localIndex c = 0; c < 6; ++c )
-    {
-#if UPDATE_STRESS == 2
-      stressLocal[ c ] *= -detJ;
-#elif UPDATE_STRESS == 1
-      stressLocal[ c ] = -( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * detJ; // TODO: decide on
-                                                                                                     // initial stress
-                                                                                                     // strategy
-#else
-      stressLocal[ c ] *= -detJ;
-#endif
-    }
-
-    FE_TYPE::plusGradNajAij( dNdX, stressLocal, stack.fLocal );
-
-#else
-    real64 invJ[3][3];
-    real64 const detJ = FE_TYPE::inverseJacobianTransformation( q, stack.xLocal, invJ );
-
-    real64 strain[6] = {0};
-    FE_TYPE::symmetricGradient( q, invJ, stack.varLocal, strain );
-
-    real64 stressLocal[ 6 ] = {0};
-#if UPDATE_STRESS == 2
-    m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, strain, stressLocal );
-#else
-    m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
-#endif
-
-    for( localIndex c = 0; c < 6; ++c )
-    {
-#if UPDATE_STRESS == 2
-      stressLocal[ c ] *= detJ;
-#elif UPDATE_STRESS == 1
-      stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * DETJ; // TODO: decide on
-                                                                                                    // initial stress
-                                                                                                    // strategy
-#else
-      stressLocal[ c ] *= DETJ;
-#endif
-    }
-
-    FE_TYPE::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
-#endif
-  }
+                              StackVariables & stack ) const;
 
   /**
    * @copydoc geosx::finiteElement::KernelBase::complete
@@ -265,20 +171,8 @@ public:
    * Performs the distribution of the nodal force out to the rank local arrays.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
-                   StackVariables const & stack ) const
-  {
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
-    {
-      localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int b = 0; b < numDofPerTestSupportPoint; ++b )
-      {
-        RAJA::atomicAdd< parallelDeviceAtomic >( &m_acc( nodeIndex, b ), stack.fLocal[ a ][ b ] );
-      }
-    }
-    return 0;
-  }
+                   StackVariables const & stack ) const;
 
   /**
    * @copydoc geosx::finiteElement::KernelBase::kernelLaunch
@@ -291,29 +185,7 @@ public:
             typename KERNEL_TYPE >
   static real64
   kernelLaunch( localIndex const numElems,
-                KERNEL_TYPE const & kernelComponent )
-  {
-    GEOSX_MARK_FUNCTION;
-
-    GEOSX_UNUSED_VAR( numElems );
-
-    localIndex const numProcElems = kernelComponent.m_elementList.size();
-    forAll< POLICY >( numProcElems,
-                      [=] GEOSX_DEVICE ( localIndex const index )
-    {
-      localIndex const k = kernelComponent.m_elementList[ index ];
-
-      typename KERNEL_TYPE::StackVariables stack;
-
-      kernelComponent.setup( k, stack );
-      for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
-      {
-        kernelComponent.quadraturePointKernel( k, q, stack );
-      }
-      kernelComponent.complete( k, stack );
-    } );
-    return 0;
-  }
+                KERNEL_TYPE const & kernelComponent );
 
 
 protected:
@@ -338,15 +210,18 @@ protected:
 
 
 };
-#undef UPDATE_STRESS
+
+
 
 /// The factory used to construct a ExplicitSmallStrain kernel.
 using ExplicitSmallStrainFactory = finiteElement::KernelFactory< ExplicitSmallStrain,
                                                                  real64,
                                                                  string const >;
 
+
+
 } // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
 
-#endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINEXPLICITNEWMARK_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITSMALLSTRAIN_HPP_
