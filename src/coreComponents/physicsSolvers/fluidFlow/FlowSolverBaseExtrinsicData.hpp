@@ -152,6 +152,14 @@ EXTRINSIC_MESH_DATA_TRAIT( mimGravityCoefficient,
                            WRITE_AND_READ,
                            "Mimetic gravity coefficient" );
 
+EXTRINSIC_MESH_DATA_TRAIT( macroElementIndex,
+                           "macroElementIndex",
+                           array1d< integer >,
+                           -1,
+                           LEVEL_1,
+                           WRITE_AND_READ,
+                           "Index of the macroelement for a given element" );
+
 EXTRINSIC_MESH_DATA_TRAIT( bcPressure,
                            "bcPressure",
                            array1d< real64 >,
@@ -166,7 +174,15 @@ EXTRINSIC_MESH_DATA_TRAIT( bcTemperature,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
-                           "Boundary temperature" );
+                           "Boundary condition temperature" );
+
+EXTRINSIC_MESH_DATA_TRAIT( elementStabConstant,
+                           "elementStabConstant",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_1,
+                           WRITE_AND_READ,
+                           "Stabilization constant for pressure jump stabilization" );
 
 EXTRINSIC_MESH_DATA_TRAIT( transMultiplier,
                            "permeabilityTransMultiplier",

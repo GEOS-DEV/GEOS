@@ -606,6 +606,8 @@ void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, l
 
 void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
 {
+  RelativePermeabilityBase::saveConvergedState();
+
   arrayView2d< real64, compflow::USD_PHASE > phaseMaxHistoricalVolFraction = m_phaseMaxHistoricalVolFraction.toView();
   arrayView2d< real64, compflow::USD_PHASE > phaseMinHistoricalVolFraction = m_phaseMinHistoricalVolFraction.toView();
 
