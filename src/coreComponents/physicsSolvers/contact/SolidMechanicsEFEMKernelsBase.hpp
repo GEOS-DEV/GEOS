@@ -20,7 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
 #define GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
 
-#include "physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
+#include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
 #include "SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/contact/ContactExtrinsicData.hpp"
 
@@ -43,15 +43,15 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class EFEMKernelsBase :
-  public solidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
-                                                          CONSTITUTIVE_TYPE,
-                                                          FE_TYPE >
+  public solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE,
+                                                                             CONSTITUTIVE_TYPE,
+                                                                             FE_TYPE >
 {
 public:
   /// Alias for the base class;
-  using Base = solidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
-                                                                CONSTITUTIVE_TYPE,
-                                                                FE_TYPE >;
+  using Base = solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE,
+                                                                                   CONSTITUTIVE_TYPE,
+                                                                                   FE_TYPE >;
 
   /// Number of nodes per element...which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.

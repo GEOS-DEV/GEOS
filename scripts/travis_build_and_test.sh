@@ -79,26 +79,28 @@ echo "                     Before make                     "
 echo "Disk space availability:" 
 df -h .
 echo "Current directory size:"
-dh -hs
-dh -hs
+du -hs
 echo "================ END DISK USAGE INFO ================"
 if [[ "$*" == *--build-exe-only* ]]; then
-  or_die make -j 1 geosx VERBOSE=1
+  or_die make -j $(nproc) geosx
 else
-  or_die make -j $(nproc) VERBOSE=1
+<<<<<<< HEAD
+  or_die make -j $(nproc) geosx
+  make -j $(nproc)
+  or_die make -j 2
 echo "================== DISK USAGE INFO =================="
 echo "                      After make                     "
 echo "Disk space availability:" 
 df -h .
 echo "Current directory size:"
-dh -hs
+du -hs
 echo "================ END DISK USAGE INFO ================"
 
   # Verbosity check for installation to prevent hitting Travis log limit
   if [[ "$*" == *--reduce-install-logs* ]]; then
     or_die make install
   else
-    or_die make install VERBOSE=1
+    or_die make install
   fi
 fi
 
@@ -106,5 +108,6 @@ fi
 if [[ "$*" != *--disable-unit-tests* ]]; then
   or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
+
 
 exit 0
