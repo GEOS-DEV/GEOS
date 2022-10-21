@@ -152,7 +152,6 @@ public:
     return 0;
   }
 
-
   /**
    * @brief Small strain update.
    *
@@ -704,6 +703,33 @@ public:
   }
 
   ///@}
+  //
+
+  /**
+   *@brief Get bulkModulus vector
+   *@return the bulkModulus of all elements
+   */
+  GEOSX_HOST_DEVICE
+  virtual arrayView1d< real64 const > getBulkModulus( ) const
+  {
+    GEOSX_ERROR( "getBulkModulus() not implemented for this model" );
+
+    array1d< real64 > out;
+    return out.toViewConst();
+  }
+
+  /**
+   *@brief Get shearModulus vector
+   *@return the shearModulus of all elements
+   */
+  GEOSX_HOST_DEVICE
+  virtual arrayView1d< real64 const > getShearModulus( ) const
+  {
+    GEOSX_ERROR( "getShearModulus() not implemented for this model" );
+
+    array1d< real64 > out;
+    return out.toViewConst();
+  }
 
 protected:
 

@@ -632,6 +632,15 @@ public:
     return getSolidModel().getDensity();
   }
 
+  /**
+   * @brief Const/non-mutable accessor for biot coefficient
+   * @return Accessor
+   */
+  arrayView1d< real64 const > const getBiotCoefficient() const
+  {
+    return getPorosityModel().getBiotCoefficient();
+  }
+
 private:
   using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getSolidModel;
   using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getPorosityModel;

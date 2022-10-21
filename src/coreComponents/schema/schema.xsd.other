@@ -8,6 +8,11 @@
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:simpleType name="R1Tensor32">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="R2SymTensor">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
@@ -454,6 +459,7 @@
 			<xsd:element name="CompositionalMultiphaseHybridFVM" type="CompositionalMultiphaseHybridFVMType" />
 			<xsd:element name="CompositionalMultiphaseReservoir" type="CompositionalMultiphaseReservoirType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
+			<xsd:element name="ElasticSEM" type="ElasticSEMType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
@@ -491,9 +497,9 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--pressureNp1AtReceivers => Pressure value at each receiver for each timestep-->
-		<xsd:attribute name="pressureNp1AtReceivers" type="real64_array2d" />
+		<xsd:attribute name="pressureNp1AtReceivers" type="real32_array2d" />
 		<!--receiverConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
 		<xsd:attribute name="receiverConstants" type="real64_array2d" />
 		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
@@ -507,7 +513,9 @@
 		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
 		<!--sourceValue => Source Value of the sources-->
-		<xsd:attribute name="sourceValue" type="real64_array2d" />
+		<xsd:attribute name="sourceValue" type="real32_array2d" />
+		<!--useDAS => Flag to indicate if DAS type of data will be modeled-->
+		<xsd:attribute name="useDAS" type="integer" />
 		<!--usePML => Flag to apply PML-->
 		<xsd:attribute name="usePML" type="integer" />
 	</xsd:complexType>
@@ -538,7 +546,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseHybridFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -549,7 +557,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -562,7 +570,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -576,7 +584,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="WellControlsType">
 		<!--currentControl => Current well control-->
@@ -587,6 +595,41 @@
 			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate|uninitialized" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:complexType name="ElasticSEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--displacementXNp1AtReceivers => Displacement value at each receiver for each timestep (x-component)-->
+		<xsd:attribute name="displacementXNp1AtReceivers" type="real32_array2d" />
+		<!--displacementYNp1AtReceivers => Displacement value at each receiver for each timestep (y-component)-->
+		<xsd:attribute name="displacementYNp1AtReceivers" type="real32_array2d" />
+		<!--displacementZNp1AtReceivers => Displacement value at each receiver for each timestep (z-component)-->
+		<xsd:attribute name="displacementZNp1AtReceivers" type="real32_array2d" />
+		<!--indexSeismoTrace => Count for output pressure at receivers-->
+		<xsd:attribute name="indexSeismoTrace" type="integer" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
+		<xsd:attribute name="receiverIsLocal" type="integer_array" />
+		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
+		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
+		<!--sourceConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<xsd:attribute name="sourceConstants" type="real64_array2d" />
+		<!--sourceIsAccessible => Flag that indicates whether the source is accessible to this MPI rank-->
+		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
+		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
+		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
+		<!--sourceValue => Source Value of the sources-->
+		<xsd:attribute name="sourceValue" type="real32_array2d" />
+		<!--useDAS => Flag to indicate if DAS type of data will be modeled-->
+		<xsd:attribute name="useDAS" type="integer" />
+		<!--usePML => Flag to apply PML-->
+		<xsd:attribute name="usePML" type="integer" />
+	</xsd:complexType>
 	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -596,7 +639,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="FlowProppantTransportType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -609,7 +652,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="HydrofractureType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -622,7 +665,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="LagrangianContactType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -633,7 +676,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="LaplaceFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -644,7 +687,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiphasePoromechanicsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -657,7 +700,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiphasePoromechanicsReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -670,7 +713,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="PhaseFieldDamageFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -681,7 +724,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="PhaseFieldFractureType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -692,7 +735,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantTransportType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -703,7 +746,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="ReactiveCompositionalMultiphaseOBLType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -714,7 +757,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -725,7 +768,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseHybridFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -736,7 +779,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -749,7 +792,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsEmbeddedFracturesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -762,7 +805,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -775,7 +818,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseProppantFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -786,7 +829,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -799,7 +842,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -813,7 +856,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsEmbeddedFracturesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -826,7 +869,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsLagrangianSSLEType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -839,7 +882,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanics_LagrangianFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -852,7 +895,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="SurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -867,7 +910,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--tipEdges => Set containing all the tip edges-->
 		<xsd:attribute name="tipEdges" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer&gt;" />
 		<!--tipFaces => Set containing all the tip faces-->
@@ -1006,7 +1049,7 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
-		<!--biotCoefficient => Biot coefficient.-->
+		<!--biotCoefficient => Biot coefficient-->
 		<xsd:attribute name="biotCoefficient" type="real64_array" />
 		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
@@ -1086,6 +1129,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -1112,6 +1157,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -1420,6 +1467,8 @@
 		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--extDrivingForce => External Driving Force-->
+		<xsd:attribute name="extDrivingForce" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--shearModulus => Elastic Shear Modulus Field-->
@@ -1438,6 +1487,8 @@
 		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--extDrivingForce => External Driving Force-->
+		<xsd:attribute name="extDrivingForce" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--shearModulus => Elastic Shear Modulus Field-->
@@ -1456,6 +1507,8 @@
 		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--extDrivingForce => External Driving Force-->
+		<xsd:attribute name="extDrivingForce" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--shearModulus => Elastic Shear Modulus Field-->
@@ -1904,6 +1957,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -1942,6 +1997,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -1986,6 +2043,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
