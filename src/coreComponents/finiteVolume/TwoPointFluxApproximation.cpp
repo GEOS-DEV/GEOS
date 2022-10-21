@@ -170,6 +170,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
     stackArray1d< localIndex, 2 > subRegionIndex( 2 );
     stackArray1d< localIndex, 2 > elementIndex( 2 );
     stackArray1d< real64, 2 > stencilWeights( 2 );
+    stackArray1d< real64, 2 > stencilStabilizationWeights( 2 );
     stackArray1d< globalIndex, 2 > stencilCellsGlobalIndex( 2 );
 
     for( localIndex ke = 0; ke < 2; ++ke )
@@ -189,7 +190,11 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
       real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec[ke] );
 
       stencilWeights[ke] = faceArea / c2fDistance;
+      stencilStabilizationWeights[ke] = faceArea * c2fDistance;
     }
+
+    real64 const sumStabilizationWeight =
+      ( stencilStabilizationWeights[0] + stencilStabilizationWeights[1] );
 
     // Ensure elements are added to stencil in order of global indices
     if( stencilCellsGlobalIndex[0] >= stencilCellsGlobalIndex[1] )
@@ -206,7 +211,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
                  stencilWeights.data(),
                  kf );
 
-    stencil.addVectors( transMultiplier[kf], faceNormal, cellToFaceVec );
+    stencil.addVectors( transMultiplier[kf], sumStabilizationWeight, faceNormal, cellToFaceVec );
   } );
 }
 
