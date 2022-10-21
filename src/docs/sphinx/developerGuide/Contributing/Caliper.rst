@@ -21,6 +21,8 @@ The following macros may be used to annotate GEOSX:
 * ``GEOSX_MARK_BEGIN(name)`` - Marks the beginning of a user defined code region. 
 * ``GEOSX_MARK_END(name)`` - Marks the end of user defined code region.
 
+The 2 first macros also generate annotations for NVTX is ENABLE_CUDA_NVTOOLSEXT is activated through CMake.
+
 Configuring Caliper
 =================================
   

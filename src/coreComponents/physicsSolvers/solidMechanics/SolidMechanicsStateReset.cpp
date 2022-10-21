@@ -27,6 +27,7 @@ namespace geosx
 
 using namespace constitutive;
 using namespace dataRepository;
+using namespace extrinsicMeshData;
 
 SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
                                                     Group * const parent ):
@@ -73,9 +74,9 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
                                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                                         DomainPartition & domain )
 {
-  m_solidSolver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                               MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+  m_solidSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                               MeshLevel & mesh,
+                                                                               arrayView1d< string const > const & regionNames )
   {
     // Option 1: zero out velocity, incremental displacement, and displacement
     if( m_resetDisplacements )
@@ -85,9 +86,12 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
 
       NodeManager & nodeManager = mesh.getNodeManager();
 
-      nodeManager.velocity().zero();
-      nodeManager.incrementalDisplacement().zero();
-      nodeManager.totalDisplacement().zero();
+      if( nodeManager.hasExtrinsicData< solidMechanics::velocity >() )
+      {
+        nodeManager.getExtrinsicData< solidMechanics::velocity >().zero();
+      }
+      nodeManager.getExtrinsicData< solidMechanics::totalDisplacement >().zero();
+      nodeManager.getExtrinsicData< solidMechanics::incrementalDisplacement >().zero();
     }
 
     // Option 2: enable / disable inelastic behavior

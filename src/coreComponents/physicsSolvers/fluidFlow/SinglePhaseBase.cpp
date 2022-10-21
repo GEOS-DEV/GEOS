@@ -69,9 +69,9 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
   m_numDofPerCell = m_isThermal ? 2 : 1;
 
-  forMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -154,9 +154,9 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
 {
   GEOSX_MARK_FUNCTION;
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
@@ -213,9 +213,9 @@ void SinglePhaseBase::initializePreSubGroups()
   validateConstitutiveModels( domain );
 
   // 2. Set the value of temperature
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
@@ -323,9 +323,9 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key() },
@@ -342,17 +342,24 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       computeHydrostaticEquilibrium();
 
       // 1. update porosity, permeability, and density/viscosity
-      SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-
+      // In addition, to avoid multiplying permeability/porosity bay netToGross in the assembly kernel, we do it once and for all here
+      arrayView1d< real64 const > const netToGross = subRegion.template getExtrinsicData< extrinsicMeshData::flow::netToGross >();
+      CoupledSolidBase const & porousSolid =
+        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+      PermeabilityBase const & permeabilityModel =
+        getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
+      permeabilityModel.scaleHorizontalPermeability( netToGross );
+      porousSolid.scaleReferencePorosity( netToGross );
       updatePorosityAndPermeability( subRegion );
+
+      SingleFluidBase const & fluid =
+        getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
       updateFluidState( subRegion );
 
       // 2. save the initial density (for use in the single-phase poromechanics solver to compute the deltaBodyForce)
       fluid.initializeState();
 
       // 3. save the initial/old porosity
-      CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-
       porousSolid.initializeState();
 
       // 4. initialize the rock thermal quantities: conductivity and solid internal energy
@@ -450,9 +457,9 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
   // Step 3: for each equil, compute a fine table with hydrostatic pressure vs elevation if the region is a target region
   // first compute the region filter
   std::set< string > regionFilter;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel &,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel &,
+                                                                arrayView1d< string const > const & regionNames )
   {
     for( string const & regionName : regionNames )
     {
@@ -463,7 +470,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
   // then start the actual table construction
   fsManager.apply< ElementSubRegionBase,
                    EquilibriumInitialCondition >( 0.0,
-                                                  domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                  domain.getMeshBody( 0 ).getBaseDiscretization(),
                                                   EquilibriumInitialCondition::catalogName(),
                                                   [&] ( EquilibriumInitialCondition const & fs,
                                                         string const &,
@@ -482,7 +489,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     real64 const minElevation = LvArray::math::min( globalMinElevation[equilIndex], datumElevation );
     real64 const maxElevation = LvArray::math::max( globalMaxElevation[equilIndex], datumElevation );
     real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
-    localIndex const numPointsInTable = std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1;
+    localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 : 1;
 
     real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
     GEOSX_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
@@ -559,19 +566,23 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     // Step 4: assign pressure as a function of elevation
     // TODO: this last step should probably be delayed to wait for the creation of FaceElements
-    arrayView2d< real64 const > const elemCenter =
-      subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+    arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
+    arrayView1d< real64 > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
 
-    arrayView1d< real64 > const pres =
-      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
     forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
-
       pres[k] = presTableWrapper.compute( &elevation );
+      minPressure.min( pres[k] );
     } );
+
+    // For single phase flow, just issue a warning, because the simulation can proceed with a negative pressure
+    GEOSX_WARNING_IF( minPressure.get() <= 0.0,
+                      GEOSX_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
+                                 minPressure.get(), region.getName(), subRegion.getName() ) );
   } );
 }
 
@@ -620,9 +631,9 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
                                          DomainPartition & domain )
 {
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
@@ -692,9 +703,9 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
   // otherwise the aquifer flux is saved with the wrong pressure time level
   saveAquiferConvergedState( time, dt, domain );
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
@@ -787,9 +798,9 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion,
                                                 SurfaceElementSubRegion >( regionNames,
@@ -896,8 +907,7 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
                                                   subRegion,
                                                   extrinsicBoundaryFieldKey );
 
-    arrayView1d< integer const > const ghostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
     arrayView1d< globalIndex const > const dofNumber =
       subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< real64 const > const bcField =
@@ -944,9 +954,9 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
   globalIndex const rankOffset = dofManager.rankOffset();
   bool const isFirstNonlinearIteration = ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     applyAndSpecifyFieldValue( time_n, dt, mesh, rankOffset, dofKey, isFirstNonlinearIteration, getName(),
                                0, extrinsicMeshData::flow::pressure::key(), extrinsicMeshData::flow::bcPressure::key(),
@@ -1002,9 +1012,9 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
 
   // Step 3: we are ready to impose the boundary condition, normalized by the set size
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & )
   {
     fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                              mesh,
@@ -1029,8 +1039,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       }
 
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< integer const > const ghostRank =
-        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       // Step 3.1: get the values of the source boundary condition that need to be added to the rhs
 
@@ -1087,9 +1096,9 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
 {
 
 // set mass fraction flag on fluid models
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
@@ -1108,9 +1117,9 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
 void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   // set mass fraction flag on fluid models
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )

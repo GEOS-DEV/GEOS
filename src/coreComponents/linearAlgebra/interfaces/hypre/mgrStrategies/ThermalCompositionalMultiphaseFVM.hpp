@@ -76,10 +76,9 @@ public:
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::cprLikeBlockDiag; // Non-Galerkin Quasi-IMPES CPR
 
-    // Global smoothing performed only on the first level,
-    // after the reservoir density associated with the volume constraint has been eliminated
-    m_levelSmoothType[0]  = 0;
-    m_levelSmoothIters[0] = 0;
+    m_levelSmoothType[0]  = 16;
+    m_levelSmoothIters[0] = 1;
+    // Block GS smoothing for the system made of pressure and densities (except the last one)
     m_levelSmoothType[1]  = 1;
     m_levelSmoothIters[1] = 1;
   }

@@ -53,7 +53,7 @@ EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity_n,
                            "globalCompDensity_n",
                            array2dLayoutComp,
                            0,
-                           LEVEL_0,
+                           NOPLOT,
                            WRITE_AND_READ,
                            "Global component density at the previous converged time step" );
 
@@ -69,7 +69,7 @@ EXTRINSIC_MESH_DATA_TRAIT( mixtureConnectionRate_n,
                            "wellElementMixtureConnectionRate_n",
                            array1d< real64 >,
                            0,
-                           LEVEL_0,
+                           NOPLOT,
                            WRITE_AND_READ,
                            "Mixture connection rate at the previous converged time step" );
 

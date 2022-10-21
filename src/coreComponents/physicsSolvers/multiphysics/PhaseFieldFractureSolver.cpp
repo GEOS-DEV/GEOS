@@ -64,9 +64,9 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
 
 void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
 {
-  forMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & meshLevel,
-                                    arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & meshLevel,
+                                                    arrayView1d< string const > const & )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
 
@@ -86,9 +86,9 @@ void PhaseFieldFractureSolver::implicitStepSetup( real64 const & GEOSX_UNUSED_PA
                                                   DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -141,9 +141,9 @@ PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
 
 void PhaseFieldFractureSolver::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -297,9 +297,9 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 {
 
   GEOSX_MARK_FUNCTION;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -313,10 +313,6 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
-    ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
-
-    ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
-    constitutiveRelations = elemManager.constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
     // begin region loop
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [this, nodalDamage]
                                                                 ( localIndex const,
