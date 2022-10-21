@@ -122,4 +122,10 @@ if( ENABLE_UNCRUSTIFY )
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
 endif()
 
+if( ENABLE_YAPF )
+  add_test( NAME testPythonFormatCheck
+            COMMAND sh -c "${CMAKE_MAKE_PROGRAM} python_documentation_examples_yapf_check python_modules_yapf_check python_scripts_yapf_check 2>&1 >/dev/null"
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
+endif()
+
 add_subdirectory( unitTests )

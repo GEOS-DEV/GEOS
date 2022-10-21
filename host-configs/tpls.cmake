@@ -90,6 +90,17 @@ if(EXISTS ${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify)
   set(UNCRUSTIFY_EXECUTABLE ${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify CACHE PATH "" FORCE)
 endif()
 
+# YAPF is built by the system's python, so we need to search it in the
+# python console script directory
+execute_process(
+  COMMAND "python3" -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+  OUTPUT_VARIABLE PYTHON_CONSOLE_SCRIPT_DIR
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+if(EXISTS ${PYTHON_CONSOLE_SCRIPT_DIR}/yapf)
+  set(YAPF_EXECUTABLE ${PYTHON_CONSOLE_SCRIPT_DIR}/yapf CACHE PATH "" FORCE)
+endif()
+
 if(EXISTS ${GEOSX_TPL_DIR}/doxygen/bin/doxygen)
   set(DOXYGEN_EXECUTABLE ${GEOSX_TPL_DIR}/doxygen/bin/doxygen CACHE PATH "" FORCE)
 endif()
