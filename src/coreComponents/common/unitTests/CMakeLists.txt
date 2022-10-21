@@ -5,6 +5,7 @@
 set(gtest_geosx_tests
     testDataTypes.cpp
     testTypeDispatch.cpp
+    testFixedSizeDeque.cpp
    )
 
 set( dependencyList common hdf5 gtest )

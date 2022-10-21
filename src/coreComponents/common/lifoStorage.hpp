@@ -161,7 +161,7 @@ public:
    */
   void push( arrayView1d< T > array )
   {
-    std::cout << array[1] << std::endl;
+    std::cout <<__FILE__<<":"<<__LINE__<<" array[i] " <<  array[1] << std::endl;
     array.move( LvArray::MemorySpace::cuda, false );
     m_deviceDeque.emplace_back( array.toSliceConst() );
     push( array.data(), array.size() );

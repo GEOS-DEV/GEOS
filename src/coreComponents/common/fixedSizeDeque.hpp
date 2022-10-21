@@ -27,7 +27,10 @@
 #include "LvArray/src/ArrayView.hpp"
 #include "LvArray/src/memcpy.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "common/Logger.hpp"
 
+/// Get the positive value of a module b
+#define POSITIVE_MODULO( a, b ) ( ( ( a ) % ( b ) ) + b ) % ( b )
 namespace geosx
 {
 template< typename T, typename INDEX_TYPE >
@@ -42,49 +45,71 @@ class fixedSizeDeque
 public:
   fixedSizeDeque( IndexType maxEntries, IndexType valuesPerEntry, LvArray::MemorySpace space )
   {
+    GEOSX_THROW_IF( maxEntries < 0 , "Fixed sized queue size must be positive", std::runtime_error );
+    GEOSX_THROW_IF( valuesPerEntry < 0 , "Fixed sized queue array size must be positive", std::runtime_error );
     m_storage.resizeWithoutInitializationOrDestruction( space, maxEntries, valuesPerEntry );
   }
   
+  bool empty() const {
+    return m_begin > m_end;
+  }
+
   bool full() const
   {
-    return m_end - m_begin == m_storage.size( 0 );
+    return size() == m_storage.size( 0 );
+  }
+
+  size_t size() const {
+    return  (size_t)( m_end - m_begin + 1 );
   }
 
   ArraySlice1D front() const {
-    return m_storage[m_begin];
+    GEOSX_THROW_IF( empty(), "Can't get front from empty queue", std::runtime_error );
+    return m_storage[ m_begin ];
     //return ArraySlice1D<T const>(&m_storage[m_begin][0], m_storage.size(1), 1);
   }
 
   ArraySlice1D back() const {
-    return m_storage[m_end];
+    GEOSX_THROW_IF( empty(), "Can't get back from empty queue", std::runtime_error );
+    return m_storage[ m_end ];
     //return ArraySlice1D<T const>(&m_storage[m_end][0], m_storage.size(1), 1);
   }
 
   void pop_back() {
-    assert( m_end > m_begin );
+    GEOSX_THROW_IF( empty(), "Can't pop back from empty queue", std::runtime_error );
+    GEOSX_LOG_VAR(m_begin);
+    GEOSX_LOG_VAR(m_end);
     m_end--;
-    m_end = m_end % m_storage.size(0);
   }
 
   void pop_front() {
-    assert( m_end > m_begin );
+    GEOSX_THROW_IF( empty(), "Can't pop front from empty queue", std::runtime_error );
+    GEOSX_LOG_VAR(m_begin);
+    GEOSX_LOG_VAR(m_end);
     m_begin++;
-    m_begin = m_begin % m_storage.size(0);
   }
 
   void emplace_back( const ArraySlice1D & src ) {
-    LvArray::memcpy( m_storage[++m_end], src);
-    m_end = m_end % m_storage.size(0);
+    GEOSX_THROW_IF( full(), "Can't emplace in a full queue", std::runtime_error );
+    ++m_end;
+    GEOSX_LOG_VAR(m_begin);
+    GEOSX_LOG_VAR(m_end);
+    LvArray::memcpy( m_storage[ POSITIVE_MODULO( m_end, m_storage.size( 0 ) ) ], src);
+
   }
 
   void emplace_front( const ArraySlice1D & src ) {
-    if ( m_begin == 0 ) m_begin = m_storage.size(0);
-    LvArray::memcpy( m_storage[--m_begin], src );
+    GEOSX_THROW_IF( full(), "Can't emplace in a full  queue", std::runtime_error );
+    --m_begin;
+    GEOSX_LOG_VAR(m_begin);
+    GEOSX_LOG_VAR(m_end);
+    GEOSX_LOG_VAR( m_begin % m_storage.size( 0 ) );
+    LvArray::memcpy( m_storage[ POSITIVE_MODULO( m_begin, m_storage.size( 0 ) ) ], src );
   }
   
 private:
   Array2D m_storage;
-  IndexType m_begin = 0;
+  IndexType m_begin = 1;
   IndexType m_end = 0;
 };
 }
