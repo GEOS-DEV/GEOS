@@ -54,7 +54,7 @@
                  objectPath="ElementRegions/wellRegion/wellRegionuniqueSubRegion"
                  fieldName="pressure" />
 
-        <!-- SPHINX_STATS_START -->
+        <!-- SPHINX_STATS -->
         <CompositionalMultiphaseStatistics
                 name="compflowStatistics"
                 flowSolverName="compositionalMultiphaseFlow"
@@ -80,7 +80,7 @@
       targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
 
-<!--      SPHINX_STAT_EV_START-->
+<!--      SPHINX_STAT_EV-->
     <PeriodicEvent
       name="statistics"
       forceDt="1e8"
