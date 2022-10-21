@@ -24,7 +24,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
-#include "mesh/ElementRegionManager.hpp"
+#include "mesh/MeshLevel.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
