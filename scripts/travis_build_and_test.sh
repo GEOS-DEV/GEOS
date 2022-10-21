@@ -62,18 +62,12 @@ or_die cd ${GEOSX_BUILD_DIR}
 
 # Code style check
 if [[ "$*" == *--test-code-style* ]]; then
-  echo "DEBUG checking disk space"
-  df -h
-  du -hs .
   or_die ctest --output-on-failure -R "testUncrustifyCheck"
   exit 0
 fi
 
 # Documentation check
 if [[ "$*" == *--test-documentation* ]]; then
-  echo "DEBUG checking disk space"
-  df -h
-  du -hs .
   or_die ctest --output-on-failure -R "testDoxygenCheck"
   exit 0
 fi
@@ -81,38 +75,24 @@ fi
 # "Make" target check (builds geosx executable target only if true)
 # Use one process to prevent out-of-memory error
 if [[ "$*" == *--build-exe-only* ]]; then
-  echo "DEBUG checking disk space"
-  df -h
-  du -hs .
-  or_die make -j 1 geosx VERBOSE=1
+  or_die make -j $(nproc) geosx
 else
-  echo "DEBUG checking disk space"
-  df -h
-  du -hs .
-  or_die make -j $(nproc) VERBOSE=1
-  echo "DEBUG checking disk space"
-  df -h
-  du -hs .
+  or_die make -j $(nproc) geosx
+  make -j $(nproc)
+  or_die make -j 2
+
   # Verbosity check for installation to prevent hitting Travis log limit
   if [[ "$*" == *--reduce-install-logs* ]]; then
     or_die make install
   else
-    or_die make install VERBOSE=1
+    or_die make install
   fi
-  echo "DEBUG checking disk space"
-  df -h
-  du -hs .
 fi
 
 # Unit tests (excluding previously ran checks)
 if [[ "$*" != *--disable-unit-tests* ]]; then
-  echo "DEBUG checking disk space"
-  df -h
-  du -hs .
   or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
-  echo "DEBUG checking disk space"
-  df -h
-  du -hs .
+
 
 exit 0
