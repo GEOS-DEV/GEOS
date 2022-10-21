@@ -55,8 +55,8 @@ def main():
     plt.plot(timeRefined[:,0]*inDays, 100*abs(compOutfluxRefined[:,14,0]/timeStepSize)/injectionRate, 'r-', label="GEOSX (FINE)" )    
     plt.plot(timeCoarse[:,0]*inDays, 100*abs(compOutfluxCoarse[:,14,0]/timeStepSize)/injectionRate, 'k-', label="GEOSX (COARSE)" )
 
-    #plt.xlim( 0, 2000 )
-    #plt.ylim( 0, 0.14 )
+    plt.xlim( 0, 2000 )
+    plt.ylim( 0, 0.14 )
     #ax = plt.axes()
     #ax.xaxis.set_minor_locator(AutoMinorLocator())
     #ax.yaxis.set_minor_locator(AutoMinorLocator())

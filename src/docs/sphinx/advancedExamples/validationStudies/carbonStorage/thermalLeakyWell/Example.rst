@@ -107,7 +107,7 @@ general-purpose multiphase flow solver defined in the XML block **CompositionalM
     :end-before: <!-- SPHINX_SOLVER_END -->
 
 .. note::
-   The attribute ``temperature`` listed above is mandatory, but will be overridden by GEOSX to impose a non-uniform geothermal gradient along the z-axis, as we will see later. 
+   The attribute ``temperature`` listed above is mandatory, but are overridden by GEOSX to impose a non-uniform geothermal gradient along the z-axis, as we will see later. 
 
 ------------------------------------------------------------------
 Constitutive models
@@ -145,8 +145,8 @@ The density and viscosity values are internally tabulated by GEOSX at the beginn
 the Helmholtz energy equation for each pair :math:`(p,T)`.
 
 The tables size and spacing are specified in the file `pvtgas.txt`.
-Here, for both quantities, the values are tabulated between 6.8e4 Pa and 1.5e7 Pa, with a pressure spacing of 5e4 Pa,
-and between 302 K and 310 K, with a temperature increment of 0.5 K.
+Here, for both quantities, the values are tabulated between 6.6e6 Pa and 4e7 Pa, with a pressure spacing of 1e6 Pa,
+and between 302 K and 312 K, with a temperature increment of 5 K.
 These values have been chosen using the initial condition and an upper bound on the expected pressure increase
 during the simulation.
 

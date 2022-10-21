@@ -63,8 +63,8 @@ def main():
     values = 100 * abs(phaseOutflux[:, 14, 0] / timeStepSize) * inKilograms / injectionRate
     argmax = np.argmax(values)
 
-    #plt.xlim(0, 1000)
-    #plt.ylim(0, 0.25)
+    plt.xlim(0, 1000)
+    plt.ylim(0, 0.25)
     #ax = plt.axes()
     #ax.xaxis.set_minor_locator(AutoMinorLocator())
     #ax.yaxis.set_minor_locator(AutoMinorLocator())
