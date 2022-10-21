@@ -97,10 +97,14 @@ TEST( FixedSizeDequeTest, emplace_and_pop_cuda )
   EXPECT_EQ( false, deque.empty());
   EXPECT_EQ( false, deque.full());
 
+  LvArray::memcpy( array.toSlice(), deque.front() );
+  array.move( LvArray::MemorySpace::host, false );
   for (int i = 0; i < elemCnt; i++)
-    EXPECT_EQ( deque.front()[i], 2*i );
+    EXPECT_EQ( array[i], 2*i );
+  LvArray::memcpy( array.toSlice(), deque.back() );
+  array.move( LvArray::MemorySpace::host, false );
   for (int i = 0; i < elemCnt; i++)
-    EXPECT_EQ( deque.back()[i], 2*i );
+    EXPECT_EQ( array[i], 2*i );
 
   deque.pop_front();
   EXPECT_EQ( true, deque.empty());
