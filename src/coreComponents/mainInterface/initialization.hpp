@@ -50,6 +50,8 @@ void basicCleanup();
  */
 string getVersion();
 
+void outputVersionInfo();
+
 } // namespace geosx
 
 #endif // GEOSX_MAININTERFACE_INITIALIZATION_HPP_

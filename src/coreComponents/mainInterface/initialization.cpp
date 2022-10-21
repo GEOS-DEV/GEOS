@@ -22,7 +22,10 @@
 
 // TPL includes
 #include <optionparser.h>
-
+#include <hdf5.h>
+#include <vtkVersion.h>
+#include <umpire/Umpire.hpp>
+#include <conduit/conduit.hpp>
 namespace geosx
 {
 
@@ -253,12 +256,92 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
 }
 
 
+void outputVersionInfo()
+{
+#if defined(__clang__)
+  GEOSX_LOG_RANK_0( "  - clang version: " << 
+                    __clang_major__<<"."<<
+                    __clang_minor__<<"."<<
+                    __clang_patchlevel__ );
+#if defined(__apple_build_version__)
+  GEOSX_LOG_RANK_0( "    apple clang version: " << 
+                    __apple_build_version__);
+#endif
+#if defined(__ibmxl_vrm__)
+  GEOSX_LOG_RANK_0( "  - IBM compiler version: " <<
+                    __ibmxl_version__<<"."<<
+                    __ibmxl_release__<<"."<<
+                    __ibmxl_modification__<<"."<<
+                    __ibmxl_ptf_fix_level__ );
+#endif
+#elif defined(__GNUC__)
+  GEOSX_LOG_RANK_0( "  - gcc version: " << 
+                    __GNUC__<<"."<<
+                    __GNUC_MINOR__<<"."<<
+                    __GNUC_PATCHLEVEL__ );
+#endif
+
+#if defined( GEOSX_USE_CUDA )
+  GEOSX_LOG_RANK_0( "  - cuda version: " <<
+                    CUDA_VERSION/1000<<"."<<
+                    CUDA_VERSION/10%100 );
+#endif
+
+  {
+#if defined(_OPENMP)
+    GEOSX_LOG_RANK_0( "  - openmp version: "<<_OPENMP )
+#endif
+  }
+
+
+  {
+    char version[MPI_MAX_LIBRARY_VERSION_STRING];
+    int len;
+
+    MPI_Get_library_version( version, &len );
+    GEOSX_LOG_RANK_0( "  - MPI version: " << version );
+
+  }
+
+  {
+    unsigned majnum, minnum, relnum;
+    H5get_libversion( &majnum, &minnum, &relnum );
+    GEOSX_LOG_RANK_0( "  - HDF5 version: " << majnum<<"."<<minnum<<"."<<relnum );
+  }
+
+  {
+    static const char * vtkVersionString = vtkVersion::GetVTKVersion();
+    GEOSX_LOG_RANK_0( "  - VTK version: " << vtkVersionString );
+
+  }
+
+  {
+    GEOSX_LOG_RANK_0( "  - RAJA version: " << 
+                      RAJA_VERSION_MAJOR<<"."<<
+                      RAJA_VERSION_MINOR<<"."<<
+                      RAJA_VERSION_PATCHLEVEL );
+
+    GEOSX_LOG_RANK_0( "  - UMPIRE version: " << 
+                      umpire::get_major_version()<<"."<<
+                      umpire::get_minor_version()<<"."<<
+                      umpire::get_patch_version() );
+  }
+
+  {
+    GEOSX_LOG_RANK_0( "  - Conduit Version: "<<CONDUIT_VERSION );
+  }
+
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool const parseCommandLine )
 {
   setupEnvironment( argc, argv );
 
-  GEOSX_LOG_RANK_0( "GEOSX version " << getVersion() );
+  GEOSX_LOG_RANK_0( "GEOSX version: " << getVersion() );
+  outputVersionInfo();
+
   setupLAI();
 
   if( parseCommandLine )
