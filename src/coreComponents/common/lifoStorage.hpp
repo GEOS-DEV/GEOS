@@ -223,7 +223,7 @@ public:
   {
     array.move( LvArray::MemorySpace::cuda, true );
     pop( array.data(), array.size() );
-    LvArray::memcpy( array.toSlice(), m_deviceDeque.back( ) );
+    LvArray::memcpy( array.toSlice(), m_deviceDeque.front( ) );
     m_deviceDeque.pop_back();
   }
 

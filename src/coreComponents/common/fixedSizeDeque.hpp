@@ -65,13 +65,13 @@ public:
 
   ArraySlice1D front() const {
     GEOSX_THROW_IF( empty(), "Can't get front from empty queue", std::runtime_error );
-    return m_storage[ m_begin ];
+    return m_storage[ POSITIVE_MODULO( m_begin, m_storage.size( 0 ) ) ];
     //return ArraySlice1D<T const>(&m_storage[m_begin][0], m_storage.size(1), 1);
   }
 
   ArraySlice1D back() const {
     GEOSX_THROW_IF( empty(), "Can't get back from empty queue", std::runtime_error );
-    return m_storage[ m_end ];
+    return m_storage[ POSITIVE_MODULO( m_end, m_storage.size( 0 ) ) ];
     //return ArraySlice1D<T const>(&m_storage[m_end][0], m_storage.size(1), 1);
   }
 
@@ -109,8 +109,8 @@ public:
   
 private:
   Array2D m_storage;
-  IndexType m_begin = 1;
-  IndexType m_end = 0;
+  IndexType m_begin = 0;
+  IndexType m_end = -1;
 };
 }
 #endif // FIXEDSIZEDEQUE_HPP
