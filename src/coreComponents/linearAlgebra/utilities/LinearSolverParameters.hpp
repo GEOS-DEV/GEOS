@@ -185,14 +185,14 @@ struct LinearSolverParameters
     enum class AggInterpType : integer
     {
       default_,     ///< Use LAI's default option
-      extIStg2,     ///< Extended+i 2-stage (GPU support) - 1
-      stdStg2,      ///< Standard 2-stage - 2
-      extStg2,      ///< Extended 2-stage (GPU support) - 3
-      multipass,    ///< Multipass (GPU support) - 4
-      modExt,       ///< Modularized Extended (GPU support) - 5
-      modExtI,      ///< Modularized Extended+i (GPU support) - 6
-      modExtE,      ///< Modularized Extended+e (GPU support) - 7
-      modMultipass, ///< Modularized Multipass (GPU support) - 8
+      extIStg2,     ///< Extended+i 2-stage (GPU support in hypre)
+      stdStg2,      ///< Standard 2-stage
+      extStg2,      ///< Extended 2-stage (GPU support in hypre)
+      multipass,    ///< Multipass (GPU support in hypre)
+      modExt,       ///< Modularized Extended (GPU support in hypre)
+      modExtI,      ///< Modularized Extended+i (GPU support in hypre)
+      modExtE,      ///< Modularized Extended+e (GPU support in hypre)
+      modMultipass, ///< Modularized Multipass (GPU support in hypre)
     };
 
     /// AMG coarse solver type
@@ -384,6 +384,7 @@ ENUM_STRINGS( LinearSolverParameters::AMG::InterpType,
               "extI",
               "std",
               "ext",
+              "dirBAMG",
               "modExt",
               "modExtI",
               "modExtE" );
