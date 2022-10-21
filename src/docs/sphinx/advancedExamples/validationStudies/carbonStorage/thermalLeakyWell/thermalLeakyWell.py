@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import h5py
     
-from matplotlib.ticker import AutoMinorLocator
+#from matplotlib.ticker import AutoMinorLocator
 
 def main():
 
@@ -55,15 +55,15 @@ def main():
     plt.plot(timeRefined[:,0]*inDays, 100*abs(compOutfluxRefined[:,14,0]/timeStepSize)/injectionRate, 'r-', label="GEOSX (FINE)" )    
     plt.plot(timeCoarse[:,0]*inDays, 100*abs(compOutfluxCoarse[:,14,0]/timeStepSize)/injectionRate, 'k-', label="GEOSX (COARSE)" )
 
-    plt.xlim( 0, 2000 )
-    plt.ylim( 0, 0.14 )
-    ax = plt.axes()
-    ax.xaxis.set_minor_locator(AutoMinorLocator())
-    ax.yaxis.set_minor_locator(AutoMinorLocator())
+    #plt.xlim( 0, 2000 )
+    #plt.ylim( 0, 0.14 )
+    #ax = plt.axes()
+    #ax.xaxis.set_minor_locator(AutoMinorLocator())
+    #ax.yaxis.set_minor_locator(AutoMinorLocator())
     
     plt.grid()
-    plt.xlabel('time [days]', fontweight='bold')
-    plt.ylabel('leakage value [%]', fontweight='bold')
+    plt.xlabel('Time [days]', fontweight='bold')
+    plt.ylabel('Leakage value [%]', fontweight='bold')
     plt.legend(loc="lower right")    
     plt.show()
 
