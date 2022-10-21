@@ -163,7 +163,7 @@ public:
   {
     std::cout << array[1] << std::endl;
     array.move( LvArray::MemorySpace::cuda, false );
-    m_deviceDeque.emplace_front( array.toSliceConst() );
+    m_deviceDeque.emplace_back( array.toSliceConst() );
     push( array.data(), array.size() );
   }
 
@@ -223,6 +223,8 @@ public:
   {
     array.move( LvArray::MemorySpace::cuda, true );
     pop( array.data(), array.size() );
+    LvArray::memcpy( array.toSlice(), m_deviceDeque.back( ) );
+    m_deviceDeque.pop_back();
   }
 
   /**

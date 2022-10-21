@@ -63,18 +63,22 @@ public:
   void pop_back() {
     assert( m_end > m_begin );
     m_end--;
+    m_end = m_end % m_storage.size(0);
   }
 
   void pop_front() {
     assert( m_end > m_begin );
     m_begin++;
+    m_begin = m_begin % m_storage.size(0);
   }
 
-  void emplace_back( ArraySlice1D & src ) {
+  void emplace_back( const ArraySlice1D & src ) {
     LvArray::memcpy( m_storage[++m_end], src);
+    m_end = m_end % m_storage.size(0);
   }
 
   void emplace_front( const ArraySlice1D & src ) {
+    if ( m_begin == 0 ) m_begin = m_storage.size(0);
     LvArray::memcpy( m_storage[--m_begin], src );
   }
   
