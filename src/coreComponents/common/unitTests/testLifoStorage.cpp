@@ -13,7 +13,7 @@ using namespace geosx;
 
 TEST( LifoStorageTest, LifoStorage )
 {
-  size_t elemCnt = 100;
+  int elemCnt = 10;
   int numberOfElementsOnDevice = 2;
   int numberOfElementsOnHost = 3;
   int totalNumberOfBuffers = 10;
@@ -23,7 +23,7 @@ TEST( LifoStorageTest, LifoStorage )
 
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {
-    for( int i = 0; i < (int)elemCnt; i++ )
+    for( int i = 0; i < elemCnt; i++ )
       array[i] = j*elemCnt+i;
     lifo.push( array );
   }
@@ -31,8 +31,9 @@ TEST( LifoStorageTest, LifoStorage )
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {
     lifo.pop( array );
-    for( int i = 0; i < (int)elemCnt; i++ )
-      assert( array[i] == (totalNumberOfBuffers-j-1)*elemCnt+i );
+    array.move( LvArray::MemorySpace::host, false );
+    for( int i = 0; i < elemCnt; i++ )
+      EXPECT_EQ( array[i], (totalNumberOfBuffers-j-1)*elemCnt+i );
   }
 
 

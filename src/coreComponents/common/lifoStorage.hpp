@@ -21,6 +21,7 @@
 
 #include <chai/ArrayManager.hpp>
 #include <chai/ChaiMacros.hpp>
+#include "common/fixedSizeDeque.hpp"
 #include <deque>
 #include <future>
 #include <string>
@@ -46,7 +47,6 @@ private:
   struct storageData
   {
     char * m_data;
-    int m_id;
   };
 
   /// Number of buffers to be inserted into the LIFO
@@ -61,6 +61,8 @@ private:
   std::string m_name;
   /// Queue of data stored on device
   std::deque< storageData > m_deviceStorage;
+  fixedSizeDeque< T, int > m_deviceDeque;
+
   /// Queue of data stored on host memory
   std::deque< storageData > m_hostStorage;
   /// Queue of data stored on disk
@@ -92,6 +94,11 @@ private:
    */
   int m_bufferCount;
 
+  /**
+   * Counter of buffer stored on disk
+   */
+  int m_bufferOnDiskCount;
+
   /// Condition used to tell m_worker queue has been filled or processed is stopped.
   std::condition_variable m_task_queue_not_empty_cond;
   /// Mutex to protect access to m_task_queue.
@@ -118,7 +125,10 @@ public:
     m_maxNumberOfBuffers( maxNumberOfBuffers ),
     m_numberOfBuffersToStoreOnDevice( numberOfBuffersToStoreOnDevice ), m_numberOfBuffersToStoreOnHost( numberOfBuffersToStoreOnHost ),
     m_bufferSize( elemCnt*sizeof( T ) ),
-    m_name( name ), m_bufferCount( 0 ), m_worker( &lifoStorage< T >::wait_and_consume_tasks, this ),
+    m_name( name ),
+    m_deviceDeque( maxNumberOfBuffers, elemCnt, LvArray::MemorySpace::cuda ),
+    m_bufferCount( 0 ), m_bufferOnDiskCount( 0 ),
+    m_worker( &lifoStorage< T >::wait_and_consume_tasks, this ),
     m_continue( true )
   {
     GEOSX_ASSERT( numberOfBuffersToStoreOnDevice > 0 && numberOfBuffersToStoreOnHost >= 0 && maxNumberOfBuffers >= numberOfBuffersToStoreOnHost * numberOfBuffersToStoreOnDevice );
@@ -151,7 +161,9 @@ public:
    */
   void push( arrayView1d< T > array )
   {
+    std::cout << array[1] << std::endl;
     array.move( LvArray::MemorySpace::cuda, false );
+    m_deviceDeque.emplace_front( array.toSliceConst() );
     push( array.data(), array.size() );
   }
 
@@ -166,7 +178,7 @@ public:
     GEOSX_ASSERT( m_bufferSize == sizeof(T)*elemCnt; );
 
     storageData d;
-    d.m_id = m_bufferCount++;
+    int id = m_bufferCount++;
     chai::gpuMalloc((void * *)&d.m_data, m_bufferSize );
     chai::gpuMemcpy( d.m_data, data, m_bufferSize, gpuMemcpyDeviceToDevice );
     m_deviceStorageMutex.lock();
@@ -180,7 +192,7 @@ public:
     m_deviceStorage.emplace_front( d );
     m_deviceStorageMutex.unlock();
 
-    if( m_maxNumberOfBuffers - d.m_id > m_numberOfBuffersToStoreOnDevice + m_numberOfBuffersToStoreOnHost )
+    if( m_maxNumberOfBuffers - id > m_numberOfBuffersToStoreOnDevice + m_numberOfBuffersToStoreOnHost )
     {
       // This buffer will go to host then to disk
       std::packaged_task< void() > task1 ( std::bind( &lifoStorage< T >::deviceToHost, this ) );
@@ -192,7 +204,7 @@ public:
       m_task_queue.emplace_back( std::move( task ) );
       m_task_queue_not_empty_cond.notify_all();
     }
-    else if( m_maxNumberOfBuffers - d.m_id > m_numberOfBuffersToStoreOnDevice )
+    else if( m_maxNumberOfBuffers - id > m_numberOfBuffersToStoreOnDevice )
     {
       // This buffer will go to host memory
       std::packaged_task< void() > task = std::packaged_task< void() >( std::bind( &lifoStorage< T >::deviceToHost, this ) );
@@ -223,6 +235,8 @@ public:
   {
     GEOSX_ASSERT( m_bufferSize == sizeof(T)*elemCnt; );
 
+    int id = --m_bufferCount;
+
     m_deviceStorageMutex.lock();
     while( m_deviceStorage.empty() )
     {
@@ -237,7 +251,7 @@ public:
 
     chai::gpuMemcpy( data, d.m_data, m_bufferSize, gpuMemcpyDeviceToDevice );
     std::packaged_task< void() > task;
-    if( d.m_id >= m_numberOfBuffersToStoreOnDevice + m_numberOfBuffersToStoreOnHost )
+    if( id >= m_numberOfBuffersToStoreOnDevice + m_numberOfBuffersToStoreOnHost )
     {
       // Trigger pull one buffer from disk
       task = std::packaged_task< void() >( std::bind( &lifoStorage< T >::diskToHost, this ) );
@@ -245,7 +259,7 @@ public:
       m_task_queue.emplace_back( std::move( task ) );
       m_task_queue_not_empty_cond.notify_all();
     }
-    if( d.m_id >= m_numberOfBuffersToStoreOnDevice )
+    if( id >= m_numberOfBuffersToStoreOnDevice )
     {
       // Trigger pull one buffer from host
       task = std::packaged_task< void() >( std::bind( &lifoStorage< T >::hostToDevice, this ) );
@@ -329,8 +343,9 @@ private:
    */
   void writeOnDisk( storageData d )
   {
+    int id = m_bufferOnDiskCount++;
     int const rank = MpiWrapper::initialized()?MpiWrapper::commRank( MPI_COMM_GEOSX ):0;
-    std::string fileName = GEOSX_FMT( "{}_{:08}_{:04}.dat", m_name, d.m_id, rank );
+    std::string fileName = GEOSX_FMT( "{}_{:08}_{:04}.dat", m_name, id, rank );
     std::ofstream wf( fileName, std::ios::out | std::ios::binary );
     GEOSX_THROW_IF( !wf,
                     "Could not open file "<< fileName << " for writting",
@@ -349,8 +364,9 @@ private:
    */
   void readOnDisk( storageData & d )
   {
+    int id = --m_bufferOnDiskCount;
     int const rank = MpiWrapper::initialized()?MpiWrapper::commRank( MPI_COMM_GEOSX ):0;
-    std::string fileName = GEOSX_FMT( "{}_{:08}_{:04}.dat", m_name, d.m_id, rank );
+    std::string fileName = GEOSX_FMT( "{}_{:08}_{:04}.dat", m_name, id, rank );
     std::ifstream wf( fileName, std::ios::in | std::ios::binary );
     GEOSX_THROW_IF( !wf,
                     "Could not open file "<< fileName << " for reading",
