@@ -4,7 +4,7 @@
 
   <Included>
     <File
-      name="./thermalLeakyWell_base_iterative.xml"/>
+      name="./thermalLeakyWell_base_direct.xml"/>
   </Included>
   
   <!-- SPHINX_MESH -->  
@@ -15,9 +15,9 @@
       xCoords="{ -500, -0.1329, 0.1329, 99.8671, 100.1329, 500 }"
       yCoords="{ -500, -0.1329, 0.1329, 500 }"
       zCoords="{ -800, -770, -670, -640 }"
-      nx="{ 50, 1, 20, 1, 40 }"
-      ny="{ 50, 1, 50 }"
-      nz="{ 20, 30, 10 }"
+      nx="{ 5, 1, 2, 1, 4 }"
+      ny="{ 5, 1, 5 }"
+      nz="{ 5, 30, 5 }"
       cellBlockNames="{ aquiferBottom00, aquitard00, aquiferTop00,
   		        aquiferBottom01, aquitard01, aquiferTop01,
 		        aquiferBottom02, aquitard02, aquiferTop02,

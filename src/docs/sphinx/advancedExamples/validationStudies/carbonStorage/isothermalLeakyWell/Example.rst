@@ -282,7 +282,7 @@ Next, we measure the CO2 leakage rate through the leaky well, defined by the aut
 flow at midway between top and bottom aquifers divided by the injection rate (8.87 kg/s), in percent.
 The GEOSX leakage rate is shown in the figure below:
 
-.. _isothermalLeakyWell_GEOSXLeakageRate:
+
 .. plot:: docs/sphinx/advancedExamples/validationStudies/carbonStorage/isothermalLeakyWell/isothermalLeakyWellFigure.py
 
 

@@ -21,7 +21,7 @@
         lineSearchAction="Attempt"/>
       <LinearSolverParameters
         solverType="direct"
-	directParallel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseFVM>
   </Solvers>
   <!-- SPHINX_SOLVER_END -->        
@@ -47,7 +47,7 @@
       target="/Solvers/compflow"/>
     <PeriodicEvent
       name="solverApplications2"
-      beginTime="1e5"	
+      beginTime="1e5"   
       forceDt="1e5"
       target="/Solvers/compflow"/>
     <PeriodicEvent
@@ -73,15 +73,15 @@
     <CellElementRegion
       name="aquiferBottom"
       cellBlocks="{ aquiferBottom00, aquiferBottom01, aquiferBottom02,
-		            aquiferBottom10,                  aquiferBottom12,
-		            aquiferBottom20, aquiferBottom21, aquiferBottom22,
-	                aquiferBottom30,                  aquiferBottom32,
-		            aquiferBottom40, aquiferBottom41, aquiferBottom42 }"
+                    aquiferBottom10,                  aquiferBottom12,
+                    aquiferBottom20, aquiferBottom21, aquiferBottom22,
+                    aquiferBottom30,                  aquiferBottom32,
+                    aquiferBottom40, aquiferBottom41, aquiferBottom42 }"
       materialList="{ fluid, rock, relperm }"/>
     <CellElementRegion
       name="aquiferTop"
       cellBlocks="{ aquiferTop00, aquiferTop01, aquiferTop02,
-		            aquiferTop10,               aquiferTop12,
+                    aquiferTop10,               aquiferTop12,
                     aquiferTop20, aquiferTop21, aquiferTop22,
                     aquiferTop30,               aquiferTop32,
                     aquiferTop40, aquiferTop41, aquiferTop42 }"
