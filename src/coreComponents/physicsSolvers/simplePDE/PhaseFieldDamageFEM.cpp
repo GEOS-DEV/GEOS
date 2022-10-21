@@ -69,6 +69,16 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
   registerWrapper( viewKeyStruct::localDissipationOptionString(), &m_localDissipationOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Type of local dissipation function. Can be Linear or Quadratic" );
+
+  registerWrapper( viewKeyStruct::irreversibilityFlagString(), &m_irreversibilityFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag to indicate whether to apply the irreversibility constraint" );
+
+  registerWrapper( viewKeyStruct::damageUpperBoundString(), &m_damageUpperBound ).
+    setApplyDefaultValue( 1.5 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The upper bound of the damage" );
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
@@ -78,9 +88,9 @@ PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
 
 void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 {
-  forMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodes = mesh.getNodeManager();
 
@@ -197,7 +207,7 @@ void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM(
   dofManager.addField( m_fieldName,
                        FieldLocation::Node,
                        1,
-                       m_meshTargets );
+                       getMeshTargets() );
 
   dofManager.addCoupling( m_fieldName,
                           m_fieldName,
@@ -213,9 +223,9 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                           arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -423,9 +433,9 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
   dofManager.addVectorToField( localSolution, m_fieldName, m_fieldName, scalingFactor );
 
   // Syncronize ghost nodes
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, { m_fieldName } );
@@ -452,6 +462,12 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
 {
   GEOSX_MARK_FUNCTION;
   applyDirichletBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
+
+  // Apply the crack irreversibility constraint
+  if( m_irreversibilityFlag )
+  {
+    applyIrreversibilityConstraint( dofManager, domain, localMatrix, localRhs );
+  }
 
   if( getLogLevel() == 2 )
   {
@@ -490,9 +506,9 @@ PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
 
   RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & )
   {
     const NodeManager & nodeManager = mesh.getNodeManager();
     const arrayView1d< const integer > & ghostRank = nodeManager.ghostRank();
@@ -556,18 +572,18 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
 
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & )
   {
-    fsManager.apply( time,
-                     mesh,
-                     "nodeManager",
-                     m_fieldName,
-                     [&]( FieldSpecificationBase const & bc, string const &,
-                          SortedArrayView< localIndex const > const & targetSet,
-                          Group & targetGroup,
-                          string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
+    fsManager.template apply< NodeManager >( time,
+                                             mesh,
+                                             m_fieldName,
+                                             [&]( FieldSpecificationBase const & bc,
+                                                  string const &,
+                                                  SortedArrayView< localIndex const > const & targetSet,
+                                                  NodeManager & targetGroup,
+                                                  string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                          parallelDevicePolicy< 32 > >( targetSet,
@@ -580,9 +596,65 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                                        localRhs );
     } );
 
-    fsManager.applyFieldValue< serialPolicy >( time, mesh, "ElementRegions", viewKeyStruct::coeffNameString() );
+    fsManager.applyFieldValue< serialPolicy >( time, mesh, viewKeyStruct::coeffNameString() );
   } );
 }
+
+void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dofManager,
+                                                          DomainPartition & domain,
+                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                          arrayView1d< real64 > const & localRhs )
+{
+  GEOSX_MARK_FUNCTION;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    arrayView1d< globalIndex const > const dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( m_fieldName );
+
+    globalIndex const rankOffSet = dofManager.rankOffset();
+
+    real64 const damangeUpperBound = m_damageUpperBound;
+
+    forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIndex )
+    {
+      localIndex const dof = dofIndex[nodeIndex];
+
+      if( dof > -1 )
+      {
+        real64 const damageAtNode = nodalDamage[nodeIndex];
+
+        if( damageAtNode >= damangeUpperBound )
+        {
+
+          // Specify the contribution to rhs
+          real64 rhsContribution;
+
+          FieldSpecificationEqual::SpecifyFieldValue( dof,
+                                                      rankOffSet,
+                                                      localMatrix,
+                                                      rhsContribution,
+                                                      damangeUpperBound,
+                                                      damageAtNode );
+
+          globalIndex const localRow = dof - rankOffSet;
+
+          if( localRow >= 0 && localRow < localRhs.size() )
+          {
+            localRhs[ localRow ] = rhsContribution;
+          }
+        }
+      }
+    } );
+
+  } );
+}
+
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, string const &,
                         Group * const )
