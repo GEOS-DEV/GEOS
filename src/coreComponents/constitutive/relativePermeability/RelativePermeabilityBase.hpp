@@ -140,6 +140,11 @@ public:
   virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
   { GEOSX_UNUSED_VAR( phaseVolFraction ); }
 
+  /**
+   * @brief Save converged state after the relperm update
+   */
+  virtual void saveConvergedState() const override;
+
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
@@ -174,6 +179,7 @@ protected:
 
   // output quantities
   array3d< real64, relperm::LAYOUT_RELPERM > m_phaseRelPerm;
+  array3d< real64, relperm::LAYOUT_RELPERM >  m_phaseRelPerm_n;
   array4d< real64, relperm::LAYOUT_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
   array3d< real64, relperm::LAYOUT_RELPERM > m_phaseTrappedVolFrac;
 

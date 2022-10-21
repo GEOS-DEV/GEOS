@@ -22,6 +22,8 @@
       name="multiphasePoroelasticity"
       solidSolverName="linearElasticity"
       flowSolverName="twoPhaseFlow"
+      stabilizationType="Global"
+      stabilizationRegionNames="{ channel, barrier }"
       logLevel="1"
       targetRegions="{ channel, barrier }"/>
 

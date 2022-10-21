@@ -291,9 +291,6 @@ public:
 
     // Component fluxes and derivatives
 
-    /// Derivatives of component fluxes wrt temperature
-    stackArray2d< real64, 2 * numComp > dCompFlux_dT;
-
     // Thermal transmissibility (for now, no derivatives)
 
     real64 thermalTransmissibility[maxNumConns][2]{};
@@ -365,7 +362,7 @@ public:
       real64 dGravHead_dT[numFluxSupportPoints]{};
 
       // compute potential difference MPFA-style
-      for( integer i = 0; i < 2; ++i )
+      for( integer i = 0; i < numFluxSupportPoints; ++i )
       {
         localIndex const er  = seri[i];
         localIndex const esr = sesri[i];
@@ -476,6 +473,7 @@ public:
         dConvectiveEnergyFlux_dC[k_up][jc] += phaseFlux * dProp_dC[jc];
       }
 
+      // Step 6: add convectiveFlux and its derivatives to localFlux and localFluxJacobian
       integer const localRowIndexEnergy0 = k[0] * numEqn + numEqn - 1;
       integer const localRowIndexEnergy1 = k[1] * numEqn + numEqn - 1;
       stack.localFlux[localRowIndexEnergy0] +=  m_dt * convectiveEnergyFlux;
@@ -516,8 +514,7 @@ public:
 
 
 
-    // Step 2: compute temperature difference at the interface
-    localIndex k[2];
+    localIndex k[2]{};
     localIndex connectionIndex = 0;
 
     for( k[0] = 0; k[0] < stack.numConnectedElems; ++k[0] )
@@ -531,6 +528,7 @@ public:
 
         real64 conductiveEnergyFlux = 0.0;
         real64 dConductiveEnergyFlux_dT[numFluxSupportPoints]{};
+
         // Step 2: compute temperature difference at the interface
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
@@ -542,7 +540,7 @@ public:
           dConductiveEnergyFlux_dT[ke] += thermalTrans[ke];
         }
 
-        // Step 1: add energyFlux and its derivatives to localFlux and localFluxJacobian
+        // Step 3: add conductiveFlux and its derivatives to localFlux and localFluxJacobian
         integer const localRowIndexEnergy0 = k[0] * numEqn + numEqn - 1;
         integer const localRowIndexEnergy1 = k[1] * numEqn + numEqn - 1;
         stack.localFlux[localRowIndexEnergy0] +=  m_dt * conductiveEnergyFlux;
