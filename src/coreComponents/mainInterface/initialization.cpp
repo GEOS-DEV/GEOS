@@ -257,6 +257,8 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
 std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool const parseCommandLine )
 {
   setupEnvironment( argc, argv );
+
+  GEOSX_LOG_RANK_0( "GEOSX version " << getVersion() );
   setupLAI();
 
   if( parseCommandLine )
