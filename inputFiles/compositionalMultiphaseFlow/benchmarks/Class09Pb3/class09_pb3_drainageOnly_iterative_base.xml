@@ -11,21 +11,25 @@
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
       initialDt="1e2"
-      targetRegions="{ reservoir, boundaries, wellRegion }">
+      targetRegions="{ reservoir, wellRegion }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="40"/>
-      <LinearSolverParameters
-        solverType="fgmres"
-	    preconditionerType="mgr"
-	    krylovTol="1e-6"/>
+        <LinearSolverParameters
+                solverType="fgmres"
+                preconditionerType="mgr"
+                krylovTol="1e-6"
+                useIlukSmoother="1"
+                iluFill="0"
+                logLevel="1"
+                stopIfError="1"/>
     </CompositionalMultiphaseReservoir>
       <!-- SPHINX_SOLVER_MPWELL_END -->
 
       <!-- SPHINX_SOLVER_MP_END -->
     <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"
-      targetRegions="{ reservoir, boundaries }"
+      targetRegions="{ reservoir }"
       discretization="fluidTPFA"
       temperature="363"
       maxCompFractionChange="0.2"
@@ -39,19 +43,19 @@
       targetRegions="{ wellRegion }"
       logLevel="1"
       useMass="1">
-      <WellControls
-        name="wellControls"
-        type="injector"
-        control="totalVolRate"
-        referenceElevation="-3000"
-        targetBHP="1e8"
-	enableCrossflow="0"
-	useSurfaceConditions="1"            
-	surfacePressure="101325"  
-        surfaceTemperature="288.71" 
-	targetTotalRateTableName="totalRateTable"
-        injectionTemperature="353.15"
-        injectionStream="{ 1.0, 0.0 }"/>
+        <WellControls
+         name="wellControls"
+         type="injector"
+         control="totalVolRate"
+         referenceElevation="-3000"
+         targetBHP="1e8"
+         enableCrossflow="0"
+         useSurfaceConditions="1"
+         surfacePressure="101325"
+         surfaceTemperature="288.71"
+         targetTotalRateTableName="totalRateTable"
+         injectionTemperature="353.15"
+         injectionStream="{ 1.0, 0.0 }"/>
     </CompositionalMultiphaseWell>
       <!-- SPHINX_SOLVER_WELL_END -->
   </Solvers>
@@ -61,11 +65,6 @@
     <CellElementRegion
       name="reservoir"
       cellBlocks="{ 1_hexahedra }"
-      materialList="{ fluid, rock, relperm, cappres }"/>
-
-    <CellElementRegion
-      name="boundaries"
-      cellBlocks="{ 2_hexahedra }"
       materialList="{ fluid, rock, relperm, cappres }"/>
 
     <WellElementRegion
@@ -115,7 +114,7 @@
       name="relperm"
       phaseNames="{ gas, water }"
       wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable,
-    					    gasRelativePermeabilityTable }"/>
+                                            gasRelativePermeabilityTable }"/>
 
 	<!-- Problem 3.2 is hysteretical only --> 
     <!-- <TableRelativePermeabilityHysteresis
@@ -146,43 +145,43 @@
       initialPhaseName="water"
       componentNames="{ co2, water }"
       componentFractionVsElevationTableNames="{ initCO2CompFracTable,
-						   initWaterCompFracTable }"
-      temperatureVsElevationTableName="initTempTable"/>o
+                                                initWaterCompFracTable }"
+      temperatureVsElevationTableName="initTempTable"/>
     <!-- SPHINX_HYDROSTATIC_END -->
 
 <!-- bc ComponentFrac -->
 <!-- bc Pressure +tables -->
       <!-- SPHINX_BC -->
-  <FieldSpecification
-      name="bcPressure"
-      objectPath="ElementRegions/boundaries"
-      setNames="{ all }"
-      fieldName="pressure"
-      functionName="pressureFunction"
-      scale="1"/>
-    <FieldSpecification
-      name="bcTemperature"
-      objectPath="ElementRegions/boundaries"
-      setNames="{ all }"
-      fieldName="temperature"
-      functionName="tempFunction"
-      scale="1"/>
-    <FieldSpecification
-      name="bcCompositionCO2"
-      objectPath="ElementRegions/boundaries"
-      setNames="{ all }"
-      fieldName="globalCompFraction"
-      component="0"
-      scale="0.000001"/>
-    <FieldSpecification
-      name="bcCompositionWater"
-      objectPath="ElementRegions/boundaries"
-      setNames="{ all }"
-      fieldName="globalCompFraction"
-      component="1"
-      scale="0.999999"/>
+      <FieldSpecification
+              name="bcPressure"
+              objectPath="faceManager"
+              setNames="{3}"
+              fieldName="pressure"
+              functionName="pressureFunction"
+              scale="1"/>
+      <FieldSpecification
+              name="bcTemperature"
+              objectPath="faceManager"
+              setNames="{3}"
+              fieldName="temperature"
+              functionName="temperatureFunction"
+              scale="1"/>
+      <FieldSpecification
+              name="bcCompositionCO2"
+              objectPath="faceManager"
+              setNames="{3}"
+              fieldName="globalCompFraction"
+              component="0"
+              scale="0.000001"/>
+      <FieldSpecification
+              name="bcCompositionWater"
+              objectPath="faceManager"
+              setNames="{3}"
+              fieldName="globalCompFraction"
+              component="1"
+              scale="0.999999"/>
+      <!-- SPHINX_BC_END -->
   </FieldSpecifications>
-    <!-- SPHINX_BC_END -->
 
   <Outputs>
     <VTK
@@ -195,102 +194,7 @@
       name="timeHistoryOutput"
       sources="{/Tasks/wellPressureCollection}"
       filename="wellPressureHistory" />
-
-   <TimeHistory
-      name="timeXcompHistoryOutput"
-      sources="{/Tasks/xcompCollection}"
-      filename="xcompHistory" />
-    <TimeHistory
-      name="timeSatHistoryOutput"
-      sources="{/Tasks/satCollection}"
-      filename="satHistory" /> 
-    <TimeHistory
-      name="timeRhoHistoryOutput"
-      sources="{/Tasks/rhoCollection}"
-      filename="rhoHistory" /> 
-    <TimeHistory
-      name="timePoroHistoryOutput"
-      sources="{/Tasks/poroCollection}"
-      filename="poroHistory" /> 
-    <TimeHistory
-      name="timeVolHistoryOutput"
-      sources="{/Tasks/volCollection}"
-      filename="volHistory" /> 
-
-   <TimeHistory
-      name="timeXcompHistoryOutput_bc"
-      sources="{/Tasks/xcompCollection_bc}"
-      filename="xcompHistory_bc" />
-    <TimeHistory
-      name="timeSatHistoryOutput_bc"
-      sources="{/Tasks/satCollection_bc}"
-      filename="satHistory_bc" />
-    <TimeHistory
-      name="timeRhoHistoryOutput_bc"
-      sources="{/Tasks/rhoCollection_bc}"
-      filename="rhoHistory_bc" />
-    <TimeHistory
-      name="timePoroHistoryOutput_bc"
-      sources="{/Tasks/poroCollection_bc}"
-      filename="poroHistory_bc" /> 
-    <TimeHistory
-      name="timeVolHistoryOutput_bc"
-      sources="{/Tasks/volCollection_bc}"
-      filename="volHistory_bc" /> 
   </Outputs>
-
-  <Tasks>
-    <PackCollection
-      name="wellPressureCollection"
-      objectPath="ElementRegions/wellRegion/wellRegionuniqueSubRegion"
-      fieldName="pressure" />
-   
-    <PackCollection
-      name="xcompCollection"
-      objectPath="ElementRegions/reservoir/elementSubRegions/1_hexahedra"
-      fieldName="fluid_phaseCompFraction" />
-    <PackCollection
-      name="satCollection"
-      objectPath="ElementRegions/reservoir/elementSubRegions/1_hexahedra"
-      fieldName="phaseVolumeFraction" />
-    <PackCollection
-      name="rhoCollection"
-      objectPath="ElementRegions/reservoir/elementSubRegions/1_hexahedra"
-      fieldName="fluid_phaseDensity" /> 
-    <PackCollection
-      name="poroCollection"
-      objectPath="ElementRegions/reservoir/elementSubRegions/1_hexahedra"
-      fieldName="rockPorosity_porosity" /> 
-    <PackCollection
-      name="volCollection"
-      objectPath="ElementRegions/reservoir/elementSubRegions/1_hexahedra"
-      fieldName="elementVolume" /> 
-
-
-
-    <PackCollection
-      name="xcompCollection_bc"
-      objectPath="ElementRegions/boundaries/elementSubRegions/2_hexahedra"
-      fieldName="fluid_phaseCompFraction" />
-    <PackCollection
-      name="satCollection_bc"
-      objectPath="ElementRegions/boundaries/elementSubRegions/2_hexahedra"
-      fieldName="phaseVolumeFraction" />
-    <PackCollection
-      name="rhoCollection_bc"
-      objectPath="ElementRegions/boundaries/elementSubRegions/2_hexahedra"
-      fieldName="fluid_phaseDensity" />
-    <PackCollection
-      name="poroCollection_bc"
-      objectPath="ElementRegions/boundaries/elementSubRegions/2_hexahedra"
-      fieldName="rockPorosity_porosity" /> 
-    <PackCollection
-      name="volCollection_bc"
-      objectPath="ElementRegions/boundaries/elementSubRegions/2_hexahedra"
-      fieldName="elementVolume" /> 
- 
-  </Tasks>
-  <!-- SPHINX_FIELD_CASE_Co2_TASKS_END -->  
 
   <Functions>
     <TableFunction
@@ -323,14 +227,15 @@
     <TableFunction 
       name="tempFunction"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ tables/xlin.geos, tables/ylin.geos, tables/zlin.geos}"
-      voxelFile="tables/temperature.geos"
-      interpolation="linear" /> 
+      coordinateFiles="{ fc_tables/xlin.geos, fc_tables/ylin.geos, fc_tables/zlin.geos}"
+      voxelFile="fc_tables/temperature.geos"
+      interpolation="linear" />
+
     <TableFunction 
       name="pressureFunction"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ tables/xlin.geos, tables/ylin.geos, tables/zlin.geos}"
-      voxelFile="tables/pressure.geos"
+      coordinateFiles="{ fc_tables/xlin.geos, fc_tables/ylin.geos, fc_tables/zlin.geos}"
+      voxelFile="fc_tables/pressure.geos"
       interpolation="linear" /> 
 
     <TableFunction

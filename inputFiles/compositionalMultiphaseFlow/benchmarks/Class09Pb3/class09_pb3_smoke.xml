@@ -2,17 +2,19 @@
 
 <Problem>
   <Included>
-    <File name="./class09_pb3_drainageOnly_base.xml"/>
+    <File name="./class09_pb3_drainageOnly_iterative_base.xml"/>
   </Included>
-    <!-- <File name="./class09_pb3_hystRelperm_base.xml"/> -->
-    <!-- <File name="./class09_pb3_drainageOnly_base.xml"/> -->
+    <!-- <File name="./class09_pb3_hystRelperm_iterative_base.xml"/> -->
+    <!-- <File name="./class09_pb3_hystRelperm_direct_base.xml"/> -->
+    <!-- <File name="./class09_pb3_drainageOnly_iterative_base.xml"/> -->
+    <!-- <File name="./class09_pb3_drainageOnly_direct_base.xml"/> -->
 
 	<!-- SPHINX_MESH -->
   <Mesh>
    <VTKMesh
      name="mesh"
      logLevel="2"  
-     file="../meshes/Johansen.vtk"
+     file="../meshes/Johansen_faces.vtu"
      fieldsToImport="{ perm, poro }"
      fieldNamesInGEOSX="{ rockPerm_permeability, rockPorosity_referencePorosity }" /> 
    <InternalWell
@@ -44,7 +46,24 @@
     </InternalWell>
   </Mesh>
 	<!-- SPHINX_MESH_END -->
- 
+
+    <Tasks>
+
+        <PackCollection
+                 name="wellPressureCollection"
+                 objectPath="ElementRegions/wellRegion/wellRegionuniqueSubRegion"
+                 fieldName="pressure" />
+
+        <!-- SPHINX_STATS_START -->
+        <CompositionalMultiphaseStatistics
+                name="compflowStatistics"
+                flowSolverName="compositionalMultiphaseFlow"
+                logLevel="1"
+                computeCFLNumbers="1"
+                computeRegionStatistics="1"/>
+        <!-- SPHINX_STATS_END -->
+    </Tasks>
+
   <!-- max time 50 y -->
   <Events
     maxTime="1.5768e+09">
@@ -61,157 +80,19 @@
       targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
 
+<!--      SPHINX_STAT_EV_START-->
+    <PeriodicEvent
+      name="statistics"
+      forceDt="1e8"
+      target="/Tasks/compflowStatistics"/>
+<!--      SPHINX_STAT_EV_END-->
+
     <PeriodicEvent
       name="timeHistoryCollection"
       timeFrequency="1e8"
       targetExactTimestep="1"
       target="/Tasks/wellPressureCollection" />
     
-   <PeriodicEvent
-      name="timeRhoHistoryCollection"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Tasks/rhoCollection" /> 
-   <PeriodicEvent
-      name="timeRhoHistoryOutput"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Outputs/timeRhoHistoryOutput" />
-   <PeriodicEvent
-      name="timeSatHistoryCollection"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Tasks/satCollection" /> 
-    <PeriodicEvent
-      name="timeSatHistoryOutput"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Outputs/timeSatHistoryOutput" />
-   <PeriodicEvent
-      name="timeXcompHistoryCollection"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Tasks/xcompCollection" /> 
-    <PeriodicEvent
-      name="timeXcompHistoryOutput"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Outputs/timeXcompHistoryOutput" />
-   
-   <PeriodicEvent
-      name="timePoroHistoryCollection"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Tasks/poroCollection" /> 
-    <PeriodicEvent
-      name="timePoroHistoryOutput"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Outputs/timePoroHistoryOutput" />
-   <PeriodicEvent
-      name="timeVolHistoryCollection"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Tasks/volCollection" /> 
-    <PeriodicEvent
-      name="timeVolHistoryOutput"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Outputs/timeVolHistoryOutput" />
-
-   <PeriodicEvent
-      name="timeRhoHistoryCollection_bc"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Tasks/rhoCollection_bc" />
-   <PeriodicEvent
-      name="timeRhoHistoryOutput_bc"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Outputs/timeRhoHistoryOutput_bc" />
-   <PeriodicEvent
-      name="timeSatHistoryCollection_bc"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Tasks/satCollection_bc" />
-    <PeriodicEvent
-      name="timeSatHistoryOutput_bc"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Outputs/timeSatHistoryOutput_bc" />
-   <PeriodicEvent
-      name="timeXcompHistoryCollection_bc"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Tasks/xcompCollection_bc" />
-    <PeriodicEvent
-      name="timeXcompHistoryOutput_bc"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Outputs/timeXcompHistoryOutput_bc" />
-   <PeriodicEvent
-      name="timePoroHistoryCollection_bc"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Tasks/poroCollection_bc" /> 
-    <PeriodicEvent
-      name="timePoroHistoryOutput_bc"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Outputs/timePoroHistoryOutput_bc" />
-   <PeriodicEvent
-      name="timeVolHistoryCollection_bc"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Tasks/volCollection_bc" /> 
-    <PeriodicEvent
-      name="timeVolHistoryOutput_bc"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Outputs/timeVolHistoryOutput_bc" />
-
-	<SoloEvent 
-		name="final_timeXcompHistoryOutput"
-		target="/Outputs/timeXcompHistoryOutput"
-		targetTime="1.5768e+09"/>
-
-	<SoloEvent 
-		name="final_timeSatHistoryOutput"
-		target="/Outputs/timeSatHistoryOutput"
-		targetTime="1.5768e+09"/>
-	<SoloEvent 
-		name="final_timeRhoHistoryOutput"
-		target="/Outputs/timeRhoHistoryOutput"
-		targetTime="1.5768e+09"/>
-	<SoloEvent 
-		name="final_timePoroHistoryOutput"
-		target="/Outputs/timePoroHistoryOutput"
-		targetTime="1.5768e+09"/>
-	<SoloEvent 
-		name="final_timeVolHistoryOutput"
-		target="/Outputs/timeVolHistoryOutput"
-		targetTime="1.5768e+09"/>
-	<SoloEvent 
-		name="final_timeXcompHistoryOutput_bc"
-		target="/Outputs/timeXcompHistoryOutput_bc"
-		targetTime="1.5768e+09"/>
-	<SoloEvent 
-		name="final_timeSatHistoryOutput_bc"
-		target="/Outputs/timeSatHistoryOutput_bc"
-		targetTime="1.5768e+09"/>
-	<SoloEvent 
-		name="final_timeRhoHistoryOutput_bc"
-		target="/Outputs/timeRhoHistoryOutput_bc" 
-		targetTime="1.5768e+09"/>
-	<SoloEvent 
-		name="final_timePoroHistoryOutput_bc"
-		target="/Outputs/timePoroHistoryOutput_bc" 
-		targetTime="1.5768e+09"/>
-	<SoloEvent 
-		name="final_timeVolHistoryOutput_bc"
-		target="/Outputs/timeVolHistoryOutput_bc"
-		targetTime="1.5768e+09"/>
-
     <PeriodicEvent
       name="solverApplications1"
       beginTime="0"
