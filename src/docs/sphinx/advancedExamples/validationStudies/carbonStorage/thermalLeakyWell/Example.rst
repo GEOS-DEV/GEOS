@@ -51,7 +51,7 @@ This depth corresponds to the point where the line depicting the formation condi
 crosses the CO2 saturation vapor curve, that is, the boundary between liquid and gaseous CO2.
 Other fluid properties such as viscosity also change abruptly at that depth.    
 
-.. _isothermalLeakyWell_aquiferConditions:
+.. _thermalLeakyWell_aquiferConditions:
 .. figure:: aquiferConditions.png
    :align: center
    :width: 500
@@ -85,7 +85,7 @@ Therefore, we consider two meshes in this test case:
 
 These structured meshes are defined as in :ref:`ExampleIsothermalLeakyWell`, as shown next for the "fine" mesh.
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
@@ -101,7 +101,7 @@ Flow solver
 Although the fluid behavior is significantly different from that of the previous benchmark, we still use the GEOSX
 general-purpose multiphase flow solver defined in the XML block **CompositionalMultiphaseFVM**:
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base_iterative.ml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base_iterative.xml
     :language: xml
     :start-after: <!-- SPHINX_SOLVER -->
     :end-before: <!-- SPHINX_SOLVER_END -->
@@ -119,7 +119,7 @@ saturation range between 0.2 and 0.95, an entry pressure of 10000 Pa, and a Broo
 We refer the reader to the files used in the **TableFunction** listed below for the exact values
 that we have used:
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base_iterative.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base_iterative.xml
     :language: xml
     :start-after: <!-- SPHINX_SCAL -->
     :end-before: <!-- SPHINX_SCAL_END -->
@@ -127,7 +127,7 @@ that we have used:
 The two-phase, two-component CO2-brine model implemented in GEOSX is parameterized in
 the **CO2BrinePhillips** XML block:
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base_iterative.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base_iterative.xml
     :language: xml
     :start-after: <!-- SPHINX_FLUID -->
     :end-before: <!-- SPHINX_FLUID_END -->
@@ -199,7 +199,7 @@ The domain is initially saturated with brine with a hydrostatic pressure field a
 gradient of 0.03 K/m.
 This is specified using the **HydrostaticEquilibrium** XML tag in the **FieldSpecifications** block:
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base_iterative.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base_iterative.xml
     :language: xml
     :start-after: <!-- SPHINX_HYDROSTATIC -->
     :end-before: <!-- SPHINX_HYDROSTATIC_END -->
@@ -211,7 +211,7 @@ for the nonlinear temperature dependence of brine density to equilibrate the pre
 We use the simple table-based approach shown below to impose the Dirichlet boundary conditions on the four
 sides of the domain.  
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base_iterative.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base_iterative.xml
     :language: xml
     :start-after: <!-- SPHINX_DIRICHLET_BC -->
     :end-before: <!-- SPHINX_DIRICHLET_BC_END -->
@@ -230,23 +230,23 @@ Inspecting results
 ---------------------------------
 
 We request VTK-format output files and use Paraview to visualize the results.
-The following figures show the distribution of CO2 saturation and pressure along the slice defined by x = 0 at t = 200 days.  
+The following figures show the distribution of CO2 saturation and pressure along the slice defined by x = 0 at t = 1,000 days.  
 
-.. _isothermalLeakyWell_CO2saturation:
+.. _thermalLeakyWell_CO2saturation:
 .. figure:: co2_saturation.png
    :align: center
    :width: 500
    :figclass: align-center
 
-   CO2 saturation after 200 days
+   CO2 saturation after 1,000 days
 
-.. _isothermalLeakyWell_pressure:
+.. _thermalLeakyWell_pressure:
 .. figure:: pressure.png
    :align: center
    :width: 500
    :figclass: align-center
 
-   Pressure after 200 days
+   Pressure after 1,000 days
 
 To validate the GEOSX results, we consider the metrics used in
 `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__ as
@@ -300,7 +300,7 @@ For reference, we include below the original figure from
 `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__
 containing all the results, including those obtained with the codes solving an energy equation.
 
-.. _isothermalLeakyWell_referenceLeakageRate:
+.. _thermalLeakyWell_referenceLeakageRate:
 .. figure:: referenceLeakageRates.png
    :align: center
    :width: 500

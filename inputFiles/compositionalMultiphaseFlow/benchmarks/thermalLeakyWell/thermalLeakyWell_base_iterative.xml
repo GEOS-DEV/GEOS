@@ -43,7 +43,6 @@
       target="/Tasks/compOutfluxCollection"/>
     <PeriodicEvent
       name="solverApplications"
-      beginTime="1e4"	
       target="/Solvers/compflow"/>
     <PeriodicEvent
       name="statistics"

@@ -95,7 +95,7 @@
       cellBlocks="{ aquiferTop11, aquitard11, aquiferBottom11 }"
       materialList="{ fluid, rockWell, relperm }"/>
     <CellElementRegion
-      name="Barrier"
+      name="barrier"
       cellBlocks="{ aquitard00, aquitard01, aquitard02,
                     aquitard10,             aquitard12,
                     aquitard20, aquitard21, aquitard22,
