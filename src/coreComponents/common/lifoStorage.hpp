@@ -163,7 +163,7 @@ public:
   {
     std::cout <<__FILE__<<":"<<__LINE__<<" array[i] " <<  array[1] << std::endl;
     array.move( LvArray::MemorySpace::cuda, false );
-    m_deviceDeque.emplace_back( array.toSliceConst() );
+    m_deviceDeque.emplace_front( array.toSliceConst() );
     push( array.data(), array.size() );
   }
 
@@ -224,7 +224,7 @@ public:
     array.move( LvArray::MemorySpace::cuda, true );
     pop( array.data(), array.size() );
     LvArray::memcpy( array.toSlice(), m_deviceDeque.front( ) );
-    m_deviceDeque.pop_back();
+    m_deviceDeque.pop_front();
   }
 
   /**
