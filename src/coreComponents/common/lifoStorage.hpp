@@ -51,28 +51,22 @@ private:
 
   /// Number of buffers to be inserted into the LIFO
   int m_maxNumberOfBuffers;
-  /// Number of buffers that will be stored on device (at least 1)
-  int m_numberOfBuffersToStoreOnDevice;
-  /// Number of buffers that will be stored on host memory (at least 1)
-  int m_numberOfBuffersToStoreOnHost;
   /// Size of one buffer in bytes
   size_t m_bufferSize;
   /// Name used to store data on disk
   std::string m_name;
   /// Queue of data stored on device
-  std::deque< storageData > m_deviceStorage;
   fixedSizeDeque< T, int > m_deviceDeque;
 
   /// Queue of data stored on host memory
-  std::deque< storageData > m_hostStorage;
-  /// Queue of data stored on disk
-  std::deque< storageData > m_diskStorage;
+  fixedSizeDeque< T, int > m_hostDeque;
+
   /**
-   * Mutex to protect access to m_deviceStorage.
+   * Mutex to protect access to m_deviceDeque
    *
-   * Only deviceStorage is accessed from user thread, other only from m_worker.
+   * Only deviceDeque is accessed from user thread, other only from m_worker.
    */
-  std::mutex m_deviceStorageMutex;
+  std::mutex m_deviceDequeMutex;
   /**
    * Future to be aware data are effectively copied on host memory from device.
    */
@@ -109,6 +103,8 @@ private:
   std::thread m_worker;
   /// Boolean to keep m_worker alive.
   bool m_continue;
+  /// tmp array to read data from disk
+  array1d< T > m_tmparray;
 
 public:
   /**
@@ -123,13 +119,14 @@ public:
    */
   lifoStorage( std::string name, size_t elemCnt, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
     m_maxNumberOfBuffers( maxNumberOfBuffers ),
-    m_numberOfBuffersToStoreOnDevice( numberOfBuffersToStoreOnDevice ), m_numberOfBuffersToStoreOnHost( numberOfBuffersToStoreOnHost ),
     m_bufferSize( elemCnt*sizeof( T ) ),
     m_name( name ),
-    m_deviceDeque( maxNumberOfBuffers, elemCnt, LvArray::MemorySpace::cuda ),
+    m_deviceDeque( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda ),
+    m_hostDeque( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host ),
     m_bufferCount( 0 ), m_bufferOnDiskCount( 0 ),
     m_worker( &lifoStorage< T >::wait_and_consume_tasks, this ),
-    m_continue( true )
+    m_continue( true ),
+    m_tmparray( elemCnt )
   {
     GEOSX_ASSERT( numberOfBuffersToStoreOnDevice > 0 && numberOfBuffersToStoreOnHost >= 0 && maxNumberOfBuffers >= numberOfBuffersToStoreOnHost * numberOfBuffersToStoreOnDevice );
   }
@@ -161,58 +158,36 @@ public:
    */
   void push( arrayView1d< T > array )
   {
-    std::cout <<__FILE__<<":"<<__LINE__<<" array[i] " <<  array[1] << std::endl;
-    array.move( LvArray::MemorySpace::cuda, false );
-    m_deviceDeque.emplace_front( array.toSliceConst() );
-    push( array.data(), array.size() );
-  }
-
-  /**
-   * push elemCnt T elements from buffer data into the LIFO.
-   *
-   * @param data    buffer to store data from in the LIFO.
-   * @param elemCnt Number of element to store in the LIFO, should match the one used in constructor.
-   */
-  void push( T * data, size_t elemCnt )
-  {
-    GEOSX_ASSERT( m_bufferSize == sizeof(T)*elemCnt; );
-
-    storageData d;
     int id = m_bufferCount++;
-    chai::gpuMalloc((void * *)&d.m_data, m_bufferSize );
-    chai::gpuMemcpy( d.m_data, data, m_bufferSize, gpuMemcpyDeviceToDevice );
-    m_deviceStorageMutex.lock();
-    while( m_deviceStorage.size() >= (size_t)m_numberOfBuffersToStoreOnDevice )
-    {
-      m_deviceStorageMutex.unlock();
+    m_deviceDequeMutex.lock();
+    while( m_deviceDeque.full() ) {
+      m_deviceDequeMutex.unlock();
       m_deviceToHostFutures.front().wait();
       m_deviceToHostFutures.pop_front();
-      m_deviceStorageMutex.lock();
+      m_deviceDequeMutex.lock();
     }
-    m_deviceStorage.emplace_front( d );
-    m_deviceStorageMutex.unlock();
+    m_deviceDeque.emplace_front( array.toSliceConst() );    
+    m_deviceDequeMutex.unlock();
 
-    if( m_maxNumberOfBuffers - id > m_numberOfBuffersToStoreOnDevice + m_numberOfBuffersToStoreOnHost )
-    {
-      // This buffer will go to host then to disk
-      std::packaged_task< void() > task1 ( std::bind( &lifoStorage< T >::deviceToHost, this ) );
-      m_deviceToHostFutures.emplace_back( task1.get_future() );
-      m_task_queue.emplace_back( std::move( task1 ) );
-      m_task_queue_not_empty_cond.notify_all();
-      std::packaged_task< void() > task = std::packaged_task< void() >( std::bind( &lifoStorage< T >::hostToDisk, this ) );
-      m_hostToDiskFutures.emplace_back( task.get_future() );
-      m_task_queue.emplace_back( std::move( task ) );
-      m_task_queue_not_empty_cond.notify_all();
-    }
-    else if( m_maxNumberOfBuffers - id > m_numberOfBuffersToStoreOnDevice )
+    if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() )
     {
       // This buffer will go to host memory
-      std::packaged_task< void() > task = std::packaged_task< void() >( std::bind( &lifoStorage< T >::deviceToHost, this ) );
+      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this ) );
       m_deviceToHostFutures.emplace_back( task.get_future() );
       m_task_queue.emplace_back( std::move( task ) );
       m_task_queue_not_empty_cond.notify_all();
     }
+
+    if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() + m_hostDeque.capacity() )
+    {
+      // This buffer will go to host then to disk
+      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this ) );
+      m_hostToDiskFutures.emplace_back( task.get_future() );
+      m_task_queue.emplace_back( std::move( task ) );
+      m_task_queue_not_empty_cond.notify_all();
+    }
   }
+
 
   /**
    * Copy last data from the LIFO into the LvArray.
@@ -221,55 +196,38 @@ public:
    */
   void pop( arrayView1d< T > array )
   {
-    array.move( LvArray::MemorySpace::cuda, true );
-    pop( array.data(), array.size() );
-    LvArray::memcpy( array.toSlice(), m_deviceDeque.front( ) );
-    m_deviceDeque.pop_front();
-  }
-
-  /**
-   * Copylast data from the LIFO into the given buffer
-   *
-   * @param data    The buffer to copy data into.
-   * @param elemCnt Number of elements to store into data, should match size used in constructor.
-   */
-  void pop( T * data, size_t elemCnt )
-  {
-    GEOSX_ASSERT( m_bufferSize == sizeof(T)*elemCnt; );
-
     int id = --m_bufferCount;
 
-    m_deviceStorageMutex.lock();
-    while( m_deviceStorage.empty() )
+    m_deviceDequeMutex.lock();
+    while( m_deviceDeque.empty() )
     {
-      m_deviceStorageMutex.unlock();
+      m_deviceDequeMutex.unlock();
       m_hostToDeviceFutures.front().wait();
       m_hostToDeviceFutures.pop_front();
-      m_deviceStorageMutex.lock();
+      m_deviceDequeMutex.lock();
     }
-    storageData d = m_deviceStorage.front();
-    m_deviceStorage.pop_front();
-    m_deviceStorageMutex.unlock();
+    LvArray::memcpy( array.toSlice(), m_deviceDeque.front( ) );
+    m_deviceDeque.pop_front();
+    m_deviceDequeMutex.unlock();
 
-    chai::gpuMemcpy( data, d.m_data, m_bufferSize, gpuMemcpyDeviceToDevice );
-    std::packaged_task< void() > task;
-    if( id >= m_numberOfBuffersToStoreOnDevice + m_numberOfBuffersToStoreOnHost )
-    {
-      // Trigger pull one buffer from disk
-      task = std::packaged_task< void() >( std::bind( &lifoStorage< T >::diskToHost, this ) );
-      m_diskToHostFutures.emplace_back( task.get_future() );
-      m_task_queue.emplace_back( std::move( task ) );
-      m_task_queue_not_empty_cond.notify_all();
-    }
-    if( id >= m_numberOfBuffersToStoreOnDevice )
+    if( id >= m_deviceDeque.capacity() )
     {
       // Trigger pull one buffer from host
-      task = std::packaged_task< void() >( std::bind( &lifoStorage< T >::hostToDevice, this ) );
+      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this ) );
       m_hostToDeviceFutures.emplace_back( task.get_future() );
       m_task_queue.emplace_back( std::move( task ) );
       m_task_queue_not_empty_cond.notify_all();
     }
+    if( id >= m_deviceDeque.capacity() + m_hostDeque.capacity() )
+    {
+      // Trigger pull one buffer from disk
+      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this ) );
+      m_diskToHostFutures.emplace_back( task.get_future() );
+      m_task_queue.emplace_back( std::move( task ) );
+      m_task_queue_not_empty_cond.notify_all();
+    }
   }
+
 
 private:
   /**
@@ -277,23 +235,14 @@ private:
    */
   void deviceToHost()
   {
-    m_deviceStorageMutex.lock();
-    storageData d = m_deviceStorage.back();
-    m_deviceStorage.pop_back();
-
-    m_deviceStorageMutex.unlock();
-
-    char * ptr = new char[m_bufferSize];
-    chai::gpuMemcpy( ptr, d.m_data, m_bufferSize, gpuMemcpyDeviceToHost );
-    chai::gpuFree( d.m_data );
-    d.m_data = ptr;
-
-    while( m_hostStorage.size() >= (size_t)m_numberOfBuffersToStoreOnHost )
-    {
+    while ( m_hostDeque.full() ) {
       m_hostToDiskFutures.front().wait();
       m_hostToDiskFutures.pop_front();
     }
-    m_hostStorage.emplace_front( d );
+    m_hostDeque.emplace_front( m_deviceDeque.back() );
+    m_deviceDequeMutex.lock();
+    m_deviceDeque.pop_back();
+    m_deviceDequeMutex.unlock();
   }
 
   /**
@@ -301,13 +250,8 @@ private:
    */
   void hostToDisk()
   {
-    storageData d = std::move( m_hostStorage.back() );
-    m_hostStorage.pop_back();
-    writeOnDisk( d );
-    delete[] d.m_data;
-    d.m_data = nullptr;
-
-    m_diskStorage.emplace_front( d );
+    writeOnDisk( m_hostDeque.back().dataIfContiguous() );
+    m_hostDeque.pop_back();
   }
 
   /**
@@ -315,16 +259,15 @@ private:
    */
   void hostToDevice()
   {
-    storageData d = std::move( m_hostStorage.front());
-    m_hostStorage.pop_front();
-    char * ptr;
-    chai::gpuMalloc((void * *)&ptr, m_bufferSize );
-    chai::gpuMemcpy( ptr, d.m_data, m_bufferSize, gpuMemcpyHostToDevice );
-    delete[] d.m_data;
-    d.m_data = ptr;
-    m_deviceStorageMutex.lock();
-    m_deviceStorage.emplace_back( d );
-    m_deviceStorageMutex.unlock();
+    while ( m_hostDeque.empty() ) {
+      m_diskToHostFutures.front().wait();
+      m_diskToHostFutures.pop_front();
+    }
+
+    m_deviceDequeMutex.lock();
+    m_deviceDeque.emplace_back( m_hostDeque.front() );
+    m_deviceDequeMutex.unlock();
+    m_hostDeque.pop_front();
   }
 
   /**
@@ -332,10 +275,13 @@ private:
    */
   void diskToHost()
   {
-    storageData d = std::move( m_diskStorage.front() );
-    m_diskStorage.pop_front();
-    readOnDisk( d );
-    m_hostStorage.emplace_back( d );
+    while ( m_hostDeque.full() ) {
+      m_hostToDeviceFutures.front().wait();
+      m_hostToDeviceFutures.pop_front();
+    }
+
+    readOnDisk( m_tmparray.data() );
+    m_hostDeque.emplace_back( m_tmparray );
   }
 
   /**
@@ -343,7 +289,7 @@ private:
    *
    * @param d Data to store on disk.
    */
-  void writeOnDisk( storageData d )
+  void writeOnDisk( const T * d )
   {
     int id = m_bufferOnDiskCount++;
     int const rank = MpiWrapper::initialized()?MpiWrapper::commRank( MPI_COMM_GEOSX ):0;
@@ -352,7 +298,7 @@ private:
     GEOSX_THROW_IF( !wf,
                     "Could not open file "<< fileName << " for writting",
                     InputError );
-    wf.write( d.m_data, m_bufferSize );
+    wf.write( (char*)d, m_bufferSize );
     wf.close();
     GEOSX_THROW_IF( !wf.good(),
                     "An error occured while writting "<< fileName,
@@ -364,7 +310,7 @@ private:
    *
    * @param Handler to store datta read from disk.
    */
-  void readOnDisk( storageData & d )
+  void readOnDisk( T* d )
   {
     int id = --m_bufferOnDiskCount;
     int const rank = MpiWrapper::initialized()?MpiWrapper::commRank( MPI_COMM_GEOSX ):0;
@@ -373,8 +319,7 @@ private:
     GEOSX_THROW_IF( !wf,
                     "Could not open file "<< fileName << " for reading",
                     InputError );
-    d.m_data = new char[m_bufferSize];
-    wf.read( d.m_data, m_bufferSize );
+    wf.read( (char*)d, m_bufferSize );
     wf.close();
     remove( fileName.c_str() );
   }

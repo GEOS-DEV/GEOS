@@ -25,7 +25,6 @@ TEST( LifoStorageTest, LifoStorage )
   {
     for( int i = 0; i < elemCnt; i++ )
       array[i] = j*elemCnt+i;
-    std::cout << "buffer j " << j << std::endl;
     lifo.push( array );
   }
 
