@@ -152,19 +152,6 @@
       <!-- SPHINX_BC_END -->
   </FieldSpecifications>
 
-  <Outputs>
-    <VTK
-      name="simpleReservoirViz"/>
-
-    <Restart
-      name="restartOutput"/>
-
-   <TimeHistory
-      name="timeHistoryOutput"
-      sources="{/Tasks/wellPressureCollection}"
-      filename="wellPressureHistory" />
-  </Outputs>
-
   <Functions>
     <TableFunction
       name="initCO2CompFracTable"
@@ -194,15 +181,15 @@
       voxelFile="tables/capPres_water.txt"/>  
 
     <TableFunction 
-      name="tempFunction"
-      inputVarNames="{ elementCenter }"
+      name="temperatureFunction"
+      inputVarNames="{ faceCenter }"
       coordinateFiles="{ fc_tables/xlin.geos, fc_tables/ylin.geos, fc_tables/zlin.geos}"
       voxelFile="fc_tables/temperature.geos"
       interpolation="linear" />
 
     <TableFunction 
       name="pressureFunction"
-      inputVarNames="{ elementCenter }"
+      inputVarNames="{ faceCenter }"
       coordinateFiles="{ fc_tables/xlin.geos, fc_tables/ylin.geos, fc_tables/zlin.geos}"
       voxelFile="fc_tables/pressure.geos"
       interpolation="linear" /> 

@@ -48,12 +48,6 @@
 	<!-- SPHINX_MESH_END -->
 
     <Tasks>
-
-        <PackCollection
-                 name="wellPressureCollection"
-                 objectPath="ElementRegions/wellRegion/wellRegionuniqueSubRegion"
-                 fieldName="pressure" />
-
         <!-- SPHINX_STATS -->
         <CompositionalMultiphaseStatistics
                 name="compflowStatistics"
@@ -63,6 +57,13 @@
                 computeRegionStatistics="1"/>
         <!-- SPHINX_STATS_END -->
     </Tasks>
+
+    <Outputs>
+        <VTK
+                name="simpleReservoirViz"/>
+        <Restart
+                name="restartOutput"/>
+    </Outputs>
 
   <!-- max time 50 y -->
   <Events
@@ -87,12 +88,6 @@
       target="/Tasks/compflowStatistics"/>
 <!--      SPHINX_STAT_EV_END-->
 
-    <PeriodicEvent
-      name="timeHistoryCollection"
-      timeFrequency="1e8"
-      targetExactTimestep="1"
-      target="/Tasks/wellPressureCollection" />
-    
     <PeriodicEvent
       name="solverApplications1"
       beginTime="0"
