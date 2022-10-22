@@ -335,7 +335,7 @@ void outputVersionInfo()
   }
 
   {
-    GEOSX_LOG_RANK_0( "  - Conduit Version: "<<CONDUIT_VERSION );
+    GEOSX_LOG_RANK_0( "  - conduit version: "<<CONDUIT_VERSION );
   }
 
 
