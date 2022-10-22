@@ -1,4 +1,4 @@
-import h5py
+
 import os
 import argparse
 import pandas as pd
@@ -10,61 +10,32 @@ descr = 'Post processing for Class09 Cases \n' + \
         '\t use -f to specify a dest folder\n' + \
         '\t use -t to specify a drain or hyst\n'
 parser = argparse.ArgumentParser(description=descr)
-parser.add_argument('-f', nargs=1, help='specify dest folder')
+parser.add_argument('-f', nargs=1, help='specify the logfile to load')
 parser.add_argument('-t', nargs=1, help='specify drain or hyst for ref loading')
 args = parser.parse_args()
 
+def extract_from_log(prefix, name):
+    cmd = f'grep Dissolved {name} | awk "' + 'BEGIN{s = 0;}{print \\$8\\" \\"\\$9\\", \\"\\$12\\" \\"\\$13;}' + f' "> {prefix}_dissolved'
+    cmd1 = f'grep Trapped {name} | awk "' + '{print \\$7\\" \\"\\$8;}' + f' "> {prefix}_trapped'
+    cmd2 = f'grep \'Phase mass\' {name} | awk "' + '{print \\$11\\" \\"\\$12;}' + f' "> {prefix}_mass'
+    if not os.system(cmd1) and not os.system(cmd2) and not os.system(cmd):
+        print('success')
+    else:
+        raise BaseException("grep|awk not working")
 
-def form_block_value(suffix):
-    # read hdf5 timeHistory
-    fr = h5py.File(os.getcwd() + '/' + args.f[0] + '/rhoHistory' + suffix + '.hdf5', 'r')
-    fs = h5py.File(os.getcwd() + '/' + args.f[0] + '/satHistory' + suffix + '.hdf5', 'r')
-    fx = h5py.File(os.getcwd() + '/' + args.f[0] + '/xcompHistory' + suffix + '.hdf5', 'r')
+    t0 = np.loadtxt(f'{prefix}_dissolved', delimiter=',')[:,2]
+    t1 = np.loadtxt(f'{prefix}_trapped', delimiter=',')[:,0]
+    t2 = np.loadtxt(f'{prefix}_mass', delimiter=',')[:,0]
 
-    fporo = h5py.File(os.getcwd() + '/' + args.f[0] + '/poroHistory' + suffix + '.hdf5', 'r')
-    fvol = h5py.File(os.getcwd() + '/' + args.f[0] + '/volHistory' + suffix + '.hdf5', 'r')
-
-    # get the data
-    dens = fr.get('fluid_phaseDensity')
-    sat = fs.get('phaseVolumeFraction')
-    xcomp = fx.get('fluid_phaseCompFraction')
-    poro = fporo.get('rockPorosity_porosity')
-    vol = fvol.get('elementVolume')
-
-    # get some constant
-    ntime, ncells, nphase = dens.shape
-    _, _, ncomp = xcomp.shape
-    times = np.arange(0, ntime, 1)
-    nt = len(times)
-    ti = 0
-    mc = np.zeros((ncomp, nt, ncells))
-    mp = np.zeros((nphase, nt, ncells))
-
-    for time in times:
-        for comp in range(ncomp):
-            p = (comp + 1) % 2
-            pv = poro[time, :, 0] * vol[0]
-            # mass per comp
-            mc[comp, ti, :] = pv * sat[time, :, p] * dens[time, :, p] * xcomp[time, :, comp]
-            # mass per phase
-            mp[p, ti, :] += pv * sat[time, :, p] * dens[time, :, p] * xcomp[time, :, comp]
-        ti = ti + 1
-
-    fr.close()
-    fs.close()
-    fx.close()
-    fporo.close()
-    fvol.close()
-
-    return mc, mp
+    return t0,t1,t2
 
 
 if (args.t[0] == 'hyst'):
-    # ecl = pd.read_csv(os.getcwd() + '/postt/ECLSLB_hyst.csv')
-    ref = pd.read_csv(os.getcwd() + '/postt/data_hyst.csv')
+    # ecl = pd.read_csv(os.getcwd() + '/article-results/ECLSLB_hyst.csv')
+    ref = pd.read_csv(os.getcwd() + '/article-results/data_hyst.csv')
     ofs = [str(i) for i in [1,3,5,7,9,11]]
 elif (args.t[0] == 'drain'):
-    ref = pd.read_csv(os.getcwd() + '/postt/data_drain.csv')
+    ref = pd.read_csv(os.getcwd() + '/article-results/data_drain.csv')
     ofs = [str(i) for i in [9,11,5,7,13,15]]
 else:
     raise NotImplemented
@@ -86,41 +57,21 @@ for i, tg in enumerate(tags):
 ##
 
 # get interior values
-mi, mpi = form_block_value('')
-# get interior values
-mc, mpc = form_block_value('_bc')
-
-##
-id_co2_g = 3
-id_co2_l = 2
+sco2_l, sco2_trap, stot = extract_from_log(args.t[0], args.f[0])
 
 # resize as time
-nt = mi.shape[1]
-sco2_l = np.zeros(nt)
-sco2_g = np.zeros(nt)
-stot = np.zeros(nt)
-
-sl = np.zeros(nt)
-sv = np.zeros(nt)
+nt = sco2_l.shape[0]
 
 icount = 0
 # some conversion
 year_in_sec = 86400 * 365
 dt = 1.0e8 / year_in_sec
 
-for ti in range(mc.shape[1]):
-    sco2_l[ti] = np.sum(mi[id_co2_l, ti, :])
-    sco2_l[ti] += np.sum(mc[id_co2_l, ti, :])
-    stot[ti] = sco2_l[ti]
-
-    sco2_g[ti] = np.sum(mi[id_co2_g, ti, :])
-    sco2_g[ti] += np.sum(mc[id_co2_g, ti, :])
-    stot[ti] += sco2_g[ti]
 
 plt.figure()
-plt.plot(np.arange(0, nt) * dt , sco2_l, '-r+')
-plt.plot(np.arange(0, nt) * dt , sco2_g, '--r+')
-plt.plot(np.arange(0, nt) * dt , stot, ':r+')
+plt.plot(np.arange(0, nt) * dt , 1.7*sco2_l, '-r+')
+plt.plot(np.arange(0, nt) * dt , 1.7*(stot-sco2_l), '--r+')
+plt.plot(np.arange(0, nt) * dt , 1.7*stot, ':r+')
 #
 
 lgd = ['m_co2_l', 'm_co2_g', 'm_co2_tot']
@@ -138,4 +89,4 @@ plt.xlabel('time[years]')
 plt.ylabel('Co_2 mass [kg]')
 plt.xlim([0, 50])
 plt.ylim([0, 14e9])
-plt.savefig('figure_compare_' + args.f[0] + '_' + args.t[0] + '.png')
+plt.savefig(f'figure_compare_{args.t[0]}.png')
