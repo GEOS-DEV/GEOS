@@ -21,11 +21,18 @@
 #include "mainInterface/GeosxVersion.hpp"
 
 // TPL includes
-#include <optionparser.h>
+#include <conduit/conduit.hpp>
 #include <hdf5.h>
+#include <metis.h>
+#include <optionparser.h>
+#include <parmetis.h>
+#include <superlu_defs.h>
+#include <umfpack.h>
 #include <vtkVersion.h>
 #include <umpire/Umpire.hpp>
-#include <conduit/conduit.hpp>
+
+
+
 namespace geosx
 {
 
@@ -259,13 +266,13 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
 void outputVersionInfo()
 {
 #if defined(__clang__)
-  GEOSX_LOG_RANK_0( "  - clang version: " << 
+  GEOSX_LOG_RANK_0( "  - clang version: " <<
                     __clang_major__<<"."<<
                     __clang_minor__<<"."<<
                     __clang_patchlevel__ );
 #if defined(__apple_build_version__)
-  GEOSX_LOG_RANK_0( "    apple clang version: " << 
-                    __apple_build_version__);
+  GEOSX_LOG_RANK_0( "    apple clang version: " <<
+                    __apple_build_version__ );
 #endif
 #if defined(__ibmxl_vrm__)
   GEOSX_LOG_RANK_0( "  - IBM compiler version: " <<
@@ -275,7 +282,7 @@ void outputVersionInfo()
                     __ibmxl_ptf_fix_level__ );
 #endif
 #elif defined(__GNUC__)
-  GEOSX_LOG_RANK_0( "  - gcc version: " << 
+  GEOSX_LOG_RANK_0( "  - gcc version: " <<
                     __GNUC__<<"."<<
                     __GNUC_MINOR__<<"."<<
                     __GNUC_PATCHLEVEL__ );
@@ -289,7 +296,7 @@ void outputVersionInfo()
 
   {
 #if defined(_OPENMP)
-    GEOSX_LOG_RANK_0( "  - openmp version: "<<_OPENMP )
+    GEOSX_LOG_RANK_0( "  - openmp version: "<<_OPENMP );
 #endif
   }
 
@@ -316,12 +323,12 @@ void outputVersionInfo()
   }
 
   {
-    GEOSX_LOG_RANK_0( "  - RAJA version: " << 
+    GEOSX_LOG_RANK_0( "  - RAJA version: " <<
                       RAJA_VERSION_MAJOR<<"."<<
                       RAJA_VERSION_MINOR<<"."<<
                       RAJA_VERSION_PATCHLEVEL );
 
-    GEOSX_LOG_RANK_0( "  - UMPIRE version: " << 
+    GEOSX_LOG_RANK_0( "  - UMPIRE version: " <<
                       umpire::get_major_version()<<"."<<
                       umpire::get_minor_version()<<"."<<
                       umpire::get_patch_version() );
@@ -330,6 +337,26 @@ void outputVersionInfo()
   {
     GEOSX_LOG_RANK_0( "  - Conduit Version: "<<CONDUIT_VERSION );
   }
+
+
+  GEOSX_LOG_RANK_0( "  - metis version: " <<
+                    METIS_VER_MAJOR<<"."<<
+                    METIS_VER_MINOR<<"."<<
+                    METIS_VER_SUBMINOR );
+
+  GEOSX_LOG_RANK_0( "  - parmetis version: " <<
+                    PARMETIS_MAJOR_VERSION<<"."<<
+                    PARMETIS_MINOR_VERSION<<"."<<
+                    PARMETIS_SUBMINOR_VERSION );
+
+  GEOSX_LOG_RANK_0( "  - superlu_dist version: " <<
+                    SUPERLU_DIST_MAJOR_VERSION<<"."<<
+                    SUPERLU_DIST_MINOR_VERSION<<"."<<
+                    SUPERLU_DIST_PATCH_VERSION<<" ("<<
+                    SUPERLU_DIST_RELEASE_DATE<<")" );
+
+  GEOSX_LOG_RANK_0( "  - umfpack version: " <<
+                    UMFPACK_VERSION );
 
 }
 

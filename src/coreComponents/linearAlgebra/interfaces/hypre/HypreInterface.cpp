@@ -44,7 +44,7 @@ void HypreInterface::initialize()
   HYPRE_SetMemoryLocation( hypre::memoryLocation );
 
   // Hypre version info
-#if defined(HYPRE_DEVELOP_STRING) 
+#if defined(HYPRE_DEVELOP_STRING)
   GEOSX_LOG_RANK_0( "  - hypre development version: " << HYPRE_DEVELOP_STRING <<
                     " (" << HYPRE_BRANCH_NAME << ")" );
 #elif defined(HYPRE_RELEASE_VERSION)
