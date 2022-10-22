@@ -50,6 +50,9 @@ void basicCleanup();
  */
 string getVersion();
 
+/**
+ * @brief output version info for dependencies to log
+ */
 void outputVersionInfo();
 
 } // namespace geosx
