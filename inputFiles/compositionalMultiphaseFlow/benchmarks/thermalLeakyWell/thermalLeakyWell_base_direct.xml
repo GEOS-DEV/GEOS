@@ -10,6 +10,8 @@
       discretization="fluidTPFA"
       temperature="307.15"
       initialDt="1"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"      
       useMass="1"
       targetRegions="{ aquiferTop, aquiferBottom, injectionWell, leakyWell }">
       <NonlinearSolverParameters
@@ -26,25 +28,32 @@
   <!-- SPHINX_SOLVER_END -->        
 
   <Events
-    maxTime="17.28e6">
+    maxTime="8.64e6">
     <PeriodicEvent
       name="outputs"
       timeFrequency="8.64e6"
       target="/Outputs/vtkOutput"/>
     <PeriodicEvent
       name="timeHistoryOutput"
-      timeFrequency="1e4"
+      timeFrequency="4.32e6"
       target="/Outputs/timeHistoryOutput"/>
     <PeriodicEvent
       name="timeHistoryCollection"
-      timeFrequency="1e4"
+      timeFrequency="4.32e6"
       target="/Tasks/compOutfluxCollection"/>
     <PeriodicEvent
-      name="solverApplications"
+      name="solverApplications1"
+      beginTime="0"
+      endTime="1e5"
+      target="/Solvers/compflow"/>
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="1e5"   
+      forceDt="1e5"
       target="/Solvers/compflow"/>
     <PeriodicEvent
       name="restarts"
-      timeFrequency="8.64e6"
+      timeFrequency="4.32e6"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
     <PeriodicEvent
@@ -352,6 +361,12 @@
       name="compOutfluxCollection"
       objectPath="ElementRegions/leakyWell/aquitard11"
       fieldName="componentOutflux"/>
+    <CompositionalMultiphaseStatistics
+      name="compflowStatistics"
+      flowSolverName="compflow"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
   </Tasks>
   
 </Problem>

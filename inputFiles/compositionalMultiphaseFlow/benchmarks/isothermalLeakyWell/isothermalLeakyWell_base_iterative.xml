@@ -32,21 +32,21 @@
       timeFrequency="8.64e6"
       target="/Outputs/vtkOutput"/>
     <PeriodicEvent
+      name="statistics"
+      timeFrequency="1e7"
+      target="/Tasks/compflowStatistics"/>
+    <PeriodicEvent
       name="timeHistoryOutput"
-      timeFrequency="1e4"
+      timeFrequency="1e7"
       target="/Outputs/timeHistoryOutput"/>
     <PeriodicEvent
       name="timeHistoryCollection"
-      timeFrequency="1e4"
+      timeFrequency="1e7"
       target="/Tasks/phaseOutfluxCollection"/>
     <PeriodicEvent
       name="solverApplications"
       maxEventDt="1e5"
       target="/Solvers/compflow"/>
-    <PeriodicEvent
-      name="statistics"
-      timeFrequency="1e7"
-      target="/Tasks/compflowStatistics"/>
   </Events>
 
   <NumericalMethods>
