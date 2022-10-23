@@ -74,7 +74,7 @@ public:
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::cprLikeBlockDiag;
 
     // ILU smoothing for the system made of pressure and densities (except the last one)
-    m_levelSmoothType[1]  = 16;
+    m_levelSmoothType[1]  = 1;
     m_levelSmoothIters[1] = 1;
   }
 
