@@ -1067,7 +1067,7 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
-		<!--biotCoefficient => Biot coefficient.-->
+		<!--biotCoefficient => Biot coefficient-->
 		<xsd:attribute name="biotCoefficient" type="real64_array" />
 		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
@@ -1147,6 +1147,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -1173,6 +1175,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -1966,6 +1970,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -2004,6 +2010,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -2048,6 +2056,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
