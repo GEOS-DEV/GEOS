@@ -343,6 +343,8 @@
       name="timeHistoryOutput"
       sources="{ /Tasks/compOutfluxCollection }"
       filename="compOutfluxHistory"/>
+    <Restart
+      name="restartOutput"/>    
   </Outputs>
 
   <Tasks>
@@ -350,8 +352,6 @@
       name="compOutfluxCollection"
       objectPath="ElementRegions/leakyWell/aquitard11"
       fieldName="componentOutflux"/>
-    <Restart
-      name="restartOutput"/>    
   </Tasks>
   
 </Problem>
