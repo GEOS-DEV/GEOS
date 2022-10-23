@@ -2,19 +2,10 @@
 Publications
 ###############################################################################
 
-Last updated 4-October-2022
+Last updated 23-October-2022
 
 Preprints and Early-Views
 =========================
-
-.. list-table::
-   :widths: 100
-   :header-rows: 0
-
-   * - | **A Multi-Resolution Approach to Hydraulic Fracture Simulation**
-       | A Costa, M Cusini, T Jin, R Settgast, J Dolbow
-       | arXiv preprint
-       | `arXiv:2207.00661 <https://arxiv.org/abs/2207.00661>`_
 
 
 2022
@@ -23,6 +14,11 @@ Preprints and Early-Views
 .. list-table::
    :widths: 100
    :header-rows: 0
+   
+   * - | **A Multi-Resolution Approach to Hydraulic Fracture Simulation**
+       | A Costa, M Cusini, T Jin, R Settgast, J Dolbow
+       | International Journal of Fracture 
+       | `doi:10.1007/s10704-022-00662-y <https://doi.org/10.1007/s10704-022-00662-y>`_
 
    * - | **Smooth implicit hybrid upwinding for compositional multiphase flow in porous media**
        | SBM Bosma, FP Hamon, BT Mallison, HA Tchelepi
