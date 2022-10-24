@@ -62,6 +62,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_hasCapPressure( 0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
+
 {
 //START_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
@@ -724,6 +725,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
     relPermMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac ); // this needs to happen before calling updateRelPermModel
     updateRelPermModel( subRegion );
+    relPermMaterial.saveConvergedState(); // this needs to happen after calling updateRelPermModel
 
     string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
     MultiFluidBase & fluidMaterial = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
