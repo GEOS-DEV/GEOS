@@ -47,11 +47,13 @@ public:
   PorosityBaseUpdates( arrayView2d< real64 > const & newPorosity,
                        arrayView2d< real64 > const & porosity_n,
                        arrayView2d< real64 > const & dPorosity_dPressure,
+                       arrayView2d< real64 > const & dPorosity_dTemperature, 
                        arrayView2d< real64 > const & initialPorosity,
                        arrayView1d< real64 > const & referencePorosity ):
     m_newPorosity( newPorosity ),
     m_porosity_n( porosity_n ),
     m_dPorosity_dPressure( dPorosity_dPressure ),
+    m_dPorosity_dTemperature( dPorosity_dTemperature ),  
     m_initialPorosity( initialPorosity ),
     m_referencePorosity ( referencePorosity )
   {}
@@ -64,6 +66,7 @@ public:
    * @param[in] k Element index.
    * @param[in] q Quadrature point index.
    * @param[in] porosity porosity to be saved to m_newPorosity[k][q]
+   * @param[in] dPorosity_dPressure porosity derivative w.r.t pressure to be saved to m_dPorosity_dPressure[k][q]
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -74,6 +77,30 @@ public:
   {
     m_newPorosity[k][q] = porosity;
     m_dPorosity_dPressure[k][q] = dPorosity_dPressure;
+  }
+
+  /**
+   * @brief Helper to save point stress back to m_newPorosity array
+   *
+   * This is mostly defined for improving code readability.
+   *
+   * @param[in] k Element index.
+   * @param[in] q Quadrature point index.
+   * @param[in] porosity porosity to be saved to m_newPorosity[k][q]
+   * @param[in] dPorosity_dPressure porosity derivative w.r.t pressure to be saved to m_dPorosity_dPressure[k][q]
+   * @param[in] dPorosity_dTemperature porosity derivative w.r.t temperature to be saved to m_dPorosity_dTemperature[k][q]
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void savePorosity( localIndex const k,
+                     localIndex const q,
+                     real64 const & porosity,
+                     real64 const & dPorosity_dPressure,
+                     real64 const & dPorosity_dTemperature ) const
+  {
+    m_newPorosity[k][q] = porosity;
+    m_dPorosity_dPressure[k][q] = dPorosity_dPressure;
+    m_dPorosity_dTemperature[k][q] = dPorosity_dTemperature; 
   }
 
   GEOSX_HOST_DEVICE
@@ -111,12 +138,24 @@ public:
     GEOSX_ERROR( "updateFromPressure is not implemented for porosityBase." );
   }
 
+  GEOSX_HOST_DEVICE
+  virtual void updateFromPressureAndTemperature( localIndex const k,
+                                                 localIndex const q,
+                                                 real64 const & pressure,
+                                                 real64 const & temperature ) const
+  {
+    GEOSX_UNUSED_VAR( k, q, pressure, temperature );
+    GEOSX_ERROR( "updateFromPressureAndTemperature is not implemented for porosityBase." );
+  }
+
 protected:
   arrayView2d< real64 > m_newPorosity;
 
   arrayView2d< real64 > m_porosity_n;
 
   arrayView2d< real64 > m_dPorosity_dPressure;
+
+  arrayView2d< real64 > m_dPorosity_dTemperature;
 
   arrayView2d< real64 > m_initialPorosity;
 
@@ -194,6 +233,12 @@ public:
   arrayView2d< real64 const > const  dPorosity_dPressure() const { return m_dPorosity_dPressure; }
 
   /**
+   * @brief Const/non-mutable accessor for dPorosity_dTemperature
+   * @return Accessor
+   */
+  arrayView2d< real64 const > const  dPorosity_dTemperature() const { return m_dPorosity_dTemperature; }
+
+  /**
    * @brief Utility function to scale the reference porosity (for instance, by net-to-gross)
    * @param[in] scalingFactors the vector of scaling factors (one value per cell) for the reference porosity
    */
@@ -226,6 +271,7 @@ public:
     return KernelWrapper( m_newPorosity,
                           m_porosity_n,
                           m_dPorosity_dPressure,
+                          m_dPorosity_dTemperature,
                           m_initialPorosity,
                           m_referencePorosity );
   }
@@ -239,6 +285,8 @@ protected:
   array2d< real64 > m_porosity_n;
 
   array2d< real64 > m_dPorosity_dPressure;
+  
+  array2d< real64 > m_dPorosity_dTemperature;
 
   array2d< real64 > m_initialPorosity;
 

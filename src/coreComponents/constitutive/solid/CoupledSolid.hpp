@@ -88,6 +88,15 @@ public:
     GEOSX_UNUSED_VAR( k, q, pressure );
   }
 
+  GEOSX_HOST_DEVICE
+  virtual void updateStateFromPressureAndTemperature( localIndex const k,
+                                                      localIndex const q,
+                                                      real64 const & pressure,
+                                                      real64 const & temperature ) const
+  {
+    GEOSX_UNUSED_VAR( k, q, pressure, temperature );
+  }
+
 protected:
   typename SOLID_TYPE::KernelWrapper const m_solidUpdate;
 

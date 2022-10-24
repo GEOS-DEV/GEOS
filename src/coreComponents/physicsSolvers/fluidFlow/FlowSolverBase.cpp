@@ -54,6 +54,23 @@ void execute1( POROUSWRAPPER_TYPE porousWrapper,
 
 template< typename POROUSWRAPPER_TYPE >
 void execute2( POROUSWRAPPER_TYPE porousWrapper,
+               CellElementSubRegion & subRegion,
+               arrayView1d< real64 const > const & pressure,
+               arrayView1d< real64 const > const & temperature )
+{
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+    {
+      porousWrapper.updateStateFromPressureAndTemperature( k, q,
+                                                           pressure[k],
+                                                           temperature[k] );
+    }
+  } );
+}
+
+template< typename POROUSWRAPPER_TYPE >
+void execute3( POROUSWRAPPER_TYPE porousWrapper,
                SurfaceElementSubRegion & subRegion,
                arrayView1d< real64 const > const & pressure,
                arrayView1d< real64 const > const & oldHydraulicAperture,
@@ -279,6 +296,7 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   GEOSX_MARK_FUNCTION;
 
   arrayView1d< real64 const > const & pressure = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+  arrayView1d< real64 const > const & temperature = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
 
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
@@ -287,7 +305,14 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    execute1( porousWrapper, subRegion, pressure );
+    if( m_isThermal )
+    {
+      execute2( porousWrapper, subRegion, pressure, temperature );
+    }
+    else
+    {
+      execute1( porousWrapper, subRegion, pressure );
+    }
   } );
 }
 
@@ -307,7 +332,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    execute2( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+    execute3( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
 
   } );
 }

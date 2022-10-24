@@ -47,12 +47,14 @@ public:
   BiotPorosityUpdates( arrayView2d< real64 > const & newPorosity,
                        arrayView2d< real64 > const & porosity_n,
                        arrayView2d< real64 > const & dPorosity_dPressure,
+                       arrayView2d< real64 > const & dPorosity_dTemperature,
                        arrayView2d< real64 > const & initialPorosity,
                        arrayView1d< real64 > const & referencePorosity,
                        arrayView1d< real64 > const & biotCoefficient,
                        real64 const & grainBulkModulus ): PorosityBaseUpdates( newPorosity,
                                                                                porosity_n,
                                                                                dPorosity_dPressure,
+                                                                               dPorosity_dTemperature, 
                                                                                initialPorosity,
                                                                                referencePorosity ),
     m_biotCoefficient( biotCoefficient ),
@@ -78,8 +80,8 @@ public:
   {
     real64 const biotSkeletonModulusInverse = (m_biotCoefficient[k] - m_referencePorosity[k]) / m_grainBulkModulus;
 
-    real64 const porosity = m_porosity_n[k][q] +
-                            +m_biotCoefficient[k] * LvArray::tensorOps::symTrace< 3 >( strainIncrement ) + biotSkeletonModulusInverse * deltaPressure;
+    real64 const porosity = m_porosity_n[k][q]
+                            + m_biotCoefficient[k] * LvArray::tensorOps::symTrace< 3 >( strainIncrement ) + biotSkeletonModulusInverse * deltaPressure;
 
     dPorosity_dPressure = biotSkeletonModulusInverse;
 
@@ -89,14 +91,49 @@ public:
   }
 
   GEOSX_HOST_DEVICE
+  void updateFromPressureTemperatureAndStrain( localIndex const k,
+                                               localIndex const q,
+                                               real64 const & deltaPressure,
+                                               real64 const & deltaTemperature, 
+                                               real64 const (&strainIncrement)[6],
+                                               real64 & dPorosity_dPressure,
+                                               real64 & dPorosity_dTemperature, 
+                                               real64 & dPorosity_dVolStrain ) const
+  {
+    real64 const biotSkeletonModulusInverse = (m_biotCoefficient[k] - m_referencePorosity[k]) / m_grainBulkModulus;
+    real64 const porosityThermalExpansion = 3 * m_thermalExpansionCoefficient[k] * m_referencePorosity[k]; 
+
+    real64 const porosity = m_porosity_n[k][q]
+                            + m_biotCoefficient[k] * LvArray::tensorOps::symTrace< 3 >( strainIncrement ) + biotSkeletonModulusInverse * deltaPressure
+                            + porosityThermalExpansion * deltaTemperature ;
+
+    dPorosity_dPressure = biotSkeletonModulusInverse;
+
+    dPorosity_dTemperature = porosityThermalExpansion; 
+
+    dPorosity_dVolStrain = m_biotCoefficient[k];
+
+    savePorosity( k, q, porosity, biotSkeletonModulusInverse, porosityThermalExpansion );
+  }
+
+  GEOSX_HOST_DEVICE
   void updateBiotCoefficient( localIndex const k,
                               real64 const bulkModulus ) const
   {
     m_biotCoefficient[k] = 1 - bulkModulus / m_grainBulkModulus;
   }
 
+  GEOSX_HOST_DEVICE
+  void updateThermalExpansionCoefficient( localIndex const k,
+                                          real64 const thermalExpansionCoefficient ) const
+  {
+    m_thermalExpansionCoefficient[k] = thermalExpansionCoefficient;
+  }
+
 protected:
   arrayView1d< real64 > m_biotCoefficient;
+
+  arrayView1d< real64 > m_thermalExpansionCoefficient;
 
   real64 m_grainBulkModulus;
 };
@@ -136,6 +173,7 @@ public:
     return KernelWrapper( m_newPorosity,
                           m_porosity_n,
                           m_dPorosity_dPressure,
+                          m_dPorosity_dTemperature, 
                           m_initialPorosity,
                           m_referencePorosity,
                           m_biotCoefficient,

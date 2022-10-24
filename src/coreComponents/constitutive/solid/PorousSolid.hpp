@@ -140,6 +140,7 @@ public:
                                             real64 const & fluidPressure_n,
                                             real64 const & fluidPressure,
                                             real64 const & initialTemperature,
+                                            real64 const & temperature_n, 
                                             real64 const & temperature,
                                             real64 const ( &strainIncrement )[6],
                                             real64 ( & totalStress )[6],
@@ -158,20 +159,24 @@ public:
 
     // Compute porosity
     real64 const deltaFluidPressure = fluidPressure - fluidPressure_n;
+    real64 const deltaTemperature = temperature - temperature_n;
     real64 porosity;
     real64 porosity_n;
     real64 porosityInit;
     real64 dPorosity_dVolStrain; // No use. Just to input something
     real64 dPorosity_dPressure; // No use. Just to input something
-    computePorosity( k,
-                     q,
-                     deltaFluidPressure,
-                     strainIncrement,
-                     porosity,
-                     porosity_n,
-                     porosityInit,
-                     dPorosity_dVolStrain,
-                     dPorosity_dPressure );
+    real64 dPorosity_dTemperature; // No use. Just to input something
+    computeThermalPorosity( k,
+                            q,
+                            deltaFluidPressure,
+                            deltaTemperature, 
+                            strainIncrement,
+                            porosity,
+                            porosity_n,
+                            porosityInit,
+                            dPorosity_dVolStrain,
+                            dPorosity_dPressure,
+                            dPorosity_dTemperature );
   }
 
   template< int NUM_MAX_COMPONENTS >
@@ -504,6 +509,33 @@ private:
   }
 
   GEOSX_HOST_DEVICE
+  void computeThermalPorosity( localIndex const k,
+                               localIndex const q,
+                               real64 const & deltaFluidPressure,
+                               real64 const & deltaTemperature, 
+                               real64 const ( &strainIncrement )[6],
+                               real64 & porosity,
+                               real64 & porosity_n,
+                               real64 & porosityInit,
+                               real64 & dPorosity_dVolStrain,
+                               real64 & dPorosity_dPressure,
+                               real64 & dPorosity_dTemperature ) const
+  {
+    m_porosityUpdate.updateFromPressureTemperatureAndStrain( k,
+                                                             q,
+                                                             deltaFluidPressure,
+                                                             deltaTemperature, 
+                                                             strainIncrement,
+                                                             dPorosity_dPressure,
+                                                             dPorosity_dTemperature, 
+                                                             dPorosity_dVolStrain );
+
+    porosity = m_porosityUpdate.getPorosity( k, q );
+    porosity_n = m_porosityUpdate.getPorosity_n( k, q );
+    porosityInit = m_porosityUpdate.getInitialPorosity( k, q );
+  }
+
+  GEOSX_HOST_DEVICE
   void computeTotalStress( localIndex const k,
                            localIndex const q,
                            real64 const & initialFluidPressure,
@@ -564,6 +596,8 @@ private:
     // Add the contribution of the thermal expansion into the total stress
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
+
+    m_porosityUpdate.updateThermalExpansionCoefficient( k, thermalExpansionCoefficient ); 
 
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -3 * thermalExpansionCoefficient * bulkModulus * ( temperature - initialTemperature ) );
   }

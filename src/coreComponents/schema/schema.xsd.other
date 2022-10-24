@@ -1053,6 +1053,8 @@
 		<xsd:attribute name="biotCoefficient" type="real64_array" />
 		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
+		<!--dPorosity_dTemperature => Derivative of rock porosity with respect to temperature-->
+		<xsd:attribute name="dPorosity_dTemperature" type="real64_array2d" />
 		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
 		<!--porosity => Rock porosity-->
@@ -1824,6 +1826,8 @@
 	<xsd:complexType name="PressurePorosityType">
 		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
+		<!--dPorosity_dTemperature => Derivative of rock porosity with respect to temperature-->
+		<xsd:attribute name="dPorosity_dTemperature" type="real64_array2d" />
 		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
 		<!--porosity => Rock porosity-->
@@ -1848,6 +1852,8 @@
 	<xsd:complexType name="ProppantPorosityType">
 		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
+		<!--dPorosity_dTemperature => Derivative of rock porosity with respect to temperature-->
+		<xsd:attribute name="dPorosity_dTemperature" type="real64_array2d" />
 		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
 		<!--porosity => Rock porosity-->

@@ -33,6 +33,7 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
   m_newPorosity(),
   m_porosity_n(),
   m_dPorosity_dPressure(),
+  m_dPorosity_dTemperature(),
   m_initialPorosity(),
   m_referencePorosity(),
   m_defaultReferencePorosity()
@@ -47,6 +48,8 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
 
   registerExtrinsicData( extrinsicMeshData::porosity::dPorosity_dPressure{}, &m_dPorosity_dPressure );
 
+  registerExtrinsicData( extrinsicMeshData::porosity::dPorosity_dTemperature{}, &m_dPorosity_dTemperature );
+
   registerExtrinsicData( extrinsicMeshData::porosity::initialPorosity{}, &m_initialPorosity );
 
   registerExtrinsicData( extrinsicMeshData::porosity::referencePorosity{}, &m_referencePorosity );
@@ -58,6 +61,7 @@ void PorosityBase::allocateConstitutiveData( dataRepository::Group & parent,
   m_newPorosity.resize( 0, numConstitutivePointsPerParentIndex );
   m_porosity_n.resize( 0, numConstitutivePointsPerParentIndex );
   m_dPorosity_dPressure.resize( 0, numConstitutivePointsPerParentIndex );
+  m_dPorosity_dTemperature.resize( 0, numConstitutivePointsPerParentIndex );
   m_initialPorosity.resize( 0, numConstitutivePointsPerParentIndex );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );

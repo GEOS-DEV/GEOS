@@ -115,6 +115,7 @@ public:
     m_fluidPressure_n( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >() ),
     m_fluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
     m_initialTemperature( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::initialTemperature >() ),
+    m_temperature_n( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature_n >() ),
     m_temperature( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature >() )
   {}
 
@@ -214,6 +215,7 @@ public:
                                                               m_fluidPressure_n[k],
                                                               m_fluidPressure[k],
                                                               m_initialTemperature[k],
+                                                              m_temperature_n[k], 
                                                               m_temperature[k],
                                                               strainIncrement,
                                                               totalStress,
@@ -299,6 +301,7 @@ protected:
   arrayView1d< real64 const > const m_initialTemperature;
 
   /// The rank-global temperature arrays.
+  arrayView1d< real64 const > const m_temperature_n;
   arrayView1d< real64 const > const m_temperature;
 
 };

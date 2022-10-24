@@ -148,6 +148,7 @@ public:
                               arrayView1d< real64 > const & localRhs )
     : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
     m_dDensity_dTemp( fluid.dDensity_dTemperature() ),
+    m_dPoro_dTemp( solid.getDporosity_dTemperature() ), 
     m_internalEnergy_n( fluid.internalEnergy_n() ),
     m_internalEnergy( fluid.internalEnergy() ),
     m_dInternalEnergy_dPres( fluid.dInternalEnergy_dPressure() ),
@@ -178,6 +179,9 @@ public:
     using Base::StackVariables::localResidual;
     using Base::StackVariables::localJacobian;
 
+    /// Derivative of pore volume with respect to temperature
+    real64 dPoreVolume_dTemp = 0.0;
+
     // Solid energy
 
     /// Solid energy at time n+1
@@ -205,16 +209,19 @@ public:
   {
     Base::setup( ei, stack );
 
+    stack.dPoreVolume_dTemp = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dTemp[ei][0];
+
     // initialize the solid volume
     real64 const solidVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * ( 1.0 - m_porosityNew[ei][0] );
     real64 const solidVolume_n = m_volume[ei] * ( 1.0 - m_porosity_n[ei][0] );
     real64 const dSolidVolume_dPres = -( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
+    real64 const dSolidVolume_dTemp = -( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dTemp[ei][0];
 
     // initialize the solid internal energy
     stack.solidEnergy = solidVolume * m_rockInternalEnergy[ei][0];
     stack.solidEnergy_n = solidVolume_n * m_rockInternalEnergy_n[ei][0];
     stack.dSolidEnergy_dPres = dSolidVolume_dPres * m_rockInternalEnergy[ei][0];
-    stack.dSolidEnergy_dTemp = solidVolume * m_dRockInternalEnergy_dTemp[ei][0];
+    stack.dSolidEnergy_dTemp = solidVolume * m_dRockInternalEnergy_dTemp[ei][0] + dSolidVolume_dTemp * m_rockInternalEnergy[ei][0];
   }
 
   /**
@@ -231,7 +238,7 @@ public:
     Base::computeAccumulation( ei, stack, [&] ()
     {
       // Step 1: assemble the derivatives of the mass balance equation w.r.t temperature
-      stack.localJacobian[0][numDof-1] = stack.poreVolume * m_dDensity_dTemp[ei][0];
+      stack.localJacobian[0][numDof-1] = stack.poreVolume * m_dDensity_dTemp[ei][0] + stack.dPoreVolume_dTemp * m_density[ei][0];
 
       // Step 2: assemble the fluid part of the accumulation term of the energy equation
       real64 const fluidEnergy = stack.poreVolume * m_density[ei][0] * m_internalEnergy[ei][0];
@@ -284,6 +291,9 @@ protected:
 
   /// View on derivative of fluid density w.r.t temperature
   arrayView2d< real64 const > const m_dDensity_dTemp;
+
+  /// View on derivative of fluid density w.r.t temperature
+  arrayView2d< real64 const > const m_dPoro_dTemp;
 
   /// Views on fluid internal energy
   arrayView2d< real64 const > const m_internalEnergy_n;
