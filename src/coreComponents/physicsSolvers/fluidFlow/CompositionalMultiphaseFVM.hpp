@@ -126,6 +126,14 @@ public:
                      arrayView1d< real64 > const & localRhs ) const override;
 
   virtual void
+  assembleStabilizedFluxTerms( real64 const dt,
+                               DomainPartition const & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) const override;
+
+
+  virtual void
   updatePhaseMobility( ObjectManagerBase & dataGroup ) const override;
 
   virtual void

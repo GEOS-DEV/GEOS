@@ -3,7 +3,7 @@
 =================== ============== ==================================================== 
 Name                Type           Description                                          
 =================== ============== ==================================================== 
-biotCoefficient     real64_array   Biot coefficient.                                    
+biotCoefficient     real64_array   Biot coefficient                                     
 dPorosity_dPressure real64_array2d Derivative of rock porosity with respect to pressure 
 initialPorosity     real64_array2d Initial porosity                                     
 porosity            real64_array2d Rock porosity                                        
