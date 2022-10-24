@@ -20,7 +20,7 @@ and leakage rate through the abandoned well) are in agreement with the reference
 `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__.
 
 The GEOSX results obtained for the non-isothermal version of this test case (referred to as Problem 1.2 in
-`(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__) will be
+`(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__) are 
 presented in a separate documentation page.
 
 **Input file**
@@ -95,7 +95,7 @@ cell block using an k-j-i logic in which the k index is the fastest index, and t
     :end-before: <!-- SPHINX_MESH_END -->
 
 .. note::
-   In the GEOSX input file, the two wells are defined as columns of hexahedral elements of individual size 0.2658 x 0.2658 x 1 m. The coefficient 0.2858 is chosen to ensure that the cross-section of the wells is equal to the one defined in the benchmark, in which wells are defined as cylinders with a radius of 0.15.   
+   In the GEOSX input file, the two wells are defined as columns of hexahedral elements of individual size 0.2658 x 0.2658 x 1 m. The coefficient 0.2858 is chosen to ensure that the cross-section of the wells is equal to the one defined in the benchmark, in which wells are defined as cylinders with a radius of 0.15 m.   
 
 The cell block names are used in the **ElementRegions** block to define element regions
 in the aquifers and in the wells.
@@ -156,9 +156,6 @@ The fluid properties (constant densities and constant viscosities) are those giv
 article documenting the benchmark.
 To define an incompressible fluid, we set all the formation volume factors to 1.  
 		 
-.. note::		 
-   For now, we have to use the label ``oil`` to denote the CO2 phase in the Dead-Oil model, but this will be changed in future GEOSX releases.
-
 The rock model defines an incompressible porous medium with a porosity equal to 0.15.
 The relative permeability model is linear.
 Capillary pressure is neglected.
@@ -197,7 +194,7 @@ XML tags of the **Geometry** section, and where the tables are defined as **Tabl
 in the **Functions** section.
 
 To reproduce the behavior of a rate-controlled well, we use the **SourceFlux** tag on the
-``source`` set (located in the ``injectionWell`` cell element regions), with the injection rate
+``source`` set (located in the ``injectionWell`` cell element region), with the injection rate
 specified in the benchmark description (8.87 kg/s):
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/isothermalLeakyWell/isothermalLeakyWell_base_iterative.xml
@@ -282,7 +279,7 @@ Next, we measure the CO2 leakage rate through the leaky well, defined by the aut
 flow at midway between top and bottom aquifers divided by the injection rate (8.87 kg/s), in percent.
 The GEOSX leakage rate is shown in the figure below:
 
-.. _isothermalLeakyWell_GEOSXLeakageRate:
+
 .. plot:: docs/sphinx/advancedExamples/validationStudies/carbonStorage/isothermalLeakyWell/isothermalLeakyWellFigure.py
 
 
@@ -344,7 +341,7 @@ A particularly good match is obtained with Eclipse, FEHM, and TOUGH2/ECO2N (2).
 To go further
 ------------------------------------------------------------------
 
-The more complex, non-isothermal version of this test will be added to this suite of validation examples soon.  
+The more complex, non-isothermal version of this test is in :ref:`ExampleThermalLeakyWell`.
 
 **Feedback on this example**
 
