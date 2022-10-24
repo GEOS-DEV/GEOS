@@ -13,7 +13,7 @@
       subcycling="1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
-        newtonMaxIter="50"/>
+        newtonMaxIter="200"/>
       <LinearSolverParameters
         directParallel="0"/>
     </ThermalSinglePhasePoromechanics>
@@ -42,7 +42,7 @@
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonMaxIter="100"
-        newtonTol="1.0e-6"/>
+        newtonTol="1.0e-4"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseFVM>
@@ -104,8 +104,8 @@
       defaultViscosity="1e-3"
       referencePressure="0.0"
       referenceTemperature="0.0"
-      compressibility="1e-10"
-      thermalExpansionCoeff="9.0e-7"
+      compressibility="0.0"
+      thermalExpansionCoeff="0.0"
       viscosibility="0.0"
       volumetricHeatCapacity="1.672e2"
       referenceInternalEnergy="4.56e7"/>
@@ -122,7 +122,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"
-      scale="1.0"/>
+      scale="0.0"/>
 
     <FieldSpecification
       name="initialTemperature"
@@ -134,21 +134,21 @@
 
     <FieldSpecification
       name="xconstraint"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       objectPath="nodeManager"
-      setNames="{ xneg, xpos, yneg }"/>
+      setNames="{ xneg, xpos }"/>
 
     <FieldSpecification
       name="yconstraint"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       objectPath="nodeManager"
       setNames="{ yneg }"/>
 
     <FieldSpecification
       name="zconstraint"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       objectPath="nodeManager"
       setNames="{ zneg, zpos }"/>

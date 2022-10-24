@@ -13,36 +13,29 @@
       yCoords="{ 0, 7 }"
       zCoords="{ 0, 1 }"
       nx="{ 1 }"
-      ny="{ 7 }"
+      ny="{ 70 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Events
-    maxTime="1e2">
+    maxTime="1e5">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="10"
+      timeFrequency="1000"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplication0"
-      endTime="1.e-5"
-      forceDt="1.e-5"
+      endTime="1e3"
+      forceDt="1e3"
       target="/Solvers/thermoPoroSolver"/>
 
     <PeriodicEvent
       name="solverApplication1"
-      beginTime="1.e-5"
-      endTime="1.0"
-      forceDt="0.99999"
-      target="/Solvers/thermoPoroSolver"/>
-
-    <PeriodicEvent
-      name="solverApplication2"
-      beginTime="1.0"
-      endTime="100.0"
-      forceDt="1.0"
+      beginTime="1e3"
+      endTime="1e5"
+      forceDt="1e2"
       target="/Solvers/thermoPoroSolver"/>
 
   </Events>
@@ -50,7 +43,7 @@
   <Geometry>
     <Box
       name="top"
-      xMin="{ -0.001, 5.999, -0.001 }"
+      xMin="{ -0.001, 6.899, -0.001 }"
       xMax="{ 1.001, 7.001, 1.001 }"/>
   </Geometry>
 </Problem>
