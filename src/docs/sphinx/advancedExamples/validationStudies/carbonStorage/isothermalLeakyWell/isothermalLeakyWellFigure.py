@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import h5py
 
-from matplotlib.ticker import AutoMinorLocator
+#from matplotlib.ticker import AutoMinorLocator
 
 
 def main():
@@ -65,13 +65,13 @@ def main():
 
     plt.xlim(0, 1000)
     plt.ylim(0, 0.25)
-    ax = plt.axes()
-    ax.xaxis.set_minor_locator(AutoMinorLocator())
-    ax.yaxis.set_minor_locator(AutoMinorLocator())
+    #ax = plt.axes()
+    #ax.xaxis.set_minor_locator(AutoMinorLocator())
+    #ax.yaxis.set_minor_locator(AutoMinorLocator())
 
     plt.grid()
-    plt.xlabel('time [days]', fontweight='bold')
-    plt.ylabel('leakage value [%]', fontweight='bold')
+    plt.xlabel('Time [days]', fontweight='bold')
+    plt.ylabel('Leakage value [%]', fontweight='bold')
     plt.legend(loc="upper right")
     plt.show()
 
