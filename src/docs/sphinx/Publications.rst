@@ -21,7 +21,7 @@ Preprints and Early-Views
        | `doi:10.1016/j.cma.2021.114288 <https://doi.org/10.1016/j.cma.2021.114288>`_
        
    * - | **A Multi-resolution approach to hydraulic fracture simulation**
-       | A Costa, M Cusini, T Jin, R Settgast, J Dolbow
+       | A Costa, M Cusini, T Jin, R Settgast, JE Dolbow
        | International Journal of Fracture 
        | `doi:10.1007/s10704-022-00662-y <https://doi.org/10.1007/s10704-022-00662-y>`_    
 
