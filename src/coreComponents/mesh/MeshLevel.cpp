@@ -98,10 +98,11 @@ MeshLevel::MeshLevel( string const & name,
 MeshLevel::MeshLevel( string const & name,
                       Group * const parent,
                       MeshLevel const & source,
+                      CellBlockManager & cellBlockManager,
                       int const order ):
   MeshLevel( name, parent )
 {
-
+  GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel cellBlockManager.getName()="<<cellBlockManager.getName());  
   localIndex const numBasisSupportPoints = order+1;
 
 
@@ -189,11 +190,11 @@ MeshLevel::MeshLevel( string const & name,
 
 
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMapSource = source.m_faceManager->nodeList().toViewConst();
+  //ArrayOfArraysView< localIndex const > const & faceToNodeMapSource = source.m_faceManager->nodeList().toViewConst();
 
-  FaceManager::ElemMapType const & faceToElem = source.m_faceManager->toElementRelation();
+  //FaceManager::ElemMapType const & faceToElem = source.m_faceManager->toElementRelation();
 
-  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
+  //arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
 
 
   source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
@@ -216,13 +217,27 @@ MeshLevel::MeshLevel( string const & name,
 
       newSubRegion.resize( sourceSubRegion.size() );
 
-      arrayView2d< localIndex const > const & elemToFaces = sourceSubRegion.faceList();
+      array1d< localIndex > const globalInfo = cellBlockManager.setO3Information(sourceSubRegion.getName());
+      //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel globalInfo="<<globalInfo);
+      CellBlockABC & cellBlock = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( sourceSubRegion.getName() );
+
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
       array2d< localIndex, cells::NODE_MAP_PERMUTATION > & elemsToNodesNew = newSubRegion.nodeList();
+      array2d< localIndex, cells::NODE_MAP_PERMUTATION > elemsToNodes = cellBlock.getElemToNodes();
+      elemsToNodesNew =  elemsToNodes;
 
+      arrayView2d< localIndex const > const & elemToFaces = sourceSubRegion.faceList();
       array2d< localIndex > & elemToFacesNew = newSubRegion.faceList();
       elemToFacesNew = elemToFaces;
+
+      arrayView1d< globalIndex const > const & elemlLocalToGlobalSrc = sourceSubRegion.localToGlobalMap();
+      arrayView1d< globalIndex > const & elemlLocalToGlobalNew = newSubRegion.localToGlobalMap();
+
+      for( localIndex elemIndex = 0; elemIndex < elemlLocalToGlobalSrc.size( 0 ); ++elemIndex )
+      {
+      	elemlLocalToGlobalNew[elemIndex] = elemlLocalToGlobalSrc[elemIndex];
+      }
 
       // Copy a new elemCenter map from the old one
       array2d< real64 > & elemCenterNew = newSubRegion.getElementCenter();
@@ -235,6 +250,19 @@ MeshLevel::MeshLevel( string const & name,
           elemCenterNew[elem][a] = elemCenterOld[elem][a];
         }
       }
+
+      for( localIndex elemIndex = 0; elemIndex < elemsToNodesNew.size( 0 ); ++elemIndex )
+      {
+         for( localIndex faceIndex = 0; faceIndex < 6; ++faceIndex )
+         {
+           getFaceNodesO3(faceIndex, elemsToNodesNew[elemIndex], faceToNodeMapNew[elemToFaces[elemIndex][faceIndex]]); 
+           //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel faceIndex="<<faceIndex<<"; faceToNodeMapNew["<<elemToFaces[elemIndex][faceIndex]<<"]="<<faceToNodeMapNew[elemToFaces[elemIndex][faceIndex]]);
+         }
+      }
+
+
+/*
+
 
 //      elemsToNodesNew.resize( elemsToNodesSource.size(0), numNodesPerElem );
 
@@ -397,7 +425,7 @@ MeshLevel::MeshLevel( string const & name,
           }
         }
       }
-
+*/
 
 
       //Fill a temporary array which contains the Gauss-Lobatto points depending on the order

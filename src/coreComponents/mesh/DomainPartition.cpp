@@ -155,7 +155,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 
   forMeshBodies( [&]( MeshBody & meshBody )
   {
-
+/*
     MeshLevel & meshLevel = meshBody.getBaseDiscretization();
 
     for( NeighborCommunicator const & neighbor : m_neighbors )
@@ -187,22 +187,73 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 
     faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
     faceManager.computeGeometry( nodeManager );
+*/
 
     // implement ghosting for non-base discretization...probably use information from the base ghosting.
+    
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
-      for( NeighborCommunicator const & neighbor : m_neighbors )
+
+      if ( !meshLevel.isShallowCopyOf(meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
       {
-        neighbor.addNeighborGroupToMesh( meshLevel );
+        for ( NeighborCommunicator const & neighbor : m_neighbors )
+        {
+          neighbor.addNeighborGroupToMesh( meshLevel );
+        }
+  
+        NodeManager & nodeManager = meshLevel.getNodeManager();
+        FaceManager & faceManager = meshLevel.getFaceManager();
+        EdgeManager & edgeManager = meshLevel.getEdgeManager();
+  
+        nodeManager.setMaxGlobalIndex();
+  
+        CommunicationTools::getInstance().assignGlobalIndices( faceManager,
+                                                               nodeManager,
+                                                               m_neighbors );
+    
+        CommunicationTools::getInstance().assignGlobalIndices( edgeManager,
+                                                               nodeManager,
+                                                               m_neighbors );
+    
+        CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
+                                                                               m_neighbors );
+    
+        CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
+                                                                               m_neighbors );
+
+        //GEOSX_LOG_RANK( "INFO: meshLevel="<<meshLevel.getName()<<"; faceManager.localToGlobalMap()="<<faceManager.localToGlobalMap()<<"; faceManager.globalToLocalMap()="<<faceManager.globalToLocalMap());
+        /*
+        GEOSX_LOG_RANK( "INFO: meshLevel="<<meshLevel.getName()<<"; nodeManager.elementList()()="<<nodeManager.elementList());
+        GEOSX_LOG_RANK( "INFO: meshLevel="<<meshLevel.getName()<<"; faceManager.elementList()()="<<faceManager.elementList());
+        GEOSX_LOG_RANK( "INFO: meshLevel="<<meshLevel.getName()<<"; faceManager.nodeList()()="<<faceManager.nodeList());
+	*/
+
+	/*
+        ElementRegionManager & elemManager = meshLevel.getElemManager();
+        elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+        {
+          GEOSX_LOG_RANK( "INFO: DomainPartition::setupCommunications: meshLevel="<<meshLevel.getName()<<"; elemToFace="<<subRegion.faceList() );
+          GEOSX_LOG_RANK( "INFO: DomainPartition::setupCommunications: meshLevel="<<meshLevel.getName()<<"; elemToNodes="<<subRegion.nodeList() );
+          GEOSX_LOG_RANK( "INFO: DomainPartition::setupCommunications: meshLevel="<<meshLevel.getName()<<"; elemlLocalToGlobal="<<subRegion.localToGlobalMap() );
+          GEOSX_LOG_RANK( "INFO: DomainPartition::setupCommunications: meshLevel="<<meshLevel.getName()<<"; elemlGlobalToLocal="<<subRegion.globalToLocalMap() );
+         } );
+	 */
+
+
+        CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+
+    
+        if ( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() ) 
+        {
+          faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
+          faceManager.computeGeometry( nodeManager );
+ 	}
+
       }
-
-      NodeManager & nodeManager = meshLevel.getNodeManager();
-      FaceManager & faceManager = meshLevel.getFaceManager();
-      EdgeManager & edgeManager = meshLevel.getEdgeManager();
-
-      nodeManager.setMaxGlobalIndex();
-
+    
     } );
+    
+
   } );
 }
 

@@ -584,13 +584,19 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     m_max[0] = m_vertices[0].back();
     m_max[1] = m_vertices[1].back();
     m_max[2] = m_vertices[2].back();
-
+/*
+    GEOSX_LOG_RANK("m_vertices="<<m_vertices);
+    GEOSX_LOG_RANK("m_min=("<<m_min[0]<<","<<m_min[2]<<","<<m_min[2]<<")");
+    GEOSX_LOG_RANK("m_max=("<<m_max[0]<<","<<m_max[2]<<","<<m_max[2]<<")");
+    GEOSX_LOG_RANK("m_nElems="<<m_nElems);
+*/
     partition.setSizes( m_min, m_max );
 
     real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
     LvArray::tensorOps::subtract< 3 >( size, m_min );
     meshBody.setGlobalLengthScale( LvArray::tensorOps::l2Norm< 3 >( size ) );
   }
+  //GEOSX_LOG_RANK("m_nElems[0].size="<<m_nElems[0].size()<<"; m_nElems[1].size="<<m_nElems[1].size()<<"; m_nElems[2].size="<<m_nElems[2].size());
 
   // Find elemCenters for even uniform element sizes
   array1d< array1d< real64 > > elemCenterCoords( 3 );
@@ -614,6 +620,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
                            MPI_MAX,
                            MPI_COMM_GEOSX );
   }
+  //GEOSX_LOG_RANK("elemCenterCoords="<<elemCenterCoords);
 
   // Find starting/ending index
   // Get the first and last indices in this partition each direction
@@ -629,6 +636,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       if( partition.isCoordInPartition( elemCenterCoords[i][k], i ) )
       {
         firstElemIndexInPartition[i] = k;
+        //GEOSX_LOG_RANK("elemCenterCoords["<<i<<"]["<<k<<"]="<<elemCenterCoords[i][k]<<"; firstElemIndexInPartition["<<i<<"]="<<k);
         break;
       }
     }
@@ -640,10 +648,14 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
         if( partition.isCoordInPartition( elemCenterCoords[i][k], i ) )
         {
           lastElemIndexInPartition[i] = k;
+          //GEOSX_LOG_RANK("elemCenterCoords["<<i<<"]["<<k<<"]="<<elemCenterCoords[i][k]<<"; lastElemIndexInPartition["<<i<<"]="<<k);
         }
       }
     }
   }
+
+  //GEOSX_LOG_RANK("firstElemIndexInPartition=("<<firstElemIndexInPartition[0]<<","<<firstElemIndexInPartition[1]<<","<<firstElemIndexInPartition[2]<<")");
+  //GEOSX_LOG_RANK("lastElemIndexInPartition=("<<lastElemIndexInPartition[0]<<","<<lastElemIndexInPartition[1]<<","<<lastElemIndexInPartition[2]<<")");
 
   // Calculate number of elements in this partition from each region, and the
   // total number of nodes
@@ -680,6 +692,20 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       }
     }
   }
+
+  //GEOSX_LOG_RANK("firstElemIndexForBlockInPartition="<<firstElemIndexForBlockInPartition);
+  //GEOSX_LOG_RANK("lastElemIndexForBlockInPartition="<<lastElemIndexForBlockInPartition);
+  
+  arrayView1d< localIndex > const globalInfo = cellBlockManager.getGlobalInformation();
+  for( int i = 0; i < m_dim * 3 ; ++i )
+  {
+    globalInfo[i]=m_numElemsTotal[i];
+    globalInfo[i+3]=firstElemIndexInPartition[i];
+    globalInfo[i+6]=lastElemIndexInPartition[i];
+  }
+  
+  //GEOSX_LOG_RANK("globalInfo="<<globalInfo);
+  
 
   // TODO This needs to be rewritten for dimensions lower than 3.
   localIndex regionOffset = 0;
@@ -799,6 +825,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       }
     }
   }
+  //GEOSX_LOG_RANK(" !!!! INFO !!!! InternalMeshGenerator::generateMesh nodeLocalToGlobal="<<nodeLocalToGlobal);
 
   {
     array1d< integer > numElements;

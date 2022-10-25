@@ -43,6 +43,7 @@
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/utilities/MeshMapUtilities.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "schema/schemaUtilities.hpp"
@@ -565,12 +566,13 @@ void ProblemManager::generateMesh()
         string const & discretizationName = feDiscretization->getName();
         arrayView1d< string const > const regionNames = discretizationPair.second;
         CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+        CellBlockManager & cellBlockManager0 = meshBody.getGroup< CellBlockManager >( keys::cellManager );
 
         // create a high order MeshLevel
         if( order > 1 )
         {
           MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
-                                                       discretizationName,
+                                                       discretizationName, cellBlockManager0,
                                                        order );
 
           this->generateMeshLevel( mesh,
@@ -732,13 +734,6 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   FaceManager & faceManager = meshLevel.getFaceManager();
   ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-//  GeometricObjectManager & geometricObjects = this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
-
-//  MeshUtilities::generateNodesets( geometricObjects, nodeManager );
-
-
-//  nodeManager.constructGlobalToLocalMap();
-
 
   if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
   {
@@ -766,19 +761,62 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     nodeManager.setDomainBoundaryObjects( faceManager );
     edgeManager.setDomainBoundaryObjects( faceManager );
   }
-  meshLevel.generateSets();
+    meshLevel.generateSets();
 
 
-  if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+    if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+    {
+      elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
+      {
+        subRegion.setupRelatedObjectsInRelations( meshLevel );
+        subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+        subRegion.setMaxGlobalIndex();
+      } );
+      elemManager.setMaxGlobalIndex();
+    }
+  
+  else if (!meshLevel.isShallowCopyOf(
+    getDomainPartition().getMeshBodies().getGroup< MeshBody >(0).getMeshLevels().getGroup< MeshLevel >( 0 )))
   {
+
+    //nodeManager.setGeometricalRelations( cellBlockManager, true, elemManager );
+    nodeManager.resize( cellBlockManager.numNodes() );
+    ToCellRelation< ArrayOfArrays< localIndex > > const toCellBlock = cellBlockManager.getNodeToElements();
+    array2d< localIndex > const blockToSubRegion = elemManager.getCellBlockToSubRegionMap( cellBlockManager );
+    meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( blockToSubRegion.toViewConst(),
+                                                                         toCellBlock,
+                                                                         nodeManager.toElementRelation());
+
+    edgeManager.setGeometricalRelations( cellBlockManager );
+
+    ToCellRelation< array2d< localIndex > > const faceToCellBlock = cellBlockManager.getFaceToElements();
+    array2d< localIndex > const faceBlockToSubRegion = elemManager.getCellBlockToSubRegionMap( cellBlockManager );
+    meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( faceBlockToSubRegion.toViewConst(),
+                                                                         faceToCellBlock,
+                                                                         faceManager.toElementRelation());
+
+    nodeManager.constructGlobalToLocalMap( cellBlockManager );
+
+    nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemManager );
+    edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
+    faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemManager );
+
+    faceManager.setDomainBoundaryObjects();
+    nodeManager.setDomainBoundaryObjects( faceManager );
+    edgeManager.setDomainBoundaryObjects( faceManager );
+
+    meshLevel.generateSets();
+
     elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
     {
+      subRegion.constructGlobalToLocalMap();
       subRegion.setupRelatedObjectsInRelations( meshLevel );
-      subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
       subRegion.setMaxGlobalIndex();
     } );
     elemManager.setMaxGlobalIndex();
+
   }
+
 }
 
 
@@ -817,7 +855,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
         ElementRegionManager & elemManager = meshLevel.getElemManager();
         FaceManager const & faceManager = meshLevel.getFaceManager();
         EdgeManager const & edgeManager = meshLevel.getEdgeManager();
-        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+        //arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
         for( auto const & regionName : regionNames )
         {
@@ -851,7 +889,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
                   localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-                  feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >( X, &subRegion, meshData, finiteElement );
+                  //feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >( X, &subRegion, meshData, finiteElement );
 
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
                                                                                               meshLevel.getName(),

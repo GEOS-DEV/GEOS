@@ -66,6 +66,7 @@ public:
    */
   MeshLevel & createMeshLevel( string const & sourceLevelName,
                                string const & newLevelName,
+			       CellBlockManager & cellBlockManager,
                                int const order );
 
   /**

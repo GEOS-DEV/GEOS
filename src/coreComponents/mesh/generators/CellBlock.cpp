@@ -97,6 +97,12 @@ void CellBlock::resize( dataRepository::indexType const numElements )
   m_elementsToFaces.resize( numElements );
 }
 
+void CellBlock::resizeO3mesh( dataRepository::indexType const numElements )
+{ 
+  this->resize(numElements);
+  m_elementsToNodes.resize( this->numElements(), 64 );
+}
+
 localIndex CellBlock::getFaceNodes( localIndex const cellIndex,
                                     localIndex const faceNum,
                                     Span< localIndex > const nodesInFaces ) const

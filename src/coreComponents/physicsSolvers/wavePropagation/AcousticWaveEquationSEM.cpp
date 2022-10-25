@@ -468,14 +468,14 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
     //TODO: Please make a shallow copy of face normal in the constructo for the new mesh level
-    FaceManager & faceManager0 = this->getGroupByPath< FaceManager >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/faceManager" );
+    //FaceManager & faceManager0 = this->getGroupByPath< FaceManager >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/faceManager" );
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     /// get table containing all the face normals
-    arrayView2d< real64 const > const faceNormal  = faceManager0.faceNormal();
+    arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
@@ -506,7 +506,21 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
         localIndex const numNodesPerFace = facesToNodes.sizeOfArray( 0 );
+/*
+	GEOSX_LOG_RANK_0("INFO: !!!! SEM: meshlevel="<<mesh.getName()<<"; elementSubRegion.size()="<<elementSubRegion.size());
+	GEOSX_LOG_RANK_0("INFO: !!!! SEM: meshlevel="<<mesh.getName()<<"; numFacesPerElem="<<numFacesPerElem);
+	GEOSX_LOG_RANK_0("INFO: !!!! SEM: meshlevel="<<mesh.getName()<<"; numNodesPerFace="<<numNodesPerFace);
 
+
+    	GEOSX_LOG_RANK_0("INFO: !!!! SEM: meshlevel="<<mesh.getName()<<"; facesToNodes="<<facesToNodes);
+    	GEOSX_LOG_RANK_0("INFO: !!!! SEM: meshlevel="<<mesh.getName()<<"; elemsToNodes="<<elemsToNodes);
+    	GEOSX_LOG_RANK_0("INFO: !!!! SEM: meshlevel="<<mesh.getName()<<"; elemsToFaces="<<elemsToFaces);
+    	GEOSX_LOG_RANK_0("INFO: !!!! SEM: meshlevel="<<mesh.getName()<<"; facesDomainBoundaryIndicator="<<facesDomainBoundaryIndicator);
+    	GEOSX_LOG_RANK_0("INFO: !!!! SEM: meshlevel="<<mesh.getName()<<"; freeSurfaceFaceIndicator="<<freeSurfaceFaceIndicator);
+    	GEOSX_LOG_RANK_0("INFO: !!!! SEM: meshlevel="<<mesh.getName()<<"; faceNormal="<<faceNormal);
+    	GEOSX_LOG_RANK_0("INFO: !!!! SEM: meshlevel="<<mesh.getName()<<"; velocity="<<velocity);
+    	GEOSX_LOG_RANK_0("INFO: !!!! SEM: meshlevel="<<mesh.getName()<<"; X="<<X);
+*/
         acousticWaveEquationSEMKernels::MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
 
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
@@ -522,6 +536,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                               velocity,
                                                               mass,
                                                               damping );
+
       } );
     } );
   } );

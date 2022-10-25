@@ -43,6 +43,7 @@ MeshLevel & MeshBody::createMeshLevel( string const & name )
 
 MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
                                        string const & newLevelName,
+				       CellBlockManager & cellBlockManager,
                                        int const order )
 {
   MeshLevel const & sourceMeshLevel = this->getMeshLevel( sourceLevelName );
@@ -50,6 +51,7 @@ MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
                                      std::make_unique< MeshLevel >( newLevelName,
                                                                     this,
                                                                     sourceMeshLevel,
+				       				    cellBlockManager,
                                                                     order ) );
 }
 

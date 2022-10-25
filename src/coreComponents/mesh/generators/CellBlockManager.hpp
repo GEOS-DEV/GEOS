@@ -21,6 +21,7 @@
 
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlock.hpp"
+#include "common/DataTypes.hpp"
 
 namespace geosx
 {
@@ -84,6 +85,10 @@ public:
    * @note This is meant to be used as a values setter.
    */
   arrayView1d< globalIndex > getNodeLocalToGlobal();
+
+  array1d< localIndex > setO3Information( string const & regionName ) override;
+
+  arrayView1d< localIndex > getGlobalInformation();
 
   std::map< string, SortedArray< localIndex > > const & getNodeSets() const override;
 
@@ -218,6 +223,7 @@ private:
   ToCellRelation< array2d< localIndex > > m_faceToCells;
 
   array1d< globalIndex > m_nodeLocalToGlobal;
+  array1d< localIndex > m_globalInfo;
 
   std::map< string, SortedArray< localIndex > > m_nodeSets;
 

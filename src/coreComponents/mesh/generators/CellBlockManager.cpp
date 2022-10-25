@@ -704,6 +704,156 @@ arrayView1d< globalIndex > CellBlockManager::getNodeLocalToGlobal()
   return m_nodeLocalToGlobal.toView();
 }
 
+array1d< localIndex > CellBlockManager::setO3Information(string const & regionName)
+{
+  // calculating the node local to global map: mimic from InternalMeshGenerator.cpp
+  // the number of dimensions for the current elements
+  localIndex m_dim = 3;
+  // the number of nodes in each direction for the current partition
+  array1d< localIndex > numNodesInDir{3}; //= { 1, 1, 1 };
+  array1d< localIndex > numElemsInDir{3}; // = { 1, 1, 1 };
+
+  // the m_globalInfo are passing from InternalMeshGenerator.cpp:
+  // m_globalInfo[0-2] are m_numElemsTotal
+  // m_globalInfo[3-5] are firstElemIndexInPartition 
+  // m_globalInfo[6-8] are lastElemIndexInPartition 
+  for( localIndex i = 0; i < m_dim; ++i )
+  { 
+    numNodesInDir[i] = (m_globalInfo[i+6] - m_globalInfo[i+3]) * 3 + 4;
+    numElemsInDir[i] = (m_globalInfo[i+6] - m_globalInfo[i+3]) + 1;
+    
+  }
+  // the following call will reset the number of nodes for the current cell
+  // by doing this m_nodeLocalToGlobal and m_nodesPositions are initialized
+  setNumNodes( numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2] );
+  //GEOSX_LOG_RANK("!!!! INFO !!!! CellBlockManager::setO3Information numNodes="<<numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2]);
+
+  // the localIndex for each nodes of all the blocks in the current partition
+  // the global to local relationship is aiming for the partitions
+  // and each "element" there could be multiple blocks
+
+  localIndex localNodeIndex= 0;
+  localIndex localElemIndex= 0;
+
+  // Part I ---- to calculate the node local to global map ----
+  // numNodesInDir[0] is the number of nodes on the x direction of the current partition
+  for( localIndex i = 0; i < numNodesInDir[0]; ++i )
+  {
+    // numNodesInDir[0] is the number of nodes on the y direction of the current partition
+    for( localIndex j = 0; j < numNodesInDir[1]; ++j )
+    {
+      // numNodesInDir[0] is the number of nodes on the z direction of the current partition
+      for( localIndex k = 0; k < numNodesInDir[2]; ++k )
+      {
+	// globalnodeIJK is initilized as the global node index of the current partition
+        // plus the global information of the partition which is firstElemIndexInPartition
+        localIndex globalnodeIJK[3] = { i + m_globalInfo[3] * 3, j + m_globalInfo[4] * 3, k + m_globalInfo[5] *3 };
+
+        //               15__________________ 63
+        //               /|                  /|
+        //              / |                 / |
+        //             /  |                /  |
+        //           3/___|_______________/51 |
+        //            |   |               |   |
+        //            |   |               |   |
+        //            |   |               |   |
+        //            2   |               |   |
+        //            |   |               |   |
+        //            |   12-----28-----44|---/16       z
+        //            1  /                |  /          |   y
+        //            | /                 | /           |  /
+        //            |/__________________|/            | /
+        //            0      16     32    48            |/____ x
+
+	// assigning the localNodeIndex and globalnodeIJK for nodes
+        m_nodeLocalToGlobal[localNodeIndex] = globalnodeIJK[0]*(m_globalInfo[1]*3+1)*(m_globalInfo[2]*3+1) 
+                                            + globalnodeIJK[1]*(m_globalInfo[2]*3+1) 
+                                            + globalnodeIJK[2];
+
+	// local node index is simply incremental
+        ++localNodeIndex;
+      }
+    }
+  }
+  // End of Part I ---- done calculating the node local to global map ----
+  
+  // Part II ---- to calculate the element to node map ----
+
+  // get the total number of element in the current partition
+  localIndex numElementsInPartition = numElemsInDir[0] * numElemsInDir[1] * numElemsInDir[2];
+
+  // resize the cell block to setup the elemsToNodes information
+  this->getCellBlock(regionName).resizeO3mesh(numElementsInPartition);
+
+  // assigning the element to nodes map through cell block
+  arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = this->getCellBlock(regionName).getElemToNode();
+
+  //GEOSX_LOG_RANK("!!!! INFO !!!! CellBlockManager::setO3Information numElemsInDir=" << numElemsInDir);
+
+  // numElemsInDir[0] is the number of elements on the x direction of the current partition
+  for( localIndex i = 0; i < numElemsInDir [0]; ++i )
+  {
+    // numElemsInDir[1] is the number of elements on the y direction of the current partition
+    for( localIndex j = 0; j < numElemsInDir[1]; ++j )
+    {
+      // numElemsInDir[2] is the number of elements on the z direction of the current partition
+      for( localIndex k = 0; k < numElemsInDir[2]; ++k )
+      {
+        // get the first node index in the current partition
+	localIndex firstNodeIndex = i * numNodesInDir[2] * numNodesInDir[1] * 3 + j * numNodesInDir[2] * 3 + k * 3;
+  	//GEOSX_LOG_RANK("!!!! INFO !!!! CellBlockManager::setO3Information firstNodeIndex=" << firstNodeIndex);
+
+	// assign the element to node index with in the current partition
+        for( localIndex zNodeIndex = 0; zNodeIndex < 4; ++zNodeIndex )
+        {
+          for( localIndex yNodeIndex = 0; yNodeIndex < 4; ++yNodeIndex )
+          {
+            for( localIndex xNodeIndex = 0; xNodeIndex < 4; ++xNodeIndex )
+	    {
+
+              //               60__________________ 63
+              //               /                   /|
+              //              /                   / |
+              //             /                   /  |
+              //          48/__________________ /51 |
+              //            |                   |   |
+              //            |                   |   |
+              //            |                   |   |
+              //            |                   |   |
+              //            |                   |   |
+              //            |                   |   /15       z
+              //            |                   |  /          |   y
+              //            |                   | /           |  /
+              //            |___________________|/            | /
+              //            0     1      2      3             |/____ x
+
+              elemsToNodes[localElemIndex][xNodeIndex + yNodeIndex * 4 + zNodeIndex * 16 ] = 
+		// note that the indexing of elemsToNodes are in the x-y-z ordering
+		// and it needs to consider the postion of each element in the current partition
+		numNodesInDir[1] * numNodesInDir[2] * xNodeIndex + numNodesInDir[2] * yNodeIndex + zNodeIndex + firstNodeIndex;
+	    }
+          }
+        }	
+
+        // local node index is simply incremental
+        ++localElemIndex;
+      }
+    }
+  }
+  // End Part II ---- to calculate the element to node map ----
+  
+  //GEOSX_LOG_RANK("!!!! INFO !!!! CellBlockManager::setO3Information m_nodeLocalToGlobal="<<m_nodeLocalToGlobal);   
+  //GEOSX_LOG_RANK("!!!! INFO !!!! CellBlockManager::setO3Information elemsToNodes"<<elemsToNodes);
+ 
+  return m_globalInfo;
+}
+
+arrayView1d< localIndex > CellBlockManager::getGlobalInformation() 
+{
+  m_globalInfo.resize(9);
+  return m_globalInfo.toView();
+}
+
 std::map< string, SortedArray< localIndex > > const & CellBlockManager::getNodeSets() const
 {
   return m_nodeSets;

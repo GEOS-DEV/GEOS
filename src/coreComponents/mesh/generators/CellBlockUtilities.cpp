@@ -528,4 +528,140 @@ localIndex buildEdgeMaps( localIndex const numNodes,
   return uniqueEdgeOffsets.back();
 }
 
+
+void getFaceNodesO3 ( localIndex const faceNum,
+                                   arraySlice1d< localIndex const, cells::NODE_MAP_USD-1 > const & elemNodes,
+                                   Span< localIndex > const faceNodes )
+{
+  GEOSX_ERROR_IF_LT( faceNodes.size(), 16 );
+  switch( faceNum )
+  {
+    case 0: // the front face
+    {
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[16];
+      faceNodes[2] = elemNodes[32];
+      faceNodes[3] = elemNodes[48];
+      faceNodes[4] = elemNodes[1];
+      faceNodes[5] = elemNodes[17];
+      faceNodes[6] = elemNodes[33];
+      faceNodes[7] = elemNodes[49];
+      faceNodes[8] = elemNodes[2];
+      faceNodes[9] = elemNodes[18];
+      faceNodes[10] = elemNodes[34];
+      faceNodes[11] = elemNodes[50];
+      faceNodes[12] = elemNodes[3];
+      faceNodes[13] = elemNodes[19];
+      faceNodes[14] = elemNodes[35];
+      faceNodes[15] = elemNodes[51];
+      break;
+    }    
+    case 1: // the left face
+    {
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[1];
+      faceNodes[2] = elemNodes[2];
+      faceNodes[3] = elemNodes[3];
+      faceNodes[4] = elemNodes[7];
+      faceNodes[5] = elemNodes[6];
+      faceNodes[6] = elemNodes[5];
+      faceNodes[7] = elemNodes[4];
+      faceNodes[8] = elemNodes[11];
+      faceNodes[9] = elemNodes[10];
+      faceNodes[10] = elemNodes[9];
+      faceNodes[11] = elemNodes[8];
+      faceNodes[12] = elemNodes[15];
+      faceNodes[13] = elemNodes[14];
+      faceNodes[14] = elemNodes[13];
+      faceNodes[15] = elemNodes[12];
+      break;
+    }
+
+    case 2: // the bottom face
+    {
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[16];
+      faceNodes[2] = elemNodes[32];
+      faceNodes[3] = elemNodes[48];
+      faceNodes[4] = elemNodes[4];
+      faceNodes[5] = elemNodes[20];
+      faceNodes[6] = elemNodes[36];
+      faceNodes[7] = elemNodes[52];
+      faceNodes[8] = elemNodes[8];
+      faceNodes[9] = elemNodes[24];
+      faceNodes[10] = elemNodes[40];
+      faceNodes[11] = elemNodes[56];
+      faceNodes[12] = elemNodes[12];
+      faceNodes[13] = elemNodes[28];
+      faceNodes[14] = elemNodes[44];
+      faceNodes[15] = elemNodes[60];
+      break;
+    }
+    case 3: // the top face
+    {
+      faceNodes[0] = elemNodes[3];
+      faceNodes[1] = elemNodes[7];
+      faceNodes[2] = elemNodes[11];
+      faceNodes[3] = elemNodes[15];
+      faceNodes[4] = elemNodes[19];
+      faceNodes[5] = elemNodes[23];
+      faceNodes[6] = elemNodes[27];
+      faceNodes[7] = elemNodes[31];
+      faceNodes[8] = elemNodes[35];
+      faceNodes[9] = elemNodes[39];
+      faceNodes[10] = elemNodes[43];
+      faceNodes[11] = elemNodes[47];
+      faceNodes[12] = elemNodes[51];
+      faceNodes[13] = elemNodes[55];
+      faceNodes[14] = elemNodes[59];
+      faceNodes[15] = elemNodes[63];
+      break;
+    }
+    case 4: // the back face
+    {
+      faceNodes[0] = elemNodes[12];
+      faceNodes[1] = elemNodes[13];
+      faceNodes[2] = elemNodes[14];
+      faceNodes[3] = elemNodes[15];
+      faceNodes[4] = elemNodes[28];
+      faceNodes[5] = elemNodes[29];
+      faceNodes[6] = elemNodes[30];
+      faceNodes[7] = elemNodes[31];
+      faceNodes[8] = elemNodes[44];
+      faceNodes[9] = elemNodes[45];
+      faceNodes[10] = elemNodes[46];
+      faceNodes[11] = elemNodes[47];
+      faceNodes[12] = elemNodes[60];
+      faceNodes[13] = elemNodes[61];
+      faceNodes[14] = elemNodes[62];
+      faceNodes[15] = elemNodes[63];
+      break;
+    }
+    case 5: // the right face
+    {
+      faceNodes[0] = elemNodes[48];
+      faceNodes[1] = elemNodes[49];
+      faceNodes[2] = elemNodes[50];
+      faceNodes[3] = elemNodes[51];
+      faceNodes[4] = elemNodes[52];
+      faceNodes[5] = elemNodes[53];
+      faceNodes[6] = elemNodes[54];
+      faceNodes[7] = elemNodes[55];
+      faceNodes[8] = elemNodes[56];
+      faceNodes[9] = elemNodes[57];
+      faceNodes[10] = elemNodes[58];
+      faceNodes[11] = elemNodes[59];
+      faceNodes[12] = elemNodes[60];
+      faceNodes[13] = elemNodes[61];
+      faceNodes[14] = elemNodes[62];
+      faceNodes[15] = elemNodes[63];
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Invalid local face index for element of type O3: " << faceNum );
+    }
+  }
+}
+
 }

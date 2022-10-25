@@ -64,6 +64,10 @@ localIndex getFaceNodes( ElementType const elementType,
                          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elementToNodes,
                          Span< localIndex > const faceNodes );
 
+void getFaceNodesO3 ( localIndex const faceNum,
+                                   arraySlice1d< localIndex const, cells::NODE_MAP_USD-1 > const & elemNodes,
+                                   Span< localIndex > const faceNodes );
+
 /**
  * @brief Find and count ranges of repeated values in an array of sorted arrays and compute offsets.
  * @tparam POLICY execution policy
