@@ -58,7 +58,8 @@ void constitutiveUpdatePassThru( RelativePermeabilityBase & relPerm,
   ConstitutivePassThruHandler< BrooksCoreyRelativePermeability,
                                BrooksCoreyBakerRelativePermeability,
                                TableRelativePermeability,
-                               TableRelativePermeabilityHysteresis,
+                               // nvcc doens't like this on lassen at the moment, causes the compiler to fail due to an invalid memory access
+                               // TableRelativePermeabilityHysteresis,
                                VanGenuchtenBakerRelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
 }
 
