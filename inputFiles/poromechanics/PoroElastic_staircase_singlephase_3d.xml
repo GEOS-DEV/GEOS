@@ -228,7 +228,7 @@
       name="initialSigmaChannel_x"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/channel"
       fieldName="skeletonChannel_stress"
       component="0"
       scale="1e7"/>
@@ -236,7 +236,7 @@
       name="initialSigmaChannel_y"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/channel"
       fieldName="skeletonChannel_stress"
       component="1"
       scale="1e7"/>
@@ -244,7 +244,7 @@
       name="initialSigmaChannel_z"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/channel"
       fieldName="skeletonChannel_stress"
       component="2"
       scale="1e7"/>
@@ -253,7 +253,7 @@
       name="initialSigmaBarrier_x"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/barrier"
       fieldName="skeletonBarrier_stress"
       component="0"
       scale="1e7"/>
@@ -261,7 +261,7 @@
       name="initialSigmaBarrier_y"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/barrier"
       fieldName="skeletonBarrier_stress"
       component="1"
       scale="1e7"/>
@@ -269,7 +269,7 @@
       name="initialSigmaBarrier_z"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/barrier"
       fieldName="skeletonBarrier_stress"
       component="2"
       scale="1e7"/>
