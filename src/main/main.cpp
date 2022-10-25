@@ -34,8 +34,6 @@ int main( int argc, char *argv[] )
 
     std::unique_ptr< CommandLineOptions > commandLineOptions = basicSetup( argc, argv, true );
 
-    GEOSX_LOG_RANK_0( "GEOSX version " << getVersion() );
-
     std::chrono::system_clock::duration initTime;
     std::chrono::system_clock::duration runTime;
     {
