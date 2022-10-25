@@ -314,7 +314,11 @@ if(DEFINED ADIAK_DIR)
                  PATHS ${ADIAK_DIR}
                  NO_DEFAULT_PATH)
 
-    message( " ----> adiak_VERSION=${adiak_VERSION}")
+    extract_version_from_header( name adiak 
+                                 HEADER "${ADIAK_DIR}/include/adiak.h"
+                                 MAJOR_VERSION_STRING "ADIAK_VERSION"
+                                 MINOR_VERSION_STRING "ADIAK_MINOR_VERSION"
+                                 SUBMINOR_VERSION_STRING "ADIAK_POINT_VERSION")
 
                  set_property(TARGET adiak
                  APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
@@ -344,7 +348,11 @@ if(DEFINED CALIPER_DIR)
                  PATHS ${CALIPER_DIR}
                  NO_DEFAULT_PATH)
 
-    message( " ----> caliper_VERSION=${caliper_VERSION}")
+    extract_version_from_header( NAME caliper
+                                 HEADER "${CALIPER_DIR}/include/caliper/caliper-config.h"
+                                 MAJOR_VERSION_STRING "CALIPER_MAJOR_VERSION"
+                                 MINOR_VERSION_STRING "CALIPER_MINOR_VERSION"
+                                 SUBMINOR_VERSION_STRING "CALIPER_PATCH_VERSION")
 
     set_property(TARGET caliper
                  APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES

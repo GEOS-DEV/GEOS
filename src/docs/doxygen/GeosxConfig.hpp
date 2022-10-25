@@ -104,8 +104,8 @@
 #define RAJA_VERSION 2022.3.0
 #define umpire_VERSION 2022.3.0
 /* #undef chai_VERSION */
-/* #undef adiak_VERSION */
-/* #undef caliper_VERSION */
+#define adiak_VERSION ..
+#define caliper_VERSION 2.8.0
 #define METIS_VERSION 5.1.0
 #define PARAMETIS_VERSION 4.0.3
 #define scotch_VERSION 6.0.9
