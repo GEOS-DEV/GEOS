@@ -35,6 +35,7 @@
 #include "fileIO/Outputs/OutputUtilities.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
 
 #include <iostream>
 
@@ -1333,14 +1334,19 @@ static std::vector< int > getSiloNodeOrdering( ElementType const elementType )
     case ElementType::Line:          return { 0, 1 };
     case ElementType::Triangle:      return { 0, 1, 2 };
     case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
-    case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
+    case ElementType::Polygon:       return { }; // TODO
     case ElementType::Tetrahedron:   return { 0, 1, 3, 2 };
     case ElementType::Pyramid:       return { 0, 2, 3, 1, 4 };
     case ElementType::Wedge:         return { 1, 0, 2, 3, 5, 4 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
-    case ElementType::Prism5:        return { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // TODO
-    case ElementType::Prism6:        return { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // TODO
-    case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
+    case ElementType::Prism5:        return { }; // TODO
+    case ElementType::Prism6:        return { }; // TODO
+    case ElementType::Prism7:        return { }; // TODO
+    case ElementType::Prism8:        return { }; // TODO
+    case ElementType::Prism9:        return { }; // TODO
+    case ElementType::Prism10:       return { }; // TODO
+    case ElementType::Prism11:       return { }; // TODO
+    case ElementType::Polyhedron:    return { }; // TODO
   }
   return {};
 }
@@ -1359,6 +1365,11 @@ static int toSiloShapeType( ElementType const elementType )
     case ElementType::Hexahedron:    return DB_ZONETYPE_HEX;
     case ElementType::Prism5:        return DB_ZONETYPE_POLYHEDRON; //TODO
     case ElementType::Prism6:        return DB_ZONETYPE_POLYHEDRON; //TODO
+    case ElementType::Prism7:        return DB_ZONETYPE_POLYHEDRON; //TODO
+    case ElementType::Prism8:        return DB_ZONETYPE_POLYHEDRON; //TODO
+    case ElementType::Prism9:        return DB_ZONETYPE_POLYHEDRON; //TODO
+    case ElementType::Prism10:       return DB_ZONETYPE_POLYHEDRON; //TODO
+    case ElementType::Prism11:       return DB_ZONETYPE_POLYHEDRON; //TODO
     case ElementType::Polyhedron:    return DB_ZONETYPE_POLYHEDRON;
     default:
     {
@@ -1615,9 +1626,10 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
     }
   }
 
-  if( nodeManager.hasWrapper( keys::TotalDisplacement ) )
+  if( nodeManager.hasExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() )
   {
-    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & totalDisplacement = nodeManager.totalDisplacement();
+    extrinsicMeshData::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const & totalDisplacement =
+      nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
     for( localIndex a = 0; a < numNodes; ++a )
     {
       xcoords[a] += totalDisplacement( a, 0 );

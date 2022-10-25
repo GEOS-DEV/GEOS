@@ -60,9 +60,9 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_hasCapPressure( 0 ),
-  m_maxCompFracChange( 1.0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
+
 {
 //START_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
@@ -74,21 +74,42 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use mass formulation instead of molar" );
 
+  this->registerWrapper( viewKeyStruct::solutionChangeScalingFactorString(), &m_solutionChangeScalingFactor ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.5 ).
+    setDescription( "Damping factor for solution change targets" );
+  this->registerWrapper( viewKeyStruct::targetRelativePresChangeString(), &m_targetRelativePresChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.2 ).
+    setDescription( "Target (relative) change in pressure in a time step (expected value between 0 and 1)" );
+  this->registerWrapper( viewKeyStruct::targetRelativeTempChangeString(), &m_targetRelativeTempChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.2 ).
+    setDescription( "Target (relative) change in temperature in a time step (expected value between 0 and 1)" );
+  this->registerWrapper( viewKeyStruct::targetPhaseVolFracChangeString(), &m_targetPhaseVolFracChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.2 ).
+    setDescription( "Target (absolute) change in phase volume fraction in a time step" );
+
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5 ).
-    setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
+    setDescription( "Maximum (absolute) change in a component fraction in a Newton iteration" );
   this->registerWrapper( viewKeyStruct::maxRelativePresChangeString(), &m_maxRelativePresChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5 ).
-    setDescription( "Maximum (relative) change in pressure between two Newton iterations" );
+    setDescription( "Maximum (relative) change in pressure in a Newton iteration (expected value between 0 and 1)" );
   this->registerWrapper( viewKeyStruct::maxRelativeTempChangeString(), &m_maxRelativeTempChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5 ).
-    setDescription( "Maximum (relative) change in temperature between two Newton iterations" );
+    setDescription( "Maximum (relative) change in temperature in a Newton iteration (expected value between 0 and 1)" );
 
   this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString(), &m_allowCompDensChopping ).
     setSizedFromParent( 0 ).
@@ -103,17 +124,29 @@ void CompositionalMultiphaseBase::postProcessInput()
   FlowSolverBase::postProcessInput();
 
   GEOSX_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                         "The maximum absolute change in component fraction must smaller or equal to 1.0" );
-  GEOSX_ERROR_IF_LT_MSG( m_maxCompFracChange, 0.0,
-                         "The maximum absolute change in component fraction must larger or equal to 0.0" );
+                         "The maximum absolute change in component fraction in a Newton iteration must be smaller or equal to 1.0" );
+  GEOSX_ERROR_IF_LE_MSG( m_maxCompFracChange, 0.0,
+                         "The maximum absolute change in component fraction in a Newton iteration must be larger than 0.0" );
   GEOSX_ERROR_IF_GT_MSG( m_maxRelativePresChange, 1.0,
-                         "The maximum relative change in pressure must smaller or equal to 1.0 (i.e., 100% change)" );
-  GEOSX_ERROR_IF_LT_MSG( m_maxRelativePresChange, 0.0,
-                         "The maximum relative change in pressure must larger or equal to 0.0" );
+                         "The maximum relative change in pressure in a Newton iteration must be smaller or equal to 1.0 (i.e., 100% change)" );
+  GEOSX_ERROR_IF_LE_MSG( m_maxRelativePresChange, 0.0,
+                         "The maximum relative change in pressure in a Newton iteration must be larger than 0.0" );
   GEOSX_ERROR_IF_GT_MSG( m_maxRelativeTempChange, 1.0,
-                         "The maximum relative change in temperature must smaller or equal to 1.0 (i.e., 100% change)" );
-  GEOSX_ERROR_IF_LT_MSG( m_maxRelativeTempChange, 0.0,
-                         "The maximum relative change in temperature must larger or equal to 0.0" );
+                         "The maximum relative change in temperature in a Newton iteration must be smaller or equal to 1.0 (i.e., 100% change)" );
+  GEOSX_ERROR_IF_LE_MSG( m_maxRelativeTempChange, 0.0,
+                         "The maximum relative change in temperature in a Newton iteration must be larger than 0.0" );
+
+  GEOSX_ERROR_IF_LE_MSG( m_targetRelativePresChange, 0.0,
+                         "The target relative change in pressure in a time step must be larger than 0.0" );
+  GEOSX_ERROR_IF_LE_MSG( m_targetRelativeTempChange, 0.0,
+                         "The target relative change in temperature in a time step must be larger than to 0.0" );
+  GEOSX_ERROR_IF_LE_MSG( m_targetPhaseVolFracChange, 0.0,
+                         "The target change in phase volume fraction in a time step must be larger than to 0.0" );
+
+  GEOSX_ERROR_IF_LT_MSG( m_solutionChangeScalingFactor, 0.0,
+                         "The solution change scaling factor must be larger or equal to 0.0" );
+  GEOSX_ERROR_IF_GT_MSG( m_solutionChangeScalingFactor, 1.0,
+                         "The solution change scaling factor must be smaller or equal to 1.0" );
 
 }
 
@@ -653,6 +686,14 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     //      - the primary variables
     //      - the fluid constitutive quantities (as they have already been updated)
     // We postpone the other constitutive models for now
+    // In addition, to avoid multiplying permeability/porosity bay netToGross in the assembly kernel, we do it once and for all here
+    arrayView1d< real64 const > const netToGross = subRegion.template getExtrinsicData< extrinsicMeshData::flow::netToGross >();
+    CoupledSolidBase const & porousSolid =
+      getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+    PermeabilityBase const & permeabilityModel =
+      getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
+    permeabilityModel.scaleHorizontalPermeability( netToGross );
+    porousSolid.scaleReferencePorosity( netToGross );
     updatePorosityAndPermeability( subRegion );
     updatePhaseVolumeFraction( subRegion );
 
@@ -685,6 +726,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
     relPermMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac ); // this needs to happen before calling updateRelPermModel
     updateRelPermModel( subRegion );
+    relPermMaterial.saveConvergedState(); // this needs to happen after calling updateRelPermModel
 
     string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
     MultiFluidBase & fluidMaterial = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
@@ -743,7 +785,6 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       solidInternalEnergyMaterial.saveConvergedState();
 
     }
-
   } );
 
   // 5. Save initial pressure (needed by the poromechanics solvers)
@@ -753,7 +794,10 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
   {
     arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
     arrayView1d< real64 > const initPres = subRegion.getExtrinsicData< extrinsicMeshData::flow::initialPressure >();
+    arrayView1d< real64 > const temp = subRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature >();
+    arrayView1d< real64 > const temp_n = subRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature_n >();
     initPres.setValues< parallelDevicePolicy<> >( pres );
+    temp_n.setValues< parallelDevicePolicy<> >( temp ); // to make sure temperature_n has a meaningful value in isothermal simulations
   } );
 }
 
@@ -1307,8 +1351,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       }
 
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< integer const > const ghostRank =
-        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       // Step 3.1: get the values of the source boundary condition that need to be added to the rhs
       // We don't use FieldSpecificationBase::applyConditionToSystem here because we want to account for the row permutation used in the
@@ -1723,6 +1766,90 @@ void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domai
       } );
     } );
   } );
+}
+
+real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & currentDt,
+                                                                 DomainPartition & domain )
+{
+  if( m_targetRelativePresChange >= 1.0 &&
+      m_targetPhaseVolFracChange >= 1.0 &&
+      ( !m_isThermal || m_targetRelativeTempChange >= 1.0 ) )
+  {
+    return LvArray::NumericLimits< real64 >::max;
+  }
+
+  real64 maxRelativePresChange = 0.0;
+  real64 maxRelativeTempChange = 0.0;
+  real64 maxAbsolutePhaseVolFracChange = 0.0;
+
+  real64 const numPhase = m_numPhases;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+      arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      arrayView1d< real64 const > const pres_n = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
+      arrayView1d< real64 const > const temp = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+      arrayView1d< real64 const > const temp_n = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature_n >();
+      arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+      arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction_n >();
+
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPresChange( 0.0 );
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTempChange( 0.0 );
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPhaseVolFracChange( 0.0 );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] < 0 )
+        {
+          subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_n[ei] ) / LvArray::math::max( pres_n[ei], LvArray::NumericLimits< real64 >::epsilon ) );
+          subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_n[ei] ) / LvArray::math::max( temp_n[ei], LvArray::NumericLimits< real64 >::epsilon ) );
+          for( integer ip = 0; ip < numPhase; ++ip )
+          {
+            subRegionMaxPhaseVolFracChange.max( LvArray::math::abs( phaseVolFrac[ei][ip] - phaseVolFrac_n[ei][ip] ) );
+          }
+        }
+      } );
+
+      maxRelativePresChange = LvArray::math::max( maxRelativePresChange, subRegionMaxPresChange.get() );
+      maxRelativeTempChange = LvArray::math::max( maxRelativeTempChange, subRegionMaxTempChange.get() );
+      maxAbsolutePhaseVolFracChange = LvArray::math::max( maxAbsolutePhaseVolFracChange, subRegionMaxPhaseVolFracChange.get() );
+
+    } );
+  } );
+
+  maxRelativePresChange = MpiWrapper::max( maxRelativePresChange );
+  maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
+  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max relative pressure change: "<< 100*maxRelativePresChange << " %" );
+  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max absolute phase volume fraction change: "<< maxAbsolutePhaseVolFracChange );
+
+  if( m_isThermal )
+  {
+    maxRelativeTempChange = MpiWrapper::max( maxRelativeTempChange );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max relative temperature change: "<< 100*maxRelativeTempChange << " %" );
+  }
+
+  real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
+
+  real64 const nextDtPressure = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativePresChange
+                                / std::max( eps, maxRelativePresChange + m_solutionChangeScalingFactor * m_targetRelativePresChange );
+  real64 const nextDtPhaseVolFrac = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetPhaseVolFracChange
+                                    / std::max( eps, maxAbsolutePhaseVolFracChange + m_solutionChangeScalingFactor * m_targetPhaseVolFracChange );
+  real64 const nextDtTemperature = m_isThermal
+    ? currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativeTempChange
+                                   / std::max( eps, maxRelativeTempChange + m_solutionChangeScalingFactor * m_targetRelativeTempChange )
+    : LvArray::NumericLimits< real64 >::max;
+
+  return std::min( std::min( nextDtPressure, nextDtPhaseVolFrac ), nextDtTemperature );
 }
 
 void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition & domain )

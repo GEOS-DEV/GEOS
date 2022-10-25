@@ -43,7 +43,6 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      discretization="FE1"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"      
       rockToughness="3.0e6"
@@ -92,13 +91,6 @@
       endTime="10.0"
       forceDt="1.0"
       target="/Solvers/hydrofracture"/>
-   
-    <PeriodicEvent
-      name="outputs2"
-      beginTime="2.0"
-      timeFrequency="2.0"
-      targetExactTimestep="0"
-      target="/Outputs/siloOutput"/>
 
     <PeriodicEvent 
       name="restarts"

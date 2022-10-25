@@ -9,6 +9,7 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain }"
+      logLevel="1"
       >
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -108,6 +109,7 @@
       <FiniteElementSpace
           name="FE1"
           order="1"
+          useVirtualElements="1"
           />
     </FiniteElements>
   </NumericalMethods>

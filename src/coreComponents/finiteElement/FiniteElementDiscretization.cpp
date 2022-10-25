@@ -43,7 +43,7 @@ FiniteElementDiscretization::FiniteElementDiscretization( string const & name, G
                     "methods of the Hexahedron parent shape would be indicated "
                     "here" );
 
-  registerWrapper( viewKeyStruct::useVemString(), &m_forceVem ).
+  registerWrapper( viewKeyStruct::useVemString(), &m_useVem ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Specifier to indicate whether to force the use of VEM" );
@@ -57,7 +57,7 @@ void FiniteElementDiscretization::postProcessInput()
 {
 //  GEOSX_ERROR_IF_NE_MSG( m_order, 1, "Higher order finite element spaces are currently not supported." );
   GEOSX_ERROR_IF_NE_MSG( m_formulation, "default", "Only standard element formulations are currently supported." );
-  GEOSX_ERROR_IF_GT_MSG( m_forceVem, 1, "The flag useVirtualElements can be either 0 or 1" );
+  GEOSX_ERROR_IF_GT_MSG( m_useVem, 1, "The flag useVirtualElements can be either 0 or 1" );
 }
 
 std::unique_ptr< FiniteElementBase >
@@ -71,7 +71,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       case ElementType::Quadrilateral: return std::make_unique< H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
       case ElementType::Tetrahedron:
       {
-        if( m_forceVem == 1 )
+        if( m_useVem == 1 )
         {
           return std::make_unique< H1_Tetrahedron_VEM_Gauss1 >();
         }
@@ -82,7 +82,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       }
       case ElementType::Pyramid:
       {
-        if( m_forceVem == 1 )
+        if( m_useVem == 1 )
         {
           return std::make_unique< H1_Pyramid_VEM_Gauss1 >();
         }
@@ -93,7 +93,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       }
       case ElementType::Wedge:
       {
-        if( m_forceVem == 1 )
+        if( m_useVem == 1 )
         {
           return std::make_unique< H1_Wedge_VEM_Gauss1 >();
         }
@@ -104,7 +104,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       }
       case ElementType::Hexahedron:
       {
-        if( m_forceVem == 1 )
+        if( m_useVem == 1 )
         {
           return std::make_unique< H1_Hexahedron_VEM_Gauss1 >();
         }
@@ -115,11 +115,45 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       }
       case ElementType::Prism5:
       {
+        GEOSX_ERROR_IF( m_useVem != 1,
+                        "Element type Prism5 available only when using the Virtual Element Method" );
         return std::make_unique< H1_Prism5_VEM_Gauss1 >();
       }
       case ElementType::Prism6:
       {
+        GEOSX_ERROR_IF( m_useVem != 1,
+                        "Element type Prism6 available only when using the Virtual Element Method" );
         return std::make_unique< H1_Prism6_VEM_Gauss1 >();
+      }
+      case ElementType::Prism7:
+      {
+        GEOSX_ERROR_IF( m_useVem != 1,
+                        "Element type Prism7 available only when using the Virtual Element Method" );
+        return std::make_unique< H1_Prism7_VEM_Gauss1 >();
+      }
+      case ElementType::Prism8:
+      {
+        GEOSX_ERROR_IF( m_useVem != 1,
+                        "Element type Prism8 available only when using the Virtual Element Method" );
+        return std::make_unique< H1_Prism8_VEM_Gauss1 >();
+      }
+      case ElementType::Prism9:
+      {
+        GEOSX_ERROR_IF( m_useVem != 1,
+                        "Element type Prism9 available only when using the Virtual Element Method" );
+        return std::make_unique< H1_Prism9_VEM_Gauss1 >();
+      }
+      case ElementType::Prism10:
+      {
+        GEOSX_ERROR_IF( m_useVem != 1,
+                        "Element type Prism10 available only when using the Virtual Element Method" );
+        return std::make_unique< H1_Prism10_VEM_Gauss1 >();
+      }
+      case ElementType::Prism11:
+      {
+        GEOSX_ERROR_IF( m_useVem != 1,
+                        "Element type Prism11 available only when using the Virtual Element Method" );
+        return std::make_unique< H1_Prism11_VEM_Gauss1 >();
       }
       default:
       {
