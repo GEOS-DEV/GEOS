@@ -307,7 +307,6 @@ public:
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
-
     using Deriv = multifluid::DerivativeOffset;
 
     // ***********************************************

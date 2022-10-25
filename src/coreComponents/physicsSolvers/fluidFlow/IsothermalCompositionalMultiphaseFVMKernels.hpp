@@ -98,7 +98,6 @@ public:
    */
   template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void compute( localIndex const ei,
                 FUNC && phaseMobilityKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
@@ -650,8 +649,6 @@ public:
               dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
             }
           }
-<<<<<<< HEAD
-        }
 
           /// compute the TPFA potential difference
           for( integer i = 0; i < numFluxSupportPoints; i++ )
@@ -685,20 +682,13 @@ public:
               }
             }
 
-        real64 v1 = m_pres[er][esr][ei];
-#ifdef GEOSX_CRUSHER_SUPPRESSION
-        GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
-#else
-        v1 -= capPressure;
-#endif
-        presGrad += trans[i] * v1;
-        dPresGrad_dP[i] += trans[i] * (1 - dCapPressure_dP);
-        dPresGrad_dP[i] += stack.dTrans_dPres[0][i] * v1;
-
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          dPresGrad_dC[i][jc] += -trans[i] * dCapPressure_dC[jc];
-        }
+            presGrad += trans[i] * (m_pres[er][esr][ei] - capPressure);
+            dPresGrad_dP[i] += trans[i] * (1 - dCapPressure_dP)
+                               + dTrans_dPres[i] * (m_pres[er][esr][ei] - capPressure);
+            for( integer jc = 0; jc < numComp; ++jc )
+            {
+              dPresGrad_dC[i][jc] += -trans[i] * dCapPressure_dC[jc];
+            }
 
             real64 const gravD     = trans[i] * m_gravCoef[er][esr][ei];
             real64 const dGravD_dP = dTrans_dPres[i] * m_gravCoef[er][esr][ei];
@@ -894,16 +884,17 @@ public:
    * @param[inout] kernelComponent the kernel component providing access to setup/compute/complete functions and stack variables
    */
   template< typename POLICY, typename KERNEL_TYPE >
-  static
-  void
+  static void
   launch( localIndex const numConnections,
           KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
+
     forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
                                                   kernelComponent.numPointsInFlux( iconn ) );
+
       kernelComponent.setup( iconn, stack );
       kernelComponent.computeFlux( iconn, stack );
       kernelComponent.complete( iconn, stack );
