@@ -77,7 +77,6 @@
 /// Macro defined when PETSc interface is selected
 #cmakedefine GEOSX_LA_INTERFACE_PETSC
 
-
 /// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
 #cmakedefine FORTRAN_MANGLE_NO_UNDERSCORE
 
@@ -98,6 +97,25 @@
 
 /// An integer flag representing the type that globalIndex will be aliased to.
 #define GEOSX_GLOBALINDEX_TYPE_FLAG @GEOSX_GLOBALINDEX_TYPE_FLAG@
+
+#cmakedefine HDF5_VERSION @HDF5_VERSION@
+#cmakedefine Conduit_VERSION @Conduit_VERSION@
+#cmakedefine pugixml_VERSION @pugixml_VERSION@
+#cmakedefine RAJA_VERSION @RAJA_VERSION@
+#cmakedefine umpire_VERSION @umpire_VERSION@
+#cmakedefine chai_VERSION @chai_VERSION@
+#cmakedefine adiak_VERSION @adiak_VERSION@
+#cmakedefine caliper_VERSION @caliper_VERSION@
+#cmakedefine METIS_VERSION @METIS_VERSION@
+#cmakedefine PARAMETIS_VERSION @PARAMETIS_VERSION@
+#cmakedefine scotch_VERSION @scotch_VERSION@
+#cmakedefine superlu_dist_VERSION @superlu_dist_VERSION@
+#cmakedefine suitesparse_VERSION @suitesparse_VERSION@
+#cmakedefine VTK_VERSION @VTK_VERSION@
+#cmakedefine fmt_VERSION @fmt_VERSION@
+#cmakedefine Python3_VERSION @Python3_VERSION@
+#cmakedefine CUDAToolkit_VERSION @CUDAToolkit_VERSION@
+
 
 #endif  /* GEOSX_CONFIG_HPP */
 

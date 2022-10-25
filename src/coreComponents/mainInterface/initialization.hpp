@@ -44,16 +44,7 @@ std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool 
  */
 void basicCleanup();
 
-/**
- * @brief Get GEOSX version.
- * @return The full version string.
- */
-string getVersion();
 
-/**
- * @brief output version info for dependencies to log
- */
-void outputVersionInfo();
 
 } // namespace geosx
 
