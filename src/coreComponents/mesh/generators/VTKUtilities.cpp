@@ -29,7 +29,13 @@
 #include <vtkBoundingBox.h>
 #include <vtkDataArray.h>
 #include <vtkRedistributeDataSetFilter.h>
+
+#include <vtkStructuredPoints.h>
+#include <vtkStructuredPointsReader.h>
+#include <vtkStructuredGridReader.h>
 #include <vtkUnstructuredGridReader.h>
+#include <vtkRectilinearGridReader.h>
+
 #include <vtkXMLPUnstructuredGridReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
 //
@@ -196,55 +202,38 @@ vtkSmartPointer< vtkMultiProcessController > getController()
   return controller;
 }
 
-VTKMeshExtension stringToVTKMeshExtension( const string & extension )
+VTKLegacyDatasetType getVTKLegacyDatasetType( vtkSmartPointer< vtkDataSetReader > const vtkGridReader,
+                                              Path const & filePath )
 {
-  if( extension == "vtk" )
+  vtkGridReader->SetFileName( filePath.c_str() );
+
+  if( vtkGridReader->IsFileStructuredPoints() )
   {
-    return VTKMeshExtension::vtk;
+    return VTKLegacyDatasetType::structuredPoints;
   }
-  else if( extension == "vtu" )
+  else if( vtkGridReader->IsFileStructuredGrid() )
   {
-    return VTKMeshExtension::vtu;
+    return VTKLegacyDatasetType::structuredGrid;
   }
-  else if( extension == "vtr" )
+  else if( vtkGridReader->IsFileUnstructuredGrid() )
   {
-    return VTKMeshExtension::vtr;
+    return VTKLegacyDatasetType::unstructuredGrid;
   }
-  else if( extension == "vts" )
+  else if( vtkGridReader->IsFileRectilinearGrid() )
   {
-    return VTKMeshExtension::vts;
-  }
-  else if( extension == "vti" )
-  {
-    return VTKMeshExtension::vti;
-  }
-  else if( extension == "pvtu" )
-  {
-    return VTKMeshExtension::pvtu;
-  }
-  else if( extension == "pvtr" )
-  {
-    return VTKMeshExtension::pvtr;
-  }
-  else if( extension == "pvts" )
-  {
-    return VTKMeshExtension::pvts;
-  }
-  else if( extension == "pvti" )
-  {
-    return VTKMeshExtension::pvti;
+    return VTKLegacyDatasetType::rectilinearGrid;
   }
   else
   {
-    return VTKMeshExtension::invalid;
+    GEOSX_ERROR( "Unsupported legacy VTK dataset format" );
   }
+  return {};
 }
 
 vtkSmartPointer< vtkDataSet >
 loadMesh( Path const & filePath )
 {
   string const extension = filePath.extension();
-  vtkSmartPointer< vtkDataSet > loadedMesh;
 
   auto const parallelRead = [&]( auto const vtkGridReader )
   {
@@ -256,79 +245,48 @@ loadMesh( Path const & filePath )
 
   auto const serialRead = [&]( auto const vtkGridReader )
   {
-    vtkGridReader->SetFileName( filePath.c_str() );
-    vtkGridReader->Update();
-    return vtkGridReader->GetOutput();
+    using GridType = TYPEOFPTR( vtkGridReader->GetOutput() );
+    if( MpiWrapper::commRank() == 0 )
+    {
+      vtkGridReader->SetFileName( filePath.c_str() );
+      vtkGridReader->Update();
+      return vtkSmartPointer< GridType >( vtkGridReader->GetOutput() );
+    }
+    else
+    {
+      return vtkSmartPointer< GridType >::New();
+    }
   };
 
-  switch( stringToVTKMeshExtension( extension ) )
+  switch( EnumStrings< VTKMeshExtension >::fromString( extension ) )
   {
     case VTKMeshExtension::vtk:
     {
-      loadedMesh = MpiWrapper::commRank() == 0
-                 ? serialRead( vtkSmartPointer< vtkDataSetReader >::New() )
-                 : vtkSmartPointer< vtkUnstructuredGrid >::New().GetPointer();
-      //if( MpiWrapper::commRank() == 0 )
-      //{
-      //  loadedMesh = serialRead( vtkSmartPointer< vtkDataSetReader >::New() );
-      //}
-      //else
-      //{
-      //  loadedMesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
-      //}
-      break;
+      VTKLegacyDatasetType const datasetType = getVTKLegacyDatasetType( vtkSmartPointer< vtkDataSetReader >::New(),
+                                                                        filePath );
+      switch( datasetType )
+      {
+        case VTKLegacyDatasetType::structuredPoints: return serialRead( vtkSmartPointer< vtkStructuredPointsReader >::New() );
+        case VTKLegacyDatasetType::structuredGrid:   return serialRead( vtkSmartPointer< vtkStructuredGridReader >::New() );
+        case VTKLegacyDatasetType::unstructuredGrid: return serialRead( vtkSmartPointer< vtkUnstructuredGridReader >::New() );
+        case VTKLegacyDatasetType::rectilinearGrid:  return serialRead( vtkSmartPointer< vtkRectilinearGridReader >::New() );
+      }
+
     }
-    case VTKMeshExtension::vtu:
-    {
-      loadedMesh = MpiWrapper::commRank() == 0
-                 ? serialRead( vtkSmartPointer< vtkXMLUnstructuredGridReader >::New() )
-                 : vtkSmartPointer< vtkUnstructuredGrid >::New().GetPointer();
-      break;
-    }
-    case VTKMeshExtension::vtr:
-    {
-      loadedMesh = MpiWrapper::commRank() == 0
-                 ? serialRead( vtkSmartPointer< vtkXMLRectilinearGridReader >::New() )
-                 : vtkSmartPointer< vtkRectilinearGrid >::New().GetPointer();
-      break;
-    }
-    case VTKMeshExtension::vts:
-    {
-      loadedMesh = MpiWrapper::commRank() == 0
-                 ? serialRead( vtkSmartPointer< vtkXMLStructuredGridReader >::New() )
-                 : vtkSmartPointer< vtkStructuredGrid >::New().GetPointer();
-      break;
-    }
-    case VTKMeshExtension::vti:
-    {
-      loadedMesh = MpiWrapper::commRank() == 0
-                 ? serialRead( vtkSmartPointer< vtkXMLImageDataReader >::New() )
-                 : vtkSmartPointer< vtkImageData >::New().GetPointer();
-      break;
-    }
+    case VTKMeshExtension::vtu: return serialRead( vtkSmartPointer< vtkXMLUnstructuredGridReader >::New() );
+    case VTKMeshExtension::vtr: return serialRead( vtkSmartPointer< vtkXMLRectilinearGridReader >::New() );
+    case VTKMeshExtension::vts: return serialRead( vtkSmartPointer< vtkXMLStructuredGridReader >::New() );
+    case VTKMeshExtension::vti: return serialRead( vtkSmartPointer< vtkXMLImageDataReader >::New() );
     case VTKMeshExtension::pvtu:
     {
-      loadedMesh = parallelRead( vtkSmartPointer< vtkXMLPUnstructuredGridReader >::New() );
+      return parallelRead( vtkSmartPointer< vtkXMLPUnstructuredGridReader >::New() );
       // TODO: Apply vtkStaticCleanUnstructuredGrid, once it is included in the next VTK release.
       //       https://gitlab.kitware.com/vtk/vtk/-/blob/master/Filters/Core/vtkStaticCleanUnstructuredGrid.h
       //       This removes duplicate points, either present in the dataset, or resulting from merging pieces.
-      break;
     }
-    case VTKMeshExtension::pvts:
-    {
-      loadedMesh = parallelRead( vtkSmartPointer< vtkXMLPStructuredGridReader >::New() );
-      break;
-    }
-    case VTKMeshExtension::pvtr:
-    {
-      loadedMesh = parallelRead( vtkSmartPointer< vtkXMLPRectilinearGridReader >::New() );
-      break;
-    }
-    case VTKMeshExtension::pvti:
-    {
-      loadedMesh = parallelRead( vtkSmartPointer< vtkXMLPImageDataReader >::New() );
-      break;
-    }
+    case VTKMeshExtension::pvts: return parallelRead( vtkSmartPointer< vtkXMLPStructuredGridReader >::New() );
+    case VTKMeshExtension::pvtr: return parallelRead( vtkSmartPointer< vtkXMLPRectilinearGridReader >::New() );
+    case VTKMeshExtension::pvti: return parallelRead( vtkSmartPointer< vtkXMLPImageDataReader >::New() );
     default:
     {
       GEOSX_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vtr, .vts, .vti, .pvtu, .pvtr, .pvts or .ptvi." );
@@ -336,7 +294,7 @@ loadMesh( Path const & filePath )
     }
   }
 
-  return loadedMesh;
+  return {};
 }
 
 vtkSmartPointer< vtkCellArray > GetCellArray( vtkDataSet & mesh )

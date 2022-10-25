@@ -68,21 +68,19 @@ ENUM_STRINGS( PartitionMethod,
  */
 enum class VTKMeshExtension : integer
 {
-  invalid, ///< ...
-  vtk,     ///< Legacy vtk
-  vtu,     ///< ...
-  vtr,     ///< ...
-  vts,     ///< ...
-  vti,     ///< ...
-  pvtu,    ///< ...
-  pvtr,    ///< ...
-  pvts,    ///< ...
-  pvti,    ///< ...
+  vtk,  ///< Legacy serial format
+  vtu,  ///< XML serial vtkUnstructuredGrid (unstructured)
+  vtr,  ///< XML serial vtkRectilinearGrid (structured)
+  vts,  ///< XML serial vtkStructuredGrid (structured)
+  vti,  ///< XML serial vtkImageData (structured)
+  pvtu, ///< XML parallel vtkUnstructuredGrid (unstructured)
+  pvtr, ///< XML parallel vtkRectilinearGrid (structured)
+  pvts, ///< XML parallel vtkStructuredGrid (structured)
+  pvti, ///< XML parallel vtkImageData (structured)
 };
 
-/// Strings for VTKMeshGenerator::PartitionMethod enumeration
+/// Strings for VTKMeshGenerator::VTKMeshExtension enumeration
 ENUM_STRINGS( VTKMeshExtension,
-              "invalid",
               "vtk",
               "vtu",
               "vtr",
@@ -92,6 +90,24 @@ ENUM_STRINGS( VTKMeshExtension,
               "pvtr",
               "pvts",
               "pvti" );
+
+/**
+ * @brief Supported VTK legacy dataset types
+ */
+enum class VTKLegacyDatasetType : integer
+{
+  structuredPoints, ///< Structured points (structured)
+  structuredGrid,   ///< Structured grid (structured)
+  unstructuredGrid, ///< Unstructured grid (unstructured)
+  rectilinearGrid,  ///< Rectilinear grid (structured)
+};
+
+/// Strings for VTKMeshGenerator::VTKLegacyDatasetType enumeration
+ENUM_STRINGS( VTKLegacyDatasetType,
+              "structuredPoints",
+              "structuredGrid",
+              "unstructuredGrid",
+              "rectilinearGrid" );
 
 /**
  * @brief Type of map used to store cell lists.
@@ -281,23 +297,6 @@ std::vector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const ce
  */
 CellMapType buildCellMap( vtkDataSet & mesh,
                           string const & attributeName );
-
-/////**
-//// * @brief Get the Geosx To Vtk Node Ordering object of a type of element
-//// *
-//// * @param[in] elemType the type of the element
-//// * @return an array of the vtk node ordering
-//// */
-////std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType );
-////
-/////**
-//// * @brief Get the Geosx To Vtk Node Ordering object of a type of element
-//// *
-//// * @param[in] elemType the type of the element
-//// * @param cell
-//// * @return an array of the vtk node ordering
-//// */
-////std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType, vtkCell *cell );
 
 /**
  * @brief Get the Vtk to Geosx Node Ordering object of a type of element
