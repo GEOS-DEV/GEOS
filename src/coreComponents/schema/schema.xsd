@@ -2195,11 +2195,25 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => (no description available)-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--stabilizationMultiplier => Constant multiplier of stabilization strength.-->
+		<xsd:attribute name="stabilizationMultiplier" type="real64" default="1" />
+		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
+		<xsd:attribute name="stabilizationRegionNames" type="string_array" default="{}" />
+		<!--stabilizationType => Stabilization type. Options are:
+None - Add no stabilization to mass equation,
+Global - Add stabilization to all faces,
+Local - Add stabilization only to interiors of macro elements.-->
+		<xsd:attribute name="stabilizationType" type="geosx_MultiphasePoromechanicsSolver_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_MultiphasePoromechanicsSolver_StabilizationType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|None|Global|Local" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="MultiphasePoromechanicsReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
