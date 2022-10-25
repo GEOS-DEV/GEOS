@@ -96,9 +96,9 @@ setup( localIndex const k,
   // (this is a no-operation with FEM classes)
   real64 const stabilizationScaling = computeStabilizationScaling( k );
   m_finiteElementSpace.template addGradGradStabilizationMatrix
-    < FE_TYPE, numDofPerTrialSupportPoint, false >( stack.feStack,
-                                                   stack.localJacobian,
-                                                   -stabilizationScaling );
+  < FE_TYPE, numDofPerTrialSupportPoint, false >( stack.feStack,
+                                                  stack.localJacobian,
+                                                  -stabilizationScaling );
 }
 
 template< typename SUBREGION_TYPE,
@@ -144,11 +144,11 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
                                    reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
   real64 const stabilizationScaling = computeStabilizationScaling( k );
   m_finiteElementSpace.template
-    addEvaluatedGradGradStabilizationVector< FE_TYPE,
-                                             numDofPerTrialSupportPoint >( stack.feStack,
-                                                                           stack.uhat_local,
-                                                                           reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
-                                                                           -stabilizationScaling );
+  addEvaluatedGradGradStabilizationVector< FE_TYPE,
+                                           numDofPerTrialSupportPoint >( stack.feStack,
+                                                                         stack.uhat_local,
+                                                                         reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
+                                                                         -stabilizationScaling );
   stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
 }
 
