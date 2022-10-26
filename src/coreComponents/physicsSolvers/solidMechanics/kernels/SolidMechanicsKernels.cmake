@@ -29,10 +29,6 @@ set( solidBaseDispatch DamageSpectral<ElasticIsotropic>
                        ElasticOrthotropic )
 
 set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
-                           Q1_Hexahedron_Lagrange_GaussLobatto
-                           Q2_Hexahedron_Lagrange_GaussLobatto
-                           Q3_Hexahedron_Lagrange_GaussLobatto
-                           Q5_Hexahedron_Lagrange_GaussLobatto
                            H1_Wedge_Lagrange1_Gauss6
                            H1_Tetrahedron_Lagrange1_Gauss1
                            H1_Pyramid_Lagrange1_Gauss5
