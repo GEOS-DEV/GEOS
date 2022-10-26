@@ -75,7 +75,7 @@ fi
 # "Make" target check (builds geosx executable target only if true)
 # Use one process to prevent out-of-memory error
 if [[ "$*" == *--build-exe-only* ]]; then
-  or_die make -j $(nproc) geosx
+  or_die make -j 2 geosx
 else
   or_die make -j $(nproc) geosx
   make -j $(nproc)
