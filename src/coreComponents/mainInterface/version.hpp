@@ -32,15 +32,15 @@ void outputVersionInfo();
 
 /**
  * @brief Get a ID and version of the c++ compiler
- * 
- * @return A string containing the c++ compiler ID and version 
+ *
+ * @return A string containing the c++ compiler ID and version
  */
 string getCppCompilerIdString();
 
 /**
  * @brief Get the Gpu Compiler type and version
- * 
- * @return A string containing the GPU compiler ID and version  
+ *
+ * @return A string containing the GPU compiler ID and version
  */
 string getGpuCompilerIdString();
 
