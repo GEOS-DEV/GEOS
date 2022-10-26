@@ -8,120 +8,71 @@ namespace geosx
 namespace constitutive
 {
 
-//Declare enumeration
-enum degradationTypes { QUADRATIC = "Quadratic", QUASIQUADRATIC = "QuasiQuadratic"};  
-
-//Template class declaration
-template< degradationTypes D >
 class DegradationFunction
-{};
-// template< char const *DEGRADATION_TYPE >
-// class DegradationFunction
-// {};
-
-//Standard quadratic degradation functions
-template<>
-class DegradationFunction<QUADRATIC>
 {
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  static real64 getValue( real64 const d, real64 const eps, std::vector<real64> const paramValues ) const
-  {
-//    if( m_extDrivingForceFlag )
-//    {
-      //pf = fmax( fmin( 1.0, m_damage( k, q )), 0.0 );
-//    }
-    GEOSX_UNUSED_VAR( paramValues );
-    return ((1 - eps)*(1 - d)*(1 - d) + eps);
-  }
-
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  static real64 getDerivative( real64 const d, real64 const eps, std::vector<real64> const paramValues ) const
-  {
-    GEOSX_UNUSED_VAR( paramValues );
-    return -2.0*(1-eps)*(1 - d);
-  }
-
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  static real64 getSecondDerivative( real64 const d, real64 const eps, std::vector<real64> const paramValues ) const
-  {
-    GEOSX_UNUSED_VAR( paramValues );
-    GEOSX_UNUSED_VAR( d );
-    return 2.0*(1-eps);
-  }
-
-  ///accessor for list of material parameters needed for this degradation function  
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  static std::vector<string> getParameterList()
-  {
-    return parameterList;
-  }  
-  
-  private:
-  std::vector<string> parameterList = {}; //no parameters needed for quadratic degradation function  
-
-};
-
-template<>
-class DegradationFunction<QUASIQUADRATIC>
-{
+  public:
   //Lorentz type degradation (cohesive fracture)
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  static real64 getValue( real64 const d, real64 const eps, std::vector<real64> const paramValues ) const
+  static real64 getValue( real64 const d, real64 const eps, real64 const ell, real64 const gc, real64 const psic, localIndex const degOption ) 
   {
-    GEOSX_UNUSED_VAR( eps );
-    real64 const ell = paramValues[0]; 
-    real64 const gc = paramValues[1];
-    real64 const psic = paramValues[2];
-    real64 m = 3*gc/(8*ell*psic);
-    real64 p = 1;
-    return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
+    real64 gd;
+    if(degOption == 0)//quadratic degradation
+    {
+      gd = pow( 1-d, 2 );
+    }
+    if(degOption == 1)//quasi-quadratic (cohesive) degradation
+    {
+      //these operation could be moved to damage.hpp, and that would reduce the number of params passed here, however, that would make
+      //us do these extra operations even in the quadratic degradation case.
+      real64 const m = 3*gc/(8*ell*psic);
+      real64 const p = 1;
+      gd = pow( 1-d, 2 ) /( pow( 1-d, 2 ) + m * d * (1 + p*d) );   
+    }
+    return (1-eps)*gd + eps;
   }
 
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  static real64 getDerivative( real64 const d, real64 const eps, std::vector<real64> const paramValues ) const
+  static real64 getDerivative( real64 const d, real64 const eps, real64 const ell, real64 const gc, real64 const psic, localIndex const degOption ) 
   {
-    GEOSX_UNUSED_VAR( eps );
-    real64 const ell = paramValues[0]; 
-    real64 const gc = paramValues[1];
-    real64 const psic = paramValues[2];
-    real64 m = 3*gc/(8*ell*psic);
-    real64 p = 1;
-    return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
+    real64 gdprime;
+    if(degOption == 0)//quadratic degradation
+    {
+      gdprime = -2.0*(1 - d);
+    }
+    if(degOption == 1)//quasi-quadratic (cohesive) degradation
+    {
+      //these operation could be moved to damage.hpp, and that would reduce the number of params passed here, however, that would make
+      //us do these extra operations even in the quadratic degradation case.
+      real64 const m = 3*gc/(8*ell*psic);
+      real64 const p = 1;
+      gdprime = -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
+    }
+    return (1-eps)*gdprime;
   }
 
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  virtual real64 getSecondDerivative( real64 const d, std::vector<real64> const paramValues ) const override
+  static real64 getSecondDerivative( real64 const d, real64 const eps, real64 const ell, real64 const gc, real64 const psic, localIndex const degOption ) 
   {
-    GEOSX_UNUSED_VAR( eps );
-    real64 const ell = paramValues[0]; 
-    real64 const gc = paramValues[1];
-    real64 const psic = paramValues[2];
-    real64 m = 3*gc/(8*ell*psic);
-    real64 p = 1;
-    return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
+    real64 gdprimeprime;
+    if(degOption == 0)//quadratic degradation
+    {
+      gdprimeprime = 2.0;
+    }
+    if(degOption == 1)//quasi-quadratic (cohesive) degradation
+    {
+      //these operation could be moved to damage.hpp, and that would reduce the number of params passed here, however, that would make
+      //us do these extra operations even in the quadratic degradation case.
+      real64 const m = 3*gc/(8*ell*psic);
+      real64 const p = 1;
+      gdprimeprime = -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
+    }
+    return (1-eps)*gdprimeprime;
   }
-
-  ///accessor for list of material parameters needed for this degradation function  
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  static std::vector<string> getParameterList()
-  {
-    return parameterList;
-  }  
-  
-  private:
-  std::vector<string> parameterList = {"lengthScale","criticalFractureEnergy","criticalStrainEnergy"}; //parameters used when computing g(d)  
 
 };
 

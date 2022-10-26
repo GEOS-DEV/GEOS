@@ -8,36 +8,57 @@ namespace geosx
 namespace constitutive
 {
 
-//Template class declaration
-template< char const *INDICATOR_TYPE >
 class PressureFunction
-{};
-
-//Standard linear indicator function
-template<>
-class PressureFunction<"Linear">
 {
+  public:
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  static real64 getValue( real64 const d) const
+  static real64 getValue( real64 const d, localIndex const indOption) 
   {
-    return d;
+    real64 md;
+    if(indOption == 0)//linear indicator
+    {
+      md = d;
+    }
+    if(indOption == 1)//cosine indicator
+    {
+      md = cos(M_PI*d);
+    }
+    return md;
   }
 
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  static real64 getDerivative( real64 const d ) const
+  static real64 getDerivative( real64 const d, localIndex const indOption ) 
   {
-    return 1.0;
+    real64 mdprime;
+    if(indOption == 0)//linear indicator
+    {
+      mdprime = 1.0;
+    }
+    if(indOption == 1)//cosine indicator
+    {
+      mdprime = sin(M_PI*d);
+    }
+    return mdprime;
   }
 
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  static real64 getSecondDerivative( real64 const d ) const
+  static real64 getSecondDerivative( real64 const d, localIndex const indOption ) 
   {
-    return 0.0;
+    real64 mdprimeprime;
+    if(indOption == 0)//linear indicator
+    {
+      mdprimeprime = 0.0;
+    }
+    if(indOption == 1)//cosine indicator
+    {
+      mdprimeprime = -cos(M_PI*d);
+    }
+    return mdprimeprime;
   }
 
 };

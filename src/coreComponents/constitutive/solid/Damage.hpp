@@ -43,6 +43,7 @@
 #define GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 
 #include "constitutive/solid/SolidBase.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
 #include "constitutive/solid/damage/DegradationFunction.hpp"
 #include "constitutive/solid/damage/Decomposition.hpp"
 #include "constitutive/solid/damage/PressureFunction.hpp"
@@ -95,6 +96,12 @@ public:
     m_strainEnergyDensity( inputStrainEnergyDensity ),
     m_volStrain( inputVolumetricStrain ),
     m_extDrivingForce ( inputExtDrivingForce ),
+    m_validDegradations({"Quadratic","QuasiQuadratic"}),
+    m_validDecompositions({"None","VolDev","Spectral"}),
+    m_validPressureIndicators({"Linear","Cosine"}),
+    m_degradationOption(-1),
+    m_decompositionOption(-1),
+    m_pressureIndicatorOption(-1),
     m_degradationFunction( inputDegradationFunction ),
     m_decomposition( inputDecomposition ),
     m_pressureIndicatorFunction( inputPressureIndicatorFunction ),
@@ -107,9 +114,49 @@ public:
     m_compressStrength( inputCompressStrength ),
     m_deltaCoefficient( inputDeltaCoefficient ),
     m_biotCoefficient( inputBiotCoefficient )
-  {}
+  {
+    //set degradation function option
+    for (size_t i = 0; i < m_validDegradations.size(); i++) 
+    {
+      if(m_validDegradations[i]==m_degradationFunction)
+      {
+        m_degradationOption = i;
+      }
+    }
+    if(m_degradationOption==-1)
+    {
+      GEOSX_ERROR("In Damage.hpp: "<<m_degradationFunction<<" is not a valid degradation function type.");
+    }
+    //set decomposition option
+    for (size_t i = 0; i < m_validDecompositions.size(); i++) 
+    {
+      if(m_validDecompositions[i]==m_decomposition)
+      {
+        m_decompositionOption= i;
+      }
+    }
+    if(m_decompositionOption==-1)
+    {
+      GEOSX_ERROR("In Damage.hpp: "<<m_decomposition<<" is not a valid strain decomposition.");
+    }
+    //set pressure indicator option
+    for (size_t i = 0; i < m_validPressureIndicators.size(); i++) 
+    {
+      if(m_validPressureIndicators[i]==m_pressureIndicatorFunction)
+      {
+        m_pressureIndicatorOption = i;
+      }
+    }
+    if(m_pressureIndicatorOption==-1)
+    {
+      GEOSX_ERROR("In Damage.hpp: "<<m_pressureIndicatorFunction<<" is not a valid pressure indicator function.");
+    }
+    
+  }
 
-  using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps;
+  //using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps;
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // could maybe optimize, but general for now
+
 
   using UPDATE_BASE::smallStrainNoStateUpdate;
   using UPDATE_BASE::smallStrainUpdate;
@@ -123,6 +170,9 @@ public:
 
   using UPDATE_BASE::m_disableInelasticity;
 
+  using UPDATE_BASE::m_bulkModulus;  // TODO: model below strongly assumes iso elasticity, templating not so useful
+  using UPDATE_BASE::m_shearModulus;
+
   //Degradation function and its derivatives
 
   GEOSX_FORCE_INLINE
@@ -130,30 +180,30 @@ public:
   virtual real64 getDegradationValue( localIndex const k,
                                       localIndex const q ) const
   {
-    //this construction of paramValues is very inneficient
-    std::vector<string> paramNames = DegradationFunction<m_degradationFunction>::getParameterList();
-    std::vector<real64> paramValues;
-    for(string name:paramNames)
+    //this part enforces damage bounds for the nucleation model
+    //if everything is correct, it can be applied without the nucleation model as well
+    //however, it could hide some bugs that would be detected by seeing negative damage
+    real64 pf;
+    if( m_extDrivingForceFlag )
     {
-        paramValues.push_back(getParamByName(name));
+      pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
     }
+    else
+    {
+      pf = m_newDamage( k,q );
+    }
+
     real64 eps = 0.0;//residual stiffness
-    return DegradationFunction<m_degradationFunction>::getValue( m_newDamage( k, q ), eps, paramValues );
+    return DegradationFunction::getValue( pf, eps, m_lengthScale, m_criticalFractureEnergy, m_criticalStrainEnergy, m_degradationOption );
   }
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationDerivative( real64 const d ) const
   {
-    //this construction of paramValues is very inneficient
-    std::vector<string> paramNames = DegradationFunction<m_degradationFunction>::getParameterList();
-    std::vector<real64> paramValues;
-    for(string name:paramNames)
-    {
-        paramValues.push_back(getParamByName(name));
-    }
+
     real64 eps = 0.0;//residual stiffness
-    return DegradationFunction<m_degradationFunction>::getDerivative( d, eps, paramValues );
+    return DegradationFunction::getDerivative( d, eps, m_lengthScale, m_criticalFractureEnergy, m_criticalStrainEnergy, m_degradationOption );
   }
 
   GEOSX_FORCE_INLINE
@@ -161,15 +211,8 @@ public:
   virtual real64 getDegradationSecondDerivative( real64 const d ) const
   //virtual real64 getDegradationSecondDerivative( real64 const GEOSX_UNUSED_PARAM(d) ) const
   {
-    //this construction of paramValues is very inneficient
-    std::vector<string> paramNames = DegradationFunction<m_degradationFunction>::getParameterList();
-    std::vector<real64> paramValues;
-    for(string name:paramNames)
-    {
-        paramValues.push_back(getParamByName(name));
-    }
     real64 eps = 0.0;//residual stiffness
-    return DegradationFunction<m_degradationFunction>::getSecondDerivative( d, eps, paramValues );
+    return DegradationFunction::getSecondDerivative( d, eps, m_lengthScale, m_criticalFractureEnergy, m_criticalStrainEnergy, m_degradationOption );
   }
 
   //End degradation functions
@@ -180,21 +223,21 @@ public:
   virtual real64 pressureDamageFunction( localIndex const k,
                                          localIndex const q ) const
   {
-    return PressureFunction<m_pressureIndicatorFunction>::getValue( m_newDamage( k, q ) );
+    return PressureFunction::getValue( m_newDamage( k, q ), m_pressureIndicatorOption );
   }
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 pressureDamageFunctionDerivative( real64 const d ) const
   {
-    return PressureFunction<m_pressureIndicatorFunction>::getDerivative( d );
+    return PressureFunction::getDerivative( d, m_pressureIndicatorOption );
   }
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 pressureDamageFunctionSecondDerivative( real64 const d ) const
   {
-    return PressureFunction<m_pressureIndicatorFunction>::getSecondDerivative( d );
+    return PressureFunction::getSecondDerivative( d, m_pressureIndicatorOption );
   }
   //End pressure indicator function 
 
@@ -205,22 +248,30 @@ public:
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( & stress )[6],
-                                  DiscretizationOps & stiffness ) const override
+                                  DiscretizationOps & stiffness ) const final
 
   {
 
     //perform undamaged update
-    UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+    UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
     if( m_disableInelasticity )
     {
       return;
     }
     real64 strain[6] = {0};
     UPDATE_BASE::getElasticStrain( k, q, strain );
-    m_volStrain( k, q ) =  strain[0] + strain[1] + strain[2];
-
+    //GEOSX_LOG_RANK_0(k);
+    //GEOSX_LOG_RANK_0(q);
+    real64 traceOfStrain = strain[0] + strain[1] + strain[2];
+    //GEOSX_LOG_RANK_0( "m_volStrain: "<<m_volStrain( k, q ));
+    //m_volStrain( k, q ) = traceOfStrain;
+    //m_volStrain( k, q ) =  strain[0] + strain[1] + strain[2];
+    //GEOSX_LOG_RANK_0("After m_volStrain");
     //get degradation value
     real64 factor = getDegradationValue( k, q );
+    real64 const mu = m_shearModulus[k];
+    real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], mu );
+    real64 const kappa = m_bulkModulus[k];        
 
     //compute c_e for nucleation model using intact stress and stiffness
     if( m_extDrivingForceFlag )
@@ -233,9 +284,6 @@ public:
                                          stressP,
                                          stressQ,
                                          deviator );
-
-      real64 const mu    = stiffness.m_shearModulus;
-      real64 const kappa = stiffness.m_bulkModulus;
 
       // compute invariants of degraded stress
       real64 I1 = factor * stressP * 3.;
@@ -260,7 +308,8 @@ public:
     real64 sed; //placehold for strain energy density
     //use template class to get decomposition
     //this will compute the damage stresses and stiffness at the current k,q, and also update sed
-    Decomposition<m_decomposition>::stressCalculator(strain, factor, stress, stiffness.m_c, &sed);
+
+    Decomposition::stressCalculator(strain, factor, stress, stiffness.m_c, mu, lambda, sed, m_decompositionOption);
 
     //this enforces the history approach
     if( sed > m_strainEnergyDensity( k, q ) )
@@ -380,6 +429,12 @@ public:
   arrayView2d< real64 > const m_strainEnergyDensity;
   arrayView2d< real64 > const m_volStrain;
   arrayView2d< real64 > const m_extDrivingForce;
+  std::vector<std::string> m_validDegradations;
+  std::vector<std::string> m_validDecompositions;
+  std::vector<std::string> m_validPressureIndicators;
+  localIndex m_degradationOption;
+  localIndex m_decompositionOption;
+  localIndex m_pressureIndicatorOption;
   string const m_degradationFunction;
   string const m_decomposition;
   string const m_pressureIndicatorFunction;

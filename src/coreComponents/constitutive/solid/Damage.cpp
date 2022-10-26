@@ -30,13 +30,13 @@ namespace constitutive
 template< typename BASE >
 Damage< BASE >::Damage( string const & name, Group * const parent ):
   BASE( name, parent ),
-  m_damage(),
+  m_newDamage(),
   m_strainEnergyDensity(),
   m_extDrivingForce(),
-  m_lengthScale(),
-  m_degradationFunction(),
-  m_decompositon(),
+  m_degradationFunction(),  
+  m_decomposition(),
   m_pressureIndicatorFunction(),
+  m_lengthScale(),
   m_criticalFractureEnergy(),
   m_criticalStrainEnergy(),
   m_degradationLowerLimit( 0.0 ),
@@ -45,7 +45,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_compressStrength(),
   m_deltaCoefficient()
 {
-  this->registerWrapper( viewKeyStruct::damageString(), &m_damage ).
+  this->registerWrapper( viewKeyStruct::damageString(), &m_newDamage ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Material Damage Variable" );
@@ -61,18 +61,18 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setDescription( "External Driving Force" );
 
   this->registerWrapper( viewKeyStruct::degradationFunctionString(), &m_degradationFunction ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "Quadratic" ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Type of degradation function" );
 
   this->registerWrapper( viewKeyStruct::decompositionString(), &m_decomposition ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "None" ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Type of strain decomposition" );
 
   this->registerWrapper( viewKeyStruct::pressureIndicatorFunctionString(), &m_pressureIndicatorFunction ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "Linear" ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Type of pressure indicator function" );            
 
   this->registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
@@ -129,7 +129,7 @@ template< typename BASE >
 void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_damage.resize( 0, numConstitutivePointsPerParentIndex );
+  m_newDamage.resize( 0, numConstitutivePointsPerParentIndex );
   m_strainEnergyDensity.resize( 0, numConstitutivePointsPerParentIndex );
   m_extDrivingForce.resize( 0, numConstitutivePointsPerParentIndex );
   BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );

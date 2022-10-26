@@ -25,8 +25,8 @@
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
 #include "Damage.hpp"
-#include "DamageSpectral.hpp"
-#include "DamageVolDev.hpp"
+//#include "DamageSpectral.hpp"
+//#include "DamageVolDev.hpp"
 #include "ModifiedCamClay.hpp"
 
 namespace geosx

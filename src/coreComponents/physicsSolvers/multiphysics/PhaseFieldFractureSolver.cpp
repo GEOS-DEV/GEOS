@@ -331,7 +331,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
         using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
         typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
 
-        arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_damage;
+        arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_newDamage;
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
 
         finiteElement::FiniteElementBase const &

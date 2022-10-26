@@ -73,7 +73,7 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_extDrivingForce;
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
-  using DamageUpdates< UPDATE_BASE >::m_damage;
+  using DamageUpdates< UPDATE_BASE >::m_newDamage;
   using DamageUpdates< UPDATE_BASE >::m_extDrivingForceFlag;
   using DamageUpdates< UPDATE_BASE >::m_tensileStrength;
   using DamageUpdates< UPDATE_BASE >::m_compressStrength;
@@ -97,7 +97,7 @@ public:
     real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
     #endif
     real64 p = 1;
-    return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
+    return pow( 1 - m_newDamage( k, q ), 2 ) /( pow( 1 - m_newDamage( k, q ), 2 ) + m * m_newDamage( k, q ) * (1 + p*m_newDamage( k, q )) );
   }
 
 
@@ -288,7 +288,7 @@ public:
 
   using KernelWrapper = DamageSpectralUpdates< typename BASE::KernelWrapper >;
 
-  using Damage< BASE >::m_damage;
+  using Damage< BASE >::m_newDamage;
   using Damage< BASE >::m_strainEnergyDensity;
   using Damage< BASE >::m_extDrivingForce;
   using Damage< BASE >::m_criticalFractureEnergy;
@@ -310,9 +310,14 @@ public:
 
   KernelWrapper createKernelUpdates() const
   {
-    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
+    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
+                                                                       m_damageGrad.toView(),
                                                                        m_strainEnergyDensity.toView(),
+                                                                       m_volStrain.toView(),                                                
                                                                        m_extDrivingForce.toView(),
+                                                                       m_degradationFunction,
+                                                                       m_decomposition,
+                                                                       m_pressureIndicatorFunction,                                                                       
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
                                                                        m_criticalStrainEnergy,
@@ -320,7 +325,8 @@ public:
                                                                        m_extDrivingForceFlag,
                                                                        m_tensileStrength,
                                                                        m_compressStrength,
-                                                                       m_deltaCoefficient );
+                                                                       m_deltaCoefficient,
+                                                                       m_biotCoefficient.toView() );
   }
 
 };

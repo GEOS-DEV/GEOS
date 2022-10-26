@@ -22,8 +22,9 @@
 
 #include "ConstitutivePassThruHandler.hpp"
 #include "NullModel.hpp"
-#include "solid/DamageVolDev.hpp"
-#include "solid/DamageSpectral.hpp"
+//#include "solid/DamageVolDev.hpp"
+//#include "solid/DamageSpectral.hpp"
+#include "solid/Damage.hpp"
 #include "solid/DruckerPrager.hpp"
 #include "solid/DruckerPragerExtended.hpp"
 #include "solid/ModifiedCamClay.hpp"
@@ -78,8 +79,8 @@ struct ConstitutivePassThru< SolidBase >
   static
   void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
-    ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
-                                 DamageVolDev< ElasticIsotropic >,
+    ConstitutivePassThruHandler< //DamageSpectral< ElasticIsotropic >,
+                                 //DamageVolDev< ElasticIsotropic >,
                                  Damage< ElasticIsotropic >,
                                  DruckerPragerExtended,
                                  ModifiedCamClay,
@@ -126,8 +127,8 @@ struct ConstitutivePassThru< DamageBase >
   static void execute( ConstitutiveBase & constitutiveRelation,
                        LAMBDA && lambda )
   {
-    ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
-                                 DamageVolDev< ElasticIsotropic >,
+    ConstitutivePassThruHandler< //DamageSpectral< ElasticIsotropic >,
+                                 //DamageVolDev< ElasticIsotropic >,
                                  Damage< ElasticIsotropic > >::execute( constitutiveRelation,
                                                                         std::forward< LAMBDA >( lambda ) );
   }
@@ -151,8 +152,8 @@ struct ConstitutivePassThru< PorousSolidBase >
                                  PorousSolid< ElasticTransverseIsotropic >,
                                  PorousSolid< ElasticIsotropicPressureDependent >,
                                  PorousSolid< ElasticOrthotropic >,
-                                 PorousSolid< DamageSpectral< ElasticIsotropic > >,
-                                 PorousSolid< DamageVolDev< ElasticIsotropic > >,
+                                 //PorousSolid< DamageSpectral< ElasticIsotropic > >,
+                                 //PorousSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
                                                                                        std::forward< LAMBDA >( lambda ) );
   }
@@ -232,8 +233,8 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ElasticTransverseIsotropic >,
                                  PorousSolid< ElasticIsotropicPressureDependent >,
                                  PorousSolid< ElasticOrthotropic >,
-                                 PorousSolid< DamageSpectral< ElasticIsotropic > >,
-                                 PorousSolid< DamageVolDev< ElasticIsotropic > >,
+                                 //PorousSolid< DamageSpectral< ElasticIsotropic > >,
+                                 //PorousSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
                                                                                        std::forward< LAMBDA >( lambda ) );
   }
@@ -253,8 +254,8 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ElasticTransverseIsotropic >,
                                  PorousSolid< ElasticIsotropicPressureDependent >,
                                  PorousSolid< ElasticOrthotropic >,
-                                 PorousSolid< DamageSpectral< ElasticIsotropic > >,
-                                 PorousSolid< DamageVolDev< ElasticIsotropic > >,
+                                 //PorousSolid< DamageSpectral< ElasticIsotropic > >,
+                                 //PorousSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
                                                                                        std::forward< LAMBDA >( lambda ) );
   }
