@@ -10,6 +10,8 @@ Carbon Storage
    buckleyLeverett/Example
 
    isothermalLeakyWell/Example
+
+   thermalLeakyWell/Example
   
 
 
