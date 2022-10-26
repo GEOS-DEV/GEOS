@@ -45,6 +45,7 @@ class Trilinos(CMakePackage, CudaPackage, ROCmPackage):
 
     version('master', branch='master')
     version('develop', branch='develop')
+    version("13.4.0", sha256="39550006e059043b7e2177f10467ae2f77fe639901aee91cbc1e359516ff8d3e")
     version('13.2.0', commit='4a5f7906a6420ee2f9450367e9cc95b28c00d744')  # tag trilinos-release-13-2-0
     version('13.0.1', commit='4796b92fb0644ba8c531dd9953e7a4878b05c62d', preferred=True)  # tag trilinos-release-13-0-1
     version('13.0.0', commit='9fec35276d846a667bc668ff4cbdfd8be0dfea08')  # tag trilinos-release-13-0-0
@@ -375,8 +376,11 @@ class Trilinos(CMakePackage, CudaPackage, ROCmPackage):
     for _flag in ('~openmp', '+openmp'):
         depends_on('mumps' + _flag, when='+mumps' + _flag)
 
-    depends_on('hwloc', when='@13: +kokkos')
-    depends_on('hwloc+cuda', when='@13: +kokkos+cuda')
+    # GEOSX_EDIT_START
+    # Do not force hwloc as dependency (MPI error on quartz)
+    #depends_on('hwloc', when='@13: +kokkos')
+    #depends_on('hwloc+cuda', when='@13: +kokkos+cuda')
+    # GEOSX_EDIT_END
     depends_on('hypre@develop', when='@master: +hypre')
     depends_on('netcdf-c+mpi+parallel-netcdf', when="+exodus+mpi@12.12.1:")
     depends_on('superlu-dist@4.4:5.3', when='@12.6.2:12.12.1+superlu-dist')
@@ -424,6 +428,12 @@ class Trilinos(CMakePackage, CudaPackage, ROCmPackage):
                 flags.append('--expt-extended-lambda')
         elif name == 'ldflags' and is_cce:
             flags.append('-fuse-ld=gold')
+
+        # GEOSX_EDIT_START
+        # Property insert gcc-toolchain flag through environment
+        if name in ['cflags', 'cxxflags', 'cppflags']:
+            return (None, None, flags)
+        # GEOSX_EDIT_END
 
         if is_cce:
             return (None, None, flags)
@@ -678,8 +688,11 @@ class Trilinos(CMakePackage, CudaPackage, ROCmPackage):
         ]
         if spec.satisfies('@12.12.1:'):
             tpl_dep_map.append(('Pnetcdf', 'parallel-netcdf'))
-        if spec.satisfies('@13:'):
-            tpl_dep_map.append(('HWLOC', 'hwloc'))
+
+        # GEOSX_EDIT_START
+        #if spec.satisfies('@13:'):
+        #    tpl_dep_map.append(('HWLOC', 'hwloc'))
+        # GEOSX_EDIT_END
 
         for tpl_name, dep_name in tpl_dep_map:
             define_tpl(tpl_name, dep_name, dep_name in spec)
