@@ -991,6 +991,7 @@
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
 			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
 			<xsd:element name="CompressibleSolidSlipDependentPermeability" type="CompressibleSolidSlipDependentPermeabilityType" />
+                        <xsd:element name="CompressibleSolidWillisRichardsPermeability" type="CompressibleSolidWillisRichardsPermeabilityType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
@@ -1033,7 +1034,8 @@
 			<xsd:element name="TableRelativePermeabilityHysteresis" type="TableRelativePermeabilityHysteresisType" />
 			<xsd:element name="ThermalCompressibleSinglePhaseFluid" type="ThermalCompressibleSinglePhaseFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
-			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
+			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />			
+                        <xsd:element name="WillisRichardsPermeability" type="WillisRichardsPermeabilityType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
@@ -1424,6 +1426,7 @@
 	<xsd:complexType name="CompressibleSolidConstantPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidParallelPlatesPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidSlipDependentPermeabilityType" />
+        <xsd:complexType name="CompressibleSolidWillisRichardsPermeabilityType" />
 	<xsd:complexType name="ConstantPermeabilityType">
 		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
@@ -2017,6 +2020,16 @@
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
 		<xsd:attribute name="volFracScale" type="real64" />
+	</xsd:complexType>
+        <xsd:complexType name="WillisRichardsPermeabilityType">
+		<!--dPerm_dDispJump => Derivative of fault permeability w.r.t. the displacement jump.-->
+		<xsd:attribute name="dPerm_dDispJump" type="real64_array4d" />
+		<!--dPerm_dPressure => Derivative of fault permeability with respect to pressure.-->
+		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
+                <!--dPerm_dTraction => Derivative of fault permeability w.r.t. the fracture traction.-->
+		<xsd:attribute name="dPerm_dTraction" type="real64_array4d" />
+		<!--permeability => Fault permeability-->
+		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="MeshBodiesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
