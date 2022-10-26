@@ -30,11 +30,11 @@ packages:
       - spec: papi@5.5.1
         prefix: /usr/tce/packages/papi/papi-5.5.1/
   cmake:
-    version: [3.14.5]
+    version: [3.21.1]
     buildable: false
     externals:
-    - spec: cmake@3.14.5
-      prefix: /usr/tce/packages/cmake/cmake-3.14.5
+    - spec: cmake@3.21.1
+      prefix: /usr/tce/packages/cmake/cmake-3.21.1
   readline:
     externals:
     - spec: readline@7.0
