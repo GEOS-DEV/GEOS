@@ -378,6 +378,7 @@ if(DEFINED ADIAK_DIR)
 
     set(ENABLE_ADIAK ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} ${adiak_target})
+
 else()
     if(ENABLE_ADIAK)
         message(WARNING "ENABLE_ADIAK is ON but ADIAK_DIR isn't defined.")
