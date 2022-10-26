@@ -13,15 +13,16 @@
  */
 
 #include "initialization.hpp"
+#include "version.hpp"
 
 #include "common/DataTypes.hpp"
 #include "common/Path.hpp"
 #include "LvArray/src/system.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "mainInterface/GeosxVersion.hpp"
 
 // TPL includes
 #include <optionparser.h>
+
 
 namespace geosx
 {
@@ -253,12 +254,14 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
 }
 
 
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool const parseCommandLine )
 {
   setupEnvironment( argc, argv );
 
-  GEOSX_LOG_RANK_0( "GEOSX version " << getVersion() );
+  outputVersionInfo();
+
   setupLAI();
 
   if( parseCommandLine )
@@ -278,15 +281,6 @@ void basicCleanup()
   cleanupEnvironment();
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-string getVersion()
-{
-#if defined(GEOSX_GIT_BRANCH) && defined(GEOSX_GIT_HASH)
-  return GEOSX_VERSION_FULL " (" GEOSX_GIT_BRANCH ", sha1: " GEOSX_GIT_HASH ")";
-#else
-  return GEOSX_VERSION_FULL;
-#endif
-}
 
 
 } // namespace geosx
