@@ -43,6 +43,13 @@ class fixedSizeDeque
   /// 2D array type. See LvArray:Array for details.
   using Array2D = LvArray::Array< T, 2, camp::make_idx_seq_t< 2 >, IndexType, LvArray::ChaiBuffer >;
 public:
+  /**
+   * Create a fixed size double ended queue.
+   *
+   * @param maxEntries     Maximum number of array to store in the queue.
+   * @param valuesPerEntry Number of values in each array of the deque.
+   * @param space          Space used to store que queue.
+   */
   fixedSizeDeque( IndexType maxEntries, IndexType valuesPerEntry, LvArray::MemorySpace space )
   {
     GEOSX_THROW_IF( maxEntries < 0 , "Fixed sized queue size must be positive", std::runtime_error );
@@ -50,64 +57,76 @@ public:
     m_storage.resizeWithoutInitializationOrDestruction( space, maxEntries, valuesPerEntry );
   }
   
+  /// Return true if the queue is empty
   bool empty() const {
     return m_begin > m_end;
   }
 
+  /// return true if the queue is full
   bool full() const
   {
     return size() == m_storage.size( 0 );
   }
 
+  /// Number of arrays stores in the queue
   size_t size() const {
     return  (size_t)( m_end - m_begin + 1 );
   }
 
+  /// Maximum number of array that can be store in the queue
   size_t capacity() const {
     return  m_storage.size( 0 );
   }
 
+  /// First array in the queue
   ArraySlice1D front() const {
     GEOSX_THROW_IF( empty(), "Can't get front from empty queue", std::runtime_error );
     return m_storage[ POSITIVE_MODULO( m_begin, m_storage.size( 0 ) ) ];
   }
 
+  /// Last array of the queue
   ArraySlice1D back() const {
     GEOSX_THROW_IF( empty(), "Can't get back from empty queue", std::runtime_error );
     return m_storage[ POSITIVE_MODULO( m_end, m_storage.size( 0 ) ) ];
   }
 
-  void pop_back() {
-    GEOSX_THROW_IF( empty(), "Can't pop back from empty queue", std::runtime_error );
-    m_end--;
-  }
-
-  void inc_back() {
-    GEOSX_THROW_IF( full(), "Can't increase in a full queue", std::runtime_error );
-    m_end++;
-  }
-
-  void inc_front() {
-    GEOSX_THROW_IF( full(), "Can't increase in a full queue", std::runtime_error );
-    m_begin--;
-  }
-
+  /// remove first array of the queue
   void pop_front() {
     GEOSX_THROW_IF( empty(), "Can't pop front from empty queue", std::runtime_error );
     m_begin++;
   }
 
+  /// remove last array of the queue
+  void pop_back() {
+    GEOSX_THROW_IF( empty(), "Can't pop back from empty queue", std::runtime_error );
+    m_end--;
+  }
+
+  /// Add one array (uninitialized) at the front of the queue
+  void inc_front() {
+    GEOSX_THROW_IF( full(), "Can't increase in a full queue", std::runtime_error );
+    m_begin--;
+  }
+
+  /// Add one array (uninitialized) at the end of the queue
+  void inc_back() {
+    GEOSX_THROW_IF( full(), "Can't increase in a full queue", std::runtime_error );
+    m_end++;
+  }
+
+  /// Add one array (copy of src) at the front of the queue
+  void emplace_front( const ArraySlice1D & src ) {
+    GEOSX_THROW_IF( full(), "Can't emplace in a full  queue", std::runtime_error );
+    --m_begin;
+    LvArray::memcpy( m_storage[ POSITIVE_MODULO( m_begin, m_storage.size( 0 ) ) ], src );
+  }
+
+  /// Add one array (copy of src) at the end of the queue
   void emplace_back( const ArraySlice1D & src ) {
     GEOSX_THROW_IF( full(), "Can't emplace in a full queue", std::runtime_error );
     ++m_end;
     LvArray::memcpy( m_storage[ POSITIVE_MODULO( m_end, m_storage.size( 0 ) ) ], src);
 
-  }
-
-  void emplace_front( const ArraySlice1D & src ) {
-    GEOSX_THROW_IF( full(), "Can't emplace in a full  queue", std::runtime_error );
-    --m_begin;
-    LvArray::memcpy( m_storage[ POSITIVE_MODULO( m_begin, m_storage.size( 0 ) ) ], src );
   }
   
 private:
