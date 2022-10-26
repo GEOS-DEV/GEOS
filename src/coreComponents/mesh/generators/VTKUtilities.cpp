@@ -271,7 +271,7 @@ loadMesh( Path const & filePath )
         case VTKLegacyDatasetType::unstructuredGrid: return serialRead( vtkSmartPointer< vtkUnstructuredGridReader >::New() );
         case VTKLegacyDatasetType::rectilinearGrid:  return serialRead( vtkSmartPointer< vtkRectilinearGridReader >::New() );
       }
-
+      break;
     }
     case VTKMeshExtension::vtu: return serialRead( vtkSmartPointer< vtkXMLUnstructuredGridReader >::New() );
     case VTKMeshExtension::vtr: return serialRead( vtkSmartPointer< vtkXMLRectilinearGridReader >::New() );
@@ -1090,111 +1090,97 @@ CellMapType buildCellMap( vtkDataSet & mesh, string const & attributeName )
   return cellMap;
 }
 
-//std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType )
-//{
-//  switch( elemType )
-//  {
-//    case ElementType::Vertex:        return { 0 };
-//    case ElementType::Line:          return { 0, 1 };
-//    case ElementType::Triangle:      return { 0, 1, 2 };
-//    case ElementType::Quadrilateral: return { 0, 1, 2, 3 };  // TODO check
-//    case ElementType::Polygon:       return { };  // TODO
-//    case ElementType::Tetrahedron:   return { 0, 1, 2, 3 };
-//    case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };
-//    case ElementType::Wedge:         return { 0, 3, 2, 5, 1, 4 };
-//    case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
-//    case ElementType::Prism5:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-//    case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
-//    case ElementType::Polyhedron:    return { };  // TODO
-//    default:
-//    {
-//      return { };
-//    }
-//  }
-//}
-//
-//std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType, vtkCell *cell )
-//{
-//  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input for getGeosxToVtkNodeOrdering( ElementType const elemType, vtkCell
-// *cell ) must be a VTK_POLYHEDRON." );
-//  switch( elemType )
-//  {
-//    case ElementType::Tetrahedron: return getTetrahedronNodeOrderingFromPolyhedron( cell );
-//    case ElementType::Pyramid:     return getPyramidNodeOrderingFromPolyhedron( cell );
-//    case ElementType::Wedge:       return getWedgeNodeOrderingFromPolyhedron( cell );
-//    case ElementType::Hexahedron:  return getHexahedronNodeOrderingFromPolyhedron( cell );
-//    case ElementType::Prism5:      return getPrismNodeOrderingFromPolyhedron< 5 >( cell );
-//    case ElementType::Prism6:      return getPrismNodeOrderingFromPolyhedron< 6 >( cell );
-//    case ElementType::Prism7:      return getPrismNodeOrderingFromPolyhedron< 7 >( cell );
-//    case ElementType::Prism8:      return getPrismNodeOrderingFromPolyhedron< 8 >( cell );
-//    case ElementType::Prism9:      return getPrismNodeOrderingFromPolyhedron< 9 >( cell );
-//    case ElementType::Prism10:     return getPrismNodeOrderingFromPolyhedron< 10 >( cell );
-//    case ElementType::Prism11:     return getPrismNodeOrderingFromPolyhedron< 11 >( cell );
-//    case ElementType::Polyhedron:  return { };  // TODO
-//    default:
-//    {
-//      return { };
-//    }
-//  }
-//}
+bool vtkToGeosxNodeOrderingExists( ElementType const elemType )
+{
+  switch( elemType )
+  {
+    case ElementType::Vertex:
+    case ElementType::Line:
+    case ElementType::Triangle:
+    case ElementType::Quadrilateral:
+    case ElementType::Tetrahedron:
+    case ElementType::Pyramid:
+    case ElementType::Wedge:
+    case ElementType::Hexahedron:
+    case ElementType::Prism5:
+    case ElementType::Prism6:
+    {
+      return true;
+    }
+    default:
+    {
+      return false;
+    }
+  }
+}
 
-std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elemType,
-                                              VTKCellType const vtkType,
-                                              vtkCell *cell )
+std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elemType )
+{
+  switch( elemType )
+  {
+    case ElementType::Vertex:        return { 0 };
+    case ElementType::Line:          return { 0, 1 };
+    case ElementType::Triangle:      return { 0, 1, 2 };
+    case ElementType::Quadrilateral: return { 0, 1, 2, 3 };  // TODO check (QUAD vs. PIXEL)
+    case ElementType::Tetrahedron:   return { 0, 1, 2, 3 };
+    case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };
+    case ElementType::Wedge:         return { 0, 3, 2, 5, 1, 4 };
+    case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case ElementType::Prism5:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+    default:
+    {
+      GEOSX_ERROR( "Cannot get vtk to geosx node ordering based on geosx element type " << elemType );
+      break;
+    }
+  }
+  return {};
+}
+
+std::vector< int > getVtkToGeosxNodeOrdering( VTKCellType const vtkType )
 {
   switch( vtkType )
   {
-    case VTK_POLYHEDRON:
-    {
-      switch( elemType )
-      {
-        case ElementType::Tetrahedron: return getTetrahedronNodeOrderingFromPolyhedron( cell );
-        case ElementType::Pyramid:     return getPyramidNodeOrderingFromPolyhedron( cell );
-        case ElementType::Wedge:       return getWedgeNodeOrderingFromPolyhedron( cell );
-        case ElementType::Hexahedron:  return getHexahedronNodeOrderingFromPolyhedron( cell );
-        case ElementType::Prism5:      return getPrismNodeOrderingFromPolyhedron< 5 >( cell );
-        case ElementType::Prism6:      return getPrismNodeOrderingFromPolyhedron< 6 >( cell );
-        case ElementType::Prism7:      return getPrismNodeOrderingFromPolyhedron< 7 >( cell );
-        case ElementType::Prism8:      return getPrismNodeOrderingFromPolyhedron< 8 >( cell );
-        case ElementType::Prism9:      return getPrismNodeOrderingFromPolyhedron< 9 >( cell );
-        case ElementType::Prism10:     return getPrismNodeOrderingFromPolyhedron< 10 >( cell );
-        case ElementType::Prism11:     return getPrismNodeOrderingFromPolyhedron< 11 >( cell );
-        default:
-        {
-          GEOSX_ERROR( "Unsupported VTK polyhedral cell" );
-          break;
-        }
-      }
-      break;
-    }
-    case VTK_VOXEL: return { 0, 1, 2, 3, 4, 5, 6, 7 };
+    case VTK_VERTEX:           return { 0 };
+    case VTK_LINE:             return { 0, 1 };
+    case VTK_TRIANGLE:         return { 0, 1, 2 };
+    case VTK_QUAD:             return { 0, 1, 2, 3 };  // TODO check (QUAD vs. PIXEL)
+    case VTK_TETRA:            return { 0, 1, 2, 3 };
+    case VTK_PYRAMID:          return { 0, 1, 3, 2, 4 };
+    case VTK_WEDGE:            return { 0, 3, 2, 5, 1, 4 };
+    case VTK_VOXEL:            return { 0, 1, 2, 3, 4, 5, 6, 7 };
+    case VTK_HEXAHEDRON:       return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case VTK_PENTAGONAL_PRISM: return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    case VTK_HEXAGONAL_PRISM:  return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     default:
     {
-      switch( elemType )
-      {
-        case ElementType::Vertex:        return { 0 };
-        case ElementType::Line:          return { 0, 1 };
-        case ElementType::Triangle:      return { 0, 1, 2 };
-        case ElementType::Quadrilateral: return { 0, 1, 2, 3 };  // TODO check
-        //case ElementType::Polygon:       return {};  // TODO
-        case ElementType::Tetrahedron:   return { 0, 1, 2, 3 };
-        case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };
-        case ElementType::Wedge:         return { 0, 3, 2, 5, 1, 4 };
-        case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
-        case ElementType::Prism5:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-        case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
-        case ElementType::Prism7:        return {};
-        case ElementType::Prism8:        return {};
-        case ElementType::Prism9:        return {};
-        case ElementType::Prism10:       return {};
-        case ElementType::Prism11:       return {};
-        //case ElementType::Polyhedron:       return {};  // TODO
-        default:
-        {
-          GEOSX_ERROR( "Unsupported VTK cell" );
-          break;
-        }
-      }
+      GEOSX_ERROR( "Cannot get vtk to geosx node ordering based on vtk cell type " << vtkType );
+      break;
+    }
+  }
+  return {};
+}
+
+std::vector< int > getVtkToGeosxPolyhedronNodeOrdering( ElementType const elemType,
+                                                        vtkCell *cell )
+{
+  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
+  switch( elemType )
+  {
+    case ElementType::Tetrahedron: return getTetrahedronNodeOrderingFromPolyhedron( cell );
+    case ElementType::Pyramid:     return getPyramidNodeOrderingFromPolyhedron( cell );
+    case ElementType::Wedge:       return getWedgeNodeOrderingFromPolyhedron( cell );
+    case ElementType::Hexahedron:  return getHexahedronNodeOrderingFromPolyhedron( cell );
+    case ElementType::Prism5:      return getPrismNodeOrderingFromPolyhedron< 5 >( cell );
+    case ElementType::Prism6:      return getPrismNodeOrderingFromPolyhedron< 6 >( cell );
+    case ElementType::Prism7:      return getPrismNodeOrderingFromPolyhedron< 7 >( cell );
+    case ElementType::Prism8:      return getPrismNodeOrderingFromPolyhedron< 8 >( cell );
+    case ElementType::Prism9:      return getPrismNodeOrderingFromPolyhedron< 9 >( cell );
+    case ElementType::Prism10:     return getPrismNodeOrderingFromPolyhedron< 10 >( cell );
+    case ElementType::Prism11:     return getPrismNodeOrderingFromPolyhedron< 11 >( cell );
+    default:
+    {
+      GEOSX_ERROR( "Unsupported VTK polyhedral cell" );
       break;
     }
   }
@@ -1223,8 +1209,12 @@ void fillCellBlock( vtkDataSet & mesh,
   };
 
   // Writing connectivity and Local to Global
-  std::vector< int > const nodeOrderFixed = getVtkToGeosxNodeOrdering( elemType );
-  std::vector< int > const nodeOrderVoxel = getVtkToGeosxNodeOrdering( ElementType::Hexahedron, VTK_VOXEL );
+  std::vector< int > const nodeOrderFixed = vtkToGeosxNodeOrderingExists( elemType )
+                                          ? getVtkToGeosxNodeOrdering( elemType )
+                                          : std::vector< int >();
+  std::vector< int > const nodeOrderVoxel = ( elemType == ElementType::Hexahedron)
+                                          ? getVtkToGeosxNodeOrdering( VTK_VOXEL )
+                                          : std::vector< int >();
   for( vtkIdType c: cellIds )
   {
     vtkCell * const cell = mesh.GetCell( c );
@@ -1233,7 +1223,7 @@ void fillCellBlock( vtkDataSet & mesh,
     {
       case VTK_POLYHEDRON:
       {
-        writeCell( c, cell, getVtkToGeosxNodeOrdering( elemType, vtkType, cell ) );
+        writeCell( c, cell, getVtkToGeosxPolyhedronNodeOrdering( elemType, cell ) );
         break;
       }
       case VTK_VOXEL:

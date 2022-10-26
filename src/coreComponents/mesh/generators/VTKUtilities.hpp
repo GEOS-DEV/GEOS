@@ -299,18 +299,6 @@ CellMapType buildCellMap( vtkDataSet & mesh,
                           string const & attributeName );
 
 /**
- * @brief Get the Vtk to Geosx Node Ordering object of a type of element
- *
- * @param[in] elemType the type of the geosx element
- * @param[in] vtkType the type of the vtk element corresponding to @p elemType
- * @param[in] cell pointer to the vtk cell object
- * @return an array of the vtk to geosx node ordering
- */
-std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elemType,
-                                              VTKCellType const vtkType = {},
-                                              vtkCell *cell = {} );
-
-/**
  * @brief Fill @p cellBlock with the appropriate nodes and local/global mappings.
  * @param[in] elemType the geosx cell type for cells of the CellBlock being written
  * @param[in] cellIds the cell indexes of cell type \p cellType within this region
