@@ -13,10 +13,10 @@
  */
 
 /**
- * @file SlipDependentPermeability.cpp
+ * @file WillisRichardsPermeability.cpp
  */
 
-#include "SlipDependentPermeability.hpp"
+#include "WillisRichardsPermeability.hpp"
 #include "LvArray/src/tensorOps.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 
@@ -29,41 +29,43 @@ namespace constitutive
 {
 
 
-SlipDependentPermeability::SlipDependentPermeability( string const & name, Group * const parent ):
+WillisRichardsPermeability::WillisRichardsPermeability( string const & name, Group * const parent ):
   PermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::shearDispThresholdString(), &m_shearDispThreshold ).
+  registerWrapper( viewKeyStruct::maxFracApertureString(), &m_maxFracAperture ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Threshold of shear displacement." );
+    setDescription( "Maximum fracture aperture at zero contact stress." );
 
-  registerWrapper( viewKeyStruct::maxPermMultiplierString(), &m_maxPermMultiplier ).
+  registerWrapper( viewKeyStruct::dilationCoefficientString(), &m_dilationCoefficient ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Maximum permeability multiplier." );
+    setDescription( "Dilation coefficient (tan of dilation angle)." );
 
-  registerWrapper( viewKeyStruct::initialPermeabilityString(), &m_initialPermeability ).
+  registerWrapper( viewKeyStruct::refClosureStressString(), &m_refClosureStress ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( " initial permeability of the fracture." );
+    setDescription( "Effective normal stress causes 90% reduction in aperture." );
 
   registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dTraction{}, &m_dPerm_dTraction );
 }
 
 std::unique_ptr< ConstitutiveBase >
-SlipDependentPermeability::deliverClone( string const & name,
-                                         Group * const parent ) const
+WillisRichardsPermeability::deliverClone( string const & name,
+                                          Group * const parent ) const
 {
   return ConstitutiveBase::deliverClone( name, parent );
 }
 
-void SlipDependentPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                          localIndex const numConstitutivePointsPerParentIndex )
+void WillisRichardsPermeability::allocateConstitutiveData( dataRepository::Group & parent,
+                                                           localIndex const numConstitutivePointsPerParentIndex )
 {
 // NOTE: enforcing 1 quadrature point
   m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
+  m_dPerm_dTraction.resize( 0, 1, 3, 3 );
 
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, SlipDependentPermeability, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, WillisRichardsPermeability, string const &, Group * const )
 
 } /* namespace constitutive */
 } /* namespace geosx */
