@@ -11,7 +11,7 @@
 #ifndef __CUDA_ARCH__
 #define PORTABLE_EXPECT_EQ( L, R ) EXPECT_EQ( L, R )
 #define PORTABLE_EXPECT_NEAR( L, R, EPSILON ) EXPECT_LE( math::abs( ( L ) -( R ) ), EPSILON ) << \
-                                                                                                 STRINGIZE( L ) " = " << ( L ) << "\n" << STRINGIZE( R ) " = " << ( R );
+    STRINGIZE( L ) " = " << ( L ) << "\n" << STRINGIZE( R ) " = " << ( R );
 #else
 #define PORTABLE_EXPECT_EQ( L, R ) LVARRAY_ERROR_IF_NE( L, R )
 #define PORTABLE_EXPECT_NEAR( L, R, EPSILON ) LVARRAY_ERROR_IF_GE_MSG( math::abs( ( L ) -( R ) ), EPSILON, \
@@ -65,8 +65,9 @@ struct RAJAHelper< RAJA::cuda_exec< N > >
 using namespace geosx;
 
 
-template < typename POLICY >
-void testLifoStorage( ) {
+template< typename POLICY >
+void testLifoStorage( )
+{
   int elemCnt = 10;
   int numberOfElementsOnDevice = 2;
   int numberOfElementsOnHost = 3;
@@ -89,9 +90,9 @@ void testLifoStorage( ) {
     lifo.pop( array );
     float * dataPointer = array.data();
     forAll< POLICY >( elemCnt, [dataPointer, totalNumberOfBuffers, j, elemCnt] GEOSX_HOST_DEVICE ( int i )
-                        {
-                           GEOSX_ERROR_IF_NE( dataPointer[ i ], (totalNumberOfBuffers-j-1)*elemCnt+i );
-                         } );
+    {
+      GEOSX_ERROR_IF_NE( dataPointer[ i ], (totalNumberOfBuffers-j-1)*elemCnt+i );
+    } );
   }
 }
 

@@ -157,13 +157,14 @@ public:
   {
     int id = m_bufferCount++;
     m_deviceDequeMutex.lock();
-    while( m_deviceDeque.full() ) {
+    while( m_deviceDeque.full() )
+    {
       m_deviceDequeMutex.unlock();
       m_deviceToHostFutures.front().wait();
       m_deviceToHostFutures.pop_front();
       m_deviceDequeMutex.lock();
     }
-    m_deviceDeque.emplace_front( array.toSliceConst() );    
+    m_deviceDeque.emplace_front( array.toSliceConst() );
     m_deviceDequeMutex.unlock();
 
     if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() )
@@ -233,7 +234,8 @@ private:
    */
   void deviceToHost()
   {
-    while ( m_hostDeque.full() ) {
+    while( m_hostDeque.full() )
+    {
       m_hostToDiskFutures.front().wait();
       m_hostToDiskFutures.pop_front();
     }
@@ -257,7 +259,8 @@ private:
    */
   void hostToDevice()
   {
-    while ( m_hostDeque.empty() ) {
+    while( m_hostDeque.empty() )
+    {
       m_diskToHostFutures.front().wait();
       m_diskToHostFutures.pop_front();
     }
@@ -273,7 +276,8 @@ private:
    */
   void diskToHost()
   {
-    while ( m_hostDeque.full() ) {
+    while( m_hostDeque.full() )
+    {
       m_hostToDeviceFutures.front().wait();
       m_hostToDeviceFutures.pop_front();
     }
@@ -295,7 +299,7 @@ private:
     GEOSX_THROW_IF( !wf,
                     "Could not open file "<< fileName << " for writting",
                     InputError );
-    wf.write( (char*)d, m_bufferSize );
+    wf.write( (char *)d, m_bufferSize );
     wf.close();
     GEOSX_THROW_IF( !wf.good(),
                     "An error occured while writting "<< fileName,
@@ -307,7 +311,7 @@ private:
    *
    * @param Handler to store datta read from disk.
    */
-  void readOnDisk( T* d )
+  void readOnDisk( T * d )
   {
     int id = --m_bufferOnDiskCount;
     int const rank = MpiWrapper::initialized()?MpiWrapper::commRank( MPI_COMM_GEOSX ):0;
@@ -316,7 +320,7 @@ private:
     GEOSX_THROW_IF( !wf,
                     "Could not open file "<< fileName << " for reading",
                     InputError );
-    wf.read( (char*)d, m_bufferSize );
+    wf.read( (char *)d, m_bufferSize );
     wf.close();
     remove( fileName.c_str() );
   }
