@@ -79,9 +79,8 @@ class Geosx(CMakePackage, CudaPackage):
 
     # SPHINX_BEGIN_DEPENDS
 
-    depends_on('cmake@3.8:', type='build')
-    depends_on('cmake@3.14:', when='+cuda', type='build')
-
+    # Trilinos requires cmake 3.17 or newer
+    depends_on('cmake@3.17:', type='build')
     #
     # Virtual packages
     #
@@ -98,7 +97,7 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on('chai@2022.03.0+raja+openmp~benchmarks~examples')
 
-    depends_on('camp@2022.03.0')
+    depends_on('camp@2022.03.2')
 
     with when('+cuda'):
         for sm_ in CudaPackage.cuda_arch_values:
@@ -120,8 +119,8 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('conduit@0.8.2~test~fortran~hdf5_compat')
 
 
-    depends_on('adiak@0.2.1', when='+caliper')
-    depends_on('caliper@2.4.0~gotcha~sampler~libunwind~libdw', when='+caliper')
+    depends_on('adiak@0.2.2', when='+caliper')
+    depends_on('caliper@2.8.0~gotcha~sampler~libunwind~libdw', when='+caliper')
 
     depends_on('pugixml')
 
@@ -141,7 +140,7 @@ class Geosx(CMakePackage, CudaPackage):
 
     trilinos_build_options = '+openmp'
     trilinos_packages = '+aztec+stratimikos~amesos2~anasazi~belos~ifpack2~muelu~sacado+thyra'
-    depends_on('trilinos@12.18.1 ' + trilinos_build_options + trilinos_packages, when='+trilinos')
+    depends_on('trilinos@13.4.0 ' + trilinos_build_options + trilinos_packages, when='+trilinos')
 
     depends_on('hypre@2.24.0geosx+shared+superlu-dist+mixedint+mpi+openmp', when='+hypre~cuda')
 
