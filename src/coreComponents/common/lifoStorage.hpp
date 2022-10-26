@@ -218,6 +218,7 @@ public:
       m_task_queue.emplace_back( std::move( task ) );
       m_task_queue_not_empty_cond.notify_all();
     }
+
     if( id >= m_deviceDeque.capacity() + m_hostDeque.capacity() )
     {
       // Trigger pull one buffer from disk
