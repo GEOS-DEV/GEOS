@@ -98,22 +98,52 @@
 /// An integer flag representing the type that globalIndex will be aliased to.
 #define GEOSX_GLOBALINDEX_TYPE_FLAG @GEOSX_GLOBALINDEX_TYPE_FLAG@
 
+/// Version information for HDF5
 #cmakedefine HDF5_VERSION @HDF5_VERSION@
+
+/// Version information for Conduit
 #cmakedefine Conduit_VERSION @Conduit_VERSION@
-#cmakedefine pugixml_VERSION @pugixml_VERSION@
+
+/// Version information for RAJA
 #cmakedefine RAJA_VERSION @RAJA_VERSION@
+
+/// Version information for umpire
 #cmakedefine umpire_VERSION @umpire_VERSION@
+
+/// Version information for chai
 #cmakedefine chai_VERSION @chai_VERSION@
+
+/// Version information for adiak
 #cmakedefine adiak_VERSION @adiak_VERSION@
+
+/// Version information for caliper
 #cmakedefine caliper_VERSION @caliper_VERSION@
+
+/// Version information for Metis
 #cmakedefine METIS_VERSION @METIS_VERSION@
+
+/// Version information for ParMetis
 #cmakedefine PARAMETIS_VERSION @PARAMETIS_VERSION@
+
+/// Version information for scotch 
 #cmakedefine scotch_VERSION @scotch_VERSION@
+
+/// Version information for superlu_dist
 #cmakedefine superlu_dist_VERSION @superlu_dist_VERSION@
+
+/// Version information for suitesparse
 #cmakedefine suitesparse_VERSION @suitesparse_VERSION@
+
+/// Version information for VTK
 #cmakedefine VTK_VERSION @VTK_VERSION@
+
+/// Version information for fmt
 #cmakedefine fmt_VERSION @fmt_VERSION@
+
+/// Version information for python
 #cmakedefine Python3_VERSION @Python3_VERSION@
+
+/// Version information for CUDAToolkit
 #cmakedefine CUDAToolkit_VERSION @CUDAToolkit_VERSION@
 
 
