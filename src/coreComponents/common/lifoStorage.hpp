@@ -103,8 +103,6 @@ private:
   std::thread m_worker;
   /// Boolean to keep m_worker alive.
   bool m_continue;
-  /// tmp array to read data from disk
-  array1d< T > m_tmparray;
 
 public:
   /**
@@ -125,8 +123,7 @@ public:
     m_hostDeque( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host ),
     m_bufferCount( 0 ), m_bufferOnDiskCount( 0 ),
     m_worker( &lifoStorage< T >::wait_and_consume_tasks, this ),
-    m_continue( true ),
-    m_tmparray( elemCnt )
+    m_continue( true )
   {
     GEOSX_ASSERT( numberOfBuffersToStoreOnDevice > 0 && numberOfBuffersToStoreOnHost >= 0 && maxNumberOfBuffers >= numberOfBuffersToStoreOnHost * numberOfBuffersToStoreOnDevice );
   }
@@ -280,9 +277,8 @@ private:
       m_hostToDeviceFutures.front().wait();
       m_hostToDeviceFutures.pop_front();
     }
-
-    readOnDisk( m_tmparray.data() );
-    m_hostDeque.emplace_back( m_tmparray );
+    m_hostDeque.inc_back();
+    readOnDisk( const_cast< T * >(m_hostDeque.back().dataIfContiguous()) );
   }
 
   /**

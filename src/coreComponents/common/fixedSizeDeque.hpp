@@ -82,6 +82,16 @@ public:
     m_end--;
   }
 
+  void inc_back() {
+    GEOSX_THROW_IF( full(), "Can't increase in a full queue", std::runtime_error );
+    m_end++;
+  }
+
+  void inc_front() {
+    GEOSX_THROW_IF( full(), "Can't increase in a full queue", std::runtime_error );
+    m_begin--;
+  }
+
   void pop_front() {
     GEOSX_THROW_IF( empty(), "Can't pop front from empty queue", std::runtime_error );
     m_begin++;
