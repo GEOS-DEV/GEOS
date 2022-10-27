@@ -464,7 +464,7 @@ redistributeByCellGraph( vtkDataSet & mesh,
         GEOSX_WARNING_IF( numRefinements > 0, "Partition refinement is not supported by 'ptscotch' partitioning method" );
         return ptscotch::partition( graph.toViewConst(), numProcs, comm );
 #else
-        GEOSX_THROW( "GEOSX must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method" );
+        GEOSX_THROW( "GEOSX must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method", InputError );
 #endif
       }
       default:
