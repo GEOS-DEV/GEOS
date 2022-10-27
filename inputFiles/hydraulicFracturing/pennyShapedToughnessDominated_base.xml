@@ -164,19 +164,6 @@
 
   <!-- SPHINX_OUTPUT -->    
   <Outputs>
-<<<<<<< HEAD
-    <Silo
-      name="siloOutput"
-      plotFileRoot="pennyShaped_zeroViscosity"
-      plotLevel="3"
-      parallelThreads="48"/>
-
-    <VTK
-      name="vtkOutput"
-      plotFileRoot="pennyShaped_zeroViscosity"
-      plotLevel="3"
-      parallelThreads="48"/>  
-=======
     <VTK
       name="vtkOutput"
       plotFileRoot="zeroViscosity"
@@ -187,7 +174,6 @@
       name="timeHistoryOutput"
       sources="{/Tasks/pressureCollection, /Tasks/apertureCollection, /Tasks/hydraulicApertureCollection, /Tasks/areaCollection}"
       filename="pennyShapedToughnessDominated_output" />  
->>>>>>> origin/develop
 
     <Restart
       name="restartOutput"/>
