@@ -207,7 +207,7 @@ public:
   SingleFluidBase( string const & name, Group * const parent );
 
   /**
-   * @brief Save the current density into the initial density (needed for single-phase poromechanics)
+   * @brief Initialize the model
    */
   void initializeState() const;
 
@@ -227,7 +227,6 @@ public:
   arrayView2d< real64 > dDensity_dTemperature() { return m_dDensity_dTemperature; }
   arrayView2d< real64 const > dDensity_dTemperature() const { return m_dDensity_dTemperature; }
 
-  arrayView2d< real64 const > initialDensity() const { return m_initialDensity; }
   arrayView2d< real64 const > density_n() const { return m_density_n; }
 
   arrayView2d< real64 const > viscosity() const { return m_viscosity; }
@@ -270,7 +269,6 @@ protected:
   array2d< real64 > m_dDensity_dPressure;
   array2d< real64 > m_dDensity_dTemperature;
 
-  array2d< real64 > m_initialDensity;
   array2d< real64 > m_density_n;
 
   array2d< real64 > m_viscosity;

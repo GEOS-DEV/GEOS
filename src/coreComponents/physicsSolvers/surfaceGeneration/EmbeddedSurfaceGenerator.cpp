@@ -30,7 +30,7 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
+#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/simpleGeometricObjects/BoundedPlane.hpp"
 
@@ -86,7 +86,7 @@ void EmbeddedSurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
     EmbeddedSurfaceNodeManager & nodeManager = meshLevel.getEmbSurfNodeManager();
 
-    nodeManager.registerExtrinsicData< extrinsicMeshData::ParentEdgeIndex >( this->getName() );
+    nodeManager.registerExtrinsicData< extrinsicMeshData::parentEdgeIndex >( this->getName() );
   } );
 }
 

@@ -20,12 +20,10 @@
 #include "AcousticWaveEquationSEM.hpp"
 #include "AcousticWaveEquationSEMKernel.hpp"
 
-#include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
-//#include "mesh/CellBlock.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
@@ -160,6 +158,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     nodeManager.registerExtrinsicData< extrinsicMeshData::Pressure_nm1,
                                        extrinsicMeshData::Pressure_n,
                                        extrinsicMeshData::Pressure_np1,
+                                       extrinsicMeshData::PressureDoubleDerivative,
                                        extrinsicMeshData::ForcingRHS,
                                        extrinsicMeshData::MassVector,
                                        extrinsicMeshData::DampingVector,
@@ -186,6 +185,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocity >( this->getName() );
+      subRegion.registerExtrinsicData< extrinsicMeshData::PartialGradient >( this->getName() );
     } );
 
   } );
@@ -274,9 +274,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
-  real64 const timeSourceFrequency = this->m_timeSourceFrequency;
+  real32 const timeSourceFrequency = this->m_timeSourceFrequency;
   localIndex const rickerOrder = this->m_rickerOrder;
-  arrayView2d< real64 > const sourceValue = m_sourceValue.toView();
+  arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
   real64 dt = 0;
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
@@ -353,12 +353,12 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 }
 
 
-void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs )
+void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
-  arrayView2d< real64 const > const sourceValue   = m_sourceValue.toViewConst();
+  arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
   GEOSX_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
@@ -367,7 +367,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
     {
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
-        real64 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
+        real32 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
         RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
       }
     }
@@ -378,17 +378,18 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
                                                   real64 const dt,
                                                   real64 const timeSeismo,
                                                   localIndex iSeismo,
-                                                  arrayView1d< real64 const > const var_np1,
-                                                  arrayView1d< real64 const > const var_n,
-                                                  arrayView2d< real64 > varAtReceivers )
+                                                  arrayView1d< real32 const > const var_np1,
+                                                  arrayView1d< real32 const > const var_n,
+                                                  arrayView2d< real32 > varAtReceivers )
 {
-  real64 const time_np1 = time_n+dt;
+  real64 const time_np1 = time_n + dt;
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
-  real64 const a1 = (dt < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
-  real64 const a2 = 1.0 - a1;
+
+  real32 const a1 = (std::abs( dt ) < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
+  real32 const a2 = 1.0 - a1;
 
   if( m_nsamplesSeismoTrace > 0 )
   {
@@ -397,8 +398,8 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
       if( receiverIsLocal[ircv] == 1 )
       {
         varAtReceivers[iSeismo][ircv] = 0.0;
-        real64 vtmp_np1 = 0.0;
-        real64 vtmp_n = 0.0;
+        real32 vtmp_np1 = 0.0;
+        real32 vtmp_n = 0.0;
         for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
         {
           vtmp_np1 += var_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
@@ -438,7 +439,7 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
 
 /// Use for now until we get the same functionality in TimeHistory
 /// TODO: move implementation into WaveSolverBase
-void AcousticWaveEquationSEM::saveSeismo( localIndex const iSeismo, real64 const val, string const & filename )
+void AcousticWaveEquationSEM::saveSeismo( localIndex const iSeismo, real32 const val, string const & filename )
 {
   std::ofstream f( filename, std::ios::app );
   f<< iSeismo << " " << val << std::endl;
@@ -479,10 +480,10 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
-    arrayView1d< real64 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
     mass.zero();
     /// damping matrix to be computed for each dof in the boundary of the mesh
-    arrayView1d< real64 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
+    arrayView1d< real32 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
     damping.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
@@ -494,7 +495,11 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
-      arrayView1d< real64 const > const velocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
+      arrayView1d< real32 const > const velocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
+
+      /// Partial gradient if gradient as to be computed
+      arrayView1d< real32 > grad = elementSubRegion.getExtrinsicData< extrinsicMeshData::PartialGradient >();
+      grad.zero();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -529,7 +534,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 }
 
 
-void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
+void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition & domain )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager const & functionManager = FunctionManager::getInstance();
@@ -537,9 +542,9 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
   FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
   NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getNodeManager();
 
-  arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
-  arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-  arrayView1d< real64 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+  arrayView1d< real32 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
+  arrayView1d< real32 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+  arrayView1d< real32 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
@@ -549,8 +554,8 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
   arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
 
-  freeSurfaceFaceIndicator.zero();
-  freeSurfaceNodeIndicator.zero();
+  //freeSurfaceFaceIndicator.zero();
+  //freeSurfaceNodeIndicator.zero();
 
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
@@ -591,7 +596,6 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
   } );
 }
 
-
 void AcousticWaveEquationSEM::initializePML()
 {
   GEOSX_MARK_FUNCTION;
@@ -606,9 +610,9 @@ void AcousticWaveEquationSEM::initializePML()
 
   /// Get the default thicknesses and wave speeds in the PML regions from the PerfectlyMatchedLayer
   /// field specification parameters (from the xml)
-  real64 minThicknessPML=0;
-  real64 smallestXMinPML=0;
-  real64 largestXMaxPML=0;
+  real32 minThicknessPML=0;
+  real32 smallestXMinPML=0;
+  real32 largestXMaxPML=0;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   fsManager.forSubGroups< PerfectlyMatchedLayer >( [&] ( PerfectlyMatchedLayer const & fs )
   {
@@ -633,16 +637,16 @@ void AcousticWaveEquationSEM::initializePML()
 
     NodeManager & nodeManager = mesh.getNodeManager();
     /// WARNING: the array below is one of the PML auxiliary variables
-    arrayView1d< real64 > const indicatorPML = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
+    arrayView1d< real32 > const indicatorPML = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
     indicatorPML.zero();
 
-    real64 xInteriorMin[3]{};
-    real64 xInteriorMax[3]{};
-    real64 xGlobalMin[3]{};
-    real64 xGlobalMax[3]{};
-    real64 cMin[3]{};
-    real64 cMax[3]{};
+    real32 xInteriorMin[3]{};
+    real32 xInteriorMax[3]{};
+    real32 xGlobalMin[3]{};
+    real32 xGlobalMax[3]{};
+    real32 cMin[3]{};
+    real32 cMax[3]{};
     integer counterMin[3]{};
     integer counterMax[3]{};
 
@@ -678,18 +682,18 @@ void AcousticWaveEquationSEM::initializePML()
 
 
     /// find the interior and global coordinates limits
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > xMinGlobal( LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > yMinGlobal( LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > zMinGlobal( LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > xMaxGlobal( -LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > yMaxGlobal( -LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > zMaxGlobal( -LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > xMinInterior( LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > yMinInterior( LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > zMinInterior( LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > xMaxInterior( -LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > yMaxInterior( -LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > zMaxInterior( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > xMinGlobal( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > yMinGlobal( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > zMinGlobal( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > xMaxGlobal( -LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > yMaxGlobal( -LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > zMaxGlobal( -LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > xMinInterior( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > yMinInterior( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > zMinInterior( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > xMaxInterior( -LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > yMaxInterior( -LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > zMaxInterior( -LvArray::NumericLimits< real32 >::max );
 
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
@@ -762,12 +766,12 @@ void AcousticWaveEquationSEM::initializePML()
       CellElementSubRegion::NodeMapType const & elemToNodes =
         subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
-      arrayView1d< real64 const > const vel = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::MediumVelocity::key());
+      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( extrinsicMeshData::MediumVelocity::key());
       finiteElement::FiniteElementBase const &
       fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
-      real64 const xMin[3]{param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
-      real64 const xMax[3]{param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
+      real32 const xMin[3]{param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
+      real32 const xMax[3]{param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
 
       finiteElement::dispatch3D( fe,
                                  [&]
@@ -819,12 +823,12 @@ void AcousticWaveEquationSEM::initializePML()
     {
       if( param.thicknessMinXYZPML[i]<=minThicknessPML )
       {
-        param.thicknessMinXYZPML[i]=LvArray::NumericLimits< real64 >::max;
+        param.thicknessMinXYZPML[i]=LvArray::NumericLimits< real32 >::max;
         param.waveSpeedMinXYZPML[i]=0;
       }
       if( param.thicknessMaxXYZPML[i]<=minThicknessPML )
       {
-        param.thicknessMaxXYZPML[i]=LvArray::NumericLimits< real64 >::max;
+        param.thicknessMaxXYZPML[i]=LvArray::NumericLimits< real32 >::max;
         param.waveSpeedMaxXYZPML[i]=0;
       }
     }
@@ -865,11 +869,11 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
     NodeManager & nodeManager = mesh.getNodeManager();
 
     /// Array views of the pressure p, PML auxiliary variables, and node coordinates
-    arrayView1d< real64 const > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-    arrayView2d< real64 const > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
-    arrayView2d< real64 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
-    arrayView1d< real64 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
-    arrayView1d< real64 const > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
+    arrayView1d< real32 const > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+    arrayView2d< real32 const > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
+    arrayView2d< real32 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
+    arrayView1d< real32 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
+    arrayView1d< real32 const > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     /// Select the subregions concerned by the PML (specified in the xml by the Field Specification)
@@ -894,18 +898,18 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
 
       /// Array view of the wave speed
-      arrayView1d< real64 const > const vel = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::MediumVelocity::key());
+      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( extrinsicMeshData::MediumVelocity::key());
 
       /// Get the object needed to determine the type of the element in the subregion
       finiteElement::FiniteElementBase const &
       fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
-      real64 xMin[3];
-      real64 xMax[3];
-      real64 dMin[3];
-      real64 dMax[3];
-      real64 cMin[3];
-      real64 cMax[3];
+      real32 xMin[3];
+      real32 xMax[3];
+      real32 dMin[3];
+      real32 dMax[3];
+      real32 cMin[3];
+      real32 cMax[3];
       for( integer i=0; i<3; ++i )
       {
         xMin[i] = param.xMinPML[i];
@@ -915,7 +919,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
         cMin[i] = param.waveSpeedMinXYZPML[i];
         cMax[i] = param.waveSpeedMaxXYZPML[i];
       }
-      real64 const r = param.reflectivityPML;
+      real32 const r = param.reflectivityPML;
 
       /// Get the type of the elements in the subregion
       finiteElement::dispatch3D( fe,
@@ -950,22 +954,133 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
 
 }
 
-
-
-real64 AcousticWaveEquationSEM::solverStep( real64 const & time_n,
-                                            real64 const & dt,
-                                            integer const cycleNumber,
-                                            DomainPartition & domain )
+real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
+                                                     real64 const & dt,
+                                                     integer cycleNumber,
+                                                     DomainPartition & domain,
+                                                     bool computeGradient )
 {
-  return explicitStep( time_n, dt, cycleNumber, domain );
+  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                  [&] ( string const &,
+                                        MeshLevel & mesh,
+                                        arrayView1d< string const > const & GEOSX_UNUSED_PARAM ( regionNames ) )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    arrayView1d< real32 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
+    arrayView1d< real32 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+    arrayView1d< real32 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+
+    if( computeGradient )
+    {
+
+      arrayView1d< real32 > const p_dt2 = nodeManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
+
+      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIdx )
+      {
+        p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
+      } );
+
+      p_dt2.move( MemorySpace::host, false );
+      int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+      std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
+      std::ofstream wf( fileName, std::ios::out | std::ios::binary );
+      GEOSX_THROW_IF( !wf,
+                      "Could not open file "<< fileName << " for writting",
+                      InputError );
+      wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+      wf.close();
+      GEOSX_THROW_IF( !wf.good(),
+                      "An error occured while writting "<< fileName,
+                      InputError );
+
+    }
+
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      p_nm1[a] = p_n[a];
+      p_n[a]   = p_np1[a];
+    } );
+  } );
+
+  return dtOut;
 }
 
 
+real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
+                                                      real64 const & dt,
+                                                      integer cycleNumber,
+                                                      DomainPartition & domain,
+                                                      bool computeGradient )
+{
+  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                  [&] ( string const &,
+                                        MeshLevel & mesh,
+                                        arrayView1d< string const > const & regionNames )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
 
-real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
-                                              real64 const & dt,
-                                              integer const cycleNumber,
-                                              DomainPartition & domain )
+    arrayView1d< real32 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+
+    arrayView1d< real32 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
+    arrayView1d< real32 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+    arrayView1d< real32 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+
+    if( computeGradient )
+    {
+      ElementRegionManager & elemManager = mesh.getElemManager();
+
+      arrayView1d< real32 > const p_dt2 = nodeManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
+
+      int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+      std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
+      std::ifstream wf( fileName, std::ios::in | std::ios::binary );
+      GEOSX_THROW_IF( !wf,
+                      "Could not open file "<< fileName << " for reading",
+                      InputError );
+      // maybe better with registerTouch()
+      p_dt2.move( MemorySpace::host, true );
+      wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+      wf.close();
+      remove( fileName.c_str() );
+
+      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                  CellElementSubRegion & elementSubRegion )
+      {
+        arrayView1d< real32 const > const velocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
+        arrayView1d< real32 > grad = elementSubRegion.getExtrinsicData< extrinsicMeshData::PartialGradient >();
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+        constexpr localIndex numNodesPerElem = 8;
+
+        GEOSX_MARK_SCOPE ( updatePartialGradient );
+        forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const eltIdx )
+        {
+          for( localIndex i = 0; i < numNodesPerElem; ++i )
+          {
+            localIndex nodeIdx = elemsToNodes[eltIdx][i];
+            grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
+          }
+        } );
+      } );
+    }
+
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      p_nm1[a] = p_n[a];
+      p_n[a]   = p_np1[a];
+    } );
+  } );
+
+  return dtOut;
+}
+
+real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
+                                                      real64 const & dt,
+                                                      integer cycleNumber,
+                                                      DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -978,16 +1093,16 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real64 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
-    arrayView1d< real64 const > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
+    arrayView1d< real32 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+    arrayView1d< real32 const > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
 
-    arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
-    arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-    arrayView1d< real64 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+    arrayView1d< real32 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
+    arrayView1d< real32 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+    arrayView1d< real32 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
 
     arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
-    arrayView1d< real64 > const stiffnessVector = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
-    arrayView1d< real64 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
+    arrayView1d< real32 > const stiffnessVector = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
+    arrayView1d< real32 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
 
     bool const usePML = m_usePML;
 
@@ -1025,19 +1140,19 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     else
     {
       parametersPML const & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
-      arrayView2d< real64 > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
-      arrayView2d< real64 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
-      arrayView1d< real64 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
-      arrayView1d< real64 > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
+      arrayView2d< real32 > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
+      arrayView2d< real32 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
+      arrayView1d< real32 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
+      arrayView1d< real32 > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
-      real64 const xMin[ 3 ] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
-      real64 const xMax[ 3 ] = {param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
-      real64 const dMin[ 3 ] = {param.thicknessMinXYZPML[0], param.thicknessMinXYZPML[1], param.thicknessMinXYZPML[2]};
-      real64 const dMax[ 3 ] = {param.thicknessMaxXYZPML[0], param.thicknessMaxXYZPML[1], param.thicknessMaxXYZPML[2]};
-      real64 const cMin[ 3 ] = {param.waveSpeedMinXYZPML[0], param.waveSpeedMinXYZPML[1], param.waveSpeedMinXYZPML[2]};
-      real64 const cMax[ 3 ] = {param.waveSpeedMaxXYZPML[0], param.waveSpeedMaxXYZPML[1], param.waveSpeedMaxXYZPML[2]};
-      real64 const r = param.reflectivityPML;
+      real32 const xMin[ 3 ] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
+      real32 const xMax[ 3 ] = {param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
+      real32 const dMin[ 3 ] = {param.thicknessMinXYZPML[0], param.thicknessMinXYZPML[1], param.thicknessMinXYZPML[2]};
+      real32 const dMax[ 3 ] = {param.thicknessMaxXYZPML[0], param.thicknessMaxXYZPML[1], param.thicknessMaxXYZPML[2]};
+      real32 const cMin[ 3 ] = {param.waveSpeedMinXYZPML[0], param.waveSpeedMinXYZPML[1], param.waveSpeedMinXYZPML[2]};
+      real32 const cMax[ 3 ] = {param.waveSpeedMaxXYZPML[0], param.waveSpeedMaxXYZPML[1], param.waveSpeedMaxXYZPML[2]};
+      real32 const r = param.reflectivityPML;
 
       /// apply the main function to update some of the PML auxiliary variables
       /// Compute (divV) and (B.pressureGrad - C.auxUGrad) vectors for the PML region
@@ -1048,7 +1163,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
         {
-          real64 sigma[3];
+          real32 sigma[3];
           real64 xLocal[ 3 ];
 
           for( integer i=0; i<3; ++i )
@@ -1067,7 +1182,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
             r,
             sigma );
 
-          real64 const alpha = sigma[0] + sigma[1] + sigma[2];
+          real32 const alpha = sigma[0] + sigma[1] + sigma[2];
 
           p_np1[a] = dt2*( (rhs[a] - stiffnessVector[a])/mass[a] - divV_n[a])
                      - (1 - 0.5*alpha*dt)*p_nm1[a]
@@ -1101,24 +1216,22 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                   domain.getNeighbors(),
                                   true );
 
-    /// compute the seismic traces since last step.
-    arrayView2d< real64 > const pReceivers   = m_pressureNp1AtReceivers.toView();
+    // compute the seismic traces since last step.
+    arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
+
     computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
 
     /// prepare next step
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-      p_nm1[a] = p_n[a];
-      p_n[a]   = p_np1[a];
-
       stiffnessVector[a] = 0.0;
       rhs[a] = 0.0;
     } );
 
     if( usePML )
     {
-      arrayView2d< real64 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
-      arrayView1d< real64 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
+      arrayView2d< real32 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
+      arrayView1d< real32 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
       grad_n.zero();
       divV_n.zero();
     }
@@ -1143,24 +1256,39 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n,
                                                                 arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-    arrayView1d< real64 const > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-    arrayView1d< real64 const > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
-    arrayView2d< real64 > const pReceivers   = m_pressureNp1AtReceivers.toView();
+    arrayView1d< real32 const > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+    arrayView1d< real32 const > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+    arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, 0, p_np1, p_n, pReceivers );
   } );
 }
 
 void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
                                                       real64 const dt,
-                                                      arrayView1d< real64 const > const var_np1,
-                                                      arrayView1d< real64 const > const var_n,
-                                                      arrayView2d< real64 > varAtReceivers )
+                                                      arrayView1d< real32 const > const var_np1,
+                                                      arrayView1d< real32 const > const var_n,
+                                                      arrayView2d< real32 > varAtReceivers )
 {
+
+  /*
+   * In forward case we compute seismo if time_n + dt  is the first time
+   * step after the timeSeismo to write.
+   *
+   *  time_n        timeSeismo    time_n + dt
+   *   ---|--------------|-------------|
+   *
+   * In backward (time_n goes decreasing) case we compute seismo if
+   * time_n is the last time step before the timeSeismo to write.
+   *
+   *  time_n - dt    timeSeismo    time_n
+   *   ---|--------------|-------------|
+   */
   for( real64 timeSeismo;
-       (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace;
+       (m_forward)?((timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + dt + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace):
+       ((timeSeismo = m_dtSeismoTrace*(m_nsamplesSeismoTrace-m_indexSeismoTrace-1)) >= (time_n - dt -  epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace);
        m_indexSeismoTrace++ )
   {
-    computeSeismoTrace( time_n, dt, timeSeismo, m_indexSeismoTrace, var_np1, var_n, varAtReceivers );
+    computeSeismoTrace( time_n, (m_forward)?dt:-dt, timeSeismo, (m_forward)?m_indexSeismoTrace:(m_nsamplesSeismoTrace-m_indexSeismoTrace-1), var_np1, var_n, varAtReceivers );
   }
 }
 

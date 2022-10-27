@@ -400,7 +400,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       } );
     } );
 
-    // Save initial pressure field (needed by the poromechanics solvers to compute the deltaPressure needed by the total stress)
+    // Save initial pressure field
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
     {
@@ -489,7 +489,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     real64 const minElevation = LvArray::math::min( globalMinElevation[equilIndex], datumElevation );
     real64 const maxElevation = LvArray::math::max( globalMaxElevation[equilIndex], datumElevation );
     real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
-    localIndex const numPointsInTable = std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1;
+    localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 : 1;
 
     real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
     GEOSX_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
@@ -566,11 +566,8 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     // Step 4: assign pressure as a function of elevation
     // TODO: this last step should probably be delayed to wait for the creation of FaceElements
-    arrayView2d< real64 const > const elemCenter =
-      subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
-
-    arrayView1d< real64 > const pres =
-      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+    arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
+    arrayView1d< real64 > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
@@ -910,8 +907,7 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
                                                   subRegion,
                                                   extrinsicBoundaryFieldKey );
 
-    arrayView1d< integer const > const ghostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
     arrayView1d< globalIndex const > const dofNumber =
       subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< real64 const > const bcField =
@@ -1043,8 +1039,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       }
 
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< integer const > const ghostRank =
-        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       // Step 3.1: get the values of the source boundary condition that need to be added to the rhs
 
