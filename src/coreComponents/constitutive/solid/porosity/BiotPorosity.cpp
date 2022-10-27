@@ -36,12 +36,20 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setDescription( "Grain bulk modulus" );
 
   registerExtrinsicData( extrinsicMeshData::porosity::biotCoefficient{}, &m_biotCoefficient );
+
+  registerExtrinsicData( extrinsicMeshData::porosity::thermalExpansionCoefficient{}, &m_thermalExpansionCoefficient );
+
+  registerExtrinsicData( extrinsicMeshData::porosity::volStrainIncrement{}, &m_volStrainIncrement );
+
+  registerExtrinsicData( extrinsicMeshData::porosity::solidBulkModulus{}, &m_bulkModulus );
 }
 
 void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
                                              localIndex const numConstitutivePointsPerParentIndex )
 {
   PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  m_volStrainIncrement.resize( 0, numConstitutivePointsPerParentIndex );
 }
 
 void BiotPorosity::postProcessInput()

@@ -208,13 +208,13 @@ real64 ThermalSinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & 
       resetStateToBeginningOfStep( domain );
     }
 
-    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", FlowSolver: " );
+    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", MechanicsSolver: " );
 
-    dtReturnTemporary = flowSolver.nonlinearImplicitStep( time_n,
-                                                          dtReturn,
-                                                          cycleNumber,
-                                                          domain );
-
+    dtReturnTemporary = solidSolver.nonlinearImplicitStep( time_n,
+                                                           dtReturn,
+                                                           cycleNumber,
+                                                           domain );
+    
     if( dtReturnTemporary < dtReturn )
     {
       iter = 0;
@@ -222,7 +222,7 @@ real64 ThermalSinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & 
       continue;
     }
 
-    if( flowSolver.getNonlinearSolverParameters().m_numNewtonIterations == 0 && iter > 0 )
+    if( solidSolver.getNonlinearSolverParameters().m_numNewtonIterations == 0 && iter > 0 )
     {
       GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter << " iterations! *****\n" );
       isConverged = true;
@@ -235,12 +235,12 @@ real64 ThermalSinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & 
       break;
     }
 
-    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", MechanicsSolver: " );
+    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", FlowSolver: " );
 
-    dtReturnTemporary = solidSolver.nonlinearImplicitStep( time_n,
-                                                           dtReturn,
-                                                           cycleNumber,
-                                                           domain );
+    dtReturnTemporary = flowSolver.nonlinearImplicitStep( time_n,
+                                                          dtReturn,
+                                                          cycleNumber,
+                                                          domain );
                                                            
     if( dtReturnTemporary < dtReturn )
     {

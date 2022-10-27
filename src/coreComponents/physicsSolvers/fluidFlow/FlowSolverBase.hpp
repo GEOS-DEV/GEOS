@@ -76,6 +76,7 @@ public:
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
+    static constexpr char const * isBiotString() { return "isBiot"; }
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
 
@@ -142,6 +143,9 @@ protected:
 
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
+
+  /// flag to determine whether or not the Biot porosity is used
+  integer m_isBiot; 
 
   real64 m_fluxEstimate;
 

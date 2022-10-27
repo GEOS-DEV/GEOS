@@ -54,6 +54,25 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
+  virtual void updateStateFromPressure( localIndex const k,
+                                        localIndex const q,
+                                        real64 const & deltaPressure ) const override final
+  {
+    m_porosityUpdate.updateFromPressure( k, q, deltaPressure );
+    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual void updateStateFromPressureAndTemperature( localIndex const k,
+                                                      localIndex const q,
+                                                      real64 const & deltaPressure,
+                                                      real64 const & deltaTemperature ) const override final
+  {
+    m_porosityUpdate.updateFromPressureAndTemperature( k, q, deltaPressure, deltaTemperature );
+    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
+  }
+
+  GEOSX_HOST_DEVICE
   void smallStrainUpdateSinglePhase( localIndex const k,
                                      localIndex const q,
                                      real64 const & initialFluidPressure,
@@ -146,6 +165,8 @@ public:
                                             real64 ( & totalStress )[6],
                                             DiscretizationOps & stiffness ) const
   {
+    real64 effectiveMeanStressIncrement = 0.0; 
+    
     // Compute total stress increment and its derivative
     computeTotalStressThermal( k,
                                q,
@@ -154,29 +175,33 @@ public:
                                initialTemperature,
                                temperature,
                                strainIncrement,
+                               effectiveMeanStressIncrement, 
                                totalStress,
                                stiffness );
 
     // Compute porosity
     real64 const deltaFluidPressure = fluidPressure - fluidPressure_n;
     real64 const deltaTemperature = temperature - temperature_n;
+
+    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
+
+    real64 const totalMeanStressIncrement = effectiveMeanStressIncrement - biotCoefficient * deltaFluidPressure - 3 * thermalExpansionCoefficient * bulkModulus * deltaTemperature; 
+    real64 const totalMeanStrainIncrement = totalMeanStressIncrement / bulkModulus; 
+
     real64 porosity;
     real64 porosity_n;
     real64 porosityInit;
-    real64 dPorosity_dVolStrain; // No use. Just to input something
-    real64 dPorosity_dPressure; // No use. Just to input something
-    real64 dPorosity_dTemperature; // No use. Just to input something
+
     computeThermalPorosity( k,
                             q,
                             deltaFluidPressure,
                             deltaTemperature, 
-                            strainIncrement,
+                            totalMeanStrainIncrement,
                             porosity,
                             porosity_n,
-                            porosityInit,
-                            dPorosity_dVolStrain,
-                            dPorosity_dPressure,
-                            dPorosity_dTemperature );
+                            porosityInit );
   }
 
   template< int NUM_MAX_COMPONENTS >
@@ -513,22 +538,19 @@ private:
                                localIndex const q,
                                real64 const & deltaFluidPressure,
                                real64 const & deltaTemperature, 
-                               real64 const ( &strainIncrement )[6],
+                               real64 const & totalMeanStrainIncrement,
                                real64 & porosity,
                                real64 & porosity_n,
-                               real64 & porosityInit,
-                               real64 & dPorosity_dVolStrain,
-                               real64 & dPorosity_dPressure,
-                               real64 & dPorosity_dTemperature ) const
-  {
-    m_porosityUpdate.updateFromPressureTemperatureAndStrain( k,
-                                                             q,
-                                                             deltaFluidPressure,
-                                                             deltaTemperature, 
-                                                             strainIncrement,
-                                                             dPorosity_dPressure,
-                                                             dPorosity_dTemperature, 
-                                                             dPorosity_dVolStrain );
+                               real64 & porosityInit ) const
+  {    
+    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
+    
+    m_porosityUpdate.updateFromPressureTemperatureAndMeanStress( k,
+                                                                 q,
+                                                                 deltaFluidPressure,
+                                                                 deltaTemperature, 
+                                                                 totalMeanStrainIncrement,
+                                                                 bulkModulus );
 
     porosity = m_porosityUpdate.getPorosity( k, q );
     porosity_n = m_porosityUpdate.getPorosity_n( k, q );
@@ -575,6 +597,7 @@ private:
                                   real64 const & initialTemperature,
                                   real64 const & temperature,
                                   real64 const ( &strainIncrement )[6],
+                                  real64 & effectiveMeanStressIncrement, 
                                   real64 ( & totalStress )[6],
                                   DiscretizationOps & stiffness ) const
   {
@@ -596,6 +619,8 @@ private:
     // Add the contribution of the thermal expansion into the total stress
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
+
+    effectiveMeanStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] ); 
 
     m_porosityUpdate.updateThermalExpansionCoefficient( k, thermalExpansionCoefficient ); 
 

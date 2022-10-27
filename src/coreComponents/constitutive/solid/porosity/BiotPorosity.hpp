@@ -51,6 +51,9 @@ public:
                        arrayView2d< real64 > const & initialPorosity,
                        arrayView1d< real64 > const & referencePorosity,
                        arrayView1d< real64 > const & biotCoefficient,
+                       arrayView1d< real64 > const & thermalExpansionCoefficient, 
+                       arrayView2d< real64 > const & volStrainIncrement, 
+                       arrayView1d< real64 > const & bulkModulus, 
                        real64 const & grainBulkModulus ): PorosityBaseUpdates( newPorosity,
                                                                                porosity_n,
                                                                                dPorosity_dPressure,
@@ -58,6 +61,9 @@ public:
                                                                                initialPorosity,
                                                                                referencePorosity ),
     m_biotCoefficient( biotCoefficient ),
+    m_thermalExpansionCoefficient( thermalExpansionCoefficient ), 
+    m_volStrainIncrement( volStrainIncrement ), 
+    m_bulkModulus( bulkModulus ), 
     m_grainBulkModulus( grainBulkModulus )
   {}
 
@@ -91,29 +97,100 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  void updateFromPressureTemperatureAndStrain( localIndex const k,
-                                               localIndex const q,
-                                               real64 const & deltaPressure,
-                                               real64 const & deltaTemperature, 
-                                               real64 const (&strainIncrement)[6],
-                                               real64 & dPorosity_dPressure,
-                                               real64 & dPorosity_dTemperature, 
-                                               real64 & dPorosity_dVolStrain ) const
+  void updateFromPressureTemperatureAndMeanStress( localIndex const k,
+                                                   localIndex const q,
+                                                   real64 const & deltaPressure,
+                                                   real64 const & deltaTemperature, 
+                                                   real64 const & totalMeanStrainIncrement,
+                                                   real64 const & bulkModulus ) const
   {
     real64 const biotSkeletonModulusInverse = (m_biotCoefficient[k] - m_referencePorosity[k]) / m_grainBulkModulus;
     real64 const porosityThermalExpansion = 3 * m_thermalExpansionCoefficient[k] * m_referencePorosity[k]; 
 
+    m_volStrainIncrement[k][q] = totalMeanStrainIncrement; 
+    m_bulkModulus[k] = bulkModulus; 
+
     real64 const porosity = m_porosity_n[k][q]
-                            + m_biotCoefficient[k] * LvArray::tensorOps::symTrace< 3 >( strainIncrement ) + biotSkeletonModulusInverse * deltaPressure
+                            + m_biotCoefficient[k] * totalMeanStrainIncrement + biotSkeletonModulusInverse * deltaPressure
                             + porosityThermalExpansion * deltaTemperature ;
 
-    dPorosity_dPressure = biotSkeletonModulusInverse;
-
-    dPorosity_dTemperature = porosityThermalExpansion; 
-
-    dPorosity_dVolStrain = m_biotCoefficient[k];
-
     savePorosity( k, q, porosity, biotSkeletonModulusInverse, porosityThermalExpansion );
+  }
+
+  GEOSX_HOST_DEVICE
+  void computePorosity( real64 const & pressure,
+                        real64 & porosity,
+                        real64 & dPorosity_dPressure,
+                        real64 const & referencePorosity,
+                        real64 const & biotCoefficient, 
+                        real64 const & volStrainIncrement,
+                        real64 const & bulkModulus, 
+                        real64 const & porosity_n ) const
+  {
+    real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / m_grainBulkModulus;
+
+    porosity = porosity_n + biotSkeletonModulusInverse * pressure + biotCoefficient * biotCoefficient / bulkModulus * pressure 
+                          + biotCoefficient * volStrainIncrement; 
+
+    dPorosity_dPressure = biotSkeletonModulusInverse + biotCoefficient * biotCoefficient / bulkModulus;
+  }
+
+  GEOSX_HOST_DEVICE
+  void computePorosityThermal( real64 const & pressure,
+                               real64 const & temperature, 
+                               real64 & porosity,
+                               real64 & dPorosity_dPressure,
+                               real64 & dPorosity_dTemperature,
+                               real64 const & referencePorosity,
+                               real64 const & biotCoefficient,
+                               real64 const & thermalExpansionCoefficient,  
+                               real64 const & volStrainIncrement,
+                               real64 const & bulkModulus,  
+                               real64 const & porosity_n ) const
+  {
+    real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / m_grainBulkModulus;
+    real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * referencePorosity; 
+
+    porosity = porosity_n + biotSkeletonModulusInverse * pressure + biotCoefficient * biotCoefficient / bulkModulus * pressure
+                          + porosityThermalExpansion * temperature
+                          + biotCoefficient * volStrainIncrement; 
+
+    dPorosity_dPressure = biotSkeletonModulusInverse + biotCoefficient * biotCoefficient / bulkModulus;
+    dPorosity_dTemperature = porosityThermalExpansion; 
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual void updateFromPressure( localIndex const k,
+                                   localIndex const q,
+                                   real64 const & pressure ) const override final
+  {
+    computePorosity( pressure, // it is delta pressure here  
+                     m_newPorosity[k][q],
+                     m_dPorosity_dPressure[k][q],
+                     m_referencePorosity[k], 
+                     m_biotCoefficient[k],
+                     m_volStrainIncrement[k][q], 
+                     m_bulkModulus[k], 
+                     m_porosity_n[k][q] ); 
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual void updateFromPressureAndTemperature( localIndex const k,
+                                                 localIndex const q,
+                                                 real64 const & pressure, 
+                                                 real64 const & temperature ) const override final
+  {
+    computePorosityThermal( pressure, // it is delta pressure here  
+                            temperature, // it is delta temperature here  
+                            m_newPorosity[k][q],
+                            m_dPorosity_dPressure[k][q],
+                            m_dPorosity_dTemperature[k][q],
+                            m_referencePorosity[k], 
+                            m_biotCoefficient[k],
+                            m_thermalExpansionCoefficient[k], 
+                            m_volStrainIncrement[k][q], 
+                            m_bulkModulus[k], 
+                            m_porosity_n[k][q] ); 
   }
 
   GEOSX_HOST_DEVICE
@@ -133,7 +210,11 @@ public:
 protected:
   arrayView1d< real64 > m_biotCoefficient;
 
-  arrayView1d< real64 > m_thermalExpansionCoefficient;
+  arrayView1d< real64 > m_thermalExpansionCoefficient; 
+
+  arrayView2d< real64 > m_volStrainIncrement; 
+
+  arrayView1d< real64 > m_bulkModulus; 
 
   real64 m_grainBulkModulus;
 };
@@ -177,6 +258,9 @@ public:
                           m_initialPorosity,
                           m_referencePorosity,
                           m_biotCoefficient,
+                          m_thermalExpansionCoefficient,
+                          m_volStrainIncrement,
+                          m_bulkModulus,
                           m_grainBulkModulus );
   }
 
@@ -184,6 +268,12 @@ protected:
   virtual void postProcessInput() override;
 
   array1d< real64 > m_biotCoefficient;
+
+  array1d< real64 > m_thermalExpansionCoefficient;
+
+  array2d< real64 > m_volStrainIncrement;
+
+  array1d< real64 > m_bulkModulus; 
 
   real64 m_grainBulkModulus;
 };

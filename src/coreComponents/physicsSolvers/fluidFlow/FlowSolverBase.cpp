@@ -53,6 +53,24 @@ void execute1( POROUSWRAPPER_TYPE porousWrapper,
 }
 
 template< typename POROUSWRAPPER_TYPE >
+void execute1( POROUSWRAPPER_TYPE porousWrapper,
+               CellElementSubRegion & subRegion,
+               arrayView1d< real64 const > const & pressure,
+               arrayView1d< real64 const > const & pressure_n )
+{
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+    {
+      real64 const deltaPressure = pressure[k] - pressure_n[k]; 
+      
+      porousWrapper.updateStateFromPressure( k, q,
+                                             deltaPressure );
+    }
+  } );
+}
+
+template< typename POROUSWRAPPER_TYPE >
 void execute2( POROUSWRAPPER_TYPE porousWrapper,
                CellElementSubRegion & subRegion,
                arrayView1d< real64 const > const & pressure,
@@ -65,6 +83,28 @@ void execute2( POROUSWRAPPER_TYPE porousWrapper,
       porousWrapper.updateStateFromPressureAndTemperature( k, q,
                                                            pressure[k],
                                                            temperature[k] );
+    }
+  } );
+}
+
+template< typename POROUSWRAPPER_TYPE >
+void execute2( POROUSWRAPPER_TYPE porousWrapper,
+               CellElementSubRegion & subRegion,
+               arrayView1d< real64 const > const & pressure,
+               arrayView1d< real64 const > const & pressure_n,
+               arrayView1d< real64 const > const & temperature,
+               arrayView1d< real64 const > const & temperature_n )
+{
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+    {
+      real64 const deltaPressure = pressure[k] - pressure_n[k]; 
+      real64 const deltaTemperature = temperature[k] - temperature_n[k]; 
+      
+      porousWrapper.updateStateFromPressureAndTemperature( k, q,
+                                                           deltaPressure,
+                                                           deltaTemperature );
     }
   } );
 }
@@ -93,12 +133,18 @@ FlowSolverBase::FlowSolverBase( string const & name,
   SolverBase( name, parent ),
   m_numDofPerCell( 0 ),
   m_isThermal( 0 ),
+  m_isBiot( 0 ), 
   m_fluxEstimate()
 {
   this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
+
+  this->registerWrapper( viewKeyStruct::isBiotString(), &m_isBiot ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether the sequentially coupled problem uses a Biot porosity." );
 
   this->registerWrapper( viewKeyStruct::inputFluxEstimateString(), &m_fluxEstimate ).
     setApplyDefaultValue( 1.0 ).
@@ -296,7 +342,10 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   GEOSX_MARK_FUNCTION;
 
   arrayView1d< real64 const > const & pressure = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+  arrayView1d< real64 const > const & pressure_n = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
+  
   arrayView1d< real64 const > const & temperature = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+  arrayView1d< real64 const > const & temperature_n = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature_n >();
 
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
@@ -307,11 +356,25 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
 
     if( m_isThermal )
     {
-      execute2( porousWrapper, subRegion, pressure, temperature );
+      if( m_isBiot )
+      {
+        execute2( porousWrapper, subRegion, pressure, pressure_n, temperature, temperature_n );
+      }
+      else
+      {
+        execute2( porousWrapper, subRegion, pressure, temperature ); 
+      }
     }
     else
     {
-      execute1( porousWrapper, subRegion, pressure );
+      if( m_isBiot )
+      {
+        execute1( porousWrapper, subRegion, pressure, pressure_n );
+      }
+      else
+      {
+        execute1( porousWrapper, subRegion, pressure ); 
+      }
     }
   } );
 }

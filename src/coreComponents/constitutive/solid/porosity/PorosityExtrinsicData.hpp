@@ -86,6 +86,29 @@ EXTRINSIC_MESH_DATA_TRAIT( biotCoefficient,
                            WRITE_AND_READ,
                            "Biot coefficient" );
 
+EXTRINSIC_MESH_DATA_TRAIT( thermalExpansionCoefficient,
+                           "thermalExpansionCoefficient",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Thermal expansion coefficient" );
+
+EXTRINSIC_MESH_DATA_TRAIT( volStrainIncrement,
+                           "volStrainIncrement",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Volumetric strain increment" );
+
+EXTRINSIC_MESH_DATA_TRAIT( solidBulkModulus,
+                           "solidBulkModulus",
+                           array1d< real64 >,
+                           1e-6,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Solid bulk modulus" );
 }
 
 }
