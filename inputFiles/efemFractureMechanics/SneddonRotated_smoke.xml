@@ -27,7 +27,7 @@
       origin="{ 1.5, 1.5, 1.5 }"
       lengthVector="{ 0.8321, -0.5547, 0 }"
       widthVector="{ 0, 0, 1 }"
-      dimensions="{ 1, 4 }"/>
+      dimensions="{ 1.1, 4 }"/>
   </Geometry>
 
     <Events

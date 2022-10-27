@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./deadOil_fractureMatrixFlow_EDFM_base.xml" />
+    <File name="./deadOil_fractureMatrixFlow_edfm_base.xml" />
   </Included>
 
   <Geometry>

@@ -15,9 +15,7 @@
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
         directParallel="0"
-        solverType="gmres"
-        preconditionerType="mgr"
-        logLevel="1"/>
+        solverType="direct"/>
     </SinglePhasePoromechanicsEmbeddedFractures>
 
     <SolidMechanicsEmbeddedFractures
@@ -31,8 +29,7 @@
       name="matrixMechSolver"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Domain }"
-      />
+      targetRegions="{ Domain }"/>
 
     <SinglePhaseFVM
       name="flowSolver"
@@ -202,7 +199,7 @@
     <FieldSpecification
       name="xnegconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xneg, xpos }"/>
@@ -210,7 +207,7 @@
     <FieldSpecification
       name="yposconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ ypos, yneg }"/>
@@ -218,7 +215,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>
