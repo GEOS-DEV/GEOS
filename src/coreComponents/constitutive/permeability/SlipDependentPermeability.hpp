@@ -55,9 +55,11 @@ public:
                                                        localIndex const q,
                                                        real64 const & oldHydraulicAperture,
                                                        real64 const & newHydraulicAperture,
-                                                       real64 const ( &dispJump )[3] ) const override
+                                                       real64 const & pressure,
+                                                       real64 const ( &dispJump )[3],
+                                                       real64 const ( &traction )[3] ) const override
   {
-    GEOSX_UNUSED_VAR( q, oldHydraulicAperture, newHydraulicAperture );
+    GEOSX_UNUSED_VAR( q, oldHydraulicAperture, newHydraulicAperture, traction, pressure );
 
     compute( dispJump,
              m_initialPermeability,
@@ -115,14 +117,6 @@ public:
                           m_initialPermeability );
   }
 
-  struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
-  {
-    static constexpr char const * dPerm_dDispJumpString() { return "dPerm_dDispJump"; }
-    static constexpr char const * shearDispThresholdString() { return "shearDispThreshold"; }
-    static constexpr char const * maxPermMultiplierString() { return "maxPermMultiplier"; }
-    static constexpr char const * initialPermeabilityString() { return "initialPermeability"; }
-  };
-
 private:
 
   /// Derivative of fracture permeability w.r.t. displacement jump
@@ -136,6 +130,13 @@ private:
 
   /// Initial permeability tensor
   R1Tensor m_initialPermeability;
+
+  struct viewKeyStruct
+  {
+    static constexpr char const * shearDispThresholdString() { return "shearDispThreshold"; }
+    static constexpr char const * maxPermMultiplierString() { return "maxPermMultiplier"; }
+    static constexpr char const * initialPermeabilityString() { return "initialPermeability"; }
+  };
 
 };
 
