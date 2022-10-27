@@ -1369,13 +1369,11 @@ std::vector< int > getVtkToGeosxPolyhedronNodeOrdering( ElementType const elemTy
 
 /**
  * @brief Fill @p cellBlock with the appropriate nodes and local/global mappings.
- * @param[in] elemType the geosx cell type for cells of the CellBlock being written
  * @param[in] cellIds the cell indexes of cell type \p cellType within this region
  * @param[in] mesh the vtkUnstructuredGrid or vtkStructuredGrid that is loaded
  * @param[in,out] cellBlock The cell block to be written
  */
 void fillCellBlock( vtkDataSet & mesh,
-                    ElementType const elemType,
                     std::vector< vtkIdType > const & cellIds,
                     CellBlock & cellBlock )
 {
@@ -1396,6 +1394,7 @@ void fillCellBlock( vtkDataSet & mesh,
   };
 
   // Writing connectivity and Local to Global
+  ElementType const elemType = cellBlock.getElementType();
   std::vector< int > const nodeOrderFixed = vtkToGeosxNodeOrderingExists( elemType )
                                           ? getVtkToGeosxNodeOrdering( elemType )
                                           : std::vector< int >();
@@ -1840,7 +1839,7 @@ void writeCells( vtkDataSet & mesh,
       cellBlock.setElementType( elemType );
       cellBlock.resize( LvArray::integerConversion< localIndex >( cellIds.size() ) );
 
-      vtk::fillCellBlock( mesh, elemType, cellIds, cellBlock );
+      vtk::fillCellBlock( mesh, cellIds, cellBlock );
     }
   }
 }

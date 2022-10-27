@@ -170,7 +170,7 @@ TEST( VTKImport, cube )
   for( string const & meshFile: meshFiles )
   {
     TestMeshImport( testMeshDir + "/" + meshFile, validate );
-  } 
+  }
 
 }
 
