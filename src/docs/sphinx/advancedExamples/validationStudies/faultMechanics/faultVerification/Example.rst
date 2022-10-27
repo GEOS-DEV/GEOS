@@ -2,7 +2,7 @@
 
 
 ###########################################################
-Verification of Induced Sresses Along a Fault
+Verification of Induced Stresses Along a Fault
 ###########################################################
 
 
