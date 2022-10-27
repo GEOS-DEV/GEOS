@@ -61,54 +61,58 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr5 );
   }
-  else if( auto const * const ptr6 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
+  else if( auto const * const ptr6 = dynamic_cast< Q2_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
   {
     lambda( *ptr6 );
   }
-  else if( auto const * const ptr7 = dynamic_cast< Q5_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
+  else if( auto const * const ptr7 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
   {
     lambda( *ptr7 );
   }
-#ifdef GEOSX_DISPATCH_VEM
-  else if( auto const * const ptr8 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 const * >(&input) ) // VEM on Tetrahedron
+  else if( auto const * const ptr8 = dynamic_cast< Q5_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
   {
     lambda( *ptr8 );
   }
-  else if( auto const * const ptr9 = dynamic_cast< H1_Wedge_VEM_Gauss1 const * >(&input) ) // VEM on Wedge
+#ifdef GEOSX_DISPATCH_VEM
+  else if( auto const * const ptr9 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 const * >(&input) ) // VEM on Tetrahedron
   {
     lambda( *ptr9 );
   }
-  else if( auto const * const ptr10 = dynamic_cast< H1_Hexahedron_VEM_Gauss1 const * >(&input) ) // VEM on Hexahedron
+  else if( auto const * const ptr10 = dynamic_cast< H1_Wedge_VEM_Gauss1 const * >(&input) ) // VEM on Wedge
   {
     lambda( *ptr10 );
   }
-  else if( auto const * const ptr11 = dynamic_cast< H1_Prism5_VEM_Gauss1 const * >(&input) ) // VEM on Prism5
+  else if( auto const * const ptr11 = dynamic_cast< H1_Hexahedron_VEM_Gauss1 const * >(&input) ) // VEM on Hexahedron
   {
     lambda( *ptr11 );
   }
-  else if( auto const * const ptr12 = dynamic_cast< H1_Prism6_VEM_Gauss1 const * >(&input) ) // VEM on Prism6
+  else if( auto const * const ptr12 = dynamic_cast< H1_Prism5_VEM_Gauss1 const * >(&input) ) // VEM on Prism5
   {
     lambda( *ptr12 );
   }
-  else if( auto const * const ptr13 = dynamic_cast< H1_Prism7_VEM_Gauss1 const * >(&input) ) // VEM on Prism7
+  else if( auto const * const ptr13 = dynamic_cast< H1_Prism6_VEM_Gauss1 const * >(&input) ) // VEM on Prism6
   {
     lambda( *ptr13 );
   }
-  else if( auto const * const ptr14 = dynamic_cast< H1_Prism8_VEM_Gauss1 const * >(&input) ) // VEM on Prism8
+  else if( auto const * const ptr14 = dynamic_cast< H1_Prism7_VEM_Gauss1 const * >(&input) ) // VEM on Prism7
   {
     lambda( *ptr14 );
   }
-  else if( auto const * const ptr15 = dynamic_cast< H1_Prism9_VEM_Gauss1 const * >(&input) ) // VEM on Prism9
+  else if( auto const * const ptr15 = dynamic_cast< H1_Prism8_VEM_Gauss1 const * >(&input) ) // VEM on Prism8
   {
     lambda( *ptr15 );
   }
-  else if( auto const * const ptr16 = dynamic_cast< H1_Prism10_VEM_Gauss1 const * >(&input) ) // VEM on Prism10
+  else if( auto const * const ptr16 = dynamic_cast< H1_Prism9_VEM_Gauss1 const * >(&input) ) // VEM on Prism9
   {
     lambda( *ptr16 );
   }
-  else if( auto const * const ptr17 = dynamic_cast< H1_Prism11_VEM_Gauss1 const * >(&input) ) // VEM on Prism11
+  else if( auto const * const ptr17 = dynamic_cast< H1_Prism10_VEM_Gauss1 const * >(&input) ) // VEM on Prism10
   {
     lambda( *ptr17 );
+  }
+  else if( auto const * const ptr18 = dynamic_cast< H1_Prism11_VEM_Gauss1 const * >(&input) ) // VEM on Prism11
+  {
+    lambda( *ptr18 );
   }
 #endif
   else
@@ -143,54 +147,58 @@ dispatch3D( FiniteElementBase & input,
   {
     lambda( *ptr5 );
   }
-  else if( auto * const ptr6 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto * >(&input) )
+  else if( auto * const ptr6 = dynamic_cast< Q2_Hexahedron_Lagrange_GaussLobatto * >(&input) )
   {
     lambda( *ptr6 );
   }
-  else if( auto * const ptr7 = dynamic_cast< Q5_Hexahedron_Lagrange_GaussLobatto * >(&input) )
+  else if( auto * const ptr7 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto * >(&input) )
   {
     lambda( *ptr7 );
   }
-#ifdef GEOSX_DISPATCH_VEM
-  else if( auto * const ptr8 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 * >(&input) ) // VEM on Tetrahedron
+  else if( auto * const ptr8 = dynamic_cast< Q5_Hexahedron_Lagrange_GaussLobatto * >(&input) )
   {
     lambda( *ptr8 );
   }
-  else if( auto * const ptr9 = dynamic_cast< H1_Wedge_VEM_Gauss1 * >(&input) ) // VEM on Wedge
+#ifdef GEOSX_DISPATCH_VEM
+  else if( auto * const ptr9 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 * >(&input) ) // VEM on Tetrahedron
   {
     lambda( *ptr9 );
   }
-  else if( auto * const ptr10 = dynamic_cast< H1_Hexahedron_VEM_Gauss1 * >(&input) ) // VEM on Hexahedron
+  else if( auto * const ptr10 = dynamic_cast< H1_Wedge_VEM_Gauss1 * >(&input) ) // VEM on Wedge
   {
     lambda( *ptr10 );
   }
-  else if( auto * const ptr11 = dynamic_cast< H1_Prism5_VEM_Gauss1 * >(&input) ) // VEM on Prism5
+  else if( auto * const ptr11 = dynamic_cast< H1_Hexahedron_VEM_Gauss1 * >(&input) ) // VEM on Hexahedron
   {
     lambda( *ptr11 );
   }
-  else if( auto * const ptr12 = dynamic_cast< H1_Prism6_VEM_Gauss1 * >(&input) ) // VEM on Prism6
+  else if( auto * const ptr12 = dynamic_cast< H1_Prism5_VEM_Gauss1 * >(&input) ) // VEM on Prism5
   {
     lambda( *ptr12 );
   }
-  else if( auto * const ptr13 = dynamic_cast< H1_Prism7_VEM_Gauss1 * >(&input) ) // VEM on Prism7
+  else if( auto * const ptr13 = dynamic_cast< H1_Prism6_VEM_Gauss1 * >(&input) ) // VEM on Prism6
   {
     lambda( *ptr13 );
   }
-  else if( auto * const ptr14 = dynamic_cast< H1_Prism8_VEM_Gauss1 * >(&input) ) // VEM on Prism8
+  else if( auto * const ptr14 = dynamic_cast< H1_Prism7_VEM_Gauss1 * >(&input) ) // VEM on Prism7
   {
     lambda( *ptr14 );
   }
-  else if( auto * const ptr15 = dynamic_cast< H1_Prism9_VEM_Gauss1 * >(&input) ) // VEM on Prism9
+  else if( auto * const ptr15 = dynamic_cast< H1_Prism8_VEM_Gauss1 * >(&input) ) // VEM on Prism8
   {
     lambda( *ptr15 );
   }
-  else if( auto * const ptr16 = dynamic_cast< H1_Prism10_VEM_Gauss1 * >(&input) ) // VEM on Prism10
+  else if( auto * const ptr16 = dynamic_cast< H1_Prism9_VEM_Gauss1 * >(&input) ) // VEM on Prism9
   {
     lambda( *ptr16 );
   }
-  else if( auto * const ptr17 = dynamic_cast< H1_Prism11_VEM_Gauss1 * >(&input) ) // VEM on Prism11
+  else if( auto * const ptr17 = dynamic_cast< H1_Prism10_VEM_Gauss1 * >(&input) ) // VEM on Prism10
   {
     lambda( *ptr17 );
+  }
+  else if( auto * const ptr18 = dynamic_cast< H1_Prism11_VEM_Gauss1 * >(&input) ) // VEM on Prism11
+  {
+    lambda( *ptr18 );
   }
 #endif
   else
