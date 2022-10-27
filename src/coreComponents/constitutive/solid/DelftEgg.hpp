@@ -262,7 +262,7 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 
   eps_s_trial = trialQ/3.0/mu;
 
-  real64 solution[3] = {}, residual[3] = {}, delta[3] = {};
+  real64 solution[3], residual[3], delta[3];
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
 
   solution[0] = eps_v_trial; // initial guess for elastic volumetric strain
