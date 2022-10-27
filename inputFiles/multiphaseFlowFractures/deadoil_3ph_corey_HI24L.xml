@@ -14,9 +14,9 @@
       maxCompFractionChange="1"
       maxRelativePressureChange="1"
       targetRegions="{ Domain, Faults }"
-      initialDt="1e3">
+      initialDt="1e4">
       <NonlinearSolverParameters
-        newtonTol="1.0e-2"
+        newtonTol="1.0e-3"
         newtonMaxIter="15"
         maxTimeStepCuts="10"
         lineSearchMaxCuts="2"/>
@@ -79,7 +79,7 @@
     <PeriodicEvent
       name="solverApplications1"
       beginTime="0"
-      maxEventDt="250"
+      maxEventDt="1000"
       target="/Solvers/compflow"/>
 
     <PeriodicEvent
