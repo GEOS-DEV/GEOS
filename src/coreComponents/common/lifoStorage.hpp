@@ -84,6 +84,15 @@ private:
    */
   std::deque< std::future< void > > m_hostToDeviceFutures;
   /**
+   * Future to be aware data push has been completed
+   */
+  std::future< void > m_pushFuture;
+  /**
+   * Future to be aware data pop has been completed
+   */
+  std::future< void > m_popFuture;
+
+  /**
    * Counter of buffer stored in LIFO
    */
   int m_bufferCount;
@@ -149,6 +158,25 @@ public:
   }
 
   /**
+   * Asynchroneously push a copy of the given LvArray into the LIFO
+   *
+   * @param array The LvArray to store in the LIFO, should match the size of the data used in constructor.
+   */
+  void pushAsync( arrayView1d< T > array )
+  {
+    pushWait();
+    m_pushFuture = std::async( std::launch::async, [ array, this ] { push( array ); } );
+  }
+
+  /**
+   * Waits for last push to be terminated
+   */
+  void pushWait()
+  {
+    if( m_pushFuture.valid() ) m_pushFuture.get();
+  }
+
+  /**
    * Push a copy of the given LvArray into the LIFO
    *
    * @param array The LvArray to store in the LIFO, should match the size of the data used in constructor.
@@ -186,6 +214,24 @@ public:
     }
   }
 
+  /**
+   * Asynchroneously copy last data from the LIFO into the LvArray.
+   *
+   * @param array LvArray to store data from the LIFO into it.
+   */
+  void popAsync( arrayView1d< T > array )
+  {
+    popWait();
+    m_popFuture = std::async( std::launch::async, [ array, this ] { pop( array ); } );
+  }
+
+  /**
+   * Waits for last pop to be terminated
+   */
+  void popWait()
+  {
+    if( m_popFuture.valid() ) m_popFuture.get();
+  }
 
   /**
    * Copy last data from the LIFO into the LvArray.
