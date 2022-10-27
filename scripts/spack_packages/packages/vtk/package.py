@@ -3,7 +3,6 @@
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 
-
 import os
 import sys
 
@@ -16,7 +15,7 @@ class Vtk(CMakePackage):
     processing and visualization. """
 
     homepage = "http://www.vtk.org"
-    url      = "https://www.vtk.org/files/release/9.0/VTK-9.0.0.tar.gz"
+    url = "https://www.vtk.org/files/release/9.0/VTK-9.0.0.tar.gz"
     list_url = "http://www.vtk.org/download/"
 
     maintainers = ['chuckatkins', 'danlipsa']
@@ -48,8 +47,7 @@ class Vtk(CMakePackage):
     # We need vtk at least 8.0.1 for python@3,
     # and at least 9.0 for python@3.8
     depends_on('python@2.7:2.9', when='@:8.0 +python', type=('build', 'run'))
-    depends_on('python@2.7:3.7.99', when='@8.0.1:8.9 +python',
-               type=('build', 'run'))
+    depends_on('python@2.7:3.7.99', when='@8.0.1:8.9 +python', type=('build', 'run'))
     depends_on('python@2.7:', when='@9.0: +python', type=('build', 'run'))
 
     # We need mpi4py if buidling python wrappers and using MPI
@@ -60,6 +58,7 @@ class Vtk(CMakePackage):
     def cmake_args(self):
         spec = self.spec
 
+        # yapf: disable
         # Added GEOSX Arguments
         if '+mpi' in spec:
             mpi_args = [
@@ -95,6 +94,7 @@ class Vtk(CMakePackage):
             '-DVTK_BUILD_TESTING=OFF',
             '-DVTK_LEGACY_REMOVE=ON'
         ]
+        # yapf: enable
 
         cmake_args = mpi_args + cmake_args
 

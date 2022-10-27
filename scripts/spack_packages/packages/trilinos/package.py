@@ -7,6 +7,7 @@
 # This is an older, modified version of the spack recipe (Commit date: 3/8/22, Spack PR: #29256):
 # https://github.com/spack/spack/blob/b2a02861bbbe8c989d24b8c7fbd202e31abc6bd0/var/spack/repos/builtin/packages/trilinos/package.py
 # GEOSX_EDIT_END
+# yapf: disable
 
 import os
 import sys
@@ -881,3 +882,5 @@ class Trilinos(CMakePackage, CudaPackage, ROCmPackage):
             # currently Trilinos doesn't perform the memory fence so
             # it relies on blocking CUDA kernel launch.
             env.set('CUDA_LAUNCH_BLOCKING', '1')
+
+# yapf: enable

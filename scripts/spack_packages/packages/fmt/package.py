@@ -12,7 +12,7 @@ class Fmt(CMakePackage):
     to C++ IOStreams."""
 
     homepage = "https://fmt.dev/"
-    url      = "https://github.com/fmtlib/fmt/releases/download/7.1.3/fmt-7.1.3.zip"
+    url = "https://github.com/fmtlib/fmt/releases/download/7.1.3/fmt-7.1.3.zip"
 
     version('8.0.1', sha256='a627a56eab9554fc1e5dd9a623d0768583b3a383ff70a4312ba68f94c9d415bf')
     version('7.1.3', sha256='5d98c504d0205f912e22449ecdea776b78ce0bb096927334f80781e720084c9f')
@@ -62,7 +62,6 @@ class Fmt(CMakePackage):
     #patch('fmt-attributes-cpp11_4.1.0.patch', when='@4.1.0')
     # GEOSX_EDIT_END
 
-
     def cmake_args(self):
         spec = self.spec
         args = []
@@ -76,8 +75,7 @@ class Fmt(CMakePackage):
                 '-DCMAKE_CXX_FLAGS={0}'.format(self.compiler.cxx_pic_flag)
             ])
 
-        args.append('-DCMAKE_CXX_STANDARD={0}'.format(
-                    spec.variants['cxxstd'].value))
+        args.append('-DCMAKE_CXX_STANDARD={0}'.format(spec.variants['cxxstd'].value))
         # Require standard at configure time to guarantee the
         # compiler supports the selected standard.
         args.append('-DCMAKE_CXX_STANDARD_REQUIRED=ON')

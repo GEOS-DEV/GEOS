@@ -10,7 +10,7 @@ class Uncrustify(Package):
     """Source Code Beautifier for C, C++, C#, ObjectiveC, Java, and others."""
 
     homepage = "http://uncrustify.sourceforge.net/"
-    git      = "https://github.com/uncrustify/uncrustify"
+    git = "https://github.com/uncrustify/uncrustify"
 
     version('0.70geosx', commit="401a4098bce9dcc47e024987403f2d59d9ba7bd2")
 

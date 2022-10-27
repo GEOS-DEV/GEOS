@@ -16,6 +16,7 @@ from os.path import join as pjoin
 
 # WARNING: +petsc and +pygeosx variants are yet to be tested.
 
+
 def cmake_cache_entry(name, value, comment=""):
     """Generate a string for a cmake cache variable"""
 
@@ -101,14 +102,10 @@ class Geosx(CMakePackage, CudaPackage):
 
     with when('+cuda'):
         for sm_ in CudaPackage.cuda_arch_values:
-            depends_on('raja+cuda cuda_arch={0}'.format(sm_),
-                       when='cuda_arch={0}'.format(sm_))
-            depends_on('umpire~shared+cuda cuda_arch={0}'.format(sm_),
-                       when='cuda_arch={0}'.format(sm_))
-            depends_on('chai+cuda cuda_arch={0}'.format(sm_),
-                       when='cuda_arch={0}'.format(sm_))
-            depends_on('camp+cuda cuda_arch={0}'.format(sm_),
-                       when='cuda_arch={0}'.format(sm_))
+            depends_on('raja+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
+            depends_on('umpire~shared+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
+            depends_on('chai+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
+            depends_on('camp+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
 
     #
     # IO
@@ -117,7 +114,6 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('silo@4.11~fortran')
 
     depends_on('conduit@0.8.2~test~fortran~hdf5_compat')
-
 
     depends_on('adiak@0.2.2', when='+caliper')
     depends_on('caliper@2.8.0~gotcha~sampler~libunwind~libdw', when='+caliper')
@@ -147,9 +143,8 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('hypre@2.24.0geosx+cuda+shared+superlu-dist+mixedint+mpi+openmp+unified-memory', when='+hypre+cuda')
     with when('+cuda'):
         for sm_ in CudaPackage.cuda_arch_values:
-            depends_on('hypre+cuda cuda_arch={0}'.format(sm_),
-                       when='cuda_arch={0}'.format(sm_))
- 
+            depends_on('hypre+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
+
     depends_on('petsc@3.13.0~hdf5~hypre+int64', when='+petsc')
     depends_on('petsc+ptscotch', when='+petsc+scotch')
 
@@ -181,7 +176,6 @@ class Geosx(CMakePackage, CudaPackage):
     conflicts('~trilinos lai=trilinos', msg='To use Trilinos as the Linear Algebra Interface you must build it.')
     conflicts('~hypre lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
     conflicts('~petsc lai=petsc', msg='To use PETSc as the Linear Algebra Interface you must build it.')
-
 
     # Only phase necessary for building dependencies
     phases = ['hostconfig']
@@ -368,10 +362,18 @@ class Geosx(CMakePackage, CudaPackage):
 
             cfg.write(cmake_cache_entry('{}_DIR'.format('camp'), spec['camp'].prefix + '/lib/cmake/camp'))
 
-            io_tpls = (('hdf5', 'HDF5', True), ('conduit', 'CONDUIT', True), ('silo', 'SILO', True),
-                       ('adiak', 'ADIAK', '+caliper'
-                        in spec), ('caliper', 'CALIPER', '+caliper'
-                                   in spec), ('pugixml', 'PUGIXML', True), ('vtk', 'VTK', '+vtk' in spec), ('fmt', 'FMT', True))
+            # yapf: disable
+            io_tpls = (
+                ('hdf5', 'HDF5', True),
+                ('conduit', 'CONDUIT', True),
+                ('silo', 'SILO', True),
+                ('adiak', 'ADIAK', '+caliper' in spec),
+                ('caliper', 'CALIPER', '+caliper' in spec),
+                ('pugixml', 'PUGIXML', True),
+                ('vtk', 'VTK', '+vtk' in spec),
+                ('fmt', 'FMT', True)
+            )
+            # yapf: enable
 
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# IO TPLs\n')
@@ -401,14 +403,14 @@ class Geosx(CMakePackage, CudaPackage):
 
             # yapf: disable
             math_tpls = (
-              ('metis', 'METIS', True),
-              ('parmetis', 'PARMETIS', True),
-              ('scotch', 'SCOTCH', '+scotch' in spec),
-              ('superlu-dist', 'SUPERLU_DIST', True),
-              ('suite-sparse', 'SUITESPARSE', True),
-              ('trilinos', 'TRILINOS', '+trilinos' in spec),
-              ('hypre', 'HYPRE', '+hypre' in spec),
-              ('petsc', 'PETSC', '+petsc' in spec)
+                ('metis', 'METIS', True),
+                ('parmetis', 'PARMETIS', True),
+                ('scotch', 'SCOTCH', '+scotch' in spec),
+                ('superlu-dist', 'SUPERLU_DIST', True),
+                ('suite-sparse', 'SUITESPARSE', True),
+                ('trilinos', 'TRILINOS', '+trilinos' in spec),
+                ('hypre', 'HYPRE', '+hypre' in spec),
+                ('petsc', 'PETSC', '+petsc' in spec)
             )
             # yapf: enable
 
