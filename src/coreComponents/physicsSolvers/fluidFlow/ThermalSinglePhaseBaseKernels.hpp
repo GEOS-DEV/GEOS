@@ -249,7 +249,8 @@ public:
                                      + stack.poreVolume * m_density[ei][0] * m_dInternalEnergy_dPres[ei][0];
 
       real64 const dFluidEnergy_dT = stack.poreVolume * m_dDensity_dTemp[ei][0] * m_internalEnergy[ei][0]
-                                     + stack.poreVolume * m_density[ei][0] * m_dInternalEnergy_dTemp[ei][0];
+                                     + stack.poreVolume * m_density[ei][0] * m_dInternalEnergy_dTemp[ei][0]
+                                     + stack.dPoreVolume_dTemp * m_density[ei][0] * m_internalEnergy[ei][0];
 
       // local accumulation
       stack.localResidual[numEqn-1] = fluidEnergy - fluidEnergy_n;
