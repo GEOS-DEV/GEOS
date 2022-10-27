@@ -39,6 +39,7 @@
       discretization="tpfaFlow"
       temperature="0.0"
       isThermal="1"
+      isBiot="1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonMaxIter="100"
