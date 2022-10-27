@@ -1,0 +1,163 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <ThermalSinglePhasePoromechanics
+      name="thermoPoroSolver"
+      solidSolverName="SolidMechSolve"
+      flowSolverName="FlowSolve"
+      couplingTypeOption="FixedStress"
+      logLevel="1"
+      discretization="FE1"
+      subcycling="1"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </ThermalSinglePhasePoromechanics>
+
+    <SolidMechanicsLagrangianSSLE
+      name="SolidMechSolve"
+      timeIntegrationOption="QuasiStatic"
+      effectiveStress="1"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }"
+      >
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonTol="1.0e-4"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+
+    <SinglePhaseFVM
+      name="FlowSolve"
+      logLevel="1"
+      discretization="tpfaFlow"
+      temperature="0.0"
+      isThermal="0"
+      isBiot="1"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonMaxIter="100"
+        newtonTol="1.0e-4"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="tpfaFlow"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ cb1 }"
+      materialList="{ rock, water }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="rock"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <ElasticIsotropic
+      name="rockSolid"
+      defaultDensity="2700"
+      defaultBulkModulus="61.9e6"
+      defaultShearModulus="28.57e6"/>
+    
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="1.0e21"
+      defaultReferencePorosity="0.3"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 4.963e-10, 4.963e-10, 4.963e-10 }"/>
+
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="1.0e-3"
+      referencePressure="0.0"
+      referenceDensity="1000"
+      compressibility="0.0e0"
+      referenceViscosity="1.0e-3"
+      viscosibility="0.0"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      objectPath="nodeManager"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      objectPath="nodeManager"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      objectPath="nodeManager"
+      setNames="{ zneg, zpos }"/>
+
+    <Traction
+      name="traction"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-2.125e6"
+      setNames="{ xpos }"
+      functionName="timeFunction"/>
+
+    <FieldSpecification
+      name="boundaryPressure"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="pressure"
+      scale="0.0"
+      setNames="{ boundaryTop }"/>
+
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 1.0, 2.0, 6e4 }"
+      values="{ 0.0, 1.0, 1.0 }"/>
+  </Functions>
+
+</Problem>

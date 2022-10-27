@@ -1,0 +1,90 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./1D_poroElastic_consolidation_base.xml" />
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 42 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 4200 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="2000">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="10.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplication0"
+      endTime="10.0"
+      forceDt="10.0"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="solverApplication1"
+      beginTime="10.0"
+      endTime="2000"
+      forceDt="10.0"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="timeHistoryCollection"
+      timeFrequency="10.0"
+      target="/Tasks/pressureCollection"/>
+
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="10.0"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="20"
+      target="/Outputs/restartOutput"/>
+
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{ /Tasks/pressureCollection }"
+      filename="pressure_history"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Tasks>
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="pressure"/>
+  </Tasks>
+
+  <Geometry>
+    <Box
+      name="boundaryBot"
+      xMin="{ -0.1, -0.01, -0.01 }"
+      xMax="{ 0.011, 1.01, 1.01 }"/>
+
+    <Box
+      name="boundaryTop"
+      xMin="{ 41.989, -0.01, -0.01 }"
+      xMax="{ 42.1, 1.01, 1.01 }"/>
+  </Geometry>
+</Problem>
