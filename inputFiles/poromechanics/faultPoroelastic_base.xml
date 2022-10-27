@@ -84,7 +84,7 @@
       objectPath="ElementRegions/Domain"
       fieldName="rock_stress"
       component="0"
-      scale="-60.0e6"
+      scale="-28.499545e6"
     />
 
     <FieldSpecification 
@@ -94,7 +94,7 @@
       objectPath="ElementRegions/Domain"
       fieldName="rock_stress"
       component="1"
-      scale="-70.0e6"
+      scale="-38.499545e6"
     />
 
     <FieldSpecification 
@@ -104,13 +104,13 @@
       objectPath="ElementRegions/Domain"
       fieldName="rock_stress"
       component="2"
-      scale="-60.0e6"
+      scale="-28.499545e6"
     />
 
     <FieldSpecification
       name="xconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ 89, 88 }"/>
@@ -118,7 +118,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ 90 }"/>
@@ -126,7 +126,7 @@
     <FieldSpecification
       name="zconstraintFront"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ 92, 93 }"/>

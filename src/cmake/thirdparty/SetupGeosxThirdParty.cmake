@@ -60,6 +60,33 @@ macro(find_and_register)
 endmacro(find_and_register)
 
 
+macro(extract_version_from_header)
+    set(singleValueArgs NAME PACKAGE_NAME
+                        PATH HEADER
+                        MAJOR_VERSION_STRING
+                        MINOR_VERSION_STRING
+                        SUBMINOR_VERSION_STRING )
+
+    cmake_parse_arguments(arg
+    "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    file(READ ${arg_HEADER} header_file )
+
+    string(REGEX MATCH "${arg_MAJOR_VERSION_STRING} *([0-9]+)" _ ${header_file})
+    set(ver_major ${CMAKE_MATCH_1})
+
+    string(REGEX MATCH "${arg_MINOR_VERSION_STRING} *([0-9]*)" _ ${header_file})
+    set(ver_minor ".${CMAKE_MATCH_1}")
+
+    string(REGEX MATCH "${arg_SUBMINOR_VERSION_STRING} *([0-9]*)" _ ${header_file})
+    set(ver_patch ".${CMAKE_MATCH_1}")
+    
+    set( ${arg_NAME}_VERSION "${ver_major}${ver_minor}${ver_patch}" CACHE STRING "" FORCE  )
+
+    message( " ----> ${arg_NAME}_VERSION = ${${arg_NAME}_VERSION}")
+
+endmacro( extract_version_from_header)
+
 set(thirdPartyLibs "")
 
 ################################
@@ -129,6 +156,11 @@ if(DEFINED HDF5_DIR)
                        LIBRARIES ${HDF5_LIBRARIES}
                        TREAT_INCLUDES_AS_SYSTEM ON)
 
+    file(READ "${HDF5_DIR}/include/H5public.h" header_file )
+    string(REGEX MATCH "version: *([0-9]+.[0-9]+.[0-9]+)" _ ${header_file})
+    set( HDF5_VERSION "${CMAKE_MATCH_1}" CACHE STRING "" FORCE )
+    message( " ----> HDF5 version ${HDF5_VERSION}")
+
     set(ENABLE_HDF5 ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} hdf5)
 else()
@@ -144,6 +176,9 @@ if(DEFINED CONDUIT_DIR)
     find_package(Conduit REQUIRED
                  PATHS ${CONDUIT_DIR}/lib/cmake
                  NO_DEFAULT_PATH)
+
+    message( " ----> Conduit_VERSION = ${Conduit_VERSION}")
+
 
     set(CONDUIT_TARGETS conduit conduit_relay conduit_blueprint)
     foreach(targetName ${CONDUIT_TARGETS} )
@@ -183,6 +218,7 @@ if(DEFINED SILO_DIR)
                       LIBRARIES siloh5
                       DEPENDS hdf5)
 
+
     set(ENABLE_SILO ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} silo)
 else()
@@ -199,6 +235,8 @@ if(DEFINED PUGIXML_DIR)
                  PATHS ${PUGIXML_DIR}
                  NO_DEFAULT_PATH)
 
+    message( " ----> pugixml_VERSION = ${pugixml_VERSION}")
+
     set(ENABLE_PUGIXML ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} pugixml)
 else()
@@ -213,6 +251,8 @@ if(DEFINED RAJA_DIR)
     find_package(RAJA REQUIRED
                  PATHS ${RAJA_DIR}
                  NO_DEFAULT_PATH)
+
+    message( " ----> RAJA_VERSION=${RAJA_VERSION}")
 
     get_target_property(RAJA_INCLUDE_DIRS RAJA INTERFACE_INCLUDE_DIRECTORIES)
     set_target_properties(RAJA
@@ -234,6 +274,8 @@ if(DEFINED UMPIRE_DIR)
                  PATHS ${UMPIRE_DIR}
                  NO_DEFAULT_PATH)
 
+    message( " ----> umpire_VERSION=${umpire_VERSION}")
+
     set(ENABLE_UMPIRE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} umpire)
 else()
@@ -249,6 +291,8 @@ if(DEFINED CHAI_DIR)
     find_package(chai REQUIRED
                  PATHS ${CHAI_DIR}
                  NO_DEFAULT_PATH)
+
+    message( " ----> chai_VERSION=${chai_VERSION}")
 
     get_target_property(CHAI_INCLUDE_DIRS chai INTERFACE_INCLUDE_DIRECTORIES)
     set_target_properties(chai
@@ -270,7 +314,13 @@ if(DEFINED ADIAK_DIR)
                  PATHS ${ADIAK_DIR}
                  NO_DEFAULT_PATH)
 
-    set_property(TARGET adiak
+    extract_version_from_header( name adiak 
+                                 HEADER "${ADIAK_DIR}/include/adiak.h"
+                                 MAJOR_VERSION_STRING "ADIAK_VERSION"
+                                 MINOR_VERSION_STRING "ADIAK_MINOR_VERSION"
+                                 SUBMINOR_VERSION_STRING "ADIAK_POINT_VERSION")
+
+                 set_property(TARGET adiak
                  APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
                  ${adiak_INCLUDE_DIR} )
     set_property(TARGET adiak
@@ -297,6 +347,12 @@ if(DEFINED CALIPER_DIR)
     find_package(caliper REQUIRED
                  PATHS ${CALIPER_DIR}
                  NO_DEFAULT_PATH)
+
+    extract_version_from_header( NAME caliper
+                                 HEADER "${CALIPER_DIR}/include/caliper/caliper-config.h"
+                                 MAJOR_VERSION_STRING "CALIPER_MAJOR_VERSION"
+                                 MINOR_VERSION_STRING "CALIPER_MINOR_VERSION"
+                                 SUBMINOR_VERSION_STRING "CALIPER_PATCH_VERSION")
 
     set_property(TARGET caliper
                  APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
@@ -328,7 +384,7 @@ if(DEFINED MATHPRESSO_DIR)
                       LIBRARY_DIRECTORIES ${MATHPRESSO_DIR}/lib
                       HEADER mathpresso/mathpresso.h
                       LIBRARIES mathpresso)
-
+                      
     set(ENABLE_MATHPRESSO ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} mathpresso)
 else()
@@ -352,6 +408,13 @@ if(DEFINED METIS_DIR)
                       HEADER metis.h
                       LIBRARIES metis)
 
+    extract_version_from_header( NAME METIS 
+                                 HEADER "${METIS_DIR}/include/metis.h"
+                                 MAJOR_VERSION_STRING "METIS_VER_MAJOR"
+                                 MINOR_VERSION_STRING "METIS_VER_MINOR"
+                                 SUBMINOR_VERSION_STRING "METIS_VER_SUBMINOR")
+
+                      
     set(ENABLE_METIS ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} metis)
 else()
@@ -375,6 +438,12 @@ if(DEFINED PARMETIS_DIR)
                       HEADER parmetis.h
                       LIBRARIES parmetis
                       DEPENDS metis)
+
+    extract_version_from_header( NAME PARAMETIS 
+                                 HEADER "${PARMETIS_DIR}/include/parmetis.h"
+                                 MAJOR_VERSION_STRING "PARMETIS_MAJOR_VERSION"
+                                 MINOR_VERSION_STRING "PARMETIS_MINOR_VERSION"
+                                 SUBMINOR_VERSION_STRING "PARMETIS_SUBMINOR_VERSION")
 
     set(ENABLE_PARMETIS ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} parmetis)
@@ -406,6 +475,12 @@ if(DEFINED SCOTCH_DIR)
                       HEADER ptscotch.h
                       LIBRARIES ptscotch ptscotcherr )
 
+    extract_version_from_header( NAME scotch 
+                                 HEADER "${SCOTCH_DIR}/include/scotch.h"
+                                 MAJOR_VERSION_STRING "SCOTCH_VERSION"
+                                 MINOR_VERSION_STRING "SCOTCH_RELEASE"
+                                 SUBMINOR_VERSION_STRING "SCOTCH_PATCHLEVEL")
+
     set(ENABLE_SCOTCH ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} scotch ptscotch)
 else()
@@ -430,6 +505,13 @@ if(DEFINED SUPERLU_DIST_DIR)
                       LIBRARIES superlu_dist
                       DEPENDS parmetis blas lapack)
 
+
+    extract_version_from_header( NAME superlu_dist 
+                                 HEADER "${SUPERLU_DIST_DIR}/include/superlu_defs.h"
+                                 MAJOR_VERSION_STRING "SUPERLU_DIST_MAJOR_VERSION"
+                                 MINOR_VERSION_STRING "SUPERLU_DIST_MINOR_VERSION"
+                                 SUBMINOR_VERSION_STRING "SUPERLU_DIST_PATCH_VERSION")
+
     set(ENABLE_SUPERLU_DIST ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} superlu_dist)
 else()
@@ -453,6 +535,12 @@ if(DEFINED SUITESPARSE_DIR)
                       HEADER umfpack.h
                       LIBRARIES umfpack
                       DEPENDS blas lapack)
+
+    extract_version_from_header( NAME suitesparse 
+                                 HEADER "${SUITESPARSE_DIR}/include/umfpack.h"
+                                 MAJOR_VERSION_STRING "UMFPACK_MAIN_VERSION"
+                                 MINOR_VERSION_STRING "UMFPACK_SUB_VERSION"
+                                 SUBMINOR_VERSION_STRING "UMFPACK_SUBSUB_VERSION")
 
     set(ENABLE_SUITESPARSE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} suitesparse)
@@ -576,6 +664,8 @@ if(DEFINED VTK_DIR)
                  PATHS ${VTK_DIR}
                  NO_DEFAULT_PATH)
 
+    message( " ----> VTK_VERSION=${VTK_VERSION}")
+
     set( VTK_TARGETS
          VTK::FiltersParallelDIY2
          VTK::IOLegacy
@@ -612,6 +702,8 @@ if(DEFINED FMT_DIR)
     find_package(fmt REQUIRED
                  PATHS ${FMT_DIR}
                  NO_DEFAULT_PATH)
+
+    message( " ----> fmt_VERSION = ${fmt_VERSION}")
 
     set(ENABLE_FMT ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt)
@@ -655,6 +747,8 @@ endif()
 if(ENABLE_PYGEOSX)
     find_package(Python3 REQUIRED
                  COMPONENTS Development NumPy)
+
+    message( " ----> $Python3_VERSION = ${Python3_VERSION}")
 
     message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
     message(STATUS "Python3_INCLUDE_DIRS = ${Python3_INCLUDE_DIRS}")
@@ -707,6 +801,9 @@ message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
 ###############################
 if ( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   find_package(CUDAToolkit REQUIRED)
+
+  message( " ----> $CUDAToolkit_VERSION = ${CUDAToolkit_VERSION}")
+
   set(thirdPartyLibs ${thirdPartyLibs} CUDA::nvToolsExt)
 endif()
 

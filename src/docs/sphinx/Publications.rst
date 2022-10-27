@@ -2,19 +2,10 @@
 Publications
 ###############################################################################
 
-Last updated 4-October-2022
+Last updated 23-October-2022
 
 Preprints and Early-Views
 =========================
-
-.. list-table::
-   :widths: 100
-   :header-rows: 0
-
-   * - | **A Multi-Resolution Approach to Hydraulic Fracture Simulation**
-       | A Costa, M Cusini, T Jin, R Settgast, J Dolbow
-       | arXiv preprint
-       | `arXiv:2207.00661 <https://arxiv.org/abs/2207.00661>`_
 
 
 2022
@@ -28,6 +19,11 @@ Preprints and Early-Views
        | SBM Bosma, FP Hamon, BT Mallison, HA Tchelepi
        | Computer Methods in Applied Mechanics and Engineering
        | `doi:10.1016/j.cma.2021.114288 <https://doi.org/10.1016/j.cma.2021.114288>`_
+       
+   * - | **A Multi-resolution approach to hydraulic fracture simulation**
+       | A Costa, M Cusini, T Jin, R Settgast, JE Dolbow
+       | International Journal of Fracture 
+       | `doi:10.1007/s10704-022-00662-y <https://doi.org/10.1007/s10704-022-00662-y>`_    
 
    * - | **Phase-field modeling of rock fractures with roughness**
        | F Fei, J Choo, C Liu, JA White

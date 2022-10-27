@@ -46,6 +46,8 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
 
   registerExtrinsicData( extrinsicMeshData::relperm::phaseTrappedVolFraction{}, &m_phaseTrappedVolFrac );
 
+  registerExtrinsicData( extrinsicMeshData::relperm::phaseRelPerm_n{}, &m_phaseRelPerm_n );
+
 }
 
 void RelativePermeabilityBase::postProcessInput()
@@ -92,6 +94,7 @@ void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex c
   integer const numPhases = numFluidPhases();
 
   m_phaseRelPerm.resize( size, numPts, numPhases );
+  m_phaseRelPerm_n.resize( size, numPts, numPhases );
   m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases );
   //phase trapped for stats
   m_phaseTrappedVolFrac.resize( size, numPts, numPhases );
@@ -102,9 +105,15 @@ void RelativePermeabilityBase::setLabels()
 {
   getExtrinsicData< extrinsicMeshData::relperm::phaseRelPerm >().
     setDimLabels( 2, m_phaseNames );
-
+  getExtrinsicData< extrinsicMeshData::relperm::phaseRelPerm_n >().
+    setDimLabels( 2, m_phaseNames );
   getExtrinsicData< extrinsicMeshData::relperm::phaseTrappedVolFraction >().
     setDimLabels( 2, m_phaseNames );
+}
+
+void RelativePermeabilityBase::saveConvergedState( ) const
+{
+  m_phaseRelPerm_n.setValues< parallelDevicePolicy<> >( m_phaseRelPerm.toViewConst() );
 }
 
 void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
