@@ -77,7 +77,6 @@
 /// Macro defined when PETSc interface is selected
 /* #undef GEOSX_LA_INTERFACE_PETSC */
 
-
 /// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
 #define FORTRAN_MANGLE_NO_UNDERSCORE
 
@@ -98,6 +97,55 @@
 
 /// An integer flag representing the type that globalIndex will be aliased to.
 #define GEOSX_GLOBALINDEX_TYPE_FLAG 2
+
+/// Version information for HDF5
+#define HDF5_VERSION 1.12.1
+
+/// Version information for Conduit
+#define Conduit_VERSION 0.5.0
+
+/// Version information for RAJA
+/* #undef RAJA_VERSION */
+
+/// Version information for umpire
+/* #undef umpire_VERSION */
+
+/// Version information for chai
+/* #undef chai_VERSION */
+
+/// Version information for adiak
+#define adiak_VERSION ..
+
+/// Version information for caliper
+#define caliper_VERSION 2.4.0
+
+/// Version information for Metis
+#define METIS_VERSION 5.1.0
+
+/// Version information for ParMetis
+#define PARAMETIS_VERSION 4.0.3
+
+/// Version information for scotch 
+#define scotch_VERSION 6.0.9
+
+/// Version information for superlu_dist
+#define superlu_dist_VERSION 6.3.0
+
+/// Version information for suitesparse
+#define suitesparse_VERSION 5.7.9
+
+/// Version information for VTK
+#define VTK_VERSION 9.1.0
+
+/// Version information for fmt
+#define fmt_VERSION 8.0.1
+
+/// Version information for python
+/* #undef Python3_VERSION */
+
+/// Version information for CUDAToolkit
+/* #undef CUDAToolkit_VERSION */
+
 
 #endif  /* GEOSX_CONFIG_HPP */
 

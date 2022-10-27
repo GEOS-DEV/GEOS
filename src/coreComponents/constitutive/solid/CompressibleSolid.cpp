@@ -24,6 +24,7 @@
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
 #include "constitutive/permeability/ParallelPlatesPermeability.hpp"
 #include "constitutive/permeability/SlipDependentPermeability.hpp"
+#include "constitutive/permeability/WillisRichardsPermeability.hpp"
 
 namespace geosx
 {
@@ -49,12 +50,14 @@ typedef CompressibleSolid< PressurePorosity, CarmanKozenyPermeability > Compress
 typedef CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > FractureRock;
 typedef CompressibleSolid< PressurePorosity, ConstantPlusParallelPlatesPermeability > FractureRockPlus;
 typedef CompressibleSolid< PressurePorosity, SlipDependentPermeability > Fault;
+typedef CompressibleSolid< PressurePorosity, WillisRichardsPermeability > FaultWR;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockCK, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, FractureRock, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, FractureRockPlus, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, Fault, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, FaultWR, string const &, Group * const )
 
 
 }

@@ -225,6 +225,13 @@ Element: CompressibleSolidSlipDependentPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidSlipDependentPermeability.rst
 
 
+.. _XML_CompressibleSolidWillisRichardsPermeability:
+
+Element: CompressibleSolidWillisRichardsPermeability
+====================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability.rst
+
+
 .. _XML_ConstantPermeability:
 
 Element: ConstantPermeability
@@ -1121,6 +1128,13 @@ Element: WellElementRegion
 .. include:: ../../coreComponents/schema/docs/WellElementRegion.rst
 
 
+.. _XML_WillisRichardsPermeability:
+
+Element: WillisRichardsPermeability
+===================================
+.. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability.rst
+
+
 .. _XML_lassen:
 
 Element: lassen
@@ -1354,6 +1368,13 @@ Datastructure: CompressibleSolidParallelPlatesPermeability
 Datastructure: CompressibleSolidSlipDependentPermeability
 =========================================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidSlipDependentPermeability_other.rst
+
+
+.. _DATASTRUCTURE_CompressibleSolidWillisRichardsPermeability:
+
+Datastructure: CompressibleSolidWillisRichardsPermeability
+==========================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability_other.rst
 
 
 .. _DATASTRUCTURE_ConstantPermeability:
@@ -2285,6 +2306,13 @@ Datastructure: WellElementRegion
 Datastructure: WellElementRegionUniqueSubRegion
 ===============================================
 .. include:: ../../coreComponents/schema/docs/WellElementRegionUniqueSubRegion_other.rst
+
+
+.. _DATASTRUCTURE_WillisRichardsPermeability:
+
+Datastructure: WillisRichardsPermeability
+=========================================
+.. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:

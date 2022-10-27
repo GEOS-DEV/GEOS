@@ -43,6 +43,7 @@
 #include "permeability/ParallelPlatesPermeability.hpp"
 #include "permeability/ProppantPermeability.hpp"
 #include "permeability/SlipDependentPermeability.hpp"
+#include "permeability/WillisRichardsPermeability.hpp"
 
 
 namespace geosx
@@ -172,7 +173,8 @@ struct ConstitutivePassThru< CompressibleSolidBase >
                                  CompressibleSolid< PressurePorosity, ConstantPlusParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
-                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >
+                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
+                                 CompressibleSolid< PressurePorosity, WillisRichardsPermeability >
                                  >::execute( constitutiveRelation,
                                              std::forward< LAMBDA >( lambda ) );
   }
@@ -184,7 +186,8 @@ struct ConstitutivePassThru< CompressibleSolidBase >
                                  CompressibleSolid< PressurePorosity, ConstantPlusParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
-                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >
+                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
+                                 CompressibleSolid< PressurePorosity, WillisRichardsPermeability >
                                  >::execute( constitutiveRelation,
                                              std::forward< LAMBDA >( lambda ) );
   }
@@ -228,6 +231,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
+                                 CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
                                  PorousSolid< DruckerPragerExtended >,
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,
@@ -250,6 +254,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
+                                 CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
                                  PorousSolid< DruckerPragerExtended >,
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,

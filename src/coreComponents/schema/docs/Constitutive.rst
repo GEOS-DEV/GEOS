@@ -20,6 +20,7 @@ CompressibleSolidConstantPermeability                   node         :ref:`XML_C
 CompressibleSolidConstantPlusParallelPlatesPermeability node         :ref:`XML_CompressibleSolidConstantPlusParallelPlatesPermeability` 
 CompressibleSolidParallelPlatesPermeability             node         :ref:`XML_CompressibleSolidParallelPlatesPermeability`             
 CompressibleSolidSlipDependentPermeability              node         :ref:`XML_CompressibleSolidSlipDependentPermeability`              
+CompressibleSolidWillisRichardsPermeability             node         :ref:`XML_CompressibleSolidWillisRichardsPermeability`             
 ConstantPermeability                                    node         :ref:`XML_ConstantPermeability`                                    
 ConstantPlusParallelPlatesPermeability                  node         :ref:`XML_ConstantPlusParallelPlatesPermeability`                  
 Coulomb                                                 node         :ref:`XML_Coulomb`                                                 
@@ -64,6 +65,7 @@ TableRelativePermeabilityHysteresis                     node         :ref:`XML_T
 ThermalCompressibleSinglePhaseFluid                     node         :ref:`XML_ThermalCompressibleSinglePhaseFluid`                     
 VanGenuchtenBakerRelativePermeability                   node         :ref:`XML_VanGenuchtenBakerRelativePermeability`                   
 VanGenuchtenCapillaryPressure                           node         :ref:`XML_VanGenuchtenCapillaryPressure`                           
+WillisRichardsPermeability                              node         :ref:`XML_WillisRichardsPermeability`                              
 ======================================================= ==== ======= ================================================================== 
 
 
