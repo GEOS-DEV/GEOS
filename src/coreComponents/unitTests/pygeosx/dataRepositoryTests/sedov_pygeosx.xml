@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File
+      name="../../../../../inputFiles/solidMechanics/sedov_ssle_smoke.xml"/>
+  </Included>
+
+  <Events>
+    <PeriodicEvent
+      name="python"
+      cycleFrequency="5"
+      target="/Outputs/pythonOutput"/>
+  </Events>
+
+  <Outputs>
+    <Python
+      name="pythonOutput"/>
+  </Outputs>
+
+</Problem>
