@@ -67,12 +67,6 @@ public:
   static string catalogName() { return "MultiphasePoromechanics"; }
 
   /**
-   * @brief Utility function to set the solver to use a initialization solver configuration
-   * @detail This function is meant to be called by a specific task before the initialization step
-   */
-  void useInitializationSolverConfiguration( bool useInitializationSolverConfiguration );
-
-  /**
    * @brief accessor for the pointer to the solid mechanics solver
    * @return a pointer to the solid mechanics solver
    */

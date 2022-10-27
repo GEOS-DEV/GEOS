@@ -46,7 +46,9 @@ public:
     {
       using SolverType = TYPEOFPTR( solver );
       string const key = SolverType::coupledSolverAttributePrefix() + "SolverName";
-      registerWrapper( key, &m_names[idx()] ).setInputFlag( dataRepository::InputFlags::REQUIRED );
+      registerWrapper( key, &m_names[idx()] ).
+        setInputFlag( dataRepository::InputFlags::REQUIRED ).
+        setDescription( "Name of the " + SolverType::coupledSolverAttributePrefix() + " solver used by the coupled solver" );
     } );
 
     this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
@@ -239,6 +241,7 @@ public:
       real64 const singlePhysicsNorm = solver->calculateResidualNorm( domain, dofManager, localRhs );
       norm += singlePhysicsNorm * singlePhysicsNorm;
     } );
+
     return sqrt( norm );
   }
 

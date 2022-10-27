@@ -115,11 +115,6 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
       setStrategy< MultiphasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
-    case LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsInitialization:
-    {
-      setStrategy< MultiphasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
-      break;
-    }
     case LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM:
     {
       setStrategy< MultiphasePoromechanicsReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );

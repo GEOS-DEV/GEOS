@@ -88,14 +88,6 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void MultiphasePoromechanicsSolver::useInitializationSolverConfiguration( bool useInitializationSolverConfiguration )
-{
-  m_linearSolverParameters.get().mgr.strategy =
-    useInitializationSolverConfiguration
-    ? LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics
-    : LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsInitialization;
-}
-
 void MultiphasePoromechanicsSolver::setupCoupling( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                                                    DofManager & dofManager ) const
 {
