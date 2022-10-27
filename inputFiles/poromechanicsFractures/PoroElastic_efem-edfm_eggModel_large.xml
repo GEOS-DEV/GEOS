@@ -17,7 +17,7 @@
         newtonMaxIter="10"/>
       <LinearSolverParameters
         directParallel="1"
-        solverType="direct"
+        solverType="gmres"
         preconditionerType="mgr"
         logLevel="1"/>
     </SinglePhasePoromechanicsEmbeddedFractures>
@@ -66,32 +66,32 @@
   <Mesh>
     <VTKMesh
       name="mesh"
-      file="../../../../GEOSXDATA/DataSets/Egg/egg_withBurdens.vts"
-      regionAttribute="elementRegionMarker"
+      file="../../../../GEOSXDATA/DataSets/Egg/egg_extended_2.vts"
+      regionAttribute="regionAttribute"
       fieldsToImport="{ PERM }"
       fieldNamesInGEOSX="{ rockPermeability_permeability }"/>
   </Mesh>
 
   <Geometry>
     
-    <Box xMax="{500.0, 500.0, 1.0}" 
+    <Box xMax="{1182, 1182, 1.0}" 
          xMin="{0.0, 0.0, -500.0}" 
          name="bottom" />
     
-    <Box xMax="{500.0, 1.0, 500.0}" 
-         xMin="{0.0,   0.0, -500.0}" 
+    <Box xMax="{1182, 1.0, 800.0}" 
+         xMin="{0.0,   0.0, -800.0}" 
          name="front" />
 
-    <Box xMax="{1.0, 500.0, 500.0}" 
-         xMin="{-1.0, 0.0, -500.0}" 
+    <Box xMax="{1.0, 1182, 800.0}" 
+         xMin="{-1.0, 0.0, -800.0}" 
          name="left" />
          
-    <Box xMax="{500.0, 481.0, 500.0}" 
-         xMin="{0.0,   479.0, -500.0}" 
+    <Box xMax="{500.0, 1182, 800.0}" 
+         xMin="{0.0,   1181, -800.0}" 
          name="back" />
 
-    <Box xMax="{481.0, 500.0, 500.0}" 
-         xMin="{479.0, 0.0, -500.0}" 
+    <Box xMax="{1182, 1182, 800.0}" 
+         xMin="{1181, 0.0, -800.0}" 
          name="right" />     
 
     <BoundedPlane

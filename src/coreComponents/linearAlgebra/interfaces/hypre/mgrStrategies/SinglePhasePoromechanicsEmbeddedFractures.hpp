@@ -58,9 +58,9 @@ public:
     : MGRStrategyBase( 7 )
   {
     // we keep u and p
-    m_labels[0].push_back( 3 );
-    m_labels[0].push_back( 4 );
-    m_labels[0].push_back( 5 );
+    m_labels[0].push_back( 0 );
+    m_labels[0].push_back( 1 );
+    m_labels[0].push_back( 2 );
     m_labels[0].push_back( 6 );
     // we keep p
     m_labels[1].push_back( 6 );
@@ -68,16 +68,16 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel;
-    m_levelInterpType[1]       = MGRInterpolationType::blockJacobi;
-    m_levelRestrictType[1]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
+    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel;
+    m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
+    m_levelRestrictType[0]     = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
 
     // Level 1
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::amgVCycle;
-    m_levelInterpType[0]       = MGRInterpolationType::jacobi;
-    m_levelRestrictType[0]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::nonGalerkin;
+    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::amgVCycle;
+    m_levelInterpType[1]       = MGRInterpolationType::jacobi;
+    m_levelRestrictType[1]     = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::nonGalerkin;
 
     m_numGlobalSmoothSweeps = 0;
   }
