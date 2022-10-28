@@ -57,10 +57,10 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr4 );
   }
-  else if( auto const * const ptr5 = dynamic_cast< Q1_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
-  {
-    lambda( *ptr5 );
-  }
+//  else if( auto const * const ptr5 = dynamic_cast< Q1_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
+//  {
+//    lambda( *ptr5 );
+//  }
   else if( auto const * const ptr6 = dynamic_cast< Q2_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
   {
     lambda( *ptr6 );
@@ -143,10 +143,10 @@ dispatch3D( FiniteElementBase & input,
   {
     lambda( *ptr4 );
   }
-  else if( auto * const ptr5 = dynamic_cast< Q1_Hexahedron_Lagrange_GaussLobatto * >(&input) )
-  {
-    lambda( *ptr5 );
-  }
+//  else if( auto * const ptr5 = dynamic_cast< Q1_Hexahedron_Lagrange_GaussLobatto * >(&input) )
+//  {
+//    lambda( *ptr5 );
+//  }
   else if( auto * const ptr6 = dynamic_cast< Q2_Hexahedron_Lagrange_GaussLobatto * >(&input) )
   {
     lambda( *ptr6 );
