@@ -79,7 +79,7 @@ __geosx_osx_build: &__geosx_osx_build
   - HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_MAKE_JOBS=$(nproc) brew install ${BREW_OPENMPI_TAP}/open-mpi@${BREW_OPENMPI_VERSION}
   <<: *__geosx_before_script
   script:
-  - python ${TRAVIS_BUILD_DIR}/scripts/config-build.py
+  - python3 ${TRAVIS_BUILD_DIR}/scripts/config-build.py
     -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -bt Release
     -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe" -DENABLE_VTK:BOOL=OFF
   - cd build-darwin-clang-release
