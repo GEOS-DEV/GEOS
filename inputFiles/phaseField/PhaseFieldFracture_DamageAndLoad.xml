@@ -49,10 +49,6 @@
     </PhaseFieldDamageFEM>
   </Solvers>
 
-  <!-- <Mesh>
-    <PAMELAMesh name="MyMeshName"
-                file="/usr/workspace/macieira/GEOSX/debugTests/geo.msh"/>
-  </Mesh> -->
   <Mesh>
     <InternalMesh
       name="mesh1"
@@ -126,7 +122,7 @@
   <FieldSpecifications>
     <FieldSpecification
       name="xtraction"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       objectPath="nodeManager"
       scale="1e-4"
@@ -135,21 +131,21 @@
 
     <FieldSpecification
       name="xfix"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       objectPath="nodeManager"
       setNames="{ xneg }"/>
 
     <FieldSpecification
       name="yfix"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       objectPath="nodeManager"
       setNames="{ all }"/>
 
     <FieldSpecification
       name="zfix"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       objectPath="nodeManager"
       setNames="{ all }"/>

@@ -9,7 +9,8 @@ declare -a TARGET_PACKAGES=("geosx_mesh_tools_package"
                             "hdf5_wrapper_package"
                             "pygeosx_tools_package")
 declare -a LINK_SCRIPTS=("preprocess_xml"
-                         "format_xml")
+                         "format_xml"
+                         "convert_abaqus")
 
 
 # Read input arguments
@@ -165,6 +166,7 @@ then
     done
 
     ln -s $SCRIPT_DIR/automatic_xml_preprocess.sh $BIN_DIR/geosx_preprocessed
+    ln -s $SCRIPT_DIR/pygeosx_preprocess.py $BIN_DIR/pygeosx_preprocess.py
 fi
 
 echo "Done!"

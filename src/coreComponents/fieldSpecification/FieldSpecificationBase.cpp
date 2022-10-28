@@ -24,8 +24,7 @@ namespace geosx
 using namespace dataRepository;
 
 FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * parent ):
-  Group( name, parent ),
-  m_normalizeBySetSize( false )
+  Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -96,8 +95,10 @@ FieldSpecificationBase::getCatalog()
 
 
 
-void FieldSpecificationBase::postProcessInput()
-{}
+void FieldSpecificationBase::setMeshObjectPath( Group const & meshBodies )
+{
+  m_meshObjectPaths = std::make_unique< MeshObjectPath >( m_objectPath, meshBodies );
+}
 
 
 

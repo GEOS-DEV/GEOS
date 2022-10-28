@@ -133,6 +133,39 @@ private:
                         real64 & dViscosity_dPressure ) const = 0;
 
   /**
+   * @brief Compute fluid properties and derivatives at a single point.
+   * @param[in]  pressure the target pressure value
+   * @param[in]  temperature the target temperature value
+   * @param[out] density fluid density
+   * @param[out] dDensity_dPressure fluid density derivative w.r.t. pressure
+   * @param[out] dDensity_dTemperature fluid density derivative w.r.t. temperature
+   * @param[out] viscosity fluid viscosity
+   * @param[out] dViscosity_dPressure fluid viscosity derivative w.r.t. pressure
+   * @param[out] dViscosity_dTemperature fluid viscosity derivative w.r.t. temperature
+   * @param[out] internalEnergy fluid internal energy
+   * @param[out] dInternalEnergy_dPressure fluid internal energy derivative w.r.t. pressure
+   * @param[out] dInternalEnergy_dTemperature fluid internal energy derivative w.r.t. temperature
+   * @param[out] enthalpy fluid enthalpy
+   * @param[out] dEnthalpy_dPressure fluid enthalpy derivative w.r.t. pressure
+   * @param[out] dEnthalpy_dTemperature fluid enthalpy derivative w.r.t. temperature
+   */
+  GEOSX_HOST_DEVICE
+  virtual void compute( real64 const pressure,
+                        real64 const temperature,
+                        real64 & density,
+                        real64 & dDensity_dPressure,
+                        real64 & dDensity_dTemperature,
+                        real64 & viscosity,
+                        real64 & dViscosity_dPressure,
+                        real64 & dViscosity_dTemperature,
+                        real64 & internalEnergy,
+                        real64 & dInternalEnergy_dPressure,
+                        real64 & dInternalEnergy_dTemperature,
+                        real64 & enthalpy,
+                        real64 & dEnthalpy_dPressure,
+                        real64 & dEnthalpy_dTemperature ) const = 0;
+
+  /**
    * @brief Update fluid state at a single point.
    * @param[in] k        element index
    * @param[in] q        gauss point index
@@ -142,6 +175,19 @@ private:
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure ) const = 0;
+
+  /**
+   * @brief Update fluid state at a single point.
+   * @param[in] k           element index
+   * @param[in] q           gauss point index
+   * @param[in] pressure    the target pressure value
+   * @param[in] temperature the target temperature value
+   */
+  GEOSX_HOST_DEVICE
+  virtual void update( localIndex const k,
+                       localIndex const q,
+                       real64 const pressure,
+                       real64 const temperature ) const = 0;
 
 };
 //END_SPHINX_INCLUDE_02
@@ -161,7 +207,7 @@ public:
   SingleFluidBase( string const & name, Group * const parent );
 
   /**
-   * @brief Save the current density into the initial density (needed for single-phase poromechanics)
+   * @brief Initialize the model
    */
   void initializeState() const;
 
@@ -178,12 +224,38 @@ public:
 
   arrayView2d< real64 const > dDensity_dPressure() const { return m_dDensity_dPressure; }
 
-  arrayView2d< real64 const > initialDensity() const { return m_initialDensity; }
+  arrayView2d< real64 > dDensity_dTemperature() { return m_dDensity_dTemperature; }
+  arrayView2d< real64 const > dDensity_dTemperature() const { return m_dDensity_dTemperature; }
+
   arrayView2d< real64 const > density_n() const { return m_density_n; }
 
   arrayView2d< real64 const > viscosity() const { return m_viscosity; }
 
   arrayView2d< real64 const > dViscosity_dPressure() const { return m_dViscosity_dPressure; }
+
+  arrayView2d< real64 > dViscosity_dTemperature() { return m_dViscosity_dTemperature; }
+  arrayView2d< real64 const > dViscosity_dTemperature() const { return m_dViscosity_dTemperature; }
+
+  arrayView2d< real64 > internalEnergy() { return m_internalEnergy; }
+  arrayView2d< real64 const > internalEnergy() const { return m_internalEnergy; }
+
+  arrayView2d< real64 > internalEnergy_n() { return m_internalEnergy_n; }
+  arrayView2d< real64 const > internalEnergy_n() const { return m_internalEnergy_n; }
+
+  arrayView2d< real64 > dInternalEnergy_dPressure() { return m_dInternalEnergy_dPressure; }
+  arrayView2d< real64 const > dInternalEnergy_dPressure() const { return m_dInternalEnergy_dPressure; }
+
+  arrayView2d< real64 > dInternalEnergy_dTemperature() { return m_dInternalEnergy_dTemperature; }
+  arrayView2d< real64 const > dInternalEnergy_dTemperature() const { return m_dInternalEnergy_dTemperature; }
+
+  arrayView2d< real64 > enthalpy() { return m_enthalpy; }
+  arrayView2d< real64 const > enthalpy() const { return m_enthalpy; }
+
+  arrayView2d< real64 > dEnthalpy_dPressure() { return m_dEnthalpy_dPressure; }
+  arrayView2d< real64 const > dEnthalpy_dPressure() const { return m_dEnthalpy_dPressure; }
+
+  arrayView2d< real64 > dEnthalpy_dTemperature() { return m_dEnthalpy_dTemperature; }
+  arrayView2d< real64 const > dEnthalpy_dTemperature() const { return m_dEnthalpy_dTemperature; }
 
   virtual real64 defaultDensity() const = 0;
   virtual real64 defaultViscosity() const = 0;
@@ -195,12 +267,22 @@ protected:
   //START_SPHINX_INCLUDE_00
   array2d< real64 > m_density;
   array2d< real64 > m_dDensity_dPressure;
+  array2d< real64 > m_dDensity_dTemperature;
 
-  array2d< real64 > m_initialDensity;
   array2d< real64 > m_density_n;
 
   array2d< real64 > m_viscosity;
   array2d< real64 > m_dViscosity_dPressure;
+  array2d< real64 > m_dViscosity_dTemperature;
+
+  array2d< real64 > m_internalEnergy;
+  array2d< real64 > m_internalEnergy_n;
+  array2d< real64 > m_dInternalEnergy_dPressure;
+  array2d< real64 > m_dInternalEnergy_dTemperature;
+
+  array2d< real64 > m_enthalpy;
+  array2d< real64 > m_dEnthalpy_dPressure;
+  array2d< real64 > m_dEnthalpy_dTemperature;
   //END_SPHINX_INCLUDE_00
 };
 

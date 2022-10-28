@@ -20,6 +20,10 @@ set( finiteElement_headers
      elementFormulations/ConformingVirtualElementOrder1_impl.hpp
      elementFormulations/LagrangeBasis1.hpp
      elementFormulations/LagrangeBasis2.hpp
+     elementFormulations/LagrangeBasis3GL.hpp
+     elementFormulations/LagrangeBasis5GL.hpp
+     elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp
+     elementFormulations/Q5_Hexahedron_Lagrange_GaussLobatto.hpp
      kernelInterface/ImplicitKernelBase.hpp
      kernelInterface/KernelBase.hpp
      kernelInterface/SparsityKernelBase.hpp
@@ -39,14 +43,18 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
+endif()
+
 blt_add_library( NAME       finiteElement
                  SOURCES    ${finiteElement_sources}
                  HEADERS    ${finiteElement_headers}
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
-               
-target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks( PREFIX finiteElement )
 

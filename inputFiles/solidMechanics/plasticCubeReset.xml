@@ -1,0 +1,163 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 6 }"
+      ny="{ 6 }"
+      nz="{ 3 }"
+      cellBlockNames="{ cellBlock1 }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="all"
+      meshBody="mesh"
+      cellBlocks="{ cellBlock1 }"
+      materialList="{ materialPlastic }"/>
+  </ElementRegions>
+
+  <Events
+    minTime="-10"  
+    maxTime="5">
+    <SoloEvent
+      name="preEquilibrationStep"
+      targetCycle="0"
+      beginTime="-10"
+      target="/Tasks/preEquilibrationStep"/>
+    <PeriodicEvent
+      name="solverApplicationsEquilibration"
+      beginTime="-10.0"
+      endTime="0.0"
+      maxEventDt="10.0"
+      target="/Solvers/solidMechanics"/>
+    <SoloEvent
+      name="postEquilibrationStep"
+      targetTime="0"
+      target="/Tasks/postEquilibrationStep"/>
+    <PeriodicEvent
+      name="outputs"
+      beginTime="0.0"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput"/>
+    <PeriodicEvent
+      name="solverApplications"
+      beginTime="0.0"
+      forceDt="1.0"
+      target="/Solvers/solidMechanics"/>
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="2.5"
+      target="/Outputs/restartOutput"/>
+    
+  </Events>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SolidMechanics_LagrangianFEM
+      name="solidMechanics"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      targetRegions="{ mesh/all }"
+      logLevel="1"
+      >
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanics_LagrangianFEM>
+  </Solvers>
+
+ <Tasks> 
+   <SolidMechanicsStateReset                                                      
+     logLevel="2"
+     name="preEquilibrationStep" 
+     solidSolverName="solidMechanics"
+     resetDisplacements="0"
+     disableInelasticity="1"/> 
+   <SolidMechanicsStateReset                                                      
+     logLevel="2"
+     name="postEquilibrationStep" 
+     solidSolverName="solidMechanics"
+     resetDisplacements="1"
+     disableInelasticity="0"/> 
+  </Tasks>
+
+  <Constitutive>
+    <DruckerPrager
+      name="materialPlastic"
+      defaultDensity="2700"
+      defaultBulkModulus="5e8"
+      defaultShearModulus="4e8"
+      defaultFrictionAngle="0"
+      defaultDilationAngle="0"
+      defaultCohesion="6e6"
+      defaultHardeningRate="10" />
+  </Constitutive>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="xConstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ zneg }"/>
+
+    <FieldSpecification
+      name="yConstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ zneg }"/>
+
+    <FieldSpecification
+      name="zConstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg }"/>
+
+    <Traction
+      name="traction"
+      objectPath="faceManager"
+      scale="1.0e6"
+      direction="{ 0, 0, 1 }"
+      functionName="timeFunction"
+      setNames="{ zpos }"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ -10.0, 0, 10 }"
+      values="{ -10, -10, -14 }"/>
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      parallelThreads="32"/>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>
+

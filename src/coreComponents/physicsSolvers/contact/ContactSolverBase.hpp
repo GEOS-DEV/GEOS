@@ -48,8 +48,6 @@ public:
                 integer const cycleNumber,
                 DomainPartition & domain ) override final;
 
-  // virtual bool updateConfiguration( DomainPartition & domain ) override;
-
   virtual void
   applyBoundaryConditions( real64 const time,
                            real64 const dt,

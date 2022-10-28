@@ -6,6 +6,8 @@ set( physicsSolvers_headers
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
+     SolverStatistics.hpp     
+     FieldStatisticsBase.hpp
      contact/ContactSolverBase.hpp
      contact/ContactExtrinsicData.hpp
      contact/LagrangianContactSolver.hpp
@@ -16,6 +18,7 @@ set( physicsSolvers_headers
      contact/SolidMechanicsEmbeddedFractures.hpp
      fluidFlow/CompositionalMultiphaseBase.hpp
      fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp
+     fluidFlow/CompositionalMultiphaseStatistics.hpp     
      fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp
      fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp     
      fluidFlow/CompositionalMultiphaseFVM.hpp
@@ -37,13 +40,17 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseBase.hpp
      fluidFlow/SinglePhaseBaseExtrinsicData.hpp
      fluidFlow/SinglePhaseBaseKernels.hpp
+     fluidFlow/SinglePhaseStatistics.hpp
      fluidFlow/SinglePhaseFVM.hpp
      fluidFlow/SinglePhaseFVMKernels.hpp
      fluidFlow/SinglePhaseHybridFVM.hpp
      fluidFlow/SinglePhaseHybridFVMKernels.hpp
      fluidFlow/SinglePhaseProppantBase.hpp
      fluidFlow/SinglePhaseProppantBaseKernels.hpp
+     fluidFlow/StabilizedCompositionalMultiphaseFVMKernels.hpp
      fluidFlow/StencilAccessors.hpp
+     fluidFlow/ThermalSinglePhaseBaseKernels.hpp
+     fluidFlow/ThermalSinglePhaseFVMKernels.hpp
      fluidFlow/wells/CompositionalMultiphaseWell.hpp
      fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp
      fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
@@ -53,39 +60,50 @@ set( physicsSolvers_headers
      fluidFlow/wells/WellControls.hpp
      fluidFlow/wells/WellSolverBase.hpp
      fluidFlow/wells/WellSolverBaseExtrinsicData.hpp
-     multiphysics/CompositionalMultiphaseReservoir.hpp
+     multiphysics/CompositionalMultiphaseReservoirAndWells.hpp          
+     multiphysics/CoupledReservoirAndWellsBase.hpp     
+     multiphysics/CoupledSolver.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/HydrofractureSolverKernels.hpp
      multiphysics/MultiphasePoromechanicsKernel.hpp
      multiphysics/MultiphasePoromechanicsSolver.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
-     multiphysics/ReservoirSolverBase.hpp
      multiphysics/SinglePhasePoromechanicsKernel.hpp
      multiphysics/SinglePhasePoromechanicsEFEMKernel.hpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.hpp
      multiphysics/SinglePhasePoromechanicsSolver.hpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.hpp
-     multiphysics/SinglePhaseReservoir.hpp
+     multiphysics/SinglePhaseReservoirAndWells.hpp
      simplePDE/LaplaceBaseH1.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
-     solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
+     solidMechanics/SolidMechanicsExtrinsicData.hpp	
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
-     solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
-     solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
-     solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
-     solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
+     solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp
+     solidMechanics/kernels/ExplicitFiniteStrain.hpp
+     solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp
+     solidMechanics/kernels/ExplicitSmallStrain.hpp
+     solidMechanics/kernels/ExplicitSmallStrain_impl.hpp
+     solidMechanics/kernels/ImplicitSmallStrainNewmark.hpp
+     solidMechanics/kernels/ImplicitSmallStrainNewmark_impl.hpp
+     solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp
+     solidMechanics/kernels/ImplicitSmallStrainQuasiStatic_impl.hpp
+     solidMechanics/SolidMechanicsStateReset.hpp
+     solidMechanics/SolidMechanicsStatistics.hpp       
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.hpp
      surfaceGeneration/ParallelTopologyChange.hpp
      surfaceGeneration/SurfaceGenerator.hpp
+     surfaceGeneration/SurfaceGeneratorExtrinsicData.hpp     
      wavePropagation/WaveSolverBase.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
      wavePropagation/AcousticWaveEquationSEMKernel.hpp
+     wavePropagation/ElasticWaveEquationSEM.hpp
+     wavePropagation/ElasticWaveEquationSEMKernel.hpp
    )
 
 #
@@ -96,11 +114,13 @@ set( physicsSolvers_sources
      NonlinearSolverParameters.cpp
      PhysicsSolverManager.cpp
      SolverBase.cpp
+     SolverStatistics.cpp     
      contact/ContactSolverBase.cpp
      contact/LagrangianContactSolver.cpp
      contact/SolidMechanicsEmbeddedFractures.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
-     fluidFlow/CompositionalMultiphaseFVM.cpp          
+     fluidFlow/CompositionalMultiphaseFVM.cpp
+     fluidFlow/CompositionalMultiphaseStatistics.cpp          
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.cpp
      fluidFlow/CompositionalMultiphaseHybridFVM.cpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
@@ -109,6 +129,7 @@ set( physicsSolvers_sources
      fluidFlow/proppantTransport/ProppantTransport.cpp
      fluidFlow/proppantTransport/ProppantTransportKernels.cpp
      fluidFlow/SinglePhaseBase.cpp
+     fluidFlow/SinglePhaseStatistics.cpp
      fluidFlow/SinglePhaseFVM.cpp
      fluidFlow/SinglePhaseHybridFVM.cpp
      fluidFlow/SinglePhaseProppantBase.cpp
@@ -118,41 +139,50 @@ set( physicsSolvers_sources
      fluidFlow/wells/SinglePhaseWellKernels.cpp
      fluidFlow/wells/WellControls.cpp
      fluidFlow/wells/WellSolverBase.cpp
-     multiphysics/CompositionalMultiphaseReservoir.cpp
+     multiphysics/CompositionalMultiphaseReservoirAndWells.cpp
+     multiphysics/CoupledReservoirAndWellsBase.cpp  
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/MultiphasePoromechanicsSolver.cpp
      multiphysics/PhaseFieldFractureSolver.cpp
-     multiphysics/ReservoirSolverBase.cpp
      multiphysics/SinglePhasePoromechanicsSolver.cpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.cpp
-     multiphysics/SinglePhaseReservoir.cpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.cpp
+     multiphysics/SinglePhaseReservoirAndWells.cpp
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
+     solidMechanics/SolidMechanicsStateReset.cpp
+     solidMechanics/SolidMechanicsStatistics.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.cpp
      surfaceGeneration/ParallelTopologyChange.cpp
      surfaceGeneration/SurfaceGenerator.cpp
      wavePropagation/WaveSolverBase.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
+     wavePropagation/ElasticWaveEquationSEM.cpp
    )
+
+  include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
 
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers
-	python/PySolver.hpp 
-	python/PySolverType.hpp ) 
+  python/PySolver.hpp 
+  python/PySolverType.hpp ) 
   list( APPEND physicsSolvers_sources
-	python/PySolver.cpp ) 
+        python/PySolver.cpp ) 
   list( APPEND dependencyList Python3::Python pylvarray )
 endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
+endif()
+
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
 endif()
 
 blt_add_library( NAME       physicsSolvers

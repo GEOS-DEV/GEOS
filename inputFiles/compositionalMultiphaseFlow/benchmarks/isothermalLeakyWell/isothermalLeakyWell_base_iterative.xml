@@ -9,8 +9,8 @@
       logLevel="1"
       discretization="fluidTPFA"
       temperature="313.15"
+      initialDt="0.001"
       useMass="1"
-      computeCFLNumbers="1"
       targetRegions="{ aquiferTop, aquiferBottom, injectionWell, leakyWell }">
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
@@ -19,8 +19,8 @@
         lineSearchAction="Attempt"/>
       <LinearSolverParameters
         solverType="fgmres"
-	preconditionerType="mgr"
-	krylovTol="1e-4"/>
+        preconditionerType="mgr"
+        krylovTol="1e-4"/>
     </CompositionalMultiphaseFVM>
   </Solvers>
   <!-- SPHINX_SOLVER_END -->        
@@ -32,16 +32,20 @@
       timeFrequency="8.64e6"
       target="/Outputs/vtkOutput"/>
     <PeriodicEvent
+      name="statistics"
+      timeFrequency="1e7"
+      target="/Tasks/compflowStatistics"/>
+    <PeriodicEvent
       name="timeHistoryOutput"
-      timeFrequency="1e4"
+      timeFrequency="1e7"
       target="/Outputs/timeHistoryOutput"/>
     <PeriodicEvent
       name="timeHistoryCollection"
-      timeFrequency="1e4"
+      timeFrequency="1e7"
       target="/Tasks/phaseOutfluxCollection"/>
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1e4"
+      maxEventDt="1e5"
       target="/Solvers/compflow"/>
   </Events>
 
@@ -79,7 +83,7 @@
       cellBlocks="{ aquiferTop11, aquitard11, aquiferBottom11 }"
       materialList="{ fluid, rockWell, relperm }"/>
     <CellElementRegion
-      name="Barrier"
+      name="barrier"
       cellBlocks="{ aquitard00, aquitard01, aquitard02,
                     aquitard10,             aquitard12,
                     aquitard20, aquitard21, aquitard22,
@@ -300,6 +304,12 @@
       name="phaseOutfluxCollection"
       objectPath="ElementRegions/leakyWell/aquitard11"
       fieldName="phaseOutflux"/>
+    <CompositionalMultiphaseStatistics
+      name="compflowStatistics"
+      flowSolverName="compflow"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
   </Tasks>
   
 </Problem>

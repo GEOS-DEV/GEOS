@@ -27,8 +27,8 @@ class Compile(object):
         :return: List of strings ready to be used in a subprocess.call.
         """
         tmp = self.command.split()
-        tmp.insert(1, "-E")  # gcc postprocessing option to stop after preprocessing.
-        tmp.insert(1, "-H")  # gcc postprocessing option to get the included headers
+        tmp.insert(1, "-E")    # gcc postprocessing option to stop after preprocessing.
+        tmp.insert(1, "-H")    # gcc postprocessing option to get the included headers
         return tmp
 
 
@@ -40,13 +40,11 @@ def get_compile_commands(ninja_compile_command: str) -> Tuple[Compile]:
     """
     with open(ninja_compile_command, "r") as f:
         raw = json.load(f)
-    return tuple(map(
-        lambda j: Compile(j["directory"], j["command"], j["file"]),
-        raw
-    ))
+    return tuple(map(lambda j: Compile(j["directory"], j["command"], j["file"]), raw))
 
 
-def recursive_populate(edges: Tuple[str, str], root_indent: int, root_path: str, sub_graph_info: Tuple[int, str]) -> None:
+def recursive_populate(edges: Tuple[str, str], root_indent: int, root_path: str, sub_graph_info: Tuple[int,
+                                                                                                       str]) -> None:
     """
     Constructs the edges and populate the list.
     :param edges: List the will contain the pairs of string.
@@ -59,7 +57,7 @@ def recursive_populate(edges: Tuple[str, str], root_indent: int, root_path: str,
         if indent == (root_indent + 1):
             edges.append((root_path, path))
             recursive_populate(edges, indent, path, sub_graph_info[index + 1:])
-        if indent <= root_indent:  # This is not our graph branch anymore
+        if indent <= root_indent:    # This is not our graph branch anymore
             return
 
 
@@ -84,7 +82,7 @@ def find_cycles(outputs: Dict[Compile, str], exclude_dirs: List[str]) -> int:
                     path = os.path.normpath(os.path.join(cc.directory, path))
                 sub_graph_info.append((len(indent), path))
             else:
-                break  # graph lines are on top, we stop at first non graph line.
+                break    # graph lines are on top, we stop at first non graph line.
         recursive_populate(edges, 0, cc.file, sub_graph_info)
 
     # Using dedicated graph lib to find cycles.
@@ -115,7 +113,7 @@ def get_gcc_output(cc: Compile) -> str:
     try:
         logging.info("Extracting include information for " + cc.file)
         process = subprocess.run(cc.include_command, capture_output=True, cwd=cc.directory, check=True)
-        return process.stderr.decode('utf-8')  # output is on stderr.
+        return process.stderr.decode('utf-8')    # output is on stderr.
     except subprocess.CalledProcessError as e:
         logging.error("Could not run " + " ".join(cc.include_command), exc_info=e)
         sys.exit(-1)
@@ -143,9 +141,16 @@ def parse(cli_args: List[str]):
     :return: The struct
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--compile-command', help="Ninja's compile_command.json file.",
-                        type=str, dest="ninja_compile_command")
-    parser.add_argument('-e', '--exclude-dir', default=[], action='append', dest="exclude_dirs",
+    parser.add_argument('-c',
+                        '--compile-command',
+                        help="Ninja's compile_command.json file.",
+                        type=str,
+                        dest="ninja_compile_command")
+    parser.add_argument('-e',
+                        '--exclude-dir',
+                        default=[],
+                        action='append',
+                        dest="exclude_dirs",
                         help="Exclude a directory for cycle analysis. Can be used multiple times.")
     args = parser.parse_args(cli_args)
     return args

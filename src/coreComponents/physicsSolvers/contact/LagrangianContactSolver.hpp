@@ -93,9 +93,9 @@ public:
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  virtual void
+  virtual real64
   setNextDt( real64 const & currentDt,
-             real64 & nextDt ) override;
+             DomainPartition & domain ) override;
 
   void updateState( DomainPartition & domain ) override final;
 

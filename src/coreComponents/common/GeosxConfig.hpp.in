@@ -32,6 +32,9 @@
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #cmakedefine GEOSX_USE_CUDA
 
+/// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
+#cmakedefine GEOSX_USE_CUDA_NVTOOLSEXT
+
 /// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
 #cmakedefine GEOSX_USE_PVTPackage
 
@@ -62,6 +65,9 @@
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #cmakedefine GEOSX_USE_PETSC
 
+/// Enables use of Scotch library (CMake option ENABLE_SCOTCH)
+#cmakedefine GEOSX_USE_SCOTCH
+
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
 #cmakedefine GEOSX_LA_INTERFACE @GEOSX_LA_INTERFACE@
 /// Macro defined when Trilinos interface is selected
@@ -70,7 +76,6 @@
 #cmakedefine GEOSX_LA_INTERFACE_HYPRE
 /// Macro defined when PETSc interface is selected
 #cmakedefine GEOSX_LA_INTERFACE_PETSC
-
 
 /// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
 #cmakedefine FORTRAN_MANGLE_NO_UNDERSCORE
@@ -92,6 +97,55 @@
 
 /// An integer flag representing the type that globalIndex will be aliased to.
 #define GEOSX_GLOBALINDEX_TYPE_FLAG @GEOSX_GLOBALINDEX_TYPE_FLAG@
+
+/// Version information for HDF5
+#cmakedefine HDF5_VERSION @HDF5_VERSION@
+
+/// Version information for Conduit
+#cmakedefine Conduit_VERSION @Conduit_VERSION@
+
+/// Version information for RAJA
+#cmakedefine RAJA_VERSION @RAJA_VERSION@
+
+/// Version information for umpire
+#cmakedefine umpire_VERSION @umpire_VERSION@
+
+/// Version information for chai
+#cmakedefine chai_VERSION @chai_VERSION@
+
+/// Version information for adiak
+#cmakedefine adiak_VERSION @adiak_VERSION@
+
+/// Version information for caliper
+#cmakedefine caliper_VERSION @caliper_VERSION@
+
+/// Version information for Metis
+#cmakedefine METIS_VERSION @METIS_VERSION@
+
+/// Version information for ParMetis
+#cmakedefine PARAMETIS_VERSION @PARAMETIS_VERSION@
+
+/// Version information for scotch 
+#cmakedefine scotch_VERSION @scotch_VERSION@
+
+/// Version information for superlu_dist
+#cmakedefine superlu_dist_VERSION @superlu_dist_VERSION@
+
+/// Version information for suitesparse
+#cmakedefine suitesparse_VERSION @suitesparse_VERSION@
+
+/// Version information for VTK
+#cmakedefine VTK_VERSION @VTK_VERSION@
+
+/// Version information for fmt
+#cmakedefine fmt_VERSION @fmt_VERSION@
+
+/// Version information for python
+#cmakedefine Python3_VERSION @Python3_VERSION@
+
+/// Version information for CUDAToolkit
+#cmakedefine CUDAToolkit_VERSION @CUDAToolkit_VERSION@
+
 
 #endif  /* GEOSX_CONFIG_HPP */
 

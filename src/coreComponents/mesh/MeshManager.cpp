@@ -65,13 +65,13 @@ void MeshManager::generateMeshLevels( DomainPartition & domain )
 {
   this->forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
-    string const & meshName = meshGen.getName();
-
-    // THIS IS A HACK
-    if( meshName.find( "well" ) == string::npos )
+    if( dynamicCast< InternalWellGenerator * >( &meshGen ) )
     {
-      domain.getMeshBodies().registerGroup< MeshBody >( meshName ).createMeshLevel( 0 );
+      return;
     }
+
+    string const & meshName = meshGen.getName();
+    domain.getMeshBodies().registerGroup< MeshBody >( meshName ).createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString() );
   } );
 }
 

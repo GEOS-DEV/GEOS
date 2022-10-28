@@ -2,27 +2,29 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           CALIPER
                           CHAI
                           CUDA
+                          CUDA_NVTOOLSEXT
                           FORTRAN_MANGLE_NO_UNDERSCORE
                           FPE
                           HYPRE
                           HYPRE_CUDA
                           MATHPRESSO
                           METIS
+                          MKL
                           MPI
                           OPENMP
-                          CUDA
                           PARMETIS
                           PETSC
                           PVTPackage
                           PYGEOSX
                           RAJA 
-                          SUPERLU_DIST
+                          SCOTCH
+                          SEPARATION_COEFFICIENT
                           SUITESPARSE
+                          SUPERLU_DIST
                           TIMERS
                           TOTALVIEW_OUTPUT
                           TRILINOS
-                          MKL
-                          SEPARATION_COEFFICIENT
+                          VTK
                           ${externalComponentsList} )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES} )
@@ -31,6 +33,7 @@ foreach( DEP in ${PREPROCESSOR_DEFINES} )
         set( GEOSX_USE_${DEP} TRUE )
     endif()
 endforeach()
+
 
 set( GEOSX_CMAKE_BUILD_TYPE "\"${CMAKE_BUILD_TYPE}\"" )
 
