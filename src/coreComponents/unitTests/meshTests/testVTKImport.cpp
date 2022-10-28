@@ -160,13 +160,14 @@ TEST( VTKImport, cube )
                                       "cube_STRUCTURED_GRID.vtk",
                                       "cube_UNSTRUCTURED_GRID.vtk",
                                       "cube.vtu",
+                                      //"cube.pvtu",
                                       "cube.vts",
                                       "cube.pvts",
                                       "cube.vtr",
                                       "cube.pvtr",
                                       "cube.vti",
-                                      "cube.pvti" };
-  //string const cubePVTU = testMeshDir + "/cube.pvtu";
+                                      "cube.pvti"
+				      };
   for( string const & meshFile: meshFiles )
   {
     TestMeshImport( testMeshDir + "/" + meshFile, validate );
