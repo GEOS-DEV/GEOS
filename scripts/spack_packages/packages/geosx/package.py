@@ -132,7 +132,7 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on('scotch@6.0.9 +mpi +int64', when='+scotch')
 
-    depends_on('suite-sparse+openmp')
+    depends_on('suite-sparse@5.10.1+openmp')
 
     trilinos_build_options = '+openmp'
     trilinos_packages = '+aztec+stratimikos~amesos2~anasazi~belos~ifpack2~muelu~sacado+thyra'
