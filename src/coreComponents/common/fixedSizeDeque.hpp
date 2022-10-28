@@ -34,6 +34,7 @@
 namespace geosx
 {
 template< typename T, typename INDEX_TYPE >
+/// Implement a double ended queue with fixed number of fixed size buffer to be stored
 class fixedSizeDeque
 {
   /// The integer type used for indexing.
@@ -126,7 +127,7 @@ public:
   /**
    * Add one array (copy of src) at the front of the queue
    *
-   * @pram src Array to emplace at the front of the queue
+   * @param src Array to emplace at the front of the queue
    */
   void emplace_front( const ArraySlice1D & src )
   {
@@ -138,7 +139,7 @@ public:
   /**
    * Add one array (copy of src) at the end of the queue
    *
-   * @pram src Array to emplace at the end of the queue
+   * @param src Array to emplace at the end of the queue
    */
   void emplace_back( const ArraySlice1D & src )
   {
