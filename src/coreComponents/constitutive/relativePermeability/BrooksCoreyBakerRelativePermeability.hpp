@@ -137,6 +137,9 @@ public:
     static constexpr char const * volFracScaleString() { return "volFracScale"; }
   };
 
+
+    arrayView1d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
+
 protected:
 
   virtual void postProcessInput() override;

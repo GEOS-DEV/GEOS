@@ -25,14 +25,6 @@ namespace geosx {
                 setInputFlag(InputFlags::REQUIRED).
                 setDescription("Relperm model to test");
 
-        registerWrapper( viewKeyStruct::nonwettingFunctionString(), &m_nonwettingFunctionName).
-                setInputFlag(InputFlags::REQUIRED).
-                setDescription("Relperm model to test");
-
-        registerWrapper( viewKeyStruct::wettingFunctionString(), &m_wettingFunctionName).
-                setInputFlag(InputFlags::REQUIRED).
-                setDescription("Relperm model to test");
-
         registerWrapper( viewKeyStruct::numStepsString(), &m_numSteps ).
                 setInputFlag( InputFlags::REQUIRED ).
                 setDescription( "Number of load steps to take" );
@@ -145,50 +137,64 @@ namespace geosx {
 
                                 m_numPhases = baseRelperm.numFluidPhases();
 
-                                m_table.resize( m_numSteps+1, 1, 1+2*m_numPhases );
-
-                                FunctionManager & functionManager = FunctionManager::getInstance();
-                                TableFunction & wettingFunction = functionManager.getGroup< TableFunction >( m_wettingFunctionName );
-                                TableFunction & nonwettingFunction = functionManager.getGroup< TableFunction >( m_nonwettingFunctionName );
-
-                                wettingFunction.initializeFunction();
-                                nonwettingFunction.initializeFunction();
-
-                                // determine time increment
-
-                                ArrayOfArraysView< real64 > coordinates = wettingFunction.getCoordinates();
-                                real64 const minSw = coordinates[0][0];
-                                real64 const maxSw = coordinates[0][coordinates.sizeOfArray( 0 )-1];
-                                real64 const dSw = (maxSw-minSw) / m_numSteps;
-
-                                // set input columns
 
                                 using PT = constitutive::RelativePermeabilityBase::PhaseType;
                                 integer const ipWater = baseRelperm.getPhaseOrder()[PT::WATER];
                                 integer const ipOil   = baseRelperm.getPhaseOrder()[PT::OIL];
                                 integer const ipGas   = baseRelperm.getPhaseOrder()[PT::GAS];
 
-                                for( integer n=0; n<m_numSteps+1; ++n )
+                                real64 minSw, minSnw;
+                                if( baseRelperm.numFluidPhases() > 2 ) {
+                                    minSw = baseRelperm.getPhaseMinVolumeFraction()[ipWater];
+                                    minSnw = baseRelperm.getPhaseMinVolumeFraction()[ipGas];
+                                }
+                                else
                                 {
-                                    m_table( n, 0,  TIME ) = minSw + n*dSw;
-                                    if( m_numPhases > 2) {
-                                        m_table( n, 0, ipWater+1 ) = wettingFunction.evaluate( &m_table( n, 0, TIME ) );
-                                        m_table(n, 0, ipGas+1) = nonwettingFunction.evaluate(&m_table(n, 0, TIME));
-                                        m_table(n, 0, ipOil+1) = 1. - m_table(n, 0, ipWater+1) - m_table(n, 0, ipOil+1);
-                                    }
-                                    else
+                                    if(ipWater<0)
                                     {
+                                        minSw = 0;
+                                        minSnw = baseRelperm.getPhaseMinVolumeFraction()[ipGas];
+                                    }
+                                    else if(ipGas<0)
+                                    {
+                                        minSnw = 0;
+                                        minSw = baseRelperm.getPhaseMinVolumeFraction()[ipGas];
+                                    }
+                                }
+                                real64 const dSw = (1-minSw-minSnw) / m_numSteps;
+                                // set input columns
 
+
+                                if( m_numPhases > 2) {
+                                    m_table.resize( (m_numSteps+1)*(m_numSteps+1), 1, 1+2*m_numPhases );
+                                    for (integer ni = 0; ni < m_numSteps + 1; ++ni) {
+                                        for (integer nj = 0; nj < m_numSteps + 1; ++nj) {
+
+                                            integer index = ni * (m_numSteps + 1) + nj;
+                                            m_table(index, 0, TIME) = minSw + index * dSw;
+                                            m_table(index, 0, ipWater + 1) = minSw + nj * dSw;
+                                            m_table(index, 0, ipGas + 1) = minSnw + ni * dSw;
+                                            m_table(index, 0, ipOil + 1) =
+                                                    1. - m_table(index, 0, ipWater + 1) - m_table(index, 0, ipOil + 1);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    m_table.resize( m_numSteps+1, 1, 1+2*m_numPhases );
+                                    for (integer ni = 0; ni < m_numSteps + 1; ++ni) {
+                                        integer index = ni;
+                                        m_table(index, 0, TIME) = minSw + index * dSw;
                                         if(ipWater<0) {
-                                            m_table( n, 0, ipOil+1 ) = wettingFunction.evaluate( &m_table( n, 0, TIME ) );
-                                            m_table(n, 0, ipGas+1 ) = 1. - m_table(n, 0, ipOil+1);
+                                            m_table(index, 0, ipGas + 1) = minSnw + ni * dSw;
+                                            m_table(index, 0, ipOil+1 ) = 1. - m_table(index, 0, ipGas+1);
                                         }
                                         else if(ipGas<0){
-                                            m_table( n, 0, ipWater+1 ) = wettingFunction.evaluate( &m_table( n, 0, TIME ) );
-                                            m_table(n, 0, ipOil+1 ) = 1. - m_table(n, 0, ipWater+1);
+                                            m_table(index, 0, ipWater + 1) = minSw + ni * dSw;
+                                            m_table(index, 0, ipOil+1 ) = 1. - m_table(index, 0, ipWater+1);
                                         }
-
                                     }
+
                                 }
 
 

@@ -294,6 +294,7 @@ public:
                          localIndex const q,
                          arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override;
 
+
 private:
 
     /// Drainage kernel wrappers for relative permeabilities in the following order:
@@ -387,6 +388,8 @@ private:
     static constexpr char const * imbibitionNonWettingRelPermTableNameString() { return "imbibitionNonWettingRelPermTableName"; }
 
   };
+
+    arrayView1d< real64 const > getPhaseMinVolumeFraction() const override { return m_imbibitionPhaseMinVolFraction; };
 
 private:
 

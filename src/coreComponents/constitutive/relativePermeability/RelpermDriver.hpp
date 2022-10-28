@@ -52,8 +52,6 @@ namespace geosx {
         struct viewKeyStruct
         {
             constexpr static char const * relpermNameString() { return "relperm"; }
-            constexpr static char const * wettingFunctionString() { return "wettingControl"; }
-            constexpr static char const * nonwettingFunctionString() { return "nonwettingControl"; }
             constexpr static char const * numStepsString() { return "steps"; }
             constexpr static char const * outputString() { return "output"; }
             constexpr static char const * baselineString() { return "baseline"; }
@@ -65,15 +63,13 @@ namespace geosx {
         integer m_numComponents; ///< Number of fluid components
 
         string m_relpermName;               ///< relPermType identifier
-        string m_wettingFunctionName;    ///< Time-dependent function controlling pressure
-        string m_nonwettingFunctionName; ///< Time-dependent function controlling temperature
         string m_outputFile;              ///< Output file (optional, no output if not specified)
 
         array3d< real64 > m_table; ///< Table storing time-history of input/output
 
         Path m_baselineFile; ///< Baseline file (optional, for unit testing of solid models)
 
-        enum columnKeys { TIME, WET, NONWET=3  }; ///< Enumeration of "input" column keys for readability
+        enum columnKeys { TIME }; ///< Enumeration of "input" column keys for readability
 
         static constexpr real64 m_baselineTol = 1e-3; ///< Comparison tolerance for baseline results
     };

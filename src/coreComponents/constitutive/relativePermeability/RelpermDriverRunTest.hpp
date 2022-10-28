@@ -27,14 +27,21 @@ using namespace constitutive;
         // set saturation to user specified feed
         // it is more convenient to provide input in molar, so perform molar to mass conversion here
 
-        array3d< real64, relperm::LAYOUT_RELPERM > const saturationValues( 1, m_numSteps, numPhases );
+        array3d< real64, relperm::LAYOUT_RELPERM > saturationValues;
+        if(numPhases>2) {
+            saturationValues.resize(1, (m_numSteps + 1)*(m_numSteps + 1), numPhases);
+        }
+        else
+        {
+            saturationValues.resize(1, m_numSteps + 1, numPhases);
+        }
         using PT = typename RELPERM_TYPE::PhaseType;
         integer const ipWater = relperm.getPhaseOrder()[PT::WATER];
         integer const ipOil   = relperm.getPhaseOrder()[PT::OIL];
         integer const ipGas   = relperm.getPhaseOrder()[PT::GAS];
         const localIndex  offset = std::max(std::max(ipOil,ipWater), std::max(ipOil, ipGas)) + 1;
 
-        for( integer n = 0; n < m_numSteps; ++n )
+        for( integer n = 0; n < table.size(0); ++n )
         {
 
 
@@ -67,12 +74,12 @@ using namespace constitutive;
         integer const numSteps = m_numSteps;
         using ExecPolicy = typename RELPERM_TYPE::exec_policy;
         forAll< ExecPolicy >(saturation.size(0),
-                             [numPhases, numSteps, kernelWrapper, saturation, table, offset ] GEOSX_HOST_DEVICE (localIndex const i )
+                             [numPhases, kernelWrapper, saturation, table, offset ] GEOSX_HOST_DEVICE (localIndex const i )
         {
-            for( integer n = 0; n < numSteps; ++n )
+            for( integer n = 0; n < saturation.size(1); ++n )
             {
 
-d                kernelWrapper.update(i, 0, saturation[0][n] );
+                kernelWrapper.update(i, 0, saturation[0][n] );
                 for( integer p = 0; p < numPhases; ++p )
                 {
                     table( n, 0, offset + 1 + p ) = kernelWrapper.relperm()( i, 0, p );
