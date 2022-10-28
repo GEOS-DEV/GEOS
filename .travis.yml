@@ -59,7 +59,7 @@ __geosx_linux_build: &__geosx_linux_build
 
 __geosx_osx_build: &__geosx_osx_build
   os: osx
-  osx_image: xcode13.2
+  osx_image: xcode13.4
   install:
   - echo "running nproc"; nproc
   - top -l 1 -s 0 | grep PhysMem
