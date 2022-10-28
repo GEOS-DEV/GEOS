@@ -18,8 +18,13 @@
 
 #include "mesh/generators/VTKUtilities.hpp"
 
-#include "mesh/generators/CellBlockManager.hpp"
+#include "common/TypeDispatch.hpp"
+#include "mesh/generators/VTKMeshGeneratorTools.hpp"
 
+#include "mesh/generators/ParMETISInterface.hpp"
+#ifdef GEOSX_USE_SCOTCH
+#include "mesh/generators/PTScotchInterface.hpp"
+#endif
 
 #include <vtkArrayDispatch.h>
 #include <vtkCellData.h>
@@ -29,31 +34,33 @@
 #include <vtkBoundingBox.h>
 #include <vtkDataArray.h>
 #include <vtkRedistributeDataSetFilter.h>
+#include <vtkNew.h>
+#include <vtkDataSetReader.h>
 
+// vtk data formats
 #include <vtkStructuredPoints.h>
+#include <vtkStructuredGrid.h>
+#include <vtkRectilinearGrid.h>
+#include <vtkImageData.h>
+
+// for legacy vtk import
 #include <vtkStructuredPointsReader.h>
 #include <vtkStructuredGridReader.h>
 #include <vtkUnstructuredGridReader.h>
 #include <vtkRectilinearGridReader.h>
-
+// for vtu/pvtu import
 #include <vtkXMLPUnstructuredGridReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
-//
-#include <vtkDataSetReader.h>
-// for vts import
-#include <vtkNew.h>
-#include <vtkStructuredGrid.h>
+// for vts/pvts import
 #include <vtkXMLStructuredGridReader.h>
 #include <vtkXMLPStructuredGridReader.h>
-// for vtr import
-#include <vtkRectilinearGrid.h>
+// for vtr/pvtr import
 #include <vtkXMLRectilinearGridReader.h>
 #include <vtkXMLPRectilinearGridReader.h>
-// for vti import
-#include <vtkImageData.h>
+// for vti/pvti import
 #include <vtkXMLImageDataReader.h>
 #include <vtkXMLPImageDataReader.h>
-#include <vtkImageDataToPointSet.h>
+//#include <vtkImageDataToPointSet.h>
 
 #ifdef GEOSX_USE_MPI
 #include <vtkMPIController.h>
@@ -196,6 +203,35 @@ buildElemToNodesImpl( vtkDataSet & mesh,
 }
 
 /**
+ * @brief Check it the vtk grid is a (supported) structured mesh
+ * @param[in] mesh a vtk grid
+ * @return @p true if i@p mesh is structured; @p false otehrwise
+ */
+bool isMeshStructured( vtkDataSet & mesh )
+{
+  if( mesh.IsA( "vtkStructuredPoints" ) )
+  {
+    return true;
+  }
+  else if( mesh.IsA( "vtkStructuredGrid" ) )
+  {
+    return true;
+  }
+  else if( mesh.IsA( "vtkRectilinearGrid" ) )
+  {
+    return true;
+  }
+  else if( mesh.IsA( "vtkImageData" ) )
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+/**
  * @brief Get the Cell Array object
  * @details Replaces GetCells() that exist only in vtkUnstructuredGrid
  * @param[in] mesh a vtk grid
@@ -204,17 +240,23 @@ buildElemToNodesImpl( vtkDataSet & mesh,
 vtkSmartPointer< vtkCellArray > getCellArray( vtkDataSet & mesh )
 {
   vtkSmartPointer< vtkCellArray > cells = vtkSmartPointer< vtkCellArray >::New();
-  if( mesh.IsA( "vtkUnstructuredGrid" ))
+  if( mesh.IsA( "vtkUnstructuredGrid" ) )
   {
     cells = vtkUnstructuredGrid::SafeDownCast( &mesh )->GetCells();
   }
-  else
+  else if( isMeshStructured( mesh ) )
   {
-    int numCell = mesh.GetNumberOfCells();
-    for( int c = 0; c < numCell; ++c )
+    // All cells are either hexahedra or voxels
+    vtkIdType const numCells = mesh.GetNumberOfCells();
+    cells->AllocateExact( numCells, 8 * numCells );
+    for( vtkIdType c = 0; c < numCells; ++c )
     {
       cells->InsertNextCell( mesh.GetCell( c ));
     }
+  }
+  else
+  {
+    GEOSX_ERROR( "Unsupported mesh format" );
   }
   return cells;
 }
@@ -358,6 +400,7 @@ loadMesh( Path const & filePath )
     }
     else
     {
+      // TODO Check if this is truly needed for parallel runs
       return vtkSmartPointer< GridType >::New();
     }
   };
@@ -679,7 +722,7 @@ geosx::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
 
 /**
  * @brief Get the GEOSX element type
- * @param[in] cellType The vtk cell type
+ * @param[in] cell The vtk cell type
  * @return The GEOSX element type
  */
 ElementType convertVtkToGeosxElementType( vtkCell *cell )
@@ -1265,11 +1308,6 @@ CellMapType buildCellMap( vtkDataSet & mesh, string const & attributeName )
   return cellMap;
 }
 
-bool isElementHexahedron( ElementType const elemType )
-{
-  return elemType == ElementType::Hexahedron;
-}
-
 bool vtkToGeosxNodeOrderingExists( ElementType const elemType )
 {
   switch( elemType )
@@ -1321,17 +1359,17 @@ std::vector< int > getVtkToGeosxNodeOrdering( VTKCellType const vtkType )
 {
   switch( vtkType )
   {
-    case VTK_VERTEX:           return { 0 };
-    case VTK_LINE:             return { 0, 1 };
-    case VTK_TRIANGLE:         return { 0, 1, 2 };
-    case VTK_QUAD:             return { 0, 1, 2, 3 };  // TODO check (QUAD vs. PIXEL)
-    case VTK_TETRA:            return { 0, 1, 2, 3 };
-    case VTK_PYRAMID:          return { 0, 1, 3, 2, 4 };
-    case VTK_WEDGE:            return { 0, 3, 2, 5, 1, 4 };
+    case VTK_VERTEX:           return getVtkToGeosxNodeOrdering( ElementType::Vertex );
+    case VTK_LINE:             return getVtkToGeosxNodeOrdering( ElementType::Line );
+    case VTK_TRIANGLE:         return getVtkToGeosxNodeOrdering( ElementType::Triangle );
+    case VTK_QUAD:             return getVtkToGeosxNodeOrdering( ElementType::Quadrilateral );
+    case VTK_TETRA:            return getVtkToGeosxNodeOrdering( ElementType::Tetrahedron );
+    case VTK_PYRAMID:          return getVtkToGeosxNodeOrdering( ElementType::Pyramid );
+    case VTK_WEDGE:            return getVtkToGeosxNodeOrdering( ElementType::Wedge );
     case VTK_VOXEL:            return { 0, 1, 2, 3, 4, 5, 6, 7 };
-    case VTK_HEXAHEDRON:       return { 0, 1, 3, 2, 4, 5, 7, 6 };
-    case VTK_PENTAGONAL_PRISM: return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-    case VTK_HEXAGONAL_PRISM:  return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+    case VTK_HEXAHEDRON:       return getVtkToGeosxNodeOrdering( ElementType::Hexahedron );
+    case VTK_PENTAGONAL_PRISM: return getVtkToGeosxNodeOrdering( ElementType::Prism5 );
+    case VTK_HEXAGONAL_PRISM:  return getVtkToGeosxNodeOrdering( ElementType::Prism6 );
     default:
     {
       GEOSX_ERROR( "Cannot get vtk to geosx node ordering based on vtk cell type " << vtkType );
@@ -1398,7 +1436,7 @@ void fillCellBlock( vtkDataSet & mesh,
   std::vector< int > const nodeOrderFixed = vtkToGeosxNodeOrderingExists( elemType )
                                           ? getVtkToGeosxNodeOrdering( elemType )
                                           : std::vector< int >();
-  std::vector< int > const nodeOrderVoxel = isElementHexahedron( elemType )
+  std::vector< int > const nodeOrderVoxel = ( elemType == ElementType::Hexahedron)
                                           ? getVtkToGeosxNodeOrdering( VTK_VOXEL )
                                           : std::vector< int >();
 

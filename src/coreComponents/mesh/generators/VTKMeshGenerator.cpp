@@ -21,17 +21,11 @@
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/MpiWrapper.hpp"
-#include "common/TypeDispatch.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-
-#include <vtkBoundingBox.h>
-#include <vtkUnstructuredGrid.h>
-
-#include <unordered_set>
 
 namespace geosx
 {

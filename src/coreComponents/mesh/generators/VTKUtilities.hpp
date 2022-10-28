@@ -22,21 +22,12 @@
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/MpiWrapper.hpp"
-#include "common/TypeDispatch.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/MeshBody.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
-#include "mesh/generators/VTKMeshGeneratorTools.hpp"
-#include "mesh/generators/ParMETISInterface.hpp"
-#ifdef GEOSX_USE_SCOTCH
-#include "mesh/generators/PTScotchInterface.hpp"
-#endif
 
 #include <vtkSmartPointer.h>
 #include <vtkDataSet.h>
-#include <vtkCellArray.h>
 #include <vtkMultiProcessController.h>
-
 
 #include <numeric>
 #include <unordered_set>

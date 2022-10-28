@@ -19,18 +19,8 @@
 #ifndef GEOSX_MESH_GENERATORS_VTKMESHGENERATOR_HPP
 #define GEOSX_MESH_GENERATORS_VTKMESHGENERATOR_HPP
 
-#include "codingUtilities/StringUtilities.hpp"
-#include "codingUtilities/Utilities.hpp"
-#include "mesh/ElementType.hpp"
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
-#include "mesh/FieldIdentifiers.hpp"
-
-// TODO can we remove this and use unique_ptr to hold mesh?
-#include <vtkSmartPointer.h>
-
-#include <map>
-#include <unordered_map>
 
 class vtkDataSet;
 namespace geosx
@@ -120,6 +110,7 @@ private:
    * @brief The VTK mesh to be imported into GEOSX.
    * @note We keep this smart pointer as a member for use in @p importFields().
    */
+  // TODO can we use unique_ptr to hold mesh?
   vtkSmartPointer< vtkDataSet > m_vtkMesh;
 
   /// Name of VTK dataset attribute used to mark regions
