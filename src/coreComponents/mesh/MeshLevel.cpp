@@ -119,6 +119,8 @@ MeshLevel::MeshLevel( string const & name,
   m_faceManager->edgeList() = source.m_faceManager->edgeList();
   m_faceManager->faceCenter() = source.m_faceManager->faceCenter();
   m_faceManager->faceNormal() = source.m_faceManager->faceNormal();
+  m_faceManager->getDomainBoundaryIndicator() = source.m_faceManager->getDomainBoundaryIndicator();
+  m_faceManager->elementList() = source.m_faceManager->elementList();
 
   // Faces
 //  ArrayOfArraysView< localIndex const > const facesToNodesMapSource = m_faceManager->nodeList().toViewConst();

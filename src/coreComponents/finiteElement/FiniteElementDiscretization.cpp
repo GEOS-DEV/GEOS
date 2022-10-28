@@ -56,7 +56,7 @@ FiniteElementDiscretization::~FiniteElementDiscretization()
 void FiniteElementDiscretization::postProcessInput()
 {
 //  GEOSX_ERROR_IF_NE_MSG( m_order, 1, "Higher order finite element spaces are currently not supported." );
-  GEOSX_ERROR_IF_NE_MSG( m_formulation, "default", "Only standard element formulations are currently supported." );
+  GEOSX_ERROR_IF( m_formulation != "default" && m_formulation != "SEM", "Only standard element formulations and spectral element formulations are currently supported." );
   GEOSX_ERROR_IF_GT_MSG( m_useVem, 1, "The flag useVirtualElements can be either 0 or 1" );
 }
 
@@ -107,6 +107,10 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
         if( m_useVem == 1 )
         {
           return std::make_unique< H1_Hexahedron_VEM_Gauss1 >();
+        }
+        else if( m_formulation == "SEM" )
+        {
+          return std::make_unique< Q1_Hexahedron_Lagrange_GaussLobatto >();
         }
         else
         {
@@ -168,6 +172,8 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     switch( parentElementShape )
     {
       case ElementType::Hexahedron:
+        GEOSX_ERROR_IF( m_formulation != "SEM",
+                        "Element type Hexahedron with order 3 available only when using the Spectral Element Method" );
         return std::make_unique< Q3_Hexahedron_Lagrange_GaussLobatto >();
       default:
       {
@@ -177,6 +183,21 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     return {};
   }
 
+  if( m_order==5 )
+  {
+    switch( parentElementShape )
+    {
+      case ElementType::Hexahedron:
+        GEOSX_ERROR_IF( m_formulation != "SEM",
+                        "Element type Hexahedron with order 5 available only when using the Spectral Element Method" );
+        return std::make_unique< Q5_Hexahedron_Lagrange_GaussLobatto >();
+      default:
+      {
+        GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
+      }
+    }
+    return {};
+  }
   GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
   return {};
 }

@@ -42,6 +42,19 @@ public:
   constexpr static localIndex numSupportPoints = 2;
 
   /**
+   * @brief The value of the weight for the given support point
+   * @param q The index of the support point
+   * @return The value of the weight
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  constexpr static real64 weight( const int q )
+  {
+    GEOSX_UNUSED_VAR( q );
+    return 1.0;
+  }
+
+  /**
    * @brief Calculate the parent coordinates for the xi0 direction, given the
    *   linear index of a support point.
    * @param supportPointIndex The linear index of support point
@@ -140,6 +153,109 @@ public:
     return 0.5;
   }
 
+  /**
+   * @struct TensorProduct2D
+   *
+   * A 2-dimensional basis formed from the tensor product of the 1d basis.
+   *
+   *               2                   3
+   *                o-----------------o                           _______________
+   *                |                 |                          |Node   xi0  xi1|
+   *                |                 |                          |=====  ===  ===|
+   *                |                 |                          | 0     -1   -1 |
+   *                |                 |                          | 1      1   -1 |
+   *                |                 |            xi1           | 2     -1    1 |
+   *                |                 |            |             | 3      1    1 |
+   *                |                 |            |             |_______________|
+   *                o-----------------o            |
+   *               0                   1           ------ xi0
+   *
+   */
+  struct TensorProduct2D
+  {
+    /// The number of support points in the basis.
+    constexpr static localIndex numSupportPoints = 4;
+
+    /**
+     * @brief Calculates the linear index for support/quadrature points from ijk
+     *   coordinates.
+     * @param i The index in the xi0 direction (0,1)
+     * @param j The index in the xi1 direction (0,1)
+     * @return The linear index of the support/quadrature point (0-3)
+     */
+    GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
+    constexpr static int linearIndex( const int i,
+                                      const int j )
+    {
+      return i + 2 * j;
+    }
+
+    /**
+     * @brief Calculate the Cartesian/TensorProduct index given the linear index
+     *   of a support point.
+     * @param linearIndex The linear index of support point
+     * @param i0 The Cartesian index of the support point in the xi0 direction.
+     * @param i1 The Cartesian index of the support point in the xi1 direction.
+     */
+    GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
+    constexpr static void multiIndex( const int linearIndex,
+                                      int & i0,
+                                      int & i1 )
+    {
+      i0 = ( linearIndex & 1 );
+      i1 = ( linearIndex & 2 ) >> 1;
+    }
+
+    /**
+     * @brief The value of the basis function for a support point evaluated at a
+     *   point along the axes.
+     *
+     * @param coords The coordinates (in the parent frame) at which to evaluate the basis
+     * @param N Array to hold the value of the basis functions at each support point.
+     */
+    GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
+    static void value( real64 const (&coords)[2],
+                       real64 (& N)[numSupportPoints] )
+    {
+      for( int a=0; a<2; ++a )
+      {
+        for( int b=0; b<2; ++b )
+        {
+          const int lindex = LagrangeBasis1::TensorProduct2D::linearIndex( a, b );
+          N[ lindex ] = LagrangeBasis1::value( a, coords[0] ) *
+                        LagrangeBasis1::value( b, coords[1] );
+        }
+      }
+    }
+
+    /**
+     * @brief The parent coordinates for a support point in the xi0 direction.
+     * @param linearIndex The linear index of the support point
+     * @return
+     */
+    GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
+    constexpr static real64 parentCoords0( localIndex const linearIndex )
+    {
+      return -1.0 + 2.0 * (linearIndex & 1);
+    }
+
+    /**
+     * @brief The parent coordinates for a support point in the xi1 direction.
+     * @param linearIndex The linear index of the support point
+     * @return
+     */
+    GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
+    constexpr static real64 parentCoords1( localIndex const linearIndex )
+    {
+      return -1.0 + ( linearIndex & 2 );
+    }
+
+  };
 
   /**
    * @struct TensorProduct3D

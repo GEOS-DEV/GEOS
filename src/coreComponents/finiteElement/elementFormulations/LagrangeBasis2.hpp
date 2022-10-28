@@ -20,6 +20,10 @@
 
 #include "common/DataTypes.hpp"
 
+namespace geosx
+{
+namespace finiteElement
+{
 
 /**
  * This class contains the implementation for a second order (quadratic) Lagrange
@@ -32,6 +36,76 @@
  */
 class LagrangeBasis2
 {
+public:
+  /// The number of support points for the basis
+  constexpr static localIndex numSupportPoints = 3;
+
+  /**
+   * @brief The value of the weight for the given support point
+   * @param q The index of the support point
+   * @return The value of the weight
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  constexpr static real64 weight( const int q )
+  {
+    switch( q )
+    {
+      case 0:
+      case 2:
+        return 1.0/3.0;
+      default:
+        return 4.0/3.0;
+    }
+  }
+
+  /**
+   * @brief Calculate the parent coordinates for the xi0 direction, given the
+   *   linear index of a support point.
+   * @param supportPointIndex The linear index of support point
+   * @return parent coordinate in the xi0 direction.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  constexpr static real64 parentSupportCoord( const localIndex supportPointIndex )
+  {
+    switch( supportPointIndex )
+    {
+      case 0:
+        return -1.0;
+        break;
+      case 2:
+        return 1.0;
+      case 1:
+      default:
+        return 0.0;
+    }
+  }
+
+  /**
+   * @brief The value of the basis function for a support point evaluated at a
+   *   point along the axes.
+   * @param index The index of the support point.
+   * @param xi The coordinate at which to evaluate the basis.
+   * @return The value of basis function.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  constexpr static real64 value( const int index,
+                                 const real64 xi )
+  {
+
+    switch( index )
+    {
+      case 0:
+        return value0( xi );
+      case 2:
+        return value2( xi );
+      case 1:
+      default:
+        return value1( xi );
+    }
+  }
 
   /**
    * @brief The value of the basis function for support point 0.
@@ -40,9 +114,9 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 value0( constexpr real64 xi )
+  constexpr static real64 value0( const real64 xi )
   {
-    constexpr real64 xi_div2 = 0.5 * xi;
+    const real64 xi_div2 = 0.5 * xi;
     return -xi_div2 + xi_div2 * xi;
   }
 
@@ -53,7 +127,7 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 value1( constexpr real64 xi )
+  constexpr static real64 value1( const real64 xi )
   {
     return 1.0 - xi * xi;
   }
@@ -65,9 +139,9 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 value2( constexpr real64 xi )
+  constexpr static real64 value2( const real64 xi )
   {
-    constexpr real64 xi_div2 = 0.5 * xi;
+    const real64 xi_div2 = 0.5 * xi;
     return xi_div2 + xi_div2 * xi;
   }
 
@@ -79,7 +153,7 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 gradient0( constexpr real64 xi )
+  constexpr static real64 gradient0( const real64 xi )
   {
     return -0.5 + xi;
   }
@@ -92,7 +166,7 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 gradient1( constexpr real64 xi )
+  constexpr static real64 gradient1( const real64 xi )
   {
     return -2 * xi;
   }
@@ -105,10 +179,126 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 gradient2( constexpr real64 xi )
+  constexpr static real64 gradient2( const real64 xi )
   {
     return 0.5 + xi;
   }
+
+  /**
+   * @brief The gradient of the basis function for a support point evaluated at a
+   *   point along the axes.
+   * @param index The index of the support point.
+   * @param xi The coordinate at which to evaluate the basis.
+   * @return The value of basis function.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  constexpr static real64 gradient( const int index,
+                                    const real64 xi )
+  {
+    switch( index )
+    {
+      case 0:
+        return gradient0( xi );
+      case 2:
+        return gradient2( xi );
+      case 1:
+      default:
+        return gradient1( xi );
+    }
+  }
+
+
+  /**
+   * @class TensorProduct2D
+   *
+   *         6               7               8
+   *          o--------------o--------------o                          ________________
+   *          |                             |                         |Node   xi0  xi1 |
+   *          |                             |                         |=====  ===  === |
+   *          |                             |                         |  0    -1   -1  |
+   *          |                             |                         |  1     0   -1  |
+   *          |                             |                         |  2     1   -1  |
+   *          |                             |                         |  3    -1    0  |
+   *        3 o              o 4            o 5                       |  4     0    0  |
+   *          |                             |                         |  5     1    0  |
+   *          |                             |                         |  6    -1    1  |
+   *          |                             |                         |  7     0    1  |
+   *          |                             |            xi1          |  8     1    1  |
+   *          |                             |            |            |________________|
+   *          |                             |            |
+   *          o--------------o--------------o            |
+   *         0               1               2           o----- xi0
+   *
+   *
+   *
+   */
+  struct TensorProduct2D
+  {
+
+    /// The number of support points in the basis.
+    constexpr static localIndex numSupportPoints = 9;
+
+    /**
+     * @brief Calculates the linear index for support/quadrature points from ij
+     *   coordinates.
+     * @param i The index in the xi0 direction (0,1)
+     * @param j The index in the xi1 direction (0,1)
+     * @return The linear index of the support/quadrature point (0-8)
+     */
+    GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
+    constexpr static int linearIndex( const int i,
+                                      const int j )
+    {
+      return i + 3 * j;
+    }
+
+
+
+    /**
+     * @brief Calculate the Cartesian/TensorProduct index given the linear index
+     *   of a support point.
+     * @param linearIndex The linear index of support point
+     * @param i0 The Cartesian index of the support point in the xi0 direction.
+     * @param i1 The Cartesian index of the support point in the xi1 direction.
+     */
+    GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
+    constexpr static void multiIndex( const int linearIndex,
+                                      int & i0,
+                                      int & i1 )
+    {
+
+      i1 = ( ( linearIndex * 22 ) >> 6 );
+      //i1 = a/3;
+
+      i0 = linearIndex - i1 * 3;
+    }
+
+    /**
+     * @brief The value of the basis function for a support point evaluated at a
+     *   point along the axes.
+     *
+     * @param coords The coordinates (in the parent frame) at which to evaluate the basis
+     * @param N Array to hold the value of the basis functions at each support point.
+     */
+    GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
+    static void value( real64 const (&coords)[2],
+                       real64 (& N)[numSupportPoints] )
+    {
+      for( int a=0; a<3; ++a )
+      {
+        for( int b=0; b<3; ++b )
+        {
+          const int lindex = LagrangeBasis2::TensorProduct2D::linearIndex( a, b );
+          N[ lindex ] = LagrangeBasis2::value( a, coords[0] ) *
+                        LagrangeBasis2::value( b, coords[1] );
+        }
+      }
+    }
+  };
 
   /**
    * @class TensorProduct3D
@@ -149,19 +339,22 @@ class LagrangeBasis2
   struct TensorProduct3D
   {
 
+    /// The number of support points in the basis.
+    constexpr static localIndex numSupportPoints = 27;
+
     /**
      * @brief Calculates the linear index for support/quadrature points from ijk
      *   coordinates.
      * @param i The index in the xi0 direction (0,1)
      * @param j The index in the xi1 direction (0,1)
      * @param k The index in the xi2 direction (0,1)
-     * @return The linear index of the support/quadrature point (0-7)
+     * @return The linear index of the support/quadrature point (0-26)
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    constexpr static int linearIndex( constexpr int i,
-                                      constexpr int j,
-                                      constexpr int k )
+    constexpr static int linearIndex( const int i,
+                                      const int j,
+                                      const int k )
     {
       return i + 3 * j + 9 * k;
     }
@@ -171,15 +364,14 @@ class LagrangeBasis2
     /**
      * @brief Calculate the Cartesian/TensorProduct index given the linear index
      *   of a support point.
-     * @param a The linear index of support point
+     * @param linearIndex The linear index of support point
      * @param i0 The Cartesian index of the support point in the xi0 direction.
      * @param i1 The Cartesian index of the support point in the xi1 direction.
      * @param i2 The Cartesian index of the support point in the xi2 direction.
-     * @return
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    constexpr static void multiIndex( constexpr int linearIndex,
+    constexpr static void multiIndex( const int linearIndex,
                                       int & i0,
                                       int & i1,
                                       int & i2 )
@@ -192,10 +384,37 @@ class LagrangeBasis2
 
       i0 = linearIndex - i1 * 3 - i2 * 9;
     }
+
+    /**
+     * @brief The value of the basis function for a support point evaluated at a
+     *   point along the axes.
+     *
+     * @param coords The coordinates (in the parent frame) at which to evaluate the basis
+     * @param N Array to hold the value of the basis functions at each support point.
+     */
+    GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
+    static void value( const real64 (& coords)[3],
+                       real64 (& N)[numSupportPoints] )
+    {
+      for( int a=0; a<3; ++a )
+      {
+        for( int b=0; b<3; ++b )
+        {
+          for( int c=0; c<3; ++c )
+          {
+            const int lindex = LagrangeBasis2::TensorProduct3D::linearIndex( a, b, c );
+            N[ lindex ] = LagrangeBasis2::value( a, coords[0] ) *
+                          LagrangeBasis2::value( b, coords[1] ) *
+                          LagrangeBasis2::value( c, coords[2] );
+          }
+        }
+      }
+    }
   };
-
-
 };
 
+}
+}
 
 #endif /* GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_LAGRANGEBASIS2_HPP_ */

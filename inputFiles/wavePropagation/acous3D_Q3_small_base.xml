@@ -9,7 +9,7 @@
     <AcousticSEM
       name="acousticSolver"
       cflFactor="0.25"
-      discretization="FE1"
+      discretization="FE2"
       targetRegions="{ Region }"
       sourceCoordinates="{ { 55, 55, 55 },
                            { 10, 10, 14 } }"
@@ -22,8 +22,8 @@
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
-        name="FE1"
-        order="1"
+        name="FE2"
+        order="3"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>
@@ -39,14 +39,14 @@
     <NullModel
       name="nullModel"/>
   </Constitutive>
- 
+
   <FieldSpecifications>
     <!-- 1) The initial pressure field -->
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="nodeManager"
+      objectPath="mesh/FE2/nodeManager"
       fieldName="pressure_n"
       scale="0.0"/>
 
@@ -54,7 +54,7 @@
       name="initialPressure_nm1"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="nodeManager"
+      objectPath="mesh/FE2/nodeManager"
       fieldName="pressure_nm1"
       scale="0.0"/>
 
@@ -62,7 +62,7 @@
     <FieldSpecification
       name="cellVelocity"
       initialCondition="1"
-      objectPath="ElementRegions/Region/cb"
+      objectPath="mesh/FE2/ElementRegions/Region/cb"
       fieldName="mediumVelocity"
       scale="1500"
       setNames="{ all }"/>
@@ -70,7 +70,7 @@
     <!-- 3) The free surface condition the domain -->
     <FieldSpecification
       name="zposFreeSurface"
-      objectPath="faceManager"
+      objectPath="mesh/FE2/faceManager"
       fieldName="FreeSurface"
       scale="0.0"
       setNames="{ zpos }"/>
@@ -114,7 +114,7 @@
   <Tasks>
     <PackCollection
       name="pressureCollection"
-      objectPath="/Problem/domain/MeshBodies/mesh/meshLevels/FE1/nodeManager"
+      objectPath="/Problem/domain/MeshBodies/mesh/meshLevels/FE2/nodeManager"
       fieldName="pressure_np1"/>
   </Tasks>
 
@@ -129,7 +129,7 @@
       name="timeHistoryOutput"
       sources="{ /Tasks/pressureCollection }"
       filename="pressure_history"/>
- 
+
     <Restart
       name="restartOutput"/>
   </Outputs>

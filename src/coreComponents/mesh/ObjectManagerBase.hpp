@@ -957,9 +957,9 @@ public:
    * @return The information in an array of integers, mainly treated as booleans
    *         (1 meaning the "index" is on the boundary).
    */
-  arrayView1d< integer > getDomainBoundaryIndicator()
+  array1d< integer > & getDomainBoundaryIndicator()
   {
-    return m_domainBoundaryIndicator.toView();
+    return m_domainBoundaryIndicator;
   }
 
   /// @copydoc getDomainBoundaryIndicator()
