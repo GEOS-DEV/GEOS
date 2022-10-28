@@ -23,25 +23,27 @@
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
 #include "finiteElement/TeamKernelInterface/common.hpp"
+#include "tensor/tensor_types.hpp"
 
 namespace geosx
 {
 
-template < typename QField >
+// Non-distributed/Shared version
+template < localIndex num_quads_1d >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void qLocalLoad( TensorIndex const & quad_index,
-                 QField const & q_field,
+                 real64 const (& q_field)[num_quads_1d][num_quads_1d][num_quads_1d],
                  real64 & q_value )
 {
   q_value = q_field[quad_index.x][quad_index.y][quad_index.z];
 }
 
-template < typename QField, size_t num_comp >
+template < localIndex num_quads_1d, size_t num_comp >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void qLocalLoad( TensorIndex const & quad_index,
-                 QField const & q_field,
+                 real64 const (& q_field)[num_quads_1d][num_quads_1d][num_quads_1d][num_comp],
                  real64 (& q_value)[num_comp] )
 {
   for (size_t c = 0; c < num_comp; c++)
@@ -50,11 +52,11 @@ void qLocalLoad( TensorIndex const & quad_index,
   }
 }
 
-template < typename QField, size_t num_comp_x, size_t num_comp_y >
+template < localIndex num_quads_1d, size_t num_comp_x, size_t num_comp_y >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void qLocalLoad( TensorIndex const & quad_index,
-                 QField const & q_field,
+                 real64 const (& q_field)[num_quads_1d][num_quads_1d][num_quads_1d][num_comp_x][num_comp_y],
                  real64 (& q_value)[num_comp_x][num_comp_y] )
 {
   for (size_t c_x = 0; c_x < num_comp_x; c_x++)
@@ -62,6 +64,47 @@ void qLocalLoad( TensorIndex const & quad_index,
     for (size_t c_y = 0; c_y < num_comp_y; c_y++)
     {
       q_value[c_x][c_y] = q_field[quad_index.x][quad_index.y][quad_index.z][c_x][c_y];
+    }
+  }
+}
+
+// 2D distributed (x ,y)
+template < localIndex num_quads_1d >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void qLocalLoad( TensorIndex const & quad_index,
+                 tensor::Static2dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d > const & q_field,
+                 real64 & q_value )
+{
+  // TODO: Assert in debug that tidx == quad_x & tidy == quad_y ?
+  q_value = q_field( quad_index.x, quad_index.y, quad_index.z );
+}
+
+template < localIndex num_quads_1d, localIndex num_comp >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void qLocalLoad( TensorIndex const & quad_index,
+                 tensor::Static2dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp > const & q_field,
+                 real64 (& q_value)[num_comp] )
+{
+  for (localIndex c = 0; c < num_comp; c++)
+  {
+    q_value[c] = q_field( quad_index.x, quad_index.y, quad_index.z, c );
+  }
+}
+
+template < localIndex num_quads_1d, localIndex num_comp_x, localIndex num_comp_y >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void qLocalLoad( TensorIndex const & quad_index,
+                 tensor::Static2dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp_x,  num_comp_y > const & q_field,
+                 real64 (& q_value)[num_comp_x][num_comp_y] )
+{
+  for (localIndex c_x = 0; c_x < num_comp_x; c_x++)
+  {
+    for (localIndex c_y = 0; c_y < num_comp_y; c_y++)
+    {
+      q_value[c_x][c_y] = q_field( quad_index.x, quad_index.y, quad_index.z, c_x, c_y );
     }
   }
 }

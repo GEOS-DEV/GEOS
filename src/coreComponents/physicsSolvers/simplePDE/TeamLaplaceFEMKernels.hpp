@@ -147,7 +147,7 @@ public:
     static constexpr localIndex num_dofs_1d = 2; // TODO
     using Base::StackVariables::num_quads_1d;
     using Base::StackVariables::batch_size;
-  
+
     /**
      * @brief Constructor
      */
@@ -164,14 +164,14 @@ public:
     TeamLaplaceFEMKernel const & kernelComponent;
 
     // TODO alias shared buffers / Generalize for non-tensor elements
-    MeshStackVariables< num_dofs_mesh_1d, num_quads_1d, dim, batch_size > mesh;
-    ElementStackVariables< num_dofs_1d, num_quads_1d, dim, batch_size > element;
-    QuadratureWeightsStackVariables< num_quads_1d > weights;
+    stackVariables::SharedMesh< num_dofs_mesh_1d, num_quads_1d, dim, batch_size > mesh;
+    stackVariables::SharedElement< num_dofs_1d, num_quads_1d, dim, batch_size > element;
+    stackVariables::SharedQuadratureWeights< num_quads_1d > weights;
 
     /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
     static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim;
     static constexpr localIndex num_buffers = 2 * dim;
-    SharedMemStackVariables< buffer_size, num_buffers, batch_size > shared_mem;
+    stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
   };
 
   GEOSX_HOST_DEVICE
@@ -377,7 +377,7 @@ public:
     static constexpr localIndex num_dofs_1d = 2; // TODO
     using Base::StackVariables::num_quads_1d;
     using Base::StackVariables::batch_size;
-  
+
     /**
      * @brief Constructor
      */
@@ -397,16 +397,16 @@ public:
     TeamLaplaceFEMDiagonalKernel const & kernelComponent;
 
     // TODO alias shared buffers / Generalize for non-tensor elements
-    MeshStackVariables< num_dofs_mesh_1d, num_quads_1d, dim, batch_size > mesh;
-    BasisStackVariables< num_dofs_1d, num_quads_1d > element_basis;
-    Shared2DStackVariables< num_quads_1d, dim, batch_size > quad_values;
-    SharedStackVariables< num_dofs_1d, batch_size > diag;
-    QuadratureWeightsStackVariables< num_quads_1d > weights;
+    stackVariables::SharedMesh< num_dofs_mesh_1d, num_quads_1d, dim, batch_size > mesh;
+    stackVariables::SharedBasis< num_dofs_1d, num_quads_1d > element_basis;
+    stackVariables::Shared2DMem< num_quads_1d, dim, batch_size > quad_values;
+    stackVariables::SharedMem< num_dofs_1d, batch_size > diag;
+    stackVariables::SharedQuadratureWeights< num_quads_1d > weights;
 
     /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
     static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
     static constexpr localIndex num_buffers = 2;
-    SharedMemStackVariables< buffer_size, num_buffers, batch_size > shared_mem;
+    stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
   };
 
   GEOSX_HOST_DEVICE

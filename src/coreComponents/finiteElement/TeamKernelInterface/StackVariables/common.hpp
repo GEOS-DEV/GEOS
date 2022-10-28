@@ -14,30 +14,22 @@
 
 
 /**
- * @file common.hpp
+ * @file StackVariables.hpp
  */
 
-#ifndef GEOSX_FINITEELEMENT_TEAMKERNELFUNCTION_COMMON_HPP_
-#define GEOSX_FINITEELEMENT_TEAMKERNELFUNCTION_COMMON_HPP_
-
-#include "common/DataTypes.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
+#ifndef GEOSX_FINITEELEMENT_TEAMKERNELBASE_STACKVARIABLES_COMMON_HPP_
+#define GEOSX_FINITEELEMENT_TEAMKERNELBASE_STACKVARIABLES_COMMON_HPP_
 
 namespace geosx
 {
 
-struct TensorIndex
+namespace stackVariables
 {
-  localIndex x, y, z;
-};
 
-enum class ThreadingModel {
-  Serial,
-  Distributed1D,
-  Distributed2D,
-  Distributed3D
-};
+enum class Location { Stack, Shared, Distributed1D, Distributed2D, Distributed3D };
 
-} // namespace geosx
+}
 
-#endif /* GEOSX_FINITEELEMENT_TEAMKERNELFUNCTION_COMMON_HPP_ */
+}
+
+#endif

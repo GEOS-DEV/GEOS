@@ -64,6 +64,43 @@ using StaticPointerTensor = TensorBase<
 template <int... Sizes>
 using StaticPointerDTensor = StaticPointerTensor<real64,Sizes...>;
 
+/// A Tensor statically distributed over a plane of threads
+/** Static2dThreadTensor represent stack allocated tensors whith dimensions
+    known at compilation, their data is distributed over a plane of threads,
+    for instance (ThreadIdx.x and ThreadIdx.y).
+    Shared memory MUST be used to read data located in a different thread.
+   */
+constexpr int get_Static2dThreadTensor_size(int Size0)
+{
+   GEOSX_UNUSED_VAR(Size0);
+   return 1;
+}
+
+constexpr int get_Static2dThreadTensor_size(int Size0, int Size1)
+{
+   GEOSX_UNUSED_VAR(Size0, Size1);
+   return 1;
+}
+
+template <typename... Sizes>
+constexpr int get_Static2dThreadTensor_size(int Size0, int Size1, Sizes... sizes)
+{
+   GEOSX_UNUSED_VAR(Size0, Size1);
+   return prod(sizes...);
+}
+
+template <typename T, int... Sizes>
+using Static2dThreadTensor = TensorBase<StackContainer<
+                                       T,
+                                       get_Static2dThreadTensor_size(Sizes...)
+                                    >,
+                                    Static2dThreadLayout<Sizes...>
+                             >;
+
+/// Helper type for Static2dThreadTensor with real64
+template <int... Sizes>
+using Static2dThreadDTensor = Static2dThreadTensor<real64,Sizes...>;
+
 } // namespace tensor
 
 } // namespace geosx

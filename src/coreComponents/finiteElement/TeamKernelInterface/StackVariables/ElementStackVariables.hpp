@@ -22,17 +22,174 @@
 
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "finiteElement/TeamKernelInterface/StackVariables/BasisStackVariables.hpp"
+#include "tensor/tensor_types.hpp"
 
 namespace geosx
 {
 
-template < localIndex num_dofs_1d, localIndex num_quads_1d, localIndex dim, localIndex batch_size >
-struct ElementStackVariables
+namespace stackVariables
 {
-  BasisStackVariables< num_dofs_1d, num_quads_1d > basis;
+
+// On the stack
+template < localIndex num_dofs_1d, localIndex num_quads_1d, localIndex dim, localIndex batch_size >
+struct StackElement
+{
+  StackBasis< num_dofs_1d, num_quads_1d > basis;
+
+  template < localIndex... Sizes >
+  using Tensor = tensor::StaticDTensor< Sizes... >; // TODO generalize
 
   GEOSX_HOST_DEVICE
-  ElementStackVariables( LaunchContext & ctx ) : basis( ctx )
+  StackElement( LaunchContext & ctx ) : basis( ctx )
+  {
+
+  }
+
+  // Element input dofs of the primary field
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > dofs_in;
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > const & getDofsIn() const
+  {
+    return dofs_in;
+  }
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > & getDofsIn()
+  {
+    return dofs_in;
+  }
+
+  // Element primary field gradients at quadrature points
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, dim > q_gradient_values;
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, dim > const & getGradientValues() const
+  {
+    return q_gradient_values;
+  }
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, dim > & getGradientValues()
+  {
+    return q_gradient_values;
+  }
+
+  // Element "geometric factors"
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, dim > Du; // Could be in registers
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, dim > const & getQuadValues() const
+  {
+    return Du;
+  }
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, dim > & getQuadValues()
+  {
+    return Du;
+  }
+
+  // Element contribution to the residual
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > dofs_out; // Distributed on threads x & y
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > const & getDofsOut() const
+  {
+    return dofs_out;
+  }
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > & getDofsOut()
+  {
+    return dofs_out;
+  }
+};
+
+// Distributed on threads x & y
+template < localIndex num_dofs_1d, localIndex num_quads_1d, localIndex dim, localIndex batch_size >
+struct Distributed2DElement
+{
+  StackBasis< num_dofs_1d, num_quads_1d > basis;
+
+  template < localIndex... Sizes >
+  using Tensor = tensor::Static2dThreadDTensor< Sizes... >; // TODO generalize
+
+  GEOSX_HOST_DEVICE
+  Distributed2DElement( LaunchContext & ctx ) : basis( ctx )
+  {
+
+  }
+
+  // Element input dofs of the primary field
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > dofs_in;
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > const & getDofsIn() const
+  {
+    return dofs_in;
+  }
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > & getDofsIn()
+  {
+    return dofs_in;
+  }
+
+  // Element primary field gradients at quadrature points
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, dim > q_gradient_values;
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, dim > const & getGradientValues() const
+  {
+    return q_gradient_values;
+  }
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, dim > & getGradientValues()
+  {
+    return q_gradient_values;
+  }
+
+  // Element "geometric factors"
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, dim > Du; // Could be in registers
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, dim > const & getQuadValues() const
+  {
+    return Du;
+  }
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, dim > & getQuadValues()
+  {
+    return Du;
+  }
+
+  // Element contribution to the residual
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > dofs_out; // Distributed on threads x & y
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > const & getDofsOut() const
+  {
+    return dofs_out;
+  }
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > & getDofsOut()
+  {
+    return dofs_out;
+  }
+};
+
+
+template < localIndex num_dofs_1d, localIndex num_quads_1d, localIndex dim, localIndex batch_size >
+struct SharedElement
+{
+  SharedBasis< num_dofs_1d, num_quads_1d > basis;
+
+  GEOSX_HOST_DEVICE
+  SharedElement( LaunchContext & ctx ) : basis( ctx )
   {
     // Element input dofs of the primary field
     GEOSX_STATIC_SHARED real64 s_dofs_in[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d];
@@ -111,6 +268,51 @@ struct ElementStackVariables
     return *dofs_out;
   }
 };
+
+// Generic type alias
+template < Location location,
+           localIndex num_dofs_1d,
+           localIndex num_quads_1d,
+           localIndex dim,
+           localIndex batch_size >
+struct Element_t;
+
+template < localIndex num_dofs_1d,
+           localIndex num_quads_1d,
+           localIndex dim,
+           localIndex batch_size >
+struct Element_t< Location::Stack, num_dofs_1d, num_quads_1d, dim, batch_size >
+{
+  using type = StackElement< num_dofs_1d, num_quads_1d, dim, batch_size >;
+};
+
+template < localIndex num_dofs_1d,
+           localIndex num_quads_1d,
+           localIndex dim,
+           localIndex batch_size >
+struct Element_t< Location::Shared, num_dofs_1d, num_quads_1d, dim, batch_size >
+{
+  using type = SharedElement< num_dofs_1d, num_quads_1d, dim, batch_size >;
+};
+
+template < localIndex num_dofs_1d,
+           localIndex num_quads_1d,
+           localIndex dim,
+           localIndex batch_size >
+struct Element_t< Location::Distributed2D, num_dofs_1d, num_quads_1d, dim, batch_size >
+{
+  using type = Distributed2DElement< num_dofs_1d, num_quads_1d, dim, batch_size >;
+};
+
+
+template < Location location,
+           localIndex num_dofs_1d,
+           localIndex num_quads_1d,
+           localIndex dim,
+           localIndex batch_size >
+using Element = typename Element_t< location, num_dofs_1d, num_quads_1d, dim, batch_size >::type;
+
+} // namespace stackVariables
 
 } // namespace geosx
 

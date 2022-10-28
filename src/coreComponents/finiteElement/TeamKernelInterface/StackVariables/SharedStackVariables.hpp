@@ -26,13 +26,16 @@
 namespace geosx
 {
 
+namespace stackVariables
+{
+
 // TODO: Use this in other Stack Variables?
 // TODO: Rename in ShareMemStackVariables ?
 template < localIndex size_1d, localIndex batch_size >
-struct SharedStackVariables
+struct SharedMem
 {
   GEOSX_HOST_DEVICE
-  SharedStackVariables( LaunchContext & ctx )
+  SharedMem( LaunchContext & ctx )
   {
     // Element primary field gradients at quadrature points
     GEOSX_STATIC_SHARED real64 s_values[batch_size][size_1d][size_1d][size_1d];
@@ -59,10 +62,10 @@ struct SharedStackVariables
 };
 
 template < localIndex size_1d, localIndex dim, localIndex batch_size >
-struct Shared1DStackVariables
+struct Shared1DMem
 {
   GEOSX_HOST_DEVICE
-  Shared1DStackVariables( LaunchContext & ctx )
+  Shared1DMem( LaunchContext & ctx )
   {
     // Element primary field gradients at quadrature points
     GEOSX_STATIC_SHARED real64 s_values[batch_size][size_1d][size_1d][size_1d][dim];
@@ -89,10 +92,10 @@ struct Shared1DStackVariables
 };
 
 template < localIndex size_1d, localIndex dim, localIndex batch_size >
-struct Shared2DStackVariables
+struct Shared2DMem
 {
   GEOSX_HOST_DEVICE
-  Shared2DStackVariables( LaunchContext & ctx )
+  Shared2DMem( LaunchContext & ctx )
   {
     // Element primary field gradients at quadrature points
     GEOSX_STATIC_SHARED real64 s_values[batch_size][size_1d][size_1d][size_1d][dim][dim];
@@ -117,6 +120,8 @@ struct Shared2DStackVariables
     return *values;
   }
 };
+
+} // namespace stackVariables
 
 } // namespace geosx
 

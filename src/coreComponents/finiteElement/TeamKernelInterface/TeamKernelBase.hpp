@@ -331,8 +331,7 @@ public:
 };
 
 } // namespace finiteElement
+
 } // namespace geosx
-
-
 
 #endif /* GEOSX_FINITEELEMENT_TEAMKERNELBASE_HPP_ */
