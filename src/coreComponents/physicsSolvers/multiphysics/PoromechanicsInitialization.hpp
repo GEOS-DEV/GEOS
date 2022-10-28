@@ -13,49 +13,49 @@
  */
 
 /**
- * @file CompositionalMultiphaseStateReset.hpp
+ * @file PoromechanicsInitialization.hpp
  */
 
-#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_MULTIPHYSICS_COMPOSITIONALMULTIPHASESTATERESET_HPP_
-#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_MULTIPHYSICS_COMPOSITIONALMULTIPHASESTATERESET_HPP_
+#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSINITIALIZATION_HPP_
+#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSINITIALIZATION_HPP_
 
 #include "events/tasks/TaskBase.hpp"
 
 namespace geosx
 {
 
-class CompositionalMultiphaseBase;
+class MultiPhasePoromechanicsSolver;
+class SinglePhasePoromechanicsSolver;
 
 /**
- * @class CompositionalMultiphaseStateReset
+ * @class PoromechanicsInitialization
  *
- * Task class allowing for various "reset" actions on solver configuration and state variables,
- * useful for pre- and post-equilibration actions. Currently, this class gives the user the option
- * to reset change the MGR recipe during the initialization step. A common
- * workflow might be:
- * (1) freezeFlowVariablesDuringStep = true
+ * Task class used to perform stress initialization in the poromechanical simulations
+ * A common workflow might be:
+ * (1) performStressInitialization = true
  * (2) solve an equilibration problem for initial conditions,
- * (3) freezeFlowVariablesDuringStep = false
+ * (3) performStressInitialization = false
  * (4) run a normal simulation
  *
  */
-class CompositionalMultiphaseStateReset : public TaskBase
+template< typename POROMECHANICS_SOLVER >
+class PoromechanicsInitialization : public TaskBase
 {
 public:
 
   /**
-   * @brief Constructor for the state reset class
+   * @brief Constructor for the initialization class
    * @param[in] name the name of the task coming from the xml
    * @param[in] parent the parent group of the task
    */
-  CompositionalMultiphaseStateReset( const string & name,
-                                     Group * const parent );
+  PoromechanicsInitialization( const string & name,
+                               Group * const parent );
 
   /// Destructor for the class
-  ~CompositionalMultiphaseStateReset() override;
+  ~PoromechanicsInitialization() override;
 
   /// Accessor for the catalog name
-  static string catalogName() { return "CompositionalMultiphaseStateReset"; }
+  static string catalogName();
 
   /**
    * @defgroup Tasks Interface Functions
@@ -80,27 +80,27 @@ private:
    */
   struct viewKeyStruct
   {
-    /// String for the flow solver name
-    constexpr static char const * flowSolverNameString() { return "flowSolverName"; }
+    /// String for the poromechanics solver name
+    constexpr static char const * poromechanicsSolverNameString() { return "poromechanicsSolverName"; }
     /// String for the solver configuration
-    constexpr static char const * freezeFlowVariablesDuringStepString() { return "freezeFlowVariablesDuringStep"; }
+    constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
   };
 
 
   void postProcessInput() override;
 
-  /// Name of the flow solver
-  string m_flowSolverName;
+  /// Name of the poromechanics solver
+  string m_poromechanicsSolverName;
 
-  /// Pointer to the flow solver
-  CompositionalMultiphaseBase * m_flowSolver;
+  /// Pointer to the multiphase poromechanics solver
+  POROMECHANICS_SOLVER * m_poromechanicsSolver;
 
-  /// Flag for freeze the flow variables during step
-  integer m_freezeFlowVariablesDuringStep;
+  /// Flag to indicate that the solver is going to perform stress initialization
+  integer m_performStressInitialization;
 
 };
 
 
 } /* namespace geosx */
 
-#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_MULTIPHYSICS_COMPOSITIONALMULTIPHASESTATERESET_HPP_ */
+#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSINITIALIZATION_HPP_ */

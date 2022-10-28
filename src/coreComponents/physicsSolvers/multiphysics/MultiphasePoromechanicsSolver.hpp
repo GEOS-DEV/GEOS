@@ -111,7 +111,12 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
-  void updateStabilizationParameters( DomainPartition & domain ) const;
+  /*
+   * @brief Utility function to set the stress initialization flag
+   * @param[in] performStressInitialization true if the solver has to initialize stress, false otherwise
+   */
+  void performStressInitialization( integer const performStressInitialization )
+  { m_performStressInitialization = performStressInitialization; }
 
   /**@}*/
 
@@ -137,9 +142,21 @@ protected:
 
     /// Multiplier on stabilization
     constexpr static char const * stabilizationMultiplierString() { return "stabilizationMultiplier"; }
+
+    /// Flag to indicate that the solver is going to perform stress initialization
+    constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
+
   };
 
+  /*
+   * @brief Utility function to update the stabilization parameters at each time step
+   * @param[in] domain the domain partition
+   */
+  void updateStabilizationParameters( DomainPartition & domain ) const;
+
   virtual void initializePreSubGroups() override;
+
+private:
 
   /// Type of stabilization used in the simulation
   StabilizationType m_stabilizationType;
@@ -149,6 +166,9 @@ protected:
 
   /// Multiplier on stabilization constant
   real64 m_stabilizationMultiplier;
+
+  /// Flag to indicate that the solver is going to perform stress initialization
+  integer m_performStressInitialization;
 
 };
 

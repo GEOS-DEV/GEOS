@@ -169,13 +169,6 @@ Element: CompositionalMultiphaseReservoir
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir.rst
 
 
-.. _XML_CompositionalMultiphaseStateReset:
-
-Element: CompositionalMultiphaseStateReset
-==========================================
-.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseStateReset.rst
-
-
 .. _XML_CompositionalMultiphaseStatistics:
 
 Element: CompositionalMultiphaseStatistics
@@ -561,6 +554,13 @@ Element: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
 
 
+.. _XML_MultiphasePoromechanicsInitialization:
+
+Element: MultiphasePoromechanicsInitialization
+==============================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsInitialization.rst
+
+
 .. _XML_MultiphasePoromechanicsReservoir:
 
 Element: MultiphasePoromechanicsReservoir
@@ -860,6 +860,13 @@ Element: SinglePhasePoromechanics
 Element: SinglePhasePoromechanicsEmbeddedFractures
 ==================================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures.rst
+
+
+.. _XML_SinglePhasePoromechanicsInitialization:
+
+Element: SinglePhasePoromechanicsInitialization
+===============================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsInitialization.rst
 
 
 .. _XML_SinglePhasePoromechanicsReservoir:
@@ -1293,13 +1300,6 @@ Datastructure: CompositionalMultiphaseReservoir
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir_other.rst
 
 
-.. _DATASTRUCTURE_CompositionalMultiphaseStateReset:
-
-Datastructure: CompositionalMultiphaseStateReset
-================================================
-.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseStateReset_other.rst
-
-
 .. _DATASTRUCTURE_CompositionalMultiphaseStatistics:
 
 Datastructure: CompositionalMultiphaseStatistics
@@ -1706,6 +1706,13 @@ Datastructure: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
 
 
+.. _DATASTRUCTURE_MultiphasePoromechanicsInitialization:
+
+Datastructure: MultiphasePoromechanicsInitialization
+====================================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsInitialization_other.rst
+
+
 .. _DATASTRUCTURE_MultiphasePoromechanicsReservoir:
 
 Datastructure: MultiphasePoromechanicsReservoir
@@ -2005,6 +2012,13 @@ Datastructure: SinglePhasePoromechanics
 Datastructure: SinglePhasePoromechanicsEmbeddedFractures
 ========================================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsInitialization:
+
+Datastructure: SinglePhasePoromechanicsInitialization
+=====================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsInitialization_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhasePoromechanicsReservoir:

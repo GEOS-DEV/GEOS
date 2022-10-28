@@ -26,7 +26,6 @@ set( physicsSolvers_headers
      fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp     
      fluidFlow/CompositionalMultiphaseHybridFVM.hpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp 
-     fluidFlow/CompositionalMultiphaseStateReset.hpp    
      fluidFlow/CompositionalMultiphaseUtilities.hpp
      fluidFlow/ReactiveCompositionalMultiphaseOBL.hpp
      fluidFlow/ReactiveCompositionalMultiphaseOBLExtrinsicData.hpp
@@ -70,6 +69,7 @@ set( physicsSolvers_headers
      multiphysics/MultiphasePoromechanicsKernel.hpp
      multiphysics/MultiphasePoromechanicsSolver.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
+     multiphysics/PoromechanicsInitialization.hpp          
      multiphysics/SinglePhasePoromechanicsKernel.hpp
      multiphysics/SinglePhasePoromechanicsEFEMKernel.hpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.hpp
@@ -121,7 +121,6 @@ set( physicsSolvers_sources
      contact/SolidMechanicsEmbeddedFractures.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
-     fluidFlow/CompositionalMultiphaseStateReset.cpp         
      fluidFlow/CompositionalMultiphaseStatistics.cpp          
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.cpp
      fluidFlow/CompositionalMultiphaseHybridFVM.cpp
@@ -147,6 +146,7 @@ set( physicsSolvers_sources
      multiphysics/HydrofractureSolver.cpp
      multiphysics/MultiphasePoromechanicsSolver.cpp
      multiphysics/PhaseFieldFractureSolver.cpp
+     multiphysics/PoromechanicsInitialization.cpp
      multiphysics/SinglePhasePoromechanicsSolver.cpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.cpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.cpp

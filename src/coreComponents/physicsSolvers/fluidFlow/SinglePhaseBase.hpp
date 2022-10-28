@@ -283,10 +283,6 @@ public:
   void
   updateMobility( ObjectManagerBase & dataGroup ) const;
 
-  /**
-   * @brief Setup stored views into domain data for the current step
-   */
-
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
@@ -296,20 +292,44 @@ public:
    */
   void computeHydrostaticEquilibrium();
 
+  /**
+   * @brief Utility function to keep the flow variables during a time step (used in poromechanics simulations)
+   * @param[in] keepFlowVariablesConstantDuringStep flag to tell the solver to freeze its primary variables during a time step
+   * @detail This function is meant to be called by a specific task before/after the initialization step
+   */
+  void keepFlowVariablesConstantDuringStep( bool const keepFlowVariablesConstantDuringStep )
+  { m_keepFlowVariablesConstantDuringStep = keepFlowVariablesConstantDuringStep; }
+
 protected:
 
   /**
    * @brief Checks constitutive models for consistency
    * @param[in] domain the domain partition
    */
-  virtual void
-  validateConstitutiveModels( DomainPartition & domain ) const;
+  virtual void validateConstitutiveModels( DomainPartition & domain ) const;
 
   /**
    * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
    */
-  void
-  initializeAquiferBC() const;
+  void initializeAquiferBC() const;
+
+  /**
+   * @brief Function to fix the initial state during the initialization step in coupled problems
+   * @param[in] time current time
+   * @param[in] dt time step
+   * @param[in] dofManager degree-of-freedom manager associated with the linear system
+   * @param[in] domain the domain
+   * @param[in] localMatrix local system matrix
+   * @param[in] localRhs local system right-hand side vector
+   * @detail This function is meant to be called when the flag m_keepFlowVariablesConstantDuringStep is on
+   *         The main use case is the initialization step in coupled problems during which we solve an elastic problem for a fixed pressure
+   */
+  void keepFlowVariablesConstantDuringStep( real64 const time,
+                                            real64 const dt,
+                                            DofManager const & dofManager,
+                                            DomainPartition & domain,
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            arrayView1d< real64 > const & localRhs ) const;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
@@ -352,6 +372,9 @@ protected:
 
   /// the input temperature
   real64 m_inputTemperature;
+
+  /// flag to freeze the initial state during initialization in coupled problems
+  integer m_keepFlowVariablesConstantDuringStep;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
