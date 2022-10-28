@@ -119,12 +119,14 @@ struct Distributed2DMesh
   }
 };
 
+// Distributed on 3D threads
 template < localIndex num_dofs_mesh_1d, localIndex num_quads_1d, localIndex dim, localIndex batch_size >
-struct MeshStackVariables
+struct Distributed3DMesh
 {
   BasisStackVariables< num_dofs_mesh_1d, num_quads_1d > basis;
 
   GEOSX_HOST_DEVICE
+};
 
 template < localIndex num_dofs_mesh_1d, localIndex num_quads_1d, localIndex dim, localIndex batch_size >
 struct SharedMesh
