@@ -113,7 +113,14 @@ void
 SinglePhaseReservoirAndWells< SinglePhasePoromechanicsSolver >::
 setMGRStrategy()
 {
-  // not implemented yet
+  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM )
+  {
+    GEOSX_LOG_RANK_0( "The MGR strategy for hybrid FVM is not implemented" );
+  }
+  else
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
+  }
 }
 
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >

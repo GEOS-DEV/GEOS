@@ -79,8 +79,6 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerExtrinsicData( extrinsicMeshData::multifluid::totalDensity_n{}, &m_totalDensity_n );
   registerExtrinsicData( extrinsicMeshData::multifluid::dTotalDensity{}, &m_totalDensity.derivs );
 
-  registerExtrinsicData( extrinsicMeshData::multifluid::initialTotalMassDensity{}, &m_initialTotalMassDensity );
-
 }
 
 void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPts )
@@ -117,8 +115,6 @@ void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPt
   m_totalDensity.value.resize( size, numPts );
   m_totalDensity_n.resize( size, numPts );
   m_totalDensity.derivs.resize( size, numPts, numDof );
-
-  m_initialTotalMassDensity.resize( size, numPts );
 }
 
 void MultiFluidBase::setLabels()
@@ -183,35 +179,16 @@ void MultiFluidBase::postProcessInput()
   setLabels();
 }
 
-void MultiFluidBase::initializeState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
+void MultiFluidBase::initializeState() const
 {
-  localIndex const numElem = m_initialTotalMassDensity.size( 0 );
-  localIndex const numGauss = m_initialTotalMassDensity.size( 1 );
-  integer const numPhase = m_phaseMassDensity.value.size( 2 );
-
-  PhaseProp::ViewTypeConst const phaseMassDensity = m_phaseMassDensity.toViewConst();
-  arrayView2d< real64, multifluid::USD_FLUID > const totalMassDensity = m_initialTotalMassDensity.toView();
-
-  forAll< parallelDevicePolicy<> >( numElem, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-  {
-    for( localIndex q = 0; q < numGauss; ++q )
-    {
-      totalMassDensity[k][q] = 0.0;
-      for( integer ip = 0; ip < numPhase; ++ip )
-      {
-        totalMassDensity[k][q] += phaseVolFraction[k][ip] * phaseMassDensity.value[k][q][ip];
-      }
-    }
-  } );
-
   // initialize the "old" variables
   saveConvergedState();
 }
 
 void MultiFluidBase::saveConvergedState() const
 {
-  localIndex const numElem = m_initialTotalMassDensity.size( 0 );
-  localIndex const numGauss = m_initialTotalMassDensity.size( 1 );
+  localIndex const numElem = m_phaseMassDensity.value.size( 0 );
+  localIndex const numGauss = m_phaseMassDensity.value.size( 1 );
   integer const numPhase = m_phaseMassDensity.value.size( 2 );
   integer const numComp = m_phaseCompFraction.value.size( 3 );
 
