@@ -55,6 +55,11 @@ public:
   GEOSX_HOST_DEVICE
   integer numPhases() const { return LvArray::integerConversion< integer >( m_phaseTypes.size() ); }
 
+
+  GEOSX_HOST_DEVICE arrayView3d< real64 const, relperm::USD_RELPERM > relperm() const
+    { return m_phaseRelPerm; }
+
+
 protected:
 
   RelativePermeabilityBaseUpdate( arrayView1d< integer const > const & phaseTypes,
@@ -88,6 +93,8 @@ class RelativePermeabilityBase : public ConstitutiveBase
 public:
 
   static constexpr integer MAX_NUM_PHASES = 3;
+
+  using exec_policy = parallelDevicePolicy<>;
 
   struct PhaseType
   {
@@ -176,8 +183,12 @@ protected:
   // phase ordering info
   array1d< integer > m_phaseTypes;
   array1d< integer > m_phaseOrder;
+public:
+    const array1d<geosx::integer> &getPhaseOrder() const;
 
-  // output quantities
+protected:
+
+    // output quantities
   array3d< real64, relperm::LAYOUT_RELPERM > m_phaseRelPerm;
   array3d< real64, relperm::LAYOUT_RELPERM >  m_phaseRelPerm_n;
   array4d< real64, relperm::LAYOUT_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;

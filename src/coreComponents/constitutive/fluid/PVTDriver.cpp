@@ -56,6 +56,8 @@ PVTDriver::PVTDriver( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Function controlling temperature time history" );
 
+
+  //todo refactor in mother class
   registerWrapper( viewKeyStruct::numStepsString(), &m_numSteps ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Number of load steps to take" );

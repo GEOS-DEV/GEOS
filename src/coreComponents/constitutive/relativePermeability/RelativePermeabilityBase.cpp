@@ -123,6 +123,10 @@ void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group &
   resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
 }
 
+    const array1d<geosx::integer> & RelativePermeabilityBase::getPhaseOrder() const {
+        return m_phaseOrder;
+    }
+
 
 } // namespace constitutive
 
