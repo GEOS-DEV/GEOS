@@ -32,7 +32,7 @@ class ExponentialDecayPermeabilityUpdate : public PermeabilityBaseUpdate
 public:
 
   ExponentialDecayPermeabilityUpdate( arrayView3d< real64 > const & permeability,
-                                      arrayView3d< real64 > const & dPerm_dPressure,                                      
+                                      arrayView3d< real64 > const & dPerm_dPressure,
                                       arrayView4d< real64 > const & dPerm_dTraction,
                                       real64 const empiricalConstant,
                                       R1Tensor const & initialPermeability )
@@ -68,7 +68,7 @@ public:
 private:
 
   /// Derivative of fracture permeability to effective normal stress applied on the fracture surfaces
-  arrayView4d< real64 > m_dPerm_dTraction; 
+  arrayView4d< real64 > m_dPerm_dTraction;
 
   /// An empirical constant
   real64 m_empiricalConstant;
@@ -107,7 +107,7 @@ public:
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure,
                           m_dPerm_dTraction,
-                          m_empiricalConstant,                          
+                          m_empiricalConstant,
                           m_initialPermeability );
   }
 
@@ -117,14 +117,14 @@ private:
   array4d< real64 > m_dPerm_dTraction;
 
   /// An empirical constant
-  real64 m_empiricalConstant; 
+  real64 m_empiricalConstant;
 
   /// Initial permeability tensor
   R1Tensor m_initialPermeability;
 
   struct viewKeyStruct
   {
-    static constexpr char const * empiricalConstantString() { return "empiricalConstant"; }    
+    static constexpr char const * empiricalConstantString() { return "empiricalConstant"; }
     static constexpr char const * initialPermeabilityString() { return "initialPermeability"; }
   };
 
@@ -143,7 +143,7 @@ void ExponentialDecayPermeabilityUpdate::compute( real64 const ( &traction )[3],
   real64 const permMultiplier = std::exp( -m_empiricalConstant * effNormalStress );
 
   real64 const dpermMultiplier_dTraction = std::exp( -m_empiricalConstant * effNormalStress ) * m_empiricalConstant;
- 
+
 
   for( localIndex i=0; i < permeability.size(); i++ )
   {
