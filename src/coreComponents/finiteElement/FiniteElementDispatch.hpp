@@ -50,6 +50,22 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr1 );
   }
+  else if( auto const * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG1 const * >(&input) )
+  {
+    lambda( *ptr1 );
+  }
+  else if( auto const * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG2 const * >(&input) )
+  {
+    lambda( *ptr1 );
+  }
+  else if( auto const * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG3 const * >(&input) )
+  {
+    lambda( *ptr1 );
+  }
+  else if( auto const * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG4 const * >(&input) )
+  {
+    lambda( *ptr1 );
+  }
   else if( auto const * const ptr2 = dynamic_cast< H1_Wedge_Lagrange1_Gauss6 const * >(&input) )
   {
     lambda( *ptr2 );
@@ -121,6 +137,22 @@ dispatch3D( FiniteElementBase & input,
             LAMBDA && lambda )
 {
   if( auto * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2 * >(&input) )
+  {
+    lambda( *ptr1 );
+  }
+  else if( auto * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG1 * >(&input) )
+  {
+    lambda( *ptr1 );
+  }
+  else if( auto * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG2 * >(&input) )
+  {
+    lambda( *ptr1 );
+  }
+  else if( auto * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG3 * >(&input) )
+  {
+    lambda( *ptr1 );
+  }
+  else if( auto * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG4 * >(&input) )
   {
     lambda( *ptr1 );
   }
