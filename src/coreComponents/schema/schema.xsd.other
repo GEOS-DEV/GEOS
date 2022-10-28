@@ -1105,8 +1105,6 @@
 		<xsd:attribute name="formationVolFactorTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--hydrocarbonPhaseOrder => (no description available)-->
 		<xsd:attribute name="hydrocarbonPhaseOrder" type="integer_array" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
@@ -1203,8 +1201,6 @@
 		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
@@ -1251,8 +1247,6 @@
 		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
@@ -1299,8 +1293,6 @@
 		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
@@ -1347,8 +1339,6 @@
 		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
@@ -1403,8 +1393,6 @@
 		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
@@ -1457,8 +1445,6 @@
 		<xsd:attribute name="density_n" type="real64_array2d" />
 		<!--enthalpy => Enthalpy-->
 		<xsd:attribute name="enthalpy" type="real64_array2d" />
-		<!--initialDensity => Initial density-->
-		<xsd:attribute name="initialDensity" type="real64_array2d" />
 		<!--internalEnergy => Internal energy-->
 		<xsd:attribute name="internalEnergy" type="real64_array2d" />
 		<!--internalEnergy_n => Fluid internal energy at the previous converged step-->
@@ -1565,8 +1551,6 @@
 		<xsd:attribute name="formationVolFactorTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--hydrocarbonPhaseOrder => (no description available)-->
 		<xsd:attribute name="hydrocarbonPhaseOrder" type="integer_array" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
@@ -1922,8 +1906,6 @@
 		<xsd:attribute name="density_n" type="real64_array2d" />
 		<!--enthalpy => Enthalpy-->
 		<xsd:attribute name="enthalpy" type="real64_array2d" />
-		<!--initialDensity => Initial density-->
-		<xsd:attribute name="initialDensity" type="real64_array2d" />
 		<!--internalEnergy => Internal energy-->
 		<xsd:attribute name="internalEnergy" type="real64_array2d" />
 		<!--internalEnergy_n => Fluid internal energy at the previous converged step-->
@@ -2043,8 +2025,6 @@
 		<xsd:attribute name="density_n" type="real64_array2d" />
 		<!--enthalpy => Enthalpy-->
 		<xsd:attribute name="enthalpy" type="real64_array2d" />
-		<!--initialDensity => Initial density-->
-		<xsd:attribute name="initialDensity" type="real64_array2d" />
 		<!--internalEnergy => Internal energy-->
 		<xsd:attribute name="internalEnergy" type="real64_array2d" />
 		<!--internalEnergy_n => Fluid internal energy at the previous converged step-->
