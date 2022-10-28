@@ -67,7 +67,7 @@ public:
   /// @returns true if the queue is full
   bool full() const
   {
-    return size() == m_storage.size( 0 );
+    return size() == (size_t)m_storage.size( 0 );
   }
 
   /// @returns the number of arrays stores in the queue
