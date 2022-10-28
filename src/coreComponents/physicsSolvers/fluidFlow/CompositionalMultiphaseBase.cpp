@@ -62,6 +62,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_hasCapPressure( 0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
+
 {
 //START_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
@@ -709,8 +710,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
 
     // 4.3 Initialize/update the relative permeability model using the initial phase volume fraction
     //     This is needed to handle relative permeability hysteresis
-    //     Also, initialize the fluid model (to compute the initial total mass density, needed to compute the body force increment in
-    // coupled simulations)
+    //     Also, initialize the fluid model
     //
     // Note:
     // - This must be called after updatePhaseVolumeFraction
@@ -725,10 +725,11 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
     relPermMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac ); // this needs to happen before calling updateRelPermModel
     updateRelPermModel( subRegion );
+    relPermMaterial.saveConvergedState(); // this needs to happen after calling updateRelPermModel
 
     string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
     MultiFluidBase & fluidMaterial = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-    fluidMaterial.initializeState( phaseVolFrac );
+    fluidMaterial.initializeState();
 
     // 4.4 Then, we initialize/update the capillary pressure model
     //

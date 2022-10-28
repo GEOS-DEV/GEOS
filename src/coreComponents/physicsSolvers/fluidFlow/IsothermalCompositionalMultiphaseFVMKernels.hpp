@@ -414,6 +414,7 @@ public:
   /// Maximum number of points in the stencil
   static constexpr localIndex maxStencilSize = STENCILWRAPPER::maxStencilSize;
 
+  /// Number of flux support points (hard-coded for TFPA)
   static constexpr integer numFluxSupportPoints = 2;
 
   /**
@@ -486,7 +487,6 @@ public:
 
     /// Stencil size for a given connection
     localIndex const stencilSize;
-
     /// Number of elements connected at a given connection
     localIndex const numConnectedElems;
 
@@ -578,7 +578,7 @@ public:
     {
       for( k[1] = k[0] + 1; k[1] < stack.numConnectedElems; ++k[1] )
       {
-        /// Cells indexes
+        /// cell indices
         localIndex const seri[numFluxSupportPoints]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
         localIndex const sesri[numFluxSupportPoints] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
         localIndex const sei[numFluxSupportPoints]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
@@ -623,9 +623,9 @@ public:
           // calculate quantities on primary connected cells
           for( integer i = 0; i < numFluxSupportPoints; ++i )
           {
-            localIndex const er  = seri[ i ];
-            localIndex const esr = sesri[ i ];
-            localIndex const ei  = sei[ i ];
+            localIndex const er  = seri[i];
+            localIndex const esr = sesri[i];
+            localIndex const ei  = sei[i];
 
             // density
             real64 const density  = m_phaseMassDens[er][esr][ei][0][ip];
@@ -646,7 +646,7 @@ public:
             }
           }
 
-          ///
+          /// compute the TPFA potential difference
           for( integer i = 0; i < numFluxSupportPoints; i++ )
           {
             localIndex const er  = seri[i];
@@ -712,9 +712,9 @@ public:
           // choose upstream cell
           localIndex const k_up = (potGrad >= 0) ? 0 : 1;
 
-          localIndex const er_up  = seri[ k_up ];
-          localIndex const esr_up = sesri[ k_up ];
-          localIndex const ei_up  = sei[ k_up ];
+          localIndex const er_up  = seri[k_up];
+          localIndex const esr_up = sesri[k_up];
+          localIndex const ei_up  = sei[k_up];
 
           real64 const mobility = m_phaseMob[er_up][esr_up][ei_up][ip];
 
@@ -785,24 +785,23 @@ public:
               dCompFlux_dC[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
             }
           } // *** end of upwinding
-            // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
+
+          // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
           // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
           compFluxKernelOp( ip, k, seri, sesri, sei, connectionIndex,
                             k_up, er_up, esr_up, ei_up, potGrad,
                             phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
+
         } // loop over phases
 
         // populate local flux vector and derivatives
-        // std::cout << "connection index: " << connectionIndex <<std::endl;
         for( integer ic = 0; ic < numComp; ++ic )
         {
-          // std::cout << "ic - " << ic << std::endl;
-
           integer const eqIndex0 = k[0] * numEqn + ic;
           integer const eqIndex1 = k[1] * numEqn + ic;
 
-          stack.localFlux[ eqIndex0 ]  +=  m_dt * compFlux[ic];
-          stack.localFlux[ eqIndex1 ]  -=  m_dt * compFlux[ic];
+          stack.localFlux[eqIndex0]  +=  m_dt * compFlux[ic];
+          stack.localFlux[eqIndex1]  -=  m_dt * compFlux[ic];
 
           for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
           {

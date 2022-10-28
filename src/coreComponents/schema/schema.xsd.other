@@ -991,6 +991,7 @@
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
 			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
 			<xsd:element name="CompressibleSolidSlipDependentPermeability" type="CompressibleSolidSlipDependentPermeabilityType" />
+                        <xsd:element name="CompressibleSolidWillisRichardsPermeability" type="CompressibleSolidWillisRichardsPermeabilityType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
@@ -1033,11 +1034,12 @@
 			<xsd:element name="TableRelativePermeabilityHysteresis" type="TableRelativePermeabilityHysteresisType" />
 			<xsd:element name="ThermalCompressibleSinglePhaseFluid" type="ThermalCompressibleSinglePhaseFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
-			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
+			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />			
+                        <xsd:element name="WillisRichardsPermeability" type="WillisRichardsPermeabilityType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
-		<!--biotCoefficient => Biot coefficient.-->
+		<!--biotCoefficient => Biot coefficient-->
 		<xsd:attribute name="biotCoefficient" type="real64_array" />
 		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
@@ -1073,8 +1075,6 @@
 		<xsd:attribute name="formationVolFactorTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--hydrocarbonPhaseOrder => (no description available)-->
 		<xsd:attribute name="hydrocarbonPhaseOrder" type="integer_array" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
@@ -1117,6 +1117,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -1143,6 +1145,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -1167,8 +1171,6 @@
 		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
@@ -1215,8 +1217,6 @@
 		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
@@ -1263,8 +1263,6 @@
 		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
@@ -1311,8 +1309,6 @@
 		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
@@ -1367,8 +1363,6 @@
 		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
@@ -1421,8 +1415,6 @@
 		<xsd:attribute name="density_n" type="real64_array2d" />
 		<!--enthalpy => Enthalpy-->
 		<xsd:attribute name="enthalpy" type="real64_array2d" />
-		<!--initialDensity => Initial density-->
-		<xsd:attribute name="initialDensity" type="real64_array2d" />
 		<!--internalEnergy => Internal energy-->
 		<xsd:attribute name="internalEnergy" type="real64_array2d" />
 		<!--internalEnergy_n => Fluid internal energy at the previous converged step-->
@@ -1434,6 +1426,7 @@
 	<xsd:complexType name="CompressibleSolidConstantPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidParallelPlatesPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidSlipDependentPermeabilityType" />
+        <xsd:complexType name="CompressibleSolidWillisRichardsPermeabilityType" />
 	<xsd:complexType name="ConstantPermeabilityType">
 		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
@@ -1519,8 +1512,6 @@
 		<xsd:attribute name="formationVolFactorTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--hydrocarbonPhaseOrder => (no description available)-->
 		<xsd:attribute name="hydrocarbonPhaseOrder" type="integer_array" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
@@ -1876,8 +1867,6 @@
 		<xsd:attribute name="density_n" type="real64_array2d" />
 		<!--enthalpy => Enthalpy-->
 		<xsd:attribute name="enthalpy" type="real64_array2d" />
-		<!--initialDensity => Initial density-->
-		<xsd:attribute name="initialDensity" type="real64_array2d" />
 		<!--internalEnergy => Internal energy-->
 		<xsd:attribute name="internalEnergy" type="real64_array2d" />
 		<!--internalEnergy_n => Fluid internal energy at the previous converged step-->
@@ -1927,6 +1916,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -1965,6 +1956,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -1993,8 +1986,6 @@
 		<xsd:attribute name="density_n" type="real64_array2d" />
 		<!--enthalpy => Enthalpy-->
 		<xsd:attribute name="enthalpy" type="real64_array2d" />
-		<!--initialDensity => Initial density-->
-		<xsd:attribute name="initialDensity" type="real64_array2d" />
 		<!--internalEnergy => Internal energy-->
 		<xsd:attribute name="internalEnergy" type="real64_array2d" />
 		<!--internalEnergy_n => Fluid internal energy at the previous converged step-->
@@ -2009,6 +2000,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -2027,6 +2020,16 @@
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
 		<xsd:attribute name="volFracScale" type="real64" />
+	</xsd:complexType>
+        <xsd:complexType name="WillisRichardsPermeabilityType">
+		<!--dPerm_dDispJump => Derivative of fault permeability w.r.t. the displacement jump.-->
+		<xsd:attribute name="dPerm_dDispJump" type="real64_array4d" />
+		<!--dPerm_dPressure => Derivative of fault permeability with respect to pressure.-->
+		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
+                <!--dPerm_dTraction => Derivative of fault permeability w.r.t. the fracture traction.-->
+		<xsd:attribute name="dPerm_dTraction" type="real64_array4d" />
+		<!--permeability => Fault permeability-->
+		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="MeshBodiesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
