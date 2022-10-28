@@ -57,22 +57,22 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr4 );
   }
-  else if( auto const * const ptr5 = dynamic_cast< Q1_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
-  {
-    lambda( *ptr5 );
-  }
-  else if( auto const * const ptr6 = dynamic_cast< Q2_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
-  {
-    lambda( *ptr6 );
-  }
-  else if( auto const * const ptr7 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
-  {
-    lambda( *ptr7 );
-  }
-  else if( auto const * const ptr8 = dynamic_cast< Q5_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
-  {
-    lambda( *ptr8 );
-  }
+//  else if( auto const * const ptr5 = dynamic_cast< Q1_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
+//  {
+//    lambda( *ptr5 );
+//  }
+//  else if( auto const * const ptr6 = dynamic_cast< Q2_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
+//  {
+//    lambda( *ptr6 );
+//  }
+//  else if( auto const * const ptr7 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
+//  {
+//    lambda( *ptr7 );
+//  }
+//  else if( auto const * const ptr8 = dynamic_cast< Q5_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
+//  {
+//    lambda( *ptr8 );
+//  }
 #ifdef GEOSX_DISPATCH_VEM
   else if( auto const * const ptr9 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 const * >(&input) ) // VEM on Tetrahedron
   {
@@ -143,22 +143,22 @@ dispatch3D( FiniteElementBase & input,
   {
     lambda( *ptr4 );
   }
-  else if( auto * const ptr5 = dynamic_cast< Q1_Hexahedron_Lagrange_GaussLobatto * >(&input) )
-  {
-    lambda( *ptr5 );
-  }
-  else if( auto * const ptr6 = dynamic_cast< Q2_Hexahedron_Lagrange_GaussLobatto * >(&input) )
-  {
-    lambda( *ptr6 );
-  }
-  else if( auto * const ptr7 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto * >(&input) )
-  {
-    lambda( *ptr7 );
-  }
-  else if( auto * const ptr8 = dynamic_cast< Q5_Hexahedron_Lagrange_GaussLobatto * >(&input) )
-  {
-    lambda( *ptr8 );
-  }
+//  else if( auto * const ptr5 = dynamic_cast< Q1_Hexahedron_Lagrange_GaussLobatto * >(&input) )
+//  {
+//    lambda( *ptr5 );
+//  }
+//  else if( auto * const ptr6 = dynamic_cast< Q2_Hexahedron_Lagrange_GaussLobatto * >(&input) )
+//  {
+//    lambda( *ptr6 );
+//  }
+//  else if( auto * const ptr7 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto * >(&input) )
+//  {
+//    lambda( *ptr7 );
+//  }
+//  else if( auto * const ptr8 = dynamic_cast< Q5_Hexahedron_Lagrange_GaussLobatto * >(&input) )
+//  {
+//    lambda( *ptr8 );
+//  }
 #ifdef GEOSX_DISPATCH_VEM
   else if( auto * const ptr9 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 * >(&input) ) // VEM on Tetrahedron
   {
