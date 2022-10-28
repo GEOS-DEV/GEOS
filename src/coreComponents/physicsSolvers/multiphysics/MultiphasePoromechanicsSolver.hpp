@@ -112,6 +112,12 @@ public:
   virtual void updateState( DomainPartition & domain ) override;
 
   /*
+   * @brief Utility function to update the stabilization parameters at each time step
+   * @param[in] domain the domain partition
+   */
+  void updateStabilizationParameters( DomainPartition & domain ) const;
+
+  /*
    * @brief Utility function to set the stress initialization flag
    * @param[in] performStressInitialization true if the solver has to initialize stress, false otherwise
    */
@@ -147,12 +153,6 @@ protected:
     constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
 
   };
-
-  /*
-   * @brief Utility function to update the stabilization parameters at each time step
-   * @param[in] domain the domain partition
-   */
-  void updateStabilizationParameters( DomainPartition & domain ) const;
 
   virtual void initializePreSubGroups() override;
 

@@ -332,17 +332,6 @@ public:
   void keepFlowVariablesConstantDuringStep( bool const keepFlowVariablesConstantDuringStep )
   { m_keepFlowVariablesConstantDuringStep = keepFlowVariablesConstantDuringStep; }
 
-  virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
-                                              DomainPartition & domain ) override;
-
-  virtual void initializePostInitialConditionsPreSubGroups() override;
-
-protected:
-
-  virtual void postProcessInput() override;
-
-  virtual void initializePreSubGroups() override;
-
   /**
    * @brief Function to fix the initial state during the initialization step in coupled problems
    * @param[in] time current time
@@ -360,6 +349,17 @@ protected:
                                             DomainPartition & domain,
                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                             arrayView1d< real64 > const & localRhs ) const;
+
+  virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
+                                              DomainPartition & domain ) override;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
+protected:
+
+  virtual void postProcessInput() override;
+
+  virtual void initializePreSubGroups() override;
 
   /**
    * @brief Utility function that checks the consistency of the constitutive models

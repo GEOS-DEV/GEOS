@@ -300,19 +300,6 @@ public:
   void keepFlowVariablesConstantDuringStep( bool const keepFlowVariablesConstantDuringStep )
   { m_keepFlowVariablesConstantDuringStep = keepFlowVariablesConstantDuringStep; }
 
-protected:
-
-  /**
-   * @brief Checks constitutive models for consistency
-   * @param[in] domain the domain partition
-   */
-  virtual void validateConstitutiveModels( DomainPartition & domain ) const;
-
-  /**
-   * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
-   */
-  void initializeAquiferBC() const;
-
   /**
    * @brief Function to fix the initial state during the initialization step in coupled problems
    * @param[in] time current time
@@ -330,6 +317,19 @@ protected:
                                             DomainPartition & domain,
                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                             arrayView1d< real64 > const & localRhs ) const;
+
+protected:
+
+  /**
+   * @brief Checks constitutive models for consistency
+   * @param[in] domain the domain partition
+   */
+  virtual void validateConstitutiveModels( DomainPartition & domain ) const;
+
+  /**
+   * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
+   */
+  void initializeAquiferBC() const;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
