@@ -27,7 +27,7 @@
 #include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
-#include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "constitutive/thermalConductivity/multiPhaseThermalConductivitySelector.hpp"
