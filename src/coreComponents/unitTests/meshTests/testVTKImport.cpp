@@ -155,17 +155,24 @@ TEST( VTKImport, cube )
     }
   };
 
-  string const cubeVTK = testMeshDir + "/cube.vtk";
-  string const cubeVTU = testMeshDir + "/cube.vtu";
-  // string const cubePVTU = testMeshDir + "/cube.pvtu";
-  string const cubeVTS = testMeshDir + "/cube.vts";
-  string const cubePVTS = testMeshDir + "/cube.pvts";
+  std::set< string > const meshFiles{ "cube.vtk",
+                                      "cube_STRUCTURED_POINTS.vtk",
+                                      "cube_RECTILINEAR_GRID.vtk",
+                                      "cube_STRUCTURED_GRID.vtk",
+                                      "cube_UNSTRUCTURED_GRID.vtk",
+                                      "cube.vtu",
+                                      //"cube.pvtu",
+                                      "cube.vts",
+                                      "cube.pvts",
+                                      "cube.vtr",
+                                      "cube.pvtr",
+                                      "cube.vti",
+                                      "cube.pvti" };
+  for( string const & meshFile: meshFiles )
+  {
+    TestMeshImport( testMeshDir + "/" + meshFile, validate );
+  }
 
-  TestMeshImport( cubeVTK, validate );
-  TestMeshImport( cubeVTU, validate );
-  // TestMeshImport( cubePVTU, validate );
-  TestMeshImport( cubeVTS, validate );
-  TestMeshImport( cubePVTS, validate );
 }
 
 TEST( VTKImport, medley )
