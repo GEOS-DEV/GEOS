@@ -18,8 +18,13 @@
 
 #include "mesh/generators/VTKUtilities.hpp"
 
-#include "mesh/generators/CellBlockManager.hpp"
+#include "common/TypeDispatch.hpp"
+#include "mesh/generators/VTKMeshGeneratorTools.hpp"
 
+#include "mesh/generators/ParMETISInterface.hpp"
+#ifdef GEOSX_USE_SCOTCH
+#include "mesh/generators/PTScotchInterface.hpp"
+#endif
 
 #include <vtkArrayDispatch.h>
 #include <vtkCellData.h>
@@ -29,19 +34,33 @@
 #include <vtkBoundingBox.h>
 #include <vtkDataArray.h>
 #include <vtkRedistributeDataSetFilter.h>
+#include <vtkNew.h>
+#include <vtkDataSetReader.h>
+
+// vtk data formats
+#include <vtkStructuredPoints.h>
+#include <vtkStructuredGrid.h>
+#include <vtkRectilinearGrid.h>
+#include <vtkImageData.h>
+
+// for legacy vtk import
+#include <vtkStructuredPointsReader.h>
+#include <vtkStructuredGridReader.h>
 #include <vtkUnstructuredGridReader.h>
+#include <vtkRectilinearGridReader.h>
+// for vtu/pvtu import
 #include <vtkXMLPUnstructuredGridReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
-// for vts import
-#include <vtkNew.h>
-#include <vtkStructuredGrid.h>
+// for vts/pvts import
 #include <vtkXMLStructuredGridReader.h>
 #include <vtkXMLPStructuredGridReader.h>
-// for vti import
-#include <vtkImageData.h>
+// for vtr/pvtr import
+#include <vtkXMLRectilinearGridReader.h>
+#include <vtkXMLPRectilinearGridReader.h>
+// for vti/pvti import
 #include <vtkXMLImageDataReader.h>
-// #include <vtkXMLPImageDataReader.h>
-#include <vtkImageDataToPointSet.h>
+#include <vtkXMLPImageDataReader.h>
+//#include <vtkImageDataToPointSet.h>
 
 #ifdef GEOSX_USE_MPI
 #include <vtkMPIController.h>
@@ -59,6 +78,85 @@ namespace geosx
 
 namespace vtk
 {
+
+/**
+ * @brief Supported VTK Mesh file extensions
+ */
+enum class VTKMeshExtension : integer
+{
+  vtk,  ///< Legacy serial format
+  vtu,  ///< XML serial vtkUnstructuredGrid (unstructured)
+  vtr,  ///< XML serial vtkRectilinearGrid (structured)
+  vts,  ///< XML serial vtkStructuredGrid (structured)
+  vti,  ///< XML serial vtkImageData (structured)
+  pvtu, ///< XML parallel vtkUnstructuredGrid (unstructured)
+  pvtr, ///< XML parallel vtkRectilinearGrid (structured)
+  pvts, ///< XML parallel vtkStructuredGrid (structured)
+  pvti, ///< XML parallel vtkImageData (structured)
+};
+
+/// Strings for VTKMeshGenerator::VTKMeshExtension enumeration
+ENUM_STRINGS( VTKMeshExtension,
+              "vtk",
+              "vtu",
+              "vtr",
+              "vts",
+              "vti",
+              "pvtu",
+              "pvtr",
+              "pvts",
+              "pvti" );
+
+/**
+ * @brief Supported VTK legacy dataset types
+ */
+enum class VTKLegacyDatasetType : integer
+{
+  structuredPoints, ///< Structured points (structured)
+  structuredGrid,   ///< Structured grid (structured)
+  unstructuredGrid, ///< Unstructured grid (unstructured)
+  rectilinearGrid,  ///< Rectilinear grid (structured)
+};
+
+/// Strings for VTKMeshGenerator::VTKLegacyDatasetType enumeration
+ENUM_STRINGS( VTKLegacyDatasetType,
+              "structuredPoints",
+              "structuredGrid",
+              "unstructuredGrid",
+              "rectilinearGrid" );
+
+/**
+ * @brief Gathers all the data from all ranks, merge them, sort them, and remove duplicates.
+ * @tparam T Type of the exchanged data.
+ * @param data The data to be exchanged.
+ * @return The merged data.
+ * @note This function makes MPI calls.
+ */
+template< typename T >
+std::vector< T > collectUniqueValues( std::vector< T > const & data )
+{
+  // Exchange the sizes of the data across all ranks.
+  array1d< int > dataSizes( MpiWrapper::commSize() );
+  MpiWrapper::allGather( LvArray::integerConversion< int >( data.size() ), dataSizes, MPI_COMM_GEOSX );
+  // `totalDataSize` contains the total data size across all the MPI ranks.
+  int const totalDataSize = std::accumulate( dataSizes.begin(), dataSizes.end(), 0 );
+
+  // Once the MPI exchange is done, `allData` will contain all the data of all the MPI ranks.
+  // We want all ranks to get all the data. But each rank may have a different size of information.
+  // Therefore, we use `allgatherv` that does not impose the same size across ranks like `allgather` does.
+  std::vector< T > allData( totalDataSize );
+  // `displacements` is the offset (relative to the receive buffer) to store the data for each rank.
+  std::vector< int > displacements( MpiWrapper::commSize(), 0 );
+  std::partial_sum( dataSizes.begin(), dataSizes.end() - 1, displacements.begin() + 1 );
+  MpiWrapper::allgatherv( data.data(), data.size(), allData.data(), dataSizes.data(), displacements.data(), MPI_COMM_GEOSX );
+
+  // Finalizing by sorting, removing duplicates and trimming the result vector at the proper size.
+  std::sort( allData.begin(), allData.end() );
+  auto newEnd = std::unique( allData.begin(), allData.end() );
+  allData.erase( newEnd, allData.end() );
+
+  return allData;
+}
 
 /**
  * @brief Build the Elements to Nodes indexing
@@ -105,6 +203,65 @@ buildElemToNodesImpl( vtkDataSet & mesh,
 }
 
 /**
+ * @brief Check it the vtk grid is a (supported) structured mesh
+ * @param[in] mesh a vtk grid
+ * @return @p true if i@p mesh is structured; @p false otehrwise
+ */
+bool isMeshStructured( vtkDataSet & mesh )
+{
+  if( mesh.IsA( "vtkStructuredPoints" ) )
+  {
+    return true;
+  }
+  else if( mesh.IsA( "vtkStructuredGrid" ) )
+  {
+    return true;
+  }
+  else if( mesh.IsA( "vtkRectilinearGrid" ) )
+  {
+    return true;
+  }
+  else if( mesh.IsA( "vtkImageData" ) )
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+/**
+ * @brief Get the Cell Array object
+ * @details Replaces GetCells() that exist only in vtkUnstructuredGrid
+ * @param[in] mesh a vtk grid
+ * @return an array of cells
+ */
+vtkSmartPointer< vtkCellArray > getCellArray( vtkDataSet & mesh )
+{
+  vtkSmartPointer< vtkCellArray > cells = vtkSmartPointer< vtkCellArray >::New();
+  if( mesh.IsA( "vtkUnstructuredGrid" ) )
+  {
+    cells = vtkUnstructuredGrid::SafeDownCast( &mesh )->GetCells();
+  }
+  else if( isMeshStructured( mesh ) )
+  {
+    // All cells are either hexahedra or voxels
+    vtkIdType const numCells = mesh.GetNumberOfCells();
+    cells->AllocateExact( numCells, 8 * numCells );
+    for( vtkIdType c = 0; c < numCells; ++c )
+    {
+      cells->InsertNextCell( mesh.GetCell( c ));
+    }
+  }
+  else
+  {
+    GEOSX_ERROR( "Unsupported mesh format" );
+  }
+  return cells;
+}
+
+/**
  * @brief Build the Elements to Nodes indexing depending on the execution policy
  *
  * @tparam INDEX_TYPE the type of the indexes
@@ -115,7 +272,7 @@ template< typename INDEX_TYPE >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
 buildElemToNodes( vtkDataSet & mesh )
 {
-  vtkSmartPointer< vtkCellArray > const & cells = vtk::GetCellArray( mesh );
+  vtkSmartPointer< vtkCellArray > const & cells = vtk::getCellArray( mesh );
   // According to VTK docs, IsStorageShareable() indicates whether pointers extracted via
   // vtkCellArray::GetCellAtId() are pointers into internal storage rather than temp buffer
   // and thus results can be used in a thread-safe way.
@@ -190,96 +347,109 @@ vtkSmartPointer< vtkMultiProcessController > getController()
   return controller;
 }
 
+VTKLegacyDatasetType getVTKLegacyDatasetType( vtkSmartPointer< vtkDataSetReader > const vtkGridReader,
+                                              Path const & filePath )
+{
+  vtkGridReader->SetFileName( filePath.c_str() );
+
+  if( vtkGridReader->IsFileStructuredPoints() )
+  {
+    return VTKLegacyDatasetType::structuredPoints;
+  }
+  else if( vtkGridReader->IsFileStructuredGrid() )
+  {
+    return VTKLegacyDatasetType::structuredGrid;
+  }
+  else if( vtkGridReader->IsFileUnstructuredGrid() )
+  {
+    return VTKLegacyDatasetType::unstructuredGrid;
+  }
+  else if( vtkGridReader->IsFileRectilinearGrid() )
+  {
+    return VTKLegacyDatasetType::rectilinearGrid;
+  }
+  else
+  {
+    GEOSX_ERROR( "Unsupported legacy VTK dataset format" );
+  }
+  return {};
+}
+
 vtkSmartPointer< vtkDataSet >
 loadMesh( Path const & filePath )
 {
   string const extension = filePath.extension();
-  vtkSmartPointer< vtkDataSet > loadedMesh;
 
-  if( extension == "pvtu" )
+  auto const parallelRead = [&]( auto const vtkGridReader )
   {
-    auto const vtkUgReader = vtkSmartPointer< vtkXMLPUnstructuredGridReader >::New();
-    vtkUgReader->SetFileName( filePath.c_str() );
-    vtkUgReader->UpdateInformation();
-    vtkUgReader->UpdatePiece( MpiWrapper::commRank(), MpiWrapper::commSize(), 0 );
-    loadedMesh = vtkUgReader->GetOutput();
+    using GridType = TYPEOFPTR( vtkGridReader->GetOutput() );
+    vtkGridReader->SetFileName( filePath.c_str() );
+    vtkGridReader->UpdateInformation();
+    vtkGridReader->UpdatePiece( MpiWrapper::commRank(), MpiWrapper::commSize(), 0 );
+    return vtkSmartPointer< GridType >( vtkGridReader->GetOutput() );
+  };
 
-    // TODO: Apply vtkStaticCleanUnstructuredGrid, once it is included in the next VTK release.
-    //       https://gitlab.kitware.com/vtk/vtk/-/blob/master/Filters/Core/vtkStaticCleanUnstructuredGrid.h
-    //       This removes duplicate points, either present in the dataset, or resulting from merging pieces.
-  }
-  else if( extension == "pvts" )
+  auto const serialRead = [&]( auto const vtkGridReader )
   {
-    auto const vtkSgReader = vtkSmartPointer< vtkXMLPStructuredGridReader >::New();
-    vtkSgReader->SetFileName( filePath.c_str() );
-    vtkSgReader->UpdateInformation();
-    vtkSgReader->UpdatePiece( MpiWrapper::commRank(), MpiWrapper::commSize(), 0 );
-    loadedMesh = vtkSgReader->GetOutput();
-  }
-  else
-  {
+    using GridType = TYPEOFPTR( vtkGridReader->GetOutput() );
     if( MpiWrapper::commRank() == 0 )
     {
-      auto const read = [&]( auto const vtkGridReader )
-      {
-        vtkGridReader->SetFileName( filePath.c_str() );
-        vtkGridReader->Update();
-        return vtkGridReader->GetOutput();
-      };
-
-      if( extension == "vtk" )
-      {
-        loadedMesh = read( vtkSmartPointer< vtkUnstructuredGridReader >::New() );
-      }
-      else if( extension == "vtu" )
-      {
-        loadedMesh = read( vtkSmartPointer< vtkXMLUnstructuredGridReader >::New() );
-      }
-      else if( extension == "vts" )
-      {
-        loadedMesh = read( vtkSmartPointer< vtkXMLStructuredGridReader >::New() );
-      }
-      else if( extension == "vti" )
-      {
-        vtkSmartPointer< vtkImageData > image = read( vtkSmartPointer< vtkXMLImageDataReader >::New() );
-        vtkNew< vtkImageDataToPointSet > imageDataToSg;
-        imageDataToSg->SetInputData( image );
-        imageDataToSg->Update();
-        vtkStructuredGrid * sGrid = imageDataToSg->GetOutput();
-        loadedMesh = sGrid;
-      }
-      else
-      {
-        GEOSX_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vts, .vti, .pvtu or .ptvs." );
-      }
+      vtkGridReader->SetFileName( filePath.c_str() );
+      vtkGridReader->Update();
+      return vtkSmartPointer< GridType >( vtkGridReader->GetOutput() );
     }
     else
     {
-      loadedMesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
+      // TODO Check if this is truly needed for parallel runs
+      return vtkSmartPointer< GridType >::New();
     }
-  }
+  };
 
-  return loadedMesh;
-}
-
-vtkSmartPointer< vtkCellArray > GetCellArray( vtkDataSet & mesh )
-{
-  vtkSmartPointer< vtkCellArray > cells = vtkSmartPointer< vtkCellArray >::New();
-  if( mesh.IsA( "vtkUnstructuredGrid" ))
+  switch( EnumStrings< VTKMeshExtension >::fromString( extension ) )
   {
-    cells = vtkUnstructuredGrid::SafeDownCast( &mesh )->GetCells();
-  }
-  else
-  {
-    int numCell = mesh.GetNumberOfCells();
-    for( int c = 0; c < numCell; ++c )
+    case VTKMeshExtension::vtk:
     {
-      cells->InsertNextCell( mesh.GetCell( c ));
+      VTKLegacyDatasetType const datasetType = getVTKLegacyDatasetType( vtkSmartPointer< vtkDataSetReader >::New(),
+                                                                        filePath );
+      switch( datasetType )
+      {
+        case VTKLegacyDatasetType::structuredPoints: return serialRead( vtkSmartPointer< vtkStructuredPointsReader >::New() );
+        case VTKLegacyDatasetType::structuredGrid:   return serialRead( vtkSmartPointer< vtkStructuredGridReader >::New() );
+        case VTKLegacyDatasetType::unstructuredGrid: return serialRead( vtkSmartPointer< vtkUnstructuredGridReader >::New() );
+        case VTKLegacyDatasetType::rectilinearGrid:  return serialRead( vtkSmartPointer< vtkRectilinearGridReader >::New() );
+      }
+      break;
+    }
+    case VTKMeshExtension::vtu: return serialRead( vtkSmartPointer< vtkXMLUnstructuredGridReader >::New() );
+    case VTKMeshExtension::vtr: return serialRead( vtkSmartPointer< vtkXMLRectilinearGridReader >::New() );
+    case VTKMeshExtension::vts: return serialRead( vtkSmartPointer< vtkXMLStructuredGridReader >::New() );
+    case VTKMeshExtension::vti: return serialRead( vtkSmartPointer< vtkXMLImageDataReader >::New() );
+    case VTKMeshExtension::pvtu:
+    {
+      return parallelRead( vtkSmartPointer< vtkXMLPUnstructuredGridReader >::New() );
+      // TODO: Apply vtkStaticCleanUnstructuredGrid, once it is included in the next VTK release.
+      //       https://gitlab.kitware.com/vtk/vtk/-/blob/master/Filters/Core/vtkStaticCleanUnstructuredGrid.h
+      //       This removes duplicate points, either present in the dataset, or resulting from merging pieces.
+    }
+    case VTKMeshExtension::pvts: return parallelRead( vtkSmartPointer< vtkXMLPStructuredGridReader >::New() );
+    case VTKMeshExtension::pvtr: return parallelRead( vtkSmartPointer< vtkXMLPRectilinearGridReader >::New() );
+    case VTKMeshExtension::pvti: return parallelRead( vtkSmartPointer< vtkXMLPImageDataReader >::New() );
+    default:
+    {
+      GEOSX_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vtr, .vts, .vti, .pvtu, .pvtr, .pvts or .ptvi." );
+      break;
     }
   }
-  return cells;
+
+  return {};
 }
 
+/**
+ * @brief Generate global point and cell ids
+ *
+ * @param[in] mesh a vtk grid
+ * @return the vtk grid with global ids attributes
+ */
 vtkSmartPointer< vtkDataSet >
 generateGlobalIDs( vtkDataSet & mesh )
 {
@@ -291,6 +461,15 @@ generateGlobalIDs( vtkDataSet & mesh )
   return vtkDataSet::SafeDownCast( generator->GetOutputDataObject( 0 ) );
 }
 
+/**
+ * @brief Redistributes the mesh using cell graphds methods (ParMETIS or PTScotch)
+ *
+ * @param[in] mesh a vtk grid
+ * @param[in] method the partitionning method
+ * @param[in] comm the MPI communicator
+ * @param[in] numRefinements the number of refinements for PTScotch
+ * @return the vtk grid redistributed
+ */
 vtkSmartPointer< vtkDataSet >
 redistributeByCellGraph( vtkDataSet & mesh,
                          PartitionMethod const method,
@@ -341,6 +520,12 @@ redistributeByCellGraph( vtkDataSet & mesh,
   return vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
 }
 
+/**
+ * @brief Redistributes the mesh using a Kd-Tree
+ *
+ * @param[in] mesh a vtk grid
+ * @return the vtk grid redistributed
+ */
 vtkSmartPointer< vtkDataSet >
 redistributeByKdTree( vtkDataSet & mesh )
 {
@@ -435,6 +620,12 @@ redistributeMesh( vtkDataSet & loadedMesh,
   return mesh;
 }
 
+/**
+ * @brief Identify the GEOSX type of the polyhedron
+ *
+ * @param cell The vtk cell VTK_POLYHEDRON
+ * @return The geosx element type associated to VTK_POLYHEDRON
+ */
 geosx::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
 {
   GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input for polyhedronType() must be a VTK_POLYHEDRON." );
@@ -529,6 +720,11 @@ geosx::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
   }
 }
 
+/**
+ * @brief Get the GEOSX element type
+ * @param[in] cell The vtk cell type
+ * @return The GEOSX element type
+ */
 ElementType convertVtkToGeosxElementType( vtkCell *cell )
 {
   switch( cell->GetCellType() )
@@ -541,6 +737,7 @@ ElementType convertVtkToGeosxElementType( vtkCell *cell )
     case VTK_TETRA:            return ElementType::Tetrahedron;
     case VTK_PYRAMID:          return ElementType::Pyramid;
     case VTK_WEDGE:            return ElementType::Wedge;
+    case VTK_VOXEL:            return ElementType::Hexahedron;
     case VTK_HEXAHEDRON:       return ElementType::Hexahedron;
     case VTK_PENTAGONAL_PRISM: return ElementType::Prism5;
     case VTK_HEXAGONAL_PRISM:  return ElementType::Prism6;
@@ -553,6 +750,12 @@ ElementType convertVtkToGeosxElementType( vtkCell *cell )
   }
 }
 
+/**
+ * @brief Split and arrange the cells of a grid by type
+ *
+ * @param[in] mesh a vtk grid
+ * @return a map of cells grouped by type
+ */
 std::map< ElementType, std::vector< vtkIdType > >
 splitCellsByType( vtkDataSet & mesh )
 {
@@ -622,6 +825,13 @@ splitCellsByType( vtkDataSet & mesh )
   return typeToCells;
 }
 
+/**
+ * @brief Split and arrange the cells of a grid according to an attribute
+ *
+ * @param[in] typeToCells a map of cells grouped by type
+ * @param attributeDataArray an attribute
+ * @return a map of cell lists grouped by type
+ */
 CellMapType
 splitCellsByTypeAndAttribute( std::map< ElementType, std::vector< vtkIdType > > & typeToCells,
                               vtkDataArray * const attributeDataArray )
@@ -666,6 +876,11 @@ splitCellsByTypeAndAttribute( std::map< ElementType, std::vector< vtkIdType > > 
   return typeToAttributeToCells;
 }
 
+/**
+ * @brief Gather all element types encountered on any rank and enrich the local collection
+ *
+ * @param[in] cellMap a map of cell lists grouped by type
+ */
 void extendCellMapWithRemoteKeys( CellMapType & cellMap )
 {
   // Gather all element types encountered on any rank and enrich the local collection
@@ -704,6 +919,12 @@ void extendCellMapWithRemoteKeys( CellMapType & cellMap )
   }
 }
 
+/**
+ * @brief Get the tetrahedron node ordering from a VTK_POLYHEDRON
+ *
+ * @param cell The vtk cell, type VTK_POLYHEDRON
+ * @return The node ordering
+ */
 std::vector< localIndex > getTetrahedronNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
   GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
@@ -736,6 +957,16 @@ std::vector< localIndex > getTetrahedronNodeOrderingFromPolyhedron( vtkCell * co
   }
 }
 
+/**
+ * @brief Get the hexahedron node ordering from a VTK_POLYHEDRON
+ *
+ * @param cell The vtk cell, type VTK_POLYHEDRON
+ * @return The node ordering
+ *
+ * It could be possible to use getPrismNodeOrderingFromPolyhedron< 4 > with additional
+ * permutations. But at this point computationalGeometry::prismVolume< NUM_SIDES >
+ * is not ready.
+ */
 std::vector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
   GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
@@ -801,6 +1032,16 @@ std::vector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell * con
   return nodeOrder;
 }
 
+/**
+ * @brief Get the wedge node ordering from a VTK_POLYHEDRON
+ *
+ * @param cell The vtk cell, type VTK_POLYHEDRON
+ * @return The node ordering
+ *
+ * It could be possible to use getPrismNodeOrderingFromPolyhedron< 3 > with additional
+ * permutations. But at this point computationalGeometry::prismVolume< NUM_SIDES >
+ * is not ready.
+ */
 std::vector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
   GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
@@ -891,6 +1132,12 @@ std::vector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const ce
   return nodeOrder;
 }
 
+/**
+ * @brief Get the pyramid node ordering from a VTK_POLYHEDRON
+ *
+ * @param cell The vtk cell, type VTK_POLYHEDRON
+ * @return The node ordering
+ */
 std::vector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
   GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
@@ -958,6 +1205,13 @@ std::vector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const 
   return nodeOrder;
 }
 
+/**
+ * @brief Get the prism node ordering from a VTK_POLYHEDRON
+ *
+ * @tparam NUM_SIDES number of sides of the prism
+ * @param cell The vtk cell, type VTK_POLYHEDRON
+ * @return The node ordering
+ */
 template< integer NUM_SIDES >
 std::vector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
@@ -1054,32 +1308,81 @@ CellMapType buildCellMap( vtkDataSet & mesh, string const & attributeName )
   return cellMap;
 }
 
-std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType )
+bool vtkToGeosxNodeOrderingExists( ElementType const elemType )
+{
+  switch( elemType )
+  {
+    case ElementType::Vertex:
+    case ElementType::Line:
+    case ElementType::Triangle:
+    case ElementType::Quadrilateral:
+    case ElementType::Tetrahedron:
+    case ElementType::Pyramid:
+    case ElementType::Wedge:
+    case ElementType::Hexahedron:
+    case ElementType::Prism5:
+    case ElementType::Prism6:
+    {
+      return true;
+    }
+    default:
+    {
+      return false;
+    }
+  }
+}
+
+std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elemType )
 {
   switch( elemType )
   {
     case ElementType::Vertex:        return { 0 };
     case ElementType::Line:          return { 0, 1 };
     case ElementType::Triangle:      return { 0, 1, 2 };
-    case ElementType::Quadrilateral: return { 0, 1, 2, 3 };  // TODO check
-    case ElementType::Polygon:       return { };  // TODO
+    case ElementType::Quadrilateral: return { 0, 1, 2, 3 };  // TODO check (QUAD vs. PIXEL)
     case ElementType::Tetrahedron:   return { 0, 1, 2, 3 };
     case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };
     case ElementType::Wedge:         return { 0, 3, 2, 5, 1, 4 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
     case ElementType::Prism5:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
-    case ElementType::Polyhedron:    return { };  // TODO
     default:
     {
-      return { };
+      GEOSX_ERROR( "Cannot get vtk to geosx node ordering based on geosx element type " << elemType );
+      break;
     }
   }
+  return {};
 }
 
-std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType, vtkCell *cell )
+std::vector< int > getVtkToGeosxNodeOrdering( VTKCellType const vtkType )
 {
-  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input for getGeosxToVtkNodeOrdering( ElementType const elemType, vtkCell *cell ) must be a VTK_POLYHEDRON." );
+  switch( vtkType )
+  {
+    case VTK_VERTEX:           return getVtkToGeosxNodeOrdering( ElementType::Vertex );
+    case VTK_LINE:             return getVtkToGeosxNodeOrdering( ElementType::Line );
+    case VTK_TRIANGLE:         return getVtkToGeosxNodeOrdering( ElementType::Triangle );
+    case VTK_QUAD:             return getVtkToGeosxNodeOrdering( ElementType::Quadrilateral );
+    case VTK_TETRA:            return getVtkToGeosxNodeOrdering( ElementType::Tetrahedron );
+    case VTK_PYRAMID:          return getVtkToGeosxNodeOrdering( ElementType::Pyramid );
+    case VTK_WEDGE:            return getVtkToGeosxNodeOrdering( ElementType::Wedge );
+    case VTK_VOXEL:            return { 0, 1, 2, 3, 4, 5, 6, 7 };
+    case VTK_HEXAHEDRON:       return getVtkToGeosxNodeOrdering( ElementType::Hexahedron );
+    case VTK_PENTAGONAL_PRISM: return getVtkToGeosxNodeOrdering( ElementType::Prism5 );
+    case VTK_HEXAGONAL_PRISM:  return getVtkToGeosxNodeOrdering( ElementType::Prism6 );
+    default:
+    {
+      GEOSX_ERROR( "Cannot get vtk to geosx node ordering based on vtk cell type " << vtkType );
+      break;
+    }
+  }
+  return {};
+}
+
+std::vector< int > getVtkToGeosxPolyhedronNodeOrdering( ElementType const elemType,
+                                                        vtkCell *cell )
+{
+  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
   switch( elemType )
   {
     case ElementType::Tetrahedron: return getTetrahedronNodeOrderingFromPolyhedron( cell );
@@ -1093,16 +1396,22 @@ std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType, vtkCel
     case ElementType::Prism9:      return getPrismNodeOrderingFromPolyhedron< 9 >( cell );
     case ElementType::Prism10:     return getPrismNodeOrderingFromPolyhedron< 10 >( cell );
     case ElementType::Prism11:     return getPrismNodeOrderingFromPolyhedron< 11 >( cell );
-    case ElementType::Polyhedron:  return { };  // TODO
     default:
     {
-      return { };
+      GEOSX_ERROR( "Unsupported VTK polyhedral cell" );
+      break;
     }
   }
+  return {};
 }
 
+/**
+ * @brief Fill @p cellBlock with the appropriate nodes and local/global mappings.
+ * @param[in] cellIds the cell indexes of cell type \p cellType within this region
+ * @param[in] mesh the vtkUnstructuredGrid or vtkStructuredGrid that is loaded
+ * @param[in,out] cellBlock The cell block to be written
+ */
 void fillCellBlock( vtkDataSet & mesh,
-                    ElementType const elemType,
                     std::vector< vtkIdType > const & cellIds,
                     CellBlock & cellBlock )
 {
@@ -1122,22 +1431,46 @@ void fillCellBlock( vtkDataSet & mesh,
     localToGlobal[cellCount++] = globalCellId->GetValue( c );
   };
 
-  std::vector< int > const nodeOrderFixed = getGeosxToVtkNodeOrdering( elemType );
   // Writing connectivity and Local to Global
+  ElementType const elemType = cellBlock.getElementType();
+  std::vector< int > const nodeOrderFixed = vtkToGeosxNodeOrderingExists( elemType )
+                                          ? getVtkToGeosxNodeOrdering( elemType )
+                                          : std::vector< int >();
+  std::vector< int > const nodeOrderVoxel = ( elemType == ElementType::Hexahedron)
+                                          ? getVtkToGeosxNodeOrdering( VTK_VOXEL )
+                                          : std::vector< int >();
+
   for( vtkIdType c: cellIds )
   {
     vtkCell * const cell = mesh.GetCell( c );
-    if( cell->GetCellType() == VTK_POLYHEDRON )
+    VTKCellType const vtkType = static_cast< VTKCellType >( cell->GetCellType() );
+    switch( vtkType )
     {
-      writeCell( c, cell, getGeosxToVtkNodeOrdering( elemType, cell ) );
-    }
-    else
-    {
-      writeCell( c, cell, nodeOrderFixed );
+      case VTK_POLYHEDRON:
+      {
+        writeCell( c, cell, getVtkToGeosxPolyhedronNodeOrdering( elemType, cell ) );
+        break;
+      }
+      case VTK_VOXEL:
+      {
+        writeCell( c, cell, nodeOrderVoxel );
+        break;
+      }
+      default:
+      {
+        writeCell( c, cell, nodeOrderFixed );
+        break;
+      }
     }
   }
 }
 
+/**
+ * @brief Returns a string describing the element.
+ * @param[in] type The element type.
+ * @return The name.
+ * @warning This information will be visible in the input file... Consider refactoring with great care.
+ */
 string getElementTypeName( ElementType const type )
 {
   switch( type )
@@ -1162,6 +1495,13 @@ string getElementTypeName( ElementType const type )
   }
 }
 
+/**
+ * @brief Builds the cell block name.
+ * @param[in] type The element name.
+ * @param[in] regionId The region Id.
+ * @return The name.
+ * @warning This name will be visible in the input file... Consider refactoring with great care.
+ */
 string buildCellBlockName( ElementType const type, int const regionId )
 {
   GEOSX_ERROR_IF_LT_MSG( regionId, -1, "Invalid region id" );
@@ -1169,6 +1509,11 @@ string buildCellBlockName( ElementType const type, int const regionId )
   return regionId != -1 ? std::to_string( regionId ) + "_" + cellTypeName : cellTypeName;
 }
 
+/**
+ * @brief Collect a set of material field names registered in a subregion.
+ * @param subRegion the target subregion
+ * @return a set of wrapper names
+ */
 std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const & subRegion )
 {
   using namespace constitutive;
@@ -1186,6 +1531,12 @@ std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const
   return materialWrapperNames;
 }
 
+/**
+ * @brief Imports 2d and 3d arrays from @p vtkArray to @p wrapper, only for @p cellIds
+ * @param cellIds The cells for which we should copy the data.
+ * @param vtkArray The source.
+ * @param wrapper The destination.
+ */
 void importMaterialField( std::vector< vtkIdType > const & cellIds,
                           vtkDataArray * vtkArray,
                           WrapperBase & wrapper )
@@ -1223,6 +1574,12 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
   } );
 }
 
+/**
+ * @brief Imports 1d and 2d arrays from @p vtkArray to @p wrapper, only for @p cellIds
+ * @param cellIds The cells for which we should copy the data.
+ * @param vtkArray The source.
+ * @param wrapper The destination.
+ */
 void importRegularField( std::vector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
                          WrapperBase & wrapper )
@@ -1294,10 +1651,10 @@ void printMeshStatistics( vtkDataSet & mesh,
   {
     int const widthGlobal = static_cast< int >( std::log10( std::max( numGlobalElems, numGlobalNodes ) ) + 1 );
     GEOSX_LOG( GEOSX_FMT( "Number of nodes: {:>{}}", numGlobalNodes, widthGlobal ) );
-    GEOSX_LOG( GEOSX_FMT( "Number of elems: {:>{}}", numGlobalElems, widthGlobal ) );
+    GEOSX_LOG( GEOSX_FMT( "  Number of elems: {:>{}}", numGlobalElems, widthGlobal ) );
     for( auto const & typeCount: elemCounts )
     {
-      GEOSX_LOG( GEOSX_FMT( "{:>15}: {:>{}}", toString( typeCount.first ), typeCount.second, widthGlobal ) );
+      GEOSX_LOG( GEOSX_FMT( "{:>17}: {:>{}}", toString( typeCount.first ), typeCount.second, widthGlobal ) );
     }
 
     int const widthLocal = static_cast< int >( std::log10( maxLocalElems ) + 1 );
@@ -1396,6 +1753,13 @@ void importFieldOnCellElementSubRegion( int const regionId,
   } );
 }
 
+/**
+ * @brief Build node sets
+ *
+ * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
+ * @param[in] nodesetNames An array of the node sets names
+ * @param[in] cellBlockManager The instance that stores the node sets.
+ */
 void importNodesets( vtkDataSet & mesh,
                      string_array & nodesetNames,
                      CellBlockManager & cellBlockManager )
@@ -1513,7 +1877,7 @@ void writeCells( vtkDataSet & mesh,
       cellBlock.setElementType( elemType );
       cellBlock.resize( LvArray::integerConversion< localIndex >( cellIds.size() ) );
 
-      vtk::fillCellBlock( mesh, elemType, cellIds, cellBlock );
+      vtk::fillCellBlock( mesh, cellIds, cellBlock );
     }
   }
 }

@@ -1,0 +1,14 @@
+<VTKFile type="ImageData" version="1.0" byte_order="LittleEndian">
+  <ImageData WholeExtent="0 2 0 2 0 3" Origin="0 0 0" Spacing="1 1 1">
+  <Piece Extent="0 2 0 2 0 3">
+    <PointData>
+    </PointData>
+    <CellData>
+      <DataArray type="Int32" Name="attribute" format="ascii">
+        3 3 3 3 3 3
+        3 3 3 3 3 3
+      </DataArray>
+    </CellData>
+  </Piece>
+  </ImageData>
+</VTKFile>
