@@ -50,22 +50,6 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr1 );
   }
-  else if( auto const * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG1 const * >(&input) )
-  {
-    lambda( *ptr1 );
-  }
-  else if( auto const * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG2 const * >(&input) )
-  {
-    lambda( *ptr1 );
-  }
-  else if( auto const * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG3 const * >(&input) )
-  {
-    lambda( *ptr1 );
-  }
-  else if( auto const * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG4 const * >(&input) )
-  {
-    lambda( *ptr1 );
-  }
   else if( auto const * const ptr2 = dynamic_cast< H1_Wedge_Lagrange1_Gauss6 const * >(&input) )
   {
     lambda( *ptr2 );
@@ -124,6 +108,22 @@ dispatch3D( FiniteElementBase const & input,
     lambda( *ptr15 );
   }
 #endif
+  else if( auto const * const ptr16 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG1 const * >(&input) )
+  {
+    lambda( *ptr16 );
+  }
+  else if( auto const * const ptr17 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG2 const * >(&input) )
+  {
+    lambda( *ptr17 );
+  }
+  else if( auto const * const ptr18 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG3 const * >(&input) )
+  {
+    lambda( *ptr18 );
+  }
+  else if( auto const * const ptr19 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG4 const * >(&input) )
+  {
+    lambda( *ptr19 );
+  }
   else
   {
     GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
@@ -137,22 +137,6 @@ dispatch3D( FiniteElementBase & input,
             LAMBDA && lambda )
 {
   if( auto * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2 * >(&input) )
-  {
-    lambda( *ptr1 );
-  }
-  else if( auto * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG1 * >(&input) )
-  {
-    lambda( *ptr1 );
-  }
-  else if( auto * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG2 * >(&input) )
-  {
-    lambda( *ptr1 );
-  }
-  else if( auto * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG3 * >(&input) )
-  {
-    lambda( *ptr1 );
-  }
-  else if( auto * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG4 * >(&input) )
   {
     lambda( *ptr1 );
   }
@@ -214,6 +198,22 @@ dispatch3D( FiniteElementBase & input,
     lambda( *ptr15 );
   }
 #endif
+  else if( auto * const ptr16 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG1 * >(&input) )
+  {
+    lambda( *ptr16 );
+  }
+  else if( auto * const ptr17 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG2 * >(&input) )
+  {
+    lambda( *ptr17 );
+  }
+  else if( auto * const ptr18 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG3 * >(&input) )
+  {
+    lambda( *ptr18 );
+  }
+  else if( auto * const ptr19 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG4 * >(&input) )
+  {
+    lambda( *ptr19 );
+  }
   else
   {
     GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<LvArray::system::demangleType( &input ) );

@@ -11,6 +11,10 @@ set( finiteElement_headers
      PDEUtilities.hpp
      elementFormulations/FiniteElementBase.hpp
      elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp
+     elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG1.hpp
+     elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG2.hpp
+     elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG3.hpp
+     elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG4.hpp
      elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp
      elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp
      elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp
