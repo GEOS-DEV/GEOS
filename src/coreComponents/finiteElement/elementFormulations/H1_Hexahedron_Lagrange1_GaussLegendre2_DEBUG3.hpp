@@ -409,10 +409,10 @@ private:
 template< typename FUNC, typename ... PARAMS >
 GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
 H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG3::supportLoop( int const qa,
-                                                     int const qb,
-                                                     int const qc,
-                                                     FUNC && func,
-                                                     PARAMS &&... params )
+                                                            int const qb,
+                                                            int const qc,
+                                                            FUNC && func,
+                                                            PARAMS &&... params )
 {
 
 /// Options for how to calculate the parent gradients.
@@ -504,8 +504,8 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG3::calcGradN( localIndex const q,
-                                                   real64 const (&X)[numNodes][3],
-                                                   real64 (& gradN)[numNodes][3] )
+                                                          real64 const (&X)[numNodes][3],
+                                                          real64 (& gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
@@ -633,9 +633,9 @@ H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG3::
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG3::symmetricGradient( int const q,
-                                                                real64 const (&invJ)[3][3],
-                                                                real64 const (&var)[numNodes][3],
-                                                                real64 (& grad)[6] )
+                                                                       real64 const (&invJ)[3][3],
+                                                                       real64 const (&var)[numNodes][3],
+                                                                       real64 (& grad)[6] )
 {
   int qa, qb, qc;
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -668,9 +668,9 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG3::symmetricGradient( int const
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG3::plusGradNajAij( int const q,
-                                                             real64 const (&invJ)[3][3],
-                                                             real64 const (&var)[6],
-                                                             real64 (& R)[numNodes][3] )
+                                                                    real64 const (&invJ)[3][3],
+                                                                    real64 const (&var)[6],
+                                                                    real64 (& R)[numNodes][3] )
 {
   int qa, qb, qc;
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -703,9 +703,9 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG3::plusGradNajAij( int const q,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2_DEBUG3::gradient( int const q,
-                                                       real64 const (&invJ)[3][3],
-                                                       real64 const (&var)[numNodes][3],
-                                                       real64 (& grad)[3][3] )
+                                                              real64 const (&invJ)[3][3],
+                                                              real64 const (&var)[numNodes][3],
+                                                              real64 (& grad)[3][3] )
 {
   int qa, qb, qc;
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
