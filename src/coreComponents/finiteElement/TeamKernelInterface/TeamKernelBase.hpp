@@ -27,6 +27,8 @@
 #include "mesh/ElementRegionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "finiteElement/TeamKernelInterface/common.hpp"
+#include "tensor/tensor_types.hpp"
+#include "common.hpp"
 
 namespace geosx
 {
@@ -128,23 +130,51 @@ public:
    */
   struct StackVariables
   {
-public:
+    static constexpr ThreadingModel threading_model = ThreadingModel::Distributed3D;
 
     /**
      * @brief Constructor
      */
     GEOSX_HOST_DEVICE
     StackVariables( LaunchContext & ctx )
-      : ctx(ctx)
-    {}
+      : ctx( ctx ), tidx( 0 ), tidy( 0 ), tidz( 0 )
+    {
+      using RAJA::RangeSegment;
+      // TODO: factorize into KernelConfiguration?
+      if ( threading_model == ThreadingModel::Distributed2D )
+      {
+        /// Distributed on threads x & y
+        loop<thread_x>( ctx, RangeSegment( 0, num_quads_1d ), [&] ( localIndex tid_x )
+        {
+          tidx = tid_x;
+        } );
+        loop<thread_y>( ctx, RangeSegment( 0, num_quads_1d ), [&] ( localIndex tid_y )
+        {
+          tidy = tid_y;
+        } );
+      }
+      else if ( threading_model == ThreadingModel::Distributed3D )
+      {
+        /// Distributed on threads x
+        loop<thread_x>( ctx, RangeSegment( 0, num_quads_1d * num_quads_1d * num_quads_1d ),
+                        [&] ( localIndex tid )
+        {
+          tidx = tid % num_quads_1d;
+          tidy = ( tid % ( num_quads_1d * num_quads_1d ) ) / num_quads_1d;
+          tidz = tid / ( num_quads_1d * num_quads_1d );
+        } );
+      }
+    }
 
     /// RAJA launch context
     LaunchContext & ctx;
 
     /// Index of the finite element
     localIndex element_index;
+    localIndex tidx, tidy, tidz;
 
-    static constexpr localIndex batch_size = 8;
+    // static constexpr localIndex batch_size = 4; // TODO
+    static constexpr localIndex batch_size = 8; // TODO
     static constexpr localIndex num_quads_1d = 2; // TODO
   };
 
@@ -278,7 +308,8 @@ public:
     constexpr localIndex num_quads_1d = KERNEL_TYPE::StackVariables::num_quads_1d;
 
     launch< POLICY >
-    ( GEOSX_RAJA_DEVICE, Grid( Teams( num_blocks ), Threads( num_quads_1d, num_quads_1d, batch_size ) ),
+    // ( GEOSX_RAJA_DEVICE, Grid( Teams( num_blocks ), Threads( num_quads_1d, num_quads_1d, batch_size ) ),
+    ( GEOSX_RAJA_DEVICE, Grid( Teams( num_blocks ), Threads( num_quads_1d * num_quads_1d * num_quads_1d, 1, batch_size ) ),
     [=] GEOSX_HOST_DEVICE ( LaunchContext ctx )
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent, ctx );
@@ -295,16 +326,10 @@ public:
           if ( element_index >= numElems ) { return; }
 
           kernelComponent.setup( stack, element_index );
-          loop<thread_y>( ctx, RangeSegment( 0, num_quads_1d ), [&] ( localIndex quad_y )
-          {
-            loop<thread_x>( ctx, RangeSegment( 0, num_quads_1d ), [&] ( localIndex quad_x )
-            {
-              for( localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++ )
-              {
-                TensorIndex quad_index { quad_x, quad_y, quad_z };
-                kernelComponent.quadraturePointKernel( stack, quad_index );
-              }
-            } );
+          loop3D( stack, num_quads_1d, num_quads_1d, num_quads_1d,
+                  [&]( localIndex quad_x, localIndex quad_y, localIndex quad_z ){
+            TensorIndex quad_index { quad_x, quad_y, quad_z };
+            kernelComponent.quadraturePointKernel( stack, quad_index );
           } );
 
           maxResidual.max( kernelComponent.complete( stack ) );

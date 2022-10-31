@@ -123,9 +123,45 @@ struct Distributed2DMesh
 template < localIndex num_dofs_mesh_1d, localIndex num_quads_1d, localIndex dim, localIndex batch_size >
 struct Distributed3DMesh
 {
-  BasisStackVariables< num_dofs_mesh_1d, num_quads_1d > basis;
+  StackBasis< num_dofs_mesh_1d, num_quads_1d > basis;
+
+  template < localIndex... Sizes >
+  using Tensor = tensor::Static3dThreadDTensor< Sizes... >; // TODO generalize
 
   GEOSX_HOST_DEVICE
+  Distributed3DMesh( LaunchContext & ctx )
+  : basis( ctx )
+  { }
+
+  // Mesh nodes
+  Tensor< num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, dim > mesh_nodes;
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, dim > const & getNodes() const
+  {
+    return mesh_nodes;
+  }
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, dim > & getNodes()
+  {
+    return mesh_nodes;
+  }
+
+  // Mesh jacobians
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, dim, dim > jacobians;
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, dim, dim > & getJacobians()
+  {
+    return jacobians;
+  }
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, dim, dim > const & getJacobians() const
+  {
+    return jacobians;
+  }
 };
 
 template < localIndex num_dofs_mesh_1d, localIndex num_quads_1d, localIndex dim, localIndex batch_size >
@@ -213,6 +249,14 @@ struct Mesh_t< Location::Distributed2D, num_dofs_1d, num_quads_1d, dim, batch_si
   using type = Distributed2DMesh< num_dofs_1d, num_quads_1d, dim, batch_size >;
 };
 
+template < localIndex num_dofs_1d,
+           localIndex num_quads_1d,
+           localIndex dim,
+           localIndex batch_size >
+struct Mesh_t< Location::Distributed3D, num_dofs_1d, num_quads_1d, dim, batch_size >
+{
+  using type = Distributed3DMesh< num_dofs_1d, num_quads_1d, dim, batch_size >;
+};
 
 template < Location location,
            localIndex num_dofs_1d,

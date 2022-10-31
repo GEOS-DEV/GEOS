@@ -130,7 +130,7 @@ public:
     using Base::StackVariables::num_quads_1d;
     using Base::StackVariables::batch_size;
 
-    static constexpr stackVariables::Location location = stackVariables::Location::Distributed2D;
+    static constexpr stackVariables::Location location = stackVariables::Location::Distributed3D;
   
     /**
      * @brief Constructor
@@ -153,8 +153,10 @@ public:
     stackVariables::StackQuadratureWeights< num_quads_1d > weights;
 
     /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
-    static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d;
+    // static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d;
     static constexpr localIndex num_buffers = 2 * dim;
+    static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
+    // static constexpr localIndex num_buffers = 1;
     stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
   };
 

@@ -35,5 +35,6 @@
 
 /// Distributed layouts statically sized
 #include "distributed_2d_layout.hpp"
+#include "distributed_3d_layout.hpp"
 
 #endif // GEOSX_LAYOUTS_HPP_

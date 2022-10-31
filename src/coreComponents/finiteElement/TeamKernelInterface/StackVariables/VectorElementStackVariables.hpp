@@ -186,6 +186,83 @@ struct Distributed2DVectorElement
   }
 };
 
+template < localIndex num_dofs_1d,
+           localIndex num_quads_1d,
+           localIndex dim,
+           localIndex num_comp,
+           localIndex batch_size >
+struct Distributed3DVectorElement
+{
+  StackBasis< num_dofs_1d, num_quads_1d > basis;
+
+  template < localIndex... Sizes >
+  using Tensor = tensor::Static3dThreadDTensor< Sizes... >; // TODO generalize
+
+  GEOSX_HOST_DEVICE
+  Distributed3DVectorElement( LaunchContext & ctx ) : basis( ctx )
+  {
+  }
+
+  // Element input dofs of the primary field
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d, num_comp > dofs_in;
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d, num_comp > const & getDofsIn() const
+  {
+    return dofs_in;
+  }
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d, num_comp > & getDofsIn()
+  {
+    return dofs_in;
+  }
+
+  // Element primary field gradients at quadrature points
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp, dim > q_gradient_values;
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp, dim > const & getGradientValues() const
+  {
+    return q_gradient_values;
+  }
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp, dim > & getGradientValues()
+  {
+    return q_gradient_values;
+  }
+
+  // Element "geometric factors"
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp, dim > Du;
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp, dim > const & getQuadValues() const
+  {
+    return Du;
+  }
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp, dim > & getQuadValues()
+  {
+    return Du;
+  }
+
+  // Element contribution to the residual
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d, num_comp > dofs_out;
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d, num_comp > const & getDofsOut() const
+  {
+    return dofs_out;
+  }
+
+  GEOSX_HOST_DEVICE
+  Tensor< num_dofs_1d, num_dofs_1d, num_dofs_1d, num_comp > & getDofsOut()
+  {
+    return dofs_out;
+  }
+};
 
 template < localIndex num_dofs_1d,
            localIndex num_quads_1d,
@@ -316,6 +393,15 @@ struct VectorElement_t< Location::Distributed2D, num_dofs_1d, num_quads_1d, dim,
   using type = Distributed2DVectorElement< num_dofs_1d, num_quads_1d, dim, num_comp, batch_size >;
 };
 
+template < localIndex num_dofs_1d,
+           localIndex num_quads_1d,
+           localIndex dim,
+           localIndex num_comp,
+           localIndex batch_size >
+struct VectorElement_t< Location::Distributed3D, num_dofs_1d, num_quads_1d, dim, num_comp, batch_size >
+{
+  using type = Distributed3DVectorElement< num_dofs_1d, num_quads_1d, dim, num_comp, batch_size >;
+};
 
 template < Location location,
            localIndex num_dofs_1d,
