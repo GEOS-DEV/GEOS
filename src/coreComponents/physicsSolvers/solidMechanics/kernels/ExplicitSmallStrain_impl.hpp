@@ -47,9 +47,9 @@ ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::ExplicitSmall
         finiteElementSpace,
         inputConstitutiveType ),
   m_X( nodeManager.referencePosition()),
-  m_u( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
-  m_vel( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::velocity >() ),
-  m_acc( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::acceleration >() ),
+  m_u( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
+  m_vel( nodeManager.getField< fields::solidMechanics::velocity >() ),
+  m_acc( nodeManager.getField< fields::solidMechanics::acceleration >() ),
   m_dt( dt ),
   m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( elementListName ).toViewConst() )
 {

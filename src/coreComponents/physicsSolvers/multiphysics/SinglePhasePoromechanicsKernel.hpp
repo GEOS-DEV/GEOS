@@ -22,8 +22,8 @@
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 
 namespace geosx
 {
@@ -110,8 +110,8 @@ public:
           inputMatrix,
           inputRhs ),
     m_X( nodeManager.referencePosition()),
-    m_disp( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
-    m_uhat( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::incrementalDisplacement >() ),
+    m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
+    m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
@@ -119,8 +119,8 @@ public:
     m_fluidDensity_n( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density_n() ),
     m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
-    m_fluidPressure_n( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >() ),
-    m_fluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() )
+    m_fluidPressure_n( elementSubRegion.template getField< fields::flow::pressure_n >() ),
+    m_fluidPressure( elementSubRegion.template getField< fields::flow::pressure >() )
   {}
 
   //*****************************************************************************

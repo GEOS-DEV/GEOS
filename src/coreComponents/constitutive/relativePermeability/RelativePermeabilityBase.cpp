@@ -17,7 +17,7 @@
  */
 
 #include "RelativePermeabilityBase.hpp"
-#include "RelativePermeabilityExtrinsicData.hpp"
+#include "RelativePermeabilityFields.hpp"
 
 namespace geosx
 {
@@ -40,13 +40,12 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseRelPerm{}, &m_phaseRelPerm );
-  registerExtrinsicData( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{},
-                         &m_dPhaseRelPerm_dPhaseVolFrac );
+  registerField( fields::relperm::phaseRelPerm{}, &m_phaseRelPerm );
+  registerField( fields::relperm::dPhaseRelPerm_dPhaseVolFraction{}, &m_dPhaseRelPerm_dPhaseVolFrac );
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseTrappedVolFraction{}, &m_phaseTrappedVolFrac );
+  registerField( fields::relperm::phaseTrappedVolFraction{}, &m_phaseTrappedVolFrac );
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseRelPerm_n{}, &m_phaseRelPerm_n );
+  registerField( fields::relperm::phaseRelPerm_n{}, &m_phaseRelPerm_n );
 
 }
 
@@ -103,11 +102,11 @@ void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex c
 
 void RelativePermeabilityBase::setLabels()
 {
-  getExtrinsicData< extrinsicMeshData::relperm::phaseRelPerm >().
+  getField< fields::relperm::phaseRelPerm >().
     setDimLabels( 2, m_phaseNames );
-  getExtrinsicData< extrinsicMeshData::relperm::phaseRelPerm_n >().
+  getField< fields::relperm::phaseRelPerm_n >().
     setDimLabels( 2, m_phaseNames );
-  getExtrinsicData< extrinsicMeshData::relperm::phaseTrappedVolFraction >().
+  getField< fields::relperm::phaseTrappedVolFraction >().
     setDimLabels( 2, m_phaseNames );
 }
 

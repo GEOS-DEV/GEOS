@@ -24,7 +24,7 @@
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsKernel.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
@@ -32,7 +32,7 @@ namespace geosx
 
 using namespace constitutive;
 using namespace dataRepository;
-using namespace extrinsicMeshData;
+using namespace fields;
 
 SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & name,
                                                                 Group * const parent )
