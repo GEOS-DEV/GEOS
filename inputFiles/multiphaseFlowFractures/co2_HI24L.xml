@@ -79,6 +79,7 @@
     <PeriodicEvent
       name="solverApplications1"
       beginTime="0"
+      maxEventDt="2000"
       target="/Solvers/compflow"/>
 
     <PeriodicEvent

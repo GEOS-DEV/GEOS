@@ -51,7 +51,7 @@
   <!-- END_SPHINX_INCLUDE_GEOM_BLOCK -->
   <!-- START_SPHINX_INCLUDE_EVENTS_BLOCK -->
   <Events
-    maxTime="2e8">
+    maxTime="1e5">
     <PeriodicEvent
       name="siloOutputs"
       timeFrequency="1e7"
