@@ -123,18 +123,13 @@ blt_append_custom_compiler_flag( FLAGS_VAR GEOSX_NINJA_FLAGS
                                  CLANG   "-fcolor-diagnostics"
                                )
 
-# clang-13 complains about unused-but-set variable.
+# clang-13 and gcc complains about unused-but-set variable.
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-Wunused-but-set-variable" CXX_UNUSED_BUT_SET_VAR)
-if (CXX_UNUSED_BUT_SET_VAR AND ENABLE_BENCHMARKS)
-    set(is_appleclang "$<CXX_COMPILER_ID:AppleClang>")
-    set(v13_or_later "$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,13>")
-    set(meet_requirements "$<AND:${is_appleclang},${v13_or_later}>")
-    blt_add_target_compile_flags(TO ${BLT_RUN_BENCHMARKS_TARGET_NAME}
-                                FLAGS $<${meet_requirements}:-Wno-unused-but-set-variable>)
-    unset(meet_requirements)
-    unset(v13_or_later)
-    unset(is_appleclang)
+if (ENABLE_GBENCHMARK)
+    blt_add_target_compile_flags(TO benchmark
+                                FLAGS $<$<BOOL:${CXX_UNUSED_BUT_SET_VAR}>:-Wno-unused-but-set-variable>
+                                )
 endif()
 
 if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
