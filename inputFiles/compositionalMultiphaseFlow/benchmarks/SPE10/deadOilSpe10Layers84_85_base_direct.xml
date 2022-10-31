@@ -11,10 +11,11 @@
       discretization="fluidTPFA"
       targetRegions="{ reservoir }"      
       temperature="300"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
       useMass="1"
       initialDt="1e3"
-      maxCompFractionChange="0.1"
-      computeCFLNumbers="1">
+      maxCompFractionChange="0.1">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         newtonMaxIter="40"

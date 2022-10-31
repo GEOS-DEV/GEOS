@@ -30,7 +30,7 @@ ProjectionEDFMHelper::ProjectionEDFMHelper( MeshLevel const & mesh,
 void ProjectionEDFMHelper::addNonNeighboringConnections() const
 {
   SurfaceElementRegion const & fractureRegion = m_elementManager.getRegion< SurfaceElementRegion >( m_embeddedSurfaceRegionName );
-  EmbeddedSurfaceSubRegion const & fractureSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
+  EmbeddedSurfaceSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< EmbeddedSurfaceSubRegion >();
 
   arrayView1d< integer const > const ghostRank = fractureSubRegion.ghostRank();
   FixedToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();

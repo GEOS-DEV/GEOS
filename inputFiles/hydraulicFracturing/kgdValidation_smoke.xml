@@ -54,16 +54,9 @@
     <PeriodicEvent 
       name="solverApplications1"
       beginTime="0.0"
-      endTime="1.0"
       forceDt="1.0"
       targetExactStartStop="1"
       target="/Solvers/hydrofracture" />
-
-    <PeriodicEvent 
-      name="outputs"
-      timeFrequency="1.0"
-      targetExactTimestep="0"
-      target="/Outputs/siloOutput" />
 
     <PeriodicEvent
       name="restarts"

@@ -39,14 +39,6 @@ EXTRINSIC_MESH_DATA_TRAIT( effectiveConductivity,
                            WRITE_AND_READ,
                            "Effective conductivity" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dEffectiveConductivity_dPhaseVolFraction,
-                           "dEffectiveConductivity_dPhaseVolFraction",
-                           array4d< real64 >,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of effective conductivity with respect to phase volume fraction" );
-
 EXTRINSIC_MESH_DATA_TRAIT( rockThermalConductivity,
                            "rockThermalConductivity",
                            array3d< real64 >,

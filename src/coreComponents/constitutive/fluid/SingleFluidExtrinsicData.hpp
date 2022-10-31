@@ -46,13 +46,13 @@ EXTRINSIC_MESH_DATA_TRAIT( dDensity_dPressure,
                            WRITE_AND_READ,
                            "Derivative of density with respect to pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( initialDensity,
-                           "initialDensity",
+EXTRINSIC_MESH_DATA_TRAIT( dDensity_dTemperature,
+                           "dDensity_dTemperature",
                            array2d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
-                           "Initial density" );
+                           "Derivative of density with respect to temperature" );
 
 EXTRINSIC_MESH_DATA_TRAIT( density_n,
                            "density_n",
@@ -77,6 +77,70 @@ EXTRINSIC_MESH_DATA_TRAIT( dViscosity_dPressure,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Derivative of viscosity with respect to pressure" );
+
+EXTRINSIC_MESH_DATA_TRAIT( dViscosity_dTemperature,
+                           "dViscosity_dTemperature",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Derivative of viscosity with respect to temperature" );
+
+EXTRINSIC_MESH_DATA_TRAIT( internalEnergy,
+                           "internalEnergy",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Internal energy" );
+
+EXTRINSIC_MESH_DATA_TRAIT( internalEnergy_n,
+                           "internalEnergy_n",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Fluid internal energy at the previous converged step" );
+
+EXTRINSIC_MESH_DATA_TRAIT( dInternalEnergy_dPressure,
+                           "dInternalEnergy_dPressure",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Derivative of internal energy with respect to pressure" );
+
+EXTRINSIC_MESH_DATA_TRAIT( dInternalEnergy_dTemperature,
+                           "dInternalEnergy_dTemperature",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Derivative of internal energy with respect to temperature" );
+
+EXTRINSIC_MESH_DATA_TRAIT( enthalpy,
+                           "enthalpy",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Enthalpy" );
+
+EXTRINSIC_MESH_DATA_TRAIT( dEnthalpy_dPressure,
+                           "dEnthalpy_dPressure",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Derivative of enthalpy with respect to pressure" );
+
+EXTRINSIC_MESH_DATA_TRAIT( dEnthalpy_dTemperature,
+                           "dEnthalpy_dTemperature",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Derivative of enthalpy with respect to temperature" );
 
 
 

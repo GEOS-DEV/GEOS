@@ -62,6 +62,13 @@ EXTRINSIC_MESH_DATA_TRAIT( dPerm_dDispJump,
                            WRITE_AND_READ,
                            "Derivative of rock permeability with respect to displacement jump" );
 
+EXTRINSIC_MESH_DATA_TRAIT( dPerm_dTraction,
+                           "dPerm_dTraction",
+                           array4d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Derivative of rock permeability with respect to the traction vector" );
 
 EXTRINSIC_MESH_DATA_TRAIT( permeabilityMultiplier,
                            "permeabilityMultiplier",

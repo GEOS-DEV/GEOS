@@ -34,7 +34,7 @@ class FlowSolverBase : public SolverBase
 {
 public:
 
-/// String used to form the solverName used to register single-physics solvers in CoupledSolver
+  /// String used to form the solverName used to register single-physics solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "flow"; }
 
 /**
@@ -75,8 +75,9 @@ public:
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
+    static constexpr char const * isThermalString() { return "isThermal"; }
+    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
-    static constexpr char const * transMultiplierString() { return "permeabilityTransMultiplier"; }
 
   };
 
@@ -138,6 +139,9 @@ protected:
 
   /// the number of Degrees of Freedom per cell
   integer m_numDofPerCell;
+
+  /// flag to determine whether or not this is a thermal simulation
+  integer m_isThermal;
 
   real64 m_fluxEstimate;
 

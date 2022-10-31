@@ -8,6 +8,7 @@
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
       logLevel="1"
+      discretization="FE1"
       targetRegions="{ Region, Fracture }"
       contactRelationName="fractureMaterial"
       fractureRegionName="Fracture">
@@ -36,7 +37,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Region }"
-      
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
   </Solvers>
@@ -57,7 +57,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ South_HEX, North_HEX }"
+      cellBlocks="{ 0_hexahedra, 1_hexahedra }"
       materialList="{ rock }"/>
 
     <SurfaceElementRegion
@@ -100,7 +100,7 @@
     <FieldSpecification
       name="xconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ bottomPoint, topPoint }"/>
@@ -108,7 +108,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ leftPoint, rightPoint }"/>
@@ -116,7 +116,7 @@
     <FieldSpecification
       name="zconstraintFront"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ front }"/>
@@ -124,7 +124,7 @@
     <FieldSpecification
       name="zconstraintRear"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ rear }"/>

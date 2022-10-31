@@ -92,7 +92,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Fracture }"
-      
       rockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>

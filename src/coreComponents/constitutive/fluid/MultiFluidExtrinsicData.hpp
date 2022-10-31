@@ -198,14 +198,6 @@ EXTRINSIC_MESH_DATA_TRAIT( totalDensity_n,
                            WRITE_AND_READ,
                            "Total density at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( initialTotalMassDensity,
-                           "initialTotalMassDensity",
-                           array2dLayoutFluid,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Initial total mass density" );
-
 EXTRINSIC_MESH_DATA_TRAIT( dTotalDensity,
                            "dTotalDensity",
                            array3dLayoutFluid_dC,

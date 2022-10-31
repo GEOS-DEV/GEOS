@@ -56,20 +56,18 @@ public:
   GEOSX_HOST_DEVICE
   void smallStrainUpdateSinglePhase( localIndex const k,
                                      localIndex const q,
-                                     real64 const & initialFluidPressure,
                                      real64 const & fluidPressure_n,
                                      real64 const & fluidPressure,
                                      real64 const ( &strainIncrement )[6],
                                      real64 const & gravityAcceleration,
                                      real64 const ( &gravityVector )[3],
                                      real64 const & solidDensity,
-                                     real64 const & initialFluidDensity,
                                      real64 const & fluidDensity_n,
                                      real64 const & fluidDensity,
                                      real64 const & dFluidDensity_dPressure,
                                      real64 ( & totalStress )[6],
                                      real64 ( & dTotalStress_dPressure )[6],
-                                     real64 ( & bodyForceIncrement )[3],
+                                     real64 ( & bodyForce )[3],
                                      real64 ( & dBodyForce_dVolStrainIncrement )[3],
                                      real64 ( & dBodyForce_dPressure )[3],
                                      real64 & fluidMassContentIncrement,
@@ -80,7 +78,6 @@ public:
     // Compute total stress increment and its derivative
     computeTotalStress( k,
                         q,
-                        initialFluidPressure,
                         fluidPressure,
                         strainIncrement,
                         totalStress,
@@ -108,15 +105,13 @@ public:
     if( gravityAcceleration > 0.0 )
     {
       computeBodyForce( solidDensity,
-                        initialFluidDensity,
                         fluidDensity,
                         dFluidDensity_dPressure,
-                        porosityInit,
                         porosity,
                         dPorosity_dVolStrain,
                         dPorosity_dPressure,
                         gravityVector,
-                        bodyForceIncrement,
+                        bodyForce,
                         dBodyForce_dVolStrainIncrement,
                         dBodyForce_dPressure );
     }
@@ -139,14 +134,12 @@ public:
                                     localIndex const q,
                                     localIndex const NP,
                                     localIndex const NC,
-                                    real64 const & initialFluidPressure,
                                     real64 const & fluidPressure_n,
                                     real64 const & fluidPressure,
                                     real64 const ( &strainIncrement )[6],
                                     real64 const & gravityAcceleration,
                                     real64 const ( &gravityVector )[3],
                                     real64 const & solidDensity,
-                                    real64 const & initialFluidTotalMassDensity,
                                     arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & fluidPhaseDensity,
                                     arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & fluidPhaseDensity_n,
                                     arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const & dFluidPhaseDensity,
@@ -157,12 +150,11 @@ public:
                                     arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const & dFluidPhaseMassDensity,
                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & fluidPhaseSaturation,
                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & fluidPhaseSaturation_n,
-                                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dFluidPhaseSaturation_dPressure,
-                                    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dFluidPhaseSaturation_dGlobalCompDensity,
+                                    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dFluidPhaseSaturation,
                                     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dGlobalCompFraction_dGlobalCompDensity,
                                     real64 ( & totalStress )[6],
                                     real64 ( & dTotalStress_dPressure )[6],
-                                    real64 ( & bodyForceIncrement )[3],
+                                    real64 ( & bodyForce )[3],
                                     real64 ( & dBodyForce_dVolStrainIncrement )[3],
                                     real64 ( & dBodyForce_dPressure )[3],
                                     real64 ( & dBodyForce_dComponents )[3][NUM_MAX_COMPONENTS],
@@ -178,7 +170,6 @@ public:
     // Compute total stress increment and its derivatives
     computeTotalStress( k,
                         q,
-                        initialFluidPressure,
                         fluidPressure,
                         strainIncrement,
                         totalStress,
@@ -209,13 +200,13 @@ public:
     {
       // Compute mixture density
       real64 fluidTotalMassDensity = fluidPhaseSaturation( 0 ) * fluidPhaseMassDensity( 0 );
-      real64 dFluidTotalMassDensity_dPressure = dFluidPhaseSaturation_dPressure( 0 ) * fluidPhaseMassDensity( 0 )
+      real64 dFluidTotalMassDensity_dPressure = dFluidPhaseSaturation( 0, Deriv::dP ) * fluidPhaseMassDensity( 0 )
                                                 + fluidPhaseSaturation( 0 ) * dFluidPhaseDensity( 0, Deriv::dP );
       for( integer i = 1; i < NP; ++i )
       {
         fluidTotalMassDensity = fluidTotalMassDensity + fluidPhaseSaturation( i ) * fluidPhaseMassDensity( i );
         dFluidTotalMassDensity_dPressure = dFluidTotalMassDensity_dPressure
-                                           + dFluidPhaseSaturation_dPressure( i ) * fluidPhaseMassDensity( i )
+                                           + dFluidPhaseSaturation( i, Deriv::dP ) * fluidPhaseMassDensity( i )
                                            + fluidPhaseSaturation( i ) * dFluidPhaseDensity( i, Deriv::dP );
       }
       real64 dFluidTotalMassDensity_dComponents[NUM_MAX_COMPONENTS]{};
@@ -230,23 +221,21 @@ public:
         for( integer jc = 0; jc < NC; ++jc )
         {
           dFluidTotalMassDensity_dComponents[jc] = dFluidTotalMassDensity_dComponents[jc]
-                                                   + dFluidPhaseSaturation_dGlobalCompDensity( ip, jc ) * fluidPhaseMassDensity( ip )
+                                                   + dFluidPhaseSaturation( ip, Deriv::dC+jc ) * fluidPhaseMassDensity( ip )
                                                    + fluidPhaseSaturation( ip ) * dFluidPhaseMassDensity_dC[jc];
         }
       }
       LvArray::tensorOps::scale< NUM_MAX_COMPONENTS >( dFluidTotalMassDensity_dComponents, porosity );
 
       computeBodyForce( solidDensity,
-                        initialFluidTotalMassDensity,
                         fluidTotalMassDensity,
                         dFluidTotalMassDensity_dPressure,
                         dFluidTotalMassDensity_dComponents,
-                        porosityInit,
                         porosity,
                         dPorosity_dVolStrain,
                         dPorosity_dPressure,
                         gravityVector,
-                        bodyForceIncrement,
+                        bodyForce,
                         dBodyForce_dVolStrainIncrement,
                         dBodyForce_dPressure,
                         dBodyForce_dComponents );
@@ -269,7 +258,7 @@ public:
       real64 const phaseAmount_n = porosity_n * fluidPhaseSaturation_n( ip ) * fluidPhaseDensity_n( ip );
 
       real64 const dPhaseAmount_dP = dPorosity_dPressure * fluidPhaseSaturation( ip ) * fluidPhaseDensity( ip )
-                                     + porosity * ( dFluidPhaseSaturation_dPressure( ip ) * fluidPhaseDensity( ip )
+                                     + porosity * ( dFluidPhaseSaturation( ip, Deriv::dP ) * fluidPhaseDensity( ip )
                                                     + fluidPhaseSaturation( ip ) * dFluidPhaseDensity( ip, Deriv::dP ) );
 
       // assemble density dependence
@@ -282,7 +271,7 @@ public:
       for( integer jc = 0; jc < NC; ++jc )
       {
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * fluidPhaseSaturation( ip )
-                              + fluidPhaseDensity( ip ) * dFluidPhaseSaturation_dGlobalCompDensity( ip, jc );
+                              + fluidPhaseDensity( ip ) * dFluidPhaseSaturation( ip, Deriv::dC+jc );
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * porosity;
       }
 
@@ -326,13 +315,13 @@ public:
     {
       poreVolumeConstraint = poreVolumeConstraint - fluidPhaseSaturation( ip );
       dPoreVolumeConstraint_dPressure = dPoreVolumeConstraint_dPressure
-                                        - dFluidPhaseSaturation_dPressure( ip ) * porosity
+                                        - dFluidPhaseSaturation( ip, Deriv::dP ) * porosity
                                         - dPorosity_dPressure * fluidPhaseSaturation( ip );
 
       for( integer jc = 0; jc < NC; ++jc )
       {
         dPoreVolumeConstraint_dComponents[0][jc] = dPoreVolumeConstraint_dComponents[0][jc]
-                                                   - dFluidPhaseSaturation_dGlobalCompDensity( ip, jc )  * porosity;
+                                                   - dFluidPhaseSaturation( ip, Deriv::dC+jc )  * porosity;
       }
     }
     poreVolumeConstraint = poreVolumeConstraint * porosity;
@@ -379,30 +368,25 @@ private:
 
   GEOSX_HOST_DEVICE
   void computeBodyForce( real64 const & solidDensity,
-                         real64 const & initialFluidDensity,
                          real64 const & fluidDensity,
                          real64 const & dFluidDensity_dPressure,
-                         real64 const & porosityInit,
                          real64 const & porosity,
                          real64 const & dPorosity_dVolStrain,
                          real64 const & dPorosity_dPressure,
                          real64 const ( &gravityVector )[3],
-                         real64 ( & bodyForceIncrement )[3],
+                         real64 ( & bodyForce )[3],
                          real64 ( & dBodyForce_dVolStrainIncrement )[3],
                          real64 ( & dBodyForce_dPressure )[3] ) const
   {
     real64 const mixtureDensity = ( 1.0 - porosity ) * solidDensity
                                   + porosity * fluidDensity;
-    real64 const initialMixtureDensity = ( 1.0 - porosityInit ) * solidDensity
-                                         + porosityInit * initialFluidDensity;
-    real64 const mixtureDensityIncrement = mixtureDensity - initialMixtureDensity;
 
     real64 const dMixtureDens_dVolStrainIncrement = dPorosity_dVolStrain * ( -solidDensity + fluidDensity );
     real64 const dMixtureDens_dPressure = dPorosity_dPressure * ( -solidDensity + fluidDensity )
                                           + ( 1.0 - porosity ) * m_porosityUpdate.dGrainDensity_dPressure()
                                           + porosity * dFluidDensity_dPressure;
 
-    LvArray::tensorOps::scaledCopy< 3 >( bodyForceIncrement, gravityVector, mixtureDensityIncrement );
+    LvArray::tensorOps::scaledCopy< 3 >( bodyForce, gravityVector, mixtureDensity );
     LvArray::tensorOps::scaledCopy< 3 >( dBodyForce_dVolStrainIncrement, gravityVector, dMixtureDens_dVolStrainIncrement );
     LvArray::tensorOps::scaledCopy< 3 >( dBodyForce_dPressure, gravityVector, dMixtureDens_dPressure );
   }
@@ -410,30 +394,26 @@ private:
   template< int NUM_MAX_COMPONENTS >
   GEOSX_HOST_DEVICE
   void computeBodyForce( real64 const & solidDensity,
-                         real64 const & initialFluidTotalMassDensity,
                          real64 const & fluidTotalMassDensity,
                          real64 const & dFluidTotalMassDensity_dPressure,
                          real64 const ( &dFluidTotalMassDensity_dComponents)[NUM_MAX_COMPONENTS],
-                         real64 const & porosityInit,
                          real64 const & porosity,
                          real64 const & dPorosity_dVolStrain,
                          real64 const & dPorosity_dPressure,
                          real64 const ( &gravityVector )[3],
-                         real64 ( & bodyForceIncrement )[3],
+                         real64 ( & bodyForce )[3],
                          real64 ( & dBodyForce_dVolStrainIncrement )[3],
                          real64 ( & dBodyForce_dPressure )[3],
                          real64 ( & dBodyForce_dComponents )[3][NUM_MAX_COMPONENTS] ) const
   {
     computeBodyForce( solidDensity,
-                      initialFluidTotalMassDensity,
                       fluidTotalMassDensity,
                       dFluidTotalMassDensity_dPressure,
-                      porosityInit,
                       porosity,
                       dPorosity_dVolStrain,
                       dPorosity_dPressure,
                       gravityVector,
-                      bodyForceIncrement,
+                      bodyForce,
                       dBodyForce_dVolStrainIncrement,
                       dBodyForce_dPressure );
 
@@ -466,7 +446,6 @@ private:
   GEOSX_HOST_DEVICE
   void computeTotalStress( localIndex const k,
                            localIndex const q,
-                           real64 const & initialFluidPressure,
                            real64 const & fluidPressure,
                            real64 const ( &strainIncrement )[6],
                            real64 ( & totalStress )[6],
@@ -483,9 +462,8 @@ private:
     updateBiotCoefficient( k );
 
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-    real64 const initialBiotCoefficient = biotCoefficient; // temporary
 
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * fluidPressure + initialBiotCoefficient * initialFluidPressure );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * fluidPressure );
 
     dTotalStress_dPressure[0] = -biotCoefficient;
     dTotalStress_dPressure[1] = -biotCoefficient;
@@ -558,6 +536,15 @@ public:
   arrayView2d< real64 const > const getDensity() const
   {
     return getSolidModel().getDensity();
+  }
+
+  /**
+   * @brief Const/non-mutable accessor for biot coefficient
+   * @return Accessor
+   */
+  arrayView1d< real64 const > const getBiotCoefficient() const
+  {
+    return getPorosityModel().getBiotCoefficient();
   }
 
 private:

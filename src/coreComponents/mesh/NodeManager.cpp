@@ -217,6 +217,8 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           bool const overwriteUpMaps,
                                           bool const )
 {
+  GEOSX_MARK_FUNCTION;
+
   localIndex unPackedSize = 0;
 
   string temp;

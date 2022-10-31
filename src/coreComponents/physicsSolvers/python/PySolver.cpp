@@ -76,7 +76,7 @@ static PyObject * execute( PySolver * self, PyObject * args )
 
   geosx::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  int cycleNumber = int(time/dt);
+  int cycleNumber = int(round( time/dt ));
 
   self->group->execute( time, dt, cycleNumber, 0, 0, domain );
 
@@ -95,10 +95,29 @@ static PyObject * reinit( PySolver * self, PyObject *args )
   Py_RETURN_NONE;
 }
 
+static PyObject * cleanup( PySolver * self, PyObject *args )
+{
+  VERIFY_NON_NULL_SELF( self );
+  VERIFY_INITIALIZED( self );
+  GEOSX_UNUSED_VAR( args );
+
+  double time;
+  if( !PyArg_ParseTuple( args, "d", &time ) )
+  {
+    return nullptr;
+  }
+
+  geosx::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  self->group->cleanup( time, 0, 0, 0.0, domain );
+
+  Py_RETURN_NONE;
+}
+
 
 static PyMethodDef PySolver_methods[] = {
   { "execute", (PyCFunction) execute, METH_VARARGS, "solver Step" },
   { "reinit", (PyCFunction) reinit, METH_NOARGS, "re-initialize certain variable depending on the solver being used"},
+  { "cleanup", (PyCFunction) cleanup, METH_VARARGS, "Call cleanup step"},
   { nullptr, nullptr, 0, nullptr }      /* Sentinel */
 };
 

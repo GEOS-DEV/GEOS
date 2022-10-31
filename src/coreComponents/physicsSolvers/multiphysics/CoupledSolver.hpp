@@ -46,8 +46,14 @@ public:
     {
       using SolverType = TYPEOFPTR( solver );
       string const key = SolverType::coupledSolverAttributePrefix() + "SolverName";
-      registerWrapper( key, &m_names[idx()] ).setInputFlag( dataRepository::InputFlags::REQUIRED );
+      registerWrapper( key, &m_names[idx()] ).
+        setInputFlag( dataRepository::InputFlags::REQUIRED ).
+        setDescription( "Name of the " + SolverType::coupledSolverAttributePrefix() + " solver used by the coupled solver" );
     } );
+
+    this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
+      setInputFlag( dataRepository::InputFlags::FALSE );
+
   }
 
   /// deleted copy constructor
@@ -235,6 +241,7 @@ public:
       real64 const singlePhysicsNorm = solver->calculateResidualNorm( domain, dofManager, localRhs );
       norm += singlePhysicsNorm * singlePhysicsNorm;
     } );
+
     return sqrt( norm );
   }
 
@@ -280,6 +287,21 @@ public:
     } );
     return scalingFactor;
   }
+
+  virtual real64
+  setNextDtBasedOnStateChange( real64 const & currentDt,
+                               DomainPartition & domain ) override
+  {
+    real64 nextDt = LvArray::NumericLimits< real64 >::max;
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      real64 const singlePhysicsNextDt =
+        solver->setNextDtBasedOnStateChange( currentDt, domain );
+      nextDt = LvArray::math::min( singlePhysicsNextDt, nextDt );
+    } );
+    return nextDt;
+  }
+
 
   /**@}*/
 

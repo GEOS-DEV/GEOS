@@ -1,4 +1,3 @@
-
 import numpy as np
 import re
 
@@ -41,17 +40,16 @@ def parse_las(fname, variable_start='~C', body_start='~A'):
                         match = variable_regex.match(line)
                         if match:
                             variable_order.append(match[1])
-                            results[match[1]] = {'units': match[2][0:],
-                                                 'code': match[3],
-                                                 'description': match[4],
-                                                 'values': []}
+                            results[match[1]] = {
+                                'units': match[2][0:],
+                                'code': match[3],
+                                'description': match[4],
+                                'values': []
+                            }
                         else:
                             # As a fall-back use the full line
                             variable_order.append(line[:-1])
-                            results[line[:-1]] = {'units': '',
-                                                  'code': '',
-                                                  'description': '',
-                                                  'values': []}
+                            results[line[:-1]] = {'units': '', 'code': '', 'description': '', 'values': []}
 
                 # Body
                 else:
@@ -96,4 +94,3 @@ def estimate_shmin(z, rho, nu):
     k = nu / (1.0 - nu)
     sigma_h = k * rho * 9.81 * z
     return sigma_h
-

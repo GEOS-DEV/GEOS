@@ -141,7 +141,7 @@ char const * xmlInput =
   "phaseMinVolumeFraction=\"{ 0.0, 0.0 }\"\n"
   "phaseRelPermExponent=\"{ 1.5, 1.5 }\"\n"
   "phaseRelPermMaxValue=\"{ 0.9, 0.9 }\"/>\n"
-  "<ConstantThermalConductivity\n"
+  "<MultiPhaseConstantThermalConductivity\n"
   "name=\"thermalCond\"\n"
   "phaseNames=\"{ gas, water }\"\n"
   "thermalConductivityComponents=\"{ 0.6, 0.6, 0.6 }\"/>\n"

@@ -211,7 +211,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
 
-  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
+  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
   topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
   elementManager.processInputFileRecursive( topLevelNode );
 
@@ -226,10 +226,10 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
 {
   integer const numComp = solver.numFluidComponents();
 
-  solver.forMeshTargets( domain.getMeshBodies(),
-                         [&]( string const,
-                              MeshLevel & mesh,
-                              arrayView1d< string const > const & regionNames )
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                         [&]( string const,
+                                              MeshLevel & mesh,
+                                              arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -305,13 +305,15 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
                                                   real64 const perturbParameter,
                                                   real64 const relTol )
 {
+  using Deriv = multifluid::DerivativeOffset;
+
   integer const numComp = solver.numFluidComponents();
   integer const numPhase = solver.numFluidPhases();
 
-  solver.forMeshTargets( domain.getMeshBodies(),
-                         [&]( string const,
-                              MeshLevel & mesh,
-                              arrayView1d< string const > const & regionNames )
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                         [&]( string const,
+                                              MeshLevel & mesh,
+                                              arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -338,11 +340,8 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
 
-      arrayView2d< real64, compflow::USD_PHASE > const dPhaseVolFrac_dPres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >();
-
-      arrayView3d< real64, compflow::USD_PHASE_DC > const dPhaseVolFrac_dCompDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >();
+      arrayView3d< real64, compflow::USD_PHASE_DC > const dPhaseVolFrac =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction >();
 
       // reset the solver state to zero out variable updates
       solver.resetStateToBeginningOfStep( domain );
@@ -368,11 +367,12 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
         forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
         {
           SCOPED_TRACE( "Element " + std::to_string( ei ) );
+          auto dS = invertLayout( dPhaseVolFrac[ei].toSliceConst(), numPhase, numComp + 2 );
 
           real64 const delta = pres[ei] - pres_n[ei];
           checkDerivative( phaseVolFrac[ei].toSliceConst(),
                            phaseVolFracOrig[ei].toSliceConst(),
-                           dPhaseVolFrac_dPres[ei].toSliceConst(),
+                           dS[Deriv::dP].toSliceConst(),
                            delta,
                            relTol,
                            "phaseVolFrac",
@@ -403,13 +403,13 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
         {
           SCOPED_TRACE( "Element " + std::to_string( ei ) );
 
-          auto dS_dRho = invertLayout( dPhaseVolFrac_dCompDens[ei].toSliceConst(), numPhase, numComp );
+          auto dS = invertLayout( dPhaseVolFrac[ei].toSliceConst(), numPhase, numComp + 2 );
           string var = "compDens[" + components[jc] + "]";
 
           real64 const delta = compDens[ei][jc] - compDens_n[ei][jc];
           checkDerivative( phaseVolFrac[ei].toSliceConst(),
                            phaseVolFracOrig[ei].toSliceConst(),
-                           dS_dRho[jc].toSliceConst(),
+                           dS[Deriv::dC+jc].toSliceConst(),
                            delta,
                            relTol,
                            "phaseVolFrac",
@@ -426,9 +426,6 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
           subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
         arrayView1d< real64 > const temp_n =
           subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature_n >();
-
-        arrayView2d< real64, compflow::USD_PHASE > const dPhaseVolFrac_dTemp =
-          subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >();
 
         // reset the solver state to zero out variable updates
         solver.resetStateToBeginningOfStep( domain );
@@ -448,10 +445,12 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
         {
           SCOPED_TRACE( "Element " + std::to_string( ei ) );
 
+          auto dS = invertLayout( dPhaseVolFrac[ei].toSliceConst(), numPhase, numComp + 2 );
+
           real64 const delta = temp[ei] - temp_n[ei];
           checkDerivative( phaseVolFrac[ei].toSliceConst(),
                            phaseVolFracOrig[ei].toSliceConst(),
-                           dPhaseVolFrac_dTemp[ei].toSliceConst(),
+                           dS[Deriv::dT].toSliceConst(),
                            delta,
                            relTol,
                            "phaseVolFrac",
@@ -470,13 +469,15 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
                                             real64 const perturbParameter,
                                             real64 const relTol )
 {
+  using Deriv = multifluid::DerivativeOffset;
+
   integer const numComp = solver.numFluidComponents();
   integer const numPhase = solver.numFluidPhases();
 
-  solver.forMeshTargets( domain.getMeshBodies(),
-                         [&]( string const,
-                              MeshLevel & mesh,
-                              arrayView1d< string const > const & regionNames )
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                         [&]( string const,
+                                              MeshLevel & mesh,
+                                              arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -503,11 +504,8 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       arrayView2d< real64, compflow::USD_PHASE > const phaseMob =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >();
 
-      arrayView2d< real64, compflow::USD_PHASE > const dPhaseMob_dPres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dPressure >();
-
-      arrayView3d< real64, compflow::USD_PHASE_DC > const dPhaseMob_dCompDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity >();
+      arrayView3d< real64, compflow::USD_PHASE_DC > const dPhaseMob =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility >();
 
       // reset the solver state to zero out variable updates
       solver.resetStateToBeginningOfStep( domain );
@@ -534,10 +532,12 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
         {
           SCOPED_TRACE( "Element " + std::to_string( ei ) );
 
+          auto dMob = invertLayout( dPhaseMob[ei].toSliceConst(), numPhase, numComp + 2 );
+
           real64 const delta = pres[ei] - pres_n[ei];
           checkDerivative( phaseMob[ei].toSliceConst(),
                            phaseMobOrig[ei].toSliceConst(),
-                           dPhaseMob_dPres[ei].toSliceConst(),
+                           dMob[Deriv::dP].toSliceConst(),
                            delta,
                            relTol,
                            "phaseMob",
@@ -568,13 +568,13 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
         {
           SCOPED_TRACE( "Element " + std::to_string( ei ) );
 
-          auto dS_dRho = invertLayout( dPhaseMob_dCompDens[ei].toSliceConst(), numPhase, numComp );
+          auto dMob = invertLayout( dPhaseMob[ei].toSliceConst(), numPhase, numComp + 2 );
           string var = "compDens[" + components[jc] + "]";
 
           real64 const delta = compDens[ei][jc] - compDens_n[ei][jc];
           checkDerivative( phaseMob[ei].toSliceConst(),
                            phaseMobOrig[ei].toSliceConst(),
-                           dS_dRho[jc].toSliceConst(),
+                           dMob[Deriv::dC+jc].toSliceConst(),
                            delta,
                            relTol,
                            "phaseMob",
@@ -591,9 +591,6 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
           subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
         arrayView1d< real64 const > const temp_n =
           subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature_n >();
-
-        arrayView2d< real64, compflow::USD_PHASE > const dPhaseMob_dTemp =
-          subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dTemperature >();
 
         // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
         solver.resetStateToBeginningOfStep( domain );
@@ -613,10 +610,12 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
         {
           SCOPED_TRACE( "Element " + std::to_string( ei ) );
 
+          auto dMob = invertLayout( dPhaseMob[ei].toSliceConst(), numPhase, numComp + 2 );
+
           real64 const delta = temp[ei] - temp_n[ei];
           checkDerivative( phaseMob[ei].toSliceConst(),
                            phaseMobOrig[ei].toSliceConst(),
-                           dPhaseMob_dTemp[ei].toSliceConst(),
+                           dMob[Deriv::dT].toSliceConst(),
                            delta,
                            relTol,
                            "phaseMob",
@@ -645,9 +644,9 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
   DofManager const & dofManager = solver.getDofManager();
   string const elemDofKey = dofManager.getKey( COMPOSITIONAL_SOLVER::viewKeyStruct::elemDofFieldString() );
 
-  solver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                       MeshLevel & mesh,
-                                                       arrayView1d< string const > const & regionNames )
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                       MeshLevel & mesh,
+                                                                       arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,

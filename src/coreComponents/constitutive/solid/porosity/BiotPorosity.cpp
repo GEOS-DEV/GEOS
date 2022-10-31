@@ -17,6 +17,7 @@
  */
 
 #include "BiotPorosity.hpp"
+#include "PorosityExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -34,8 +35,7 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Grain bulk modulus" );
 
-  registerWrapper( viewKeyStruct::biotCoefficientString(), &m_biotCoefficient ).
-    setDescription( "Biot coefficient." );
+  registerExtrinsicData( extrinsicMeshData::porosity::biotCoefficient{}, &m_biotCoefficient );
 }
 
 void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,

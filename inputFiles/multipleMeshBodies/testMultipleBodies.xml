@@ -1,0 +1,172 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+
+    <SolidMechanicsLagrangianSSLE
+      name="SolidMechSolveBody1"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{body1/body1_cer}">
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonTol="1.0e-0"/>
+    </SolidMechanicsLagrangianSSLE>
+    
+    <SolidMechanicsLagrangianSSLE
+      name="SolidMechSolveBody2"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{body2/body2_cer}"
+      >
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonTol="1.0e-0"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="body1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -2, 2 }"
+      yCoords="{ -2, 2 }"
+      zCoords="{ -2, 2 }"
+      nx="{ 5 }"
+      ny="{ 5 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+    <InternalMesh
+      name="body2"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ -1, 1 }"
+      zCoords="{ -1, 1 }"
+      nx="{ 3 }"
+      ny="{ 3 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb2 }"/>
+  </Mesh>
+  
+  <Events
+      maxTime="2.0">
+    
+    <PeriodicEvent
+      name="solverApplications1"
+      forceDt="1"
+      target="/Solvers/SolidMechSolveBody1"/>
+
+    <PeriodicEvent
+      name="solverApplications2"
+      forceDt="1"
+      target="/Solvers/SolidMechSolveBody2"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/MultiBodyTest_VTKOutput"/>
+
+    <PeriodicEvent
+      name="siloOutputs"
+      timeFrequency="1.0"
+      target="/Outputs/MultiBodyTest_SiloOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="body1_cer"
+      meshBody="body1"
+      cellBlocks="{ cb1 }"
+      materialList="{ shale }"/>
+    <CellElementRegion
+      name="body2_cer"
+      meshBody="body2"
+      cellBlocks="{ cb2 }"
+      materialList="{ shale }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="shale"
+      defaultDensity="2700"
+      defaultBulkModulus="5.5556e9"
+      defaultShearModulus="8.3333e9"/>
+
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="ypos"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="1.0e-7"
+      functionName="f_b"
+      setNames="{ ypos }"/>
+
+    <FieldSpecification
+      name="yneg"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="-1.0e-7"
+      functionName="f_b"
+      setNames="{ yneg }"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      setNames="{ xpos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      setNames="{ all }"/>
+
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+        name="f_b"
+        inputVarNames="{ time }"
+        coordinates="{ 0, 501 }"
+        values="{ 0, 501 }"/>
+  </Functions>
+
+  <Outputs>
+    <Silo
+	    name="MultiBodyTest_SiloOutput"/>
+
+    <VTK
+      name="MultiBodyTest_VTKOutput"
+      plotFileRoot="VTKplot_files"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+</Problem>

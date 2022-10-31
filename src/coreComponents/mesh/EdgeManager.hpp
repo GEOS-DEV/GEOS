@@ -149,15 +149,12 @@ public:
 
 
   /**
-   * @brief Build \p globalEdgeNodes, a  vector containing all the global indices
-   * of each nodes of each edges
+   * @brief Build a vector containing all the global indices of each nodes of each edges
    * @param[in] nodeManager the nodeManager object.
-   * @param[out] globalEdgeNodes the globalEdgesNodes array to be built
-   * [ [global_index_node_0_edge_0, global_index_node1_edge_0], [global_index_node_0_edge_1, global_index_node1_edge_1] ....]
+   * @return an array of pairs of each edge's nodes globalIndices
    */
-  virtual void
-  extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager const & nodeManager,
-                                                   std::vector< std::vector< globalIndex > > & globalEdgeNodes ) override;
+  virtual ArrayOfSets< globalIndex >
+  extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager ) override;
 
   /**
    * @brief Compute the future size of a packed list.
@@ -260,9 +257,6 @@ public:
     static constexpr char const * elementRegionListString() { return "elemRegionList"; }
     static constexpr char const * elementSubRegionListString() { return "elemSubRegionList"; }
     static constexpr char const * elementListString() { return "elemList"; }
-    static constexpr char const * edgesTofractureConnectorsEdgesString() { return "edgesToFractureConnectors"; }
-    static constexpr char const * fractureConnectorEdgesToEdgesString() { return "fractureConnectorsToEdges"; }
-    static constexpr char const * fractureConnectorsEdgesToFaceElementsIndexString() { return "fractureConnectorsToElementIndex"; }
 
     dataRepository::ViewKey nodesList             = { nodeListString() };
     dataRepository::ViewKey faceList              = { faceListString() };
@@ -324,21 +318,6 @@ public:
   FaceMapType const & faceList() const { return m_toFacesRelation; }
 
   ///@}
-
-  // TODO These should be in their own subset of edges when we add that capability.
-
-  /// map from the edges to the fracture connectors index (edges that are fracture connectors)
-  SortedArray< localIndex > m_recalculateFractureConnectorEdges;
-
-  /// todo
-  map< localIndex, localIndex > m_edgesToFractureConnectorsEdges;
-
-  /// todo
-  array1d< localIndex > m_fractureConnectorsEdgesToEdges;
-
-  /// todo
-  ArrayOfArrays< localIndex > m_fractureConnectorEdgesToFaceElements;
-
 
 private:
 

@@ -81,7 +81,7 @@ static PyObject * output( PyHistoryOutput * self, PyObject * args )
 
   geosx::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  int cycleNumber = int(time/dt);
+  int cycleNumber = int(round( time/dt ));
   try
   {
     self->group->cleanup( time, cycleNumber, 0, 0, domain );

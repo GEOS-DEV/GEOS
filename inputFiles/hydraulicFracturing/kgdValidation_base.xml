@@ -7,11 +7,10 @@
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
       couplingTypeOption="FIM"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="2">
@@ -160,7 +159,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>
@@ -168,7 +167,7 @@
     <FieldSpecification
       name="xConstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xneg }"/>
@@ -180,15 +179,41 @@
       setNames="{ source }"/>
   </FieldSpecifications>
   <!-- SPHINX_BC_END -->
+
+  <!-- SPHINX_TASKS -->
+  <Tasks>
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="pressure"/>
+
+    <PackCollection
+      name="apertureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="elementAperture"/> 
+
+    <PackCollection
+      name="hydraulicApertureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="hydraulicAperture"/>  
+
+    <PackCollection
+      name="areaCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="elementArea"/> 
+  </Tasks>
+  <!-- SPHINX_TASKS_END --> 
   
   <!-- SPHINX_OUTPUT -->
   <Outputs>
-    <Silo
-      name="siloOutput"
-      writeEdgeMesh="0"
-      writeFEMFaces="0"
-      plotLevel="3"
+    <VTK
+      name="vtkOutput"
     />
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/pressureCollection, /Tasks/apertureCollection, /Tasks/hydraulicApertureCollection, /Tasks/areaCollection}"
+      filename="KGD_validation_output" />  
 
     <Restart
       name="restartOutput"/>  

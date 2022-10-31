@@ -44,7 +44,7 @@ EXTRINSIC_MESH_DATA_TRAIT( pressure_n,
                            "pressure_n",
                            array1d< real64 >,
                            0,
-                           LEVEL_0,
+                           NOPLOT,
                            WRITE_AND_READ,
                            "Pressure at the previous converged time step" );
 
@@ -55,6 +55,14 @@ EXTRINSIC_MESH_DATA_TRAIT( initialPressure,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Initial pressure" );
+
+EXTRINSIC_MESH_DATA_TRAIT( deltaPressure,
+                           "deltaPressure",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Delta pressure: current pressure - initial pressure" );
 
 EXTRINSIC_MESH_DATA_TRAIT( facePressure,
                            "facePressure",
@@ -71,6 +79,38 @@ EXTRINSIC_MESH_DATA_TRAIT( facePressure_n,
                            NOPLOT,
                            NO_WRITE,
                            "Face pressure at the previous converged time step" );
+
+EXTRINSIC_MESH_DATA_TRAIT( temperature,
+                           "temperature",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Temperature" );
+
+EXTRINSIC_MESH_DATA_TRAIT( faceTemperature,
+                           "faceTemperature",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Face temperature" );
+
+EXTRINSIC_MESH_DATA_TRAIT( temperature_n,
+                           "temperature_n",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Temperature at the previous converged time step" );
+
+EXTRINSIC_MESH_DATA_TRAIT( netToGross,
+                           "netToGross",
+                           array1d< real64 >,
+                           1,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Net to gross" );
 
 EXTRINSIC_MESH_DATA_TRAIT( deltaVolume,
                            "deltaVolume",
@@ -111,6 +151,48 @@ EXTRINSIC_MESH_DATA_TRAIT( mimGravityCoefficient,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Mimetic gravity coefficient" );
+
+EXTRINSIC_MESH_DATA_TRAIT( macroElementIndex,
+                           "macroElementIndex",
+                           array1d< integer >,
+                           -1,
+                           LEVEL_1,
+                           WRITE_AND_READ,
+                           "Index of the macroelement for a given element" );
+
+EXTRINSIC_MESH_DATA_TRAIT( bcPressure,
+                           "bcPressure",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Boundary condition pressure" );
+
+EXTRINSIC_MESH_DATA_TRAIT( bcTemperature,
+                           "bcTemperature",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Boundary condition temperature" );
+
+EXTRINSIC_MESH_DATA_TRAIT( elementStabConstant,
+                           "elementStabConstant",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_1,
+                           WRITE_AND_READ,
+                           "Stabilization constant for pressure jump stabilization" );
+
+EXTRINSIC_MESH_DATA_TRAIT( transMultiplier,
+                           "permeabilityTransMultiplier",
+                           array1d< real64 >,
+                           1,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Permeability transmissibility multipliers" );
+
+
 
 }
 

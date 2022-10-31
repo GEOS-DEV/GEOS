@@ -157,9 +157,6 @@ public:
   arrayView3d< real64 const, multifluid::USD_FLUID_DC > dTotalDensity() const
   { return m_totalDensity.derivs; }
 
-  arrayView2d< real64 const, multifluid::USD_FLUID > initialTotalMassDensity() const
-  { return m_initialTotalMassDensity.toViewConst(); }
-
   arrayView3d< real64 const, multifluid::USD_PHASE > phaseEnthalpy() const
   { return m_phaseEnthalpy.value; }
 
@@ -179,10 +176,10 @@ public:
   { return m_phaseInternalEnergy.derivs; }
 
   /**
-   * @brief Save the initial total mass density
+   * @brief Initialize the model
    * @param[in] phaseVolFraction an array containing the initial phase volume fractions
    */
-  virtual void initializeState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const;
+  virtual void initializeState() const;
 
   /**
    * @brief Save the phase densities, component fractions, enthalpies and internal energies (for accumulation)
@@ -242,6 +239,30 @@ public:
      */
     GEOSX_HOST_DEVICE
     integer numPhases() const { return LvArray::integerConversion< integer >( m_phaseFraction.value.size( 2 ) ); }
+
+    GEOSX_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseFraction() const
+    { return m_phaseFraction.value; }
+
+    GEOSX_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseDensity() const
+    { return m_phaseDensity.value; }
+
+    GEOSX_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseMassDensity() const
+    { return m_phaseMassDensity.value; }
+
+    GEOSX_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseViscosity() const
+    { return m_phaseViscosity.value; }
+
+    GEOSX_HOST_DEVICE arrayView4d< real64 const, multifluid::USD_PHASE_COMP > phaseCompFraction() const
+    { return m_phaseCompFraction.value; }
+
+    GEOSX_HOST_DEVICE arrayView2d< real64 const, multifluid::USD_FLUID > totalDensity() const
+    { return m_totalDensity.value; }
+
+    GEOSX_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseEnthalpy() const
+    { return m_phaseEnthalpy.value; }
+
+    GEOSX_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseInternalEnergy() const
+    { return m_phaseInternalEnergy.value; }
 
 protected:
 
@@ -597,10 +618,6 @@ protected:
   array3d< real64, multifluid::LAYOUT_PHASE > m_phaseInternalEnergy_n;
   array4d< real64, multifluid::LAYOUT_PHASE_COMP > m_phaseCompFraction_n;
   array2d< real64, multifluid::LAYOUT_FLUID > m_totalDensity_n;
-
-  // initial data (used to compute the body force in the poromechanics solver)
-
-  array2d< real64, multifluid::LAYOUT_FLUID > m_initialTotalMassDensity;
 
 };
 

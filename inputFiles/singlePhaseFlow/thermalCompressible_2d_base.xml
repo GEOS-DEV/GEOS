@@ -1,0 +1,122 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SinglePhaseFVM
+      name="singleFlow"
+      logLevel="1"
+      discretization="tpfaFlow"
+      temperature="285.0"
+      isThermal="1"
+      targetRegions="{ region }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="100"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="tpfaFlow"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="region"
+      cellBlocks="{ cb }"
+      materialList="{ fluid, rock, thermalCond }"/>
+  </ElementRegions>
+
+  <Constitutive>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      volumetricHeatCapacity="0.0"
+      referenceTemperature="0.0"
+      referenceInternalEnergy="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 4.9e-11, 4.9e-11, 4.9e-11 }"/>
+
+    <ThermalCompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000"
+      defaultViscosity="1.3e-3"
+      referencePressure="0.0"
+      referenceTemperature="273.0"
+      compressibility="1e-10"
+      thermalExpansionCoeff="3e-4"
+      viscosibility="0.0"
+      volumetricHeatCapacity="4.0e3"
+      referenceInternalEnergy="1.1e6"/>
+
+    <SinglePhaseConstantThermalConductivity
+      name="thermalCond"
+      thermalConductivityComponents="{ 1.49, 1.49, 1.49 }"/>
+    
+  </Constitutive>
+
+  <FieldSpecifications>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/region/cb"
+      fieldName="pressure"
+      scale="1e5"/>
+
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/region/cb"
+      fieldName="temperature"
+      scale="285.0"/>
+
+    <FieldSpecification
+      name="sinkTemperature"
+      setNames="{ sink }"       
+      objectPath="ElementRegions/region/cb"
+      fieldName="temperature"
+      scale="293.0"/>
+
+    <FieldSpecification
+      name="sourceTemperature"
+      setNames="{ source }"     
+      objectPath="ElementRegions/region/cb"
+      fieldName="temperature"
+      scale="285.0"/>
+
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

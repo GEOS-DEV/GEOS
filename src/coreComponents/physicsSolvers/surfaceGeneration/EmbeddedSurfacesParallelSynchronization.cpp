@@ -50,7 +50,7 @@ void packNewNodes( NeighborCommunicator * const neighbor,
   localIndex_array newNodesToSend;
 
   arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( neighbor->neighborRank() ).ghostsToSend();
-  arrayView1d< localIndex > const & parentIndex = nodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
+  arrayView1d< localIndex > const & parentIndex = nodeManager.getExtrinsicData< extrinsicMeshData::parentEdgeIndex >();
   arrayView1d< integer const > const & nodeGhostRank = nodeManager.ghostRank();
 
   for( auto const ni : newObjects.newNodes )
@@ -93,7 +93,6 @@ void unpackNewNodes( NeighborCommunicator * const neighbor,
                      int commID,
                      MeshLevel & mesh )
 {
-  int unpackedSize = 0;
 
   EmbeddedSurfaceNodeManager & nodeManager = mesh.getEmbSurfNodeManager();
 
@@ -104,7 +103,7 @@ void unpackNewNodes( NeighborCommunicator * const neighbor,
 
   parallelDeviceEvents events;
 
-  unpackedSize += nodeManager.unpackNewNodesGlobalMaps( receiveBufferPtr, newGhostNodes );
+  nodeManager.unpackNewNodesGlobalMaps( receiveBufferPtr, newGhostNodes );
 
   waitAllDeviceEvents( events );
 }
@@ -127,7 +126,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
   array1d< array1d< localIndex_array > > newElemsToSendData;
 
   arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( neighbor->neighborRank() ).ghostsToSend();
-  arrayView1d< localIndex > const & parentIndex = nodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
+  arrayView1d< localIndex > const & parentIndex = nodeManager.getExtrinsicData< extrinsicMeshData::parentEdgeIndex >();
 
   for( auto const ni : newObjects.newNodes )
   {
@@ -235,7 +234,6 @@ void unpackNewToGhosts( NeighborCommunicator * const neighbor,
                         int commID,
                         MeshLevel & mesh )
 {
-  int unpackedSize = 0;
 
   EmbeddedSurfaceNodeManager & nodeManager = mesh.getEmbSurfNodeManager();
   ElementRegionManager & elemManager = mesh.getElemManager();
@@ -262,14 +260,14 @@ void unpackNewToGhosts( NeighborCommunicator * const neighbor,
 
   parallelDeviceEvents events;
 
-  unpackedSize += nodeManager.unpackGlobalMaps( receiveBufferPtr, newGhostNodes, 0 );
-  unpackedSize += elemManager.unpackGlobalMaps( receiveBufferPtr, newGhostElems );
+  nodeManager.unpackGlobalMaps( receiveBufferPtr, newGhostNodes, 0 );
+  elemManager.unpackGlobalMaps( receiveBufferPtr, newGhostElems );
 
-  unpackedSize += nodeManager.unpackUpDownMaps( receiveBufferPtr, newGhostNodes, true, true );
-  unpackedSize += elemManager.unpackUpDownMaps( receiveBufferPtr, newGhostElems, true );
+  nodeManager.unpackUpDownMaps( receiveBufferPtr, newGhostNodes, true, true );
+  elemManager.unpackUpDownMaps( receiveBufferPtr, newGhostElems, true );
 
-  unpackedSize += nodeManager.unpack( receiveBufferPtr, newGhostNodes, 0, false, events );
-  unpackedSize += elemManager.unpack( receiveBufferPtr, newGhostElems );
+  nodeManager.unpack( receiveBufferPtr, newGhostNodes, 0, false, events );
+  elemManager.unpack( receiveBufferPtr, newGhostElems );
 
   waitAllDeviceEvents( events );
 
@@ -347,7 +345,6 @@ void unpackFracturedToGhosts( NeighborCommunicator * const neighbor,
                               MeshLevel & mesh,
                               string const fractureRegionName )
 {
-  int unpackedSize = 0;
 
   ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -372,7 +369,7 @@ void unpackFracturedToGhosts( NeighborCommunicator * const neighbor,
 
   parallelDeviceEvents events;
 
-  unpackedSize += elemManager.unpackFracturedElements( receiveBufferPtr, ghostElems, fractureRegionName );
+  elemManager.unpackFracturedElements( receiveBufferPtr, ghostElems, fractureRegionName );
 
   waitAllDeviceEvents( events );
 }

@@ -51,6 +51,21 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
                                 viewKeyStruct::toEmbSurfString() } );
 }
 
+
+void CellElementSubRegion::resizePerElementValues( localIndex const newNumNodesPerElement,
+                                                   localIndex const newNumEdgesPerElement,
+                                                   localIndex const newNumFacesPerElement )
+{
+  ElementSubRegionBase::resizePerElementValues( newNumNodesPerElement,
+                                                newNumEdgesPerElement,
+                                                newNumFacesPerElement );
+
+  m_toNodesRelation.resize( size(), m_numNodesPerElement );
+  m_toEdgesRelation.resize( size(), m_numEdgesPerElement );
+  m_toFacesRelation.resize( size(), m_numFacesPerElement );
+}
+
+
 void CellElementSubRegion::copyFromCellBlock( CellBlockABC & cellBlock )
 {
   // Defines the (unique) element type of this cell element region,
@@ -335,6 +350,41 @@ void CellElementSubRegion::
       real64 Xlocal[12][3];
       getElementCoordinatesaAndComputeElementCenter( Xlocal );
       m_elementVolume[k] = computationalGeometry::prismVolume< 6 >( Xlocal );
+      break;
+    }
+    case ElementType::Prism7:
+    {
+      real64 Xlocal[14][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::prismVolume< 7 >( Xlocal );
+      break;
+    }
+    case ElementType::Prism8:
+    {
+      real64 Xlocal[16][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::prismVolume< 8 >( Xlocal );
+      break;
+    }
+    case ElementType::Prism9:
+    {
+      real64 Xlocal[18][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::prismVolume< 9 >( Xlocal );
+      break;
+    }
+    case ElementType::Prism10:
+    {
+      real64 Xlocal[20][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::prismVolume< 10 >( Xlocal );
+      break;
+    }
+    case ElementType::Prism11:
+    {
+      real64 Xlocal[22][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::prismVolume< 11 >( Xlocal );
       break;
     }
     default:
