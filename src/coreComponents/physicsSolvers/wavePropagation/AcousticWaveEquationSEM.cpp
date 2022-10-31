@@ -155,7 +155,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    nodeManager.registerExtrinsicData< extrinsicMeshData::Pressure_nm1,
+    nodeManager.registerField< extrinsicMeshData::Pressure_nm1,
                                        extrinsicMeshData::Pressure_n,
                                        extrinsicMeshData::Pressure_np1,
                                        extrinsicMeshData::PressureDoubleDerivative,
@@ -168,7 +168,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     /// register  PML auxiliary variables only when a PML is specified in the xml
     if( m_usePML )
     {
-      nodeManager.registerExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML,
+      nodeManager.registerField< extrinsicMeshData::AuxiliaryVar1PML,
                                          extrinsicMeshData::AuxiliaryVar2PML,
                                          extrinsicMeshData::AuxiliaryVar3PML,
                                          extrinsicMeshData::AuxiliaryVar4PML >( this->getName() );
@@ -178,14 +178,14 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     }
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< extrinsicMeshData::FreeSurfaceFaceIndicator >( this->getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocity >( this->getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::PartialGradient >( this->getName() );
+      subRegion.registerField< extrinsicMeshData::MediumVelocity >( this->getName() );
+      subRegion.registerField< extrinsicMeshData::PartialGradient >( this->getName() );
     } );
 
   } );

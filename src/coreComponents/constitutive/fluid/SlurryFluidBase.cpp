@@ -60,23 +60,23 @@ SlurryFluidBase::SlurryFluidBase( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flow consistency index" );
 
-  registerExtrinsicData( extrinsicMeshData::slurryfluid::dDensity_dProppantConcentration{}, &m_dDensity_dProppantConc );
-  registerExtrinsicData( extrinsicMeshData::slurryfluid::dDensity_dComponentConcentration{}, &m_dDensity_dCompConc );
+  registerField( extrinsicMeshData::slurryfluid::dDensity_dProppantConcentration{}, &m_dDensity_dProppantConc );
+  registerField( extrinsicMeshData::slurryfluid::dDensity_dComponentConcentration{}, &m_dDensity_dCompConc );
 
-  registerExtrinsicData( extrinsicMeshData::slurryfluid::fluidDensity{}, &m_fluidDensity );
-  registerExtrinsicData( extrinsicMeshData::slurryfluid::dFluidDensity_dPressure{}, &m_dFluidDens_dPres );
-  registerExtrinsicData( extrinsicMeshData::slurryfluid::dFluidDensity_dComponentConcentration{}, &m_dFluidDens_dCompConc );
+  registerField( extrinsicMeshData::slurryfluid::fluidDensity{}, &m_fluidDensity );
+  registerField( extrinsicMeshData::slurryfluid::dFluidDensity_dPressure{}, &m_dFluidDens_dPres );
+  registerField( extrinsicMeshData::slurryfluid::dFluidDensity_dComponentConcentration{}, &m_dFluidDens_dCompConc );
 
-  registerExtrinsicData( extrinsicMeshData::slurryfluid::fluidViscosity{}, &m_fluidViscosity );
-  registerExtrinsicData( extrinsicMeshData::slurryfluid::dFluidViscosity_dPressure{}, &m_dFluidVisc_dPres );
-  registerExtrinsicData( extrinsicMeshData::slurryfluid::dFluidViscosity_dComponentConcentration{}, &m_dFluidVisc_dCompConc );
+  registerField( extrinsicMeshData::slurryfluid::fluidViscosity{}, &m_fluidViscosity );
+  registerField( extrinsicMeshData::slurryfluid::dFluidViscosity_dPressure{}, &m_dFluidVisc_dPres );
+  registerField( extrinsicMeshData::slurryfluid::dFluidViscosity_dComponentConcentration{}, &m_dFluidVisc_dCompConc );
 
-  registerExtrinsicData( extrinsicMeshData::slurryfluid::componentDensity{}, &m_componentDensity );
-  registerExtrinsicData( extrinsicMeshData::slurryfluid::dComponentDensity_dPressure{}, &m_dCompDens_dPres );
-  registerExtrinsicData( extrinsicMeshData::slurryfluid::dComponentDensity_dComponentConcentration{}, &m_dCompDens_dCompConc );
+  registerField( extrinsicMeshData::slurryfluid::componentDensity{}, &m_componentDensity );
+  registerField( extrinsicMeshData::slurryfluid::dComponentDensity_dPressure{}, &m_dCompDens_dPres );
+  registerField( extrinsicMeshData::slurryfluid::dComponentDensity_dComponentConcentration{}, &m_dCompDens_dCompConc );
 
-  registerExtrinsicData( extrinsicMeshData::slurryfluid::dViscosity_dProppantConcentration{}, &m_dViscosity_dProppantConc );
-  registerExtrinsicData( extrinsicMeshData::slurryfluid::dViscosity_dComponentConcentration{}, &m_dViscosity_dCompConc );
+  registerField( extrinsicMeshData::slurryfluid::dViscosity_dProppantConcentration{}, &m_dViscosity_dProppantConc );
+  registerField( extrinsicMeshData::slurryfluid::dViscosity_dComponentConcentration{}, &m_dViscosity_dCompConc );
 }
 
 SlurryFluidBase::~SlurryFluidBase() = default;

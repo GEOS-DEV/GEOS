@@ -33,8 +33,8 @@ PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
   m_permeability(),
   m_dPerm_dPressure()
 {
-  registerExtrinsicData( extrinsicMeshData::permeability::permeability{}, &m_permeability );
-  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dPressure{}, &m_dPerm_dPressure );
+  registerField( extrinsicMeshData::permeability::permeability{}, &m_permeability );
+  registerField( extrinsicMeshData::permeability::dPerm_dPressure{}, &m_dPerm_dPressure );
 }
 
 std::unique_ptr< ConstitutiveBase >

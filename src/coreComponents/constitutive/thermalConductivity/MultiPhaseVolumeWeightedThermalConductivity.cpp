@@ -42,7 +42,7 @@ MultiPhaseVolumeWeightedThermalConductivity::MultiPhaseVolumeWeightedThermalCond
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Phase thermal conductivity [W/(m.K)]" );
 
-  registerExtrinsicData( extrinsicMeshData::thermalconductivity::rockThermalConductivity{}, &m_rockThermalConductivity );
+  registerField( extrinsicMeshData::thermalconductivity::rockThermalConductivity{}, &m_rockThermalConductivity );
 }
 
 std::unique_ptr< ConstitutiveBase >

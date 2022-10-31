@@ -90,7 +90,7 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
         setDescription( "An array that holds the rotation matrices on the fracture." ).
         reference().resizeDimension< 1, 2 >( 3, 3 );
 
-      subRegion.registerExtrinsicData< deltaTraction >( getName() ).
+      subRegion.registerField< deltaTraction >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
@@ -110,10 +110,10 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
 
       // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
       // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
-      subRegion.registerExtrinsicData< flow::pressure >( getName() ).
+      subRegion.registerField< flow::pressure >( getName() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( this->getName());
-      subRegion.registerExtrinsicData< flow::pressure_n >( getName() ).
+      subRegion.registerField< flow::pressure_n >( getName() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( this->getName());
 

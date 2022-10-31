@@ -152,49 +152,49 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
 
       MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::pressure >( getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::pressure_n >( getName() );
+      subRegion.registerField< extrinsicMeshData::well::pressure >( getName() );
+      subRegion.registerField< extrinsicMeshData::well::pressure_n >( getName() );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::temperature >( getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::temperature_n >( getName() );
+      subRegion.registerField< extrinsicMeshData::well::temperature >( getName() );
+      subRegion.registerField< extrinsicMeshData::well::temperature_n >( getName() );
 
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
       // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::globalCompDensity >( getName() ).
+      subRegion.registerField< extrinsicMeshData::well::globalCompDensity >( getName() ).
         reference().resizeDimension< 1 >( m_numComponents );
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::globalCompDensity_n >( getName() ).
+      subRegion.registerField< extrinsicMeshData::well::globalCompDensity_n >( getName() ).
         reference().resizeDimension< 1 >( m_numComponents );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::mixtureConnectionRate >( getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::mixtureConnectionRate_n >( getName() );
+      subRegion.registerField< extrinsicMeshData::well::mixtureConnectionRate >( getName() );
+      subRegion.registerField< extrinsicMeshData::well::mixtureConnectionRate_n >( getName() );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::globalCompFraction >( getName() ).
+      subRegion.registerField< extrinsicMeshData::well::globalCompFraction >( getName() ).
         setDimLabels( 1, fluid.componentNames() ).
         reference().resizeDimension< 1 >( m_numComponents );
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::dGlobalCompFraction_dGlobalCompDensity >( getName() ).
+      subRegion.registerField< extrinsicMeshData::well::dGlobalCompFraction_dGlobalCompDensity >( getName() ).
         reference().resizeDimension< 1, 2 >( m_numComponents, m_numComponents );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::phaseVolumeFraction >( getName() ).
+      subRegion.registerField< extrinsicMeshData::well::phaseVolumeFraction >( getName() ).
         setDimLabels( 1, fluid.phaseNames() ).
         reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction >( getName() ).
+      subRegion.registerField< extrinsicMeshData::well::dPhaseVolumeFraction >( getName() ).
         reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents + 2 ); // dP, dT, dC
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::totalMassDensity >( getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::dTotalMassDensity_dPressure >( getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::dTotalMassDensity_dGlobalCompDensity >( getName() ).
+      subRegion.registerField< extrinsicMeshData::well::totalMassDensity >( getName() );
+      subRegion.registerField< extrinsicMeshData::well::dTotalMassDensity_dPressure >( getName() );
+      subRegion.registerField< extrinsicMeshData::well::dTotalMassDensity_dGlobalCompDensity >( getName() ).
         reference().resizeDimension< 1 >( m_numComponents );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::phaseVolumeFraction_n >( getName() ).
+      subRegion.registerField< extrinsicMeshData::well::phaseVolumeFraction_n >( getName() ).
         reference().resizeDimension< 1 >( m_numPhases );
 
       PerforationData & perforationData = *subRegion.getPerforationData();
-      perforationData.registerExtrinsicData< extrinsicMeshData::well::compPerforationRate >( getName() ).
+      perforationData.registerField< extrinsicMeshData::well::compPerforationRate >( getName() ).
         reference().resizeDimension< 1 >( m_numComponents );
-      perforationData.registerExtrinsicData< extrinsicMeshData::well::dCompPerforationRate_dPres >( getName() ).
+      perforationData.registerField< extrinsicMeshData::well::dCompPerforationRate_dPres >( getName() ).
         reference().resizeDimension< 1, 2 >( 2, m_numComponents );
-      perforationData.registerExtrinsicData< extrinsicMeshData::well::dCompPerforationRate_dComp >( getName() ).
+      perforationData.registerField< extrinsicMeshData::well::dCompPerforationRate_dComp >( getName() ).
         reference().resizeDimension< 1, 2, 3 >( 2, m_numComponents, m_numComponents );
 
       WellControls & wellControls = getWellControls( subRegion );

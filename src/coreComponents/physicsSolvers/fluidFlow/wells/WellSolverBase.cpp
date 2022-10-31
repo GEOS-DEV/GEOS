@@ -89,7 +89,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
                                                                             WellElementSubRegion & subRegion )
     {
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::gravityCoefficient >( getName() );
+      subRegion.registerField< extrinsicMeshData::well::gravityCoefficient >( getName() );
 
       subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
@@ -97,7 +97,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
         setSizedFromParent( 0 );
 
       PerforationData * const perforationData = subRegion.getPerforationData();
-      perforationData->registerExtrinsicData< extrinsicMeshData::well::gravityCoefficient >( getName() );
+      perforationData->registerField< extrinsicMeshData::well::gravityCoefficient >( getName() );
     } );
   } );
 }

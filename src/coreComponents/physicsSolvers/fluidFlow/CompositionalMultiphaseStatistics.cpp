@@ -113,12 +113,12 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
       elemManager.forElementSubRegions( regionNames, [&]( localIndex const,
                                                           ElementSubRegionBase & subRegion )
       {
-        subRegion.registerExtrinsicData< extrinsicMeshData::flow::phaseOutflux >( getName() ).
+        subRegion.registerField< extrinsicMeshData::flow::phaseOutflux >( getName() ).
           reference().resizeDimension< 1 >( numPhases );
-        subRegion.registerExtrinsicData< extrinsicMeshData::flow::componentOutflux >( getName() ).
+        subRegion.registerField< extrinsicMeshData::flow::componentOutflux >( getName() ).
           reference().resizeDimension< 1 >( numComps );
-        subRegion.registerExtrinsicData< extrinsicMeshData::flow::phaseCFLNumber >( getName() );
-        subRegion.registerExtrinsicData< extrinsicMeshData::flow::componentCFLNumber >( getName() );
+        subRegion.registerField< extrinsicMeshData::flow::phaseCFLNumber >( getName() );
+        subRegion.registerField< extrinsicMeshData::flow::componentCFLNumber >( getName() );
       } );
     }
   } );

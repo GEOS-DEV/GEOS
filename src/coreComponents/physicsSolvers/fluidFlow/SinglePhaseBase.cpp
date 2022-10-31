@@ -80,33 +80,33 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
-      subRegion.registerExtrinsicData< pressure_n >( getName() );
-      subRegion.registerExtrinsicData< initialPressure >( getName() );
-      subRegion.registerExtrinsicData< deltaPressure >( getName() ); // for reporting/stats purposes
-      subRegion.registerExtrinsicData< pressure >( getName() );
+      subRegion.registerField< pressure_n >( getName() );
+      subRegion.registerField< initialPressure >( getName() );
+      subRegion.registerField< deltaPressure >( getName() ); // for reporting/stats purposes
+      subRegion.registerField< pressure >( getName() );
 
-      subRegion.registerExtrinsicData< bcPressure >( getName() ); // needed for the application of boundary conditions
+      subRegion.registerField< bcPressure >( getName() ); // needed for the application of boundary conditions
 
-      subRegion.registerExtrinsicData< deltaVolume >( getName() );
+      subRegion.registerField< deltaVolume >( getName() );
 
-      subRegion.registerExtrinsicData< temperature >( getName() );
-      subRegion.registerExtrinsicData< temperature_n >( getName() );
+      subRegion.registerField< temperature >( getName() );
+      subRegion.registerField< temperature_n >( getName() );
 
-      subRegion.registerExtrinsicData< bcTemperature >( getName() ); // needed for the application of boundary conditions
+      subRegion.registerField< bcTemperature >( getName() ); // needed for the application of boundary conditions
 
-      subRegion.registerExtrinsicData< mobility >( getName() );
-      subRegion.registerExtrinsicData< dMobility_dPressure >( getName() );
+      subRegion.registerField< mobility >( getName() );
+      subRegion.registerField< dMobility_dPressure >( getName() );
 
       if( m_isThermal )
       {
-        subRegion.registerExtrinsicData< dMobility_dTemperature >( getName() );
+        subRegion.registerField< dMobility_dTemperature >( getName() );
       }
 
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
     {
-      faceManager.registerExtrinsicData< facePressure >( getName() );
+      faceManager.registerField< facePressure >( getName() );
     }
   } );
 }

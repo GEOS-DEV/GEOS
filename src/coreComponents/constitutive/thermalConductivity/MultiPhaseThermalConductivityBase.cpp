@@ -35,8 +35,8 @@ MultiPhaseThermalConductivityBase::MultiPhaseThermalConductivityBase( string con
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of fluid phases" );
 
-  registerExtrinsicData( extrinsicMeshData::thermalconductivity::effectiveConductivity{}, &m_effectiveConductivity );
-  registerExtrinsicData( extrinsicMeshData::thermalconductivity::dEffectiveConductivity_dPhaseVolFraction{}, &m_dEffectiveConductivity_dPhaseVolFrac );
+  registerField( extrinsicMeshData::thermalconductivity::effectiveConductivity{}, &m_effectiveConductivity );
+  registerField( extrinsicMeshData::thermalconductivity::dEffectiveConductivity_dPhaseVolFraction{}, &m_dEffectiveConductivity_dPhaseVolFrac );
 }
 
 void MultiPhaseThermalConductivityBase::postProcessInput()

@@ -81,8 +81,8 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
       if( m_stabilizationType == StabilizationType::Global ||
           m_stabilizationType == StabilizationType::Local )
       {
-        subRegion.registerExtrinsicData< extrinsicMeshData::flow::macroElementIndex >( getName() );
-        subRegion.registerExtrinsicData< extrinsicMeshData::flow::elementStabConstant >( getName() );
+        subRegion.registerField< extrinsicMeshData::flow::macroElementIndex >( getName() );
+        subRegion.registerField< extrinsicMeshData::flow::elementStabConstant >( getName() );
       }
     } );
   } );

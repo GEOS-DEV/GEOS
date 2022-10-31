@@ -231,60 +231,60 @@ void ReactiveCompositionalMultiphaseOBL::registerDataOnMesh( Group & meshBodies 
     {
       string const solverName = getName();
 
-      subRegion.registerExtrinsicData< pressure >( solverName );
-      subRegion.registerExtrinsicData< initialPressure >( solverName );
-      subRegion.registerExtrinsicData< pressure_n >( solverName );
-      subRegion.registerExtrinsicData< bcPressure >( solverName );
+      subRegion.registerField< pressure >( solverName );
+      subRegion.registerField< initialPressure >( solverName );
+      subRegion.registerField< pressure_n >( solverName );
+      subRegion.registerField< bcPressure >( solverName );
 
-      subRegion.registerExtrinsicData< temperature >( solverName );
-      subRegion.registerExtrinsicData< bcTemperature >( solverName );
+      subRegion.registerField< temperature >( solverName );
+      subRegion.registerField< bcTemperature >( solverName );
 
-      subRegion.registerExtrinsicData< OBLOperatorValues >( solverName ).
+      subRegion.registerField< OBLOperatorValues >( solverName ).
         reference().resizeDimension< 1 >( m_numOBLOperators );
-      subRegion.registerExtrinsicData< OBLOperatorValues_n >( solverName ).
+      subRegion.registerField< OBLOperatorValues_n >( solverName ).
         reference().resizeDimension< 1 >( m_numOBLOperators );
-      subRegion.registerExtrinsicData< OBLOperatorDerivatives >( solverName ).
+      subRegion.registerField< OBLOperatorDerivatives >( solverName ).
         reference().resizeDimension< 1, 2 >( m_numOBLOperators, m_numDofPerCell );
 
       // we need to register this fiels in any case (if energy balance is enabled or not)
       // to be able to pass the view to OBLOperatorsKernel
-      subRegion.registerExtrinsicData< temperature_n >( solverName );
+      subRegion.registerField< temperature_n >( solverName );
 
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
       // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
-      subRegion.registerExtrinsicData< globalCompFraction >( solverName ).
+      subRegion.registerField< globalCompFraction >( solverName ).
         setDimLabels( 1, m_componentNames ).
         reference().resizeDimension< 1 >( m_numComponents );
 
-      subRegion.registerExtrinsicData< bcGlobalCompFraction >( solverName ).
+      subRegion.registerField< bcGlobalCompFraction >( solverName ).
         reference().resizeDimension< 1 >( m_numComponents );
 
       // we need to register this fiels in any case (if there is a single component or not)
       // to be able to pass the view to OBLOperatorsKernel
-      subRegion.registerExtrinsicData< globalCompFraction_n >( solverName ).
+      subRegion.registerField< globalCompFraction_n >( solverName ).
         reference().resizeDimension< 1 >( m_numComponents );
       // in principle, referencePorosity could be used directly from solid model,
       // but was duplicated to remove dependency on solid
-      subRegion.registerExtrinsicData< referencePorosity >( solverName );
+      subRegion.registerField< referencePorosity >( solverName );
 
       // referencePoreVolume and referenceRockVolume are introduced for the sake of performance:
       // this way the multiplication of constant arrays (e.g., referencePorosity and volume) every Newton step is avoided
-      subRegion.registerExtrinsicData< referencePoreVolume >( solverName );
-      subRegion.registerExtrinsicData< referenceRockVolume >( solverName );
+      subRegion.registerField< referencePoreVolume >( solverName );
+      subRegion.registerField< referenceRockVolume >( solverName );
 
       // thermal rock properties (again, register in any case)
       // it is not possible to use specificHeatCapacity from solid model here, because specificHeatCapacity includes several quantities,
       // which are split in OBL framework: constant rock volume and,
       // hidden inside operator - therefore variable - rock compressibility and rock energy
-      subRegion.registerExtrinsicData< rockVolumetricHeatCapacity >( solverName );
-      subRegion.registerExtrinsicData< rockThermalConductivity >( solverName );
-      subRegion.registerExtrinsicData< rockKineticRateFactor >( solverName );
+      subRegion.registerField< rockVolumetricHeatCapacity >( solverName );
+      subRegion.registerField< rockThermalConductivity >( solverName );
+      subRegion.registerField< rockKineticRateFactor >( solverName );
 
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
     {
-      faceManager.registerExtrinsicData< facePressure >( getName() );
+      faceManager.registerField< facePressure >( getName() );
     }
 
   } );

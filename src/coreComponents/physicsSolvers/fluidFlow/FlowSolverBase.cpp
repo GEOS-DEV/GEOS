@@ -105,9 +105,9 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
-      subRegion.registerExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >( getName() ).
+      subRegion.registerField< extrinsicMeshData::flow::gravityCoefficient >( getName() ).
         setApplyDefaultValue( 0.0 );
-      subRegion.registerExtrinsicData< extrinsicMeshData::flow::netToGross >( getName() );
+      subRegion.registerField< extrinsicMeshData::flow::netToGross >( getName() );
     } );
 
     elemManager.forElementSubRegionsComplete< SurfaceElementSubRegion >( [&]( localIndex const,
@@ -117,20 +117,20 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
     {
       SurfaceElementRegion & faceRegion = dynamicCast< SurfaceElementRegion & >( region );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >( getName() );
+      subRegion.registerField< extrinsicMeshData::flow::gravityCoefficient >( getName() );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::flow::aperture0 >( getName() ).
+      subRegion.registerField< extrinsicMeshData::flow::aperture0 >( getName() ).
         setDefaultValue( faceRegion.getDefaultAperture() );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::flow::hydraulicAperture >( getName() ).
+      subRegion.registerField< extrinsicMeshData::flow::hydraulicAperture >( getName() ).
         setDefaultValue( faceRegion.getDefaultAperture() );
 
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >( getName() ).
+    faceManager.registerField< extrinsicMeshData::flow::gravityCoefficient >( getName() ).
       setApplyDefaultValue( 0.0 );
-    faceManager.registerExtrinsicData< extrinsicMeshData::flow::transMultiplier >( getName() );
+    faceManager.registerField< extrinsicMeshData::flow::transMultiplier >( getName() );
 
   } );
 

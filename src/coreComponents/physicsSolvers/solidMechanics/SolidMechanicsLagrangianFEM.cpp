@@ -138,33 +138,33 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodes = meshLevel.getNodeManager();
 
-    nodes.registerExtrinsicData< solidMechanics::totalDisplacement >( getName() ).
+    nodes.registerField< solidMechanics::totalDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
-    nodes.registerExtrinsicData< solidMechanics::incrementalDisplacement >( getName() ).
+    nodes.registerField< solidMechanics::incrementalDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
     if( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic )
     {
-      nodes.registerExtrinsicData< solidMechanics::velocity >( getName() ).
+      nodes.registerField< solidMechanics::velocity >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
-      nodes.registerExtrinsicData< solidMechanics::acceleration >( getName() ).
+      nodes.registerField< solidMechanics::acceleration >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
-      nodes.registerExtrinsicData< solidMechanics::velocityTilde >( getName() ).
+      nodes.registerField< solidMechanics::velocityTilde >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
-      nodes.registerExtrinsicData< solidMechanics::uhatTilde >( getName() ).
+      nodes.registerField< solidMechanics::uhatTilde >( getName() ).
         reference().resizeDimension< 1 >( 3 );
     }
 
-    nodes.registerExtrinsicData< solidMechanics::mass >( getName() );
+    nodes.registerField< solidMechanics::mass >( getName() );
 
-    nodes.registerExtrinsicData< solidMechanics::externalForce >( getName() ).
+    nodes.registerField< solidMechanics::externalForce >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
-    nodes.registerExtrinsicData< solidMechanics::contactForce >( getName() ).
+    nodes.registerField< solidMechanics::contactForce >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
     Group & nodeSets = nodes.sets();

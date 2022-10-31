@@ -143,7 +143,7 @@ Then the registration is simplified as follows:
       for( auto & mesh : MeshBodies->GetSubGroups() )
       {
         NodeManager & nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 ).getNodeManager();
-        nodes.registerExtrinsicData< extrinsicMeshData::TotalDisplacement >( this->getName() ).resizeDimension< 1 >( 3 );
+        nodes.registerField< extrinsicMeshData::TotalDisplacement >( this->getName() ).resizeDimension< 1 >( 3 );
       }
     }
 

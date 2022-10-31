@@ -41,15 +41,15 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default value of the reference porosity" );
 
-  registerExtrinsicData( extrinsicMeshData::porosity::porosity{}, &m_newPorosity );
+  registerField( extrinsicMeshData::porosity::porosity{}, &m_newPorosity );
 
-  registerExtrinsicData( extrinsicMeshData::porosity::porosity_n{}, &m_porosity_n );
+  registerField( extrinsicMeshData::porosity::porosity_n{}, &m_porosity_n );
 
-  registerExtrinsicData( extrinsicMeshData::porosity::dPorosity_dPressure{}, &m_dPorosity_dPressure );
+  registerField( extrinsicMeshData::porosity::dPorosity_dPressure{}, &m_dPorosity_dPressure );
 
-  registerExtrinsicData( extrinsicMeshData::porosity::initialPorosity{}, &m_initialPorosity );
+  registerField( extrinsicMeshData::porosity::initialPorosity{}, &m_initialPorosity );
 
-  registerExtrinsicData( extrinsicMeshData::porosity::referencePorosity{}, &m_referencePorosity );
+  registerField( extrinsicMeshData::porosity::referencePorosity{}, &m_referencePorosity );
 }
 
 void PorosityBase::allocateConstitutiveData( dataRepository::Group & parent,

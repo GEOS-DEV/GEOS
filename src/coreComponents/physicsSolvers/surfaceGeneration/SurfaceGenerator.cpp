@@ -231,7 +231,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const, CellElementSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< surfaceGeneration::K_IC_00,
+      subRegion.registerField< surfaceGeneration::K_IC_00,
                                        surfaceGeneration::K_IC_01,
                                        surfaceGeneration::K_IC_02,
                                        surfaceGeneration::K_IC_10,
@@ -244,7 +244,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< surfaceGeneration::K_IC_00,
+      subRegion.registerField< surfaceGeneration::K_IC_00,
                                        surfaceGeneration::K_IC_01,
                                        surfaceGeneration::K_IC_02,
                                        surfaceGeneration::K_IC_10,
@@ -261,20 +261,20 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
     EdgeManager & edgeManager = mesh.getEdgeManager();
     FaceManager & faceManager = mesh.getFaceManager();
 
-    nodeManager.registerExtrinsicData< extrinsicMeshData::parentIndex,
+    nodeManager.registerField< extrinsicMeshData::parentIndex,
                                        extrinsicMeshData::childIndex,
                                        surfaceGeneration::degreeFromCrack,
                                        surfaceGeneration::degreeFromCrackTip,
                                        surfaceGeneration::SIFNode,
                                        extrinsicMeshData::ruptureTime >( this->getName() );
 
-    edgeManager.registerExtrinsicData< extrinsicMeshData::parentIndex,
+    edgeManager.registerField< extrinsicMeshData::parentIndex,
                                        extrinsicMeshData::childIndex,
                                        surfaceGeneration::SIF_I,
                                        surfaceGeneration::SIF_II,
                                        surfaceGeneration::SIF_III >( this->getName() );
 
-    faceManager.registerExtrinsicData< extrinsicMeshData::parentIndex,
+    faceManager.registerField< extrinsicMeshData::parentIndex,
                                        extrinsicMeshData::childIndex,
                                        surfaceGeneration::ruptureState,
                                        extrinsicMeshData::ruptureTime,
@@ -284,7 +284,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
                                        surfaceGeneration::isFaceSeparable,
                                        surfaceGeneration::degreeFromCrackTip >( this->getName() );
 
-    // TODO: handle this automatically in registerExtrinsicData()
+    // TODO: handle this automatically in registerField()
     faceManager.getField< surfaceGeneration::K_IC >().resizeDimension< 1 >( 3 );
   } );
 

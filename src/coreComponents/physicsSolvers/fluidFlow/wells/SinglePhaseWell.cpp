@@ -68,19 +68,19 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::pressure_n >( getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::pressure >( getName() ).
+      subRegion.registerField< extrinsicMeshData::well::pressure_n >( getName() );
+      subRegion.registerField< extrinsicMeshData::well::pressure >( getName() ).
         setRestartFlags( RestartFlags::WRITE_AND_READ );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::temperature_n >( getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::temperature >( getName() );
+      subRegion.registerField< extrinsicMeshData::well::temperature_n >( getName() );
+      subRegion.registerField< extrinsicMeshData::well::temperature >( getName() );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::connectionRate_n >( getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::connectionRate >( getName() );
+      subRegion.registerField< extrinsicMeshData::well::connectionRate_n >( getName() );
+      subRegion.registerField< extrinsicMeshData::well::connectionRate >( getName() );
 
       PerforationData & perforationData = *subRegion.getPerforationData();
-      perforationData.registerExtrinsicData< extrinsicMeshData::well::perforationRate >( getName() );
-      perforationData.registerExtrinsicData< extrinsicMeshData::well::dPerforationRate_dPres >( getName() ).
+      perforationData.registerField< extrinsicMeshData::well::perforationRate >( getName() );
+      perforationData.registerField< extrinsicMeshData::well::dPerforationRate_dPres >( getName() ).
         reference().resizeDimension< 1 >( 2 );
 
       WellControls & wellControls = getWellControls( subRegion );

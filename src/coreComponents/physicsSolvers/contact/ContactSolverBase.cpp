@@ -80,21 +80,21 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
     {
       region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
       {
-        subRegion.registerExtrinsicData< dispJump >( getName() ).
+        subRegion.registerField< dispJump >( getName() ).
           reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerExtrinsicData< deltaDispJump >( getName() ).
+        subRegion.registerField< deltaDispJump >( getName() ).
           reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerExtrinsicData< oldDispJump >( getName() ).
+        subRegion.registerField< oldDispJump >( getName() ).
           reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerExtrinsicData< traction >( getName() ).
+        subRegion.registerField< traction >( getName() ).
           reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerExtrinsicData< fractureState >( getName() );
+        subRegion.registerField< fractureState >( getName() );
 
-        subRegion.registerExtrinsicData< oldFractureState >( getName() );
+        subRegion.registerField< oldFractureState >( getName() );
       } );
     } );
   } );

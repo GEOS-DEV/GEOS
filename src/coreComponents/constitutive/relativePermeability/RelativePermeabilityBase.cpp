@@ -40,13 +40,12 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseRelPerm{}, &m_phaseRelPerm );
-  registerExtrinsicData( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{},
-                         &m_dPhaseRelPerm_dPhaseVolFrac );
+  registerField( extrinsicMeshData::relperm::phaseRelPerm{}, &m_phaseRelPerm );
+  registerField( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{}, &m_dPhaseRelPerm_dPhaseVolFrac );
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseTrappedVolFraction{}, &m_phaseTrappedVolFrac );
+  registerField( extrinsicMeshData::relperm::phaseTrappedVolFraction{}, &m_phaseTrappedVolFrac );
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseRelPerm_n{}, &m_phaseRelPerm_n );
+  registerField( extrinsicMeshData::relperm::phaseRelPerm_n{}, &m_phaseRelPerm_n );
 
 }
 

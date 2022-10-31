@@ -100,14 +100,14 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
                                                                         [&]( localIndex const,
                                                                              CellElementSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< proppantConcentration >( getName() );
-      subRegion.registerExtrinsicData< proppantConcentration_n >( getName() );
-      subRegion.registerExtrinsicData< componentConcentration >( getName() );
-      subRegion.registerExtrinsicData< componentConcentration_n >( getName() );
-      subRegion.registerExtrinsicData< bcComponentConcentration >( getName() );
-      subRegion.registerExtrinsicData< cellBasedFlux >( getName() ).
+      subRegion.registerField< proppantConcentration >( getName() );
+      subRegion.registerField< proppantConcentration_n >( getName() );
+      subRegion.registerField< componentConcentration >( getName() );
+      subRegion.registerField< componentConcentration_n >( getName() );
+      subRegion.registerField< bcComponentConcentration >( getName() );
+      subRegion.registerField< cellBasedFlux >( getName() ).
         reference().resizeDimension< 1 >( 3 );
-      subRegion.registerExtrinsicData< isProppantBoundary >( getName() );
+      subRegion.registerField< isProppantBoundary >( getName() );
 
       setConstitutiveNames( subRegion );
     } );
@@ -115,20 +115,20 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           FaceElementSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< proppantConcentration >( getName() );
-      subRegion.registerExtrinsicData< proppantConcentration_n >( getName() );
-      subRegion.registerExtrinsicData< componentConcentration >( getName() );
-      subRegion.registerExtrinsicData< componentConcentration_n >( getName() );
-      subRegion.registerExtrinsicData< bcComponentConcentration >( getName() );
-      subRegion.registerExtrinsicData< componentDensity_n >( getName() );
-      subRegion.registerExtrinsicData< cellBasedFlux >( getName() ).
+      subRegion.registerField< proppantConcentration >( getName() );
+      subRegion.registerField< proppantConcentration_n >( getName() );
+      subRegion.registerField< componentConcentration >( getName() );
+      subRegion.registerField< componentConcentration_n >( getName() );
+      subRegion.registerField< bcComponentConcentration >( getName() );
+      subRegion.registerField< componentDensity_n >( getName() );
+      subRegion.registerField< cellBasedFlux >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
-      subRegion.registerExtrinsicData< isProppantBoundary >( getName() );
-      subRegion.registerExtrinsicData< isProppantMobile >( getName() );
-      subRegion.registerExtrinsicData< proppantPackVolumeFraction >( getName() );
-      subRegion.registerExtrinsicData< proppantExcessPackVolume >( getName() );
-      subRegion.registerExtrinsicData< proppantLiftFlux >( getName() );
+      subRegion.registerField< isProppantBoundary >( getName() );
+      subRegion.registerField< isProppantMobile >( getName() );
+      subRegion.registerField< proppantPackVolumeFraction >( getName() );
+      subRegion.registerField< proppantExcessPackVolume >( getName() );
+      subRegion.registerField< proppantLiftFlux >( getName() );
 
       setConstitutiveNames( subRegion );
 

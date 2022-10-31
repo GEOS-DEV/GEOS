@@ -31,7 +31,7 @@ namespace constitutive
 SinglePhaseThermalConductivityBase::SinglePhaseThermalConductivityBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerExtrinsicData( extrinsicMeshData::thermalconductivity::effectiveConductivity{}, &m_effectiveConductivity );
+  registerField( extrinsicMeshData::thermalconductivity::effectiveConductivity{}, &m_effectiveConductivity );
 }
 
 void SinglePhaseThermalConductivityBase::postProcessInput()

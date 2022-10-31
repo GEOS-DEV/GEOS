@@ -68,7 +68,7 @@ void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
     FaceManager & faceManager = meshLevel.getFaceManager();
 
     // primary variables: face pressures at the previous converged time step
-    faceManager.registerExtrinsicData< extrinsicMeshData::flow::facePressure_n >( getName() );
+    faceManager.registerField< extrinsicMeshData::flow::facePressure_n >( getName() );
   } );
 }
 

@@ -48,8 +48,8 @@ ProppantPermeability::ProppantPermeability( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::proppantPackPermeabilityString(), &m_proppantPackPermeability );
 
-  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
-  registerExtrinsicData( extrinsicMeshData::permeability::permeabilityMultiplier{}, &m_permeabilityMultiplier );
+  registerField( extrinsicMeshData::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+  registerField( extrinsicMeshData::permeability::permeabilityMultiplier{}, &m_permeabilityMultiplier );
 
 }
 

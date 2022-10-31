@@ -69,10 +69,10 @@ void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group & meshBodies )
 
     // primary variables: face pressure changes
 
-    faceManager.registerExtrinsicData< extrinsicMeshData::flow::facePressure_n >( getName() );
+    faceManager.registerField< extrinsicMeshData::flow::facePressure_n >( getName() );
 
     // auxiliary data for the buoyancy coefficient
-    faceManager.registerExtrinsicData< extrinsicMeshData::flow::mimGravityCoefficient >( getName() );
+    faceManager.registerField< extrinsicMeshData::flow::mimGravityCoefficient >( getName() );
   } );
 }
 

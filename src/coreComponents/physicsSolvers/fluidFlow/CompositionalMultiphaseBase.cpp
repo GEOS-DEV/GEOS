@@ -223,49 +223,49 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
-      subRegion.registerExtrinsicData< pressure >( getName() );
-      subRegion.registerExtrinsicData< initialPressure >( getName() );
-      subRegion.registerExtrinsicData< deltaPressure >( getName() ); // for reporting/stats purposes
-      subRegion.registerExtrinsicData< pressure_n >( getName() );
+      subRegion.registerField< pressure >( getName() );
+      subRegion.registerField< initialPressure >( getName() );
+      subRegion.registerField< deltaPressure >( getName() ); // for reporting/stats purposes
+      subRegion.registerField< pressure_n >( getName() );
 
-      subRegion.registerExtrinsicData< bcPressure >( getName() ); // needed for the application of boundary conditions
+      subRegion.registerField< bcPressure >( getName() ); // needed for the application of boundary conditions
 
       // these fields are always registered for the evaluation of the fluid properties
-      subRegion.registerExtrinsicData< temperature >( getName() );
-      subRegion.registerExtrinsicData< temperature_n >( getName() );
+      subRegion.registerField< temperature >( getName() );
+      subRegion.registerField< temperature_n >( getName() );
 
-      subRegion.registerExtrinsicData< bcTemperature >( getName() ); // needed for the application of boundary conditions
+      subRegion.registerField< bcTemperature >( getName() ); // needed for the application of boundary conditions
 
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
       // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
 
-      subRegion.registerExtrinsicData< globalCompDensity >( getName() ).
+      subRegion.registerField< globalCompDensity >( getName() ).
         setDimLabels( 1, fluid.componentNames() ).
         reference().resizeDimension< 1 >( m_numComponents );
-      subRegion.registerExtrinsicData< globalCompDensity_n >( getName() ).
+      subRegion.registerField< globalCompDensity_n >( getName() ).
         reference().resizeDimension< 1 >( m_numComponents );
 
-      subRegion.registerExtrinsicData< globalCompFraction >( getName() ).
+      subRegion.registerField< globalCompFraction >( getName() ).
         setDimLabels( 1, fluid.componentNames() ).
         reference().resizeDimension< 1 >( m_numComponents );
-      subRegion.registerExtrinsicData< dGlobalCompFraction_dGlobalCompDensity >( getName() ).
+      subRegion.registerField< dGlobalCompFraction_dGlobalCompDensity >( getName() ).
         reference().resizeDimension< 1, 2 >( m_numComponents, m_numComponents );
 
-      subRegion.registerExtrinsicData< phaseVolumeFraction >( getName() ).
+      subRegion.registerField< phaseVolumeFraction >( getName() ).
         setDimLabels( 1, fluid.phaseNames() ).
         reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerExtrinsicData< dPhaseVolumeFraction >( getName() ).
+      subRegion.registerField< dPhaseVolumeFraction >( getName() ).
         reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents + 2 ); // dP, dT, dC
 
-      subRegion.registerExtrinsicData< phaseMobility >( getName() ).
+      subRegion.registerField< phaseMobility >( getName() ).
         setDimLabels( 1, fluid.phaseNames() ).
         reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerExtrinsicData< dPhaseMobility >( getName() ).
+      subRegion.registerField< dPhaseMobility >( getName() ).
         reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents + 2 ); // dP, dT, dC
 
-      subRegion.registerExtrinsicData< phaseVolumeFraction_n >( getName() ).
+      subRegion.registerField< phaseVolumeFraction_n >( getName() ).
         reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerExtrinsicData< phaseMobility_n >( getName() ).
+      subRegion.registerField< phaseMobility_n >( getName() ).
         reference().resizeDimension< 1 >( m_numPhases );
     } );
 
@@ -275,9 +275,9 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
 
       // TODO: add conditional registration later, this is only needed when there is a face-based Dirichlet BC
-      faceManager.registerExtrinsicData< facePressure >( getName() );
-      faceManager.registerExtrinsicData< faceTemperature >( getName() );
-      faceManager.registerExtrinsicData< faceGlobalCompFraction >( getName() ).
+      faceManager.registerField< facePressure >( getName() );
+      faceManager.registerField< faceTemperature >( getName() );
+      faceManager.registerField< faceGlobalCompFraction >( getName() ).
         setDimLabels( 1, fluid0.componentNames() ).
         reference().resizeDimension< 1 >( m_numComponents );
     }

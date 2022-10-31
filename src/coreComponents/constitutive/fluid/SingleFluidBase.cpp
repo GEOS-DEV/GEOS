@@ -31,23 +31,23 @@ namespace constitutive
 SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerExtrinsicData( extrinsicMeshData::singlefluid::density{}, &m_density );
-  registerExtrinsicData( extrinsicMeshData::singlefluid::dDensity_dPressure{}, &m_dDensity_dPressure );
-  registerExtrinsicData( extrinsicMeshData::singlefluid::dDensity_dTemperature{}, &m_dDensity_dTemperature );
-  registerExtrinsicData( extrinsicMeshData::singlefluid::density_n{}, &m_density_n );
+  registerField( extrinsicMeshData::singlefluid::density{}, &m_density );
+  registerField( extrinsicMeshData::singlefluid::dDensity_dPressure{}, &m_dDensity_dPressure );
+  registerField( extrinsicMeshData::singlefluid::dDensity_dTemperature{}, &m_dDensity_dTemperature );
+  registerField( extrinsicMeshData::singlefluid::density_n{}, &m_density_n );
 
-  registerExtrinsicData( extrinsicMeshData::singlefluid::viscosity{}, &m_viscosity );
-  registerExtrinsicData( extrinsicMeshData::singlefluid::dViscosity_dPressure{}, &m_dViscosity_dPressure );
-  registerExtrinsicData( extrinsicMeshData::singlefluid::dViscosity_dTemperature{}, &m_dViscosity_dTemperature );
+  registerField( extrinsicMeshData::singlefluid::viscosity{}, &m_viscosity );
+  registerField( extrinsicMeshData::singlefluid::dViscosity_dPressure{}, &m_dViscosity_dPressure );
+  registerField( extrinsicMeshData::singlefluid::dViscosity_dTemperature{}, &m_dViscosity_dTemperature );
 
-  registerExtrinsicData( extrinsicMeshData::singlefluid::internalEnergy{}, &m_internalEnergy );
-  registerExtrinsicData( extrinsicMeshData::singlefluid::internalEnergy_n{}, &m_internalEnergy_n );
-  registerExtrinsicData( extrinsicMeshData::singlefluid::dInternalEnergy_dPressure{}, &m_dInternalEnergy_dPressure );
-  registerExtrinsicData( extrinsicMeshData::singlefluid::dInternalEnergy_dTemperature{}, &m_dInternalEnergy_dTemperature );
+  registerField( extrinsicMeshData::singlefluid::internalEnergy{}, &m_internalEnergy );
+  registerField( extrinsicMeshData::singlefluid::internalEnergy_n{}, &m_internalEnergy_n );
+  registerField( extrinsicMeshData::singlefluid::dInternalEnergy_dPressure{}, &m_dInternalEnergy_dPressure );
+  registerField( extrinsicMeshData::singlefluid::dInternalEnergy_dTemperature{}, &m_dInternalEnergy_dTemperature );
 
-  registerExtrinsicData( extrinsicMeshData::singlefluid::enthalpy{}, &m_enthalpy );
-  registerExtrinsicData( extrinsicMeshData::singlefluid::dEnthalpy_dPressure{}, &m_dEnthalpy_dPressure );
-  registerExtrinsicData( extrinsicMeshData::singlefluid::dEnthalpy_dTemperature{}, &m_dEnthalpy_dTemperature );
+  registerField( extrinsicMeshData::singlefluid::enthalpy{}, &m_enthalpy );
+  registerField( extrinsicMeshData::singlefluid::dEnthalpy_dPressure{}, &m_dEnthalpy_dPressure );
+  registerField( extrinsicMeshData::singlefluid::dEnthalpy_dTemperature{}, &m_dEnthalpy_dTemperature );
 
 }
 

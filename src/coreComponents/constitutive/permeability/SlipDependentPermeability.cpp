@@ -44,7 +44,7 @@ SlipDependentPermeability::SlipDependentPermeability( string const & name, Group
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( " initial permeability of the fracture." );
 
-  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+  registerField( extrinsicMeshData::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
 }
 
 std::unique_ptr< ConstitutiveBase >

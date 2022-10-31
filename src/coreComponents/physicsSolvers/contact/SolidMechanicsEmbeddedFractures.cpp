@@ -95,7 +95,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&] ( localIndex const, EmbeddedSurfaceSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< dTraction_dJump >( getName() ).
+      subRegion.registerField< dTraction_dJump >( getName() ).
         reference().resizeDimension< 1, 2 >( 3, 3 );
     } );
   } );

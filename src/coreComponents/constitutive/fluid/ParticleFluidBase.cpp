@@ -41,15 +41,15 @@ ParticleFluidBase::ParticleFluidBase( string const & name, Group * const parent 
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Whether the collisional component of the slip velocity is considered" );
 
-  registerExtrinsicData( extrinsicMeshData::particlefluid::settlingFactor{}, &m_settlingFactor );
-  registerExtrinsicData( extrinsicMeshData::particlefluid::dSettlingFactor_dPressure{}, &m_dSettlingFactor_dPressure );
-  registerExtrinsicData( extrinsicMeshData::particlefluid::dSettlingFactor_dProppantConcentration{}, &m_dSettlingFactor_dProppantConcentration );
-  registerExtrinsicData( extrinsicMeshData::particlefluid::dSettlingFactor_dComponentConcentration{}, &m_dSettlingFactor_dComponentConcentration );
+  registerField( extrinsicMeshData::particlefluid::settlingFactor{}, &m_settlingFactor );
+  registerField( extrinsicMeshData::particlefluid::dSettlingFactor_dPressure{}, &m_dSettlingFactor_dPressure );
+  registerField( extrinsicMeshData::particlefluid::dSettlingFactor_dProppantConcentration{}, &m_dSettlingFactor_dProppantConcentration );
+  registerField( extrinsicMeshData::particlefluid::dSettlingFactor_dComponentConcentration{}, &m_dSettlingFactor_dComponentConcentration );
 
-  registerExtrinsicData( extrinsicMeshData::particlefluid::collisionFactor{}, &m_collisionFactor );
-  registerExtrinsicData( extrinsicMeshData::particlefluid::dCollisionFactor_dProppantConcentration{}, &m_dCollisionFactor_dProppantConcentration );
+  registerField( extrinsicMeshData::particlefluid::collisionFactor{}, &m_collisionFactor );
+  registerField( extrinsicMeshData::particlefluid::dCollisionFactor_dProppantConcentration{}, &m_dCollisionFactor_dProppantConcentration );
 
-  registerExtrinsicData( extrinsicMeshData::particlefluid::proppantPackPermeability{}, &m_proppantPackPermeability );
+  registerField( extrinsicMeshData::particlefluid::proppantPackPermeability{}, &m_proppantPackPermeability );
 }
 
 ParticleFluidBase::~ParticleFluidBase() = default;

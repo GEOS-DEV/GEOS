@@ -131,7 +131,7 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    nodeManager.registerExtrinsicData< extrinsicMeshData::Displacementx_nm1,
+    nodeManager.registerField< extrinsicMeshData::Displacementx_nm1,
                                        extrinsicMeshData::Displacementy_nm1,
                                        extrinsicMeshData::Displacementz_nm1,
                                        extrinsicMeshData::Displacementx_n,
@@ -153,15 +153,15 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                        extrinsicMeshData::FreeSurfaceNodeIndicator >( this->getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< extrinsicMeshData::FreeSurfaceFaceIndicator >( this->getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocityVp >( this->getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocityVs >( this->getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::MediumDensity >( this->getName() );
+      subRegion.registerField< extrinsicMeshData::MediumVelocityVp >( this->getName() );
+      subRegion.registerField< extrinsicMeshData::MediumVelocityVs >( this->getName() );
+      subRegion.registerField< extrinsicMeshData::MediumDensity >( this->getName() );
     } );
 
   } );
