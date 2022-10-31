@@ -77,8 +77,8 @@ protected:
                                      integer const state1 )
   {
     return state0 == state1
-           || ( state0 == extrinsicMeshData::contact::FractureState::NewSlip && state1 == extrinsicMeshData::contact::FractureState::Slip )
-           || ( state0 == extrinsicMeshData::contact::FractureState::Slip && state1 == extrinsicMeshData::contact::FractureState::NewSlip );
+           || ( state0 == fields::contact::FractureState::NewSlip && state1 == fields::contact::FractureState::Slip )
+           || ( state0 == fields::contact::FractureState::Slip && state1 == fields::contact::FractureState::NewSlip );
   }
 
   void synchronizeFractureState( DomainPartition & domain ) const;

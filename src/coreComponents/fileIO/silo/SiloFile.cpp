@@ -1626,10 +1626,10 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
     }
   }
 
-  if( nodeManager.hasField< extrinsicMeshData::solidMechanics::totalDisplacement >() )
+  if( nodeManager.hasField< fields::solidMechanics::totalDisplacement >() )
   {
-    extrinsicMeshData::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const & totalDisplacement =
-      nodeManager.getField< extrinsicMeshData::solidMechanics::totalDisplacement >();
+    fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const & totalDisplacement =
+      nodeManager.getField< fields::solidMechanics::totalDisplacement >();
     for( localIndex a = 0; a < numNodes; ++a )
     {
       xcoords[a] += totalDisplacement( a, 0 );

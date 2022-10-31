@@ -85,8 +85,8 @@ void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Gro
 {
   SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  getField< extrinsicMeshData::singlefluid::density >().setApplyDefaultValue( m_defaultDensity );
-  getField< extrinsicMeshData::singlefluid::viscosity >().setApplyDefaultValue( m_defaultViscosity );
+  getField< fields::singlefluid::density >().setApplyDefaultValue( m_defaultDensity );
+  getField< fields::singlefluid::viscosity >().setApplyDefaultValue( m_defaultViscosity );
 
   m_density.setValues< serialPolicy >( m_referenceDensity );
   m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
@@ -130,8 +130,8 @@ void CompressibleSinglePhaseFluid::postProcessInput()
   real64 dRho_dP;
   real64 dVisc_dP;
   createKernelWrapper().compute( m_referencePressure, m_referenceDensity, dRho_dP, m_referenceViscosity, dVisc_dP );
-  getField< extrinsicMeshData::singlefluid::dDensity_dPressure >().setDefaultValue( dRho_dP );
-  getField< extrinsicMeshData::singlefluid::dViscosity_dPressure >().setDefaultValue( dVisc_dP );
+  getField< fields::singlefluid::dDensity_dPressure >().setDefaultValue( dRho_dP );
+  getField< fields::singlefluid::dViscosity_dPressure >().setDefaultValue( dVisc_dP );
 }
 
 CompressibleSinglePhaseFluid::KernelWrapper

@@ -208,7 +208,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
 
           // get the primary variables on reservoir elements
           arrayView1d< real64 > const & pres =
-            subRegion.getField< extrinsicMeshData::well::pressure >();
+            subRegion.getField< fields::well::pressure >();
           pres.move( LvArray::MemorySpace::host, false );
 
           // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
@@ -273,11 +273,11 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
 
       // get the primary variables on well elements
       arrayView1d< real64 > const & wellElemPressure =
-        subRegion.getField< extrinsicMeshData::well::pressure >();
+        subRegion.getField< fields::well::pressure >();
       wellElemPressure.move( LvArray::MemorySpace::host, false );
 
       arrayView1d< real64 > const & connRate =
-        subRegion.getField< extrinsicMeshData::well::connectionRate >();
+        subRegion.getField< fields::well::connectionRate >();
       connRate.move( LvArray::MemorySpace::host, false );
 
       // a) compute all the derivatives wrt to the pressure in WELL elem iwelem

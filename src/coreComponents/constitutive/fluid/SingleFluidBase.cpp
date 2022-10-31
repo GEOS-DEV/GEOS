@@ -31,23 +31,23 @@ namespace constitutive
 SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerField( extrinsicMeshData::singlefluid::density{}, &m_density );
-  registerField( extrinsicMeshData::singlefluid::dDensity_dPressure{}, &m_dDensity_dPressure );
-  registerField( extrinsicMeshData::singlefluid::dDensity_dTemperature{}, &m_dDensity_dTemperature );
-  registerField( extrinsicMeshData::singlefluid::density_n{}, &m_density_n );
+  registerField( fields::singlefluid::density{}, &m_density );
+  registerField( fields::singlefluid::dDensity_dPressure{}, &m_dDensity_dPressure );
+  registerField( fields::singlefluid::dDensity_dTemperature{}, &m_dDensity_dTemperature );
+  registerField( fields::singlefluid::density_n{}, &m_density_n );
 
-  registerField( extrinsicMeshData::singlefluid::viscosity{}, &m_viscosity );
-  registerField( extrinsicMeshData::singlefluid::dViscosity_dPressure{}, &m_dViscosity_dPressure );
-  registerField( extrinsicMeshData::singlefluid::dViscosity_dTemperature{}, &m_dViscosity_dTemperature );
+  registerField( fields::singlefluid::viscosity{}, &m_viscosity );
+  registerField( fields::singlefluid::dViscosity_dPressure{}, &m_dViscosity_dPressure );
+  registerField( fields::singlefluid::dViscosity_dTemperature{}, &m_dViscosity_dTemperature );
 
-  registerField( extrinsicMeshData::singlefluid::internalEnergy{}, &m_internalEnergy );
-  registerField( extrinsicMeshData::singlefluid::internalEnergy_n{}, &m_internalEnergy_n );
-  registerField( extrinsicMeshData::singlefluid::dInternalEnergy_dPressure{}, &m_dInternalEnergy_dPressure );
-  registerField( extrinsicMeshData::singlefluid::dInternalEnergy_dTemperature{}, &m_dInternalEnergy_dTemperature );
+  registerField( fields::singlefluid::internalEnergy{}, &m_internalEnergy );
+  registerField( fields::singlefluid::internalEnergy_n{}, &m_internalEnergy_n );
+  registerField( fields::singlefluid::dInternalEnergy_dPressure{}, &m_dInternalEnergy_dPressure );
+  registerField( fields::singlefluid::dInternalEnergy_dTemperature{}, &m_dInternalEnergy_dTemperature );
 
-  registerField( extrinsicMeshData::singlefluid::enthalpy{}, &m_enthalpy );
-  registerField( extrinsicMeshData::singlefluid::dEnthalpy_dPressure{}, &m_dEnthalpy_dPressure );
-  registerField( extrinsicMeshData::singlefluid::dEnthalpy_dTemperature{}, &m_dEnthalpy_dTemperature );
+  registerField( fields::singlefluid::enthalpy{}, &m_enthalpy );
+  registerField( fields::singlefluid::dEnthalpy_dPressure{}, &m_dEnthalpy_dPressure );
+  registerField( fields::singlefluid::dEnthalpy_dTemperature{}, &m_dEnthalpy_dTemperature );
 
 }
 
@@ -56,7 +56,7 @@ void SingleFluidBase::postProcessInput()
   ConstitutiveBase::postProcessInput();
 
   // for fracture elements, set the default value
-  getField< extrinsicMeshData::singlefluid::density_n >().
+  getField< fields::singlefluid::density_n >().
     setDefaultValue( defaultDensity() );
 }
 

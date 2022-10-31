@@ -25,7 +25,7 @@
 namespace geosx
 {
 
-namespace extrinsicMeshData
+namespace fields
 {
 
 namespace multifluid

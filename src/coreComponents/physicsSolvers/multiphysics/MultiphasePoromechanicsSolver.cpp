@@ -31,7 +31,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace extrinsicMeshData;
+using namespace fields;
 
 MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & name,
                                                               Group * const parent )
@@ -81,8 +81,8 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
       if( m_stabilizationType == StabilizationType::Global ||
           m_stabilizationType == StabilizationType::Local )
       {
-        subRegion.registerField< extrinsicMeshData::flow::macroElementIndex >( getName() );
-        subRegion.registerField< extrinsicMeshData::flow::elementStabConstant >( getName() );
+        subRegion.registerField< fields::flow::macroElementIndex >( getName() );
+        subRegion.registerField< fields::flow::elementStabConstant >( getName() );
       }
     } );
   } );
@@ -258,8 +258,8 @@ void MultiphasePoromechanicsSolver::updateStabilizationParameters( DomainPartiti
                                                                                               ElementSubRegionBase & subRegion )
 
     {
-      arrayView1d< integer > const macroElementIndex = subRegion.getField< extrinsicMeshData::flow::macroElementIndex >();
-      arrayView1d< real64 > const elementStabConstant = subRegion.getField< extrinsicMeshData::flow::elementStabConstant >();
+      arrayView1d< integer > const macroElementIndex = subRegion.getField< fields::flow::macroElementIndex >();
+      arrayView1d< real64 > const elementStabConstant = subRegion.getField< fields::flow::elementStabConstant >();
 
       geosx::constitutive::CoupledSolidBase const & porousSolid =
         getConstitutiveModel< geosx::constitutive::CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() ) );

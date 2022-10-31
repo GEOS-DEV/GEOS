@@ -149,35 +149,35 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
     FLUID.getReference< TRAIT::type >( TRAIT::key() )[0][0]
 
   MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseFrac {
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::phaseFraction ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseFraction )
+    GET_FLUID_DATA( fluid, fields::multifluid::phaseFraction ),
+    GET_FLUID_DATA( fluid, fields::multifluid::dPhaseFraction )
   };
 
   MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseDens {
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::phaseDensity ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseDensity )
+    GET_FLUID_DATA( fluid, fields::multifluid::phaseDensity ),
+    GET_FLUID_DATA( fluid, fields::multifluid::dPhaseDensity )
   };
 
   MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseVisc {
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::phaseViscosity ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseViscosity )
+    GET_FLUID_DATA( fluid, fields::multifluid::phaseViscosity ),
+    GET_FLUID_DATA( fluid, fields::multifluid::dPhaseViscosity )
   };
 
   MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 > phaseCompFrac {
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::phaseCompFraction ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseCompFraction )
+    GET_FLUID_DATA( fluid, fields::multifluid::phaseCompFraction ),
+    GET_FLUID_DATA( fluid, fields::multifluid::dPhaseCompFraction )
   };
 
   MultiFluidVarSlice< real64, 0, USD_FLUID - 2, USD_FLUID_DC - 2 > totalDens {
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::totalDensity ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dTotalDensity )
+    GET_FLUID_DATA( fluid, fields::multifluid::totalDensity ),
+    GET_FLUID_DATA( fluid, fields::multifluid::dTotalDensity )
   };
 
-  auto const & phaseFracCopy     = GET_FLUID_DATA( fluidCopy, extrinsicMeshData::multifluid::phaseFraction );
-  auto const & phaseDensCopy     = GET_FLUID_DATA( fluidCopy, extrinsicMeshData::multifluid::phaseDensity );
-  auto const & phaseViscCopy     = GET_FLUID_DATA( fluidCopy, extrinsicMeshData::multifluid::phaseViscosity );
-  auto const & phaseCompFracCopy = GET_FLUID_DATA( fluidCopy, extrinsicMeshData::multifluid::phaseCompFraction );
-  auto const & totalDensCopy     = GET_FLUID_DATA( fluidCopy, extrinsicMeshData::multifluid::totalDensity );
+  auto const & phaseFracCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseFraction );
+  auto const & phaseDensCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseDensity );
+  auto const & phaseViscCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseViscosity );
+  auto const & phaseCompFracCopy = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseCompFraction );
+  auto const & totalDensCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::totalDensity );
 
 #undef GET_FLUID_DATA
 

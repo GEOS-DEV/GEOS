@@ -384,9 +384,9 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
   ArrayOfArraysView< localIndex const > const & faceToNodesMap = faceManager.nodeList();
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion.faceList();
   array2dLayoutIncrDisplacementConst const incrementalDisplacement =
-    nodeManager.getField< extrinsicMeshData::solidMechanics::incrementalDisplacement >();
+    nodeManager.getField< fields::solidMechanics::incrementalDisplacement >();
   array2dLayoutTotalDisplacementConst const totalDisplacement =
-    nodeManager.getField< extrinsicMeshData::solidMechanics::totalDisplacement >();
+    nodeManager.getField< fields::solidMechanics::totalDisplacement >();
   arrayView1d< real64 > const aperture = fractureSubRegion.getReference< array1d< real64 > >( "elementAperture" );
 #endif
 
@@ -399,8 +399,8 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
 #endif
 
 #if SET_CREATION_PRESSURE==1
-  arrayView1d< real64 > const fluidPressure_n = fractureSubRegion.getField< extrinsicMeshData::flow::pressure_n >();
-  arrayView1d< real64 > const fluidPressure = fractureSubRegion.getField< extrinsicMeshData::flow::pressure >();
+  arrayView1d< real64 > const fluidPressure_n = fractureSubRegion.getField< fields::flow::pressure_n >();
+  arrayView1d< real64 > const fluidPressure = fractureSubRegion.getField< fields::flow::pressure >();
   // Set the new face elements to some unphysical numbers to make sure they get set by the following routines.
   SortedArrayView< localIndex const > const newFaceElements = fractureSubRegion.m_newFaceElements.toViewConst();
 

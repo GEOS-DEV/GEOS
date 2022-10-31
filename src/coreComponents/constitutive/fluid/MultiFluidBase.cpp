@@ -50,34 +50,34 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::useMassString(), &m_useMass ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerField( extrinsicMeshData::multifluid::phaseFraction{}, &m_phaseFraction.value );
-  registerField( extrinsicMeshData::multifluid::dPhaseFraction{}, &m_phaseFraction.derivs );
+  registerField( fields::multifluid::phaseFraction{}, &m_phaseFraction.value );
+  registerField( fields::multifluid::dPhaseFraction{}, &m_phaseFraction.derivs );
 
-  registerField( extrinsicMeshData::multifluid::phaseDensity{}, &m_phaseDensity.value );
-  registerField( extrinsicMeshData::multifluid::phaseDensity_n{}, &m_phaseDensity_n );
-  registerField( extrinsicMeshData::multifluid::dPhaseDensity{}, &m_phaseDensity.derivs );
+  registerField( fields::multifluid::phaseDensity{}, &m_phaseDensity.value );
+  registerField( fields::multifluid::phaseDensity_n{}, &m_phaseDensity_n );
+  registerField( fields::multifluid::dPhaseDensity{}, &m_phaseDensity.derivs );
 
-  registerField( extrinsicMeshData::multifluid::phaseMassDensity{}, &m_phaseMassDensity.value );
-  registerField( extrinsicMeshData::multifluid::dPhaseMassDensity{}, &m_phaseMassDensity.derivs );
+  registerField( fields::multifluid::phaseMassDensity{}, &m_phaseMassDensity.value );
+  registerField( fields::multifluid::dPhaseMassDensity{}, &m_phaseMassDensity.derivs );
 
-  registerField( extrinsicMeshData::multifluid::phaseViscosity{}, &m_phaseViscosity.value );
-  registerField( extrinsicMeshData::multifluid::dPhaseViscosity{}, &m_phaseViscosity.derivs );
+  registerField( fields::multifluid::phaseViscosity{}, &m_phaseViscosity.value );
+  registerField( fields::multifluid::dPhaseViscosity{}, &m_phaseViscosity.derivs );
 
-  registerField( extrinsicMeshData::multifluid::phaseEnthalpy{}, &m_phaseEnthalpy.value );
-  registerField( extrinsicMeshData::multifluid::phaseEnthalpy_n{}, &m_phaseEnthalpy_n );
-  registerField( extrinsicMeshData::multifluid::dPhaseEnthalpy{}, &m_phaseEnthalpy.derivs );
+  registerField( fields::multifluid::phaseEnthalpy{}, &m_phaseEnthalpy.value );
+  registerField( fields::multifluid::phaseEnthalpy_n{}, &m_phaseEnthalpy_n );
+  registerField( fields::multifluid::dPhaseEnthalpy{}, &m_phaseEnthalpy.derivs );
 
-  registerField( extrinsicMeshData::multifluid::phaseInternalEnergy{}, &m_phaseInternalEnergy.value );
-  registerField( extrinsicMeshData::multifluid::phaseInternalEnergy_n{}, &m_phaseInternalEnergy_n );
-  registerField( extrinsicMeshData::multifluid::dPhaseInternalEnergy{}, &m_phaseInternalEnergy.derivs );
+  registerField( fields::multifluid::phaseInternalEnergy{}, &m_phaseInternalEnergy.value );
+  registerField( fields::multifluid::phaseInternalEnergy_n{}, &m_phaseInternalEnergy_n );
+  registerField( fields::multifluid::dPhaseInternalEnergy{}, &m_phaseInternalEnergy.derivs );
 
-  registerField( extrinsicMeshData::multifluid::phaseCompFraction{}, &m_phaseCompFraction.value );
-  registerField( extrinsicMeshData::multifluid::phaseCompFraction_n{}, &m_phaseCompFraction_n );
-  registerField( extrinsicMeshData::multifluid::dPhaseCompFraction{}, &m_phaseCompFraction.derivs );
+  registerField( fields::multifluid::phaseCompFraction{}, &m_phaseCompFraction.value );
+  registerField( fields::multifluid::phaseCompFraction_n{}, &m_phaseCompFraction_n );
+  registerField( fields::multifluid::dPhaseCompFraction{}, &m_phaseCompFraction.derivs );
 
-  registerField( extrinsicMeshData::multifluid::totalDensity{}, &m_totalDensity.value );
-  registerField( extrinsicMeshData::multifluid::totalDensity_n{}, &m_totalDensity_n );
-  registerField( extrinsicMeshData::multifluid::dTotalDensity{}, &m_totalDensity.derivs );
+  registerField( fields::multifluid::totalDensity{}, &m_totalDensity.value );
+  registerField( fields::multifluid::totalDensity_n{}, &m_totalDensity_n );
+  registerField( fields::multifluid::dTotalDensity{}, &m_totalDensity.derivs );
 
 }
 
@@ -119,25 +119,25 @@ void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPt
 
 void MultiFluidBase::setLabels()
 {
-  getField< extrinsicMeshData::multifluid::phaseFraction >().
+  getField< fields::multifluid::phaseFraction >().
     setDimLabels( 2, m_phaseNames );
 
-  getField< extrinsicMeshData::multifluid::phaseDensity >().
+  getField< fields::multifluid::phaseDensity >().
     setDimLabels( 2, m_phaseNames );
 
-  getField< extrinsicMeshData::multifluid::phaseMassDensity >().
+  getField< fields::multifluid::phaseMassDensity >().
     setDimLabels( 2, m_phaseNames );
 
-  getField< extrinsicMeshData::multifluid::phaseViscosity >().
+  getField< fields::multifluid::phaseViscosity >().
     setDimLabels( 2, m_phaseNames );
 
-  getField< extrinsicMeshData::multifluid::phaseEnthalpy >().
+  getField< fields::multifluid::phaseEnthalpy >().
     setDimLabels( 2, m_phaseNames );
 
-  getField< extrinsicMeshData::multifluid::phaseInternalEnergy >().
+  getField< fields::multifluid::phaseInternalEnergy >().
     setDimLabels( 2, m_phaseNames );
 
-  getField< extrinsicMeshData::multifluid::phaseCompFraction >().
+  getField< fields::multifluid::phaseCompFraction >().
     setDimLabels( 2, m_phaseNames ).
     setDimLabels( 3, m_componentNames );
 }

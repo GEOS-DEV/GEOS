@@ -42,8 +42,8 @@ CapillaryPressureBase::CapillaryPressureBase( string const & name,
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerField( extrinsicMeshData::cappres::phaseCapPressure{}, &m_phaseCapPressure );
-  registerField( extrinsicMeshData::cappres::dPhaseCapPressure_dPhaseVolFraction{}, &m_dPhaseCapPressure_dPhaseVolFrac );
+  registerField( fields::cappres::phaseCapPressure{}, &m_phaseCapPressure );
+  registerField( fields::cappres::dPhaseCapPressure_dPhaseVolFraction{}, &m_dPhaseCapPressure_dPhaseVolFrac );
 
 }
 
@@ -97,7 +97,7 @@ void CapillaryPressureBase::resizeFields( localIndex const size,
 
 void CapillaryPressureBase::setLabels()
 {
-  getField< extrinsicMeshData::cappres::phaseCapPressure >().
+  getField< fields::cappres::phaseCapPressure >().
     setDimLabels( 2, m_phaseNames );
 }
 

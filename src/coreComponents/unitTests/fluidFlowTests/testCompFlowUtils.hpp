@@ -243,15 +243,15 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       arrayView1d< string const > const & components = fluid.componentNames();
 
       arrayView2d< real64, compflow::USD_COMP > const compDens =
-        subRegion.getField< extrinsicMeshData::flow::globalCompDensity >();
+        subRegion.getField< fields::flow::globalCompDensity >();
       arrayView2d< real64 const, compflow::USD_COMP > const compDens_n =
-        subRegion.getField< extrinsicMeshData::flow::globalCompDensity_n >();
+        subRegion.getField< fields::flow::globalCompDensity_n >();
 
       arrayView2d< real64, compflow::USD_COMP > const compFrac =
-        subRegion.getField< extrinsicMeshData::flow::globalCompFraction >();
+        subRegion.getField< fields::flow::globalCompFraction >();
 
       arrayView3d< real64, compflow::USD_COMP_DC > const dCompFrac_dCompDens =
-        subRegion.getField< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >();
+        subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >();
 
       // reset the solver state to zero out variable updates
       solver.resetStateToBeginningOfStep( domain );
@@ -328,20 +328,20 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       arrayView1d< string const > const & phases = fluid.phaseNames();
 
       arrayView1d< real64 > const pres =
-        subRegion.getField< extrinsicMeshData::flow::pressure >();
+        subRegion.getField< fields::flow::pressure >();
       arrayView1d< real64 const > const pres_n =
-        subRegion.getField< extrinsicMeshData::flow::pressure_n >();
+        subRegion.getField< fields::flow::pressure_n >();
 
       arrayView2d< real64, compflow::USD_COMP > const compDens =
-        subRegion.getField< extrinsicMeshData::flow::globalCompDensity >();
+        subRegion.getField< fields::flow::globalCompDensity >();
       arrayView2d< real64, compflow::USD_COMP > const compDens_n =
-        subRegion.getField< extrinsicMeshData::flow::globalCompDensity_n >();
+        subRegion.getField< fields::flow::globalCompDensity_n >();
 
       arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac =
-        subRegion.getField< extrinsicMeshData::flow::phaseVolumeFraction >();
+        subRegion.getField< fields::flow::phaseVolumeFraction >();
 
       arrayView3d< real64, compflow::USD_PHASE_DC > const dPhaseVolFrac =
-        subRegion.getField< extrinsicMeshData::flow::dPhaseVolumeFraction >();
+        subRegion.getField< fields::flow::dPhaseVolumeFraction >();
 
       // reset the solver state to zero out variable updates
       solver.resetStateToBeginningOfStep( domain );
@@ -423,9 +423,9 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       if( isThermal )
       {
         arrayView1d< real64 > const temp =
-          subRegion.getField< extrinsicMeshData::flow::temperature >();
+          subRegion.getField< fields::flow::temperature >();
         arrayView1d< real64 > const temp_n =
-          subRegion.getField< extrinsicMeshData::flow::temperature_n >();
+          subRegion.getField< fields::flow::temperature_n >();
 
         // reset the solver state to zero out variable updates
         solver.resetStateToBeginningOfStep( domain );
@@ -492,20 +492,20 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       arrayView1d< string const > const & phases = fluid.phaseNames();
 
       arrayView1d< real64 > const pres =
-        subRegion.getField< extrinsicMeshData::flow::pressure >();
+        subRegion.getField< fields::flow::pressure >();
       arrayView1d< real64 const > const pres_n =
-        subRegion.getField< extrinsicMeshData::flow::pressure_n >();
+        subRegion.getField< fields::flow::pressure_n >();
 
       arrayView2d< real64, compflow::USD_COMP > const compDens =
-        subRegion.getField< extrinsicMeshData::flow::globalCompDensity >();
+        subRegion.getField< fields::flow::globalCompDensity >();
       arrayView2d< real64 const, compflow::USD_COMP > const compDens_n =
-        subRegion.getField< extrinsicMeshData::flow::globalCompDensity_n >();
+        subRegion.getField< fields::flow::globalCompDensity_n >();
 
       arrayView2d< real64, compflow::USD_PHASE > const phaseMob =
-        subRegion.getField< extrinsicMeshData::flow::phaseMobility >();
+        subRegion.getField< fields::flow::phaseMobility >();
 
       arrayView3d< real64, compflow::USD_PHASE_DC > const dPhaseMob =
-        subRegion.getField< extrinsicMeshData::flow::dPhaseMobility >();
+        subRegion.getField< fields::flow::dPhaseMobility >();
 
       // reset the solver state to zero out variable updates
       solver.resetStateToBeginningOfStep( domain );
@@ -588,9 +588,9 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       if( isThermal )
       {
         arrayView1d< real64 > const temp =
-          subRegion.getField< extrinsicMeshData::flow::temperature >();
+          subRegion.getField< fields::flow::temperature >();
         arrayView1d< real64 const > const temp_n =
-          subRegion.getField< extrinsicMeshData::flow::temperature_n >();
+          subRegion.getField< fields::flow::temperature_n >();
 
         // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
         solver.resetStateToBeginningOfStep( domain );
@@ -657,9 +657,9 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
         subRegion.getReference< array1d< globalIndex > >( elemDofKey );
 
       arrayView1d< real64 > const pres =
-        subRegion.getField< extrinsicMeshData::flow::pressure >();
+        subRegion.getField< fields::flow::pressure >();
       arrayView2d< real64, compflow::USD_COMP > const compDens =
-        subRegion.getField< extrinsicMeshData::flow::globalCompDensity >();
+        subRegion.getField< fields::flow::globalCompDensity >();
 
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
@@ -744,7 +744,7 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
         if( isThermal )
         {
           arrayView1d< real64 > const temp =
-            subRegion.getField< extrinsicMeshData::flow::temperature >();
+            subRegion.getField< fields::flow::temperature >();
           temp.move( LvArray::MemorySpace::host, false );
 
           solver.resetStateToBeginningOfStep( domain );

@@ -260,7 +260,7 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex
                                        pointGhostRank[ originalIndices[ j ] ] );
 
         arrayView1d< localIndex > const & parentIndex =
-          embSurfNodeManager.getField< extrinsicMeshData::parentEdgeIndex >();
+          embSurfNodeManager.getField< fields::parentEdgeIndex >();
 
         parentIndex[nodeIndex] = pointParentIndex[ originalIndices[ j ] ];
 

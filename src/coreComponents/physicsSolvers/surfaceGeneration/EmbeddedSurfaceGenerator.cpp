@@ -86,7 +86,7 @@ void EmbeddedSurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
     EmbeddedSurfaceNodeManager & nodeManager = meshLevel.getEmbSurfNodeManager();
 
-    nodeManager.registerField< extrinsicMeshData::parentEdgeIndex >( this->getName() );
+    nodeManager.registerField< fields::parentEdgeIndex >( this->getName() );
   } );
 }
 

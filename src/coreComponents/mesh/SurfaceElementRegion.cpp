@@ -98,7 +98,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   rval = subRegion.size() - 1;
 
 
-  arrayView1d< real64 > const ruptureTime = subRegion.getField< extrinsicMeshData::ruptureTime >();
+  arrayView1d< real64 > const ruptureTime = subRegion.getField< fields::ruptureTime >();
 
   arrayView1d< real64 > const creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
 

@@ -224,24 +224,24 @@ struct PerforationKernel
   using TAG = compositionalMultiphaseWellKernels::SubRegionTag;
 
   using CompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::phaseVolumeFraction,
-                      extrinsicMeshData::flow::dPhaseVolumeFraction,
-                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
+    StencilAccessors< fields::flow::pressure,
+                      fields::flow::phaseVolumeFraction,
+                      fields::flow::dPhaseVolumeFraction,
+                      fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseDensity,
-                              extrinsicMeshData::multifluid::dPhaseDensity,
-                              extrinsicMeshData::multifluid::phaseViscosity,
-                              extrinsicMeshData::multifluid::dPhaseViscosity,
-                              extrinsicMeshData::multifluid::phaseCompFraction,
-                              extrinsicMeshData::multifluid::dPhaseCompFraction >;
+                              fields::multifluid::phaseDensity,
+                              fields::multifluid::dPhaseDensity,
+                              fields::multifluid::phaseViscosity,
+                              fields::multifluid::dPhaseViscosity,
+                              fields::multifluid::phaseCompFraction,
+                              fields::multifluid::dPhaseCompFraction >;
 
   using RelPermAccessors =
     StencilMaterialAccessors< RelativePermeabilityBase,
-                              extrinsicMeshData::relperm::phaseRelPerm,
-                              extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction >;
+                              fields::relperm::phaseRelPerm,
+                              fields::relperm::dPhaseRelPerm_dPhaseVolFraction >;
 
 
   /**
@@ -409,14 +409,14 @@ struct PresTempCompFracInitializationKernel
 {
 
   using CompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::temperature,
-                      extrinsicMeshData::flow::globalCompDensity,
-                      extrinsicMeshData::flow::phaseVolumeFraction >;
+    StencilAccessors< fields::flow::pressure,
+                      fields::flow::temperature,
+                      fields::flow::globalCompDensity,
+                      fields::flow::phaseVolumeFraction >;
 
   using MultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseMassDensity >;
+                              fields::multifluid::phaseMassDensity >;
 
 
   /**
@@ -511,14 +511,14 @@ public:
   TotalMassDensityKernel( ObjectManagerBase & subRegion,
                           MultiFluidBase const & fluid )
     : Base(),
-    m_phaseVolFrac( subRegion.getField< extrinsicMeshData::well::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac( subRegion.getField< extrinsicMeshData::well::dPhaseVolumeFraction >() ),
-    m_dCompFrac_dCompDens( subRegion.getField< extrinsicMeshData::well::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFrac( subRegion.getField< fields::well::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac( subRegion.getField< fields::well::dPhaseVolumeFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::well::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseMassDens( fluid.phaseMassDensity() ),
     m_dPhaseMassDens( fluid.dPhaseMassDensity() ),
-    m_totalMassDens( subRegion.getField< extrinsicMeshData::well::totalMassDensity >() ),
-    m_dTotalMassDens_dPres( subRegion.getField< extrinsicMeshData::well::dTotalMassDensity_dPressure >() ),
-    m_dTotalMassDens_dCompDens( subRegion.getField< extrinsicMeshData::well::dTotalMassDensity_dGlobalCompDensity >() )
+    m_totalMassDens( subRegion.getField< fields::well::totalMassDensity >() ),
+    m_dTotalMassDens_dPres( subRegion.getField< fields::well::dTotalMassDensity_dPressure >() ),
+    m_dTotalMassDens_dCompDens( subRegion.getField< fields::well::dTotalMassDensity_dGlobalCompDensity >() )
   {}
 
   /**
@@ -782,9 +782,9 @@ public:
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure =
-      subRegion.getField< extrinsicMeshData::well::pressure >();
+      subRegion.getField< fields::well::pressure >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-      subRegion.getField< extrinsicMeshData::well::globalCompDensity >();
+      subRegion.getField< fields::well::globalCompDensity >();
     isothermalCompositionalMultiphaseBaseKernels::
       ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxCompFracChange, rankOffset,
                                              numComp, dofKey, subRegion, localSolution, pressure, compDens );
@@ -825,8 +825,8 @@ public:
                    ElementSubRegionBase const & subRegion,
                    arrayView1d< real64 const > const localSolution )
   {
-    arrayView1d< real64 const > const pressure = subRegion.getField< extrinsicMeshData::well::pressure >();
-    arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< extrinsicMeshData::well::globalCompDensity >();
+    arrayView1d< real64 const > const pressure = subRegion.getField< fields::well::pressure >();
+    arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::well::globalCompDensity >();
     isothermalCompositionalMultiphaseBaseKernels::
       SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor, rankOffset,
                                   numComp, dofKey, subRegion, localSolution, pressure, compDens );

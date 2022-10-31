@@ -113,8 +113,8 @@ public:
           inputMatrix,
           inputRhs ),
     m_X( nodeManager.referencePosition() ),
-    m_disp( nodeManager.getField< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
-    m_uhat( nodeManager.getField< extrinsicMeshData::solidMechanics::incrementalDisplacement >() ),
+    m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
+    m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
@@ -147,7 +147,7 @@ public:
 
     // extract views into flow solver data
     {
-      using namespace extrinsicMeshData::flow;
+      using namespace fields::flow;
 
       m_fluidPressure_n = elementSubRegion.template getField< pressure_n >();
       m_fluidPressure = elementSubRegion.template getField< pressure >();

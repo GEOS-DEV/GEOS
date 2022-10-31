@@ -130,15 +130,15 @@ void testMobilityNumericalDerivatives( SinglePhaseFVM< SinglePhaseBase > & solve
       SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
 
       arrayView1d< real64 > const pres =
-        subRegion.getField< extrinsicMeshData::flow::pressure >();
+        subRegion.getField< fields::flow::pressure >();
       arrayView1d< real64 const > const pres_n =
-        subRegion.getField< extrinsicMeshData::flow::pressure_n >();
+        subRegion.getField< fields::flow::pressure_n >();
 
       arrayView1d< real64 > const mob =
-        subRegion.getField< extrinsicMeshData::flow::mobility >();
+        subRegion.getField< fields::flow::mobility >();
 
       arrayView1d< real64 > const dMob_dPres =
-        subRegion.getField< extrinsicMeshData::flow::dMobility_dPressure >();
+        subRegion.getField< fields::flow::dMobility_dPressure >();
 
       // reset the solver state to zero out variable updates
       solver.resetStateToBeginningOfStep( domain );
@@ -180,12 +180,12 @@ void testMobilityNumericalDerivatives( SinglePhaseFVM< SinglePhaseBase > & solve
       if( isThermal )
       {
         arrayView1d< real64 > const temp =
-          subRegion.getField< extrinsicMeshData::flow::temperature >();
+          subRegion.getField< fields::flow::temperature >();
         arrayView1d< real64 const > const temp_n =
-          subRegion.getField< extrinsicMeshData::flow::temperature_n >();
+          subRegion.getField< fields::flow::temperature_n >();
 
         arrayView1d< real64 > const dMob_dTemp =
-          subRegion.getField< extrinsicMeshData::flow::dMobility_dTemperature >();
+          subRegion.getField< fields::flow::dMobility_dTemperature >();
 
         // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
         solver.resetStateToBeginningOfStep( domain );
@@ -246,7 +246,7 @@ void fillCellCenteredNumericalJacobian( SINGLE_PHASE_SOLVER & solver,
         subRegion.getReference< array1d< globalIndex > >( elemDofKey );
 
       arrayView1d< real64 > const pres =
-        subRegion.getField< extrinsicMeshData::flow::pressure >();
+        subRegion.getField< fields::flow::pressure >();
 
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
@@ -285,7 +285,7 @@ void fillCellCenteredNumericalJacobian( SINGLE_PHASE_SOLVER & solver,
         if( isThermal )
         {
           arrayView1d< real64 > const temp =
-            subRegion.getField< extrinsicMeshData::flow::temperature >();
+            subRegion.getField< fields::flow::temperature >();
           temp.move( LvArray::MemorySpace::host, false );
 
           solver.resetStateToBeginningOfStep( domain );

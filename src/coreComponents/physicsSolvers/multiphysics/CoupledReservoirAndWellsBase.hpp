@@ -199,7 +199,7 @@ public:
       {
         array1d< array1d< arrayView3d< real64 const > > > const permeability =
           elemManager.constructMaterialExtrinsicAccessor< constitutive::PermeabilityBase,
-                                                          extrinsicMeshData::permeability::permeability >();
+                                                          fields::permeability::permeability >();
 
         PerforationData & perforationData = *subRegion.getPerforationData();
         WellControls const & wellControls = wellSolver()->getWellControls( subRegion );
@@ -211,9 +211,9 @@ public:
         if( wellControls.getLogLevel() >= 2 )
         {
           arrayView2d< real64 const > const perfLocation =
-            perforationData.getField< extrinsicMeshData::perforation::location >();
+            perforationData.getField< fields::perforation::location >();
           arrayView1d< real64 const > const perfTrans =
-            perforationData.getField< extrinsicMeshData::perforation::wellTransmissibility >();
+            perforationData.getField< fields::perforation::wellTransmissibility >();
 
           forAll< serialPolicy >( perforationData.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
           {

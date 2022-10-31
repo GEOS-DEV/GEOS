@@ -26,7 +26,7 @@ namespace geosx
 /**
  * A scope for extrinsic mesh data traits.
  */
-namespace extrinsicMeshData
+namespace fields
 {
 
 namespace flow

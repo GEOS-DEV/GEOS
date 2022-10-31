@@ -60,8 +60,8 @@ ObjectManagerBase::ObjectManagerBase( string const & name,
   excludeWrappersFromPacking( { viewKeyStruct::localToGlobalMapString(),
                                 viewKeyStruct::globalToLocalMapString(),
                                 viewKeyStruct::ghostRankString(),
-                                extrinsicMeshData::parentIndex::key(),
-                                extrinsicMeshData::childIndex::key() } );
+                                fields::parentIndex::key(),
+                                fields::childIndex::key() } );
 }
 
 ObjectManagerBase::~ObjectManagerBase()
@@ -373,10 +373,10 @@ localIndex ObjectManagerBase::packParentChildMapsImpl( buffer_unit_type * & buff
 {
   localIndex packedSize = 0;
 
-  if( this->hasField< extrinsicMeshData::parentIndex >() )
+  if( this->hasField< fields::parentIndex >() )
   {
-    arrayView1d< localIndex const > const parentIndex = this->getField< extrinsicMeshData::parentIndex >();
-    packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( extrinsicMeshData::parentIndex::key() ) );
+    arrayView1d< localIndex const > const parentIndex = this->getField< fields::parentIndex >();
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( fields::parentIndex::key() ) );
     packedSize += bufferOps::Pack< DO_PACKING >( buffer,
                                                  parentIndex,
                                                  packList,
@@ -384,10 +384,10 @@ localIndex ObjectManagerBase::packParentChildMapsImpl( buffer_unit_type * & buff
                                                  this->m_localToGlobalMap );
   }
 
-  if( this->hasField< extrinsicMeshData::childIndex >() )
+  if( this->hasField< fields::childIndex >() )
   {
-    arrayView1d< localIndex const > const & childIndex = this->getField< extrinsicMeshData::childIndex >();
-    packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( extrinsicMeshData::childIndex::key() ) );
+    arrayView1d< localIndex const > const & childIndex = this->getField< fields::childIndex >();
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( fields::childIndex::key() ) );
     packedSize += bufferOps::Pack< DO_PACKING >( buffer,
                                                  childIndex,
                                                  packList,
@@ -411,13 +411,13 @@ localIndex ObjectManagerBase::unpackParentChildMaps( buffer_unit_type const * & 
 {
   localIndex unpackedSize = 0;
 
-  if( this->hasField< extrinsicMeshData::parentIndex >() )
+  if( this->hasField< fields::parentIndex >() )
   {
-    arrayView1d< localIndex > const & parentIndex = this->getField< extrinsicMeshData::parentIndex >();
+    arrayView1d< localIndex > const & parentIndex = this->getField< fields::parentIndex >();
     string shouldBeParentIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeParentIndexString );
-    GEOSX_ERROR_IF( shouldBeParentIndexString != extrinsicMeshData::parentIndex::key(),
-                    "value read from buffer is:" << shouldBeParentIndexString << ". It should be " << extrinsicMeshData::parentIndex::key() );
+    GEOSX_ERROR_IF( shouldBeParentIndexString != fields::parentIndex::key(),
+                    "value read from buffer is:" << shouldBeParentIndexString << ". It should be " << fields::parentIndex::key() );
     unpackedSize += bufferOps::Unpack( buffer,
                                        parentIndex,
                                        packList,
@@ -425,13 +425,13 @@ localIndex ObjectManagerBase::unpackParentChildMaps( buffer_unit_type const * & 
                                        this->m_globalToLocalMap );
   }
 
-  if( this->hasField< extrinsicMeshData::childIndex >() )
+  if( this->hasField< fields::childIndex >() )
   {
-    arrayView1d< localIndex > const & childIndex = this->getField< extrinsicMeshData::childIndex >();
+    arrayView1d< localIndex > const & childIndex = this->getField< fields::childIndex >();
     string shouldBeChildIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeChildIndexString );
-    GEOSX_ERROR_IF( shouldBeChildIndexString != extrinsicMeshData::childIndex::key(),
-                    "value read from buffer is:" << shouldBeChildIndexString << ". It should be " << extrinsicMeshData::childIndex::key() );
+    GEOSX_ERROR_IF( shouldBeChildIndexString != fields::childIndex::key(),
+                    "value read from buffer is:" << shouldBeChildIndexString << ". It should be " << fields::childIndex::key() );
     unpackedSize += bufferOps::Unpack( buffer,
                                        childIndex,
                                        packList,
@@ -545,10 +545,10 @@ localIndex ObjectManagerBase::packGlobalMapsImpl( buffer_unit_type * & buffer,
   }
 
   // FIXME is this the responsibility of this instance to do this?
-  if( this->hasField< extrinsicMeshData::parentIndex >() )
+  if( this->hasField< fields::parentIndex >() )
   {
-    arrayView1d< localIndex const > const & parentIndex = this->getField< extrinsicMeshData::parentIndex >();
-    packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( extrinsicMeshData::parentIndex::key() ) );
+    arrayView1d< localIndex const > const & parentIndex = this->getField< fields::parentIndex >();
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( fields::parentIndex::key() ) );
     packedSize += bufferOps::Pack< DO_PACKING >( buffer,
                                                  parentIndex,
                                                  packList,
@@ -666,12 +666,12 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
   }
 
 
-  if( this->hasField< extrinsicMeshData::parentIndex >() )
+  if( this->hasField< fields::parentIndex >() )
   {
-    arrayView1d< localIndex > const & parentIndex = this->getField< extrinsicMeshData::parentIndex >();
+    arrayView1d< localIndex > const & parentIndex = this->getField< fields::parentIndex >();
     string parentIndicesString;
     unpackedSize += bufferOps::Unpack( buffer, parentIndicesString );
-    GEOSX_ERROR_IF( parentIndicesString != extrinsicMeshData::parentIndex::key(), "ObjectManagerBase::unpack(): label incorrect" );
+    GEOSX_ERROR_IF( parentIndicesString != fields::parentIndex::key(), "ObjectManagerBase::unpack(): label incorrect" );
     unpackedSize += bufferOps::Unpack( buffer,
                                        parentIndex,
                                        packList,
@@ -776,15 +776,15 @@ integer ObjectManagerBase::splitObject( localIndex const indexToSplit,
   // copy the fields
   copyObject( indexToSplit, newIndex );
 
-  if( this->hasField< extrinsicMeshData::parentIndex >() )
+  if( this->hasField< fields::parentIndex >() )
   {
-    arrayView1d< localIndex > const & parentIndex = this->getField< extrinsicMeshData::parentIndex >();
+    arrayView1d< localIndex > const & parentIndex = this->getField< fields::parentIndex >();
     parentIndex[newIndex] = indexToSplit;
   }
 
-  if( this->hasField< extrinsicMeshData::childIndex >() )
+  if( this->hasField< fields::childIndex >() )
   {
-    arrayView1d< localIndex > const & childIndex = this->getField< extrinsicMeshData::childIndex >();
+    arrayView1d< localIndex > const & childIndex = this->getField< fields::childIndex >();
     childIndex[indexToSplit] = newIndex;
   }
 
@@ -807,7 +807,7 @@ integer ObjectManagerBase::splitObject( localIndex const indexToSplit,
 
 void ObjectManagerBase::inheritGhostRankFromParent( std::set< localIndex > const & indices )
 {
-  arrayView1d< localIndex const > const parentIndex = this->getField< extrinsicMeshData::parentIndex >();
+  arrayView1d< localIndex const > const parentIndex = this->getField< fields::parentIndex >();
 
   for( auto const a : indices )
   {
@@ -1008,7 +1008,7 @@ void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices
 
 void ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices )
 {
-  arrayView1d< localIndex const > const childFaceIndices = getField< extrinsicMeshData::childIndex >();
+  arrayView1d< localIndex const > const childFaceIndices = getField< fields::childIndex >();
 
   for( localIndex const targetIndex : targetIndices )
   {

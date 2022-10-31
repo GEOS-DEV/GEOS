@@ -149,7 +149,7 @@ public:
     m_dofNumber( subRegion.template getReference< array1d< globalIndex > >( dofKey ) ),
     m_elemGhostRank( subRegion.ghostRank() ),
     m_volume( subRegion.getElementVolume() ),
-    m_deltaVolume( subRegion.template getField< extrinsicMeshData::flow::deltaVolume >() ),
+    m_deltaVolume( subRegion.template getField< fields::flow::deltaVolume >() ),
     m_porosity_n( solid.getPorosity_n() ),
     m_porosityNew( solid.getPorosity() ),
     m_dPoro_dPres( solid.getDporosity_dPressure() ),

@@ -44,8 +44,8 @@ WillisRichardsPermeability::WillisRichardsPermeability( string const & name, Gro
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Effective normal stress causes 90% reduction in aperture." );
 
-  registerField( extrinsicMeshData::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
-  registerField( extrinsicMeshData::permeability::dPerm_dTraction{}, &m_dPerm_dTraction );
+  registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+  registerField( fields::permeability::dPerm_dTraction{}, &m_dPerm_dTraction );
 }
 
 std::unique_ptr< ConstitutiveBase >

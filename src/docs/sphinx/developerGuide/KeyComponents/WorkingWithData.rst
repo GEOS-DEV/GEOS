@@ -119,7 +119,7 @@ should be the following definition somewhere in a header file:
 
 .. code-block:: c++
 
-    namespace extrinsicMeshData
+    namespace fields
     {
     struct TotalDisplacement
     {
@@ -143,7 +143,7 @@ Then the registration is simplified as follows:
       for( auto & mesh : MeshBodies->GetSubGroups() )
       {
         NodeManager & nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 ).getNodeManager();
-        nodes.registerField< extrinsicMeshData::TotalDisplacement >( this->getName() ).resizeDimension< 1 >( 3 );
+        nodes.registerField< fields::TotalDisplacement >( this->getName() ).resizeDimension< 1 >( 3 );
       }
     }
 
@@ -151,7 +151,7 @@ And to extract the data, the call would be:
 
 .. code-block:: c++
 
-    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.getField< extrinsicMeshData::TotalDisplacement >();
+    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.getField< fields::TotalDisplacement >();
     ... do something with u
 
 The end result of the ``trait approach`` to this example is that the developer

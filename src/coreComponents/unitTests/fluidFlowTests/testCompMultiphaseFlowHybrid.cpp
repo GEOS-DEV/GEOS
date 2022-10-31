@@ -202,7 +202,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
 
     // get the face-based pressure
     arrayView1d< real64 > const & facePres =
-      faceManager.getField< extrinsicMeshData::flow::facePressure >();
+      faceManager.getField< fields::flow::facePressure >();
     facePres.move( LvArray::MemorySpace::host, false );
 
     string const faceDofKey = dofManager.getKey( CompositionalMultiphaseHybridFVM::viewKeyStruct::faceDofFieldString() );

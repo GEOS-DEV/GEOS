@@ -69,34 +69,34 @@ public:
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
   using SinglePhaseFlowAccessors =
-    StencilAccessors< extrinsicMeshData::ghostRank,
-                      extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::pressure_n,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::flow::mobility,
-                      extrinsicMeshData::flow::dMobility_dPressure >;
+    StencilAccessors< fields::ghostRank,
+                      fields::flow::pressure,
+                      fields::flow::pressure_n,
+                      fields::flow::gravityCoefficient,
+                      fields::flow::mobility,
+                      fields::flow::dMobility_dPressure >;
 
   using SinglePhaseFluidAccessors =
     StencilMaterialAccessors< SingleFluidBase,
-                              extrinsicMeshData::singlefluid::density,
-                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
+                              fields::singlefluid::density,
+                              fields::singlefluid::dDensity_dPressure >;
 
   using SlurryFluidAccessors =
     StencilMaterialAccessors< SlurryFluidBase,
-                              extrinsicMeshData::singlefluid::density,
-                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
+                              fields::singlefluid::density,
+                              fields::singlefluid::dDensity_dPressure >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
-                              extrinsicMeshData::permeability::permeability,
-                              extrinsicMeshData::permeability::dPerm_dPressure >;
+                              fields::permeability::permeability,
+                              fields::permeability::dPerm_dPressure >;
 
   using ProppantPermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
-                              extrinsicMeshData::permeability::permeability,
-                              extrinsicMeshData::permeability::dPerm_dPressure,
-                              extrinsicMeshData::permeability::dPerm_dDispJump,
-                              extrinsicMeshData::permeability::permeabilityMultiplier >;
+                              fields::permeability::permeability,
+                              fields::permeability::dPerm_dPressure,
+                              fields::permeability::dPerm_dDispJump,
+                              fields::permeability::permeabilityMultiplier >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -120,15 +120,15 @@ public:
     : m_rankOffset( rankOffset ),
     m_dt( dt ),
     m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
-    m_permeability( permeabilityAccessors.get( extrinsicMeshData::permeability::permeability {} ) ),
-    m_dPerm_dPres( permeabilityAccessors.get( extrinsicMeshData::permeability::dPerm_dPressure {} ) ),
-    m_ghostRank( singlePhaseFlowAccessors.get( extrinsicMeshData::ghostRank {} ) ),
-    m_gravCoef( singlePhaseFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient {} ) ),
-    m_pres( singlePhaseFlowAccessors.get( extrinsicMeshData::flow::pressure {} ) ),
-    m_mob( singlePhaseFlowAccessors.get( extrinsicMeshData::flow::mobility {} ) ),
-    m_dMob_dPres( singlePhaseFlowAccessors.get( extrinsicMeshData::flow::dMobility_dPressure {} ) ),
-    m_dens( singlePhaseFluidAccessors.get( extrinsicMeshData::singlefluid::density {} ) ),
-    m_dDens_dPres( singlePhaseFluidAccessors.get( extrinsicMeshData::singlefluid::dDensity_dPressure {} ) ),
+    m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
+    m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
+    m_ghostRank( singlePhaseFlowAccessors.get( fields::ghostRank {} ) ),
+    m_gravCoef( singlePhaseFlowAccessors.get( fields::flow::gravityCoefficient {} ) ),
+    m_pres( singlePhaseFlowAccessors.get( fields::flow::pressure {} ) ),
+    m_mob( singlePhaseFlowAccessors.get( fields::flow::mobility {} ) ),
+    m_dMob_dPres( singlePhaseFlowAccessors.get( fields::flow::dMobility_dPressure {} ) ),
+    m_dens( singlePhaseFluidAccessors.get( fields::singlefluid::density {} ) ),
+    m_dDens_dPres( singlePhaseFluidAccessors.get( fields::singlefluid::dDensity_dPressure {} ) ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {}
@@ -636,34 +636,34 @@ struct FluxKernel
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using SinglePhaseFlowAccessors =
-    StencilAccessors< extrinsicMeshData::ghostRank,
-                      extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::pressure_n,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::flow::mobility,
-                      extrinsicMeshData::flow::dMobility_dPressure >;
+    StencilAccessors< fields::ghostRank,
+                      fields::flow::pressure,
+                      fields::flow::pressure_n,
+                      fields::flow::gravityCoefficient,
+                      fields::flow::mobility,
+                      fields::flow::dMobility_dPressure >;
 
   using SinglePhaseFluidAccessors =
     StencilMaterialAccessors< SingleFluidBase,
-                              extrinsicMeshData::singlefluid::density,
-                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
+                              fields::singlefluid::density,
+                              fields::singlefluid::dDensity_dPressure >;
 
   using SlurryFluidAccessors =
     StencilMaterialAccessors< SlurryFluidBase,
-                              extrinsicMeshData::singlefluid::density,
-                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
+                              fields::singlefluid::density,
+                              fields::singlefluid::dDensity_dPressure >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
-                              extrinsicMeshData::permeability::permeability,
-                              extrinsicMeshData::permeability::dPerm_dPressure >;
+                              fields::permeability::permeability,
+                              fields::permeability::dPerm_dPressure >;
 
   using ProppantPermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
-                              extrinsicMeshData::permeability::permeability,
-                              extrinsicMeshData::permeability::dPerm_dPressure,
-                              extrinsicMeshData::permeability::dPerm_dDispJump,
-                              extrinsicMeshData::permeability::permeabilityMultiplier >;
+                              fields::permeability::permeability,
+                              fields::permeability::dPerm_dPressure,
+                              fields::permeability::dPerm_dDispJump,
+                              fields::permeability::permeabilityMultiplier >;
 
 
   /**

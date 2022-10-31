@@ -248,7 +248,7 @@ private:
 };
 
 
-namespace extrinsicMeshData
+namespace fields
 {
 
 EXTRINSIC_MESH_DATA_TRAIT( Displacementx_nm1,

@@ -158,9 +158,9 @@ public:
    */
   ComponentFractionKernel( ObjectManagerBase & subRegion )
     : Base(),
-    m_compDens( subRegion.getField< extrinsicMeshData::flow::globalCompDensity >() ),
-    m_compFrac( subRegion.getField< extrinsicMeshData::flow::globalCompFraction >() ),
-    m_dCompFrac_dCompDens( subRegion.getField< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() )
+    m_compDens( subRegion.getField< fields::flow::globalCompDensity >() ),
+    m_compFrac( subRegion.getField< fields::flow::globalCompFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() )
   {}
 
   /**
@@ -271,10 +271,10 @@ public:
   PhaseVolumeFractionKernel( ObjectManagerBase & subRegion,
                              MultiFluidBase const & fluid )
     : Base(),
-    m_phaseVolFrac( subRegion.getField< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac( subRegion.getField< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
-    m_compDens( subRegion.getField< extrinsicMeshData::flow::globalCompDensity >() ),
-    m_dCompFrac_dCompDens( subRegion.getField< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
+    m_compDens( subRegion.getField< fields::flow::globalCompDensity >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseFrac( fluid.phaseFraction() ),
     m_dPhaseFrac( fluid.dPhaseFraction() ),
     m_phaseDens( fluid.phaseDensity() ),
@@ -551,10 +551,10 @@ public:
     m_porosity_n( solid.getPorosity_n() ),
     m_porosity( solid.getPorosity() ),
     m_dPoro_dPres( solid.getDporosity_dPressure() ),
-    m_dCompFrac_dCompDens( subRegion.getField< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
-    m_phaseVolFrac_n( subRegion.getField< extrinsicMeshData::flow::phaseVolumeFraction_n >() ),
-    m_phaseVolFrac( subRegion.getField< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac( subRegion.getField< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFrac_n( subRegion.getField< fields::flow::phaseVolumeFraction_n >() ),
+    m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens( fluid.dPhaseDensity() ),
@@ -1209,9 +1209,9 @@ public:
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure =
-      subRegion.getField< extrinsicMeshData::flow::pressure >();
+      subRegion.getField< fields::flow::pressure >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-      subRegion.getField< extrinsicMeshData::flow::globalCompDensity >();
+      subRegion.getField< fields::flow::globalCompDensity >();
     ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxCompFracChange, rankOffset,
                                            numComp, dofKey, subRegion, localSolution, pressure, compDens );
     return ScalingForSystemSolutionKernel::launch< POLICY >( subRegion.size(), kernel );
@@ -1366,9 +1366,9 @@ public:
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure =
-      subRegion.getField< extrinsicMeshData::flow::pressure >();
+      subRegion.getField< fields::flow::pressure >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-      subRegion.getField< extrinsicMeshData::flow::globalCompDensity >();
+      subRegion.getField< fields::flow::globalCompDensity >();
     SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor, rankOffset,
                                 numComp, dofKey, subRegion, localSolution, pressure, compDens );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );

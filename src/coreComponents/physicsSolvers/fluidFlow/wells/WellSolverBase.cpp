@@ -89,7 +89,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
                                                                             WellElementSubRegion & subRegion )
     {
 
-      subRegion.registerField< extrinsicMeshData::well::gravityCoefficient >( getName() );
+      subRegion.registerField< fields::well::gravityCoefficient >( getName() );
 
       subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
@@ -97,7 +97,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
         setSizedFromParent( 0 );
 
       PerforationData * const perforationData = subRegion.getPerforationData();
-      perforationData->registerField< extrinsicMeshData::well::gravityCoefficient >( getName() );
+      perforationData->registerField< fields::well::gravityCoefficient >( getName() );
     } );
   } );
 }
@@ -234,10 +234,10 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
       real64 const refElev = wellControls.getReferenceElevation();
 
       arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter();
-      arrayView1d< real64 > const wellElemGravCoef = subRegion.getField< extrinsicMeshData::well::gravityCoefficient >();
+      arrayView1d< real64 > const wellElemGravCoef = subRegion.getField< fields::well::gravityCoefficient >();
 
-      arrayView2d< real64 const > const perfLocation = perforationData.getField< extrinsicMeshData::perforation::location >();
-      arrayView1d< real64 > const perfGravCoef = perforationData.getField< extrinsicMeshData::well::gravityCoefficient >();
+      arrayView2d< real64 const > const perfLocation = perforationData.getField< fields::perforation::location >();
+      arrayView1d< real64 > const perfGravCoef = perforationData.getField< fields::well::gravityCoefficient >();
 
       forAll< serialPolicy >( perforationData.size(), [=]( localIndex const iperf )
       {

@@ -225,7 +225,7 @@ private:
 };
 
 
-namespace extrinsicMeshData
+namespace fields
 {
 
 EXTRINSIC_MESH_DATA_TRAIT( Pressure_nm1,

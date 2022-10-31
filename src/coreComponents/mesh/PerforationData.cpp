@@ -35,12 +35,12 @@ PerforationData::PerforationData( string const & name, Group * const parent )
 {
   registerWrapper( viewKeyStruct::numPerforationsGlobalString(), &m_numPerforationsGlobal );
 
-  registerField( extrinsicMeshData::perforation::reservoirElementRegion{}, &m_toMeshElements.m_toElementRegion );
-  registerField( extrinsicMeshData::perforation::reservoirElementSubRegion{}, &m_toMeshElements.m_toElementSubRegion );
-  registerField( extrinsicMeshData::perforation::reservoirElementIndex{}, &m_toMeshElements.m_toElementIndex );
-  registerField( extrinsicMeshData::perforation::wellElementIndex{}, &m_wellElementIndex );
-  registerField( extrinsicMeshData::perforation::location{}, &m_location );
-  registerField( extrinsicMeshData::perforation::wellTransmissibility{}, &m_wellTransmissibility );
+  registerField( fields::perforation::reservoirElementRegion{}, &m_toMeshElements.m_toElementRegion );
+  registerField( fields::perforation::reservoirElementSubRegion{}, &m_toMeshElements.m_toElementSubRegion );
+  registerField( fields::perforation::reservoirElementIndex{}, &m_toMeshElements.m_toElementIndex );
+  registerField( fields::perforation::wellElementIndex{}, &m_wellElementIndex );
+  registerField( fields::perforation::location{}, &m_location );
+  registerField( fields::perforation::wellTransmissibility{}, &m_wellTransmissibility );
 }
 
 PerforationData::~PerforationData()

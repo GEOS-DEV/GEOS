@@ -53,7 +53,7 @@ namespace geosx
 
 using namespace constitutive;
 using namespace dataRepository;
-using namespace extrinsicMeshData;
+using namespace fields;
 using namespace finiteElement;
 
 LagrangianContactSolver::LagrangianContactSolver( const string & name,
@@ -74,7 +74,7 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
 {
   ContactSolverBase::registerDataOnMesh( meshBodies );
 
-  using namespace extrinsicMeshData::contact;
+  using namespace fields::contact;
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -1714,7 +1714,7 @@ bool LagrangianContactSolver::resetConfigurationToDefault( DomainPartition & dom
 {
   GEOSX_MARK_FUNCTION;
 
-  using namespace extrinsicMeshData::contact;
+  using namespace fields::contact;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -1745,7 +1745,7 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  using namespace extrinsicMeshData::contact;
+  using namespace fields::contact;
 
   int hasConfigurationConverged = true;
 

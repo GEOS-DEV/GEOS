@@ -102,8 +102,8 @@ public:
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
   using FlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::mobility,
-                      extrinsicMeshData::flow::dMobility_dPressure >;
+    StencilAccessors< fields::flow::mobility,
+                      fields::flow::dMobility_dPressure >;
 
   /**
    * @brief Constructor
@@ -153,22 +153,22 @@ public:
     m_elemToFaces( subRegion.faceList().toViewConst() ),
     m_elemCenter( subRegion.getElementCenter() ),
     m_elemVolume( subRegion.getElementVolume() ),
-    m_elemGravCoef( subRegion.getField< extrinsicMeshData::flow::gravityCoefficient >() ),
+    m_elemGravCoef( subRegion.getField< fields::flow::gravityCoefficient >() ),
     m_faceToNodes( faceManager.nodeList().toViewConst() ),
-    m_faceGravCoef( faceManager.getField< extrinsicMeshData::flow::gravityCoefficient >() ),
+    m_faceGravCoef( faceManager.getField< fields::flow::gravityCoefficient >() ),
     m_regionFilter( regionFilter ),
     m_nodePosition( nodeManager.referencePosition() ),
     m_elemRegionList( faceManager.elementRegionList() ),
     m_elemSubRegionList( faceManager.elementSubRegionList() ),
     m_elemList( faceManager.elementList() ),
     m_elemPerm( permeability.permeability() ),
-    m_transMultiplier( faceManager.getField< extrinsicMeshData::flow::transMultiplier >() ),
-    m_elemPres( subRegion.getField< extrinsicMeshData::flow::pressure >() ),
-    m_facePres( faceManager.getField< extrinsicMeshData::flow::facePressure >() ),
+    m_transMultiplier( faceManager.getField< fields::flow::transMultiplier >() ),
+    m_elemPres( subRegion.getField< fields::flow::pressure >() ),
+    m_facePres( faceManager.getField< fields::flow::facePressure >() ),
     m_elemDens ( fluid.density() ),
     m_dElemDens_dPres( fluid.dDensity_dPressure() ),
-    m_mob( flowAccessors.get( extrinsicMeshData::flow::mobility {} ) ),
-    m_dMob_dPres( flowAccessors.get( extrinsicMeshData::flow::dMobility_dPressure {} ) ),
+    m_mob( flowAccessors.get( fields::flow::mobility {} ) ),
+    m_dMob_dPres( flowAccessors.get( fields::flow::dMobility_dPressure {} ) ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {}

@@ -78,19 +78,19 @@ public:
   using Base::m_sei;
 
   using ThermalSinglePhaseFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::temperature,
-                      extrinsicMeshData::flow::dMobility_dTemperature >;
+    StencilAccessors< fields::flow::temperature,
+                      fields::flow::dMobility_dTemperature >;
 
   using ThermalSinglePhaseFluidAccessors =
     StencilMaterialAccessors< SingleFluidBase,
-                              extrinsicMeshData::singlefluid::dDensity_dTemperature,
-                              extrinsicMeshData::singlefluid::enthalpy,
-                              extrinsicMeshData::singlefluid::dEnthalpy_dPressure,
-                              extrinsicMeshData::singlefluid::dEnthalpy_dTemperature >;
+                              fields::singlefluid::dDensity_dTemperature,
+                              fields::singlefluid::enthalpy,
+                              fields::singlefluid::dEnthalpy_dPressure,
+                              fields::singlefluid::dEnthalpy_dTemperature >;
 
   using ThermalConductivityAccessors =
     StencilMaterialAccessors< SinglePhaseThermalConductivityBase,
-                              extrinsicMeshData::thermalconductivity::effectiveConductivity >;
+                              fields::thermalconductivity::effectiveConductivity >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -128,13 +128,13 @@ public:
             dt,
             localMatrix,
             localRhs ),
-    m_temp( thermalSinglePhaseFlowAccessors.get( extrinsicMeshData::flow::temperature {} ) ),
-    m_dMob_dTemp( thermalSinglePhaseFlowAccessors.get( extrinsicMeshData::flow::dMobility_dTemperature {} ) ),
-    m_dDens_dTemp( thermalSinglePhaseFluidAccessors.get( extrinsicMeshData::singlefluid::dDensity_dTemperature {} ) ),
-    m_enthalpy( thermalSinglePhaseFluidAccessors.get( extrinsicMeshData::singlefluid::enthalpy {} ) ),
-    m_dEnthalpy_dPres( thermalSinglePhaseFluidAccessors.get( extrinsicMeshData::singlefluid::dEnthalpy_dPressure {} ) ),
-    m_dEnthalpy_dTemp( thermalSinglePhaseFluidAccessors.get( extrinsicMeshData::singlefluid::dEnthalpy_dTemperature {} ) ),
-    m_thermalConductivity( thermalConductivityAccessors.get( extrinsicMeshData::thermalconductivity::effectiveConductivity {} ) )
+    m_temp( thermalSinglePhaseFlowAccessors.get( fields::flow::temperature {} ) ),
+    m_dMob_dTemp( thermalSinglePhaseFlowAccessors.get( fields::flow::dMobility_dTemperature {} ) ),
+    m_dDens_dTemp( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dDensity_dTemperature {} ) ),
+    m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
+    m_dEnthalpy_dPres( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dPressure {} ) ),
+    m_dEnthalpy_dTemp( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dTemperature {} ) ),
+    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
   {}
 
   struct StackVariables : public Base::StackVariables

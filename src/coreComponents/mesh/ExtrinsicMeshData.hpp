@@ -69,7 +69,7 @@ namespace geosx
 /**
  * A scope for extrinsic mesh data traits.
  */
-namespace extrinsicMeshData
+namespace fields
 {
 
 namespace internal
@@ -147,7 +147,7 @@ EXTRINSIC_MESH_DATA_TRAIT( ruptureTime,
                            "Time that the object was ruptured/split." );
 
 
-} // namespace extrinsicMeshData
+} // namespace fields
 } // namespace geosx
 
 #endif /* GEOSX_MESH_EXTRINSIC_MESH_DATA_HPP_ */

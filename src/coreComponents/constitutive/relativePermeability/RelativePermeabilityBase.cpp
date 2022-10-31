@@ -40,12 +40,12 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerField( extrinsicMeshData::relperm::phaseRelPerm{}, &m_phaseRelPerm );
-  registerField( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{}, &m_dPhaseRelPerm_dPhaseVolFrac );
+  registerField( fields::relperm::phaseRelPerm{}, &m_phaseRelPerm );
+  registerField( fields::relperm::dPhaseRelPerm_dPhaseVolFraction{}, &m_dPhaseRelPerm_dPhaseVolFrac );
 
-  registerField( extrinsicMeshData::relperm::phaseTrappedVolFraction{}, &m_phaseTrappedVolFrac );
+  registerField( fields::relperm::phaseTrappedVolFraction{}, &m_phaseTrappedVolFrac );
 
-  registerField( extrinsicMeshData::relperm::phaseRelPerm_n{}, &m_phaseRelPerm_n );
+  registerField( fields::relperm::phaseRelPerm_n{}, &m_phaseRelPerm_n );
 
 }
 
@@ -102,11 +102,11 @@ void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex c
 
 void RelativePermeabilityBase::setLabels()
 {
-  getField< extrinsicMeshData::relperm::phaseRelPerm >().
+  getField< fields::relperm::phaseRelPerm >().
     setDimLabels( 2, m_phaseNames );
-  getField< extrinsicMeshData::relperm::phaseRelPerm_n >().
+  getField< fields::relperm::phaseRelPerm_n >().
     setDimLabels( 2, m_phaseNames );
-  getField< extrinsicMeshData::relperm::phaseTrappedVolFraction >().
+  getField< fields::relperm::phaseTrappedVolFraction >().
     setDimLabels( 2, m_phaseNames );
 }
 
