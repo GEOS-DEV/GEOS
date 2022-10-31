@@ -24,7 +24,7 @@
 #include "LvArray/src/tensorOps.hpp"
 #include "mesh/BufferOps.hpp"
 #include "mesh/ElementRegionManager.hpp"
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "utilities/ComputationalGeometry.hpp"
@@ -453,7 +453,7 @@ void FaceManager::compressRelationMaps()
 
 void FaceManager::enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices )
 {
-  arrayView1d< localIndex const > const childFaceIndices = getExtrinsicData< extrinsicMeshData::childIndex >();
+  arrayView1d< localIndex const > const childFaceIndices = getField< fields::childIndex >();
 
   ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange ( targetIndices );
 

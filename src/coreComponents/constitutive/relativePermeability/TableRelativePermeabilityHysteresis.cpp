@@ -18,7 +18,7 @@
 
 #include "TableRelativePermeabilityHysteresis.hpp"
 
-#include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "constitutive/relativePermeability/TableRelativePermeabilityHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 
@@ -131,8 +131,8 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setSizedFromParent( 0 );
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseMaxHistoricalVolFraction{}, &m_phaseMaxHistoricalVolFraction );
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseMinHistoricalVolFraction{}, &m_phaseMinHistoricalVolFraction );
+  registerField( fields::relperm::phaseMaxHistoricalVolFraction{}, &m_phaseMaxHistoricalVolFraction );
+  registerField( fields::relperm::phaseMinHistoricalVolFraction{}, &m_phaseMinHistoricalVolFraction );
 
   registerWrapper( viewKeyStruct::drainageRelPermKernelWrappersString(), &m_drainageRelPermKernelWrappers ).
     setSizedFromParent( 0 ).

@@ -22,7 +22,7 @@
 #include "constitutive/fluid/layouts.hpp"
 #include "constitutive/relativePermeability/layouts.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 namespace geosx

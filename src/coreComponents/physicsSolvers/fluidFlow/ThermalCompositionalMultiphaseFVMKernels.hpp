@@ -20,8 +20,8 @@
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivityBase.hpp"
-#include "constitutive/thermalConductivity/ThermalConductivityExtrinsicData.hpp"
-#include "constitutive/thermalConductivity/MultiPhaseThermalConductivityExtrinsicData.hpp"
+#include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
+#include "constitutive/thermalConductivity/MultiPhaseThermalConductivityFields.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
 namespace geosx
@@ -209,16 +209,16 @@ public:
   using Base::m_sei;
 
   using ThermalCompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::temperature >;
+    StencilAccessors< fields::flow::temperature >;
 
   using ThermalMultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseEnthalpy,
-                              extrinsicMeshData::multifluid::dPhaseEnthalpy >;
+                              fields::multifluid::phaseEnthalpy,
+                              fields::multifluid::dPhaseEnthalpy >;
 
   using ThermalConductivityAccessors =
     StencilMaterialAccessors< MultiPhaseThermalConductivityBase,
-                              extrinsicMeshData::thermalconductivity::effectiveConductivity >;
+                              fields::thermalconductivity::effectiveConductivity >;
   // for now, we treat thermal conductivity explicitly
 
   /**
@@ -266,10 +266,10 @@ public:
             dt,
             localMatrix,
             localRhs ),
-    m_temp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::temperature {} ) ),
-    m_phaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseEnthalpy {} ) ),
-    m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseEnthalpy {} ) ),
-    m_thermalConductivity( thermalConductivityAccessors.get( extrinsicMeshData::thermalconductivity::effectiveConductivity {} ) )
+    m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} ) ),
+    m_phaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
+    m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) ),
+    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
   {}
 
   struct StackVariables : public Base::StackVariables
@@ -721,16 +721,16 @@ public:
 
 
   using ThermalCompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::temperature >;
+    StencilAccessors< fields::flow::temperature >;
 
   using ThermalMultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseEnthalpy,
-                              extrinsicMeshData::multifluid::dPhaseEnthalpy >;
+                              fields::multifluid::phaseEnthalpy,
+                              fields::multifluid::dPhaseEnthalpy >;
 
   using ThermalConductivityAccessors =
     StencilMaterialAccessors< MultiPhaseThermalConductivityBase,
-                              extrinsicMeshData::thermalconductivity::effectiveConductivity >;
+                              fields::thermalconductivity::effectiveConductivity >;
   // for now, we treat thermal conductivity explicitly
 
   /**
@@ -784,10 +784,10 @@ public:
             dt,
             localMatrix,
             localRhs ),
-    m_temp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::temperature {} ) ),
-    m_phaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseEnthalpy {} ) ),
-    m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseEnthalpy {} ) ),
-    m_thermalConductivity( thermalConductivityAccessors.get( extrinsicMeshData::thermalconductivity::effectiveConductivity {} ) )
+    m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} ) ),
+    m_phaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
+    m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) ),
+    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
   {}
 
   struct StackVariables : public Base::StackVariables

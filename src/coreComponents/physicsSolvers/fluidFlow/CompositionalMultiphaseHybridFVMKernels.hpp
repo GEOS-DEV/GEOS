@@ -21,12 +21,12 @@
 
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
+#include "constitutive/fluid/MultiFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/ObjectManagerBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
@@ -553,18 +553,18 @@ struct FluxKernel
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using CompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::phaseMobility,
-                      extrinsicMeshData::flow::dPhaseMobility,
-                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
+    StencilAccessors< fields::flow::phaseMobility,
+                      fields::flow::dPhaseMobility,
+                      fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseDensity,
-                              extrinsicMeshData::multifluid::dPhaseDensity,
-                              extrinsicMeshData::multifluid::phaseMassDensity,
-                              extrinsicMeshData::multifluid::dPhaseMassDensity,
-                              extrinsicMeshData::multifluid::phaseCompFraction,
-                              extrinsicMeshData::multifluid::dPhaseCompFraction >;
+                              fields::multifluid::phaseDensity,
+                              fields::multifluid::dPhaseDensity,
+                              fields::multifluid::phaseMassDensity,
+                              fields::multifluid::dPhaseMassDensity,
+                              fields::multifluid::phaseCompFraction,
+                              fields::multifluid::dPhaseCompFraction >;
 
 
   /**
@@ -666,15 +666,15 @@ public:
                        MultiFluidBase const & fluid,
                        RelativePermeabilityBase const & relperm )
     : Base(),
-    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
-    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseVisc( fluid.phaseViscosity() ),
     m_dPhaseVisc( fluid.dPhaseViscosity() ),
     m_phaseRelPerm( relperm.phaseRelPerm() ),
     m_dPhaseRelPerm_dPhaseVolFrac( relperm.dPhaseRelPerm_dPhaseVolFraction() ),
-    m_phaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >() ),
-    m_dPhaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility >() )
+    m_phaseMob( subRegion.getField< fields::flow::phaseMobility >() ),
+    m_dPhaseMob( subRegion.getField< fields::flow::dPhaseMobility >() )
   {}
 
   /**

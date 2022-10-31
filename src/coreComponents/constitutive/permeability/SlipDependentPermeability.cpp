@@ -18,7 +18,7 @@
 
 #include "SlipDependentPermeability.hpp"
 #include "LvArray/src/tensorOps.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 
 namespace geosx
 {
@@ -44,7 +44,7 @@ SlipDependentPermeability::SlipDependentPermeability( string const & name, Group
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( " initial permeability of the fracture." );
 
-  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+  registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
 }
 
 std::unique_ptr< ConstitutiveBase >
