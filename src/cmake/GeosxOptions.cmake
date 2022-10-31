@@ -129,9 +129,12 @@ CHECK_CXX_COMPILER_FLAG("-Wunused-but-set-variable" CXX_UNUSED_BUT_SET_VAR)
 if (CXX_UNUSED_BUT_SET_VAR AND ENABLE_BENCHMARKS)
     set(is_appleclang "$<CXX_COMPILER_ID:AppleClang>")
     set(v13_or_later "$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,13>")
-    set(meet_requirements "$<AND:${is_gnu},${v13_or_later}>")
-    blt_add_target_compile_flags(TO gbenchmark
+    set(meet_requirements "$<AND:${is_appleclang},${v13_or_later}>")
+    blt_add_target_compile_flags(TO ${BLT_RUN_BENCHMARKS_TARGET_NAME}
                                 FLAGS $<${meet_requirements}:-Wno-unused-but-set-variable>)
+    unset(meet_requirements)
+    unset(v13_or_later)
+    unset(is_appleclang)
 endif()
 
 if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
