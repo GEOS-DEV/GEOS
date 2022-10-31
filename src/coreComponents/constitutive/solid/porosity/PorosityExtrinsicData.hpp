@@ -30,53 +30,53 @@ namespace fields
 namespace porosity
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( porosity,
-                           "porosity",
-                           array2d< real64 >,
-                           1.0, // important for newly created face elements
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Rock porosity" );
+DECLARE_FIELD( porosity,
+               "porosity",
+               array2d< real64 >,
+               1.0, // important for newly created face elements
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Rock porosity" );
 
-EXTRINSIC_MESH_DATA_TRAIT( porosity_n,
-                           "porosity_n",
-                           array2d< real64 >,
-                           1.0, // important for newly created face elements
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Rock porosity at the previous converged time step" );
+DECLARE_FIELD( porosity_n,
+               "porosity_n",
+               array2d< real64 >,
+               1.0, // important for newly created face elements
+               NOPLOT,
+               WRITE_AND_READ,
+               "Rock porosity at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPorosity_dPressure,
-                           "dPorosity_dPressure",
-                           array2d< real64 >,
-                           0.0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of rock porosity with respect to pressure" );
+DECLARE_FIELD( dPorosity_dPressure,
+               "dPorosity_dPressure",
+               array2d< real64 >,
+               0.0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of rock porosity with respect to pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( initialPorosity,
-                           "initialPorosity",
-                           array2d< real64 >,
-                           0.0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Initial porosity" );
+DECLARE_FIELD( initialPorosity,
+               "initialPorosity",
+               array2d< real64 >,
+               0.0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Initial porosity" );
 
-EXTRINSIC_MESH_DATA_TRAIT( referencePorosity,
-                           "referencePorosity",
-                           array1d< real64 >,
-                           1.0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Reference porosity" );
+DECLARE_FIELD( referencePorosity,
+               "referencePorosity",
+               array1d< real64 >,
+               1.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Reference porosity" );
 
-EXTRINSIC_MESH_DATA_TRAIT( biotCoefficient,
-                           "biotCoefficient",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Biot coefficient" );
+DECLARE_FIELD( biotCoefficient,
+               "biotCoefficient",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Biot coefficient" );
 
 }
 

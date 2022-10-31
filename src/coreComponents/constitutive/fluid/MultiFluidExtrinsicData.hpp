@@ -38,173 +38,173 @@ using array4dLayoutPhase_dC = array4d< real64, constitutive::multifluid::LAYOUT_
 using array4dLayoutPhaseComp = array4d< real64, constitutive::multifluid::LAYOUT_PHASE_COMP >;
 using array5dLayoutPhaseComp_dC = array5d< real64, constitutive::multifluid::LAYOUT_PHASE_COMP_DC >;
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseFraction,
-                           "phaseFraction",
-                           array3dLayoutPhase,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Phase fraction" );
+DECLARE_FIELD( phaseFraction,
+               "phaseFraction",
+               array3dLayoutPhase,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Phase fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseFraction,
-                           "dPhaseFraction",
-                           array4dLayoutPhase_dC,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase fraction with respect to pressure, temperature, and global component fractions" );
+DECLARE_FIELD( dPhaseFraction,
+               "dPhaseFraction",
+               array4dLayoutPhase_dC,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of phase fraction with respect to pressure, temperature, and global component fractions" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseDensity,
-                           "phaseDensity",
-                           array3dLayoutPhase,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Phase density" );
+DECLARE_FIELD( phaseDensity,
+               "phaseDensity",
+               array3dLayoutPhase,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Phase density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseDensity_n,
-                           "phaseDensity_n",
-                           array3dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase density at the previous converged time step" );
+DECLARE_FIELD( phaseDensity_n,
+               "phaseDensity_n",
+               array3dLayoutPhase,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Phase density at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseDensity,
-                           "dPhaseDensity",
-                           array4dLayoutPhase_dC,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase density with respect to pressure, temperature, and global component fractions" );
+DECLARE_FIELD( dPhaseDensity,
+               "dPhaseDensity",
+               array4dLayoutPhase_dC,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of phase density with respect to pressure, temperature, and global component fractions" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseMassDensity,
-                           "phaseMassDensity",
-                           array3dLayoutPhase,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Phase mass density" );
+DECLARE_FIELD( phaseMassDensity,
+               "phaseMassDensity",
+               array3dLayoutPhase,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Phase mass density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseMassDensity,
-                           "dPhaseMassDensity",
-                           array4dLayoutPhase_dC,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase mass density with respect to pressure, temperature, and global component fractions" );
+DECLARE_FIELD( dPhaseMassDensity,
+               "dPhaseMassDensity",
+               array4dLayoutPhase_dC,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of phase mass density with respect to pressure, temperature, and global component fractions" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseViscosity,
-                           "phaseViscosity",
-                           array3dLayoutPhase,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Phase viscosity" );
+DECLARE_FIELD( phaseViscosity,
+               "phaseViscosity",
+               array3dLayoutPhase,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Phase viscosity" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseViscosity,
-                           "dPhaseViscosity",
-                           array4dLayoutPhase_dC,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase viscosity with respect to pressure, temperature, and global component fractions" );
+DECLARE_FIELD( dPhaseViscosity,
+               "dPhaseViscosity",
+               array4dLayoutPhase_dC,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of phase viscosity with respect to pressure, temperature, and global component fractions" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseEnthalpy,
-                           "phaseEnthalpy",
-                           array3dLayoutPhase,
-                           0,
-                           NOPLOT, // default behavior overridden by thermal models
-                           NO_WRITE,
-                           "Phase enthalpy" );
+DECLARE_FIELD( phaseEnthalpy,
+               "phaseEnthalpy",
+               array3dLayoutPhase,
+               0,
+               NOPLOT, // default behavior overridden by thermal models
+               NO_WRITE,
+               "Phase enthalpy" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseEnthalpy_n,
-                           "phaseEnthalpy_n",
-                           array3dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase enthalpy at the previous converged time step" );
+DECLARE_FIELD( phaseEnthalpy_n,
+               "phaseEnthalpy_n",
+               array3dLayoutPhase,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Phase enthalpy at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseEnthalpy,
-                           "dPhaseEnthalpy",
-                           array4dLayoutPhase_dC,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions" );
+DECLARE_FIELD( dPhaseEnthalpy,
+               "dPhaseEnthalpy",
+               array4dLayoutPhase_dC,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseInternalEnergy,
-                           "phaseInternalEnergy",
-                           array3dLayoutPhase,
-                           0,
-                           NOPLOT, // default behavior overridden by thermal models
-                           NO_WRITE,
-                           "Phase internal energy" );
+DECLARE_FIELD( phaseInternalEnergy,
+               "phaseInternalEnergy",
+               array3dLayoutPhase,
+               0,
+               NOPLOT, // default behavior overridden by thermal models
+               NO_WRITE,
+               "Phase internal energy" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseInternalEnergy_n,
-                           "phaseInternalEnergy_n",
-                           array3dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase internal energy at the previous converged time step" );
+DECLARE_FIELD( phaseInternalEnergy_n,
+               "phaseInternalEnergy_n",
+               array3dLayoutPhase,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Phase internal energy at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseInternalEnergy,
-                           "dPhaseInternalEnergy",
-                           array4dLayoutPhase_dC,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase internal energy with respect to pressure, temperature, and global component fractions" );
+DECLARE_FIELD( dPhaseInternalEnergy,
+               "dPhaseInternalEnergy",
+               array4dLayoutPhase_dC,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of phase internal energy with respect to pressure, temperature, and global component fractions" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseCompFraction,
-                           "phaseCompFraction",
-                           array4dLayoutPhaseComp,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Phase component fraction" );
+DECLARE_FIELD( phaseCompFraction,
+               "phaseCompFraction",
+               array4dLayoutPhaseComp,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Phase component fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseCompFraction_n,
-                           "phaseCompFraction_n",
-                           array4dLayoutPhaseComp,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase component fraction at the previous converged time step" );
+DECLARE_FIELD( phaseCompFraction_n,
+               "phaseCompFraction_n",
+               array4dLayoutPhaseComp,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Phase component fraction at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseCompFraction,
-                           "dPhaseCompFraction",
-                           array5dLayoutPhaseComp_dC,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase component fraction with respect to pressure, temperature, and global component fractions" );
+DECLARE_FIELD( dPhaseCompFraction,
+               "dPhaseCompFraction",
+               array5dLayoutPhaseComp_dC,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of phase component fraction with respect to pressure, temperature, and global component fractions" );
 
-EXTRINSIC_MESH_DATA_TRAIT( totalDensity,
-                           "totalDensity",
-                           array2dLayoutFluid,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Total density" );
+DECLARE_FIELD( totalDensity,
+               "totalDensity",
+               array2dLayoutFluid,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Total density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( totalDensity_n,
-                           "totalDensity_n",
-                           array2dLayoutFluid,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Total density at the previous converged time step" );
+DECLARE_FIELD( totalDensity_n,
+               "totalDensity_n",
+               array2dLayoutFluid,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Total density at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dTotalDensity,
-                           "dTotalDensity",
-                           array3dLayoutFluid_dC,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of total density with respect to pressure, temperature, and global component fractions" );
+DECLARE_FIELD( dTotalDensity,
+               "dTotalDensity",
+               array3dLayoutFluid_dC,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of total density with respect to pressure, temperature, and global component fractions" );
 
 }
 

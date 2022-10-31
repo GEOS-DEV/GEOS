@@ -30,53 +30,53 @@ namespace fields
 namespace permeability
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( permeability,
-                           "permeability",
-                           array3d< real64 >,
-                           -1,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Rock permeability" );
+DECLARE_FIELD( permeability,
+               "permeability",
+               array3d< real64 >,
+               -1,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Rock permeability" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPerm_dPressure,
-                           "dPerm_dPressure",
-                           array3d< real64 >,
-                           0,
-                           LEVEL_3,
-                           WRITE_AND_READ,
-                           "Derivative of rock permeability with respect to pressure" );
+DECLARE_FIELD( dPerm_dPressure,
+               "dPerm_dPressure",
+               array3d< real64 >,
+               0,
+               LEVEL_3,
+               WRITE_AND_READ,
+               "Derivative of rock permeability with respect to pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPerm_dAperture,
-                           "dPerm_dAperture",
-                           array3d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of rock permeability with respect to aperture" );
+DECLARE_FIELD( dPerm_dAperture,
+               "dPerm_dAperture",
+               array3d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of rock permeability with respect to aperture" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPerm_dDispJump,
-                           "dPerm_dDispJump",
-                           array4d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of rock permeability with respect to displacement jump" );
+DECLARE_FIELD( dPerm_dDispJump,
+               "dPerm_dDispJump",
+               array4d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of rock permeability with respect to displacement jump" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPerm_dTraction,
-                           "dPerm_dTraction",
-                           array4d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of rock permeability with respect to the traction vector" );
+DECLARE_FIELD( dPerm_dTraction,
+               "dPerm_dTraction",
+               array4d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of rock permeability with respect to the traction vector" );
 
-EXTRINSIC_MESH_DATA_TRAIT( permeabilityMultiplier,
-                           "permeabilityMultiplier",
-                           array3d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Rock permeability multiplier" );
+DECLARE_FIELD( permeabilityMultiplier,
+               "permeabilityMultiplier",
+               array3d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Rock permeability multiplier" );
 
 }
 

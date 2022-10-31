@@ -30,110 +30,109 @@ namespace fields
 namespace slurryfluid
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( dDensity_dProppantConcentration,
-                           "dDens_dProppantConc",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of density with respect to proppant concentration" );
+DECLARE_FIELD( dDensity_dProppantConcentration,
+               "dDens_dProppantConc",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of density with respect to proppant concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dDensity_dComponentConcentration,
-                           "dDens_dCompConc",
-                           array3d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of density with respect to component concentration" );
+DECLARE_FIELD( dDensity_dComponentConcentration,
+               "dDens_dCompConc",
+               array3d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of density with respect to component concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( componentDensity,
-                           "componentDensity",
-                           array3d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Component density" );
+DECLARE_FIELD( componentDensity,
+               "componentDensity",
+               array3d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Component density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dComponentDensity_dPressure,
-                           "dCompDens_dPres",
-                           array3d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of component density with respect to pressure" );
+DECLARE_FIELD( dComponentDensity_dPressure,
+               "dCompDens_dPres",
+               array3d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of component density with respect to pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dComponentDensity_dComponentConcentration,
-                           "dCompDens_dCompConc",
-                           array4d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of component density with respect to component concentration" );
+DECLARE_FIELD( dComponentDensity_dComponentConcentration,
+               "dCompDens_dCompConc",
+               array4d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of component density with respect to component concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( fluidDensity,
-                           "FluidDensity",
-                           array2d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Fluid density" );
+DECLARE_FIELD( fluidDensity,
+               "FluidDensity",
+               array2d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Fluid density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dFluidDensity_dPressure,
-                           "dFluidDens_dPres",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of fluid density with respect to pressure" );
+DECLARE_FIELD( dFluidDensity_dPressure,
+               "dFluidDens_dPres",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of fluid density with respect to pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dFluidDensity_dComponentConcentration,
-                           "dFluidDens_dCompConc",
-                           array3d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of fluid density with respect to component concentration" );
+DECLARE_FIELD( dFluidDensity_dComponentConcentration,
+               "dFluidDens_dCompConc",
+               array3d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of fluid density with respect to component concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dViscosity_dProppantConcentration,
-                           "dVisc_dProppantConc",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of viscosity with respect to proppant concentration" );
+DECLARE_FIELD( dViscosity_dProppantConcentration,
+               "dVisc_dProppantConc",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of viscosity with respect to proppant concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dViscosity_dComponentConcentration,
-                           "dVisc_dCompConc",
-                           array3d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of viscosity with respect to component concentration" );
+DECLARE_FIELD( dViscosity_dComponentConcentration,
+               "dVisc_dCompConc",
+               array3d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of viscosity with respect to component concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( fluidViscosity,
-                           "FluidViscosity",
-                           array2d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Fluid viscosity" );
+DECLARE_FIELD( fluidViscosity,
+               "FluidViscosity",
+               array2d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Fluid viscosity" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dFluidViscosity_dPressure,
-                           "dFluidVisc_dPres",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of fluid viscosity with respect to pressure" );
+DECLARE_FIELD( dFluidViscosity_dPressure,
+               "dFluidVisc_dPres",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of fluid viscosity with respect to pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dFluidViscosity_dComponentConcentration,
-                           "dFluidVisc_dCompConc",
-                           array3d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of fluid viscosity with respect to component concentration" );
-
+DECLARE_FIELD( dFluidViscosity_dComponentConcentration,
+               "dFluidVisc_dCompConc",
+               array3d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of fluid viscosity with respect to component concentration" );
 
 }
 

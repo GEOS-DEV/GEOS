@@ -32,45 +32,45 @@ namespace fields
 namespace well
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( pressure,
-                           "pressure",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Pressure" );
+DECLARE_FIELD( pressure,
+               "pressure",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( pressure_n,
-                           "pressure_n",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Pressure at the previous converged time step" );
+DECLARE_FIELD( pressure_n,
+               "pressure_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Pressure at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( temperature,
-                           "wellTemperature",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Temperature" );
+DECLARE_FIELD( temperature,
+               "wellTemperature",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Temperature" );
 
-EXTRINSIC_MESH_DATA_TRAIT( temperature_n,
-                           "wellTemperature_n",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Temperature at the previous converged time step" );
+DECLARE_FIELD( temperature_n,
+               "wellTemperature_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Temperature at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( gravityCoefficient,
-                           "gravityCoefficient",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Gravity coefficient (dot product of gravity acceleration by gravity vector)" );
+DECLARE_FIELD( gravityCoefficient,
+               "gravityCoefficient",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Gravity coefficient (dot product of gravity acceleration by gravity vector)" );
 
 }
 

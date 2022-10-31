@@ -32,45 +32,45 @@ namespace fields
 namespace well
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( connectionRate,
-                           "connectionRate",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Connection rate" );
+DECLARE_FIELD( connectionRate,
+               "connectionRate",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Connection rate" );
 
-EXTRINSIC_MESH_DATA_TRAIT( connectionRate_n,
-                           "connectionRate_n",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Connection rate at the previous converged time step" );
+DECLARE_FIELD( connectionRate_n,
+               "connectionRate_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Connection rate at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( density_n,
-                           "density_n",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Density at the previous converged time step" );
+DECLARE_FIELD( density_n,
+               "density_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Density at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( perforationRate,
-                           "perforationRate",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Perforation rate" );
+DECLARE_FIELD( perforationRate,
+               "perforationRate",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Perforation rate" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPerforationRate_dPres,
-                           "dPerforationRate_dPres",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of perforation rate with respect to pressure" );
+DECLARE_FIELD( dPerforationRate_dPres,
+               "dPerforationRate_dPres",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of perforation rate with respect to pressure" );
 
 }
 

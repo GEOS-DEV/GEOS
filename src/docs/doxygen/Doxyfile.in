@@ -2033,7 +2033,7 @@ EXPAND_AS_DEFINED      = LVARRAY_HOST_DEVICE \
                          CONSTEXPR_WITHOUT_BOUNDS_CHECK \
                          GEOSX_HOST_DEVICE \
                          DISABLE_HD_WARNING \
-                         EXTRINSIC_MESH_DATA_TRAIT \
+                         DECLARE_FIELD \
                          GEOSX_FORCE_INLINE \
                          USING_FINITEELEMENTBASE \ 
                          MAKE_PRINT_MATVIEW

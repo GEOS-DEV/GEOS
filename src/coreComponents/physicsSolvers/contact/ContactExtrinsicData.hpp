@@ -48,78 +48,78 @@ struct FractureState
   };
 };
 
-EXTRINSIC_MESH_DATA_TRAIT( dispJump,
-                           "displacementJump",
-                           array2d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Displacement jump vector" );
+DECLARE_FIELD( dispJump,
+               "displacementJump",
+               array2d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Displacement jump vector" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaDispJump,
-                           "deltaDisplacementJump",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Delta displacement jump vector" );
+DECLARE_FIELD( deltaDispJump,
+               "deltaDisplacementJump",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Delta displacement jump vector" );
 
-EXTRINSIC_MESH_DATA_TRAIT( oldDispJump,
-                           "oldDisplacementJump",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Displacement jump vector at the previous time-step" );
+DECLARE_FIELD( oldDispJump,
+               "oldDisplacementJump",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Displacement jump vector at the previous time-step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( traction,
-                           "traction",
-                           array2d< real64 >,
-                           0,
-                           LEVEL_0,
-                           NO_WRITE,
-                           "Fracture traction vector" );
+DECLARE_FIELD( traction,
+               "traction",
+               array2d< real64 >,
+               0,
+               LEVEL_0,
+               NO_WRITE,
+               "Fracture traction vector" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaTraction,
-                           "deltaTraction",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "An array that holds the traction increments on the fracture." );
+DECLARE_FIELD( deltaTraction,
+               "deltaTraction",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "An array that holds the traction increments on the fracture." );
 
 
-EXTRINSIC_MESH_DATA_TRAIT( dTraction_dJump,
-                           "dTraction_dJump",
-                           array3d< real64 >,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of the traction w.r.t. the displacement jump." );
+DECLARE_FIELD( dTraction_dJump,
+               "dTraction_dJump",
+               array3d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of the traction w.r.t. the displacement jump." );
 
-EXTRINSIC_MESH_DATA_TRAIT( dTraction_dPressure,
-                           "dTraction_dPressure",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of the traction w.r.t. to the fluid pressure." );
+DECLARE_FIELD( dTraction_dPressure,
+               "dTraction_dPressure",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of the traction w.r.t. to the fluid pressure." );
 
-EXTRINSIC_MESH_DATA_TRAIT( fractureState,
-                           "fractureState",
-                           array1d< integer >,
-                           FractureState::Stick,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Fracture state." );
+DECLARE_FIELD( fractureState,
+               "fractureState",
+               array1d< integer >,
+               FractureState::Stick,
+               NOPLOT,
+               NO_WRITE,
+               "Fracture state." );
 
-EXTRINSIC_MESH_DATA_TRAIT( oldFractureState,
-                           "oldFractureState",
-                           array1d< integer >,
-                           FractureState::Stick,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Fracture state at the previous timestep." );
+DECLARE_FIELD( oldFractureState,
+               "oldFractureState",
+               array1d< integer >,
+               FractureState::Stick,
+               NOPLOT,
+               NO_WRITE,
+               "Fracture state at the previous timestep." );
 
 
 ENUM_STRINGS( FractureState::State, "stick", "new_slip", "slip", "open" );

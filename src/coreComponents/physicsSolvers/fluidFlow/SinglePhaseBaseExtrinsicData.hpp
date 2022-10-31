@@ -32,29 +32,29 @@ namespace fields
 namespace flow
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( mobility,
-                           "mobility",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Mobility" );
+DECLARE_FIELD( mobility,
+               "mobility",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Mobility" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dMobility_dPressure,
-                           "dMobility_dPressure",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of mobility with respect to pressure" );
+DECLARE_FIELD( dMobility_dPressure,
+               "dMobility_dPressure",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of mobility with respect to pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dMobility_dTemperature,
-                           "dMobility_dTemperature",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of mobility with respect to temperature" );
+DECLARE_FIELD( dMobility_dTemperature,
+               "dMobility_dTemperature",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of mobility with respect to temperature" );
 
 }
 

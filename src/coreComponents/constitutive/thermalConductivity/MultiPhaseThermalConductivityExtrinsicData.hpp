@@ -31,13 +31,13 @@ namespace fields
 namespace thermalconductivity
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( dEffectiveConductivity_dPhaseVolFraction,
-                           "dEffectiveConductivity_dPhaseVolFraction",
-                           array4d< real64 >,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of effective conductivity with respect to phase volume fraction" );
+DECLARE_FIELD( dEffectiveConductivity_dPhaseVolFraction,
+               "dEffectiveConductivity_dPhaseVolFraction",
+               array4d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of effective conductivity with respect to phase volume fraction" );
 
 }
 

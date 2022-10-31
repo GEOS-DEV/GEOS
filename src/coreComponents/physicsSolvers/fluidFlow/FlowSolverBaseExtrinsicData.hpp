@@ -32,167 +32,165 @@ namespace fields
 namespace flow
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( pressure,
-                           "pressure",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Pressure" );
+DECLARE_FIELD( pressure,
+               "pressure",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( pressure_n,
-                           "pressure_n",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Pressure at the previous converged time step" );
+DECLARE_FIELD( pressure_n,
+               "pressure_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Pressure at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( initialPressure,
-                           "initialPressure",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Initial pressure" );
+DECLARE_FIELD( initialPressure,
+               "initialPressure",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Initial pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaPressure,
-                           "deltaPressure",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Delta pressure: current pressure - initial pressure" );
+DECLARE_FIELD( deltaPressure,
+               "deltaPressure",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Delta pressure: current pressure - initial pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( facePressure,
-                           "facePressure",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Face pressure" );
+DECLARE_FIELD( facePressure,
+               "facePressure",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Face pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( facePressure_n,
-                           "facePressure_n",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Face pressure at the previous converged time step" );
+DECLARE_FIELD( facePressure_n,
+               "facePressure_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Face pressure at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( temperature,
-                           "temperature",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Temperature" );
+DECLARE_FIELD( temperature,
+               "temperature",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Temperature" );
 
-EXTRINSIC_MESH_DATA_TRAIT( faceTemperature,
-                           "faceTemperature",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Face temperature" );
+DECLARE_FIELD( faceTemperature,
+               "faceTemperature",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Face temperature" );
 
-EXTRINSIC_MESH_DATA_TRAIT( temperature_n,
-                           "temperature_n",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Temperature at the previous converged time step" );
+DECLARE_FIELD( temperature_n,
+               "temperature_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Temperature at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( netToGross,
-                           "netToGross",
-                           array1d< real64 >,
-                           1,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Net to gross" );
+DECLARE_FIELD( netToGross,
+               "netToGross",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Net to gross" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaVolume,
-                           "deltaVolume",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Accumulated volume updates" );
+DECLARE_FIELD( deltaVolume,
+               "deltaVolume",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Accumulated volume updates" );
 
-EXTRINSIC_MESH_DATA_TRAIT( aperture0,
-                           "aperture_n",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Initial aperture" );
+DECLARE_FIELD( aperture0,
+               "aperture_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Initial aperture" );
 
-EXTRINSIC_MESH_DATA_TRAIT( hydraulicAperture,
-                           "hydraulicAperture",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Hydraulic aperture" );
+DECLARE_FIELD( hydraulicAperture,
+               "hydraulicAperture",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Hydraulic aperture" );
 
-EXTRINSIC_MESH_DATA_TRAIT( gravityCoefficient,
-                           "gravityCoefficient",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Gravity coefficient (dot product of gravity acceleration by gravity vector)" );
+DECLARE_FIELD( gravityCoefficient,
+               "gravityCoefficient",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Gravity coefficient (dot product of gravity acceleration by gravity vector)" );
 
-EXTRINSIC_MESH_DATA_TRAIT( mimGravityCoefficient,
-                           "mimGravityCoefficient",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Mimetic gravity coefficient" );
+DECLARE_FIELD( mimGravityCoefficient,
+               "mimGravityCoefficient",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Mimetic gravity coefficient" );
 
-EXTRINSIC_MESH_DATA_TRAIT( macroElementIndex,
-                           "macroElementIndex",
-                           array1d< integer >,
-                           -1,
-                           LEVEL_1,
-                           WRITE_AND_READ,
-                           "Index of the macroelement for a given element" );
+DECLARE_FIELD( macroElementIndex,
+               "macroElementIndex",
+               array1d< integer >,
+               -1,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "Index of the macroelement for a given element" );
 
-EXTRINSIC_MESH_DATA_TRAIT( bcPressure,
-                           "bcPressure",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Boundary condition pressure" );
+DECLARE_FIELD( bcPressure,
+               "bcPressure",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Boundary condition pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( bcTemperature,
-                           "bcTemperature",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Boundary condition temperature" );
+DECLARE_FIELD( bcTemperature,
+               "bcTemperature",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Boundary condition temperature" );
 
-EXTRINSIC_MESH_DATA_TRAIT( elementStabConstant,
-                           "elementStabConstant",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_1,
-                           WRITE_AND_READ,
-                           "Stabilization constant for pressure jump stabilization" );
+DECLARE_FIELD( elementStabConstant,
+               "elementStabConstant",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "Stabilization constant for pressure jump stabilization" );
 
-EXTRINSIC_MESH_DATA_TRAIT( transMultiplier,
-                           "permeabilityTransMultiplier",
-                           array1d< real64 >,
-                           1,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Permeability transmissibility multipliers" );
-
-
+DECLARE_FIELD( transMultiplier,
+               "permeabilityTransMultiplier",
+               array1d< real64 >,
+               1,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Permeability transmissibility multipliers" );
 
 }
 

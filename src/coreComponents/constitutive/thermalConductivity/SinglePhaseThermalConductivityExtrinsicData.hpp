@@ -31,13 +31,13 @@ namespace fields
 namespace thermalconductivity
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( dEffectiveConductivity_dPorosity,
-                           "dEffectiveConductivity_dPorosity",
-                           array3d< real64 >,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of effective conductivity with respect to porosity" );
+DECLARE_FIELD( dEffectiveConductivity_dPorosity,
+               "dEffectiveConductivity_dPorosity",
+               array3d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of effective conductivity with respect to porosity" );
 
 }
 

@@ -50,79 +50,79 @@ using arrayView2dLayoutAcceleration = arrayView2d< real64, nodes::ACCELERATION_U
 using arrayViewConst2dLayoutAcceleration = arrayView2d< real64 const, nodes::ACCELERATION_USD >;
 
 
-EXTRINSIC_MESH_DATA_TRAIT( totalDisplacement,
-                           "totalDisplacement",
-                           array2dLayoutTotalDisplacement,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Total displacements at the nodes" );
+DECLARE_FIELD( totalDisplacement,
+               "totalDisplacement",
+               array2dLayoutTotalDisplacement,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Total displacements at the nodes" );
 
-EXTRINSIC_MESH_DATA_TRAIT( incrementalDisplacement,
-                           "incrementalDisplacement",
-                           array2dLayoutIncrDisplacement,
-                           0,
-                           LEVEL_3,
-                           WRITE_AND_READ,
-                           "Incremental displacements for the current time step on the nodes" );
+DECLARE_FIELD( incrementalDisplacement,
+               "incrementalDisplacement",
+               array2dLayoutIncrDisplacement,
+               0,
+               LEVEL_3,
+               WRITE_AND_READ,
+               "Incremental displacements for the current time step on the nodes" );
 
-EXTRINSIC_MESH_DATA_TRAIT( velocity,
-                           "velocity",
-                           array2dLayoutVelocity,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Current velocity on the nodes" );
+DECLARE_FIELD( velocity,
+               "velocity",
+               array2dLayoutVelocity,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Current velocity on the nodes" );
 
-EXTRINSIC_MESH_DATA_TRAIT( acceleration,
-                           "acceleration",
-                           array2dLayoutAcceleration,
-                           0,
-                           LEVEL_1,
-                           WRITE_AND_READ,
-                           "Current acceleration on the nodes. This array also is used "
-                           "to hold the summation of nodal forces resulting from the governing equations" );
+DECLARE_FIELD( acceleration,
+               "acceleration",
+               array2dLayoutAcceleration,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "Current acceleration on the nodes. This array also is used "
+               "to hold the summation of nodal forces resulting from the governing equations" );
 
-EXTRINSIC_MESH_DATA_TRAIT( externalForce,
-                           "externalForce",
-                           array2d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "External forces on the nodes. This includes any boundary"
-                           " conditions as well as coupling forces such as hydraulic forces" );
+DECLARE_FIELD( externalForce,
+               "externalForce",
+               array2d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "External forces on the nodes. This includes any boundary"
+               " conditions as well as coupling forces such as hydraulic forces" );
 
-EXTRINSIC_MESH_DATA_TRAIT( mass,
-                           "mass",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Mass on the nodes" );
+DECLARE_FIELD( mass,
+               "mass",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Mass on the nodes" );
 
-EXTRINSIC_MESH_DATA_TRAIT( velocityTilde,
-                           "velocityTilde",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Velocity predictors on the nodes" );
+DECLARE_FIELD( velocityTilde,
+               "velocityTilde",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Velocity predictors on the nodes" );
 
-EXTRINSIC_MESH_DATA_TRAIT( uhatTilde,
-                           "uhatTilde",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Incremental displacement predictors on the nodes" );
+DECLARE_FIELD( uhatTilde,
+               "uhatTilde",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Incremental displacement predictors on the nodes" );
 
-EXTRINSIC_MESH_DATA_TRAIT( contactForce,
-                           "contactForce",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Contact force" );
+DECLARE_FIELD( contactForce,
+               "contactForce",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Contact force" );
 
 }
 

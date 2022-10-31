@@ -30,62 +30,61 @@ namespace fields
 namespace particlefluid
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( settlingFactor,
-                           "settlingFactor",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Settling factor" );
+DECLARE_FIELD( settlingFactor,
+               "settlingFactor",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Settling factor" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dSettlingFactor_dPressure,
-                           "dSettlingFactor_dPressure",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of settling factor with respect to pressure" );
+DECLARE_FIELD( dSettlingFactor_dPressure,
+               "dSettlingFactor_dPressure",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of settling factor with respect to pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dSettlingFactor_dProppantConcentration,
-                           "dSettlingFactor_dProppantConcentration",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of settling factor with respect to proppant concentration" );
+DECLARE_FIELD( dSettlingFactor_dProppantConcentration,
+               "dSettlingFactor_dProppantConcentration",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of settling factor with respect to proppant concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dSettlingFactor_dComponentConcentration,
-                           "dSettlingFactor_dComponentConcentration",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of settling factor with respect to component concentration" );
+DECLARE_FIELD( dSettlingFactor_dComponentConcentration,
+               "dSettlingFactor_dComponentConcentration",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of settling factor with respect to component concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( collisionFactor,
-                           "collisionFactor",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Collision factor" );
+DECLARE_FIELD( collisionFactor,
+               "collisionFactor",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Collision factor" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dCollisionFactor_dProppantConcentration,
-                           "dCollisionFactor_dProppantConcentration",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of collision factor with respect to proppant concentration" );
+DECLARE_FIELD( dCollisionFactor_dProppantConcentration,
+               "dCollisionFactor_dProppantConcentration",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of collision factor with respect to proppant concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( proppantPackPermeability,
-                           "proppantPackPermeability",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Proppant pack permeability" );
-
+DECLARE_FIELD( proppantPackPermeability,
+               "proppantPackPermeability",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Proppant pack permeability" );
 
 }
 

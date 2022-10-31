@@ -31,21 +31,21 @@ namespace fields
 namespace thermalconductivity
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( effectiveConductivity,
-                           "effectiveConductivity",
-                           array3d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Effective conductivity" );
+DECLARE_FIELD( effectiveConductivity,
+               "effectiveConductivity",
+               array3d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Effective conductivity" );
 
-EXTRINSIC_MESH_DATA_TRAIT( rockThermalConductivity,
-                           "rockThermalConductivity",
-                           array3d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Rock thermal conductivity" );
+DECLARE_FIELD( rockThermalConductivity,
+               "rockThermalConductivity",
+               array3d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Rock thermal conductivity" );
 
 }
 

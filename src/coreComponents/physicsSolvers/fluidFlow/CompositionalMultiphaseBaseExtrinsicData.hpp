@@ -39,126 +39,125 @@ using array2dLayoutComp = array2d< real64, compflow::LAYOUT_COMP >;
 using array3dLayoutComp_dC = array3d< real64, compflow::LAYOUT_COMP_DC >;
 using array3dLayoutPhaseComp = array3d< real64, compflow::LAYOUT_PHASE_COMP >;
 
-EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity,
-                           "globalCompDensity",
-                           array2dLayoutComp,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Global component density" );
+DECLARE_FIELD( globalCompDensity,
+               "globalCompDensity",
+               array2dLayoutComp,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Global component density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity_n,
-                           "globalCompDensity_n",
-                           array2dLayoutComp,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Global component density updates at the previous converged time step " );
+DECLARE_FIELD( globalCompDensity_n,
+               "globalCompDensity_n",
+               array2dLayoutComp,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Global component density updates at the previous converged time step " );
 
-EXTRINSIC_MESH_DATA_TRAIT( globalCompFraction,
-                           "globalCompFraction",
-                           array2dLayoutComp,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Global component fraction" );
+DECLARE_FIELD( globalCompFraction,
+               "globalCompFraction",
+               array2dLayoutComp,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Global component fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( faceGlobalCompFraction,
-                           "faceGlobalCompFraction",
-                           array2dLayoutComp,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Face global component fraction" );
+DECLARE_FIELD( faceGlobalCompFraction,
+               "faceGlobalCompFraction",
+               array2dLayoutComp,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Face global component fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dGlobalCompFraction_dGlobalCompDensity,
-                           "dGlobalCompFraction_dGlobalCompDensity",
-                           array3dLayoutComp_dC,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of global component fraction with respect to component density" );
+DECLARE_FIELD( dGlobalCompFraction_dGlobalCompDensity,
+               "dGlobalCompFraction_dGlobalCompDensity",
+               array3dLayoutComp_dC,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of global component fraction with respect to component density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseVolumeFraction,
-                           "phaseVolumeFraction",
-                           array2dLayoutPhase,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Phase volume fraction" );
+DECLARE_FIELD( phaseVolumeFraction,
+               "phaseVolumeFraction",
+               array2dLayoutPhase,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Phase volume fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseVolumeFraction,
-                           "dPhaseVolumeFraction",
-                           array3dLayoutPhase_dC,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase volume fraction with respect to pressure, temperature, global component density" );
+DECLARE_FIELD( dPhaseVolumeFraction,
+               "dPhaseVolumeFraction",
+               array3dLayoutPhase_dC,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of phase volume fraction with respect to pressure, temperature, global component density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseMobility,
-                           "phaseMobility",
-                           array2dLayoutPhase,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Phase mobility" );
+DECLARE_FIELD( phaseMobility,
+               "phaseMobility",
+               array2dLayoutPhase,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Phase mobility" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseMobility,
-                           "dPhaseMobility",
-                           array3dLayoutPhase_dC,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase volume fraction with respect to pressure, temperature, global component density" );
+DECLARE_FIELD( dPhaseMobility,
+               "dPhaseMobility",
+               array3dLayoutPhase_dC,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of phase volume fraction with respect to pressure, temperature, global component density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseVolumeFraction_n,
-                           "phaseVolumeFraction_n",
-                           array2dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase volume fraction at the previous converged time step" );
+DECLARE_FIELD( phaseVolumeFraction_n,
+               "phaseVolumeFraction_n",
+               array2dLayoutPhase,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Phase volume fraction at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseMobility_n,
-                           "phaseMobility_n",
-                           array2dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase mobility at the previous converged time step" );
+DECLARE_FIELD( phaseMobility_n,
+               "phaseMobility_n",
+               array2dLayoutPhase,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Phase mobility at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseOutflux,
-                           "phaseOutflux",
-                           array2dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Phase outflux" );
+DECLARE_FIELD( phaseOutflux,
+               "phaseOutflux",
+               array2dLayoutPhase,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Phase outflux" );
 
-EXTRINSIC_MESH_DATA_TRAIT( componentOutflux,
-                           "componentOutflux",
-                           array2dLayoutComp,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Component outflux" );
+DECLARE_FIELD( componentOutflux,
+               "componentOutflux",
+               array2dLayoutComp,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Component outflux" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseCFLNumber,
-                           "phaseCFLNumber",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           NO_WRITE,
-                           "Phase CFL number" );
+DECLARE_FIELD( phaseCFLNumber,
+               "phaseCFLNumber",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               NO_WRITE,
+               "Phase CFL number" );
 
-EXTRINSIC_MESH_DATA_TRAIT( componentCFLNumber,
-                           "componentCFLNumber",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           NO_WRITE,
-                           "Component CFL number" );
-
+DECLARE_FIELD( componentCFLNumber,
+               "componentCFLNumber",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               NO_WRITE,
+               "Component CFL number" );
 
 }
 

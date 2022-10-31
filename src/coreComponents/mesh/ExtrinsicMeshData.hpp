@@ -35,13 +35,13 @@
  * @param DESCRIPTION A string literal that contains a description of the data for
  *   use in sphinx documentation.
  */
-#define EXTRINSIC_MESH_DATA_TRAIT( NAME, \
-                                   KEY, \
-                                   TYPE, \
-                                   DEFAULT, \
-                                   PLOTLEVEL, \
-                                   RESTARTFLAG, \
-                                   DESCRIPTION ) \
+#define DECLARE_FIELD( NAME, \
+                       KEY, \
+                       TYPE, \
+                       DEFAULT, \
+                       PLOTLEVEL, \
+                       RESTARTFLAG, \
+                       DESCRIPTION ) \
 /** @struct NAME */ \
 /** @brief Trait struct for NAME data */ \
   struct NAME \
@@ -90,61 +90,61 @@ template< typename T >
 using typeHelper_t = typename typeHelper< T >::type;
 }
 
-EXTRINSIC_MESH_DATA_TRAIT( ghostRank,
-                           "ghostRank",
-                           array1d< integer >,
-                           -2,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Ghost rank." );
+DECLARE_FIELD( ghostRank,
+               "ghostRank",
+               array1d< integer >,
+               -2,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Ghost rank." );
 
-EXTRINSIC_MESH_DATA_TRAIT( elementVolume,
-                           "elementVolume",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_1,
-                           WRITE_AND_READ,
-                           "Element volume." );
+DECLARE_FIELD( elementVolume,
+               "elementVolume",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "Element volume." );
 
-EXTRINSIC_MESH_DATA_TRAIT( elementAperture,
-                           "elementAperture",
-                           array1d< real64 >,
-                           1e-5,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Element aperture." );
+DECLARE_FIELD( elementAperture,
+               "elementAperture",
+               array1d< real64 >,
+               1e-5,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Element aperture." );
 
-EXTRINSIC_MESH_DATA_TRAIT( parentIndex,
-                           "parentIndex",
-                           array1d< localIndex >,
-                           -1,
-                           LEVEL_2,
-                           WRITE_AND_READ,
-                           "Index of parent within the mesh object it is registered on." );
+DECLARE_FIELD( parentIndex,
+               "parentIndex",
+               array1d< localIndex >,
+               -1,
+               LEVEL_2,
+               WRITE_AND_READ,
+               "Index of parent within the mesh object it is registered on." );
 
-EXTRINSIC_MESH_DATA_TRAIT( parentEdgeIndex,
-                           "parentEdgeIndex",
-                           array1d< localIndex >,
-                           -1,
-                           LEVEL_2,
-                           WRITE_AND_READ,
-                           "Index of parent edge within the mesh object it is registered on." );
+DECLARE_FIELD( parentEdgeIndex,
+               "parentEdgeIndex",
+               array1d< localIndex >,
+               -1,
+               LEVEL_2,
+               WRITE_AND_READ,
+               "Index of parent edge within the mesh object it is registered on." );
 
-EXTRINSIC_MESH_DATA_TRAIT( childIndex,
-                           "childIndex",
-                           array1d< localIndex >,
-                           -1,
-                           LEVEL_2,
-                           WRITE_AND_READ,
-                           "Index of child within the mesh object it is registered on." );
+DECLARE_FIELD( childIndex,
+               "childIndex",
+               array1d< localIndex >,
+               -1,
+               LEVEL_2,
+               WRITE_AND_READ,
+               "Index of child within the mesh object it is registered on." );
 
-EXTRINSIC_MESH_DATA_TRAIT( ruptureTime,
-                           "ruptureTime",
-                           array1d< real64 >,
-                           1.0e9,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Time that the object was ruptured/split." );
+DECLARE_FIELD( ruptureTime,
+               "ruptureTime",
+               array1d< real64 >,
+               1.0e9,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Time that the object was ruptured/split." );
 
 
 } // namespace fields

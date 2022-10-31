@@ -35,53 +35,53 @@ using array2dLayoutPhase = array2d< real64, compflow::LAYOUT_PHASE >;
 using array3dLayoutRelPerm = array3d< real64, constitutive::relperm::LAYOUT_RELPERM >;
 using array4dLayoutRelPerm_dS = array4d< real64, constitutive::relperm::LAYOUT_RELPERM_DS >;
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseRelPerm,
-                           "phaseRelPerm",
-                           array3dLayoutRelPerm,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Phase relative permeability" );
+DECLARE_FIELD( phaseRelPerm,
+               "phaseRelPerm",
+               array3dLayoutRelPerm,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Phase relative permeability" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseRelPerm_n,
-                           "phaseRelPerm_n",
-                           array3dLayoutRelPerm,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase relative permeability at previous time" );
+DECLARE_FIELD( phaseRelPerm_n,
+               "phaseRelPerm_n",
+               array3dLayoutRelPerm,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Phase relative permeability at previous time" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseRelPerm_dPhaseVolFraction,
-                           "dPhaseRelPerm_dPhaseVolFraction",
-                           array4dLayoutRelPerm_dS,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase relative permeability with respect to phase volume fraction" );
+DECLARE_FIELD( dPhaseRelPerm_dPhaseVolFraction,
+               "dPhaseRelPerm_dPhaseVolFraction",
+               array4dLayoutRelPerm_dS,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of phase relative permeability with respect to phase volume fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseTrappedVolFraction,
-                           "phaseTrappedVolFraction",
-                           array3dLayoutRelPerm,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Phase trapped volume fraction" );
+DECLARE_FIELD( phaseTrappedVolFraction,
+               "phaseTrappedVolFraction",
+               array3dLayoutRelPerm,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Phase trapped volume fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseMaxHistoricalVolFraction,
-                           "phaseMaxHistoricalVolFraction",
-                           array2dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase max historical phase volume fraction" );
+DECLARE_FIELD( phaseMaxHistoricalVolFraction,
+               "phaseMaxHistoricalVolFraction",
+               array2dLayoutPhase,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Phase max historical phase volume fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseMinHistoricalVolFraction,
-                           "phaseMinHistoricalVolFraction",
-                           array2dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase min historical phase volume fraction" );
+DECLARE_FIELD( phaseMinHistoricalVolFraction,
+               "phaseMinHistoricalVolFraction",
+               array2dLayoutPhase,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Phase min historical phase volume fraction" );
 
 }
 

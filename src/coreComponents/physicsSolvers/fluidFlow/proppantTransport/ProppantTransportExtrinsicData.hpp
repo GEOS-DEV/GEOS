@@ -32,102 +32,101 @@ namespace fields
 namespace proppant
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( proppantConcentration,
-                           "proppantConcentration",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Proppant concentration" );
+DECLARE_FIELD( proppantConcentration,
+               "proppantConcentration",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Proppant concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( proppantConcentration_n,
-                           "proppantConcentration_n",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Proppant concentration at the previous converged time step" );
+DECLARE_FIELD( proppantConcentration_n,
+               "proppantConcentration_n",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Proppant concentration at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( componentConcentration,
-                           "componentConcentration",
-                           array2d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Component concentration" );
+DECLARE_FIELD( componentConcentration,
+               "componentConcentration",
+               array2d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Component concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( componentConcentration_n,
-                           "componentConcentration_n",
-                           array2d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Component concentration at the previous converged time step" );
+DECLARE_FIELD( componentConcentration_n,
+               "componentConcentration_n",
+               array2d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Component concentration at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( bcComponentConcentration,
-                           "bcComponentConcentration",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Boundary component concentration" );
+DECLARE_FIELD( bcComponentConcentration,
+               "bcComponentConcentration",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Boundary component concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( cellBasedFlux,
-                           "cellBasedFlux",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Cell-based flux" );
+DECLARE_FIELD( cellBasedFlux,
+               "cellBasedFlux",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Cell-based flux" );
 
-EXTRINSIC_MESH_DATA_TRAIT( isProppantBoundary,
-                           "isProppantBoundary",
-                           array1d< integer >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Flag denoting the proppant boundary" );
+DECLARE_FIELD( isProppantBoundary,
+               "isProppantBoundary",
+               array1d< integer >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Flag denoting the proppant boundary" );
 
-EXTRINSIC_MESH_DATA_TRAIT( isProppantMobile,
-                           "isProppantMobile",
-                           array1d< integer >,
-                           1.0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Flag indicating whether proppant is mobile" );
+DECLARE_FIELD( isProppantMobile,
+               "isProppantMobile",
+               array1d< integer >,
+               1.0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Flag indicating whether proppant is mobile" );
 
-EXTRINSIC_MESH_DATA_TRAIT( componentDensity_n,
-                           "componentDensity_n",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Component density at the previous converged time step" );
+DECLARE_FIELD( componentDensity_n,
+               "componentDensity_n",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Component density at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( proppantPackVolumeFraction,
-                           "proppantPackVolumeFraction",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Proppant pack volume fraction" );
+DECLARE_FIELD( proppantPackVolumeFraction,
+               "proppantPackVolumeFraction",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Proppant pack volume fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( proppantExcessPackVolume,
-                           "proppantExcessPackVolume",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Proppant pack volume fraction" );
+DECLARE_FIELD( proppantExcessPackVolume,
+               "proppantExcessPackVolume",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Proppant pack volume fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( proppantLiftFlux,
-                           "proppantLiftFlux",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Proppant lift flux" );
-
+DECLARE_FIELD( proppantLiftFlux,
+               "proppantLiftFlux",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Proppant lift flux" );
 
 }
 
