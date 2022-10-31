@@ -539,13 +539,13 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< extrinsicMeshData::FreeSurfaceFaceIndicator >();
 
-    arrayView1d< real32 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< extrinsicMeshData::MassVector >();
 
-    arrayView1d< real32 > const dampingx = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorx >();
-    arrayView1d< real32 > const dampingy = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectory >();
-    arrayView1d< real32 > const dampingz = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorz >();
+    arrayView1d< real32 > const dampingx = nodeManager.getField< extrinsicMeshData::DampingVectorx >();
+    arrayView1d< real32 > const dampingy = nodeManager.getField< extrinsicMeshData::DampingVectory >();
+    arrayView1d< real32 > const dampingz = nodeManager.getField< extrinsicMeshData::DampingVectorz >();
 
     mass.zero();
 
@@ -560,9 +560,9 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
 
-      arrayView1d< real32 > const density = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity >();
-      arrayView1d< real32 > const velocityVp = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVp >();
-      arrayView1d< real32 > const velocityVs = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVs >();
+      arrayView1d< real32 > const density = elementSubRegion.getField< extrinsicMeshData::MediumDensity >();
+      arrayView1d< real32 > const velocityVp = elementSubRegion.getField< extrinsicMeshData::MediumVelocityVp >();
+      arrayView1d< real32 > const velocityVs = elementSubRegion.getField< extrinsicMeshData::MediumVelocityVs >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -607,23 +607,23 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
   NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getNodeManager();
 
-  arrayView1d< real32 > const ux_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_np1 >();
-  arrayView1d< real32 > const uy_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_np1 >();
-  arrayView1d< real32 > const uz_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_np1 >();
-  arrayView1d< real32 > const ux_n = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_n >();
-  arrayView1d< real32 > const uy_n = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_n >();
-  arrayView1d< real32 > const uz_n = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_n >();
-  arrayView1d< real32 > const ux_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_nm1 >();
-  arrayView1d< real32 > const uy_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_nm1 >();
-  arrayView1d< real32 > const uz_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_nm1 >();
+  arrayView1d< real32 > const ux_np1 = nodeManager.getField< extrinsicMeshData::Displacementx_np1 >();
+  arrayView1d< real32 > const uy_np1 = nodeManager.getField< extrinsicMeshData::Displacementy_np1 >();
+  arrayView1d< real32 > const uz_np1 = nodeManager.getField< extrinsicMeshData::Displacementz_np1 >();
+  arrayView1d< real32 > const ux_n = nodeManager.getField< extrinsicMeshData::Displacementx_n >();
+  arrayView1d< real32 > const uy_n = nodeManager.getField< extrinsicMeshData::Displacementy_n >();
+  arrayView1d< real32 > const uz_n = nodeManager.getField< extrinsicMeshData::Displacementz_n >();
+  arrayView1d< real32 > const ux_nm1 = nodeManager.getField< extrinsicMeshData::Displacementx_nm1 >();
+  arrayView1d< real32 > const uy_nm1 = nodeManager.getField< extrinsicMeshData::Displacementy_nm1 >();
+  arrayView1d< real32 > const uz_nm1 = nodeManager.getField< extrinsicMeshData::Displacementz_nm1 >();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// set array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< extrinsicMeshData::FreeSurfaceFaceIndicator >();
 
   /// set array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< extrinsicMeshData::FreeSurfaceNodeIndicator >();
 
 
   freeSurfaceFaceIndicator.zero();
@@ -716,31 +716,31 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
-    arrayView1d< real32 const > const dampingx = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorx >();
-    arrayView1d< real32 const > const dampingy = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectory >();
-    arrayView1d< real32 const > const dampingz = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorz >();
-    arrayView1d< real32 > const stiffnessVectorx = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVectorx >();
-    arrayView1d< real32 > const stiffnessVectory = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVectory >();
-    arrayView1d< real32 > const stiffnessVectorz = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVectorz >();
+    arrayView1d< real32 const > const mass = nodeManager.getField< extrinsicMeshData::MassVector >();
+    arrayView1d< real32 const > const dampingx = nodeManager.getField< extrinsicMeshData::DampingVectorx >();
+    arrayView1d< real32 const > const dampingy = nodeManager.getField< extrinsicMeshData::DampingVectory >();
+    arrayView1d< real32 const > const dampingz = nodeManager.getField< extrinsicMeshData::DampingVectorz >();
+    arrayView1d< real32 > const stiffnessVectorx = nodeManager.getField< extrinsicMeshData::StiffnessVectorx >();
+    arrayView1d< real32 > const stiffnessVectory = nodeManager.getField< extrinsicMeshData::StiffnessVectory >();
+    arrayView1d< real32 > const stiffnessVectorz = nodeManager.getField< extrinsicMeshData::StiffnessVectorz >();
 
 
-    arrayView1d< real32 > const ux_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_nm1 >();
-    arrayView1d< real32 > const uy_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_nm1 >();
-    arrayView1d< real32 > const uz_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_nm1 >();
-    arrayView1d< real32 > const ux_n = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_n >();
-    arrayView1d< real32 > const uy_n = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_n >();
-    arrayView1d< real32 > const uz_n = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_n >();
-    arrayView1d< real32 > const ux_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_np1 >();
-    arrayView1d< real32 > const uy_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_np1 >();
-    arrayView1d< real32 > const uz_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_np1 >();
+    arrayView1d< real32 > const ux_nm1 = nodeManager.getField< extrinsicMeshData::Displacementx_nm1 >();
+    arrayView1d< real32 > const uy_nm1 = nodeManager.getField< extrinsicMeshData::Displacementy_nm1 >();
+    arrayView1d< real32 > const uz_nm1 = nodeManager.getField< extrinsicMeshData::Displacementz_nm1 >();
+    arrayView1d< real32 > const ux_n = nodeManager.getField< extrinsicMeshData::Displacementx_n >();
+    arrayView1d< real32 > const uy_n = nodeManager.getField< extrinsicMeshData::Displacementy_n >();
+    arrayView1d< real32 > const uz_n = nodeManager.getField< extrinsicMeshData::Displacementz_n >();
+    arrayView1d< real32 > const ux_np1 = nodeManager.getField< extrinsicMeshData::Displacementx_np1 >();
+    arrayView1d< real32 > const uy_np1 = nodeManager.getField< extrinsicMeshData::Displacementy_np1 >();
+    arrayView1d< real32 > const uz_np1 = nodeManager.getField< extrinsicMeshData::Displacementz_np1 >();
 
     /// get array of indicators: 1 if node on free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< extrinsicMeshData::FreeSurfaceNodeIndicator >();
 
-    arrayView1d< real32 > const rhsx = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHSx >();
-    arrayView1d< real32 > const rhsy = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHSy >();
-    arrayView1d< real32 > const rhsz = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHSz >();
+    arrayView1d< real32 > const rhsx = nodeManager.getField< extrinsicMeshData::ForcingRHSx >();
+    arrayView1d< real32 > const rhsy = nodeManager.getField< extrinsicMeshData::ForcingRHSy >();
+    arrayView1d< real32 > const rhsz = nodeManager.getField< extrinsicMeshData::ForcingRHSz >();
 
     auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
 
@@ -843,12 +843,12 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
                                                                 arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-    arrayView1d< real32 const > const ux_n = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_n >();
-    arrayView1d< real32 const > const ux_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_np1 >();
-    arrayView1d< real32 const > const uy_n = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_n >();
-    arrayView1d< real32 const > const uy_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_np1 >();
-    arrayView1d< real32 const > const uz_n = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_n >();
-    arrayView1d< real32 const > const uz_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_np1 >();
+    arrayView1d< real32 const > const ux_n = nodeManager.getField< extrinsicMeshData::Displacementx_n >();
+    arrayView1d< real32 const > const ux_np1 = nodeManager.getField< extrinsicMeshData::Displacementx_np1 >();
+    arrayView1d< real32 const > const uy_n = nodeManager.getField< extrinsicMeshData::Displacementy_n >();
+    arrayView1d< real32 const > const uy_np1 = nodeManager.getField< extrinsicMeshData::Displacementy_np1 >();
+    arrayView1d< real32 const > const uz_n = nodeManager.getField< extrinsicMeshData::Displacementz_n >();
+    arrayView1d< real32 const > const uz_np1 = nodeManager.getField< extrinsicMeshData::Displacementz_np1 >();
     arrayView2d< real32 > const uXReceivers   = m_displacementXNp1AtReceivers.toView();
     arrayView2d< real32 > const uYReceivers   = m_displacementYNp1AtReceivers.toView();
     arrayView2d< real32 > const uZReceivers   = m_displacementZNp1AtReceivers.toView();

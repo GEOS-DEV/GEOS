@@ -113,8 +113,8 @@ public:
           inputMatrix,
           inputRhs ),
     m_X( nodeManager.referencePosition() ),
-    m_disp( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
-    m_uhat( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::incrementalDisplacement >() ),
+    m_disp( nodeManager.getField< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
+    m_uhat( nodeManager.getField< extrinsicMeshData::solidMechanics::incrementalDisplacement >() ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
@@ -149,16 +149,16 @@ public:
     {
       using namespace extrinsicMeshData::flow;
 
-      m_fluidPressure_n = elementSubRegion.template getExtrinsicData< pressure_n >();
-      m_fluidPressure = elementSubRegion.template getExtrinsicData< pressure >();
+      m_fluidPressure_n = elementSubRegion.template getField< pressure_n >();
+      m_fluidPressure = elementSubRegion.template getField< pressure >();
 
-      m_fluidPhaseSaturation_n = elementSubRegion.template getExtrinsicData< phaseVolumeFraction_n >();
+      m_fluidPhaseSaturation_n = elementSubRegion.template getField< phaseVolumeFraction_n >();
 
-      m_fluidPhaseSaturation = elementSubRegion.template getExtrinsicData< phaseVolumeFraction >();
-      m_dFluidPhaseSaturation = elementSubRegion.template getExtrinsicData< dPhaseVolumeFraction >();
+      m_fluidPhaseSaturation = elementSubRegion.template getField< phaseVolumeFraction >();
+      m_dFluidPhaseSaturation = elementSubRegion.template getField< dPhaseVolumeFraction >();
 
       m_dGlobalCompFraction_dGlobalCompDensity =
-        elementSubRegion.template getExtrinsicData< dGlobalCompFraction_dGlobalCompDensity >();
+        elementSubRegion.template getField< dGlobalCompFraction_dGlobalCompDensity >();
     }
   }
 

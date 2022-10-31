@@ -110,7 +110,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 
     // check that multipliers are stricly larger than 0, which would work with SinglePhaseFVM, but not with SinglePhaseHybridFVM.
     // To deal with a 0 multiplier, we would just have to skip the corresponding face in the FluxKernel
-    arrayView1d< real64 const > const transMultiplier = faceManager.getExtrinsicData< extrinsicMeshData::flow::transMultiplier >();
+    arrayView1d< real64 const > const transMultiplier = faceManager.getField< extrinsicMeshData::flow::transMultiplier >();
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
     forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
@@ -166,9 +166,9 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
 
     // get the face-based pressures
     arrayView1d< real64 const > const & facePres =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
+      faceManager.getField< extrinsicMeshData::flow::facePressure >();
     arrayView1d< real64 > const & facePres_n =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure_n >();
+      faceManager.getField< extrinsicMeshData::flow::facePressure_n >();
     facePres_n.setValues< parallelDevicePolicy<> >( facePres );
   } );
 }
@@ -506,9 +506,9 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
 
     // get the face pressure update
     arrayView1d< real64 > const & facePres =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
+      faceManager.getField< extrinsicMeshData::flow::facePressure >();
     arrayView1d< real64 const > const & facePres_n =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure_n >();
+      faceManager.getField< extrinsicMeshData::flow::facePressure_n >();
     facePres.setValues< parallelDevicePolicy<> >( facePres_n );
   } );
 }

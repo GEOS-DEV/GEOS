@@ -225,11 +225,11 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
   {
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      arrayView2d< real64 > const & deltaTraction = subRegion.getExtrinsicData< contact::deltaTraction >();
-      arrayView2d< real64 const > const & dispJump = subRegion.getExtrinsicData< contact::dispJump >();
-      arrayView2d< real64 > const & oldDispJump = subRegion.getExtrinsicData< contact::oldDispJump >();
-      arrayView1d< integer const > const & fractureState = subRegion.getExtrinsicData< contact::fractureState >();
-      arrayView1d< integer > const & oldFractureState = subRegion.getExtrinsicData< contact::oldFractureState >();
+      arrayView2d< real64 > const & deltaTraction = subRegion.getField< contact::deltaTraction >();
+      arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
+      arrayView2d< real64 > const & oldDispJump = subRegion.getField< contact::oldDispJump >();
+      arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer > const & oldFractureState = subRegion.getField< contact::oldFractureState >();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
@@ -307,7 +307,7 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      if( subRegion.hasExtrinsicData< contact::traction >() )
+      if( subRegion.hasField< contact::traction >() )
       {
         arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
         arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
@@ -428,13 +428,13 @@ void LagrangianContactSolver::resetStateToBeginningOfStep( DomainPartition & dom
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      arrayView2d< real64 > const & traction = subRegion.getExtrinsicData< contact::traction >();
-      arrayView2d< real64 > const & deltaTraction = subRegion.getExtrinsicData< contact::deltaTraction >();
-      arrayView2d< real64 > const & dispJump = subRegion.getExtrinsicData< contact::dispJump >();
-      arrayView2d< real64 const > const & oldDispJump = subRegion.getExtrinsicData< contact::oldDispJump >();
+      arrayView2d< real64 > const & traction = subRegion.getField< contact::traction >();
+      arrayView2d< real64 > const & deltaTraction = subRegion.getField< contact::deltaTraction >();
+      arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
+      arrayView2d< real64 const > const & oldDispJump = subRegion.getField< contact::oldDispJump >();
 
-      arrayView1d< integer > const & fractureState = subRegion.getExtrinsicData< contact::fractureState >();
-      arrayView1d< integer const > const & oldFractureState = subRegion.getExtrinsicData< contact::oldFractureState >();
+      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer const > const & oldFractureState = subRegion.getField< contact::oldFractureState >();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
@@ -467,18 +467,18 @@ void LagrangianContactSolver::computeFaceDisplacementJump( DomainPartition & dom
     ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u =
-      nodeManager.getExtrinsicData< solidMechanics::totalDisplacement >();
+      nodeManager.getField< solidMechanics::totalDisplacement >();
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion & subRegion )
     {
-      if( subRegion.hasExtrinsicData< contact::traction >() )
+      if( subRegion.hasField< contact::traction >() )
       {
         arrayView3d< real64 > const &
         rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
         arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
-        arrayView2d< real64 > const & dispJump = subRegion.getExtrinsicData< contact::dispJump >();
+        arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
         arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -1038,10 +1038,10 @@ void LagrangianContactSolver::
       arrayView3d< real64 const > const &
       rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
-      arrayView2d< real64 const > const & traction = subRegion.getExtrinsicData< contact::traction >();
-      arrayView1d< integer const > const & fractureState = subRegion.getExtrinsicData< contact::fractureState >();
-      arrayView2d< real64 const > const & dispJump = subRegion.getExtrinsicData< contact::dispJump >();
-      arrayView2d< real64 const > const & previousDispJump = subRegion.getExtrinsicData< contact::oldDispJump >();
+      arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
+      arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
+      arrayView2d< real64 const > const & previousDispJump = subRegion.getField< contact::oldDispJump >();
       arrayView1d< real64 const > const & slidingTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
 
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
@@ -1282,7 +1282,7 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
     SurfaceGenerator const & surfaceGenerator = this->getParent().getGroup< SurfaceGenerator >( "SurfaceGen" );
     SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( surfaceGenerator.getFractureRegionName() );
     FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
-    GEOSX_ERROR_IF( !fractureSubRegion.hasExtrinsicData< contact::traction >(), "The fracture subregion must contain traction field." );
+    GEOSX_ERROR_IF( !fractureSubRegion.hasField< contact::traction >(), "The fracture subregion must contain traction field." );
     arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
     GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
@@ -1291,8 +1291,8 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
       fractureSubRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
 
     // Get the tractions and stabilization contribution to the local jump
-    arrayView2d< real64 const > const & traction = fractureSubRegion.getExtrinsicData< contact::traction >();
-    arrayView2d< real64 const > const & deltaTraction = fractureSubRegion.getExtrinsicData< contact::deltaTraction >();
+    arrayView2d< real64 const > const & traction = fractureSubRegion.getField< contact::traction >();
+    arrayView2d< real64 const > const & deltaTraction = fractureSubRegion.getField< contact::deltaTraction >();
 
     // Get the volume for all elements
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
@@ -1725,9 +1725,9 @@ bool LagrangianContactSolver::resetConfigurationToDefault( DomainPartition & dom
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 FaceElementSubRegion & subRegion )
     {
-      if( subRegion.hasExtrinsicData< contact::traction >() )
+      if( subRegion.hasField< contact::traction >() )
       {
-        arrayView1d< integer > const & fractureState = subRegion.getExtrinsicData< contact::fractureState >();
+        arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
           if( fractureState[kfe] != FractureState::Open )
@@ -1761,9 +1761,9 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView2d< real64 const > const & traction = subRegion.getExtrinsicData< contact::traction >();
-      arrayView2d< real64 const > const & dispJump = subRegion.getExtrinsicData< contact::dispJump >();
-      arrayView1d< integer > const & fractureState = subRegion.getExtrinsicData< contact::fractureState >();
+      arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
+      arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
+      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
 
       arrayView1d< real64 const > const & normalTractionTolerance =
         subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );

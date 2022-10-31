@@ -182,15 +182,15 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 
       // get the well element indices corresponding to each perforation
       arrayView1d< localIndex const > const & perfWellElemIndex =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
+        perforationData->getField< extrinsicMeshData::perforation::wellElementIndex >();
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const & resElementRegion =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
+        perforationData->getField< extrinsicMeshData::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const & resElementSubRegion =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
+        perforationData->getField< extrinsicMeshData::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const & resElementIndex =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
+        perforationData->getField< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       // Insert the entries corresponding to reservoir-well perforations
       // This will fill J_WR, and J_RW
@@ -281,20 +281,20 @@ assembleCouplingTerms( real64 const time_n,
 
       // get well variables on perforations
       arrayView1d< real64 const > const perfRate =
-        perforationData->getExtrinsicData< extrinsicMeshData::well::perforationRate >();
+        perforationData->getField< extrinsicMeshData::well::perforationRate >();
       arrayView2d< real64 const > const dPerfRate_dPres =
-        perforationData->getExtrinsicData< extrinsicMeshData::well::dPerforationRate_dPres >();
+        perforationData->getField< extrinsicMeshData::well::dPerforationRate_dPres >();
 
       arrayView1d< localIndex const > const perfWellElemIndex =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
+        perforationData->getField< extrinsicMeshData::perforation::wellElementIndex >();
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const resElementRegion =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
+        perforationData->getField< extrinsicMeshData::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const resElementSubRegion =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
+        perforationData->getField< extrinsicMeshData::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const resElementIndex =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
+        perforationData->getField< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       // loop over the perforations and add the rates to the residual and jacobian
       forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )

@@ -56,8 +56,8 @@ ImplicitSmallStrainQuasiStatic( NodeManager const & nodeManager,
         inputMatrix,
         inputRhs ),
   m_X( nodeManager.referencePosition()),
-  m_disp( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
-  m_uhat( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::incrementalDisplacement >() ),
+  m_disp( nodeManager.getField< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
+  m_uhat( nodeManager.getField< extrinsicMeshData::solidMechanics::incrementalDisplacement >() ),
   m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
   m_density( inputConstitutiveType.getDensity() )
 {}

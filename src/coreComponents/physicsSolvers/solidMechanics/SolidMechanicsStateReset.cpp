@@ -86,12 +86,12 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
 
       NodeManager & nodeManager = mesh.getNodeManager();
 
-      if( nodeManager.hasExtrinsicData< solidMechanics::velocity >() )
+      if( nodeManager.hasField< solidMechanics::velocity >() )
       {
-        nodeManager.getExtrinsicData< solidMechanics::velocity >().zero();
+        nodeManager.getField< solidMechanics::velocity >().zero();
       }
-      nodeManager.getExtrinsicData< solidMechanics::totalDisplacement >().zero();
-      nodeManager.getExtrinsicData< solidMechanics::incrementalDisplacement >().zero();
+      nodeManager.getField< solidMechanics::totalDisplacement >().zero();
+      nodeManager.getField< solidMechanics::incrementalDisplacement >().zero();
     }
 
     // Option 2: enable / disable inelastic behavior

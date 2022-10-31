@@ -56,7 +56,7 @@ void SingleFluidBase::postProcessInput()
   ConstitutiveBase::postProcessInput();
 
   // for fracture elements, set the default value
-  getExtrinsicData< extrinsicMeshData::singlefluid::density_n >().
+  getField< extrinsicMeshData::singlefluid::density_n >().
     setDefaultValue( defaultDensity() );
 }
 

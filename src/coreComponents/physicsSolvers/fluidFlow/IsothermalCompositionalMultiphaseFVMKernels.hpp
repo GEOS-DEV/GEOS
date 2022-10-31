@@ -77,17 +77,17 @@ public:
                        MultiFluidBase const & fluid,
                        RelativePermeabilityBase const & relperm )
     : Base(),
-    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
-    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFrac( subRegion.getField< extrinsicMeshData::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac( subRegion.getField< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens( fluid.dPhaseDensity() ),
     m_phaseVisc( fluid.phaseViscosity() ),
     m_dPhaseVisc( fluid.dPhaseViscosity() ),
     m_phaseRelPerm( relperm.phaseRelPerm() ),
     m_dPhaseRelPerm_dPhaseVolFrac( relperm.dPhaseRelPerm_dPhaseVolFraction() ),
-    m_phaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >() ),
-    m_dPhaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility >() )
+    m_phaseMob( subRegion.getField< extrinsicMeshData::flow::phaseMobility >() ),
+    m_dPhaseMob( subRegion.getField< extrinsicMeshData::flow::dPhaseMobility >() )
   {}
 
   /**
@@ -1072,10 +1072,10 @@ public:
             dt,
             localMatrix,
             localRhs ),
-    m_facePres( faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >() ),
-    m_faceTemp( faceManager.getExtrinsicData< extrinsicMeshData::flow::faceTemperature >() ),
-    m_faceCompFrac( faceManager.getExtrinsicData< extrinsicMeshData::flow::faceGlobalCompFraction >() ),
-    m_faceGravCoef( faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >() ),
+    m_facePres( faceManager.getField< extrinsicMeshData::flow::facePressure >() ),
+    m_faceTemp( faceManager.getField< extrinsicMeshData::flow::faceTemperature >() ),
+    m_faceCompFrac( faceManager.getField< extrinsicMeshData::flow::faceGlobalCompFraction >() ),
+    m_faceGravCoef( faceManager.getField< extrinsicMeshData::flow::gravityCoefficient >() ),
     m_fluidWrapper( fluidWrapper )
   {}
 

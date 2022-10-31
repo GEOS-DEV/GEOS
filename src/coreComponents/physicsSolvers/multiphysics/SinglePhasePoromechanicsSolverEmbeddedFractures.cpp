@@ -589,29 +589,29 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
                                                                                      auto & subRegion )
     {
       arrayView2d< real64 const > const dispJump =
-        subRegion.template getExtrinsicData< extrinsicMeshData::contact::dispJump >();
+        subRegion.template getField< extrinsicMeshData::contact::dispJump >();
 
       arrayView1d< real64 > const aperture = subRegion.getElementAperture();
 
       arrayView1d< real64 > const hydraulicAperture =
-        subRegion.template getExtrinsicData< extrinsicMeshData::flow::hydraulicAperture >();
+        subRegion.template getField< extrinsicMeshData::flow::hydraulicAperture >();
 
       arrayView1d< real64 const > const oldHydraulicAperture =
-        subRegion.template getExtrinsicData< extrinsicMeshData::flow::aperture0 >();
+        subRegion.template getField< extrinsicMeshData::flow::aperture0 >();
 
       arrayView1d< real64 const > const volume = subRegion.getElementVolume();
 
       arrayView1d< real64 > const deltaVolume =
-        subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaVolume >();
+        subRegion.template getField< extrinsicMeshData::flow::deltaVolume >();
 
       arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
 
-      arrayView2d< real64 > const & fractureTraction = subRegion.template getExtrinsicData< extrinsicMeshData::contact::traction >();
+      arrayView2d< real64 > const & fractureTraction = subRegion.template getField< extrinsicMeshData::contact::traction >();
 
-      arrayView1d< real64 >  const & dTdpf = subRegion.template getExtrinsicData< extrinsicMeshData::contact::dTraction_dPressure >();
+      arrayView1d< real64 >  const & dTdpf = subRegion.template getField< extrinsicMeshData::contact::dTraction_dPressure >();
 
       arrayView1d< real64 const > const & pressure =
-        subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >();
+        subRegion.template getField< extrinsicMeshData::flow::pressure >();
 
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_fracturesSolver->getContactRelationName() );
 

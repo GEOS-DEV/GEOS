@@ -191,11 +191,11 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
 
     arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-    arrayView1d< real64 > const deltaPres = subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
-    arrayView1d< real64 const > const temp = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+    arrayView1d< real64 const > const pres = subRegion.getField< extrinsicMeshData::flow::pressure >();
+    arrayView1d< real64 > const deltaPres = subRegion.getField< extrinsicMeshData::flow::deltaPressure >();
+    arrayView1d< real64 const > const temp = subRegion.getField< extrinsicMeshData::flow::temperature >();
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+      subRegion.getField< extrinsicMeshData::flow::phaseVolumeFraction >();
 
     Group const & constitutiveModels = subRegion.getGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
 
@@ -379,9 +379,9 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
                                                      ElementSubRegionBase & subRegion )
     {
       arrayView2d< real64, compflow::USD_PHASE > const & phaseOutflux =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseOutflux >();
+        subRegion.getField< extrinsicMeshData::flow::phaseOutflux >();
       arrayView2d< real64, compflow::USD_COMP > const & compOutflux =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::componentOutflux >();
+        subRegion.getField< extrinsicMeshData::flow::componentOutflux >();
       phaseOutflux.zero();
       compOutflux.zero();
     } );
@@ -449,21 +449,21 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
                                                      ElementSubRegionBase & subRegion )
     {
       arrayView2d< real64 const, compflow::USD_PHASE > const & phaseOutflux =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseOutflux >();
+        subRegion.getField< extrinsicMeshData::flow::phaseOutflux >();
       arrayView2d< real64 const, compflow::USD_COMP > const & compOutflux =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::componentOutflux >();
+        subRegion.getField< extrinsicMeshData::flow::componentOutflux >();
 
-      arrayView1d< real64 > const & phaseCFLNumber = subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseCFLNumber >();
-      arrayView1d< real64 > const & compCFLNumber = subRegion.getExtrinsicData< extrinsicMeshData::flow::componentCFLNumber >();
+      arrayView1d< real64 > const & phaseCFLNumber = subRegion.getField< extrinsicMeshData::flow::phaseCFLNumber >();
+      arrayView1d< real64 > const & compCFLNumber = subRegion.getField< extrinsicMeshData::flow::componentCFLNumber >();
 
       arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
 
       arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+        subRegion.getField< extrinsicMeshData::flow::globalCompDensity >();
       arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+        subRegion.getField< extrinsicMeshData::flow::globalCompFraction >();
       arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+        subRegion.getField< extrinsicMeshData::flow::phaseVolumeFraction >();
 
       Group const & constitutiveModels = subRegion.getGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
 

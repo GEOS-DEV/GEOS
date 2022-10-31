@@ -65,7 +65,7 @@ void ChomboCoupler::write( double dt )
   }
 
   arrayView1d< integer const > const & ruptureState =
-    faces.getExtrinsicData< extrinsicMeshData::surfaceGeneration::ruptureState >();
+    faces.getField< extrinsicMeshData::surfaceGeneration::ruptureState >();
   arrayView1d< integer const > const & ghostRank = faces.ghostRank();
 
   localIndex voidRegionIndex = -1;
@@ -162,9 +162,9 @@ void ChomboCoupler::copyNodalData()
   localIndex const numNodes = nodes.size();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePos = nodes.referencePosition();
   extrinsicMeshData::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const & displacement =
-    nodes.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
+    nodes.getField< extrinsicMeshData::solidMechanics::totalDisplacement >();
   extrinsicMeshData::solidMechanics::arrayViewConst2dLayoutVelocity const & velocity =
-    nodes.getExtrinsicData< extrinsicMeshData::solidMechanics::velocity >();
+    nodes.getField< extrinsicMeshData::solidMechanics::velocity >();
 
   GEOSX_ERROR_IF_NE( referencePos.size( 0 ), numNodes );
   GEOSX_ERROR_IF_NE( referencePos.size( 1 ), 3 );

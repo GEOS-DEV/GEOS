@@ -211,9 +211,9 @@ public:
         if( wellControls.getLogLevel() >= 2 )
         {
           arrayView2d< real64 const > const perfLocation =
-            perforationData.getExtrinsicData< extrinsicMeshData::perforation::location >();
+            perforationData.getField< extrinsicMeshData::perforation::location >();
           arrayView1d< real64 const > const perfTrans =
-            perforationData.getExtrinsicData< extrinsicMeshData::perforation::wellTransmissibility >();
+            perforationData.getField< extrinsicMeshData::perforation::wellTransmissibility >();
 
           forAll< serialPolicy >( perforationData.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
           {

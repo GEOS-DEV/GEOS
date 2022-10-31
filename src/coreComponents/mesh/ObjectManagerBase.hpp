@@ -556,7 +556,7 @@ public:
    */
   template< typename MESH_DATA_TRAIT >
   dataRepository::Wrapper< typename MESH_DATA_TRAIT::type > &
-  registerExtrinsicData(  string const & nameOfRegisteringObject )
+  registerExtrinsicData( string const & nameOfRegisteringObject )
   {
     // These are required to work-around the need for instantiation of
     // the static constexpr trait components. This will not be required once
@@ -618,10 +618,10 @@ public:
    *   to be retrieved from this ObjectManagerBase.
    * @return A const reference to a view to const data.
    */
-  template< typename MESH_DATA_TRAIT >
-  GEOSX_DECLTYPE_AUTO_RETURN getExtrinsicData() const
+  template< typename FIELD_TRAIT >
+  GEOSX_DECLTYPE_AUTO_RETURN getField() const
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key() ).reference();
+    return this->getWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() ).reference();
   }
 
   /**
@@ -630,10 +630,10 @@ public:
    *   to be retrieved from this ObjectManagerBase.
    * @return A reference to the data.
    */
-  template< typename MESH_DATA_TRAIT >
-  GEOSX_DECLTYPE_AUTO_RETURN getExtrinsicData()
+  template< typename FIELD_TRAIT >
+  GEOSX_DECLTYPE_AUTO_RETURN getField()
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key() ).reference();
+    return this->getWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() ).reference();
   }
 
   /**
@@ -642,10 +642,10 @@ public:
    *   to be retrieved from this ObjectManagerBase.
    * @return @p true if the data has been registered, @p false otherwise.
    */
-  template< typename MESH_DATA_TRAIT >
-  bool hasExtrinsicData() const
+  template< typename FIELD_TRAIT >
+  bool hasField() const
   {
-    return this->hasWrapper( MESH_DATA_TRAIT::key() );
+    return this->hasWrapper( FIELD_TRAIT::key() );
   }
 
 #if 0
@@ -686,13 +686,13 @@ public:
   }
 
   template< typename MESH_DATA_TRAIT >
-  auto const & getExtrinsicData( MESH_DATA_TRAIT const & extrinsicDataTrait ) const
+  auto const & getField( MESH_DATA_TRAIT const & extrinsicDataTrait ) const
   {
     return this->getWrapper< typename MESH_DATA_TRAIT::type >( extrinsicDataTrait.key() ).referenceAsView();
   }
 
   template< typename MESH_DATA_TRAIT >
-  auto & getExtrinsicData( MESH_DATA_TRAIT const & extrinsicDataTrait )
+  auto & getField( MESH_DATA_TRAIT const & extrinsicDataTrait )
   {
     return this->getWrapper< typename MESH_DATA_TRAIT::type >( extrinsicDataTrait.key() ).referenceAsView();
   }

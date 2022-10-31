@@ -63,15 +63,15 @@ addCouplingNumNonzeros( SolverBase const * const solver,
 
       // get the well element indices corresponding to each perforation
       arrayView1d< localIndex const > const & perfWellElemIndex =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
+        perforationData->getField< extrinsicMeshData::perforation::wellElementIndex >();
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const & resElementRegion =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
+        perforationData->getField< extrinsicMeshData::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const & resElementSubRegion =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
+        perforationData->getField< extrinsicMeshData::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const & resElementIndex =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
+        perforationData->getField< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       // Loop over perforations and increase row lengths for reservoir and well elements accordingly
       forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )

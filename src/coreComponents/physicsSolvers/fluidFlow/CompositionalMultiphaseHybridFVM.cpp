@@ -133,7 +133,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
     // check that multipliers are stricly larger than 0, which would work with SinglePhaseFVM, but not with SinglePhaseHybridFVM.
     // To deal with a 0 multiplier, we would just have to skip the corresponding face in the FluxKernel
-    arrayView1d< real64 const > const & transMultiplier = faceManager.getExtrinsicData< extrinsicMeshData::flow::transMultiplier >();
+    arrayView1d< real64 const > const & transMultiplier = faceManager.getField< extrinsicMeshData::flow::transMultiplier >();
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
     forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
@@ -176,10 +176,10 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, arrayVi
   // face data
 
   arrayView1d< real64 const > const & transMultiplier =
-    faceManager.getExtrinsicData< extrinsicMeshData::flow::transMultiplier >();
+    faceManager.getField< extrinsicMeshData::flow::transMultiplier >();
 
   arrayView1d< real64 > const mimFaceGravCoef =
-    faceManager.getExtrinsicData< extrinsicMeshData::flow::mimGravityCoefficient >();
+    faceManager.getField< extrinsicMeshData::flow::mimGravityCoefficient >();
 
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
 
@@ -241,9 +241,9 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
     FaceManager & faceManager = mesh.getFaceManager();
 
     arrayView1d< real64 > const & facePres_n =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure_n >();
+      faceManager.getField< extrinsicMeshData::flow::facePressure_n >();
     arrayView1d< real64 const > const & facePres =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
+      faceManager.getField< extrinsicMeshData::flow::facePressure >();
     facePres_n.setValues< parallelDevicePolicy<> >( facePres );
   } );
 
@@ -327,17 +327,17 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
 
     // get the face-centered pressures
     arrayView1d< real64 const > const & facePres =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
+      faceManager.getField< extrinsicMeshData::flow::facePressure >();
 
     // get the face-centered depth
     arrayView1d< real64 const > const & faceGravCoef =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
+      faceManager.getField< extrinsicMeshData::flow::gravityCoefficient >();
     arrayView1d< real64 const > const & mimFaceGravCoef =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::mimGravityCoefficient >();
+      faceManager.getField< extrinsicMeshData::flow::mimGravityCoefficient >();
 
     // get the face-centered transMultiplier
     arrayView1d< real64 const > const & transMultiplier =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::transMultiplier >();
+      faceManager.getField< extrinsicMeshData::flow::transMultiplier >();
 
     // get the face-to-nodes connectivity for the transmissibility calculation
     ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
@@ -466,7 +466,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
       faceManager.getReference< array1d< globalIndex > >( faceDofKey );
     arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
     arrayView1d< real64 const > const & facePressure =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
+      faceManager.getField< extrinsicMeshData::flow::facePressure >();
     globalIndex const rankOffset = dofManager.rankOffset();
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minFaceVal( 1.0 );
@@ -537,7 +537,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
     arrayView1d< globalIndex const > const faceDofNumber =
       faceManager.getReference< array1d< globalIndex > >( faceDofKey );
     arrayView1d< real64 const > const facePres =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
+      faceManager.getField< extrinsicMeshData::flow::facePressure >();
 
     // check that face pressure is non-negative
     integer const faceSolutionCheck =
@@ -769,9 +769,9 @@ void CompositionalMultiphaseHybridFVM::resetStateToBeginningOfStep( DomainPartit
     FaceManager & faceManager = mesh.getFaceManager();
 
     arrayView1d< real64 const > const & facePres_n =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure_n >();
+      faceManager.getField< extrinsicMeshData::flow::facePressure_n >();
     arrayView1d< real64 > const & facePres =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
+      faceManager.getField< extrinsicMeshData::flow::facePressure >();
     facePres.setValues< parallelDevicePolicy<> >( facePres_n );
   } );
 }

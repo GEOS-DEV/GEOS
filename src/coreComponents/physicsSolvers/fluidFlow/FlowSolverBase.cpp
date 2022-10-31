@@ -253,7 +253,7 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh,
     arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
 
     arrayView1d< real64 > const gravityCoef =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
+      subRegion.getField< extrinsicMeshData::flow::gravityCoefficient >();
 
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
@@ -265,7 +265,7 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh,
     arrayView2d< real64 const > const faceCenter = faceManager.faceCenter();
 
     arrayView1d< real64 > const gravityCoef =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
+      faceManager.getField< extrinsicMeshData::flow::gravityCoefficient >();
 
     forAll< parallelHostPolicy >( faceManager.size(), [=] ( localIndex const kf )
     {
@@ -278,7 +278,7 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const & pressure = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+  arrayView1d< real64 const > const & pressure = subRegion.getField< extrinsicMeshData::flow::pressure >();
 
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
@@ -295,10 +295,10 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const & pressure = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+  arrayView1d< real64 const > const & pressure = subRegion.getField< extrinsicMeshData::flow::pressure >();
 
-  arrayView1d< real64 const > const newHydraulicAperture = subRegion.getExtrinsicData< extrinsicMeshData::flow::hydraulicAperture >();
-  arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getExtrinsicData< extrinsicMeshData::flow::aperture0 >();
+  arrayView1d< real64 const > const newHydraulicAperture = subRegion.getField< extrinsicMeshData::flow::hydraulicAperture >();
+  arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< extrinsicMeshData::flow::aperture0 >();
 
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( solidName );

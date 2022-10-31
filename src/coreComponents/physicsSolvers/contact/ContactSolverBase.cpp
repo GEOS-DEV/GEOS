@@ -138,7 +138,7 @@ void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
   elemManager.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion const & subRegion )
   {
     arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-    arrayView1d< integer const > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
+    arrayView1d< integer const > const & fractureState = subRegion.getField< extrinsicMeshData::contact::fractureState >();
 
     RAJA::ReduceSum< parallelHostReduce, localIndex > stickCount( 0 ), slipCount( 0 ), openCount( 0 );
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )

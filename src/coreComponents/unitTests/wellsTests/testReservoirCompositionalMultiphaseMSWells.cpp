@@ -252,11 +252,11 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
 
           // get the primary variables on the reservoir elements
           arrayView1d< real64 > const & pres =
-            subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
+            subRegion.getField< extrinsicMeshData::well::pressure >();
           pres.move( LvArray::MemorySpace::host, false );
 
           arrayView2d< real64, compflow::USD_COMP > const & compDens =
-            subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
+            subRegion.getField< extrinsicMeshData::well::globalCompDensity >();
           compDens.move( LvArray::MemorySpace::host, false );
 
           // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
@@ -357,15 +357,15 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
 
       // get the primary variables on the well elements
       arrayView1d< real64 > const & wellElemPressure =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
+        subRegion.getField< extrinsicMeshData::well::pressure >();
       wellElemPressure.move( LvArray::MemorySpace::host, false );
 
       arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
+        subRegion.getField< extrinsicMeshData::well::globalCompDensity >();
       wellElemCompDens.move( LvArray::MemorySpace::host, false );
 
       arrayView1d< real64 > const & connRate =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::mixtureConnectionRate >();
+        subRegion.getField< extrinsicMeshData::well::mixtureConnectionRate >();
       connRate.move( LvArray::MemorySpace::host, false );
 
       // a) compute all the derivatives wrt to the pressure in WELL elem iwelem

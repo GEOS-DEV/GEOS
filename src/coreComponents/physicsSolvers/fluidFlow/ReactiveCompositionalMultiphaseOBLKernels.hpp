@@ -181,11 +181,11 @@ public:
                       MultivariableTableFunctionStaticKernel< numDofs, numOps > OBLOperatorsTable )
     :
     m_OBLOperatorsTable( OBLOperatorsTable ),
-    m_pressure( subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
-    m_compFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >() ),
-    m_temperature( subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >() ),
-    m_OBLOperatorValues ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >()),
-    m_OBLOperatorDerivatives ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorDerivatives >())
+    m_pressure( subRegion.getField< extrinsicMeshData::flow::pressure >() ),
+    m_compFrac( subRegion.getField< extrinsicMeshData::flow::globalCompFraction >() ),
+    m_temperature( subRegion.getField< extrinsicMeshData::flow::temperature >() ),
+    m_OBLOperatorValues ( subRegion.getField< extrinsicMeshData::flow::OBLOperatorValues >()),
+    m_OBLOperatorDerivatives ( subRegion.getField< extrinsicMeshData::flow::OBLOperatorDerivatives >())
   {}
 
   /**
@@ -343,13 +343,13 @@ public:
     m_rankOffset( rankOffset ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
     m_elemGhostRank( subRegion.ghostRank() ),
-    m_referencePoreVolume( subRegion.getExtrinsicData< extrinsicMeshData::flow::referencePoreVolume >() ),
-    m_referenceRockVolume( subRegion.getExtrinsicData< extrinsicMeshData::flow::referenceRockVolume >() ),
-    m_rockVolumetricHeatCapacity( subRegion.getExtrinsicData< extrinsicMeshData::flow::rockVolumetricHeatCapacity >() ),
-    m_rockKineticRateFactor( subRegion.getExtrinsicData< extrinsicMeshData::flow::rockKineticRateFactor >() ),
-    m_OBLOperatorValues ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >()),
-    m_OBLOperatorValues_n ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues_n >()),
-    m_OBLOperatorDerivatives ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorDerivatives >()),
+    m_referencePoreVolume( subRegion.getField< extrinsicMeshData::flow::referencePoreVolume >() ),
+    m_referenceRockVolume( subRegion.getField< extrinsicMeshData::flow::referenceRockVolume >() ),
+    m_rockVolumetricHeatCapacity( subRegion.getField< extrinsicMeshData::flow::rockVolumetricHeatCapacity >() ),
+    m_rockKineticRateFactor( subRegion.getField< extrinsicMeshData::flow::rockKineticRateFactor >() ),
+    m_OBLOperatorValues ( subRegion.getField< extrinsicMeshData::flow::OBLOperatorValues >()),
+    m_OBLOperatorValues_n ( subRegion.getField< extrinsicMeshData::flow::OBLOperatorValues_n >()),
+    m_OBLOperatorDerivatives ( subRegion.getField< extrinsicMeshData::flow::OBLOperatorDerivatives >()),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {}

@@ -258,8 +258,8 @@ void MultiphasePoromechanicsSolver::updateStabilizationParameters( DomainPartiti
                                                                                               ElementSubRegionBase & subRegion )
 
     {
-      arrayView1d< integer > const macroElementIndex = subRegion.getExtrinsicData< extrinsicMeshData::flow::macroElementIndex >();
-      arrayView1d< real64 > const elementStabConstant = subRegion.getExtrinsicData< extrinsicMeshData::flow::elementStabConstant >();
+      arrayView1d< integer > const macroElementIndex = subRegion.getField< extrinsicMeshData::flow::macroElementIndex >();
+      arrayView1d< real64 > const elementStabConstant = subRegion.getField< extrinsicMeshData::flow::elementStabConstant >();
 
       geosx::constitutive::CoupledSolidBase const & porousSolid =
         getConstitutiveModel< geosx::constitutive::CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() ) );

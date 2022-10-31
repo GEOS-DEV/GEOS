@@ -217,25 +217,25 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
       arrayView1d< string const > const & components = solver.componentNames();
 
       arrayView1d< real64 > const & pres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+        subRegion.getField< extrinsicMeshData::flow::pressure >();
 
       arrayView1d< real64 const > const & pres_n =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
+        subRegion.getField< extrinsicMeshData::flow::pressure_n >();
 
       arrayView2d< real64, compflow::USD_COMP > const & compFrac =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+        subRegion.getField< extrinsicMeshData::flow::globalCompFraction >();
 
       arrayView2d< real64 const, compflow::USD_COMP > const & compFrac_n =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction_n >();
+        subRegion.getField< extrinsicMeshData::flow::globalCompFraction_n >();
 
       arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLVals =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >();
+        subRegion.getField< extrinsicMeshData::flow::OBLOperatorValues >();
 
       arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLVals_n =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues_n >();
+        subRegion.getField< extrinsicMeshData::flow::OBLOperatorValues_n >();
 
       arrayView3d< real64 const, compflow::USD_OBL_DER > const & OBLDers =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorDerivatives >();
+        subRegion.getField< extrinsicMeshData::flow::OBLOperatorDerivatives >();
 
       // reset the solver state to zero out variable updates
       solver.resetStateToBeginningOfStep( domain );
@@ -360,11 +360,11 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
         subRegion.getReference< array1d< globalIndex > >( dofKey );
 
       arrayView1d< real64 > const & pres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+        subRegion.getField< extrinsicMeshData::flow::pressure >();
       pres.move( LvArray::MemorySpace::host, false );
 
       arrayView2d< real64, compflow::USD_COMP > const & compFrac =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+        subRegion.getField< extrinsicMeshData::flow::globalCompFraction >();
       compFrac.move( LvArray::MemorySpace::host, false );
 
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )

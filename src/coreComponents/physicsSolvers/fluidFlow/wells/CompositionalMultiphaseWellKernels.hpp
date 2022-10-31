@@ -511,14 +511,14 @@ public:
   TotalMassDensityKernel( ObjectManagerBase & subRegion,
                           MultiFluidBase const & fluid )
     : Base(),
-    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::well::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction >() ),
-    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::well::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFrac( subRegion.getField< extrinsicMeshData::well::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac( subRegion.getField< extrinsicMeshData::well::dPhaseVolumeFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< extrinsicMeshData::well::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseMassDens( fluid.phaseMassDensity() ),
     m_dPhaseMassDens( fluid.dPhaseMassDensity() ),
-    m_totalMassDens( subRegion.getExtrinsicData< extrinsicMeshData::well::totalMassDensity >() ),
-    m_dTotalMassDens_dPres( subRegion.getExtrinsicData< extrinsicMeshData::well::dTotalMassDensity_dPressure >() ),
-    m_dTotalMassDens_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::well::dTotalMassDensity_dGlobalCompDensity >() )
+    m_totalMassDens( subRegion.getField< extrinsicMeshData::well::totalMassDensity >() ),
+    m_dTotalMassDens_dPres( subRegion.getField< extrinsicMeshData::well::dTotalMassDensity_dPressure >() ),
+    m_dTotalMassDens_dCompDens( subRegion.getField< extrinsicMeshData::well::dTotalMassDensity_dGlobalCompDensity >() )
   {}
 
   /**
@@ -782,9 +782,9 @@ public:
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure =
-      subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
+      subRegion.getField< extrinsicMeshData::well::pressure >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
+      subRegion.getField< extrinsicMeshData::well::globalCompDensity >();
     isothermalCompositionalMultiphaseBaseKernels::
       ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxCompFracChange, rankOffset,
                                              numComp, dofKey, subRegion, localSolution, pressure, compDens );
@@ -825,8 +825,8 @@ public:
                    ElementSubRegionBase const & subRegion,
                    arrayView1d< real64 const > const localSolution )
   {
-    arrayView1d< real64 const > const pressure = subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
-    arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
+    arrayView1d< real64 const > const pressure = subRegion.getField< extrinsicMeshData::well::pressure >();
+    arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< extrinsicMeshData::well::globalCompDensity >();
     isothermalCompositionalMultiphaseBaseKernels::
       SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor, rankOffset,
                                   numComp, dofKey, subRegion, localSolution, pressure, compDens );

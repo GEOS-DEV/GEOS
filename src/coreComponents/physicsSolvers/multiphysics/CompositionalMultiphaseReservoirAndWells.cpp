@@ -200,15 +200,15 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 
       // get the well element indices corresponding to each perforation
       arrayView1d< localIndex const > const & perfWellElemIndex =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
+        perforationData->getField< extrinsicMeshData::perforation::wellElementIndex >();
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const & resElementRegion =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
+        perforationData->getField< extrinsicMeshData::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const & resElementSubRegion =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
+        perforationData->getField< extrinsicMeshData::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const & resElementIndex =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
+        perforationData->getField< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       // Insert the entries corresponding to reservoir-well perforations
       // This will fill J_WR, and J_RW
@@ -323,22 +323,22 @@ assembleCouplingTerms( real64 const time_n,
 
       // get well variables on perforations
       arrayView2d< real64 const > const & compPerfRate =
-        perforationData->getExtrinsicData< extrinsicMeshData::well::compPerforationRate >();
+        perforationData->getField< extrinsicMeshData::well::compPerforationRate >();
       arrayView3d< real64 const > const & dCompPerfRate_dPres =
-        perforationData->getExtrinsicData< extrinsicMeshData::well::dCompPerforationRate_dPres >();
+        perforationData->getField< extrinsicMeshData::well::dCompPerforationRate_dPres >();
       arrayView4d< real64 const > const & dCompPerfRate_dComp =
-        perforationData->getExtrinsicData< extrinsicMeshData::well::dCompPerforationRate_dComp >();
+        perforationData->getField< extrinsicMeshData::well::dCompPerforationRate_dComp >();
 
       arrayView1d< localIndex const > const & perfWellElemIndex =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
+        perforationData->getField< extrinsicMeshData::perforation::wellElementIndex >();
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const & resElementRegion =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
+        perforationData->getField< extrinsicMeshData::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const & resElementSubRegion =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
+        perforationData->getField< extrinsicMeshData::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const & resElementIndex =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
+        perforationData->getField< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       RAJA::ReduceSum< parallelDeviceReduce, integer > numCrossflowPerforations( 0 );
 

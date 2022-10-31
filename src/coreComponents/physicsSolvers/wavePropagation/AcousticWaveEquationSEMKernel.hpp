@@ -879,8 +879,8 @@ public:
           finiteElementSpace,
           inputConstitutiveType ),
     m_X( nodeManager.referencePosition() ),
-    m_p_n( nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >() ),
-    m_stiffnessVector( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >() ),
+    m_p_n( nodeManager.getField< extrinsicMeshData::Pressure_n >() ),
+    m_stiffnessVector( nodeManager.getField< extrinsicMeshData::StiffnessVector >() ),
     m_dt( dt )
   {
     GEOSX_UNUSED_VAR( edgeManager );

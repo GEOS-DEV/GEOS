@@ -577,10 +577,10 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     arrayView1d< real64 const > const presFace =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
+      faceManager.getField< extrinsicMeshData::flow::facePressure >();
 
     arrayView1d< real64 const > const gravCoefFace =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
+      faceManager.getField< extrinsicMeshData::flow::gravityCoefficient >();
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
     elemDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );

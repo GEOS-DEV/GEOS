@@ -53,7 +53,7 @@ void ProppantPorosity::allocateConstitutiveData( dataRepository::Group & parent,
 
 void ProppantPorosity::postProcessInput()
 {
-  getExtrinsicData< extrinsicMeshData::porosity::referencePorosity >().
+  getField< extrinsicMeshData::porosity::referencePorosity >().
     setApplyDefaultValue( m_defaultReferencePorosity );
 }
 

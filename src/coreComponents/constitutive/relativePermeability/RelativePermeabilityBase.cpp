@@ -103,11 +103,11 @@ void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex c
 
 void RelativePermeabilityBase::setLabels()
 {
-  getExtrinsicData< extrinsicMeshData::relperm::phaseRelPerm >().
+  getField< extrinsicMeshData::relperm::phaseRelPerm >().
     setDimLabels( 2, m_phaseNames );
-  getExtrinsicData< extrinsicMeshData::relperm::phaseRelPerm_n >().
+  getField< extrinsicMeshData::relperm::phaseRelPerm_n >().
     setDimLabels( 2, m_phaseNames );
-  getExtrinsicData< extrinsicMeshData::relperm::phaseTrappedVolFraction >().
+  getField< extrinsicMeshData::relperm::phaseTrappedVolFraction >().
     setDimLabels( 2, m_phaseNames );
 }
 

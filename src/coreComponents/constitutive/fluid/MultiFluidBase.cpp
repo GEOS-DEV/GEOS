@@ -119,25 +119,25 @@ void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPt
 
 void MultiFluidBase::setLabels()
 {
-  getExtrinsicData< extrinsicMeshData::multifluid::phaseFraction >().
+  getField< extrinsicMeshData::multifluid::phaseFraction >().
     setDimLabels( 2, m_phaseNames );
 
-  getExtrinsicData< extrinsicMeshData::multifluid::phaseDensity >().
+  getField< extrinsicMeshData::multifluid::phaseDensity >().
     setDimLabels( 2, m_phaseNames );
 
-  getExtrinsicData< extrinsicMeshData::multifluid::phaseMassDensity >().
+  getField< extrinsicMeshData::multifluid::phaseMassDensity >().
     setDimLabels( 2, m_phaseNames );
 
-  getExtrinsicData< extrinsicMeshData::multifluid::phaseViscosity >().
+  getField< extrinsicMeshData::multifluid::phaseViscosity >().
     setDimLabels( 2, m_phaseNames );
 
-  getExtrinsicData< extrinsicMeshData::multifluid::phaseEnthalpy >().
+  getField< extrinsicMeshData::multifluid::phaseEnthalpy >().
     setDimLabels( 2, m_phaseNames );
 
-  getExtrinsicData< extrinsicMeshData::multifluid::phaseInternalEnergy >().
+  getField< extrinsicMeshData::multifluid::phaseInternalEnergy >().
     setDimLabels( 2, m_phaseNames );
 
-  getExtrinsicData< extrinsicMeshData::multifluid::phaseCompFraction >().
+  getField< extrinsicMeshData::multifluid::phaseCompFraction >().
     setDimLabels( 2, m_phaseNames ).
     setDimLabels( 3, m_componentNames );
 }

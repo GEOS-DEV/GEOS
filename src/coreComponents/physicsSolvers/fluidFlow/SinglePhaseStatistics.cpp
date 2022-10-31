@@ -109,8 +109,8 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
 
     arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-    arrayView1d< real64 const > const deltaPres = subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
+    arrayView1d< real64 const > const pres = subRegion.getField< extrinsicMeshData::flow::pressure >();
+    arrayView1d< real64 const > const deltaPres = subRegion.getField< extrinsicMeshData::flow::deltaPressure >();
 
     string const & solidName = subRegion.getReference< string >( SinglePhaseBase::viewKeyStruct::solidNamesString() );
     Group const & constitutiveModels = subRegion.getGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );

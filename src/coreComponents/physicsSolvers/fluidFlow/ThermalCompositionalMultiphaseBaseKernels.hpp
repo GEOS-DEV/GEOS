@@ -617,9 +617,9 @@ public:
                    ElementSubRegionBase const & subRegion,
                    arrayView1d< real64 const > const localSolution )
   {
-    arrayView1d< real64 const > const pressure = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-    arrayView1d< real64 const > const temperature = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
-    arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+    arrayView1d< real64 const > const pressure = subRegion.getField< extrinsicMeshData::flow::pressure >();
+    arrayView1d< real64 const > const temperature = subRegion.getField< extrinsicMeshData::flow::temperature >();
+    arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< extrinsicMeshData::flow::globalCompDensity >();
     ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxRelativeTempChange, maxCompFracChange,
                                            rankOffset, numComp, dofKey, subRegion, localSolution,
                                            pressure, temperature, compDens );
@@ -737,11 +737,11 @@ public:
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      subRegion.getField< extrinsicMeshData::flow::pressure >();
     arrayView1d< real64 const > const temperature =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+      subRegion.getField< extrinsicMeshData::flow::temperature >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+      subRegion.getField< extrinsicMeshData::flow::globalCompDensity >();
     SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor,
                                 rankOffset, numComp, dofKey, subRegion, localSolution,
                                 pressure, temperature, compDens );

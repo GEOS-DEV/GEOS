@@ -230,7 +230,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
       if( m_isThermal )
       {
         arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac_n =
-          subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction_n >();
+          subRegion.getField< extrinsicMeshData::flow::phaseVolumeFraction_n >();
         arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDens_n = fluid.phaseDensity_n();
         arrayView3d< real64 const, multifluid::USD_PHASE > const phaseInternalEnergy_n = fluid.phaseInternalEnergy_n();
 

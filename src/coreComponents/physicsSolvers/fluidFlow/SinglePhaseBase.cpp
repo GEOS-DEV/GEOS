@@ -222,7 +222,7 @@ void SinglePhaseBase::initializePreSubGroups()
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
-      arrayView1d< real64 > const temp = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+      arrayView1d< real64 > const temp = subRegion.getField< extrinsicMeshData::flow::temperature >();
       temp.setValues< parallelHostPolicy >( m_inputTemperature );
     } );
   } );
@@ -235,8 +235,8 @@ void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const pres = dataGroup.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-  arrayView1d< real64 const > const temp = dataGroup.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+  arrayView1d< real64 const > const pres = dataGroup.getField< extrinsicMeshData::flow::pressure >();
+  arrayView1d< real64 const > const temp = dataGroup.getField< extrinsicMeshData::flow::temperature >();
 
   SingleFluidBase & fluid =
     getConstitutiveModel< SingleFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
@@ -250,7 +250,7 @@ void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
 
 void SinglePhaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
 {
-  arrayView1d< real64 const > const temp = dataGroup.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+  arrayView1d< real64 const > const temp = dataGroup.getField< extrinsicMeshData::flow::temperature >();
 
   string const & solidInternalEnergyName = dataGroup.getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
   SolidInternalEnergy & solidInternalEnergy = getConstitutiveModel< SolidInternalEnergy >( dataGroup, solidInternalEnergyName );
@@ -272,11 +272,8 @@ void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup ) const
 
   // output
 
-  arrayView1d< real64 > const mob =
-    dataGroup.getExtrinsicData< extrinsicMeshData::flow::mobility >();
-
-  arrayView1d< real64 > const dMob_dPres =
-    dataGroup.getExtrinsicData< extrinsicMeshData::flow::dMobility_dPressure >();
+  arrayView1d< real64 > const mob = dataGroup.getField< extrinsicMeshData::flow::mobility >();
+  arrayView1d< real64 > const dMob_dPres = dataGroup.getField< extrinsicMeshData::flow::dMobility_dPressure >();
 
   // input
 
@@ -287,7 +284,7 @@ void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup ) const
   if( m_isThermal )
   {
     arrayView1d< real64 > const dMob_dTemp =
-      dataGroup.getExtrinsicData< extrinsicMeshData::flow::dMobility_dTemperature >();
+      dataGroup.getField< extrinsicMeshData::flow::dMobility_dTemperature >();
 
     ThermalFluidPropViews thermalFluidProps = getThermalFluidProperties( fluid );
 
@@ -343,7 +340,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
       // 1. update porosity, permeability, and density/viscosity
       // In addition, to avoid multiplying permeability/porosity bay netToGross in the assembly kernel, we do it once and for all here
-      arrayView1d< real64 const > const netToGross = subRegion.template getExtrinsicData< extrinsicMeshData::flow::netToGross >();
+      arrayView1d< real64 const > const netToGross = subRegion.template getField< extrinsicMeshData::flow::netToGross >();
       CoupledSolidBase const & porousSolid =
         getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
       PermeabilityBase const & permeabilityModel =
@@ -404,8 +401,8 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
     {
-      arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-      arrayView1d< real64 > const presInit   = subRegion.getExtrinsicData< extrinsicMeshData::flow::initialPressure >();
+      arrayView1d< real64 const > const pres = subRegion.getField< extrinsicMeshData::flow::pressure >();
+      arrayView1d< real64 > const presInit   = subRegion.getField< extrinsicMeshData::flow::initialPressure >();
       presInit.setValues< parallelDevicePolicy<> >( pres );
     } );
   } );
@@ -567,7 +564,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     // Step 4: assign pressure as a function of elevation
     // TODO: this last step should probably be delayed to wait for the creation of FaceElements
     arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
-    arrayView1d< real64 > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+    arrayView1d< real64 > const pres = subRegion.getField< extrinsicMeshData::flow::pressure >();
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
@@ -638,22 +635,22 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
     {
-      arrayView1d< real64 const > const & pres = subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >();
-      arrayView1d< real64 const > const & initPres = subRegion.template getExtrinsicData< extrinsicMeshData::flow::initialPressure >();
-      arrayView1d< real64 > const & deltaPres = subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
-      arrayView1d< real64 > const & pres_n = subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
+      arrayView1d< real64 const > const & pres = subRegion.template getField< extrinsicMeshData::flow::pressure >();
+      arrayView1d< real64 const > const & initPres = subRegion.template getField< extrinsicMeshData::flow::initialPressure >();
+      arrayView1d< real64 > const & deltaPres = subRegion.template getField< extrinsicMeshData::flow::deltaPressure >();
+      arrayView1d< real64 > const & pres_n = subRegion.template getField< extrinsicMeshData::flow::pressure_n >();
       pres_n.setValues< parallelDevicePolicy<> >( pres );
       singlePhaseBaseKernels::StatisticsKernel::
         saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
 
       if( m_isThermal )
       {
-        arrayView1d< real64 const > const & temp = subRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature >();
-        arrayView1d< real64 > const & temp_n = subRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature_n >();
+        arrayView1d< real64 const > const & temp = subRegion.template getField< extrinsicMeshData::flow::temperature >();
+        arrayView1d< real64 > const & temp_n = subRegion.template getField< extrinsicMeshData::flow::temperature_n >();
         temp_n.setValues< parallelDevicePolicy<> >( temp );
       }
 
-      arrayView1d< real64 > const & dVol = subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaVolume >();
+      arrayView1d< real64 > const & dVol = subRegion.template getField< extrinsicMeshData::flow::deltaVolume >();
       dVol.zero();
 
       // This should fix NaN density in newly created fracture elements
@@ -670,8 +667,8 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           FaceElementSubRegion & subRegion )
     {
-      arrayView1d< real64 const > const aper = subRegion.getExtrinsicData< extrinsicMeshData::flow::hydraulicAperture >();
-      arrayView1d< real64 > const aper0 = subRegion.getExtrinsicData< extrinsicMeshData::flow::aperture0 >();
+      arrayView1d< real64 const > const aper = subRegion.getField< extrinsicMeshData::flow::hydraulicAperture >();
+      arrayView1d< real64 > const aper0 = subRegion.getField< extrinsicMeshData::flow::aperture0 >();
       aper0.setValues< parallelDevicePolicy<> >( aper );
 
       // Needed coz faceElems don't exist when initializing.
@@ -710,7 +707,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
     {
-      arrayView1d< real64 const > const dVol = subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaVolume >();
+      arrayView1d< real64 const > const dVol = subRegion.getField< extrinsicMeshData::flow::deltaVolume >();
       arrayView1d< real64 > const vol = subRegion.getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
@@ -1124,14 +1121,14 @@ void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
     {
-      arrayView1d< real64 > const pres = subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >();
-      arrayView1d< real64 const > const pres_n = subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
+      arrayView1d< real64 > const pres = subRegion.template getField< extrinsicMeshData::flow::pressure >();
+      arrayView1d< real64 const > const pres_n = subRegion.template getField< extrinsicMeshData::flow::pressure_n >();
       pres.setValues< parallelDevicePolicy<> >( pres_n );
 
       if( m_isThermal )
       {
-        arrayView1d< real64 > const temp = subRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature >();
-        arrayView1d< real64 const > const temp_n = subRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature_n >();
+        arrayView1d< real64 > const temp = subRegion.template getField< extrinsicMeshData::flow::temperature >();
+        arrayView1d< real64 const > const temp_n = subRegion.template getField< extrinsicMeshData::flow::temperature_n >();
         temp.setValues< parallelDevicePolicy<> >( temp_n );
       }
 

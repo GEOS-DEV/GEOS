@@ -86,7 +86,7 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh ) const
   NodeManager & nodeManager = mesh.getNodeManager();
   arrayView1d< integer const > const ghostRank = nodeManager.ghostRank();
   solidMechanics::arrayViewConst2dLayoutTotalDisplacement const & u =
-    nodeManager.getExtrinsicData< solidMechanics::totalDisplacement >();
+    nodeManager.getField< solidMechanics::totalDisplacement >();
 
   RAJA::ReduceMax< parallelDeviceReduce, real64 > maxDispX( -LvArray::NumericLimits< real64 >::max );
   RAJA::ReduceMax< parallelDeviceReduce, real64 > maxDispY( -LvArray::NumericLimits< real64 >::max );

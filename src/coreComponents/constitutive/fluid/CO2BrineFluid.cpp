@@ -96,11 +96,11 @@ CO2BrineFluid( string const & name, Group * const parent ):
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
   {
-    getExtrinsicData< extrinsicMeshData::multifluid::phaseEnthalpy >().
+    getField< extrinsicMeshData::multifluid::phaseEnthalpy >().
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRestartFlags( RestartFlags::WRITE_AND_READ );
 
-    getExtrinsicData< extrinsicMeshData::multifluid::phaseInternalEnergy >().
+    getField< extrinsicMeshData::multifluid::phaseInternalEnergy >().
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRestartFlags( RestartFlags::WRITE_AND_READ );
   }

@@ -151,7 +151,7 @@ And to extract the data, the call would be:
 
 .. code-block:: c++
 
-    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.getExtrinsicData< extrinsicMeshData::TotalDisplacement >();
+    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.getField< extrinsicMeshData::TotalDisplacement >();
     ... do something with u
 
 The end result of the ``trait approach`` to this example is that the developer
