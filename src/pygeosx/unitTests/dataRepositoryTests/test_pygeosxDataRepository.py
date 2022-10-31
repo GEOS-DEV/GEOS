@@ -7,6 +7,10 @@ import os
 
 
 class TestPygeosxObjects(object):
+    def get_geosx_args(self):
+        script_path = os.path.dirname(os.path.abspath(__file__))
+        target_xml = os.path.join(script_path, 'pygeosx_only.xml')
+        return ('pygeosx', '-i', target_xml)
 
     @pytest.fixture(scope='class')
     def geosx_problem(self):
@@ -18,22 +22,21 @@ class TestPygeosxObjects(object):
         Returns:
             pygeosx.problem: the problem handle
         """
-        script_path = os.path.dirname(os.path.abspath(__file__))
-        target_xml = os.path.join(script_path, 'pygeosx_only.xml')
-
-        rank = 0
-        args = ('pygeosx', '-i', target_xml)
-        problem = pygeosx.initialize(rank, args)
-        pygeosx.apply_initial_conditions()
-        # print(wrapper.get_matching_wrapper_path(problem, ['cellBlock01']))
+        args = self.get_geosx_args()
+        problem = pygeosx.initialize(0, args)
         return problem
+
+    def test_apply_initial_conditions(self, geosx_problem):
+        pygeosx.apply_initial_conditions()
 
     def test_get_group(self, geosx_problem):
         """
         Test accessing a group, which has an expected wrapper 'time'
         """
         group = geosx_problem.get_group('Events', None)
-        t = group.get_wrapper('time')
+        assert isinstance(group, pygeosx.Group)
+        t = group.get_wrapper('time').value()[0]
+        assert isinstance(t, float)
 
     @pytest.mark.parametrize('target_key, target_shape, target_type',
                              [('Events/time', (1,), float),
@@ -81,8 +84,6 @@ class TestPygeosxObjects(object):
 
         Args:
             target_key (str): Key value for the target wrapper
-            target_shape (tuple): Expected shape for the target wrapper
-            target_type (dtype): Expected type for the wrapper elements
             geosx_proplem (pygeosx.problem): The problem handle
         """
         # Access and record the initial value
@@ -109,3 +110,61 @@ class TestPygeosxObjects(object):
         dx = float(dx)
 
         assert dx < 1e-10
+
+    @pytest.mark.parametrize('target_key',
+                             [('domain/MeshBodies/mesh1/meshLevels/Level0/nodeManager/ReferencePosition'),
+                              ('domain/MeshBodies/mesh1/meshLevels/Level0/nodeManager/ghostRank'),
+                              ('domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/dummy/elementSubRegions/cellBlock01/elementVolume')])
+    def test_wrapper_read_only_error(self, target_key, geosx_problem):
+        """
+        Test writing to read-only wrappers.
+        Note: this error does not get called on certain scalar wrappers (time, cycle)
+
+        Args:
+            target_key (str): Key value for the target wrapper
+            geosx_proplem (pygeosx.problem): The problem handle
+        """
+        x = geosx_problem.get_wrapper(target_key).value()
+        if hasattr(x, "to_numpy"):
+            print('Test_a')
+            x = x.to_numpy()
+
+        with pytest.raises(ValueError):
+            x += 1
+
+    def test_problem_run(self, geosx_problem):
+        """
+        Test advancing the problem one step
+        """
+        status = pygeosx.run()
+        assert status == pygeosx.READY_TO_RUN
+        group = geosx_problem.get_group('Events', None)
+        ta = group.get_wrapper('time').value()[0].copy()
+        ca = group.get_wrapper('cycle').value()[0].copy()
+
+        status = pygeosx.run()
+        assert status == pygeosx.READY_TO_RUN
+        tb = group.get_wrapper('time').value()[0]
+        cb = group.get_wrapper('cycle').value()[0]
+        assert (ta + 1) == tb
+        assert (ca + 1) == cb
+
+    def test_problem_complete(self, geosx_problem):
+        """
+        Test running the problem to completion
+        """
+        max_iter = 100
+        ii = 0
+        while (pygeosx.run() != pygeosx.COMPLETED) and (ii <= max_iter):
+            ii += 1
+
+        assert ii != max_iter
+
+    def test_problem_reinit(self, geosx_problem):
+        """
+        Test re-initializing the problem
+        """
+        args = self.get_geosx_args()
+        problem = pygeosx.reinit(args)
+        c = problem.get_wrapper('Events/cycle').value()[0]
+        assert c == 0

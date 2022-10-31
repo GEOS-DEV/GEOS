@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Events maxTime="2">
+  <Events maxTime="10">
     <PeriodicEvent
       name="python"
       maxEventDt="1"
