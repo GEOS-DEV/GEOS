@@ -21,14 +21,14 @@
 
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/slurryFluidSelector.hpp"
-#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
-#include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/fluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/SlurryFluidFields.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/ProppantSolid.hpp"
 #include "constitutive/solid/porosity/ProppantPorosity.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseProppantBaseKernels.hpp"
 
 namespace geosx

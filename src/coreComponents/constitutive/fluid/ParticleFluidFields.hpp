@@ -13,13 +13,13 @@
  */
 
 /**
- * @file ParticleFluidExtrinsicData.hpp
+ * @file ParticleFluidFields.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDEXTRINSICDATA_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDEXTRINSICDATA_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDFIELDS_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDFIELDS_HPP_
 
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 
 namespace geosx
 {
@@ -92,4 +92,4 @@ DECLARE_FIELD( proppantPackPermeability,
 
 }
 
-#endif // GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDEXTRINSICDATA_HPP_
+#endif // GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDFIELDS_HPP_

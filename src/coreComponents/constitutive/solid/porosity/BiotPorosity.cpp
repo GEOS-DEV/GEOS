@@ -17,7 +17,7 @@
  */
 
 #include "BiotPorosity.hpp"
-#include "PorosityExtrinsicData.hpp"
+#include "PorosityFields.hpp"
 
 namespace geosx
 {

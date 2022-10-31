@@ -17,7 +17,7 @@
  */
 
 #include "CapillaryPressureBase.hpp"
-#include "CapillaryPressureExtrinsicData.hpp"
+#include "CapillaryPressureFields.hpp"
 
 namespace geosx
 {

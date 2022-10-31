@@ -16,9 +16,9 @@
 #include "hdf5_interface/coupler.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/FaceManager.hpp"
-#include "mesh/ExtrinsicMeshData.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
-#include "physicsSolvers/surfaceGeneration/SurfaceGeneratorExtrinsicData.hpp"
+#include "mesh/MeshFields.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsSolvers/surfaceGeneration/SurfaceGeneratorFields.hpp"
 
 #include <cstdint>
 #include <tuple>

@@ -19,7 +19,7 @@
 #include "ObjectManagerBase.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 #include "common/MpiWrapper.hpp"
 
 namespace geosx

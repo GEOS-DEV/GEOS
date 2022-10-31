@@ -20,8 +20,8 @@
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
 
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
-#include "constitutive/thermalConductivity/ThermalConductivityExtrinsicData.hpp"
-#include "constitutive/thermalConductivity/SinglePhaseThermalConductivityExtrinsicData.hpp"
+#include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
+#include "constitutive/thermalConductivity/SinglePhaseThermalConductivityFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 
 namespace geosx

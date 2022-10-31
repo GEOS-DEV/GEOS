@@ -13,13 +13,13 @@
  */
 
 /**
- * @file SlurryFluidExtrinsicData.hpp
+ * @file SlurryFluidFields.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_SLURRYFLUIDEXTRINSICDATA_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_SLURRYFLUIDEXTRINSICDATA_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_SLURRYFLUIDFIELDS_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_SLURRYFLUIDFIELDS_HPP_
 
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 
 namespace geosx
 {
@@ -140,4 +140,4 @@ DECLARE_FIELD( dFluidViscosity_dComponentConcentration,
 
 }
 
-#endif // GEOSX_CONSTITUTIVE_FLUID_SLURRYFLUIDEXTRINSICDATA_HPP_
+#endif // GEOSX_CONSTITUTIVE_FLUID_SLURRYFLUIDFIELDS_HPP_

@@ -26,8 +26,8 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 
 using namespace geosx;
 using namespace geosx::dataRepository;

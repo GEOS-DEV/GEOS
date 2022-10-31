@@ -20,8 +20,8 @@
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivityBase.hpp"
-#include "constitutive/thermalConductivity/ThermalConductivityExtrinsicData.hpp"
-#include "constitutive/thermalConductivity/MultiPhaseThermalConductivityExtrinsicData.hpp"
+#include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
+#include "constitutive/thermalConductivity/MultiPhaseThermalConductivityFields.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
 namespace geosx

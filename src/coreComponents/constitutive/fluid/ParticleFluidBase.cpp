@@ -18,7 +18,7 @@
 
 #include "ParticleFluidBase.hpp"
 
-#include "ParticleFluidExtrinsicData.hpp"
+#include "ParticleFluidFields.hpp"
 
 namespace geosx
 {

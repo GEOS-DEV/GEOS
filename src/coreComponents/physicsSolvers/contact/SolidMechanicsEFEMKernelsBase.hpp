@@ -22,7 +22,7 @@
 
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
 #include "SolidMechanicsEFEMKernelsHelper.hpp"
-#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
+#include "physicsSolvers/contact/ContactFields.hpp"
 
 namespace geosx
 {

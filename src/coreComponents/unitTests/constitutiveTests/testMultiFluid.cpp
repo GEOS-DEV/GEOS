@@ -15,7 +15,7 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
+#include "constitutive/fluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"

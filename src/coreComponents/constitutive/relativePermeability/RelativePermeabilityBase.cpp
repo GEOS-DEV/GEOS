@@ -17,7 +17,7 @@
  */
 
 #include "RelativePermeabilityBase.hpp"
-#include "RelativePermeabilityExtrinsicData.hpp"
+#include "RelativePermeabilityFields.hpp"
 
 namespace geosx
 {

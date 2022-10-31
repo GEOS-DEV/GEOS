@@ -17,8 +17,8 @@
  */
 
 #include "MultiPhaseThermalConductivityBase.hpp"
-#include "ThermalConductivityExtrinsicData.hpp"
-#include "MultiPhaseThermalConductivityExtrinsicData.hpp"
+#include "ThermalConductivityFields.hpp"
+#include "MultiPhaseThermalConductivityFields.hpp"
 
 namespace geosx
 {

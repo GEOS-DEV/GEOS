@@ -13,13 +13,13 @@
  */
 
 /**
- * @file PermeabilityExtrinsicData.hpp
+ * @file PermeabilityFields.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_PERMEABILITYEXTRINSICDATA_HPP_
-#define GEOSX_CONSTITUTIVE_PERMEABILITYEXTRINSICDATA_HPP_
+#ifndef GEOSX_CONSTITUTIVE_PERMEABILITYFIELDS_HPP_
+#define GEOSX_CONSTITUTIVE_PERMEABILITYFIELDS_HPP_
 
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 
 namespace geosx
 {
@@ -84,4 +84,4 @@ DECLARE_FIELD( permeabilityMultiplier,
 
 }
 
-#endif // GEOSX_CONSTITUTIVE_PERMEABILITYEXTRINSICDATA_HPP_
+#endif // GEOSX_CONSTITUTIVE_PERMEABILITYFIELDS_HPP_

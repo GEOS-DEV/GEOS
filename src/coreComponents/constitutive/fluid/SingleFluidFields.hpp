@@ -13,13 +13,13 @@
  */
 
 /**
- * @file SingleFluidExtrinsicData.hpp
+ * @file SingleFluidFields.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_SINGLEFLUIDEXTRINSICDATA_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_SINGLEFLUIDEXTRINSICDATA_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_SINGLEFLUIDFIELDS_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_SINGLEFLUIDFIELDS_HPP_
 
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 
 namespace geosx
 {
@@ -148,4 +148,4 @@ DECLARE_FIELD( dEnthalpy_dTemperature,
 
 }
 
-#endif // GEOSX_CONSTITUTIVE_FLUID_SINGLEFLUIDEXTRINSICDATA_HPP_
+#endif // GEOSX_CONSTITUTIVE_FLUID_SINGLEFLUIDFIELDS_HPP_

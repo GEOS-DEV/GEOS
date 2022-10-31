@@ -20,7 +20,7 @@
 
 #include "common/MpiWrapper.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/PerforationExtrinsicData.hpp"
+#include "mesh/PerforationFields.hpp"
 #include "utilities/ComputationalGeometry.hpp"
 
 namespace geosx

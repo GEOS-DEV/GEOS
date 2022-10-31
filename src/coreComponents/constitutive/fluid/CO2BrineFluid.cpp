@@ -17,7 +17,7 @@
  */
 #include "CO2BrineFluid.hpp"
 
-#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
+#include "constitutive/fluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 
 namespace geosx

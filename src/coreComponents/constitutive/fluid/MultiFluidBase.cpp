@@ -18,7 +18,7 @@
 
 
 #include "MultiFluidBase.hpp"
-#include "MultiFluidExtrinsicData.hpp"
+#include "MultiFluidFields.hpp"
 
 namespace geosx
 {

@@ -13,13 +13,13 @@
  */
 
 /**
- * @file ContactExtrinsicData.hpp
+ * @file ContactFields.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTEXTRINSICDATA_HPP_
-#define GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTEXTRINSICDATA_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTFIELDS_HPP_
+#define GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTFIELDS_HPP_
 
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 
 namespace geosx
 {
@@ -130,4 +130,4 @@ ENUM_STRINGS( FractureState::State, "stick", "new_slip", "slip", "open" );
 
 }
 
-#endif // GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTEXTRINSICDATA_HPP_
+#endif // GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTFIELDS_HPP_

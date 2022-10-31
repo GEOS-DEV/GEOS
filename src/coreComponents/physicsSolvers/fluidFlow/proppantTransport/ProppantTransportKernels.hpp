@@ -21,16 +21,16 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
+#include "constitutive/fluid/SingleFluidFields.hpp"
 #include "constitutive/fluid/ParticleFluidBase.hpp"
-#include "constitutive/fluid/ParticleFluidExtrinsicData.hpp"
+#include "constitutive/fluid/ParticleFluidFields.hpp"
 #include "constitutive/fluid/SlurryFluidBase.hpp"
-#include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
+#include "constitutive/fluid/SlurryFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 namespace geosx

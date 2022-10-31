@@ -13,14 +13,14 @@
  */
 
 /**
- * @file MultiFluidExtrinsicData.hpp
+ * @file MultiFluidFields.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDEXTRINSICDATA_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDEXTRINSICDATA_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDFIELDS_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDFIELDS_HPP_
 
 #include "constitutive/fluid/layouts.hpp"
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 
 namespace geosx
 {
@@ -212,4 +212,4 @@ DECLARE_FIELD( dTotalDensity,
 
 }
 
-#endif // GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDEXTRINSICDATA_HPP_
+#endif // GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDFIELDS_HPP_

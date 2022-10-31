@@ -13,14 +13,14 @@
  */
 
 /**
- * @file CompositionalMultiphaseBaseExtrinsicData.hpp
+ * @file CompositionalMultiphaseWellFields.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEEXTRINSICDATA_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEEXTRINSICDATA_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLFIELDS_HPP_
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLFIELDS_HPP_
 
 #include "common/DataLayouts.hpp"
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 
 namespace geosx
 {
@@ -30,14 +30,16 @@ namespace geosx
 namespace fields
 {
 
-namespace flow
+namespace well
 {
 
+using array2dLayoutFluid_dC = array2d< real64, compflow::LAYOUT_FLUID_DC >;
 using array2dLayoutPhase = array2d< real64, compflow::LAYOUT_PHASE >;
 using array3dLayoutPhase_dC = array3d< real64, compflow::LAYOUT_PHASE_DC >;
 using array2dLayoutComp = array2d< real64, compflow::LAYOUT_COMP >;
 using array3dLayoutComp_dC = array3d< real64, compflow::LAYOUT_COMP_DC >;
 using array3dLayoutPhaseComp = array3d< real64, compflow::LAYOUT_PHASE_COMP >;
+
 
 DECLARE_FIELD( globalCompDensity,
                "globalCompDensity",
@@ -52,8 +54,24 @@ DECLARE_FIELD( globalCompDensity_n,
                array2dLayoutComp,
                0,
                NOPLOT,
-               NO_WRITE,
-               "Global component density updates at the previous converged time step " );
+               WRITE_AND_READ,
+               "Global component density at the previous converged time step" );
+
+DECLARE_FIELD( mixtureConnectionRate,
+               "wellElementMixtureConnectionRate",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Mixture connection rate" );
+
+DECLARE_FIELD( mixtureConnectionRate_n,
+               "wellElementMixtureConnectionRate_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Mixture connection rate at the previous converged time step" );
 
 DECLARE_FIELD( globalCompFraction,
                "globalCompFraction",
@@ -62,14 +80,6 @@ DECLARE_FIELD( globalCompFraction,
                LEVEL_0,
                WRITE_AND_READ,
                "Global component fraction" );
-
-DECLARE_FIELD( faceGlobalCompFraction,
-               "faceGlobalCompFraction",
-               array2dLayoutComp,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Face global component fraction" );
 
 DECLARE_FIELD( dGlobalCompFraction_dGlobalCompDensity,
                "dGlobalCompFraction_dGlobalCompDensity",
@@ -93,23 +103,7 @@ DECLARE_FIELD( dPhaseVolumeFraction,
                0,
                NOPLOT,
                NO_WRITE,
-               "Derivative of phase volume fraction with respect to pressure, temperature, global component density" );
-
-DECLARE_FIELD( phaseMobility,
-               "phaseMobility",
-               array2dLayoutPhase,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Phase mobility" );
-
-DECLARE_FIELD( dPhaseMobility,
-               "dPhaseMobility",
-               array3dLayoutPhase_dC,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of phase volume fraction with respect to pressure, temperature, global component density" );
+               "Derivative of phase volume fraction with respect to pressure, temperature, and global component density" );
 
 DECLARE_FIELD( phaseVolumeFraction_n,
                "phaseVolumeFraction_n",
@@ -119,45 +113,53 @@ DECLARE_FIELD( phaseVolumeFraction_n,
                WRITE_AND_READ,
                "Phase volume fraction at the previous converged time step" );
 
-DECLARE_FIELD( phaseMobility_n,
-               "phaseMobility_n",
-               array2dLayoutPhase,
+DECLARE_FIELD( totalMassDensity,
+               "totalMassDensity",
+               array1d< real64 >,
                0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
-               "Phase mobility at the previous converged time step" );
+               "Total mass density" );
 
-DECLARE_FIELD( phaseOutflux,
-               "phaseOutflux",
-               array2dLayoutPhase,
+DECLARE_FIELD( dTotalMassDensity_dPressure,
+               "dTotalMassDensity_dPressure",
+               array1d< real64 >,
                0,
                NOPLOT,
                NO_WRITE,
-               "Phase outflux" );
+               "Derivative of total mass density with respect to pressure" );
 
-DECLARE_FIELD( componentOutflux,
-               "componentOutflux",
-               array2dLayoutComp,
+DECLARE_FIELD( dTotalMassDensity_dGlobalCompDensity,
+               "dTotalMassDensity_dComp", // to avoid a rebaseline
+               array2dLayoutFluid_dC,
                0,
                NOPLOT,
                NO_WRITE,
-               "Component outflux" );
+               "Derivative of total mass density with respect to global component density" );
 
-DECLARE_FIELD( phaseCFLNumber,
-               "phaseCFLNumber",
-               array1d< real64 >,
+DECLARE_FIELD( compPerforationRate,
+               "compPerforationRate",
+               array2d< real64 >,
                0,
                LEVEL_0,
-               NO_WRITE,
-               "Phase CFL number" );
+               WRITE_AND_READ,
+               "Component perforation rate" );
 
-DECLARE_FIELD( componentCFLNumber,
-               "componentCFLNumber",
-               array1d< real64 >,
+DECLARE_FIELD( dCompPerforationRate_dPres,
+               "dCompPerforationRate_dPres",
+               array3d< real64 >,
                0,
-               LEVEL_0,
+               NOPLOT,
                NO_WRITE,
-               "Component CFL number" );
+               "Derivative of component perforation rate with respect to pressure" );
+
+DECLARE_FIELD( dCompPerforationRate_dComp,
+               "dCompPerforationRate_dComp",
+               array4d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of component perforation rate with respect to global component density" );
 
 }
 
@@ -165,4 +167,4 @@ DECLARE_FIELD( componentCFLNumber,
 
 }
 
-#endif // GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEEXTRINSICDATA_HPP_
+#endif // GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLFIELDS_HPP_

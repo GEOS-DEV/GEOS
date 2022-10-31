@@ -24,7 +24,7 @@
 #include "LvArray/src/tensorOps.hpp"
 #include "mesh/BufferOps.hpp"
 #include "mesh/ElementRegionManager.hpp"
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "utilities/ComputationalGeometry.hpp"

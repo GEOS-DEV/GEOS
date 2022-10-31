@@ -15,7 +15,7 @@
 // Source includes
 #include "common/DataLayouts.hpp"
 #include "constitutiveTestHelpers.hpp"
-#include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
 

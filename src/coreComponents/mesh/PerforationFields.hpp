@@ -13,13 +13,13 @@
  */
 
 /**
- * @file PerforationExtrinsicData.hpp
+ * @file PerforationFields.hpp
  */
 
-#ifndef GEOSX_MESH_PERFORATIONEXTRINSICDATA_HPP_
-#define GEOSX_MESH_PERFORATIONEXTRINSICDATA_HPP_
+#ifndef GEOSX_MESH_PERFORATIONFIELDS_HPP_
+#define GEOSX_MESH_PERFORATIONFIELDS_HPP_
 
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 
 namespace geosx
 {
@@ -88,4 +88,4 @@ DECLARE_FIELD( location,
 
 }
 
-#endif // GEOSX_MESH_PERFORATIONEXTRINSICDATA_HPP_
+#endif // GEOSX_MESH_PERFORATIONFIELDS_HPP_

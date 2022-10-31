@@ -13,14 +13,14 @@
  */
 
 /**
- * @file ThermalConductivityExtrinsicData.hpp
+ * @file SinglePhaseThermalConductivityFields.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYEXTRINSICDATA_HPP_
-#define GEOSX_CONSTITUTIVE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYEXTRINSICDATA_HPP_
+#ifndef GEOSX_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYFIELDS_HPP_
+#define GEOSX_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYFIELDS_HPP_
 
 #include "constitutive/relativePermeability/layouts.hpp"
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 
 namespace geosx
 {
@@ -31,21 +31,13 @@ namespace fields
 namespace thermalconductivity
 {
 
-DECLARE_FIELD( effectiveConductivity,
-               "effectiveConductivity",
+DECLARE_FIELD( dEffectiveConductivity_dPorosity,
+               "dEffectiveConductivity_dPorosity",
                array3d< real64 >,
                0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Effective conductivity" );
-
-DECLARE_FIELD( rockThermalConductivity,
-               "rockThermalConductivity",
-               array3d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Rock thermal conductivity" );
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of effective conductivity with respect to porosity" );
 
 }
 
@@ -53,4 +45,4 @@ DECLARE_FIELD( rockThermalConductivity,
 
 }
 
-#endif // GEOSX_CONSTITUTIVE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYEXTRINSICDATA_HPP_
+#endif // GEOSX_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYFIELDS_HPP_

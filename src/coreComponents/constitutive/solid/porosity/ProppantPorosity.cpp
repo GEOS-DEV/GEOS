@@ -17,7 +17,7 @@
  */
 
 #include "constitutive/solid/porosity/ProppantPorosity.hpp"
-#include "constitutive/solid/porosity/PorosityExtrinsicData.hpp"
+#include "constitutive/solid/porosity/PorosityFields.hpp"
 
 namespace geosx
 {

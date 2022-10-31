@@ -21,7 +21,7 @@
 #define GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
+#include "physicsSolvers/contact/ContactFields.hpp"
 
 namespace geosx
 {

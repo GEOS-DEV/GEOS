@@ -17,8 +17,8 @@
  */
 
 #include "SinglePhaseThermalConductivityBase.hpp"
-#include "ThermalConductivityExtrinsicData.hpp"
-#include "SinglePhaseThermalConductivityExtrinsicData.hpp"
+#include "ThermalConductivityFields.hpp"
+#include "SinglePhaseThermalConductivityFields.hpp"
 
 namespace geosx
 {

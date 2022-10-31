@@ -18,7 +18,7 @@
 
 #include "SingleFluidBase.hpp"
 
-#include "SingleFluidExtrinsicData.hpp"
+#include "SingleFluidFields.hpp"
 
 namespace geosx
 {

@@ -17,7 +17,7 @@
 #include "functions/FunctionManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
-#include "constitutive/capillaryPressure/CapillaryPressureExtrinsicData.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 
 using namespace geosx;
 using namespace geosx::testing;

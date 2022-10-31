@@ -18,7 +18,7 @@
 
 #include "SlipDependentPermeability.hpp"
 #include "LvArray/src/tensorOps.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 
 namespace geosx
 {

@@ -21,9 +21,9 @@
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "SinglePhasePoromechanicsKernel.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
-#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
+#include "physicsSolvers/contact/ContactFields.hpp"
 
 
 namespace geosx

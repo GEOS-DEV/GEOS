@@ -17,7 +17,7 @@
  */
 
 #include "constitutive/permeability/PermeabilityBase.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 
 namespace geosx
 {

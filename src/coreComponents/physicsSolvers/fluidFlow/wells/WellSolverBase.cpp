@@ -19,13 +19,13 @@
 #include "WellSolverBase.hpp"
 
 #include "mesh/DomainPartition.hpp"
-#include "mesh/PerforationExtrinsicData.hpp"
+#include "mesh/PerforationFields.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 
 namespace geosx
 {

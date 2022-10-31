@@ -18,7 +18,7 @@
 
 #include "SlurryFluidBase.hpp"
 
-#include "SlurryFluidExtrinsicData.hpp"
+#include "SlurryFluidFields.hpp"
 
 namespace geosx
 {
