@@ -13,7 +13,7 @@
  */
 
 /**
- * @file ExtrinsicMeshData.hpp
+ * @file MeshFields.hpp
  */
 
 #ifndef GEOSX_MESH_EXTRINSIC_MESH_DATA_HPP_
