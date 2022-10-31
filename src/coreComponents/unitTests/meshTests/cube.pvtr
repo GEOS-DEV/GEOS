@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<VTKFile type="PRectilinearGrid" version="1.0" byte_order="LittleEndian">
+  <PRectilinearGrid WholeExtent="0 3 0 3 0 3" GhostLevel="0">
+    <PCellData>
+      <PDataArray type="Int32" Name="attribute"/>
+    </PCellData>
+    <PCoordinates>
+      <PDataArray type="Float64" Name="x_coordinates" format="ascii"/>
+      <PDataArray type="Float64" Name="y_coordinates" format="ascii"/>
+      <PDataArray type="Float64" Name="z_coordinates" format="ascii"/>
+    </PCoordinates>
+    <Piece Extent="0 2 0 2 0 3" Source="cube/cube_0.vtr"/>
+    <Piece Extent="0 2 2 3 0 3" Source="cube/cube_1.vtr"/>
+    <Piece Extent="2 3 0 2 0 3" Source="cube/cube_2.vtr"/>
+    <Piece Extent="2 3 2 3 0 3" Source="cube/cube_3.vtr"/>
+  </PRectilinearGrid>
+</VTKFile>
