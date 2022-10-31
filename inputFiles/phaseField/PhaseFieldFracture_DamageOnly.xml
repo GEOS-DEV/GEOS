@@ -124,21 +124,21 @@
   <FieldSpecifications>
     <FieldSpecification
       name="xboundary"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       objectPath="nodeManager"
       setNames="{ all }"/>
 
     <FieldSpecification
       name="yboundary"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       objectPath="nodeManager"
       setNames="{ all }"/>
 
     <FieldSpecification
       name="zboundary"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       objectPath="nodeManager"
       setNames="{ all }"/>

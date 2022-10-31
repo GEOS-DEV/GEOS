@@ -83,6 +83,26 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr10 );
   }
+  else if( auto const * const ptr11 = dynamic_cast< H1_Prism7_VEM_Gauss1 const * >(&input) ) // VEM on Prism7
+  {
+    lambda( *ptr11 );
+  }
+  else if( auto const * const ptr12 = dynamic_cast< H1_Prism8_VEM_Gauss1 const * >(&input) ) // VEM on Prism8
+  {
+    lambda( *ptr12 );
+  }
+  else if( auto const * const ptr13 = dynamic_cast< H1_Prism9_VEM_Gauss1 const * >(&input) ) // VEM on Prism9
+  {
+    lambda( *ptr13 );
+  }
+  else if( auto const * const ptr14 = dynamic_cast< H1_Prism10_VEM_Gauss1 const * >(&input) ) // VEM on Prism10
+  {
+    lambda( *ptr14 );
+  }
+  else if( auto const * const ptr15 = dynamic_cast< H1_Prism11_VEM_Gauss1 const * >(&input) ) // VEM on Prism11
+  {
+    lambda( *ptr15 );
+  }
 #endif
   else
   {
@@ -136,6 +156,26 @@ dispatch3D( FiniteElementBase & input,
   else if( auto * const ptr10 = dynamic_cast< H1_Prism6_VEM_Gauss1 * >(&input) ) // VEM on Prism6
   {
     lambda( *ptr10 );
+  }
+  else if( auto * const ptr11 = dynamic_cast< H1_Prism7_VEM_Gauss1 * >(&input) ) // VEM on Prism7
+  {
+    lambda( *ptr11 );
+  }
+  else if( auto * const ptr12 = dynamic_cast< H1_Prism8_VEM_Gauss1 * >(&input) ) // VEM on Prism8
+  {
+    lambda( *ptr12 );
+  }
+  else if( auto * const ptr13 = dynamic_cast< H1_Prism9_VEM_Gauss1 * >(&input) ) // VEM on Prism9
+  {
+    lambda( *ptr13 );
+  }
+  else if( auto * const ptr14 = dynamic_cast< H1_Prism10_VEM_Gauss1 * >(&input) ) // VEM on Prism10
+  {
+    lambda( *ptr14 );
+  }
+  else if( auto * const ptr15 = dynamic_cast< H1_Prism11_VEM_Gauss1 * >(&input) ) // VEM on Prism11
+  {
+    lambda( *ptr15 );
   }
 #endif
   else

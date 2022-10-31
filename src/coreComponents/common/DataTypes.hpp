@@ -190,6 +190,8 @@ using StackArray = LvArray::StackArray< T, NDIM, PERMUTATION, localIndex, MAXSIZ
 
 /// Alias for a local (stack-based) rank-1 tensor type
 using R1Tensor = Tensor< real64, 3 >;
+/// Alias for a local (stack-based) rank-1 tensor type using 32 bits integers
+using R1Tensor32 = Tensor< real32, 3 >;
 
 /// Alias for a local (stack-based) rank-2 Voigt tensor type
 using R2SymTensor = Tensor< real64, 6 >;
@@ -511,6 +513,7 @@ public:
       {std::type_index( typeid(localIndex)), "localIndex"},
       {std::type_index( typeid(globalIndex)), "globalIndex"},
       {std::type_index( typeid(R1Tensor)), "R1Tensor"},
+      {std::type_index( typeid(R1Tensor32)), "R1Tensor32"},
       {std::type_index( typeid(R2SymTensor)), "R2SymTensor"},
       {std::type_index( typeid(integer_array)), "integer_array"},
       {std::type_index( typeid(real32_array)), "real32_array"},
@@ -648,6 +651,7 @@ private:
       {"real32", rr},
       {"real64", rr},
       {"R1Tensor", r1},
+      {"R1Tensor32", r1},
       {"R2SymTensor", r2s},
       {"integer_array", constructArrayRegex( ri, 1 )},
       {"localIndex_array", constructArrayRegex( ri, 1 )},

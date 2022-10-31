@@ -140,9 +140,9 @@ def getWellboreGeometryFromXML(xmlFilePath):
 
 def main():
     xmlFilePathPrefix = "../../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Drilling"
-    
-    geometry = getWellboreGeometryFromXML( xmlFilePathPrefix + "_benchmark.xml" )
-    parameters = getParametersFromXML( xmlFilePathPrefix + "_base.xml" )
+
+    geometry = getWellboreGeometryFromXML(xmlFilePathPrefix + "_benchmark.xml")
+    parameters = getParametersFromXML(xmlFilePathPrefix + "_base.xml")
 
     # Time
     t = parameters[0]

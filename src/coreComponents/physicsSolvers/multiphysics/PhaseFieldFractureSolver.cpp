@@ -313,10 +313,6 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
-    ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
-
-    ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
-    constitutiveRelations = elemManager.constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
     // begin region loop
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [this, nodalDamage]
                                                                 ( localIndex const,

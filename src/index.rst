@@ -43,6 +43,8 @@ you have suggestions for improving the guides below, please post an issue on our
 
    docs/sphinx/Doxygen
 
+   docs/sphinx/pythonTools/pythonAPI
+
    docs/sphinx/buildGuide/Index
 
    docs/sphinx/CompleteXMLSchema

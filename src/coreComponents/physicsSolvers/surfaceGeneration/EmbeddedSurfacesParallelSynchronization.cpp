@@ -50,7 +50,7 @@ void packNewNodes( NeighborCommunicator * const neighbor,
   localIndex_array newNodesToSend;
 
   arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( neighbor->neighborRank() ).ghostsToSend();
-  arrayView1d< localIndex > const & parentIndex = nodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
+  arrayView1d< localIndex > const & parentIndex = nodeManager.getExtrinsicData< extrinsicMeshData::parentEdgeIndex >();
   arrayView1d< integer const > const & nodeGhostRank = nodeManager.ghostRank();
 
   for( auto const ni : newObjects.newNodes )
@@ -126,7 +126,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
   array1d< array1d< localIndex_array > > newElemsToSendData;
 
   arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( neighbor->neighborRank() ).ghostsToSend();
-  arrayView1d< localIndex > const & parentIndex = nodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
+  arrayView1d< localIndex > const & parentIndex = nodeManager.getExtrinsicData< extrinsicMeshData::parentEdgeIndex >();
 
   for( auto const ni : newObjects.newNodes )
   {

@@ -538,6 +538,16 @@ using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 4 >;
 using H1_Prism5_VEM_Gauss1 = ConformingVirtualElementOrder1< 10, 5 >;
 /// Convenience typedef for VEM on prism6.
 using H1_Prism6_VEM_Gauss1 = ConformingVirtualElementOrder1< 12, 6 >;
+/// Convenience typedef for VEM on prism7.
+using H1_Prism7_VEM_Gauss1 = ConformingVirtualElementOrder1< 14, 7 >;
+/// Convenience typedef for VEM on prism8.
+using H1_Prism8_VEM_Gauss1 = ConformingVirtualElementOrder1< 16, 8 >;
+/// Convenience typedef for VEM on prism9.
+using H1_Prism9_VEM_Gauss1 = ConformingVirtualElementOrder1< 18, 9 >;
+/// Convenience typedef for VEM on prism10.
+using H1_Prism10_VEM_Gauss1 = ConformingVirtualElementOrder1< 20, 10 >;
+/// Convenience typedef for VEM on prism11.
+using H1_Prism11_VEM_Gauss1 = ConformingVirtualElementOrder1< 22, 11 >;
 }
 }
 

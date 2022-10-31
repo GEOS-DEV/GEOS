@@ -16,8 +16,8 @@
  * @file PorosityExtrinsicData.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_POROSITYEXTRINSICDATA_HPP_
-#define GEOSX_CONSTITUTIVE_POROSITYEXTRINSICDATA_HPP_
+#ifndef GEOSX_CONSTITUTIVE_SOLID_POROSITY_POROSITYEXTRINSICDATA_HPP
+#define GEOSX_CONSTITUTIVE_SOLID_POROSITY_POROSITYEXTRINSICDATA_HPP
 
 #include "mesh/ExtrinsicMeshData.hpp"
 
@@ -70,10 +70,18 @@ EXTRINSIC_MESH_DATA_TRAIT( referencePorosity,
                            WRITE_AND_READ,
                            "Reference porosity" );
 
-}
+EXTRINSIC_MESH_DATA_TRAIT( biotCoefficient,
+                           "biotCoefficient",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Biot coefficient" );
 
 }
 
 }
 
-#endif // GEOSX_CONSTITUTIVE_POROSITYEXTRINSICDATA_HPP_
+}
+
+#endif // GEOSX_CONSTITUTIVE_SOLID_POROSITY_POROSITYEXTRINSICDATA_HPP_

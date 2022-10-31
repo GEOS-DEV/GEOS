@@ -118,18 +118,25 @@ void
 CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsSolver >::
 setMGRStrategy()
 {
-  // Not implemented yet
+  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM )
+  {
+    GEOSX_LOG_RANK_0( "The MGR strategy for hybrid FVM is not implemented" );
+  }
+  else
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM;
+  }
 }
-
 
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
 void
 CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
 initializePreSubGroups()
 {
+  Base::initializePreSubGroups();
+
   CompositionalMultiphaseBase const * const flowSolver = this->flowSolver();
   Base::wellSolver()->setFlowSolverName( flowSolver->getName() );
-  setMGRStrategy();
 
   bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );;
   bool const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
@@ -138,6 +145,15 @@ initializePreSubGroups()
                              this->getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
                              Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
                   InputError );
+}
+
+template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
+void
+CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
+initializePostInitialConditionsPreSubGroups()
+{
+  Base::initializePostInitialConditionsPreSubGroups();
+  setMGRStrategy();
 }
 
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
@@ -250,7 +266,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
 void
 CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
-assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+assembleCouplingTerms( real64 const time_n,
                        real64 const dt,
                        DomainPartition const & domain,
                        DofManager const & dofManager,
@@ -292,6 +308,11 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
       bool const detectCrossflow =
         ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
         getLogLevel() >= 1; // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
+
+      if( !wellControls.isWellOpen( time_n + dt ) )
+      {
+        return;
+      }
 
       PerforationData const * const perforationData = subRegion.getPerforationData();
 
