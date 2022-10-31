@@ -556,7 +556,7 @@ public:
    */
   template< typename MESH_DATA_TRAIT >
   dataRepository::Wrapper< typename MESH_DATA_TRAIT::type > &
-  registerExtrinsicData( string const & nameOfRegisteringObject )
+  registerExtrinsicData(  string const & nameOfRegisteringObject )
   {
     // These are required to work-around the need for instantiation of
     // the static constexpr trait components. This will not be required once
