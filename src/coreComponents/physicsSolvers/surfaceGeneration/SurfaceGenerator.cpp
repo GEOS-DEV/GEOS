@@ -232,29 +232,29 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const, CellElementSubRegion & subRegion )
     {
       subRegion.registerField< surfaceGeneration::K_IC_00,
-                                       surfaceGeneration::K_IC_01,
-                                       surfaceGeneration::K_IC_02,
-                                       surfaceGeneration::K_IC_10,
-                                       surfaceGeneration::K_IC_11,
-                                       surfaceGeneration::K_IC_12,
-                                       surfaceGeneration::K_IC_20,
-                                       surfaceGeneration::K_IC_21,
-                                       surfaceGeneration::K_IC_22 >( this->getName() );
+                               surfaceGeneration::K_IC_01,
+                               surfaceGeneration::K_IC_02,
+                               surfaceGeneration::K_IC_10,
+                               surfaceGeneration::K_IC_11,
+                               surfaceGeneration::K_IC_12,
+                               surfaceGeneration::K_IC_20,
+                               surfaceGeneration::K_IC_21,
+                               surfaceGeneration::K_IC_22 >( this->getName() );
     } );
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       subRegion.registerField< surfaceGeneration::K_IC_00,
-                                       surfaceGeneration::K_IC_01,
-                                       surfaceGeneration::K_IC_02,
-                                       surfaceGeneration::K_IC_10,
-                                       surfaceGeneration::K_IC_11,
-                                       surfaceGeneration::K_IC_12,
-                                       surfaceGeneration::K_IC_20,
-                                       surfaceGeneration::K_IC_21,
-                                       surfaceGeneration::K_IC_22,
-                                       fields::ruptureTime,
-                                       surfaceGeneration::ruptureRate >( this->getName() );
+                               surfaceGeneration::K_IC_01,
+                               surfaceGeneration::K_IC_02,
+                               surfaceGeneration::K_IC_10,
+                               surfaceGeneration::K_IC_11,
+                               surfaceGeneration::K_IC_12,
+                               surfaceGeneration::K_IC_20,
+                               surfaceGeneration::K_IC_21,
+                               surfaceGeneration::K_IC_22,
+                               fields::ruptureTime,
+                               surfaceGeneration::ruptureRate >( this->getName() );
     } );
 
     NodeManager & nodeManager = mesh.getNodeManager();
@@ -262,27 +262,27 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
     FaceManager & faceManager = mesh.getFaceManager();
 
     nodeManager.registerField< fields::parentIndex,
-                                       fields::childIndex,
-                                       surfaceGeneration::degreeFromCrack,
-                                       surfaceGeneration::degreeFromCrackTip,
-                                       surfaceGeneration::SIFNode,
-                                       fields::ruptureTime >( this->getName() );
+                               fields::childIndex,
+                               surfaceGeneration::degreeFromCrack,
+                               surfaceGeneration::degreeFromCrackTip,
+                               surfaceGeneration::SIFNode,
+                               fields::ruptureTime >( this->getName() );
 
     edgeManager.registerField< fields::parentIndex,
-                                       fields::childIndex,
-                                       surfaceGeneration::SIF_I,
-                                       surfaceGeneration::SIF_II,
-                                       surfaceGeneration::SIF_III >( this->getName() );
+                               fields::childIndex,
+                               surfaceGeneration::SIF_I,
+                               surfaceGeneration::SIF_II,
+                               surfaceGeneration::SIF_III >( this->getName() );
 
     faceManager.registerField< fields::parentIndex,
-                                       fields::childIndex,
-                                       surfaceGeneration::ruptureState,
-                                       fields::ruptureTime,
-                                       surfaceGeneration::SIFonFace,
-                                       surfaceGeneration::K_IC,
-                                       surfaceGeneration::primaryCandidateFace,
-                                       surfaceGeneration::isFaceSeparable,
-                                       surfaceGeneration::degreeFromCrackTip >( this->getName() );
+                               fields::childIndex,
+                               surfaceGeneration::ruptureState,
+                               fields::ruptureTime,
+                               surfaceGeneration::SIFonFace,
+                               surfaceGeneration::K_IC,
+                               surfaceGeneration::primaryCandidateFace,
+                               surfaceGeneration::isFaceSeparable,
+                               surfaceGeneration::degreeFromCrackTip >( this->getName() );
 
     // TODO: handle this automatically in registerField()
     faceManager.getField< surfaceGeneration::K_IC >().resizeDimension< 1 >( 3 );
