@@ -77,7 +77,7 @@ outside of the mesh object class scope.
 Registering Field data on a Mesh Object
 ---------------------------------------
 To register ``Field`` data, there are many ways a developer may proceed.
-We will use the example of registering a ``TotalDisplacement`` on the ``NodeManager``
+We will use the example of registering a ``totalDisplacement`` on the ``NodeManager``
 from the ``SolidMechanics`` solver.
 The most general approach is to define a string key and call one of the
 `Group::registerWrapper() <../../../doxygen_output/html/classgeosx_1_1data_repository_1_1_group.html#a741c3b5728fc47b33fbaad6c4f124991>`_
@@ -93,7 +93,7 @@ For example this would look something like:
       {
         NodeManager & nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 ).getNodeManager();
 
-        nodes.registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement ).
+        nodes.registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::totalDisplacement ).
           setPlotLevel( PlotLevel::LEVEL_0 ).
           setRegisteringObjects( this->getName()).
           setDescription( "An array that holds the total displacements on the nodes." ).
@@ -105,7 +105,7 @@ and
 
 .. code-block:: c++
 
-    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.getReference<array2d<real64, nodes::TOTAL_DISPLACEMENT_PERM >(keys::TotalDisplacement);
+    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::totalDisplacement );
     ... do something with u
 
 This approach is flexible and extendible, but is potentially error prone due to
@@ -121,7 +121,7 @@ should be the following definition somewhere in a header file:
 
     namespace fields
     {
-    struct TotalDisplacement
+    struct totalDisplacement
     {
       static constexpr auto key = "totalDisplacement";
       using DataType = real64;
@@ -144,7 +144,7 @@ Then the registration is simplified as follows:
       for( auto & mesh : MeshBodies->GetSubGroups() )
       {
         NodeManager & nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 ).getNodeManager();
-        nodes.registerField< fields::TotalDisplacement >( this->getName() ).resizeDimension< 1 >( 3 );
+        nodes.registerField< fields::totalDisplacement >( this->getName() ).resizeDimension< 1 >( 3 );
       }
     }
 
@@ -152,9 +152,9 @@ And to extract the data, the call would be:
 
 .. code-block:: c++
 
-    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.getField< fields::TotalDisplacement >();
+    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.getField< fields::totalDisplacement >();
     ... do something with u
 
 The end result of the ``trait approach`` to this example is that the developer
-has defined a standard specification for ``TotalDisplacement``, which may be
+has defined a standard specification for ``totalDisplacement``, which may be
 used uniformly across the code.
