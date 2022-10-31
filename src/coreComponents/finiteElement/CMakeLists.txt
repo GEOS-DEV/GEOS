@@ -41,6 +41,8 @@ set( finiteElement_sources
      FiniteElementDiscretizationManager.cpp
    )
 
+include( dispatchImpl/FiniteElementDispatch.cmake )
+
 set( dependencyList dataRepository )
 
 if ( ENABLE_CUDA )
