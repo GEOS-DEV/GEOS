@@ -117,10 +117,8 @@ public:
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density() ),
     m_fluidDensity_n( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density_n() ),
-    m_initialFluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).initialDensity() ),
     m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
-    m_initialFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::initialPressure >() ),
     m_fluidPressure_n( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >() ),
     m_fluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() )
   {}
@@ -294,14 +292,12 @@ public:
     // Evaluate conserved quantities (total stress and fluid mass content) and their derivatives
     m_constitutiveUpdate.smallStrainUpdateSinglePhase( k,
                                                        q,
-                                                       m_initialFluidPressure[k],
                                                        m_fluidPressure_n[k],
                                                        m_fluidPressure[k],
                                                        strainIncrement,
                                                        m_gravityAcceleration,
                                                        m_gravityVector,
                                                        m_solidDensity( k, q ),
-                                                       m_initialFluidDensity( k, q ),
                                                        m_fluidDensity_n( k, q ),
                                                        m_fluidDensity( k, q ),
                                                        m_dFluidDensity_dPressure( k, q ),
@@ -494,14 +490,10 @@ protected:
   arrayView2d< real64 const > const m_solidDensity;
   arrayView2d< real64 const > const m_fluidDensity;
   arrayView2d< real64 const > const m_fluidDensity_n;
-  arrayView2d< real64 const > const m_initialFluidDensity;
   arrayView2d< real64 const > const m_dFluidDensity_dPressure;
 
   /// The global degree of freedom number
   arrayView1d< globalIndex const > const m_flowDofNumber;
-
-  /// The rank-global initial fluid pressure array
-  arrayView1d< real64 const > const m_initialFluidPressure;
 
   /// The rank-global fluid pressure arrays.
   arrayView1d< real64 const > const m_fluidPressure_n;

@@ -86,9 +86,11 @@ public:
                                                        localIndex const q,
                                                        real64 const & oldHydraulicAperture,
                                                        real64 const & newHydraulicAperture,
-                                                       real64 const ( &dispJump )[3] ) const override final
+                                                       real64 const & pressure,
+                                                       real64 const ( &dispJump )[3],
+                                                       real64 const ( &traction )[3] ) const override final
   {
-    GEOSX_UNUSED_VAR( dispJump );
+    GEOSX_UNUSED_VAR( dispJump, traction, pressure );
 
     updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture );
   }

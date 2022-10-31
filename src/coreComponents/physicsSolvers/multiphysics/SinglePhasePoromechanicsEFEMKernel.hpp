@@ -633,14 +633,18 @@ struct StateUpdateKernel
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 
-      real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[k] );
-
-      porousMaterialWrapper.updateStateFromPressureApertureAndJump( k, 0, pressure[k], oldHydraulicAperture[k], hydraulicAperture[k], jump );
-
       // traction on the fracture to include the pressure contribution
       contactWrapper.addPressureToTraction( pressure[k],
                                             fractureTraction[k],
                                             dFractureTraction_dPressure[k] );
+
+      real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[k] );
+      real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fractureTraction[k] );
+
+      porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( k, 0, pressure[k],
+                                                                            oldHydraulicAperture[k], hydraulicAperture[k],
+                                                                            jump, traction );
+
     } );
   }
 };

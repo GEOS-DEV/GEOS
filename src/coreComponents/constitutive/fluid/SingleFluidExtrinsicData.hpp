@@ -54,14 +54,6 @@ EXTRINSIC_MESH_DATA_TRAIT( dDensity_dTemperature,
                            WRITE_AND_READ,
                            "Derivative of density with respect to temperature" );
 
-EXTRINSIC_MESH_DATA_TRAIT( initialDensity,
-                           "initialDensity",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Initial density" );
-
 EXTRINSIC_MESH_DATA_TRAIT( density_n,
                            "density_n",
                            array2d< real64 >,
