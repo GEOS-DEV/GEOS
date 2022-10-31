@@ -948,7 +948,7 @@ public:
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
     m_ghostRank( subRegion.ghostRank() ),
     m_localSolution( localSolution ),
-    m_pressure( pressure ), // not passed with extrinsicData::flow to be able to reuse this for wells
+    m_pressure( pressure ), // not passed with fields::flow to be able to reuse this for wells
     m_compDens( compDens ) // same here
   {}
 

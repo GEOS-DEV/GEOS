@@ -198,8 +198,8 @@ public:
                                                                                   WellElementSubRegion & subRegion )
       {
         array1d< array1d< arrayView3d< real64 const > > > const permeability =
-          elemManager.constructMaterialExtrinsicAccessor< constitutive::PermeabilityBase,
-                                                          fields::permeability::permeability >();
+          elemManager.constructMaterialFieldAccessor< constitutive::PermeabilityBase,
+                                                      fields::permeability::permeability >();
 
         PerforationData & perforationData = *subRegion.getPerforationData();
         WellControls const & wellControls = wellSolver()->getWellControls( subRegion );

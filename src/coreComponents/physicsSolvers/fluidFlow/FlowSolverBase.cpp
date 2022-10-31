@@ -465,16 +465,16 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
 
     AquiferBoundaryCondition::KernelWrapper aquiferBCWrapper = bc.createKernelWrapper();
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
-    pressure = elemManager.constructExtrinsicAccessor< fields::flow::pressure >();
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > pressure =
+      elemManager.constructFieldAccessor< fields::flow::pressure >();
     pressure.setName( getName() + "/accessors/" + fields::flow::pressure::key() );
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
-    pressure_n = elemManager.constructExtrinsicAccessor< fields::flow::pressure_n >();
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > pressure_n =
+      elemManager.constructFieldAccessor< fields::flow::pressure_n >();
     pressure_n.setName( getName() + "/accessors/" + fields::flow::pressure_n::key() );
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
-    gravCoef = elemManager.constructExtrinsicAccessor< fields::flow::gravityCoefficient >();
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > gravCoef =
+      elemManager.constructFieldAccessor< fields::flow::gravityCoefficient >();
     gravCoef.setName( getName() + "/accessors/" + fields::flow::gravityCoefficient::key() );
 
     real64 const targetSetSumFluxes =

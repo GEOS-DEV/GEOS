@@ -16,8 +16,8 @@
  * @file MeshFields.hpp
  */
 
-#ifndef GEOSX_MESH_EXTRINSIC_MESH_DATA_HPP_
-#define GEOSX_MESH_EXTRINSIC_MESH_DATA_HPP_
+#ifndef GEOSX_MESH_FIELDS_HPP_
+#define GEOSX_MESH_FIELDS_HPP_
 
 #include "codingUtilities/traits.hpp"
 #include "dataRepository/RestartFlags.hpp"
@@ -67,7 +67,7 @@
 namespace geosx
 {
 /**
- * A scope for extrinsic mesh data traits.
+ * A scope for field traits.
  */
 namespace fields
 {
@@ -150,4 +150,4 @@ DECLARE_FIELD( ruptureTime,
 } // namespace fields
 } // namespace geosx
 
-#endif /* GEOSX_MESH_EXTRINSIC_MESH_DATA_HPP_ */
+#endif /* GEOSX_MESH_FIELDS_HPP_ */

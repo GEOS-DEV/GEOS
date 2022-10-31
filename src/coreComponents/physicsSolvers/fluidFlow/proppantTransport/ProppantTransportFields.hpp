@@ -24,7 +24,7 @@
 namespace geosx
 {
 /**
- * A scope for extrinsic mesh data traits.
+ * A scope for field traits.
  */
 namespace fields
 {

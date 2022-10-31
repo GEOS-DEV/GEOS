@@ -873,8 +873,8 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
                                 bool const isFirstNonlinearIteration,
                                 string const solverName,
                                 integer const idof,
-                                string const extrinsicFieldKey,
-                                string const extrinsicBoundaryFieldKey,
+                                string const fieldKey,
+                                string const boundaryFieldKey,
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs )
 {
@@ -882,7 +882,7 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
 
   fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                            mesh,
-                                           extrinsicFieldKey,
+                                           fieldKey,
                                            [&]( FieldSpecificationBase const & fs,
                                                 string const & setName,
                                                 SortedArrayView< localIndex const > const & lset,
@@ -902,15 +902,15 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
                         parallelDevicePolicy<> >( lset,
                                                   time_n + dt,
                                                   subRegion,
-                                                  extrinsicBoundaryFieldKey );
+                                                  boundaryFieldKey );
 
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
     arrayView1d< globalIndex const > const dofNumber =
       subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< real64 const > const bcField =
-      subRegion.getReference< array1d< real64 > >( extrinsicBoundaryFieldKey );
+      subRegion.getReference< array1d< real64 > >( boundaryFieldKey );
     arrayView1d< real64 const > const field =
-      subRegion.getReference< array1d< real64 > >( extrinsicFieldKey );
+      subRegion.getReference< array1d< real64 > >( fieldKey );
 
     forAll< parallelDevicePolicy<> >( lset.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {

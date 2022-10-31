@@ -113,7 +113,7 @@ public:
   /**
    * @brief Helper function to register field on a constitutive model
    * @tparam FIELD_TRAIT the type of field
-   * @param[in] extrinsicData the field struct corresponding to the object being registered
+   * @param[in] fieldTrait the field struct corresponding to the object being registered
    * @param[in] newObject a pointer to the object that is being registered
    * @return A reference to the newly registered/created Wrapper
    * TODO: Remove duplicated code with ObjectManagerBase
