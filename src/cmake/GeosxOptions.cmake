@@ -126,10 +126,12 @@ blt_append_custom_compiler_flag( FLAGS_VAR GEOSX_NINJA_FLAGS
 # clang-13 complains about unused-but-set variable.
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-Wunused-but-set-variable" CXX_UNUSED_BUT_SET_VAR)
-if (CXX_UNUSED_BUT_SET_VAR)
-    blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
-                                     CLANG "-Wno-unused-but-set-variable"
-                                   )
+if (CXX_UNUSED_BUT_SET_VAR AND ENABLE_BENCHMARKS)
+    set(is_appleclang "$<CXX_COMPILER_ID:AppleClang>")
+    set(v13_or_later "$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,13>")
+    set(meet_requirements "$<AND:${is_gnu},${v13_or_later}>")
+    blt_add_target_compile_flags(TO gbenchmark
+                                FLAGS $<${meet_requirements}:-Wno-unused-but-set-variable>)
 endif()
 
 if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
