@@ -19,15 +19,14 @@
 #include "VTKMeshGenerator.hpp"
 
 #include "common/DataTypes.hpp"
+#include "common/DataLayouts.hpp"
+#include "common/MpiWrapper.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
 #include "mesh/generators/VTKFaceBlockUtilities.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
-
-#include <vtkBoundingBox.h>
-#include <vtkUnstructuredGrid.h>
 
 namespace geosx
 {
