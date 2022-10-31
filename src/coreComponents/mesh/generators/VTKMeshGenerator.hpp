@@ -22,12 +22,10 @@
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 
-class vtkDataSet;
+#include <vtkDataSet.h>
+
 namespace geosx
 {
-
-class CellBlockManager;
-class ElementRegionManager;
 
 /**
  *  @class VTKMeshGenerator
