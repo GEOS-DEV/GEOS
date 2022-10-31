@@ -1,12 +1,17 @@
-
 import pylvarray
 import pygeosx
 import numpy as np
 import pytest
 import os
 
+# Geosx paths
+level_zero = 'domain/MeshBodies/mesh1/meshLevels/Level0/'
+node_manager = level_zero + 'nodeManager/'
+cell_blocks = level_zero + 'ElementRegions/elementRegionsGroup/dummy/elementSubRegions/cellBlock01/'
+
 
 class TestPygeosxObjects(object):
+
     def get_geosx_args(self):
         script_path = os.path.dirname(os.path.abspath(__file__))
         target_xml = os.path.join(script_path, 'pygeosx_only.xml')
@@ -38,13 +43,14 @@ class TestPygeosxObjects(object):
         t = group.get_wrapper('time').value()[0]
         assert isinstance(t, float)
 
+    # yapf: disable
     @pytest.mark.parametrize('target_key, target_shape, target_type',
-                             [('Events/time', (1,), float),
-                              ('Events/cycle', (1,), np.int32),
+                             [('Events/time', (1, ), float),
+                              ('Events/cycle', (1, ), np.int32),
                               ('Events/python/target', 21, str),
-                              ('domain/MeshBodies/mesh1/meshLevels/Level0/nodeManager/ReferencePosition', (8, 3), float),
-                              ('domain/MeshBodies/mesh1/meshLevels/Level0/nodeManager/ghostRank', (8,), np.int32),
-                              ('domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/dummy/elementSubRegions/cellBlock01/elementVolume', (1,), float)])
+                              (node_manager + 'ReferencePosition', (8, 3), float),
+                              (node_manager + 'ghostRank', (8, ), np.int32),
+                              (cell_blocks + 'elementVolume', (1, ), float)])
     def test_wrapper_read(self, target_key, target_shape, target_type, geosx_problem):
         """
         Test whether wrappers can be read, and whether their shape and value types are correct
@@ -55,6 +61,7 @@ class TestPygeosxObjects(object):
             target_type (dtype): Expected type for the wrapper elements
             geosx_proplem (pygeosx.problem): The problem handle
         """
+        # yapf: enable
         s = 0
         val = 0
         x = geosx_problem.get_wrapper(target_key).value()
@@ -72,12 +79,13 @@ class TestPygeosxObjects(object):
         assert s == target_shape
         assert isinstance(val, target_type)
 
+    # yapf: disable
     @pytest.mark.parametrize('target_key',
                              [('Events/time'),
                               ('Events/cycle'),
-                              ('domain/MeshBodies/mesh1/meshLevels/Level0/nodeManager/ReferencePosition'),
-                              ('domain/MeshBodies/mesh1/meshLevels/Level0/nodeManager/ghostRank'),
-                              ('domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/dummy/elementSubRegions/cellBlock01/elementVolume')])
+                              (node_manager + 'ReferencePosition'),
+                              (node_manager + 'ghostRank'),
+                              (cell_blocks + 'elementVolume')])
     def test_wrapper_write(self, target_key, geosx_problem):
         """
         Test writing to the wrappers
@@ -86,6 +94,7 @@ class TestPygeosxObjects(object):
             target_key (str): Key value for the target wrapper
             geosx_proplem (pygeosx.problem): The problem handle
         """
+        # yapf: enable
         # Access and record the initial value
         x = geosx_problem.get_wrapper(target_key).value()
         if hasattr(x, "set_access_level"):
@@ -111,10 +120,11 @@ class TestPygeosxObjects(object):
 
         assert dx < 1e-10
 
+    # yapf: disable
     @pytest.mark.parametrize('target_key',
-                             [('domain/MeshBodies/mesh1/meshLevels/Level0/nodeManager/ReferencePosition'),
-                              ('domain/MeshBodies/mesh1/meshLevels/Level0/nodeManager/ghostRank'),
-                              ('domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/dummy/elementSubRegions/cellBlock01/elementVolume')])
+                             [(node_manager + 'ReferencePosition'),
+                              (node_manager + 'ghostRank'),
+                              (cell_blocks + 'elementVolume')])
     def test_wrapper_read_only_error(self, target_key, geosx_problem):
         """
         Test writing to read-only wrappers.
@@ -124,6 +134,7 @@ class TestPygeosxObjects(object):
             target_key (str): Key value for the target wrapper
             geosx_proplem (pygeosx.problem): The problem handle
         """
+        # yapf: enable
         x = geosx_problem.get_wrapper(target_key).value()
         if hasattr(x, "to_numpy"):
             print('Test_a')
