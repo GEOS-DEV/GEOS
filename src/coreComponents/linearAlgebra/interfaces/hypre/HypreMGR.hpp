@@ -82,7 +82,8 @@ protected:
   HYPRE_Int m_numLabels[numLevels]{ -1 };              ///< Number of dof labels kept
   HYPRE_Int * m_ptrLabels[numLevels]{ nullptr };       ///< Pointers to each level's labels, as consumed by MGR
 
-  MGRFRelaxationMethod m_levelFRelaxMethod[numLevels];    ///< F-relaxation method for each level
+  MGRFRelaxationMethod m_levelFRelaxMethod[numLevels];    ///< F-relaxation strategy for each level (single or multilevel)
+  MGRFRelaxationType m_levelFRelaxType[numLevels];    ///< F-relaxation type for each level
   MGRInterpolationType m_levelInterpType[numLevels];      ///< Interpolation type for each level
   MGRRestrictionType m_levelRestrictType[numLevels];      ///< Restriction type for each level
   MGRCoarseGridMethod m_levelCoarseGridMethod[numLevels]; ///< Coarse grid method for each level
@@ -107,6 +108,7 @@ protected:
     for( HYPRE_Int i = 0; i < numLevels; ++i )
     {
       m_levelFRelaxMethod[i]     = MGRFRelaxationMethod::singleLevel;
+      m_levelFRelaxType[i]       = MGRFRelaxationType::jacobi;
       m_levelInterpType[i]       = MGRInterpolationType::jacobi;
       m_levelRestrictType[i]     = MGRRestrictionType::injection;
       m_levelCoarseGridMethod[i] = MGRCoarseGridMethod::galerkin;
