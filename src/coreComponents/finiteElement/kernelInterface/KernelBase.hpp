@@ -418,16 +418,16 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       FiniteElementBase &
       subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );
 
-      finiteElement::dispatch3D( subRegionFE,
-                                 [&maxResidualContribution,
-                                  &nodeManager,
-                                  &edgeManager,
-                                  &faceManager,
-                                  targetRegionIndex,
-                                  &kernelFactory,
-                                  &elementSubRegion,
-                                  numElems,
-                                  &castedConstitutiveRelation] ( auto const finiteElement )
+      finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( subRegionFE,
+                                                                               [&maxResidualContribution,
+                                                                                &nodeManager,
+                                                                                &edgeManager,
+                                                                                &faceManager,
+                                                                                targetRegionIndex,
+                                                                                &kernelFactory,
+                                                                                &elementSubRegion,
+                                                                                numElems,
+                                                                                &castedConstitutiveRelation] ( auto const finiteElement )
       {
         auto kernel = kernelFactory.createKernel( nodeManager,
                                                   edgeManager,
