@@ -25,7 +25,8 @@
 #include "finiteElement/elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
 #include "finiteElement/elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp"
 
-#define SEM_FE_TYPES finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2, \
+#define SEM_FE_TYPES \
+  finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2, \
   finiteElement::Q3_Hexahedron_Lagrange_GaussLobatto
 
 namespace geosx

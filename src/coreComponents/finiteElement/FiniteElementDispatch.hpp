@@ -30,13 +30,14 @@
 #include "elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp"
 #include "LvArray/src/system.hpp"
 
-#define BASE_FE_TYPES finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2, \
+#define BASE_FE_TYPES \
+  finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2, \
   finiteElement::H1_Wedge_Lagrange1_Gauss6, \
   finiteElement::H1_Tetrahedron_Lagrange1_Gauss1, \
-  finiteElement::H1_Pyramid_Lagrange1_Gauss5, \
-  finiteElement::Q3_Hexahedron_Lagrange_GaussLobatto
+  finiteElement::H1_Pyramid_Lagrange1_Gauss5
 #ifdef GEOSX_DISPATCH_VEM
-#define VEM_TYPES finiteElement::H1_Tetrahedron_VEM_Gauss1, \
+#define VEM_TYPES \
+  finiteElement::H1_Tetrahedron_VEM_Gauss1, \
   finiteElement::H1_Wedge_VEM_Gauss1, \
   finiteElement::H1_Hexahedron_VEM_Gauss1, \
   finiteElement::H1_Prism5_VEM_Gauss1, \
