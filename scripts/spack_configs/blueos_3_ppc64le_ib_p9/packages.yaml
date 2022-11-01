@@ -22,10 +22,8 @@ packages:
   essl:
     buildable: False
     externals:
-      - spec: essl@6.3.0.1 ~ilp64 threads=openmp +cuda
+      - spec: essl@6.3.0.1
         prefix: /usr/tcetmp/packages/essl/essl-6.3.0.1/
-        modules:
-        - essl/6.3.0.1
 
   cuda:
     buildable: False
