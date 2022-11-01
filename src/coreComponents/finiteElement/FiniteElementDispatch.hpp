@@ -23,17 +23,16 @@
 #include "elementFormulations/ConformingVirtualElementOrder1.hpp"
 #include "elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
 #include "elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp"
-#include "elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
 #include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
-#include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
 #include "elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp"
 #include "elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
-#include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp" 
+#include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "LvArray/src/system.hpp"
 
 #define BASE_FE_TYPES \
   finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2, \
+  finiteElement::Q3_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::H1_Wedge_Lagrange1_Gauss6, \
   finiteElement::H1_Tetrahedron_Lagrange1_Gauss1, \
   finiteElement::H1_Pyramid_Lagrange1_Gauss5
@@ -56,7 +55,7 @@
 
 #define FE_TYPES_2D \
   finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp  \
-  finiteElement::H1_TriangleFace_Lagrange1_Gauss1.hpp 
+  finiteElement::H1_TriangleFace_Lagrange1_Gauss1.hpp
 
 namespace geosx
 {
