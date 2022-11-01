@@ -109,7 +109,7 @@ public:
     for( integer p=0; p<numPhases; ++p )
     {
       phaseViscosity.value[p] *= 1e-3; 
-      for( integer k=0; k<numComponents; ++k)
+      for( integer k=0; k<phaseViscosity.derivs[p].size(); ++k)
       {
         phaseViscosity.derivs[p][k] *= 1e-3;
       }
