@@ -28,6 +28,8 @@
 #include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
 #include "elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp"
+#include "elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
+#include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp" 
 #include "LvArray/src/system.hpp"
 
 #define BASE_FE_TYPES \
@@ -51,6 +53,10 @@
 #else
 #define ALL_FE_TYPES BASE_FE_TYPES
 #endif
+
+#define FE_TYPES_2D \
+  finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp  \
+  finiteElement::H1_TriangleFace_Lagrange1_Gauss1.hpp 
 
 namespace geosx
 {
