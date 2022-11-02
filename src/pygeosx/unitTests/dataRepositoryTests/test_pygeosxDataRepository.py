@@ -113,7 +113,7 @@ class TestPygeosxObjects(object):
             x = x.to_numpy()
 
         # Check to see if the value changed appropriately
-        dx = x_init + 1 - x
+        dx = abs(x_init + 1 - x)
         if isinstance(dx, np.ndarray):
             dx = np.sum(dx)
         dx = float(dx)
@@ -137,7 +137,6 @@ class TestPygeosxObjects(object):
         # yapf: enable
         x = geosx_problem.get_wrapper(target_key).value()
         if hasattr(x, "to_numpy"):
-            print('Test_a')
             x = x.to_numpy()
 
         with pytest.raises(ValueError):
