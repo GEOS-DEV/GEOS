@@ -111,7 +111,8 @@ public:
     m_bulkModulus[k] = bulkModulus; 
 
     real64 const porosity = m_porosity_n[k][q]
-                            + m_biotCoefficient[k] * totalMeanStrainIncrement + biotSkeletonModulusInverse * deltaPressure
+                            + m_biotCoefficient[k] * totalMeanStrainIncrement 
+                            + biotSkeletonModulusInverse * deltaPressure + m_biotCoefficient[k] * m_biotCoefficient[k] / bulkModulus * deltaPressure
                             + porosityThermalExpansion * deltaTemperature ;
 
     savePorosity( k, q, porosity, biotSkeletonModulusInverse, porosityThermalExpansion );
