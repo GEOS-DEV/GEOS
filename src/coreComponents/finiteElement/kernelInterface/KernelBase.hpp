@@ -27,6 +27,10 @@
 #include "mesh/MeshLevel.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
+#ifndef SELECTED_FE_TYPES
+#define SELECTED_FE_TYPES ALL_FE_TYPES
+#endif
+
 namespace geosx
 {
 
@@ -418,16 +422,16 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       FiniteElementBase &
       subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );
 
-      finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( subRegionFE,
-                                                                               [&maxResidualContribution,
-                                                                                &nodeManager,
-                                                                                &edgeManager,
-                                                                                &faceManager,
-                                                                                targetRegionIndex,
-                                                                                &kernelFactory,
-                                                                                &elementSubRegion,
-                                                                                numElems,
-                                                                                &castedConstitutiveRelation] ( auto const finiteElement )
+      finiteElement::FiniteElementDispatchHandler< SELECTED_FE_TYPES >::dispatch3D( subRegionFE,
+                                                                                    [&maxResidualContribution,
+                                                                                     &nodeManager,
+                                                                                     &edgeManager,
+                                                                                     &faceManager,
+                                                                                     targetRegionIndex,
+                                                                                     &kernelFactory,
+                                                                                     &elementSubRegion,
+                                                                                     numElems,
+                                                                                     &castedConstitutiveRelation] ( auto const finiteElement )
       {
         auto kernel = kernelFactory.createKernel( nodeManager,
                                                   edgeManager,
