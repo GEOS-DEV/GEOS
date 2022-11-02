@@ -381,17 +381,16 @@ protected:
    * @param[in] dt the time step
    * @param[in] mesh the mesh level object
    * @param[in] logMessage the log message issued by the solver if the bc is called
-   * @param[in] targetManagerName the name of the manager ("ElementRegions" or "faceManager")
-   * @param[in] extrinsicFieldKey the key of the field specified in the xml file
-   * @param[in] extrinsicBoundaryFieldKey the key of the boundary field
+   * @param[in] fieldKey the key of the field specified in the xml file
+   * @param[in] boundaryFieldKey the key of the boundary field
    */
   template< typename OBJECT_TYPE >
   void applyFieldValue( real64 const & time_n,
                         real64 const & dt,
                         MeshLevel & mesh,
                         char const logMessage[],
-                        string const extrinsicFieldKey,
-                        string const extrinsicBoundaryFieldKey ) const;
+                        string const fieldKey,
+                        string const boundaryFieldKey ) const;
 
   /// flag to specify whether the sparsity pattern needs to be rebuilt
   bool m_systemSetupDone;
@@ -463,14 +462,14 @@ void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
                                                    real64 const & dt,
                                                    MeshLevel & mesh,
                                                    char const logMessage[],
-                                                   string const extrinsicFieldKey,
-                                                   string const extrinsicBoundaryFieldKey ) const
+                                                   string const fieldKey,
+                                                   string const boundaryFieldKey ) const
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   fsManager.apply< OBJECT_TYPE >( time_n + dt,
                                   mesh,
-                                  extrinsicFieldKey,
+                                  fieldKey,
                                   [&]( FieldSpecificationBase const & fs,
                                        string const & setName,
                                        SortedArrayView< localIndex const > const & lset,
@@ -490,7 +489,7 @@ void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
                         parallelDevicePolicy<> >( lset,
                                                   time_n + dt,
                                                   targetGroup,
-                                                  extrinsicBoundaryFieldKey );
+                                                  boundaryFieldKey );
   } );
 }
 
