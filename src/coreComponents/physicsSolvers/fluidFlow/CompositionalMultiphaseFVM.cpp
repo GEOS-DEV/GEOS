@@ -33,8 +33,8 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/StabilizedCompositionalMultiphaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp"
@@ -441,13 +441,13 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
-                               extrinsicMeshData::flow::pressure::key(),
+                               fields::flow::pressure::key(),
                                scalingFactor,
                                pressureMask );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
-                               extrinsicMeshData::flow::globalCompDensity::key(),
+                               fields::flow::globalCompDensity::key(),
                                scalingFactor,
                                componentMask );
 
@@ -456,7 +456,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
     DofManager::CompMask temperatureMask( m_numDofPerCell, m_numComponents+1, m_numComponents+2 );
     dofManager.addVectorToField( localSolution,
                                  viewKeyStruct::elemDofFieldString(),
-                                 extrinsicMeshData::flow::temperature::key(),
+                                 fields::flow::temperature::key(),
                                  scalingFactor,
                                  temperatureMask );
   }
@@ -472,10 +472,10 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
   {
-    std::vector< string > fields{ extrinsicMeshData::flow::pressure::key(), extrinsicMeshData::flow::globalCompDensity::key() };
+    std::vector< string > fields{ fields::flow::pressure::key(), fields::flow::globalCompDensity::key() };
     if( m_isThermal )
     {
-      fields.emplace_back( extrinsicMeshData::flow::temperature::key() );
+      fields.emplace_back( fields::flow::temperature::key() );
     }
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( fields, regionNames );
@@ -550,7 +550,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
     // 1. Check pressure Dirichlet BCs
     fsManager.apply< FaceManager >( time,
                                     mesh,
-                                    extrinsicMeshData::flow::pressure::key(),
+                                    fields::flow::pressure::key(),
                                     [&]( FieldSpecificationBase const &,
                                          string const & setName,
                                          SortedArrayView< localIndex const > const &,
@@ -569,7 +569,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
     // 2. Check temperature Dirichlet BCs (we always require a temperature for face-based BCs)
     fsManager.apply< FaceManager >( time,
                                     mesh,
-                                    extrinsicMeshData::flow::temperature::key(),
+                                    fields::flow::temperature::key(),
                                     [&]( FieldSpecificationBase const &,
                                          string const & setName,
                                          SortedArrayView< localIndex const > const &,
@@ -595,7 +595,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
     // 3. Check composition BC (global component fraction)
     fsManager.apply< FaceManager >( time,
                                     mesh,
-                                    extrinsicMeshData::flow::globalCompFraction::key(),
+                                    fields::flow::globalCompFraction::key(),
                                     [&] ( FieldSpecificationBase const & fs,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const &,
@@ -691,18 +691,18 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
 
     // Take BCs defined for "pressure" field and apply values to "facePressure"
     applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
-                                    extrinsicMeshData::flow::pressure::key(), extrinsicMeshData::flow::facePressure::key() );
+                                    fields::flow::pressure::key(), fields::flow::facePressure::key() );
     // Take BCs defined for "globalCompFraction" field and apply values to "faceGlobalCompFraction"
     applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
-                                    extrinsicMeshData::flow::globalCompFraction::key(), extrinsicMeshData::flow::faceGlobalCompFraction::key() );
+                                    fields::flow::globalCompFraction::key(), fields::flow::faceGlobalCompFraction::key() );
     // Take BCs defined for "temperature" field and apply values to "faceTemperature"
     applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
-                                    extrinsicMeshData::flow::temperature::key(), extrinsicMeshData::flow::faceTemperature::key() );
+                                    fields::flow::temperature::key(), fields::flow::faceTemperature::key() );
 
     // Then launch the face Dirichlet kernel
     fsManager.apply< FaceManager >( time_n + dt,
                                     mesh,
-                                    extrinsicMeshData::flow::pressure::key(), // we have required that pressure is always present
+                                    fields::flow::pressure::key(), // we have required that pressure is always present
                                     [&] ( FieldSpecificationBase const &,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const &,
@@ -840,17 +840,17 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                                         aquiferBCWrapper,
                                                                         aquiferWaterPhaseDens,
                                                                         aquiferWaterPhaseCompFrac,
-                                                                        compFlowAccessors.get( extrinsicMeshData::ghostRank{} ),
-                                                                        compFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
-                                                                        compFlowAccessors.get( extrinsicMeshData::flow::pressure_n{} ),
-                                                                        compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient{} ),
-                                                                        compFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
-                                                                        compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction{} ),
-                                                                        compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
-                                                                        multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
-                                                                        multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity{} ),
-                                                                        multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
-                                                                        multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction{} ),
+                                                                        compFlowAccessors.get( fields::ghostRank{} ),
+                                                                        compFlowAccessors.get( fields::flow::pressure{} ),
+                                                                        compFlowAccessors.get( fields::flow::pressure_n{} ),
+                                                                        compFlowAccessors.get( fields::flow::gravityCoefficient{} ),
+                                                                        compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ),
+                                                                        compFlowAccessors.get( fields::flow::dPhaseVolumeFraction{} ),
+                                                                        compFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
+                                                                        multiFluidAccessors.get( fields::multifluid::phaseDensity{} ),
+                                                                        multiFluidAccessors.get( fields::multifluid::dPhaseDensity{} ),
+                                                                        multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ),
+                                                                        multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction{} ),
                                                                         time,
                                                                         dt,
                                                                         localMatrix.toViewConstSizes(),

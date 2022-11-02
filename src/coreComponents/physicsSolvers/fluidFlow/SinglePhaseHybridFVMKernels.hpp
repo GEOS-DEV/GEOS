@@ -21,19 +21,19 @@
 
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
-#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
+#include "constitutive/fluid/SingleFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/solid/porosity/PorosityBase.hpp"
-#include "constitutive/solid/porosity/PorosityExtrinsicData.hpp"
+#include "constitutive/solid/porosity/PorosityFields.hpp"
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 #include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/QuasiRTInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
 #include "mesh/MeshLevel.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/HybridFVMHelperKernels.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
@@ -106,8 +106,8 @@ public:
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
   using FlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::mobility,
-                      extrinsicMeshData::flow::dMobility_dPressure >;
+    StencilAccessors< fields::flow::mobility,
+                      fields::flow::dMobility_dPressure >;
 
   /**
    * @brief Constructor
@@ -157,22 +157,22 @@ public:
     m_elemToFaces( subRegion.faceList().toViewConst() ),
     m_elemCenter( subRegion.getElementCenter() ),
     m_elemVolume( subRegion.getElementVolume() ),
-    m_elemGravCoef( subRegion.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >() ),
+    m_elemGravCoef( subRegion.getField< fields::flow::gravityCoefficient >() ),
     m_faceToNodes( faceManager.nodeList().toViewConst() ),
-    m_faceGravCoef( faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >() ),
+    m_faceGravCoef( faceManager.getField< fields::flow::gravityCoefficient >() ),
     m_regionFilter( regionFilter ),
     m_nodePosition( nodeManager.referencePosition() ),
     m_elemRegionList( faceManager.elementRegionList() ),
     m_elemSubRegionList( faceManager.elementSubRegionList() ),
     m_elemList( faceManager.elementList() ),
     m_elemPerm( permeability.permeability() ),
-    m_transMultiplier( faceManager.getExtrinsicData< extrinsicMeshData::flow::transMultiplier >() ),
-    m_elemPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
-    m_facePres( faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >() ),
+    m_transMultiplier( faceManager.getField< fields::flow::transMultiplier >() ),
+    m_elemPres( subRegion.getField< fields::flow::pressure >() ),
+    m_facePres( faceManager.getField< fields::flow::facePressure >() ),
     m_elemDens ( fluid.density() ),
     m_dElemDens_dPres( fluid.dDensity_dPressure() ),
-    m_mob( flowAccessors.get( extrinsicMeshData::flow::mobility {} ) ),
-    m_dMob_dPres( flowAccessors.get( extrinsicMeshData::flow::dMobility_dPressure {} ) ),
+    m_mob( flowAccessors.get( fields::flow::mobility {} ) ),
+    m_dMob_dPres( flowAccessors.get( fields::flow::dMobility_dPressure {} ) ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {}
@@ -635,14 +635,14 @@ public:
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using SinglePhaseFlowAccessors =
-    StencilAccessors< extrinsicMeshData::elementVolume >;
+    StencilAccessors< fields::elementVolume >;
 
   using SinglePhaseFluidAccessors =
     StencilMaterialAccessors< constitutive::SingleFluidBase,
-                              extrinsicMeshData::singlefluid::density_n >;
+                              fields::singlefluid::density_n >;
   using PorosityAccessors =
     StencilMaterialAccessors< constitutive::PorosityBase,
-                              extrinsicMeshData::porosity::porosity_n >;
+                              fields::porosity::porosity_n >;
 
 
   ResidualNormKernel( globalIndex const rankOffset,
@@ -666,9 +666,9 @@ public:
     m_elemRegionList( faceManager.elementRegionList() ),
     m_elemSubRegionList( faceManager.elementSubRegionList() ),
     m_elemList( faceManager.elementList() ),
-    m_volume( singlePhaseFlowAccessors.get( extrinsicMeshData::elementVolume {} ) ),
-    m_porosity_n( porosityAccessors.get( extrinsicMeshData::porosity::porosity_n {} ) ),
-    m_density_n( singlePhaseFluidAccessors.get( extrinsicMeshData::singlefluid::density_n {} ) )
+    m_volume( singlePhaseFlowAccessors.get( fields::elementVolume {} ) ),
+    m_porosity_n( porosityAccessors.get( fields::porosity::porosity_n {} ) ),
+    m_density_n( singlePhaseFluidAccessors.get( fields::singlefluid::density_n {} ) )
   {}
 
   GEOSX_HOST_DEVICE

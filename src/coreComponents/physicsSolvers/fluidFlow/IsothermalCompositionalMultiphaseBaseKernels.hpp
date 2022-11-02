@@ -27,10 +27,10 @@
 #include "functions/TableFunction.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/ObjectManagerBase.hpp"
-#include "physicsSolvers/SolverBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
+#include "physicsSolvers/SolverBaseKernels.hpp"
 
 namespace geosx
 {
@@ -159,9 +159,9 @@ public:
    */
   ComponentFractionKernel( ObjectManagerBase & subRegion )
     : Base(),
-    m_compDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >() ),
-    m_compFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >() ),
-    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() )
+    m_compDens( subRegion.getField< fields::flow::globalCompDensity >() ),
+    m_compFrac( subRegion.getField< fields::flow::globalCompFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() )
   {}
 
   /**
@@ -272,10 +272,10 @@ public:
   PhaseVolumeFractionKernel( ObjectManagerBase & subRegion,
                              MultiFluidBase const & fluid )
     : Base(),
-    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
-    m_compDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >() ),
-    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
+    m_compDens( subRegion.getField< fields::flow::globalCompDensity >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseFrac( fluid.phaseFraction() ),
     m_dPhaseFrac( fluid.dPhaseFraction() ),
     m_phaseDens( fluid.phaseDensity() ),
@@ -552,10 +552,10 @@ public:
     m_porosity_n( solid.getPorosity_n() ),
     m_porosity( solid.getPorosity() ),
     m_dPoro_dPres( solid.getDporosity_dPressure() ),
-    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
-    m_phaseVolFrac_n( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction_n >() ),
-    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFrac_n( subRegion.getField< fields::flow::phaseVolumeFraction_n >() ),
+    m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens( fluid.dPhaseDensity() ),
@@ -949,7 +949,7 @@ public:
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
     m_ghostRank( subRegion.ghostRank() ),
     m_localSolution( localSolution ),
-    m_pressure( pressure ), // not passed with extrinsicData::flow to be able to reuse this for wells
+    m_pressure( pressure ), // not passed with fields::flow to be able to reuse this for wells
     m_compDens( compDens ) // same here
   {}
 
@@ -1211,9 +1211,9 @@ public:
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      subRegion.getField< fields::flow::pressure >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+      subRegion.getField< fields::flow::globalCompDensity >();
     ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxCompFracChange, rankOffset,
                                            numComp, dofKey, subRegion, localSolution, pressure, compDens );
     return ScalingForSystemSolutionKernel::launch< POLICY >( subRegion.size(), kernel );
@@ -1367,9 +1367,9 @@ public:
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      subRegion.getField< fields::flow::pressure >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+      subRegion.getField< fields::flow::globalCompDensity >();
     SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor, rankOffset,
                                 numComp, dofKey, subRegion, localSolution, pressure, compDens );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );

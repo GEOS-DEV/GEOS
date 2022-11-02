@@ -21,13 +21,14 @@
 
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
+#include "constitutive/fluid/MultiFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/solid/porosity/PorosityBase.hpp"
-#include "constitutive/solid/porosity/PorosityExtrinsicData.hpp"
+#include "constitutive/solid/porosity/PorosityFields.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "mesh/ElementRegionManager.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "mesh/ObjectManagerBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
@@ -554,18 +555,18 @@ struct FluxKernel
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using CompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::phaseMobility,
-                      extrinsicMeshData::flow::dPhaseMobility,
-                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
+    StencilAccessors< fields::flow::phaseMobility,
+                      fields::flow::dPhaseMobility,
+                      fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseDensity,
-                              extrinsicMeshData::multifluid::dPhaseDensity,
-                              extrinsicMeshData::multifluid::phaseMassDensity,
-                              extrinsicMeshData::multifluid::dPhaseMassDensity,
-                              extrinsicMeshData::multifluid::phaseCompFraction,
-                              extrinsicMeshData::multifluid::dPhaseCompFraction >;
+                              fields::multifluid::phaseDensity,
+                              fields::multifluid::dPhaseDensity,
+                              fields::multifluid::phaseMassDensity,
+                              fields::multifluid::dPhaseMassDensity,
+                              fields::multifluid::phaseCompFraction,
+                              fields::multifluid::dPhaseCompFraction >;
 
 
   /**
@@ -667,15 +668,15 @@ public:
                        MultiFluidBase const & fluid,
                        RelativePermeabilityBase const & relperm )
     : Base(),
-    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
-    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseVisc( fluid.phaseViscosity() ),
     m_dPhaseVisc( fluid.dPhaseViscosity() ),
     m_phaseRelPerm( relperm.phaseRelPerm() ),
     m_dPhaseRelPerm_dPhaseVolFrac( relperm.dPhaseRelPerm_dPhaseVolFraction() ),
-    m_phaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >() ),
-    m_dPhaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility >() )
+    m_phaseMob( subRegion.getField< fields::flow::phaseMobility >() ),
+    m_dPhaseMob( subRegion.getField< fields::flow::dPhaseMobility >() )
   {}
 
   /**
@@ -856,14 +857,14 @@ public:
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using CompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::elementVolume >;
+    StencilAccessors< fields::elementVolume >;
 
   using MultiFluidAccessors =
     StencilMaterialAccessors< constitutive::MultiFluidBase,
-                              extrinsicMeshData::multifluid::totalDensity_n >;
+                              fields::multifluid::totalDensity_n >;
   using PorosityAccessors =
     StencilMaterialAccessors< constitutive::PorosityBase,
-                              extrinsicMeshData::porosity::porosity_n >;
+                              fields::porosity::porosity_n >;
 
   ResidualNormKernel( globalIndex const rankOffset,
                       arrayView1d< real64 const > const & localResidual,
@@ -884,9 +885,9 @@ public:
     m_elemRegionList( faceManager.elementRegionList() ),
     m_elemSubRegionList( faceManager.elementSubRegionList() ),
     m_elemList( faceManager.elementList() ),
-    m_volume( compFlowAccessors.get( extrinsicMeshData::elementVolume {} ) ),
-    m_porosity_n( porosityAccessors.get( extrinsicMeshData::porosity::porosity_n {} ) ),
-    m_totalDens_n( multiFluidAccessors.get( extrinsicMeshData::multifluid::totalDensity_n {} ) )
+    m_volume( compFlowAccessors.get( fields::elementVolume {} ) ),
+    m_porosity_n( porosityAccessors.get( fields::porosity::porosity_n {} ) ),
+    m_totalDens_n( multiFluidAccessors.get( fields::multifluid::totalDensity_n {} ) )
   {}
 
   GEOSX_HOST_DEVICE

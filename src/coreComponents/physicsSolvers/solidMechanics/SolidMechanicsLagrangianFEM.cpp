@@ -41,7 +41,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace extrinsicMeshData;
+using namespace fields;
 
 SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
                                                           Group * const parent ):
@@ -138,33 +138,33 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodes = meshLevel.getNodeManager();
 
-    nodes.registerExtrinsicData< solidMechanics::totalDisplacement >( getName() ).
+    nodes.registerField< solidMechanics::totalDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
-    nodes.registerExtrinsicData< solidMechanics::incrementalDisplacement >( getName() ).
+    nodes.registerField< solidMechanics::incrementalDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
     if( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic )
     {
-      nodes.registerExtrinsicData< solidMechanics::velocity >( getName() ).
+      nodes.registerField< solidMechanics::velocity >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
-      nodes.registerExtrinsicData< solidMechanics::acceleration >( getName() ).
+      nodes.registerField< solidMechanics::acceleration >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
-      nodes.registerExtrinsicData< solidMechanics::velocityTilde >( getName() ).
+      nodes.registerField< solidMechanics::velocityTilde >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
-      nodes.registerExtrinsicData< solidMechanics::uhatTilde >( getName() ).
+      nodes.registerField< solidMechanics::uhatTilde >( getName() ).
         reference().resizeDimension< 1 >( 3 );
     }
 
-    nodes.registerExtrinsicData< solidMechanics::mass >( getName() );
+    nodes.registerField< solidMechanics::mass >( getName() );
 
-    nodes.registerExtrinsicData< solidMechanics::externalForce >( getName() ).
+    nodes.registerField< solidMechanics::externalForce >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
-    nodes.registerExtrinsicData< solidMechanics::contactForce >( getName() ).
+    nodes.registerField< solidMechanics::contactForce >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
     Group & nodeSets = nodes.sets();
@@ -308,7 +308,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
 
-    arrayView1d< real64 > & mass = nodes.getExtrinsicData< solidMechanics::mass >();
+    arrayView1d< real64 > & mass = nodes.getField< solidMechanics::mass >();
 
     arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
 
@@ -517,15 +517,11 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-    arrayView1d< real64 const > const & mass = nodes.getExtrinsicData< solidMechanics::mass >();
-    solidMechanics::arrayView2dLayoutVelocity const & vel =
-      nodes.getExtrinsicData< solidMechanics::velocity >();
-    solidMechanics::arrayView2dLayoutTotalDisplacement const & u =
-      nodes.getExtrinsicData< solidMechanics::totalDisplacement >();
-    solidMechanics::arrayView2dLayoutIncrDisplacement const & uhat =
-      nodes.getExtrinsicData< solidMechanics::incrementalDisplacement >();
-    solidMechanics::arrayView2dLayoutAcceleration const & acc =
-      nodes.getExtrinsicData< solidMechanics::acceleration >();
+    arrayView1d< real64 const > const & mass = nodes.getField< solidMechanics::mass >();
+    solidMechanics::arrayView2dLayoutVelocity const & vel = nodes.getField< solidMechanics::velocity >();
+    solidMechanics::arrayView2dLayoutTotalDisplacement const & u = nodes.getField< solidMechanics::totalDisplacement >();
+    solidMechanics::arrayView2dLayoutIncrDisplacement const & uhat = nodes.getField< solidMechanics::incrementalDisplacement >();
+    solidMechanics::arrayView2dLayoutAcceleration const & acc = nodes.getField< solidMechanics::acceleration >();
 
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node,
@@ -750,19 +746,19 @@ SolidMechanicsLagrangianFEM::
     NodeManager & nodeManager = mesh.getNodeManager();
 
     solidMechanics::arrayView2dLayoutIncrDisplacement const uhat =
-      nodeManager.getExtrinsicData< solidMechanics::incrementalDisplacement >();
+      nodeManager.getField< solidMechanics::incrementalDisplacement >();
     solidMechanics::arrayView2dLayoutTotalDisplacement const disp =
-      nodeManager.getExtrinsicData< solidMechanics::totalDisplacement >();
+      nodeManager.getField< solidMechanics::totalDisplacement >();
 
 
     localIndex const numNodes = nodeManager.size();
 
     if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
     {
-      solidMechanics::arrayViewConst2dLayoutAcceleration const a_n = nodeManager.getExtrinsicData< solidMechanics::acceleration >();
-      solidMechanics::arrayView2dLayoutVelocity const v_n = nodeManager.getExtrinsicData< solidMechanics::velocity >();
-      arrayView2d< real64 > const vtilde = nodeManager.getExtrinsicData< solidMechanics::velocityTilde >();
-      arrayView2d< real64 > const uhatTilde = nodeManager.getExtrinsicData< solidMechanics::uhatTilde >();
+      solidMechanics::arrayViewConst2dLayoutAcceleration const a_n = nodeManager.getField< solidMechanics::acceleration >();
+      solidMechanics::arrayView2dLayoutVelocity const v_n = nodeManager.getField< solidMechanics::velocity >();
+      arrayView2d< real64 > const vtilde = nodeManager.getField< solidMechanics::velocityTilde >();
+      arrayView2d< real64 > const uhatTilde = nodeManager.getField< solidMechanics::uhatTilde >();
 
       real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
       real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
@@ -819,14 +815,14 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
 
     solidMechanics::arrayView2dLayoutIncrDisplacement const uhat =
-      nodeManager.getExtrinsicData< solidMechanics::incrementalDisplacement >();
+      nodeManager.getField< solidMechanics::incrementalDisplacement >();
 
     if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
     {
-      solidMechanics::arrayView2dLayoutAcceleration const a_n = nodeManager.getExtrinsicData< solidMechanics::acceleration >();
-      solidMechanics::arrayView2dLayoutVelocity const v_n = nodeManager.getExtrinsicData< solidMechanics::velocity >();
-      arrayView2d< real64 const > const vtilde    = nodeManager.getExtrinsicData< solidMechanics::velocityTilde >();
-      arrayView2d< real64 const > const uhatTilde = nodeManager.getExtrinsicData< solidMechanics::uhatTilde >();
+      solidMechanics::arrayView2dLayoutAcceleration const a_n = nodeManager.getField< solidMechanics::acceleration >();
+      solidMechanics::arrayView2dLayoutVelocity const v_n = nodeManager.getField< solidMechanics::velocity >();
+      arrayView2d< real64 const > const vtilde    = nodeManager.getField< solidMechanics::velocityTilde >();
+      arrayView2d< real64 const > const uhatTilde = nodeManager.getField< solidMechanics::uhatTilde >();
 
       real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
       real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
@@ -1155,9 +1151,9 @@ void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition &
     NodeManager & nodeManager = mesh.getNodeManager();
 
     solidMechanics::arrayView2dLayoutIncrDisplacement const & incdisp =
-      nodeManager.getExtrinsicData< solidMechanics::incrementalDisplacement >();
+      nodeManager.getField< solidMechanics::incrementalDisplacement >();
     solidMechanics::arrayView2dLayoutTotalDisplacement const & disp =
-      nodeManager.getExtrinsicData< solidMechanics::totalDisplacement >();
+      nodeManager.getField< solidMechanics::totalDisplacement >();
 
     // TODO need to finish this rewind
     forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
@@ -1190,8 +1186,8 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
       ElementRegionManager & elemManager = mesh.getElemManager();
 
       solidMechanics::arrayViewConst2dLayoutTotalDisplacement const u =
-        nodeManager.getExtrinsicData< solidMechanics::totalDisplacement >();
-      arrayView2d< real64 > const fc = nodeManager.getExtrinsicData< solidMechanics::contactForce >();
+        nodeManager.getField< solidMechanics::totalDisplacement >();
+      arrayView2d< real64 > const fc = nodeManager.getField< solidMechanics::contactForce >();
       fc.zero();
 
       arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();

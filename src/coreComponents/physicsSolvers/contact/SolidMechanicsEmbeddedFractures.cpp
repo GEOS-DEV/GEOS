@@ -29,7 +29,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernels.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMStaticCondensationKernels.hpp"
@@ -40,7 +40,7 @@ namespace geosx
 
 using namespace constitutive;
 using namespace dataRepository;
-using namespace extrinsicMeshData;
+using namespace fields;
 
 SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string & name,
                                                                   Group * const parent ):
@@ -86,7 +86,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 {
   ContactSolverBase::registerDataOnMesh( meshBodies );
 
-  using namespace extrinsicMeshData::contact;
+  using namespace fields::contact;
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -95,7 +95,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&] ( localIndex const, EmbeddedSurfaceSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< dTraction_dJump >( getName() ).
+      subRegion.registerField< dTraction_dJump >( getName() ).
         reference().resizeDimension< 1, 2 >( 3, 3 );
     } );
   } );
@@ -122,13 +122,13 @@ void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartiti
                                                                                     EmbeddedSurfaceSubRegion & subRegion )
     {
       arrayView2d< real64 > const & jump  =
-        subRegion.getExtrinsicData< contact::dispJump >();
+        subRegion.getField< contact::dispJump >();
 
       arrayView2d< real64 const > const & oldJump  =
-        subRegion.getExtrinsicData< contact::oldDispJump >();
+        subRegion.getField< contact::oldDispJump >();
 
       arrayView2d< real64 > const & deltaJump  =
-        subRegion.getExtrinsicData< contact::deltaDispJump >();
+        subRegion.getField< contact::deltaDispJump >();
 
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
@@ -167,8 +167,8 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
     SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
     EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
-    arrayView2d< real64 > oldDispJump = subRegion.getExtrinsicData< contact::oldDispJump >();
-    arrayView2d< real64 const > const dispJump = subRegion.getExtrinsicData< contact::dispJump >();
+    arrayView2d< real64 > oldDispJump = subRegion.getField< contact::oldDispJump >();
+    arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(),
                                       [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -742,15 +742,15 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
     {
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
-      arrayView2d< real64 const > const & jump = subRegion.getExtrinsicData< contact::dispJump >();
+      arrayView2d< real64 const > const & jump = subRegion.getField< contact::dispJump >();
 
-      arrayView2d< real64 const > const & oldJump = subRegion.getExtrinsicData< contact::oldDispJump >();
+      arrayView2d< real64 const > const & oldJump = subRegion.getField< contact::oldDispJump >();
 
-      arrayView2d< real64 > const & fractureTraction = subRegion.getExtrinsicData< contact::traction >();
+      arrayView2d< real64 > const & fractureTraction = subRegion.getField< contact::traction >();
 
-      arrayView3d< real64 > const & dFractureTraction_dJump = subRegion.getExtrinsicData< contact::dTraction_dJump >();
+      arrayView3d< real64 > const & dFractureTraction_dJump = subRegion.getField< contact::dTraction_dJump >();
 
-      arrayView1d< integer const > const & fractureState = subRegion.getExtrinsicData< contact::fractureState >();
+      arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
 
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
@@ -774,7 +774,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
 {
   int hasConfigurationConverged = true;
 
-  using namespace extrinsicMeshData::contact;
+  using namespace fields::contact;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -789,9 +789,9 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
                                                                                     EmbeddedSurfaceSubRegion & subRegion )
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView2d< real64 const > const & dispJump = subRegion.getExtrinsicData< contact::dispJump >();
-      arrayView2d< real64 const > const & traction = subRegion.getExtrinsicData< contact::traction >();
-      arrayView1d< integer > const & fractureState = subRegion.getExtrinsicData< contact::fractureState >();
+      arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
+      arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
+      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
 
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 

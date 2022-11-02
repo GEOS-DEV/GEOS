@@ -19,12 +19,12 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 
-#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
+#include "constitutive/fluid/SingleFluidFields.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/ElementRegionManager.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
@@ -161,14 +161,14 @@ struct PerforationKernel
   using TAG = singlePhaseWellKernels::SubRegionTag;
 
   using SinglePhaseFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::pressure >;
+    StencilAccessors< fields::flow::pressure >;
 
   using SingleFluidAccessors =
     StencilMaterialAccessors< constitutive::SingleFluidBase,
-                              extrinsicMeshData::singlefluid::density,
-                              extrinsicMeshData::singlefluid::dDensity_dPressure,
-                              extrinsicMeshData::singlefluid::viscosity,
-                              extrinsicMeshData::singlefluid::dViscosity_dPressure >;
+                              fields::singlefluid::density,
+                              fields::singlefluid::dDensity_dPressure,
+                              fields::singlefluid::viscosity,
+                              fields::singlefluid::dViscosity_dPressure >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -250,11 +250,11 @@ struct PresInitializationKernel
 {
 
   using SinglePhaseFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::pressure >;
+    StencilAccessors< fields::flow::pressure >;
 
   using SingleFluidAccessors =
     StencilMaterialAccessors< constitutive::SingleFluidBase,
-                              extrinsicMeshData::singlefluid::density >;
+                              fields::singlefluid::density >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.

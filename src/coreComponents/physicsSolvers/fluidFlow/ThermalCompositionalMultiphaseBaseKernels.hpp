@@ -617,9 +617,9 @@ public:
                    ElementSubRegionBase const & subRegion,
                    arrayView1d< real64 const > const localSolution )
   {
-    arrayView1d< real64 const > const pressure = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-    arrayView1d< real64 const > const temperature = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
-    arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+    arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
+    arrayView1d< real64 const > const temperature = subRegion.getField< fields::flow::temperature >();
+    arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::flow::globalCompDensity >();
     ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxRelativeTempChange, maxCompFracChange,
                                            rankOffset, numComp, dofKey, subRegion, localSolution,
                                            pressure, temperature, compDens );
@@ -737,11 +737,11 @@ public:
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      subRegion.getField< fields::flow::pressure >();
     arrayView1d< real64 const > const temperature =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+      subRegion.getField< fields::flow::temperature >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+      subRegion.getField< fields::flow::globalCompDensity >();
     SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor,
                                 rankOffset, numComp, dofKey, subRegion, localSolution,
                                 pressure, temperature, compDens );
@@ -784,7 +784,7 @@ public:
     m_numPhases( numPhases ),
     m_volume( subRegion.getElementVolume() ),
     m_porosity_n( solid.getPorosity_n() ),
-    m_phaseVolFrac_n( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction_n >() ),
+    m_phaseVolFrac_n( subRegion.getField< fields::flow::phaseVolumeFraction_n >() ),
     m_totalDens_n( fluid.totalDensity_n() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n() ),
