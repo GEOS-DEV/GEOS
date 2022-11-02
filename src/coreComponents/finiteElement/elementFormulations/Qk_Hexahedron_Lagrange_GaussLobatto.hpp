@@ -798,6 +798,8 @@ computeElasticStiffnessTerm( int q,
   real64 J[3][3] = {{0}};
   int qa, qb, qc;
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
   // diagonal terms
   for( int i=0; i<num1dNodes; i++ )
   {
@@ -805,9 +807,23 @@ computeElasticStiffnessTerm( int q,
     {
       func( GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
             GL_BASIS::TensorProduct3D::linearIndex( j, qb, qc ),
-            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
             GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
             GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qa ) ),
+            J,
+            0,
+            0 );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ),
             J,
             1,
             1 );
@@ -817,28 +833,14 @@ computeElasticStiffnessTerm( int q,
   {
     for( int j=0; j<num1dNodes; j++ )
     {
-      func( GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
-            GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
-            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
-            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
-            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ),
-            J,
-            2,
-            2 );
-    }
-  }
-  for( int i=0; i<num1dNodes; i++ )
-  {
-    for( int j=0; j<num1dNodes; j++ )
-    {
       func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i ),
             GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
-            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
             GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qc ) )*
             GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ),
             J,
-            3,
-            3 );
+            2,
+            2 );
     }
   }
   // off-diagonal terms
@@ -848,7 +850,7 @@ computeElasticStiffnessTerm( int q,
     {
       func( GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
             GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
-            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
             GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
             GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ),
             J,
@@ -863,7 +865,7 @@ computeElasticStiffnessTerm( int q,
     {
       func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
             GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
-            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
             GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
             GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ),
             J,
@@ -880,7 +882,7 @@ computeElasticStiffnessTerm( int q,
     {
       func( GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
             GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
-            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
             GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
             GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ),
             J,
@@ -896,7 +898,7 @@ computeElasticStiffnessTerm( int q,
     {
       func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
             GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
-            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
             GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
             GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ),
             J,
@@ -912,7 +914,7 @@ computeElasticStiffnessTerm( int q,
     {
       func( GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
             GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
-            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
             GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
             GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ), 
             J,
@@ -927,7 +929,7 @@ computeElasticStiffnessTerm( int q,
     {
       func( GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
             GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
-            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
             GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
             GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ), 
             J,

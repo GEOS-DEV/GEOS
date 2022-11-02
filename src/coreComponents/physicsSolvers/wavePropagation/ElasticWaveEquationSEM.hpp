@@ -20,9 +20,9 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEM_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEM_HPP_
 
+#include "WaveSolverBase.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "WaveSolverBase.hpp"
 
 
 
