@@ -109,7 +109,6 @@
       <FiniteElementSpace
           name="FE1"
           order="1"
-          useVirtualElements="1"
           />
     </FiniteElements>
   </NumericalMethods>
