@@ -29,7 +29,7 @@
 
 /**
  * @brief This macro allows solvers to select a subset of FE_TYPES on which the dispatch is done. If none are selected, by default all the
- *FE_TYPES apply.
+ * FE_TYPES apply.
  */
 #ifndef SELECTED_FE_TYPES
 #define SELECTED_FE_TYPES ALL_FE_TYPES
