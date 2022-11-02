@@ -135,6 +135,7 @@ findArraysForImport( vtkDataSet & mesh,
 
 /**
  * @brief Build all the vertex blocks.
+ * @param[in] logLevel the log level
  * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
  * @param[in] nodesetNames
  * @param[in] cellBlockManager The instance that stores the vertex blocks.
@@ -142,7 +143,8 @@ findArraysForImport( vtkDataSet & mesh,
  * @param[in] scale scale the dataset
  * @return size of the dataset on x-axis
  */
-real64 writeNodes( vtkDataSet & mesh,
+real64 writeNodes( integer const logLevel,
+                   vtkDataSet & mesh,
                    string_array & nodesetNames,
                    CellBlockManager & cellBlockManager,
                    const geosx::R1Tensor & translate,
@@ -150,29 +152,34 @@ real64 writeNodes( vtkDataSet & mesh,
 
 /**
  * @brief Build all the cell blocks.
+ * @param[in] logLevel the log level
  * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
  * @param[in] cellMap Map from the surfaces index to the list of cells in this surface in this rank.
  * @param[in] cellBlockManager The instance that stores the cell blocks.
  */
-void writeCells( vtkDataSet & mesh,
+void writeCells( integer const logLevel,
+                 vtkDataSet & mesh,
                  const geosx::vtk::CellMapType & cellMap,
                  CellBlockManager & cellBlockManager );
 
 /**
  * @brief Build the "surface" node sets from the surface information.
+ * @param[in] logLevel the log level
  * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
  * @param[in] cellMap Map from the surfaces index to the list of cells in this surface in this rank.
  * @param[out] cellBlockManager The instance that stores the node sets.
  * @note @p surfacesIdsToCellsIds will contain all the surface ids across all the MPI ranks, but only its cell ids.
  * If the current MPI rank has no cell id for a given surface, then an empty set will be created.
  */
-void writeSurfaces( vtkDataSet & mesh,
+void writeSurfaces( integer const logLevel,
+                    vtkDataSet & mesh,
                     const geosx::vtk::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager );
 
 /**
  * @brief Import data on 3d cells restricted to cells in a specific region
  *
+ * @param logLevel the log level
  * @param regionId The id of the region
  * @param elemType The type of the element to store the data
  * @param cellIds The cell ids of the specific region
@@ -181,7 +188,8 @@ void writeSurfaces( vtkDataSet & mesh,
  * @param srcArrays an array of data to import
  * @param fieldsToBeSync Indentifies the fields to synchronize
  */
-void importFieldOnCellElementSubRegion( int const regionId,
+void importFieldOnCellElementSubRegion( integer const logLevel,
+                                        integer const regionId,
                                         ElementType const elemType,
                                         std::vector< vtkIdType > const & cellIds,
                                         ElementRegionManager & elemManager,
