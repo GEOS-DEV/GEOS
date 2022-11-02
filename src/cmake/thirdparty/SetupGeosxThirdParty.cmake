@@ -557,6 +557,9 @@ endif()
 # HYPRE
 ################################
 if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
+
+    set(HYPRE_DIR ${HYPRE_LOCAL_DIR}/hypre)	
+
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
     set( HYPRE_DEPENDS blas lapack superlu_dist )
