@@ -11,7 +11,7 @@ set( mesh_headers
      ElementType.hpp
      EmbeddedSurfaceNodeManager.hpp
      EmbeddedSurfaceSubRegion.hpp
-     ExtrinsicMeshData.hpp
+     MeshFields.hpp
      FaceElementSubRegion.hpp
      FaceManager.hpp
      FieldIdentifiers.hpp
@@ -25,7 +25,7 @@ set( mesh_headers
      ObjectManagerBase.hpp
      Perforation.hpp
      PerforationData.hpp
-     PerforationExtrinsicData.hpp	     
+     PerforationFields.hpp
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
@@ -98,7 +98,6 @@ set( mesh_sources
      generators/InternalWellboreGenerator.cpp
      generators/MeshGeneratorBase.cpp
      generators/ParMETISInterface.cpp
-     generators/PTScotchInterface.cpp
      mpiCommunications/CommID.cpp
      mpiCommunications/CommunicationTools.cpp
      mpiCommunications/MPI_iCommData.cpp
