@@ -1373,7 +1373,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--nodesetNames => Names of the VTK nodesets to import-->
 		<xsd:attribute name="nodesetNames" type="string_array" default="{}" />
 		<!--partitionMethod => Method (library) used to partition the mesh-->
-		<xsd:attribute name="partitionMethod" type="geosx_VTKMeshGenerator_PartitionMethod" default="parmetis" />
+		<xsd:attribute name="partitionMethod" type="geosx_vtk_PartitionMethod" default="parmetis" />
 		<!--partitionRefinement => Number of partitioning refinement iterations (defaults to 1, recommended value).A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns.-->
 		<xsd:attribute name="partitionRefinement" type="integer" default="1" />
 		<!--regionAttribute => Name of the VTK cell attribute to use as region marker-->
@@ -1387,7 +1387,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_VTKMeshGenerator_PartitionMethod">
+	<xsd:simpleType name="geosx_vtk_PartitionMethod">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|parmetis|ptscotch" />
 		</xsd:restriction>
@@ -1785,8 +1785,12 @@ the relative residual norm satisfies:
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--dtSeismoTrace => Time step for output pressure at receivers-->
 		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
+		<!--forward => Set to 1 to compute forward propagation-->
+		<xsd:attribute name="forward" type="integer" default="1" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
+		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
@@ -1795,6 +1799,10 @@ the relative residual norm satisfies:
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
+		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
+		<xsd:attribute name="saveFields" type="integer" default="0" />
+		<!--shotIndex => Set the current shot for temporary files-->
+		<xsd:attribute name="shotIndex" type="integer" default="0" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -2005,8 +2013,12 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--dtSeismoTrace => Time step for output pressure at receivers-->
 		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
+		<!--forward => Set to 1 to compute forward propagation-->
+		<xsd:attribute name="forward" type="integer" default="1" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
+		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
@@ -2015,6 +2027,10 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
+		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
+		<xsd:attribute name="saveFields" type="integer" default="0" />
+		<!--shotIndex => Set the current shot for temporary files-->
+		<xsd:attribute name="shotIndex" type="integer" default="0" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -2171,11 +2187,25 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--stabilizationMultiplier => Constant multiplier of stabilization strength.-->
+		<xsd:attribute name="stabilizationMultiplier" type="real64" default="1" />
+		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
+		<xsd:attribute name="stabilizationRegionNames" type="string_array" default="{}" />
+		<!--stabilizationType => Stabilization type. Options are:
+None - Add no stabilization to mass equation,
+Global - Add stabilization to all faces,
+Local - Add stabilization only to interiors of macro elements.-->
+		<xsd:attribute name="stabilizationType" type="geosx_MultiphasePoromechanicsSolver_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_MultiphasePoromechanicsSolver_StabilizationType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|None|Global|Local" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="MultiphasePoromechanicsReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -2566,8 +2596,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 * ImplicitDynamic
 * ExplicitDynamic-->
 		<xsd:attribute name="timeIntegrationOption" type="geosx_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
-		<!--useVelocityForQS => Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
-		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2612,8 +2640,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 * ImplicitDynamic
 * ExplicitDynamic-->
 		<xsd:attribute name="timeIntegrationOption" type="geosx_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
-		<!--useVelocityForQS => Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
-		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2764,6 +2790,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
 			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
 			<xsd:element name="CompressibleSolidSlipDependentPermeability" type="CompressibleSolidSlipDependentPermeabilityType" />
+                        <xsd:element name="CompressibleSolidWillisRichardsPermeability" type="CompressibleSolidWillisRichardsPermeabilityType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
@@ -2806,7 +2833,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="TableRelativePermeabilityHysteresis" type="TableRelativePermeabilityHysteresisType" />
 			<xsd:element name="ThermalCompressibleSinglePhaseFluid" type="ThermalCompressibleSinglePhaseFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
-			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
+			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />			
+                        <xsd:element name="WillisRichardsPermeability" type="WillisRichardsPermeabilityType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
@@ -3049,6 +3077,18 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSolidSlipDependentPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+        <xsd:complexType name="CompressibleSolidWillisRichardsPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
@@ -3836,6 +3876,16 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+        <xsd:complexType name="WillisRichardsPermeabilityType">
+		<!--dilationCoefficient =>  Dilation coefficient.-->
+		<xsd:attribute name="dilationCoefficient" type="real64" use="required" />
+		<!--maxFracAperture => Maximum fracture aperture at zero contact stress.-->
+		<xsd:attribute name="maxFracAperture" type="real64" use="required" />
+		<!--refClosureStress => Effective normal stress causes 90% reduction in aperture.-->
+		<xsd:attribute name="refClosureStress" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

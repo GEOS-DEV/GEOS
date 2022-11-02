@@ -20,12 +20,10 @@
 #include "AcousticWaveEquationSEM.hpp"
 #include "AcousticWaveEquationSEMKernel.hpp"
 
-#include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
-//#include "mesh/CellBlock.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
@@ -157,35 +155,37 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    nodeManager.registerExtrinsicData< extrinsicMeshData::Pressure_nm1,
-                                       extrinsicMeshData::Pressure_n,
-                                       extrinsicMeshData::Pressure_np1,
-                                       extrinsicMeshData::ForcingRHS,
-                                       extrinsicMeshData::MassVector,
-                                       extrinsicMeshData::DampingVector,
-                                       extrinsicMeshData::StiffnessVector,
-                                       extrinsicMeshData::FreeSurfaceNodeIndicator >( this->getName() );
+    nodeManager.registerField< fields::Pressure_nm1,
+                               fields::Pressure_n,
+                               fields::Pressure_np1,
+                               fields::PressureDoubleDerivative,
+                               fields::ForcingRHS,
+                               fields::MassVector,
+                               fields::DampingVector,
+                               fields::StiffnessVector,
+                               fields::FreeSurfaceNodeIndicator >( this->getName() );
 
     /// register  PML auxiliary variables only when a PML is specified in the xml
     if( m_usePML )
     {
-      nodeManager.registerExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML,
-                                         extrinsicMeshData::AuxiliaryVar2PML,
-                                         extrinsicMeshData::AuxiliaryVar3PML,
-                                         extrinsicMeshData::AuxiliaryVar4PML >( this->getName() );
+      nodeManager.registerField< fields::AuxiliaryVar1PML,
+                                 fields::AuxiliaryVar2PML,
+                                 fields::AuxiliaryVar3PML,
+                                 fields::AuxiliaryVar4PML >( this->getName() );
 
-      nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >().resizeDimension< 1 >( 3 );
-      nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >().resizeDimension< 1 >( 3 );
+      nodeManager.getField< fields::AuxiliaryVar1PML >().resizeDimension< 1 >( 3 );
+      nodeManager.getField< fields::AuxiliaryVar2PML >().resizeDimension< 1 >( 3 );
     }
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< fields::FreeSurfaceFaceIndicator >( this->getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocity >( this->getName() );
+      subRegion.registerField< fields::MediumVelocity >( this->getName() );
+      subRegion.registerField< fields::PartialGradient >( this->getName() );
     } );
 
   } );
@@ -382,12 +382,13 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
                                                   arrayView1d< real32 const > const var_n,
                                                   arrayView2d< real32 > varAtReceivers )
 {
-  real64 const time_np1 = time_n+dt;
+  real64 const time_np1 = time_n + dt;
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
-  real32 const a1 = (dt < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
+
+  real32 const a1 = (std::abs( dt ) < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
   real32 const a2 = 1.0 - a1;
 
   if( m_nsamplesSeismoTrace > 0 )
@@ -479,14 +480,14 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
-    arrayView1d< real32 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
     mass.zero();
     /// damping matrix to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
+    arrayView1d< real32 > const damping = nodeManager.getField< fields::DampingVector >();
     damping.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
@@ -494,7 +495,11 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
-      arrayView1d< real32 const > const velocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
+      arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
+
+      /// Partial gradient if gradient as to be computed
+      arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
+      grad.zero();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -529,7 +534,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 }
 
 
-void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
+void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition & domain )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager const & functionManager = FunctionManager::getInstance();
@@ -537,20 +542,20 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
   FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
   NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getNodeManager();
 
-  arrayView1d< real32 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
-  arrayView1d< real32 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-  arrayView1d< real32 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+  arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::Pressure_nm1 >();
+  arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
+  arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
 
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
 
-  freeSurfaceFaceIndicator.zero();
-  freeSurfaceNodeIndicator.zero();
+  //freeSurfaceFaceIndicator.zero();
+  //freeSurfaceNodeIndicator.zero();
 
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
@@ -591,7 +596,6 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
   } );
 }
 
-
 void AcousticWaveEquationSEM::initializePML()
 {
   GEOSX_MARK_FUNCTION;
@@ -606,9 +610,9 @@ void AcousticWaveEquationSEM::initializePML()
 
   /// Get the default thicknesses and wave speeds in the PML regions from the PerfectlyMatchedLayer
   /// field specification parameters (from the xml)
-  real64 minThicknessPML=0;
-  real64 smallestXMinPML=0;
-  real64 largestXMaxPML=0;
+  real32 minThicknessPML=0;
+  real32 smallestXMinPML=0;
+  real32 largestXMaxPML=0;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   fsManager.forSubGroups< PerfectlyMatchedLayer >( [&] ( PerfectlyMatchedLayer const & fs )
   {
@@ -633,7 +637,7 @@ void AcousticWaveEquationSEM::initializePML()
 
     NodeManager & nodeManager = mesh.getNodeManager();
     /// WARNING: the array below is one of the PML auxiliary variables
-    arrayView1d< real32 > const indicatorPML = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
+    arrayView1d< real32 > const indicatorPML = nodeManager.getField< fields::AuxiliaryVar4PML >();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
     indicatorPML.zero();
 
@@ -762,7 +766,7 @@ void AcousticWaveEquationSEM::initializePML()
       CellElementSubRegion::NodeMapType const & elemToNodes =
         subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
-      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( extrinsicMeshData::MediumVelocity::key());
+      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( fields::MediumVelocity::key());
       finiteElement::FiniteElementBase const &
       fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -865,11 +869,11 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
     NodeManager & nodeManager = mesh.getNodeManager();
 
     /// Array views of the pressure p, PML auxiliary variables, and node coordinates
-    arrayView1d< real32 const > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-    arrayView2d< real32 const > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
-    arrayView2d< real32 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
-    arrayView1d< real32 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
-    arrayView1d< real32 const > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
+    arrayView1d< real32 const > const p_n = nodeManager.getField< fields::Pressure_n >();
+    arrayView2d< real32 const > const v_n = nodeManager.getField< fields::AuxiliaryVar1PML >();
+    arrayView2d< real32 > const grad_n = nodeManager.getField< fields::AuxiliaryVar2PML >();
+    arrayView1d< real32 > const divV_n = nodeManager.getField< fields::AuxiliaryVar3PML >();
+    arrayView1d< real32 const > const u_n = nodeManager.getField< fields::AuxiliaryVar4PML >();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     /// Select the subregions concerned by the PML (specified in the xml by the Field Specification)
@@ -894,7 +898,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
 
       /// Array view of the wave speed
-      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( extrinsicMeshData::MediumVelocity::key());
+      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( fields::MediumVelocity::key());
 
       /// Get the object needed to determine the type of the element in the subregion
       finiteElement::FiniteElementBase const &
@@ -950,22 +954,133 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
 
 }
 
-
-
-real64 AcousticWaveEquationSEM::solverStep( real64 const & time_n,
-                                            real64 const & dt,
-                                            integer const cycleNumber,
-                                            DomainPartition & domain )
+real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
+                                                     real64 const & dt,
+                                                     integer cycleNumber,
+                                                     DomainPartition & domain,
+                                                     bool computeGradient )
 {
-  return explicitStep( time_n, dt, cycleNumber, domain );
+  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                  [&] ( string const &,
+                                        MeshLevel & mesh,
+                                        arrayView1d< string const > const & GEOSX_UNUSED_PARAM ( regionNames ) )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::Pressure_nm1 >();
+    arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
+    arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
+
+    if( computeGradient )
+    {
+
+      arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
+
+      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIdx )
+      {
+        p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
+      } );
+
+      p_dt2.move( MemorySpace::host, false );
+      int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+      std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
+      std::ofstream wf( fileName, std::ios::out | std::ios::binary );
+      GEOSX_THROW_IF( !wf,
+                      "Could not open file "<< fileName << " for writting",
+                      InputError );
+      wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+      wf.close();
+      GEOSX_THROW_IF( !wf.good(),
+                      "An error occured while writting "<< fileName,
+                      InputError );
+
+    }
+
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      p_nm1[a] = p_n[a];
+      p_n[a]   = p_np1[a];
+    } );
+  } );
+
+  return dtOut;
 }
 
 
+real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
+                                                      real64 const & dt,
+                                                      integer cycleNumber,
+                                                      DomainPartition & domain,
+                                                      bool computeGradient )
+{
+  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                  [&] ( string const &,
+                                        MeshLevel & mesh,
+                                        arrayView1d< string const > const & regionNames )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
 
-real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
-                                              real64 const & dt,
-                                              integer const cycleNumber,
-                                              DomainPartition & domain )
+    arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
+
+    arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::Pressure_nm1 >();
+    arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
+    arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
+
+    if( computeGradient )
+    {
+      ElementRegionManager & elemManager = mesh.getElemManager();
+
+      arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
+
+      int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+      std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
+      std::ifstream wf( fileName, std::ios::in | std::ios::binary );
+      GEOSX_THROW_IF( !wf,
+                      "Could not open file "<< fileName << " for reading",
+                      InputError );
+      // maybe better with registerTouch()
+      p_dt2.move( MemorySpace::host, true );
+      wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+      wf.close();
+      remove( fileName.c_str() );
+
+      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                  CellElementSubRegion & elementSubRegion )
+      {
+        arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
+        arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+        constexpr localIndex numNodesPerElem = 8;
+
+        GEOSX_MARK_SCOPE ( updatePartialGradient );
+        forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const eltIdx )
+        {
+          for( localIndex i = 0; i < numNodesPerElem; ++i )
+          {
+            localIndex nodeIdx = elemsToNodes[eltIdx][i];
+            grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
+          }
+        } );
+      } );
+    }
+
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      p_nm1[a] = p_n[a];
+      p_n[a]   = p_np1[a];
+    } );
+  } );
+
+  return dtOut;
+}
+
+real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
+                                                      real64 const & dt,
+                                                      integer cycleNumber,
+                                                      DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -978,16 +1093,16 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
-    arrayView1d< real32 const > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
+    arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
+    arrayView1d< real32 const > const damping = nodeManager.getField< fields::DampingVector >();
 
-    arrayView1d< real32 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
-    arrayView1d< real32 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-    arrayView1d< real32 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+    arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::Pressure_nm1 >();
+    arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
+    arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
 
-    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
-    arrayView1d< real32 > const stiffnessVector = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
-    arrayView1d< real32 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
+    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
+    arrayView1d< real32 > const stiffnessVector = nodeManager.getField< fields::StiffnessVector >();
+    arrayView1d< real32 > const rhs = nodeManager.getField< fields::ForcingRHS >();
 
     bool const usePML = m_usePML;
 
@@ -1025,10 +1140,10 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     else
     {
       parametersPML const & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
-      arrayView2d< real32 > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
-      arrayView2d< real32 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
-      arrayView1d< real32 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
-      arrayView1d< real32 > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
+      arrayView2d< real32 > const v_n = nodeManager.getField< fields::AuxiliaryVar1PML >();
+      arrayView2d< real32 > const grad_n = nodeManager.getField< fields::AuxiliaryVar2PML >();
+      arrayView1d< real32 > const divV_n = nodeManager.getField< fields::AuxiliaryVar3PML >();
+      arrayView1d< real32 > const u_n = nodeManager.getField< fields::AuxiliaryVar4PML >();
       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
       real32 const xMin[ 3 ] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
@@ -1086,13 +1201,13 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
     /// synchronize pressure fields
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addFields( FieldLocation::Node, { extrinsicMeshData::Pressure_np1::key() } );
+    fieldsToBeSync.addFields( FieldLocation::Node, { fields::Pressure_np1::key() } );
 
     if( usePML )
     {
       fieldsToBeSync.addFields( FieldLocation::Node, {
-          extrinsicMeshData::AuxiliaryVar1PML::key(),
-          extrinsicMeshData::AuxiliaryVar4PML::key() } );
+          fields::AuxiliaryVar1PML::key(),
+          fields::AuxiliaryVar4PML::key() } );
     }
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
@@ -1109,17 +1224,14 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     /// prepare next step
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-      p_nm1[a] = p_n[a];
-      p_n[a]   = p_np1[a];
-
       stiffnessVector[a] = 0.0;
       rhs[a] = 0.0;
     } );
 
     if( usePML )
     {
-      arrayView2d< real32 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
-      arrayView1d< real32 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
+      arrayView2d< real32 > const grad_n = nodeManager.getField< fields::AuxiliaryVar2PML >();
+      arrayView1d< real32 > const divV_n = nodeManager.getField< fields::AuxiliaryVar3PML >();
       grad_n.zero();
       divV_n.zero();
     }
@@ -1144,8 +1256,8 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n,
                                                                 arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-    arrayView1d< real32 const > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-    arrayView1d< real32 const > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+    arrayView1d< real32 const > const p_n = nodeManager.getField< fields::Pressure_n >();
+    arrayView1d< real32 const > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
     arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, 0, p_np1, p_n, pReceivers );
   } );
@@ -1157,11 +1269,26 @@ void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
                                                       arrayView1d< real32 const > const var_n,
                                                       arrayView2d< real32 > varAtReceivers )
 {
+
+  /*
+   * In forward case we compute seismo if time_n + dt  is the first time
+   * step after the timeSeismo to write.
+   *
+   *  time_n        timeSeismo    time_n + dt
+   *   ---|--------------|-------------|
+   *
+   * In backward (time_n goes decreasing) case we compute seismo if
+   * time_n is the last time step before the timeSeismo to write.
+   *
+   *  time_n - dt    timeSeismo    time_n
+   *   ---|--------------|-------------|
+   */
   for( real64 timeSeismo;
-       (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace;
+       (m_forward)?((timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + dt + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace):
+       ((timeSeismo = m_dtSeismoTrace*(m_nsamplesSeismoTrace-m_indexSeismoTrace-1)) >= (time_n - dt -  epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace);
        m_indexSeismoTrace++ )
   {
-    computeSeismoTrace( time_n, dt, timeSeismo, m_indexSeismoTrace, var_np1, var_n, varAtReceivers );
+    computeSeismoTrace( time_n, (m_forward)?dt:-dt, timeSeismo, (m_forward)?m_indexSeismoTrace:(m_nsamplesSeismoTrace-m_indexSeismoTrace-1), var_np1, var_n, varAtReceivers );
   }
 }
 

@@ -20,7 +20,7 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEM_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEM_HPP_
 
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "WaveSolverBase.hpp"
 
@@ -67,24 +67,25 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
-  virtual
-  real64 solverStep( real64 const & time_n,
-                     real64 const & dt,
-                     integer const cycleNumber,
-                     DomainPartition & domain ) override;
+  virtual real64 explicitStepForward( real64 const & time_n,
+                                      real64 const & dt,
+                                      integer const cycleNumber,
+                                      DomainPartition & domain,
+                                      bool const computeGradient ) override;
 
-  virtual
-  real64 explicitStep( real64 const & time_n,
-                       real64 const & dt,
-                       integer const cycleNumber,
-                       DomainPartition & domain ) override;
+  virtual real64 explicitStepBackward( real64 const & time_n,
+                                       real64 const & dt,
+                                       integer const cycleNumber,
+                                       DomainPartition & domain,
+                                       bool const computeGradient ) override;
+  /**@}*/
 
   /**
    * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
    * @param cycleNumber the cycle number/step number of evaluation of the source
    * @param rhsx the right hand side vector to be computed (x-component)
-   * @param rhsy the right hand side vector to be computed (x-component)
-   * @param rhsz the right hand side vector to be computed (x-component)
+   * @param rhsy the right hand side vector to be computed (y-component)
+   * @param rhsz the right hand side vector to be computed (z-component)
    */
   void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhsx, arrayView1d< real32 > const rhsy, arrayView1d< real32 > const rhsz );
 
@@ -123,11 +124,26 @@ public:
                                        arrayView1d< real32 const > const var_n,
                                        arrayView2d< real32 > varAtReceivers );
 
+  /**
+   * TODO: move implementation into WaveSolverBase once 'm_receiverIsLocal' is also moved
+   * @brief Compute DAS data from the appropriate three-component receiver pairs
+   * @param xCompRcv the array holding the x-component of pairs of receivers
+   * @param yCompRcv the array holding the y-component of pairs of receivers
+   * @param zCompRcv the array holding the z-component of pairs of receivers
+   */
+  void computeDAS( arrayView2d< real32 > const xCompRcv,
+                   arrayView2d< real32 > const yCompRcv,
+                   arrayView2d< real32 > const zCompRcv );
+
 
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
    */
-  virtual void cleanup( real64 const time_n, integer const cycleNumber, integer const eventCounter, real64 const eventProgress, DomainPartition & domain ) override;
+  virtual void cleanup( real64 const time_n,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        DomainPartition & domain ) override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -146,6 +162,18 @@ public:
   } waveEquationViewKeys;
 
 
+  /** internal function to the class to compute explicitStep either for backward or forward.
+   * (requires not to be private because it is called from GEOSX_HOST_DEVICE method)
+   * @param time_n time at the beginning of the step
+   * @param dt the perscribed timestep
+   * @param cycleNumber the current cycle number
+   * @param domain the domain object
+   * @return return the timestep that was achieved during the step.
+   */
+  real64 explicitStepInternal( real64 const & time_n,
+                               real64 const & dt,
+                               integer const cycleNumber,
+                               DomainPartition & domain );
 protected:
 
   virtual void postProcessInput() override final;
@@ -188,7 +216,6 @@ private:
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
 
-
   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
   array2d< real64 > m_sourceConstantsx;
 
@@ -218,205 +245,203 @@ private:
 
   /// Displacement_np1 at the receiver location for each time step for each receiver (z-component)
   array2d< real32 > m_displacementZNp1AtReceivers;
-
 };
 
 
-namespace extrinsicMeshData
+namespace fields
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( Displacementx_nm1,
-                           "displacementx_nm1",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "x-component of displacement at time n-1." );
+DECLARE_FIELD( Displacementx_nm1,
+               "displacementx_nm1",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "x-component of displacement at time n-1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Displacementy_nm1,
-                           "displacementy_nm1",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "y-component of displacement at time n-1." );
+DECLARE_FIELD( Displacementy_nm1,
+               "displacementy_nm1",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "y-component of displacement at time n-1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Displacementz_nm1,
-                           "displacementz_nm1",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "z-component of displacement at time n-1." );
+DECLARE_FIELD( Displacementz_nm1,
+               "displacementz_nm1",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "z-component of displacement at time n-1." );
 
+DECLARE_FIELD( Displacementx_n,
+               "displacementx_n",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "x-component of displacement at time n." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Displacementx_n,
-                           "displacementx_n",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "x-component of displacement at time n." );
+DECLARE_FIELD( Displacementy_n,
+               "displacementy_n",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "y-component of displacement at time n." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Displacementy_n,
-                           "displacementy_n",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "y-component of displacement at time n." );
+DECLARE_FIELD( Displacementz_n,
+               "displacementz_n",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "z-component of displacement at time n." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Displacementz_n,
-                           "displacementz_n",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "z-component of displacement at time n." );
-EXTRINSIC_MESH_DATA_TRAIT( Displacementx_np1,
-                           "displacementx_np1",
-                           array1d< real32 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "x-component of displacement at time n+1." );
+DECLARE_FIELD( Displacementx_np1,
+               "displacementx_np1",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "x-component of displacement at time n+1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Displacementy_np1,
-                           "displacementy_np1",
-                           array1d< real32 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "y-component of displacement at time n+1." );
+DECLARE_FIELD( Displacementy_np1,
+               "displacementy_np1",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "y-component of displacement at time n+1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Displacementz_np1,
-                           "displacementz_np1",
-                           array1d< real32 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "z-component of displacement at time n+1." );
+DECLARE_FIELD( Displacementz_np1,
+               "displacementz_np1",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "z-component of displacement at time n+1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( ForcingRHSx,
-                           "rhsx",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "RHS for x-direction" );
+DECLARE_FIELD( ForcingRHSx,
+               "rhsx",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "RHS for x-direction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( ForcingRHSy,
-                           "rhsy",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "RHS for y-direction" );
+DECLARE_FIELD( ForcingRHSy,
+               "rhsy",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "RHS for y-direction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( ForcingRHSz,
-                           "rhsz",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "RHS for z-direction" );
+DECLARE_FIELD( ForcingRHSz,
+               "rhsz",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "RHS for z-direction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( MassVector,
-                           "massVector",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Diagonal Mass Matrix." );
+DECLARE_FIELD( MassVector,
+               "massVector",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal Mass Matrix." );
 
-EXTRINSIC_MESH_DATA_TRAIT( DampingVectorx,
-                           "dampingVectorx",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Diagonal Damping Matrix in x-direction." );
+DECLARE_FIELD( DampingVectorx,
+               "dampingVectorx",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal Damping Matrix in x-direction." );
 
-EXTRINSIC_MESH_DATA_TRAIT( DampingVectory,
-                           "dampingVectory",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Diagonal Damping Matrix in y-direction." );
+DECLARE_FIELD( DampingVectory,
+               "dampingVectory",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal Damping Matrix in y-direction." );
 
-EXTRINSIC_MESH_DATA_TRAIT( DampingVectorz,
-                           "dampingVectorz",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Diagonal Damping Matrix in z-direction." );
+DECLARE_FIELD( DampingVectorz,
+               "dampingVectorz",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal Damping Matrix in z-direction." );
 
-EXTRINSIC_MESH_DATA_TRAIT( StiffnessVectorx,
-                           "stiffnessVectorx",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "x-component of stiffness vector." );
+DECLARE_FIELD( StiffnessVectorx,
+               "stiffnessVectorx",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "x-component of stiffness vector." );
 
-EXTRINSIC_MESH_DATA_TRAIT( StiffnessVectory,
-                           "stiffnessVectory",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "y-component of stiffness vector." );
+DECLARE_FIELD( StiffnessVectory,
+               "stiffnessVectory",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "y-component of stiffness vector." );
 
-EXTRINSIC_MESH_DATA_TRAIT( StiffnessVectorz,
-                           "stiffnessVectorz",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "z-component of stiffness vector." );
+DECLARE_FIELD( StiffnessVectorz,
+               "stiffnessVectorz",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "z-component of stiffness vector." );
 
-EXTRINSIC_MESH_DATA_TRAIT( MediumVelocityVp,
-                           "mediumVelocityVp",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "P-waves speed in the cell" );
+DECLARE_FIELD( MediumVelocityVp,
+               "mediumVelocityVp",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "P-waves speed in the cell" );
 
-EXTRINSIC_MESH_DATA_TRAIT( MediumVelocityVs,
-                           "mediumVelocityVs",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "S-waves speed in the cell" );
+DECLARE_FIELD( MediumVelocityVs,
+               "mediumVelocityVs",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "S-waves speed in the cell" );
 
-EXTRINSIC_MESH_DATA_TRAIT( MediumDensity,
-                           "mediumDensity",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Medium density of the cell" );
+DECLARE_FIELD( MediumDensity,
+               "mediumDensity",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Medium density of the cell" );
 
-EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceFaceIndicator,
-                           "freeSurfaceFaceIndicator",
-                           array1d< localIndex >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
+DECLARE_FIELD( FreeSurfaceFaceIndicator,
+               "freeSurfaceFaceIndicator",
+               array1d< localIndex >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
 
-EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceNodeIndicator,
-                           "freeSurfaceNodeIndicator",
-                           array1d< localIndex >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
-
+DECLARE_FIELD( FreeSurfaceNodeIndicator,
+               "freeSurfaceNodeIndicator",
+               array1d< localIndex >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
 
 }
 

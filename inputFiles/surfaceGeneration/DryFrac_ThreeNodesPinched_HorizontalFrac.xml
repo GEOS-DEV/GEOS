@@ -119,7 +119,7 @@
       name="x"
       component="0"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       scale="0.0"
       setNames="{ xneg, xpos }"/>
 
@@ -127,7 +127,7 @@
       name="y"
       component="1"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       scale="0.0"
       setNames="{ yneg, ypos }"/>
 
@@ -135,7 +135,7 @@
       name="zposconstraint"
       component="2"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       scale="0.001"
       setNames="{ zpos }"/>
 
@@ -143,7 +143,7 @@
       name="znegconstraint"
       component="2"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       setNames="{ zneg }"/>
   </FieldSpecifications>
 

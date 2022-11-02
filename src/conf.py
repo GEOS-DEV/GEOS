@@ -57,12 +57,9 @@ if read_the_docs_build:
                   "coreComponents/mesh",
                   "coreComponents/managers",
                   "coreComponents/finiteElement/kernelInterface",
-                  "coreComponents/mesh/ExtrinsicMeshData.hpp",
+                  "coreComponents/mesh/MeshFields.hpp",
                   "coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp",
-                  "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp",
-                  "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp",
-                  "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp",
-                  "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp",
+                  "coreComponents/physicsSolvers/solidMechanics",
                   "coreComponents/finiteVolume"]
 
     # Write correct ReadtheDocs path and input directories
