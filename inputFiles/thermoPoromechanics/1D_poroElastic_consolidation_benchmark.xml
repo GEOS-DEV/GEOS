@@ -28,7 +28,7 @@
     <PeriodicEvent
       name="solverApplication0"
       endTime="10.0"
-      forceDt="10.0"
+      forceDt="1.0"
       target="/Solvers/thermoPoroSolver"/>
 
     <PeriodicEvent
