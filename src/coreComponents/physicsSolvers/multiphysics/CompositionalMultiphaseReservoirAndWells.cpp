@@ -283,6 +283,8 @@ assembleCouplingTerms( real64 const time_n,
                                                                                MeshLevel const & mesh,
                                                                                arrayView1d< string const > const & regionNames )
   {
+    integer atLeastAWellOpen = 0;
+
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     integer constexpr MAX_NUM_COMP = MultiFluidBase::MAX_NUM_COMPONENTS;
@@ -313,6 +315,8 @@ assembleCouplingTerms( real64 const time_n,
       {
         return;
       }
+
+      atLeastAWellOpen = 1;
 
       PerforationData const * const perforationData = subRegion.getPerforationData();
 
@@ -433,6 +437,17 @@ assembleCouplingTerms( real64 const time_n,
         }
       }
     } );
+
+    atLeastAWellOpen = MpiWrapper::max( atLeastAWellOpen );
+    if( !atLeastAWellOpen )
+    {
+      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVMShut;
+    }
+    else
+    {
+      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
+    }
+
   } );
 }
 

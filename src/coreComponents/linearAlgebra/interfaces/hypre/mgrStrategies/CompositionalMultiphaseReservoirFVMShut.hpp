@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CompositionalMultiphaseReservoirFVM.hpp
+ * @file CompositionalMultiphaseReservoirFVMShut.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRCOMPOSITIONALMULTIPHASERESERVOIRFVM_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRCOMPOSITIONALMULTIPHASERESERVOIRFVM_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRCOMPOSITIONALMULTIPHASERESERVOIRFVMSHUT_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRCOMPOSITIONALMULTIPHASERESERVOIRFVMSHUT_HPP_
 
 #include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
@@ -31,7 +31,7 @@ namespace mgr
 {
 
 /**
- * @brief CompositionalMultiphaseReservoirFVM strategy.
+ * @brief CompositionalMultiphaseReservoirFVMShut strategy.
  *
  * Labels description stored in point_marker_array
  *                0 = reservoir pressure
@@ -50,7 +50,7 @@ namespace mgr
  *   - 3rd level: eliminate the remaining the reservoir densities
  *   - The coarse grid is the pressure system and is solved with BoomerAMG
  */
-class CompositionalMultiphaseReservoirFVM : public MGRStrategyBase< 3 >
+class CompositionalMultiphaseReservoirFVMShut : public MGRStrategyBase< 3 >
 {
 public:
 
@@ -58,7 +58,7 @@ public:
    * @brief Constructor.
    * @param numComponentsPerField array with number of components for each field
    */
-  explicit CompositionalMultiphaseReservoirFVM( arrayView1d< int const > const & numComponentsPerField )
+  explicit CompositionalMultiphaseReservoirFVMShut( arrayView1d< int const > const & numComponentsPerField )
     : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] + numComponentsPerField[1] ) )
   {
     HYPRE_Int const numResLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
@@ -75,9 +75,8 @@ public:
     setupLabels();
 
     m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
-    m_levelFRelaxType[0]       = MGRFRelaxationType::gsElimWInverse; //default, i.e. Jacobi
-    //m_levelFRelaxType[0]       = MGRFRelaxationType::jacobi; //default, i.e. Jacobi
-    m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
+    m_levelFRelaxType[0]       = MGRFRelaxationType::jacobi; //default, i.e. Jacobi
+    m_levelInterpType[0]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
 
@@ -157,4 +156,4 @@ public:
 
 } // namespace geosx
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRCOMPOSITIONALMULTIPHASERESERVOIRFVM_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRCOMPOSITIONALMULTIPHASERESERVOIRFVMSHUT_HPP_*/
