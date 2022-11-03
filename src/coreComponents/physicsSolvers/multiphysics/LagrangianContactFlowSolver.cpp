@@ -47,7 +47,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 using namespace interpolation;
-using namespace extrinsicMeshData;
+using namespace fields;
 
 LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & name,
                                                           Group * const parent ):

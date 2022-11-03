@@ -28,10 +28,10 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
-#include "physicsSolvers/surfaceGeneration/SurfaceGeneratorExtrinsicData.hpp"
+#include "physicsSolvers/surfaceGeneration/SurfaceGeneratorFields.hpp"
 
 #include <algorithm>
 
@@ -40,7 +40,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace extrinsicMeshData;
+using namespace fields;
 
 constexpr real64 SurfaceGenerator::m_nonRuptureTime;
 
@@ -231,61 +231,61 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const, CellElementSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< surfaceGeneration::K_IC_00,
-                                       surfaceGeneration::K_IC_01,
-                                       surfaceGeneration::K_IC_02,
-                                       surfaceGeneration::K_IC_10,
-                                       surfaceGeneration::K_IC_11,
-                                       surfaceGeneration::K_IC_12,
-                                       surfaceGeneration::K_IC_20,
-                                       surfaceGeneration::K_IC_21,
-                                       surfaceGeneration::K_IC_22 >( this->getName() );
+      subRegion.registerField< surfaceGeneration::K_IC_00,
+                               surfaceGeneration::K_IC_01,
+                               surfaceGeneration::K_IC_02,
+                               surfaceGeneration::K_IC_10,
+                               surfaceGeneration::K_IC_11,
+                               surfaceGeneration::K_IC_12,
+                               surfaceGeneration::K_IC_20,
+                               surfaceGeneration::K_IC_21,
+                               surfaceGeneration::K_IC_22 >( this->getName() );
     } );
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< surfaceGeneration::K_IC_00,
-                                       surfaceGeneration::K_IC_01,
-                                       surfaceGeneration::K_IC_02,
-                                       surfaceGeneration::K_IC_10,
-                                       surfaceGeneration::K_IC_11,
-                                       surfaceGeneration::K_IC_12,
-                                       surfaceGeneration::K_IC_20,
-                                       surfaceGeneration::K_IC_21,
-                                       surfaceGeneration::K_IC_22,
-                                       extrinsicMeshData::ruptureTime,
-                                       surfaceGeneration::ruptureRate >( this->getName() );
+      subRegion.registerField< surfaceGeneration::K_IC_00,
+                               surfaceGeneration::K_IC_01,
+                               surfaceGeneration::K_IC_02,
+                               surfaceGeneration::K_IC_10,
+                               surfaceGeneration::K_IC_11,
+                               surfaceGeneration::K_IC_12,
+                               surfaceGeneration::K_IC_20,
+                               surfaceGeneration::K_IC_21,
+                               surfaceGeneration::K_IC_22,
+                               fields::ruptureTime,
+                               surfaceGeneration::ruptureRate >( this->getName() );
     } );
 
     NodeManager & nodeManager = mesh.getNodeManager();
     EdgeManager & edgeManager = mesh.getEdgeManager();
     FaceManager & faceManager = mesh.getFaceManager();
 
-    nodeManager.registerExtrinsicData< extrinsicMeshData::parentIndex,
-                                       extrinsicMeshData::childIndex,
-                                       surfaceGeneration::degreeFromCrack,
-                                       surfaceGeneration::degreeFromCrackTip,
-                                       surfaceGeneration::SIFNode,
-                                       extrinsicMeshData::ruptureTime >( this->getName() );
+    nodeManager.registerField< fields::parentIndex,
+                               fields::childIndex,
+                               surfaceGeneration::degreeFromCrack,
+                               surfaceGeneration::degreeFromCrackTip,
+                               surfaceGeneration::SIFNode,
+                               fields::ruptureTime >( this->getName() );
 
-    edgeManager.registerExtrinsicData< extrinsicMeshData::parentIndex,
-                                       extrinsicMeshData::childIndex,
-                                       surfaceGeneration::SIF_I,
-                                       surfaceGeneration::SIF_II,
-                                       surfaceGeneration::SIF_III >( this->getName() );
+    edgeManager.registerField< fields::parentIndex,
+                               fields::childIndex,
+                               surfaceGeneration::SIF_I,
+                               surfaceGeneration::SIF_II,
+                               surfaceGeneration::SIF_III >( this->getName() );
 
-    faceManager.registerExtrinsicData< extrinsicMeshData::parentIndex,
-                                       extrinsicMeshData::childIndex,
-                                       surfaceGeneration::ruptureState,
-                                       extrinsicMeshData::ruptureTime,
-                                       surfaceGeneration::SIFonFace,
-                                       surfaceGeneration::K_IC,
-                                       surfaceGeneration::primaryCandidateFace,
-                                       surfaceGeneration::isFaceSeparable,
-                                       surfaceGeneration::degreeFromCrackTip >( this->getName() );
+    faceManager.registerField< fields::parentIndex,
+                               fields::childIndex,
+                               surfaceGeneration::ruptureState,
+                               fields::ruptureTime,
+                               surfaceGeneration::SIFonFace,
+                               surfaceGeneration::K_IC,
+                               surfaceGeneration::primaryCandidateFace,
+                               surfaceGeneration::isFaceSeparable,
+                               surfaceGeneration::degreeFromCrackTip >( this->getName() );
 
-    // TODO: handle this automatically in registerExtrinsicData()
-    faceManager.getExtrinsicData< surfaceGeneration::K_IC >().resizeDimension< 1 >( 3 );
+    // TODO: handle this automatically in registerField()
+    faceManager.getField< surfaceGeneration::K_IC >().resizeDimension< 1 >( 3 );
   } );
 
 
@@ -301,11 +301,11 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
     NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
 
-    arrayView1d< localIndex > const & parentNodeIndex = nodeManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
+    arrayView1d< localIndex > const & parentNodeIndex = nodeManager.getField< fields::parentIndex >();
 
-    arrayView1d< localIndex > const & parentFaceIndex = faceManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
+    arrayView1d< localIndex > const & parentFaceIndex = faceManager.getField< fields::parentIndex >();
 
-    arrayView1d< localIndex > const & childFaceIndex = faceManager.getExtrinsicData< extrinsicMeshData::childIndex >();
+    arrayView1d< localIndex > const & childFaceIndex = faceManager.getField< fields::childIndex >();
 
     parentNodeIndex.setValues< serialPolicy >( -1 );
     parentFaceIndex.setValues< serialPolicy >( -1 );
@@ -345,7 +345,7 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
     arrayView2d< real64 const > const & faceNormals = faceManager.faceNormal();
 
     //TODO: roughness to KIC should be made a material constitutive relationship.
-    arrayView2d< real64 > const & KIC = faceManager.getExtrinsicData< surfaceGeneration::K_IC >();
+    arrayView2d< real64 > const & KIC = faceManager.getField< surfaceGeneration::K_IC >();
 
     for( localIndex kf=0; kf<faceManager.size(); ++kf )
     {
@@ -373,15 +373,15 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
                                                         getSubRegion< CellElementSubRegion >( faceToSubRegionMap[kf][k] );
             localIndex iEle = faceToElementMap[kf][k];
 
-            arrayView1d< real64 const > const K_IC_00 = elementSubRegion.getExtrinsicData< surfaceGeneration::K_IC_00 >();
-            arrayView1d< real64 const > const K_IC_01 = elementSubRegion.getExtrinsicData< surfaceGeneration::K_IC_01 >();
-            arrayView1d< real64 const > const K_IC_02 = elementSubRegion.getExtrinsicData< surfaceGeneration::K_IC_02 >();
-            arrayView1d< real64 const > const K_IC_10 = elementSubRegion.getExtrinsicData< surfaceGeneration::K_IC_10 >();
-            arrayView1d< real64 const > const K_IC_11 = elementSubRegion.getExtrinsicData< surfaceGeneration::K_IC_11 >();
-            arrayView1d< real64 const > const K_IC_12 = elementSubRegion.getExtrinsicData< surfaceGeneration::K_IC_12 >();
-            arrayView1d< real64 const > const K_IC_20 = elementSubRegion.getExtrinsicData< surfaceGeneration::K_IC_20 >();
-            arrayView1d< real64 const > const K_IC_21 = elementSubRegion.getExtrinsicData< surfaceGeneration::K_IC_21 >();
-            arrayView1d< real64 const > const K_IC_22 = elementSubRegion.getExtrinsicData< surfaceGeneration::K_IC_22 >();
+            arrayView1d< real64 const > const K_IC_00 = elementSubRegion.getField< surfaceGeneration::K_IC_00 >();
+            arrayView1d< real64 const > const K_IC_01 = elementSubRegion.getField< surfaceGeneration::K_IC_01 >();
+            arrayView1d< real64 const > const K_IC_02 = elementSubRegion.getField< surfaceGeneration::K_IC_02 >();
+            arrayView1d< real64 const > const K_IC_10 = elementSubRegion.getField< surfaceGeneration::K_IC_10 >();
+            arrayView1d< real64 const > const K_IC_11 = elementSubRegion.getField< surfaceGeneration::K_IC_11 >();
+            arrayView1d< real64 const > const K_IC_12 = elementSubRegion.getField< surfaceGeneration::K_IC_12 >();
+            arrayView1d< real64 const > const K_IC_20 = elementSubRegion.getField< surfaceGeneration::K_IC_20 >();
+            arrayView1d< real64 const > const K_IC_21 = elementSubRegion.getField< surfaceGeneration::K_IC_21 >();
+            arrayView1d< real64 const > const K_IC_22 = elementSubRegion.getField< surfaceGeneration::K_IC_22 >();
 
             real64 k0[3];
             k0[0] = K_IC_00[iEle]*faceNormals[kf][0] + K_IC_10[iEle]*faceNormals[kf][1] + K_IC_20[iEle]*faceNormals[kf][2];
@@ -528,9 +528,9 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   FieldIdentifiers fieldsToBeSync;
 
   fieldsToBeSync.addFields( FieldLocation::Face, { surfaceGeneration::ruptureState::key() } );
-  if( nodeManager.hasExtrinsicData< extrinsicMeshData::solidMechanics::externalForce >() )
+  if( nodeManager.hasField< fields::solidMechanics::externalForce >() )
   {
-    fieldsToBeSync.addFields( FieldLocation::Node, { extrinsicMeshData::solidMechanics::externalForce::key() } );
+    fieldsToBeSync.addFields( FieldLocation::Node, { fields::solidMechanics::externalForce::key() } );
   }
 
   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
@@ -731,7 +731,7 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
                                             NodeManager & nodeManager,
                                             ModifiedObjectLists & receivedObjects )
 {
-  arrayView1d< localIndex const > const & parentNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
+  arrayView1d< localIndex const > const & parentNodeIndices = nodeManager.getField< fields::parentIndex >();
 
   for( localIndex const nodeIndex : receivedObjects.newNodes )
   {
@@ -748,10 +748,10 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
 
 
   arrayView1d< localIndex const > const &
-  parentEdgeIndices = edgeManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
+  parentEdgeIndices = edgeManager.getField< fields::parentIndex >();
 
   arrayView1d< localIndex const > const &
-  childEdgeIndices = edgeManager.getExtrinsicData< extrinsicMeshData::childIndex >();
+  childEdgeIndices = edgeManager.getField< fields::childIndex >();
 
 
   ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList().toViewConst();
@@ -786,11 +786,11 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
     }
   }
 
-  arrayView1d< integer const > const & isFaceSeparable = faceManager.getExtrinsicData< surfaceGeneration::isFaceSeparable >();
+  arrayView1d< integer const > const & isFaceSeparable = faceManager.getField< surfaceGeneration::isFaceSeparable >();
   arrayView2d< localIndex const > const & faceToElementMap = faceManager.elementList();
 
-  arrayView1d< localIndex const > const & childNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::childIndex >();
-  arrayView1d< localIndex > const & parentFaceIndices = faceManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
+  arrayView1d< localIndex const > const & childNodeIndices = nodeManager.getField< fields::childIndex >();
+  arrayView1d< localIndex > const & parentFaceIndices = faceManager.getField< fields::parentIndex >();
 
   for( localIndex const faceIndex : receivedObjects.newFaces )
   {
@@ -941,12 +941,12 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
                                            map< localIndex, int > & faceLocations,
                                            map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
 {
-  arrayView1d< localIndex const > const & parentNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
+  arrayView1d< localIndex const > const & parentNodeIndices = nodeManager.getField< fields::parentIndex >();
 
   localIndex const parentNodeIndex = ObjectManagerBase::getParentRecursive( parentNodeIndices, nodeID );
 
-  arrayView1d< localIndex const > const & parentFaceIndices = faceManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
-  arrayView1d< localIndex const > const & childFaceIndices = faceManager.getExtrinsicData< extrinsicMeshData::childIndex >();
+  arrayView1d< localIndex const > const & parentFaceIndices = faceManager.getField< fields::parentIndex >();
+  arrayView1d< localIndex const > const & childFaceIndices = faceManager.getField< fields::childIndex >();
 
   std::set< localIndex > const & vNodeToRupturedFaces = nodesToRupturedFaces[parentNodeIndex];
 
@@ -1517,7 +1517,7 @@ bool SurfaceGenerator::setElemLocations( int const location,
                                          map< localIndex, int > & faceLocations,
                                          map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
 {
-  arrayView1d< localIndex const > const & parentFaceIndices = faceManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
+  arrayView1d< localIndex const > const & parentFaceIndices = faceManager.getField< fields::parentIndex >();
 
   const int otherlocation = (location==0) ? 1 : 0;
 
@@ -1655,21 +1655,21 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
   array1d< integer > const & nodeIsExternal = nodeManager.isExternal();
 
   SurfaceElementRegion & fractureElementRegion = elementManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
-  array1d< integer > const & isFaceSeparable = faceManager.getExtrinsicData< surfaceGeneration::isFaceSeparable >();
+  array1d< integer > const & isFaceSeparable = faceManager.getField< surfaceGeneration::isFaceSeparable >();
 
   array2d< real64 > const & faceNormals = faceManager.faceNormal();
 
-  array1d< localIndex > const & parentEdgeIndices = edgeManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
-  array1d< localIndex > const & childEdgeIndices = edgeManager.getExtrinsicData< extrinsicMeshData::childIndex >();
-  array1d< localIndex > const & parentNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
-  array1d< localIndex > const & childNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::childIndex >();
+  array1d< localIndex > const & parentEdgeIndices = edgeManager.getField< fields::parentIndex >();
+  array1d< localIndex > const & childEdgeIndices = edgeManager.getField< fields::childIndex >();
+  array1d< localIndex > const & parentNodeIndices = nodeManager.getField< fields::parentIndex >();
+  array1d< localIndex > const & childNodeIndices = nodeManager.getField< fields::childIndex >();
 
-  array1d< integer > const & degreeFromCrack = nodeManager.getExtrinsicData< surfaceGeneration::degreeFromCrack >();
-  array1d< integer > const & nodeDegreeFromCrackTip = nodeManager.getExtrinsicData< surfaceGeneration::degreeFromCrackTip >();
-  array1d< integer > const & faceDegreeFromCrackTip = faceManager.getExtrinsicData< surfaceGeneration::degreeFromCrackTip >();
+  array1d< integer > const & degreeFromCrack = nodeManager.getField< surfaceGeneration::degreeFromCrack >();
+  array1d< integer > const & nodeDegreeFromCrackTip = nodeManager.getField< surfaceGeneration::degreeFromCrackTip >();
+  array1d< integer > const & faceDegreeFromCrackTip = faceManager.getField< surfaceGeneration::degreeFromCrackTip >();
 
-  array1d< real64 > const & nodeRuptureTime = nodeManager.getExtrinsicData< extrinsicMeshData::ruptureTime >();
-  array1d< real64 > const & faceRuptureTime = faceManager.getExtrinsicData< extrinsicMeshData::ruptureTime >();
+  array1d< real64 > const & nodeRuptureTime = nodeManager.getField< fields::ruptureTime >();
+  array1d< real64 > const & faceRuptureTime = faceManager.getField< fields::ruptureTime >();
 
   // ***** split all the objects first *****
 
@@ -1785,7 +1785,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
 
   // split the faces
-  array1d< integer > const & ruptureState = faceManager.getExtrinsicData< surfaceGeneration::ruptureState >();
+  array1d< integer > const & ruptureState = faceManager.getField< surfaceGeneration::ruptureState >();
   map< localIndex, localIndex > splitFaces;
 
 
@@ -1922,8 +1922,8 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
    *  - location 1 gets the new node,edge,face.
    */
 
-  array1d< localIndex > const & parentFaceIndex = faceManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
-  array1d< localIndex > const & childFaceIndex = faceManager.getExtrinsicData< extrinsicMeshData::childIndex >();
+  array1d< localIndex > const & parentFaceIndex = faceManager.getField< fields::parentIndex >();
+  array1d< localIndex > const & childFaceIndex = faceManager.getField< fields::childIndex >();
 
   // 1) loop over all elements attached to the nodeID
   for( map< std::pair< CellElementSubRegion const *, localIndex >, int >::const_iterator iter_elem = elemLocations.begin(); iter_elem != elemLocations.end(); ++iter_elem )
@@ -2759,7 +2759,7 @@ void SurfaceGenerator::identifyRupturedFaces( DomainPartition const & domain,
     ModifiedObjectLists modifiedObjects;
 
     calculateNodeAndFaceSif( domain, nodeManager, edgeManager, faceManager, elementManager );
-    arrayView1d< real64 const > const & SIFNode = nodeManager.getExtrinsicData< surfaceGeneration::SIFNode >();
+    arrayView1d< real64 const > const & SIFNode = nodeManager.getField< surfaceGeneration::SIFNode >();
 
     for( auto nodeIndex: m_tipNodes )
     {
@@ -2782,8 +2782,8 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
                                                 FaceManager & faceManager,
                                                 ElementRegionManager const & elementManager )
 {
-  arrayView1d< real64 > const & SIFNode = nodeManager.getExtrinsicData< surfaceGeneration::SIFNode >();
-  arrayView1d< real64 > const & SIFonFace = faceManager.getExtrinsicData< surfaceGeneration::SIFonFace >();
+  arrayView1d< real64 > const & SIFNode = nodeManager.getField< surfaceGeneration::SIFNode >();
+  arrayView1d< real64 > const & SIFonFace = faceManager.getField< surfaceGeneration::SIFonFace >();
 
   std::vector< std::vector< real64 > > SIFNode_All, SIFonFace_All;
   std::vector< real64 > SIFOnEdge;
@@ -2795,9 +2795,9 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
   SIFNode.zero();
   SIFonFace.zero();
 
-  arrayView2d< real64 const > const & fext = nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::externalForce >();
+  arrayView2d< real64 const > const & fext = nodeManager.getField< fields::solidMechanics::externalForce >();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement =
-    nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
+    nodeManager.getField< fields::solidMechanics::totalDisplacement >();
   ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList().toViewConst();
   ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList().toViewConst();
   ArrayOfArraysView< localIndex const > const & nodeToElementMap = nodeManager.elementList().toViewConst();
@@ -2814,9 +2814,9 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
   arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
   arrayView2d< real64 const > const & faceCenter = faceManager.faceCenter();
 
-  arrayView1d< localIndex const > const & childFaceIndices = faceManager.getExtrinsicData< extrinsicMeshData::childIndex >();
-  arrayView1d< localIndex const > const & childNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::childIndex >();
-  arrayView1d< localIndex const > const & parentNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
+  arrayView1d< localIndex const > const & childFaceIndices = faceManager.getField< fields::childIndex >();
+  arrayView1d< localIndex const > const & childNodeIndices = nodeManager.getField< fields::childIndex >();
+  arrayView1d< localIndex const > const & parentNodeIndices = nodeManager.getField< fields::parentIndex >();
 
   ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
   m_solidMaterialFullIndex.resize( elementManager.numRegions() );
@@ -2846,7 +2846,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const
   detJ = elementManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( keys::detJ );
 
-  nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >().move( LvArray::MemorySpace::host, false );
+  nodeManager.getField< fields::solidMechanics::totalDisplacement >().move( LvArray::MemorySpace::host, false );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const &,
@@ -3228,19 +3228,19 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
 {
   real64 rval;
   localIndex_array faceInvolved;
-  arrayView1d< real64 > const & SIF_I = edgeManager.getExtrinsicData< surfaceGeneration::SIF_I >();
-  arrayView1d< real64 > const & SIF_II = edgeManager.getExtrinsicData< surfaceGeneration::SIF_II >();
-  arrayView1d< real64 > const & SIF_III = edgeManager.getExtrinsicData< surfaceGeneration::SIF_III >();
+  arrayView1d< real64 > const & SIF_I = edgeManager.getField< surfaceGeneration::SIF_I >();
+  arrayView1d< real64 > const & SIF_II = edgeManager.getField< surfaceGeneration::SIF_II >();
+  arrayView1d< real64 > const & SIF_III = edgeManager.getField< surfaceGeneration::SIF_III >();
 
   ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList().toViewConst();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement =
-    nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
+    nodeManager.getField< fields::solidMechanics::totalDisplacement >();
 
   arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager.nodeList();
   ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList().toViewConst();
 
-  arrayView1d< localIndex const > const & faceParentIndex = faceManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
+  arrayView1d< localIndex const > const & faceParentIndex = faceManager.getField< fields::parentIndex >();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
 
@@ -3850,7 +3850,7 @@ int SurfaceGenerator::checkOrphanElement( ElementRegionManager const & elementMa
 
   arrayView1d< integer const > const & faceIsExternal = faceManager.isExternal();
 
-  arrayView1d< integer const > const & ruptureState = faceManager.getExtrinsicData< surfaceGeneration::ruptureState >();
+  arrayView1d< integer const > const & ruptureState = faceManager.getField< surfaceGeneration::ruptureState >();
 
   int flagOrphan = 0;
   for( localIndex k=0; k<faceToRegionMap.size( 1 ); ++k )
@@ -3892,9 +3892,9 @@ void SurfaceGenerator::markRuptureFaceFromNode( localIndex const nodeIndex,
                                                 ElementRegionManager const & GEOSX_UNUSED_PARAM( elementManager ),
                                                 ModifiedObjectLists & modifiedObjects )
 {
-  arrayView1d< integer > const & ruptureState = faceManager.getExtrinsicData< surfaceGeneration::ruptureState >();
-  arrayView1d< real64 const > const & SIFonFace = faceManager.getExtrinsicData< surfaceGeneration::SIFonFace >();
-  arrayView2d< real64 const > const & KIC = faceManager.getExtrinsicData< surfaceGeneration::K_IC >();
+  arrayView1d< integer > const & ruptureState = faceManager.getField< surfaceGeneration::ruptureState >();
+  arrayView1d< real64 const > const & SIFonFace = faceManager.getField< surfaceGeneration::SIFonFace >();
+  arrayView2d< real64 const > const & KIC = faceManager.getField< surfaceGeneration::K_IC >();
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
   arrayView2d< real64 const > const & faceCenter = faceManager.faceCenter();
 
@@ -4008,13 +4008,13 @@ void SurfaceGenerator::markRuptureFaceFromEdge( localIndex const edgeID,
                                                 ModifiedObjectLists & modifiedObjects,
                                                 int const edgeMode )
 {
-  arrayView1d< integer > const & ruptureState = faceManager.getExtrinsicData< surfaceGeneration::ruptureState >();
-  arrayView1d< real64 > const & SIFonFace = faceManager.getExtrinsicData< surfaceGeneration::SIFonFace >();
-  arrayView2d< real64 const > const & KIC = faceManager.getExtrinsicData< surfaceGeneration::K_IC >();
-  arrayView1d< real64 const > const & SIF_I = edgeManager.getExtrinsicData< surfaceGeneration::SIF_I >();
-  arrayView1d< real64 const > const & SIF_II = edgeManager.getExtrinsicData< surfaceGeneration::SIF_II >();
-  arrayView1d< localIndex > const & primaryCandidateFace = faceManager.getExtrinsicData< surfaceGeneration::primaryCandidateFace >();
-  arrayView1d< integer const > const & isFaceSeparable = faceManager.getExtrinsicData< surfaceGeneration::isFaceSeparable >();
+  arrayView1d< integer > const & ruptureState = faceManager.getField< surfaceGeneration::ruptureState >();
+  arrayView1d< real64 > const & SIFonFace = faceManager.getField< surfaceGeneration::SIFonFace >();
+  arrayView2d< real64 const > const & KIC = faceManager.getField< surfaceGeneration::K_IC >();
+  arrayView1d< real64 const > const & SIF_I = edgeManager.getField< surfaceGeneration::SIF_I >();
+  arrayView1d< real64 const > const & SIF_II = edgeManager.getField< surfaceGeneration::SIF_II >();
+  arrayView1d< localIndex > const & primaryCandidateFace = faceManager.getField< surfaceGeneration::primaryCandidateFace >();
+  arrayView1d< integer const > const & isFaceSeparable = faceManager.getField< surfaceGeneration::isFaceSeparable >();
 //  integer_array* dfnIndexMap = faceManager.getReferencePointer<integer_array>( "DFN_Index" );
 
   arrayView1d< integer const > const & faceIsExternal = faceManager.isExternal();
@@ -4245,8 +4245,8 @@ void SurfaceGenerator::postUpdateRuptureStates( NodeManager const & nodeManager,
   nodesToRupturedFaces.resize( nodeManager.size() );
   edgesToRupturedFaces.resize( edgeManager.size() );
 
-  arrayView1d< integer const > const & faceRuptureState = faceManager.getExtrinsicData< surfaceGeneration::ruptureState >();
-  arrayView1d< localIndex const > const & faceParentIndex = faceManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
+  arrayView1d< integer const > const & faceRuptureState = faceManager.getField< surfaceGeneration::ruptureState >();
+  arrayView1d< localIndex const > const & faceParentIndex = faceManager.getField< fields::parentIndex >();
 
   // assign the values of the nodeToRupturedFaces and edgeToRupturedFaces arrays.
   for( localIndex kf=0; kf<faceManager.size(); ++kf )
@@ -4289,7 +4289,7 @@ int SurfaceGenerator::checkEdgeSplitability( localIndex const edgeID,
   //                  = 3, this is an eligible kink, we need to process it as a kink
 
   ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList().toViewConst();
-  arrayView1d< localIndex const > const & faceParentIndex = faceManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
+  arrayView1d< localIndex const > const & faceParentIndex = faceManager.getField< fields::parentIndex >();
 
   arrayView1d< integer const > const & faceIsExternal = faceManager.isExternal();
   arrayView1d< integer const > const & edgeIsExternal = edgeManager.isExternal();
@@ -4369,7 +4369,7 @@ real64 SurfaceGenerator::minimumToughnessOnEdge( localIndex const edgeID,
   real64 edgeCenter[3] = { 0.0 };
   edgeManager.calculateCenter( edgeID, X, edgeCenter );
 
-  arrayView2d< real64 const > const & KIC = faceManager.getExtrinsicData< surfaceGeneration::K_IC >();
+  arrayView2d< real64 const > const & KIC = faceManager.getField< surfaceGeneration::K_IC >();
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
   for( localIndex const iface : edgeManager.faceList()[ edgeID ] )
   {
@@ -4398,7 +4398,7 @@ real64 SurfaceGenerator::minimumToughnessOnNode( localIndex const nodeID,
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   ArrayOfSetsView< localIndex const > const & nodeToFaceMap = nodeManager.faceList().toViewConst();
 
-  arrayView2d< real64 const > const & KIC = faceManager.getExtrinsicData< surfaceGeneration::K_IC >();
+  arrayView2d< real64 const > const & KIC = faceManager.getField< surfaceGeneration::K_IC >();
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
   arrayView2d< real64 const > const & faceCenter = faceManager.faceCenter();
 
@@ -4484,8 +4484,8 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
   ArrayOfArraysView< localIndex const > const &
   fractureConnectorEdgesToFaceElements = subRegion.m_fractureConnectorEdgesToFaceElements.toViewConst();
 
-  arrayView1d< real64 > const & ruptureTime = subRegion.getExtrinsicData< extrinsicMeshData::ruptureTime >();
-  arrayView1d< real64 > const & ruptureRate = subRegion.getExtrinsicData< surfaceGeneration::ruptureRate >();
+  arrayView1d< real64 > const & ruptureTime = subRegion.getField< fields::ruptureTime >();
+  arrayView1d< real64 > const & ruptureRate = subRegion.getField< surfaceGeneration::ruptureRate >();
 
   arrayView2d< real64 const > const & elemCenter = subRegion.getElementCenter();
 

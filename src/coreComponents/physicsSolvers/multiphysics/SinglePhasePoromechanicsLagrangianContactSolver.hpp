@@ -23,8 +23,8 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/contact/ContactFields.hpp"
 
 namespace geosx
 {

@@ -24,7 +24,7 @@
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsKernel.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
@@ -32,7 +32,7 @@ namespace geosx
 
 using namespace constitutive;
 using namespace dataRepository;
-using namespace extrinsicMeshData;
+using namespace fields;
 
 SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & name,
                                                                 Group * const parent )
@@ -132,9 +132,9 @@ void SinglePhasePoromechanicsSolver::implicitStepComplete( real64 const & time_n
   {
     region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      if( subRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ) )
+      if( subRegion.hasWrapper( flow::pressure::key() ) )
       {
-        arrayView1d< real64 > pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+        arrayView1d< real64 > pres = subRegion.getReference< array1d< real64 > >( fields::flow::pressure::key() );
         double * max_pres = std::max_element( pres.begin(), pres.end());
         std::cout << "max pres " << *max_pres << std::endl;
       }
@@ -142,7 +142,7 @@ void SinglePhasePoromechanicsSolver::implicitStepComplete( real64 const & time_n
   } );
   // displacement
   NodeManager & nodeManager = mesh.getNodeManager();
-  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
+  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.getField< solidMechanics::totalDisplacement >();
   double * min_disp = std::min_element( disp.begin(), disp.end());
   std::cout << "min disp " << *min_disp << std::endl;
   // end Laura

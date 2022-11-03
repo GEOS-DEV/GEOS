@@ -22,8 +22,8 @@
 
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/contact/LagrangianContactSolver.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/contact/ContactFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geosx
