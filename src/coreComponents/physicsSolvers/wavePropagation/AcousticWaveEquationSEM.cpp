@@ -188,6 +188,9 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< extrinsicMeshData::PartialGradient >( this->getName() );
     } );
 
+    arrayView1d< real32 > const p_dt2 = nodeManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
+    m_lifo = std::unique_ptr< lifoStorage < real32 > >( new lifoStorage< real32 >( "lifo/pdt2", p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize ) );
+
   } );
 }
 
@@ -978,23 +981,31 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
       arrayView1d< real32 > const p_dt2 = nodeManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
 
+      m_lifo->pushWait();
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIdx )
       {
         p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
       } );
 
-      p_dt2.move( MemorySpace::host, false );
-      int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-      std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
-      std::ofstream wf( fileName, std::ios::out | std::ios::binary );
-      GEOSX_THROW_IF( !wf,
-                      "Could not open file "<< fileName << " for writting",
-                      InputError );
-      wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
-      wf.close();
-      GEOSX_THROW_IF( !wf.good(),
-                      "An error occured while writting "<< fileName,
-                      InputError );
+      if ( NULL == std::getenv("DISABLE_LIFO") )
+      {
+        m_lifo->pushAsync( p_dt2 );
+      }
+      else
+      {
+        p_dt2.move( MemorySpace::host, false );
+        int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+        std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
+        std::ofstream wf( fileName, std::ios::out | std::ios::binary );
+        GEOSX_THROW_IF( !wf,
+                        "Could not open file "<< fileName << " for writting",
+                        InputError );
+        wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+        wf.close();
+        GEOSX_THROW_IF( !wf.good(),
+                        "An error occured while writting "<< fileName,
+                        InputError );
+      }
 
     }
 
@@ -1035,18 +1046,24 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 
       arrayView1d< real32 > const p_dt2 = nodeManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
 
-      int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-      std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
-      std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-      GEOSX_THROW_IF( !wf,
-                      "Could not open file "<< fileName << " for reading",
-                      InputError );
-      // maybe better with registerTouch()
-      p_dt2.move( MemorySpace::host, true );
-      wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
-      wf.close();
-      remove( fileName.c_str() );
-
+      if ( NULL == std::getenv("DISABLE_LIFO") )
+      {
+        m_lifo->pop( p_dt2 );
+      }
+      else
+      {
+        int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+        std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
+        std::ifstream wf( fileName, std::ios::in | std::ios::binary );
+        GEOSX_THROW_IF( !wf,
+                        "Could not open file "<< fileName << " for reading",
+                        InputError );
+        // maybe better with registerTouch()
+        p_dt2.move( MemorySpace::host, true );
+        wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+        wf.close();
+        remove( fileName.c_str() );
+      }
       elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                   CellElementSubRegion & elementSubRegion )
       {

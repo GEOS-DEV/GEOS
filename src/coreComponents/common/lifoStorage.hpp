@@ -22,14 +22,15 @@
 #include <chai/ArrayManager.hpp>
 #include <chai/ChaiMacros.hpp>
 #include "common/fixedSizeDeque.hpp"
+#include "common/Path.hpp"
 #include <deque>
 #include <future>
 #include <string>
 #include <functional>
+#include <cerrno>
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayView.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-
 
 namespace geosx
 {
@@ -41,13 +42,6 @@ class lifoStorage
 {
 
 private:
-  /**
-   * Handler to identify and store data stored inn the LIFO.
-   */
-  struct storageData
-  {
-    char * m_data;
-  };
 
   /// Number of buffers to be inserted into the LIFO
   int m_maxNumberOfBuffers;
@@ -134,7 +128,6 @@ public:
     m_worker( &lifoStorage< T >::wait_and_consume_tasks, this ),
     m_continue( true )
   {
-    GEOSX_ASSERT( numberOfBuffersToStoreOnDevice > 0 && numberOfBuffersToStoreOnHost >= 0 && maxNumberOfBuffers >= numberOfBuffersToStoreOnHost * numberOfBuffersToStoreOnDevice );
   }
 
   /**
@@ -184,6 +177,10 @@ public:
   void push( arrayView1d< T > array )
   {
     int id = m_bufferCount++;
+    GEOSX_ERROR_IF( m_deviceDeque.capacity() == 0,
+                    "Cannot save on a Lifo without device storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
+    GEOSX_ERROR_IF( m_hostDeque.capacity() == 0,
+                    "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
     m_deviceDequeMutex.lock();
     while( m_deviceDeque.full() )
     {
@@ -338,18 +335,22 @@ private:
    */
   void writeOnDisk( const T * d )
   {
+
+
+    std::ofstream outfile;
+
     int id = m_bufferOnDiskCount++;
     int const rank = MpiWrapper::initialized()?MpiWrapper::commRank( MPI_COMM_GEOSX ):0;
     std::string fileName = GEOSX_FMT( "{}_{:08}_{:04}.dat", m_name, id, rank );
+    makeDirsForPath( fileName.substr( 0, fileName.find_last_of( "/\\" ) ) );
     std::ofstream wf( fileName, std::ios::out | std::ios::binary );
-    GEOSX_THROW_IF( !wf,
-                    "Could not open file "<< fileName << " for writting",
-                    InputError );
-    wf.write( (char *)d, m_bufferSize );
+    GEOSX_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
+                    "Could not open file "<< fileName << " for writting: " << strerror(errno) );
+    if (wf)
+      wf.write( (char *)d, m_bufferSize );
+    GEOSX_ERROR_IF( wf.bad() || wf.fail(),
+                    "An error occured while writting "<< fileName << ": " << strerror(errno) );
     wf.close();
-    GEOSX_THROW_IF( !wf.good(),
-                    "An error occured while writting "<< fileName,
-                    InputError );
   }
 
   /**
@@ -363,9 +364,8 @@ private:
     int const rank = MpiWrapper::initialized()?MpiWrapper::commRank( MPI_COMM_GEOSX ):0;
     std::string fileName = GEOSX_FMT( "{}_{:08}_{:04}.dat", m_name, id, rank );
     std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-    GEOSX_THROW_IF( !wf,
-                    "Could not open file "<< fileName << " for reading",
-                    InputError );
+    GEOSX_ERROR_IF( !wf,
+                    "Could not open file "<< fileName << " for reading: " << strerror(errno) );
     wf.read( (char *)d, m_bufferSize );
     wf.close();
     remove( fileName.c_str() );

@@ -22,7 +22,7 @@
 
 #include "mesh/ExtrinsicMeshData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-
+#include "common/lifoStorage.hpp"
 
 namespace geosx
 {
@@ -73,6 +73,9 @@ public:
     static constexpr char const * forwardString() { return "forward"; }
     static constexpr char const * saveFieldsString() { return "saveFields"; }
     static constexpr char const * shotIndexString() { return "shotIndex"; }
+    static constexpr char const * lifoSizeString() { return "lifoSize"; }
+    static constexpr char const * lifoOnDeviceString() { return "lifoOnDevice"; }
+    static constexpr char const * lifoOnHostString() { return "lifoOnHost"; }
 
     static constexpr char const * useDASString() { return "useDAS"; }
     static constexpr char const * linearDASGeometryString() { return "linearDASGeometry"; }
@@ -234,6 +237,18 @@ protected:
 
   /// Flag to apply PML
   integer m_usePML;
+
+  /// lifo size
+  localIndex m_lifoSize;
+
+  /// Number of buffers to store on device by LIFO
+  localIndex m_lifoOnDevice;
+
+  /// Number of buffers to store on host by LIFO
+  localIndex m_lifoOnHost;
+
+  /// LIFO to store p_dt2
+  std::unique_ptr< lifoStorage< real32 > > m_lifo;
 
   struct parametersPML
   {
