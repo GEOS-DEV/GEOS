@@ -189,7 +189,9 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     } );
 
     arrayView1d< real32 > const p_dt2 = nodeManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
-    m_lifo = std::unique_ptr< lifoStorage < real32 > >( new lifoStorage< real32 >( "lifo/pdt2", p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize ) );
+    int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    std::string lifoPrefix = GEOSX_FMT( "lifo/pdt2_shot{:06}_rank{:04}", m_shotIndex, rank );
+    m_lifo = std::unique_ptr< lifoStorage < real32 > >( new lifoStorage< real32 >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize ) );
 
   } );
 }
