@@ -620,14 +620,6 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 
     // get a view into local residual vector
 
-    string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-    string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
-
-
-    StencilAccessors< fields::elementVolume,
-                      fields::flow::phaseMobility_n >
-    compFlowAccessors( mesh.getElemManager(), getName() );
-
     elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase const & subRegion )
