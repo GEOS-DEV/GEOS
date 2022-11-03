@@ -187,6 +187,6 @@
 
   <Outputs>
     <VTK
-      name="vtkOutput"/>
+      name="thermoPoroVTKOutput"/>
   </Outputs>
 </Problem>
