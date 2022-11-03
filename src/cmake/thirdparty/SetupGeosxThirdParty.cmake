@@ -314,11 +314,8 @@ if(DEFINED ADIAK_DIR)
                  PATHS ${ADIAK_DIR}
                  NO_DEFAULT_PATH)
 
-    extract_version_from_header( name adiak 
-                                 HEADER "${ADIAK_DIR}/include/adiak.h"
-                                 MAJOR_VERSION_STRING "ADIAK_VERSION"
-                                 MINOR_VERSION_STRING "ADIAK_MINOR_VERSION"
-                                 SUBMINOR_VERSION_STRING "ADIAK_POINT_VERSION")
+    # Header file provides incorrect version 0.3.0
+    message( " ----> adiak_VERSION = 0.2.2")
 
     set_property(TARGET adiak::adiak
                  APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
