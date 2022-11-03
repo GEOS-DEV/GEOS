@@ -61,17 +61,17 @@ public:
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
 
   using StabCompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::macroElementIndex,
-                      extrinsicMeshData::flow::elementStabConstant,
-                      extrinsicMeshData::flow::pressure_n >;
+    StencilAccessors< fields::flow::macroElementIndex,
+                      fields::flow::elementStabConstant,
+                      fields::flow::pressure_n >;
 
   using StabMultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseDensity_n,
-                              extrinsicMeshData::multifluid::phaseCompFraction_n >;
+                              fields::multifluid::phaseDensity_n,
+                              fields::multifluid::phaseCompFraction_n >;
 
   using RelPermAccessors =
-    StencilMaterialAccessors< RelativePermeabilityBase, extrinsicMeshData::relperm::phaseRelPerm_n >;
+    StencilMaterialAccessors< RelativePermeabilityBase, fields::relperm::phaseRelPerm_n >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -146,12 +146,12 @@ public:
             dt,
             localMatrix,
             localRhs ),
-    m_pres_n( stabCompFlowAccessors.get( extrinsicMeshData::flow::pressure_n {} ) ),
-    m_phaseDens_n( stabMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity_n {} ) ),
-    m_phaseCompFrac_n( stabMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction_n {} ) ),
-    m_phaseRelPerm_n( relPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm_n {} ) ),
-    m_macroElementIndex( stabCompFlowAccessors.get( extrinsicMeshData::flow::macroElementIndex {} ) ),
-    m_elementStabConstant( stabCompFlowAccessors.get( extrinsicMeshData::flow::elementStabConstant {} ) )
+    m_pres_n( stabCompFlowAccessors.get( fields::flow::pressure_n {} ) ),
+    m_phaseDens_n( stabMultiFluidAccessors.get( fields::multifluid::phaseDensity_n {} ) ),
+    m_phaseCompFrac_n( stabMultiFluidAccessors.get( fields::multifluid::phaseCompFraction_n {} ) ),
+    m_phaseRelPerm_n( relPermAccessors.get( fields::relperm::phaseRelPerm_n {} ) ),
+    m_macroElementIndex( stabCompFlowAccessors.get( fields::flow::macroElementIndex {} ) ),
+    m_elementStabConstant( stabCompFlowAccessors.get( fields::flow::elementStabConstant {} ) )
   {}
 
   struct StackVariables : public Base::StackVariables
