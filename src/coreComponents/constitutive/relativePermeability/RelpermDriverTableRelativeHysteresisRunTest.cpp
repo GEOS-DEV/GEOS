@@ -8,5 +8,11 @@
 
 namespace geosx
 {
+//    template<>
+//    void RelpermDriver::runTest< geosx::constitutive::TableRelativePermeabilityHysteresis >( geosx::constitutive::TableRelativePermeabilityHysteresis &, arrayView3d< real64 > const & )
+//    {
+//
+//    };
+
     template void RelpermDriver::runTest< geosx::constitutive::TableRelativePermeabilityHysteresis >( geosx::constitutive::TableRelativePermeabilityHysteresis &, arrayView3d< real64 > const & );
 }

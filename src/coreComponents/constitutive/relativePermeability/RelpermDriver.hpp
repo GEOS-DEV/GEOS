@@ -6,6 +6,7 @@
 #define GEOSX_RELPERMDRIVER_HPP_
 
 #include "events/tasks/TaskBase.hpp"
+#include "TableRelativePermeabilityHysteresis.hpp"
 
 namespace geosx {
 
@@ -31,8 +32,11 @@ namespace geosx {
          * @param i Fluid constitutive model
          * @param table Table with input/output time history
          */
-        template< typename RELPERM_TYPE >
-        void runTest(RELPERM_TYPE & relperm, arrayView3d< real64 > const & table );
+        template< typename RELPERM_TYPE>
+        std::enable_if_t< std::is_same<constitutive::TableRelativePermeabilityHysteresis,RELPERM_TYPE>::value, void> runTest(RELPERM_TYPE & relperm, arrayView3d< real64 > const & table );
+
+        template< typename RELPERM_TYPE>
+        std::enable_if_t< !std::is_same<constitutive::TableRelativePermeabilityHysteresis,RELPERM_TYPE>::value, void> runTest(RELPERM_TYPE & relperm, arrayView3d< real64 > const & table );
 
         /**
          * @brief Ouput table to file for easy plotting

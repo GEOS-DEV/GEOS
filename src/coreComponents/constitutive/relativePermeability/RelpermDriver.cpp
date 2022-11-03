@@ -104,7 +104,7 @@ namespace geosx {
 
                                     constitutiveUpdatePassThru( baseRelperm, [&] ( auto & selectedRelpermModel )
                                     {
-                                        using RELPERM_TYPE = TYPEOFREF( selectedRelpermModel );
+                                         using RELPERM_TYPE = TYPEOFREF( selectedRelpermModel );
                                         runTest< RELPERM_TYPE >( selectedRelpermModel, m_table );
                                     } );
 

@@ -294,6 +294,9 @@ public:
                          localIndex const q,
                          arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override;
 
+//      GEOSX_HOST_DEVICE
+//      arrayView3d< real64 const, relperm::USD_RELPERM > relperm_h() const
+//      { return m_phaseRelPerm_h; }
 
 private:
 
