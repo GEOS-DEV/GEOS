@@ -37,13 +37,13 @@
       name="FlowSolve"
       logLevel="1"
       discretization="tpfaFlow"
-      temperature="0.0"
+      temperature="273.0"
       isThermal="1"
       isBiot="1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonMaxIter="100"
-        newtonTol="1.0e-4"/>
+        newtonTol="1.0e-6"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseFVM>
@@ -131,7 +131,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Domain/cb1"
       fieldName="temperature"
-      scale="0.0"/>
+      scale="273.0"/>
 
     <FieldSpecification
       name="xconstraint"
@@ -173,7 +173,7 @@
       name="boundaryTemperature"
       objectPath="ElementRegions/Domain/cb1"
       fieldName="temperature"
-      scale="50.0"
+      scale="323.0"
       setNames="{ top }"/>
   </FieldSpecifications>
 

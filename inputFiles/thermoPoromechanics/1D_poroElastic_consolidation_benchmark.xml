@@ -23,7 +23,7 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="10.0"
-      target="/Outputs/vtkOutput"/>
+      target="/Outputs/poroVTKOutput"/>
 
     <PeriodicEvent
       name="solverApplication0"
@@ -58,7 +58,7 @@
 
   <Outputs>
     <VTK
-      name="vtkOutput"/>
+      name="poroVTKOutput"/>
 
     <TimeHistory
       name="timeHistoryOutput"
