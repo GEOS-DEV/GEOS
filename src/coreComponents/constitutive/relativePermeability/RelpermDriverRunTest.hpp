@@ -72,8 +72,7 @@ using namespace constitutive;
         // note: column indexing should be kept consistent with output file header below.
 
         integer const numSteps = m_numSteps;
-        using ExecPolicy = typename RELPERM_TYPE::exec_policy;
-        forAll< ExecPolicy >(saturation.size(0),
+        forAll< parallelDevicePolicy<> >(saturation.size(0),
                              [numPhases, kernelWrapper, saturation, table, offset ] GEOSX_HOST_DEVICE (localIndex const i )
         {
             for( integer n = 0; n < saturation.size(1); ++n )

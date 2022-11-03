@@ -116,22 +116,17 @@ namespace geosx {
                                         outputResults();
                                     }
 
-                                    //TODO
-//                                    if( m_baselineFile != "none" )
-//                                    {
-//                                        compareWithBaseline();
-//                                    }
+                                    if( m_baselineFile != "none" )
+                                    {
+                                        compareWithBaseline();
+                                    }
 
                                     return false;
-
-
                             }
 
 
                             void RelpermDriver::postProcessInput()
                             {
-
-
                                 constitutive::ConstitutiveManager & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
                                 constitutive::RelativePermeabilityBase& baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
 
@@ -158,12 +153,12 @@ namespace geosx {
                                     else if(ipGas<0)
                                     {
                                         minSnw = 0;
-                                        minSw = baseRelperm.getPhaseMinVolumeFraction()[ipGas];
+                                        minSw = baseRelperm.getPhaseMinVolumeFraction()[ipWater];
                                     }
                                 }
+
                                 real64 const dSw = (1-minSw-minSnw) / m_numSteps;
                                 // set input columns
-
 
                                 if( m_numPhases > 2) {
                                     m_table.resize( (m_numSteps+1)*(m_numSteps+1), 1, 1+2*m_numPhases );
@@ -200,13 +195,61 @@ namespace geosx {
 
                             }
 
-                            //TODO impl
-                            //    void RelpermDriver::compareWithBaseline()
+                            //TODO refactor - duplication
+                            void RelpermDriver::compareWithBaseline()
+                            {
+                                // open baseline file
+
+                                std::ifstream file( m_baselineFile.c_str() );
+                                GEOSX_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+
+                                // discard file header
+
+                                string line;
+                                for( integer row=0; row < 7; ++row )
+                                {
+                                    getline( file, line );
+                                }
+
+                                // read data block.  we assume the file size is consistent with m_table,
+                                // but check for a premature end-of-file. we then compare results value by value.
+                                // we ignore the newton iteration and residual columns, as those may be platform
+                                // specific.
+
+                                real64 value;
+                                //table is redim to fit the layout of relperm so the second dimension is numGaussPt
+                                // and always of size 1
+                                for( integer row=0; row < m_table.size( 0 ); ++row )
+                                {
+                                    for( integer col=0; col < m_table.size( 2 ); ++col )
+                                    {
+                                        GEOSX_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+                                        file >> value;
+
+                                        real64 const error = fabs( m_table[row][0][col] - value ) / ( fabs( value )+1 );
+                                        GEOSX_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
+                                                                                                                            << " (row " << row+m_numColumns << " with header)"
+                                                                                                                            << " and column " << col+1, std::runtime_error );
+                                    }
+                                }
+
+                                // check we actually reached the end of the baseline file
+
+                                file >> value;
+                                GEOSX_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+
+                                // success
+
+                                if( getLogLevel() > 0 )
+                                {
+                                    GEOSX_LOG_RANK_0( "  Comparison ............. Internal results consistent with baseline." );
+                                }
+
+                                file.close();
+                            }
 
     REGISTER_CATALOG_ENTRY( TaskBase,
                             RelpermDriver,
                             string const &, dataRepository::Group * const )
-
-
 
 };

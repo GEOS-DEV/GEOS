@@ -99,8 +99,6 @@ public:
 
   static constexpr integer MAX_NUM_PHASES = 3;
 
-  using exec_policy = parallelDevicePolicy<>;
-
   struct PhaseType
   {
     enum : integer
