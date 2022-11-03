@@ -11,7 +11,8 @@
                 "ms-vscode.cpptools-extension-pack",
                 "GitHub.vscode-pull-request-github",
                 "eamodio.gitlens",
-                "fredericbonnet.cmake-test-adapter"
+                "fredericbonnet.cmake-test-adapter",
+                "redhat.vscode-xml"
             ]
         }
     },
