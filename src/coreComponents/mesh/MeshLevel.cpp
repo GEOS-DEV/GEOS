@@ -130,14 +130,15 @@ MeshLevel::MeshLevel( string const & name,
   //  reconstructs the faceToNodeMap with the provided capacity in counts
   faceToNodeMapNew.resizeFromCapacities< parallelHostPolicy >( faceToNodeMapNew.size(), counts.data() );
 
-  // setup initial values of the faceToNodeMap using emplaceBackAtomic
-  forAll< parallelHostPolicy >( numNodesPerFace, [faceToNodeMapNew = faceToNodeMapNew.toView()] ( localIndex faceIndex )
+  // setup initial values of the faceToNodeMap using emplaceBack
+  forAll< parallelHostPolicy >( faceToNodeMapNew.size(), 
+                                [faceToNodeMapNew = faceToNodeMapNew.toView()] 
+                                ( localIndex const faceIndex )
   {
-    for( faceIndex =0; faceIndex < faceToNodeMapNew.size(); faceIndex++ )
+    for(localIndex i = 0; i < faceToNodeMapNew.capacityOfArray( faceIndex ); ++i )
     {
-      faceToNodeMapNew.emplaceBackAtomic< AtomicPolicy< parallelHostPolicy > >( faceIndex, 0 );
+      faceToNodeMapNew.emplaceBack( faceIndex, -1 );
     }
-
   } );
 
   // add the number of non-edge face nodes
