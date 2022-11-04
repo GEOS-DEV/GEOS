@@ -1,0 +1,3 @@
+DensityFun PhillipsBrineDensity 1.0e5 4e7 5e4 283.15 393.5 5 1.901285269
+ViscosityFun PhillipsBrineViscosity 1.901285269
+EnthalpyFun BrineEnthalpy 1.0e5 4e7 5e4 283.15 393.5 5 1.901285269

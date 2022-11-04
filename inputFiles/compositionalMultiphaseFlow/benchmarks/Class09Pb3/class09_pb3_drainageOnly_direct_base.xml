@@ -205,7 +205,7 @@
       name="totalRateTable"
       inputVarNames="{time}"
       coordinates="{0, 7.7198e8, 1.544e9}"
-      values="{ 9.562606384, 0, 0}" 
+      values="{ 8.02849025, 0, 0}"
       interpolation="lower"/>
 
   <!-- Problem 3.2 is hysteresis -->

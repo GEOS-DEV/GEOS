@@ -14,7 +14,7 @@
    <VTKMesh
      name="mesh"
      logLevel="2"  
-     file="../meshes/Johansen_faces.vtu"
+     file="Johansen_faces.vtu"
      fieldsToImport="{ perm, poro }"
      fieldNamesInGEOSX="{ rockPerm_permeability, rockPorosity_referencePorosity }" /> 
    <InternalWell
