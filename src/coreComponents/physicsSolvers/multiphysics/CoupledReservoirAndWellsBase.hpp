@@ -23,9 +23,9 @@
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
-#include "mesh/PerforationExtrinsicData.hpp"
+#include "mesh/PerforationFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 
@@ -198,8 +198,8 @@ public:
                                                                                   WellElementSubRegion & subRegion )
       {
         array1d< array1d< arrayView3d< real64 const > > > const permeability =
-          elemManager.constructMaterialExtrinsicAccessor< constitutive::PermeabilityBase,
-                                                          extrinsicMeshData::permeability::permeability >();
+          elemManager.constructMaterialFieldAccessor< constitutive::PermeabilityBase,
+                                                      fields::permeability::permeability >();
 
         PerforationData & perforationData = *subRegion.getPerforationData();
         WellControls const & wellControls = wellSolver()->getWellControls( subRegion );
@@ -211,9 +211,9 @@ public:
         if( wellControls.getLogLevel() >= 2 )
         {
           arrayView2d< real64 const > const perfLocation =
-            perforationData.getExtrinsicData< extrinsicMeshData::perforation::location >();
+            perforationData.getField< fields::perforation::location >();
           arrayView1d< real64 const > const perfTrans =
-            perforationData.getExtrinsicData< extrinsicMeshData::perforation::wellTransmissibility >();
+            perforationData.getField< fields::perforation::wellTransmissibility >();
 
           forAll< serialPolicy >( perforationData.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
           {

@@ -21,9 +21,9 @@
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanicsKernel.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
@@ -31,7 +31,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace extrinsicMeshData;
+using namespace fields;
 
 MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & name,
                                                               Group * const parent )
@@ -81,8 +81,8 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
       if( m_stabilizationType == StabilizationType::Global ||
           m_stabilizationType == StabilizationType::Local )
       {
-        subRegion.registerExtrinsicData< extrinsicMeshData::flow::macroElementIndex >( getName() );
-        subRegion.registerExtrinsicData< extrinsicMeshData::flow::elementStabConstant >( getName() );
+        subRegion.registerField< fields::flow::macroElementIndex >( getName() );
+        subRegion.registerField< fields::flow::elementStabConstant >( getName() );
       }
     } );
   } );
@@ -258,8 +258,8 @@ void MultiphasePoromechanicsSolver::updateStabilizationParameters( DomainPartiti
                                                                                               ElementSubRegionBase & subRegion )
 
     {
-      arrayView1d< integer > const macroElementIndex = subRegion.getExtrinsicData< extrinsicMeshData::flow::macroElementIndex >();
-      arrayView1d< real64 > const elementStabConstant = subRegion.getExtrinsicData< extrinsicMeshData::flow::elementStabConstant >();
+      arrayView1d< integer > const macroElementIndex = subRegion.getField< fields::flow::macroElementIndex >();
+      arrayView1d< real64 > const elementStabConstant = subRegion.getField< fields::flow::elementStabConstant >();
 
       geosx::constitutive::CoupledSolidBase const & porousSolid =
         getConstitutiveModel< geosx::constitutive::CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() ) );
