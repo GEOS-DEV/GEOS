@@ -157,26 +157,25 @@ void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    nodeManager.registerExtrinsicData< extrinsicMeshData::Pressure_np1,
-                                       extrinsicMeshData::ForcingRHS,
-                                       extrinsicMeshData::MassVector,
-                                       extrinsicMeshData::DampingVector,
-                                       extrinsicMeshData::StiffnessVector,
-                                       extrinsicMeshData::FreeSurfaceNodeIndicator >( this->getName() );
+    nodeManager.registerField< fields::Pressure_np1,
+                               fields::ForcingRHS,
+                               fields::MassVector,
+                               fields::DampingVector,
+                               fields::FreeSurfaceNodeIndicator >( this->getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< fields::FreeSurfaceFaceIndicator >( this->getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocity >( this->getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::MediumDensity >( this->getName() );
+      subRegion.registerField< fields::MediumVelocity >( this->getName() );
+      subRegion.registerField< fields::MediumDensity >( this->getName() );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::Velocity_x >( this->getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::Velocity_y >( this->getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::Velocity_z >( this->getName() );
+      subRegion.registerField< fields::Velocity_x >( this->getName() );
+      subRegion.registerField< fields::Velocity_y >( this->getName() );
+      subRegion.registerField< fields::Velocity_z >( this->getName() );
 
       finiteElement::FiniteElementBase const & fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -189,9 +188,9 @@ void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
-        subRegion.getExtrinsicData< extrinsicMeshData::Velocity_x >().resizeDimension< 1 >( numNodesPerElem );
-        subRegion.getExtrinsicData< extrinsicMeshData::Velocity_y >().resizeDimension< 1 >( numNodesPerElem );
-        subRegion.getExtrinsicData< extrinsicMeshData::Velocity_z >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< fields::Velocity_x >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< fields::Velocity_y >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< fields::Velocity_z >().resizeDimension< 1 >( numNodesPerElem );
 
       } );
 
@@ -469,23 +468,23 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
-    arrayView1d< real32 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
 
     /// damping matrix to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
+    arrayView1d< real32 > const damping = nodeManager.getField< fields::DampingVector >();
     damping.zero();
     mass.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
-      arrayView1d< real32 const > const velocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
-      arrayView1d< real32 const > const density = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity >();
+      arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensity >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -529,15 +528,15 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
   FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
   NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getNodeManager();
 
-  arrayView1d< real32 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+  arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
 
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
 
 
   freeSurfaceFaceIndicator.zero();
@@ -630,23 +629,23 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
 
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
-    arrayView1d< real32 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
-    arrayView1d< real32 const > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
+    arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
+    arrayView1d< real32 const > const damping = nodeManager.getField< fields::DampingVector >();
 
-    arrayView1d< real32 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+    arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
 
-    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
-    arrayView1d< real32 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
+    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
+    arrayView1d< real32 > const rhs = nodeManager.getField< fields::ForcingRHS >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-      arrayView1d< real32 const > const density = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity >();
-      arrayView1d< real32 const > const mediumVelocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
-      arrayView2d< real32 > const velocity_x = elementSubRegion.getExtrinsicData< extrinsicMeshData::Velocity_x >();
-      arrayView2d< real32 > const velocity_y = elementSubRegion.getExtrinsicData< extrinsicMeshData::Velocity_y >();
-      arrayView2d< real32 > const velocity_z = elementSubRegion.getExtrinsicData< extrinsicMeshData::Velocity_z >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensity >();
+      arrayView1d< real32 const > const mediumVelocity = elementSubRegion.getField< fields::MediumVelocity >();
+      arrayView2d< real32 > const velocity_x = elementSubRegion.getField< fields::Velocity_x >();
+      arrayView2d< real32 > const velocity_y = elementSubRegion.getField< fields::Velocity_y >();
+      arrayView2d< real32 > const velocity_z = elementSubRegion.getField< fields::Velocity_z >();
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::dispatch3D( fe,
@@ -692,8 +691,8 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
     } );
 
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addFields( FieldLocation::Node, { extrinsicMeshData::Pressure_np1::key() } );
-    fieldsToBeSync.addElementFields( {extrinsicMeshData::Velocity_x::key(), extrinsicMeshData::Velocity_y::key(), extrinsicMeshData::Velocity_z::key()}, regionNames );
+    fieldsToBeSync.addFields( FieldLocation::Node, { fields::Pressure_np1::key() } );
+    fieldsToBeSync.addElementFields( {fields::Velocity_x::key(), fields::Velocity_y::key(), fields::Velocity_z::key()}, regionNames );
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
     syncFields.synchronizeFields( fieldsToBeSync,
@@ -717,7 +716,7 @@ void AcousticFirstOrderWaveEquationSEM::cleanup( real64 const time_n, integer co
                                                                 arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-    arrayView1d< real32 const > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+    arrayView1d< real32 const > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
     arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, 0, p_np1, p_np1, pReceivers );
   } );
