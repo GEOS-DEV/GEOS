@@ -1053,15 +1053,19 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
         arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+        arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
         constexpr localIndex numNodesPerElem = 8;
 
         GEOSX_MARK_SCOPE ( updatePartialGradient );
         forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const eltIdx )
         {
-          for( localIndex i = 0; i < numNodesPerElem; ++i )
+          if( elemGhostRank[eltIdx] < 0 )
           {
-            localIndex nodeIdx = elemsToNodes[eltIdx][i];
-            grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
+            for( localIndex i = 0; i < numNodesPerElem; ++i )
+            {
+              localIndex nodeIdx = elemsToNodes[eltIdx][i];
+              grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
+            }
           }
         } );
       } );
