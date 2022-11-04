@@ -589,9 +589,9 @@ ArrayOfArrays< localIndex > compute2dFaceToElems2d( localIndex const num2dFaces,
   return face2dToElems2d;
 }
 
-void importFracture( string const & faceBlockName,
-                     vtkSmartPointer< vtkDataSet > vtkMesh,
-                     CellBlockManager & cellBlockManager )
+void importFractureNetwork( string const & faceBlockName,
+                            vtkSmartPointer< vtkDataSet > vtkMesh,
+                            CellBlockManager & cellBlockManager )
 {
   vtkFieldData * fieldData = vtkMesh->GetFieldData();
   GEOSX_ERROR_IF( fieldData == nullptr, "Fault and fracture information is supposed to be defined in the VTK field data. None was found." );

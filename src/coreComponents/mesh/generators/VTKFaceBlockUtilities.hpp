@@ -29,9 +29,9 @@ namespace geosx {
  * @param[in] vtkMesh The vtk mesh.
  * @param[inout] cellBlockManager The face block instance will be attached to the @p cellBlockManager
  */
-void importFracture( string const & faceBlockName,
-                     vtkSmartPointer< vtkDataSet > vtkMesh,
-                     CellBlockManager & cellBlockManager );
+void importFractureNetwork( string const & faceBlockName,
+                            vtkSmartPointer< vtkDataSet > vtkMesh,
+                            CellBlockManager & cellBlockManager );
 
 }
 
