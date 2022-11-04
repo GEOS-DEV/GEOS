@@ -20,7 +20,7 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEM_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEM_HPP_
 
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "WaveSolverBase.hpp"
 
@@ -230,177 +230,177 @@ private:
 };
 
 
-namespace extrinsicMeshData
+namespace fields
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( Displacementx_np1,
-                           "displacementx_np1",
-                           array1d< real32 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "x-component of displacement at time n+1." );
+DECLARE_FIELD( Displacementx_np1,
+               "displacementx_np1",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "x-component of displacement at time n+1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Displacementy_np1,
-                           "displacementy_np1",
-                           array1d< real32 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "y-component of displacement at time n+1." );
+DECLARE_FIELD( Displacementy_np1,
+               "displacementy_np1",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "y-component of displacement at time n+1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Displacementz_np1,
-                           "displacementz_np1",
-                           array1d< real32 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "z-component of displacement at time n+1." );
+DECLARE_FIELD( Displacementz_np1,
+               "displacementz_np1",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "z-component of displacement at time n+1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Stresstensorxx,
-                           "stresstensorxx",
-                           array2d< real32 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "xx-components of the stress tensor." );
+DECLARE_FIELD( Stresstensorxx,
+               "stresstensorxx",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "xx-components of the stress tensor." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Stresstensoryy,
-                           "stresstensoryy",
-                           array2d< real32 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "yy-components of the stress tensor." );
+DECLARE_FIELD( Stresstensoryy,
+               "stresstensoryy",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "yy-components of the stress tensor." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Stresstensorzz,
-                           "stresstensorzz",
-                           array2d< real32 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "zz-components of the stress tensor." );
+DECLARE_FIELD( Stresstensorzz,
+               "stresstensorzz",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "zz-components of the stress tensor." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Stresstensorxy,
-                           "stresstensorxy",
-                           array2d< real32 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "xy-components of the stress tensor (symetric of yx-component)." );
+DECLARE_FIELD( Stresstensorxy,
+               "stresstensorxy",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "xy-components of the stress tensor (symetric of yx-component)." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Stresstensorxz,
-                           "stresstensorxz",
-                           array2d< real32 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "xz-components of the stress tensor (symetric of zx-component)." );
+DECLARE_FIELD( Stresstensorxz,
+               "stresstensorxz",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "xz-components of the stress tensor (symetric of zx-component)." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Stresstensoryz,
-                           "stresstensoryz",
-                           array2d< real32 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "yz-components of the stress tensor (symetric of zy-component)." );
+DECLARE_FIELD( Stresstensoryz,
+               "stresstensoryz",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "yz-components of the stress tensor (symetric of zy-component)." );
 
 
-EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS,
-                           "rhs",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "RHS" );
+DECLARE_FIELD( ForcingRHS,
+               "rhs",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "RHS" );
 
-EXTRINSIC_MESH_DATA_TRAIT( MassVector,
-                           "massVector",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Diagonal Mass Matrix." );
+DECLARE_FIELD( MassVector,
+               "massVector",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal Mass Matrix." );
 
-EXTRINSIC_MESH_DATA_TRAIT( DampingVectorx,
-                           "dampingVectorx",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Diagonal Damping Matrix in x-direction." );
+DECLARE_FIELD( DampingVectorx,
+               "dampingVectorx",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal Damping Matrix in x-direction." );
 
-EXTRINSIC_MESH_DATA_TRAIT( DampingVectory,
-                           "dampingVectory",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Diagonal Damping Matrix in y-direction." );
+DECLARE_FIELD( DampingVectory,
+               "dampingVectory",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal Damping Matrix in y-direction." );
 
-EXTRINSIC_MESH_DATA_TRAIT( DampingVectorz,
-                           "dampingVectorz",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Diagonal Damping Matrix in z-direction." );
+DECLARE_FIELD( DampingVectorz,
+               "dampingVectorz",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal Damping Matrix in z-direction." );
 
-EXTRINSIC_MESH_DATA_TRAIT( MediumVelocityVp,
-                           "mediumVelocityVp",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "P-waves speed in the cell" );
+DECLARE_FIELD( MediumVelocityVp,
+               "mediumVelocityVp",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "P-waves speed in the cell" );
 
-EXTRINSIC_MESH_DATA_TRAIT( MediumVelocityVs,
-                           "mediumVelocityVs",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "S-waves speed in the cell" );
+DECLARE_FIELD( MediumVelocityVs,
+               "mediumVelocityVs",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "S-waves speed in the cell" );
 
-EXTRINSIC_MESH_DATA_TRAIT( MediumDensity,
-                           "mediumDensity",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Medium density of the cell" );
+DECLARE_FIELD( MediumDensity,
+               "mediumDensity",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Medium density of the cell" );
 
-EXTRINSIC_MESH_DATA_TRAIT( Lambda,
-                           "lambda",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "First Lame parameter: lambda" );
+DECLARE_FIELD( Lambda,
+               "lambda",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "First Lame parameter: lambda" );
 
-EXTRINSIC_MESH_DATA_TRAIT( Mu,
-                           "mu",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Second Lame parameter: mu" );
+DECLARE_FIELD( Mu,
+               "mu",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Second Lame parameter: mu" );
 
-EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceFaceIndicator,
-                           "freeSurfaceFaceIndicator",
-                           array1d< localIndex >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
+DECLARE_FIELD( FreeSurfaceFaceIndicator,
+               "freeSurfaceFaceIndicator",
+               array1d< localIndex >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
 
-EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceNodeIndicator,
-                           "freeSurfaceNodeIndicator",
-                           array1d< localIndex >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
+DECLARE_FIELD( FreeSurfaceNodeIndicator,
+               "freeSurfaceNodeIndicator",
+               array1d< localIndex >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
 
 }
 

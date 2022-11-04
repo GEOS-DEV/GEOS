@@ -168,35 +168,35 @@ void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    nodeManager.registerExtrinsicData< extrinsicMeshData::Displacementx_np1,
-                                       extrinsicMeshData::Displacementy_np1,
-                                       extrinsicMeshData::Displacementz_np1,
-                                       extrinsicMeshData::ForcingRHS,
-                                       extrinsicMeshData::MassVector,
-                                       extrinsicMeshData::DampingVectorx,
-                                       extrinsicMeshData::DampingVectory,
-                                       extrinsicMeshData::DampingVectorz,
-                                       extrinsicMeshData::FreeSurfaceNodeIndicator >( this->getName() );
+    nodeManager.registerField< fields::Displacementx_np1,
+                               fields::Displacementy_np1,
+                               fields::Displacementz_np1,
+                               fields::ForcingRHS,
+                               fields::MassVector,
+                               fields::DampingVectorx,
+                               fields::DampingVectory,
+                               fields::DampingVectorz,
+                               fields::FreeSurfaceNodeIndicator >( this->getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< fields::FreeSurfaceFaceIndicator >( this->getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocityVp >( this->getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocityVs >( this->getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::MediumDensity >( this->getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::Lambda >( this->getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::Mu >( this->getName() );
+      subRegion.registerField< fields::MediumVelocityVp >( this->getName() );
+      subRegion.registerField< fields::MediumVelocityVs >( this->getName() );
+      subRegion.registerField< fields::MediumDensity >( this->getName() );
+      subRegion.registerField< fields::Lambda >( this->getName() );
+      subRegion.registerField< fields::Mu >( this->getName() );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensorxx >( this->getName());
-      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensoryy >( this->getName());
-      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensorzz >( this->getName());
-      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensorxy >( this->getName());
-      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensorxz >( this->getName());
-      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensoryz >( this->getName());
+      subRegion.registerField< fields::Stresstensorxx >( this->getName());
+      subRegion.registerField< fields::Stresstensoryy >( this->getName());
+      subRegion.registerField< fields::Stresstensorzz >( this->getName());
+      subRegion.registerField< fields::Stresstensorxy >( this->getName());
+      subRegion.registerField< fields::Stresstensorxz >( this->getName());
+      subRegion.registerField< fields::Stresstensoryz >( this->getName());
 
       finiteElement::FiniteElementBase const & fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -209,12 +209,12 @@ void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
-        subRegion.getExtrinsicData< extrinsicMeshData::Stresstensorxx >().resizeDimension< 1 >( numNodesPerElem );
-        subRegion.getExtrinsicData< extrinsicMeshData::Stresstensoryy >().resizeDimension< 1 >( numNodesPerElem );
-        subRegion.getExtrinsicData< extrinsicMeshData::Stresstensorzz >().resizeDimension< 1 >( numNodesPerElem );
-        subRegion.getExtrinsicData< extrinsicMeshData::Stresstensorxy >().resizeDimension< 1 >( numNodesPerElem );
-        subRegion.getExtrinsicData< extrinsicMeshData::Stresstensorxz >().resizeDimension< 1 >( numNodesPerElem );
-        subRegion.getExtrinsicData< extrinsicMeshData::Stresstensoryz >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< fields::Stresstensorxx >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< fields::Stresstensoryy >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< fields::Stresstensorzz >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< fields::Stresstensorxy >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< fields::Stresstensorxz >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< fields::Stresstensoryz >().resizeDimension< 1 >( numNodesPerElem );
       } );
 
 
@@ -497,15 +497,15 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
     arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
 
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
 
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
-    arrayView1d< real32 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
 
-    arrayView1d< real32 > const dampingx = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorx >();
-    arrayView1d< real32 > const dampingy = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectory >();
-    arrayView1d< real32 > const dampingz = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorz >();
+    arrayView1d< real32 > const dampingx = nodeManager.getField< fields::DampingVectorx >();
+    arrayView1d< real32 > const dampingy = nodeManager.getField< fields::DampingVectory >();
+    arrayView1d< real32 > const dampingz = nodeManager.getField< fields::DampingVectorz >();
 
     dampingx.zero();
     dampingy.zero();
@@ -518,9 +518,9 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
 
-      arrayView1d< real32 > const density = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity >();
-      arrayView1d< real32 > const velocityVp = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVp >();
-      arrayView1d< real32 > const velocityVs = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVs >();
+      arrayView1d< real32 > const density = elementSubRegion.getField< fields::MediumDensity >();
+      arrayView1d< real32 > const velocityVp = elementSubRegion.getField< fields::MediumVelocityVp >();
+      arrayView1d< real32 > const velocityVs = elementSubRegion.getField< fields::MediumVelocityVs >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -565,17 +565,17 @@ void ElasticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, Do
   FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
   NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getNodeManager();
 
-  arrayView1d< real32 > const ux_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_np1 >();
-  arrayView1d< real32 > const uy_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_np1 >();
-  arrayView1d< real32 > const uz_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_np1 >();
+  arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
+  arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
+  arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// set array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
 
   /// set array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
 
   freeSurfaceFaceIndicator.zero();
   freeSurfaceNodeIndicator.zero();
@@ -669,11 +669,11 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
 
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
-    arrayView1d< real32 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+    arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
 
-    arrayView1d< real32 > const ux_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_np1 >();
-    arrayView1d< real32 > const uy_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_np1 >();
-    arrayView1d< real32 > const uz_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_np1 >();
+    arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
+    arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
+    arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
@@ -681,19 +681,19 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
-      arrayView1d< real32 const > const velocityVp = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVp >();
-      arrayView1d< real32 const > const velocityVs = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVs >();
-      arrayView1d< real32 const > const density = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity >();
+      arrayView1d< real32 const > const velocityVp = elementSubRegion.getField< fields::MediumVelocityVp >();
+      arrayView1d< real32 const > const velocityVs = elementSubRegion.getField< fields::MediumVelocityVs >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensity >();
 
-      arrayView1d< real32 > const lambda = elementSubRegion.getExtrinsicData< extrinsicMeshData::Lambda >();
-      arrayView1d< real32 > const mu = elementSubRegion.getExtrinsicData< extrinsicMeshData::Mu >();
+      arrayView1d< real32 > const lambda = elementSubRegion.getField< fields::Lambda >();
+      arrayView1d< real32 > const mu = elementSubRegion.getField< fields::Mu >();
 
-      arrayView2d< real32 > const stressxx = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensorxx >();
-      arrayView2d< real32 > const stressyy = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensoryy >();
-      arrayView2d< real32 > const stresszz = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensorzz >();
-      arrayView2d< real32 > const stressxy = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensorxy >();
-      arrayView2d< real32 > const stressxz = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensorxz >();
-      arrayView2d< real32 > const stressyz = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensoryz >();
+      arrayView2d< real32 > const stressxx = elementSubRegion.getField< fields::Stresstensorxx >();
+      arrayView2d< real32 > const stressyy = elementSubRegion.getField< fields::Stresstensoryy >();
+      arrayView2d< real32 > const stresszz = elementSubRegion.getField< fields::Stresstensorzz >();
+      arrayView2d< real32 > const stressxy = elementSubRegion.getField< fields::Stresstensorxy >();
+      arrayView2d< real32 > const stressxz = elementSubRegion.getField< fields::Stresstensorxz >();
+      arrayView2d< real32 > const stressyz = elementSubRegion.getField< fields::Stresstensoryz >();
 
 
       finiteElement::FiniteElementBase const &
@@ -755,10 +755,10 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
     } );
 
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addFields( FieldLocation::Node, { extrinsicMeshData::Displacementx_np1::key(), extrinsicMeshData::Displacementy_np1::key(), extrinsicMeshData::Displacementz_np1::key()} );
-    fieldsToBeSync.addElementFields( {extrinsicMeshData::Stresstensorxx::key(), extrinsicMeshData::Stresstensoryy::key(), extrinsicMeshData::Stresstensorzz::key(),
-                                      extrinsicMeshData::Stresstensorxy::key(),
-                                      extrinsicMeshData::Stresstensorxz::key(), extrinsicMeshData::Stresstensoryz::key()}, regionNames );
+    fieldsToBeSync.addFields( FieldLocation::Node, { fields::Displacementx_np1::key(), fields::Displacementy_np1::key(), fields::Displacementz_np1::key()} );
+    fieldsToBeSync.addElementFields( {fields::Stresstensorxx::key(), fields::Stresstensoryy::key(), fields::Stresstensorzz::key(),
+                                      fields::Stresstensorxy::key(),
+                                      fields::Stresstensorxz::key(), fields::Stresstensoryz::key()}, regionNames );
 
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
@@ -797,9 +797,9 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 > const ux_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_np1 >();
-    arrayView1d< real32 > const uy_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_np1 >();
-    arrayView1d< real32 > const uz_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_np1 >();
+    arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
+    arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
+    arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
     // compute the seismic traces since last step.
     arrayView2d< real32 > const uxReceivers   = m_displacementxNp1AtReceivers.toView();
     arrayView2d< real32 > const uyReceivers   = m_displacementyNp1AtReceivers.toView();
