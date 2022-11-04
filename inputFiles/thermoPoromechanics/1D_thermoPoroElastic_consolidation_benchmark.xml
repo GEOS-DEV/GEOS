@@ -19,7 +19,7 @@
   </Mesh>
 
   <Events
-    maxTime="10001">
+    maxTime="100001">
     <PeriodicEvent
       name="outputs0"
       endTime="1e-2"
@@ -37,7 +37,7 @@
       name="outputs2"
       beginTime="1"
       endTime="1001"
-      forceDt="10"
+      forceDt="2"
       target="/Outputs/thermoPoroVTKOutput"/>
 
     <PeriodicEvent
@@ -45,6 +45,13 @@
       beginTime="1001"
       endTime="10001"
       forceDt="100"
+      target="/Outputs/thermoPoroVTKOutput"/>
+
+    <PeriodicEvent
+      name="outputs4"
+      beginTime="10001"
+      endTime="100001"
+      forceDt="1000"
       target="/Outputs/thermoPoroVTKOutput"/>
 
     <PeriodicEvent
@@ -64,7 +71,7 @@
       name="solverApplication2"
       beginTime="1"
       endTime="1001"
-      forceDt="10"
+      forceDt="2"
       target="/Solvers/thermoPoroSolver"/>
     
     <PeriodicEvent
@@ -72,6 +79,13 @@
       beginTime="1001"
       endTime="10001"
       forceDt="100"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="solverApplication4"
+      beginTime="10001"
+      endTime="100001"
+      forceDt="1000"
       target="/Solvers/thermoPoroSolver"/>
 
   </Events>

@@ -82,7 +82,7 @@
       defaultDensity="0.0"
       defaultBulkModulus="1e4"
       defaultShearModulus="2.143e3"
-      defaultThermalExpansionCoefficient="9e-7"/>
+      defaultThermalExpansionCoefficient="3e-7"/>
     
     <BiotPorosity
       name="rockPorosity"
