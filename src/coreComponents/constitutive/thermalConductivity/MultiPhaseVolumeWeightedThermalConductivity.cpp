@@ -18,8 +18,8 @@
 
 #include "MultiPhaseVolumeWeightedThermalConductivity.hpp"
 
-#include "ThermalConductivityExtrinsicData.hpp"
-#include "MultiPhaseThermalConductivityExtrinsicData.hpp"
+#include "ThermalConductivityFields.hpp"
+#include "MultiPhaseThermalConductivityFields.hpp"
 
 namespace geosx
 {
@@ -42,7 +42,7 @@ MultiPhaseVolumeWeightedThermalConductivity::MultiPhaseVolumeWeightedThermalCond
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Phase thermal conductivity [W/(m.K)]" );
 
-  registerExtrinsicData( extrinsicMeshData::thermalconductivity::rockThermalConductivity{}, &m_rockThermalConductivity );
+  registerField( fields::thermalconductivity::rockThermalConductivity{}, &m_rockThermalConductivity );
 }
 
 std::unique_ptr< ConstitutiveBase >
