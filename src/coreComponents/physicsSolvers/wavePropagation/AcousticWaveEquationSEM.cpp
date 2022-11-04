@@ -188,7 +188,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< fields::PartialGradient >( this->getName() );
     } );
 
-    arrayView1d< real32 > const p_dt2 = nodeManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
+    arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
     std::string lifoPrefix = GEOSX_FMT( "lifo/pdt2_shot{:06}_rank{:04}", m_shotIndex, rank );
     m_lifo = std::unique_ptr< lifoStorage < real32 > >( new lifoStorage< real32 >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize ) );
@@ -983,7 +983,10 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
       arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
 
-      m_lifo->pushWait();
+      {
+        GEOSX_MARK_SCOPE ( LifoPushWai );
+        m_lifo->pushWait();
+      }
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIdx )
       {
         p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
@@ -991,10 +994,12 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
       if ( NULL == std::getenv("DISABLE_LIFO") )
       {
+        GEOSX_MARK_SCOPE ( LifoPushAsync );
         m_lifo->pushAsync( p_dt2 );
       }
       else
       {
+        GEOSX_MARK_SCOPE ( DirectWrite );
         p_dt2.move( MemorySpace::host, false );
         int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
         std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
@@ -1050,10 +1055,13 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 
       if ( NULL == std::getenv("DISABLE_LIFO") )
       {
+        GEOSX_MARK_SCOPE ( LifoPop );
         m_lifo->pop( p_dt2 );
       }
       else
       {
+        GEOSX_MARK_SCOPE ( DirectRead );
+
         int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
         std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
         std::ifstream wf( fileName, std::ios::in | std::ios::binary );
