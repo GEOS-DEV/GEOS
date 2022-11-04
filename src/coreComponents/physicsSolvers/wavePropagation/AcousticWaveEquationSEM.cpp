@@ -984,7 +984,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
       arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
 
       {
-        GEOSX_MARK_SCOPE ( LifoPushWai );
+        GEOSX_MARK_SCOPE ( LifoPushWait );
         m_lifo->pushWait();
       }
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIdx )
