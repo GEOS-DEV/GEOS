@@ -69,171 +69,109 @@ toVTKCellType( ElementType const elementType )
     case ElementType::Hexahedron:    return VTK_HEXAHEDRON;
     case ElementType::Prism5:        return VTK_PENTAGONAL_PRISM;
     case ElementType::Prism6:        return VTK_HEXAGONAL_PRISM;
+    case ElementType::Prism7:        return VTK_POLYHEDRON;
+    case ElementType::Prism8:        return VTK_POLYHEDRON;
+    case ElementType::Prism9:        return VTK_POLYHEDRON;
+    case ElementType::Prism10:       return VTK_POLYHEDRON;
+    case ElementType::Prism11:       return VTK_POLYHEDRON;
     case ElementType::Polyhedron:    return VTK_POLYHEDRON;
   }
   return VTK_EMPTY_CELL;
 }
 
-static std::vector< int >
-getVtkToGeosxNodeOrdering( ElementType const elementType )
+/**
+ * @brief Provide the local list of nodes or face streams for the corresponding VTK element
+ *
+ * @param elementType geosx element type
+ * @return list of nodes or face streams
+ *
+ * For geosx element with existing standard VTK element the corresponding list of nodes is provided.
+ * For Prism7+, the geosx element is converted to VTK_POLYHEDRON. The vtkUnstructuredGrid
+ * stores polyhedron cells as face streams of the following format:
+ * [numberOfCellFaces,
+ * (numberOfPointsOfFace0, pointId0, pointId1, ... ),
+ * (numberOfPointsOfFace1, pointId0, pointId1, ... ),
+ * ...]
+ * We use the same format except that the number of faces and the number of nodes per faces
+ * are provided as negative values. This convention provides a simple way to isolate the local
+ * nodes for mapping purpose while keeping a face streams data structure. The negative values are
+ * converted to positives when generating the VTK_POLYHEDRON. Check getVtkCells() for more details.
+ */
+static std::vector< int > getVtkConnectivity( ElementType const elementType )
 {
   switch( elementType )
   {
     case ElementType::Vertex:        return { 0 };
     case ElementType::Line:          return { 0, 1 };
     case ElementType::Triangle:      return { 0, 1, 2 };
-    case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
-    case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
+    case ElementType::Quadrilateral: return { 0, 1, 2, 3 };  // TODO check
+    case ElementType::Polygon:       return { };  // TODO
     case ElementType::Tetrahedron:   return { 0, 1, 2, 3 };
     case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };
     case ElementType::Wedge:         return { 0, 4, 2, 1, 5, 3 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
-//    case ElementType::Hexahedron:
-//    {
-//      int order = 3;
-//      std::vector< int > vtkNodes;
-//
-//      vtkNodes.push_back( 0 );// = 0;
-//      vtkNodes.push_back( order );
-//      vtkNodes.push_back( pow( order+1, 2 )-1 );
-//      vtkNodes.push_back((order+1)*order );
-//      vtkNodes.push_back( order*pow( order+1, 2 ));
-//      vtkNodes.push_back( order*pow( order+1, 2 )+ order );
-//      vtkNodes.push_back( pow( order+1, 3 )-1 );
-//      vtkNodes.push_back( order*pow( order+1, 2 )+order*(order+1));
-//
-//      //Loop to fill the edges
-//      for( localIndex i = 0; i < order-1; ++i )
-//      {
-//        vtkNodes.push_back( i+1 );
-//      }
-//
-//      for( localIndex i = 0; i < order-1; ++i )
-//      {
-//        vtkNodes.push_back( order + (order+1)*(i+1));
-//      }
-//
-//      for( localIndex i = 0; i < order-1; ++i )
-//      {
-//        vtkNodes.push_back( order*(order+1)+1+i );
-//      }
-//
-//      for( localIndex i = 0; i < order-1; ++i )
-//      {
-//        vtkNodes.push_back((order+1)+(order+1)*i );
-//      }
-//
-//      for( localIndex i = 0; i < order-1; ++i )
-//      {
-//        vtkNodes.push_back( order*pow( order+1, 2 )+1+i );
-//      }
-//
-//      for( localIndex i = 0; i < order-1; ++i )
-//      {
-//        vtkNodes.push_back( order*pow( order+1, 2 )+order+(order+1)*(i+1));
-//      }
-//
-//      for( localIndex i = 0; i < order-1; ++i )
-//      {
-//        vtkNodes.push_back( order*pow( order+1, 2 )+order*(order+1)+1+i );
-//      }
-//
-//      for( localIndex i = 0; i < order-1; ++i )
-//      {
-//        vtkNodes.push_back( order*pow( order+1, 2 )+(order+1)*(i+1));
-//      }
-//
-//      for( localIndex i = 0; i < order-1; ++i )
-//      {
-//        vtkNodes.push_back( pow( order+1, 2 )*(i+1));
-//      }
-//
-//      for( localIndex i = 0; i < order-1; ++i )
-//      {
-//        vtkNodes.push_back( order+pow( order+1, 2 )*(i+1));
-//      }
-//
-//      for( localIndex i = 0; i < order-1; ++i )
-//      {
-//        vtkNodes.push_back( pow( order+1, 2 )-1+ pow( order+1, 2 )*(i+1));
-//      }
-//
-//      for( localIndex i = 0; i < order-1; ++i )
-//      {
-//        vtkNodes.push_back( order*(order+1) + pow( order+1, 2 )*(i+1));
-//      }
-//      //Loops to fill the faces
-//      // Face 1 (z=zmin)
-//      for( localIndex j = 0; j < order-1; ++j )
-//      {
-//        for( localIndex i = 0; i < order-1; ++i )
-//        {
-//          vtkNodes.push_back( pow( order+1, 2 ) + pow( order+1, 2 )*j+i+1 );
-//        }
-//      }
-//
-//      // Face 2 (z=zmax)
-//      for( localIndex j = 0; j < order-1; ++j )
-//      {
-//        for( localIndex i = 0; i < order-1; ++i )
-//        {
-//          vtkNodes.push_back( pow( order+1, 2 ) + order*(order+1) + pow( order+1, 2 )*j+i+1 );
-//        }
-//      }
-//
-//      // Face 3 (x=xmin)
-//      for( localIndex j = 0; j < order-1; ++j )
-//      {
-//        for( localIndex i = 0; i < order-1; ++i )
-//        {
-//          vtkNodes.push_back( pow( order+1, 2 )+pow( order+1, 2 )*j+(order+1)*(i+1));
-//        }
-//      }
-//
-//      // Face 4 (x=xmax)
-//      for( localIndex j = 0; j < order-1; ++j )
-//      {
-//        for( localIndex i = 0; i < order-1; ++i )
-//        {
-//          vtkNodes.push_back( pow( order+1, 2 ) +order+1+order+ pow( order+1, 2 )*j+(order+1)*i );
-//        }
-//      }
-//
-//      // Face 5 (y=ymin)
-//      for( localIndex j = 0; j < order-1; ++j )
-//      {
-//        for( localIndex i = 0; i < order-1; ++i )
-//        {
-//          vtkNodes.push_back( order+1 + (order+1)*j+i+1 );
-//        }
-//      }
-//
-//      // Face 6 (y=ymax)
-//      for( localIndex j = 0; j < order-1; ++j )
-//      {
-//        for( localIndex i = 0; i < order-1; ++i )
-//        {
-//          vtkNodes.push_back( pow( order+1, 2 )*order+order+1 + (order+1)*j+i+1 );
-//        }
-//      }
-//
-//      //Nodes inside the cell
-//      for( localIndex k = 0; k < order-1; ++k )
-//      {
-//        for( localIndex j = 0; j < order-1; ++j )
-//        {
-//          for( localIndex i = 0; i < order-1; ++i )
-//          {
-//            vtkNodes.push_back( pow( order+1, 2 ) + (order+1) + pow( order+1, 2 )*k + (order+1)*j + (i+1));
-//          }
-//        }
-//      }
-//
-//      return vtkNodes;
-//    }
     case ElementType::Prism5:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
-    case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
+    case ElementType::Prism7:        return {-9,
+                                             -7, 0, 1, 2, 3, 4, 5, 6,
+                                             -7, 7, 8, 9, 10, 11, 12, 13,
+                                             -4, 0, 1, 8, 7, -4, 1, 2, 9, 8,
+                                             -4, 2, 3, 10, 9,
+                                             -4, 3, 4, 11, 10,
+                                             -4, 4, 5, 12, 11,
+                                             -4, 5, 6, 13, 12,
+                                             -4, 6, 0, 7, 13 };
+    case ElementType::Prism8:        return {-10,
+                                             -8, 0, 1, 2, 3, 4, 5, 6, 7,
+                                             -8, 8, 9, 10, 11, 12, 13, 14, 15,
+                                             -4, 0, 1, 9, 8,
+                                             -4, 1, 2, 10, 9,
+                                             -4, 2, 3, 11, 10,
+                                             -4, 3, 4, 12, 11,
+                                             -4, 4, 5, 13, 12,
+                                             -4, 5, 6, 14, 13,
+                                             -4, 6, 7, 15, 14,
+                                             -4, 7, 0, 8, 15 };
+    case ElementType::Prism9:        return {-11,
+                                             -9, 0, 1, 2, 3, 4, 5, 6, 7, 8,
+                                             -9, 9, 10, 11, 12, 13, 14, 15, 16, 17,
+                                             -4, 0, 1, 10, 9,
+                                             -4, 1, 2, 11, 10,
+                                             -4, 2, 3, 12, 11,
+                                             -4, 3, 4, 13, 12,
+                                             -4, 4, 5, 14, 13,
+                                             -4, 5, 6, 15, 14,
+                                             -4, 6, 7, 16, 15,
+                                             -4, 7, 8, 17, 16,
+                                             -4, 8, 0, 9, 17 };
+    case ElementType::Prism10:       return {-12,
+                                             -10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+                                             -10, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+                                             -4, 0, 1, 11, 10,
+                                             -4, 1, 2, 12, 11,
+                                             -4, 2, 3, 13, 12,
+                                             -4, 3, 4, 14, 13,
+                                             -4, 4, 5, 15, 14,
+                                             -4, 5, 6, 16, 15,
+                                             -4, 6, 7, 17, 16,
+                                             -4, 7, 8, 18, 17,
+                                             -4, 8, 9, 19, 18,
+                                             -4, 9, 0, 10, 19 };
+    case ElementType::Prism11:       return {-13,
+                                             -11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                                             -11, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+                                             -4, 0, 1, 12, 11,
+                                             -4, 1, 2, 13, 12,
+                                             -4, 2, 3, 14, 13,
+                                             -4, 3, 4, 15, 14,
+                                             -4, 4, 5, 16, 15,
+                                             -4, 5, 6, 17, 16,
+                                             -4, 6, 7, 18, 17,
+                                             -4, 7, 8, 19, 18,
+                                             -4, 8, 9, 20, 19,
+                                             -4, 9, 10, 21, 20,
+                                             -4, 10, 0, 11, 21 };
+    case ElementType::Polyhedron:    return { };  // TODO
   }
   return {};
 }
@@ -335,7 +273,7 @@ getSurface( FaceElementSubRegion const & subRegion,
   geosx2VTKIndexing.reserve( subRegion.size() * subRegion.numNodesPerElement() );
   localIndex nodeIndexInVTK = 0;
   std::vector< vtkIdType > connectivity( subRegion.numNodesPerElement() );
-  std::vector< int > const vtkOrdering = getVtkToGeosxNodeOrdering( subRegion.getElementType() );
+  std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType() );
 
   for( localIndex ei = 0; ei < subRegion.size(); ei++ )
   {
@@ -384,7 +322,8 @@ getSurface( FaceElementSubRegion const & subRegion,
 }
 
 /**
- * @brief Gets the cell connectivities and the vertices coordinates as VTK objects for a specific EmbeddedSurafaceSubRegion.
+ * @brief Gets the cell connectivities and the vertices coordinates as VTK objects for a specific
+ * EmbeddedSurafaceSubRegion.
  * @param[in] subRegion the EmbeddedSurfaceSubRegion to be output
  * @param[in] nodeManager the NodeManager associated with the DomainPartition being written.
  * @return a pair containing a VTKPoints (with the information on the vertices and their coordinates)
@@ -484,7 +423,7 @@ getVtkCells( CellElementRegion const & region,
     localIndex numConn = 0;
     region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
     {
-      numConn += subRegion.size() * subRegion.numNodesPerElement();
+      numConn += subRegion.size() * getVtkConnectivity( subRegion.getElementType() ).size();
     } );
     return numConn;
   }();
@@ -504,23 +443,37 @@ getVtkCells( CellElementRegion const & region,
   region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
     cellTypes.insert( cellTypes.end(), subRegion.size(), toVTKCellType( subRegion.getElementType() ) );
-    std::vector< int > const vtkOrdering = getVtkToGeosxNodeOrdering( subRegion.getElementType() );
-    localIndex const nodesPerElem = subRegion.numNodesPerElement();
+    std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType() );
+    localIndex const numVtkData = vtkOrdering.size();
     auto const nodeList = subRegion.nodeList().toViewConst();
 
+// For all geosx element, the corresponding VTK data are copied in "connectivity".
+// Local nodes are mapped to global indices. Any negative value in "vtkOrdering"
+// corresponds to the number of faces or the number of nodes per faces, and they
+// are copied as positive values.
+// Here we privilege code simplicity. This can be more efficient (less tests) if the code is
+// specialized for each type of subregion.
+// This is not a time sensitive part of the code. Can be optimized later if needed.
     forAll< parallelHostPolicy >( subRegion.size(), [=, &connectivity, &offsets]( localIndex const c )
     {
-      localIndex const elemConnOffset = connOffset + c * nodesPerElem;
+      localIndex const elemConnOffset = connOffset + c * numVtkData;
       auto const nodes = nodeList[c];
-      for( localIndex i = 0; i < nodesPerElem; ++i )
+      for( localIndex i = 0; i < numVtkData; ++i )
       {
-        connectivity->SetTypedComponent( elemConnOffset + i, 0, newNodeIndices[nodes[vtkOrdering[i]]] );
+        if( vtkOrdering[i] < 0 )
+        {
+          connectivity->SetTypedComponent( elemConnOffset + i, 0, -vtkOrdering[i] );
+        }
+        else
+        {
+          connectivity->SetTypedComponent( elemConnOffset + i, 0, newNodeIndices[nodes[vtkOrdering[i]]] );
+        }
       }
       offsets->SetTypedComponent( elemOffset + c, 0, elemConnOffset );
     } );
 
     elemOffset += subRegion.size();
-    connOffset += subRegion.size() * nodesPerElem;
+    connOffset += subRegion.size() * numVtkData;
   } );
   offsets->SetTypedComponent( elemOffset, 0, connOffset );
 
@@ -1000,6 +953,12 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
   {
     meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
     {
+
+      if( meshLevel.isShallowCopy() )
+      {
+        return;
+      }
+
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
       string const meshPath = joinPath( getCycleSubFolder( cycle ), meshBody.getName(), meshLevel.getName() );
       int const mpiSize = MpiWrapper::commSize();
@@ -1088,6 +1047,12 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   {
     meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
     {
+
+      if( meshLevel.isShallowCopy() )
+      {
+        return;
+      }
+
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
       NodeManager const & nodeManager = meshLevel.getNodeManager();
       EmbeddedSurfaceNodeManager const & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
