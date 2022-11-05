@@ -109,7 +109,7 @@
       thermalExpansionCoeff="0.0"
       viscosibility="0.0"
       volumetricHeatCapacity="1.672e2"
-      referenceInternalEnergy="4.56e7"/>
+      referenceInternalEnergy="0.001"/>
 
     <SinglePhaseConstantThermalConductivity
       name="thermalCond"
