@@ -105,7 +105,7 @@ public:
                                                    real64 const & bulkModulus ) const
   {
     real64 const biotSkeletonModulusInverse = (m_biotCoefficient[k] - m_referencePorosity[k]) / m_grainBulkModulus;
-    real64 const porosityThermalExpansion = 3 * m_thermalExpansionCoefficient[k] * m_referencePorosity[k]; 
+    real64 const porosityThermalExpansion = 3 * m_thermalExpansionCoefficient[k] * (m_referencePorosity[k] - m_biotCoefficient[k]); 
 
     m_volStrainIncrement[k][q] = totalMeanStrainIncrement; 
     m_bulkModulus[k] = bulkModulus; 
@@ -150,7 +150,7 @@ public:
                                real64 const & porosity_n ) const
   {
     real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / m_grainBulkModulus;
-    real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * referencePorosity; 
+    real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * (referencePorosity - biotCoefficient); 
 
     porosity = porosity_n + biotSkeletonModulusInverse * pressure + biotCoefficient * biotCoefficient / bulkModulus * pressure
                           + porosityThermalExpansion * temperature + 3 * thermalExpansionCoefficient * biotCoefficient * temperature
