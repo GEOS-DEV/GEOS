@@ -84,7 +84,6 @@ set( physicsSolvers_headers
      simplePDE/PhaseFieldDamageFEMKernels.hpp
      solidMechanics/MatrixFreeSolidMechanicsFEM.hpp
      solidMechanics/TeamSolidMechanicsFEMKernels.hpp
-     solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsFields.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp

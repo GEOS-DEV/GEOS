@@ -87,6 +87,15 @@ public:
                                               3,
                                               3 >;
 
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
+
+  using Base::numDofPerTestSupportPoint;
+  using Base::numDofPerTrialSupportPoint;
+  using Base::m_elemsToNodes;
+  using Base::m_elemGhostRank;
+  using Base::m_constitutiveUpdate;
+  using Base::m_finiteElementSpace;
+
   /**
    * @brief Constructor
    * @copydoc geosx::finiteElement::TeamKernelBase::TeamKernelBase
@@ -337,6 +346,88 @@ public:
     // return maxForce;
     return 0.0;
   }
+
+
+  #if 1
+  template< typename POLICY,
+            typename KERNEL_TYPE >
+  static real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent )
+  {
+    GEOSX_MARK_FUNCTION;
+    constexpr int dims=3;
+
+    forAll< parallelDevicePolicy<32> >( numElems,
+                      [=] GEOSX_DEVICE ( localIndex const k )
+    {
+
+      real64 xLocal[numNodesPerElem][dims];
+      real64 srcLocal[numNodesPerElem][dims];
+      real64 dstLocal[numNodesPerElem][dims] = {};
+
+      for( localIndex a=0; a<numNodesPerElem; ++a )
+      {
+        localIndex const nodeIndex = kernelComponent.m_elemsToNodes( k, a );
+        for( int i=0; i<dims; ++i )
+        {
+          xLocal[ a ][ i ] = kernelComponent.m_X[ nodeIndex ][ i ];
+          srcLocal[ a ][ i ] = kernelComponent.m_src[ nodeIndex ][ i ];
+        }
+      }
+
+
+      for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
+      {
+//#define USE_JACOBIAN
+#if !defined( USE_JACOBIAN )
+        real64 dNdX[ numNodesPerElem ][ dims ];
+        real64 const detJ = kernelComponent.m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, xLocal, dNdX );
+        /// Macro to substitute in the shape function derivatives.
+        real64 strain[6] = {0};
+        FE_TYPE::symmetricGradient( dNdX, srcLocal, strain );
+
+        real64 stressLocal[ 6 ] = {0};
+        kernelComponent.m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
+
+        for( localIndex c = 0; c < 6; ++c )
+        {
+          stressLocal[ c ] *= -detJ;
+        }
+        FE_TYPE::plusGradNajAij( dNdX, stressLocal, dstLocal );
+#else
+        real64 invJ[3][3];
+        real64 const detJ = FE_TYPE::inverseJacobianTransformation( q, stack.xLocal, invJ );
+
+        real64 strain[6] = {0};
+        FE_TYPE::symmetricGradient( q, invJ, stack.varLocal, strain );
+
+        real64 stressLocal[ 6 ] = {0};
+        m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
+
+        for( localIndex c = 0; c < 6; ++c )
+        {
+          stressLocal[ c ] *= DETJ;
+        }
+
+        FE_TYPE::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
+#endif
+      }
+
+      
+      for( localIndex a = 0; a < numNodesPerElem; ++a )
+      {
+        localIndex const nodeIndex = kernelComponent.m_elemsToNodes( k, a );
+        for( int b = 0; b < numDofPerTestSupportPoint; ++b )
+        {
+          RAJA::atomicAdd< parallelDeviceAtomic >( &kernelComponent.m_dst( nodeIndex, b ), dstLocal[ a ][ b ] );
+        }
+      }
+
+    } );
+    return 0;
+  }
+  #endif
 
   /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;

@@ -26,6 +26,8 @@
 #include "linearAlgebra/common/LinearOperatorWithBC.hpp"
 #include "constitutive/solid/ElasticIsotropic.hpp"
 
+#include "SolidMechanicsFields.hpp"
+
 namespace geosx
 {
 
@@ -81,7 +83,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
     }
     MeshLevel & mesh = *meshLevelPtr;
       
-    auto const & totalDisplacement = mesh.getNodeManager().totalDisplacement();
+    auto const & totalDisplacement = mesh.getNodeManager().getField<fields::solidMechanics::totalDisplacement>();
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > localSrc2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localSrc.dataBuffer() );
     arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > localDst2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localDst.dataBuffer() );
     TeamSolidMechanicsFEMKernelFactory kernelFactory( localSrc2d, localDst2d );
@@ -246,14 +248,14 @@ void MatrixFreeSolidMechanicsFEM::setupDofs( DomainPartition const & GEOSX_UNUSE
                                              DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
-  dofManager.addField( keys::TotalDisplacement,
-                       FieldLocation::Node,
-                       3,
-                       getMeshTargets() );
+  // dofManager.addField( keys::TotalDisplacement,
+  //                      FieldLocation::Node,
+  //                      3,
+  //                      getMeshTargets() );
 
-  dofManager.addCoupling( keys::TotalDisplacement,
-                          keys::TotalDisplacement,
-                          DofManager::Connector::Elem );
+  // dofManager.addCoupling( keys::TotalDisplacement,
+  //                         keys::TotalDisplacement,
+  //                         DofManager::Connector::Elem );
 }
 
 void MatrixFreeSolidMechanicsFEM::registerDataOnMesh( Group & meshBodies )
@@ -266,10 +268,7 @@ void MatrixFreeSolidMechanicsFEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodes = meshLevel.getNodeManager();
 
-    nodes.registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the total displacements on the nodes." ).
+    nodes.registerField< fields::solidMechanics::totalDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
   });
 
@@ -298,8 +297,8 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
   dofManager.addVectorToField( localSolution,
-                               keys::TotalDisplacement,
-                               keys::TotalDisplacement,
+                               fields::solidMechanics::totalDisplacement::key(),
+                               fields::solidMechanics::totalDisplacement::key(),
                                scalingFactor );
                                
 
@@ -307,7 +306,7 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
   {
-    auto const & disp = mesh.getNodeManager().totalDisplacement();
+//    auto const & disp = mesh.getNodeManager().totalDisplacement();
 //    std::cout<<disp<<std::endl;
 
   } );
