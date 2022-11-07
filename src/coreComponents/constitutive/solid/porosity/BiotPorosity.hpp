@@ -115,7 +115,10 @@ public:
                             + biotSkeletonModulusInverse * deltaPressure + m_biotCoefficient[k] * m_biotCoefficient[k] / bulkModulus * deltaPressure
                             + porosityThermalExpansion * deltaTemperature + 3 * m_thermalExpansionCoefficient[k] * m_biotCoefficient[k] * deltaTemperature;
 
-    savePorosity( k, q, porosity, biotSkeletonModulusInverse, porosityThermalExpansion );
+    real64 const dPoro_dPres = biotSkeletonModulusInverse + m_biotCoefficient[k] * m_biotCoefficient[k] / bulkModulus; 
+    real64 const dPoro_dTemp = porosityThermalExpansion + 3 * m_thermalExpansionCoefficient[k] * m_biotCoefficient[k]; 
+    
+    savePorosity( k, q, porosity, dPoro_dPres, dPoro_dTemp );
   }
 
   GEOSX_HOST_DEVICE
