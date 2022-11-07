@@ -122,35 +122,43 @@ MeshLevel::MeshLevel( string const & name,
   m_faceManager->getDomainBoundaryIndicator() = source.m_faceManager->getDomainBoundaryIndicator();
   m_faceManager->elementList() = source.m_faceManager->elementList();
 
-  // Faces
-//  ArrayOfArraysView< localIndex const > const facesToNodesMapSource = m_faceManager->nodeList().toViewConst();
+ // Faces
   ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceManager->nodeList();
   ArrayOfArraysView< localIndex const > const & facesToEdges = m_faceManager->edgeList().toViewConst();
-  localIndex const estimatedNumNodesPerFace = pow( order+1, 2 );
-  faceToNodeMapNew.resize( faceToNodeMapNew.size(), estimatedNumNodesPerFace );
+  localIndex const numNodesPerFace = pow( order+1, 2 );
 
+  // number of elements in each row of the map as capacity
+  array1d< localIndex > counts( faceToNodeMapNew.size());
+  counts.setValues< parallelHostPolicy >( numNodesPerFace );
+
+  //  reconstructs the faceToNodeMap with the provided capacity in counts
+  faceToNodeMapNew.resizeFromCapacities< parallelHostPolicy >( faceToNodeMapNew.size(), counts.data() );
+
+  // setup initial values of the faceToNodeMap using emplaceBack
+  forAll< parallelHostPolicy >( faceToNodeMapNew.size(), 
+                                [faceToNodeMapNew = faceToNodeMapNew.toView()] 
+                                ( localIndex const faceIndex )
+  {
+    for(localIndex i = 0; i < faceToNodeMapNew.capacityOfArray( faceIndex ); ++i )
+    {
+      faceToNodeMapNew.emplaceBack( faceIndex, -1 );
+    }
+  } );
 
   // add the number of non-edge face nodes
   localIndex numInternalFaceNodes = 0;
+  localIndex const numNonEdgeNodesPerFace = pow( order-1, 2 );
   for( localIndex kf=0; kf<m_faceManager->size(); ++kf )
   {
     localIndex const numEdgesPerFace = facesToEdges.sizeOfArray( kf );
-//    localIndex const numVertexNodesPerFace = facesToNodesMapSource.sizeOfArray( kf );
-//    localIndex const numEdgeNodesPerFace = numVertexNodesPerFace + numEdgesPerFace * numNonVertexNodesPerEdge;
-
     if( numEdgesPerFace==4 )
-    {
-      localIndex const numNonEdgeNodesPerFace = pow( order-1, 2 );
       numInternalFaceNodes += numNonEdgeNodesPerFace;
-
-      localIndex const numNodesPerFace = pow( order+1, 2 );
-      faceToNodeMapNew.resizeArray( kf, numNodesPerFace );
-    }
     else
     {
       GEOSX_ERROR( "need more support for face geometry" );
     }
   }
+
 
   // add the number of non-face element nodes
   localIndex numInternalElementNodes = 0;
