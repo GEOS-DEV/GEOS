@@ -209,6 +209,8 @@ private:
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
 
+  localIndex getNumNodesPerElem();
+
 
   /// save the sismo trace in file
   void saveSeismo( localIndex iseismo, real32 val, string const & filename ) override;
