@@ -264,37 +264,47 @@ struct PrecomputeSourceAndReceiverKernel
                                                              X,
                                                              coordsOnRefElem );
             sourceIsAccessible[isrc] = 1;
-
+            for( localIndex q=0; q< numNodesPerElem; ++q )
+            {
+              FE_TYPE::evaluateGradient(q,xLocal,coordsOnRefElem, [&] (real64 Grad[3], real64 invJ[3][3])
+              {
+                 sourceNodeIds[isrc][q] = elemsToNodes[k][q];
+                 sourceConstantsx[isrc][q] = Grad[0] * invJ[0][0] + Grad[1] * invJ[0][1] + Grad[2] * invJ[0][2];
+                 sourceConstantsy[isrc][q] = Grad[0] * invJ[1][0] + Grad[1] * invJ[1][1] + Grad[2] * invJ[1][2];
+                 sourceConstantsz[isrc][q] = Grad[0] * invJ[2][0] + Grad[1] * invJ[2][1] + Grad[2] * invJ[2][2];
+              } );
+            }
             //Compute source coefficients: this generate a P-wave and an "unwanted" S-wave. It is classical in the case of the elastic wave
             // equation at order 2, the S-wave can be attenuated by refining the mesh or get to high order
             //However, we will propably use elastic wave at 1st order for the FWI case.
-            for( localIndex c=0; c<2; ++c )
-            {
-              for( localIndex b=0; b<2; ++b )
-              {
-                for( localIndex a=0; a<2; ++a )
-                {
-                  real64 const Grad[3] = { finiteElement::LagrangeBasis1::gradient( a, coordsOnRefElem[0] )*
-                                           finiteElement::LagrangeBasis1::value( b, coordsOnRefElem[1] )*
-                                           finiteElement::LagrangeBasis1::value( c, coordsOnRefElem[2] ),
-                                           finiteElement::LagrangeBasis1::value( a, coordsOnRefElem[0] )*
-                                           finiteElement::LagrangeBasis1::gradient( b, coordsOnRefElem[1] )*
-                                           finiteElement::LagrangeBasis1::value( c, coordsOnRefElem[2] ),
-                                           finiteElement::LagrangeBasis1::value( a, coordsOnRefElem[0] )*
-                                           finiteElement::LagrangeBasis1::value( b, coordsOnRefElem[1] )*
-                                           finiteElement::LagrangeBasis1::gradient( c, coordsOnRefElem[2] )};
 
-                  localIndex const nodeIndex = finiteElement::LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
+            // for( localIndex c=0; c<2; ++c )
+            // {
+            //   for( localIndex b=0; b<2; ++b )
+            //   {
+            //     for( localIndex a=0; a<2; ++a )
+            //     {
+            //       real64 const Grad[3] = { finiteElement::LagrangeBasis1::gradient( a, coordsOnRefElem[0] )*
+            //                                finiteElement::LagrangeBasis1::value( b, coordsOnRefElem[1] )*
+            //                                finiteElement::LagrangeBasis1::value( c, coordsOnRefElem[2] ),
+            //                                finiteElement::LagrangeBasis1::value( a, coordsOnRefElem[0] )*
+            //                                finiteElement::LagrangeBasis1::gradient( b, coordsOnRefElem[1] )*
+            //                                finiteElement::LagrangeBasis1::value( c, coordsOnRefElem[2] ),
+            //                                finiteElement::LagrangeBasis1::value( a, coordsOnRefElem[0] )*
+            //                                finiteElement::LagrangeBasis1::value( b, coordsOnRefElem[1] )*
+            //                                finiteElement::LagrangeBasis1::gradient( c, coordsOnRefElem[2] )};
 
-                  real64 invJ[3][3]={{0}};
-                  FE_TYPE::invJacobianTransformation( nodeIndex, xLocal, invJ );
-                  sourceNodeIds[isrc][nodeIndex] = elemsToNodes[k][nodeIndex];
-                  sourceConstantsx[isrc][nodeIndex] = Grad[0] * invJ[0][0] + Grad[1] * invJ[0][1] + Grad[2] * invJ[0][2];
-                  sourceConstantsy[isrc][nodeIndex] = Grad[0] * invJ[1][0] + Grad[1] * invJ[1][1] + Grad[2] * invJ[1][2];
-                  sourceConstantsz[isrc][nodeIndex] = Grad[0] * invJ[2][0] + Grad[1] * invJ[2][1] + Grad[2] * invJ[2][2];
-                }
-              }
-            }
+            //       localIndex const nodeIndex = finiteElement::LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
+
+            //       real64 invJ[3][3]={{0}};
+            //       FE_TYPE::invJacobianTransformation( nodeIndex, xLocal, invJ );
+            //       sourceNodeIds[isrc][nodeIndex] = elemsToNodes[k][nodeIndex];
+            //       sourceConstantsx[isrc][nodeIndex] = Grad[0] * invJ[0][0] + Grad[1] * invJ[0][1] + Grad[2] * invJ[0][2];
+            //       sourceConstantsy[isrc][nodeIndex] = Grad[0] * invJ[1][0] + Grad[1] * invJ[1][1] + Grad[2] * invJ[1][2];
+            //       sourceConstantsz[isrc][nodeIndex] = Grad[0] * invJ[2][0] + Grad[1] * invJ[2][1] + Grad[2] * invJ[2][2];
+            //     }
+            //   }
+            // }
 
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {

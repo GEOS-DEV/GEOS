@@ -384,6 +384,18 @@ public:
                                real64 const (&X)[numNodes][3],
                                FUNC && func );
 
+
+  template< typename FUNC >
+  GEOSX_HOST_DEVICE
+  static void
+  evaluateGradient(int q,
+                   real64 const (&X)[numNodes][3],
+                   real64 const (&coords)[3],
+                   FUNC && func);
+
+
+
+
   /**
    * @brief Apply a Jacobian transformation matrix from the parent space to the
    *   physical space on the parent shape function derivatives, producing the
@@ -937,6 +949,37 @@ computeElasticStiffnessTerm( int q,
             0);
     }
   }
+
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+evaluateGradient(int q,
+                 real64 const (&X)[numNodes][3],
+                 real64 const (&coords)[3],
+                 FUNC && func )
+{
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
+  GEOSX_UNUSED_VAR(detJ);
+   real64 Grad[3] =  { GL_BASIS::gradient( qa, coords[0] )*
+          GL_BASIS::value( qb, coords[1] )*
+          GL_BASIS::value( qc, coords[2] ),
+          GL_BASIS::value( qa, coords[0] )*
+          GL_BASIS::gradient( qb, coords[1] )*
+          GL_BASIS::value( qc, coords[2] ),
+          GL_BASIS::value( qa, coords[0] )*
+          GL_BASIS::value( qb, coords[1] )*
+          GL_BASIS::gradient( qc, coords[2] )};
+   func(Grad,J );
+  
 
 }
 
