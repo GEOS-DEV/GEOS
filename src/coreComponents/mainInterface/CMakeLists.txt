@@ -6,7 +6,6 @@ set( mainInterface_headers
      ProblemManager.hpp
      initialization.hpp
      version.hpp
-     DumpToJson.hpp
    )
 
 #
@@ -20,18 +19,6 @@ set( mainInterface_sources
    )
 
 set( dependencyList physicsSolvers discretizationMethods fieldSpecification linearAlgebra events fileIO optionparser )
-
-
-include(FetchContent)
-
-FetchContent_Declare( json
-                      GIT_REPOSITORY https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent
-                      GIT_TAG v3.10.5
-                      )
-FetchContent_MakeAvailable( json )
-
-set( dependencyList nlohmann_json::nlohmann_json ${dependencyList} )
-
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )

@@ -47,8 +47,6 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "schema/schemaUtilities.hpp"
 
-#include "DumpToJson.hpp"
-
 // System includes
 #include <vector>
 #include <regex>
@@ -489,6 +487,7 @@ void ProblemManager::postProcessInput()
   }
 }
 
+
 void ProblemManager::initializationOrder( string_array & order )
 {
   SortedArray< string > usedNames;
@@ -538,8 +537,6 @@ void ProblemManager::generateMesh()
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
     CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
-//    json j( cellBlockManager );
-//    std::cout << j << std::endl;
 
     MeshLevel & baseMesh = meshBody.getBaseDiscretization();
     array1d< string > junk;
@@ -828,7 +825,6 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
             if( feDiscretization != nullptr )
             {
               elemRegion.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
-//              elemRegion.forElementSubRegions< CellElementSubRegion >( [&]( auto & subRegion )
               {
                 std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
 
