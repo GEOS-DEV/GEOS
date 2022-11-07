@@ -59,7 +59,6 @@ public:
                                         real64 const & deltaPressure ) const override final
   {
     m_porosityUpdate.updateFromPressure( k, q, deltaPressure );
-    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
   }
 
   GEOSX_HOST_DEVICE
@@ -69,7 +68,6 @@ public:
                                                       real64 const & deltaTemperature ) const override final
   {
     m_porosityUpdate.updateFromPressureAndTemperature( k, q, deltaPressure, deltaTemperature );
-    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
   }
 
   GEOSX_HOST_DEVICE
