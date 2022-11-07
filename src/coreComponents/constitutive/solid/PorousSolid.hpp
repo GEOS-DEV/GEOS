@@ -188,20 +188,12 @@ public:
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
     real64 const totalMeanStressIncrement = effectiveMeanStressIncrement - biotCoefficient * deltaFluidPressure - 3 * thermalExpansionCoefficient * bulkModulus * deltaTemperature; 
-    real64 const totalMeanStrainIncrement = totalMeanStressIncrement / bulkModulus; 
-
-    real64 porosity;
-    real64 porosity_n;
-    real64 porosityInit;
 
     computeThermalPorosity( k,
                             q,
                             deltaFluidPressure,
                             deltaTemperature, 
-                            totalMeanStrainIncrement,
-                            porosity,
-                            porosity_n,
-                            porosityInit );
+                            totalMeanStressIncrement );
   }
 
   template< int NUM_MAX_COMPONENTS >
@@ -448,6 +440,14 @@ private:
   }
 
   GEOSX_HOST_DEVICE
+  void updateThermalExpansionCoefficient( localIndex const k ) const
+  {
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+
+    m_porosityUpdate.updateThermalExpansionCoefficient( k, thermalExpansionCoefficient );
+  }
+
+  GEOSX_HOST_DEVICE
   void computeBodyForce( real64 const & solidDensity,
                          real64 const & initialFluidDensity,
                          real64 const & fluidDensity,
@@ -538,23 +538,13 @@ private:
                                localIndex const q,
                                real64 const & deltaFluidPressure,
                                real64 const & deltaTemperature, 
-                               real64 const & totalMeanStrainIncrement,
-                               real64 & porosity,
-                               real64 & porosity_n,
-                               real64 & porosityInit ) const
-  {    
-    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
-    
+                               real64 const & totalMeanStressIncrement ) const
+  {     
     m_porosityUpdate.updateFromPressureTemperatureAndMeanStress( k,
                                                                  q,
                                                                  deltaFluidPressure,
                                                                  deltaTemperature, 
-                                                                 totalMeanStrainIncrement,
-                                                                 bulkModulus );
-
-    porosity = m_porosityUpdate.getPorosity( k, q );
-    porosity_n = m_porosityUpdate.getPorosity_n( k, q );
-    porosityInit = m_porosityUpdate.getInitialPorosity( k, q );
+                                                                 totalMeanStressIncrement );
   }
 
   GEOSX_HOST_DEVICE
@@ -622,7 +612,7 @@ private:
 
     effectiveMeanStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] ); 
 
-    m_porosityUpdate.updateThermalExpansionCoefficient( k, thermalExpansionCoefficient ); 
+    updateThermalExpansionCoefficient( k ); 
 
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -3 * thermalExpansionCoefficient * bulkModulus * ( temperature - initialTemperature ) );
   }

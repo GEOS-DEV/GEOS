@@ -37,11 +37,17 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
 
   registerExtrinsicData( extrinsicMeshData::porosity::biotCoefficient{}, &m_biotCoefficient );
 
-  registerExtrinsicData( extrinsicMeshData::porosity::thermalExpansionCoefficient{}, &m_thermalExpansionCoefficient );
+  registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Thermal expansion coefficient" );
 
-  registerExtrinsicData( extrinsicMeshData::porosity::volStrainIncrement{}, &m_volStrainIncrement );
+  registerWrapper( viewKeyStruct::meanStressIncrementString(), &m_meanStressIncrement ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Volumetric stress increment" );
 
-  registerExtrinsicData( extrinsicMeshData::porosity::solidBulkModulus{}, &m_bulkModulus );
+  registerWrapper( viewKeyStruct::solidBulkModulusString(), &m_bulkModulus ).
+    setApplyDefaultValue( 1e-6 ).
+    setDescription( "Solid bulk modulus" );
 }
 
 void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
@@ -49,7 +55,7 @@ void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
 {
   PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_volStrainIncrement.resize( 0, numConstitutivePointsPerParentIndex );
+  m_meanStressIncrement.resize( 0, numConstitutivePointsPerParentIndex );
 }
 
 void BiotPorosity::postProcessInput()
