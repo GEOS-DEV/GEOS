@@ -22,9 +22,9 @@
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 namespace geosx
 {
@@ -107,16 +107,16 @@ public:
           inputMatrix,
           inputRhs ),
     m_X( nodeManager.referencePosition()),
-    m_disp( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
-    m_uhat( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::incrementalDisplacement >() ),
+    m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
+    m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_density( inputConstitutiveType.getDensity() ),
-    m_initialFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::initialPressure >() ),
-    m_fluidPressure_n( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >() ),
-    m_fluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
-    m_initialTemperature( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::initialTemperature >() ),
-    m_temperature_n( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature_n >() ),
-    m_temperature( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature >() )
+    m_initialFluidPressure( elementSubRegion.template getField< fields::flow::initialPressure >() ),
+    m_fluidPressure_n( elementSubRegion.template getField< fields::flow::pressure_n >() ),
+    m_fluidPressure( elementSubRegion.template getField< fields::flow::pressure >() ),
+    m_initialTemperature( elementSubRegion.template getField< fields::flow::initialTemperature >() ),
+    m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() ),
+    m_temperature( elementSubRegion.template getField< fields::flow::temperature >() )
   {}
 
   //*****************************************************************************

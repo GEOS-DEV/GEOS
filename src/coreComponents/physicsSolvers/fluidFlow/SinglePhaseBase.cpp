@@ -408,8 +408,8 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
       if( m_isThermal )
       {
-        arrayView1d< real64 const > const temp = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
-        arrayView1d< real64 > const tempInit   = subRegion.getExtrinsicData< extrinsicMeshData::flow::initialTemperature >();
+        arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
+        arrayView1d< real64 > const tempInit   = subRegion.getField< fields::flow::initialTemperature >();
         tempInit.setValues< parallelDevicePolicy<> >( temp );
       }
     } );
