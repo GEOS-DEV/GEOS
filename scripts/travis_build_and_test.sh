@@ -75,9 +75,9 @@ fi
 # "Make" target check (builds geosx executable target only if true)
 # Use one process to prevent out-of-memory error
 if [[ "$*" == *--build-exe-only* ]]; then
-  or_die make -j $(nproc) geosx
+  or_die make -j $(nproc) geosx VERBOSE=1
 else
-  or_die make -j $(nproc) geosx
+  or_die make -j $(nproc) geosx VERBOSE=1
   make -j $(nproc)
   or_die make -j 2
 
@@ -85,7 +85,7 @@ else
   if [[ "$*" == *--reduce-install-logs* ]]; then
     or_die make install
   else
-    or_die make install
+    or_die make install VERBOSE=1
   fi
 fi
 
