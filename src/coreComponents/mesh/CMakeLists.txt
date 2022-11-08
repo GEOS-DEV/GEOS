@@ -11,7 +11,7 @@ set( mesh_headers
      ElementType.hpp
      EmbeddedSurfaceNodeManager.hpp
      EmbeddedSurfaceSubRegion.hpp
-     ExtrinsicMeshData.hpp
+     MeshFields.hpp
      FaceElementSubRegion.hpp
      FaceManager.hpp
      FieldIdentifiers.hpp
@@ -25,7 +25,7 @@ set( mesh_headers
      ObjectManagerBase.hpp
      Perforation.hpp
      PerforationData.hpp
-     PerforationExtrinsicData.hpp	     
+     PerforationFields.hpp
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
