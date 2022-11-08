@@ -150,18 +150,22 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
 
   WaveSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  localIndex numNodesPerElem = getNumNodesPerElem();
 
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
+  m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
+  m_sourceConstantsx.resize( numSourcesGlobal, numNodesPerElem );
+  m_sourceConstantsy.resize( numSourcesGlobal, numNodesPerElem );
+  m_sourceConstantsz.resize( numSourcesGlobal, numNodesPerElem );
 
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
+  m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
+  m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
+  m_receiverIsLocal.resize( numReceiversGlobal );
 
-  FiniteElementDiscretization const * const
-  feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOSX_THROW_IF( feDiscretization == nullptr,
-                  getName() << ": FE discretization not found: " << m_discretizationName,
-                  InputError );
+  m_displacementXNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_displacementYNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_displacementZNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
 
 
 }
@@ -343,12 +347,14 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
       elasticWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
+        numNodesPerElem,
         numFacesPerElem,
         X,
         elemGhostRank,
