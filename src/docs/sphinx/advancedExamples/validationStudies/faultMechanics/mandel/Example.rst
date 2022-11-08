@@ -191,7 +191,7 @@ Initial and boundary conditions
 
 Next, we specify two fields:
 
-  - The initial value (the displacements and pore pressure have to be initialized, corresponding to the undrained response),
+  - The initial value (the displacements, effective stress, and pore pressure have to be initialized, corresponding to the undrained response),
   - The boundary conditions (the vertical displacement applied at the loaded boundary and the constraints of the outer boundaries have to be set).
 
 In this example, the analytical z-displacement is applied at the top surface (``zpos``) of computational domain to enforce the rigid plate condition.

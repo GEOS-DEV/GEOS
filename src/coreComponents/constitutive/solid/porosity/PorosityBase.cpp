@@ -17,7 +17,7 @@
  */
 
 #include "constitutive/solid/porosity/PorosityBase.hpp"
-#include "constitutive/solid/porosity/PorosityExtrinsicData.hpp"
+#include "constitutive/solid/porosity/PorosityFields.hpp"
 
 namespace geosx
 {
@@ -42,17 +42,17 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default value of the reference porosity" );
 
-  registerExtrinsicData( extrinsicMeshData::porosity::porosity{}, &m_newPorosity );
+  registerField( fields::porosity::porosity{}, &m_newPorosity );
 
-  registerExtrinsicData( extrinsicMeshData::porosity::porosity_n{}, &m_porosity_n );
+  registerField( fields::porosity::porosity_n{}, &m_porosity_n );
 
-  registerExtrinsicData( extrinsicMeshData::porosity::dPorosity_dPressure{}, &m_dPorosity_dPressure );
+  registerField( fields::porosity::dPorosity_dPressure{}, &m_dPorosity_dPressure );
 
-  registerExtrinsicData( extrinsicMeshData::porosity::dPorosity_dTemperature{}, &m_dPorosity_dTemperature );
+  registerField( fields::porosity::dPorosity_dTemperature{}, &m_dPorosity_dTemperature );
 
-  registerExtrinsicData( extrinsicMeshData::porosity::initialPorosity{}, &m_initialPorosity );
+  registerField( fields::porosity::initialPorosity{}, &m_initialPorosity );
 
-  registerExtrinsicData( extrinsicMeshData::porosity::referencePorosity{}, &m_referencePorosity );
+  registerField( fields::porosity::referencePorosity{}, &m_referencePorosity );
 }
 
 void PorosityBase::allocateConstitutiveData( dataRepository::Group & parent,
@@ -69,7 +69,7 @@ void PorosityBase::allocateConstitutiveData( dataRepository::Group & parent,
 
 void PorosityBase::postProcessInput()
 {
-  getExtrinsicData< extrinsicMeshData::porosity::referencePorosity >().
+  getField< fields::porosity::referencePorosity >().
     setApplyDefaultValue( m_defaultReferencePorosity );
 }
 
