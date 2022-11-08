@@ -276,7 +276,7 @@ public:
   auto operator[]( int const & ei ) const
   {
     const localIndex iCellBlock = getCellBlockIndex( ei );
-    arrayView2d< localIndex const > const e2f = m_elemToFacesMaps[iCellBlock];
+    arrayView2d< localIndex const > const & e2f = m_elemToFacesMaps[iCellBlock];
     return e2f[ei - getElementCellBlockOffset( iCellBlock )];
   }
 
