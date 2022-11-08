@@ -27,7 +27,7 @@ using namespace dataRepository;
 
 WellElementRegion::WellElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent ),
-  m_subRegionName( name+"uniqueSubRegion" ),
+  m_subRegionName( name+"UniqueSubRegion" ),
   m_wellControlsName( "" ),
   m_wellGeneratorName( "" )
 {

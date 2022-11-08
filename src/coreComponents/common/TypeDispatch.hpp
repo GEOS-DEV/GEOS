@@ -180,7 +180,7 @@ using IntegralTypes = TypeList< integer, localIndex, globalIndex >;
 /**
  * @brief List of major real-valued (floating point) types used in GEOSX type system.
  */
-using RealTypes = TypeList< real64 >;
+using RealTypes = TypeList< real32, real64 >;
 
 /**
  * @brief Generate a list of types representing array dimensionalities from M up to (and including) @p N.

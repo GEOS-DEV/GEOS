@@ -124,6 +124,11 @@ public:
 
   void setInitialCrackNodes( arrayView1d< localIndex > const & fracturedNodes );                                                              
 
+  void applyIrreversibilityConstraint( DofManager const & dofManager,
+                                       DomainPartition & domain,
+                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       arrayView1d< real64 > const & localRhs );
+
   enum class timeIntegrationOption
   {
     SteadyState,
@@ -135,6 +140,8 @@ public:
   {
     static constexpr char const * coeffNameString() { return "coeffField"; }
     static constexpr char const * localDissipationOptionString() { return "localDissipation"; }
+    static constexpr char const * irreversibilityFlagString() { return "irreversibilityFlag"; }
+    static constexpr char const * damageUpperBoundString() { return "damageUpperBound"; }
     static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
 
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
@@ -164,6 +171,8 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
+  integer m_irreversibilityFlag;
+  real64 m_damageUpperBound;
 
   array1d< real64 > m_coeff;
   array1d< localIndex > m_initialCrack;

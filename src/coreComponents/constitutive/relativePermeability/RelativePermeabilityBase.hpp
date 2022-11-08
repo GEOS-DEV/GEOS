@@ -60,12 +60,13 @@ protected:
   RelativePermeabilityBaseUpdate( arrayView1d< integer const > const & phaseTypes,
                                   arrayView1d< integer const > const & phaseOrder,
                                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                                  arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
+                                  arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+                                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
     : m_phaseTypes( phaseTypes ),
     m_phaseOrder( phaseOrder ),
     m_phaseRelPerm( phaseRelPerm ),
-    m_dPhaseRelPerm_dPhaseVolFrac( dPhaseRelPerm_dPhaseVolFrac )
-  {}
+    m_dPhaseRelPerm_dPhaseVolFrac( dPhaseRelPerm_dPhaseVolFrac ),
+    m_phaseTrappedVolFrac( phaseTrappedVolFrac ) {}
 
   arrayView1d< integer const > m_phaseTypes;
   arrayView1d< integer const > m_phaseOrder;
@@ -73,8 +74,9 @@ protected:
   arrayView3d< real64, relperm::USD_RELPERM > m_phaseRelPerm;
   arrayView4d< real64, relperm::USD_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
 
-private:
+  arrayView3d< real64, relperm::USD_RELPERM > m_phaseTrappedVolFrac;
 
+private:
   GEOSX_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
@@ -126,6 +128,8 @@ public:
 
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
+  arrayView3d< real64 const, relperm::USD_RELPERM > phaseTrappedVolFraction() const { return m_phaseTrappedVolFrac; }
+
   arrayView3d< real64 const, relperm::USD_RELPERM > phaseRelPerm() const { return m_phaseRelPerm; }
   arrayView4d< real64 const, relperm::USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
 
@@ -169,8 +173,10 @@ protected:
   array1d< integer > m_phaseOrder;
 
   // output quantities
-  array3d< real64, relperm::LAYOUT_RELPERM >  m_phaseRelPerm;
-  array4d< real64, relperm::LAYOUT_RELPERM_DS >  m_dPhaseRelPerm_dPhaseVolFrac;
+  array3d< real64, relperm::LAYOUT_RELPERM > m_phaseRelPerm;
+  array4d< real64, relperm::LAYOUT_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
+  array3d< real64, relperm::LAYOUT_RELPERM > m_phaseTrappedVolFrac;
+
 };
 
 } // namespace constitutive

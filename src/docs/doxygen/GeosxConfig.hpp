@@ -32,6 +32,9 @@
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #define GEOSX_USE_CUDA
 
+/// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
+#define GEOSX_USE_CUDA_NVTOOLSEXT
+
 /// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
 #define GEOSX_USE_PVTPackage
 

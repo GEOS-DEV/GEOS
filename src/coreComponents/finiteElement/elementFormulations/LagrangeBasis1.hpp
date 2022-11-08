@@ -213,7 +213,7 @@ public:
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    static void value( const real64 (& coords)[3],
+    static void value( real64 const (&coords)[3],
                        real64 (& N)[numSupportPoints] )
     {
       for( int a=0; a<2; ++a )

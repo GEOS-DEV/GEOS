@@ -10,6 +10,8 @@
       discretization="fluidTPFA"
       temperature="313.15"
       initialDt="1"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
       useMass="1"
       targetRegions="{ aquiferTop, aquiferBottom, injectionWell, leakyWell }">
       <NonlinearSolverParameters

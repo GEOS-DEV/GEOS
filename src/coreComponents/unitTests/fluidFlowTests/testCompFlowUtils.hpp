@@ -211,7 +211,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
 
-  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
+  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
   topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
   elementManager.processInputFileRecursive( topLevelNode );
 
@@ -226,10 +226,10 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
 {
   integer const numComp = solver.numFluidComponents();
 
-  solver.forMeshTargets( domain.getMeshBodies(),
-                         [&]( string const,
-                              MeshLevel & mesh,
-                              arrayView1d< string const > const & regionNames )
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                         [&]( string const,
+                                              MeshLevel & mesh,
+                                              arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -310,10 +310,10 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
   integer const numComp = solver.numFluidComponents();
   integer const numPhase = solver.numFluidPhases();
 
-  solver.forMeshTargets( domain.getMeshBodies(),
-                         [&]( string const,
-                              MeshLevel & mesh,
-                              arrayView1d< string const > const & regionNames )
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                         [&]( string const,
+                                              MeshLevel & mesh,
+                                              arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -474,10 +474,10 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
   integer const numComp = solver.numFluidComponents();
   integer const numPhase = solver.numFluidPhases();
 
-  solver.forMeshTargets( domain.getMeshBodies(),
-                         [&]( string const,
-                              MeshLevel & mesh,
-                              arrayView1d< string const > const & regionNames )
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                         [&]( string const,
+                                              MeshLevel & mesh,
+                                              arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -644,9 +644,9 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
   DofManager const & dofManager = solver.getDofManager();
   string const elemDofKey = dofManager.getKey( COMPOSITIONAL_SOLVER::viewKeyStruct::elemDofFieldString() );
 
-  solver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                       MeshLevel & mesh,
-                                                       arrayView1d< string const > const & regionNames )
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                       MeshLevel & mesh,
+                                                                       arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,

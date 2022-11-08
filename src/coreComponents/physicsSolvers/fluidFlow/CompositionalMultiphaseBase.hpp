@@ -221,7 +221,20 @@ public:
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
+
+
+    // time stepping controls
+
+    static constexpr char const * solutionChangeScalingFactorString() { return "solutionChangeScalingFactor"; }
+    static constexpr char const * targetRelativePresChangeString() { return "targetRelativePressureChangeInTimeStep"; }
+    static constexpr char const * targetRelativeTempChangeString() { return "targetRelativeTemperatureChangeInTimeStep"; }
+    static constexpr char const * targetPhaseVolFracChangeString() { return "targetPhaseVolFractionChangeInTimeStep"; }
+
+    // nonlinear solver parameters
+
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
+    static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
+    static constexpr char const * maxRelativeTempChangeString() { return "maxRelativeTemperatureChange"; }
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
 
   };
@@ -296,6 +309,9 @@ public:
    */
   void chopNegativeDensities( DomainPartition & domain );
 
+  virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
+                                              DomainPartition & domain ) override;
+
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
 protected:
@@ -354,8 +370,26 @@ protected:
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
 
-  /// maximum (absolute) change in a component fraction between two Newton iterations
+  /// maximum (absolute) change in a component fraction in a Newton iteration
   real64 m_maxCompFracChange;
+
+  /// maximum (relative) change in pressure in a Newton iteration
+  real64 m_maxRelativePresChange;
+
+  /// maximum (relative) change in temperature in a Newton iteration
+  real64 m_maxRelativeTempChange;
+
+  /// damping factor for solution change targets
+  real64 m_solutionChangeScalingFactor;
+
+  /// target (relative) change in pressure in a time step
+  real64 m_targetRelativePresChange;
+
+  /// target (relative) change in temperature in a time step
+  real64 m_targetRelativeTempChange;
+
+  /// target (absolute) change in phase volume fraction in a time step
+  real64 m_targetPhaseVolFracChange;
 
   /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
   real64 m_minScalingFactor;

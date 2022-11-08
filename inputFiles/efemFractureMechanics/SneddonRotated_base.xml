@@ -32,6 +32,7 @@
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
+      discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="1"
@@ -124,7 +125,7 @@
     <FieldSpecification
       name="Traction"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      objectPath="ElementRegions/Fracture"
       fieldName="traction"
       component="0"
       scale="-1.00e5"/>

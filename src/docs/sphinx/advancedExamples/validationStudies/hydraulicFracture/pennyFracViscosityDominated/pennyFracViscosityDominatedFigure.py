@@ -40,7 +40,7 @@ def getParametersFromXML(xmlFilePath):
 
 
 def main():
-    xmlFilePathPrefix = "../../../../../../../inputFiles/hydraulicFracturing/pennyShapedViscosityDominated"    
+    xmlFilePathPrefix = "../../../../../../../inputFiles/hydraulicFracturing/pennyShapedViscosityDominated"
 
     tMax, E, nu, KIC, mu, Q0, xSource = getParametersFromXML(xmlFilePathPrefix)
     Ep = E / (1.0 - nu**2.0)

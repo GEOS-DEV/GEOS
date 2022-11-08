@@ -11,7 +11,6 @@
       surfaceGeneratorName="SurfaceGen"
       couplingTypeOption="FIM"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="2">
@@ -46,7 +45,6 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
-      
       rockToughness="1e6"
       mpiCommOrder="1"/>
     <!-- Sphinx_Solvers_SurfaceGenerator_End -->

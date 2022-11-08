@@ -26,8 +26,6 @@
 namespace geosx
 {
 
-class NodeManager;
-
 /**
  * @brief The ObjectManagerBase is the base object of all object managers in the mesh data hierachy.
  */
@@ -343,33 +341,23 @@ public:
   void constructGlobalToLocalMap();
 
   /**
-   * @brief Computes the (local) index list that are domain boundaries.
-   * @param[in,out] objectList Container that is filled with the local indices.
-   *
-   * Note that @p objectList is not cleared and domain boundary indices are only appended.
-   */
-  void constructLocalListOfBoundaryObjects( localIndex_array & objectList ) const;
-
-  /**
    * @brief Computes the (global) index list that are domain boundaries.
-   * @param[in,out] objectList Sorted container that is filled with the global indices.
-   *
-   * Note that @p objectList is not cleared and domain boundary indices are only appended.
+   * @return Sorted container that is filled with the global indices.
    */
-  void constructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const;
+  array1d< globalIndex > constructGlobalListOfBoundaryObjects() const;
 
   /**
    * @brief Extract map from object and assign global indices.
    * @param nodeManager The node manager.
-   * @param map The map.
+   * @return The map.
    *
    * Dummy version, needs to be specialised by derived classes.
    */
-  virtual void extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager const & nodeManager,
-                                                                std::vector< std::vector< globalIndex > > & map )
+  virtual ArrayOfSets< globalIndex >
+  extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager )
   {
     GEOSX_UNUSED_VAR( nodeManager );
-    GEOSX_UNUSED_VAR( map );
+    return {};
   }
 
   /**

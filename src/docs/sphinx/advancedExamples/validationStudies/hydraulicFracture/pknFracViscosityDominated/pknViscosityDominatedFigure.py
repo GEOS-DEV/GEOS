@@ -65,7 +65,7 @@ def getParametersFromXML(xmlFilePath):
 
 
 def main():
-    xmlFilePathPrefix = "../../../../../../../inputFiles/hydraulicFracturing/pknViscosityDominated" 
+    xmlFilePathPrefix = "../../../../../../../inputFiles/hydraulicFracturing/pknViscosityDominated"
 
     tMax, E, nu, KIC, mu, Q0, h = getParametersFromXML(xmlFilePathPrefix)
 

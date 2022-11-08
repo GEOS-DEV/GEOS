@@ -87,6 +87,7 @@ Module Classes
     Return a list of the wrappers.
 
   .. py:method:: get_group(path)
+    :noindex:
 
   .. py:method:: get_group(path, default)
 
@@ -95,6 +96,7 @@ Module Classes
     otherwise return ``default``.
 
   .. py:method:: get_wrapper(path)
+    :noindex:
 
   .. py:method:: get_wrapper(path, default)
 

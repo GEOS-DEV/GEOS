@@ -143,9 +143,9 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
-  forMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & meshLevel,
-                                    arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & meshLevel,
+                                                    arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodes = meshLevel.getNodeManager();
 
@@ -263,9 +263,9 @@ void SolidMechanicsLagrangianFEM::initializePreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & meshLevel,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & meshLevel,
+                                                                arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
     elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
@@ -335,10 +335,10 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  forMeshTargets( domain.getMeshBodies(),
-                  [&]( string const &,
-                       MeshLevel & mesh,
-                       auto const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                  [&]( string const &,
+                                       MeshLevel & mesh,
+                                       auto const & regionNames )
   {
     NodeManager & nodes = mesh.getNodeManager();
     Group & nodeSets = nodes.sets();
@@ -528,9 +528,9 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
   #define USE_PHYSICS_LOOP
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodes = mesh.getNodeManager();
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
@@ -659,9 +659,9 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
 
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
 
     fsManager.apply< NodeManager >( time,
@@ -693,9 +693,9 @@ void SolidMechanicsLagrangianFEM::applyTractionBC( real64 const time,
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
 
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -730,10 +730,9 @@ void SolidMechanicsLagrangianFEM::applyChomboPressure( DofManager const & dofMan
                                                        DomainPartition & domain,
                                                        arrayView1d< real64 > const & localRhs )
 {
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
-
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -776,9 +775,9 @@ SolidMechanicsLagrangianFEM::
                      DomainPartition & domain )
 {
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -854,9 +853,9 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
                                                         real64 const & dt,
                                                         DomainPartition & domain )
 {
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     localIndex const numNodes = nodeManager.size();
@@ -915,7 +914,7 @@ void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOSX_UNUSE
   dofManager.addField( keys::TotalDisplacement,
                        FieldLocation::Node,
                        3,
-                       m_meshTargets );
+                       getMeshTargets() );
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           keys::TotalDisplacement,
@@ -937,9 +936,9 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
                                                   dofManager.numGlobalDofs(),
                                                   8*8*3*1.2 );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
 
     NodeManager const & nodeManager = mesh.getNodeManager();
@@ -1030,12 +1029,11 @@ SolidMechanicsLagrangianFEM::
                            arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
@@ -1064,12 +1062,12 @@ SolidMechanicsLagrangianFEM::
   } );
 
   applyTractionBC( time_n + dt, dofManager, domain, localRhs );
-  
-  FaceManager const & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager(); //hard coded meshBody may need to be updated
+
+  FaceManager const & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
 
   if( faceManager.hasWrapper( "ChomboPressure" ) )
   {
-    fsManager.applyFieldValue( time_n, domain.getMeshBody( 0 ).getMeshLevel( 0 ), "ChomboPressure" );
+    fsManager.applyFieldValue( time_n, domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ), "ChomboPressure" );
     applyChomboPressure( dofManager, domain, localRhs );
   }
 
@@ -1091,10 +1089,9 @@ SolidMechanicsLagrangianFEM::
 
   real64 totalResidualNorm = 0.0;
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & )
-
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
 
@@ -1205,9 +1202,9 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
   }
   //     
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
 
   {
     FieldIdentifiers fieldsToBeSync;
@@ -1224,9 +1221,9 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
 void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -1255,10 +1252,9 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
 
   if( m_contactRelationName != viewKeyStruct::noContactRelationNameString() )
   {
-    forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                  MeshLevel & mesh,
-                                                  arrayView1d< string const > const & )
-
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel & mesh,
+                                                                  arrayView1d< string const > const & )
     {
       FaceManager const & faceManager = mesh.getFaceManager();
       NodeManager & nodeManager = mesh.getNodeManager();

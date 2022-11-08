@@ -194,15 +194,11 @@ private:
    * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the CellElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
-   * @param[in] meshLevelName the name of the MeshLevel containing the nodes and elements to be output
-   * @param[in] meshBodyName the name of the MeshBody containing the nodes and elements to be output
    */
   void writeCellElementRegions( real64 time,
-                                integer const cycle,
                                 ElementRegionManager const & elemManager,
-                                NodeManager const & nodeManager, 
-                                string meshLevelName, 
-                                string meshBodyName ) const;
+                                NodeManager const & nodeManager,
+                                string const & path ) const;
 
   /**
    * @brief Writes the files containing the well representation
@@ -213,9 +209,9 @@ private:
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
   void writeWellElementRegions( real64 time,
-                                integer const cycle,
                                 ElementRegionManager const & elemManager,
-                                NodeManager const & nodeManager ) const;
+                                NodeManager const & nodeManager,
+                                string const & path ) const;
 
   /**
    * @brief Writes the files containing the faces elements
@@ -224,16 +220,12 @@ private:
    * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the FaceElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
-   * @param[in] meshLevelName the name of the MeshLevel containing the nodes and elements to be output
-   * @param[in] meshBodyName the name of the MeshBody containing the nodes and elements to be output
    */
   void writeSurfaceElementRegions( real64 time,
-                                   integer const cycle,
                                    ElementRegionManager const & elemManager,
                                    NodeManager const & nodeManager,
                                    EmbeddedSurfaceNodeManager const & embSurfNodeManager,
-                                   string meshLevelName, 
-                                   string meshBodyName ) const;
+                                   string const & path ) const;
 
   /**
    * @brief Writes a VTM file for the time-step \p time.
@@ -245,7 +237,7 @@ private:
 
   void writeVtmFile( integer const cycle,
                      DomainPartition const & domain,
-                     VTKVTMWriter const & vtmWriter ) const;                   
+                     VTKVTMWriter const & vtmWriter ) const;
   /**
    * @brief Write all the fields associated to the nodes of \p nodeManager if their plotlevel is <= m_plotLevel
    * @param[in] pointData a VTK object containing all the fields associated with the nodes
@@ -261,7 +253,6 @@ private:
    * @param[in] subRegion ElementRegion being written
    * @param[in] cellData a VTK object containing all the fields associated with the elements
    */
-  template< class SUBREGION >
   void writeElementFields( ElementRegionBase const & subRegion,
                            vtkCellData * cellData ) const;
 
@@ -271,11 +262,9 @@ private:
    * it contains the cells connectivities and the vertices coordinates as long as the
    * data fields associated with it
    * @param[in] ug a VTK SmartPointer to the VTK unstructured grid.
-   * @param[in] cycle the current cycle number
-   * @param[in] name the name of the ElementRegionBase to be written
+   * @param[in] path directory path for the grid file
    */
-  void writeUnstructuredGrid( integer const cycle,
-                              string const & name,
+  void writeUnstructuredGrid( string const & path,
                               vtkUnstructuredGrid * ug ) const;
 
 private:

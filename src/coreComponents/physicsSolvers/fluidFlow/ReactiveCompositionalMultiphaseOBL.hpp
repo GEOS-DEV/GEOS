@@ -276,6 +276,23 @@ public:
                          arrayView1d< real64 > const & localRhs ) const;
 
   /**
+   * @brief Apply source flux boundary conditions to the system
+   * @param time current time
+   * @param dt time step
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param domain the domain
+   * @param localMatrix local system matrix
+   * @param localRhs local system right-hand side vector
+   */
+  void applySourceFluxBC( real64 const time,
+                          real64 const dt,
+                          DofManager const & dofManager,
+                          DomainPartition & domain,
+                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          arrayView1d< real64 > const & localRhs ) const;
+
+
+  /**
    * @brief Sets all the primary variables, which are outside of defined OBL parametrization limits, to be inside them
    * Helps to evaluate correct operator values/derivatives when a disturbed solution is obtained from a previous Newton iteration
    * Does not help in case if the model is defined inconsistently:
@@ -283,7 +300,7 @@ public:
    *    In that case, the solution will be chopped all the time and Newton will never converge
    * @param domain the physical domain object
    */
-  void chopPrimaryVariablesToOBLLimits( DomainPartition & domain );
+  void chopPrimaryVariables( DomainPartition & domain );
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
