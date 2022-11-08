@@ -47,6 +47,7 @@
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
+      discretization="FE1"
       targetRegions="{base/base_cer,base/Fracture_cer}"
       fractureRegion="Fracture_cer"
       logLevel="1"
@@ -203,7 +204,7 @@
   <FieldSpecifications>
     <FieldSpecification
       name="ypos"
-      objectPath="base/Level0/nodeManager"
+      objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="1"
       scale="1.0e-7"
@@ -212,7 +213,7 @@
 
     <FieldSpecification
       name="yneg"
-      objectPath="base/Level0/nodeManager"
+      objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="1"
       scale="-1.0e-7"
@@ -221,14 +222,14 @@
 
     <FieldSpecification
       name="xconstraint"
-      objectPath="base/Level0/nodeManager"
+      objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="0"
       setNames="{ xpos }"/>
 
     <FieldSpecification
       name="zconstraint"
-      objectPath="base/Level0/nodeManager"
+      objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="2"
       setNames="{ all }"/>
@@ -247,12 +248,12 @@
         values="{ 0, 501 }"/>
   </Functions>
 
-  <Tasks>
+  <!-- <Tasks>
     <PackCollection
       name="displacementJumpCollection"
       objectPath="ElementRegions/Fracture_cer/embeddedSurfaceSubRegion"
       fieldName="displacementJump"/>
-    </Tasks>
+    </Tasks> -->
 
   <Outputs>
     <Silo

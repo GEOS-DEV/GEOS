@@ -74,8 +74,8 @@ public:
                             integer const cycleNumber,
                             DomainPartition & domain );
 
-  virtual void setNextDt( real64 const & currentDt,
-                          real64 & nextDt ) override;
+  // virtual void setNextDt( real64 const & currentDt,
+  //                         real64 & nextDt ) override;
 
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
@@ -122,7 +122,7 @@ private:
   PhaseFieldFractureSolver * m_patchSolver;
 
   integer m_maxNumResolves;
-  integer m_numResolves[2];
+  //integer m_numResolves[2];
 
 };
 

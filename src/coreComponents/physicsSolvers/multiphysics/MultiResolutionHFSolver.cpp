@@ -361,12 +361,12 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
 
     //we probably want to run a phase-field solve in the patch problem at timestep 0 to get a smooth initial crack. Also, re-run this
     // anytime the base crack changes
-    map< string, array1d< string > > const & baseTargets = baseSolver.getReference< map< string, array1d< string > > >( SolverBase::viewKeyStruct::meshTargetsString());
-    auto const baseTarget = baseTargets.begin();
-    map< string, array1d< string > > const & patchTargets = patchSolver.getReference< map< string, array1d< string > > >( SolverBase::viewKeyStruct::meshTargetsString());
-    auto const patchTarget = patchTargets.begin();
+    map< std::pair< string, string >, array1d< string > > const & baseTargets = baseSolver.getReference< map< std::pair< string, string >, array1d< string > > >( SolverBase::viewKeyStruct::meshTargetsString());
+    auto const baseTarget = baseTargets.begin()->first;
+    map< std::pair< string, string >, array1d< string > > const & patchTargets = patchSolver.getReference< map< std::pair< string, string >, array1d< string > > >( SolverBase::viewKeyStruct::meshTargetsString());
+    auto const patchTarget = patchTargets.begin()->first;
     CRSMatrix< real64 , globalIndex > & patchDamageLocalMatrix = patchDamageSolver.getLocalMatrix();
-    this->setInitialCrackDamageBCs( patchDamageSolver.getDofManager(), patchDamageLocalMatrix.toViewConstSizes(), domain.getMeshBody( patchTarget->first ).getMeshLevel( 0 ), domain.getMeshBody( baseTarget->first ).getMeshLevel( 0 ) );
+    this->setInitialCrackDamageBCs( patchDamageSolver.getDofManager(), patchDamageLocalMatrix.toViewConstSizes(), domain.getMeshBody( patchTarget.first ).getBaseDiscretization(), domain.getMeshBody( baseTarget.first ).getBaseDiscretization() );
     patchDamageSolver.setInitialCrackNodes( m_nodeFixDamage );
     //patchSolver.addCustomBCDamage(m_nodeFixDamage); //this function still doesnt exist
     //must prescribe the damage boundary conditions based on the location of the base crack relative to the subdomain mesh
@@ -402,7 +402,7 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
     }
 
     //here, before calling the nonlinarImplicitStep of the patch solver, we must prescribe the displacement boundary conditions
-    this->prepareSubProblemBCs( domain.getMeshBody( baseTarget->first ).getMeshLevel( 0 ), domain.getMeshBody( patchTarget->first ).getMeshLevel( 0 ));
+    this->prepareSubProblemBCs( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), domain.getMeshBody( patchTarget.first ).getBaseDiscretization());
 
     //write disp BCs to local disp solver
     patchSolidSolver.setInternalBoundaryConditions( m_nodeFixDisp, m_fixedDispList );
@@ -441,17 +441,17 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
 
 // Andre - 14/03/22 - This can probably be made trivial in the MR case
 
-void MultiResolutionHFSolver::setNextDt( real64 const & currentDt,
-                                         real64 & nextDt )
-{
+// void MultiResolutionHFSolver::setNextDt( real64 const & currentDt,
+//                                          real64 & nextDt )
+// {
 
-  if( m_numResolves[0] == 0 && m_numResolves[1] == 0 )
-  {
-    this->setNextDtBasedOnNewtonIter( currentDt, nextDt );
-  }
+//   if( m_numResolves[0] == 0 && m_numResolves[1] == 0 )
+//   {
+//     this->setNextDtBasedOnNewtonIter( currentDt, nextDt );
+//   }
 
-  GEOSX_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );
-}
+//   GEOSX_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );
+// }
 
 REGISTER_CATALOG_ENTRY( SolverBase, MultiResolutionHFSolver, string const &, Group * const )
 } /* namespace geosx */

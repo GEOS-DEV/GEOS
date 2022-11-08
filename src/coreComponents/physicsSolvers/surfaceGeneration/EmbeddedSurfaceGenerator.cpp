@@ -105,9 +105,9 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();
 
   // Get meshLevel
- forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                               MeshLevel & meshLevel,
-                                               arrayView1d< string const > const &  )
+ forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                               MeshLevel & meshLevel,
+                                                               arrayView1d< string const > const &  )
     {
 
       // Get managers

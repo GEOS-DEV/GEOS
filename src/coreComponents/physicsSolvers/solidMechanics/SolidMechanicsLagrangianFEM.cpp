@@ -1184,7 +1184,7 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                scalingFactor );
 
   //Add print of total displacement for debugging purposes
-  NodeManager const & nodeManager = domain.getMeshBody( 1 ).getMeshLevel( 0 ).getNodeManager();   
+  NodeManager const & nodeManager = domain.getMeshBody( 1 ).getBaseDiscretization().getNodeManager();   
   arrayView2d< real64 const > const totDisp = nodeManager.totalDisplacement();
   localIndex const numDofs = localSolution.size();
   if( getLogLevel() == 2 )
@@ -1405,13 +1405,13 @@ void SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit( real64 co
     std::cout << localMatrix.toViewConst();
   }
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     //const NodeManager & nodeManager = mesh.getNodeManager();
     //THIS CALL TO GET NODE MANAGER IS NOT ROBUST
-    NodeManager const & nodeManager = domain.getMeshBody( 1 ).getMeshLevel( 0 ).getNodeManager();
+    NodeManager const & nodeManager = domain.getMeshBody( 1 ).getBaseDiscretization().getNodeManager();
     arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofKey );
     arrayView2d< real64 const > const nodalDisplacements = nodeManager.getReference< array2d< real64 > >( keys::TotalDisplacement );
     

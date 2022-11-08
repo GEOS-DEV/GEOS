@@ -204,7 +204,7 @@ void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM(
                                      DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
-  dofManager.addField( m_fieldName,
+  dofManager.addField( m_damageName,
                        FieldLocation::Node,
                        1,
                        getMeshTargets() );
@@ -630,7 +630,7 @@ void PhaseFieldDamageFEM::setInitialCrackDamageBCs( DomainPartition & domain,
     std::cout << localMatrix.toViewConst();
   }
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -679,9 +679,9 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< globalIndex const > const dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+    arrayView1d< globalIndex const > const dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_damageName ) );
 
-    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( m_fieldName );
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( m_damageName );
 
     globalIndex const rankOffSet = dofManager.rankOffset();
 
