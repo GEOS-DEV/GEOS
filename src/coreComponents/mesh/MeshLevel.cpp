@@ -102,7 +102,8 @@ MeshLevel::MeshLevel( string const & name,
                       int const order ):
   MeshLevel( name, parent )
 {
-  GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel cellBlockManager.getName()="<<cellBlockManager.getName());  
+
+  GEOSX_MARK_FUNCTION;
   localIndex const numBasisSupportPoints = order+1;
 
 
@@ -111,10 +112,9 @@ MeshLevel::MeshLevel( string const & name,
   localIndex const numNonVertexNodesPerEdge = numNodesPerEdge - 2;
 
   m_edgeManager->resize( source.m_edgeManager->size() );
-//  EdgeManager::NodeMapType const & edgesToNodesSource = source.m_edgeManager->nodeList();
-//  EdgeManager::NodeMapType const & edgesToNodes = m_edgeManager->nodeList();
-
   localIndex const numInternalEdgeNodes = m_edgeManager->size() * numNonVertexNodesPerEdge;
+
+  //GEOSX_LOG_RANK( "INFO: m_edgeManager->nodeList()="<<m_edgeManager->nodeList());
 
   m_faceManager->resize( source.m_faceManager->size() );
   m_faceManager->edgeList() = source.m_faceManager->edgeList();
@@ -122,29 +122,35 @@ MeshLevel::MeshLevel( string const & name,
   m_faceManager->faceNormal() = source.m_faceManager->faceNormal();
 
   // Faces
-//  ArrayOfArraysView< localIndex const > const facesToNodesMapSource = m_faceManager->nodeList().toViewConst();
   ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceManager->nodeList();
   ArrayOfArraysView< localIndex const > const & facesToEdges = m_faceManager->edgeList().toViewConst();
-  localIndex const estimatedNumNodesPerFace = pow( order+1, 2 );
-  faceToNodeMapNew.resize( faceToNodeMapNew.size(), estimatedNumNodesPerFace );
+  localIndex const numNodesPerFace = pow( order+1, 2 );
 
+  // number of elements in each row of the map as capacity
+  array1d< localIndex > counts( faceToNodeMapNew.size());
+  counts.setValues< parallelHostPolicy >( numNodesPerFace );
+
+  //  reconstructs the faceToNodeMap with the provided capacity in counts
+  faceToNodeMapNew.resizeFromCapacities< parallelHostPolicy >( faceToNodeMapNew.size(), counts.data() );
+
+  // setup initial values of the faceToNodeMap using emplaceBackAtomic
+  forAll< parallelHostPolicy >( numNodesPerFace, [faceToNodeMapNew = faceToNodeMapNew.toView()] ( localIndex faceIndex )
+  {
+    for( faceIndex =0; faceIndex < faceToNodeMapNew.size(); faceIndex++ )
+    {
+      faceToNodeMapNew.emplaceBackAtomic< AtomicPolicy< parallelHostPolicy > >( faceIndex, 0 );
+    }
+
+  } );
 
   // add the number of non-edge face nodes
   localIndex numInternalFaceNodes = 0;
+  localIndex const numNonEdgeNodesPerFace = pow( order-1, 2 );
   for( localIndex kf=0; kf<m_faceManager->size(); ++kf )
   {
     localIndex const numEdgesPerFace = facesToEdges.sizeOfArray( kf );
-//    localIndex const numVertexNodesPerFace = facesToNodesMapSource.sizeOfArray( kf );
-//    localIndex const numEdgeNodesPerFace = numVertexNodesPerFace + numEdgesPerFace * numNonVertexNodesPerEdge;
-
     if( numEdgesPerFace==4 )
-    {
-      localIndex const numNonEdgeNodesPerFace = pow( order-1, 2 );
       numInternalFaceNodes += numNonEdgeNodesPerFace;
-
-      localIndex const numNodesPerFace = pow( order+1, 2 );
-      faceToNodeMapNew.resizeArray( kf, numNodesPerFace );
-    }
     else
     {
       GEOSX_ERROR( "need more support for face geometry" );
@@ -188,14 +194,19 @@ MeshLevel::MeshLevel( string const & name,
 
   }
 
+  ArrayOfArraysView< localIndex const > const & faceToNodeMapSource = source.m_faceManager->nodeList().toViewConst();
 
+  FaceManager::ElemMapType const & faceToElem = source.m_faceManager->toElementRelation();
 
-  //ArrayOfArraysView< localIndex const > const & faceToNodeMapSource = source.m_faceManager->nodeList().toViewConst();
-
-  //FaceManager::ElemMapType const & faceToElem = source.m_faceManager->toElementRelation();
-
-  //arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
-
+  // faceToElemIndex represents the face to element map
+  // faceToElemIndex.size(0) is the number of faces on this partition
+  // faceToElemIndex.size(1)=2
+  //
+  // faceToElemIndex[faceId][0] is the index of the element that owns the face
+  // faceToElemIndex[faceId][1] is the index of the neighbor element that shares the face
+  // if faceToElemIndex[faceId][1] = 0 that means this face is not shared with any another element
+  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
+  //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel faceToElemIndex="<<faceToElemIndex);
 
   source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
   {
@@ -207,6 +218,21 @@ MeshLevel::MeshLevel( string const & name,
     sourceRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
     {
       localIndex const numNodesPerElem = pow( order+1, 3 );
+      array1d< localIndex > const globalInfo = cellBlockManager.setO3Information(sourceSubRegion.getName());
+
+      array1d< localIndex > numNodesInDir{3}; //= { 1, 1, 1 };
+      array1d< localIndex > numElemsInDir{3}; // = { 1, 1, 1 };
+
+      // the m_globalInfo are passing from InternalMeshGenerator.cpp:
+      // m_globalInfo[0-2] are m_numElemsTotal
+      // m_globalInfo[3-5] are firstElemIndexInPartition 
+      // m_globalInfo[6-8] are lastElemIndexInPartition 
+      for( localIndex i = 0; i < 3; ++i )
+      {
+        numNodesInDir[i] = (globalInfo[i+6] - globalInfo[i+3]) * 3 + 4;
+        numElemsInDir[i] = (globalInfo[i+6] - globalInfo[i+3]) + 1;
+
+      }
 
       CellElementSubRegion & newSubRegion = region.getSubRegions().registerGroup< CellElementSubRegion >( sourceSubRegion.getName() );
       newSubRegion.setElementType( sourceSubRegion.getElementType() );
@@ -217,20 +243,9 @@ MeshLevel::MeshLevel( string const & name,
 
       newSubRegion.resize( sourceSubRegion.size() );
 
-      array1d< localIndex > const globalInfo = cellBlockManager.setO3Information(sourceSubRegion.getName());
-      //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel globalInfo="<<globalInfo);
-      CellBlockABC & cellBlock = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( sourceSubRegion.getName() );
 
 
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
-      array2d< localIndex, cells::NODE_MAP_PERMUTATION > & elemsToNodesNew = newSubRegion.nodeList();
-      array2d< localIndex, cells::NODE_MAP_PERMUTATION > elemsToNodes = cellBlock.getElemToNodes();
-      elemsToNodesNew =  elemsToNodes;
-
-      arrayView2d< localIndex const > const & elemToFaces = sourceSubRegion.faceList();
-      array2d< localIndex > & elemToFacesNew = newSubRegion.faceList();
-      elemToFacesNew = elemToFaces;
-
+      // copy the element local-to-global map from the base mesh-level
       arrayView1d< globalIndex const > const & elemlLocalToGlobalSrc = sourceSubRegion.localToGlobalMap();
       arrayView1d< globalIndex > const & elemlLocalToGlobalNew = newSubRegion.localToGlobalMap();
 
@@ -238,6 +253,29 @@ MeshLevel::MeshLevel( string const & name,
       {
       	elemlLocalToGlobalNew[elemIndex] = elemlLocalToGlobalSrc[elemIndex];
       }
+
+      // copy element-to-face map from base mesh-level
+      arrayView2d< localIndex const > const & elemToFaces = sourceSubRegion.faceList();
+      array2d< localIndex > & elemToFacesNew = newSubRegion.faceList();
+      elemToFacesNew = elemToFaces;
+
+       // copy element-to-face map from base mesh-level
+      arrayView2d< localIndex const > const & elemToEdges = sourceSubRegion.edgeList();
+      array2d< localIndex > & elemToEdgesNew = newSubRegion.edgeList();
+      elemToEdgesNew = elemToEdges;
+
+     // get element-to-node from cellBlock and assign to the element region's nodelist
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
+      array2d< localIndex, cells::NODE_MAP_PERMUTATION > & elemsToNodesNew = newSubRegion.nodeList();
+
+      //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel elemsToNodesSource="<<elemsToNodesSource);
+      //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel faceToNodeMapSource="<<faceToNodeMapSource);
+      //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel refPosSource="<<refPosSource);
+
+
+      CellBlockABC & cellBlock = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( sourceSubRegion.getName() );
+      array2d< localIndex, cells::NODE_MAP_PERMUTATION > elemsToNodes = cellBlock.getElemToNodes();
+      elemsToNodesNew =  elemsToNodes;
 
       // Copy a new elemCenter map from the old one
       array2d< real64 > & elemCenterNew = newSubRegion.getElementCenter();
@@ -251,21 +289,6 @@ MeshLevel::MeshLevel( string const & name,
         }
       }
 
-      for( localIndex elemIndex = 0; elemIndex < elemsToNodesNew.size( 0 ); ++elemIndex )
-      {
-         for( localIndex faceIndex = 0; faceIndex < 6; ++faceIndex )
-         {
-           getFaceNodesO3(faceIndex, elemsToNodesNew[elemIndex], faceToNodeMapNew[elemToFaces[elemIndex][faceIndex]]); 
-           //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel faceIndex="<<faceIndex<<"; faceToNodeMapNew["<<elemToFaces[elemIndex][faceIndex]<<"]="<<faceToNodeMapNew[elemToFaces[elemIndex][faceIndex]]);
-         }
-      }
-
-
-/*
-
-
-//      elemsToNodesNew.resize( elemsToNodesSource.size(0), numNodesPerElem );
-
       // Fill a temporary table which knowing the global number of a degree of freedom and a face, gives you the local number of this degree
       // of freedom on the considering face
       array2d< localIndex > localElemToLocalFace( 6, numNodesPerElem );
@@ -273,7 +296,7 @@ MeshLevel::MeshLevel( string const & name,
       //Init arrays
       for( localIndex i = 0; i < 6; ++i )
       {
-        for( localIndex j = 0; j < pow( order+1, 3 ); ++j )
+        for( localIndex j = 0; j < numNodesPerElem; ++j )
         {
           localElemToLocalFace[i][j]=-1;
         }
@@ -284,19 +307,20 @@ MeshLevel::MeshLevel( string const & name,
 
       for( localIndex i = 0; i < faceToNodeMapSource.size(); ++i )
       {
-        for( localIndex j = 0; j < pow( order+1, 2 ); ++j )
+        for( localIndex j = 0; j < numNodesPerFace; ++j )
         {
           faceToNodeMapNew[i][j] = -1;
         }
 
       }
 
+      
       //Face 0
       for( localIndex i = 0; i < order+1; i++ )
       {
         for( localIndex j = 0; j <order+1; j++ )
         {
-          localElemToLocalFace[0][i + pow( order+1, 2 )*j] = i + (order+1)*j;
+          localElemToLocalFace[0][i + numNodesPerFace * j] = i + (order+1)*j;
         }
 
       }
@@ -316,7 +340,7 @@ MeshLevel::MeshLevel( string const & name,
       {
         for( localIndex j = 0; j < order+1; j++ )
         {
-          localElemToLocalFace[2][k*pow( order+1, 2 )+j*(order+1)] = j + (order+1)*k;
+          localElemToLocalFace[2][k * numNodesPerFace +j*(order+1)] = j + (order+1)*k;
         }
 
       }
@@ -326,7 +350,7 @@ MeshLevel::MeshLevel( string const & name,
       {
         for( localIndex k = 0; k < order+1; k++ )
         {
-          localElemToLocalFace[3][order +k*(order+1)+j*pow( order+1, 2 )] = k + (order+1)*j;
+          localElemToLocalFace[3][order +k*(order+1)+j * numNodesPerFace] = k + (order+1)*j;
         }
 
       }
@@ -336,7 +360,7 @@ MeshLevel::MeshLevel( string const & name,
       {
         for( localIndex i = 0; i < order+1; i++ )
         {
-          localElemToLocalFace[4][order*(order+1)+i+j*pow( order+1, 2 )] = i + (order+1)*j;
+          localElemToLocalFace[4][order*(order+1)+i+j * numNodesPerFace] = i + (order+1)*j;
         }
 
       }
@@ -346,7 +370,7 @@ MeshLevel::MeshLevel( string const & name,
       {
         for( localIndex i = 0; i < order+1; i++ )
         {
-          localElemToLocalFace[5][order*pow( order+1, 2 )+i+k*(order+1)] = i + (order+1)*k;
+          localElemToLocalFace[5][order * numNodesPerFace +i+k*(order+1)] = i + (order+1)*k;
         }
 
       }
@@ -361,7 +385,47 @@ MeshLevel::MeshLevel( string const & name,
 
       }
 
-      localIndex count=0;
+      //localIndex count=0;
+
+
+      //GEOSX_LOG_RANK_0("!!!! INFO !!!! MeshLevel::MeshLevel localElemToLocalFace="<<localElemToLocalFace);
+      //GEOSX_LOG_RANK_0("!!!! INFO !!!! MeshLevel::MeshLevel elemToFaces="<<elemToFaces);
+      //GEOSX_LOG_RANK_0("!!!! INFO !!!! MeshLevel::MeshLevel faceToElemIndex="<<faceToElemIndex);
+
+      localIndex localElemIndex= 0;
+      // numElemsInDir[0] is the number of elements on the x direction of the current partition
+      for( localIndex i = 0; i < numElemsInDir [0]; ++i )
+      { 
+        // numElemsInDir[1] is the number of elements on the y direction of the current partition
+        for( localIndex j = 0; j < numElemsInDir[1]; ++j )
+        { 
+          // numElemsInDir[2] is the number of elements on the z direction of the current partition
+          for( localIndex k = 0; k < numElemsInDir[2]; ++k )
+          { 
+            // get the first node index in the current partition
+            localIndex firstNodeIndex = i * numNodesInDir[2] * numNodesInDir[1] * 3 + j * numNodesInDir[2] * 3 + k * 3;
+            
+            // assign the element to node index with in the current partition
+            for( localIndex zNodeIndex = 0; zNodeIndex < 4; ++zNodeIndex )
+            { 
+              for( localIndex yNodeIndex = 0; yNodeIndex < 4; ++yNodeIndex )
+              { 
+                for( localIndex xNodeIndex = 0; xNodeIndex < 4; ++xNodeIndex )
+                { 
+                  elemsToNodesNew[localElemIndex][xNodeIndex + yNodeIndex * 4 + zNodeIndex * 16 ] =
+                    // note that the indexing of elemsToNodes are in the x-y-z ordering
+                    // and it needs to consider the postion of each element in the current partition 
+                    numNodesInDir[1] * numNodesInDir[2] * xNodeIndex + numNodesInDir[2] * yNodeIndex + zNodeIndex + firstNodeIndex;
+                }
+              }
+            }
+            
+            // local node index is simply incremental
+            ++localElemIndex;
+          }
+        }
+      }
+      //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel elemsToNodesNew = "<<elemsToNodesNew);
 
       for( localIndex elem = 0; elem < elemsToNodesNew.size( 0 ); ++elem )
       {
@@ -374,25 +438,39 @@ MeshLevel::MeshLevel( string const & name,
 
               localIndex face = 0;
               localIndex foundFace = 0;
+              // the nodeindex represents the local nodeId on the elements
+              localIndex nodeindex = i + (order+1)*j + (order+1)*(order+1)*k;
+
               while( face<6 && foundFace<1 )
               {
-                localIndex m = localElemToLocalFace[face][i +(order+1)*j + pow( order+1, 2 )*k];
+   		// find the corresponding nodeIndex on the face according to the nodeIndex on the elements
+                localIndex m = localElemToLocalFace[face][nodeindex];
 
+		// if the the nodeIndex of the element is on the face
                 if( m != -1 )
                 {
+ 		  // elemToFaces is copied from source
+ 		  // if the nodeIndex of the face is already assigned (that means it's shared by neighbor)
                   if( faceToNodeMapNew[elemToFaces[elem][face]][m] != -1 )
                   {
+ 		    //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel if: faceToNodeMapNew["<<elemToFaces[elem][face]<<"]["<<m<<"] = "<<faceToNodeMapNew[elemToFaces[elem][face]][m]);
+
                     foundFace = 1;
                     for( localIndex l = 0; l < 2; ++l )
                     {
+ 		      // faceToElemIndex is copied from source as well
+                      // faceToElemIndex[faceId][0] is the index of the element that owns the face
+                      // faceToElemIndex[faceId][1] is the index of the neighbor element that shares the face
+                      // if faceToElemIndex[faceId][1] = 0 that means this face is not shared with any another element
                       localIndex elemNeighbour = faceToElemIndex[elemToFaces[elem][face]][l];
                       if( elemNeighbour != elem && elemNeighbour != -1 )
                       {
-                        for( localIndex node = 0; node < pow( order+1, 3 ); ++node )
+                        for( localIndex node = 0; node < numNodesPerElem; ++node )
                         {
                           if( elemsToNodesNew[elemNeighbour][node] == faceToNodeMapNew[elemToFaces[elem][face]][m] )
                           {
-                            elemsToNodesNew[elem][i + (order+1)*j + pow( order+1, 2 )*k] = elemsToNodesNew[elemNeighbour][node];
+                            elemsToNodesNew[elem][nodeindex] = elemsToNodesNew[elemNeighbour][node];
+ 		            //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel if face2node="<<face<<": faceToNodeMapNew["<<elemToFaces[elem][face]<<"]["<<m<<"] = "<<faceToNodeMapNew[elemToFaces[elem][face]][m]);
                             break;
                           }
                         }
@@ -401,32 +479,32 @@ MeshLevel::MeshLevel( string const & name,
                     }
                     for( localIndex face2 = 0; face2 < 6; ++face2 )
                     {
-                      localIndex m2 = localElemToLocalFace[face2][i +(order+1)*j + pow( order+1, 2 )*k];
+                      localIndex m2 = localElemToLocalFace[face2][nodeindex];
 
                       if( m2 != -1 && face2!=face )
                       {
                         faceToNodeMapNew[elemToFaces[elem][face2]][m2] = faceToNodeMapNew[elemToFaces[elem][face]][m];
+ 		        //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel if for-face2="<<face2<<": faceToNodeMapNew["<<elemToFaces[elem][face]<<"]["<<m<<"] = "<<faceToNodeMapNew[elemToFaces[elem][face]][m]);
                       }
                     }
                   }
                   else
                   {
-                    faceToNodeMapNew[elemToFaces[elem][face]][m] = count;
+		    // elemToFaces is the element to faces map copied from base-level mesh
+		    // elemToFaces[elemId] gives the faces for each element in this partition
+		    // m is the corresponding nodeIndex on the face according to the nodeIndex on the elements 
+                    faceToNodeMapNew[elemToFaces[elem][face]][m] = elemsToNodesNew[elem][nodeindex];
+ 		    //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel else: faceToNodeMapNew["<<elemToFaces[elem][face]<<"]["<<m<<"] = "<<elemsToNodesNew[elem][nodeindex]);
                   }
                 }
                 face++;
-              }
-              if( face > 5 && foundFace < 1 )
-              {
-                elemsToNodesNew[elem][i + (order+1)*j + pow( order+1, 2 )*k] = count;
-                count++;
               }
             }
           }
         }
       }
-*/
-
+      //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel elemsToNodesNew = "<<elemsToNodesNew);
+      //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel faceToNodeMapNew = "<<faceToNodeMapNew);
 
       //Fill a temporary array which contains the Gauss-Lobatto points depending on the order
       array1d< real64 > GaussLobattoPts( 4 );
@@ -486,7 +564,7 @@ MeshLevel::MeshLevel( string const & name,
           {
             for( localIndex i = 0; i < order+1; i++ )
             {
-              localIndex const nodeIndex = elemsToNodesNew( e, i+j*(order+1)+k*pow( order+1, 2 ) );
+              localIndex const nodeIndex = elemsToNodesNew( e, i+j*(order+1)+k* numNodesPerFace );
 
               refPosNew( nodeIndex, 0 ) = x[i];
               refPosNew( nodeIndex, 1 ) = y[j];
