@@ -176,7 +176,7 @@ MPI_Comm MatrixFreeSolidMechanicsFEMOperator::comm() const
 MatrixFreeSolidMechanicsFEM::MatrixFreeSolidMechanicsFEM( const string & name,
                         Group * const parent ):
   SolverBase( name, parent ),
-  m_fieldName( "TotalDisplacement" )
+  m_fieldName( "totalDisplacement" )
 {}
 //END_SPHINX_INCLUDE_CONSTRUCTOR
 
@@ -248,14 +248,14 @@ void MatrixFreeSolidMechanicsFEM::setupDofs( DomainPartition const & GEOSX_UNUSE
                                              DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
-  // dofManager.addField( keys::TotalDisplacement,
-  //                      FieldLocation::Node,
-  //                      3,
-  //                      getMeshTargets() );
+  dofManager.addField( fields::solidMechanics::totalDisplacement::key(),
+                       FieldLocation::Node,
+                       3,
+                       getMeshTargets() );
 
-  // dofManager.addCoupling( keys::TotalDisplacement,
-  //                         keys::TotalDisplacement,
-  //                         DofManager::Connector::Elem );
+  dofManager.addCoupling( fields::solidMechanics::totalDisplacement::key(),
+                          fields::solidMechanics::totalDisplacement::key(),
+                          DofManager::Connector::Elem );
 }
 
 void MatrixFreeSolidMechanicsFEM::registerDataOnMesh( Group & meshBodies )

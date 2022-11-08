@@ -371,16 +371,14 @@ public:
         localIndex const nodeIndex = kernelComponent.m_elemsToNodes( k, a );
         for( int i=0; i<dims; ++i )
         {
-          xLocal[ a ][ i ] = kernelComponent.m_X[ nodeIndex ][ i ];
-          srcLocal[ a ][ i ] = kernelComponent.m_src[ nodeIndex ][ i ];
+          xLocal[ a ][ i ] = kernelComponent.m_X( nodeIndex, i );
+          srcLocal[ a ][ i ] = kernelComponent.m_src( nodeIndex, i );
         }
       }
 
 
       for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
       {
-//#define USE_JACOBIAN
-#if !defined( USE_JACOBIAN )
         real64 dNdX[ numNodesPerElem ][ dims ];
         real64 const detJ = kernelComponent.m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, xLocal, dNdX );
         /// Macro to substitute in the shape function derivatives.
@@ -395,23 +393,6 @@ public:
           stressLocal[ c ] *= -detJ;
         }
         FE_TYPE::plusGradNajAij( dNdX, stressLocal, dstLocal );
-#else
-        real64 invJ[3][3];
-        real64 const detJ = FE_TYPE::inverseJacobianTransformation( q, stack.xLocal, invJ );
-
-        real64 strain[6] = {0};
-        FE_TYPE::symmetricGradient( q, invJ, stack.varLocal, strain );
-
-        real64 stressLocal[ 6 ] = {0};
-        m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
-
-        for( localIndex c = 0; c < 6; ++c )
-        {
-          stressLocal[ c ] *= DETJ;
-        }
-
-        FE_TYPE::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
-#endif
       }
 
       
