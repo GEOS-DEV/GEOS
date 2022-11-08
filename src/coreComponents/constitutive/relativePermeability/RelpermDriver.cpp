@@ -25,22 +25,22 @@ RelpermDriver::RelpermDriver( const geosx::string & name,
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::relpermNameString(), &m_relpermName ).
-                                                                         setInputFlag( InputFlags::REQUIRED ).
-                                                                         setDescription( "Relperm model to test" );
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Relperm model to test" );
 
   registerWrapper( viewKeyStruct::numStepsString(), &m_numSteps ).
-                                                                   setInputFlag( InputFlags::REQUIRED ).
-                                                                   setDescription( "Number of load steps to take" );
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Number of saturation steps to take" );
 
   registerWrapper( viewKeyStruct::outputString(), &m_outputFile ).
-                                                                   setInputFlag( InputFlags::OPTIONAL ).
-                                                                   setApplyDefaultValue( "none" ).
-                                                                   setDescription( "Output file" );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( "none" ).
+    setDescription( "Output file" );
 
   registerWrapper( viewKeyStruct::baselineString(), &m_baselineFile ).
-                                                                       setInputFlag( InputFlags::OPTIONAL ).
-                                                                       setApplyDefaultValue( "none" ).
-                                                                       setDescription( "Baseline file" );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( "none" ).
+    setDescription( "Baseline file" );
 }
 
 
@@ -55,7 +55,7 @@ void RelpermDriver::outputResults()
   fprintf( fp, "# columns %d-%d = phase vol fractions\n", 2, 1 + m_numPhases );
   fprintf( fp, "# columns %d-%d = phase relperm\n", 2 + m_numPhases, 1 + 2 * m_numPhases );
 
-  if( ( m_numPhases == 2 && m_table.size( 0 ) > 5 ) || m_table.size( 0 ) > 7 )
+  if( ( m_numPhases == 2 && m_table.size( 2 ) > 5 ) || m_table.size( 2 ) > 7 )
   {
     fprintf( fp, "# columns %d-%d = phase relperm (hyst)\n", 1 + 2 * m_numPhases, 1 + 3 * m_numPhases );
   }
@@ -78,9 +78,9 @@ void RelpermDriver::outputResults()
 void RelpermDriver::postProcessInput()
 {
   constitutive::ConstitutiveManager
-    & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
   constitutive::RelativePermeabilityBase
-    & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
+  & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
 
   m_numPhases = baseRelperm.numFluidPhases();
 
@@ -101,9 +101,9 @@ bool RelpermDriver::execute( const geosx::real64 GEOSX_UNUSED_PARAM( time_n ),
 
 
   constitutive::ConstitutiveManager
-    & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
   constitutive::RelativePermeabilityBase
-    & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
+  & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
 
   if( getLogLevel() > 0 )
   {
@@ -154,9 +154,9 @@ template< typename RELPERM_TYPE >
 void RelpermDriver::resizeTables()
 {
   constitutive::ConstitutiveManager
-    & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
   constitutive::RelativePermeabilityBase
-    & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
+  & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
 
   using PT = constitutive::RelativePermeabilityBase::PhaseType;
   integer const ipWater = baseRelperm.getPhaseOrder()[PT::WATER];

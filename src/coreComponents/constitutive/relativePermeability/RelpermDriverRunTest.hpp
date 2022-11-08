@@ -85,41 +85,39 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
   relperm.setMinMaxToDrainage( 0 );
   forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
                                     [numPhases, kernelWrapper, saturation, table,
-                                     offset] GEOSX_HOST_DEVICE( localIndex const i )
-                                    {
-                                      for( integer n = 0; n < saturation.size( 1 ); ++n )
-                                      {
+                                     offset] GEOSX_HOST_DEVICE ( localIndex const i )
+  {
+    for( integer n = 0; n < saturation.size( 1 ); ++n )
+    {
 
-                                        // nw phase set max to snw_max to get the imbibition bounding curve
-                                        kernelWrapper.update( i, 0, saturation[0][n] );
-                                        std::cout << "saturation value: " << saturation[0][n] << std::endl;
-                                        for( integer p = 0; p < numPhases; ++p )
-                                        {
-                                          table( n, 0, offset + 1 + p ) = kernelWrapper.relperm()( i, 0, p );
-                                          std::cout << "relperm value: " << table( n, 0, offset + 1 + p ) << std::endl;
-                                        }
-                                      }
-                                    } );
+      // nw phase set max to snw_max to get the imbibition bounding curve
+      kernelWrapper.update( i, 0, saturation[0][n] );
+      for( integer p = 0; p < numPhases; ++p )
+      {
+        table( n, 0, offset + 1 + p ) = kernelWrapper.relperm()( i, 0, p );
+      }
+    }
+  } );
 
   //loop in charge of hysteresis values
   offset += numPhases;
   relperm.setMinMaxToImbibition( 0 );
   forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
                                     [numPhases, kernelWrapper, saturation, table,
-                                     offset] GEOSX_HOST_DEVICE( localIndex const i )
-                                    {
-                                      for( integer n = 0; n < saturation.size( 1 ); ++n )
-                                      {
+                                     offset] GEOSX_HOST_DEVICE ( localIndex const i )
+  {
+    for( integer n = 0; n < saturation.size( 1 ); ++n )
+    {
 
-                                        // nw phase set max to snw_max to get the imbibition bounding curve
+      // nw phase set max to snw_max to get the imbibition bounding curve
 
-                                        kernelWrapper.update( i, 0, saturation[0][n] );
-                                        for( integer p = 0; p < numPhases; ++p )
-                                        {
-                                          table( n, 0, offset + 1 + p ) = kernelWrapper.relperm()( i, 0, p );
-                                        }
-                                      }
-                                    } );
+      kernelWrapper.update( i, 0, saturation[0][n] );
+      for( integer p = 0; p < numPhases; ++p )
+      {
+        table( n, 0, offset + 1 + p ) = kernelWrapper.relperm()( i, 0, p );
+      }
+    }
+  } );
 
 
 }
@@ -188,18 +186,18 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
   forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
                                     [numPhases, kernelWrapper, saturation, table,
-                                     offset] GEOSX_HOST_DEVICE( localIndex const i )
-                                    {
-                                      for( integer n = 0; n < saturation.size( 1 ); ++n )
-                                      {
+                                     offset] GEOSX_HOST_DEVICE ( localIndex const i )
+  {
+    for( integer n = 0; n < saturation.size( 1 ); ++n )
+    {
 
-                                        kernelWrapper.update( i, 0, saturation[0][n] );
-                                        for( integer p = 0; p < numPhases; ++p )
-                                        {
-                                          table( n, 0, offset + 1 + p ) = kernelWrapper.relperm()( i, 0, p );
-                                        }
-                                      }
-                                    } );
+      kernelWrapper.update( i, 0, saturation[0][n] );
+      for( integer p = 0; p < numPhases; ++p )
+      {
+        table( n, 0, offset + 1 + p ) = kernelWrapper.relperm()( i, 0, p );
+      }
+    }
+  } );
 
 }
 

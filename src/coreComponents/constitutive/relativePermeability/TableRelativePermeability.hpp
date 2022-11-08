@@ -132,7 +132,7 @@ private:
     static constexpr char const * nonWettingIntermediateRelPermTableNamesString() { return "nonWettingIntermediateRelPermTableNames"; }
   };
 
-    arrayView1d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
+  arrayView1d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
 
 private:
 

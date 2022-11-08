@@ -2,6 +2,7 @@ from matplotlib import pyplot as plt
 from scipy import interpolate
 import numpy as np
 import argparse
+import re
 
 
 def populate_input(fname):
@@ -27,14 +28,13 @@ def ternatry_figure(int):
 
 def main(fname):
     T = populate_input(fname[0])
-    isThreePhase, isHysteresis = (False, False)
+    isThreePhase, isHysteresis = (False, re.search( r'hyst', open(fname[0],'r').read()) )
     if T.shape[1] == 5:  # two phase - drainage only
         Sw = T[:, 1]  # X
         Sg = T[:, 2]  # Y
-    elif T.shape[1] == 7 and not np.any(np.sum(T[:, 1:4], 1) > 1):  # two phase with hysteresis
+    elif T.shape[1] == 7 and isHysteresis:  # two phase with hysteresis
         Sw = T[:, 1]  # X
         Sg = T[:, 2]  # Y
-        isHysteresis = True
     elif T.shape[1] == 7:  # three phase - drainage only
         isThreePhase = True
         Sw = T[:, 2]  # X
@@ -42,7 +42,6 @@ def main(fname):
     elif T.shape[1] == 10:  # hysteresis and 3-phase (kro is repeated)
         Sw = T[:, 2]  # X
         Sg = T[:, 1]  # Y
-        isHysteresis = True
     else:
         raise NotImplemented()
 

@@ -34,14 +34,14 @@ class RelativePermeabilityBaseUpdate
 {
 public:
 
-    /**
-     * @brief Get handle to relperm
-     * @return arrayView for the [elt][gauss][phase] relperm container
-     */
+  /**
+   * @brief Get handle to relperm
+   * @return arrayView for the [elt][gauss][phase] relperm container
+   */
 
   GEOSX_HOST_DEVICE
   arrayView3d< real64 const, relperm::USD_RELPERM > relperm() const
-    { return m_phaseRelPerm; }
+  { return m_phaseRelPerm; }
 
   /**
    * @brief Get number of elements in this wrapper.
@@ -192,7 +192,7 @@ protected:
 
 protected:
 
-    // output quantities
+  // output quantities
   array3d< real64, relperm::LAYOUT_RELPERM > m_phaseRelPerm;
   array3d< real64, relperm::LAYOUT_RELPERM >  m_phaseRelPerm_n;
   array4d< real64, relperm::LAYOUT_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
