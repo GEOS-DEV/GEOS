@@ -109,7 +109,7 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
     };
 
     std::vector< integer > sizes( num2dElements );
-    for ( int i = 0; i < num2dElements; ++i)
+    for( int i = 0; i < num2dElements; ++i )
     {
       sizes[i] = m_toNodesRelation[i].size();
     }

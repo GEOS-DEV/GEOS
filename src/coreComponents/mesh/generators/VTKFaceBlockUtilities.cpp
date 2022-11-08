@@ -63,11 +63,11 @@ public:
   FaceData( vtkFieldData * fieldData,
             string const & faceBlockName )
   {
-    // TODO use a builder and not the constructor.
     // First, formatting the duplicated nodes' information.
     {
-      vtkDataArray * duplicatedNodes = fieldData->GetArray( "duplicated_points_info" ); // TODO create constant.
-      GEOSX_ERROR_IF( duplicatedNodes == nullptr, "Mandatory VTK field data array \"duplicated_points_info\" not found." );
+      string const DUPLICATED_POINTS_INFO = "duplicated_points_info";
+      vtkDataArray * duplicatedNodes = fieldData->GetArray( DUPLICATED_POINTS_INFO.c_str() );
+      GEOSX_ERROR_IF( duplicatedNodes == nullptr, "Mandatory VTK field data array \"" + DUPLICATED_POINTS_INFO + "\" not found." );
 
       // vtk will provide the field as a (numComponents, numTuples) table.
       // numTuples is actually the number of duplicated nodes too.
@@ -139,7 +139,8 @@ public:
   }
 
   /**
-   * @brief Given the vtk global index @p nodeId, returns the duplicated node with the lowest index, or @p nodeId itself if it's not duplicated.
+   * @brief Given the vtk global index @p nodeId, returns the duplicated node with the lowest index,
+   *        or @p nodeId itself if it's not duplicated.
    * @param nodeId The vtk global index.
    * @return The integer.
    *
@@ -213,7 +214,7 @@ public:
    */
   ElementToFace( dataRepository::Group const & cellBlocks )
     : m_localToGlobalMaps( cellBlocks.numSubGroups() ),
-      m_elemToFacesMaps( cellBlocks.numSubGroups() )
+    m_elemToFacesMaps( cellBlocks.numSubGroups() )
   {
     // This implementation here is a bit brittle and dummy.
     // It's based on the fact that each cell block often spans a continuous range of indices.
@@ -398,7 +399,9 @@ compute2dElemToNodesAndFaces( vtkSmartPointer< vtkDataSet > vtkMesh,
   {
     std::set< int > result;
     for( int i = 0; i < in->GetNumberOfIds(); ++i )
-    { result.insert( in->GetId( i ) ); }
+    {
+      result.insert( in->GetId( i ) );
+    }
     return result;
   };
 
@@ -534,7 +537,7 @@ compute2dFaceAnd2dElemToEdges( vtkSmartPointer< vtkDataSet > vtkMesh,
   // What matters is that each `face2d` matches the proper `edge`.
   // But we do not pay attention to the ordering of the `face2d`, it will be in the sorting order.
   auto const cmp = [&pairToPairSig]( std::pair< int, int > const & p0,
-                                    std::pair< int, int > const & p1 ) -> bool
+                                     std::pair< int, int > const & p1 ) -> bool
   {
     return pairToPairSig( p0 ) < pairToPairSig( p1 );
   };

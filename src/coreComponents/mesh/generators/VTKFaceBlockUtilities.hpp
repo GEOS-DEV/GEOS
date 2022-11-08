@@ -21,7 +21,8 @@
 #include <vtkDataSet.h>
 #include <vtkSmartPointer.h>
 
-namespace geosx {
+namespace geosx
+{
 
 /**
  * @brief Import face block @p faceBlockName from @p vtkMesh into the @p cellBlockManager.

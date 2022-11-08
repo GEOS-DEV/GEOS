@@ -28,6 +28,11 @@ namespace geosx
 class FaceBlock : public FaceBlockABC
 {
 public:
+  /**
+   * @brief Constructor.
+   * @param[in] name Name of this FaceBlock.
+   * @param[in] parent Parent group.
+   */
   FaceBlock( string const & name,
              Group * const parent )
     :
@@ -50,20 +55,52 @@ public:
 
   ArrayOfArrays< localIndex > get2dFaceTo2dElems() const override;
 
+  /**
+   * @brief Defines the number of 2d elements.
+   * @param num2DElements The input value.
+   */
   void setNum2DElements( localIndex num2DElements );
 
+  /**
+   * @brief Defines the number of 2d faces.
+   * @param num2DFaces The input value.
+   */
   void setNum2DFaces( localIndex num2DFaces );
 
+  /**
+   * @brief Defines the 2d elements to nodes mapping.
+   * @param _2dElemToNodes The input mapping.
+   */
   void set2dElemToNodes( ArrayOfArrays< localIndex > _2dElemToNodes );
 
+  /**
+   * @brief Defines the 2d elements to edges mapping.
+   * @param _2dElemToEdges The input mapping.
+   */
   void set2dElemToEdges( ArrayOfArrays< localIndex > _2dElemToEdges );
 
+  /**
+   * @brief Defines the 2d elements to faces mapping.
+   * @param _2dElemToFaces The input mapping.
+   */
   void set2dElemToFaces( array2d< localIndex > _2dElemToFaces );
 
+  /**
+   * @brief Defines the 2d faces to elements mapping.
+   * @param _2dFaceTo2dElems The input mapping.
+   */
   void set2dFaceTo2dElems( ArrayOfArrays< localIndex > _2dFaceTo2dElems );
 
+  /**
+   * @brief Defines the 2d faces to edges mapping.
+   * @param _2dFaceToEdge The input mapping.
+   */
   void set2dFaceToEdge( array1d< localIndex > _2dFaceToEdge );
 
+  /**
+   * @brief Defines the 2d elements to 3d elements mapping.
+   * @param _2dElemToElems The input mapping.
+   */
   void set2dElemToElems( ToCellRelation< array2d< localIndex > > _2dElemToElems );
 
 private:
