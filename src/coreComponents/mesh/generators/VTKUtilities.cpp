@@ -1693,7 +1693,8 @@ findArraysForImport( vtkDataSet & mesh,
 
 
 
-void importFieldOnCellElementSubRegion( int const regionId,
+void importFieldOnCellElementSubRegion( integer const logLevel,
+                                        integer const regionId,
                                         ElementType const elemType,
                                         std::vector< vtkIdType > const & cellIds,
                                         ElementRegionManager & elemManager,
@@ -1726,8 +1727,8 @@ void importFieldOnCellElementSubRegion( int const regionId,
       if( !subRegion.hasWrapper( wrapperName ) )
       {
         // Skip - the user may have not enabled a particular physics model/solver on this dstRegion.
-        // GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Skipping import of {} -> {} on {}/{} (field not found)",
-        //                                       vtkArray->GetName(), wrapperName, region.getName(), subRegion.getName() ) );
+        GEOSX_LOG_RANK_0_IF( logLevel >= 1, GEOSX_FMT( "Skipping import of {} -> {} on {}/{} (field not found)",
+                                                       vtkArray->GetName(), wrapperName, region.getName(), subRegion.getName() ) );
 
         continue;
       }
@@ -1738,8 +1739,8 @@ void importFieldOnCellElementSubRegion( int const regionId,
 
       WrapperBase & wrapper = subRegion.getWrapperBase( wrapperName );
 
-      // GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Importing field {} -> {} on {}/{}",
-      //                                       vtkArray->GetName(), wrapperName, region.getName(), subRegion.getName() ) );
+      GEOSX_LOG_RANK_0_IF( logLevel >= 1, GEOSX_FMT( "Importing field {} -> {} on {}/{}",
+                                                     vtkArray->GetName(), wrapperName, region.getName(), subRegion.getName() ) );
 
       if( materialWrapperNames.count( wrapperName ) > 0 && wrapper.numArrayDims() > 1 )
       {
@@ -1756,11 +1757,13 @@ void importFieldOnCellElementSubRegion( int const regionId,
 /**
  * @brief Build node sets
  *
+ * @param[in] logLevel the log level
  * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
  * @param[in] nodesetNames An array of the node sets names
  * @param[in] cellBlockManager The instance that stores the node sets.
  */
-void importNodesets( vtkDataSet & mesh,
+void importNodesets( integer const logLevel,
+                     vtkDataSet & mesh,
                      string_array & nodesetNames,
                      CellBlockManager & cellBlockManager )
 {
@@ -1769,7 +1772,7 @@ void importNodesets( vtkDataSet & mesh,
 
   for( int i=0; i < nodesetNames.size(); ++i )
   {
-    // GEOSX_LOG_LEVEL_RANK_0( 2, "    " + m_nodesetNames[i] );
+    GEOSX_LOG_RANK_0_IF( logLevel >= 2, "    " + nodesetNames[i] );
 
     vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( nodesetNames[i].c_str() );
     GEOSX_THROW_IF( curArray == nullptr,
@@ -1788,7 +1791,8 @@ void importNodesets( vtkDataSet & mesh,
   }
 }
 
-real64 writeNodes( vtkDataSet & mesh,
+real64 writeNodes( integer const logLevel,
+                   vtkDataSet & mesh,
                    string_array & nodesetNames,
                    CellBlockManager & cellBlockManager,
                    const geosx::R1Tensor & translate,
@@ -1831,7 +1835,7 @@ real64 writeNodes( vtkDataSet & mesh,
   allNodeSet.insert( allNodes.begin(), allNodes.end() );
 
   // Import remaining nodesets
-  importNodesets( mesh, nodesetNames, cellBlockManager );
+  importNodesets( logLevel, mesh, nodesetNames, cellBlockManager );
 
   constexpr real64 minReal = LvArray::NumericLimits< real64 >::min;
   constexpr real64 maxReal = LvArray::NumericLimits< real64 >::max;
@@ -1851,7 +1855,8 @@ real64 writeNodes( vtkDataSet & mesh,
   return LvArray::tensorOps::l2Norm< 3 >( xMax );
 }
 
-void writeCells( vtkDataSet & mesh,
+void writeCells( integer const logLevel,
+                 vtkDataSet & mesh,
                  const geosx::vtk::CellMapType & cellMap,
                  CellBlockManager & cellBlockManager )
 {
@@ -1870,7 +1875,7 @@ void writeCells( vtkDataSet & mesh,
       std::vector< vtkIdType > const & cellIds = regionCells.second;
 
       string const cellBlockName = vtk::buildCellBlockName( elemType, regionId );
-      // GEOSX_LOG_LEVEL_RANK_0( 1, "Importing cell block " << cellBlockName );
+      GEOSX_LOG_RANK_0_IF( logLevel >= 1, "Importing cell block " << cellBlockName );
 
       // Create and resize the cell block.
       CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName );
@@ -1882,7 +1887,8 @@ void writeCells( vtkDataSet & mesh,
   }
 }
 
-void writeSurfaces( vtkDataSet & mesh,
+void writeSurfaces( integer const logLevel,
+                    vtkDataSet & mesh,
                     const geosx::vtk::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager )
 {
@@ -1897,7 +1903,7 @@ void writeSurfaces( vtkDataSet & mesh,
     int const surfaceId = surfaceCells.first;
     std::vector< vtkIdType > const & cellIds = surfaceCells.second;
     string const surfaceName = std::to_string( surfaceId );
-    // GEOSX_LOG_LEVEL_RANK_0( 1, "Importing surface " << surfaceName );
+    GEOSX_LOG_RANK_0_IF( logLevel >= 1, "Importing surface " << surfaceName );
 
     // Get or create all surfaces (even those which are empty in this rank)
     SortedArray< localIndex > & curNodeSet = nodeSets[ surfaceName ];
