@@ -333,7 +333,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_discretizationName );
 
-        finiteElement::dispatch3D( fe, [nodalDamage, &elementSubRegion, damageFieldOnMaterial, elemNodes]( auto & finiteElement )
+        finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [nodalDamage, &elementSubRegion, damageFieldOnMaterial, elemNodes]( auto & finiteElement )
         {
           using FE_TYPE = TYPEOFREF( finiteElement );
           constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
