@@ -106,7 +106,32 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"
       scale="4934.86"/>
-   
+
+    <FieldSpecification
+      name="initial_sigma_x"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="shaleSolid_stress"
+      component="0"
+      scale="4934.86"/>
+    <FieldSpecification
+      name="initial_sigma_y"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="shaleSolid_stress"
+      component="1"
+      scale="4934.86"/>
+    <FieldSpecification
+      name="initial_sigma_z"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="shaleSolid_stress"
+      component="2"
+      scale="4934.86"/>
+    
     <FieldSpecification
       name="xInitialDisplacement"
       initialCondition="1"
