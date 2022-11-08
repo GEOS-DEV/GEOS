@@ -53,6 +53,7 @@ namespace geosx
 {
 namespace constitutive
 {
+                           
 
 // DAMAGE MODEL UPDATES
 //
@@ -71,6 +72,52 @@ template< typename UPDATE_BASE >
 class DamageUpdates : public UPDATE_BASE
 {
 public:
+
+  /**
+   * @brief Degradation Function type.
+   */
+  enum class ValidDegradations : integer
+  {
+    Quadratic,
+    QuasiQuadratic
+  };
+
+  /// Declare strings associated with enumeration values.
+  ENUM_STRINGS( ValidDegradations,
+                "Quadratic",
+                "QuasiQuadratic" ); 
+
+  /**
+   * @brief Strain Decomposition type.
+   */
+  enum class ValidDecompositions : integer
+  {
+    None,
+    VolDev,
+    Spectral
+  };
+
+  /// Declare strings associated with enumeration values.
+  ENUM_STRINGS( ValidDecompositions,
+                "None",
+                "VolDev",
+                "Spectral" ); 
+
+  /**
+   * @brief Pressure Indicator Function type.
+   */
+  enum class ValidPressureIndicators : integer
+  {
+    Linear,
+    Cosine
+  };
+
+  /// Declare strings associated with enumeration values.
+  ENUM_STRINGS( ValidPressureIndicators,
+                "Linear",
+                "Cosine" ); 
+
+  //constructor
   template< typename ... PARAMS >
   DamageUpdates( arrayView2d< real64 > const & inputNewDamage,
                  arrayView3d< real64 > const & inputDamageGrad,

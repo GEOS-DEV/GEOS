@@ -33,6 +33,7 @@ static void stressCalculator(  real64 ( &strain )[6],
       LvArray::tensorOps::scale< 6 >( stress, damageFactor );
 
       //stiffness.scaleParams( damageFactor );
+      LvArray::tensorOps::scale< 6, 6 >( stiffness, damageFactor );
 
       real64 traceOfStrain = strain[0] + strain[1] + strain[2];
 
