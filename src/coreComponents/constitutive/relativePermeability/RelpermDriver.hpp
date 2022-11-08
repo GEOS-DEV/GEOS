@@ -8,75 +8,105 @@
 #include "events/tasks/TaskBase.hpp"
 #include "TableRelativePermeabilityHysteresis.hpp"
 
-namespace geosx {
+namespace geosx
+{
 
 
-    class RelpermDriver : public TaskBase{
+class RelpermDriver : public TaskBase
+{
 
-    public:
-        RelpermDriver( const string & name, Group * const parent);
+public:
+  RelpermDriver( const string & name,
+                 Group * const parent );
 
-        static string catalogName() { return "RelpermDriver"; }
+  static string catalogName()
+  { return "RelpermDriver"; }
 
-        void postProcessInput() override;
+  void postProcessInput() override;
 
-        virtual bool execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                              real64 const GEOSX_UNUSED_PARAM( dt ),
-                              integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                              integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                              real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                              DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
+  virtual bool execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                        real64 const GEOSX_UNUSED_PARAM( dt ),
+                        integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                        DomainPartition &
+                        GEOSX_UNUSED_PARAM( domain ) ) override;
 
-        /**
-         * @brief Run test using loading protocol in table
-         * @param i Fluid constitutive model
-         * @param table Table with input/output time history
-         */
-        template< typename RELPERM_TYPE>
-        std::enable_if_t< std::is_same<constitutive::TableRelativePermeabilityHysteresis,RELPERM_TYPE>::value, void> runTest(RELPERM_TYPE & relperm, arrayView3d< real64 > const & table );
+  /**
+   * @brief Run test using loading protocol in table
+   * @param i Fluid constitutive model
+   * @param table Table with input/output time history
+   */
+  template< typename RELPERM_TYPE >
+  std::enable_if_t< std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
+  runTest( RELPERM_TYPE & relperm,
+           arrayView3d< real64 > const & table );
 
-        template< typename RELPERM_TYPE>
-        std::enable_if_t< !std::is_same<constitutive::TableRelativePermeabilityHysteresis,RELPERM_TYPE>::value, void> runTest(RELPERM_TYPE & relperm, arrayView3d< real64 > const & table );
+  template< typename RELPERM_TYPE >
+  std::enable_if_t< !std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
+  runTest( RELPERM_TYPE & relperm,
+           arrayView3d< real64 > const & table );
 
-        /**
-         * @brief Ouput table to file for easy plotting
-         */
-        void outputResults();
+  /**
+   * @brief Ouput table to file for easy plotting
+   */
+  void outputResults();
 
-        /**
-         * @brief Read in a baseline table from file and compare with computed one (for unit testing purposes)
-         */
-        void compareWithBaseline();
+  /**
+   * @brief Read in a baseline table from file and compare with computed one (for unit testing purposes)
+   */
+  void compareWithBaseline();
 
-    private:
+private:
 
-        /**
-         * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
-         */
-        struct viewKeyStruct
-        {
-            constexpr static char const * relpermNameString() { return "relperm"; }
-            constexpr static char const * numStepsString() { return "steps"; }
-            constexpr static char const * outputString() { return "output"; }
-            constexpr static char const * baselineString() { return "baseline"; }
-        };
+  template< typename RELPERM_TYPE >
+  void resizeTables();
 
-        integer m_numSteps;      ///< Number of load steps
-        integer m_numColumns;    ///< Number of columns in data table (depends on number of fluid phases)
-        integer m_numPhases;     ///< Number of fluid phases
-        integer m_numComponents; ///< Number of fluid components
+  template< typename RELPERM_TYPE >
+  std::enable_if_t< std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
+  resizeTable();
 
-        string m_relpermName;               ///< relPermType identifier
-        string m_outputFile;              ///< Output file (optional, no output if not specified)
+  template< typename RELPERM_TYPE >
+  std::enable_if_t< !std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
+  resizeTable();
 
-        array3d< real64 > m_table; ///< Table storing time-history of input/output
+  /**
+   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
+   */
+  struct viewKeyStruct
+  {
+    constexpr static char const * relpermNameString()
+    { return "relperm"; }
 
-        Path m_baselineFile; ///< Baseline file (optional, for unit testing of solid models)
+    constexpr static char const * numStepsString()
+    { return "steps"; }
 
-        enum columnKeys { TIME }; ///< Enumeration of "input" column keys for readability
+    constexpr static char const * outputString()
+    { return "output"; }
 
-        static constexpr real64 m_baselineTol = 1e-3; ///< Comparison tolerance for baseline results
-    };
+    constexpr static char const * baselineString()
+    { return "baseline"; }
+  };
+
+  integer m_numSteps;      ///< Number of load steps
+  integer m_numColumns;    ///< Number of columns in data table (depends on number of fluid phases)
+  integer m_numPhases;     ///< Number of fluid phases
+  integer m_numComponents; ///< Number of fluid components
+
+  string m_relpermName;               ///< relPermType identifier
+  string m_outputFile;              ///< Output file (optional, no output if not specified)
+
+  array3d< real64 > m_table; ///< Table storing time-history of input/output
+
+  Path m_baselineFile; ///< Baseline file (optional, for unit testing of solid models)
+
+  enum columnKeys
+  {
+    TIME
+  }; ///< Enumeration of "input" column keys for readability
+
+  static constexpr real64 m_baselineTol = 1e-3; ///< Comparison tolerance for baseline results
+};
 
 
 }
