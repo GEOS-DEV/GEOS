@@ -109,9 +109,9 @@ def parse_args(cli_arguments):
                         default="Debug",
                         help="build type.")
 
-    parser.add_argument("-e", "--eclipse", action='store_true', help="create an eclipse project file.")
-
-    parser.add_argument("-x", "--xcode", action='store_true', help="create an xcode project.")
+    parser.add_argument("-e", "--eclipse", action='store_true', help="Create an eclipse project file.")
+    parser.add_argument("-n", "--ninja", action='store_true', help="Create an eclipse project file.")
+    parser.add_argument("-x", "--xcode", action='store_true', help="Create an xcode project.")
 
     parser.add_argument(
         "-ecc",
@@ -219,6 +219,9 @@ def main(calling_script, args, unknown_args):
 
     if args.xcode:
         cmake_line.append('-GXcode')
+
+    if args.ninja:
+        cmake_line.append('-GNinja')
 
     if args.graphviz:
         cmake_line.append("--graphviz=dependency.dot")
