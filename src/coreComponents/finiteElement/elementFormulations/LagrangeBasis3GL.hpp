@@ -413,7 +413,7 @@ public:
      * @param i The index in the xi0 direction (0,1)
      * @param j The index in the xi1 direction (0,1)
      * @param k The index in the xi2 direction (0,1)
-     * @return The linear index of the support/quadrature point (0-7)
+     * @return The linear index of the support/quadrature point (0-63)
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE

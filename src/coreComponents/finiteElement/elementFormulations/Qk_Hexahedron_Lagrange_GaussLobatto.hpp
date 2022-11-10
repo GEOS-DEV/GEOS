@@ -1059,6 +1059,44 @@ using Q3_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto<
 
 /**
  * This class contains the kernel accessible functions specific to the standard
+ * Trilinear Hexahedron finite element with a Gaussian quadrature rule. It is
+ * assumed that the indexing for the quadrature points mirrors that of the
+ * nodes. Also note that the assumed node ordering is not the standard
+ * right-hand-rule used in the literature. Here we use a Cartesian aligned
+ * numbering in order to simplify the mapping to the parent coordinates and
+ * tensor product indices.
+ *                                                                  _____________________________________  
+ *                120      121     122     123       124           |Node      xi0         xi1         xi2 |
+ *                  o-------o-------o-------o-------o              |=====     ===         ===         === |
+ *                 /.                              /|              |   0       -1          -1          -1 |
+ *            115 o .  116o    117o    118o    119o |              |   1   -sqrt(3/7)      -1          -1 |
+ *               /  o                            /  o              |   2        0          -1          -1 |
+ *          110 o   .111o    112o    113o    114o   |              |   3    sqrt(3/7)      -1          -1 |
+ *             /  o .                          /  o |              |   4        1          -1          -1 |
+ *        105 o     . o106    o107    o108 109o     |              |   5       -1      -sqrt(3/7)      -1 |
+ *           /  o   o      102     103    104/  o   o              |   6   -sqrt(3/7)  -sqrt(3/7)      -1 |
+ *      100 o-------o-------o-------o-------o       |              |   7        0      -sqrt(3/7)      -1 |
+ *          | o   o . 101                   | o   o |              |   8    sqrt(3/7)  -sqrt(3/7)      -1 |
+ *          |       .                       |       |              |   9        1      -sqrt(3/7)      -1 |
+ *          o   o   o       o       o       o   o   o              |  10       -1           0          -1 |
+ *          |       .                       |       |              |  11   -sqrt(3/7)       0          -1 |
+ *          | o   o .20     21      22    23| o   o |24            |  12        0           0          -1 |
+ *          |       o.......o.......o.......|.......o              |  13    sqrt(3/7)       0          -1 |
+ *          o   o  ,o       o       o       o   o  /               |  14        1           0          -1 |
+ *          |     o       o       o       o |     o                |  ..       ..          ..          .. |
+ *          | o  ,15      13      17      18| o  /19               |  ..       ..          ..          .. |
+ *          |   o       o       o       o   |   o                  |  ..       ..          ..          .. |
+ *          o  ,10  o   11  o   12  o   13  o  /14     xi2         | 121        -1          1           1 |
+ *          | o       o       o       o     | o        |           | 122    -sqrt(3/7)      1           1 |
+ *          |,5       6       7       8     |/9        | / xi1     | 123         0          1           1 |
+ *          o-------o-------o-------o-------o          |/          | 124     sqrt(3/7)      1           1 |
+ *         0        1       2       3        4         o----- xi0  | 125         1          1           1 |
+ *                                                                 |______________________________________| 
+ *
+ */
+using Q4_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis4GL >;
+/**
+ * This class contains the kernel accessible functions specific to the standard
  * Trilinear Hexahedron finite element with a Gauss Lobatto quadrature rule. It is
  * assumed that the indexing for the quadrature points mirrors that of the
  * nodes. Also note that the assumed node ordering is not the standard
@@ -1067,78 +1105,46 @@ using Q3_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto<
  * tensor product indices.
  *
  *
- *                210      211      212      213      214      215
- *                 _______________________________________________________________________
- *                   o--------o--------o--------o--------o--------o                |Node      xi0                        xi1
- *                         xi2  |
- *                  /.                                           /|                |=====     ===                        ===
- *                         ===  |
- *            204  / .  205      206      207      208      209 / |                |  0       -1                         -1
- *                          -1   |
- *                o  .     o        o        o        o        o  |                |  1   -sqrt(1/21(7+/sqrt(7))         -1
- *                          -1   |
- *               /   o                                        /   |                |  2    -sqrt(1/21(7-/sqrt(7))        -1
- *                          -1   |
- *         198  /    .199     200      201      202      203 /    o                |  3    sqrt(1/21(7-/sqrt(7))         -1
- *                          -1   |
- *             o     .  o        o        o        o        o     |                |  4    sqrt(1/21(7+/sqrt(7))         -1
- *                          -1   |
- *            /      .                                     /      |                |  5       -1                         -1
- *                          -1   |
- *      192  /   193 o     194      195      196      197 /    o  |                |  6       -1                 -sqrt(1/21(7+/sqrt(7))
- *              -1   |
- *          o        o        o        o        o        o        o                |  7   -sqrt(1/21(7+/sqrt(7)) -sqrt(1/21(7+/sqrt(7))
- *              -1   |
- *         /         .                                  /         |                |  8   -sqrt(1/21(7-/sqrt(7)) -sqrt(1/21(7+/sqrt(7))
- *              -1   |
- *    186 /    187   .  188      189      190      191 /    o     |                |  9    sqrt(1/21(7-/sqrt(7)) -sqrt(1/21(7+/sqrt(7))
- *              -1   |
- *       o        o  o     o        o        o        o        o  |                | 10    sqrt(1/21(7+/sqrt(7)) -sqrt(1/21(7+/sqrt(7))
- *              -1   |
- *      /            .                               /            o                | 11       -1                 -sqrt(1/21(7+/sqrt(7))
- *              -1   |
- * 180 /    181      . 182    183      184      185 /    o        |                | ..       ..                         ..
- *                          ..   |
- *    o--------o--------o--------o--------o--------o        o     |                | ..       ..                         ..
- *                          ..   |
- *    |           o  .                             |           o  |                | 204      -1                  sqrt(1/21(7+/sqrt(7))
- *              1    |
- *    |  o           o        o        o        o  |  o  o        o                | 205  -sqrt(1/21(7+/sqrt(7))  sqrt(1/21(7+/sqrt(7))
- *              1    |
- *    |     o        .                             |     o        |                | 206  -sqrt(1/21(7-/sqrt(7))  sqrt(1/21(7-/sqrt(7))
- *              1    |
- *    |        o     .                             |        o     |                | 207  sqrt(1/21(7+/sqrt(7))   sqrt(1/21(7-/sqrt(7))
- *              1    |
- *    o           o  .                             o           o  |                | 208  sqrt(1/21(7-/sqrt(7))   sqrt(1/21(7+/sqrt(7))
- *              1    |
- *    |  o           .                             |  o           |                | 209       1                  sqrt(1/21(7+/sqrt(
- *                 1    |
- *    |     o        o--------o--------o--------o--|-----o--------o                | 210      -1                          1
- *                          1    |
- *    |        o    ,30       31      32        33 |     34 o    /35               | 211  -sqrt(1/21(7+/sqrt(7))          1
- *                          1    |
- *    o            ,                               o            /                  | 212  -sqrt(1/21(7-/sqrt(7))          1
- *                          1    |
- *    |  o        o        o         o       o     |  o        o                   | 213   sqrt(1/21(7-/sqrt(7))          1
- *                          1    |
- *    |     o    ,24       25        26      27    |  28 o    /29                  | 214   sqrt(1/21(7+/sqrt(7))          1
- *                          1    |
- *    |         ,                                  |         /                     | 215       1                          1
- *                          1    |
- *    o        o        o         o       o     22 o        o
- *                     |_______________________________________________________________________|
- *    |  o    ,18       19        20      21       |  o    /23
- *    |      ,                                     |      /
- *    |     o        o         o       o        o  |     o
- *    o    ,12       13        14      15       16 o    /17
- *    |   ,                                        |   /
- *    |  o        o        o        o        o     |  o               xi2
- *    | ,6        7        8        9        10    | /11               |
- *    |,                                           |/                  | / xi1
- *    o--------o--------o--------o--------o--------o                   |/
- *    0        1        2        3        4        5                   o----- xi0
- *
- *
+ *               210      211      212      213      214      215    _______________________________________________________
+ *                  o--------o--------o--------o--------o--------o  |Node      xi0                        xi1            xi2|
+ *                 /.                                           /|  |=====     ===                        ===            ===|
+ *           204  / .  205      206      207      208      209 / |  |  0       -1                         -1             -1 |
+ *               o  .     o        o        o        o        o  |  |  1   -sqrt(1/21(7+/sqrt(7))         -1             -1 |
+ *              /   o                                        /   |  |  2    -sqrt(1/21(7-/sqrt(7))        -1             -1 |
+ *        198  /    .199     200      201      202      203 /    o  |  3    sqrt(1/21(7-/sqrt(7))         -1             -1 |
+ *            o     .  o        o        o        o        o     |  |  4    sqrt(1/21(7+/sqrt(7))         -1             -1 |
+ *           /      .                                     /      |  |  5        1                         -1             -1 |
+ *     192  /   193 o     194      195      196      197 /    o  |  |  6       -1                 -sqrt(1/21(7+/sqrt(7)) -1 |
+ *         o        o        o        o        o        o        o  |  7   -sqrt(1/21(7+/sqrt(7)) -sqrt(1/21(7+/sqrt(7)) -1 |
+ *        /         .                                  /         |  |  8   -sqrt(1/21(7-/sqrt(7)) -sqrt(1/21(7+/sqrt(7)) -1 |
+ *   186 /    187   .  188      189      190      191 /    o     |  |  9    sqrt(1/21(7-/sqrt(7)) -sqrt(1/21(7+/sqrt(7)) -1 |
+ *      o        o  o     o        o        o        o        o  |  | 10    sqrt(1/21(7+/sqrt(7)) -sqrt(1/21(7+/sqrt(7)) -1 |
+ *     /            .                               /            o  | 11        1                 -sqrt(1/21(7+/sqrt(7)) -1 |
+ *180 /    181      . 182    183      184      185 /    o        |  | ..       ..                         ..             .. |
+ *   o--------o--------o--------o--------o--------o        o     |  | ..       ..                         ..             .. |
+ *   |           o  .                             |           o  |  | 204      -1                  sqrt(1/21(7+/sqrt(7)) 1  |
+ *   |  o           o        o        o        o  |  o  o        o  | 205  -sqrt(1/21(7+/sqrt(7))  sqrt(1/21(7+/sqrt(7)) 1  |
+ *   |     o        .                             |     o        |  | 206  -sqrt(1/21(7-/sqrt(7))  sqrt(1/21(7-/sqrt(7)) 1  |
+ *   |        o     .                             |        o     |  | 207  sqrt(1/21(7+/sqrt(7))   sqrt(1/21(7-/sqrt(7)) 1  |
+ *   o           o  .                             o           o  |  | 208  sqrt(1/21(7-/sqrt(7))   sqrt(1/21(7+/sqrt(7)) 1  |
+ *   |  o           .                             |  o           |  | 209       1                  sqrt(1/21(7+/sqrt( *  1  |
+ *   |     o        o--------o--------o--------o--|-----o--------o  | 210      -1                          1             1  |
+ *   |        o    ,30       31      32        33 |     34 o    /35 | 211  -sqrt(1/21(7+/sqrt(7))          1             1  |
+ *   o            ,                               o            /    | 212  -sqrt(1/21(7-/sqrt(7))          1             1  |
+ *   |  o        o        o         o       o     |  o        o     | 213   sqrt(1/21(7-/sqrt(7))          1             1  |
+ *   |     o    ,24       25        26      27    |  28 o    /29    | 214   sqrt(1/21(7+/sqrt(7))          1             1  |
+ *   |         ,                                  |         /       | 215       1                          1             1  |
+ *   o        o        o         o       o     22 o        o *      |_______________________________________________________|
+ *   |  o    ,18       19        20      21       |  o    /23
+ *   |      ,                                     |      /
+ *   |     o        o         o       o        o  |     o
+ *   o    ,12       13        14      15       16 o    /17
+ *   |   ,                                        |   /
+ *   |  o        o        o        o        o     |  o               xi2
+ *   | ,6        7        8        9        10    | /11               |
+ *   |,                                           |/                  | / xi1
+ *   o--------o--------o--------o--------o--------o                   |/
+ *   0        1        2        3        4        5                   o----- xi0
  */
 using Q5_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis5GL >;
 

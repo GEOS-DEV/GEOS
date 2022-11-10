@@ -167,6 +167,22 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     return {};
   }
 
+  if( m_order==2 )
+  {
+    switch( parentElementShape )
+    {
+      case ElementType::Hexahedron:
+        GEOSX_ERROR_IF( m_formulation != "SEM",
+                        "Element type Hexahedron with order 2 available only when using the Spectral Element Method" );
+        return std::make_unique< Q2_Hexahedron_Lagrange_GaussLobatto >();
+      default:
+      {
+        GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
+      }
+    }
+    return {};
+  }
+
   if( m_order==3 )
   {
     switch( parentElementShape )
@@ -175,6 +191,22 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
         GEOSX_ERROR_IF( m_formulation != "SEM",
                         "Element type Hexahedron with order 3 available only when using the Spectral Element Method" );
         return std::make_unique< Q3_Hexahedron_Lagrange_GaussLobatto >();
+      default:
+      {
+        GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
+      }
+    }
+    return {};
+  }
+
+  if( m_order==4 )
+  {
+    switch( parentElementShape )
+    {
+      case ElementType::Hexahedron:
+        GEOSX_ERROR_IF( m_formulation != "SEM",
+                        "Element type Hexahedron with order 4 available only when using the Spectral Element Method" );
+        return std::make_unique< Q4_Hexahedron_Lagrange_GaussLobatto >();
       default:
       {
         GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
