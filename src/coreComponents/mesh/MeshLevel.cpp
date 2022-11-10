@@ -131,11 +131,11 @@ MeshLevel::MeshLevel( string const & name,
   faceToNodeMapNew.resizeFromCapacities< parallelHostPolicy >( faceToNodeMapNew.size(), counts.data() );
 
   // setup initial values of the faceToNodeMap using emplaceBack
-  forAll< parallelHostPolicy >( faceToNodeMapNew.size(), 
-                                [faceToNodeMapNew = faceToNodeMapNew.toView()] 
-                                ( localIndex const faceIndex )
+  forAll< parallelHostPolicy >( faceToNodeMapNew.size(),
+                                [faceToNodeMapNew = faceToNodeMapNew.toView()]
+                                  ( localIndex const faceIndex )
   {
-    for(localIndex i = 0; i < faceToNodeMapNew.capacityOfArray( faceIndex ); ++i )
+    for( localIndex i = 0; i < faceToNodeMapNew.capacityOfArray( faceIndex ); ++i )
     {
       faceToNodeMapNew.emplaceBack( faceIndex, -1 );
     }
