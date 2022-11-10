@@ -55,7 +55,7 @@
 #define BASE_FE_TYPES FE_1_TYPES, VEM_TYPES
 #else
 #define BASE_FE_TYPES FE_1_TYPES
-#endif 
+#endif
 #define ALL_FE_TYPES BASE_FE_TYPES, GL_FE_TYPES
 
 #define FE_TYPES_2D \
