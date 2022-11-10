@@ -945,8 +945,8 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
-                         localIndex const q,
-                         StackVariables & stack ) const
+                              localIndex const q,
+                              StackVariables & stack ) const
   {
     m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
