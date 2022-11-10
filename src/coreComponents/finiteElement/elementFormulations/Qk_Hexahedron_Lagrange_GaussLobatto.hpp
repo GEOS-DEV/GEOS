@@ -23,6 +23,7 @@
 #include "LagrangeBasis1.hpp"
 #include "LagrangeBasis2.hpp"
 #include "LagrangeBasis3GL.hpp"
+#include "LagrangeBasis4GL.hpp"
 #include "LagrangeBasis5GL.hpp"
 #include <utility>
 
@@ -1065,7 +1066,7 @@ using Q3_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto<
  * right-hand-rule used in the literature. Here we use a Cartesian aligned
  * numbering in order to simplify the mapping to the parent coordinates and
  * tensor product indices.
- *                                                                  _____________________________________  
+ *                                                                  _____________________________________
  *                120      121     122     123       124           |Node      xi0         xi1         xi2 |
  *                  o-------o-------o-------o-------o              |=====     ===         ===         === |
  *                 /.                              /|              |   0       -1          -1          -1 |
@@ -1091,7 +1092,7 @@ using Q3_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto<
  *          |,5       6       7       8     |/9        | / xi1     | 123         0          1           1 |
  *          o-------o-------o-------o-------o          |/          | 124     sqrt(3/7)      1           1 |
  *         0        1       2       3        4         o----- xi0  | 125         1          1           1 |
- *                                                                 |______________________________________| 
+ *                                                                 |______________________________________|
  *
  */
 using Q4_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis4GL >;

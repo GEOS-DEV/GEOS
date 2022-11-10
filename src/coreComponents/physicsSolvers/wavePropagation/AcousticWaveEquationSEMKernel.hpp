@@ -210,6 +210,7 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[out] receiverNodeConstants constant part of the receiver term
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
+  static void
   launch( localIndex const size,
           localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
@@ -348,6 +349,7 @@ struct MassMatrixKernel
    * @param[out] mass diagonal of the mass matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+  void
   launch( localIndex const size,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
@@ -406,6 +408,7 @@ struct DampingMatrixKernel
    * @param[out] damping diagonal of the damping matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+  void
   launch( localIndex const size,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const > const facesToElems,
@@ -547,6 +550,7 @@ struct PMLKernel
    * @param[out] divV_n array holding the divergence at time n
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+  void
   launch( SortedArrayView< localIndex const > const targetSet,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
@@ -693,6 +697,7 @@ struct waveSpeedPMLKernel
    * @param[out] counterMax PML wave speed counter, left-front-top
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+  void
   launch( SortedArrayView< localIndex const > const targetSet,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
@@ -939,7 +944,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  quadraturePointKernel( localIndex const k,
+  void quadraturePointKernel( localIndex const k,
                          localIndex const q,
                          StackVariables & stack ) const
   {

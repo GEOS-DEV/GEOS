@@ -12,11 +12,11 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_Lagrangebasis4GL_HPP_
-#define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_Lagrangebasis4GL_HPP_
+#ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_LagrangeBasis4GL_HPP_
+#define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_LagrangeBasis4GL_HPP_
 
 /**
- * @file Lagrangebasis4GL.hpp
+ * @file LagrangeBasis4GL.hpp
  */
 
 #include "common/DataTypes.hpp"
@@ -35,7 +35,7 @@ namespace finiteElement
  *  Coordinate:   -1 -sqrt(3/7)  0  sqrt(3/7)  1
  *
  */
-class Lagrangebasis4GL
+class LagrangeBasis4GL
 {
 public:
   /// The number of support points for the basis
@@ -57,12 +57,12 @@ public:
     {
       case 0:
       case 4:
-        return 1.0/10.0
+        return 1.0/10.0;
       case 1:
       case 3:
-        return 49.0/90.0
+        return 49.0/90.0;
       default:
-        return 32.0/45.0
+        return 32.0/45.0;
     }
   }
 
@@ -131,10 +131,10 @@ public:
         result = LagrangeBasis4GL::value2( xi );
         break;
       case 3:
-        result = Lagrangebasis4GL::value3( xi );
+        result = LagrangeBasis4GL::value3( xi );
         break;
       case 4:
-        result = Lagrangebasis4GL::value4( xi );
+        result = LagrangeBasis4GL::value4( xi );
         break;
       default:
         break;
@@ -223,19 +223,19 @@ public:
     switch( index )
     {
       case 0:
-        result = Lagrangebasis4GL::gradient0( xi );
+        result = LagrangeBasis4GL::gradient0( xi );
         break;
       case 1:
-        result = Lagrangebasis4GL::gradient1( xi );
+        result = LagrangeBasis4GL::gradient1( xi );
         break;
       case 2:
-        result = Lagrangebasis4GL::gradient2( xi );
+        result = LagrangeBasis4GL::gradient2( xi );
         break;
       case 3:
-        result = Lagrangebasis4GL::gradient3( xi );
+        result = LagrangeBasis4GL::gradient3( xi );
         break;
       case 4:
-        result = Lagrangebasis4GL::gradient4( xi );
+        result = LagrangeBasis4GL::gradient4( xi );
         break;
       default:
         break;
@@ -267,7 +267,7 @@ public:
   GEOSX_FORCE_INLINE
   constexpr static real64 gradient1( const real64 xi )
   {
-    return (49.0/24.0)*(-sqrt3_7+xi*(2.0+3.0*sqr3_7*xi-4.0*xi*xi));
+    return (49.0/24.0)*(-sqrt3_7+xi*(2.0+3.0*sqrt3_7*xi-4.0*xi*xi));
   }
 
   /**
@@ -322,8 +322,8 @@ public:
    *          |                               |                        |  4        1          -1     |
    *          |                               |                        |  5       -1      -sqrt(3/7) |
    *       10 o    11 o    12 o       o 13    o 14                     |  6   -sqrt(3/7)  -sqrt(3/7) |
-   *          |                               |                        |  7        0      -sqrt(3/7) | 
-   *          |                               |                        |  8    sqrt(3/7)  -sqrt(3/7) | 
+   *          |                               |                        |  7        0      -sqrt(3/7) |
+   *          |                               |                        |  8    sqrt(3/7)  -sqrt(3/7) |
    *          |                               |                        |  9        1      -sqrt(3/7) |
    *        5 o     6 o     7 o       o 8     o 9         xi1          | 10       -1           0     |
    *          |                               |            |           | 11   -sqrt(3/7)       0     |
@@ -393,9 +393,9 @@ public:
       {
         for( int b=0; b<5; ++b )
         {
-          const int lindex = Lagrangebasis4GL::TensorProduct2D::linearIndex( a, b );
-          N[ lindex ] = Lagrangebasis4GL::value( a, coords[0] ) *
-                        Lagrangebasis4GL::value( b, coords[1] );
+          const int lindex = LagrangeBasis4GL::TensorProduct2D::linearIndex( a, b );
+          N[ lindex ] = LagrangeBasis4GL::value( a, coords[0] ) *
+                        LagrangeBasis4GL::value( b, coords[1] );
         }
       }
     }
@@ -403,10 +403,10 @@ public:
 
   /**
    * @class TensorProduct3D
-   *                                                                 
-   *                                                                 
-   *                                                                 
-   *                                                                  _____________________________________  
+   *
+   *
+   *
+   *                                                                  _____________________________________
    *                120      121     122     123       124           |Node      xi0         xi1         xi2 |
    *                  o-------o-------o-------o-------o              |=====     ===         ===         === |
    *                 /.                              /|              |   0       -1          -1          -1 |
@@ -432,7 +432,7 @@ public:
    *          |,5       6       7       8     |/9        | / xi1     | 123         0          1           1 |
    *          o-------o-------o-------o-------o          |/          | 124     sqrt(3/7)      1           1 |
    *         0        1       2       3        4         o----- xi0  | 125         1          1           1 |
-   *                                                                 |______________________________________| 
+   *                                                                 |______________________________________|
    *
    *
    */
@@ -503,10 +503,10 @@ public:
         {
           for( int c=0; c<5; ++c )
           {
-            const int lindex = Lagrangebasis4GL::TensorProduct3D::linearIndex( a, b, c );
-            N[ lindex ] = Lagrangebasis4GL::value( a, coords[0] ) *
-                          Lagrangebasis4GL::value( b, coords[1] ) *
-                          Lagrangebasis4GL::value( c, coords[2] );
+            const int lindex = LagrangeBasis4GL::TensorProduct3D::linearIndex( a, b, c );
+            N[ lindex ] = LagrangeBasis4GL::value( a, coords[0] ) *
+                          LagrangeBasis4GL::value( b, coords[1] ) *
+                          LagrangeBasis4GL::value( c, coords[2] );
           }
         }
       }
@@ -519,4 +519,4 @@ public:
 }
 
 
-#endif /* GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_Lagrangebasis4GL_HPP_ */
+#endif /* GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_LagrangeBasis4GL_HPP_ */
