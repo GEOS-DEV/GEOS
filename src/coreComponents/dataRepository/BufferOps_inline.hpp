@@ -1340,7 +1340,7 @@ Unpack( buffer_unit_type const * & buffer,
       li = globalToLocalMap.at( gi );
     }
 
-    unmappedIndices.resize(0);
+    unmappedIndices.resize( 0 );
     sizeOfUnpackedChars += Unpack( buffer,
                                    var,
                                    li,
@@ -1738,7 +1738,7 @@ Unpack( buffer_unit_type const * & buffer,
 
     arraySlice1d< localIndex, USD - 1 > varSlice = var[li];
 
-    unmappedIndices.resize(0);
+    unmappedIndices.resize( 0 );
     sizeOfUnpackedChars += Unpack( buffer,
                                    varSlice,
                                    unmappedIndices,
