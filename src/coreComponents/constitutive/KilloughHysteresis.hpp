@@ -5,13 +5,11 @@
 #ifndef GEOSX_KILLOUGHHYSTERESIS_HPP
 #define GEOSX_KILLOUGHHYSTERESIS_HPP
 
-#include "constitutive/ConstitutiveBase.hpp"
+//#include "constitutive/ConstitutiveBase.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 //#include "common/GEOS_RAJA_Interface.hpp"
 #include "functions/TableFunction.hpp"
 
-#include "constitutive/relativePermeability/layouts.hpp"
-//??
-#include "constitutive/capillaryPressure/layouts.hpp"
 
 namespace geosx
 {
@@ -21,25 +19,30 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-class KilloughHysteresis : public ConstitutiveBase
+/***
+ * @brief KilloughHysteresis is designed to hold Killough hystereis model parameters and
+ *        be in charge of all compuration related to this model (trapped Saturation,Land Coefficient?)
+ */
+
+
+
+//should be up to constitutiveBase or some new SCALConstitutiveBase but for now let's POC on relativePermeabilityBase
+class KilloughHysteresis : public RelativePermeabilityBase
 {
 public:
 
   KilloughHysteresis(std::string const& name , Group * const  parent);
 
-  virtual string getCatalogName() const = 0;
+  static std::string catalogName() { return "KilloughHysteresis"; }
 
-  virtual void postProcessInput();
+  virtual string getCatalogName() const override { return catalogName(); }
 
-//TODO  resize
+  virtual void postProcessInput() override;
 
+//  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
-//  /// by phase compute (inline ?)
 //  GEOSX_HOST_DEVICE
-//  void computeLandCoefficient(real64 const & Scrd,
-//                              real64 const & Shy,
-//                              real64 const & Smx,
-//                              real64 & landParam );
+//  void computeLandCoefficient();
 
 
   class KernelKilloughHysteresisBase
@@ -68,6 +71,7 @@ public:
      //TODO refactor end point and min as a struct _RelpermData_
      KernelKilloughHysteresisBase( real64 const & jerauldParam_a,
                                    real64 const & jerauldParam_b,
+                                   real64 const & killoughCruvParam,
                                    arrayView1d< real64 const > const & landParam,
                                    arrayView1d< real64 const > const & drainageMinPhaseVolFraction,
                                    arrayView1d< real64 const > const & imbibitionMinPhaseVolFraction,
@@ -77,8 +81,7 @@ public:
                                    arrayView1d< real64 const > const & imbibitionMaxPhaseVolFraction,
                                    arrayView3d<real64, relperm::USD_RELPERM> const & phaseTrapppedVolFrac );
 
-
-
+     KernelKilloughHysteresisBase() = default;
 
     /**
   * @brief Function computing the trapped critical phase volume fraction (Sgcrt)
@@ -97,15 +100,24 @@ public:
                                                  real64 const & landParam,
                                                  real64 & Scrt ) const;
 
+    real64 getJerauldParamA() const;
+    real64 getJerauldParamB() const;
+    real64 getCurvatureParam() const;
 
-
+  private:
+//from overnested
     /// Parameter a introduced by Jerauld in the Land model
-    real64 const m_jerauldParam_a;
-
+    real64 m_jerauldParam_a;
     /// Parameter b introduced by Jerauld in the Land model
-    real64 const m_jerauldParam_b;
+    real64 m_jerauldParam_b;
+    real64 m_killoughCurvatureParam;
 
-    /// Trapping parameter from the Land model (typically called C)
+
+
+//    real64 const m_killoughCurvatureParamCapPres;
+
+    //from main Relperm Class
+    // Trapping parameter from the Land model (typically called C)
     arrayView1d< real64 const > m_landParam;
     /// Minimum volume fraction for each phase in drainage (deduced from the drainage table)
     arrayView1d< real64 const > m_drainagePhaseMinVolFraction;
@@ -125,20 +137,27 @@ public:
     /// Maximum volume fraction for each phase
     arrayView1d< real64 const > m_imbibitionPhaseMaxVolFraction;
 
+
   };
+
+  KernelKilloughHysteresisBase createKernelWrapper(    arrayView1d< real64 const > const & landParam,
+                                                       arrayView1d< real64 const > const & drainageMinPhaseVolFraction,
+                                                       arrayView1d< real64 const > const & imbibitionMinPhaseVolFraction,
+                                                       arrayView1d< real64 const > const & drainageRelPermEndPoint,
+                                                       arrayView1d< real64 const > const & imbibitionRelPermEndPoint,
+                                                       arrayView1d< real64 const > const & drainageMaxPhaseVolFraction,
+                                                       arrayView1d< real64 const > const & imbibitionMaxPhaseVolFraction,
+                                                       arrayView3d<real64, relperm::USD_RELPERM> const & phaseTrapppedVolFrac );
+
+
 
   struct viewKeyStruct
   {
     static constexpr char const * jerauldParameterAString() { return "jerauldParameterA"; }
     static constexpr char const * jerauldParameterBString() { return "jerauldParameterB"; }
-    static constexpr char const * landParameterString() { return "landParameter"; }
 
-    static constexpr char const * drainagePhaseRelPermEndPointString() { return "drainagePhaseRelPermEndPoint"; }
-    static constexpr char const * imbibitionPhaseRelPermEndPointString() { return "imbibitionPhaseRelPermEndPoint"; }
-    static constexpr char const * drainagePhaseMinVolumeFractionString() { return "drainagePhaseMinVolumeFraction"; }
-    static constexpr char const * imbibitionPhaseMinVolumeFractionString() { return "imbibitionPhaseMinVolumeFraction"; }
-    static constexpr char const * drainagePhaseMaxVolumeFractionString() { return "drainagePhaseMaxVolumeFraction"; }
-    static constexpr char const * imbibitionPhaseMaxVolumeFractionString() { return "imbibitionPhaseMaxVolumeFraction"; }
+    static constexpr char const * killoughCurvatureParameterString() { return "killoughCurvatureParameter"; }
+    static constexpr char const * killoughCurvatureCapPresParameterString() { return "killoughCurvatureCapPresParameter"; }
   };
 
 private:
@@ -149,26 +168,9 @@ private:
   /// Parameter b introduced by Jerauld in the Land model
   real64 m_jerauldParam_b;
 
-  /// Trapping parameter from the Land model (typically called C)
-  array1d< real64 > m_landParam;
-
-  /// Minimum volume fraction for each phase in drainage (deduced from the drainage table)
-  array1d< real64 > m_drainagePhaseMinVolFraction;
-
-  /// Minimum volume fraction for each phase in imbibition (deduced from the imbibition table)
-  array1d< real64 > m_imbibitionPhaseMinVolFraction;
-
-  /// Relperm endpoint for each phase in drainage (deduced from the drainage table)
-  array1d< real64 > m_drainagePhaseRelPermEndPoint;
-
-  /// Relperm endpoint for each phase in imbibition (deduced from the imbibition table)
-  array1d< real64 > m_imbibitionPhaseRelPermEndPoint;
-
-  /// Maximum volume fraction for each phase
-  array1d< real64 > m_drainagePhaseMaxVolFraction;
-
-  /// Maximum volume fraction for each phase
-  array1d< real64 > m_imbibitionPhaseMaxVolFraction;
+  /// Curvature parameter introduced for wetting phase hysteresis in Killough
+  real64 m_killoughCurvatureParam;
+  real64 m_killoughCurvatureParamCapPres;
 
 
 };

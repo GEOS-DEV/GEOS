@@ -42,25 +42,13 @@ KilloughHysteresisRelativePermeability::KilloughHysteresisRelativePermeability( 
                                                                                 geosx::dataRepository::Group * const parent )
   : KilloughHysteresis( name, parent )
 {
-  registerWrapper( viewKeyStruct::killoughCurvatureParameterString(), &m_killoughCurvatureParam ).
-                                                                                                   setInputFlag(
-    InputFlags::OPTIONAL ).
-                                                                                                   setApplyDefaultValue(
-    1.0 ).
-                                                                                                   setDescription(
-    "Curvature parameter introduced by Killough for wetting-phase hysteresis (see RTD documentation)." );
-}
 
 void KilloughHysteresisRelativePermeability::postProcessInput()
 {
 
   KilloughHysteresis::postProcessInput();
 
-  GEOSX_THROW_IF( m_killoughCurvatureParam < 0,
-                  GEOSX_FMT( "{}: the paramater {} must be postitive",
-                             getFullName(),
-                             viewKeyStruct::killoughCurvatureParameterString() ),
-                  InputError );
+
 }
 
 
