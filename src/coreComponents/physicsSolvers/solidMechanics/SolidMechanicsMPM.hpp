@@ -192,14 +192,23 @@ protected:
   virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const override;
 
   int m_solverProfiling;
-
   std::vector< real64 > m_profilingTimes;
   std::vector< std::string > m_profilingLabels;
 
   TimeIntegrationOption m_timeIntegrationOption;
   MPI_iCommData m_iComm;
 
-  array1d< int > m_boundaryConditionTypes;
+  int m_prescribedBcTable;
+  array1d< int > m_boundaryConditionTypes; // TODO: Surely there's a way to have just one variable here
+  array2d< double > m_bcTable;
+
+  int m_prescribedBoundaryFTable;
+  int m_fTableInterpType;
+  array2d< double > m_fTable;
+  array1d< real64 > m_domainF;
+  array1d< real64 > m_domainL;
+
+  real64 m_neighborRadius;
 
   int m_cpdiDomainScaling;
 

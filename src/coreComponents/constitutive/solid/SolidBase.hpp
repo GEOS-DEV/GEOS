@@ -672,6 +672,15 @@ public:
   }
 
   /**
+   * @brief Full accessor for stress
+   * @return Accessor
+   */
+  array3d< real64 > & getStressFull()
+  {
+    return m_newStress;
+  }
+
+  /**
    * @brief Non-const/Mutable accessor for density.
    * @return Accessor
    */
@@ -685,6 +694,15 @@ public:
    * @return Accessor
    */
   arrayView2d< real64 const > const getDensity() const
+  {
+    return m_density;
+  }
+
+  /**
+   * @brief Full accessor for density.
+   * @return Accessor
+   */
+  array2d< real64 > & getDensityFull()
   {
     return m_density;
   }

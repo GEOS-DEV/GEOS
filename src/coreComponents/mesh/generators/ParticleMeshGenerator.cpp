@@ -206,7 +206,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     sizeMap[particleBlock.getName()] = npInBlock;
     particleBlock.resize(npInBlock);
 
-    array1d< int > particleID(npInBlock);
+    array1d< globalIndex > particleID(npInBlock);
     array2d< real64 > particleCenter(npInBlock,3);
     array2d< real64 > particleVelocity(npInBlock,3);
     array1d< int > particleGroup(npInBlock);

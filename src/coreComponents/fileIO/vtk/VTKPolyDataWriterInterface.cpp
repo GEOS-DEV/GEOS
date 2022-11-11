@@ -290,9 +290,9 @@ getVtkPoints( NodeManager const & nodeManager,
  * @return a VTK object storing all particle centers/corners of the mesh
  */
 static vtkSmartPointer< vtkPoints >
-getVtkPoints( ParticleRegion const & particleRegion )
+getVtkPoints( ParticleRegion const & particleRegion ) // TODO: Loop over the subregions owned by this region and operate on them directly
 {
-  localIndex const numCorners = 8*particleRegion.size(); // Each particle has 8 corners, for now
+  localIndex const numCorners = 8 * particleRegion.size(); // Each particle has 8 corners, for now
   auto points = vtkSmartPointer< vtkPoints >::New();
   points->SetNumberOfPoints( numCorners );
   array2d< real64 > const coord = particleRegion.getParticleCorners();

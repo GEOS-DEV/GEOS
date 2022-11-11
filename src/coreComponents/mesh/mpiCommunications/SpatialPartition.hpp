@@ -38,6 +38,9 @@ public:
 
   bool isCoordInPartition( const real64 & coord, const int dir ) override;
 
+  bool isCoordInPartitionBoundingBox( const R1Tensor & elemCenter,
+                                      const real64 & boundaryRadius );
+
   void setSizes( real64 const ( &min )[ 3 ],
                  real64 const ( &max )[ 3 ] ) override;
 
@@ -67,17 +70,23 @@ public:
 
   int getColor() override;
 
-  void repartitionMasterParticlesToNeighbors( DomainPartition & domain,
-                                              MPI_iCommData & icomm );
+  void repartitionMasterParticles( ParticleSubRegion & subRegion,
+                                   MPI_iCommData & icomm,
+                                   string solidMaterialName );
 
-  void sendCoordinateListToNeighbors(arrayView1d<R1Tensor> const & particleCoordinatesSendingToNeighbors,           // Single list of coordinates sent to all neighbors
-                                     MPI_iCommData & icomm,                                                         // Solver's MPI communicator
+  void getGhostParticlesFromNeighboringPartitions( DomainPartition & domain,
+                                                   MPI_iCommData & icomm,
+                                                   const real64 & boundaryRadius );
+
+  void sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,           // Single list of coordinates sent to all neighbors
+                                      MPI_iCommData & icomm,                                                                      // Solver's MPI communicator
                                      std::vector<array1d<R1Tensor>>& particleCoordinatesReceivedFromNeighbors       // List of lists of coordinates received from each neighbor.
   );
 
-  void sendListOfLocalIndicesToNeighbors(std::vector<array1d<int>>& listSendingToEachNeighbor,
-                                         MPI_iCommData & icomm,
-                                         std::vector<array1d<int>>& listReceivedFromEachNeighbor );
+  template <typename indexType>
+  void sendListOfIndicesToNeighbors( std::vector< array1d< indexType > > & listSendingToEachNeighbor,
+                                     MPI_iCommData & icomm,
+                                     std::vector< array1d< indexType > > & listReceivedFromEachNeighbor );
 
   void sendParticlesToNeighbor( ParticleSubRegionBase & subRegion,
                                 std::vector<int> const & newParticleStartingIndices,

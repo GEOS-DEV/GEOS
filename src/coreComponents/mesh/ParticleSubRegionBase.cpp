@@ -23,6 +23,7 @@ namespace geosx
 {
 
 using namespace dataRepository;
+using namespace constitutive;
 
 ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent ),
@@ -48,7 +49,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
     setPlotLevel( PlotLevel::NOPLOT );
 
   registerWrapper( viewKeyStruct::particleIDString(), &m_particleID ).
-    setPlotLevel( PlotLevel::NOPLOT );
+    setPlotLevel( PlotLevel::LEVEL_1 );
 
   registerWrapper( viewKeyStruct::particleGroupString(), &m_particleGroup ).
     setPlotLevel( PlotLevel::LEVEL_1 );
@@ -131,74 +132,101 @@ void ParticleSubRegionBase::particleUnpack( buffer_type & buffer,
   this->unpack( receiveBufferPtr, indices, 0, false, events );
 }
 
-void ParticleSubRegionBase::erase( localIndex pp )
+void ParticleSubRegionBase::erase( localIndex pp, string solidMaterialName )
 {
   int newSize = this->size()-1;
 
+  // Get constitutive fields
+  SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( solidMaterialName );
+  array2d< real64 > & particleDensity = constitutiveRelation.getDensityFull();
+  array3d< real64 > & particleStress = constitutiveRelation.getStressFull();
+
+  // Density:
+  this->eraseVector( particleDensity, pp, 1 );
+
+  // Stress:
+  this->eraseTensor( particleStress, pp, 1, 6 );
+
+  // Resize constitutive manager, I guess
+  constitutiveRelation.resize(newSize);
+
   // Scalar fields:
-  m_particleRank.erase(pp); // TODO: Can we automatically loop over all registered wrappers and erase that way?
+  m_particleRank.erase(pp); // TODO: Automatically loop over all registered wrappers
   m_particleID.erase(pp);
   m_particleGroup.erase(pp);
   m_particleVolume.erase(pp);
   m_particleInitialVolume.erase(pp);
   m_particleMass.erase(pp);
 
-  // Vector fields:
-  this->eraseVector( m_particleCenter, pp );
-  this->eraseVector( m_particleVelocity, pp );
+  // real64 vector fields:
+  this->eraseVector( m_particleCenter, pp, 3 );
+  this->eraseVector( m_particleVelocity, pp, 3 );
 
-  // Matrix fields:
-  this->eraseTensor( m_particleDeformationGradient, pp );
-  this->eraseTensor( m_particleRVectors, pp );
-  this->eraseTensor( m_particleInitialRVectors, pp );
+  // real64 matrix fields:
+  this->eraseTensor( m_particleDeformationGradient, pp, 3, 3 );
+  this->eraseTensor( m_particleRVectors, pp, 3, 3 );
+  this->eraseTensor( m_particleInitialRVectors, pp, 3, 3 );
 
   // Decrement the size of this subregion
   this->resize(newSize);
+
+  // Reconstruct the list of non-ghost indices
+  this->setNonGhostIndices();
 }
 
-void ParticleSubRegionBase::eraseVector(array2d< real64 > & vector, localIndex index)
+void ParticleSubRegionBase::eraseVector(array2d< real64 > & vector, localIndex index, int vectorLength)
 {
   int oldSize = this->size();
   int newSize = this->size()-1;
 
-  array1d< real64 > temp(3*oldSize);
-  for(int i=0; i<3*oldSize; i++)
+  array1d< real64 > temp( vectorLength * oldSize );
+  for(int i = 0; i < vectorLength * oldSize; i++)
   {
-    temp[i] = vector[i/3][i%3];
+    temp[i] = vector[ i / vectorLength ][ i % vectorLength ];
   }
-  temp.erase(3*index+2);
-  temp.erase(3*index+1);
-  temp.erase(3*index+0);
-  vector.resize(newSize,3);
-  for(int i=0; i<3*newSize; i++) // TODO: This can maybe be optimized to start from 'index' since everything before 'index' should be unchanged.
-  {                              //       Depends on whether 'resize' preserves existing entries.
-    vector[i/3][i%3] = temp[i];
+  for(int i = vectorLength - 1; i >= 0; i--)
+  {
+    temp.erase( vectorLength * index + i );
+  }
+  vector.resize( newSize, vectorLength );
+  for(int i = 0; i < vectorLength * newSize; i++) // TODO: This can maybe be optimized to start from 'index' since everything before 'index' should be unchanged.
+  {                                               //       Depends on whether 'resize' preserves existing entries.
+    vector[ i / vectorLength ][ i % vectorLength] = temp[i];
   }
 }
 
-void ParticleSubRegionBase::eraseTensor(array3d< real64 > & tensor, localIndex index)
+void ParticleSubRegionBase::eraseTensor(array3d< real64 > & tensor, localIndex index, int dim1, int dim2)
 {
   int oldSize = this->size();
   int newSize = this->size()-1;
 
-  array1d< real64 > temp(9*oldSize);
-  for(int i=0; i<9*oldSize; i++)
+  int tensorSize = dim1 * dim2;
+
+  array1d< real64 > temp( tensorSize * oldSize );
+  for(int i = 0; i < tensorSize * oldSize; i++)
   {
-    temp[i] = tensor[i/9][i/3%3][i%3];
+    temp[i] = tensor[ i / tensorSize ][ i / dim2 % dim1 ][ i % dim2 ];
   }
-  temp.erase(9*index+8);
-  temp.erase(9*index+7);
-  temp.erase(9*index+6);
-  temp.erase(9*index+5);
-  temp.erase(9*index+4);
-  temp.erase(9*index+3);
-  temp.erase(9*index+2);
-  temp.erase(9*index+1);
-  temp.erase(9*index+0);
-  tensor.resize(newSize,3,3);
-  for(int i=0; i<9*newSize; i++)
+  for(int i = tensorSize - 1; i >= 0; i--)
   {
-    tensor[i/9][i/3%3][i%3] = temp[i];
+    temp.erase( tensorSize * index + i );
+  }
+  tensor.resize( newSize, dim1, dim2 );
+  for(int i = 0; i < tensorSize * newSize; i++)
+  {
+    tensor[ i / tensorSize ][ i / dim2 % dim1 ][ i % dim2 ] = temp[i];
+  }
+}
+
+void ParticleSubRegionBase::setNonGhostIndices()
+{
+  m_nonGhostIndices.clear();
+  for( int p = 0; p < this->size(); p++ )
+  {
+    if( m_particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) )
+    {
+      m_nonGhostIndices.push_back( p );
+    }
   }
 }
 
