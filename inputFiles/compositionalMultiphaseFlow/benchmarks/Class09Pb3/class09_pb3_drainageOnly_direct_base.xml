@@ -38,11 +38,11 @@
         control="totalVolRate"
         referenceElevation="-3000"
         targetBHP="1e8"
-		enableCrossflow="0"
-		useSurfaceConditions="1"            
-		surfacePressure="101325"  
+		    enableCrossflow="0"
+		    useSurfaceConditions="1"            
+		    surfacePressure="101325"  
         surfaceTemperature="288.71" 
-		targetTotalRateTableName="totalRateTable"
+		    targetTotalRateTableName="totalRateTable"
         injectionTemperature="353.15"
         injectionStream="{ 1.0, 0.0 }"/>
     </CompositionalMultiphaseWell>
@@ -96,17 +96,7 @@
       phaseNames="{ gas, water }"
       wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable,
                                             gasRelativePermeabilityTable }"/>
-
-	<!-- Problem 3.2 is hysteretical only --> 
-    <!-- <TableRelativePermeabilityHysteresis
-      name="relperm"
-      phaseNames="{ water, gas }"
-      drainageWettingNonWettingRelPermTableNames="{ drainageWaterRelativePermeabilityTable,
-						       drainageGasRelativePermeabilityTable }"
-      imbibitionNonWettingRelPermTableName="imbibitionGasRelativePermeabilityTable"      
-      imbibitionWettingRelPermTableName="imbibitionWaterRelativePermeabilityTable"/>
-    -->
-    
+                                            
     <TableCapillaryPressure
       name="cappres"
       phaseNames="{ gas, water }"
@@ -208,23 +198,6 @@
       values="{ 8.02849025, 0, 0}"
       interpolation="lower"/>
 
-  <!-- Problem 3.2 is hysteresis -->
-    <!-- <TableFunction
-      name="drainageWaterRelativePermeabilityTable"
-      coordinateFiles="{ tables/drainagePhaseVolFraction_water.txt }"
-      voxelFile="tables/drainageRelPerm_water.txt"/>
-    <TableFunction
-      name="drainageGasRelativePermeabilityTable"
-      coordinateFiles="{ tables/drainagePhaseVolFraction_gas.txt }"
-      voxelFile="tables/drainageRelPerm_gas.txt"/>
-    <TableFunction
-      name="imbibitionWaterRelativePermeabilityTable"
-      coordinateFiles="{ tables/drainagePhaseVolFraction_water.txt }"
-      voxelFile="tables/drainageRelPerm_water.txt"/>
-    <TableFunction
-      name="imbibitionGasRelativePermeabilityTable"
-      coordinateFiles="{ tables/imbibitionPhaseVolFraction_gas.txt }"
-      voxelFile="tables/imbibitionRelPerm_gas.txt"/> -->
 
   </Functions>
   

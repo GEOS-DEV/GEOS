@@ -38,11 +38,11 @@
         control="totalVolRate"
         referenceElevation="-3000"
         targetBHP="1e8"
-		enableCrossflow="0"
-		useSurfaceConditions="1"            
-		surfacePressure="101325"  
+		    enableCrossflow="0"
+		    useSurfaceConditions="1"            
+		    surfacePressure="101325"  
         surfaceTemperature="288.71" 
-		targetTotalRateTableName="totalRateTable"
+		    targetTotalRateTableName="totalRateTable"
         injectionTemperature="353.15"
         injectionStream="{ 1.0, 0.0 }"/>
     </CompositionalMultiphaseWell>
@@ -165,15 +165,6 @@
       name="initTempTable"
       coordinates="{ -3238.2, -2506.13 }"
       values="{ 380.296, 358.334 }"/>
-
-<!--    <TableFunction-->
-<!--      name="waterRelativePermeabilityTable"-->
-<!--      coordinateFiles="{ tables/phaseVolumeFraction_water.txt }"-->
-<!--      voxelFile="tables/relPerm_water.txt"/>-->
-<!--    <TableFunction-->
-<!--      name="gasRelativePermeabilityTable"-->
-<!--      coordinateFiles="{ tables/phaseVolumeFraction_gas.txt }"-->
-<!--      voxelFile="tables/relPerm_gas.txt"/>      -->
 
    <TableFunction
       name="waterCapillaryPressureTable"

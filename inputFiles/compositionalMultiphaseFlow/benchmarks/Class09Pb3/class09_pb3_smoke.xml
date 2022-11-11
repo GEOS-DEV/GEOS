@@ -12,11 +12,11 @@
 	<!-- SPHINX_MESH -->
   <Mesh>
    <VTKMesh
-     name="mesh"
-     logLevel="2"  
-     file="Johansen_faces.vtu"
-     fieldsToImport="{ perm, poro }"
-     fieldNamesInGEOSX="{ rockPerm_permeability, rockPorosity_referencePorosity }" /> 
+      name="mesh"
+      logLevel="2"  
+      file="Johansen_faces.vtu"
+      fieldsToImport="{ perm, poro }"
+      fieldNamesInGEOSX="{ rockPerm_permeability, rockPorosity_referencePorosity }" /> 
    <InternalWell
       name="wellInjector1"
       wellRegionName="wellRegion"
@@ -39,31 +39,31 @@
         distanceFromHead="25"/>
       <Perforation
         name="injector1_perf4"
-	distanceFromHead="15"/>
+	      distanceFromHead="15"/>
       <Perforation
         name="injector1_perf5"
-	distanceFromHead="5"/> 
+	      distanceFromHead="5"/> 
     </InternalWell>
   </Mesh>
 	<!-- SPHINX_MESH_END -->
 
-    <Tasks>
-        <!-- SPHINX_STATS -->
-        <CompositionalMultiphaseStatistics
-                name="compflowStatistics"
-                flowSolverName="compositionalMultiphaseFlow"
-                logLevel="1"
-                computeCFLNumbers="1"
-                computeRegionStatistics="1"/>
-        <!-- SPHINX_STATS_END -->
-    </Tasks>
+  <Tasks>
+      <!-- SPHINX_STATS -->
+      <CompositionalMultiphaseStatistics
+              name="compflowStatistics"
+              flowSolverName="compositionalMultiphaseFlow"
+              logLevel="1"
+              computeCFLNumbers="1"
+              computeRegionStatistics="1"/>
+      <!-- SPHINX_STATS_END -->
+  </Tasks>
 
-    <Outputs>
-        <VTK
-                name="simpleReservoirViz"/>
-        <Restart
-                name="restartOutput"/>
-    </Outputs>
+  <Outputs>
+      <VTK
+              name="simpleReservoirViz"/>
+      <Restart
+              name="restartOutput"/>
+  </Outputs>
 
   <!-- max time 50 y -->
   <Events
