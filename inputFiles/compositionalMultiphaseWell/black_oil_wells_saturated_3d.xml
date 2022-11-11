@@ -22,6 +22,8 @@
       name="compositionalMultiphaseFlow"
       logLevel="1"
       discretization="fluidTPFA"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
       targetRegions="{ region }"
       temperature="297.15"
       useMass="1"/>
@@ -283,7 +285,7 @@
     
     <PackCollection
       name="wellRateCollection"
-      objectPath="ElementRegions/wellRegion1/wellRegion1uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion1/wellRegion1UniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate"/>
   </Tasks>
 

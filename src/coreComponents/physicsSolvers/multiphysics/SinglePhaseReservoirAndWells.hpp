@@ -71,6 +71,8 @@ protected:
 
   virtual void initializePreSubGroups() override;
 
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
 private:
 
   SinglePhaseBase const * flowSolver() const;

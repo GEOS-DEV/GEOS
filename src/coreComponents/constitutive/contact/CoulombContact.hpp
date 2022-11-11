@@ -215,7 +215,7 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
                                                     arraySlice2d< real64 > const & dTractionVector_dJump ) const
 {
 
-  bool const isOpen = fractureState == extrinsicMeshData::contact::FractureState::Open;
+  bool const isOpen = fractureState == fields::contact::FractureState::Open;
 
   // Initialize everyting to 0
   tractionVector[0] = 0.0;
@@ -240,7 +240,7 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
 
     switch( fractureState )
     {
-      case extrinsicMeshData::contact::FractureState::Stick:
+      case fields::contact::FractureState::Stick:
       {
         // Elastic slip case
         // Tangential components of the traction are equal to tau
@@ -255,7 +255,7 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
 
         break;
       }
-      case extrinsicMeshData::contact::FractureState::Slip:
+      case fields::contact::FractureState::Slip:
       {
         // Plastic slip case
         real64 dLimitTau_dNormalTraction;
@@ -295,7 +295,7 @@ inline void CoulombContactUpdates::updateFractureState( localIndex const k,
                                                         arraySlice1d< real64 const > const & tractionVector,
                                                         integer & fractureState ) const
 {
-  using namespace extrinsicMeshData::contact;
+  using namespace fields::contact;
 
   if( dispJump[0] >  -m_displacementJumpThreshold )
   {

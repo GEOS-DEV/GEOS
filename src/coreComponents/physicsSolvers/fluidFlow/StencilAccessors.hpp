@@ -70,7 +70,7 @@ public:
       using TRAIT = TYPEOFREF( t );
 
       auto & acc = std::get< idx() >( m_accessors );
-      acc = elemManager.constructExtrinsicAccessor< TRAIT >();
+      acc = elemManager.constructFieldAccessor< TRAIT >();
       acc.setName( solverName + "/accessors/" + TRAIT::key() );
     } );
   }
@@ -116,7 +116,7 @@ public:
 
       auto & acc = std::get< idx() >( m_accessors );
       bool const allowMissingViews = false;
-      acc = elemManager.constructMaterialExtrinsicAccessor< MATERIAL_TYPE, TRAIT >( allowMissingViews );
+      acc = elemManager.constructMaterialFieldAccessor< MATERIAL_TYPE, TRAIT >( allowMissingViews );
       acc.setName( solverName + "/accessors/" + TRAIT::key() );
     } );
   }

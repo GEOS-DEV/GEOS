@@ -35,7 +35,6 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      discretization="FE1"
       targetRegions="{ Region }"
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
@@ -102,7 +101,7 @@
     <FieldSpecification
       name="xconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ bottomRightCorner }"/>
@@ -110,7 +109,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ bottom }"/>
@@ -118,7 +117,7 @@
     <FieldSpecification
       name="ydisplacement"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="-0.1"
       setNames="{ top }"/>
@@ -126,7 +125,7 @@
     <FieldSpecification
       name="zconstraintFront"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ front }"/>
@@ -134,7 +133,7 @@
     <FieldSpecification
       name="zconstraintRear"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ rear }"/>

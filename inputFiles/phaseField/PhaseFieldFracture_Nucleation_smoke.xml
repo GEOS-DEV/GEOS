@@ -1,0 +1,187 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <PhaseFieldFracture
+      name="PhaseFieldSolve"
+      solidSolverName="SolidMechSolve"
+      damageSolverName="DamageSolve"
+      couplingTypeOption="FixedStress"
+      logLevel="1"
+      subcycling="0"
+      discretization="FE1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="100"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </PhaseFieldFracture>
+
+    <SolidMechanicsLagrangianSSLE
+      name="SolidMechSolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region1 }"
+      >
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        newtonTol="1.0e-8"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+
+    <PhaseFieldDamageFEM
+      name="DamageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      fieldName="Damage"
+      
+      localDissipation="Linear"
+      irreversibilityFlag="1"
+      damageUpperBound="1.0"
+      logLevel="1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        newtonTol="1.0e-8"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </PhaseFieldDamageFEM>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ -1, 1 }"
+      zCoords="{ -1, 1 }"
+      nx="{ 3 }"
+      ny="{ 3 }"
+      nz="{ 3 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="130.0">
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <PeriodicEvent
+      name="vtkOutput"
+      timeFrequency="1.0"
+      target="/Outputs/DamageNucleation_VTKOutput"/>
+
+    <PeriodicEvent
+      name="siloOutputs"
+      timeFrequency="1.0"
+      target="/Outputs/DamageNucleation_SiloOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="65.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ cb1 }"
+      materialList="{ rock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <DamageElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultBulkModulus="4.4144e9"
+      defaultShearModulus="4.3363e9"
+      lengthScale="0.001"
+      criticalFractureEnergy="91"
+      criticalStrainEnergy="0"
+      extDrivingForceFlag="1"
+      tensileStrength="27e6"
+      compressiveStrength="77e6"
+      deltaCoefficient="0.0"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="xtraction"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="1e-3"
+      functionName="f_b"
+      setNames="{ xpos }"/>
+
+    <FieldSpecification
+      name="xfix"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="yfix"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      setNames="{ all }"/>
+
+    <FieldSpecification
+      name="zfix"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      setNames="{ all }"/>
+
+    <FieldSpecification
+      name="pointSource"
+      fieldName="Damage"
+      objectPath="nodeManager"
+      scale="1"
+      setNames="{ middle }"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="f_b"
+      inputVarNames="{ time }"
+      coordinates="{ 0, 130 }"
+      values="{ -0.5, 129.5 }"/>
+  </Functions>
+
+  <Outputs>
+    <Silo
+      name="DamageNucleation_SiloOutput"/>
+
+    <VTK
+      name="DamageNucleation_VTKOutput"
+      plotFileRoot="plot_damage_nucleation"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Geometry>
+    <Box
+      name="middle"
+      xMin="{ -0.334, -1.001, -1.001 }"
+      xMax="{ +0.334, +0.001, +1.001 }"/>
+  </Geometry>
+</Problem>

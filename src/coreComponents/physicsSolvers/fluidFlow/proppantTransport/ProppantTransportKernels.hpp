@@ -21,16 +21,16 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
+#include "constitutive/fluid/SingleFluidFields.hpp"
 #include "constitutive/fluid/ParticleFluidBase.hpp"
-#include "constitutive/fluid/ParticleFluidExtrinsicData.hpp"
+#include "constitutive/fluid/ParticleFluidFields.hpp"
 #include "constitutive/fluid/SlurryFluidBase.hpp"
-#include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
+#include "constitutive/fluid/SlurryFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 namespace geosx
@@ -173,53 +173,53 @@ struct AccumulationKernel
 struct FluxKernel
 {
   using FlowAccessors =
-    StencilAccessors< extrinsicMeshData::ghostRank,
-                      extrinsicMeshData::elementAperture,
-                      extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::proppant::proppantConcentration,
-                      extrinsicMeshData::proppant::isProppantMobile >;
+    StencilAccessors< fields::ghostRank,
+                      fields::elementAperture,
+                      fields::flow::pressure,
+                      fields::flow::gravityCoefficient,
+                      fields::proppant::proppantConcentration,
+                      fields::proppant::isProppantMobile >;
 
   using CellBasedFluxFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::elementAperture >;
+    StencilAccessors< fields::flow::pressure,
+                      fields::flow::gravityCoefficient,
+                      fields::elementAperture >;
 
   using ParticleFluidAccessors =
     StencilMaterialAccessors< ParticleFluidBase,
-                              extrinsicMeshData::particlefluid::settlingFactor,
-                              extrinsicMeshData::particlefluid::dSettlingFactor_dPressure,
-                              extrinsicMeshData::particlefluid::dSettlingFactor_dProppantConcentration,
-                              extrinsicMeshData::particlefluid::dSettlingFactor_dComponentConcentration,
-                              extrinsicMeshData::particlefluid::collisionFactor,
-                              extrinsicMeshData::particlefluid::dCollisionFactor_dProppantConcentration >;
+                              fields::particlefluid::settlingFactor,
+                              fields::particlefluid::dSettlingFactor_dPressure,
+                              fields::particlefluid::dSettlingFactor_dProppantConcentration,
+                              fields::particlefluid::dSettlingFactor_dComponentConcentration,
+                              fields::particlefluid::collisionFactor,
+                              fields::particlefluid::dCollisionFactor_dProppantConcentration >;
 
   using SlurryFluidAccessors =
     StencilMaterialAccessors< SlurryFluidBase,
-                              extrinsicMeshData::singlefluid::density,
-                              extrinsicMeshData::singlefluid::dDensity_dPressure,
-                              extrinsicMeshData::slurryfluid::dDensity_dProppantConcentration,
-                              extrinsicMeshData::slurryfluid::dDensity_dComponentConcentration,
-                              extrinsicMeshData::singlefluid::viscosity,
-                              extrinsicMeshData::singlefluid::dViscosity_dPressure,
-                              extrinsicMeshData::slurryfluid::dViscosity_dProppantConcentration,
-                              extrinsicMeshData::slurryfluid::dViscosity_dComponentConcentration,
-                              extrinsicMeshData::slurryfluid::componentDensity,
-                              extrinsicMeshData::slurryfluid::dComponentDensity_dPressure,
-                              extrinsicMeshData::slurryfluid::dComponentDensity_dComponentConcentration,
-                              extrinsicMeshData::slurryfluid::fluidDensity,
-                              extrinsicMeshData::slurryfluid::dFluidDensity_dPressure,
-                              extrinsicMeshData::slurryfluid::dFluidDensity_dComponentConcentration >;
+                              fields::singlefluid::density,
+                              fields::singlefluid::dDensity_dPressure,
+                              fields::slurryfluid::dDensity_dProppantConcentration,
+                              fields::slurryfluid::dDensity_dComponentConcentration,
+                              fields::singlefluid::viscosity,
+                              fields::singlefluid::dViscosity_dPressure,
+                              fields::slurryfluid::dViscosity_dProppantConcentration,
+                              fields::slurryfluid::dViscosity_dComponentConcentration,
+                              fields::slurryfluid::componentDensity,
+                              fields::slurryfluid::dComponentDensity_dPressure,
+                              fields::slurryfluid::dComponentDensity_dComponentConcentration,
+                              fields::slurryfluid::fluidDensity,
+                              fields::slurryfluid::dFluidDensity_dPressure,
+                              fields::slurryfluid::dFluidDensity_dComponentConcentration >;
 
   using CellBasedFluxSlurryFluidAccessors =
     StencilMaterialAccessors< SlurryFluidBase,
-                              extrinsicMeshData::singlefluid::density,
-                              extrinsicMeshData::singlefluid::viscosity >;
+                              fields::singlefluid::density,
+                              fields::singlefluid::viscosity >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
-                              extrinsicMeshData::permeability::permeability,
-                              extrinsicMeshData::permeability::permeabilityMultiplier >;
+                              fields::permeability::permeability,
+                              fields::permeability::permeabilityMultiplier >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -349,21 +349,21 @@ struct ProppantPackVolumeKernel
 {
 
   using FlowAccessors =
-    StencilAccessors< extrinsicMeshData::ghostRank,
-                      extrinsicMeshData::elementAperture,
-                      extrinsicMeshData::elementVolume,
-                      extrinsicMeshData::proppant::cellBasedFlux,
-                      extrinsicMeshData::proppant::isProppantMobile,
-                      extrinsicMeshData::proppant::isProppantBoundary >;
+    StencilAccessors< fields::ghostRank,
+                      fields::elementAperture,
+                      fields::elementVolume,
+                      fields::proppant::cellBasedFlux,
+                      fields::proppant::isProppantMobile,
+                      fields::proppant::isProppantBoundary >;
 
   using ParticleFluidAccessors =
-    StencilMaterialAccessors< ParticleFluidBase, extrinsicMeshData::particlefluid::settlingFactor >;
+    StencilMaterialAccessors< ParticleFluidBase, fields::particlefluid::settlingFactor >;
 
   using SlurryFluidAccessors =
     StencilMaterialAccessors< SlurryFluidBase,
-                              extrinsicMeshData::singlefluid::density,
-                              extrinsicMeshData::slurryfluid::fluidDensity,
-                              extrinsicMeshData::slurryfluid::fluidViscosity >;
+                              fields::singlefluid::density,
+                              fields::slurryfluid::fluidDensity,
+                              fields::slurryfluid::fluidViscosity >;
 
 
   template< typename VIEWTYPE >

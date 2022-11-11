@@ -51,12 +51,12 @@ fi
 # This will tells OpenMPI to discover the number of hardware threads on the node,
 # and use that as the number of slots available. (There is a distinction between threads and cores).
 GEOSX_BUILD_DIR=/tmp/build
-or_die python scripts/config-build.py \
-              -hc ${HOST_CONFIG} \
-              -bt ${CMAKE_BUILD_TYPE} \
-              -bp ${GEOSX_BUILD_DIR} \
-              -ip ${GEOSX_DIR} \
-              -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"'
+or_die python3 scripts/config-build.py \
+               -hc ${HOST_CONFIG} \
+               -bt ${CMAKE_BUILD_TYPE} \
+               -bp ${GEOSX_BUILD_DIR} \
+               -ip ${GEOSX_DIR} \
+               -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"'
 
 or_die cd ${GEOSX_BUILD_DIR}
 
@@ -75,15 +75,17 @@ fi
 # "Make" target check (builds geosx executable target only if true)
 # Use one process to prevent out-of-memory error
 if [[ "$*" == *--build-exe-only* ]]; then
-  or_die make -j 1 geosx VERBOSE=1
+  or_die make -j $(nproc) geosx
 else
-  or_die make -j $(nproc) VERBOSE=1
+  or_die make -j $(nproc) geosx
+  make -j $(nproc)
+  or_die make -j 2
 
   # Verbosity check for installation to prevent hitting Travis log limit
   if [[ "$*" == *--reduce-install-logs* ]]; then
     or_die make install
   else
-    or_die make install VERBOSE=1
+    or_die make install
   fi
 fi
 
@@ -91,5 +93,6 @@ fi
 if [[ "$*" != *--disable-unit-tests* ]]; then
   or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
+
 
 exit 0

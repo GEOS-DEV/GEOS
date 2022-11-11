@@ -4,8 +4,9 @@
   <Included>
     <File name="./kgdToughnessDominated_base.xml"/>
   </Included>
+
   <Mesh>
-	<!-- Sphinx_Mesh_InternalMesh -->
+    <!-- Sphinx_Mesh_InternalMesh -->
     <InternalMesh 
       name="mesh1"
       elementTypes="{C3D8}"
@@ -15,48 +16,83 @@
       nx="{ 30, 30 }"
       ny="{ 100 }"
       nz="{ 2 }"
-	  xBias="{ 0.5, -0.5 }"
+      xBias="{ 0.5, -0.5 }"
       cellBlockNames="{cb1}"/>
-	<!-- Sphinx_Mesh_InternalMesh_End -->
+    <!-- Sphinx_Mesh_InternalMesh_End -->
   </Mesh>
 
   <Geometry>
 
-	<!-- Sphinx_Geometry_InitFracture -->
+    <!-- Sphinx_Geometry_InitFracture -->
     <Box
       name="fracture"
       xMin="{ -0.01, -0.01, -0.01 }"
       xMax="{  0.01,  1.01,  1.01 }"/>
-	<!-- Sphinx_Geometry_InitFracture_End -->
+    <!-- Sphinx_Geometry_InitFracture_End -->
 
-	<!-- Sphinx_Geometry_InjSource -->
+    <!-- Sphinx_Geometry_InjSource -->
     <Box
       name="source"
       xMin="{ -0.01, -0.01, -0.01 }"
       xMax="{  0.01,  1.01,  1.01 }"/>
-	<!-- Sphinx_Geometry_InjSource_End -->
+    <!-- Sphinx_Geometry_InjSource_End -->
 
     <!-- Sphinx_Geometry_FracturePlane -->
     <Box
       name="core"
       xMin="{ -0.01, -0.01, -0.01 }"
       xMax="{  0.01, 50.01,  1.01 }"/>
-	<!-- Sphinx_Geometry_FracturePlane_End -->
+    <!-- Sphinx_Geometry_FracturePlane_End -->
   </Geometry>
 
   <Events
-    maxTime="100.0">
-    <!-- SoloEvent 
-      name="initialPlot"
-      target="/Outputs/siloOutput"/-->
+    maxTime="100.1">
 
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
-    <!-- SoloEvent 
-      name="preFracturePlot"
-      target="/Outputs/siloOutput"/-->
+    <PeriodicEvent
+      name="outputs"
+      beginTime="2.0"
+      timeFrequency="2.0"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="timeHistoryCollection0"
+      beginTime="2.0"
+      timeFrequency="2.0"
+      targetExactTimestep="0"
+      target="/Tasks/pressureCollection" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection1"
+      beginTime="2.0"
+      timeFrequency="2.0"
+      targetExactTimestep="0"
+      target="/Tasks/apertureCollection" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection2"
+      beginTime="2.0"
+      timeFrequency="2.0"
+      targetExactTimestep="0"
+      target="/Tasks/hydraulicApertureCollection" /> 
+
+    <PeriodicEvent
+      name="timeHistoryCollection3"
+      beginTime="2.0"
+      timeFrequency="2.0"
+      targetExactTimestep="0"
+      target="/Tasks/areaCollection" />      
+
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      beginTime="2.0"
+      timeFrequency="2.0"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput"/> 
 
     <PeriodicEvent
       name="solverApplications0"
@@ -74,15 +110,8 @@
 
     <PeriodicEvent
       name="solverApplications2"
-      beginTime="20.0"
-      endTime="100.0"
+      beginTime="20.0"      
       forceDt="1.0"
       target="/Solvers/hydrofracture"/>
-
-    <PeriodicEvent
-      name="outputs"
-      timeFrequency="10.0"
-      targetExactTimestep="0"
-      target="/Outputs/siloOutput"/>
   </Events>
 </Problem>

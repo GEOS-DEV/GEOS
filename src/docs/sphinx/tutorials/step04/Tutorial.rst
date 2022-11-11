@@ -27,8 +27,8 @@ The xml input file for this test case is located at:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/solidMechanics/integratedTests/beamBending_base.xml
-  src/coreComponents/physicsSolvers/solidMechanics/integratedTests/beamBending_benchmark.xml
+  inputFiles/solidMechanics/beamBending_base.xml
+  inputFiles/solidMechanics/beamBending_benchmark.xml
 
 ------------------------------------
 Discretized computational domain
