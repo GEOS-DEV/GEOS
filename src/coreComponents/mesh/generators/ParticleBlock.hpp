@@ -81,10 +81,10 @@ public:
   ParticleType getParticleType() const override
   { return m_particleType; }
 
-  array1d< int > getParticleID() const override
+  array1d< globalIndex > getParticleID() const override
   { return m_particleID; }
 
-  void setParticleID(array1d< int > const particleID)
+  void setParticleID( array1d< globalIndex > const particleID )
   { m_particleID = particleID; }
 
   array2d< real64 > getParticleCenter() const override
@@ -160,7 +160,7 @@ private:
   string_array m_externalPropertyNames;
 
   /// Member level field for the particle global ID.
-  array1d< int > m_particleID;
+  array1d< globalIndex > m_particleID;
 
   /// Member level field for the particle contact group.
   array1d< int > m_particleGroup;

@@ -21,6 +21,9 @@
 
 #include "mesh/ParticleType.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/MPI_iCommData.hpp"
+#include "constitutive/solid/SolidBase.hpp"
 
 namespace geosx
 {
@@ -83,13 +86,13 @@ public:
    * @brief Get the global ID of each particle in this subregion.
    * @return an arrayView1d of const particle global IDs
    */
-  arrayView1d< int const > getParticleID() const
+  arrayView1d< globalIndex const > getParticleID() const
   { return m_particleID; }
 
   /**
    * @copydoc getParticleID() const
    */
-  arrayView1d< int > getParticleID()
+  arrayView1d< globalIndex > getParticleID()
   { return m_particleID; }
 
     /**
@@ -321,11 +324,18 @@ public:
                        int const & startingIndex,
                        int const & numberOfIncomingParticles );
 
-  void erase(localIndex pp);
+  void erase(localIndex pp, string solidMaterialName);
 
-  void eraseVector(array2d< real64 > & vector, localIndex index);
+  void eraseVector(array2d< real64 > & vector, localIndex index, int vectorLength);
 
-  void eraseTensor(array3d< real64 > & tensor, localIndex index);
+  void eraseTensor(array3d< real64 > & tensor, localIndex index, int dim1, int dim2);
+
+  void setNonGhostIndices();
+
+  std::vector< localIndex > & nonGhostIndices()
+  {
+    return m_nonGhostIndices;
+  }
 
 private:
   /// Group in which the constitutive models of this subregion are registered
@@ -339,7 +349,7 @@ protected:
   array1d< int > m_particleRank;
 
   /// Member level field for the particle global ID.
-  array1d< int > m_particleID;
+  array1d< globalIndex > m_particleID;
 
     /// Member level field for the particle contact group.
   array1d< int > m_particleGroup;
@@ -370,6 +380,9 @@ protected:
 
   /// initial half-R-vectors (center to face)
   array3d< real64 > m_particleInitialRVectors;
+
+  /// Indices of particles that are not ghosts
+  std::vector< localIndex > m_nonGhostIndices;
 
 };
 

@@ -60,16 +60,22 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_solverProfiling( 0 ),
   m_timeIntegrationOption( TimeIntegrationOption::ExplicitDynamic ),
   m_iComm( CommunicationTools::getInstance().getCommID() ),
+  m_prescribedBcTable( 0 ),
   m_boundaryConditionTypes(),
-  m_cpdiDomainScaling(0),
-  m_smallMass(),
+  m_bcTable(),
+  m_prescribedBoundaryFTable( 0 ),
+  m_fTableInterpType( 0 ),
+  m_fTable(),
+  m_neighborRadius( -1.0 ),
+  m_cpdiDomainScaling( 0 ),
+  m_smallMass( DBL_MAX ),
   m_numContactGroups(),
   m_numContactFlags(),
   m_numVelocityFields(),
-  m_damageFieldPartitioning( false ),
+  m_damageFieldPartitioning( 0 ),
   m_contactGapCorrection( 0 ),
   m_frictionCoefficient( 0.0 ),
-  m_planeStrain( false ),
+  m_planeStrain( 0 ),
   m_numDims( 3 ),
   m_hEl{ DBL_MAX, DBL_MAX, DBL_MAX },
   m_xLocalMin{ DBL_MAX, DBL_MAX, DBL_MAX },
@@ -92,14 +98,44 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( m_timeIntegrationOption ).
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
+  registerWrapper( "prescribedBcTable", &m_prescribedBcTable ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag for whether to have time-dependent boundary condition types" );
+
   registerWrapper( "boundaryConditionTypes", &m_boundaryConditionTypes ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Boundary conditions on x-, x+, y-, y+, z- and z+ faces. Options are:\n* " + EnumStrings< BoundaryConditionOption >::concat( "\n* " ) );
 
+  registerWrapper( "bcTable", &m_bcTable ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Array that stores time-dependent bc types on x-, x+, y-, y+, z- and z+ faces." );
+
+  registerWrapper( "prescribedBoundaryFTable", &m_prescribedBoundaryFTable ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag for whether to have time-dependent boundary conditions described by a global background grid F" );
+
+  registerWrapper( "fTableInterpType", &m_fTableInterpType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The type of F table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial)." );
+
+  registerWrapper( "fTable", &m_fTable ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Array that stores time-dependent grid-aligned stretches interpreted as a global background grid F." );
+
+  registerWrapper( "neighborRadius", &m_neighborRadius ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).
+    setDescription( "Neighbor radius for SPH-type calculations" );
+
   registerWrapper( "cpdiDomainScaling", &m_cpdiDomainScaling ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Option for CPDI domain scaling" );
+
+  registerWrapper( "smallMass", &m_smallMass ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( DBL_MAX ).
+    setDescription( "The small mass threshold for ignoring extremely low-mass nodes." );
 
   registerWrapper( "numContactGroups", &m_numContactGroups ).
     setInputFlag( InputFlags::FALSE ).
@@ -114,7 +150,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDescription( "Number of velocity fields" );
 
   registerWrapper( "damageFieldPartitioning", &m_damageFieldPartitioning ).
-    setApplyDefaultValue( false ).
+    setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag for using the gradient of the particle damage field to partition material into separate velocity fields" );
 
@@ -233,12 +269,23 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & GEOSX_UNUSED_PARAM( regionNames ) )
+                                                    arrayView1d< string const > const & regionNames )
   {
     MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
     if( meshBody.hasParticles() ) // Particle field registration? TODO: What goes here?
     {
-      GEOSX_LOG_RANK_0("Registering particle fields.");
+      ParticleManager & particleManager = meshLevel.getParticleManager();
+      
+      particleManager.forParticleSubRegions< ParticleSubRegion >( regionNames,
+                                                                  [&]( localIndex const,
+                                                                       ParticleSubRegion & subRegion )
+      {
+        subRegion.registerWrapper< array1d< int > >( "isBad" ). // TODO: Change this to a std::set/LvArray::SortedArray that we push indices into?
+          setPlotLevel( PlotLevel::NOPLOT ).
+          setDescription( "An array that remembers particles that should be deleted at the end of the time step." );
+
+        subRegion.excludeWrappersFromPacking( { "isBad" } ); // Copied from FEM solver, not sure if needed here
+      } );
     }
     else // Background grid field registration
     {
@@ -300,8 +347,6 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the result of mapping particle positions to the nodes." );
 
-
-
       Group & nodeSets = nodes.sets();
 
       nodeSets.registerWrapper< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() ).
@@ -324,8 +369,8 @@ void SolidMechanicsMPM::initializePreSubGroups()
   Group & meshBodies = domain.getMeshBodies();
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
-                                                                MeshLevel & meshLevel,
-                                                                arrayView1d<string const> const & regionNames )
+                                                    MeshLevel & meshLevel,
+                                                    arrayView1d<string const> const & regionNames )
   {
     MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 
@@ -337,9 +382,9 @@ void SolidMechanicsMPM::initializePreSubGroups()
       {
         string & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidMaterialNamesString() );
         solidMaterialName = SolverBase::getConstitutiveName<SolidBase>( subRegion );
-      });
+      } );
     }
-  });
+  } );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
@@ -400,6 +445,80 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
                                     ParticleManager & particleManager,
                                     SpatialPartition & partition )
 {
+  // Read and distribute BC table
+  if( m_prescribedBcTable == 1 )
+  {
+    int rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    int BCTableSize;
+    std::vector<double> BCTable1D; // Need 1D version of BC table for MPI broadcast
+
+    if( rank == 0 ) // Rank 0 process parses the BC table file
+    {
+      std::ifstream fp( "BCTable.dat" );
+      double BCTableEntry = 0;
+      while( fp >> BCTableEntry )
+      {
+        BCTable1D.push_back( BCTableEntry ); // Push values into BCTable1D
+      }
+      BCTableSize = BCTable1D.size();
+    }
+
+    MPI_Bcast( &BCTableSize, 1, MPI_INT, 0, MPI_COMM_WORLD ); // Broadcast the size of BCTable1D to other processes
+    if( rank != 0 ) // All processes except for root resize their versions of BCTable1D
+    {
+      BCTable1D.resize( BCTableSize );
+    }
+    MPI_Bcast( BCTable1D.data(), BCTableSize, MPI_DOUBLE, 0, MPI_COMM_WORLD ); // Broadcast BCTable1D to other processes
+
+    // Technically don't need to reshape BCTable1D into a 2D array, but it makes things more readable and should have little runtime penalty
+    m_bcTable.resize( BCTableSize / 7, 7 ); // Initialize size of m_BCTable
+    for( int i = 0 ; i < BCTableSize ; i++ ) // Populate m_BCTable
+    {
+      m_bcTable[i / 7][i % 7] = BCTable1D[i]; // Taking advantage of integer division rounding towards zero
+    }
+  }
+
+  // Read and distribute F table; Initialize domain F and L
+  if( m_prescribedBoundaryFTable == 1 )
+  {
+    m_domainF.resize(3);
+    m_domainL.resize(3);
+    for( int i=0; i<3; i++ )
+    {
+      m_domainF[i] = 1.0;
+      m_domainL[i] = 0.0;
+    }
+
+    int rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    int FTableSize;
+    std::vector<double> FTable1D; // Need 1D version of F table for MPI broadcast
+
+    if( rank == 0 ) // Rank 0 process parses the F table file
+    {
+      std::ifstream fp( "FTable.dat" );
+      double FTableEntry = 0;
+      while( fp >> FTableEntry )
+      {
+        FTable1D.push_back( FTableEntry ); // Push values into FTable1D
+      }
+      FTableSize = FTable1D.size();
+    }
+
+    MPI_Bcast( &FTableSize, 1, MPI_INT, 0, MPI_COMM_WORLD ); // Broadcast the size of FTable1D to other processes
+    if( rank != 0 ) // All processes except for root resize their versions of FTable1D
+    {
+      FTable1D.resize( FTableSize );
+    }
+    MPI_Bcast( FTable1D.data(), FTableSize, MPI_DOUBLE, 0, MPI_COMM_WORLD ); // Broadcast FTable1D to other processes
+
+    // Techinically don't need to reshape FTable1D into a 2D array, but it makes things more readable and should have little runtime penalty
+    m_fTable.resize( FTableSize / 4, 4 ); // Initialize size of m_fTable
+    for( int i = 0 ; i < FTableSize ; i++ ) // Populate m_fTable
+    {
+      m_fTable[i / 4][i % 4] = FTable1D[i]; // Taking advantage of integer division rounding towards zero
+    }
+  }
+  
   // Get grid quantites
   int numNodes = nodeManager.size();
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridReferencePosition = nodeManager.referencePosition();
@@ -444,6 +563,19 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     }
   }
 
+  // Set SPH neighbor radius if necessary
+  if( m_neighborRadius <= 0.0 )
+  {
+    if( m_planeStrain )
+    {
+      m_neighborRadius *= -1.0 * fmin( m_hEl[0], m_hEl[1] );
+    }
+    else
+    {
+      m_neighborRadius *= -1.0 * fmin( m_hEl[0], fmin( m_hEl[1], m_hEl[2] ) );
+    }
+  }
+
   // Get global domain extent excluding buffer nodes
   for(int i=0; i<3; i++)
   {
@@ -479,7 +611,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     std::set< localIndex > tmpBoundaryNodes;
     std::set< localIndex > tmpBufferNodes;
 
-    int dir0 = face / 2;           // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
+    int dir0 = face / 2; // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
 
     int positiveNormal = face % 2; // even => (-) => 0, odd => (+) => 1
     int sign = 2 * positiveNormal - 1;
@@ -495,7 +627,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
         tmpBoundaryNodes.insert(g);
       }
 
-      if( sign * positionRelativeToBoundary > 0 ) // basically a dot product with the face normal
+      if( sign * positionRelativeToBoundary > 0 && std::fabs( positionRelativeToBoundary ) > tolerance ) // basically a dot product with the face normal
       {
         tmpBufferNodes.insert(g);
       }
@@ -516,13 +648,24 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getParticleDeformationGradient();
 
     // Set particle masses and small mass threshold
-    real64 minMass = 0.0;
+    real64 localMinMass = 0.0;
+    real64 globalMinMass;
     for(int p=0; p<subRegion.size(); p++)
     {
       particleMass[p] = particleDensity[p][0] * particleVolume[p]; // TODO: This should probably be done in ParticleMeshGenerator...
-      minMass = particleMass[p] < minMass ? particleMass[p] : minMass;
+      localMinMass = particleMass[p] < localMinMass ? particleMass[p] : localMinMass;
     }
-    m_smallMass = minMass * 1.0e-12;
+    if( subRegion.size() == 0 ) // Handle empty partitions
+    {
+      localMinMass = DBL_MAX;
+    }
+    MPI_Allreduce( &localMinMass,
+                   &globalMinMass,
+                   1,
+                   MPI_DOUBLE,
+                   MPI_MIN,
+                   MPI_COMM_WORLD );
+    m_smallMass = fmin( globalMinMass * 1.0e-12, m_smallMass );
 
     // deformation gradient - TODO: there's probably a LvArray function that makes this a one-liner - I don't think the ParticleSubRegionBase constructor can easily initialize this to identity
     for(int p=0; p<subRegion.size(); p++)
@@ -571,7 +714,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   m_numContactGroups = maxGlobalGroupNumber + 1;
 
   // Specified number of damage flags.
-  m_numContactFlags = m_damageFieldPartitioning ? 2 : 1;
+  m_numContactFlags = m_damageFieldPartitioning == 1 ? 2 : 1;
 
   // Total number of velocity fields:
   m_numVelocityFields = m_numContactGroups * m_numContactFlags;
@@ -590,7 +733,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   gridMaterialPosition.resize( numNodes, m_numVelocityFields, 3 );
 }
 
-real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                         real64 const & dt,
                                         const int cycleNumber,
                                         DomainPartition & domain )
@@ -616,6 +759,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   MeshLevel & mesh = grid.getBaseDiscretization();
   NodeManager & nodeManager = mesh.getNodeManager();
 
+
   //#######################################################################################
   solverProfiling( "Get nodal fields" );
   //#######################################################################################
@@ -635,13 +779,24 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   array3d< real64 > & gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::surfaceNormalString() );
   array3d< real64 > & gridMaterialPosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::materialPositionString() );
 
-  //#######################################################################################
-  solverProfiling( "At time step zero, perform initialization calculations" );
-  //#######################################################################################
-  if(cycleNumber == 0)
+
+  if( cycleNumber == 0 )
   {
+    //#######################################################################################
+    solverProfiling( "At time step zero, perform initialization calculations" );
+    //#######################################################################################
     initialize( nodeManager, particleManager, partition );
   }
+  // intialize isBad - This has to be done every time time because isBad is not handled by the repartitioning code
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    array1d< int > & isBad = subRegion.getReference< array1d< int > >( "isBad" );
+    isBad.resize( subRegion.size() );
+    for(int p=0; p<subRegion.size(); p++)
+    {
+      isBad[p] = 0;
+    }
+  } );
   
 
   //#######################################################################################
@@ -667,6 +822,54 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   gridSurfaceNormal.zero();
   gridMaterialPosition.zero();
 
+  //#######################################################################################
+  solverProfiling( "Update global-to-local map" );
+  //#######################################################################################
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    subRegion.updateMaps();
+  } );
+
+
+  if( MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1 && m_damageFieldPartitioning == 1 )
+  {
+    //#######################################################################################
+    solverProfiling( "Perform particle ghosting" );
+    //#######################################################################################
+    partition.getGhostParticlesFromNeighboringPartitions( domain, m_iComm, m_neighborRadius );
+  }
+
+
+  //#######################################################################################
+  solverProfiling( "Get indices of non-ghost particles" );
+  //#######################################################################################
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    subRegion.setNonGhostIndices();
+  } );
+
+
+  if( m_prescribedBcTable == 1)
+  {
+    //#######################################################################################
+    solverProfiling( "Update BCs based on bcTable" );
+    //#######################################################################################
+    int bcInterval;
+
+    for( localIndex i = 0 ; i < m_bcTable.size(0) ; i++ ) // Naive method for determining what part of BC table we're currently in, can optimize later (TODO)
+    {
+      if( time_n + 0.5 * dt > m_bcTable[i][0] )
+      {
+        bcInterval = i;
+      }
+    }
+
+    for( int i=0; i<6; i++ )
+    {
+      m_boundaryConditionTypes[i] = m_bcTable[bcInterval][i+1];
+    }
+  }
+
 
   //#######################################################################################
   solverProfiling( "Particle-to-grid interpolation" );
@@ -683,7 +886,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
     SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
     arrayView3d< real64, solid::STRESS_USD > const particleStress = constitutiveRelation.getStress();
 
-    for(int p=0; p<subRegion.size(); p++)
+    for( localIndex p: subRegion.nonGhostIndices() )
     {
       auto const & p_x = particleCenter[p]; // auto = LvArray::ArraySlice<double, 1, 0, int>
       auto const & p_v = particleVelocity[p]; // auto = LvArray::ArraySlice<double, 1, 0, int>
@@ -693,9 +896,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       int const & p_group = particleGroup[p];
 
       // Get interpolation kernel
-      std::vector<int> nodeIDs; // nodes that the particle maps to
-      std::vector<real64> weights; // shape function value for each node
-      std::vector< std::vector<real64> > gradWeights; // shape function gradient value for each node; 1st index = direction, 2nd index = node
+      std::vector< int > nodeIDs; // nodes that the particle maps to
+      std::vector< real64 > weights; // shape function value for each node
+      std::vector< std::vector< real64 > > gradWeights; // shape function gradient value for each node; 1st index = direction, 2nd index = node
       gradWeights.resize(3);
       subRegion.getAllWeights( p,
                                m_xLocalMin,
@@ -817,8 +1020,73 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
     }
   }
 
-  // Read F-Table?
 
+  if( m_prescribedBoundaryFTable )
+  {
+    //#######################################################################################
+    solverProfiling( "Interpolate F table" );
+    //#######################################################################################
+    
+    double Fii_new;
+    double Fii_dot;
+    int fInterval;
+    double timeInterval;
+    double timePast;
+
+    if( time_n + dt < m_fTable[m_fTable.size(0) - 1][0] ) // If within F table bounds...
+    {
+      for( localIndex i = 0 ; i < m_fTable.size(0) ; i++ ) // Naive method for determining what part of F table we're currently in, can optimize later (TODO)
+      {
+        if( time_n + dt / 2 > m_fTable[i][0] )
+        {
+          fInterval = i;
+        }
+      }
+
+      timeInterval = m_fTable[fInterval + 1][0] - m_fTable[fInterval][0]; // Time fInterval for current part of F table we're in
+      timePast = time_n + dt - m_fTable[fInterval][0]; // Time elapsed since switching intervals in F table
+
+      for( int i = 0 ; i < m_numDims ; i++ ) // Update L and F
+      {
+        // smooth-step interpolation with cosine.
+        if( m_fTableInterpType == 1 )
+        {
+          Fii_new = m_fTable[fInterval][i + 1] - 0.5 * ( m_fTable[fInterval + 1][i + 1] - m_fTable[fInterval][i + 1] ) * ( cos(
+              3.141592653589793 * timePast / timeInterval ) - 1.0 );
+        }
+        // smooth-step interpolation with 5th order polynomial, zero endpoint velocity and acceleration
+        else if( m_fTableInterpType == 2 )
+        {
+          Fii_new = m_fTable[fInterval][i+1] + (m_fTable[fInterval+1][i+1] - m_fTable[fInterval][i+1])*(10.0*pow(timePast/timeInterval,3) - 15.0*pow(timePast/timeInterval,4) + 6.0*pow(timePast/timeInterval,5));
+        }
+        // default linear interpolation
+        else
+        {
+          Fii_new = m_fTable[fInterval][i + 1] * ( timeInterval - timePast ) / timeInterval + m_fTable[fInterval + 1][i + 1] * ( timePast ) / timeInterval;
+        }
+
+        // // drive F22 and F33 using F11 to get pure shear
+        // if(m_fTable_pure_shear && i > 0)
+        // {
+        //   Fii_new = m_planeStrain ? 1.0/m_domainF[0] : 1.0/sqrt(m_domainF[0]);
+        // }
+
+        Fii_dot = ( Fii_new - m_domainF[i] ) / dt;
+        m_domainL[i] = Fii_dot / Fii_new; // L = Fdot.Finv
+        m_domainF[i] = Fii_new;
+      }
+    }
+    else if( time_n + dt >= m_fTable[m_fTable.size(0) - 1][0] ) // Else (i.e. if we exceed F table upper bound)...
+    {
+      for( int i = 0 ; i < m_numDims ; i++ )
+      {
+        Fii_new = m_fTable[m_fTable.size(0) - 1][i + 1]; // Set Fii_new to the last prescribed F table value
+        Fii_dot = ( Fii_new - m_domainF[i] ) / dt;
+        m_domainL[i] = Fii_dot / Fii_new; // L = Fdot.Finv
+        m_domainF[i] = Fii_new;
+      }
+    }
+  }
 
   //#######################################################################################
   solverProfiling( "Apply essential boundary conditions" );
@@ -839,6 +1107,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
     arrayView1d< real64 > const particleInitialVolume = subRegion.getParticleInitialVolume();
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getParticleDeformationGradient();
     arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
+    arrayView1d< globalIndex > particleID = subRegion.getParticleID();
 
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ElasticIsotropic & constitutiveRelation = getConstitutiveModel< ElasticIsotropic >( subRegion, solidMaterialName ); // again, limiting to elastic isotropic for now
@@ -846,9 +1115,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
     arrayView3d< real64, solid::STRESS_USD > const particleStress = constitutiveRelation.getStress();
     arrayView1d< real64 > const shearModulus = constitutiveRelation.shearModulus();
     arrayView1d< real64 > const bulkModulus = constitutiveRelation.bulkModulus();
+    arrayView1d< int > const isBad = subRegion.getReference< array1d< int > >( "isBad" );
 
     // Particle loop - we might be able to get rid of this someday and have everything happen via MPMParticleSubRegion methods
-    for(int p=0; p<subRegion.size(); p++)
+    for( localIndex p: subRegion.nonGhostIndices() )
     {
       auto const & p_x = particleCenter[p];
       auto const & p_v = particleVelocity[p];
@@ -864,7 +1134,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       real64 p_Diso[3][3] = { {0} }; // Rate of deformation
       real64 p_Ddev[3][3] = { {0} }; // Rate of deformation
       real64 p_FOld[3][3] = { {0} }; // Old particle F
-      real64 detF = 0.0; // Material Jacobian
+      real64 detF; // Material Jacobian
 
       // Store the old particle F
       for(int i=0; i<3; i++)
@@ -956,16 +1226,21 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
       // Get det(F), update volume and r-vectors
       detF = -p_F[0][2]*p_F[1][1]*p_F[2][0] + p_F[0][1]*p_F[1][2]*p_F[2][0] + p_F[0][2]*p_F[1][0]*p_F[2][1] - p_F[0][0]*p_F[1][2]*p_F[2][1] - p_F[0][1]*p_F[1][0]*p_F[2][2] + p_F[0][0]*p_F[1][1]*p_F[2][2];
-      if( detF <= 0.0 )
+      // if( detF <= 0.0 )
+      // {
+      //   isBad[p] = 1;
+      //   GEOSX_LOG_RANK( "Flagging particle with negative Jacobian for deletion! Global particle ID: " << particleID[p] );
+      //   continue; // move on to the next particle since log(detF) will throw an error
+      // }
+      if( detF <= 0.1 || detF >= 10.0 )
       {
-        subRegion.erase(p);
-        GEOSX_LOG_RANK( "Deleting particle with negative Jacobian! Local particle ID: " << p);
-        p--;
-        break;
+        isBad[p] = 1;
+        GEOSX_LOG_RANK( "Flagging particle with unreasonable Jacobian (<0.1 or >10) for deletion! Global particle ID: " << particleID[p] );
+        continue; // move on to the next particle since log(detF) will throw an error
       }
       p_vol = p_vol0 * detF;
-      p_rho = p_m/p_vol;
-      subRegion.applyFtoRVectors( p, p_F );
+      p_rho = p_m / p_vol;
+      subRegion.computeRVectors( p );
       if( m_cpdiDomainScaling == 1 && subRegion.getParticleType() == ParticleType::CPDI )
       {
         real64 lCrit = m_planeStrain ? 0.49999 * fmin( m_hEl[0], m_hEl[1] ) : 0.49999 * fmin( m_hEl[0], fmin( m_hEl[1], m_hEl[2] ) );
@@ -993,7 +1268,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       // Assign full stress tensor to the symmetric version
       for(int i=0; i<3; i++)
       {
-        for(int j=i; j<3; j++) // symmetric update, yes this works, I checked it
+        for(int j=i; j<3; j++)
         {
           int voigt = m_voigtMap[i][j];
           p_stress[voigt] = stressFull[i][j];
@@ -1004,24 +1279,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   } ); // subregion loop
 
 
-  // Resize grid based on F-table
-
-
-  //#######################################################################################
-  solverProfiling( "Particle repartitioning" );
-  //#######################################################################################
-  partition.repartitionMasterParticlesToNeighbors( domain, m_iComm );
-
-
-  //#######################################################################################
-  solverProfiling( "Delete particles that map outside the domain (including buffer cells)" );
-  //#######################################################################################
-  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-  {
-    subRegion.deleteOutOfRangeParticles( m_xGlobalMin, m_xGlobalMax, m_hEl );
-  } );
-
-
   //#######################################################################################
   solverProfiling( "Calculate stable time step" );
   //#######################################################################################
@@ -1030,18 +1287,58 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
+    arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ElasticIsotropic & constitutiveRelation = getConstitutiveModel< ElasticIsotropic >( subRegion, solidMaterialName ); // For the time being we restrict our attention to elastic isotropic solids. TODO: Have all constitutive models automatically calculate a wave speed.
     arrayView2d< real64 > const rho = constitutiveRelation.getDensity();
     arrayView1d< real64 > const g = constitutiveRelation.shearModulus();
     arrayView1d< real64 > const k = constitutiveRelation.bulkModulus();
-    for(int p=0; p<subRegion.size(); p++)
+    for( localIndex p: subRegion.nonGhostIndices() )
     {
-      wavespeed = std::max( wavespeed, sqrt( ( k[p] + (4.0/3.0) * g[p] ) / rho[p][0] ) );
+      wavespeed = std::max( wavespeed, sqrt( ( k[p] + (4.0/3.0) * g[p] ) / rho[p][0] ) + tOps::l2Norm< 3 >( particleVelocity[p] ) );
     }
   } );
 
-  real64 dtReturn = wavespeed > 1.0e-12 ? m_cflFactor*length/wavespeed : DBL_MAX; // This partitions's dt, make it huge if wavespeed=0.0 (this happens when there are no particles on this partition)
+  real64 dtReturn = wavespeed > 1.0e-12 ? m_cflFactor * length / wavespeed : DBL_MAX; // This partitions's dt, make it huge if wavespeed=0.0 (this happens when there are no particles on this partition)
+
+
+  //#######################################################################################
+  solverProfiling( "Delete bad particles" );
+  //#######################################################################################
+  // Cases covered:
+  // 1.) Particles that map outside the domain (including buffer cells)
+  // 2.) Particles with negative Jacobian
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    string solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    
+    arrayView1d< int > const isBad = subRegion.getReference< array1d< int > >( "isBad" );
+    arrayView1d< int > const particleRank = subRegion.getParticleRank();
+
+    subRegion.flagOutOfRangeParticles( m_xGlobalMin, m_xGlobalMax, m_hEl, isBad ); // This skips ghost particles
+
+    for( int p=subRegion.size()-1; p>=0; p-- ) // TODO: Looping over a set containing indices ordered largest->smallest would be more elegant and probably faster.
+    {                                          //       We could also do away with the rank check since only master particles are ever evaluated for deletion.
+      if( isBad[p] == 1 && particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) )
+      {
+        subRegion.erase(p, solidMaterialName);
+      }
+    }
+  } );
+
+
+  if( MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1 )
+  {
+    //#######################################################################################
+    solverProfiling( "Particle repartitioning" );
+    //#######################################################################################
+    particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+    {
+      // We need to pass the constitutive relation so we can erase constitutive fields
+      string solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+      partition.repartitionMasterParticles( subRegion, m_iComm, solidMaterialName );
+    } );
+  }
 
 
   //#######################################################################################
@@ -1102,6 +1399,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
     m_profilingLabels.resize(0);
   }
 
+  // Return stable time step
   return dtReturn;
 }
 
@@ -1117,7 +1415,7 @@ void SolidMechanicsMPM::syncGridFields( std::vector< std::string > const & field
   m_iComm.resize( neighbors.size() );
 
   // (2) Swap send and receive indices so we can sum from ghost to master
-  for(size_t n=0; n<neighbors.size(); n++)
+  for( size_t n=0; n<neighbors.size(); n++ )
   {
     int const neighborRank = neighbors[n].neighborRank();
     array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( neighborRank ).ghostsToReceive();
@@ -1210,7 +1508,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
     arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
 
-    for(int p=0; p<subRegion.size(); p++)
+    for( localIndex p: subRegion.nonGhostIndices() )
     {
       // Get interpolation kernel
       std::vector<int> nodeIDs; // nodes that the particle maps to
@@ -1563,6 +1861,7 @@ void SolidMechanicsMPM::solverProfiling( std::string label )
 {
   if( m_solverProfiling )
   {
+    GEOSX_LOG_RANK( label );
     MPI_Barrier( MPI_COMM_GEOSX );
     m_profilingTimes.push_back( MPI_Wtime() );
     m_profilingLabels.push_back( label );

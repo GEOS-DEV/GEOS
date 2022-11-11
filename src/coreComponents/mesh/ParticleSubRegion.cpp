@@ -35,6 +35,15 @@ ParticleSubRegion::~ParticleSubRegion()
   // Left blank
 }
 
+void ParticleSubRegion::updateMaps()
+{
+  for( localIndex p=0; p<this->size(); p++ )
+  {
+    m_localToGlobalMap[p] = m_particleID[p];
+  }
+  this->constructGlobalToLocalMap();
+}
+
 void ParticleSubRegion::setParticleRank(int rank, int np)
 {
   for(int i=0; i<np; i++)
@@ -81,9 +90,10 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   } );
 }
 
-void ParticleSubRegion::deleteOutOfRangeParticles( std::array< real64, 3 > const & xGlobalMin,
-                                                   std::array< real64, 3 > const & xGlobalMax,
-                                                   std::array< real64, 3 > const & hEl )
+void ParticleSubRegion::flagOutOfRangeParticles( std::array< real64, 3 > const & xGlobalMin,
+                                                 std::array< real64, 3 > const & xGlobalMax,
+                                                 std::array< real64, 3 > const & hEl,
+                                                 arrayView1d< int > const isBad )
 {
   // For CPDI
   int signs[8][3] = { { 1,  1,  1},
@@ -103,11 +113,9 @@ void ParticleSubRegion::deleteOutOfRangeParticles( std::array< real64, 3 > const
     globalMax[i] = xGlobalMax[i] + hEl[i];
   }
 
-  for( int p=this->size()-1; p>=0; p-- )
+  for( int p : this->nonGhostIndices() )
   {
     arraySlice1d< real64 > const & p_x = m_particleCenter[p];
-
-    bool deleted = false;
 
     switch( m_particleType )
     {
@@ -117,8 +125,7 @@ void ParticleSubRegion::deleteOutOfRangeParticles( std::array< real64, 3 > const
         {
           if( p_x[i] < globalMin[i] || globalMax[i] < p_x[i] )
           {
-            this->erase(p);
-            deleted = true;
+            isBad[p] = 1;
             break;
           }
         }
@@ -133,12 +140,11 @@ void ParticleSubRegion::deleteOutOfRangeParticles( std::array< real64, 3 > const
             real64 cornerPositionComponent = p_x[i] + signs[cornerIndex][0] * m_particleRVectors[p][0][i] + signs[cornerIndex][1] * m_particleRVectors[p][1][i] + signs[cornerIndex][2] * m_particleRVectors[p][2][i];
             if( cornerPositionComponent < globalMin[i] || globalMax[i] < cornerPositionComponent )
             {
-              this->erase(p);
-              deleted = true;
+              isBad[p] = 1;
               break;
             }
           }
-          if( deleted )
+          if( isBad[p] == 1 )
           {
             break;
           }
@@ -153,9 +159,9 @@ void ParticleSubRegion::deleteOutOfRangeParticles( std::array< real64, 3 > const
   }
 }
 
-void ParticleSubRegion::applyFtoRVectors( int const p,
-                                          LvArray::ArraySlice<double, 2, 1, int> const & p_F )
+void ParticleSubRegion::computeRVectors( int const p )
 {
+  arraySlice2d< real64 const > const p_F = m_particleDeformationGradient[p];
   if(m_hasRVectors)
   {
     for(int i=0; i<3; i++)
@@ -166,6 +172,24 @@ void ParticleSubRegion::applyFtoRVectors( int const p,
       }
     }
   }
+}
+
+array2d< real64 > ParticleSubRegion::computeRVectorsTemp( int const p ) const
+{
+  arraySlice2d< real64 const > const p_F = m_particleDeformationGradient[p];
+
+  array2d< real64 > rVectors;
+  rVectors.resize( 3, 3 );
+
+  for(int i=0; i<3; i++)
+  {
+    for(int j=0; j<3; j++)
+    {
+      rVectors[i][j] = p_F[j][0]*m_particleInitialRVectors[p][i][0] + p_F[j][1]*m_particleInitialRVectors[p][i][1] + p_F[j][2]*m_particleInitialRVectors[p][i][2];
+    }
+  }
+
+  return rVectors;
 }
 
 void ParticleSubRegion::cpdiDomainScaling( int p,
@@ -292,7 +316,7 @@ void ParticleSubRegion::getAllWeights( int const p,
       centerIJK.resize(3);
       for(int i=0; i<3; i++)
       {
-        centerIJK[i] = std::floor( (p_x[i] - xMin[i])/hx[i] );
+        centerIJK[i] = std::floor( ( p_x[i] - xMin[i] ) / hx[i] );
       }
 
       // get node IDs
@@ -391,7 +415,7 @@ void ParticleSubRegion::getAllWeights( int const p,
       alpha[7][2]=oneOverV*(-(p_r1[1]*p_r2[0]) + p_r1[0]*p_r2[1] + p_r1[1]*p_r3[0] + p_r2[1]*p_r3[0] - p_r1[0]*p_r3[1] - p_r2[0]*p_r3[1]);
 
       // get IJK associated with each corner
-      std::vector<std::vector<int>> cornerIJK;
+      std::vector< std::vector< int > > cornerIJK;
       cornerIJK.resize(8); // CPDI can map to up to 8 cells
       for(int corner=0; corner<8; corner++)
       {
