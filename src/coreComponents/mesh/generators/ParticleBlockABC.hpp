@@ -56,7 +56,7 @@ public:
    */
   virtual ParticleType getParticleType() const = 0;
 
-  virtual array1d< int > getParticleID() const = 0;
+  virtual array1d< globalIndex > getParticleID() const = 0;
 
   virtual array1d< int > getParticleGroup() const = 0;
 

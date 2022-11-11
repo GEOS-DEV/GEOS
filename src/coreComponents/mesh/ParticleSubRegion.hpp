@@ -68,6 +68,11 @@ public:
   ///@}
 
   /**
+   * @brief Update the local-to-global and global-to-local maps
+   */
+  void updateMaps();
+
+  /**
    * @name Helpers for ParticleSubRegion construction
    */
   ///@{
@@ -86,12 +91,23 @@ public:
 
   ///@}
 
-  void deleteOutOfRangeParticles( std::array< real64, 3 > const & xGlobalMin,
-                                  std::array< real64, 3 > const & xGlobalMax,
-                                  std::array< real64, 3 > const & hEl );
+  void flagOutOfRangeParticles( std::array< real64, 3 > const & xGlobalMin,
+                                std::array< real64, 3 > const & xGlobalMax,
+                                std::array< real64, 3 > const & hEl,
+                                arrayView1d< int > const isBad );
 
-  void applyFtoRVectors( int const p,
-                         LvArray::ArraySlice<double, 2, 1, int> const & p_F );
+  /**
+   * @brief This function modifies m_particleRVectors using the particle deformation gradient. Used by solvers.
+   * @param p the local particle index
+   */
+  void computeRVectors( int const p );
+
+  /**
+   * @brief This function returns a matrix of r-vectors based on the current particle deformation gradient. Used for plotting.
+   * @param p the local particle index
+   * @return The matrix of current r-vectors
+   */
+  array2d< real64 > computeRVectorsTemp( int const p ) const;       
 
   void cpdiDomainScaling( int p,
                           real64 lCrit,
