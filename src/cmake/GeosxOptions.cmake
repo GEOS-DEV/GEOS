@@ -132,9 +132,9 @@ if (ENABLE_GBENCHMARK)
                                 )
 endif()
 
-if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOSX_NINJA_FLAGS}" )
-endif()
+#if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
+#  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOSX_NINJA_FLAGS}" )
+#endif()
 
 #set(CMAKE_CUDA_STANDARD 14 CACHE STRING "" FORCE)
 #blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELEASE 
