@@ -135,7 +135,7 @@
   <FieldSpecifications>
     <FieldSpecification
       name="shearLoad"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       objectPath="nodeManager"
       scale="1.00e-3"
@@ -144,21 +144,21 @@
 
     <FieldSpecification
       name="fixedY"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       objectPath="nodeManager"
       setNames="{ top, bottom, left, right }"/>
 
     <FieldSpecification
       name="fixedX"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       objectPath="nodeManager"
       setNames="{ bottom }"/>
 
     <FieldSpecification
       name="fixedZ"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       objectPath="nodeManager"
       setNames="{ top, bottom, left, right }"/>

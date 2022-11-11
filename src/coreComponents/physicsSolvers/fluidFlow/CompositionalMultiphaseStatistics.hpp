@@ -107,10 +107,14 @@ private:
     /// phase region phase pore volume
     array1d< real64 > phasePoreVolume;
 
-    /// region phase mass
+    /// region phase mass (trapped and non-trapped)
     array1d< real64 > phaseMass;
+    /// trapped region phase mass
+    array1d< real64 > trappedPhaseMass;
     /// dissolved region component mass
     array2d< real64 > dissolvedComponentMass;
+
+
   };
 
   /**

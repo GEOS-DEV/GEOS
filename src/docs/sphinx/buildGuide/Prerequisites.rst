@@ -10,7 +10,7 @@ List of prerequisites
 
 Minimal requirements:
 
-- `CMake <https://cmake.org/>`_ build system generator (3.13+).
+- `CMake <https://cmake.org/>`_ build system generator (3.17+).
 - build tools (`GNU make <https://www.gnu.org/software/make/>`_ or `ninja <https://ninja-build.org/>`_ on Linux, XCode on MacOS).
 - a C++ compiler with full c++14 standard support (`gcc <https://gcc.gnu.org/>`_ 8.3+ or `clang <https://clang.llvm.org/>`_ 8.0+ are recommended).
 - `python <https://www.python.org/>`_ (2.7+ or 3.6+).

@@ -115,11 +115,15 @@ public:
 
   struct viewKeyStruct : public PorosityBase::viewKeyStruct
   {
-    static constexpr char const *biotCoefficientString() { return "biotCoefficient"; }
     static constexpr char const *grainBulkModulusString() { return "grainBulkModulus"; }
   } viewKeys;
 
   virtual void initializeState() const override final;
+
+  virtual arrayView1d< real64 const > const getBiotCoefficient() const override final
+  {
+    return m_biotCoefficient.toViewConst();
+  }
 
   using KernelWrapper = BiotPorosityUpdates;
 
