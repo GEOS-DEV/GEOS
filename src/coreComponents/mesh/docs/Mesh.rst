@@ -139,6 +139,9 @@ Thus, the generated mesh will be :
    :align: center
    :width: 500
 
+
+.. _ExternalMeshUsage:
+
 **************************
 Using an External Mesh
 **************************

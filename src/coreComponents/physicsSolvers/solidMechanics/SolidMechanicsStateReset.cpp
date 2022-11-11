@@ -27,6 +27,7 @@ namespace geosx
 
 using namespace constitutive;
 using namespace dataRepository;
+using namespace fields;
 
 SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
                                                     Group * const parent ):
@@ -85,9 +86,12 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
 
       NodeManager & nodeManager = mesh.getNodeManager();
 
-      nodeManager.velocity().zero();
-      nodeManager.incrementalDisplacement().zero();
-      nodeManager.totalDisplacement().zero();
+      if( nodeManager.hasField< solidMechanics::velocity >() )
+      {
+        nodeManager.getField< solidMechanics::velocity >().zero();
+      }
+      nodeManager.getField< solidMechanics::totalDisplacement >().zero();
+      nodeManager.getField< solidMechanics::incrementalDisplacement >().zero();
     }
 
     // Option 2: enable / disable inelastic behavior

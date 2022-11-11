@@ -109,8 +109,8 @@ stages:
 .build_on_lassen:
   stage: build
   variables:
-    ALLOC_COMMAND: "lalloc 1 -q pdebug"
-    INTEGRATED_ALLOC_COMMAND: "lalloc 10 -q pdebug"
+    ALLOC_COMMAND: "lalloc 1"
+    INTEGRATED_ALLOC_COMMAND: "lalloc 10"
     SYSTEM: "lassen"
   tags:
     - shell

@@ -46,6 +46,8 @@ WellControls::WellControls( string const & name, Group * const parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
+  enableLogLevelInput();
+
   registerWrapper( viewKeyStruct::typeString(), &m_type ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Well type. Valid options:\n* " + EnumStrings< Type >::concat( "\n* " ) );
@@ -362,8 +364,7 @@ void WellControls::initializePreSubGroups()
 bool WellControls::isWellOpen( real64 const & currentTime ) const
 {
   bool isOpen = true;
-  if( ( m_currentControl == Control::TOTALVOLRATE && isZero( getTargetTotalRate( currentTime ) ) ) ||
-      ( m_currentControl == Control::PHASEVOLRATE && isZero( getTargetPhaseRate( currentTime ) ) ) )
+  if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) ) )
   {
     isOpen = false;
   }

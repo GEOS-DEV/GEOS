@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/131810578.svg)](https://zenodo.org/badge/latestdoi/131810578)
+
 Welcome to the GEOSX project!
 -----------------------------
 GEOSX is a simulation framework for modeling coupled flow, transport, and geomechanics

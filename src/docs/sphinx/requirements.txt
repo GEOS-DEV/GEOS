@@ -6,3 +6,4 @@ mpmath
 docutils<0.18
 # using plantuml for diagrams
 sphinxcontrib-plantuml
+sphinx-argparse

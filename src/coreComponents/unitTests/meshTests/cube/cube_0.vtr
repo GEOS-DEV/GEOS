@@ -1,0 +1,25 @@
+<VTKFile type="RectilinearGrid" version="1.0" byte_order="LittleEndian">
+  <RectilinearGrid WholeExtent="0 2 0 2 0 3">
+  <Piece Extent="0 2 0 2 0 3">
+    <PointData>
+    </PointData>
+    <CellData>
+      <DataArray type="Int32" Name="attribute" format="ascii">
+        3 3 3 3 3 3
+        3 3 3 3 3 3
+      </DataArray>
+    </CellData>
+    <Coordinates>
+      <DataArray type="Float64" Name="x_coordinates" format="ascii">
+        0 1 2
+      </DataArray>
+      <DataArray type="Float64" Name="y_coordinates" format="ascii">
+        0 1 2
+      </DataArray>
+      <DataArray type="Float64" Name="z_coordinates" format="ascii">
+        0 1 2 3
+      </DataArray>
+    </Coordinates>
+  </Piece>
+  </RectilinearGrid>
+</VTKFile>

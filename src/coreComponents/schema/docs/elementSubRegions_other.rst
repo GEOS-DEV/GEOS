@@ -3,7 +3,7 @@
 ================================ ==== ===================================================== 
 Name                             Type Description                                           
 ================================ ==== ===================================================== 
-WellElementRegionuniqueSubRegion node :ref:`DATASTRUCTURE_WellElementRegionuniqueSubRegion` 
+WellElementRegionUniqueSubRegion node :ref:`DATASTRUCTURE_WellElementRegionUniqueSubRegion` 
 ================================ ==== ===================================================== 
 
 

@@ -21,7 +21,7 @@
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "functions/TableFunction.hpp"
-#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
+#include "physicsSolvers/contact/ContactFields.hpp"
 
 
 namespace geosx

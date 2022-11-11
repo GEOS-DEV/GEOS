@@ -17,8 +17,8 @@
  */
 
 #include "MultiPhaseThermalConductivityBase.hpp"
-#include "ThermalConductivityExtrinsicData.hpp"
-#include "MultiPhaseThermalConductivityExtrinsicData.hpp"
+#include "ThermalConductivityFields.hpp"
+#include "MultiPhaseThermalConductivityFields.hpp"
 
 namespace geosx
 {
@@ -35,8 +35,8 @@ MultiPhaseThermalConductivityBase::MultiPhaseThermalConductivityBase( string con
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of fluid phases" );
 
-  registerExtrinsicData( extrinsicMeshData::thermalconductivity::effectiveConductivity{}, &m_effectiveConductivity );
-  registerExtrinsicData( extrinsicMeshData::thermalconductivity::dEffectiveConductivity_dPhaseVolFraction{}, &m_dEffectiveConductivity_dPhaseVolFrac );
+  registerField( fields::thermalconductivity::effectiveConductivity{}, &m_effectiveConductivity );
+  registerField( fields::thermalconductivity::dEffectiveConductivity_dPhaseVolFraction{}, &m_dEffectiveConductivity_dPhaseVolFrac );
 }
 
 void MultiPhaseThermalConductivityBase::postProcessInput()

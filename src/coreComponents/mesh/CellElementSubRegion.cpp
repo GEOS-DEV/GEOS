@@ -352,6 +352,41 @@ void CellElementSubRegion::
       m_elementVolume[k] = computationalGeometry::prismVolume< 6 >( Xlocal );
       break;
     }
+    case ElementType::Prism7:
+    {
+      real64 Xlocal[14][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::prismVolume< 7 >( Xlocal );
+      break;
+    }
+    case ElementType::Prism8:
+    {
+      real64 Xlocal[16][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::prismVolume< 8 >( Xlocal );
+      break;
+    }
+    case ElementType::Prism9:
+    {
+      real64 Xlocal[18][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::prismVolume< 9 >( Xlocal );
+      break;
+    }
+    case ElementType::Prism10:
+    {
+      real64 Xlocal[20][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::prismVolume< 10 >( Xlocal );
+      break;
+    }
+    case ElementType::Prism11:
+    {
+      real64 Xlocal[22][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::prismVolume< 11 >( Xlocal );
+      break;
+    }
     default:
     {
       GEOSX_ERROR( GEOSX_FMT( "Volume calculation not supported for element type {} in subregion {}",
