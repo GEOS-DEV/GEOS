@@ -9,7 +9,8 @@ declare -a TARGET_PACKAGES=("geosx_mesh_tools_package"
                             "hdf5_wrapper_package"
                             "pygeosx_tools_package")
 declare -a LINK_SCRIPTS=("preprocess_xml"
-                         "format_xml")
+                         "format_xml"
+                         "convert_abaqus")
 
 
 # Read input arguments
