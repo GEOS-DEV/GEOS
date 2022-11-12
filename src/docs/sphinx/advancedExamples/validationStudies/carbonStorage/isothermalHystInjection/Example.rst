@@ -1,9 +1,9 @@
 .. _ExampleIsothermalHystInjection:
 
 
-##########################################################
+#####################################################################
 CO2 Plume Evolution With Hysteresis Effect on Relative Permeability
-##########################################################
+#####################################################################
 
 
 **Context**
@@ -25,8 +25,8 @@ This benchmark test is based on the XML file located below:
 
 .. code-block:: console
 
-  ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_smoke.xml
-  ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+  ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_smoke.xml
+  ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
 
 ------------------------------------------------------------------------
 Problem description
@@ -79,18 +79,18 @@ values over the cell.
 The structured mesh is generated using some helpers python scripts from the formatted Point/Cells list provided.
 It contains ``ncells`` cells. It is then imported using ``meshImport``
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_smoke.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_smoke.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
 
-The central wellbore is discretized as well thanks to internal tools (see :ref:`co2_TutorialCO2FieldCase`).
+The central wellbore is discretized as well thanks to internal tools (see :ref:`TutorialCO2FieldCase`).
 It includes five segment with a perforation in each. It has its own region ``wellRegion`` and control labeled ``wellControls``
 defined and detailed respectively in **ElementRegions** and **Solvers** (see below).
 
 In the **ElementRegions** block,
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_ER -->
     :end-before: <!-- SPHINX_ER_END -->
@@ -106,7 +106,7 @@ Coupled solver
 The simulation is performed by the GEOSX coupled solver for multiphase
 flow and well defined in the XML block **CompositionalMultiphaseReservoir**:
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_SOLVER_MP -->
     :end-before: <!-- SPHINX_SOLVER_MP_END -->
@@ -123,7 +123,7 @@ Flow Solver
 
 We use the ``targetRegions`` attribute to define the regions where the flow solver is applied.
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_SOLVER_MPWELL -->
     :end-before: <!-- SPHINX_SOLVER_MPWELL_END -->
@@ -140,7 +140,7 @@ It is also the place where the **WellControls** are set thanks to ``type``, ``co
 
 For more details on the wellbore modelling please refer to :ref:`CompositionalMultiphaseWell`.
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_SOLVER_WELL -->
     :end-before: <!-- SPHINX_SOLVER_WELL_END -->
@@ -153,7 +153,7 @@ This benchmark test involves a compositional mixture that defines two phases (CO
 ``gas`` and ``water`` which contain two components ``co2`` and ``water``. The miscibility of CO2 results in
 presence of CO2 in the aqueous phase. The vaporization of H2O in the CO2-rich phase is not considered here.
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_FLUID -->
     :end-before: <!-- SPHINX_FLUID_END -->
@@ -166,14 +166,14 @@ model. (see :ref:`CO2-EOS` for details).
 
 The rock model defines a slightly compressible porous medium with a reference porosity equal to 0.1.
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_ROCK -->
     :end-before: <!-- SPHINX_ROCK_END -->
 
 The relative permeability model is input through tables thanks to **TableRelativePermeability** block.
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_RELPERM -->
     :end-before: <!-- SPHINX_RELPERM_END -->
@@ -189,12 +189,12 @@ See,
 
 .. code-block:: console
 
-  ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_hystRelperm_iterative_base.xml
+  ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_hystRelperm_iterative_base.xml
 
 for the input base with hysteresis set up.
 
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_hystRelperm_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_hystRelperm_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_RELPERM -->
     :end-before: <!-- SPHINX_RELPERM_END -->
@@ -206,7 +206,7 @@ for the input base with hysteresis set up.
 
 Capillary pressure is also tabulated and defined in **TableCapillaryPressure**. No hysteresis is modeled yet on the capillary pressure.
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_CAP -->
     :end-before: <!-- SPHINX_CAP_END -->
@@ -220,7 +220,7 @@ This is specified using the **HydrostaticEquilibrium** XML tag in the **FieldSpe
 The datum pressure and elevation used below are defined in
 `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__).
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_HYDROSTATIC -->
     :end-before: <!-- SPHINX_HYDROSTATIC_END -->
@@ -238,7 +238,7 @@ The boundaries are set to have a constant 0.03 K/m temperature gradient as well 
 We supplement that with water dominant content. Each block is linking a `fieldName` to a **TableFunction** tagged as
 the value of `functionName`. In order to have those imposed on the boundary faces, we provide ``faceManager`` as `objectPath`.
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_BC -->
     :end-before: <!-- SPHINX_BC_END -->
@@ -251,7 +251,7 @@ In order to output partitioning of co2 mass, we use reservoir statistics impleme
 `flowSolverName` pointing to the dedicated solver and `computeRegionStatistics` set to 1 to compute statistics by regions.
 The `setNames` field is set to 3 as it is its attribute tag in the input *vtu* mesh.
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_smoke.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_smoke.xml
     :language: xml
     :start-after: <!-- SPHINX_STATS -->
     :end-before: <!-- SPHINX_STATS_END -->
@@ -259,7 +259,7 @@ The `setNames` field is set to 3 as it is its attribute tag in the input *vtu* m
 and an `Event` for this to occur recursively with a `forceDt` argument for the period over which statistics are output and
 `target` pointing towards the aforementioned `Task`
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_smoke.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_smoke.xml
     :language: xml
     :start-after: <!-- SPHINX_STAT_EV -->
     :end-before: <!-- SPHINX_STAT_EV_END -->
@@ -285,7 +285,7 @@ This is a sample of the output we will have in the log file.
     a SLURM job *slurm.out* or similar
 
 
---------------------------
+---------------------------------
 Inspecting results
 ---------------------------------
 

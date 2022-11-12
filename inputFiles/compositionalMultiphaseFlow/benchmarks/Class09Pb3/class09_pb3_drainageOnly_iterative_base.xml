@@ -25,7 +25,7 @@
     </CompositionalMultiphaseReservoir>
       <!-- SPHINX_SOLVER_MPWELL_END -->
 
-      <!-- SPHINX_SOLVER_MP_END -->
+      <!-- SPHINX_SOLVER_MP -->
     <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"
       targetRegions="{ reservoir }"
@@ -36,7 +36,7 @@
       useMass="1"/>
       <!-- SPHINX_SOLVER_MP_END -->
 
-      <!-- SPHINX_SOLVER_WELL_END -->
+      <!-- SPHINX_SOLVER_WELL -->
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       targetRegions="{ wellRegion }"

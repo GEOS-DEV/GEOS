@@ -81,12 +81,12 @@
       targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
 
-<!--      SPHINX_STAT_EV-->
+	<!-- SPHINX_STAT_EV -->
     <PeriodicEvent
       name="statistics"
       forceDt="1e8"
       target="/Tasks/compflowStatistics"/>
-<!--      SPHINX_STAT_EV_END-->
+	<!-- SPHINX_STAT_EV_END -->
 
     <PeriodicEvent
       name="solverApplications1"
