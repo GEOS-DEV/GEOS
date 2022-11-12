@@ -4,12 +4,22 @@ from typing import Dict, Callable
 from . import all_checks_helpers, CheckHelper, build_check_helper
 
 import checks.register
-from checks import COLLOCATES_NODES, GENERATE_FRACTURES, GENERATE_GLOBAL_IDS
+from checks import (
+    COLLOCATES_NODES,
+    ELEMENT_VOLUMES,
+    GENERATE_FRACTURES,
+    GENERATE_GLOBAL_IDS
+)
 
 
 def __register_collocated_nodes() -> CheckHelper:
     from . import collocated_nodes_parsing
     return build_check_helper(collocated_nodes_parsing)
+
+
+def __register_element_volumes() -> CheckHelper:
+    from . import elements_volumes_parsing
+    return build_check_helper(elements_volumes_parsing)
 
 
 def __register_generate_fractures() -> CheckHelper:
@@ -24,6 +34,7 @@ def __register_generate_global_ids() -> CheckHelper:
 
 __HELPERS: Dict[str, Callable[[None], CheckHelper]] = {
     COLLOCATES_NODES: __register_collocated_nodes,
+    ELEMENT_VOLUMES: __register_element_volumes,
     GENERATE_FRACTURES: __register_generate_fractures,
     GENERATE_GLOBAL_IDS: __register_generate_global_ids,
 }

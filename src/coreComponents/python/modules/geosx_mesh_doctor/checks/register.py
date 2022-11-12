@@ -1,7 +1,13 @@
 import logging
 from typing import Tuple, Dict, Callable, Any
 
-from . import all_checks, COLLOCATES_NODES, GENERATE_FRACTURES, GENERATE_GLOBAL_IDS
+from . import all_checks
+from . import (
+    COLLOCATES_NODES,
+    ELEMENT_VOLUMES,
+    GENERATE_FRACTURES,
+    GENERATE_GLOBAL_IDS
+)
 
 
 def __get_collocated_nodes_check():
@@ -11,6 +17,15 @@ def __get_collocated_nodes_check():
     """
     from . import collocated_nodes
     return collocated_nodes.check
+
+
+def __get_element_volumes_check():
+    """
+    Returns the "element volumes" check.
+    :return: The "check" function.
+    """
+    from . import elements_volumes
+    return elements_volumes.check
 
 
 def __get_generate_fractures_check():
@@ -33,6 +48,7 @@ def __get_generate_global_ids_check():
 
 __CHECKS: Dict[str, Callable[[None], Any]] = {
     COLLOCATES_NODES: __get_collocated_nodes_check,
+    ELEMENT_VOLUMES: __get_element_volumes_check,
     GENERATE_FRACTURES: __get_generate_fractures_check,
     GENERATE_GLOBAL_IDS: __get_generate_global_ids_check,
 }
