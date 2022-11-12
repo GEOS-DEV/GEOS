@@ -6,8 +6,9 @@
 #define GEOSX_TABLECAPILLARYPRESSUREHYSTERESIS_HPP
 
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
-#include "constitutive/capillaryPressure/KilloughHysteresisCapillaryPressure.hpp"
 #include "functions/TableFunction.hpp"
+
+#include "constitutive/KilloughHysteresis.hpp"
 
 namespace geosx
 {
@@ -15,29 +16,46 @@ namespace geosx
 namespace constitutive
 {
 
-class TableCapillaryPressureHysteresis : public CapillaryPressureBase, virtual public KilloughHysteresisCapillaryPressure
+class TableCapillaryPressureHysteresis : public CapillaryPressureBase
 {
 
 public:
 
+  /// order of the phase properties for three-phase flow
+  struct ThreePhasePairPhaseType
+  {
+    enum : integer
+    {
+      INTERMEDIATE_WETTING = 0,   ///< index for intermediate-wetting
+      INTERMEDIATE_NONWETTING = 1 ///< index for intermediate-non-wetting
+    };
+  };
+
+  struct ModeIndexType
+  {
+    enum: integer
+    {
+      DRAINAGE = 0,//to be used in array of Kernels
+      IMBIBITION = 1
+    };
+  };
+
+
+
   TableCapillaryPressureHysteresis(std::string const & name, dataRepository::Group * const parent);
   static std::string catalogName() { return "TableCapillaryPressureHysteresis"; }
-
   virtual string getCatalogName() const override { return catalogName(); }
 
   ///Kernel
-  class KernelWrapper final : public CapillaryPressureBaseUpdate, virtual public KilloughHysteresisCapillaryPressure
+  class KernelWrapper final : public CapillaryPressureBaseUpdate
   {
   public:
 
     KernelWrapper();
 
     //actual workers
-
     GEOSX_HOST_DEVICE
     void computeImbibitionNonWettingCapillaryPressure();
-    
-    
 
     //wrapper call wrt number of phase
     GEOSX_HOST_DEVICE
@@ -64,6 +82,8 @@ public:
  */
   KernelWrapper createKernelWrapper();
 
+  KilloughHysteresis::KernelKilloughHysteresisBase createKilloughKernelWrapper();
+
   //might need it to be virtual one level higher --> from Killough/Hysteresis common class
   virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const;
 
@@ -71,8 +91,31 @@ public:
   
   struct viewKeyStruct : CapillaryPressureBase::viewKeyStruct
   {
-    static constexpr char const * drainagePhaseMinVolumeFractionString() { return "drainagePhaseMinVolumeFraction"; }
-    static constexpr char const * imbibitionPhaseMinVolumeFractionString() { return "imbibitionPhaseMinVolumeFraction"; }
+
+    ///Killough Kernel
+    static constexpr char const * KilloughModelNameString() { return "KilloughModelName"; }
+    static constexpr char const * KilloughModelWrapperString() { return "KilloughWrappers"; }
+    // defaulted to 0.1
+//    static constexpr char const * killoughCurvatureParameterString() { return "killoughCurvatureParameter"; }
+    //used to compute different re-traversal path going drainage-imbibition-drainage
+//    static constexpr char const * tCurveOptionString() { return "tCurveOption";};
+    ///Land Coeff
+    static constexpr char const * landParameterString() { return "landParameter"; }
+
+
+///pivot points
+    static constexpr char const * wettingPhaseMinVolumeFractionString() { return "wettingPhaseMinVolumeFraction"; }
+    static constexpr char const * drainageWettingPhaseMaxVolumeFractionString() { return "drainageWettingPhaseMaxVolumeFraction"; }
+    static constexpr char const * imbibitionWettingPhaseMaxVolumeFractionString() { return "imbibitionWettingPhaseMaxVolumeFraction"; }
+
+    static constexpr char const * nonWettingPhaseMaxVolumeFractionString() { return "nonWettingPhaseMaxVolumeFraction"; }
+    static constexpr char const * drainageNonWettingPhaseMinVolumeFractionString() { return "drainageNonWettingPhaseMinVolumeFraction"; }
+    static constexpr char const * imbibitionNonWettingPhaseMinVolumeFractionString() { return "imbibitionNonWettingPhaseMinVolumeFraction"; }
+
+    ///flag
+    static constexpr char const * phaseHasHysteresisString() { return "phaseHasHysteresis"; }
+
+    ///tables and assoc. wrappers
     //2phase
     static constexpr char const * drainageWettingNonWettingCapPresTableNameString() { return "drainageWettingNonWettingCapPressureTableName"; }
     static constexpr char const * imbibitionWettingNonWettingCapPresTableNameString() { return "imbibitionWettingNonWettingCapPressureTableName"; }
@@ -82,56 +125,82 @@ public:
     static constexpr char const * imbibitionWettingIntermediateCapPresTableNameString() { return "imbibitionWettingIntermediateCapPressureTableName"; }
     static constexpr char const * imbibitionNonWettingIntermediateCapPresTableNameString() { return "imbibitionNonWettingIntermediateCapPressureTableName"; }
 
-    // ?
     static constexpr char const * drainageCapPresWrappersString() { return "drainageCapPresWrappers"; }
     static constexpr char const * imbibitionCapPresWrappersString() { return "imbibitionCapPresWrappers"; }
 
-    // defaulted to 0.1
-    static constexpr char const * killoughCurvatureParameterString() { return "killoughCurvatureParameter"; }
-    //used to compute different re-traversal path going drainage-imbibition-drainage
-    static constexpr char const * tCurveOptionString() { return "tCurveOption";};
   };
 
 
 private:
 
+
+  void resizeFields( localIndex const size, localIndex const numPts ) override;
+
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
-  
+
   /**
    * @brief Create all the table kernel wrappers needed for the simulation (for all the phases present)
    */
   void createAllTableKernelWrappers();
 
-  /// TODO data members
+  KilloughHysteresis::KernelKilloughHysteresisBase createKilloughKernelWrapper();
+
+  /**
+ * @brief Compute the Land coefficient for the wetting and non-wetting phases
+ */
+  void computeLandCoefficient();
+
+  ///data members
 
   /// Minimum volume fraction for each phase in drainage (deduced from the drainage table)
   arrayView1d< real64 const > m_drainagePhaseMinVolFraction;
   /// Minimum volume fraction for each phase in imbibition (deduced from the imbibition table)
   arrayView1d< real64 const > m_imbibitionPhaseMinVolFraction;
 
-  // kernel wrappers
-  // 2p :
-  // ... etc
-  array1d< TableFunction::KernelWrapper > m_drainageCapillaryPressureKernelWrappers;
 
+  // Hysteresis parameters
+  KilloughHysteresis::KernelKilloughHysteresisBase m_KilloughKernel;
+  string m_KilloughModelName;
+  //TODO impl
+//  array1d< integer >  m_tCurveOption;
+
+  // kernel wrappers
   /// Imbibition kernel wrappers for relative permeabilities in the following order:
-  ///  0- wetting-phase
-  ///  1- non-wetting-phase
-  array1d< TableFunction::KernelWrapper > m_imbibitionCapillaryPressureKernelWrappers;
+  /// 0- drainage
+  /// 1- imbibition (cf. struct ModeIndexType)
+  //2p
+  array1d< TableFunction::KernelWrapper > m_wettingNonWettingCapillaryPressureKernelWrappers;
+  //3p
+  array1d< TableFunction::KernelWrapper > m_wettingIntermediateCapillaryPressureKernelWrappers;
+  array1d< TableFunction::KernelWrapper > m_nonWettingIntermediateCapillaryPressureKernelWrappers;
+
+
+
+  real64 m_wettingPhaseMinVolumeFraction;
+  real64 m_drainageWettingPhaseMaxVolumeFraction;
+  real64 m_imbibitionWettingPhaseMaxVolumeFraction;
+
+  real64 m_nonWettingPhaseMaxVolumeFraction;
+  real64 m_drainageNonWettingPhaseMinVolumeFraction;
+  real64 m_imbibitionNonWettingPhaseMinVolumeFraction;
+
 
   ///tables
  //2p
-  array1d< string> m_drainageWettingNonWettingCapPresTableName;
- array1d< string > m_imbibitionWettingNonWettingCapPresTableName;
+ string m_drainageWettingNonWettingCapPresTableName;
+ string m_imbibitionWettingNonWettingCapPresTableName;
  //3p
- array1d< string > m_drainageWettingIntermediateCapPresTableName;
- array1d< string > m_drainageNonWettingIntermediateCapPresTableName;
- array1d< string > m_imbibitionWettingIntermediateCapPresTableName;
- array1d< string > m_imbibitionNonWettingIntermediateCapPresTableName;
+ string m_drainageWettingIntermediateCapPresTableName;
+ string m_drainageNonWettingIntermediateCapPresTableName;
+ string m_imbibitionWettingIntermediateCapPresTableName;
+ string m_imbibitionNonWettingIntermediateCapPresTableName;
   /// Flag to specify whether the phase has hysteresis or not (deduced from table input)
   array1d< integer > m_phaseHasHysteresis;
+
+  /// Trapping parameter from the Land model (typically called C)
+  array1d< real64 > m_landParam;
 
   // Max historical saturations
   /// Minimum historical phase volume fraction for each phase
@@ -139,12 +208,6 @@ private:
 
   /// Maximum historical phase volume fraction for each phase
   array2d< real64, compflow::LAYOUT_PHASE > m_phaseMaxHistoricalVolFraction;
-
-  //misc
-  real64 m_killoughCurvaturePc;
-  array1d< integer >  m_tCurveOption;
-
-
 
 };
 

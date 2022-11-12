@@ -78,6 +78,14 @@ KilloughHysteresis::KilloughHysteresis( const std::string & name,
                                                                                                    setDescription(
     "Curvature parameter introduced by Killough for wetting-phase hysteresis (see RTD documentation)." );
 
+  registerWrapper( viewKeyStruct::killoughCurvatureParameterString(), &m_killoughCurvatureParamCapPres ).
+                                                                                                   setInputFlag(
+    InputFlags::OPTIONAL ).
+                                                                                                   setApplyDefaultValue(
+    1.0 ).
+                                                                                                   setDescription(
+    "Curvature parameter introduced by Killough for capillary pressure hysteresis (see RTD documentation)." );
+
 }
 
 
@@ -100,6 +108,14 @@ void KilloughHysteresis::postProcessInput()
                              getFullName(),
                              viewKeyStruct::killoughCurvatureParameterString() ),
                   InputError );
+
+
+  GEOSX_THROW_IF( m_killoughCurvatureParamCapPres < 0,
+                  GEOSX_FMT( "{}: the paramater {} must be postitive",
+                             getFullName(),
+                             viewKeyStruct::killoughCurvatureCapPresParameterString() ),
+                  InputError );
+
 }
 
 

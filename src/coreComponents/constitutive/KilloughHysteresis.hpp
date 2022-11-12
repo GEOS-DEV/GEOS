@@ -110,9 +110,8 @@ public:
     real64 m_jerauldParam_a;
     /// Parameter b introduced by Jerauld in the Land model
     real64 m_jerauldParam_b;
+
     real64 m_killoughCurvatureParam;
-
-
 
 //    real64 const m_killoughCurvatureParamCapPres;
 

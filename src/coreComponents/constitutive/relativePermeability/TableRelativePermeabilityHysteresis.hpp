@@ -337,13 +337,13 @@ private:
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
+    ///Killough Kernel
     static constexpr char const * KilloughModelNameString() { return "KilloughModelName"; }
     static constexpr char const * KilloughModelWrapperString() { return "KilloughWrappers"; }
-
-    static constexpr char const * drainageRelPermKernelWrappersString() { return "drainageRelPermWrappers"; }
-    static constexpr char const * imbibitionRelPermKernelWrappersString() { return "imbibitionRelPermWrappers"; }
+    ///Land Coeff
     static constexpr char const * landParameterString() { return "landParameter"; }
 
+    ///pivot points
     static constexpr char const * drainagePhaseRelPermEndPointString() { return "drainagePhaseRelPermEndPoint"; }
     static constexpr char const * imbibitionPhaseRelPermEndPointString() { return "imbibitionPhaseRelPermEndPoint"; }
     static constexpr char const * drainagePhaseMinVolumeFractionString() { return "drainagePhaseMinVolumeFraction"; }
@@ -351,7 +351,12 @@ private:
     static constexpr char const * drainagePhaseMaxVolumeFractionString() { return "drainagePhaseMaxVolumeFraction"; }
     static constexpr char const * imbibitionPhaseMaxVolumeFractionString() { return "imbibitionPhaseMaxVolumeFraction"; }
 
+    ///flag
     static constexpr char const * phaseHasHysteresisString() { return "phaseHasHysteresis"; }
+
+    ///tables and assoc. wrappers
+    static constexpr char const * drainageRelPermKernelWrappersString() { return "drainageRelPermWrappers"; }
+    static constexpr char const * imbibitionRelPermKernelWrappersString() { return "imbibitionRelPermWrappers"; }
 
     static constexpr char const * drainageWettingNonWettingRelPermTableNamesString() { return "drainageWettingNonWettingRelPermTableNames"; }
     static constexpr char const * drainageWettingIntermediateRelPermTableNamesString() { return "drainageWettingIntermediateRelPermTableNames"; }
