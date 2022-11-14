@@ -5,7 +5,6 @@ from checks.generate_global_ids import Options, Result
 
 from . import cli_parsing, GENERATE_GLOBAL_IDS
 
-
 __OUTPUT_FILE = "output"
 
 __ALL_KEYWORDS = {__OUTPUT_FILE}

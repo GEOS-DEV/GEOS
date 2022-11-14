@@ -7,7 +7,7 @@ from . import cli_parsing, GENERATE_FRACTURES
 
 __POLICY = "policy"
 __FIELD_POLICY = "field"
-__POLICIES = (__FIELD_POLICY,)
+__POLICIES = (__FIELD_POLICY, )
 
 __FIELD_NAME = "name"
 __FIELD_VALUES = "values"
@@ -16,10 +16,13 @@ __OUTPUT_FILE = "output"
 __SPLIT_ON_DOMAIN_BOUNDARY = "split_on_domain_boundary"
 __GENERATE_FIELD_DATA = "generate_field_data"
 
-__ALL_KEYWORDS = {__POLICY, __FIELD_NAME, __FIELD_VALUES, __FIELD_POLICY, __OUTPUT_FILE, __SPLIT_ON_DOMAIN_BOUNDARY, __GENERATE_FIELD_DATA}
+__ALL_KEYWORDS = {
+    __POLICY, __FIELD_NAME, __FIELD_VALUES, __FIELD_POLICY, __OUTPUT_FILE, __SPLIT_ON_DOMAIN_BOUNDARY,
+    __GENERATE_FIELD_DATA
+}
 
 
-def get_help():  # TODO use a formatter module.
+def get_help():    # TODO use a formatter module.
     msg = f"""\
     Splits the mesh to generate the faults and fractures. [EXPERIMENTAL]
     

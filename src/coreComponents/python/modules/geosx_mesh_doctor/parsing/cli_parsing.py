@@ -7,7 +7,6 @@ from typing import List, Dict, Set
 
 from . import CheckHelper
 
-
 __OPTIONS_SEP = ":"
 __KV_SEP = "="
 
@@ -48,7 +47,8 @@ def validate_cli_options(check_name: str, valid_keys: Set[str], options: Dict[st
         if len(invalid_keys) == 1:
             logging.warning(f"Key \"{invalid_keys.pop()}\" is not a valid option of \"{check_name}\". Ignoring it.")
         else:
-            logging.warning(f"Keys \"{', '.join(invalid_keys)}\" are not valid options of \"{check_name}\". Ignoring them.")
+            logging.warning(
+                f"Keys \"{', '.join(invalid_keys)}\" are not valid options of \"{check_name}\". Ignoring them.")
 
 
 def parse_and_set_verbosity(cli_args: List[str]) -> None:
@@ -58,16 +58,8 @@ def parse_and_set_verbosity(cli_args: List[str]) -> None:
     :return: None
     """
     dummy_verbosity_parser = argparse.ArgumentParser(add_help=None)
-    dummy_verbosity_parser.add_argument('-v',
-                                        '--verbose',
-                                        action='count',
-                                        default=2,
-                                        dest=__VERBOSE_KEY)
-    dummy_verbosity_parser.add_argument('-q',
-                                        '--quiet',
-                                        action='count',
-                                        default=0,
-                                        dest=__QUIET_KEY)
+    dummy_verbosity_parser.add_argument('-v', '--verbose', action='count', default=2, dest=__VERBOSE_KEY)
+    dummy_verbosity_parser.add_argument('-q', '--quiet', action='count', default=0, dest=__QUIET_KEY)
     args = dummy_verbosity_parser.parse_known_args(cli_args[1:])[0]
     d = vars(args)
     v = d[__VERBOSE_KEY] - d[__QUIET_KEY]
@@ -130,7 +122,7 @@ def parse(all_checks_helpers: Dict[str, CheckHelper], cli_args: List[str]) -> Ar
                                 help=check_helper.get_help())
     args = parser.parse_args(cli_args[1:])
 
-    args = vars(args)  # converting to `dict` allows to access keys by variable.
+    args = vars(args)    # converting to `dict` allows to access keys by variable.
     checks = OrderedDict()
     for check_name in all_checks_helpers.keys():
         options = args[check_name]
