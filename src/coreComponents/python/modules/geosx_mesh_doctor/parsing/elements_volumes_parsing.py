@@ -2,10 +2,9 @@ import logging
 import textwrap
 from typing import Dict
 
-from checks import ELEMENT_VOLUMES
 from checks.elements_volumes import Options, Result
 
-from . import cli_parsing
+from . import cli_parsing, ELEMENT_VOLUMES
 
 __MIN_VOLUME = "min"
 __MIN_VOLUME_DEFAULT = 0.

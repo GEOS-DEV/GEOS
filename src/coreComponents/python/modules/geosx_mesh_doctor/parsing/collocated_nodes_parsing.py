@@ -1,10 +1,9 @@
 import logging
 import textwrap
 
-from checks import COLLOCATES_NODES
 from checks.collocated_nodes import Options, Result
 
-from . import cli_parsing
+from . import cli_parsing, COLLOCATES_NODES
 
 __TOLERANCE = "tolerance"
 

@@ -73,7 +73,7 @@ def parse_and_set_verbosity(cli_args: List[str]) -> None:
     dummy_verbosity_parser.add_argument('-v',
                                         '--verbose',
                                         action='count',
-                                        default=1,
+                                        default=2,
                                         dest=__VERBOSE_KEY)
     dummy_verbosity_parser.add_argument('-q',
                                         '--quiet',
@@ -118,7 +118,7 @@ def parse(cli_args: List[str]) -> Arguments:
                           action='count',
                           default=1,
                           dest=__VERBOSE_KEY,
-                          help="Use -v for warning, -vv for info, -vvv for debug. Defaults to 'ERROR'.")
+                          help="Use -v 'INFO', -vv for 'DEBUG'. Defaults to 'WARNING'.")
     misc_grp.add_argument('-q',
                           '--quiet',
                           action='count',
