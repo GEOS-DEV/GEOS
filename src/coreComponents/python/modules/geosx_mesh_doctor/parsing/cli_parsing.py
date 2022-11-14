@@ -5,7 +5,7 @@ import logging
 import textwrap
 from typing import List, Dict, Set
 
-from . import all_checks_helpers
+from . import CheckHelper
 
 
 __OPTIONS_SEP = ":"
@@ -19,18 +19,6 @@ __QUIET_KEY = "quiet"
 class Arguments:
     vtk_input_file: str
     checks: OrderedDict()
-
-
-def __get_checks_help_msg() -> str:
-    """
-    Gathers all the doc messages into one string.
-    :return: A string.
-    """
-    tmp = []
-    for check_name, check_helper in all_checks_helpers.items():
-        h = check_name + ": " + check_helper.get_help()
-        tmp.append(h)
-    return "\n".join(tmp)
 
 
 def parse_cli_option(s: str) -> Dict[str, str]:
@@ -92,9 +80,10 @@ def parse_and_set_verbosity(cli_args: List[str]) -> None:
     logging.info(f"Logger level set to \"{logging.getLevelName(verbosity)}\"")
 
 
-def parse(cli_args: List[str]) -> Arguments:
+def parse(all_checks_helpers: Dict[str, CheckHelper], cli_args: List[str]) -> Arguments:
     """
     Parse the command line arguments and return the corresponding structure.
+    :param all_checks_helpers: All the checks
     :param cli_args: The list of arguments (as strings)
     :return: The struct
     """
