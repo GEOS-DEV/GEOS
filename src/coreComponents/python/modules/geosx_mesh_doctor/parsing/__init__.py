@@ -6,6 +6,7 @@ COLLOCATES_NODES = "collocated_nodes"
 ELEMENT_VOLUMES = "element_volumes"
 GENERATE_FRACTURES = "generate_fractures"
 GENERATE_GLOBAL_IDS = "generate_global_ids"
+SELF_INTERSECTING_ELEMENTS = "self_intersecting_elements"
 
 
 @dataclass(frozen=True)

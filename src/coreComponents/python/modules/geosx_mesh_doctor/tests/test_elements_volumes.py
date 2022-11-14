@@ -14,7 +14,7 @@ from vtkmodules.vtkCommonDataModel import (
 from checks.elements_volumes import Options, __check
 
 
-def test_simple_collocated_points():
+def test_simple_tet():
     # creating a simple tetrahedron
     points = vtkPoints()
     points.SetNumberOfPoints(4)
