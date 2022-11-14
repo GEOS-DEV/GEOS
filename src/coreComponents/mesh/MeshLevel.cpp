@@ -416,7 +416,7 @@ MeshLevel::MeshLevel( string const & name,
         GaussLobattoPts[2] = 1.0;
         break;
       case 3:
-        sattic constexpr real64 sqrt5 = 2.2360679774997897;
+        static constexpr real64 sqrt5 = 2.2360679774997897;
         GaussLobattoPts[0] = -1.0;
         GaussLobattoPts[1] = -1./sqrt5;
         GaussLobattoPts[2] = 1./sqrt5;
