@@ -58,6 +58,7 @@ class Geosx(CMakePackage, CudaPackage):
     variant('shared', default=True, description='Build Shared Libs.')
     variant('caliper', default=True, description='Build Caliper support.')
     variant('vtk', default=True, description='Build VTK support.')
+    variant('fesapi', default=True, description='Build fesapi support.')
     variant('trilinos', default=True, description='Build Trilinos support.')
     variant('hypre', default=True, description='Build HYPRE support.')
     variant('petsc', default=False, description='Build PETSc support.')
@@ -122,6 +123,8 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on('fmt@8.0.1 cxxstd=14')
     depends_on('vtk@9.1.0', when='+vtk')
+
+    depends_on('fesapi', when='+fesapi')
 
     #
     # Math
@@ -371,6 +374,7 @@ class Geosx(CMakePackage, CudaPackage):
                 ('caliper', 'CALIPER', '+caliper' in spec),
                 ('pugixml', 'PUGIXML', True),
                 ('vtk', 'VTK', '+vtk' in spec),
+                ('fesapi', 'FESAPI', '+fesapi' in spec),
                 ('fmt', 'FMT', True)
             )
             # yapf: enable
