@@ -115,8 +115,7 @@ public:
     m_bufferCount( 0 ), m_bufferOnDiskCount( 0 ),
     m_worker( &lifoStorage< T >::wait_and_consume_tasks, this ),
     m_continue( true )
-  {
-  }
+  {}
 
   /**
    * Build a LIFO storage for a given LvArray array.
@@ -333,11 +332,11 @@ private:
     makeDirsForPath( fileName.substr( 0, fileName.find_last_of( "/\\" ) ) );
     std::ofstream wf( fileName, std::ios::out | std::ios::binary );
     GEOSX_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
-                    "Could not open file "<< fileName << " for writting: " << strerror(errno) );
-    if (wf)
+                    "Could not open file "<< fileName << " for writting: " << strerror( errno ) );
+    if( wf )
       wf.write( (char *)d, m_bufferSize );
     GEOSX_ERROR_IF( wf.bad() || wf.fail(),
-                    "An error occured while writting "<< fileName << ": " << strerror(errno) );
+                    "An error occured while writting "<< fileName << ": " << strerror( errno ) );
     wf.close();
   }
 
@@ -353,7 +352,7 @@ private:
     std::string fileName = GEOSX_FMT( "{}_{:08}_{:04}.dat", m_name, id, rank );
     std::ifstream wf( fileName, std::ios::in | std::ios::binary );
     GEOSX_ERROR_IF( !wf,
-                    "Could not open file "<< fileName << " for reading: " << strerror(errno) );
+                    "Could not open file "<< fileName << " for reading: " << strerror( errno ) );
     wf.read( (char *)d, m_bufferSize );
     wf.close();
     remove( fileName.c_str() );
