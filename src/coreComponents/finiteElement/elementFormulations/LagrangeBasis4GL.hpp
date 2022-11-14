@@ -41,7 +41,7 @@ public:
   /// The number of support points for the basis
   constexpr static localIndex numSupportPoints = 5;
 
-  /// sqrt(5)
+  /// sqrt(3/7)
   constexpr static real64 sqrt3_7 = 0.6546536707079771;
 
   /**
