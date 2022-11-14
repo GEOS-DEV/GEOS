@@ -9,13 +9,12 @@ from vtkmodules.vtkIOLegacy import (
     vtkUnstructuredGridReader,
 )
 from vtkmodules.vtkIOXML import (
-    vtkXMLUnstructuredGridReader,
+    vtkUnstructuredGridReader,
 )
 
 
 def read_mesh(vtk_input_file: str) -> vtkUnstructuredGrid:
-    # reader = vtkXMLUnstructuredGridReader()
-    reader = vtkUnstructuredGridReader()  # TODO Find a generic way to read the vtk mesh.
+    reader = vtkUnstructuredGridReader()    # TODO Find a generic way to read the vtk mesh.
     reader.SetFileName(vtk_input_file)
     reader.Update()
     return reader.GetOutput()
