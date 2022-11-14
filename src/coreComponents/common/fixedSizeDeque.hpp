@@ -14,19 +14,8 @@
 #ifndef FIXEDSIZEDEQUE_HPP
 #define FIXEDSIZEDEQUE_HPP
 
-#if defined( GEOSX_USE_CUDA )
-#  include <cuda.h>
-#  include <cuda_runtime.h>
-#endif
-
-#include <chai/ArrayManager.hpp>
-#include <chai/ChaiMacros.hpp>
-#include <string>
-#include <functional>
 #include "LvArray/src/Array.hpp"
-#include "LvArray/src/ArrayView.hpp"
 #include "LvArray/src/memcpy.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
 #include "common/Logger.hpp"
 
 /// Get the positive value of a module b

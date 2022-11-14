@@ -14,22 +14,10 @@
 #ifndef LIFOSTORAGE_HPP
 #define LIFOSTORAGE_HPP
 
-#if defined( GEOSX_USE_CUDA )
-#  include <cuda.h>
-#  include <cuda_runtime.h>
-#endif
-
-#include <chai/ArrayManager.hpp>
-#include <chai/ChaiMacros.hpp>
-#include "common/fixedSizeDeque.hpp"
-#include "common/Path.hpp"
 #include <deque>
 #include <future>
-#include <string>
-#include <functional>
-#include <cerrno>
-#include "LvArray/src/Array.hpp"
-#include "LvArray/src/ArrayView.hpp"
+
+#include "common/fixedSizeDeque.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
