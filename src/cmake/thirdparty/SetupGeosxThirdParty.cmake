@@ -791,7 +791,7 @@ if(DEFINED FESAPI_DIR)
     set(FESAPI_DIR ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} FesapiCpp)
 else()
-    message(FATAL_ERROR "not using Fesapi")
+    message(STATUS "Not using Fesapi")
 endif()
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
