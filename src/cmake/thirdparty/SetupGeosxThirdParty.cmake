@@ -317,15 +317,23 @@ if(DEFINED ADIAK_DIR)
     # Header file provides incorrect version 0.3.0
     message( " ----> adiak_VERSION = 0.2.2")
 
-    set_property(TARGET adiak::adiak
+    set(adiak_target "")
+    if(TARGET adiak::adiak)
+      set(adiak_target ${adiak_target} adiak::adiak)
+    endif()
+    if(TARGET adiak)
+      set(adiak_target ${adiak_target} adiak)
+    endif()
+
+    set_property(TARGET ${adiak_target}
                  APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
                  ${adiak_INCLUDE_DIR} )
-    set_property(TARGET adiak::adiak
+    set_property(TARGET ${adiak_target}
                  APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
                  ${adiak_INCLUDE_DIR} )
 
     set(ENABLE_ADIAK ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} adiak::adiak)
+    set(thirdPartyLibs ${thirdPartyLibs} ${adiak_target})
 else()
     if(ENABLE_ADIAK)
         message(WARNING "ENABLE_ADIAK is ON but ADIAK_DIR isn't defined.")
