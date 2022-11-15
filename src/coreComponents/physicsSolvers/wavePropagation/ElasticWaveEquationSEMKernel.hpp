@@ -20,6 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
+#include "WaveSolverBase.hpp"
 
 
 namespace geosx
@@ -121,45 +122,6 @@ struct PrecomputeSourceAndReceiverKernel
     }
   }
 
-  GEOSX_HOST_DEVICE
-  static real32
-  evaluateRicker( real64 const & time_n,
-                  real64 const & f0,
-                  localIndex const & order )
-  {
-    real32 const o_tpeak = 1.0/f0;
-    real32 pulse = 0.0;
-    if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
-    {
-      return pulse;
-    }
-
-    constexpr real32 pi = M_PI;
-    real32 const lam = (f0*pi)*(f0*pi);
-
-    switch( order )
-    {
-      case 2:
-      {
-        pulse = 2.0*lam*(2.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-      }
-      break;
-      case 1:
-      {
-        pulse = -2.0*lam*(time_n-o_tpeak)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-      }
-      break;
-      case 0:
-      {
-        pulse = -(time_n-o_tpeak)*exp( -2*lam*(time_n-o_tpeak)*(time_n-o_tpeak) );
-      }
-      break;
-      default:
-        GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
-    }
-
-    return pulse;
-  }
   /**
    * @brief Launches the precomputation of the source and receiver terms
    * @tparam EXEC_POLICY execution policy
@@ -299,7 +261,7 @@ struct PrecomputeSourceAndReceiverKernel
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
               real64 const time = cycle*dt;
-              sourceValue[cycle][isrc] = evaluateRicker( time, timeSourceFrequency, rickerOrder );
+              sourceValue[cycle][isrc] = WaveSolverBase::evaluateRicker( time, timeSourceFrequency, rickerOrder );
             }
 
           }

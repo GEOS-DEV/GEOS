@@ -195,7 +195,7 @@ void WaveSolverBase::initializeDAS()
 }
 
 
-real32 WaveSolverBase::evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
+ real32 WaveSolverBase::evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
 {
   real32 const o_tpeak = 1.0/f0;
   real32 pulse = 0.0;

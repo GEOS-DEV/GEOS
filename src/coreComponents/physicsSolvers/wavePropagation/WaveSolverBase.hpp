@@ -95,6 +95,16 @@ public:
    */
   void reinit() override final;
 
+    /**
+   * @brief Compute the value of a Ricker (a Gaussian function)
+   * @param time_n time to evaluate the Ricker
+   * @param f0 central frequency of the Ricker
+   * @param order order of the ricker
+   * @return the value of a Ricker evaluated a time_n with f0
+   */
+   static real32 evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order );
+
+
 protected:
 
   virtual void postProcessInput() override;
@@ -124,14 +134,6 @@ protected:
   virtual void applyPML( real64 const time, DomainPartition & domain ) = 0;
 
 
-  /**
-   * @brief Compute the value of a Ricker (a Gaussian function)
-   * @param time_n time to evaluate the Ricker
-   * @param f0 central frequency of the Ricker
-   * @param order order of the ricker
-   * @return the value of a Ricker evaluated a time_n with f0
-   */
-  virtual real32 evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order );
 
   /**
    * @brief Locate sources and receivers positions in the mesh elements, evaluate the basis functions at each point and save them to the
