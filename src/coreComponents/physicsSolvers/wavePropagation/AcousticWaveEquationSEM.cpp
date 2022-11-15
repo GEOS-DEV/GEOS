@@ -318,9 +318,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-    finiteElement::dispatch3D( fe,
-                               [&]
-                                 ( auto const finiteElement )
+    finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
@@ -508,9 +506,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-      finiteElement::dispatch3D( fe,
-                                 [&]
-                                   ( auto const finiteElement )
+      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
@@ -778,9 +774,7 @@ void AcousticWaveEquationSEM::initializePML()
       real32 const xMin[3]{param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
       real32 const xMax[3]{param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
 
-      finiteElement::dispatch3D( fe,
-                                 [&]
-                                   ( auto const finiteElement )
+      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
@@ -927,9 +921,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
       real32 const r = param.reflectivityPML;
 
       /// Get the type of the elements in the subregion
-      finiteElement::dispatch3D( fe,
-                                 [&]
-                                   ( auto const finiteElement )
+      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
