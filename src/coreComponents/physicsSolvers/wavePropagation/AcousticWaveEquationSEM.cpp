@@ -975,6 +975,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
       arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
 
+      if ( NULL == std::getenv("DISABLE_LIFO") )
       {
         GEOSX_MARK_SCOPE ( LifoPushWait );
         m_lifo->pushWait();

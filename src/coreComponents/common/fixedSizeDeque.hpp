@@ -39,8 +39,10 @@ public:
    * @param maxEntries     Maximum number of array to store in the queue.
    * @param valuesPerEntry Number of values in each array of the deque.
    * @param space          Space used to store que queue.
+   * @param stream         Camp resource to perform the copies.
    */
-  fixedSizeDeque( IndexType maxEntries, IndexType valuesPerEntry, LvArray::MemorySpace space )
+  fixedSizeDeque( IndexType maxEntries, IndexType valuesPerEntry, LvArray::MemorySpace space, camp::resources::Resource stream):
+    m_stream(stream)
   {
     GEOSX_THROW_IF( maxEntries < 0, "Fixed sized queue size must be positive", std::runtime_error );
     GEOSX_THROW_IF( valuesPerEntry < 0, "Fixed sized queue array size must be positive", std::runtime_error );
@@ -118,11 +120,11 @@ public:
    *
    * @param src Array to emplace at the front of the queue
    */
-  void emplace_front( const ArraySlice1D & src )
+  camp::resources::Event emplace_front( const ArraySlice1D & src )
   {
     GEOSX_THROW_IF( full(), "Can't emplace in a full  queue", std::runtime_error );
     --m_begin;
-    LvArray::memcpy( m_storage[ POSITIVE_MODULO( m_begin, m_storage.size( 0 ) ) ], src );
+    return LvArray::memcpy( m_stream, m_storage[ POSITIVE_MODULO( m_begin, m_storage.size( 0 ) ) ], src );
   }
 
   /**
@@ -130,11 +132,11 @@ public:
    *
    * @param src Array to emplace at the end of the queue
    */
-  void emplace_back( const ArraySlice1D & src )
+  camp::resources::Event emplace_back( const ArraySlice1D & src )
   {
     GEOSX_THROW_IF( full(), "Can't emplace in a full queue", std::runtime_error );
     ++m_end;
-    LvArray::memcpy( m_storage[ POSITIVE_MODULO( m_end, m_storage.size( 0 ) ) ], src );
+    return LvArray::memcpy( m_stream, m_storage[ POSITIVE_MODULO( m_end, m_storage.size( 0 ) ) ], src );
 
   }
 
@@ -142,6 +144,7 @@ private:
   Array2D m_storage;
   IndexType m_begin = 0;
   IndexType m_end = -1;
+  camp::resources::Resource m_stream;
 };
 }
 #endif // FIXEDSIZEDEQUE_HPP

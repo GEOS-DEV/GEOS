@@ -37,9 +37,12 @@ private:
   size_t m_bufferSize;
   /// Name used to store data on disk
   std::string m_name;
+  /// Camp CUDA stream to handle copies to m_deviceDeque.
+  camp::resources::Resource m_deviceDequeStream{ camp::resources::Cuda{} };
+  /// Camp CUDA stream to handle  copies tp m_hostDeque.
+  camp::resources::Resource m_hostDequeStream{ camp::resources::Cuda{} };
   /// Queue of data stored on device
   fixedSizeDeque< T, int > m_deviceDeque;
-
   /// Queue of data stored on host memory
   fixedSizeDeque< T, int > m_hostDeque;
 
@@ -49,41 +52,25 @@ private:
    * Only deviceDeque is accessed from user thread, other only from m_worker.
    */
   std::mutex m_deviceDequeMutex;
-  /**
-   * Future to be aware data are effectively copied on host memory from device.
-   */
+
+  /// Future to be aware data are effectively copied on host memory from device.
+  std::deque< std::future< void > > m_deviceToDeviceEvents;
+  /// Future to be aware data are effectively copied on host memory from device.
   std::deque< std::future< void > > m_deviceToHostFutures;
-  /**
-   * Future to be aware data are effectively copied on disk from host memory.
-   */
+  /// Future to be aware data are effectively copied on disk from host memory.
   std::deque< std::future< void > > m_hostToDiskFutures;
-  /**
-   * Future to be aware data are effectively copied on host memory from disk.
-   */
+  /// Future to be aware data are effectively copied on host memory from disk.
   std::deque< std::future< void > > m_diskToHostFutures;
-  /**
-   * Future to be aware data are effectively copied on device from host memory.
-   */
+  //* Future to be aware data are effectively copied on device from host memory.
   std::deque< std::future< void > > m_hostToDeviceFutures;
-  /**
-   * Future to be aware data push has been completed
-   */
-  std::future< void > m_pushFuture;
-  /**
-   * Future to be aware data pop has been completed
-   */
+  /// Last copy to device event
+  camp::resources::Event m_pushEvent;
+  /// Future to be aware data pop has been completed
   std::future< void > m_popFuture;
-
-  /**
-   * Counter of buffer stored in LIFO
-   */
+  /// Counter of buffer stored in LIFO
   int m_bufferCount;
-
-  /**
-   * Counter of buffer stored on disk
-   */
+  /// Counter of buffer stored on disk
   int m_bufferOnDiskCount;
-
   /// Condition used to tell m_worker queue has been filled or processed is stopped.
   std::condition_variable m_task_queue_not_empty_cond;
   /// Mutex to protect access to m_task_queue.
@@ -110,8 +97,8 @@ public:
     m_maxNumberOfBuffers( maxNumberOfBuffers ),
     m_bufferSize( elemCnt*sizeof( T ) ),
     m_name( name ),
-    m_deviceDeque( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda ),
-    m_hostDeque( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host ),
+    m_deviceDeque( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda, m_deviceDequeStream ),
+    m_hostDeque( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host, m_hostDequeStream ),
     m_bufferCount( 0 ), m_bufferOnDiskCount( 0 ),
     m_worker( &lifoStorage< T >::wait_and_consume_tasks, this ),
     m_continue( true )
@@ -144,25 +131,6 @@ public:
    */
   void pushAsync( arrayView1d< T > array )
   {
-    pushWait();
-    m_pushFuture = std::async( std::launch::async, [ array, this ] { push( array ); } );
-  }
-
-  /**
-   * Waits for last push to be terminated
-   */
-  void pushWait()
-  {
-    if( m_pushFuture.valid() ) m_pushFuture.get();
-  }
-
-  /**
-   * Push a copy of the given LvArray into the LIFO
-   *
-   * @param array The LvArray to store in the LIFO, should match the size of the data used in constructor.
-   */
-  void push( arrayView1d< T > array )
-  {
     int id = m_bufferCount++;
     GEOSX_ERROR_IF( m_deviceDeque.capacity() == 0,
                     "Cannot save on a Lifo without device storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
@@ -176,7 +144,7 @@ public:
       m_deviceToHostFutures.pop_front();
       m_deviceDequeMutex.lock();
     }
-    m_deviceDeque.emplace_front( array.toSliceConst() );
+    m_pushEvent = m_deviceDeque.emplace_front( array.toSliceConst() );
     m_deviceDequeMutex.unlock();
 
     if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() )
@@ -196,6 +164,25 @@ public:
       m_task_queue.emplace_back( std::move( task ) );
       m_task_queue_not_empty_cond.notify_all();
     }
+  }
+
+  /**
+   * Waits for last push to be terminated
+   */
+  void pushWait()
+  {
+    m_deviceDequeStream.wait_for( &m_pushEvent );
+  }
+
+  /**
+   * Push a copy of the given LvArray into the LIFO
+   *
+   * @param array The LvArray to store in the LIFO, should match the size of the data used in constructor.
+   */
+  void push( arrayView1d< T > array )
+  {
+    pushAsync( array );
+    pushWait();
   }
 
   /**
@@ -234,7 +221,8 @@ public:
       m_hostToDeviceFutures.pop_front();
       m_deviceDequeMutex.lock();
     }
-    LvArray::memcpy( array.toSlice(), m_deviceDeque.front( ) );
+    camp::resources::Event e = LvArray::memcpy( m_deviceDequeStream, array.toSlice(), m_deviceDeque.front( ) );
+    m_deviceDequeStream.wait_for( &e );
     m_deviceDeque.pop_front();
     m_deviceDequeMutex.unlock();
 
@@ -269,7 +257,8 @@ private:
       m_hostToDiskFutures.front().wait();
       m_hostToDiskFutures.pop_front();
     }
-    m_hostDeque.emplace_front( m_deviceDeque.back() );
+    camp::resources::Event e = m_hostDeque.emplace_front( m_deviceDeque.back() );
+    m_hostDequeStream.wait_for( &e );
     m_deviceDequeMutex.lock();
     m_deviceDeque.pop_back();
     m_deviceDequeMutex.unlock();
@@ -296,7 +285,8 @@ private:
     }
 
     m_deviceDequeMutex.lock();
-    m_deviceDeque.emplace_back( m_hostDeque.front() );
+    camp::resources::Event e = m_deviceDeque.emplace_back( m_hostDeque.front() );
+    m_deviceDequeStream.wait_for( &e );
     m_deviceDequeMutex.unlock();
     m_hostDeque.pop_front();
   }
