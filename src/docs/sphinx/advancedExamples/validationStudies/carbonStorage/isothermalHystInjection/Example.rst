@@ -104,7 +104,7 @@ flow and well defined in the XML block **CompositionalMultiphaseReservoir**:
 
 It references the two coupled solvers under the tags ``flowSolverName`` and ``wellSolverName``. These are defined inside the same **Solvers** block
 following this coupled solver. It also defined non-linear, **NonlinearSolverParameters** and
-and linear, **LinearSolverParameters**, strategies. Noticeably, direct solver shouldn't be used for large problem and
+and linear, **LinearSolverParameters**, strategies. 
 
 The next two blocks are used to define our two coupled physics solvers ``compositionalMultiphaseFlow`` (of type **CompositionalMultiphaseFVM**)
 and ``compositionalMultiphaseWell`` (of type **CompositionalMultiphaseWell**).
