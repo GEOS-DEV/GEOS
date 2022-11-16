@@ -1,13 +1,11 @@
 from vtkmodules.vtkCommonCore import (
-    vtkPoints,
-)
+    vtkPoints, )
 from vtkmodules.vtkCommonDataModel import (
     VTK_VERTEX,
     vtkCellArray,
     vtkUnstructuredGrid,
     vtkVertex,
 )
-
 
 from checks.generate_global_ids import __build_global_ids
 

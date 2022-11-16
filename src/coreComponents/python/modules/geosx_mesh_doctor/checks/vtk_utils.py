@@ -2,19 +2,17 @@ import os.path
 import logging
 
 from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid,
-)
+    vtkUnstructuredGrid, )
 from vtkmodules.vtkIOLegacy import (
     vtkUnstructuredGridWriter,
     vtkUnstructuredGridReader,
 )
 from vtkmodules.vtkIOXML import (
-    vtkXMLUnstructuredGridReader,
-)
+    vtkXMLUnstructuredGridReader, )
 
 
 def read_mesh(vtk_input_file: str) -> vtkUnstructuredGrid:
-    reader = vtkXMLUnstructuredGridReader()  # TODO Find a generic way to read the vtk mesh.
+    reader = vtkXMLUnstructuredGridReader()    # TODO Find a generic way to read the vtk mesh.
     reader.SetFileName(vtk_input_file)
     reader.Update()
     return reader.GetOutput()
@@ -36,5 +34,3 @@ def write_mesh(mesh: vtkUnstructuredGrid, output: str) -> None:
     writer.SetInputData(mesh)
     logging.info(f"Writing mesh into file {output}")
     writer.Write()
-
-

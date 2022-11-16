@@ -3,11 +3,9 @@ from typing import Iterator, Tuple
 import pytest
 
 from vtkmodules.vtkCommonCore import (
-    vtkPoints,
-)
+    vtkPoints, )
 from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid,
-)
+    vtkUnstructuredGrid, )
 
 from checks.collocated_nodes import Options, __check
 
@@ -40,4 +38,3 @@ def test_simple_collocated_points(data: Tuple[vtkPoints, int]):
     assert len(result.nodes_buckets) == num_nodes_bucket
     if num_nodes_bucket == 1:
         assert len(result.nodes_buckets[0]) == points.GetNumberOfPoints()
-
