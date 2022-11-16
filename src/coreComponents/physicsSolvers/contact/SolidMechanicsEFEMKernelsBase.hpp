@@ -206,7 +206,6 @@ public:
                 KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
-
     GEOSX_UNUSED_VAR( numElems );
 
     // Define a RAJA reduction variable to get the maximum residual contribution.

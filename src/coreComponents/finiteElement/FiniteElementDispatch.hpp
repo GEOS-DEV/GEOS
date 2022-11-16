@@ -19,7 +19,7 @@
 #ifndef GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
 #define GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
 
-
+#include "common/GeosxMacros.hpp"
 #include "elementFormulations/ConformingVirtualElementOrder1.hpp"
 #include "elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
 #include "elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp"
@@ -27,7 +27,9 @@
 #include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
+#if ! defined( GEOSX_USE_HIP )
 #include "elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp"
+#endif
 #include "LvArray/src/system.hpp"
 
 
@@ -58,10 +60,12 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr4 );
   }
+#if ! defined( GEOSX_USE_HIP )
   else if( auto const * const ptr5 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
   {
     lambda( *ptr5 );
   }
+#endif
 #ifdef GEOSX_DISPATCH_VEM
   else if( auto const * const ptr6 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 const * >(&input) ) // VEM on Tetrahedron
   {
@@ -99,10 +103,12 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr14 );
   }
+#if ! defined( GEOSX_USE_HIP )
   else if( auto const * const ptr15 = dynamic_cast< H1_Prism11_VEM_Gauss1 const * >(&input) ) // VEM on Prism11
   {
     lambda( *ptr15 );
   }
+#endif
 #endif
   else
   {
@@ -132,10 +138,12 @@ dispatch3D( FiniteElementBase & input,
   {
     lambda( *ptr4 );
   }
+#if ! defined( GEOSX_USE_HIP )
   else if( auto * const ptr5 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto * >(&input) )
   {
     lambda( *ptr5 );
   }
+#endif
 #ifdef GEOSX_DISPATCH_VEM
   else if( auto * const ptr6 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 * >(&input) ) // VEM on Tetrahedron
   {
@@ -173,10 +181,12 @@ dispatch3D( FiniteElementBase & input,
   {
     lambda( *ptr14 );
   }
+#if ! defined( GEOSX_USE_HIP )
   else if( auto * const ptr15 = dynamic_cast< H1_Prism11_VEM_Gauss1 * >(&input) ) // VEM on Prism11
   {
     lambda( *ptr15 );
   }
+#endif
 #endif
   else
   {

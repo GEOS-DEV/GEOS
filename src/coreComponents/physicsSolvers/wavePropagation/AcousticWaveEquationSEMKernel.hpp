@@ -563,7 +563,9 @@ struct PMLKernel
           arrayView2d< real32 > const grad_n,
           arrayView1d< real32 > const divV_n )
   {
-
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+    GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
+#else
     /// Loop over elements in the subregion, 'l' is the element index within the target set
     forAll< EXEC_POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const l )
     {
@@ -661,6 +663,7 @@ struct PMLKernel
         RAJA::atomicAdd< ATOMIC_POLICY >( &divV_n[elemToNodesViewConst[k][i]], localIncrement/numNodesPerElem );
       }
     } );
+#endif
   }
 
   /// The finite element space/discretization object for the element type in the subRegion

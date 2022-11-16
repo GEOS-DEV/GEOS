@@ -889,9 +889,13 @@ public:
           KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
-
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+  GEOSX_UNUSED_VAR( numConnections, kernelComponent );
+  GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
+#else
     forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
+
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
                                                   kernelComponent.numPointsInFlux( iconn ) );
 
@@ -899,6 +903,7 @@ public:
       kernelComponent.computeFlux( iconn, stack );
       kernelComponent.complete( iconn, stack );
     } );
+#endif
   }
 
 protected:

@@ -216,23 +216,21 @@ MeshLevel::MeshLevel( string const & name,
 
       newSubRegion.resize( sourceSubRegion.size() );
 
-      arrayView2d< localIndex const > const & elemToFaces = sourceSubRegion.faceList();
-
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
       array2d< localIndex, cells::NODE_MAP_PERMUTATION > & elemsToNodesNew = newSubRegion.nodeList();
 
+      array2d< localIndex > const & elemToFaces = sourceSubRegion.faceList();
       array2d< localIndex > & elemToFacesNew = newSubRegion.faceList();
       elemToFacesNew = elemToFaces;
 
-      // Copy a new elemCenter map from the old one
+      arrayView2d< real64 const > elemCenter = sourceSubRegion.getElementCenter();
       array2d< real64 > & elemCenterNew = newSubRegion.getElementCenter();
-      arrayView2d< real64 const > const elemCenterOld = sourceSubRegion.getElementCenter();
-      elemCenterNew = elemCenterOld;
+
       for( localIndex elem = 0; elem < elemsToNodesNew.size( 0 ); ++elem )
       {
         for( localIndex a = 0; a < 3; ++a )
         {
-          elemCenterNew[elem][a] = elemCenterOld[elem][a];
+          elemCenterNew[elem][a] = elemCenter[elem][a];
         }
       }
 

@@ -16,9 +16,10 @@
  * @file FiniteElementSpace.cpp
  */
 
+// TODO make this not dependent on this header...need better key implementation
 #include "FiniteElementDiscretization.hpp"
 
-// TODO make this not dependent on this header...need better key implementation
+#include "common/GeosxMacros.hpp"
 
 namespace geosx
 {
@@ -149,12 +150,13 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
                         "Element type Prism10 available only when using the Virtual Element Method" );
         return std::make_unique< H1_Prism10_VEM_Gauss1 >();
       }
+#ifndef GEOSX_USE_HIP
       case ElementType::Prism11:
       {
-        GEOSX_ERROR_IF( m_useVem != 1,
-                        "Element type Prism11 available only when using the Virtual Element Method" );
+        GEOSX_ERROR_IF( m_useVem != 1, "Element type Prism11 available only when using the Virtual Element Method" );
         return std::make_unique< H1_Prism11_VEM_Gauss1 >();
       }
+#endif
       default:
       {
         GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
@@ -162,13 +164,16 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     }
     return {};
   }
-
   if( m_order==3 )
   {
     switch( parentElementShape )
     {
       case ElementType::Hexahedron:
+#if ! defined( GEOSX_USE_HIP )
         return std::make_unique< Q3_Hexahedron_Lagrange_GaussLobatto >();
+#else
+        GEOSX_ERROR( "Cannot compile this on Crusher." );
+#endif
       default:
       {
         GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
@@ -176,7 +181,6 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     }
     return {};
   }
-
   GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
   return {};
 }
