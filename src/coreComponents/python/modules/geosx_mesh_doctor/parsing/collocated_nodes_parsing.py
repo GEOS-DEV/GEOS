@@ -33,7 +33,7 @@ def display_results(options: Options, result: Result):
     for bucket in result.nodes_buckets:
         for node in bucket:
             all_duplicated_nodes.append(node)
-    all_duplicated_nodes = set(all_duplicated_nodes)  # Surely useless
+    all_duplicated_nodes = set(all_duplicated_nodes)    # Surely useless
     logging.error(f"You have {len(all_duplicated_nodes)} collocated nodes (tolerance = {options.tolerance}).")
 
     logging.info("Here are all the buckets of collocated nodes.")

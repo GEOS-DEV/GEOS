@@ -20,10 +20,8 @@ def main():
         arg_copy = list(sys.argv)
 
         xml_index = arg_copy.index('-i') + 1
-        arg_copy[xml_index] = os.path.join(
-            os.path.dirname(__file__), '..', '..',
-            'integratedTests', 'update', 'run', 'solidMechanicsSSLE', 'SSLE-sedov.xml'
-        )
+        arg_copy[xml_index] = os.path.join(os.path.dirname(__file__), '..', '..', 'integratedTests', 'update', 'run',
+                                           'solidMechanicsSSLE', 'SSLE-sedov.xml')
 
         output_index = arg_copy.index('-o') + 1
         arg_copy[output_index] = sys.argv[output_index] + '_ssle_dummy'
