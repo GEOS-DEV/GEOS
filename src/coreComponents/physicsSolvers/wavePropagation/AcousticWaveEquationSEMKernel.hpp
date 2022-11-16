@@ -20,7 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "WaveSolverBase.hpp"
+#include "WaveSolverUtils.hpp"
 
 
 namespace geosx
@@ -220,7 +220,7 @@ struct PrecomputeSourceAndReceiverKernel
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
               real64 const time = cycle*dt;
-              sourceValue[cycle][isrc] = WaveSolverBase::evaluateRicker( time, timeSourceFrequency, rickerOrder );
+              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
             }
           }
         }
