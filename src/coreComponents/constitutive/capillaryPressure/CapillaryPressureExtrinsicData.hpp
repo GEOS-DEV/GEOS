@@ -34,6 +34,14 @@ namespace cappres
 using array3dLayoutCapPressure = array3d< real64, constitutive::cappres::LAYOUT_CAPPRES >;
 using array4dLayoutCapPressure_dS = array4d< real64, constitutive::cappres::LAYOUT_CAPPRES_DS >;
 
+EXTRINSIC_MESH_DATA_TRAIT( phaseTrappedVolFraction,
+                           "phaseTrappedVolFraction",
+                           array3dLayoutCapPressure,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Phase trapped volume fraction" );
+
 EXTRINSIC_MESH_DATA_TRAIT( phaseCapPressure,
                            "phaseCapPressure",
                            array3dLayoutCapPressure,

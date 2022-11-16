@@ -59,16 +59,19 @@ protected:
 
   CapillaryPressureBaseUpdate( arrayView1d< integer const > const & phaseTypes,
                                arrayView1d< integer const > const & phaseOrder,
+                               arrayView3d< real64, cappres::USD_CAPPRES > const & phaseTrapped,
                                arrayView3d< real64, cappres::USD_CAPPRES > const & phaseCapPressure,
                                arrayView4d< real64, cappres::USD_CAPPRES_DS > const & dPhaseCapPressure_dPhaseVolFrac )
     : m_phaseTypes( phaseTypes ),
     m_phaseOrder( phaseOrder ),
+    m_phaseTrappedVolFrac( phaseTrapped ),
     m_phaseCapPressure( phaseCapPressure ),
     m_dPhaseCapPressure_dPhaseVolFrac( dPhaseCapPressure_dPhaseVolFrac )
   {}
 
   arrayView1d< integer const > m_phaseTypes;
   arrayView1d< integer const > m_phaseOrder;
+  arrayView3d< real64, cappres::USD_CAPPRES > m_phaseTrappedVolFrac;
 
   arrayView3d< real64, cappres::USD_CAPPRES > m_phaseCapPressure;
   arrayView4d< real64, cappres::USD_CAPPRES_DS > m_dPhaseCapPressure_dPhaseVolFrac;
@@ -188,6 +191,8 @@ protected:
   array3d< real64, cappres::LAYOUT_CAPPRES >  m_phaseCapPressure;
   array4d< real64, cappres::LAYOUT_CAPPRES_DS >  m_dPhaseCapPressure_dPhaseVolFrac;
 
+  // trapped fraction
+  array3d< real64, cappres::LAYOUT_CAPPRES > m_phaseTrappedVolFrac;
 };
 
 } // namespace constitutive
