@@ -10,9 +10,9 @@ CO2 Plume Evolution With Hysteresis Effect on Relative Permeability
 
 We consider a benchmark problem used in `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__
 to compare a number of numerical models applied to CO2 storage in geological formations.
-Using a simplified miscible two-phase setup, this test case addresses the
-simulation of the modeling of solubility trapping (with modeled CO2 dissolution in brine) and residual trapping
-(with hysteresis modeled on the gas phase relative permeability).
+Using a simplified miscible two-phase setup, this test case illustrates the modeling of solubility trapping
+(with CO2 dissolution in brine) and residual trapping
+(with gas relative permeability hysteresis) in CO2-brine systems.
 
 Our goal is to review the different sections of the XML file reproducing the benchmark configuration
 and to demonstrate that the GEOSX results (i.e., mass of CO2 dissolved and mobile for both hysteretic and non-hysteretic configurations) are in agreement with the reference
@@ -25,8 +25,8 @@ This benchmark test is based on the XML file located below:
 
 .. code-block:: console
 
-  ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_smoke.xml
-  ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+  ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_smoke.xml
+  ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
 
 ------------------------------------------------------------------------
 Problem description
@@ -39,16 +39,15 @@ presented in
 The setup is illustrated in the figure below.
 The mesh can be found in `GEOSXDATA <https://github.com/GEOSX/GEOSXDATA>`__ and
 was provided for the benchmark. It discretizes the widely-used `Johansen` reservoir,
-which consists in a tilted reservoir with a main fault. Both porosity and permeability are
-heterogeneous and given at vertices.
-
-A single CO2 injection well is completed with perforations only in the bottom 50 m
-of the reservoir.
-
+which consists in a tilted reservoir with a main fault.
 The model domain has the following dimensions: 9600 x 8900 x [90-140] m.
-It has a single well located at (5440,3300) m. The injection takes place during the first 25 years of the 50-year
-simulation at the constant rate of 15 kg/s. A hydrostatic pressure gradient is imposed on the boundary faces
-as well as a constant geothermal gradient of 0.03 K/m. The reservoir is initially at 373.15 K.
+Both porosity and permeability are heterogeneous and given at vertices.
+A single CO2 injection well is located at (x,y) = (5440,3300) m with
+perforations only in the bottom 50 m of the reservoir.
+The injection takes place during the first 25 years of the 50-year
+simulation at the constant rate of 15 kg/s.
+A hydrostatic pressure gradient is imposed on the boundary faces
+as well as a constant geothermal gradient of 0.03 K/m.
 
    .. _JohansenScenario: .. figure:: problem3.png
       :align: center
@@ -66,38 +65,30 @@ The authors have used the following simplifying assumptions:
 Mesh and element regions
 ------------------------------------------------------------------
 
-The proposed conforming discretization is
-fully hexahedral.
-<xml extract>
-
-The wellbore is discretized as X element segments with N perforations, as below,
-<xml extract>
-
-A VTK filter ``PointToCell`` is used to map properties from vertices to cells, which by default build a uniform average of
+The proposed conforming discretization is fully hexahedral.
+A VTK filter ``PointToCell`` is used to map properties from vertices to cells, which by default builds a uniform average of
 values over the cell.
-
 The structured mesh is generated using some helpers python scripts from the formatted Point/Cells list provided.
-It contains ``ncells`` cells. It is then imported using ``meshImport``
+It is then imported using ``meshImport``
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_smoke.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_smoke.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
 
-The central wellbore is discretized as well thanks to internal tools (see :ref:`TutorialCO2FieldCase`).
-It includes five segment with a perforation in each. It has its own region ``wellRegion`` and control labeled ``wellControls``
+The central wellbore is discretized internally by GEOSX  (see :ref:`TutorialCO2FieldCase`).
+It includes five segments with a perforation in each segment. It has its own region ``wellRegion`` and control labeled ``wellControls``
 defined and detailed respectively in **ElementRegions** and **Solvers** (see below).
-
 In the **ElementRegions** block,
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_ER -->
     :end-before: <!-- SPHINX_ER_END -->
 
-one signle reservoir region labeled ``reservoir``.
-This preprocessing is done in order to apply specific condition on the ``boundaries``. A third region ``welllRegion`` is associated with the well.
-All those regions define materials to be specified inside the **Constitutives** block.
+one single reservoir region labeled ``reservoir``.
+A second region ``wellRegion`` is associated with the well.
+All those regions define materials to be specified inside the **Constitutive** block.
 
 ------------------------
 Coupled solver
@@ -106,24 +97,24 @@ Coupled solver
 The simulation is performed by the GEOSX coupled solver for multiphase
 flow and well defined in the XML block **CompositionalMultiphaseReservoir**:
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_SOLVER_MP -->
     :end-before: <!-- SPHINX_SOLVER_MP_END -->
 
-It references the two coupled solvers under the tags **flowSolverName** and **wellSolverName**. These are defined inside the same **Solvers** block
+It references the two coupled solvers under the tags ``flowSolverName`` and ``wellSolverName``. These are defined inside the same **Solvers** block
 following this coupled solver. It also defined non-linear, **NonlinearSolverParameters** and
 and linear, **LinearSolverParameters**, strategies. Noticeably, direct solver shouldn't be used for large problem and
 
 The next two blocks are used to define our two coupled physics solvers ``compositionalMultiphaseFlow`` (of type **CompositionalMultiphaseFVM**)
 and ``compositionalMultiphaseWell`` (of type **CompositionalMultiphaseWell**).
 
-Flow Solver
+Flow solver
 -------------
 
 We use the ``targetRegions`` attribute to define the regions where the flow solver is applied.
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_SOLVER_MPWELL -->
     :end-before: <!-- SPHINX_SOLVER_MPWELL_END -->
@@ -131,16 +122,16 @@ We use the ``targetRegions`` attribute to define the regions where the flow solv
 The FV scheme discretization used is TPFA (which definition can be found nested in **NumericalMethods**/**FiniteVolume**)
 and some parameter values.
 
-Well Solver
+Well solver
 --------------
 
 The well solver is applied on its own region ``wellRegion`` which consists of the five discretized segments.
 It is also the place where the **WellControls** are set thanks to ``type``, ``control``, ``injectionStream`` ,
 ``injectionTemperature``, ``targetTotalRateTableName`` and, ``targetBHP`` for instance if we consider an injection well.
 
-For more details on the wellbore modelling please refer to :ref:`CompositionalMultiphaseWell`.
+For more details on the wellbore modeling please refer to :ref:`CompositionalMultiphaseWell`.
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_SOLVER_WELL -->
     :end-before: <!-- SPHINX_SOLVER_WELL_END -->
@@ -150,10 +141,10 @@ Constitutive laws
 ------------------------------
 
 This benchmark test involves a compositional mixture that defines two phases (CO2-rich and aqueous) labeled as
-``gas`` and ``water`` which contain two components ``co2`` and ``water``. The miscibility of CO2 results in
+``gas`` and ``water`` which contain two components ``co2`` and ``water``. The miscibility of CO2 results in the
 presence of CO2 in the aqueous phase. The vaporization of H2O in the CO2-rich phase is not considered here.
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_FLUID -->
     :end-before: <!-- SPHINX_FLUID_END -->
@@ -162,26 +153,26 @@ The brine properties are modeled using Ezrokhi correlation, hence the block name
 The external PVT files *tables/pvtgas.txt* and *tables/pvtliquid_ex.txt* give access to the models considered
 respectively for the computation of gas density and viscosity and the brine density and viscosity, along with pressure, temperature, salinity
 discretization of the parameter space. The external file *tables/co2flash.txt* gives the same type of information for the `CO2Solubility`
-model. (see :ref:`CO2-EOS` for details).
+model (see :ref:`CO2-EOS` for details).
 
 The rock model defines a slightly compressible porous medium with a reference porosity equal to 0.1.
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_ROCK -->
     :end-before: <!-- SPHINX_ROCK_END -->
 
 The relative permeability model is input through tables thanks to **TableRelativePermeability** block.
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_RELPERM -->
     :end-before: <!-- SPHINX_RELPERM_END -->
 
 As this benchmark is testing the sensitivity of the plume dynamics to the relative permeability hysteresis modeling,
 in commented block the **TableRelativePermeabilityHysteresis** block sets up bounding curves for imbibition and drainage
-under `imbibitionNonWettingRelPermTableName`, `imbibitionWettingRelPermTableName` and, `drainageWettingNonWettingRelPermTableNames`
-compared to the `wettingNonWettingRelPermTableNames` label of the drainage only **TableRelativePermeability** blocks.
+under ``imbibitionNonWettingRelPermTableName``, ``imbibitionWettingRelPermTableName`` and, ``drainageWettingNonWettingRelPermTableNames``
+compared to the ``wettingNonWettingRelPermTableNames`` label of the drainage only **TableRelativePermeability** blocks.
 Those link to **TableFunction** blocks in **Functions**, which define sample points for piecewise linear interpolation.
 This feature is used and explained in more details in the following section dedicated to *Initial and Boundary conditions*.
 
@@ -189,24 +180,24 @@ See,
 
 .. code-block:: console
 
-  ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_hystRelperm_iterative_base.xml
+  ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_hystRelperm_iterative_base.xml
 
-for the input base with hysteresis set up.
+for the input base with relative permeability hysteresis setup.
 
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_hystRelperm_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_hystRelperm_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_RELPERM -->
     :end-before: <!-- SPHINX_RELPERM_END -->
 
 .. note::
-    `wettingNonWettingRelPermTableNames` in **TableRelativePermeability** and `drainageWettingNonWettingRelPermTableNames` in
-    **TableRelativePermeabilityHysteresis** usage are identical.
+    ``wettingNonWettingRelPermTableNames`` in **TableRelativePermeability** and ``drainageWettingNonWettingRelPermTableNames`` in
+    **TableRelativePermeabilityHysteresis** are identical.
 
 
 Capillary pressure is also tabulated and defined in **TableCapillaryPressure**. No hysteresis is modeled yet on the capillary pressure.
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_CAP -->
     :end-before: <!-- SPHINX_CAP_END -->
@@ -220,46 +211,41 @@ This is specified using the **HydrostaticEquilibrium** XML tag in the **FieldSpe
 The datum pressure and elevation used below are defined in
 `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__).
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_HYDROSTATIC -->
     :end-before: <!-- SPHINX_HYDROSTATIC_END -->
 
-In the **Functions** block, the **TableFunction** s named ``initOilCompFracTable`` and ``initWaterCompFracTable``
+In the **Functions** block, the **TableFunction** s named ``initCO2CompFracTable`` and ``initWaterCompFracTable``
 define the brine-saturated initial state, while the **TableFunction** named ``initTempTable`` defines the
-homogeneous temperature field (temperature is not used in this benchmark).   
+ temperature field as a function of depth to impose the geothermal gradient.
 		 
-Since the fluid densities are constant for this simple incompressible fluid model, the same result
-could have been achieved using a simpler table in a **FieldSpecification** tag, as explained
-in :ref:`EquilibriumInitialCondition`.
-
-
 The boundaries are set to have a constant 0.03 K/m temperature gradient as well as the hydrostatic pressure gradient.
-We supplement that with water dominant content. Each block is linking a `fieldName` to a **TableFunction** tagged as
-the value of `functionName`. In order to have those imposed on the boundary faces, we provide ``faceManager`` as `objectPath`.
+We supplement that with water dominant content. Each block is linking a ``fieldName`` to a **TableFunction** tagged as
+the value of ``functionName``. In order to have those imposed on the boundary faces, we provide ``faceManager`` as ``objectPath``.
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
     :language: xml
     :start-after: <!-- SPHINX_BC -->
     :end-before: <!-- SPHINX_BC_END -->
 
 ---------------------------------
-Outputing reservoir Statistics
+Outputing reservoir statistics
 ---------------------------------
 
-In order to output partitioning of co2 mass, we use reservoir statistics implemented in GEOSX. This is done by defining a `Task`, with
-`flowSolverName` pointing to the dedicated solver and `computeRegionStatistics` set to 1 to compute statistics by regions.
-The `setNames` field is set to 3 as it is its attribute tag in the input *vtu* mesh.
+In order to output partitioning of CO2 mass, we use reservoir statistics implemented in GEOSX. This is done by defining a **Task**, with
+``flowSolverName`` pointing to the dedicated solver and ``computeRegionStatistics`` set to 1 to compute statistics by regions.
+The ``setNames`` field is set to 3 as it is its attribute tag in the input *vtu* mesh.
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_smoke.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_smoke.xml
     :language: xml
     :start-after: <!-- SPHINX_STATS -->
     :end-before: <!-- SPHINX_STATS_END -->
 
-and an `Event` for this to occur recursively with a `forceDt` argument for the period over which statistics are output and
-`target` pointing towards the aforementioned `Task`
+and an **Event** for this to occur recursively with a `forceDt` argument for the period over which statistics are output and
+`target` pointing towards the aforementioned **Task**.
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/Class09Pb3/class09_pb3_smoke.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_smoke.xml
     :language: xml
     :start-after: <!-- SPHINX_STAT_EV -->
     :end-before: <!-- SPHINX_STAT_EV_END -->
@@ -301,7 +287,7 @@ drops below 10e-7, the cell is displayed in black.
    :width: 1000
    :figclass: align-center
 
-   Plume of CO2 saturation for significant value where immobile co2 is colored in black.
+   Plume of CO2 saturation for significant value where immobile CO2 is colored in black.
 
 We observe the importance of hysteresis modeling in CO2 plume migration. Indeed, during the migration phase, the cells at
 the tail of the plume are switching from drainage to imbibition and the residual CO2 is trapped. This results in a slower migration
@@ -322,7 +308,6 @@ hysteretic relative permeabilities.
 
 We can see that at the end of the injection period the mass of CO2 in the gaseous phase stops increasing and starts
 decreasing due to dissolution of CO2 in the brine phase.
-
 These curves confirm the agreement between GEOSX and the results of `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__.
 
 ------------------------------------------------------------------

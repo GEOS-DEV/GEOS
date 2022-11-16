@@ -14,13 +14,8 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="40"/>
-        <LinearSolverParameters
-          solverType="fgmres"
-          preconditionerType="mgr"
-          krylovTol="1e-6"
-          iluFill="0"
-          logLevel="1"
-          stopIfError="1"/>
+      <LinearSolverParameters
+        directParallel="0"/>
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFVM
@@ -37,20 +32,19 @@
       targetRegions="{ wellRegion }"
       logLevel="1"
       useMass="1">
-        <WellControls
-          name="wellControls"
-          type="injector"
-	        logLevel="2"
-          control="totalVolRate"
-          referenceElevation="-3000"
-          targetBHP="1e8"
-          enableCrossflow="0"
-          useSurfaceConditions="1"
-          surfacePressure="101325"
-          surfaceTemperature="288.71"
-          targetTotalRateTableName="totalRateTable"
-          injectionTemperature="353.15"
-          injectionStream="{ 1.0, 0.0 }"/>
+      <WellControls
+        name="wellControls"
+        type="injector"
+        control="totalVolRate"
+        referenceElevation="-3000"
+        targetBHP="1e8"
+        enableCrossflow="0"
+        useSurfaceConditions="1"            
+        surfacePressure="101325"  
+        surfaceTemperature="288.71" 
+        targetTotalRateTableName="totalRateTable"
+        injectionTemperature="353.15"
+        injectionStream="{ 1.0, 0.0 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
   
@@ -98,15 +92,13 @@
       permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
 
     <!-- Problem 3.2 is hysteretical only --> 
-     <!-- SPHINX_RELPERM -->
     <TableRelativePermeabilityHysteresis
       name="relperm"
       phaseNames="{ gas, water }"
       drainageWettingNonWettingRelPermTableNames="{ drainageWaterRelativePermeabilityTable,
-						       drainageGasRelativePermeabilityTable }"
+                                                    drainageGasRelativePermeabilityTable }"
       imbibitionNonWettingRelPermTableName="imbibitionGasRelativePermeabilityTable"      
       imbibitionWettingRelPermTableName="imbibitionWaterRelativePermeabilityTable"/>
-       <!-- SPHINX_RELPERM_END -->
     
     <TableCapillaryPressure
       name="cappres"
@@ -115,49 +107,49 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <HydrostaticEquilibrium
-        name="equil"
-        objectPath="ElementRegions"
-        datumElevation="-3000"
-        datumPressure="3.0e7"
-        initialPhaseName="water"
-        componentNames="{ co2, water }"
-        componentFractionVsElevationTableNames="{ initCO2CompFracTable,
-                                                  initWaterCompFracTable }"
-        temperatureVsElevationTableName="initTempTable"/>
+   <HydrostaticEquilibrium
+      name="equil"
+      objectPath="ElementRegions"
+      datumElevation="-3000"
+      datumPressure="3.0e7"
+      initialPhaseName="water"
+      componentNames="{ co2, water }"
+      componentFractionVsElevationTableNames="{ initCO2CompFracTable,
+                                                initWaterCompFracTable }"
+      temperatureVsElevationTableName="initTempTable"/>
    
 <!-- bc ComponentFrac -->
 <!-- bc Pressure +tables -->
-      <!-- SPHINX_BC -->
+    <!-- SPHINX_BC -->
     <FieldSpecification
-        name="bcPressure"
-        objectPath="faceManager"
-        setNames="{3}"
-        fieldName="pressure"
-        functionName="pressureFunction"
-        scale="1"/>
+      name="bcPressure"
+      objectPath="faceManager"
+      setNames="{3}"
+      fieldName="pressure"
+      functionName="pressureFunction"
+      scale="1"/>
     <FieldSpecification
-        name="bcTemperature"
-        objectPath="faceManager"
-        setNames="{3}"
-        fieldName="temperature"
-        functionName="temperatureFunction"
-        scale="1"/>
+      name="bcTemperature"
+      objectPath="faceManager"
+      setNames="{3}"
+      fieldName="temperature"
+      functionName="temperatureFunction"
+      scale="1"/>
     <FieldSpecification
-        name="bcCompositionCO2"
-        objectPath="faceManager"
-        setNames="{3}"
-        fieldName="globalCompFraction"
-        component="0"
-        scale="0.000001"/>
+      name="bcCompositionCO2"
+      objectPath="faceManager"
+      setNames="{3}"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.000001"/>
     <FieldSpecification
-        name="bcCompositionWater"
-        objectPath="faceManager"
-        setNames="{3}"
-        fieldName="globalCompFraction"
-        component="1"
-        scale="0.999999"/>
-      <!-- SPHINX_BC_END -->
+      name="bcCompositionWater"
+      objectPath="faceManager"
+      setNames="{3}"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.999999"/>
+    <!-- SPHINX_BC_END -->
   </FieldSpecifications>
 
   <Functions>
@@ -174,16 +166,7 @@
       coordinates="{ -3238.2, -2506.13 }"
       values="{ 380.296, 358.334 }"/>
 
-    <TableFunction
-      name="waterRelativePermeabilityTable"
-      coordinateFiles="{ tables/phaseVolumeFraction_water.txt }"
-      voxelFile="tables/relPerm_water.txt"/>
-    <TableFunction
-      name="gasRelativePermeabilityTable"
-      coordinateFiles="{ tables/phaseVolumeFraction_gas.txt }"
-      voxelFile="tables/relPerm_gas.txt"/>      
-
-    <TableFunction
+   <TableFunction
       name="waterCapillaryPressureTable"
       coordinateFiles="{ tables/phaseVolumeFraction_water.txt }"
       voxelFile="tables/capPres_water.txt"/>  
@@ -206,11 +189,11 @@
       name="totalRateTable"
       inputVarNames="{time}"
       coordinates="{0, 7.7198e8, 1.544e9}"
-      values="{ 8.02849025, 0, 0}" 
+      values="{ 8.02849025, 0, 0}"
       interpolation="lower"/>
 
   <!-- Problem 3.2 is hysteresis -->
-    <TableFunction
+      <TableFunction
       name="drainageWaterRelativePermeabilityTable"
       coordinateFiles="{ tables/drainagePhaseVolFraction_water.txt }"
       voxelFile="tables/drainageRelPerm_water.txt"/>

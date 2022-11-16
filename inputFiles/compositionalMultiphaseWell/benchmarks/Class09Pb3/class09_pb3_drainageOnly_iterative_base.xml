@@ -15,13 +15,11 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="40"/>
-        <LinearSolverParameters
-          solverType="fgmres"
-          preconditionerType="mgr"
-          krylovTol="1e-6"
-          iluFill="0"
-          logLevel="1"
-          stopIfError="1"/>
+      <LinearSolverParameters
+        solverType="fgmres"
+        preconditionerType="mgr"
+        krylovTol="1e-6"
+        logLevel="1"/>
     </CompositionalMultiphaseReservoir>
       <!-- SPHINX_SOLVER_MPWELL_END -->
 
