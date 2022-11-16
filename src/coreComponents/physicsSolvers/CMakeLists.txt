@@ -6,7 +6,7 @@ set( physicsSolvers_headers
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
-     SolverStatistics.hpp     
+     SolverStatistics.hpp
      FieldStatisticsBase.hpp
      contact/ContactSolverBase.hpp
      contact/ContactFields.hpp
@@ -18,12 +18,12 @@ set( physicsSolvers_headers
      contact/SolidMechanicsEmbeddedFractures.hpp
      fluidFlow/CompositionalMultiphaseBase.hpp
      fluidFlow/CompositionalMultiphaseBaseFields.hpp
-     fluidFlow/CompositionalMultiphaseStatistics.hpp     
+     fluidFlow/CompositionalMultiphaseStatistics.hpp
      fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp
-     fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp     
+     fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp
      fluidFlow/CompositionalMultiphaseFVM.hpp
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp
-     fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp     
+     fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseHybridFVM.hpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseUtilities.hpp
@@ -60,8 +60,8 @@ set( physicsSolvers_headers
      fluidFlow/wells/WellControls.hpp
      fluidFlow/wells/WellSolverBase.hpp
      fluidFlow/wells/WellSolverBaseFields.hpp
-     multiphysics/CompositionalMultiphaseReservoirAndWells.hpp          
-     multiphysics/CoupledReservoirAndWellsBase.hpp     
+     multiphysics/CompositionalMultiphaseReservoirAndWells.hpp
+     multiphysics/CoupledReservoirAndWellsBase.hpp
      multiphysics/CoupledSolver.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
@@ -93,13 +93,14 @@ set( physicsSolvers_headers
      solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp
      solidMechanics/kernels/ImplicitSmallStrainQuasiStatic_impl.hpp
      solidMechanics/SolidMechanicsStateReset.hpp
-     solidMechanics/SolidMechanicsStatistics.hpp       
+     solidMechanics/SolidMechanicsStatistics.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.hpp
      surfaceGeneration/ParallelTopologyChange.hpp
      surfaceGeneration/SurfaceGenerator.hpp
      surfaceGeneration/SurfaceGeneratorFields.hpp
      wavePropagation/WaveSolverBase.hpp
+     wavePropagation/WaveSolverUtils.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
      wavePropagation/AcousticWaveEquationSEMKernel.hpp
      wavePropagation/ElasticWaveEquationSEM.hpp
@@ -114,13 +115,13 @@ set( physicsSolvers_sources
      NonlinearSolverParameters.cpp
      PhysicsSolverManager.cpp
      SolverBase.cpp
-     SolverStatistics.cpp     
+     SolverStatistics.cpp
      contact/ContactSolverBase.cpp
      contact/LagrangianContactSolver.cpp
      contact/SolidMechanicsEmbeddedFractures.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
-     fluidFlow/CompositionalMultiphaseStatistics.cpp          
+     fluidFlow/CompositionalMultiphaseStatistics.cpp
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.cpp
      fluidFlow/CompositionalMultiphaseHybridFVM.cpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
@@ -140,7 +141,7 @@ set( physicsSolvers_sources
      fluidFlow/wells/WellControls.cpp
      fluidFlow/wells/WellSolverBase.cpp
      multiphysics/CompositionalMultiphaseReservoirAndWells.cpp
-     multiphysics/CoupledReservoirAndWellsBase.cpp  
+     multiphysics/CoupledReservoirAndWellsBase.cpp
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/MultiphasePoromechanicsSolver.cpp
@@ -170,10 +171,10 @@ set( physicsSolvers_sources
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers
-  python/PySolver.hpp 
-  python/PySolverType.hpp ) 
+  python/PySolver.hpp
+  python/PySolverType.hpp )
   list( APPEND physicsSolvers_sources
-        python/PySolver.cpp ) 
+        python/PySolver.cpp )
   list( APPEND dependencyList Python3::Python pylvarray )
 endif()
 
