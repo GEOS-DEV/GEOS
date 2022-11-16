@@ -10,7 +10,6 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-
 from checks.elements_volumes import Options, __check
 
 

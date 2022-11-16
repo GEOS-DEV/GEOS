@@ -30,6 +30,6 @@ def parse_cli_options(options_str: str) -> Options:
 
 
 def display_results(options: Options, result: Result):
-    logging.error(f"You have {len(result.jumbled_elements)} elements with self intersecting faces.")
-    if result.jumbled_elements:
-        logging.error("The elements indices are:\n" + "\n".join(map(str, result.jumbled_elements)))
+    logging.error(f"You have {len(result.intersecting_faces_elements)} elements with self intersecting faces.")
+    if result.intersecting_faces_elements:
+        logging.error("The elements indices are:\n" + "\n".join(map(str, result.intersecting_faces_elements)))

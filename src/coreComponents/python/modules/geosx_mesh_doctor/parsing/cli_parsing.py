@@ -97,14 +97,14 @@ def parse(all_checks_helpers: Dict[str, CheckHelper], cli_args: List[str]) -> Ar
     misc_grp.add_argument('-v',
                           '--verbose',
                           action='count',
-                          default=1,
+                          default=2,
                           dest=__VERBOSE_KEY,
                           help="Use -v 'INFO', -vv for 'DEBUG'. Defaults to 'WARNING'.")
     misc_grp.add_argument('-q',
                           '--quiet',
                           action='count',
                           default=0,
-                          dest=__VERBOSE_KEY,
+                          dest=__QUIET_KEY,
                           help="Use -q to reduce the verbosity of the output.")
     misc_grp.add_argument('-i',
                           '--vtk-input-file',

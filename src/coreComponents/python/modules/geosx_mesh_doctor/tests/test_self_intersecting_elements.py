@@ -29,16 +29,16 @@ def test_jumbled_hex():
     cells = vtkCellArray()
     cells.AllocateExact(1, 8)
 
-    tet = vtkHexahedron()
-    tet.GetPointIds().SetId(0, 0)
-    tet.GetPointIds().SetId(1, 1)
-    tet.GetPointIds().SetId(2, 3)  # Intentionally wrong
-    tet.GetPointIds().SetId(3, 2)  # Intentionally wrong
-    tet.GetPointIds().SetId(4, 4)
-    tet.GetPointIds().SetId(5, 5)
-    tet.GetPointIds().SetId(6, 6)
-    tet.GetPointIds().SetId(7, 7)
-    cells.InsertNextCell(tet)
+    hex = vtkHexahedron()
+    hex.GetPointIds().SetId(0, 0)
+    hex.GetPointIds().SetId(1, 1)
+    hex.GetPointIds().SetId(2, 3)  # Intentionally wrong
+    hex.GetPointIds().SetId(3, 2)  # Intentionally wrong
+    hex.GetPointIds().SetId(4, 4)
+    hex.GetPointIds().SetId(5, 5)
+    hex.GetPointIds().SetId(6, 6)
+    hex.GetPointIds().SetId(7, 7)
+    cells.InsertNextCell(hex)
 
     mesh = vtkUnstructuredGrid()
     mesh.SetPoints(points)
@@ -46,5 +46,5 @@ def test_jumbled_hex():
 
     result = __check(mesh, Options(tolerance=0.))
 
-    assert len(result.jumbled_elements) == 1
-    assert result.jumbled_elements[0] == 0
+    assert len(result.intersecting_faces_elements) == 1
+    assert result.intersecting_faces_elements[0] == 0
