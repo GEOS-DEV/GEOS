@@ -64,13 +64,14 @@ TableCapillaryPressureHysteresis::TableCapillaryPressureHysteresis( const std::s
   setInputFlag(InputFlags::OPTIONAL).
                                         setDescription("");
 
-  // ?
-  registerWrapper( viewKeyStruct::drainageCapPresWrappersString(), & m_drainageWettingNonWettingCapillaryPressureKernelWrappers ).
-  setInputFlag(InputFlags::OPTIONAL).
-                                        setDescription("");
-  registerWrapper( viewKeyStruct::imbibitionCapPresWrappersString(), &m_imbibitionWettingNonWettingCapillaryPressureKernelWrappers ).
-  setInputFlag(InputFlags::OPTIONAL).
-                                        setDescription("");
+  //2p
+  registerWrapper( viewKeyStruct::wettingNonWettingCapillaryPressureKernelWrappersString(), &m_wettingNonWettingCapillaryPressureKernelWrappers).
+  setInputFlag(InputFlags::OPTIONAL).setDescription("");
+  //3p
+  registerWrapper( viewKeyStruct::wettingIntermediateCapillaryPressureKernelWrappersString(), &m_wettingIntermediateCapillaryPressureKernelWrappers).
+  setInputFlag(InputFlags::OPTIONAL).setDescription("");
+  registerWrapper( viewKeyStruct::nonWettingIntermediateCapillaryPressureKernelWrappersString(), &m_nonWettingIntermediateCapillaryPressureKernelWrappers).
+  setInputFlag(InputFlags::OPTIONAL).setDescription("");
 
 };
 
@@ -238,6 +239,314 @@ void TableCapillaryPressureHysteresis::initializePreSubGroups()
   computeLandCoefficient();
 }
 
+void
+TableCapillaryPressureHysteresis::KernelWrapper::computeImbibitionWettingCapillaryPressure( arrayView1d< TableFunction::KernelWrapper const > const & wettingKernelWapper,
+                                                                                            const KilloughHysteresis::HysteresisCurve_t & wettingCurve,
+                                                                                            const geosx::real64 & landParam,
+                                                                                            const geosx::real64 & phaseVolFraction,
+                                                                                            const geosx::real64 & phaseMinHistoricalVolFraction,
+                                                                                            const real64 & phaseIntermediateMinVolFraction,
+                                                                                            geosx::real64 & phaseTrappedVolFrac,
+                                                                                            geosx::real64 & phaseCapPressure,
+                                                                                            geosx::real64 & dPhaseCapPressure_dPhaseVolFrac ) const
+{
+  GEOSX_ASSERT(wettingCurve.isWetting());
+  real64 const S = phaseVolFraction;
+  real64 const Smxi = wettingCurve.imbibitionExtrema;
+  real64 const Smxd = wettingCurve.drainageExtrema;
+  real64 const Smin = wettingCurve.oppositeBound;
+
+  if( S<=Smin)
+  {
+    //below accessible range
+    phaseCapPressure = CAP_INF;
+    dPhaseCapPressure_dPhaseVolFrac = - CAP_INF_DERIV;
+  }
+  else if( S >= Smxd)
+  {
+    //above accessible range
+    phaseCapPressure = - CAP_INF;
+    dPhaseCapPressure_dPhaseVolFrac = - CAP_INF_DERIV;
+  }
+  else
+  {
+    //drainage to imbibition
+    real64 dpci_dS, dpcd_dS;
+    real64 const pci = wettingKernelWapper[ModeIndexType::IMBIBITION].compute(&S, &dpci_dS);
+    real64 const pcd = wettingKernelWapper[ModeIndexType::DRAINAGE].compute(&S,&dpcd_dS);
+    real64 const Somin = phaseIntermediateMinVolFraction;
+
+    // Step 1: get the trapped from wetting data
+    real64 const Shy = ( phaseMinHistoricalVolFraction > Smin ) ? phaseMinHistoricalVolFraction : Smin;
+
+    real64 Scrt = 0.0;
+    m_KilloughKernel.computeTrappedCriticalPhaseVolFraction( wettingCurve, Shy, landParam,
+                                                                                 Scrt );
+    real64 const Swma = 1 - Scrt - Somin;
+
+    real64 const E = m_KilloughKernel.getCurvatureParamPc();
+
+    //Step 2. compute F as in (EQ 34.15) F = (1/(Sw-Shy+E)-1/E) / (1/(Swma-Shy+E)-1/E)
+    real64 const F = (1./(S-Shy+E) - 1./E) / (1./(Swma-Shy+E) - 1./E);
+
+    //Step 3. compute dF_dS
+    real64 dF_dS = (-1./(S*S)) / (1./(Swma-Shy+E) - 1./E);
+
+    //Step 4. Eventually assemble everything following (EQ. 34.14)
+    phaseCapPressure = pcd + F * ( pci - pcd );
+    dPhaseCapPressure_dPhaseVolFrac = dpci_dS + F * ( dpci_dS - dpcd_dS);
+    dPhaseCapPressure_dPhaseVolFrac += dF_dS * ( pci -pcd );
+
+    //TODO reverse flow
+
+  }
+
+}
+
+void TableCapillaryPressureHysteresis::KernelWrapper::computeTwoPhase( const geosx::integer ipWetting,
+                                                                       const geosx::integer ipNonWetting,
+                                                                       const arraySlice1d< const geosx::real64,
+                                                                         compflow::USD_PHASE - 1 > & phaseVolFraction,
+                                                                       const arraySlice1d< const geosx::real64,
+                                                                         compflow::USD_PHASE
+                                                                         - 1 > & phaseMaxHistoricalVolFraction,
+                                                                       const arraySlice1d< const geosx::real64,
+                                                                         compflow::USD_PHASE
+                                                                         - 1 > & phaseMinHistoricalVolFraction,
+                                                                       const arraySlice1d< geosx::real64,
+                                                                         relperm::USD_RELPERM
+                                                                         - 2 > & phaseTrappedVolFrac,
+                                                                       arraySlice1d< geosx::real64,
+                                                                         relperm::USD_RELPERM
+                                                                         - 2 > const & phaseCapPressure,
+                                                                       arraySlice2d< geosx::real64,
+                                                                         relperm::USD_RELPERM_DS
+                                                                         - 2 > const & dPhaseCapPressure_dPhaseVolFrac ) const
+{
+  using TTP = ThreePhasePairPhaseType;
+
+  //--- wetting  cap pressure
+  if( !m_phaseHasHysteresis[TTP::INTERMEDIATE_WETTING] || phaseVolFraction[ipWetting] <= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer )
+  {
+    phaseTrappedVolFrac[ipWetting] = LvArray::math::min( phaseVolFraction[ipWetting], m_wettingCurve.oppositeBound );
+    computeDrainageCapillaryPressure( m_wettingNonWettingCapillaryPressureKernelWrappers[ModeIndexType::DRAINAGE],
+                                      phaseVolFraction[ipWetting],
+                                      phaseCapPressure[ipWetting],
+                                      dPhaseCapPressure_dPhaseVolFrac[ipWetting][ipWetting] );
+
+  }
+  else
+  {
+      computeImbibitionWettingCapillaryPressure( m_wettingNonWettingCapillaryPressureKernelWrappers,
+                                                 m_wettingCurve,
+                                                 m_landParam[ipWetting],
+                                                 phaseVolFraction[ipWetting],
+                                                 phaseMinHistoricalVolFraction[ipWetting],
+                                                 m_phaseIntermediateMinVolFraction,
+                                                 phaseTrappedVolFrac[ipWetting],
+                                                 phaseCapPressure[ipWetting],
+                                                 dPhaseCapPressure_dPhaseVolFrac[ipWetting][ipWetting]
+                                                 );
+
+    }
+
+  //-- non wetting
+
+  if( !m_phaseHasHysteresis[TTP::INTERMEDIATE_NONWETTING] || phaseVolFraction[ipNonWetting] >= phaseMaxHistoricalVolFraction[ipNonWetting] + flowReversalBuffer )
+    {
+      phaseTrappedVolFrac[ipNonWetting] = LvArray::math::min( phaseVolFraction[ipNonWetting], m_nonWettingCurve.drainageExtrema );
+      computeDrainageCapillaryPressure( m_wettingNonWettingCapillaryPressureKernelWrappers[ModeIndexType::DRAINAGE],
+                                        phaseVolFraction[ipNonWetting],
+                                        phaseCapPressure[ipNonWetting],
+                                        dPhaseCapPressure_dPhaseVolFrac[ipNonWetting][ipNonWetting] );
+      // when pc is on the gas phase, we need to multiply user input by -1
+      // because CompositionalMultiphaseFVM does: pres_gas = pres_oil - pc_og, so we need a negative pc_og
+      phaseCapPressure[ipNonWetting] *=-1;
+      dPhaseCapPressure_dPhaseVolFrac[ipNonWetting][ipNonWetting] *= -1;
+
+    }
+
+  {
+      computeImbibitionNonWettingCapillaryPressure( m_wettingNonWettingCapillaryPressureKernelWrappers,
+                                                    m_nonWettingCurve,
+                                                    m_landParam[ipNonWetting],
+                                                    phaseVolFraction[ipNonWetting],
+                                                    phaseMaxHistoricalVolFraction[ipNonWetting],
+                                                    phaseTrappedVolFrac[ipNonWetting],
+                                                    phaseCapPressure[ipNonWetting],
+                                                    dPhaseCapPressure_dPhaseVolFrac[ipNonWetting][ipNonWetting]
+                                                    );
+
+    // when pc is on the gas phase, we need to multiply user input by -1
+    // because CompositionalMultiphaseFVM does: pres_gas = pres_oil - pc_og, so we need a negative pc_og
+    phaseCapPressure[ipNonWetting] *= -1;
+    dPhaseCapPressure_dPhaseVolFrac[ipNonWetting][ipNonWetting] *= -1;
+    }
+
+}
+
+
+void TableCapillaryPressureHysteresis::KernelWrapper::computeThreePhase( const geosx::integer ipWetting,
+                                                                         const geosx::integer ipInter,
+                                                                         const geosx::integer ipNonWetting,
+                                                                         const arraySlice1d< const geosx::real64,
+                                                                           compflow::USD_PHASE - 1 > & phaseVolFraction,
+                                                                         const arraySlice1d< const geosx::real64,
+                                                                           compflow::USD_PHASE
+                                                                           - 1 > & phaseMaxHistoricalVolFraction,
+                                                                         const arraySlice1d< const geosx::real64,
+                                                                           compflow::USD_PHASE
+                                                                           - 1 > & phaseMinHistoricalVolFraction,
+                                                                         const arraySlice1d< geosx::real64,
+                                                                           relperm::USD_RELPERM
+                                                                           - 2 > & phaseTrappedVolFrac,
+                                                                         const arraySlice1d< geosx::real64,
+                                                                           relperm::USD_RELPERM - 2 > & phaseCapPressure,
+                                                                         const arraySlice2d< geosx::real64,
+                                                                           relperm::USD_RELPERM_DS
+                                                                           - 2 > & dPhaseCapPressure_dPhaseVolFrac ) const
+{
+
+
+  LvArray::forValuesInSlice( dPhaseCapPressure_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
+  using TTP = ThreePhasePairPhaseType;
+
+  // -- wetting curve if drainage only
+     if( !m_phaseHasHysteresis[TTP::INTERMEDIATE_WETTING] || phaseVolFraction[ipWetting] <= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer )
+  {
+    //TODO trapped
+       // water-oil capillary pressure
+    phaseTrappedVolFrac[ipWetting] = LvArray::math::min( phaseVolFraction[ipWetting], m_wettingCurve.oppositeBound );
+    phaseCapPressure[ipWetting] =
+    m_wettingIntermediateCapillaryPressureKernelWrappers[ModeIndexType::DRAINAGE].compute( &(phaseVolFraction)[ipWetting],
+                                                                &(dPhaseCapPressure_dPhaseVolFrac)[ipWetting][ipWetting] );
+  }
+     else
+     {
+       computeImbibitionWettingCapillaryPressure( m_wettingIntermediateCapillaryPressureKernelWrappers,
+                                                  m_wettingCurve,
+                                                  m_landParam[ipWetting],
+                                                  phaseVolFraction[ipWetting],
+                                                  phaseMinHistoricalVolFraction[ipWetting],
+                                                  m_phaseIntermediateMinVolFraction,
+                                                  phaseTrappedVolFrac[ipWetting],
+                                                  phaseCapPressure[ipWetting],
+                                                  dPhaseCapPressure_dPhaseVolFrac[ipWetting][ipWetting]);
+
+
+     }
+
+
+  // -- non wetting cure if drainage only
+  // gas-oil capillary pressure
+  if( !m_phaseHasHysteresis[TTP::INTERMEDIATE_NONWETTING] || phaseVolFraction[ipNonWetting] >= phaseMaxHistoricalVolFraction[ipNonWetting] + flowReversalBuffer )
+  {
+    //TODO trapped
+    phaseTrappedVolFrac[ipNonWetting] = LvArray::math::min( phaseVolFraction[ipNonWetting], m_nonWettingCurve.drainageExtrema );
+    phaseCapPressure[ipNonWetting] =
+    m_nonWettingIntermediateCapillaryPressureKernelWrappers[ModeIndexType::IMBIBITION].compute( &(phaseVolFraction)[ipNonWetting],
+                                                                   &(dPhaseCapPressure_dPhaseVolFrac)[ipNonWetting][ipNonWetting] );
+
+
+    // when pc is on the gas phase, we need to multiply user input by -1
+    // because CompositionalMultiphaseFVM does: pres_gas = pres_oil - pc_og, so we need a negative pc_og
+    phaseCapPressure[ipNonWetting] *=-1;
+    dPhaseCapPressure_dPhaseVolFrac[ipNonWetting][ipNonWetting] *= -1;
+  }
+  else
+  {
+
+    computeImbibitionNonWettingCapillaryPressure( m_nonWettingIntermediateCapillaryPressureKernelWrappers,
+                                                                                                m_nonWettingCurve,
+                                                                                                m_landParam[ipNonWetting],
+                                                                                                phaseVolFraction[ipNonWetting],
+                                                                                                phaseMinHistoricalVolFraction[ipNonWetting],
+                                                                                                phaseTrappedVolFrac[ipNonWetting],
+                                                                                                phaseCapPressure[ipNonWetting],
+                                                                                                dPhaseCapPressure_dPhaseVolFrac[ipNonWetting][ipNonWetting] );
+    // when pc is on the gas phase, we need to multiply user input by -1
+    // because CompositionalMultiphaseFVM does: pres_gas = pres_oil - pc_og, so we need a negative pc_og
+    phaseCapPressure[ipNonWetting] *=-1;
+    dPhaseCapPressure_dPhaseVolFrac[ipNonWetting][ipNonWetting] *= -1;
+  }
+
+
+
+
+}
+
+
+void
+TableCapillaryPressureHysteresis::KernelWrapper::computeImbibitionNonWettingCapillaryPressure( arrayView1d< TableFunction::KernelWrapper const > const & nonWettingKernelWrapper,
+                                                                                               const KilloughHysteresis::HysteresisCurve_t & nonWettingCurve,
+                                                                                               const geosx::real64 & landParam,
+                                                                                               const geosx::real64 & phaseVolFraction,
+                                                                                               const geosx::real64 & phaseMaxHistoricalVolFraction,
+                                                                                               geosx::real64 & phaseTrappedVolFrac,
+                                                                                               geosx::real64 & phaseCapPressure,
+                                                                                               geosx::real64 & dPhaseCapPressure_dPhaseVolFrac ) const
+{
+  GEOSX_ASSERT(!nonWettingCurve.isWetting());
+  real64 const S = phaseVolFraction;
+  real64 const Smii = nonWettingCurve.imbibitionExtrema;
+  real64 const Smid = nonWettingCurve.drainageExtrema;
+  real64 const Smax = nonWettingCurve.oppositeBound;
+
+  if( S >= Smax )
+  {
+    //above accessible range
+    phaseCapPressure = CAP_INF;
+    dPhaseCapPressure_dPhaseVolFrac = CAP_INF_DERIV;
+  }
+  else if( S <= Smid )
+  {
+    //below accessible range
+    phaseCapPressure = - CAP_INF;
+    dPhaseCapPressure_dPhaseVolFrac = CAP_INF_DERIV;
+  }
+  else
+  {
+    //drainage to imbibition
+    real64 dpci_dS, dpcd_dS;
+    real64 const pci = nonWettingKernelWrapper[ModeIndexType::IMBIBITION].compute(&S,&dpci_dS);
+    real64 const pcd = nonWettingKernelWrapper[ModeIndexType::DRAINAGE].compute(&S,&dpcd_dS);
+
+    // Step 1: get the trapped from wetting data
+    real64 const Shy = ( phaseMaxHistoricalVolFraction < Smax ) ? phaseMaxHistoricalVolFraction : Smax;
+
+    real64 Scrt = 0.0;
+    m_KilloughKernel.computeTrappedCriticalPhaseVolFraction( nonWettingCurve, Shy, landParam,
+                                                             Scrt );
+
+    real64 const E = m_KilloughKernel.getCurvatureParamPc();
+
+    //Set 2. compute F as in (EQ 34.21) F = (1/(Shy-S+E)-1/E) / (1/(Shy - Sgcr +E)-1/E)
+    real64 const F = (1./(Shy-S+E) - 1./E) / (1./(Shy - Scrt +E) - 1./E);
+
+    //Step 3. compute dF_dS
+    real64 dF_dS = (1./(S*S)) / (1./(Shy - Scrt +E) - 1./E);
+
+    //Step 4. Eventually assemble everything following (EQ. 34.20)
+    phaseCapPressure = pcd + F * ( pci - pcd );
+    dPhaseCapPressure_dPhaseVolFrac = dpci_dS + F * ( dpci_dS - dpcd_dS);
+    dPhaseCapPressure_dPhaseVolFrac += dF_dS * ( pci -pcd );
+    //TODO reverse flow
+
+  }
+}
+
+void TableCapillaryPressureHysteresis::KernelWrapper::computeDrainageCapillaryPressure( const TableFunction::KernelWrapper & drainageRelpermWrapper,
+                                                                                        const geosx::real64 & phaseVolFraction,
+                                                                                        geosx::real64 & phaseCapPressure,
+                                                                                        geosx::real64 & dPhaseCapPressure_dPhaseVolFrac ) const
+{
+  phaseCapPressure = drainageRelpermWrapper.compute( &phaseVolFraction,
+                                                     &dPhaseCapPressure_dPhaseVolFrac );
+
+}
+
+
+
 /// Land coeff (tb refactored out in KilloughHysteresis) and saved cvgd
 
 void TableCapillaryPressureHysteresis::computeLandCoefficient()
@@ -246,7 +555,7 @@ void TableCapillaryPressureHysteresis::computeLandCoefficient()
   // For two-phase flow, we make sure that they are equal
   m_landParam.resize( 2 );
 
-  integer ipWetting = 0;
+/*  integer ipWetting = 0;
   integer ipNonWetting = 0;
 
   integer const numPhases = m_phaseNames.size();
@@ -259,7 +568,7 @@ void TableCapillaryPressureHysteresis::computeLandCoefficient()
   {
     ipWetting = m_phaseOrder[PhaseType::WATER];
     ipNonWetting = m_phaseOrder[PhaseType::GAS];
-  }
+  }*/
 
   // Note: for simplicity, the notations are taken from IX documentation (although this breaks our phaseVolFrac naming convention)
 
@@ -331,13 +640,10 @@ KilloughHysteresis::KernelKilloughHysteresisBase TableCapillaryPressureHysteresi
   KilloughHysteresis & KilloughModel = constitutiveManager.getGroup< KilloughHysteresis >( m_KilloughModelName );
   //can use move semantic
   //TODO change Interface
+  //extract phase min and max from data structures
   return KilloughModel.createKernelWrapper( m_landParam,
-                                            m_drainagePhaseMinVolFraction,
-                                            m_imbibitionPhaseMinVolFraction,
-                                            m_drainagePhaseRelPermEndPoint,
-                                            m_imbibitionPhaseRelPermEndPoint,
-                                            m_drainagePhaseMaxVolFraction,
-                                            m_imbibitionPhaseMaxVolFraction,
+                                            KilloughHysteresis::HysteresisCurve_t(m_wettingPhaseMinVolumeFraction,m_imbibitionWettingPhaseMaxVolumeFraction,m_drainageWettingPhaseMaxVolumeFraction),
+                                            KilloughHysteresis::HysteresisCurve_t(m_nonWettingPhaseMaxVolumeFraction,m_imbibitionNonWettingPhaseMinVolumeFraction,m_drainageNonWettingPhaseMinVolumeFraction),
                                             m_phaseTrappedVolFrac );
 
 }
@@ -352,24 +658,22 @@ TableCapillaryPressureHysteresis::createKernelWrapper()
   m_KilloughKernel = createKilloughKernelWrapper();
 
   // then we create the actual TableRelativePermeabilityHysteresis::KernelWrapper
-  return KernelWrapper( m_drainageRelPermKernelWrappers,
-                        m_imbibitionRelPermKernelWrappers,
+  return KernelWrapper( m_wettingNonWettingCapillaryPressureKernelWrappers,
+                        m_wettingIntermediateCapillaryPressureKernelWrappers,
+                        m_nonWettingIntermediateCapillaryPressureKernelWrappers,
                         m_KilloughKernel,
                         m_phaseHasHysteresis,
                         m_landParam,
-                        m_drainagePhaseMinVolFraction,
-                        m_imbibitionPhaseMinVolFraction,
-                        m_drainagePhaseMaxVolFraction,
-                        m_imbibitionPhaseMaxVolFraction,
-                        m_drainagePhaseRelPermEndPoint,
-                        m_imbibitionPhaseRelPermEndPoint,
-                        m_phaseTypes,
-                        m_phaseOrder,
+                        m_phaseIntermediateMinVolFraction,
+                        KilloughHysteresis::HysteresisCurve_t(m_wettingPhaseMinVolumeFraction,m_imbibitionWettingPhaseMaxVolumeFraction,m_drainageWettingPhaseMaxVolumeFraction),
+                        KilloughHysteresis::HysteresisCurve_t(m_nonWettingPhaseMaxVolumeFraction,m_imbibitionNonWettingPhaseMinVolumeFraction,m_drainageNonWettingPhaseMinVolumeFraction),
                         m_phaseMinHistoricalVolFraction,
                         m_phaseMaxHistoricalVolFraction,
+                        m_phaseTypes,
+                        m_phaseOrder,
                         m_phaseTrappedVolFrac,
-                        m_phaseRelPerm,
-                        m_dPhaseRelPerm_dPhaseVolFrac );
+                        m_phaseCapPressure,
+                        m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
 void TableCapillaryPressureHysteresis::createAllTableKernelWrappers()
@@ -431,6 +735,45 @@ void TableCapillaryPressureHysteresis::resizeFields( localIndex const size, loca
   m_phaseMaxHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 0.0 );
   m_phaseMinHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 1.0 );
 }
+
+
+///kernel ctor
+TableCapillaryPressureHysteresis::KernelWrapper::KernelWrapper( arrayView1d< const TableFunction::KernelWrapper > const & wettingNonWettingCapillaryPressureKernelWrappers,
+                                                                arrayView1d< const TableFunction::KernelWrapper > const & wettingIntermediateCapillaryPressureKernelWrappers,
+                                                                arrayView1d< const TableFunction::KernelWrapper > const & nonWettingIntermediateCapillaryPressureKernelWrappers,
+                                                                const KilloughHysteresis::KernelKilloughHysteresisBase & KilloughKernel,
+                                                                const arrayView1d< const geosx::integer > & phaseHasHysteresis,
+                                                                const arrayView1d< const geosx::real64 > & landParam,
+                                                                const geosx::real64 & phaseIntermediateMinVolFraction,
+                                                                const KilloughHysteresis::HysteresisCurve_t & wettingCurve,
+                                                                const KilloughHysteresis::HysteresisCurve_t & nonWettingCurve,
+                                                                const arrayView2d< const geosx::real64, compflow::USD_PHASE > & phaseMinHistoricalVolFraction,
+                                                                const arrayView2d< const geosx::real64, compflow::USD_PHASE > & phaseMaxHistoricalVolFraction,
+                                                                arrayView1d< integer const > const & phaseTypes,
+                                                                arrayView1d< integer const > const & phaseOrder,
+                                                                arrayView3d< real64, cappres::USD_CAPPRES > const & phaseTrapped,
+                                                                const arrayView3d< geosx::real64, relperm::USD_RELPERM > & phaseCapPressure,
+                                                                const arrayView4d< geosx::real64, relperm::USD_RELPERM_DS > & dPhaseCapPressure_dPhaseVolFrac )
+                                                                :
+  CapillaryPressureBaseUpdate( phaseTypes,
+                               phaseOrder,
+                               phaseTrapped,
+                               phaseCapPressure,
+                               dPhaseCapPressure_dPhaseVolFrac ),
+                                                                m_wettingNonWettingCapillaryPressureKernelWrappers(wettingNonWettingCapillaryPressureKernelWrappers),
+                                                                m_wettingIntermediateCapillaryPressureKernelWrappers(wettingIntermediateCapillaryPressureKernelWrappers),
+                                                                m_nonWettingIntermediateCapillaryPressureKernelWrappers(nonWettingIntermediateCapillaryPressureKernelWrappers),
+                                                                m_KilloughKernel(KilloughKernel),
+                                                                m_phaseHasHysteresis(phaseHasHysteresis),
+                                                                m_landParam(landParam),
+                                                                m_phaseIntermediateMinVolFraction(phaseIntermediateMinVolFraction),
+                                                                m_wettingCurve(wettingCurve),
+                                                                m_nonWettingCurve(nonWettingCurve),
+                                                                m_phaseMinHistoricalVolFraction(phaseMinHistoricalVolFraction),
+                                                                m_phaseMaxHistoricalVolFraction(phaseMaxHistoricalVolFraction)
+{}
+
+
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, TableCapillaryPressureHysteresis, std::string const &, Group * const )
