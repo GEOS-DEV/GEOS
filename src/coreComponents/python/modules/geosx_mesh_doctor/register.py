@@ -41,13 +41,13 @@ __CHECKS[COLLOCATES_NODES] = __get_collocated_nodes_check
 
 
 def __get_element_volumes_check_helper() -> CheckHelper:
-    import parsing.elements_volumes_parsing
-    return __build_check_helper(parsing.elements_volumes_parsing)
+    import parsing.element_volumes_parsing
+    return __build_check_helper(parsing.element_volumes_parsing)
 
 
 def __get_element_volumes_check():
-    from checks import elements_volumes
-    return elements_volumes.check
+    from checks import element_volumes
+    return element_volumes.check
 
 
 __HELPERS[ELEMENT_VOLUMES] = __get_element_volumes_check_helper

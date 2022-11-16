@@ -10,7 +10,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-from checks.elements_volumes import Options, __check
+from checks.element_volumes import Options, __check
 
 
 def test_simple_tet():

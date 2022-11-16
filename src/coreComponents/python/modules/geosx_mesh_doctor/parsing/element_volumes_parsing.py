@@ -2,7 +2,7 @@ import logging
 import textwrap
 from typing import Dict
 
-from checks.elements_volumes import Options, Result
+from checks.element_volumes import Options, Result
 
 from . import cli_parsing, ELEMENT_VOLUMES
 
