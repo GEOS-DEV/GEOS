@@ -30,6 +30,8 @@ class Fesapi(CMakePackage):
             self.define('CMAKE_CXX_COMPILER', spec['mpi'].mpicxx),
             self.define('CMAKE_CXX_FLAGS', cxxflags),
             self.define('HDF5_ROOT', spec['hdf5'].prefix),
+            # fesAPI/spack can detect wrong version otherwise
+            self.define('HDF5_VERSION', spec['hdf5'].version),
             self.define('MINIZIP_INCLUDE_DIR', spec['minizip'].prefix.include + "/minizip"),
             self.define('MINIZIP_LIBRARY_RELEASE', spec['minizip'].prefix.lib),
             self.define('Boost_INCLUDE_DIR', spec['boost'].prefix.include),
