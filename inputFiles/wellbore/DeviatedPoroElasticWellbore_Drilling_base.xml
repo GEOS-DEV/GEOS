@@ -104,32 +104,32 @@
       fieldName="pressure"
       scale="10e6"/>
 
-	<FieldSpecification 
-	  name="Sx"
-	  initialCondition="1"
-	  setNames="{all}"
-	  objectPath="ElementRegions/Omega/cb1"
-	  fieldName="rock_stress"
-	  component="0"
-	  scale="-21.9e6"/>
+    <FieldSpecification 
+      name="Sx"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Omega/cb1"
+      fieldName="rock_stress"
+      component="0"
+      scale="-14.19e6"/>
 
-	<FieldSpecification 
-	  name="Sy"
-	  initialCondition="1"
-	  setNames="{all}"
-	  objectPath="ElementRegions/Omega/cb1"
-	  fieldName="rock_stress"
-	  component="1"
-	  scale="-12.9e6"/>
+    <FieldSpecification 
+      name="Sy"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Omega/cb1"
+      fieldName="rock_stress"
+      component="1"
+      scale="-5.19e6"/>
 
-	<FieldSpecification 
-	  name="Sz"
-	  initialCondition="1"
-	  setNames="{all}"
-	  objectPath="ElementRegions/Omega/cb1"
-	  fieldName="rock_stress"
-	  component="2"
-	  scale="-17.9e6"/>
+    <FieldSpecification 
+      name="Sz"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Omega/cb1"
+      fieldName="rock_stress"
+      component="2"
+      scale="-10.19e6"/>
 
     <FieldSpecification
       name="innerPorePressure"
@@ -142,7 +142,7 @@
     <FieldSpecification
       name="xConstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xneg, xpos }"/>
@@ -150,7 +150,7 @@
     <FieldSpecification
       name="yConstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ tneg, tpos, ypos }"/>
@@ -158,7 +158,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>

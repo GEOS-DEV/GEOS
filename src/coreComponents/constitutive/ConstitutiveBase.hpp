@@ -111,48 +111,48 @@ public:
   virtual std::vector< string > getSubRelationNames() const { return {}; }
 
   /**
-   * @brief Helper function to register extrinsic data on a constitutive model
-   * @tparam TRAIT the type of extrinsic data
-   * @param[in] extrinsicData the extrinsic data struct corresponding to the object being registered
+   * @brief Helper function to register field on a constitutive model
+   * @tparam FIELD_TRAIT the type of field
+   * @param[in] fieldTrait the field struct corresponding to the object being registered
    * @param[in] newObject a pointer to the object that is being registered
    * @return A reference to the newly registered/created Wrapper
-   * TODO: move up to Group
+   * TODO: Remove duplicated code with ObjectManagerBase
    */
-  template< typename TRAIT >
-  dataRepository::Wrapper< typename TRAIT::type > & registerExtrinsicData( TRAIT const & extrinsicDataTrait,
-                                                                           typename TRAIT::type * newObject )
+  template< typename FIELD_TRAIT >
+  dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( FIELD_TRAIT const & fieldTrait,
+                                                                         typename FIELD_TRAIT::type * newObject )
   {
-    return registerWrapper( extrinsicDataTrait.key(), newObject ).
-             setApplyDefaultValue( extrinsicDataTrait.defaultValue() ).
-             setPlotLevel( TRAIT::plotLevel ).
-             setRestartFlags( TRAIT::restartFlag ).
-             setDescription( TRAIT::description );
+    return registerWrapper( fieldTrait.key(), newObject ).
+             setApplyDefaultValue( fieldTrait.defaultValue() ).
+             setPlotLevel( FIELD_TRAIT::plotLevel ).
+             setRestartFlags( FIELD_TRAIT::restartFlag ).
+             setDescription( FIELD_TRAIT::description );
   }
 
   /**
    * @brief Get a wrapper associated with a trait from the constitutive model
-   * @tparam TRAIT The trait that holds the type and key of the data
+   * @tparam FIELD_TRAIT The trait that holds the type and key of the field
    *   to be retrieved from this constitutive model
    * @return A const reference to a view to const wrapper.
-   * TODO: move up to Group
+   * TODO: Remove duplicated code with ObjectManagerBase
    */
-  template< typename TRAIT >
-  dataRepository::Wrapper< typename TRAIT::type > const & getExtrinsicData() const
+  template< typename FIELD_TRAIT >
+  dataRepository::Wrapper< typename FIELD_TRAIT::type > const & getField() const
   {
-    return this->getWrapper< typename TRAIT::type >( TRAIT::key() );
+    return this->getWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() );
   }
 
   /**
    * @brief Get a wrapper associated with a trait from the constitutive model
-   * @tparam TRAIT The trait that holds the type and key of the data
+   * @tparam FIELD_TRAIT The trait that holds the type and key of the field
    *   to be retrieved from this constitutive model
    * @return A reference to the wrapper.
-   * TODO: move up to Group
+   * TODO: Remove duplicated code with ObjectManagerBase
    */
-  template< typename TRAIT >
-  dataRepository::Wrapper< typename TRAIT::type > & getExtrinsicData()
+  template< typename FIELD_TRAIT >
+  dataRepository::Wrapper< typename FIELD_TRAIT::type > & getField()
   {
-    return this->getWrapper< typename TRAIT::type >( TRAIT::key() );
+    return this->getWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() );
   }
 
 private:

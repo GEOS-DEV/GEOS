@@ -1,15 +1,14 @@
-<VTKFile type="PUnstructuredGrid" version="1.0" byte_order="LittleEndian" header_type="UInt64">
-  <PUnstructuredGrid GhostLevel="1">
-    <FieldData>
-      <DataArray type="Float64" Name="TimeValue" NumberOfTuples="1" format="binary" RangeMin="0" RangeMax="0">
-        CAAAAAAAAAAAAAAAAAAAAA==
-      </DataArray>
-    </FieldData>
-    <PCellData>
-      <PDataArray type="Int64" IdType="1" Name="vtkOriginalCellIds"/>
+<VTKFile type="PUnstructuredGrid" version="1.0" byte_order="LittleEndian">
+  <PUnstructuredGrid GhostLevel="0">
+    <PPointData GlobalIds="GLOBAL_IDS_POINTS">
+      <PDataArray type="Int64" IdType="1" Name="GLOBAL_IDS_POINTS" format="ascii"/>
+    </PPointData>
+    <PCellData GlobalIds="GLOBAL_IDS_CELLS" Scalars="attribute">
+      <PDataArray type="Int64" IdType="1" Name="GLOBAL_IDS_CELLS" format="ascii"/>
+      <PDataArray type="Int32" Name="attribute" format="ascii"/>
     </PCellData>
     <PPoints>
-      <PDataArray type="Float64" Name="Points" NumberOfComponents="3"/>
+      <PDataArray type="Float32" Name="coordinates" NumberOfComponents="3" format="ascii"/>
     </PPoints>
     <Piece Source="cube/cube_0.vtu"/>
     <Piece Source="cube/cube_1.vtu"/>

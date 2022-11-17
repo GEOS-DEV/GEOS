@@ -152,7 +152,7 @@
     <FieldSpecification
       name="xconstraint"
       objectPath="nodeManager"
-      fieldName="Velocity"
+      fieldName="velocity"
       component="0"
       scale="0.0"
       setNames="{ xneg }"/>
@@ -160,7 +160,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="Velocity"
+      fieldName="velocity"
       component="1"
       scale="0.0"
       setNames="{ yneg }"/>
@@ -168,7 +168,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="Velocity"
+      fieldName="velocity"
       component="2"
       scale="0.0"
       setNames="{ zneg }"/>

@@ -129,6 +129,16 @@ public:
                        real64 ( &dWeight_dVar1 )[1][2],
                        real64 ( &dWeight_dVar2 )[1][2] ) const;
 
+  /**
+   * @brief Compute the stabilization weights
+   * @param[in] iconn connection index
+   * @param[out] stabilizationWeight view weights
+   */
+  GEOSX_HOST_DEVICE
+  void computeStabilizationWeights( localIndex iconn,
+                                    real64 ( & stabilizationWeight )[1][2] ) const
+  { GEOSX_UNUSED_VAR( iconn, stabilizationWeight ); }
+
 };
 
 /**

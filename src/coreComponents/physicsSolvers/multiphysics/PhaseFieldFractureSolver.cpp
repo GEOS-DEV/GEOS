@@ -345,10 +345,6 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
-    ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
-
-    ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
-    constitutiveRelations = elemManager.constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
     // begin region loop
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [this, nodalDamage]
                                                                 ( localIndex const,
@@ -369,7 +365,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_discretizationName );
 
-        finiteElement::dispatch3D( fe, [nodalDamage, &elementSubRegion, damageFieldOnMaterial, elemNodes]( auto & finiteElement )
+        finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [nodalDamage, &elementSubRegion, damageFieldOnMaterial, elemNodes]( auto & finiteElement )
         {
           using FE_TYPE = TYPEOFREF( finiteElement );
           constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
