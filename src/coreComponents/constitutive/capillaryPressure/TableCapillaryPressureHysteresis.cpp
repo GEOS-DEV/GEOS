@@ -22,6 +22,21 @@ TableCapillaryPressureHysteresis::TableCapillaryPressureHysteresis( const std::s
   : CapillaryPressureBase( name, parent )
 {
 
+    /// Killough data
+    registerWrapper( viewKeyStruct::KilloughModelNameString(), &m_KilloughModelName ).
+            setInputFlag(
+            InputFlags::REQUIRED ).setDescription( "name of the linked Killough Model" );
+
+    registerWrapper( viewKeyStruct::KilloughModelWrapperString(), &m_KilloughKernel )
+            .setSizedFromParent( 0 ).
+            setRestartFlags( RestartFlags::NO_WRITE );
+
+    registerWrapper( viewKeyStruct::phaseHasHysteresisString(), &m_phaseHasHysteresis ).
+                    setInputFlag( InputFlags::FALSE )
+            . // will be deduced from tables
+                    setSizedFromParent( 0 );
+
+
   registerWrapper( viewKeyStruct::wettingPhaseMinVolumeFractionString(), &m_wettingPhaseMinVolumeFraction ).
   setInputFlag(InputFlags::OPTIONAL).
   setDescription("");
@@ -66,14 +81,14 @@ TableCapillaryPressureHysteresis::TableCapillaryPressureHysteresis( const std::s
 
   //2p
   registerWrapper( viewKeyStruct::wettingNonWettingCapillaryPressureKernelWrappersString(), &m_wettingNonWettingCapillaryPressureKernelWrappers).
-  setInputFlag(InputFlags::OPTIONAL).setDescription("");
+  setInputFlag(InputFlags::FALSE).setDescription("");
   //3p
   registerWrapper( viewKeyStruct::wettingIntermediateCapillaryPressureKernelWrappersString(), &m_wettingIntermediateCapillaryPressureKernelWrappers).
-  setInputFlag(InputFlags::OPTIONAL).setDescription("");
+  setInputFlag(InputFlags::FALSE).setDescription("");
   registerWrapper( viewKeyStruct::nonWettingIntermediateCapillaryPressureKernelWrappersString(), &m_nonWettingIntermediateCapillaryPressureKernelWrappers).
-  setInputFlag(InputFlags::OPTIONAL).setDescription("");
+  setInputFlag(InputFlags::FALSE).setDescription("");
 
-};
+}
 
 /// usual utils
 
@@ -150,36 +165,55 @@ void TableCapillaryPressureHysteresis::initializePreSubGroups()
   // Step 1: check sanity of drainage tables
   if( numPhases == 2 )
   {
-    {
-      GEOSX_THROW_IF( !functionManager.hasGroup( m_drainageWettingNonWettingCapPresTableName ),
-                      GEOSX_FMT( "{}: the table function named {} could not be found",
-                                 getFullName(),
-                                 m_drainageWettingNonWettingCapPresTableName ),
-                      InputError );
-      TableFunction const
-        & capPresTable = functionManager.getGroup< TableFunction >( m_drainageWettingNonWettingCapPresTableName );
-      bool const capPresMustBeIncreasing = ( m_phaseOrder[PhaseType::WATER] < 0 )
-                                           ? true   // pc on the gas phase, function must be increasing
-                                           : false; // pc on the water phase, function must be decreasing
-      TableCapillaryPressureHelpers::validateCapillaryPressureTable( capPresTable, getFullName(),
-                                                                     capPresMustBeIncreasing );
-    }
+      {
+          GEOSX_THROW_IF(!functionManager.hasGroup(m_drainageWettingNonWettingCapPresTableName),
+                         GEOSX_FMT("{}: the table function named {} could not be found",
+                                   getFullName(),
+                                   m_drainageWettingNonWettingCapPresTableName),
+                         InputError);
+          TableFunction const
+                  &capPresTable = functionManager.getGroup<TableFunction>(m_drainageWettingNonWettingCapPresTableName);
+          bool const capPresMustBeIncreasing = (m_phaseOrder[PhaseType::WATER] < 0)
+                                               ? true   // pc on the gas phase, function must be increasing
+                                               : false; // pc on the water phase, function must be decreasing
+          if (!capPresMustBeIncreasing)
+              TableCapillaryPressureHelpers::validateCapillaryPressureTable(capPresTable, getFullName(),
+                                                                            capPresMustBeIncreasing,
+                                                                            m_drainageWettingPhaseMaxVolumeFraction,
+                                                                            m_wettingPhaseMinVolumeFraction);
+          else
+              TableCapillaryPressureHelpers::validateCapillaryPressureTable(capPresTable, getFullName(),
+                                                                            capPresMustBeIncreasing,
+                                                                            m_nonWettingPhaseMaxVolumeFraction,
+                                                                            m_drainageNonWettingPhaseMinVolumeFraction);
+
+      }
 //should be an imibibition as we use this model
 //define scope to avoid differentiate temp var (lazy)
-    {
-      GEOSX_THROW_IF( !functionManager.hasGroup( m_imbibitionWettingNonWettingCapPresTableName ),
-                      GEOSX_FMT( "{}: the table function named {} could not be found",
-                                 getFullName(),
-                                 m_imbibitionWettingNonWettingCapPresTableName ),
-                      InputError );
-      TableFunction const
-        & capPresTable = functionManager.getGroup< TableFunction >( m_imbibitionWettingNonWettingCapPresTableName );
-      bool const capPresMustBeIncreasing = ( m_phaseOrder[PhaseType::WATER] < 0 )
-                                           ? true   // pc on the gas phase, function must be increasing
-                                           : false; // pc on the water phase, function must be decreasing
-      TableCapillaryPressureHelpers::validateCapillaryPressureTable( capPresTable, getFullName(),
-                                                                     capPresMustBeIncreasing );
-    }
+      {
+          GEOSX_THROW_IF(!functionManager.hasGroup(m_imbibitionWettingNonWettingCapPresTableName),
+                         GEOSX_FMT("{}: the table function named {} could not be found",
+                                   getFullName(),
+                                   m_imbibitionWettingNonWettingCapPresTableName),
+                         InputError);
+          TableFunction const
+                  &capPresTable = functionManager.getGroup<TableFunction>(
+                  m_imbibitionWettingNonWettingCapPresTableName);
+          bool const capPresMustBeIncreasing = (m_phaseOrder[PhaseType::WATER] < 0)
+                                               ? true   // pc on the gas phase, function must be increasing
+                                               : false; // pc on the water phase, function must be decreasing
+          if (!capPresMustBeIncreasing)
+              TableCapillaryPressureHelpers::validateCapillaryPressureTable(capPresTable, getFullName(),
+                                                                            capPresMustBeIncreasing,
+                                                                            m_imbibitionWettingPhaseMaxVolumeFraction,
+                                                                            m_wettingPhaseMinVolumeFraction);
+          else
+              TableCapillaryPressureHelpers::validateCapillaryPressureTable(capPresTable, getFullName(),
+                                                                            capPresMustBeIncreasing,
+                                                                            m_nonWettingPhaseMaxVolumeFraction,
+                                                                            m_imbibitionNonWettingPhaseMinVolumeFraction);
+
+      }
 
   }
   else if( numPhases == 3 )

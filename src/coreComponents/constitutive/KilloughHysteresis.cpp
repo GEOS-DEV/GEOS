@@ -72,7 +72,7 @@ real64 KilloughHysteresis::KernelKilloughHysteresisBase::getCurvatureParam() con
 real64 KilloughHysteresis::KernelKilloughHysteresisBase::getCurvatureParamPc() const
 {
   return m_killoughCurvatureParamCapPres;
-};
+}
 
 
 KilloughHysteresis::KilloughHysteresis( const std::string & name,
@@ -80,6 +80,7 @@ KilloughHysteresis::KilloughHysteresis( const std::string & name,
   :
   ConstitutiveBase( name, parent )
 {
+
   registerWrapper( viewKeyStruct::jerauldParameterAString(), &m_jerauldParam_a ).
                                                                                   setInputFlag( InputFlags::OPTIONAL).
                                                                                   setApplyDefaultValue( 0.1 ).
