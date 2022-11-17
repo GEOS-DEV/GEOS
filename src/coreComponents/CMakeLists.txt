@@ -19,33 +19,6 @@ set( subdirs
      python
    )
 
-if ( GEOSX_BUILD_OBJ_LIBS )
-  set( LVARRAY_BUILD_OBJ_LIBS TRUE CACHE BOOL "" FORCE )
-endif()
-
-add_subdirectory( LvArray )
-
-if( ENABLE_PYGEOSX )
-  list( APPEND coreLibs pylvarray )
-endif()
-
-foreach( lib ${subdirs} )
-  if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
-    list( APPEND coreLibs ${lib} )
-  endif()
-endforeach()
-
-# if we're building full static libs and not obj_libs
-if( NOT GEOSX_BUILD_SHARED_LIBS AND NOT GEOSX_BUILD_OBJ_LIBS )
-  set( geosx_core_list "" )
-  foreach( lib ${coreLibs} )
-    list( APPEND geosx_core_list ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-  endforeach()
-else( )
-  set( geosx_core_list ${coreLibs} )
-endif( )
-set ( geosx_core_libs "${geosx_core_list}" CACHE INTERNAL "" )
-
 set( parallelDeps "" )
 
 if ( ENABLE_OPENMP )
@@ -67,6 +40,37 @@ endif()
 if( ENABLE_MPI )
   set( parallelDeps ${parallelDeps} mpi )
 endif()
+
+if ( GEOSX_BUILD_OBJ_LIBS )
+  set( LVARRAY_BUILD_OBJ_LIBS TRUE CACHE BOOL "" FORCE )
+endif()
+
+add_subdirectory( LvArray )
+
+if( ENABLE_PYGEOSX )
+  list( APPEND coreLibs pylvarray )
+endif()
+
+foreach( lib ${subdirs} )
+  if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
+    list( APPEND coreLibs ${lib} )
+  endif()
+endforeach()
+
+# if we're building full static libs and not obj_libs
+if( NOT GEOSX_BUILD_SHARED_LIBS )
+  set( geosx_core_list "" )
+  foreach( lib ${coreLibs} )
+    list( APPEND geosx_core_list ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+  endforeach()
+else( )
+  set( geosx_core_list ${coreLibs} )
+endif( )
+set ( geosx_core_libs "${geosx_core_list}" CACHE INTERNAL "" )
+
+foreach( lib ${subdirs} )
+  add_subdirectory( ${lib} )
+endforeach()
 
 if( GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
   message( "Building shared geosx_core library with object coreComponents, executables link to geosx_core" )
