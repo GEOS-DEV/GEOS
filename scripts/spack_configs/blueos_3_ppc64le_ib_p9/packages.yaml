@@ -35,8 +35,8 @@ packages:
   cmake:
     buildable: False
     externals:
-    - spec: cmake@3.21.1
-      prefix: /usr/tce/packages/cmake/cmake-3.21.1
+    - spec: cmake@3.22.4
+      prefix: /usr/tce/packages/cmake/cmake-3.22.4
   readline:
     buildable: False
     externals:
