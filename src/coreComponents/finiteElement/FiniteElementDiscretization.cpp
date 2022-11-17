@@ -55,7 +55,7 @@ FiniteElementDiscretization::~FiniteElementDiscretization()
 
 void FiniteElementDiscretization::postProcessInput()
 {
-  GEOSX_ERROR_IF_NE_MSG( m_order, 1, "Higher order finite element spaces are currently not supported." );
+//  GEOSX_ERROR_IF_NE_MSG( m_order, 1, "Higher order finite element spaces are currently not supported." );
   GEOSX_ERROR_IF_NE_MSG( m_formulation, "default", "Only standard element formulations are currently supported." );
   GEOSX_ERROR_IF_GT_MSG( m_forceVem, 1, "The flag useVirtualElements can be either 0 or 1" );
 }
@@ -126,11 +126,24 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
         GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
       }
     }
+    return {};
   }
-  else
+
+  if( m_order==3 )
   {
-    GEOSX_ERROR( "Elements with order > 1 are not currently supported." );
+    switch( parentElementShape )
+    {
+      case ElementType::Hexahedron:
+        return std::make_unique< Q3_Hexahedron_Lagrange_GaussLobatto >();
+      default:
+      {
+        GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
+      }
+    }
+    return {};
   }
+
+  GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
   return {};
 }
 

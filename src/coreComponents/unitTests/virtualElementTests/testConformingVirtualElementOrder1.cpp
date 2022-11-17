@@ -299,7 +299,7 @@ TEST( ConformingVirtualElementOrder1, hexahedra )
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys
                                                                         .meshManager );
   meshManager.generateMeshLevels( domain );
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   ElementRegionManager & elementManager = mesh.getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
   elementManager.processInputFileRecursive( topLevelNode );
@@ -352,7 +352,7 @@ TEST( ConformingVirtualElementOrder1, wedges )
   MeshManager & meshManager = problemManager.getGroup< MeshManager >
                                 ( problemManager.groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   ElementRegionManager & elementManager = mesh.getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
   elementManager.processInputFileRecursive( topLevelNode );

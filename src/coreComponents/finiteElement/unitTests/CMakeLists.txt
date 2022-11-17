@@ -10,6 +10,8 @@ set(testSources
     testH1_Wedge_Lagrange1_Gauss6.cpp
     testH1_Pyramid_Lagrange1_Gauss5.cpp
     testH1_TriangleFace_Lagrange1_Gauss1.cpp
+    testQ3_Hexahedron_Lagrange_GaussLobatto.cpp
+    testQ5_Hexahedron_Lagrange_GaussLobatto.cpp
    )
 
 set( dependencyList gtest finiteElement)

@@ -22,8 +22,6 @@
 #include "FiniteElementBase.hpp"
 #include "codingUtilities/traits.hpp"
 
-#include "mesh/CellElementSubRegion.hpp"
-
 namespace geosx
 {
 namespace finiteElement
@@ -211,18 +209,19 @@ public:
   /**
    * @brief Adds a grad-grad stabilization to @p matrix.
    * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
+   * @tparam MAXSUPPORTPOINTS Maximum number of support points allowed for this element.
    * @tparam UPPER If true only the upper triangular part of @p matrix is modified.
    * @param stack Stack variables as filled by @ref setupStack.
    * @param matrix The matrix that needs to be stabilized.
-   * @param scaleFactor Optional scaling of the stabilization matrix.
+   * @param scaleFactor Scaling of the stabilization matrix.
    */
-  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS, bool UPPER >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void addGradGradStabilization( StackVariables const & stack,
                                         real64 ( & matrix )
-                                        [MAXCELLNODES * NUMDOFSPERTRIALSUPPORTPOINT]
-                                        [MAXCELLNODES * NUMDOFSPERTRIALSUPPORTPOINT],
+                                        [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT]
+                                        [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT],
                                         real64 const & scaleFactor )
   {
     for( localIndex i = 0; i < stack.numSupportPoints; ++i )
@@ -251,12 +250,12 @@ public:
    * @p NUMDOFSPERTRIALSUPPORTPOINT.
    * @param scaleFactor Scaling of the stabilization matrix.
    */
-  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT >
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void addEvaluatedGradGradStabilization( StackVariables const & stack,
-                                                 real64 const ( &dofs )[maxSupportPoints][NUMDOFSPERTRIALSUPPORTPOINT],
-                                                 real64 ( & targetVector )[maxSupportPoints][NUMDOFSPERTRIALSUPPORTPOINT],
+                                                 real64 const ( &dofs )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
+                                                 real64 ( & targetVector )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
                                                  real64 const scaleFactor )
   {
     for( localIndex d = 0; d < NUMDOFSPERTRIALSUPPORTPOINT; ++d )
@@ -399,6 +398,25 @@ public:
   }
 
   /**
+   * @brief This function returns an error, since to get projection of gradients with VEM you have
+   * to use the StackVariables version of this function.
+   * @param[in] coords The parent coordinates at which to evaluate the shape function value
+   * @param[out] N The shape function values. It is set to zero.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( real64 const (&coords)[3],
+                     real64 (& N)[maxSupportPoints] )
+  {
+    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    GEOSX_UNUSED_VAR( coords );
+    for( localIndex i = 0; i < maxSupportPoints; ++i )
+    {
+      N[i] = 0.0;
+    }
+  }
+
+  /**
    * @brief This function returns an error, since there is no reference element defined in the VEM
    * context. It is kept for consistency with other finite element classes.
    * @param q The quadrature point index in 3d space.
@@ -429,8 +447,8 @@ public:
    * to use the StackVariables version of this function.
    * @param q The quadrature point index in 3d space.
    * @param X Array containing the coordinates of the support points.
-   * @param gradN Array to store the gradients of shape functions.
-   * @return A zero matrix.
+   * @param gradN Array to store the gradients of shape functions. It is set to zero.
+   * @return Zero.
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE

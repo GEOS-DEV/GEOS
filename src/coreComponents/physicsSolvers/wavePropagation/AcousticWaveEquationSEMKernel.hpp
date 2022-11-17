@@ -33,6 +33,56 @@ struct PrecomputeSourceAndReceiverKernel
 {
 
   /**
+   * @brief Check if the sourtc epoint is inside an element or not
+   */
+
+  GEOSX_HOST_DEVICE
+  static bool
+  locateSourceElement( real64 const numFacesPerElem,
+                       real64 const (&elemCenter)[3],
+                       arrayView2d< real64 const > const faceNormal,
+                       arrayView2d< real64 const > const faceCenter,
+                       arraySlice1d< localIndex const > const elemsToFaces,
+                       real64 const (&coords)[3] )
+  {
+    //Loop over the element faces
+    localIndex prevSign = 0;
+    real64 tmpVector[3]{};
+    for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
+    {
+
+      localIndex const iface = elemsToFaces[kfe];
+      real64 faceCenterOnFace[3] = {faceCenter[iface][0],
+                                    faceCenter[iface][1],
+                                    faceCenter[iface][2]};
+      real64 faceNormalOnFace[3] = {faceNormal[iface][0],
+                                    faceNormal[iface][1],
+                                    faceNormal[iface][2]};
+
+      //Test to make sure if the normal is outwardly directed
+      LvArray::tensorOps::copy< 3 >( tmpVector, faceCenterOnFace );
+      LvArray::tensorOps::subtract< 3 >( tmpVector, elemCenter );
+      if( LvArray::tensorOps::AiBi< 3 >( tmpVector, faceNormalOnFace ) < 0.0 )
+      {
+        LvArray::tensorOps::scale< 3 >( faceNormalOnFace, -1 );
+      }
+
+      // compute the vector face center to query point
+      LvArray::tensorOps::subtract< 3 >( faceCenterOnFace, coords );
+      localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >( faceNormalOnFace, faceCenterOnFace ));
+
+      // all dot products should be non-negative (we enforce outward normals)
+      if( prevSign * s < 0 )
+      {
+        return false;
+      }
+      prevSign = s;
+
+    }
+    return true;
+  }
+
+  /**
    * @brief Convert a mesh element point coordinate into a coordinate on the reference element
    * @tparam FE_TYPE finite element type
    * @param[in] coords coordinate of the point
@@ -47,22 +97,33 @@ struct PrecomputeSourceAndReceiverKernel
   template< typename FE_TYPE >
   GEOSX_HOST_DEVICE
   static bool
-  computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
+  computeCoordinatesOnReferenceElement( real64 numFacesPerElem,
+                                        real64 const (&coords)[3],
                                         real64 const (&elemCenter)[3],
+                                        arrayView2d< real64 const > const faceNormal,
+                                        arrayView2d< real64 const > const faceCenter,
                                         arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
                                         arraySlice1d< localIndex const > const elemsToFaces,
-                                        ArrayOfArraysView< localIndex const > const & facesToNodes,
                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
                                         real64 (& coordsOnRefElem)[3] )
   {
-    bool const isInsidePolyhedron =
-      computationalGeometry::isPointInsidePolyhedron( X,
-                                                      elemsToFaces,
-                                                      facesToNodes,
-                                                      elemCenter,
-                                                      coords );
-    if( isInsidePolyhedron )
+    // bool const isInsidePolyhedron =
+    //   computationalGeometry::isPointInsidePolyhedron( X,
+    //                                                   elemsToFaces,
+    //                                                   facesToNodes,
+    //                                                   elemCenter,
+    //                                                   coords );
+
+    bool const SourceInELem =
+      locateSourceElement( numFacesPerElem,
+                           elemCenter,
+                           faceNormal,
+                           faceCenter,
+                           elemsToFaces,
+                           coords );
+    if( SourceInELem )
     {
+
       real64 xLocal[FE_TYPE::numNodes][3]{};
       for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
       {
@@ -152,12 +213,14 @@ struct PrecomputeSourceAndReceiverKernel
   static void
   launch( localIndex const size,
           localIndex const numNodesPerElem,
+          localIndex const numFacesPerElem,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
-          ArrayOfArraysView< localIndex const > const & facesToNodes,
           arrayView2d< real64 const > const & elemCenter,
+          arrayView2d< real64 const > const faceNormal,
+          arrayView2d< real64 const > const faceCenter,
           arrayView2d< real64 const > const sourceCoordinates,
           arrayView1d< localIndex > const sourceIsAccessible,
           arrayView2d< localIndex > const sourceNodeIds,
@@ -191,18 +254,20 @@ struct PrecomputeSourceAndReceiverKernel
 
           real64 coordsOnRefElem[3]{};
           bool const sourceFound =
-            computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+            computeCoordinatesOnReferenceElement< FE_TYPE >( numFacesPerElem,
+                                                             coords,
                                                              center,
+                                                             faceNormal,
+                                                             faceCenter,
                                                              elemsToNodes[k],
                                                              elemsToFaces[k],
-                                                             facesToNodes,
                                                              X,
                                                              coordsOnRefElem );
           if( sourceFound )
           {
             sourceIsAccessible[isrc] = 1;
-            real64 Ntest[8];
-            finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
+            real64 Ntest[FE_TYPE::numNodes];
+            FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
@@ -233,11 +298,13 @@ struct PrecomputeSourceAndReceiverKernel
 
           real64 coordsOnRefElem[3]{};
           bool const receiverFound =
-            computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+            computeCoordinatesOnReferenceElement< FE_TYPE >( numFacesPerElem,
+                                                             coords,
                                                              center,
+                                                             faceNormal,
+                                                             faceCenter,
                                                              elemsToNodes[k],
                                                              elemsToFaces[k],
-                                                             facesToNodes,
                                                              X,
                                                              coordsOnRefElem );
 
@@ -245,8 +312,9 @@ struct PrecomputeSourceAndReceiverKernel
           {
             receiverIsLocal[ircv] = 1;
 
-            real64 Ntest[8];
-            finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
+            real64 Ntest[FE_TYPE::numNodes];
+            FE_TYPE::calcN( coordsOnRefElem, Ntest );
+
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
               receiverNodeIds[ircv][a] = elemsToNodes[k][a];
@@ -362,6 +430,7 @@ struct MassAndDampingMatrixKernel
                 for( localIndex j = 0; j < 3; ++j )
                 {
                   tmp += invJ[j][i] * faceNormal[iface][j];
+
                 }
                 ds += tmp * tmp;
               }
@@ -877,7 +946,6 @@ public:
                               StackVariables & stack ) const
   {
     real64 gradN[ numNodesPerElem ][ 3 ];
-
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
 
     for( localIndex i=0; i<numNodesPerElem; ++i )

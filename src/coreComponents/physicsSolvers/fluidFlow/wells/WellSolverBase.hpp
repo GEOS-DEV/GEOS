@@ -268,9 +268,8 @@ private:
 
 
 protected:
-  virtual void postProcessInput() override;
 
-  virtual void initializePreSubGroups() override;
+  virtual void postProcessInput() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
@@ -280,11 +279,6 @@ protected:
    */
   virtual void initializeWells( DomainPartition & domain ) = 0;
 
-  /**
-   * @brief Check if the controls are viable; if not, switch the controls
-   * @param domain the domain containing the well manager to access individual wells
-   */
-  //virtual void CheckWellControlSwitch( DomainPartition & domain ) = 0;
 
   /// name of the flow solver
   string m_flowSolverName;

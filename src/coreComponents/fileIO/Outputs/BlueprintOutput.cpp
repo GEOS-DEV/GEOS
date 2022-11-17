@@ -131,7 +131,7 @@ bool BlueprintOutput::execute( real64 const time,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
 
   conduit::Node meshRoot;
   conduit::Node & mesh = meshRoot[ "mesh" ];

@@ -50,6 +50,10 @@ public:
         setInputFlag( dataRepository::InputFlags::REQUIRED ).
         setDescription( "Name of the " + SolverType::coupledSolverAttributePrefix() + " solver used by the coupled solver" );
     } );
+
+    this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
+      setInputFlag( dataRepository::InputFlags::FALSE );
+
   }
 
   /// deleted copy constructor

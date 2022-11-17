@@ -32,6 +32,7 @@
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
+      discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="1"

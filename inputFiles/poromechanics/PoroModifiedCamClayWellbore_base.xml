@@ -149,7 +149,6 @@
   solidSolverName="mechanicsSolver"
   flowSolverName="SinglePhaseFlowSolver"
   logLevel="1"
-  discretization="FE1"
   targetRegions="{Omega}">
   <LinearSolverParameters 
     solverType="direct"

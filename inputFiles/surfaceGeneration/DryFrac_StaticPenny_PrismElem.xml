@@ -19,7 +19,7 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      
+      discretization="FE1"
       rockToughness="0.5e100"
       nodeBasedSIF="1"
       logLevel="1"

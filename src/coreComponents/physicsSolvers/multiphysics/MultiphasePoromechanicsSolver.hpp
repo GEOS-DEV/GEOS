@@ -19,13 +19,12 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_
 
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
 {
-
-class SolidMechanicsLagrangianFEM;
-class CompositionalMultiphaseBase;
 
 class MultiphasePoromechanicsSolver : public CoupledSolver< SolidMechanicsLagrangianFEM,
                                                             CompositionalMultiphaseBase >
@@ -44,6 +43,9 @@ public:
     SolidMechanics = 0,
     Flow = 1
   };
+
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "poromechanics"; }
 
   /**
    * @brief main constructor for MultiphasePoromechanicsSolver Objects

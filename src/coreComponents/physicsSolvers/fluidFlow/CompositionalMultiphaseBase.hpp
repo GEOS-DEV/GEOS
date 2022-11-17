@@ -222,6 +222,8 @@ public:
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
+    static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
+    static constexpr char const * maxRelativeTempChangeString() { return "maxRelativeTemperatureChange"; }
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
 
   };
@@ -356,6 +358,12 @@ protected:
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;
+
+  /// maximum (relative) change in pressure between two Newton iterations
+  real64 m_maxRelativePresChange;
+
+  /// maximum (relative) change in temperature between two Newton iterations
+  real64 m_maxRelativeTempChange;
 
   /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
   real64 m_minScalingFactor;

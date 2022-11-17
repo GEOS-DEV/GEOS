@@ -8,7 +8,6 @@
       solidSolverName="LinearElasticitySolver"
       flowSolverName="TwoPhaseFlowSolver"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
@@ -301,7 +300,6 @@
   
   <Outputs>
 
-    <!-- We add deltaPressure just to trigger the warning since this field is not registered -->
     <Silo
       name="siloOutput"
       fieldNames="{ TotalDisplacement, pressure, skeleton_stress, deltaPressure }"/>
