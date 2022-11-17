@@ -63,23 +63,6 @@ struct WaveSolverUtils
     return pulse;
   }
 
-   static void computeSeismoTrace( real64 const time_n,
-                                   real64 const dt,
-                                   real64 const timeSeismo,
-                                   localIndex iSeismo,
-                                   arrayView1d< real32 const > const var_np1,
-                                   arrayView1d< real32 const > const var_n,
-                                   arrayView2d< real32 > varAtReceivers ) {};
-
-  /**
-   * @brief Temporary debug function. Saves the sismo trace to a file.
-   * @param iSeismo index number of the seismo trace
-   * @param val value to be written in seismo
-   * @param filename name of the output file
-   */
-  static void saveSeismo( localIndex const iSeismo, real32 val, string const & filename ) {};
-
-
 };
 
 } /* namespace geosx */

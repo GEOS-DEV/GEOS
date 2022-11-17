@@ -91,19 +91,15 @@ public:
   };
 
   /**
+   * @brief Safeguard for timeStep. Used to avoid memory issue due to too small value.
+   */
+  static constexpr real64 epsilonLoc = 1e-8;
+
+
+  /**
    * @brief Re-initialize source and receivers positions in the mesh, and resize the pressureNp1_at_receivers array
    */
   void reinit() override final;
-
-    /**
-   * @brief Compute the value of a Ricker (a Gaussian function)
-   * @param time_n time to evaluate the Ricker
-   * @param f0 central frequency of the Ricker
-   * @param order order of the ricker
-   * @return the value of a Ricker evaluated a time_n with f0
-   */
-   static real32 evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order );
-
 
 protected:
 
@@ -159,17 +155,7 @@ protected:
                                    localIndex iSeismo,
                                    arrayView1d< real32 const > const var_np1,
                                    arrayView1d< real32 const > const var_n,
-                                   arrayView2d< real32 > varAtReceivers ) = 0;
-
-  /**
-   * @brief Temporary debug function. Saves the sismo trace to a file.
-   * @param iSeismo index number of the seismo trace
-   * @param val value to be written in seismo
-   * @param filename name of the output file
-   */
-  virtual void saveSeismo( localIndex const iSeismo, real32 val, string const & filename ) = 0;
-
-
+                                   arrayView2d< real32 > varAtReceivers );
 
   /**
    * @brief Perform forward explicit step

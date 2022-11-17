@@ -164,6 +164,68 @@ void WaveSolverBase::postProcessInput()
   }
 }
 
+void WaveSolverBase::computeSeismoTrace( real64 const time_n,
+                                         real64 const dt,
+                                         real64 const timeSeismo,
+                                         localIndex iSeismo,
+                                         arrayView1d< real32 const > const var_np1,
+                                         arrayView1d< real32 const > const var_n,
+                                         arrayView2d< real32 > varAtReceivers )
+{
+  real64 const time_np1 = time_n + dt;
+  arrayView2d< localIndex const > const receiverNodeIds = receiverNodeIds.toViewConst();
+  arrayView2d< real64 const > const receiverConstants   = receiverConstants.toViewConst();
+  arrayView1d< localIndex const > const receiverIsLocal = receiverIsLocal.toViewConst();
+
+
+  real32 const a1 = (std::abs( dt ) < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
+  real32 const a2 = 1.0 - a1;
+
+  if( m_nsamplesSeismoTrace > 0 )
+  {
+    forAll< parallelDevicePolicy< 32 > >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
+    {
+      if( receiverIsLocal[ircv] == 1 )
+      {
+        varAtReceivers[iSeismo][ircv] = 0.0;
+        real32 vtmp_np1 = 0.0;
+        real32 vtmp_n = 0.0;
+        for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
+        {
+          vtmp_np1 += var_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+          vtmp_n += var_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+        }
+        // linear interpolation between the pressure value at time_n and time_(n+1)
+        varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;
+      }
+    } );
+  }
+
+  // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized.
+  // Output will then only be done via the previous code.
+  if( iSeismo == m_nsamplesSeismoTrace - 1 )
+  {
+    forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+    {
+      if( this->m_outputSeismoTrace == 1 )
+      {
+        if( receiverIsLocal[ircv] == 1 )
+        {
+          // Note: this "manual" output to file is temporary
+          //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
+          // TODO: remove saveSeismo and replace with TimeHistory
+          std::ofstream f( GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
+          for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
+          {
+            f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
+          }
+          f.close();
+        }
+      }
+    } );
+  }
+}
+
 void WaveSolverBase::initializeDAS()
 {
   /// double the number of receivers and modify their coordinates
@@ -192,43 +254,6 @@ void WaveSolverBase::initializeDAS()
     receiverCoordinates[ircv][2] = receiverCoordinates[ircv][2]
                                    - sin( linearDASGeometry[ircv][0] ) * linearDASGeometry[ircv][2] / 2.0;
   }
-}
-
-
- real32 WaveSolverBase::evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
-{
-  real32 const o_tpeak = 1.0/f0;
-  real32 pulse = 0.0;
-  if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
-  {
-    return pulse;
-  }
-
-  constexpr real32 pi = M_PI;
-  real32 const lam = (f0*pi)*(f0*pi);
-
-  switch( order )
-  {
-    case 2:
-    {
-      pulse = 2.0*lam*(2.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-    }
-    break;
-    case 1:
-    {
-      pulse = -2.0*lam*(time_n-o_tpeak)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-    }
-    break;
-    case 0:
-    {
-      pulse = -(time_n-o_tpeak)*exp( -2*lam*(time_n-o_tpeak)*(time_n-o_tpeak) );
-    }
-    break;
-    default:
-      GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
-  }
-
-  return pulse;
 }
 
 real64 WaveSolverBase::solverStep( real64 const & time_n,
