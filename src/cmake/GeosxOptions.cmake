@@ -129,7 +129,7 @@ include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-Wunused-but-set-variable" CXX_UNUSED_BUT_SET_VAR)
 if (ENABLE_GBENCHMARK)
     blt_add_target_compile_flags(TO benchmark
-                                FLAGS $<$<AND:${CXX_UNUSED_BUT_SET_VAR},$<COMPILE_LANGUAGE:CXX>>:-Wno-unused-but-set-variable>
+                                FLAGS $<$<AND:$<BOOL:${CXX_UNUSED_BUT_SET_VAR}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-unused-but-set-variable>
                                 )
 endif()
 

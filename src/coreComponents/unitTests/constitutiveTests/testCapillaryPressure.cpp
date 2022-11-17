@@ -691,13 +691,8 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_jFunctionCapPressureThreePha
 
   // move the multiplier back to the CPU since the test is performed on the CPU
   auto & jFuncMultiplier =
-<<<<<<< HEAD
-    m_model->getReference< array2d< real64 > >( extrinsicMeshData::cappres::jFuncMultiplier::key() );
-  jFuncMultiplier.move( hostMemorySpace, false );
-=======
     m_model->getReference< array2d< real64 > >( fields::cappres::jFuncMultiplier::key() );
-  jFuncMultiplier.move( LvArray::MemorySpace::host, false );
->>>>>>> develop
+  jFuncMultiplier.move( hostMemorySpace, false );
 
   // we are ready to proceed to the test
 
