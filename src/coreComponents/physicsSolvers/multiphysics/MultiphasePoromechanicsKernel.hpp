@@ -22,8 +22,8 @@
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 
 namespace geosx
@@ -113,8 +113,8 @@ public:
           inputMatrix,
           inputRhs ),
     m_X( nodeManager.referencePosition() ),
-    m_disp( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
-    m_uhat( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::incrementalDisplacement >() ),
+    m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
+    m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
@@ -142,25 +142,23 @@ public:
 
       m_fluidPhaseMassDensity = fluid.phaseMassDensity();
       m_dFluidPhaseMassDensity = fluid.dPhaseMassDensity();
-      m_initialFluidTotalMassDensity = fluid.initialTotalMassDensity();
 
     }
 
     // extract views into flow solver data
     {
-      using namespace extrinsicMeshData::flow;
+      using namespace fields::flow;
 
-      m_initialFluidPressure = elementSubRegion.template getExtrinsicData< initialPressure >();
-      m_fluidPressure_n = elementSubRegion.template getExtrinsicData< pressure_n >();
-      m_fluidPressure = elementSubRegion.template getExtrinsicData< pressure >();
+      m_fluidPressure_n = elementSubRegion.template getField< pressure_n >();
+      m_fluidPressure = elementSubRegion.template getField< pressure >();
 
-      m_fluidPhaseSaturation_n = elementSubRegion.template getExtrinsicData< phaseVolumeFraction_n >();
+      m_fluidPhaseSaturation_n = elementSubRegion.template getField< phaseVolumeFraction_n >();
 
-      m_fluidPhaseSaturation = elementSubRegion.template getExtrinsicData< phaseVolumeFraction >();
-      m_dFluidPhaseSaturation = elementSubRegion.template getExtrinsicData< dPhaseVolumeFraction >();
+      m_fluidPhaseSaturation = elementSubRegion.template getField< phaseVolumeFraction >();
+      m_dFluidPhaseSaturation = elementSubRegion.template getField< dPhaseVolumeFraction >();
 
       m_dGlobalCompFraction_dGlobalCompDensity =
-        elementSubRegion.template getExtrinsicData< dGlobalCompFraction_dGlobalCompDensity >();
+        elementSubRegion.template getField< dGlobalCompFraction_dGlobalCompDensity >();
     }
   }
 
@@ -324,14 +322,12 @@ public:
                                                       q,
                                                       NP,
                                                       NC,
-                                                      m_initialFluidPressure[k],
                                                       m_fluidPressure_n[k],
                                                       m_fluidPressure[k],
                                                       strainIncrement,
                                                       m_gravityAcceleration,
                                                       m_gravityVector,
                                                       m_solidDensity( k, q ),
-                                                      m_initialFluidTotalMassDensity( k, q ),
                                                       m_fluidPhaseDensity[k][q],
                                                       m_fluidPhaseDensity_n[k][q],
                                                       m_dFluidPhaseDensity[k][q],
@@ -639,8 +635,6 @@ protected:
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseMassDensity;
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseMassDensity;
 
-  arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > m_initialFluidTotalMassDensity;
-
   arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseSaturation;
   arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseSaturation_n;
   arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dFluidPhaseSaturation;
@@ -649,9 +643,6 @@ protected:
 
   /// The global degree of freedom number
   arrayView1d< globalIndex const > m_flowDofNumber;
-
-  /// The rank-global initial fluid pressure array.
-  arrayView1d< real64 const > m_initialFluidPressure;
 
   /// The rank-global fluid pressure arrays.
   arrayView1d< real64 const > m_fluidPressure_n;

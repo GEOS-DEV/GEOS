@@ -7,24 +7,23 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           FORTRAN_MANGLE_NO_UNDERSCORE
                           FPE
                           HYPRE
-                          HYPRE_CUDA
                           MATHPRESSO
                           METIS
+                          MKL
                           MPI
-                          CUDA
                           PARMETIS
                           PETSC
-                          SCOTCH
                           PVTPackage
                           PYGEOSX
                           RAJA
-                          SUPERLU_DIST
+                          SCOTCH
+                          SEPARATION_COEFFICIENT
                           SUITESPARSE
+                          SUPERLU_DIST
                           TIMERS
                           TOTALVIEW_OUTPUT
                           TRILINOS
-                          MKL
-                          SEPARATION_COEFFICIENT
+                          VTK
                           ${externalComponentsList} )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES} )
@@ -45,6 +44,15 @@ foreach( DEP in ${STRICT_PPD} )
 	message(STATUS "GEOSX_USE_${DEP} = ${GEOSX_USE_${DEP}}")
     endif()
 endforeach( )
+
+if( NOT ENABLE_HYPRE_DEVICE )
+  set( ENABLE_HYPRE_DEVICE CPU )
+endif()
+if(NOT ${ENABLE_HYPRE_DEVICE} IN_LIST "CPU:CUDA:HIP" )
+  message(FATAL_ERROR "Set ENABLE_HYPRE_DEVICE to CPU, CUDA, or HIP.")
+endif()
+set( GEOSX_USE_HYPRE_DEVICE "GEOSX_USE_HYPRE_${ENABLE_HYPRE_DEVICE}" )
+message( STATUS "GEOSX_USE_HYPRE_DEVICE = ${GEOSX_USER_HYPRE_DEVICE}")
 
 set( GEOSX_CMAKE_BUILD_TYPE "\"${CMAKE_BUILD_TYPE}\"" )
 

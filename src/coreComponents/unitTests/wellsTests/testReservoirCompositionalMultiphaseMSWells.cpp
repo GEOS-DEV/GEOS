@@ -26,8 +26,8 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 
 using namespace geosx;
 using namespace geosx::dataRepository;
@@ -252,11 +252,11 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
 
           // get the primary variables on the reservoir elements
           arrayView1d< real64 > const & pres =
-            subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
+            subRegion.getField< fields::well::pressure >();
           pres.move( hostMemorySpace, false );
 
           arrayView2d< real64, compflow::USD_COMP > const & compDens =
-            subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
+            subRegion.getField< fields::well::globalCompDensity >();
           compDens.move( hostMemorySpace, false );
 
           // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
@@ -357,15 +357,15 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
 
       // get the primary variables on the well elements
       arrayView1d< real64 > const & wellElemPressure =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
+        subRegion.getField< fields::well::pressure >();
       wellElemPressure.move( hostMemorySpace, false );
 
       arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
+        subRegion.getField< fields::well::globalCompDensity >();
       wellElemCompDens.move( hostMemorySpace, false );
 
       arrayView1d< real64 > const & connRate =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::mixtureConnectionRate >();
+        subRegion.getField< fields::well::mixtureConnectionRate >();
       connRate.move( hostMemorySpace, false );
 
       // a) compute all the derivatives wrt to the pressure in WELL elem iwelem

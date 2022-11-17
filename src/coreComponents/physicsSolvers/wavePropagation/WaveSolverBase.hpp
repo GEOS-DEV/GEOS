@@ -20,9 +20,17 @@
 #ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_
 #define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_
 
-#include "mesh/ExtrinsicMeshData.hpp"
-#include "physicsSolvers/SolverBase.hpp"
 
+#include "mesh/MeshFields.hpp"
+#include "physicsSolvers/SolverBase.hpp"
+#include "finiteElement/elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
+#include "finiteElement/elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp"
+
+#define SEM_FE_TYPES \
+  finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2, \
+  finiteElement::Q3_Hexahedron_Lagrange_GaussLobatto
+
+#define SELECTED_FE_TYPES SEM_FE_TYPES
 
 namespace geosx
 {

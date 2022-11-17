@@ -839,8 +839,8 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
                        setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).reference();
                 subRegion.excludeWrappersFromPacking( { discretizationName } );
 
-                finiteElement::dispatch3D( fe,
-                                           [&] ( auto & finiteElement )
+                finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe,
+                                                                                         [&] ( auto & finiteElement )
                 {
                   using FE_TYPE = std::remove_const_t< TYPEOFREF( finiteElement ) >;
                   using SUBREGION_TYPE = TYPEOFREF( subRegion );

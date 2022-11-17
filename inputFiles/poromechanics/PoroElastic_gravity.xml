@@ -1,0 +1,234 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Solvers>
+    <SinglePhasePoromechanics
+      name="singlePhasePoroelasticity"
+      solidSolverName="linearElasticity"
+      flowSolverName="singlePhaseFlow"
+      logLevel="1"
+      targetRegions="{ Domain }">
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhasePoromechanics>
+
+    <SolidMechanicsLagrangianSSLE
+      name="linearElasticity"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }"/>
+
+    <SinglePhaseFVM
+      name="singlePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Domain }"/>
+  </Solvers>
+  
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ -10, 0 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 10 }"
+      cellBlockNames="{ cellblock }"/>
+  </Mesh>
+
+  <Events
+    maxTime="10.0">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="10.0"
+      target="/Outputs/vtkOutput"/>
+    <PeriodicEvent
+      name="linearElasticityStatistics"
+      timeFrequency="1.0"
+      target="/Tasks/linearElasticityStatistics"/>
+    <PeriodicEvent
+      name="singlePhaseFlowStatistics"
+      timeFrequency="1.0"
+      target="/Tasks/singlePhaseFlowStatistics"/>
+    <PeriodicEvent
+      name="solverApplication"
+      forceDt="1.0"
+      target="/Solvers/singlePhasePoroelasticity"/>
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="5.0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+    
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ cellblock }"
+      materialList="{ fluid, porousRock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="skeleton"
+      porosityModelName="skeletonPorosity"
+      permeabilityModelName="skeletonPerm"/>
+
+    <ElasticIsotropic
+      name="skeleton"
+      defaultDensity="2650"
+      defaultYoungModulus="5e9"
+      defaultPoissonRatio="0.2"/>
+
+    <CompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      referenceDensity="1000"
+      compressibility="0"
+      referenceViscosity="0.001"
+      viscosibility="0.0"/>
+
+    <BiotPorosity
+      name="skeletonPorosity"
+      grainBulkModulus="1.2e11"
+      defaultReferencePorosity="0.3"/>
+
+    <ConstantPermeability
+      name="skeletonPerm"
+      permeabilityComponents="{ 1.0e-4, 1.0e-4, 1.0e-4 }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      functionName="pressure"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="edgePressure"
+      setNames="{ zpos }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="0"/>
+
+    <FieldSpecification
+      name="initial_sigma_x"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="skeleton_stress"
+      component="0"
+      functionName="sigma_x"
+      scale="1.0"/>
+    <FieldSpecification
+      name="initial_sigma_y"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="skeleton_stress"
+      component="1"
+      functionName="sigma_y"
+      scale="1.0"/>
+    <FieldSpecification
+      name="initial_sigma_z"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="skeleton_stress"
+      component="2"
+      functionName="sigma_z"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg }"/>
+    
+  </FieldSpecifications>
+
+  <Tasks>
+    <SolidMechanicsStatistics
+      name="linearElasticityStatistics"
+      solidSolverName="linearElasticity"
+      logLevel="1"/>
+    <SinglePhaseStatistics
+      name="singlePhaseFlowStatistics"
+      flowSolverName="singlePhaseFlow"
+      logLevel="1"/>
+  </Tasks>
+  
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Functions>
+    
+    <TableFunction
+      name="pressure"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ ./gravity_tables/x.csv, ./gravity_tables/y.csv, ./gravity_tables/z.csv }"
+      voxelFile="./gravity_tables/pressure.csv"/>
+
+    <TableFunction
+      name="sigma_x"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ ./gravity_tables/x.csv, ./gravity_tables/y.csv, ./gravity_tables/z.csv }"
+      voxelFile="./gravity_tables/sigma_x.csv"/>
+    <TableFunction
+      name="sigma_y"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ ./gravity_tables/x.csv, ./gravity_tables/y.csv, ./gravity_tables/z.csv }"
+      voxelFile="./gravity_tables/sigma_y.csv"/>
+    <TableFunction
+      name="sigma_z"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ ./gravity_tables/x.csv, ./gravity_tables/y.csv, ./gravity_tables/z.csv }"
+      voxelFile="./gravity_tables/sigma_z.csv"/>
+    
+  </Functions>
+
+</Problem>

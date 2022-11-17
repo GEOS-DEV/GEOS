@@ -44,14 +44,6 @@ option( ENABLE_HYPRE "Enables HYPRE" ON )
 option( ENABLE_PETSC "Enables PETSC" OFF )
 option( ENABLE_SUITESPARSE "Enables SUITESPARSE" ON )
 
-if( NOT ENABLE_HYPRE_DEVICE )
-  set( ENABLE_HYPRE_DEVICE CPU )
-endif()
-if(NOT ${GEOSX_USE_HYPRE_DEVICE} IN_LIST "CPU:CUDA:HIP" )
-  message(FATAL_ERROR "Set GEOSX_USE_HYPRE_DEVICE to CPU, CUDA, or HIP.")
-endif()
-set( GEOSX_USE_HYPRE_DEVICE "GEOSX_USE_HYPRE_${ENABLE_HYPRE_DEVICE}" )
-
 #if ( "${CMAKE_HOST_APPLE}" )
 #  option( ENABLE_PETSC "Enables PETSC" OFF )
 #else()
@@ -84,9 +76,9 @@ endif()
 
 ### BUILD & BLT SETUP ###
 
-option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" ON )
+option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF )
 
-option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
+option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " ON )
 
 set( GEOSX_PARALLEL_COMPILE_JOBS "" CACHE STRING "Maximum number of concurrent compilation jobs" )
 if( GEOSX_PARALLEL_COMPILE_JOBS )
@@ -131,6 +123,15 @@ blt_append_custom_compiler_flag( FLAGS_VAR GEOSX_NINJA_FLAGS
                                  GNU     "-fdiagnostics-color=always"
                                  CLANG   "-fcolor-diagnostics"
                                )
+
+# clang-13 and gcc complains about unused-but-set variable.
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-Wunused-but-set-variable" CXX_UNUSED_BUT_SET_VAR)
+if (ENABLE_GBENCHMARK)
+    blt_add_target_compile_flags(TO benchmark
+                                FLAGS $<$<AND:${CXX_UNUSED_BUT_SET_VAR},$<COMPILE_LANGUAGE:CXX>>:-Wno-unused-but-set-variable>
+                                )
+endif()
 
 if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOSX_NINJA_FLAGS}" )

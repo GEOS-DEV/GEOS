@@ -24,11 +24,9 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 from vtkmodules.vtkFiltersGeometry import (
-    vtkMarkBoundaryFilter,
-)
+    vtkMarkBoundaryFilter, )
 from vtk.util.numpy_support import (
-    vtk_to_numpy,
-)
+    vtk_to_numpy, )
 
 import networkx
 
@@ -56,6 +54,7 @@ class FractureNodesInfo:
 
 
 class FractureCellsInfo:
+
     def __init__(self, mesh: vtkUnstructuredGrid, cell_to_faces: Dict[int, Iterable[int]]):
         # For each cell (the key), gets the local (to the face, i.e. 0 to 3 for a tet) faces that are part of the fracture.
         # There can be multiple faces involved.
@@ -93,8 +92,7 @@ def _iter(id_list: vtkIdList) -> Iterator[int]:
         yield id_list.GetId(i)
 
 
-def __duplicate_fracture_nodes(mesh: vtkUnstructuredGrid,
-                               connected_components: Iterable[Iterable[int]],
+def __duplicate_fracture_nodes(mesh: vtkUnstructuredGrid, connected_components: Iterable[Iterable[int]],
                                node_frac_info: FractureNodesInfo) -> Tuple[vtkUnstructuredGrid, DuplicatedNodesInfo]:
     """
     Splits the mesh on the fracture.
@@ -123,7 +121,7 @@ def __duplicate_fracture_nodes(mesh: vtkUnstructuredGrid,
 
     # Building an indicator to find fracture cells.
     # A fracture cell is a cell which touches a fracture internal node.
-    is_fracture_side_cells = numpy.zeros(num_cells, dtype=bool)  # Defaults to "not a fracture cell".
+    is_fracture_side_cells = numpy.zeros(num_cells, dtype=bool)    # Defaults to "not a fracture cell".
     for fracture_side_cells in connected_components:
         for fracture_side_cell in fracture_side_cells:
             is_fracture_side_cells[fracture_side_cell] = True
@@ -132,8 +130,8 @@ def __duplicate_fracture_nodes(mesh: vtkUnstructuredGrid,
     # The idea is that I do not want to fill holes in the numbering,
     # I just want to increment the next number by one.
     # A negative number means that this is a duplicated number.
-    renumbered_nodes = numpy.ones(num_points, dtype=int) * -1  # Defaults to "moved".
-    next_point_id = 0  # When a node needs to be duplicated, `next_point_id` is the next available node.
+    renumbered_nodes = numpy.ones(num_points, dtype=int) * -1    # Defaults to "moved".
+    next_point_id = 0    # When a node needs to be duplicated, `next_point_id` is the next available node.
     for node_idx in range(num_points):
         if not node_frac_info.is_internal_fracture_node[node_idx]:
             renumbered_nodes[node_idx] = next_point_id
@@ -157,13 +155,13 @@ def __duplicate_fracture_nodes(mesh: vtkUnstructuredGrid,
                 # Here we find or build the new number of the node.
                 if node_frac_info.is_internal_fracture_node[new_cell_point_id]:
                     assert renumbered_nodes[new_cell_point_id] == -1
-                    if new_cell_point_id in dup_nodes:  # if already duplicated, take the same
+                    if new_cell_point_id in dup_nodes:    # if already duplicated, take the same
                         new_cell_point_ids.SetId(i, dup_nodes[new_cell_point_id])
-                    else:  # otherwise, duplicate
+                    else:    # otherwise, duplicate
                         dup_nodes[new_cell_point_id] = next_point_id
                         new_cell_point_ids.SetId(i, next_point_id)
                         next_point_id += 1
-                else:  # Here, it's not an internal fracture node which was not duplicated.
+                else:    # Here, it's not an internal fracture node which was not duplicated.
                     assert not renumbered_nodes[new_cell_point_id] == -1
                     new_cell_point_ids.SetId(i, renumbered_nodes[new_cell_point_id])
             new_cells.ReplaceCellAtId(fracture_side_cell, new_cell_point_ids)
@@ -184,7 +182,8 @@ def __duplicate_fracture_nodes(mesh: vtkUnstructuredGrid,
         new_cells.ReplaceCellAtId(cell_idx, new_cell_point_ids)
 
     # Now we finish the process for vtk points.
-    num_new_points = num_points - sum(node_frac_info.is_internal_fracture_node) + sum(map(len, component_to_dup_nodes.values()))
+    num_new_points = num_points - sum(node_frac_info.is_internal_fracture_node) + sum(
+        map(len, component_to_dup_nodes.values()))
     assert next_point_id == num_new_points
 
     old_points = mesh.GetPoints()
@@ -216,19 +215,16 @@ def __duplicate_fracture_nodes(mesh: vtkUnstructuredGrid,
             nodes_validation[renumbered_nodes[n]] = True
     assert all(nodes_validation)
 
-    output = mesh.NewInstance()  # keeping the same instance type.
+    output = mesh.NewInstance()    # keeping the same instance type.
     output.SetPoints(new_points)
-    output.SetCells(mesh.GetCellTypesArray(), new_cells)  # The cell types are unchanged; we reuse the old cell types!
+    output.SetCells(mesh.GetCellTypesArray(), new_cells)    # The cell types are unchanged; we reuse the old cell types!
 
-    duplicated_nodes_info = DuplicatedNodesInfo(renumbered_nodes=renumbered_nodes,
-                                                duplicated_nodes=duplicated_nodes)
+    duplicated_nodes_info = DuplicatedNodesInfo(renumbered_nodes=renumbered_nodes, duplicated_nodes=duplicated_nodes)
 
     return output, duplicated_nodes_info
 
 
-def __copy_fields(input_mesh: vtkUnstructuredGrid,
-                  output_mesh: vtkUnstructuredGrid,
-                  cell_frac_info: FractureCellsInfo,
+def __copy_fields(input_mesh: vtkUnstructuredGrid, output_mesh: vtkUnstructuredGrid, cell_frac_info: FractureCellsInfo,
                   duplicated_nodes_info: DuplicatedNodesInfo) -> None:
     """
     Given input and output meshes, copies the fields from the input into the output.
@@ -269,15 +265,16 @@ def __copy_fields(input_mesh: vtkUnstructuredGrid,
     # The "field data" will contain the fracture information
     field_data = input_mesh.GetFieldData()
     if field_data.GetNumberOfArrays() > 0:
-        logging.warning(f"Copying field data that already has arrays. No modification was made w.r.t. nodes duplications.")
+        logging.warning(
+            f"Copying field data that already has arrays. No modification was made w.r.t. nodes duplications.")
 
     # Building the field data for the fracture
     if field_data.HasArray("fracture_info"):
         logging.warning("Field data \"fracture_info\" already exists, nothing done.")
     else:
         frac_array = vtkIntArray()
-        frac_array.SetName("fracture_info")  # TODO hard coded name.
-        frac_array.SetNumberOfComponents(4)  # Warning the component has to be defined first...
+        frac_array.SetName("fracture_info")    # TODO hard coded name.
+        frac_array.SetNumberOfComponents(4)    # Warning the component has to be defined first...
         frac_array.SetNumberOfTuples(len(cell_frac_info.field_data))
         for i, data in enumerate(cell_frac_info.field_data):
             frac_array.SetTuple(i, data)
@@ -290,7 +287,8 @@ def __copy_fields(input_mesh: vtkUnstructuredGrid,
         duplication_max_multiplicity = max(map(len, duplicated_nodes_info.duplicated_nodes.values()))
         nodes_array = vtkIntArray()
         nodes_array.SetName("duplicated_points_info")
-        nodes_array.SetNumberOfComponents(duplication_max_multiplicity)  # Warning the component has to be defined first...
+        nodes_array.SetNumberOfComponents(
+            duplication_max_multiplicity)    # Warning the component has to be defined first...
         nodes_array.SetNumberOfTuples(len(duplicated_nodes_info.duplicated_nodes))
         for i, data in enumerate(duplicated_nodes_info.duplicated_nodes.values()):
             tmp = list(data) + [-1] * (duplication_max_multiplicity - len(data))
@@ -300,7 +298,8 @@ def __copy_fields(input_mesh: vtkUnstructuredGrid,
     output_mesh.SetFieldData(field_data)
 
 
-def __color_fracture_sides(mesh: vtkUnstructuredGrid, cell_frac_info: FractureCellsInfo, node_frac_info: FractureNodesInfo) -> Iterable[Iterable[int]]:
+def __color_fracture_sides(mesh: vtkUnstructuredGrid, cell_frac_info: FractureCellsInfo,
+                           node_frac_info: FractureNodesInfo) -> Iterable[Iterable[int]]:
     """
     Given all the cells that are in contact with the detected fracture,
     we separate them into bucket of connected cells touching the fractures.
@@ -308,13 +307,15 @@ def __color_fracture_sides(mesh: vtkUnstructuredGrid, cell_frac_info: FractureCe
     So they need to share the same nodes as they did before the split.
     :return: All the buckets connected fracture cells.
     """
-    def does_face_contain_boundary_node(_face_point_ids: Iterable[int]) -> bool:  # Small helper function.
+
+    def does_face_contain_boundary_node(_face_point_ids: Iterable[int]) -> bool:    # Small helper function.
         for face_point_id in _face_point_ids:
             if node_frac_info.is_boundary_fracture_node[face_point_id]:
                 return True
         return False
 
-    face_node_set_to_cell = defaultdict(list)  # For each face (defined by its node set), gives all the cells containing this face.
+    face_node_set_to_cell = defaultdict(
+        list)    # For each face (defined by its node set), gives all the cells containing this face.
     for c, local_frac_f in cell_frac_info.cell_to_faces.items():
         cell = mesh.GetCell(c)
         for f in [i for i in range(cell.GetNumberOfFaces()) if i not in local_frac_f]:
@@ -357,8 +358,7 @@ def __find_boundary_nodes(mesh: vtkUnstructuredGrid) -> Sequence[int]:
     return vtk_to_numpy(is_boundary_point)
 
 
-def __build_fracture_nodes(mesh: vtkUnstructuredGrid,
-                           cell_frac_info: FractureCellsInfo,
+def __build_fracture_nodes(mesh: vtkUnstructuredGrid, cell_frac_info: FractureCellsInfo,
                            split_on_domain_boundary: bool) -> FractureNodesInfo:
     """
     Given the description of the fracture in @p cell_frac_info, computes the underlying nodes.
@@ -375,9 +375,9 @@ def __build_fracture_nodes(mesh: vtkUnstructuredGrid,
             for e in range(face.GetNumberOfEdges()):
                 edge = face.GetEdge(e)
                 edge_nodes = []
-                for i in range(edge.GetNumberOfPoints()):  # TODO, do less pedantic
+                for i in range(edge.GetNumberOfPoints()):    # TODO, do less pedantic
                     edge_nodes.append(edge.GetPointId(i))
-                fracture_edges[tuple(sorted(edge_nodes))] += 1  # TODO frozenset?
+                fracture_edges[tuple(sorted(edge_nodes))] += 1    # TODO frozenset?
 
     boundary_fracture_edges = []
     # Boundary edges are seen twice because each 2d fracture element is seen twice too.
@@ -414,7 +414,7 @@ def __build_fracture_nodes(mesh: vtkUnstructuredGrid,
 
     # Now compute the internal fracture nodes by "difference".
     is_internal_fracture_node = numpy.zeros(mesh.GetNumberOfPoints(), dtype=bool)
-    for n in range(mesh.GetNumberOfPoints()):  # TODO duplicated, reorg the code.
+    for n in range(mesh.GetNumberOfPoints()):    # TODO duplicated, reorg the code.
         if is_fracture_node[n] and not is_boundary_fracture_node[n]:
             is_internal_fracture_node[n] = True
 
@@ -438,21 +438,21 @@ def __find_involved_cells(mesh: vtkUnstructuredGrid, options: Options) -> Tuple[
         raise ValueError(f"Cell field {options.field} does not exist in mesh, nothing done")
 
     cells_to_faces = defaultdict(list)
-    is_fracture_node = numpy.zeros(mesh.GetNumberOfPoints(), dtype=bool)  # all False
+    is_fracture_node = numpy.zeros(mesh.GetNumberOfPoints(), dtype=bool)    # all False
 
     # For each face of each cell, we search for the unique neighbor cell (if it exists).
     # Then, if the 2 values of the two cells match the field requirements,
     # we store the cell and its local face index: this is indeed part of the surface that we'll need to be split.
     neighbor_cell_ids = vtkIdList()
     for cell_id in range(mesh.GetNumberOfCells()):
-        if f[cell_id] not in options.field_values:  # No need to consider a cell if its field value is not in the target range.
+        if f[cell_id] not in options.field_values:    # No need to consider a cell if its field value is not in the target range.
             continue
         cell = mesh.GetCell(cell_id)
         for i in range(cell.GetNumberOfFaces()):
             face = cell.GetFace(i)
             mesh.GetCellNeighbors(cell_id, face.GetPointIds(), neighbor_cell_ids)
             assert neighbor_cell_ids.GetNumberOfIds() < 2
-            for j in range(neighbor_cell_ids.GetNumberOfIds()):  # It's 0 or 1...
+            for j in range(neighbor_cell_ids.GetNumberOfIds()):    # It's 0 or 1...
                 neighbor_cell_id = neighbor_cell_ids.GetId(j)
                 if f[neighbor_cell_id] != f[cell_id] and f[neighbor_cell_id] in options.field_values:
                     cells_to_faces[cell_id].append(i)
