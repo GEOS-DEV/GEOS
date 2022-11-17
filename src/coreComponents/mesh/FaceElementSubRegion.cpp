@@ -108,6 +108,8 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
       }
     };
 
+    // Checking if all the 2d elements are homogeneous.
+    // We rely on the number of nodes for each element to find out.
     std::vector< integer > sizes( num2dElements );
     for( int i = 0; i < num2dElements; ++i )
     {
@@ -117,6 +119,9 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
 
     if( s.size() > 1 )
     {
+      // If we have found that the input face block contains 2d elements of different types,
+      // we inform the used that the situation may be at risk.
+      // (We're storing the face block in a homogeneous container while it's actually heterogeneous).
       GEOSX_WARNING( "Heterogeneous face element sub region found and stored as homogeneous. Use at your own risk." );
     }
 

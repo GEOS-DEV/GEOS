@@ -71,10 +71,10 @@ public:
 
       // vtk will provide the field as a (numComponents, numTuples) table.
       // numTuples is actually the number of duplicated nodes too.
-      // But numComponents is just the maximum number of nodes multiplied nodes at one location.
+      // But numComponents is just the maximum number of multiplied nodes at one location.
       // For a T shaped fracture, the nodes at the T intersection will be tripled.
       // But all the other nodes will only get doubled.
-      // Nevertheless, numComponents will equal 3 for all the nodes.
+      // Nevertheless, numComponents will be equal 3 for all the nodes.
       // The dummy slot will be filled with negative dummy values.
       int const numComponents = duplicatedNodes->GetNumberOfComponents();
       int const numDuplicatedLocations = duplicatedNodes->GetNumberOfTuples();
@@ -250,7 +250,7 @@ public:
   {
     auto const it = std::find_if( m_ranges.cbegin(), m_ranges.cend(), [&]( auto const & p ) -> bool
     {
-      return p.first <= ei and ei <= p.second;
+      return p.first <= ei && ei <= p.second;
     } );
 
     return std::distance( m_ranges.cbegin(), it );

@@ -136,7 +136,9 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC & cellBlockManager 
   this->forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion & elemRegion )
   {
     FaceElementSubRegion & subRegion = elemRegion.getUniqueSubRegion< FaceElementSubRegion >();
-    // While indicated as a `ToElementRelation`, the relation contains cell block information.
+    // While indicated as containing element subregion information,
+    // `relation` currently contains cell block information
+    // that will be transformed into element subregion information.
     // This is why we copy the information into a temporary,
     // which frees space for the final information (of same size).
     FixedToManyElementRelation & relation = subRegion.getToCellRelation();

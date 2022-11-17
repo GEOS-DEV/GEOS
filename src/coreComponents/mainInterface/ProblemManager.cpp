@@ -885,7 +885,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
                                           ConstitutiveManager const & constitutiveManager,
                                           map< std::tuple< string, string, string, string >, localIndex > const & regionQuadratures )
 {
-  for( auto const & regionQuadrature: regionQuadratures )
+  for( auto const & regionQuadrature : regionQuadratures )
   {
     std::tuple< string, string, string, string > const key = regionQuadrature.first;
     localIndex const numQuadraturePoints = regionQuadrature.second;
