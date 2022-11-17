@@ -65,7 +65,7 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain ) override;
 
-   /**
+  /**
    * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
    * last two timesteps.
    * @param time_n the time corresponding to the field values pressure_n

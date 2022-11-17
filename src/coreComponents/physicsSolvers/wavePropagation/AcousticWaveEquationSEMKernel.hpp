@@ -190,7 +190,7 @@ struct PrecomputeSourceAndReceiverKernel
                                      sourceCoordinates[isrc][1],
                                      sourceCoordinates[isrc][2] };
 
-           bool const sourceFound =
+          bool const sourceFound =
             locateSourceElement( numFacesPerElem,
                                  center,
                                  faceNormal,
@@ -230,7 +230,7 @@ struct PrecomputeSourceAndReceiverKernel
       // Step 2: locate the receivers, and precompute the receiver term
 
       /// loop over all the receivers that haven't been found yet
-     for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
+      for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
       {
         if( receiverIsLocal[ircv] == 0 )
         {

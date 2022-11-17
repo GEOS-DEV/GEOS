@@ -35,10 +35,10 @@ struct WaveSolverUtils
     {
       return pulse;
     }
-  
+
     constexpr real32 pi = M_PI;
     real32 const lam = (f0*pi)*(f0*pi);
-  
+
     switch( order )
     {
       case 2:
@@ -59,7 +59,7 @@ struct WaveSolverUtils
       default:
         GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
     }
-  
+
     return pulse;
   }
 
