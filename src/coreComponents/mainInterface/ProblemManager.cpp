@@ -833,8 +833,8 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
                        setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).reference();
                 subRegion.excludeWrappersFromPacking( { discretizationName } );
 
-                finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe,
-                                                                                         [&] ( auto & finiteElement )
+                finiteElement::dispatch3D( fe,
+                                           [&] ( auto & finiteElement )
                 {
                   using FE_TYPE = std::remove_const_t< TYPEOFREF( finiteElement ) >;
                   using SUBREGION_TYPE = TYPEOFREF( subRegion );
@@ -848,13 +848,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
                   localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-#if !defined(GEOSX_USE_CUDA)
-                  feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE,
-                                                                     FE_TYPE >( X,
-                                                                                &subRegion,
-                                                                                meshData,
-                                                                                finiteElement );
-#endif
+                  feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >( X, &subRegion, meshData, finiteElement );
 
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
                                                                                               meshLevel.getName(),
