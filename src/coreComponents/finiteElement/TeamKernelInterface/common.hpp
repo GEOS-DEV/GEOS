@@ -49,10 +49,13 @@ void loop3D( StackVariables & stack,
              localIndex loop_bound_3,
              Lambda3D && lambda )
 {
+  #pragma unroll
   for (localIndex ind_3 = 0; ind_3 < loop_bound_3; ind_3++)
   {
+    #pragma unroll
     for (localIndex ind_2 = 0; ind_2 < loop_bound_2; ind_2++)
     {
+      #pragma unroll
       for (localIndex ind_1 = 0; ind_1 < loop_bound_1; ind_1++)
       {
         lambda( ind_1, ind_2, ind_3 );
@@ -72,12 +75,14 @@ void loop3D( StackVariables & stack,
              localIndex loop_bound_3,
              Lambda3D && lambda )
 {
-  for (localIndex ind_3 = 0; ind_3 < loop_bound_3; ind_3++)
+  localIndex ind_1 = stack.tidx;
+  if ( ind_1 < loop_bound_1 )
   {
-    for (localIndex ind_2 = 0; ind_2 < loop_bound_2; ind_2++)
+    #pragma unroll
+    for (localIndex ind_3 = 0; ind_3 < loop_bound_3; ind_3++)
     {
-      localIndex ind_1 = stack.tidx;
-      if ( ind_1 < loop_bound_1 )
+      #pragma unroll
+      for (localIndex ind_2 = 0; ind_2 < loop_bound_2; ind_2++)
       {
         lambda( ind_1, ind_2, ind_3 );
       }
@@ -96,16 +101,13 @@ void loop3D( StackVariables & stack,
              localIndex loop_bound_3,
              Lambda3D && lambda )
 {
-  for (localIndex ind_3 = 0; ind_3 < loop_bound_3; ind_3++)
+  localIndex ind_1 = stack.tidx;
+  localIndex ind_2 = stack.tidy;
+  if ( ( ind_2 < loop_bound_2 ) && ( ind_1 < loop_bound_1 ) )
   {
-    localIndex ind_2 = stack.tidy;
-    if ( ind_2 < loop_bound_2 )
+    for (localIndex ind_3 = 0; ind_3 < loop_bound_3; ind_3++)
     {
-      localIndex ind_1 = stack.tidx;
-      if ( ind_1 < loop_bound_1 )
-      {
-        lambda( ind_1, ind_2, ind_3 );
-      }
+      lambda( ind_1, ind_2, ind_3 );
     }
   }
 }
@@ -121,19 +123,12 @@ void loop3D( StackVariables & stack,
              localIndex loop_bound_3,
              Lambda3D && lambda )
 {
-  // printf( "(e=%d,x=%d,y=%d,z=%d)\n", stack.element_index, stack.tidx, stack.tidy, stack.tidz );
+  localIndex ind_1 = stack.tidx;
+  localIndex ind_2 = stack.tidy;
   localIndex ind_3 = stack.tidz;
-  if ( ind_3 < loop_bound_3 )
+  if ( ( ind_3 < loop_bound_3 ) && ( ind_2 < loop_bound_2 ) && ( ind_1 < loop_bound_1 ) )
   {
-    localIndex ind_2 = stack.tidy;
-    if ( ind_2 < loop_bound_2 )
-    {
-      localIndex ind_1 = stack.tidx;
-      if ( ind_1 < loop_bound_1 )
-      {
-        lambda( ind_1, ind_2, ind_3 );
-      }
-    }
+    lambda( ind_1, ind_2, ind_3 );
   }
 }
 
