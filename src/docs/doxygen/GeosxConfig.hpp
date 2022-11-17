@@ -117,7 +117,7 @@
 #define adiak_VERSION ..
 
 /// Version information for caliper
-#define caliper_VERSION 2.4.0
+#define caliper_VERSION 2.8.0
 
 /// Version information for Metis
 #define METIS_VERSION 5.1.0
@@ -141,7 +141,7 @@
 #define fmt_VERSION 8.0.1
 
 /// Version information for python
-#define Python3_VERSION 3.8.5
+/* #undef Python3_VERSION */
 
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */
