@@ -7,6 +7,11 @@ set(gtest_geosx_tests
     testTypeDispatch.cpp
    )
 
+if ( ENABLE_CALIPER )
+  list( APPEND gtest_geosx_tests
+        testCaliperSmoke.cpp )
+endif()
+
 set( dependencyList common hdf5 gtest )
 
 if( ENABLE_CUDA )
