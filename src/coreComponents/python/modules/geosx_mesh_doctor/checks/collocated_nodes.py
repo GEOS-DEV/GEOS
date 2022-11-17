@@ -22,8 +22,8 @@ class Options:
 
 @dataclass(frozen=True)
 class Result:
-    nodes_buckets: List[List[int]]
-    wrong_support_elements: List[int]
+    nodes_buckets: List[List[int]]  # Each bucket contains the duplicated node indices.
+    wrong_support_elements: List[int]  # Element indices with support node indices appearing more than once.
 
 
 def __check(mesh, options: Options) -> Result:
@@ -35,7 +35,6 @@ def __check(mesh, options: Options) -> Result:
     locator.InitPointInsertion(output, points.GetBounds())
 
     # original ids to/from filtered ids.
-    # original_to_filtered = numpy.ones(points.GetNumberOfPoints(), dtype=int) * -1
     filtered_to_original = numpy.ones(points.GetNumberOfPoints(), dtype=int) * -1
 
     rejected_points = defaultdict(list)
@@ -60,6 +59,7 @@ def __check(mesh, options: Options) -> Result:
     for n, ns in rejected_points.items():
         tmp.append((n, *ns))
 
+    # Checking that the support node indices appear only once per element.
     wrong_support_elements = []
     for c in range(mesh.GetNumberOfCells()):
         cell = mesh.GetCell(c)

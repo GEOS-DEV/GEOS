@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import logging
 from typing import List, Tuple
+import uuid
 
 from vtkmodules.vtkFiltersVerdict import (
     vtkCellSizeFilter
@@ -31,8 +32,7 @@ def __check(mesh, options: Options) -> Result:
     f.ComputeSumOff()
     f.ComputeVertexCountOff()
     f.ComputeVolumeOn()
-    volume_array_name = "__MESH_DOCTOR_VOLUME"
-    # TODO assert it does not exist
+    volume_array_name = "__MESH_DOCTOR_VOLUME-" + str(uuid.uuid4())  # Making the name unique
     f.SetVolumeArrayName(volume_array_name)
 
     f.SetInputData(mesh)
@@ -42,7 +42,7 @@ def __check(mesh, options: Options) -> Result:
     for i in range(cd.GetNumberOfArrays()):
         if cd.GetArrayName(i) == volume_array_name:
             volume = vtk_to_numpy(cd.GetArray(i))
-    # TODO assert volume exists
+    assert volume is not None
     small_volumes: List[Tuple[int, float]] = []
     for i, v in enumerate(volume):
         if v < options.min_volume:
