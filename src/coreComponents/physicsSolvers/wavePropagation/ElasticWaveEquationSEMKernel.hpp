@@ -450,12 +450,12 @@ struct DampingMatrixKernel
 
         for( localIndex q = 0; q < numNodesPerFace; ++q )
         {
-          real32 const localIncrementx = density[k] *(velocityVp[k]*(faceNormal[f][0]*faceNormal[f][0]) + velocityVs[k]*(faceNormal[f][1]*faceNormal[f][1]) +
-                                                           velocityVs[k]*(faceNormal[f][2]*faceNormal[f][2]) )* m_finiteElement.computeDampingTerm( q, xLocal );
-          real32 const localIncrementy = density[k] * (velocityVs[k]*(faceNormal[f][0]*faceNormal[f][0]) + velocityVp[k]*(faceNormal[f][1]*faceNormal[f][1]) +
-                                                           velocityVs[k]*(faceNormal[f][2]*faceNormal[f][2]) )* m_finiteElement.computeDampingTerm( q, xLocal );
-          real32 const localIncrementz = density[k] * (velocityVs[k]*(faceNormal[f][0]*faceNormal[f][0]) + velocityVs[k]*(faceNormal[f][1]*faceNormal[f][1]) +
-                                                           velocityVp[k]*(faceNormal[f][2]*faceNormal[f][2]) )*  m_finiteElement.computeDampingTerm( q, xLocal );
+          real32 const localIncrementx = density[k] * (velocityVp[k]*abs(faceNormal[f][0]) + velocityVs[k]*sqrt(faceNormal[f][1]*faceNormal[f][1] +
+                                                           faceNormal[f][2]*faceNormal[f][2]) )* m_finiteElement.computeDampingTerm( q, xLocal );
+          real32 const localIncrementy = density[k] * (velocityVp[k]*abs(faceNormal[f][1]) + velocityVs[k]*sqrt(faceNormal[f][0]*faceNormal[f][0] +
+                                                           faceNormal[f][2]*faceNormal[f][2]) )* m_finiteElement.computeDampingTerm( q, xLocal );
+          real32 const localIncrementz = density[k] * (velocityVp[k]*abs(faceNormal[f][2]) + velocityVs[k]*sqrt(faceNormal[f][0]*faceNormal[f][0] +
+                                                           faceNormal[f][1]*faceNormal[f][1]) )*  m_finiteElement.computeDampingTerm( q, xLocal );
 
           RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[facesToNodes[f][q]], localIncrementx );
           RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[facesToNodes[f][q]], localIncrementy );
