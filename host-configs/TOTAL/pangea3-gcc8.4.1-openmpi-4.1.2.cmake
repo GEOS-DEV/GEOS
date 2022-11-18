@@ -107,4 +107,7 @@ set(PETSC_OMP_DIR ${GEOSX_TPL_ROOT_DIR}/omp-links-for-petsc CACHE STRING "")
 # PETSc doesn't seem to work correctly with clang.
 set(ENABLE_PETSC OFF CACHE BOOL "")
 
+set(ENABLE_HYPRE ON CACHE BOOL "")
+set(ENABLE_HYPRE_CUDA ON CACHE BOOL "")
+
 include( ${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake )
