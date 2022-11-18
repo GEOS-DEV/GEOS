@@ -273,7 +273,7 @@
   <Mesh>
     <VTKMesh
         name="mesh"
-        file="prism6_mandel_0430_cells.vtk"/>
+        file="mandel_prism6_0430_cells.vtk"/>
   </Mesh>
   <!-- SPHINX_MESH_END -->
 
