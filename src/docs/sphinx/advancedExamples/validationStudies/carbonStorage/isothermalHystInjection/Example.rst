@@ -298,13 +298,22 @@ To validate the GEOSX results, we consider the metrics used in
 The reporting values are the dissolved and gaseous CO2 with respect to time using only the drainage relative permeability and using 
 hysteretic relative permeabilities.
 
-.. _pb3_dissolvedMobile:
-.. figure:: pb3_curves.png
+.. _pb3_dissolvedMobile_drainage:
+.. figure:: co2_mass_no_hyst.png
    :align: center
-   :width: 1000
+   :width: 500
+   :figclass: align-center
+      
+   CO2 mass in aqueous and CO2-rich phases as a function of without relative permeability hysteresis
+
+.. _pb3_dissolvedMobile_hysteresis:
+.. figure:: co2_mass_hyst.png
+   :align: center
+   :width: 500
    :figclass: align-center
 
-   CO2 dissolved, gaseous and total mass with respect to time for (left) drainage only and (right) hysteresis relative permeabilities
+   CO2 mass in aqueous and CO2-rich phases as a function of time with relative permeability hysteresis
+	      
 
 We can see that at the end of the injection period the mass of CO2 in the gaseous phase stops increasing and starts
 decreasing due to dissolution of CO2 in the brine phase.
