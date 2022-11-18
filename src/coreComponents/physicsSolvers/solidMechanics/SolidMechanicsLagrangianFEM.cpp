@@ -1345,7 +1345,7 @@ void SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit( real64 co
   {
     return;
   }
-  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+  string const dofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
 
   if( getLogLevel() == 2 )
   {
@@ -1362,7 +1362,7 @@ void SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit( real64 co
     //THIS CALL TO GET NODE MANAGER IS NOT ROBUST
     NodeManager const & nodeManager = domain.getMeshBody( 1 ).getBaseDiscretization().getNodeManager();
     arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofKey );
-    arrayView2d< real64 const > const nodalDisplacements = nodeManager.getReference< array2d< real64 > >( keys::TotalDisplacement );
+    arrayView2d< real64 const > const nodalDisplacements = nodeManager.getField< fields::solidMechanics::totalDisplacement >();
     
     localIndex count = 0;
     for( localIndex fixed_node : m_fixedDisplacementNodes)

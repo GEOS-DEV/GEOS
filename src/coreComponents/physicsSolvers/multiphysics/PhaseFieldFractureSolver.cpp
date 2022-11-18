@@ -172,6 +172,13 @@ real64 PhaseFieldFractureSolver::solverStep( real64 const & time_n,
   real64 dtReturn = dt;
   if( m_couplingTypeOption == CouplingTypeOption::FixedStress )
   {
+    this->setupSystem( domain,
+                     this->getDofManager(),
+                     this->getLocalMatrix(),
+                     this->getSystemRhs(),
+                     this->getSystemSolution(),
+                     true );
+    
     dtReturn = splitOperatorStep( time_n, dt, cycleNumber, domain );
   }
   else if( m_couplingTypeOption == CouplingTypeOption::TightlyCoupled )
@@ -241,11 +248,11 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
   //                          solidSolver.getSystemRhs(),
   //                          solidSolver.getSystemSolution() );
 
-  damageSolver.implicitStepSetup( time_n, dt, domain );
+  damageSolver.implicitStepSetup( time_n, dt, domain ); //this is an empty function
 
-  solidSolver.implicitStepSetup( time_n, dt, domain );
+  solidSolver.implicitStepSetup( time_n, dt, domain );  //this sets uhat = 0 is the quasi-static case
 
-  this->implicitStepSetup( time_n, dt, domain );
+  this->implicitStepSetup( time_n, dt, domain ); //this is probably useless
 
   NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
   integer & iter = solverParams.m_numNewtonIterations;
@@ -318,9 +325,9 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
 
   GEOSX_ERROR_IF( !isConverged, "PhaseFieldFractureSolver::SplitOperatorStep() did not converge" );
 
-  damageSolver.implicitStepComplete( time_n, dt, domain );
-  solidSolver.implicitStepComplete( time_n, dt, domain );
-  this->implicitStepComplete( time_n, dt, domain );
+  damageSolver.implicitStepComplete( time_n, dt, domain ); 
+  solidSolver.implicitStepComplete( time_n, dt, domain ); //empty function
+  this->implicitStepComplete( time_n, dt, domain ); //empty function
 
   return dtReturn;
 }
