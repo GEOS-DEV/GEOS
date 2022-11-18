@@ -374,7 +374,6 @@ bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
 {
   localIndex const numFaces = faceIndices.size();
   R1Tensor faceCenter, faceNormal, cellToFaceVec;
-  int prevSign = 0;
 
   for( localIndex kf = 0; kf < numFaces; ++kf )
   {
@@ -395,11 +394,10 @@ bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
     int const s = sign( LvArray::tensorOps::AiBi< 3 >( faceNormal, faceCenter ) );
 
     // all dot products should be non-negative (we enforce outward normals)
-    if( prevSign * s < 0 )
+    if( s < 0 )
     {
       return false;
     }
-    prevSign = s;
   }
   return true;
 }
