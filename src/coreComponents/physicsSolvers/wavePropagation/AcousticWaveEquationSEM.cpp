@@ -977,7 +977,6 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
       if ( NULL == std::getenv("DISABLE_LIFO") )
       {
-        GEOSX_MARK_SCOPE ( LifoPushWait );
         m_lifo->pushWait();
       }
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIdx )
@@ -987,7 +986,6 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
       if ( NULL == std::getenv("DISABLE_LIFO") )
       {
-        GEOSX_MARK_SCOPE ( LifoPushAsync );
         m_lifo->pushAsync( p_dt2 );
       }
       else
@@ -1048,7 +1046,6 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 
       if ( NULL == std::getenv("DISABLE_LIFO") )
       {
-        GEOSX_MARK_SCOPE ( LifoPop );
         m_lifo->pop( p_dt2 );
       }
       else

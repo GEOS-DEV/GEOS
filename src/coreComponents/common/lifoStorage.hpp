@@ -19,6 +19,7 @@
 
 #include "common/fixedSizeDeque.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -63,6 +64,8 @@ private:
   std::deque< std::future< void > > m_diskToHostFutures;
   //* Future to be aware data are effectively copied on device from host memory.
   std::deque< std::future< void > > m_hostToDeviceFutures;
+  /// yTo check if pushEvent has been initialized
+  bool m_pushEventInitialized = false;
   /// Last copy to device event
   camp::resources::Event m_pushEvent;
   /// Future to be aware data pop has been completed
@@ -131,38 +134,47 @@ public:
    */
   void pushAsync( arrayView1d< T > array )
   {
+    GEOSX_MARK_FUNCTION;
     int id = m_bufferCount++;
     GEOSX_ERROR_IF( m_deviceDeque.capacity() == 0,
                     "Cannot save on a Lifo without device storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
     GEOSX_ERROR_IF( m_hostDeque.capacity() == 0,
                     "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
-    m_deviceDequeMutex.lock();
+    {
+      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::pushAcquireLock );
+      m_deviceDequeMutex.lock();
+    }
     while( m_deviceDeque.full() )
     {
+      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::pushWaitForCudaBuffer );
       m_deviceDequeMutex.unlock();
       m_deviceToHostFutures.front().wait();
       m_deviceToHostFutures.pop_front();
       m_deviceDequeMutex.lock();
     }
     m_pushEvent = m_deviceDeque.emplace_front( array.toSliceConst() );
+    m_pushEventInitialized = true;
     m_deviceDequeMutex.unlock();
 
-    if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() )
     {
-      // This buffer will go to host memory
-      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this ) );
-      m_deviceToHostFutures.emplace_back( task.get_future() );
-      m_task_queue.emplace_back( std::move( task ) );
-      m_task_queue_not_empty_cond.notify_all();
-    }
+      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::pushAddTasks );
+      if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() )
+      {
+        // This buffer will go to host memory
+        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this ) );
+        m_deviceToHostFutures.emplace_back( task.get_future() );
+        m_task_queue.emplace_back( std::move( task ) );
+        m_task_queue_not_empty_cond.notify_all();
+      }
 
-    if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() + m_hostDeque.capacity() )
-    {
-      // This buffer will go to host then to disk
-      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this ) );
-      m_hostToDiskFutures.emplace_back( task.get_future() );
-      m_task_queue.emplace_back( std::move( task ) );
-      m_task_queue_not_empty_cond.notify_all();
+      if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() + m_hostDeque.capacity() )
+      {
+        // This buffer will go to host then to disk
+        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this ) );
+        m_hostToDiskFutures.emplace_back( task.get_future() );
+        m_task_queue.emplace_back( std::move( task ) );
+        m_task_queue_not_empty_cond.notify_all();
+      }
     }
   }
 
@@ -171,7 +183,8 @@ public:
    */
   void pushWait()
   {
-    m_deviceDequeStream.wait_for( &m_pushEvent );
+    GEOSX_MARK_FUNCTION;
+    if ( m_pushEventInitialized ) m_deviceDequeStream.wait_for( &m_pushEvent );
   }
 
   /**
@@ -181,6 +194,7 @@ public:
    */
   void push( arrayView1d< T > array )
   {
+    GEOSX_MARK_FUNCTION;
     pushAsync( array );
     pushWait();
   }
@@ -192,6 +206,7 @@ public:
    */
   void popAsync( arrayView1d< T > array )
   {
+    GEOSX_MARK_FUNCTION;
     popWait();
     m_popFuture = std::async( std::launch::async, [ array, this ] { pop( array ); } );
   }
@@ -201,6 +216,7 @@ public:
    */
   void popWait()
   {
+    GEOSX_MARK_FUNCTION;
     if( m_popFuture.valid() ) m_popFuture.get();
   }
 
@@ -211,37 +227,49 @@ public:
    */
   void pop( arrayView1d< T > array )
   {
+    GEOSX_MARK_FUNCTION;
     int id = --m_bufferCount;
 
-    m_deviceDequeMutex.lock();
+    {
+      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::popAcquireLock );
+      m_deviceDequeMutex.lock();
+    }
     while( m_deviceDeque.empty() )
     {
+      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::popWaitForCudaBuffer );
       m_deviceDequeMutex.unlock();
       m_hostToDeviceFutures.front().wait();
       m_hostToDeviceFutures.pop_front();
       m_deviceDequeMutex.lock();
     }
-    camp::resources::Event e = LvArray::memcpy( m_deviceDequeStream, array.toSlice(), m_deviceDeque.front( ) );
-    m_deviceDequeStream.wait_for( &e );
+
+    {
+      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::popMemcpy );
+      camp::resources::Event e = LvArray::memcpy( m_deviceDequeStream, array.toSlice(), m_deviceDeque.front( ) );
+      m_deviceDequeStream.wait_for( &e );
+    }
     m_deviceDeque.pop_front();
     m_deviceDequeMutex.unlock();
 
-    if( id >= m_deviceDeque.capacity() )
     {
-      // Trigger pull one buffer from host
-      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this ) );
-      m_hostToDeviceFutures.emplace_back( task.get_future() );
-      m_task_queue.emplace_back( std::move( task ) );
-      m_task_queue_not_empty_cond.notify_all();
-    }
+      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::popAddTasks );
+      if( id >= m_deviceDeque.capacity() )
+      {
+        // Trigger pull one buffer from host
+        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this ) );
+        m_hostToDeviceFutures.emplace_back( task.get_future() );
+        m_task_queue.emplace_back( std::move( task ) );
+        m_task_queue_not_empty_cond.notify_all();
+      }
 
-    if( id >= m_deviceDeque.capacity() + m_hostDeque.capacity() )
-    {
-      // Trigger pull one buffer from disk
-      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this ) );
-      m_diskToHostFutures.emplace_back( task.get_future() );
-      m_task_queue.emplace_back( std::move( task ) );
-      m_task_queue_not_empty_cond.notify_all();
+      if( id >= m_deviceDeque.capacity() + m_hostDeque.capacity() )
+      {
+        // Trigger pull one buffer from disk
+        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this ) );
+        m_diskToHostFutures.emplace_back( task.get_future() );
+        m_task_queue.emplace_back( std::move( task ) );
+        m_task_queue_not_empty_cond.notify_all();
+      }
     }
   }
 
