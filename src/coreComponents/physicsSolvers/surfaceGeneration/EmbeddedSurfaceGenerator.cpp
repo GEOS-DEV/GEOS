@@ -28,7 +28,7 @@
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "mesh/utilities/CIcomputationKernel.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
@@ -90,7 +90,7 @@ void EmbeddedSurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
     EmbeddedSurfaceNodeManager & nodeManager = meshLevel.getEmbSurfNodeManager();
 
-    nodeManager.registerExtrinsicData< extrinsicMeshData::parentEdgeIndex >( this->getName() );
+    nodeManager.registerField< fields::parentEdgeIndex >( this->getName() );
   } );
 }
 
