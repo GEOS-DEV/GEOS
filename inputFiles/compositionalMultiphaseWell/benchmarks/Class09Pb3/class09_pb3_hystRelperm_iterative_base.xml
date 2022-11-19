@@ -38,7 +38,7 @@
       <WellControls
         name="wellControls"
         type="injector"
-        logLevel="2"
+        logLevel="1"
         control="totalVolRate"
         referenceElevation="-3000"
         targetBHP="1e8"

@@ -2,21 +2,21 @@
 
 <Problem>
   <Included>
-    <File name="./class09_pb3_drainageOnly_iterative_base.xml"/>
+    <File name="./class09_pb3_hystRelperm_direct_base.xml"/>
   </Included>
-    <!-- <File name="./class09_pb3_hystRelperm_iterative_base.xml"/> -->
-    <!-- <File name="./class09_pb3_hystRelperm_direct_base.xml"/> -->
-    <!-- <File name="./class09_pb3_drainageOnly_iterative_base.xml"/> -->
-    <!-- <File name="./class09_pb3_drainageOnly_direct_base.xml"/> -->
 
   <!-- SPHINX_MESH -->
-  <Mesh> 
-    <VTKMesh
-      name="mesh"
-      logLevel="5"  
-      file="../../../../../GEOSXDATA/DataSets/Class09_p3/Johansen_faces.vtu"
-      fieldsToImport="{ perm, poro }"
-      fieldNamesInGEOSX="{ rockPerm_permeability, rockPorosity_referencePorosity }" /> 
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 5240, 5640 }"
+      yCoords="{ 3100, 3500 }"
+      zCoords="{ -3000, -2950 }"
+      nx="{ 5 }"
+      ny="{ 5 }"
+      nz="{ 5 }"
+      cellBlockNames="{ 1_hexahedra }"/>
     <InternalWell
       name="wellInjector1"
       wellRegionName="wellRegion"
@@ -45,7 +45,7 @@
         distanceFromHead="5"/> 
     </InternalWell>
   </Mesh>
-        <!-- SPHINX_MESH_END -->
+  <!-- SPHINX_MESH_END -->
 
   <Tasks>
     <!-- SPHINX_STATS -->
@@ -65,26 +65,25 @@
       name="restartOutput"/>
   </Outputs>
 
-  <!-- max time 50 y -->
   <Events
-    maxTime="1.5768e+09">
+    maxTime="1e6">
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e8"
+      timeFrequency="1e5"
       targetExactTimestep="1"
       target="/Outputs/simpleReservoirViz"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="3.5e8"
+      timeFrequency="5e5"
       targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
 
     <!-- SPHINX_STAT_EV -->
     <PeriodicEvent
       name="statistics"
-      timeFrequency="1e8"
+      timeFrequency="1e5"
       target="/Tasks/compflowStatistics"/>
     <!-- SPHINX_STAT_EV_END -->
 
@@ -92,19 +91,7 @@
       name="solverApplications1"
       beginTime="0"
       endTime="7.884e8"
-      maxEventDt="5e6"        
-      target="/Solvers/coupledFlowAndWells"/>
-    <PeriodicEvent
-      name="solverApplications2"
-      beginTime="7.884e8"
-      endTime="7.88405e8"
-      forceDt="1e4"        
-      target="/Solvers/coupledFlowAndWells"/>
-    <PeriodicEvent
-      name="solverApplications3"
-      beginTime="7.88405e8"
-      endTime="1.544e9"
-      maxEventDt="1e7"        
+      forceDt="1e5"        
       target="/Solvers/coupledFlowAndWells"/>
 
   </Events>

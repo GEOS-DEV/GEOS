@@ -217,8 +217,7 @@ The datum pressure and elevation used below are defined in
     :end-before: <!-- SPHINX_HYDROSTATIC_END -->
 
 In the **Functions** block, the **TableFunction** s named ``initCO2CompFracTable`` and ``initWaterCompFracTable``
-define the brine-saturated initial state, while the **TableFunction** named ``initTempTable`` defines the
- temperature field as a function of depth to impose the geothermal gradient.
+define the brine-saturated initial state, while the **TableFunction** named ``initTempTable`` defines the temperature field as a function of depth to impose the geothermal gradient.
 		 
 The boundaries are set to have a constant 0.03 K/m temperature gradient as well as the hydrostatic pressure gradient.
 We supplement that with water dominant content. Each block is linking a ``fieldName`` to a **TableFunction** tagged as

@@ -40,20 +40,20 @@
       targetRegions="{ wellRegion }"
       logLevel="1"
       useMass="1">
-        <WellControls
-          name="wellControls"
-          logLevel="2"
-          type="injector"
-          control="totalVolRate"
-          referenceElevation="-3000"
-          targetBHP="1e8"
-          enableCrossflow="0"
-          useSurfaceConditions="1"
-          surfacePressure="101325"
-          surfaceTemperature="288.71"
-          targetTotalRateTableName="totalRateTable"
-          injectionTemperature="353.15"
-          injectionStream="{ 1.0, 0.0 }"/>
+      <WellControls
+        name="wellControls"
+        logLevel="1"
+        type="injector"
+        control="totalVolRate"
+        referenceElevation="-3000"
+        targetBHP="1e8"
+        enableCrossflow="0"
+        useSurfaceConditions="1"
+        surfacePressure="101325"
+        surfaceTemperature="288.71"
+        targetTotalRateTableName="totalRateTable"
+        injectionTemperature="353.15"
+        injectionStream="{ 1.0, 0.0 }"/>
     </CompositionalMultiphaseWell>
       <!-- SPHINX_SOLVER_WELL_END -->
   </Solvers>
