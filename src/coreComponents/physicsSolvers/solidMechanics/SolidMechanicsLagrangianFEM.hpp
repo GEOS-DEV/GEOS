@@ -267,11 +267,11 @@ public:
 
   void applyInternalDisplacementBCImplicit( real64 const time,
                                             DofManager const & dofManager,
-                                            DomainPartition & domain, 
+                                            DomainPartition & domain,
                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                             arrayView1d< real64 > const & localRhs );
-  
-  void setInternalBoundaryConditions( array1d< localIndex > const & fixedNodes, array2d< real64 > const & fixedValues );                                                              
+
+  void setInternalBoundaryConditions( array1d< localIndex > const & fixedNodes, array2d< real64 > const & fixedValues );
 
 
 protected:

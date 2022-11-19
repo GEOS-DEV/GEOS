@@ -588,7 +588,7 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                   SortedArrayView< localIndex const > const & targetSet,
                                                   NodeManager & targetGroup,
                                                   string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
-    
+
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                          parallelDevicePolicy< 32 > >( targetSet,
@@ -603,24 +603,24 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
 
     fsManager.applyFieldValue< serialPolicy >( time, mesh, viewKeyStruct::coeffNameString() );
   } );
-  
+
 }
 
 void PhaseFieldDamageFEM::setInitialCrackNodes( arrayView1d< localIndex > const & fracturedNodes )
 {
   localIndex count = 0;
   m_initialCrack.resize( fracturedNodes.size() );
-  for( localIndex c : fracturedNodes)
+  for( localIndex c : fracturedNodes )
   {
     m_initialCrack( count ) = c;
     ++count;
   }
 
-} 
+}
 
-void PhaseFieldDamageFEM::setInitialCrackDamageBCs( DomainPartition & domain, 
-                                                    DofManager const & dofManager, 
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix, 
+void PhaseFieldDamageFEM::setInitialCrackDamageBCs( DomainPartition & domain,
+                                                    DofManager const & dofManager,
+                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs )
 {
   if( getLogLevel() == 2 )
@@ -631,30 +631,30 @@ void PhaseFieldDamageFEM::setInitialCrackDamageBCs( DomainPartition & domain,
   }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     const NodeManager & nodeManager = mesh.getNodeManager();
     arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( "Damage" ) );
     arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( "Damage" );
 
-    for( localIndex c : m_initialCrack)
+    for( localIndex c : m_initialCrack )
     {
-      localIndex const dof = dofIndex[c]; 
+      localIndex const dof = dofIndex[c];
       real64 const damageAtNode = nodalDamage[c];
-      real64 rhsContribution; 
-      FieldSpecificationEqual::SpecifyFieldValue( dof, 
-                                                  dofManager.rankOffset(), 
+      real64 rhsContribution;
+      FieldSpecificationEqual::SpecifyFieldValue( dof,
+                                                  dofManager.rankOffset(),
                                                   localMatrix,
-                                                  rhsContribution, 
-                                                  1.0, 
-                                                  damageAtNode ); 
+                                                  rhsContribution,
+                                                  1.0,
+                                                  damageAtNode );
 
-      globalIndex const localRow = dof - dofManager.rankOffset(); 
+      globalIndex const localRow = dof - dofManager.rankOffset();
       if( localRow >=0 && localRow < localRhs.size() )
       {
-        localRhs[ localRow ] = rhsContribution; 
-      }                                                   
+        localRhs[ localRow ] = rhsContribution;
+      }
     }
 
   } );
@@ -725,4 +725,3 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, string const &,
                         Group * const )
 } // namespace geosx
-

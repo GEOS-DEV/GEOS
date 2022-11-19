@@ -173,12 +173,12 @@ real64 PhaseFieldFractureSolver::solverStep( real64 const & time_n,
   if( m_couplingTypeOption == CouplingTypeOption::FixedStress )
   {
     this->setupSystem( domain,
-                     this->getDofManager(),
-                     this->getLocalMatrix(),
-                     this->getSystemRhs(),
-                     this->getSystemSolution(),
-                     true );
-    
+                       this->getDofManager(),
+                       this->getLocalMatrix(),
+                       this->getSystemRhs(),
+                       this->getSystemSolution(),
+                       true );
+
     dtReturn = splitOperatorStep( time_n, dt, cycleNumber, domain );
   }
   else if( m_couplingTypeOption == CouplingTypeOption::TightlyCoupled )
@@ -189,11 +189,11 @@ real64 PhaseFieldFractureSolver::solverStep( real64 const & time_n,
 }
 
 void PhaseFieldFractureSolver::setupSystem( DomainPartition & domain,
-                                            DofManager & GEOSX_UNUSED_PARAM(dofManager),
-                                            CRSMatrix< real64, globalIndex > & GEOSX_UNUSED_PARAM(localMatrix),
-                                            ParallelVector & GEOSX_UNUSED_PARAM(rhs),
-                                            ParallelVector & GEOSX_UNUSED_PARAM(solution),
-                                            bool const GEOSX_UNUSED_PARAM(setSparsity) )
+                                            DofManager & GEOSX_UNUSED_PARAM( dofManager ),
+                                            CRSMatrix< real64, globalIndex > & GEOSX_UNUSED_PARAM( localMatrix ),
+                                            ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
+                                            ParallelVector & GEOSX_UNUSED_PARAM( solution ),
+                                            bool const GEOSX_UNUSED_PARAM( setSparsity ) )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -325,7 +325,7 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
 
   GEOSX_ERROR_IF( !isConverged, "PhaseFieldFractureSolver::SplitOperatorStep() did not converge" );
 
-  damageSolver.implicitStepComplete( time_n, dt, domain ); 
+  damageSolver.implicitStepComplete( time_n, dt, domain );
   solidSolver.implicitStepComplete( time_n, dt, domain ); //empty function
   this->implicitStepComplete( time_n, dt, domain ); //empty function
 

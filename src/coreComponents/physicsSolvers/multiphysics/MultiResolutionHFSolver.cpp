@@ -204,14 +204,17 @@ real64 MultiResolutionHFSolver::solverStep( real64 const & time_n,
 
 //Andre - 03/15 - this function will loop over all subdomain nodes and check their distance to the prescribed discrete crack. If the
 // distance is smaller than 1 element size (subdomain), we set the damage in this node to be fixed at 1.
-void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & dofManager, CRSMatrixView< real64, globalIndex const > const & localMatrix, MeshLevel const &  patch , MeshLevel const & base )
+void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                                        CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
+                                                        MeshLevel const & GEOSX_UNUSED_PARAM( patch ),
+                                                        MeshLevel const & base )
 {
-
   // get list of nodes on the boundary of the patch
-  NodeManager const & patchNodeManager = patch.getNodeManager();
-  arrayView1d< globalIndex const > const & dofIndex = patchNodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( "Damage" ) );
+  //NodeManager const & patchNodeManager = patch.getNodeManager();
+  //arrayView1d< globalIndex const > const & dofIndex = patchNodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( "Damage"
+  // ) );
   //need dofManager from PhaseFieldDamage, not PhaseFieldFracture
-  arrayView1d< real64 const > const nodalDamage = patchNodeManager.getReference< array1d< real64 > >( "Damage" );
+  //arrayView1d< real64 const > const nodalDamage = patchNodeManager.getReference< array1d< real64 > >( "Damage" );
   ElementRegionManager const & baseElemManager = base.getElemManager();
   baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
@@ -253,8 +256,8 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
   // get list of nodes on the boundary of the patch
   FaceManager const & patchFaceManager = patch.getFaceManager();
   NodeManager & patchNodeManager = patch.getNodeManager();
-  patchNodeManager.setIsExternal(patchFaceManager);
-  SortedArray< localIndex > patchExternalSet = patchNodeManager.externalSet(); 
+  patchNodeManager.setIsExternal( patchFaceManager );
+  SortedArray< localIndex > patchExternalSet = patchNodeManager.externalSet();
   //arrayView1d< integer const > const patchExternalSet = patchNodeManager.isExternal(); //option 2 remove if not needed
   //arrayView1d< globalIndex const > const patchLocalToGlobalMap = patchNodeManager.localToGlobalMap();
   arrayView1d< real64 const > const patchDamage = patchNodeManager.getReference< array1d< real64 > >( "Damage" );
@@ -316,10 +319,10 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
   patchSolver = this->getParent().getGroup< PhaseFieldFractureSolver >( m_patchSolverName );
 
   PhaseFieldDamageFEM &
-  patchDamageSolver = patchSolver.getParent().getGroup< PhaseFieldDamageFEM >( patchSolver.getDamageSolverName() ); 
+  patchDamageSolver = patchSolver.getParent().getGroup< PhaseFieldDamageFEM >( patchSolver.getDamageSolverName() );
 
-  SolidMechanicsLagrangianFEM & 
-  patchSolidSolver = patchSolver.getParent().getGroup< SolidMechanicsLagrangianFEM >( patchSolver.getSolidSolverName() ); 
+  SolidMechanicsLagrangianFEM &
+  patchSolidSolver = patchSolver.getParent().getGroup< SolidMechanicsLagrangianFEM >( patchSolver.getSolidSolverName() );
 
   baseSolver.setupSystem( domain,
                           baseSolver.getDofManager(),
@@ -362,12 +365,15 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
 
     //we probably want to run a phase-field solve in the patch problem at timestep 0 to get a smooth initial crack. Also, re-run this
     // anytime the base crack changes
-    map< std::pair< string, string >, array1d< string > > const & baseTargets = baseSolver.getReference< map< std::pair< string, string >, array1d< string > > >( SolverBase::viewKeyStruct::meshTargetsString());
+    map< std::pair< string, string >, array1d< string > > const & baseTargets = baseSolver.getReference< map< std::pair< string, string >, array1d< string > > >(
+      SolverBase::viewKeyStruct::meshTargetsString());
     auto const baseTarget = baseTargets.begin()->first;
-    map< std::pair< string, string >, array1d< string > > const & patchTargets = patchSolver.getReference< map< std::pair< string, string >, array1d< string > > >( SolverBase::viewKeyStruct::meshTargetsString());
+    map< std::pair< string, string >, array1d< string > > const & patchTargets = patchSolver.getReference< map< std::pair< string, string >, array1d< string > > >(
+      SolverBase::viewKeyStruct::meshTargetsString());
     auto const patchTarget = patchTargets.begin()->first;
-    CRSMatrix< real64 , globalIndex > & patchDamageLocalMatrix = patchDamageSolver.getLocalMatrix();
-    this->setInitialCrackDamageBCs( patchDamageSolver.getDofManager(), patchDamageLocalMatrix.toViewConstSizes(), domain.getMeshBody( patchTarget.first ).getBaseDiscretization(), domain.getMeshBody( baseTarget.first ).getBaseDiscretization() );
+    CRSMatrix< real64, globalIndex > & patchDamageLocalMatrix = patchDamageSolver.getLocalMatrix();
+    this->setInitialCrackDamageBCs( patchDamageSolver.getDofManager(), patchDamageLocalMatrix.toViewConstSizes(), domain.getMeshBody( patchTarget.first ).getBaseDiscretization(),
+                                    domain.getMeshBody( baseTarget.first ).getBaseDiscretization() );
     patchDamageSolver.setInitialCrackNodes( m_nodeFixDamage );
     //patchSolver.addCustomBCDamage(m_nodeFixDamage); //this function still doesnt exist
     //must prescribe the damage boundary conditions based on the location of the base crack relative to the subdomain mesh

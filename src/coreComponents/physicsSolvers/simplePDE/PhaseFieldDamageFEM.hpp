@@ -117,12 +117,12 @@ public:
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs );
 
-  void setInitialCrackDamageBCs( DomainPartition & domain, 
-                                 DofManager const & dofManager, 
+  void setInitialCrackDamageBCs( DomainPartition & domain,
+                                 DofManager const & dofManager,
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs );
 
-  void setInitialCrackNodes( arrayView1d< localIndex > const & fracturedNodes );                                                              
+  void setInitialCrackNodes( arrayView1d< localIndex > const & fracturedNodes );
 
   void applyIrreversibilityConstraint( DofManager const & dofManager,
                                        DomainPartition & domain,

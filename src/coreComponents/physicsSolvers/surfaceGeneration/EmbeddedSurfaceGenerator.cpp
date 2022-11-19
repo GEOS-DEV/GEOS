@@ -105,141 +105,141 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();
 
   // Get meshLevel
- forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                               MeshLevel & meshLevel,
-                                                               arrayView1d< string const > const &  )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & meshLevel,
+                                                                arrayView1d< string const > const & )
+  {
+
+    // Get managers
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
+    NodeManager & nodeManager = meshLevel.getNodeManager();
+    EmbeddedSurfaceNodeManager & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
+    EdgeManager & edgeManager = meshLevel.getEdgeManager();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
+
+    // Get EmbeddedSurfaceSubRegions
+    SurfaceElementRegion & embeddedSurfaceRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
+    EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion = embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+
+    localIndex localNumberOfSurfaceElems         = 0;
+
+    NewObjectLists newObjects;
+
+    // Loop over all the fracture planes
+    geometricObjManager.forSubGroups< BoundedPlane >( [&]( BoundedPlane & fracture )
     {
+      /* 1. Find out if an element is cut by the fracture or not.
+       * Loop over all the elements and for each one of them loop over the nodes and compute the
+       * dot product between the distance between the plane center and the node and the normal
+       * vector defining the plane. If two scalar products have different signs the plane cuts the
+       * cell. If a nodes gives a 0 dot product it has to be neglected or the method won't work.
+       */
+      real64 const planeCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fracture.getCenter() );
+      real64 const normalVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fracture.getNormal() );
+      // Initialize variables
+      globalIndex nodeIndex;
+      integer isPositive, isNegative;
+      real64 distVec[ 3 ];
 
-      // Get managers
-      ElementRegionManager & elemManager = meshLevel.getElemManager();
-      NodeManager & nodeManager = meshLevel.getNodeManager();
-      EmbeddedSurfaceNodeManager & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
-      EdgeManager & edgeManager = meshLevel.getEdgeManager();
-      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
-
-      // Get EmbeddedSurfaceSubRegions
-      SurfaceElementRegion & embeddedSurfaceRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
-      EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion = embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
-
-      localIndex localNumberOfSurfaceElems         = 0;
-
-      NewObjectLists newObjects;
-
-      // Loop over all the fracture planes
-      geometricObjManager.forSubGroups< BoundedPlane >( [&]( BoundedPlane & fracture )
+      elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
+        [&]( localIndex const er, localIndex const esr, ElementRegionBase &, CellElementSubRegion & subRegion )
       {
-        /* 1. Find out if an element is cut by the fracture or not.
-         * Loop over all the elements and for each one of them loop over the nodes and compute the
-         * dot product between the distance between the plane center and the node and the normal
-         * vector defining the plane. If two scalar products have different signs the plane cuts the
-         * cell. If a nodes gives a 0 dot product it has to be neglected or the method won't work.
-         */
-        real64 const planeCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fracture.getCenter() );
-        real64 const normalVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fracture.getNormal() );
-        // Initialize variables
-        globalIndex nodeIndex;
-        integer isPositive, isNegative;
-        real64 distVec[ 3 ];
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes = subRegion.nodeList();
+        FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
 
-        elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
-          [&]( localIndex const er, localIndex const esr, ElementRegionBase &, CellElementSubRegion & subRegion )
+        arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+        forAll< serialPolicy >( subRegion.size(), [ &, ghostRank,
+                                                    cellToNodes,
+                                                    nodesCoord ] ( localIndex const cellIndex )
         {
-          arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes = subRegion.nodeList();
-          FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
-
-          arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
-
-          forAll< serialPolicy >( subRegion.size(), [ &, ghostRank,
-                                                      cellToNodes,
-                                                      nodesCoord ] ( localIndex const cellIndex )
+          if( ghostRank[cellIndex] < 0 )
           {
-            if( ghostRank[cellIndex] < 0 )
+            isPositive = 0;
+            isNegative = 0;
+            for( localIndex kn = 0; kn < subRegion.numNodesPerElement(); kn++ )
             {
-              isPositive = 0;
-              isNegative = 0;
-              for( localIndex kn = 0; kn < subRegion.numNodesPerElement(); kn++ )
+              nodeIndex = cellToNodes[cellIndex][kn];
+              LvArray::tensorOps::copy< 3 >( distVec, nodesCoord[nodeIndex] );
+              LvArray::tensorOps::subtract< 3 >( distVec, planeCenter );
+              // check if the dot product is zero
+              if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) > 0 )
               {
-                nodeIndex = cellToNodes[cellIndex][kn];
-                LvArray::tensorOps::copy< 3 >( distVec, nodesCoord[nodeIndex] );
-                LvArray::tensorOps::subtract< 3 >( distVec, planeCenter );
-                // check if the dot product is zero
-                if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) > 0 )
-                {
-                  isPositive = 1;
-                }
-                else if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) < 0 )
-                {
-                  isNegative = 1;
-                }
-              } // end loop over nodes
-              if( isPositive * isNegative == 1 )
+                isPositive = 1;
+              }
+              else if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) < 0 )
               {
-                bool added = embeddedSurfaceSubRegion.addNewEmbeddedSurface( cellIndex,
-                                                                             er,
-                                                                             esr,
-                                                                             nodeManager,
-                                                                             embSurfNodeManager,
-                                                                             edgeManager,
-                                                                             cellToEdges,
-                                                                             &fracture );
+                isNegative = 1;
+              }
+            }   // end loop over nodes
+            if( isPositive * isNegative == 1 )
+            {
+              bool added = embeddedSurfaceSubRegion.addNewEmbeddedSurface( cellIndex,
+                                                                           er,
+                                                                           esr,
+                                                                           nodeManager,
+                                                                           embSurfNodeManager,
+                                                                           edgeManager,
+                                                                           cellToEdges,
+                                                                           &fracture );
 
-                if( added )
-                {
-                  GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+              if( added )
+              {
+                GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
 
-                  // Add the information to the CellElementSubRegion
-                  subRegion.addFracturedElement( cellIndex, localNumberOfSurfaceElems );
+                // Add the information to the CellElementSubRegion
+                subRegion.addFracturedElement( cellIndex, localNumberOfSurfaceElems );
 
-                  embeddedSurfaceSubRegion.computeConnectivityIndex( localNumberOfSurfaceElems, cellToNodes, nodesCoord );
+                embeddedSurfaceSubRegion.computeConnectivityIndex( localNumberOfSurfaceElems, cellToNodes, nodesCoord );
 
-                  newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( localNumberOfSurfaceElems );
+                newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( localNumberOfSurfaceElems );
 
-                  localNumberOfSurfaceElems++;
-                }
+                localNumberOfSurfaceElems++;
               }
             }
-          } );// end loop over cells
-        } );// end loop over subregions
-      } );// end loop over thick planes
+          }
+        } );  // end loop over cells
+      } );  // end loop over subregions
+    } );  // end loop over thick planes
 
-      // add all new nodes to newObject list
-      for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
-      {
-        newObjects.newNodes.insert( ni );
-      }
+    // add all new nodes to newObject list
+    for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
+    {
+      newObjects.newNodes.insert( ni );
+    }
 
-      // Set the ghostRank form the parent cell
-      ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
-        elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+    // Set the ghostRank form the parent cell
+    ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
+      elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
-      embeddedSurfaceSubRegion.inheritGhostRank( cellElemGhostRank );
+    embeddedSurfaceSubRegion.inheritGhostRank( cellElemGhostRank );
 
-      setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
+    setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
-      embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
-                                                                   domain.getNeighbors(),
-                                                                   newObjects,
-                                                                   m_mpiCommOrder,
-                                                                   this->m_fractureRegionName );
+    embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
+                                                                 domain.getNeighbors(),
+                                                                 newObjects,
+                                                                 m_mpiCommOrder,
+                                                                 this->m_fractureRegionName );
 
-      addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
+    addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
 
-      EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
+    EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
 
-      // Populate EdgeManager for embedded surfaces.
-      EdgeManager & embSurfEdgeManager = meshLevel.getEmbSurfEdgeManager();
+    // Populate EdgeManager for embedded surfaces.
+    EdgeManager & embSurfEdgeManager = meshLevel.getEmbSurfEdgeManager();
 
-      EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion.edgeList();
+    EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion.edgeList();
 
-      localIndex numOfPoints = embSurfNodeManager.size();
+    localIndex numOfPoints = embSurfNodeManager.size();
 
-      // Create the edges
-      embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
-      // Node to cell map
-      embSurfNodeManager.setElementMaps( elemManager );
-      // Node to edge map
-      embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
-      embSurfNodeManager.compressRelationMaps();
+    // Create the edges
+    embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
+    // Node to cell map
+    embSurfNodeManager.setElementMaps( elemManager );
+    // Node to edge map
+    embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
+    embSurfNodeManager.compressRelationMaps();
   } );
 }
 
