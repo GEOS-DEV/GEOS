@@ -75,8 +75,8 @@ public:
 
   /// Type of kernel wrapper for in-kernel update
   // maybe problem to make inheritance virtual (to protect against possible diamond inheritance)
-class KernelWrapper final : public RelativePermeabilityBaseUpdate
-{
+  class KernelWrapper final : public RelativePermeabilityBaseUpdate
+  {
 public:
 
     /**
@@ -567,7 +567,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     // this is the saturation for the scanning curve endpoint
     real64 const krwedAtScrt = drainageRelPermKernelWrapper.compute( &Scrt );
     real64 const krwieStar = krwedAtScrt
-                             + deltak * pow( ( Smxd - Scrt ) / LvArray::math::max( KilloughHysteresis::KernelKilloughHysteresisBase::minScriMinusScrd, ( Smxd - Smxi ) ), m_KilloughKernel.getCurvatureParam() );
+                             + deltak * pow( ( Smxd - Scrt ) / LvArray::math::max( KilloughHysteresis::KernelKilloughHysteresisBase::minScriMinusScrd,
+                                                                                   ( Smxd - Smxi ) ), m_KilloughKernel.getCurvatureParam() );
 
     // Step 2: get the normalized value of saturation
     real64 const ratio = ( Smxi - Swc ) / ( Scrt - Shy );
@@ -620,7 +621,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   real64 const Smx = drainagePhaseMaxVolFraction;
   real64 const Shy = (phaseMaxHistoricalVolFraction < Smx) ? phaseMaxHistoricalVolFraction : Smx; // to make sure that Shy < Smax
   real64 Scrt = 0;
-  m_KilloughKernel.computeTrappedCriticalPhaseVolFraction( KilloughHysteresis::HysteresisCurve_t(drainagePhaseMaxVolFraction,imbibitionPhaseMinVolFraction,drainagePhaseMinVolFraction),
+  m_KilloughKernel.computeTrappedCriticalPhaseVolFraction( KilloughHysteresis::HysteresisCurve_t( drainagePhaseMaxVolFraction, imbibitionPhaseMinVolFraction, drainagePhaseMinVolFraction ),
                                                            Shy,
 //                                          jerauldParam_a,
 //                                          jerauldParam_b,
@@ -719,7 +720,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     real64 const Shy = ( phaseVolFraction[ipNonWetting] < m_drainagePhaseMaxVolFraction[ipNonWetting] )
       ? phaseVolFraction[ipNonWetting] : m_drainagePhaseMaxVolFraction[ipNonWetting]; // to make sure that Shy < Smax
     real64 Scrt = 0;
-    m_KilloughKernel.computeTrappedCriticalPhaseVolFraction( KilloughHysteresis::HysteresisCurve_t(m_drainagePhaseMaxVolFraction[ipNonWetting],m_imbibitionPhaseMinVolFraction[ipNonWetting],m_drainagePhaseMinVolFraction[ipNonWetting]),
+    m_KilloughKernel.computeTrappedCriticalPhaseVolFraction( KilloughHysteresis::HysteresisCurve_t( m_drainagePhaseMaxVolFraction[ipNonWetting], m_imbibitionPhaseMinVolFraction[ipNonWetting],
+                                                                                                    m_drainagePhaseMinVolFraction[ipNonWetting] ),
                                                              Shy,
 //                                            m_jerauldParam_a,
 //                                            m_jerauldParam_b,
@@ -820,7 +822,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     real64 const Shy = ( phaseVolFraction[ipNonWetting] < m_drainagePhaseMaxVolFraction[ipNonWetting] )
       ? phaseVolFraction[ipNonWetting] : m_drainagePhaseMaxVolFraction[ipNonWetting]; // to make sure that Shy < Smax
     real64 Scrt = 0;
-    m_KilloughKernel.computeTrappedCriticalPhaseVolFraction( KilloughHysteresis::HysteresisCurve_t(m_drainagePhaseMaxVolFraction[ipNonWetting],m_imbibitionPhaseMinVolFraction[ipNonWetting],m_drainagePhaseMinVolFraction[ipNonWetting]),
+    m_KilloughKernel.computeTrappedCriticalPhaseVolFraction( KilloughHysteresis::HysteresisCurve_t( m_drainagePhaseMaxVolFraction[ipNonWetting], m_imbibitionPhaseMinVolFraction[ipNonWetting],
+                                                                                                    m_drainagePhaseMinVolFraction[ipNonWetting] ),
                                                              Shy,
 //                                            m_jerauldParam_a,
 //                                            m_jerauldParam_b,

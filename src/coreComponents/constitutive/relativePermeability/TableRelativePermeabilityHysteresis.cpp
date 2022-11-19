@@ -39,8 +39,8 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
 
   registerWrapper( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString(),
                    &m_drainageWettingNonWettingRelPermTableNames ).
-                                                                    setInputFlag( InputFlags::OPTIONAL ).
-                                                                    setDescription(
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription(
     "List of drainage relative permeability tables for the pair (wetting phase, non-wetting phase)\n"
     "The expected format is \"{ wettingPhaseRelPermTableName, nonWettingPhaseRelPermTableName }\", in that order\n"
     "Note that this input is only used for two-phase flow.\n"
@@ -52,8 +52,8 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
 
   registerWrapper( viewKeyStruct::drainageWettingIntermediateRelPermTableNamesString(),
                    &m_drainageWettingIntermediateRelPermTableNames ).
-                                                                      setInputFlag( InputFlags::OPTIONAL ).
-                                                                      setDescription(
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription(
     "List of drainage relative permeability tables for the pair (wetting phase, intermediate phase)\n"
     "The expected format is \"{ wettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
     "Note that this input is only used for three-phase flow.\n"
@@ -63,8 +63,8 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
 
   registerWrapper( viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString(),
                    &m_drainageNonWettingIntermediateRelPermTableNames ).
-                                                                         setInputFlag( InputFlags::OPTIONAL ).
-                                                                         setDescription(
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription(
     "List of drainage relative permeability tables for the pair (non-wetting phase, intermediate phase)\n"
     "The expected format is \"{ nonWettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
     "Note that this input is only used for three-phase flow.\n"
@@ -75,27 +75,27 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
   // imbibition table names
 
   registerWrapper( viewKeyStruct::imbibitionWettingRelPermTableNameString(), &m_imbibitionWettingRelPermTableName ).
-                                                                                                                     setInputFlag(
+    setInputFlag(
     InputFlags::OPTIONAL ).
-                                                                                                                     setApplyDefaultValue(
+    setApplyDefaultValue(
     "" ).
-                                                                                                                     setDescription(
+    setDescription(
     "Imbibition relative permeability table name for the wetting phase.\n"
     "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
 
   registerWrapper( viewKeyStruct::imbibitionNonWettingRelPermTableNameString(),
                    &m_imbibitionNonWettingRelPermTableName ).
-                                                              setInputFlag( InputFlags::OPTIONAL ).
-                                                              setApplyDefaultValue( "" ).
-                                                              setDescription(
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( "" ).
+    setDescription(
     "Imbibition relative permeability table name for the non-wetting phase.\n"
     "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
 
   // hysteresis input parameters
   registerWrapper( viewKeyStruct::phaseHasHysteresisString(), &m_phaseHasHysteresis ).
-                                                                                       setInputFlag( InputFlags::FALSE )
-                                                                                     . // will be deduced from tables
-                                                                                       setSizedFromParent( 0 );
+    setInputFlag( InputFlags::FALSE )
+    .                                                                                  // will be deduced from tables
+    setSizedFromParent( 0 );
 
   registerExtrinsicData( extrinsicMeshData::relperm::phaseMaxHistoricalVolFraction{},
                          &m_phaseMaxHistoricalVolFraction );
@@ -105,7 +105,7 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
   /// Killough data
 
   registerWrapper( viewKeyStruct::KilloughModelNameString(), &m_KilloughModelName ).
-                                                                                     setInputFlag(
+    setInputFlag(
     InputFlags::REQUIRED ).setDescription( "name of the linked Killough Model" );
 
   registerWrapper( viewKeyStruct::KilloughModelWrapperString(), &m_KilloughKernel )
@@ -115,52 +115,56 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
 
   registerWrapper( viewKeyStruct::drainageRelPermKernelWrappersString(),
                    &m_drainageRelPermKernelWrappers ).
-                                                       setSizedFromParent( 0 ).
-                                                       setRestartFlags(
+    setSizedFromParent( 0 ).
+    setRestartFlags(
     RestartFlags::NO_WRITE );
 
   registerWrapper( viewKeyStruct::imbibitionRelPermKernelWrappersString(),
                    &m_imbibitionRelPermKernelWrappers ).
-                                                         setSizedFromParent( 0 ).
-                                                         setRestartFlags(
+    setSizedFromParent( 0 ).
+    setRestartFlags(
     RestartFlags::NO_WRITE );
+
+  registerWrapper( viewKeyStruct::landParameterString(), &m_landParam ).
+    setInputFlag( InputFlags::FALSE ). // will be deduced from tables
+    setSizedFromParent( 0 );
 
   //TODO reorder, what was stolen
 
   registerWrapper( viewKeyStruct::drainagePhaseMinVolumeFractionString(), &m_drainagePhaseMinVolFraction ).
-                                                                                                            setInputFlag(
+    setInputFlag(
     InputFlags::FALSE ). // will be deduced from tables
-                                                                                                            setSizedFromParent(
+    setSizedFromParent(
     0 );
 
   registerWrapper( viewKeyStruct::imbibitionPhaseMinVolumeFractionString(), &m_imbibitionPhaseMinVolFraction ).
-                                                                                                                setInputFlag(
+    setInputFlag(
     InputFlags::FALSE ). // will be deduced from tables
-                                                                                                                setSizedFromParent(
+    setSizedFromParent(
     0 );
 
   registerWrapper( viewKeyStruct::drainagePhaseRelPermEndPointString(), &m_drainagePhaseRelPermEndPoint ).
-                                                                                                           setInputFlag(
+    setInputFlag(
     InputFlags::FALSE ). // will be deduced from tables
-                                                                                                           setSizedFromParent(
+    setSizedFromParent(
     0 );
 
   registerWrapper( viewKeyStruct::imbibitionPhaseRelPermEndPointString(), &m_imbibitionPhaseRelPermEndPoint ).
-                                                                                                               setInputFlag(
+    setInputFlag(
     InputFlags::FALSE ). // will be deduced from tables
-                                                                                                               setSizedFromParent(
+    setSizedFromParent(
     0 );
 
   registerWrapper( viewKeyStruct::drainagePhaseMaxVolumeFractionString(), &m_drainagePhaseMaxVolFraction ).
-                                                                                                            setInputFlag(
+    setInputFlag(
     InputFlags::FALSE ). // will be deduced from tables
-                                                                                                            setSizedFromParent(
+    setSizedFromParent(
     0 );
 
   registerWrapper( viewKeyStruct::imbibitionPhaseMaxVolumeFractionString(), &m_imbibitionPhaseMaxVolFraction ).
-                                                                                                                setInputFlag(
+    setInputFlag(
     InputFlags::FALSE ). // will be deduced from tables
-                                                                                                                setSizedFromParent(
+    setSizedFromParent(
     0 );
 
 }
@@ -241,7 +245,6 @@ void TableRelativePermeabilityHysteresis::postProcessInput()
                              viewKeyStruct::imbibitionWettingRelPermTableNameString(),
                              viewKeyStruct::imbibitionNonWettingRelPermTableNameString() ),
                   InputError );
-
 
 
 
@@ -569,21 +572,21 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
 }
 
 KilloughHysteresis::KernelKilloughHysteresisBase TableRelativePermeabilityHysteresis::createKilloughKernelWrapper()
-  {
-    ConstitutiveManager
-    & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+{
+  ConstitutiveManager
+  & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
   KilloughHysteresis & KilloughModel = constitutiveManager.getGroup< KilloughHysteresis >( m_KilloughModelName );
   //can use move semantic
   return KilloughModel.createKernelWrapper( m_landParam,
-  m_drainagePhaseMinVolFraction,
-  m_imbibitionPhaseMinVolFraction,
-  m_drainagePhaseRelPermEndPoint,
-  m_imbibitionPhaseRelPermEndPoint,
-  m_drainagePhaseMaxVolFraction,
-  m_imbibitionPhaseMaxVolFraction,
-  m_phaseTrappedVolFrac );
+                                            m_drainagePhaseMinVolFraction,
+                                            m_imbibitionPhaseMinVolFraction,
+                                            m_drainagePhaseRelPermEndPoint,
+                                            m_imbibitionPhaseRelPermEndPoint,
+                                            m_drainagePhaseMaxVolFraction,
+                                            m_imbibitionPhaseMaxVolFraction,
+                                            m_phaseTrappedVolFrac );
 
-  }
+}
 
 TableRelativePermeabilityHysteresis::KernelWrapper
 TableRelativePermeabilityHysteresis::createKernelWrapper()

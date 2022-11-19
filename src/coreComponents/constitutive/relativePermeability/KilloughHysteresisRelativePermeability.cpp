@@ -21,7 +21,8 @@ KilloughHysteresisRelativePermeability::KilloughHysteresisRelativePermeabilityKe
                                                                                                                                     const arrayView1d< const geosx::real64 > & imbibitionRelPermEndPoint,
                                                                                                                                     const arrayView1d< const geosx::real64 > & drainageMaxPhaseVolFraction,
                                                                                                                                     const arrayView1d< const geosx::real64 > & imbibitionMaxPhaseVolFraction,
-                                                                                                                                    const arrayView3d< geosx::real64, relperm::USD_RELPERM > & phaseTrapppedVolFrac )
+                                                                                                                                    const arrayView3d< geosx::real64,
+                                                                                                                                                       relperm::USD_RELPERM > & phaseTrapppedVolFrac )
   :
   KilloughHysteresis::KernelKilloughHysteresisBase( jerauldParam_a,
                                                     jerauldParam_b,
@@ -33,7 +34,7 @@ KilloughHysteresisRelativePermeability::KilloughHysteresisRelativePermeabilityKe
                                                     drainageMaxPhaseVolFraction,
                                                     imbibitionMaxPhaseVolFraction,
                                                     phaseTrapppedVolFrac
-  ),
+                                                    ),
   m_killoughCurvatureParam( killoughCurvatureParam )
 { };
 
@@ -43,13 +44,13 @@ KilloughHysteresisRelativePermeability::KilloughHysteresisRelativePermeability( 
   : KilloughHysteresis( name, parent )
 {
 
-void KilloughHysteresisRelativePermeability::postProcessInput()
-{
+  void KilloughHysteresisRelativePermeability::postProcessInput()
+  {
 
-  KilloughHysteresis::postProcessInput();
+    KilloughHysteresis::postProcessInput();
 
 
-}
+  }
 
 
 //TODO

@@ -19,7 +19,7 @@ KilloughHysteresis::KernelKilloughHysteresisBase::KernelKilloughHysteresisBase( 
                                                                                 real64 const & killoughCurvaturePCParam,
                                                                                 arrayView1d< real64 const > const & landParam,
                                                                                 arrayView1d< const real64 > const & drainageMinPhaseVolFraction,
-                                                                                arrayView1d< const real64 > const& imbibitionMinPhaseVolFraction,
+                                                                                arrayView1d< const real64 > const & imbibitionMinPhaseVolFraction,
                                                                                 arrayView1d< const real64 > const & drainageRelPermEndPoint,
                                                                                 arrayView1d< const real64 > const & imbibitionRelPermEndPoint,
                                                                                 arrayView1d< const real64 > const & drainageMaxPhaseVolFraction,
@@ -44,12 +44,12 @@ KilloughHysteresis::KernelKilloughHysteresisBase::KernelKilloughHysteresisBase( 
                                                                                 const geosx::constitutive::KilloughHysteresis::HysteresisCurve_t & wettingCurve,
                                                                                 const geosx::constitutive::KilloughHysteresis::HysteresisCurve_t & nonWettingCurve,
                                                                                 const arrayView3d< geosx::real64, cappres::USD_CAPPRES > & phaseTrappedVolFrac ):
-                                                                                m_killoughCurvatureParamCapPres(killoughCurvaturePCParam),
-                                                                                m_landParam( landParam ),
-                                                                                m_drainagePhaseMinVolFraction(KilloughHysteresis::toDrainagePhaseMinVolFraction(wettingCurve,nonWettingCurve)),
-                                                                                m_imbibitionPhaseMinVolFraction(KilloughHysteresis::toDrainagePhaseMinVolFraction(wettingCurve,nonWettingCurve)),
-                                                                                m_drainagePhaseMaxVolFraction(KilloughHysteresis::toDrainagePhaseMinVolFraction(wettingCurve,nonWettingCurve)),
-                                                                                m_imbibitionPhaseMaxVolFraction(KilloughHysteresis::toDrainagePhaseMinVolFraction(wettingCurve,nonWettingCurve))
+  m_killoughCurvatureParamCapPres( killoughCurvaturePCParam ),
+  m_landParam( landParam ),
+  m_drainagePhaseMinVolFraction( KilloughHysteresis::toDrainagePhaseMinVolFraction( wettingCurve, nonWettingCurve )),
+  m_imbibitionPhaseMinVolFraction( KilloughHysteresis::toImbibitionPhaseMinVolFraction( wettingCurve, nonWettingCurve )),
+  m_drainagePhaseMaxVolFraction( KilloughHysteresis::toDrainagePhaseMaxVolFraction( wettingCurve, nonWettingCurve )),
+  m_imbibitionPhaseMaxVolFraction( KilloughHysteresis::toImbibitionPhaseMaxVolFraction( wettingCurve, nonWettingCurve ))
 {}
 
 
@@ -82,31 +82,31 @@ KilloughHysteresis::KilloughHysteresis( const std::string & name,
 {
 
   registerWrapper( viewKeyStruct::jerauldParameterAString(), &m_jerauldParam_a ).
-                                                                                  setInputFlag( InputFlags::OPTIONAL).
-                                                                                  setApplyDefaultValue( 0.1 ).
-                                                                                  setDescription(
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.1 ).
+    setDescription(
     "First parameter (modification parameter) introduced by Jerauld in the Land trapping model (see RTD documentation)." );
 
   registerWrapper( viewKeyStruct::jerauldParameterBString(), &m_jerauldParam_b ).
-                                                                                  setInputFlag( InputFlags::OPTIONAL ).
-                                                                                  setApplyDefaultValue( 0.0 ).
-                                                                                  setDescription(
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription(
     "Second parameter (modification parameter) introduced by Jerauld in the Land trapping model (see RTD documentation)." );
 
   registerWrapper( viewKeyStruct::killoughCurvatureParameterString(), &m_killoughCurvatureParam ).
-                                                                                                   setInputFlag(
+    setInputFlag(
     InputFlags::OPTIONAL ).
-                                                                                                   setApplyDefaultValue(
+    setApplyDefaultValue(
     1.0 ).
-                                                                                                   setDescription(
+    setDescription(
     "Curvature parameter introduced by Killough for wetting-phase hysteresis (see RTD documentation)." );
 
   registerWrapper( viewKeyStruct::killoughCurvatureCapPresParameterString(), &m_killoughCurvatureParamCapPres ).
-                                                                                                   setInputFlag(
+    setInputFlag(
     InputFlags::OPTIONAL ).
-                                                                                                   setApplyDefaultValue(
+    setApplyDefaultValue(
     .1 ).
-                                                                                                   setDescription(
+    setDescription(
     "Curvature parameter introduced by Killough for capillary pressure hysteresis (see RTD documentation)." );
 
 
@@ -190,4 +190,3 @@ KilloughHysteresis::createKernelWrapper( const arrayView1d< const geosx::real64 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, KilloughHysteresis, std::string const &, Group * const )
 }//end namespace
 }//end namespace
-

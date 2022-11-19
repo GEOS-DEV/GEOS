@@ -19,7 +19,8 @@ KilloughHysteresisCapillaryPressure::KilloughHysteresisCapillaryPressureKernel::
                                                                                                                            const arrayView1d< const geosx::real64 > & imbibitionRelPermEndPoint,
                                                                                                                            const arrayView1d< const geosx::real64 > & drainageMaxPhaseVolFraction,
                                                                                                                            const arrayView1d< const geosx::real64 > & imbibitionMaxPhaseVolFraction,
-                                                                                                                           const arrayView3d< geosx::real64, relperm::USD_RELPERM > & phaseTrapppedVolFrac )
+                                                                                                                           const arrayView3d< geosx::real64,
+                                                                                                                                              relperm::USD_RELPERM > & phaseTrapppedVolFrac )
   :
   KernelKilloughHysteresisBase( jerauldParam_a,
                                 jerauldParam_b,
@@ -31,7 +32,7 @@ KilloughHysteresisCapillaryPressure::KilloughHysteresisCapillaryPressureKernel::
                                 drainageMaxPhaseVolFraction,
                                 imbibitionMaxPhaseVolFraction,
                                 phaseTrapppedVolFrac
-  ),
+                                ),
   m_killoughCurvatureParamCapPres( killoughCurvatureParam )
 { };
 
@@ -41,11 +42,11 @@ KilloughHysteresisCapillaryPressure::KilloughHysteresisCapillaryPressure( const 
 {
 
   registerWrapper( viewKeyStruct::killoughCurvatureCapPresParameterString(), &m_killoughCurvatureParamCapPres ).
-                                                                                                                 setInputFlag(
+    setInputFlag(
     InputFlags::OPTIONAL ).
-                                                                                                                 setApplyDefaultValue(
+    setApplyDefaultValue(
     .1 ).
-                                                                                                                 setDescription(
+    setDescription(
     "Curvature parameter introduced by Killough for capillary pressure (see RTD documentation)." );
 }
 

@@ -10,7 +10,8 @@
 
 namespace geosx
 {
-namespace constitutive{
+namespace constitutive
+{
 
 
 class KilloughHysteresisCapillaryPressure : public KilloughHysteresis
@@ -18,7 +19,7 @@ class KilloughHysteresisCapillaryPressure : public KilloughHysteresis
 
 public:
 
-  KilloughHysteresisCapillaryPressure(string const& name, Group * const parent);
+  KilloughHysteresisCapillaryPressure( string const & name, Group * const parent );
 
   void postProcessInput() override;
 //  KernelWrapper createKernelWrapper();
@@ -39,7 +40,7 @@ public:
                                                const arrayView1d< const geosx::real64 > & imbibitionRelPermEndPoint,
                                                const arrayView1d< const geosx::real64 > & drainageMaxPhaseVolFraction,
                                                const arrayView1d< const geosx::real64 > & imbibitionMaxPhaseVolFraction,
-                                               const arrayView3d< geosx::real64, relperm::USD_RELPERM > & phaseTrapppedVolFrac);
+                                               const arrayView3d< geosx::real64, relperm::USD_RELPERM > & phaseTrapppedVolFrac );
 
 
     GEOSX_HOST_DEVICE
@@ -78,7 +79,7 @@ public:
 
 
 
-  private:
+private:
     /// Curvature parameter introduced for wetting phase hysteresis in Killough (for PC)
     real64 const m_killoughCurvatureParamCapPres;
 
@@ -100,21 +101,21 @@ private:
 GEOSX_HOST_DEVICE
 inline void
 KilloughHysteresisCapillaryPressure::KilloughHysteresisCapillaryPressureKernel::
-computeImbibitionWettingCapPres( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
-                                 TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
+  computeImbibitionWettingCapPres( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
+                                   TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
 //                                     real64 const & jerauldParam_a,
 //                                     real64 const & jerauldParam_b,
-                                 real64 const & landParam,
-                                 real64 const & phaseVolFraction,
-                                 real64 const & phaseMinHistoricalVolFraction,
-                                 real64 const & imbibitionPhaseMinWettingVolFraction,
-                                 real64 const & drainagePhaseMaxVolFraction,
-                                 real64 const & imbibitionPhaseMaxVolFraction,
-                                 real64 const & drainageRelPermEndPoint,
-                                 real64 const & imbibitionRelPermEndPoint,
-                                 real64 & phaseTrappedVolFrac,
-                                 real64 & phaseRelPerm,
-                                 real64 & dPhaseRelPerm_dPhaseVolFrac ) const
+                                   real64 const & landParam,
+                                   real64 const & phaseVolFraction,
+                                   real64 const & phaseMinHistoricalVolFraction,
+                                   real64 const & imbibitionPhaseMinWettingVolFraction,
+                                   real64 const & drainagePhaseMaxVolFraction,
+                                   real64 const & imbibitionPhaseMaxVolFraction,
+                                   real64 const & drainageRelPermEndPoint,
+                                   real64 const & imbibitionRelPermEndPoint,
+                                   real64 & phaseTrappedVolFrac,
+                                   real64 & phaseRelPerm,
+                                   real64 & dPhaseRelPerm_dPhaseVolFrac ) const
 {
   // use curvature param
 }
@@ -122,20 +123,20 @@ computeImbibitionWettingCapPres( TableFunction::KernelWrapper const & drainageRe
 GEOSX_HOST_DEVICE
 inline void
 KilloughHysteresisCapillaryPressure::KilloughHysteresisCapillaryPressureKernel::
-computeImbibitionNonWettingCapPres( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
-                                    TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
+  computeImbibitionNonWettingCapPres( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
+                                      TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
 //                                        real64 const & jerauldParam_a,
 //                                        real64 const & jerauldParam_b,
-                                    real64 const & landParam,
-                                    real64 const & phaseVolFraction,
-                                    real64 const & phaseMaxHistoricalVolFraction,
-                                    real64 const & drainagePhaseMinVolFraction,
-                                    real64 const & imbibitionPhaseMinVolFraction,
-                                    real64 const & drainagePhaseMaxVolFraction,
-                                    real64 const & drainageRelPermEndPoint,
-                                    real64 & phaseTrappedVolFrac,
-                                    real64 & phaseRelPerm,
-                                    real64 & dPhaseRelPerm_dPhaseVolFrac ) const
+                                      real64 const & landParam,
+                                      real64 const & phaseVolFraction,
+                                      real64 const & phaseMaxHistoricalVolFraction,
+                                      real64 const & drainagePhaseMinVolFraction,
+                                      real64 const & imbibitionPhaseMinVolFraction,
+                                      real64 const & drainagePhaseMaxVolFraction,
+                                      real64 const & drainageRelPermEndPoint,
+                                      real64 & phaseTrappedVolFrac,
+                                      real64 & phaseRelPerm,
+                                      real64 & dPhaseRelPerm_dPhaseVolFrac ) const
 {
   //use curvature param
 }

@@ -56,7 +56,7 @@ public:
   ///Kernel
   class KernelWrapper final : public CapillaryPressureBaseUpdate
   {
-  public:
+public:
 
     KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & wettingNonWettingCapillaryPressureKernelWrappers,
                    arrayView1d< TableFunction::KernelWrapper const > const & wettingIntermediateCapillaryPressureKernelWrappers,
@@ -74,7 +74,6 @@ public:
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseCapPressure,
                    arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseCapPressure_dPhaseVolFrac );
-
 
 
 
@@ -132,20 +131,20 @@ public:
 
     //uppermost call-wrappers
     GEOSX_HOST_DEVICE
-    virtual void compute(arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                         arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
-                         arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
-                         arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseTrappedVolFrac,
-                         arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPressure,
-                         arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPressure_dPhaseVolFrac ) const;
+    virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                          arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
+                          arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
+                          arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseTrappedVolFrac,
+                          arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPressure,
+                          arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPressure_dPhaseVolFrac ) const;
 
     GEOSX_HOST_DEVICE
     virtual void update( localIndex const k,
                          localIndex const q,
                          arraySlice1d< real64 const,
-                           compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override;
+                                       compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override;
 
-  private:
+private:
 
 
 
@@ -179,9 +178,9 @@ public:
   };
 
   /**
- * @brief Create an update kernel wrapper.
- * @return the wrapper
- */
+   * @brief Create an update kernel wrapper.
+   * @return the wrapper
+   */
   KernelWrapper createKernelWrapper();
 
   //might need it to be virtual one level higher --> from Killough/Hysteresis common class
@@ -260,6 +259,10 @@ public:
     static constexpr char const * nonWettingIntermediateCapillaryPressureKernelWrappersString()
     { return "nonWettingIntermediateCapillaryPressureKernelWrappers"; }
 
+    //misc
+    static constexpr char const * phaseIntermediateMinVolFractionString()
+    { return "phaseIntermediateMinVolFraction";}
+
   };
 
 
@@ -281,8 +284,8 @@ private:
   KilloughHysteresis::KernelKilloughHysteresisBase createKilloughKernelWrapper();
 
   /**
- * @brief Compute the Land coefficient for the wetting and non-wetting phases
- */
+   * @brief Compute the Land coefficient for the wetting and non-wetting phases
+   */
   void computeLandCoefficient();
 
   ///data members
@@ -341,14 +344,14 @@ private:
 };
 
 GEOSX_HOST_DEVICE
-inline void TableCapillaryPressureHysteresis::KernelWrapper::compute(arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                                                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
-                                                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
-                                                                     arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseTrappedVolFrac,
-                                                                     arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPressure,
-                                                                     arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPressure_dPhaseVolFrac
+inline void TableCapillaryPressureHysteresis::KernelWrapper::compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                                                                      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
+                                                                      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
+                                                                      arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseTrappedVolFrac,
+                                                                      arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPressure,
+                                                                      arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPressure_dPhaseVolFrac
 
-  ) const
+                                                                      ) const
 {
   LvArray::forValuesInSlice( dPhaseCapPressure_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 
@@ -411,15 +414,15 @@ GEOSX_HOST_DEVICE
 inline void TableCapillaryPressureHysteresis::KernelWrapper::update( const geosx::localIndex k,
                                                                      const geosx::localIndex q,
                                                                      const arraySlice1d< const geosx::real64,
-                                                                       compflow::USD_PHASE
-                                                                       - 1 > & phaseVolFraction ) const
+                                                                                         compflow::USD_PHASE
+                                                                                         - 1 > & phaseVolFraction ) const
 {
-  compute(phaseVolFraction,
-          m_phaseMaxHistoricalVolFraction[k],
-          m_phaseMinHistoricalVolFraction[k],
-          m_phaseTrappedVolFrac[k][q],
-          m_phaseCapPressure[k][q],
-          m_dPhaseCapPressure_dPhaseVolFrac[k][q]);
+  compute( phaseVolFraction,
+           m_phaseMaxHistoricalVolFraction[k],
+           m_phaseMinHistoricalVolFraction[k],
+           m_phaseTrappedVolFrac[k][q],
+           m_phaseCapPressure[k][q],
+           m_dPhaseCapPressure_dPhaseVolFrac[k][q] );
 }
 
 

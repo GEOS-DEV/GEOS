@@ -8,20 +8,22 @@
 #include "constitutive/KilloughHysteresis.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx {
-namespace constitutive{
+namespace geosx
+{
+namespace constitutive
+{
 
 class KilloughHysteresisRelativePermeability : public KilloughHysteresis
 {
 
 public:
 
-  KilloughHysteresisRelativePermeability(std::string const& name, Group * const parent);
+  KilloughHysteresisRelativePermeability( std::string const & name, Group * const parent );
 
   class KilloughHysteresisRelativePermeabilityKernel : public KernelKilloughHysteresisBase
   {
 
-  public:
+public:
 
     KilloughHysteresisRelativePermeabilityKernel( real64 const & jerauldParam_a,
                                                   real64 const & jerauldParam_b,
@@ -71,17 +73,16 @@ public:
 
 
 
-
-  private:
+private:
 
     /// Curvature parameter introduced for wetting phase hysteresis in Killough
     real64 const m_killoughCurvatureParam;
   };
 
-struct viewKeyStruct : public KilloughHysteresis::viewKeyStruct
-{
-  static constexpr char const * killoughCurvatureParameterString() { return "killoughCurvatureParameter"; }
-};
+  struct viewKeyStruct : public KilloughHysteresis::viewKeyStruct
+  {
+    static constexpr char const * killoughCurvatureParameterString() { return "killoughCurvatureParameter"; }
+  };
 
 
   void postProcessInput() override;
@@ -98,21 +99,21 @@ private:
 GEOSX_HOST_DEVICE
 inline void
 KilloughHysteresisRelativePermeability::KilloughHysteresisRelativePermeabilityKernel::
-computeImbibitionWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
-                                 TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
+  computeImbibitionWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
+                                   TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
 //                                 real64 const & jerauldParam_a,
 //                                 real64 const & jerauldParam_b,
-                                 real64 const & landParam,
-                                 real64 const & phaseVolFraction,
-                                 real64 const & phaseMinHistoricalVolFraction,
-                                 real64 const & imbibitionPhaseMinWettingVolFraction,
-                                 real64 const & drainagePhaseMaxVolFraction,
-                                 real64 const & imbibitionPhaseMaxVolFraction,
-                                 real64 const & drainageRelPermEndPoint,
-                                 real64 const & imbibitionRelPermEndPoint,
-                                 real64 & phaseTrappedVolFrac,
-                                 real64 & phaseRelPerm,
-                                 real64 & dPhaseRelPerm_dPhaseVolFrac ) const
+                                   real64 const & landParam,
+                                   real64 const & phaseVolFraction,
+                                   real64 const & phaseMinHistoricalVolFraction,
+                                   real64 const & imbibitionPhaseMinWettingVolFraction,
+                                   real64 const & drainagePhaseMaxVolFraction,
+                                   real64 const & imbibitionPhaseMaxVolFraction,
+                                   real64 const & drainageRelPermEndPoint,
+                                   real64 const & imbibitionRelPermEndPoint,
+                                   real64 & phaseTrappedVolFrac,
+                                   real64 & phaseRelPerm,
+                                   real64 & dPhaseRelPerm_dPhaseVolFrac ) const
 {
 
   // Step 0: preparing keypoints in the (S,kr) plan
@@ -184,20 +185,20 @@ computeImbibitionWettingRelPerm( TableFunction::KernelWrapper const & drainageRe
 GEOSX_HOST_DEVICE
 inline void
 KilloughHysteresisRelativePermeability::KilloughHysteresisRelativePermeabilityKernel::
-computeImbibitionNonWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
-                                    TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
+  computeImbibitionNonWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
+                                      TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
 //                                    real64 const & jerauldParam_a,
 //                                    real64 const & jerauldParam_b,
-                                    real64 const & landParam,
-                                    real64 const & phaseVolFraction,
-                                    real64 const & phaseMaxHistoricalVolFraction,
-                                    real64 const & drainagePhaseMinVolFraction,
-                                    real64 const & imbibitionPhaseMinVolFraction,
-                                    real64 const & drainagePhaseMaxVolFraction,
-                                    real64 const & drainageRelPermEndPoint,
-                                    real64 & phaseTrappedVolFrac,
-                                    real64 & phaseRelPerm,
-                                    real64 & dPhaseRelPerm_dPhaseVolFrac ) const
+                                      real64 const & landParam,
+                                      real64 const & phaseVolFraction,
+                                      real64 const & phaseMaxHistoricalVolFraction,
+                                      real64 const & drainagePhaseMinVolFraction,
+                                      real64 const & imbibitionPhaseMinVolFraction,
+                                      real64 const & drainagePhaseMaxVolFraction,
+                                      real64 const & drainageRelPermEndPoint,
+                                      real64 & phaseTrappedVolFrac,
+                                      real64 & phaseRelPerm,
+                                      real64 & dPhaseRelPerm_dPhaseVolFrac ) const
 {
   // note: for simplicity, the notations are taken from IX documentation (although this breaks our phaseVolFrac naming convention)
 

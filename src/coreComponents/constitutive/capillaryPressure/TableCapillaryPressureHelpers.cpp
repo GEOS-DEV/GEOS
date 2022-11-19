@@ -73,24 +73,25 @@ TableCapillaryPressureHelpers::validateCapillaryPressureTable( TableFunction con
 
 
 void
-TableCapillaryPressureHelpers::validateCapillaryPressureTable(const geosx::TableFunction &capPresTable,
-                                                              const geosx::string &fullConstitutiveName,
-                                                              const bool capPresMustBeIncreasing,
-                                                              geosx::real64 &phaseMax, geosx::real64 &phaseMin) {
+TableCapillaryPressureHelpers::validateCapillaryPressureTable( const geosx::TableFunction & capPresTable,
+                                                               const geosx::string & fullConstitutiveName,
+                                                               const bool capPresMustBeIncreasing,
+                                                               geosx::real64 & phaseMax, geosx::real64 & phaseMin )
+{
 
-  TableCapillaryPressureHelpers::validateCapillaryPressureTable(capPresTable,fullConstitutiveName,capPresMustBeIncreasing);
+  TableCapillaryPressureHelpers::validateCapillaryPressureTable( capPresTable, fullConstitutiveName, capPresMustBeIncreasing );
   ArrayOfArraysView< real64 const > coords = capPresTable.getCoordinates();
-    arraySlice1d< real64 const > phaseVolFrac = coords[0];
-    phaseMin = phaseVolFrac[0];
-    phaseMax = phaseVolFrac[phaseVolFrac.size()-1];
-    arrayView1d< real64 const > const capPres = capPresTable.getValues();
-    for( localIndex i = 1; i < coords.sizeOfArray( 0 ); ++i )
+  arraySlice1d< real64 const > phaseVolFrac = coords[0];
+  phaseMin = phaseVolFrac[0];
+  phaseMax = phaseVolFrac[phaseVolFrac.size()-1];
+  arrayView1d< real64 const > const capPres = capPresTable.getValues();
+  for( localIndex i = 1; i < coords.sizeOfArray( 0 ); ++i )
+  {
+    if( isZero( capPres[i-1] ) && !isZero( capPres[i] ) )
     {
-        if( isZero( capPres[i-1] ) && !isZero( capPres[i] ) )
-        {
-            phaseMin = phaseVolFrac[i-1];
-        }
+      phaseMin = phaseVolFrac[i-1];
     }
+  }
 }
 
 

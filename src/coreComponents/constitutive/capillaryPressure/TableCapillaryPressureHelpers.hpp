@@ -42,12 +42,12 @@ struct TableCapillaryPressureHelpers
                                        bool const capPresMustBeIncreasing );
 
 
-    static
-    void validateCapillaryPressureTable( TableFunction const & capPresTable,
-                                         string const & fullConstitutiveName,
-                                         bool const capPresMustBeIncreasing,
-                                         real64& phaseMax,
-                                         real64& phaseMin );
+  static
+  void validateCapillaryPressureTable( TableFunction const & capPresTable,
+                                       string const & fullConstitutiveName,
+                                       bool const capPresMustBeIncreasing,
+                                       real64 & phaseMax,
+                                       real64 & phaseMin );
 
 };
 
