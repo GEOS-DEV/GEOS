@@ -263,7 +263,7 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
   arrayView1d< real64 const > const patchDamage = patchNodeManager.getReference< array1d< real64 > >( "Damage" );
   NodeManager const & baseNodeManager = base.getNodeManager();
   //arrayView2d< real64 const > const baseDisp = baseNodeManager.totalDisplacement();
-  arrayView2d< real64 const > const baseDisp = baseNodeManager.getField< fields::solidMechanics::totalDisplacement >();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const baseDisp = baseNodeManager.getField< fields::solidMechanics::totalDisplacement >();
   //unordered_map< globalIndex, localIndex > const & patchGlobalToLocalMap = baseNodeManager.globalToLocalMap();
 
   //we need to zero the lists to erase data from previous step
