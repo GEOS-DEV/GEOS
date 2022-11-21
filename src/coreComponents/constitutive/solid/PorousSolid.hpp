@@ -190,6 +190,8 @@ public:
                             deltaFluidPressure,
                             deltaTemperature, 
                             totalMeanStressIncrement );
+
+    // The body force is calculated in the SolidMechancis kernel and the fluid contribution is neglected here 
   }
 
   template< int NUM_MAX_COMPONENTS >
