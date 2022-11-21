@@ -358,28 +358,30 @@ void applyGradientTestFunctions(
   tensor::StaticDTensor< num_quads_1d, num_quads_1d, num_quads_1d, 3 > const & q_values,
   tensor::StaticDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > & dofs )
 {
-  using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
-
   // Contraction on the first dimension
   tensor::StaticDTensor< num_dofs_1d, num_quads_1d, num_quads_1d > Gqx, Bqy, Bqz;
+  #pragma unroll
   for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
   {
+    #pragma unroll
     for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
     {
       real64 gqx[ num_quads_1d ];
       real64 bqy[ num_quads_1d ];
       real64 bqz[ num_quads_1d ];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         gqx[ quad_z ] = 0.0;
         bqy[ quad_z ] = 0.0;
         bqz[ quad_z ] = 0.0;
       }
+      #pragma unroll
       for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
       {
         real64 const b = basis[ dof_x ][ quad_x ];
         real64 const g = basis_gradient[ dof_x ][ quad_x ];
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           // assumes quads in shared
@@ -391,6 +393,7 @@ void applyGradientTestFunctions(
           bqz[ quad_z ] += b * qz;
         }
       }
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         Gqx( dof_x, quad_y, quad_z ) = gqx[ quad_z ];
@@ -402,23 +405,28 @@ void applyGradientTestFunctions(
 
   // Contraction on the second dimension
   tensor::StaticDTensor< num_dofs_1d, num_dofs_1d, num_quads_1d > BGqx, GBqy, BBqz;
+  #pragma unroll
   for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
   {
+    #pragma unroll
     for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
     {
       real64 bgqx[num_quads_1d];
       real64 gbqy[num_quads_1d];
       real64 bbqz[num_quads_1d];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         bgqx[quad_z] = 0.0;
         gbqy[quad_z] = 0.0;
         bbqz[quad_z] = 0.0;
       }
+      #pragma unroll
       for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
       {
         real64 const b = basis[dof_y][quad_y];
         real64 const g = basis_gradient[dof_y][quad_y];
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           real64 const gqx = Gqx( dof_x, quad_y, quad_z );
@@ -429,6 +437,7 @@ void applyGradientTestFunctions(
           bbqz[quad_z] += b * bqz;
         }
       }
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         BGqx( dof_x, dof_y, quad_z ) = bgqx[quad_z];
@@ -439,23 +448,28 @@ void applyGradientTestFunctions(
   }
 
   // Contraction on the third dimension
+  #pragma unroll
   for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
   {
+    #pragma unroll
     for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
     {
       // Cache values in registers to read them only once from shared
       real64 bgqx[num_quads_1d];
       real64 gbqy[num_quads_1d];
       real64 bbqz[num_quads_1d];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         bgqx[quad_z] = BGqx( dof_x, dof_y, quad_z );
         gbqy[quad_z] = GBqy( dof_x, dof_y, quad_z );
         bbqz[quad_z] = BBqz( dof_x, dof_y, quad_z );
       }
+      #pragma unroll
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
         real64 res = 0.0;
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           real64 const b = basis[dof_z][quad_z];
@@ -1087,18 +1101,22 @@ void applyGradientTestFunctions(
   loop3D( stack, num_dofs_1d, num_dofs_1d, num_dofs_1d,
           [&]( localIndex dof_x, localIndex dof_y, localIndex dof_z){
     real64 v[ num_comp ];
+    #pragma unroll
     for (localIndex comp = 0; comp < num_comp; comp++)
     {
       v[ comp ] = 0.0;
     }
+    #pragma unroll
     for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
     {
       real64 const bz = Bz[quad_z];
       real64 const gz = Gz[quad_z];
+      #pragma unroll
       for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
       {
         real64 const by = By[quad_y];
         real64 const gy = Gy[quad_y];
+        #pragma unroll
         for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
         {
           real64 const bx = Bx[quad_x];
@@ -1106,11 +1124,16 @@ void applyGradientTestFunctions(
           real64 const dx = gx * by * bz;
           real64 const dy = bx * gy * bz;
           real64 const dz = bx * by * gz;
+          // localIndex const srcLane = quad_x + num_quads_1d * ( quad_y + num_quads_1d * ( quad_z + num_quads_1d * stack.batch_index ) );
+          #pragma unroll
           for (localIndex comp = 0; comp < num_comp; comp++)
           {
             real64 const valx = Du( quad_x, quad_y, quad_z, comp, 0 );
+            // real64 const valx = __shfl_sync(0xffffffff, q_values( quad_x, quad_y, quad_z, comp, 0 ), srcLane);
             real64 const valy = Du( quad_x, quad_y, quad_z, comp, 1 );
+            // real64 const valy = __shfl_sync(0xffffffff, q_values( quad_x, quad_y, quad_z, comp, 1 ), srcLane);
             real64 const valz = Du( quad_x, quad_y, quad_z, comp, 2 );
+            // real64 const valz = __shfl_sync(0xffffffff, q_values( quad_x, quad_y, quad_z, comp, 2 ), srcLane);
             v[ comp ] += dx * valx;
             v[ comp ] += dy * valy;
             v[ comp ] += dz * valz;
@@ -1118,11 +1141,30 @@ void applyGradientTestFunctions(
         }
       }
     }
+    #pragma unroll
     for (localIndex comp = 0; comp < num_comp; comp++)
     {
       dofs( dof_x, dof_y, dof_z, comp ) = v[ comp ];
     }
   } );
+}
+
+template < typename StackVariables,
+           typename Basis,
+           typename QValues,
+           typename Dofs >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void applyGradientTestFunctions( StackVariables & stack,
+                                 Basis const & basis,
+                                 QValues const & q_values,
+                                 Dofs& dofs )
+{
+  applyGradientTestFunctions( stack,
+                              basis.getValuesAtQuadPts(),
+                              basis.getGradientValuesAtQuadPts(),
+                              q_values,
+                              dofs );
 }
 
 } // namespace finiteElement

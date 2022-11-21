@@ -41,6 +41,12 @@ class LagrangeBasis<1> : public finiteElement::LagrangeBasis1 { };
 template < localIndex num_dofs_1d, localIndex num_quads_1d >
 struct StackBasis
 {
+  template <typename Stack>
+  GEOSX_HOST_DEVICE
+  StackBasis( Stack & stack )
+    : StackBasis( stack.ctx )
+  { }
+
   GEOSX_HOST_DEVICE
   StackBasis( LaunchContext & ctx )
   {
