@@ -132,7 +132,7 @@ public:
     GEOSX_UNUSED_VAR( faceManager );
     GEOSX_UNUSED_VAR( targetRegionIndex );
   }
-
+  
   //***************************************************************************
   /**
    * @class StackVariables
@@ -140,163 +140,126 @@ public:
    *
    * Adds a stack array for the primary field.
    */
-  struct StackVariables : public Base::StackVariables
+  template < typename KernelConfig >
+  struct StackVariables : public Base::template StackVariables< KernelConfig >
   {
     static constexpr localIndex dim = 3;
     static constexpr localIndex num_dofs_mesh_1d = 2; // TODO
     static constexpr localIndex num_dofs_1d = 2; // TODO
-    using Base::StackVariables::num_quads_1d;
-    using Base::StackVariables::batch_size;
+    static constexpr localIndex num_quads_1d = 2; // TODO
+
+    using Basis = stackVariables::StackBasis<num_dofs_1d,num_quads_1d>;
 
     /**
      * @brief Constructor
      */
     GEOSX_HOST_DEVICE
-    StackVariables( TeamLaplaceFEMKernel const & kernelComponent, LaunchContext & ctx ):
-      Base::StackVariables( ctx ),
-      kernelComponent( kernelComponent ),
-      mesh( ctx ),
-      element( ctx ),
-      weights( ctx ),
-      shared_mem( ctx )
+    StackVariables( LaunchContext & ctx ):
+      Base::template StackVariables<KernelConfig>( ctx )
     {}
 
-    TeamLaplaceFEMKernel const & kernelComponent;
-
-    // TODO alias shared buffers / Generalize for non-tensor elements
-    stackVariables::SharedMesh< num_dofs_mesh_1d, num_quads_1d, dim, batch_size > mesh;
-    stackVariables::SharedElement< num_dofs_1d, num_quads_1d, dim, batch_size > element;
-    stackVariables::SharedQuadratureWeights< num_quads_1d > weights;
-
     /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
-    static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim;
-    static constexpr localIndex num_buffers = 2 * dim;
-    stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
+    // static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim;
+    // static constexpr localIndex num_buffers = 2 * dim;
+    // stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
   };
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void kernelSetup( StackVariables & stack ) const
+  template< typename POLICY, // ignored
+            typename KERNEL_TYPE >
+  static
+  real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & fields )
   {
-  }
+    GEOSX_MARK_FUNCTION;
 
-  /**
-   * @brief Copy global values from primary field to a local stack array.
-   * @copydoc geosx::finiteElement::TeamKernelBase::setup
-   *
-   * For the TeamLaplaceFEMKernel implementation, global values from the
-   * primaryField, and degree of freedom numbers are placed into element local
-   * stack storage.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void setup( StackVariables & stack,
-              localIndex const element_index ) const
-  {
-    Base::setup( stack, element_index );
-    /// Computation of the Jacobians
-    readField( stack, stack.kernelComponent.m_X, stack.mesh.getNodes() );
-    interpolateGradientAtQuadraturePoints( stack,
-                                           stack.mesh.basis.getValuesAtQuadPts(),
-                                           stack.mesh.basis.getGradientValuesAtQuadPts(),
-                                           stack.mesh.getNodes(),
-                                           stack.mesh.getJacobians() );
+    fields.m_X.move( LvArray::MemorySpace::cuda, false );
+    fields.m_src.move( LvArray::MemorySpace::cuda, false );
+    fields.m_dst.move( LvArray::MemorySpace::cuda, true );
+    fields.m_elemsToNodes.move( LvArray::MemorySpace::cuda, false );
 
-    /// Computation of the Gradient of the solution field
-    readField( stack, stack.kernelComponent.m_src, stack.element.getDofsIn() );
-    interpolateGradientAtQuadraturePoints( stack,
-                                           stack.element.basis.getValuesAtQuadPts(),
-                                           stack.element.basis.getGradientValuesAtQuadPts(),
-                                           stack.element.getDofsIn(),
-                                           stack.element.getGradientValues() );
-  }
+    // FE Config
+    constexpr localIndex num_dofs_1d = 2;
+    constexpr localIndex num_dofs_mesh_1d = 2;
+    constexpr localIndex num_quads_1d = 2;
 
-  /**
-   * @copydoc geosx::finiteElement::TeamKernelBase::quadraturePointKernel
-   */
-  template < typename QuadraturePointIndex >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointKernel( StackVariables & stack,
-                              QuadraturePointIndex const & quad_index ) const
-  {
-    /// QFunction for Laplace operator
-    constexpr int dim = StackVariables::dim;
+    // Kernel Config
+    constexpr ThreadingModel threading_model = ThreadingModel::Serial;
+    constexpr localIndex num_threads_1d = num_quads_1d;
+    constexpr localIndex batch_size = 32;
 
-    // Load q-local gradients
-    real64 grad_u[ dim ];
-    qLocalLoad( quad_index, stack.element.getGradientValues(), grad_u );
+    using KernelConf = finiteElement::KernelConfiguration< threading_model, num_threads_1d, batch_size >;
+    using Stack = StackVariables<KernelConf>;
 
-    // load q-local jacobian
-    real64 J[ dim ][ dim ];
-    qLocalLoad( quad_index, stack.mesh.getJacobians(), J );
-
-    // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
-    real64 const weight = stack.weights( quad_index );
-
-    real64 const detJ = determinant( J );
-
-    real64 AdjJ[ dim ][ dim ];
-    adjugate( J, AdjJ );
-
-    real64 D[ dim ][ dim ];
-    D[0][0] = weight / detJ * (AdjJ[0][0]*AdjJ[0][0] + AdjJ[0][1]*AdjJ[0][1] + AdjJ[0][2]*AdjJ[0][2]);
-    D[1][0] = weight / detJ * (AdjJ[0][0]*AdjJ[1][0] + AdjJ[0][1]*AdjJ[1][1] + AdjJ[0][2]*AdjJ[1][2]);
-    D[2][0] = weight / detJ * (AdjJ[0][0]*AdjJ[2][0] + AdjJ[0][1]*AdjJ[2][1] + AdjJ[0][2]*AdjJ[2][2]);
-    D[0][1] = D[1][0];
-    D[1][1] = weight / detJ * (AdjJ[1][0]*AdjJ[1][0] + AdjJ[1][1]*AdjJ[1][1] + AdjJ[1][2]*AdjJ[1][2]);
-    D[2][1] = weight / detJ * (AdjJ[1][0]*AdjJ[2][0] + AdjJ[1][1]*AdjJ[2][1] + AdjJ[1][2]*AdjJ[2][2]);
-    D[0][2] = D[2][0];
-    D[1][2] = D[2][1];
-    D[2][2] = weight / detJ * (AdjJ[2][0]*AdjJ[2][0] + AdjJ[2][1]*AdjJ[2][1] + AdjJ[2][2]*AdjJ[2][2]);
-
-    // Compute D_q * grad_u_q
-    real64 Du[ dim ];
-    for (localIndex d = 0; d < dim; d++)
+    finiteElement::forallElements<KernelConf>( numElems, fields, [=] GEOSX_HOST_DEVICE ( Stack & stack )
     {
-      Du[d] = D[d][0] * grad_u[0]
-            + D[d][1] * grad_u[1]
-            + D[d][2] * grad_u[2];
-    }
-    qLocalWrite( quad_index, Du, stack.element.getQuadValues() );
-  }
+      typename Stack::Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > nodes;
+      typename Stack::Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d > dofs_in;
+      readField( stack, fields.m_elemsToNodes, fields.m_X, nodes );
+      readField( stack, fields.m_elemsToNodes, fields.m_src, dofs_in );
 
-  /**
-   * @copydoc geosx::finiteElement::TeamKernelBase::complete
-   *
-   * Form element residual from the fully formed element Jacobian dotted with
-   * the primary field and map the element local Jacobian/Residual to the
-   * global matrix/vector.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  real64 complete( StackVariables & stack ) const
-  {
-    using RAJA::RangeSegment;
+      typename Stack::Basis basis( stack );
+      /// Computation of the Jacobians
+      typename Stack::Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3, 3 > Jac;
+      interpolateGradientAtQuadraturePoints( stack, basis, nodes, Jac );
 
-    // Applying gradient of the test functions
-    applyGradientTestFunctions( stack,
-                                stack.element.basis.getValuesAtQuadPts(),
-                                stack.element.basis.getGradientValuesAtQuadPts(),
-                                stack.element.getQuadValues(),
-                                stack.element.getDofsOut() );
-    writeAddField( stack, stack.element.getDofsOut(), stack.kernelComponent.m_dst );
+      /// Computation of the Gradient of the solution field
+      typename Stack::Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > Gu;
+      interpolateGradientAtQuadraturePoints( stack, basis, dofs_in, Gu );
 
-    constexpr localIndex num_dofs_1d = StackVariables::num_dofs_1d;
-    real64 maxForce = 0;
-    // TODO put this into a lambda "iterator" function
-    auto & dofs_out = stack.element.getDofsOut();
-    loop<thread_x> (stack.ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
-    {
-      loop<thread_y> (stack.ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+      /// QFunction
+      forallQuadratureIndices( stack, [&]( auto const & quad_index )
       {
-        for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
+        /// QFunction for Laplace operator
+        constexpr int dim = Stack::dim;
+
+        // Load q-local gradients
+        real64 grad_u[ dim ];
+        qLocalLoad( quad_index, Gu, grad_u );
+
+        // load q-local jacobian
+        real64 J[ dim ][ dim ];
+        qLocalLoad( quad_index, Jac, J );
+
+        // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
+        real64 const weight = 1.0; // stack.weights( quad_index ); // FIXME
+
+        real64 const detJ = determinant( J );
+        real64 const detJinv = 1.0 / detJ;
+
+        real64 AdjJ[ dim ][ dim ];
+        adjugate( J, AdjJ );
+
+        real64 D[ dim ][ dim ];
+        D[0][0] = weight * detJinv * (AdjJ[0][0]*AdjJ[0][0] + AdjJ[0][1]*AdjJ[0][1] + AdjJ[0][2]*AdjJ[0][2]);
+        D[1][0] = weight * detJinv * (AdjJ[0][0]*AdjJ[1][0] + AdjJ[0][1]*AdjJ[1][1] + AdjJ[0][2]*AdjJ[1][2]);
+        D[2][0] = weight * detJinv * (AdjJ[0][0]*AdjJ[2][0] + AdjJ[0][1]*AdjJ[2][1] + AdjJ[0][2]*AdjJ[2][2]);
+        D[0][1] = D[1][0];
+        D[1][1] = weight * detJinv * (AdjJ[1][0]*AdjJ[1][0] + AdjJ[1][1]*AdjJ[1][1] + AdjJ[1][2]*AdjJ[1][2]);
+        D[2][1] = weight * detJinv * (AdjJ[1][0]*AdjJ[2][0] + AdjJ[1][1]*AdjJ[2][1] + AdjJ[1][2]*AdjJ[2][2]);
+        D[0][2] = D[2][0];
+        D[1][2] = D[2][1];
+        D[2][2] = weight * detJinv * (AdjJ[2][0]*AdjJ[2][0] + AdjJ[2][1]*AdjJ[2][1] + AdjJ[2][2]*AdjJ[2][2]);
+
+        // Compute D_q * grad_u_q
+        real64 Du[ dim ];
+        for (localIndex d = 0; d < dim; d++)
         {
-          maxForce = fmax( maxForce, fabs( dofs_out[ dof_x ][ dof_y ][ dof_z ] ) );
+          Du[d] = D[d][0] * grad_u[0]
+                + D[d][1] * grad_u[1]
+                + D[d][2] * grad_u[2];
         }
+        qLocalWrite( quad_index, Du, Gu );
       } );
+
+      /// Application of the test functions
+      typename Stack::Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d > dofs_out;
+      applyGradientTestFunctions( stack, basis, Gu, dofs_out );
+
+      writeAddField( stack, fields.m_elemsToNodes, dofs_out, fields.m_dst );
+
     } );
-    return maxForce;
+    return 0.0;
   }
 
   /// The array containing the nodal position array.
@@ -304,12 +267,6 @@ public:
 
   arrayView1d< real64 const > const m_src;
   arrayView1d< real64 > const m_dst;
-
-  /// The global primary field array.
-  // arrayView1d< real64 const > const m_primaryField;
-
-  /// The global residual vector.
-  // arrayView1d< real64 > const m_rhs;
 };
 
 /// The factory used to construct a TeamLaplaceFEMKernel.
@@ -370,132 +327,120 @@ public:
    *
    * Adds a stack array for the primary field.
    */
-  struct StackVariables : public Base::StackVariables
+  template < typename KernelConfig >
+  struct StackVariables : public Base::template StackVariables< KernelConfig >
   {
     static constexpr localIndex dim = 3;
     static constexpr localIndex num_dofs_mesh_1d = 2; // TODO
     static constexpr localIndex num_dofs_1d = 2; // TODO
-    using Base::StackVariables::num_quads_1d;
-    using Base::StackVariables::batch_size;
+    static constexpr localIndex num_quads_1d = 2; // TODO
+
+    using Basis = stackVariables::StackBasis<num_dofs_1d,num_quads_1d>;
 
     /**
      * @brief Constructor
      */
     GEOSX_HOST_DEVICE
-    StackVariables( TeamLaplaceFEMDiagonalKernel const & kernelComponent,
-                    LaunchContext & ctx ):
-      Base::StackVariables( ctx ),
-      kernelComponent( kernelComponent ),
-      mesh( ctx ),
-      element_basis( ctx ),
-      quad_values( ctx ),
-      diag( ctx ),
-      weights( ctx ),
-      shared_mem( ctx )
+    StackVariables( LaunchContext & ctx )
+    : Base::template StackVariables< KernelConfig >( ctx ) //,
+      // diag( ctx )//,
+      // weights( ctx ),
+      // shared_mem( ctx )
     {}
 
-    TeamLaplaceFEMDiagonalKernel const & kernelComponent;
-
     // TODO alias shared buffers / Generalize for non-tensor elements
-    stackVariables::SharedMesh< num_dofs_mesh_1d, num_quads_1d, dim, batch_size > mesh;
-    stackVariables::SharedBasis< num_dofs_1d, num_quads_1d > element_basis;
-    stackVariables::Shared2DMem< num_quads_1d, dim, batch_size > quad_values;
-    stackVariables::SharedMem< num_dofs_1d, batch_size > diag;
-    stackVariables::SharedQuadratureWeights< num_quads_1d > weights;
+    // stackVariables::SharedMesh< num_dofs_mesh_1d, num_quads_1d, dim, batch_size > mesh;
+    // stackVariables::SharedBasis< num_dofs_1d, num_quads_1d > element_basis;
+    // stackVariables::Shared2DMem< num_quads_1d, dim, batch_size > quad_values;
+    // stackVariables::SharedMem< num_dofs_1d, batch_size > diag;
+    // stackVariables::SharedQuadratureWeights< num_quads_1d > weights;
 
     /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
-    static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
-    static constexpr localIndex num_buffers = 2;
-    stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
+    // static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
+    // static constexpr localIndex num_buffers = 2;
+    // stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
   };
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void kernelSetup( StackVariables & stack ) const
+  template< typename POLICY, // ignored
+            typename KERNEL_TYPE >
+  static
+  real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & fields )
   {
-  }
+    GEOSX_MARK_FUNCTION;
 
-  /**
-   * @brief Copy global values from primary field to a local stack array.
-   * @copydoc geosx::finiteElement::TeamKernelBase::setup
-   *
-   * For the TeamLaplaceFEMKernel implementation, global values from the
-   * primaryField, and degree of freedom numbers are placed into element local
-   * stack storage.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void setup( StackVariables & stack,
-              localIndex const element_index ) const
-  {
-    Base::setup( stack, element_index );
-    /// Computation of the Jacobians
-    readField( stack, stack.kernelComponent.m_X, stack.mesh.getNodes() );
-    interpolateGradientAtQuadraturePoints( stack,
-                                           stack.mesh.basis.getValuesAtQuadPts(),
-                                           stack.mesh.basis.getGradientValuesAtQuadPts(),
-                                           stack.mesh.getNodes(),
-                                           stack.mesh.getJacobians() );
-  }
+    fields.m_X.move( LvArray::MemorySpace::cuda, false );
+    fields.m_diag.move( LvArray::MemorySpace::cuda, true );
+    fields.m_elemsToNodes.move( LvArray::MemorySpace::cuda, false );
 
-  /**
-   * @copydoc geosx::finiteElement::TeamKernelBase::quadraturePointKernel
-   */
-  template < typename QuadraturePointIndex >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointKernel( StackVariables & stack,
-                              QuadraturePointIndex const & quad_index ) const
-  {
-    /// QFunction for Laplace operator
-    constexpr int dim = StackVariables::dim;
+    // FE Config
+    constexpr localIndex num_dofs_1d = 2;
+    constexpr localIndex num_dofs_mesh_1d = 2;
+    constexpr localIndex num_quads_1d = 2;
 
-    // load q-local jacobian
-    real64 J[ dim ][ dim ];
-    qLocalLoad( quad_index, stack.mesh.getJacobians(), J );
+    // Kernel Config
+    constexpr ThreadingModel threading_model = ThreadingModel::Serial;
+    constexpr localIndex num_threads_1d = num_quads_1d;
+    constexpr localIndex batch_size = 32;
 
-    // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
-    real64 const weight = stack.weights( quad_index );
+    using KernelConf = finiteElement::KernelConfiguration< threading_model, num_threads_1d, batch_size >;
+    using Stack = StackVariables<KernelConf>;
 
-    real64 const detJ = determinant( J );
+    finiteElement::forallElements<KernelConf>( numElems, fields, [=] GEOSX_HOST_DEVICE ( Stack & stack )
+    {
+      typename Stack::Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > nodes;
+      readField( stack, fields.m_elemsToNodes, fields.m_X, nodes );
 
-    real64 AdjJ[ dim ][ dim ];
-    adjugate( J, AdjJ );
+      typename Stack::Basis basis( stack );
+      /// Computation of the Jacobians
+      typename Stack::Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3, 3 > Jac;
+      interpolateGradientAtQuadraturePoints( stack, basis, nodes, Jac );
 
-    real64 D[ dim ][ dim ];
-    D[0][0] = weight / detJ * (AdjJ[0][0]*AdjJ[0][0] + AdjJ[0][1]*AdjJ[0][1] + AdjJ[0][2]*AdjJ[0][2]);
-    D[1][0] = weight / detJ * (AdjJ[0][0]*AdjJ[1][0] + AdjJ[0][1]*AdjJ[1][1] + AdjJ[0][2]*AdjJ[1][2]);
-    D[2][0] = weight / detJ * (AdjJ[0][0]*AdjJ[2][0] + AdjJ[0][1]*AdjJ[2][1] + AdjJ[0][2]*AdjJ[2][2]);
-    D[0][1] = D[1][0];
-    D[1][1] = weight / detJ * (AdjJ[1][0]*AdjJ[1][0] + AdjJ[1][1]*AdjJ[1][1] + AdjJ[1][2]*AdjJ[1][2]);
-    D[2][1] = weight / detJ * (AdjJ[1][0]*AdjJ[2][0] + AdjJ[1][1]*AdjJ[2][1] + AdjJ[1][2]*AdjJ[2][2]);
-    D[0][2] = D[2][0];
-    D[1][2] = D[2][1];
-    D[2][2] = weight / detJ * (AdjJ[2][0]*AdjJ[2][0] + AdjJ[2][1]*AdjJ[2][1] + AdjJ[2][2]*AdjJ[2][2]);
+      /// QFunction
+      forallQuadratureIndices( stack, [&]( auto const & quad_index )
+      {
+        /// QFunction for Laplace operator
+        constexpr int dim = Stack::dim;
 
-    qLocalWrite( quad_index, D, stack.quad_values.getValues() );
-  }
+        // load q-local jacobian
+        real64 J[ dim ][ dim ];
+        qLocalLoad( quad_index, Jac, J );
 
-  /**
-   * @copydoc geosx::finiteElement::TeamKernelBase::complete
-   *
-   * Form element residual from the fully formed element Jacobian dotted with
-   * the primary field and map the element local Jacobian/Residual to the
-   * global matrix/vector.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  real64 complete( StackVariables & stack ) const
-  {
-    using RAJA::RangeSegment;
+        // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
+        real64 const weight = 1.0; // stack.weights( quad_index ); // FIXME
 
-    computeGradGradLocalDiagonal( stack,
-                                  stack.element_basis.getValuesAtQuadPts(),
-                                  stack.element_basis.getGradientValuesAtQuadPts(),
-                                  stack.quad_values.getValues(),
-                                  stack.diag.getValues() );
-    writeAddField( stack, stack.diag.getValues(), stack.kernelComponent.m_diag );
+        real64 const detJ = determinant( J );
+        real64 const detJinv = 1.0 / detJ;
 
+        real64 AdjJ[ dim ][ dim ];
+        adjugate( J, AdjJ );
+
+        real64 D[ dim ][ dim ];
+        D[0][0] = weight * detJinv * (AdjJ[0][0]*AdjJ[0][0] + AdjJ[0][1]*AdjJ[0][1] + AdjJ[0][2]*AdjJ[0][2]);
+        D[1][0] = weight * detJinv * (AdjJ[0][0]*AdjJ[1][0] + AdjJ[0][1]*AdjJ[1][1] + AdjJ[0][2]*AdjJ[1][2]);
+        D[2][0] = weight * detJinv * (AdjJ[0][0]*AdjJ[2][0] + AdjJ[0][1]*AdjJ[2][1] + AdjJ[0][2]*AdjJ[2][2]);
+        D[0][1] = D[1][0];
+        D[1][1] = weight * detJinv * (AdjJ[1][0]*AdjJ[1][0] + AdjJ[1][1]*AdjJ[1][1] + AdjJ[1][2]*AdjJ[1][2]);
+        D[2][1] = weight * detJinv * (AdjJ[1][0]*AdjJ[2][0] + AdjJ[1][1]*AdjJ[2][1] + AdjJ[1][2]*AdjJ[2][2]);
+        D[0][2] = D[2][0];
+        D[1][2] = D[2][1];
+        D[2][2] = weight * detJinv * (AdjJ[2][0]*AdjJ[2][0] + AdjJ[2][1]*AdjJ[2][1] + AdjJ[2][2]*AdjJ[2][2]);
+
+        qLocalWrite( quad_index, D, Jac );
+      } );
+
+      // Computation of the local diagonal
+      typename Stack::Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d > diag;
+      computeGradGradLocalDiagonal( stack,
+                                    basis.getValuesAtQuadPts(),
+                                    basis.getGradientValuesAtQuadPts(),
+                                    Jac,
+                                    diag );
+
+      writeAddField( stack, fields.m_elemsToNodes, diag, fields.m_diag );
+
+    } );
     return 0.0;
   }
 
