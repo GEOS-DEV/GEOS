@@ -25,6 +25,7 @@
 #include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
 #include "linearAlgebra/common/LinearOperatorWithBC.hpp"
 #include "constitutive/solid/ElasticIsotropic.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 #include "SolidMechanicsFields.hpp"
 
@@ -306,7 +307,7 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
   {
-//    auto const & disp = mesh.getNodeManager().totalDisplacement();
+    // auto const & disp = mesh.getNodeManager().getField<fields::solidMechanics::totalDisplacement>();
 //    std::cout<<disp<<std::endl;
 
   } );
@@ -318,7 +319,7 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
   // {
   //   FieldIdentifiers fieldsToBeSync;
 
-  //   fieldsToBeSync.addFields( FieldLocation::Node, { keys::TotalDisplacement } );
+  //   fieldsToBeSync.addFields( FieldLocation::Node, { fields::solidMechanics::totalDisplacement } )::key;
 
   //   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
   //                                                        mesh,
