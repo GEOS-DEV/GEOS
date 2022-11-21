@@ -23,6 +23,8 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "tensor/tensor_types.hpp"
+#include "tensor/tensor_traits.hpp"
+#include "finiteElement/TeamKernelInterface/common.hpp"
 
 namespace geosx
 {
@@ -88,143 +90,54 @@ void readField( StackVariables & stack,
   });
 }
 
-// Stack tensor
+// Generic version
 template < typename StackVariables,
+           typename EtoNMap,
            typename Field,
-           localIndex stride_x, localIndex stride_y, localIndex stride_z >
+           typename Tensor,
+           std::enable_if_t< tensor::get_tensor_rank< Tensor > == 3, bool > = true >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void readField( StackVariables & stack,
-                Field & field,
-                tensor::StaticDTensor< stride_x, stride_y, stride_z > & local_field)
+                EtoNMap const & m_elemsToNodes,
+                Field const & field,
+                Tensor & local_field)
 {
-  for (localIndex ind_z = 0; ind_z < stride_z; ind_z++)
-  {
-    for (localIndex ind_y = 0; ind_y < stride_y; ind_y++)
-    {
-      for (localIndex ind_x = 0; ind_x < stride_x; ind_x++)
-      {
-        localIndex const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
-        localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
-        local_field( ind_x, ind_y, ind_z ) = field[ global_node_index ];
-      }
-    }
-  }
-}
+  constexpr localIndex stride_x = tensor::get_tensor_size<0, Tensor>;
+  constexpr localIndex stride_y = tensor::get_tensor_size<1, Tensor>;
+  constexpr localIndex stride_z = tensor::get_tensor_size<2, Tensor>;
 
-template < typename StackVariables,
-           typename Field,
-           localIndex stride_x, localIndex stride_y, localIndex stride_z, localIndex dim >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void readField( StackVariables & stack,
-                Field & field,
-                tensor::StaticDTensor< stride_x, stride_y, stride_z, dim > & local_field)
-{
-  for (localIndex ind_z = 0; ind_z < stride_z; ind_z++)
-  {
-    for (localIndex ind_y = 0; ind_y < stride_y; ind_y++)
-    {
-      for (localIndex ind_x = 0; ind_x < stride_x; ind_x++)
-      {
-        localIndex const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
-        localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
-        for (localIndex d = 0; d < dim; d++)
-        {
-          local_field( ind_x, ind_y, ind_z, d ) = field( global_node_index, d );
-        }
-      }
-    }
-  }
-}
-
-// 2d distributed
-template < typename StackVariables,
-           typename Field,
-           localIndex stride_x, localIndex stride_y, localIndex stride_z >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void readField( StackVariables & stack,
-                Field & field,
-                tensor::Static2dThreadDTensor< stride_x, stride_y, stride_z > & local_field)
-{
-  using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
-
-  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
-  {
-    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
-    {
-      for (localIndex ind_z = 0; ind_z < stride_z; ind_z++)
-      {
-        localIndex const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
-        localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
-        local_field( ind_x, ind_y, ind_z ) = field[ global_node_index ];
-      }
-    });
-  });
-}
-
-template < typename StackVariables,
-           typename Field,
-           localIndex stride_x, localIndex stride_y, localIndex stride_z, localIndex dim >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void readField( StackVariables & stack,
-                Field & field,
-                tensor::Static2dThreadDTensor< stride_x, stride_y, stride_z, dim > & local_field)
-{
-  using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
-
-  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
-  {
-    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
-    {
-      for (localIndex ind_z = 0; ind_z < stride_z; ind_z++)
-      {
-        localIndex const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
-        localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
-        for (localIndex d = 0; d < dim; d++)
-        {
-          local_field( ind_x, ind_y, ind_z, d ) = field( global_node_index, d );
-        }
-      }
-    });
-  });
-}
-
-// 3d distributed
-template < typename StackVariables,
-           typename Field,
-           localIndex stride_x, localIndex stride_y, localIndex stride_z >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void readField( StackVariables & stack,
-                Field & field,
-                tensor::Static3dThreadDTensor< stride_x, stride_y, stride_z > & local_field)
-{
   loop3D( stack, stride_x, stride_y, stride_z,
-          [&]( localIndex ind_x, localIndex ind_y, localIndex ind_z){
+          [&]( localIndex ind_x, localIndex ind_y, localIndex ind_z)
+  {
     localIndex const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
-    localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
+    localIndex const global_node_index = m_elemsToNodes( stack.element_index, local_node_index );
     local_field( ind_x, ind_y, ind_z ) = field[ global_node_index ];
   });
 }
 
 template < typename StackVariables,
+           typename EtoNMap,
            typename Field,
-           localIndex stride_x, localIndex stride_y, localIndex stride_z, localIndex dim >
+           typename Tensor,
+           std::enable_if_t< tensor::get_tensor_rank< Tensor > == 4, bool > = true >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void readField( StackVariables & stack,
-                Field & field,
-                tensor::Static3dThreadDTensor< stride_x, stride_y, stride_z, dim > & local_field)
+                EtoNMap const & m_elemsToNodes,
+                Field const & field,
+                Tensor & local_field)
 {
+  constexpr localIndex stride_x = tensor::get_tensor_size<0, Tensor>;
+  constexpr localIndex stride_y = tensor::get_tensor_size<1, Tensor>;
+  constexpr localIndex stride_z = tensor::get_tensor_size<2, Tensor>;
+  constexpr localIndex dim = tensor::get_tensor_size<3, Tensor>;
+
   loop3D( stack, stride_x, stride_y, stride_z,
-          [&]( localIndex ind_x, localIndex ind_y, localIndex ind_z){
+          [&]( localIndex ind_x, localIndex ind_y, localIndex ind_z)
+  {
     localIndex const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
-    localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
+    localIndex const global_node_index = m_elemsToNodes( stack.element_index, local_node_index );
     for (localIndex d = 0; d < dim; d++)
     {
       local_field( ind_x, ind_y, ind_z, d ) = field( global_node_index, d );
