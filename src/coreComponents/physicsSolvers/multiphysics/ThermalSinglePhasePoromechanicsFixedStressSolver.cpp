@@ -13,11 +13,11 @@
  */
 
 /**
- * @file ThermalSinglePhasePoromechanicsSolver.cpp
+ * @file ThermalSinglePhasePoromechanicsFixedStressSolver.cpp
  *
  */
 
-#include "ThermalSinglePhasePoromechanicsSolver.hpp"
+#include "ThermalSinglePhasePoromechanicsFixedStressSolver.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
@@ -31,12 +31,11 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-ThermalSinglePhasePoromechanicsSolver::ThermalSinglePhasePoromechanicsSolver( const string & name,
-                                                                              Group * const parent ):
+ThermalSinglePhasePoromechanicsFixedStressSolver::ThermalSinglePhasePoromechanicsFixedStressSolver( const string & name,
+                                                                                                    Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
-  m_flowSolverName(),
-  m_couplingTypeOption( CouplingTypeOption::FixedStress )
+  m_flowSolverName()
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -48,17 +47,13 @@ ThermalSinglePhasePoromechanicsSolver::ThermalSinglePhasePoromechanicsSolver( co
     setDescription(
     "Name of the flow solver to use in the ThermalSinglePhasePoromechanics solver" );
 
-  registerWrapper( viewKeyStruct::couplingTypeOptionString(), &m_couplingTypeOption ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Coupling option. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
-
   registerWrapper( viewKeyStruct::subcyclingOptionString(), &m_subcyclingOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "turn on subcycling on each load step" );
 
 }
 
-void ThermalSinglePhasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
+void ThermalSinglePhasePoromechanicsFixedStressSolver::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
@@ -81,7 +76,7 @@ void ThermalSinglePhasePoromechanicsSolver::registerDataOnMesh( Group & meshBodi
   } );
 }
 
-void ThermalSinglePhasePoromechanicsSolver::initializePreSubGroups()
+void ThermalSinglePhasePoromechanicsFixedStressSolver::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
@@ -109,63 +104,56 @@ void ThermalSinglePhasePoromechanicsSolver::initializePreSubGroups()
   } );
 } 
 
-void ThermalSinglePhasePoromechanicsSolver::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                                  real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                                                  DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void ThermalSinglePhasePoromechanicsFixedStressSolver::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                                                             real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                                                             DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
-void ThermalSinglePhasePoromechanicsSolver::postProcessInput()
+void ThermalSinglePhasePoromechanicsFixedStressSolver::postProcessInput()
 {
-  if( m_couplingTypeOption == CouplingTypeOption::FixedStress )
-  {
-    // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it
-    // will never converge.
-    SolidMechanicsLagrangianFEM &
-    solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-    integer & minNewtonIterSolid = solidSolver.getNonlinearSolverParameters().m_minIterNewton;
+  // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it
+  // will never converge.
+  SolidMechanicsLagrangianFEM &
+  solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  integer & minNewtonIterSolid = solidSolver.getNonlinearSolverParameters().m_minIterNewton;
 
-    SinglePhaseBase &
-    flowSolver = this->getParent().getGroup< SinglePhaseBase >( m_flowSolverName );
-    integer & minNewtonIterFluid = flowSolver.getNonlinearSolverParameters().m_minIterNewton;
+  SinglePhaseBase &
+  flowSolver = this->getParent().getGroup< SinglePhaseBase >( m_flowSolverName );
+  integer & minNewtonIterFluid = flowSolver.getNonlinearSolverParameters().m_minIterNewton;
 
-    minNewtonIterSolid = 0;
-    minNewtonIterFluid = 0;
-  }
+  minNewtonIterSolid = 0;
+  minNewtonIterFluid = 0;
+
 }
 
-void ThermalSinglePhasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups()
+void ThermalSinglePhasePoromechanicsFixedStressSolver::initializePostInitialConditionsPreSubGroups()
 {}
 
-ThermalSinglePhasePoromechanicsSolver::~ThermalSinglePhasePoromechanicsSolver()
+ThermalSinglePhasePoromechanicsFixedStressSolver::~ThermalSinglePhasePoromechanicsFixedStressSolver()
 {
   // TODO Auto-generated destructor stub
 }
 
-void ThermalSinglePhasePoromechanicsSolver::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void ThermalSinglePhasePoromechanicsFixedStressSolver::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
-real64 ThermalSinglePhasePoromechanicsSolver::solverStep( real64 const & time_n,
-                                                          real64 const & dt,
-                                                          int const cycleNumber,
-                                                          DomainPartition & domain )
+real64 ThermalSinglePhasePoromechanicsFixedStressSolver::solverStep( real64 const & time_n,
+                                                                     real64 const & dt,
+                                                                     int const cycleNumber,
+                                                                     DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
-  if( m_couplingTypeOption == CouplingTypeOption::FixedStress )
-  {
-    dtReturn = splitOperatorStep( time_n, dt, cycleNumber, domain );
-  }
-  else if( m_couplingTypeOption == CouplingTypeOption::TightlyCoupled )
-  {
-    GEOSX_ERROR( "CouplingTypeOption::FullyImplicit not yet implemented" );
-  }
+  
+  dtReturn = splitOperatorStep( time_n, dt, cycleNumber, domain );
+
   return dtReturn;
 }
 
-real64 ThermalSinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & time_n,
-                                                                 real64 const & dt,
-                                                                 integer const cycleNumber,
-                                                                 DomainPartition & domain )
+real64 ThermalSinglePhasePoromechanicsFixedStressSolver::splitOperatorStep( real64 const & time_n,
+                                                                            real64 const & dt,
+                                                                            integer const cycleNumber,
+                                                                            DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
@@ -261,7 +249,7 @@ real64 ThermalSinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & 
     ++iter;
   }
 
-  GEOSX_ERROR_IF( !isConverged, "ThermalSinglePhasePoromechanicsSolver::SplitOperatorStep() did not converge" );
+  GEOSX_ERROR_IF( !isConverged, "ThermalSinglePhasePoromechanicsFixedStressSolver::SplitOperatorStep() did not converge" );
 
   flowSolver.implicitStepComplete( time_n, dt, domain );
   solidSolver.implicitStepComplete( time_n, dt, domain );
@@ -270,6 +258,6 @@ real64 ThermalSinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & 
   return dtReturn;
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, ThermalSinglePhasePoromechanicsSolver, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, ThermalSinglePhasePoromechanicsFixedStressSolver, string const &, Group * const )
 
 } /* namespace geosx */

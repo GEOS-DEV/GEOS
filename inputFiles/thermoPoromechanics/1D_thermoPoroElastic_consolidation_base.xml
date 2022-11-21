@@ -3,7 +3,7 @@
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-    <ThermalSinglePhasePoromechanics
+    <ThermalSinglePhasePoromechanicsFixedStress
       name="thermoPoroSolver"
       solidSolverName="SolidMechSolve"
       flowSolverName="FlowSolve"
@@ -16,7 +16,7 @@
         newtonMaxIter="200"/>
       <LinearSolverParameters
         directParallel="0"/>
-    </ThermalSinglePhasePoromechanics>
+    </ThermalSinglePhasePoromechanicsFixedStress>
 
     <SolidMechanicsLagrangianSSLE
       name="SolidMechSolve"

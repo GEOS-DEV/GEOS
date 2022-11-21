@@ -75,7 +75,7 @@ set( physicsSolvers_headers
      multiphysics/SinglePhasePoromechanicsSolver.hpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.hpp
      multiphysics/SinglePhaseReservoirAndWells.hpp
-     multiphysics/ThermalSinglePhasePoromechanicsSolver.hpp
+     multiphysics/ThermalSinglePhasePoromechanicsFixedStressSolver.hpp
      simplePDE/LaplaceBaseH1.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
@@ -150,7 +150,7 @@ set( physicsSolvers_sources
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.cpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.cpp
      multiphysics/SinglePhaseReservoirAndWells.cpp
-     multiphysics/ThermalSinglePhasePoromechanicsSolver.cpp
+     multiphysics/ThermalSinglePhasePoromechanicsFixedStressSolver.cpp
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp

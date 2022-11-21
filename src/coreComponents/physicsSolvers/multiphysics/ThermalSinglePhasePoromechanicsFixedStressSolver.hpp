@@ -13,12 +13,12 @@
  */
 
 /**
- * @file ThermalSinglePhasePoromechanicsSolver.hpp
+ * @file ThermalSinglePhasePoromechanicsFixedStressSolver.hpp
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_THERMALSINGLEPHASEPOROMECHANICSSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_THERMALSINGLEPHASEPOROMECHANICSSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_THERMALSINGLEPHASEPOROMECHANICSFIXEDSTRESSSOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_THERMALSINGLEPHASEPOROMECHANICSFIXEDSTRESSSOLVER_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
@@ -26,12 +26,12 @@
 namespace geosx
 {
 
-class ThermalSinglePhasePoromechanicsSolver : public SolverBase
+class ThermalSinglePhasePoromechanicsFixedStressSolver : public SolverBase
 {
 public:
-  ThermalSinglePhasePoromechanicsSolver( const string & name,
-                                         Group * const parent );
-  ~ThermalSinglePhasePoromechanicsSolver() override;
+  ThermalSinglePhasePoromechanicsFixedStressSolver( const string & name,
+                                                    Group * const parent );
+  ~ThermalSinglePhasePoromechanicsFixedStressSolver() override;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -39,7 +39,7 @@ public:
    */
   static string catalogName()
   {
-    return "ThermalSinglePhasePoromechanics";
+    return "ThermalSinglePhasePoromechanicsFixedStress";
   }
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override final;
@@ -63,15 +63,8 @@ public:
                             integer const cycleNumber,
                             DomainPartition & domain );
 
-  enum class CouplingTypeOption : integer
-  {
-    FixedStress,
-    TightlyCoupled
-  };
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static char const * couplingTypeOptionString() { return "couplingTypeOption"; }
     static constexpr char const * porousMaterialNamesString() { return "porousMaterialNames"; }
 
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
@@ -90,15 +83,10 @@ private:
 
   string m_solidSolverName;
   string m_flowSolverName;
-  CouplingTypeOption m_couplingTypeOption;
   integer m_subcyclingOption;
 
 };
 
-ENUM_STRINGS( ThermalSinglePhasePoromechanicsSolver::CouplingTypeOption,
-              "FixedStress",
-              "TightlyCoupled" );
-
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_ThermalSinglePhasePoromechanicsSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_THERMALSINGLEPHASEPOROMECHANICSFIXEDSTRESSSOLVER_HPP_ */
