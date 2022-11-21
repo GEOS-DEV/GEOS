@@ -75,9 +75,9 @@ endif()
 
 ### BUILD & BLT SETUP ###
 
-option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" ON )
+option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF )
 
-option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
+option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " ON )
 
 set( GEOSX_PARALLEL_COMPILE_JOBS "" CACHE STRING "Maximum number of concurrent compilation jobs" )
 if( GEOSX_PARALLEL_COMPILE_JOBS )
@@ -128,7 +128,7 @@ include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-Wunused-but-set-variable" CXX_UNUSED_BUT_SET_VAR)
 if (ENABLE_GBENCHMARK)
     blt_add_target_compile_flags(TO benchmark
-                                FLAGS $<$<AND:${CXX_UNUSED_BUT_SET_VAR},$<COMPILE_LANGUAGE:CXX>>:-Wno-unused-but-set-variable>
+                                FLAGS $<$<AND:$<BOOL:${CXX_UNUSED_BUT_SET_VAR}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-unused-but-set-variable>
                                 )
 endif()
 
