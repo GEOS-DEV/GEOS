@@ -40,7 +40,6 @@ ThermalSinglePhasePoromechanicsSolver::ThermalSinglePhasePoromechanicsSolver( co
   m_solidSolverName(),
   m_flowSolverName(),
   m_couplingTypeOption( CouplingTypeOption::FixedStress )
-
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -88,6 +87,12 @@ void ThermalSinglePhasePoromechanicsSolver::registerDataOnMesh( Group & meshBodi
 void ThermalSinglePhasePoromechanicsSolver::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
+
+  // Set m_updateThermalPoroElasticityFlag in SolidMechanicsLagrangianFEM to 1 
+  SolidMechanicsLagrangianFEM &
+    solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+
+  solidSolver.turnOnFixedStressThermoPoroElasticityFlag(); 
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
