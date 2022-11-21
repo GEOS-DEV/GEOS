@@ -22,12 +22,10 @@
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 
-class vtkDataSet;
+#include <vtkDataSet.h>
+
 namespace geosx
 {
-
-class CellBlockManager;
-class ElementRegionManager;
 
 /**
  *  @class VTKMeshGenerator
@@ -99,6 +97,7 @@ private:
   struct viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
+    constexpr static char const * faceBlockNamesString() { return "faceBlocks"; }
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
@@ -115,6 +114,9 @@ private:
 
   /// Name of VTK dataset attribute used to mark regions
   string m_attributeName;
+
+  /// Name of the face blocks to be imported
+  array1d< string > m_faceBlockNames;
 
   /// Names of VTK nodesets to import
   string_array m_nodesetNames;
