@@ -26,7 +26,6 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/ThermalSinglePhasePoromechanicsSolver.hpp"
 
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"

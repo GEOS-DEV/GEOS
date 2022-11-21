@@ -21,10 +21,7 @@
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "finiteElement/Kinematics.h"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
-#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
