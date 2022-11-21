@@ -7,7 +7,6 @@
       name="thermoPoroSolver"
       solidSolverName="SolidMechSolve"
       flowSolverName="FlowSolve"
-      couplingTypeOption="FixedStress"
       logLevel="1"
       discretization="FE1"
       subcycling="1"
