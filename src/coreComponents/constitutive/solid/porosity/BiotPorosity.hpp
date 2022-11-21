@@ -145,9 +145,12 @@ public:
   GEOSX_HOST_DEVICE
   virtual void updateFromPressure( localIndex const k,
                                    localIndex const q,
-                                   real64 const & pressure ) const override final
+                                   real64 const & pressure,
+                                   real64 const & pressure_n ) const override final
   {
-    computePorosity( pressure, // it is delta pressure here  
+    real64 const deltaPressure = pressure - pressure_n; 
+    
+    computePorosity( deltaPressure, 
                      0.0, // pass some value here for the isothermal case
                      m_newPorosity[k][q],
                      m_dPorosity_dPressure[k][q],
@@ -163,10 +166,15 @@ public:
   virtual void updateFromPressureAndTemperature( localIndex const k,
                                                  localIndex const q,
                                                  real64 const & pressure, 
-                                                 real64 const & temperature ) const override final
+                                                 real64 const & pressure_n, 
+                                                 real64 const & temperature,
+                                                 real64 const & temperature_n ) const override final
   {
-    computePorosity( pressure, // it is delta pressure here  
-                     temperature, // it is delta temperature here  
+    real64 const deltaPressure = pressure - pressure_n; 
+    real64 const deltaTemperature = temperature - temperature_n; 
+    
+    computePorosity( deltaPressure,   
+                     deltaTemperature, 
                      m_newPorosity[k][q],
                      m_dPorosity_dPressure[k][q],
                      m_dPorosity_dTemperature[k][q],

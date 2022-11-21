@@ -69,7 +69,8 @@ public:
   GEOSX_HOST_DEVICE
   virtual void updateFromPressure( localIndex const k,
                                    localIndex const q,
-                                   real64 const & pressure ) const override final
+                                   real64 const & pressure,
+                                   real64 const & GEOSX_UNUSED_PARAM( pressure_n ) ) const override final
   {
     computePorosity( pressure,
                      0.0, // to pass something of no use 
@@ -83,7 +84,9 @@ public:
   virtual void updateFromPressureAndTemperature( localIndex const k,
                                                  localIndex const q,
                                                  real64 const & pressure,
-                                                 real64 const & temperature ) const override final
+                                                 real64 const & GEOSX_UNUSED_PARAM( pressure_n ), 
+                                                 real64 const & temperature, 
+                                                 real64 const & GEOSX_UNUSED_PARAM( temperature_n ) ) const override final
   {
     computePorosity( pressure,
                      temperature, 

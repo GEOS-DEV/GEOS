@@ -56,18 +56,21 @@ public:
   GEOSX_HOST_DEVICE
   virtual void updateStateFromPressure( localIndex const k,
                                         localIndex const q,
-                                        real64 const & deltaPressure ) const override final
+                                        real64 const & pressure, 
+                                        real64 const & pressure_n ) const override final
   {
-    m_porosityUpdate.updateFromPressure( k, q, deltaPressure );
+    m_porosityUpdate.updateFromPressure( k, q, pressure, pressure_n );
   }
 
   GEOSX_HOST_DEVICE
   virtual void updateStateFromPressureAndTemperature( localIndex const k,
                                                       localIndex const q,
-                                                      real64 const & deltaPressure,
-                                                      real64 const & deltaTemperature ) const override final
+                                                      real64 const & pressure, 
+                                                      real64 const & pressure_n,
+                                                      real64 const & temperature,
+                                                      real64 const & temperature_n ) const override final
   {
-    m_porosityUpdate.updateFromPressureAndTemperature( k, q, deltaPressure, deltaTemperature );
+    m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, pressure_n, temperature, temperature_n );
   }
 
   GEOSX_HOST_DEVICE
