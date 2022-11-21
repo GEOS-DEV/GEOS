@@ -56,9 +56,9 @@ def main():
 
     # Load and process GEOSX results
     # File path
-    hdf5File1Path = "dfit_penny_output.hdf5"
-    xmlFile1Path = "dfit_pennyShaped_base.xml"
-    xmlFile2Path = "dfit_pennyShaped_benchmark.xml"
+    hdf5File1Path = "/usr/workspace/cusini1/geosx/geosx_dev/GEOSX/build-quartz-clang@10.0.0-release/Output/dfit_penny_output.hdf5"
+    xmlFile1Path = "/usr/workspace/cusini1/geosx/geosx_dev/GEOSX/inputFiles/hydraulicFracturing/dfit/dfit_pennyShaped_base.xml"
+    xmlFile2Path = "/usr/workspace/cusini1/geosx/geosx_dev/GEOSX/inputFiles/hydraulicFracturing/dfit/dfit_pennyShaped_benchmark.xml"
 
     # Read simulation parameters from XML file
     xMin, xMax, yMin, yMax, zMin, zMax, nx, ny, nz = getMeshSettings(xmlFile2Path)    
@@ -207,7 +207,7 @@ def main():
 
     plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.3, hspace=0.3)
 
-    fig.savefig('DFIT_KGD.png')
+    fig.savefig('DFIT_Penny.png')
 
     plt.show()
 
