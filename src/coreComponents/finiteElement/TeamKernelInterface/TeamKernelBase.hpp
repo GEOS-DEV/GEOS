@@ -29,6 +29,7 @@
 #include "finiteElement/TeamKernelInterface/common.hpp"
 #include "tensor/tensor_types.hpp"
 #include "common.hpp"
+// #include <cuda.h>
 
 namespace geosx
 {
@@ -128,217 +129,20 @@ public:
    * global data arrays, and/or local storage for the residual and jacobian
    * contributions.
    */
-  struct StackVariables
+  template < typename KernelConfig >
+  struct StackVariables: public KernelConfig
   {
-    static constexpr ThreadingModel threading_model = ThreadingModel::Distributed3D;
-
     /**
      * @brief Constructor
      */
     GEOSX_HOST_DEVICE
     StackVariables( LaunchContext & ctx )
-      : ctx( ctx ), tidx( 0 ), tidy( 0 ), tidz( 0 )
-    {
-      using RAJA::RangeSegment;
-      // TODO: factorize into KernelConfiguration?
-      if ( threading_model == ThreadingModel::Distributed2D )
-      {
-        /// Distributed on threads x & y
-        loop<thread_x>( ctx, RangeSegment( 0, num_quads_1d ), [&] ( localIndex tid_x )
-        {
-          tidx = tid_x;
-        } );
-        loop<thread_y>( ctx, RangeSegment( 0, num_quads_1d ), [&] ( localIndex tid_y )
-        {
-          tidy = tid_y;
-        } );
-      }
-      else if ( threading_model == ThreadingModel::Distributed3D )
-      {
-        /// Distributed on threads x
-        loop<thread_x>( ctx, RangeSegment( 0, num_quads_1d * num_quads_1d * num_quads_1d ),
-                        [&] ( localIndex tid )
-        {
-          tidx = tid % num_quads_1d;
-          tidy = ( tid % ( num_quads_1d * num_quads_1d ) ) / num_quads_1d;
-          tidz = tid / ( num_quads_1d * num_quads_1d );
-        } );
-      }
-    }
-
-    /// RAJA launch context
-    LaunchContext & ctx;
+      : KernelConfig( ctx ), element_index( -1 )
+    { }
 
     /// Index of the finite element
     localIndex element_index;
-    localIndex tidx, tidy, tidz;
-
-    // static constexpr localIndex batch_size = 4; // TODO
-    static constexpr localIndex batch_size = 8; // TODO
-    static constexpr localIndex num_quads_1d = 2; // TODO
   };
-
-  /**
-   * @brief Performs the setup phase for the kernel (common to all elements).
-   * @tparam STACK_VARIABLE_TYPE The type of StackVariable that holds the stack
-   *                             variables. This is most likely a defined in a
-   *                             type that derives from TeamKernelBase.
-   * @param stack The StackVariable object that hold the stack variables.
-   *
-   * ### TeamKernelBase::setup() Description
-   *
-   * The operations typically found in setup are thing such as the collection
-   * of global data into local stack storage.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void kernelSetup( StackVariables & stack ) const
-  {
-    GEOSX_UNUSED_VAR( stack );
-  }
-
-  /**
-   * @brief Performs the setup phase for the kernel.
-   * @tparam STACK_VARIABLE_TYPE The type of StackVariable that holds the stack
-   *                             variables. This is most likely a defined in a
-   *                             type that derives from TeamKernelBase.
-   * @param k The element index.
-   * @param stack The StackVariable object that hold the stack variables.
-   *
-   * ### TeamKernelBase::setup() Description
-   *
-   * The operations typically found in setup are thing such as the collection
-   * of global data into local stack storage.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void setup( StackVariables & stack,
-              localIndex const element_index ) const
-  {
-    stack.element_index = element_index;
-  }
-
-  /**
-   * @brief Performs a state update at a quadrature point.
-   * @tparam STACK_VARIABLE_TYPE The type of StackVariable that holds the stack
-   *                             variables. This is most likely a defined in a
-   *                             type that derives from TeamKernelBase.
-   * @param k The element index.
-   * @param q The quadrature point index.
-   * @param stack The StackVariable object that hold the stack variables.
-   *
-   * ### TeamKernelBase::quadraturePointKernel() Description
-   *
-   * The operations found here are the mapping from the support points to the
-   * quadrature point, calculation of gradients, etc. From this data the
-   * state of the constitutive model is updated if required by the physics
-   * package.
-   */
-  template < typename QuadraturePointIndex >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointKernel( StackVariables & stack,
-                              QuadraturePointIndex const & quad_index ) const
-  {
-    GEOSX_UNUSED_VAR( stack );
-    GEOSX_UNUSED_VAR( quad_index );
-  }
-
-  /**
-   * @brief Performs the complete phase for the kernel.
-   * @tparam STACK_VARIABLE_TYPE The type of StackVariable that holds the stack
-   *                             variables. This is most likely a defined in a
-   *                             type that derives from TeamKernelBase.
-   * @param k The element index.
-   * @param stack The StackVariable object that hold the stack variables.
-   * @return The maximum contribution to the residual.
-   *
-   * ### TeamKernelBase::complete() Description
-   *
-   * The operations typically found in complete are the mapping of the local
-   * Jacobian and Residual into the global Jacobian and Residual.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  real64 complete( StackVariables & stack ) const
-  {
-    GEOSX_UNUSED_VAR( stack );
-    return 0;
-  }
-
-
-  /**
-   * @brief Kernel Launcher.
-   * @tparam POLICY The RAJA policy to use for the launch.
-   * @tparam NUM_QUADRATURE_POINTS The number of quadrature points per element.
-   * @tparam KERNEL_TYPE The type of Kernel to execute.
-   * @param numElems The number of elements to process in this launch.
-   * @param kernelComponent The instantiation of KERNEL_TYPE to execute.
-   * @return The maximum residual contribution.
-   *
-   * This is a generic launching function for all of the finite element kernels
-   * that follow the interface set by TeamKernelBase.
-   */
-  //START_kernelLauncher
-  template< typename POLICY,
-            typename KERNEL_TYPE >
-  static
-  real64
-  kernelLaunch( localIndex const numElems,
-                KERNEL_TYPE const & kernelComponent )
-  {
-    GEOSX_MARK_FUNCTION;
-    using RAJA::RangeSegment;
-
-    // Define a RAJA reduction variable to get the maximum residual contribution.
-    // RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
-    // RAJA::ReduceMax< RAJA::seq_reduce, real64 > maxResidual( 0 );
-#if defined(RAJA_ENABLE_CUDA)
-    RAJA::ReduceMax< RAJA::cuda_reduce, real64 > maxResidual( 0 );
-#else
-    RAJA::ReduceMax< RAJA::seq_reduce, real64 > maxResidual( 0 );
-#endif
-
-    constexpr localIndex batch_size = KERNEL_TYPE::StackVariables::batch_size;
-
-    const localIndex num_blocks = ( numElems + batch_size - 1 ) / batch_size;
-    // const localIndex num_SM = 80; // For V100
-    // const localIndex num_hardware_blocks = 2 * num_SM;
-
-    constexpr localIndex num_quads_1d = KERNEL_TYPE::StackVariables::num_quads_1d;
-
-    launch< POLICY >
-    // ( GEOSX_RAJA_DEVICE, Grid( Teams( num_blocks ), Threads( num_quads_1d, num_quads_1d, batch_size ) ),
-    ( GEOSX_RAJA_DEVICE, Grid( Teams( num_blocks ), Threads( num_quads_1d * num_quads_1d * num_quads_1d, 1, batch_size ) ),
-    [=] GEOSX_HOST_DEVICE ( LaunchContext ctx )
-    {
-      typename KERNEL_TYPE::StackVariables stack( kernelComponent, ctx );
-
-      kernelComponent.kernelSetup( stack );
-
-      // Each block of threads treats "batch_size" elements.
-      loop<team_x>( ctx, RangeSegment( 0, num_blocks ), [&]( const int block_index )
-      {
-        // We batch elements over the z-thread dimension
-        loop<thread_z>( ctx, RangeSegment( 0, batch_size ), [&]( const int batch_index )
-        {
-          const localIndex element_index = block_index * batch_size + batch_index;
-          if ( element_index >= numElems ) { return; }
-
-          kernelComponent.setup( stack, element_index );
-          loop3D( stack, num_quads_1d, num_quads_1d, num_quads_1d,
-                  [&]( localIndex quad_x, localIndex quad_y, localIndex quad_z ){
-            TensorIndex quad_index { quad_x, quad_y, quad_z };
-            kernelComponent.quadraturePointKernel( stack, quad_index );
-          } );
-
-          maxResidual.max( kernelComponent.complete( stack ) );
-        } );
-      } );
-    } );
-    return maxResidual.get();
-  }
-  //END_kernelLauncher
 
   /// The element to nodes map.
   traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > const m_elemsToNodes;
