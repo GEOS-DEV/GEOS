@@ -92,11 +92,11 @@ public:
                FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE & inputConstitutiveType,
                arrayView1d< globalIndex const > const inputDispDofNumber,
-               string const inputFlowDofKey,
                globalIndex const rankOffset,
                CRSMatrixView< real64, globalIndex const > const inputMatrix,
                arrayView1d< real64 > const inputRhs,
                real64 const (&inputGravityVector)[3],
+               string const inputFlowDofKey,
                string const fluidModelKey ):
     Base( nodeManager,
           edgeManager,
@@ -503,11 +503,11 @@ protected:
 
 using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
                                                                arrayView1d< globalIndex const > const,
-                                                               string const,
                                                                globalIndex const,
                                                                CRSMatrixView< real64, globalIndex const > const,
                                                                arrayView1d< real64 > const,
                                                                real64 const (&)[3],
+                                                               string const,
                                                                string const >;
 
 } // namespace poromechanicsKernels
