@@ -218,6 +218,8 @@ public:
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
+  void turnOnFixedStressThermoPoroElasticityFlag(); 
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * cflFactorString() { return "cflFactor"; }
@@ -234,7 +236,6 @@ public:
     static constexpr char const * maxForceString() { return "maxForce"; }
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
-    static constexpr char const * effectiveStressString() { return "effectiveStress"; }
 
     static constexpr char const * sendOrReceiveNodesString() { return "sendOrReceiveNodes";}
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
@@ -287,7 +288,7 @@ protected:
   integer m_strainTheory;
   string m_contactRelationName;
   MPI_iCommData m_iComm;
-  integer m_effectiveStressFlag;
+  integer m_fixedStressUpdateThermoPoroElasticityFlag;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
@@ -336,7 +337,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                   gravityVectorData,
                                   std::forward< PARAMS >( params )... );
 
-    if( m_effectiveStressFlag )
+    if( m_fixedStressUpdateThermoPoroElasticityFlag )
     {
       m_maxForce = finiteElement::
                     regionBasedKernelApplication< parallelDevicePolicy< 32 >,

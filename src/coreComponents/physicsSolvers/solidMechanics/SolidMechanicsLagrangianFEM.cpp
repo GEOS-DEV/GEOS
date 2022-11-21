@@ -21,7 +21,7 @@
 #include "kernels/ImplicitSmallStrainQuasiStatic.hpp"
 #include "kernels/ExplicitSmallStrain.hpp"
 #include "kernels/ExplicitFiniteStrain.hpp"
-#include "kernels/ThermoPoroElasticKernel.hpp"
+#include "kernels/FixedStressThermoPoroElasticKernel.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -56,7 +56,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
   m_iComm( CommunicationTools::getInstance().getCommID() ),
-  m_effectiveStressFlag( 0 )
+  m_fixedStressUpdateThermoPoroElasticityFlag( 0 )
 {
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
@@ -110,11 +110,6 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   registerWrapper( viewKeyStruct::maxForceString(), &m_maxForce ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "The maximum force contribution in the problem domain." );
-
-  registerWrapper( viewKeyStruct::effectiveStressString(), &m_effectiveStressFlag ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "The flag to indicate whether to apply fluid pressure and thermal effects to produce effective stress" );
 
 }
 
@@ -946,14 +941,14 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   localMatrix.zero();
   localRhs.zero();
 
-  if( m_effectiveStressFlag )
+  if( m_fixedStressUpdateThermoPoroElasticityFlag )
   {
     GEOSX_UNUSED_VAR( dt );
     assemblyLaunch< constitutive::PorousSolidBase,
-                    solidMechanicsLagrangianFEMKernels::ThermoPoroElasticFactory >( domain,
-                                                                                    dofManager,
-                                                                                    localMatrix,
-                                                                                    localRhs );
+                    solidMechanicsLagrangianFEMKernels::FixedStressThermoPoroElasticFactory >( domain,
+                                                                                               dofManager,
+                                                                                               localMatrix,
+                                                                                               localRhs );
   }
   else
   {
@@ -1309,6 +1304,11 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
   GEOSX_UNUSED_VAR( domain, dofManager, localSolution );
 
   return 1.0;
+}
+
+void SolidMechanicsLagrangianFEM::turnOnFixedStressThermoPoroElasticityFlag()
+{
+  m_fixedStressUpdateThermoPoroElasticityFlag = 1; 
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::Group * const )
