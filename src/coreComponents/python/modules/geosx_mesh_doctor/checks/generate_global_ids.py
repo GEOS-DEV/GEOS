@@ -2,8 +2,7 @@ from dataclasses import dataclass
 import logging
 
 from vtkmodules.vtkCommonCore import (
-    vtkIdTypeArray,
-)
+    vtkIdTypeArray, )
 
 from . import vtk_utils
 

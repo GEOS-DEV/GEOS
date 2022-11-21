@@ -153,6 +153,23 @@ public:
                              real64 const & dt,
                              DomainPartition & domain ) override;
 
+  /**
+   * @brief Function to perform the application of Dirichlet BCs on faces
+   * @param[in] time_n current time
+   * @param[in] dt time step
+   * @param[in] faceSet degree-of-freedom manager associated with the linear system
+   * @param[in] domain the domain
+   * @param[inout] localMatrix the system matrix
+   * @param[inout] localRhs the system right-hand side vector
+   */
+  void
+  applyFaceDirichletBC( real64 const time_n,
+                        real64 const dt,
+                        DofManager const & faceSet,
+                        DomainPartition & domain,
+                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                        arrayView1d< real64 > const & localRhs );
+
   /**@}*/
 
 
@@ -167,9 +184,6 @@ public:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
 private:
-
-  /// Dof key for the member functions that do not have access to the coupled Dof manager
-  string m_faceDofKey;
 
   /// relative tolerance (redundant with FluxApproximationBase)
   real64 m_areaRelTol;
