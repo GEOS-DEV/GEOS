@@ -215,7 +215,7 @@ public:
                                                               m_fluidPressure_n[k],
                                                               m_fluidPressure[k],
                                                               m_initialTemperature[k],
-                                                              m_temperature_n[k], 
+                                                              m_temperature_n[k],
                                                               m_temperature[k],
                                                               strainIncrement,
                                                               totalStress,

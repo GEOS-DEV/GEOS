@@ -56,7 +56,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual void updateStateFromPressure( localIndex const k,
                                         localIndex const q,
-                                        real64 const & pressure, 
+                                        real64 const & pressure,
                                         real64 const & pressure_n ) const override final
   {
     m_porosityUpdate.updateFromPressure( k, q, pressure, pressure_n );
@@ -65,7 +65,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual void updateStateFromPressureAndTemperature( localIndex const k,
                                                       localIndex const q,
-                                                      real64 const & pressure, 
+                                                      real64 const & pressure,
                                                       real64 const & pressure_n,
                                                       real64 const & temperature,
                                                       real64 const & temperature_n ) const override final
@@ -155,14 +155,14 @@ public:
                                             real64 const & fluidPressure_n,
                                             real64 const & fluidPressure,
                                             real64 const & initialTemperature,
-                                            real64 const & temperature_n, 
+                                            real64 const & temperature_n,
                                             real64 const & temperature,
                                             real64 const ( &strainIncrement )[6],
                                             real64 ( & totalStress )[6],
                                             DiscretizationOps & stiffness ) const
   {
-    real64 effectiveMeanStressIncrement = 0.0; 
-    
+    real64 effectiveMeanStressIncrement = 0.0;
+
     // Compute total stress increment and its derivative
     computeTotalStressThermal( k,
                                q,
@@ -171,7 +171,7 @@ public:
                                initialTemperature,
                                temperature,
                                strainIncrement,
-                               effectiveMeanStressIncrement, 
+                               effectiveMeanStressIncrement,
                                totalStress,
                                stiffness );
 
@@ -183,15 +183,15 @@ public:
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
-    real64 const totalMeanStressIncrement = effectiveMeanStressIncrement - biotCoefficient * deltaFluidPressure - 3 * thermalExpansionCoefficient * bulkModulus * deltaTemperature; 
+    real64 const totalMeanStressIncrement = effectiveMeanStressIncrement - biotCoefficient * deltaFluidPressure - 3 * thermalExpansionCoefficient * bulkModulus * deltaTemperature;
 
     computeThermalPorosity( k,
                             q,
                             deltaFluidPressure,
-                            deltaTemperature, 
+                            deltaTemperature,
                             totalMeanStressIncrement );
 
-    // The body force is calculated in the SolidMechancis kernel and the fluid contribution is neglected here 
+    // The body force is calculated in the SolidMechancis kernel and the fluid contribution is neglected here
   }
 
   template< int NUM_MAX_COMPONENTS >
@@ -521,13 +521,13 @@ private:
   void computeThermalPorosity( localIndex const k,
                                localIndex const q,
                                real64 const & deltaFluidPressure,
-                               real64 const & deltaTemperature, 
+                               real64 const & deltaTemperature,
                                real64 const & totalMeanStressIncrement ) const
-  {     
+  {
     m_porosityUpdate.updateFromPressureTemperatureAndMeanStress( k,
                                                                  q,
                                                                  deltaFluidPressure,
-                                                                 deltaTemperature, 
+                                                                 deltaTemperature,
                                                                  totalMeanStressIncrement );
   }
 
@@ -569,7 +569,7 @@ private:
                                   real64 const & initialTemperature,
                                   real64 const & temperature,
                                   real64 const ( &strainIncrement )[6],
-                                  real64 & effectiveMeanStressIncrement, 
+                                  real64 & effectiveMeanStressIncrement,
                                   real64 ( & totalStress )[6],
                                   DiscretizationOps & stiffness ) const
   {
@@ -592,9 +592,9 @@ private:
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
-    effectiveMeanStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] ); 
+    effectiveMeanStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
-    updateThermalExpansionCoefficient( k ); 
+    updateThermalExpansionCoefficient( k );
 
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -3 * thermalExpansionCoefficient * bulkModulus * ( temperature - initialTemperature ) );
   }

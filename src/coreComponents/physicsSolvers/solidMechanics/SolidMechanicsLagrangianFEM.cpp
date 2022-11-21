@@ -1308,7 +1308,7 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
 
 void SolidMechanicsLagrangianFEM::turnOnFixedStressThermoPoroElasticityFlag()
 {
-  m_fixedStressUpdateThermoPoroElasticityFlag = 1; 
+  m_fixedStressUpdateThermoPoroElasticityFlag = 1;
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::Group * const )

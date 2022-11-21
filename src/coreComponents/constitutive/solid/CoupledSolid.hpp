@@ -97,7 +97,7 @@ public:
                                                       real64 const & temperature,
                                                       real64 const & temperature_n ) const
   {
-    GEOSX_UNUSED_VAR( k, q, pressure, pressure_n, temperature, temperature_n);
+    GEOSX_UNUSED_VAR( k, q, pressure, pressure_n, temperature, temperature_n );
   }
 
 protected:

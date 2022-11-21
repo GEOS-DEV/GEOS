@@ -217,7 +217,7 @@ public:
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
-  void turnOnFixedStressThermoPoroElasticityFlag(); 
+  void turnOnFixedStressThermoPoroElasticityFlag();
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -339,24 +339,24 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
     if( m_fixedStressUpdateThermoPoroElasticityFlag )
     {
       m_maxForce = finiteElement::
-                    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                                  CONSTITUTIVE_BASE,
-                                                  CellElementSubRegion >( mesh,
-                                                                          regionNames,
-                                                                          this->getDiscretizationName(),
-                                                                          ThermalSinglePhasePoromechanicsFixedStressSolver::viewKeyStruct::porousMaterialNamesString(),
-                                                                          kernelWrapper );
+                     regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                                   CONSTITUTIVE_BASE,
+                                                   CellElementSubRegion >( mesh,
+                                                                           regionNames,
+                                                                           this->getDiscretizationName(),
+                                                                           ThermalSinglePhasePoromechanicsFixedStressSolver::viewKeyStruct::porousMaterialNamesString(),
+                                                                           kernelWrapper );
     }
     else
     {
       m_maxForce = finiteElement::
-                    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                                  CONSTITUTIVE_BASE,
-                                                  CellElementSubRegion >( mesh,
-                                                                          regionNames,
-                                                                          this->getDiscretizationName(),
-                                                                          viewKeyStruct::solidMaterialNamesString(),
-                                                                          kernelWrapper );
+                     regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                                   CONSTITUTIVE_BASE,
+                                                   CellElementSubRegion >( mesh,
+                                                                           regionNames,
+                                                                           this->getDiscretizationName(),
+                                                                           viewKeyStruct::solidMaterialNamesString(),
+                                                                           kernelWrapper );
     }
   } );
 

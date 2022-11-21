@@ -80,11 +80,11 @@ void ThermalSinglePhasePoromechanicsFixedStressSolver::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  // Set m_updateThermalPoroElasticityFlag in SolidMechanicsLagrangianFEM to 1 
+  // Set m_updateThermalPoroElasticityFlag in SolidMechanicsLagrangianFEM to 1
   SolidMechanicsLagrangianFEM &
-    solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 
-  solidSolver.turnOnFixedStressThermoPoroElasticityFlag(); 
+  solidSolver.turnOnFixedStressThermoPoroElasticityFlag();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -102,7 +102,7 @@ void ThermalSinglePhasePoromechanicsFixedStressSolver::initializePreSubGroups()
       GEOSX_ERROR_IF( porousName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
     } );
   } );
-} 
+}
 
 void ThermalSinglePhasePoromechanicsFixedStressSolver::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
@@ -144,7 +144,7 @@ real64 ThermalSinglePhasePoromechanicsFixedStressSolver::solverStep( real64 cons
 {
   GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
-  
+
   dtReturn = splitOperatorStep( time_n, dt, cycleNumber, domain );
 
   return dtReturn;
@@ -204,7 +204,7 @@ real64 ThermalSinglePhasePoromechanicsFixedStressSolver::splitOperatorStep( real
                                                            dtReturn,
                                                            cycleNumber,
                                                            domain );
-    
+
     if( dtReturnTemporary < dtReturn )
     {
       iter = 0;
@@ -231,7 +231,7 @@ real64 ThermalSinglePhasePoromechanicsFixedStressSolver::splitOperatorStep( real
                                                           dtReturn,
                                                           cycleNumber,
                                                           domain );
-                                                           
+
     if( dtReturnTemporary < dtReturn )
     {
       iter = 0;

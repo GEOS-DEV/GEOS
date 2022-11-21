@@ -47,13 +47,13 @@ public:
   PorosityBaseUpdates( arrayView2d< real64 > const & newPorosity,
                        arrayView2d< real64 > const & porosity_n,
                        arrayView2d< real64 > const & dPorosity_dPressure,
-                       arrayView2d< real64 > const & dPorosity_dTemperature, 
+                       arrayView2d< real64 > const & dPorosity_dTemperature,
                        arrayView2d< real64 > const & initialPorosity,
                        arrayView1d< real64 > const & referencePorosity ):
     m_newPorosity( newPorosity ),
     m_porosity_n( porosity_n ),
     m_dPorosity_dPressure( dPorosity_dPressure ),
-    m_dPorosity_dTemperature( dPorosity_dTemperature ),  
+    m_dPorosity_dTemperature( dPorosity_dTemperature ),
     m_initialPorosity( initialPorosity ),
     m_referencePorosity ( referencePorosity )
   {}
@@ -100,7 +100,7 @@ public:
   {
     m_newPorosity[k][q] = porosity;
     m_dPorosity_dPressure[k][q] = dPorosity_dPressure;
-    m_dPorosity_dTemperature[k][q] = dPorosity_dTemperature; 
+    m_dPorosity_dTemperature[k][q] = dPorosity_dTemperature;
   }
 
   GEOSX_HOST_DEVICE
@@ -143,7 +143,7 @@ public:
   virtual void updateFromPressureAndTemperature( localIndex const k,
                                                  localIndex const q,
                                                  real64 const & pressure,
-                                                 real64 const & pressure_n, 
+                                                 real64 const & pressure_n,
                                                  real64 const & temperature,
                                                  real64 const & temperature_n ) const
   {
@@ -288,7 +288,7 @@ protected:
   array2d< real64 > m_porosity_n;
 
   array2d< real64 > m_dPorosity_dPressure;
-  
+
   array2d< real64 > m_dPorosity_dTemperature;
 
   array2d< real64 > m_initialPorosity;

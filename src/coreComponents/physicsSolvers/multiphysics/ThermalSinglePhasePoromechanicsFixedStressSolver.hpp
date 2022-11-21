@@ -78,7 +78,7 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
   virtual void initializePreSubGroups() override;
-  
+
 private:
 
   string m_solidSolverName;

@@ -148,7 +148,7 @@ public:
                               arrayView1d< real64 > const & localRhs )
     : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
     m_dDensity_dTemp( fluid.dDensity_dTemperature() ),
-    m_dPoro_dTemp( solid.getDporosity_dTemperature() ), 
+    m_dPoro_dTemp( solid.getDporosity_dTemperature() ),
     m_internalEnergy_n( fluid.internalEnergy_n() ),
     m_internalEnergy( fluid.internalEnergy() ),
     m_dInternalEnergy_dPres( fluid.dInternalEnergy_dPressure() ),

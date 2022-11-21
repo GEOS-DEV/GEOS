@@ -56,7 +56,7 @@ public:
                                         real64 const & pressure,
                                         real64 const & pressure_n ) const override final
   {
-    m_porosityUpdate.updateFromPressure( k, q, pressure, pressure_n);
+    m_porosityUpdate.updateFromPressure( k, q, pressure, pressure_n );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPorosity( k, q, porosity );
   }
@@ -65,7 +65,7 @@ public:
   virtual void updateStateFromPressureAndTemperature( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & pressure,
-                                                      real64 const & pressure_n, 
+                                                      real64 const & pressure_n,
                                                       real64 const & temperature,
                                                       real64 const & temperature_n ) const override final
   {

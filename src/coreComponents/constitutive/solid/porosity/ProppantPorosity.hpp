@@ -102,7 +102,7 @@ public:
     return KernelWrapper( m_newPorosity,
                           m_porosity_n,
                           m_dPorosity_dPressure,
-                          m_dPorosity_dTemperature, 
+                          m_dPorosity_dTemperature,
                           m_initialPorosity,
                           m_referencePorosity,
                           m_maxProppantConcentration );

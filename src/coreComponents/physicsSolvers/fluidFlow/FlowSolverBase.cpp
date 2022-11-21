@@ -46,7 +46,7 @@ void execute1( POROUSWRAPPER_TYPE porousWrapper,
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
-    { 
+    {
       porousWrapper.updateStateFromPressure( k, q,
                                              pressure[k],
                                              pressure_n[k] );
@@ -68,7 +68,7 @@ void execute2( POROUSWRAPPER_TYPE porousWrapper,
     {
       porousWrapper.updateStateFromPressureAndTemperature( k, q,
                                                            pressure[k],
-                                                           pressure_n[k], 
+                                                           pressure_n[k],
                                                            temperature[k],
                                                            temperature_n[k] );
     }
@@ -303,7 +303,7 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
 
   arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
   arrayView1d< real64 const > const & pressure_n = subRegion.getField< fields::flow::pressure_n >();
-  
+
   arrayView1d< real64 const > const & temperature = subRegion.getField< fields::flow::temperature >();
   arrayView1d< real64 const > const & temperature_n = subRegion.getField< fields::flow::temperature_n >();
 
