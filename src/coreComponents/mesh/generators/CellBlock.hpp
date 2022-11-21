@@ -184,6 +184,13 @@ public:
   { return m_localToGlobalMap; }
 
   /**
+   * @brief Get local to global map, const view version.
+   * @return The mapping relationship as a array.
+   */
+  arrayView1d< globalIndex const > localToGlobalMapConstView() const
+  { return m_localToGlobalMap.toViewConst(); }
+
+  /**
    * @brief Resize the cell block to hold @p numElements
    * @param numElements The new number of elements.
    */

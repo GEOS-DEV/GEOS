@@ -21,6 +21,7 @@
 
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlock.hpp"
+#include "mesh/generators/FaceBlock.hpp"
 
 namespace geosx
 {
@@ -152,6 +153,13 @@ public:
    * @return A reference to the new cell block. The CellBlockManager owns this new instance.
    */
   CellBlock & registerCellBlock( string const & name );
+
+  /**
+   * @brief Registers and returns a face block of name @p name.
+   * @param name The name of the created face block.
+   * @return A reference to the new face block. The CellBlockManager owns this new instance.
+   */
+  FaceBlock & registerFaceBlock( string const & name );
 
   /**
    * @brief Launch kernel function over all the sub-regions
