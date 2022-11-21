@@ -30,6 +30,7 @@
 #include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/qLocalWrite.hpp"
 #include "finiteElement/TeamKernelInterface/StackVariables/MeshStackVariables.hpp"
 #include "finiteElement/TeamKernelInterface/StackVariables/VectorElementStackVariables.hpp"
+#include "finiteElement/TeamKernelInterface/StackVariables/BasisStackVariables.hpp"
 #include "finiteElement/TeamKernelInterface/StackVariables/QuadratureWeightsStackVariables.hpp"
 #include "finiteElement/TeamKernelInterface/StackVariables/SharedStackVariables.hpp"
 #include "finiteElement/TeamKernelInterface/StackVariables/SharedMemStackVariables.hpp"
@@ -122,230 +123,171 @@ public:
    *
    * Adds a stack array for the primary field.
    */
-  struct StackVariables : public Base::StackVariables
+  template < typename KernelConfig >
+  struct StackVariables : public Base::template StackVariables< KernelConfig >
   {
     static constexpr localIndex dim = 3;
     static constexpr localIndex num_dofs_mesh_1d = 2; // TODO
     static constexpr localIndex num_dofs_1d = 2; // TODO
-    using Base::StackVariables::num_quads_1d;
-    using Base::StackVariables::batch_size;
+    static constexpr localIndex num_quads_1d = 2; // TODO
 
-    static constexpr stackVariables::Location location = stackVariables::Location::Distributed3D;
-  
+    using Basis = stackVariables::StackBasis<num_dofs_1d,num_quads_1d>;
+
     /**
      * @brief Constructor
      */
     GEOSX_HOST_DEVICE
-    StackVariables( TeamSolidMechanicsFEMKernel const & kernelComponent, LaunchContext & ctx ):
-      Base::StackVariables( ctx ),
-      kernelComponent( kernelComponent ),
-      mesh( ctx ),
-      element( ctx ),
-      weights( ctx ),
-      shared_mem( ctx )
+    StackVariables( LaunchContext & ctx ):
+      Base::template StackVariables<KernelConfig>( ctx )
     {}
-
-    TeamSolidMechanicsFEMKernel const & kernelComponent;
-
-    // TODO alias shared buffers / Generalize for non-tensor elements
-    stackVariables::Mesh< location, num_dofs_mesh_1d, num_quads_1d, dim, batch_size > mesh;
-    stackVariables::VectorElement< location, num_dofs_1d, num_quads_1d, dim, dim, batch_size > element;
-    stackVariables::StackQuadratureWeights< num_quads_1d > weights;
 
     /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
     // static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d;
-    static constexpr localIndex num_buffers = 2 * dim;
-    static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
+    // static constexpr localIndex num_buffers = 2 * dim;
+    // static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
     // static constexpr localIndex num_buffers = 1;
-    stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
+    // stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
   };
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void kernelSetup( StackVariables & stack ) const
+  template< typename POLICY, // ignored
+            typename KERNEL_TYPE >
+  static
+  real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & fields )
   {
-  }
+    GEOSX_MARK_FUNCTION;
 
-  /**
-   * @brief Copy global values from primary field to a local stack array.
-   * @copydoc geosx::finiteElement::TeamKernelBase::setup
-   *
-   * For the TeamSolidMechanicsFEMKernel implementation, global values from the
-   * primaryField, and degree of freedom numbers are placed into element local
-   * stack storage.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void setup( StackVariables & stack,
-              localIndex const element_index ) const
-  {
-    Base::setup( stack, element_index );
-    /// Computation of the Jacobians
-    readField( stack, stack.kernelComponent.m_X, stack.mesh.getNodes() );
-    interpolateGradientAtQuadraturePoints( stack,
-                                           stack.mesh.basis.getValuesAtQuadPts(),
-                                           stack.mesh.basis.getGradientValuesAtQuadPts(),
-                                           stack.mesh.getNodes(),
-                                           stack.mesh.getJacobians() );
+    fields.m_X.move( LvArray::MemorySpace::cuda, false );
+    fields.m_src.move( LvArray::MemorySpace::cuda, false );
+    fields.m_dst.move( LvArray::MemorySpace::cuda, true );
+    fields.m_elemsToNodes.move( LvArray::MemorySpace::cuda, false );
 
-    /// Computation of the Gradient of the solution field
-    readField( stack, stack.kernelComponent.m_src, stack.element.getDofsIn() );
-    interpolateGradientAtQuadraturePoints( stack,
-                                           stack.element.basis.getValuesAtQuadPts(),
-                                           stack.element.basis.getGradientValuesAtQuadPts(),
-                                           stack.element.getDofsIn(),
-                                           stack.element.getGradientValues() );
-  }
+    // FE Config
+    constexpr localIndex num_dofs_1d = 2;
+    constexpr localIndex num_dofs_mesh_1d = 2;
+    constexpr localIndex num_quads_1d = 2;
 
-  /**
-   * @copydoc geosx::finiteElement::TeamKernelBase::quadraturePointKernel
-   */
-  template < typename QuadraturePointIndex >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointKernel( StackVariables & stack,
-                              QuadraturePointIndex const & quad_index ) const
-  {
-    /// QFunction for Laplace operator
-    constexpr int dim = StackVariables::dim;
+    // Kernel Config
+    constexpr ThreadingModel threading_model = ThreadingModel::Serial;
+    constexpr localIndex num_threads_1d = num_quads_1d;
+    constexpr localIndex batch_size = 32;
 
-    // Load q-local gradients
-    real64 grad_u[ dim ][ dim ];
-    qLocalLoad( quad_index, stack.element.getGradientValues(), grad_u );
+    using KernelConf = finiteElement::KernelConfiguration< threading_model, num_threads_1d, batch_size >;
+    using Stack = StackVariables<KernelConf>;
 
-    // load q-local jacobian
-    real64 J[ dim ][ dim ];
-    qLocalLoad( quad_index, stack.mesh.getJacobians(), J );
-
-    // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
-    real64 const weight = stack.weights( quad_index );
-
-    real64 const detJ = determinant( J );
-
-    real64 AdjJ[ dim ][ dim ];
-    adjugate( J, AdjJ );
-
-    // physical gradient of displacement
-    real64 grad_phys_u[ dim ][ dim ];
-    for (localIndex i = 0; i < dim; i++)
+    finiteElement::forallElements<KernelConf>( numElems, fields, [=] GEOSX_HOST_DEVICE ( Stack & stack )
     {
-      for (localIndex j = 0; j < dim; j++)
+      typename Stack::Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > dofs_in, nodes;
+      readField( stack, fields.m_elemsToNodes, fields.m_X, nodes );
+      readField( stack, fields.m_elemsToNodes, fields.m_src, dofs_in );
+
+      typename Stack::Basis basis( stack );
+      /// Computation of the Jacobians
+      typename Stack::Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3, 3 > Jac;
+      interpolateGradientAtQuadraturePoints( stack, basis, nodes, Jac );
+
+      /// Computation of the Gradient of the solution field
+      typename Stack::Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3, 3 > Gu;
+      interpolateGradientAtQuadraturePoints( stack, basis, dofs_in, Gu );
+
+      /// QFunction
+      forallQuadratureIndices( stack, [&]( auto const & quad_index )
       {
-        real64 val = 0.0;
-        for (localIndex k = 0; k < dim; k++)
+        constexpr localIndex dim = 3;
+        // Load q-local gradients
+        real64 grad_u[ dim ][ dim ];
+        qLocalLoad( quad_index, Gu, grad_u );
+
+        // load q-local jacobian
+        real64 J[ dim ][ dim ];
+        qLocalLoad( quad_index, Jac, J );
+
+        // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
+        real64 const detJ = determinant( J );
+
+        real64 const detJinv = 1.0 / detJ;
+
+        real64 AdjJ[ dim ][ dim ];
+        adjugate( J, AdjJ );
+
+        // physical gradient of displacement
+        real64 grad_phys_u[ dim ][ dim ];
+        for (localIndex i = 0; i < dim; i++)
         {
-          val += AdjJ[ i ][ k ] * grad_u[ k ][ j ] / detJ;
+          for (localIndex j = 0; j < dim; j++)
+          {
+            real64 val = 0.0;
+            for (localIndex k = 0; k < dim; k++)
+            {
+              val = val + AdjJ[ i ][ k ] * grad_u[ k ][ j ];
+            }
+            grad_phys_u[ i ][ j ] = val * detJinv;
+          }
         }
-        grad_phys_u[ i ][ j ] = val;
-      }
-    }
 
-    // Computation of the strain
-    real64 strain[ dim ][ dim ];
-    for (localIndex j = 0; j < dim; j++)
-    {
-      for (localIndex i = 0; i < dim; i++)
-      {
-        strain[ i ][ j ] = 0.5 * ( grad_phys_u[ i ][ j ] + grad_phys_u[ j ][ i ] );
-      }
-    }
-
-    // Local material stiffness values
-    // real64 D_mat[ 2*dim ][ 2*dim ];
-    // qLocalLoad( quad_index, stack.element.getMaterialStiffnes(), D_mat );
-    
-    // Computation of the stress
-    real64 stress[ dim ][ dim ];
-    // computeStress< DiscretizationOps >( D_mat, strain, stress ); // Tensor product
-    // DiscretizationOps::computeStress( stack.element.getMaterialStiffnes(), strain, stress ); // Tensor product
-    computeStress( stack, strain, stress );
-
-    // Apply J^-T
-    real64 D[ dim ][ dim ];
-    for (localIndex i = 0; i < dim; i++)
-    {
-      for (localIndex j = 0; j < dim; j++)
-      {
-        real64 val = 0.0;
-        for (localIndex k = 0; k < dim; k++)
+        // Computation of the strain
+        real64 strain[ dim ][ dim ];
+        for (localIndex j = 0; j < dim; j++)
         {
-          val += AdjJ[ k ][ i ] * stress[ k ][ j ] / detJ;
+          for (localIndex i = 0; i < dim; i++)
+          {
+            strain[ i ][ j ] = 0.5 * ( grad_phys_u[ i ][ j ] + grad_phys_u[ j ][ i ] );
+          }
         }
-        D[ i ][ j ] = val;
-      }
-    }
-    qLocalWrite( quad_index, D, stack.element.getQuadValues() );
-  }
+        
+        // Computation of the stress
+        real64 symm_strain[6];
+        symm_strain[0] = strain[0][0];
+        symm_strain[1] = strain[1][1];
+        symm_strain[2] = strain[2][2];
+        symm_strain[3] = 2 * strain[0][1];
+        symm_strain[4] = 2 * strain[0][2];
+        symm_strain[5] = 2 * strain[1][2];
+        real64 symm_stress[6];
+        fields.m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( stack.element_index, 0, symm_strain, symm_stress );
+        real64 stress[ dim ][ dim ];
+        stress[0][0] = symm_stress[0];
+        stress[1][1] = symm_stress[1];
+        stress[2][2] = symm_stress[2];
+        stress[0][1] = symm_stress[3];
+        stress[0][2] = symm_stress[4];
+        stress[1][2] = symm_stress[5];
+        stress[1][0] = symm_stress[3];
+        stress[2][0] = symm_stress[4];
+        stress[2][1] = symm_stress[5];
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void computeStress( StackVariables & stack,
-                      real64 const ( &strain )[ 3 ][ 3 ],
-                      real64 ( & stress )[ 3 ][ 3 ] ) const
-  {
-    localIndex const k = stack.element_index;
-    real64 symm_strain[6];
-    symm_strain[0] = strain[0][0];
-    symm_strain[1] = strain[1][1];
-    symm_strain[2] = strain[2][2];
-    symm_strain[3] = 2 * strain[0][1];
-    symm_strain[4] = 2 * strain[0][2];
-    symm_strain[5] = 2 * strain[1][2];
-    real64 symm_stress[6];
-    stack.kernelComponent.m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, 0, symm_strain, symm_stress );
-    stress[0][0] = symm_stress[0];
-    stress[1][1] = symm_stress[1];
-    stress[2][2] = symm_stress[2];
-    stress[0][1] = symm_stress[3];
-    stress[0][2] = symm_stress[4];
-    stress[1][2] = symm_stress[5];
-    stress[1][0] = symm_stress[3];
-    stress[2][0] = symm_stress[4];
-    stress[2][1] = symm_stress[5];
-  }
+        // Apply J^-T
+        real64 const weight = 1.0; //stack.weights( quad_index );
+        real64 D[ dim ][ dim ];
+        for (localIndex i = 0; i < dim; i++)
+        {
+          for (localIndex j = 0; j < dim; j++)
+          {
+            real64 val = 0.0;
+            for (localIndex k = 0; k < dim; k++)
+            {
+              val = val + AdjJ[ k ][ i ] * stress[ k ][ j ];
+            }
+            D[ i ][ j ] = weight * val;
+          }
+        }
+        qLocalWrite( quad_index, D, Gu );
+      } );
 
-  /**
-   * @copydoc geosx::finiteElement::TeamKernelBase::complete
-   *
-   * Form element residual from the fully formed element Jacobian dotted with
-   * the primary field and map the element local Jacobian/Residual to the
-   * global matrix/vector.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  real64 complete( StackVariables & stack ) const
-  {
-    using RAJA::RangeSegment;
+      /// Application of the test functions
+      typename Stack::Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > dofs_out;
+      applyGradientTestFunctions( stack, basis, Gu, dofs_out );
 
-    // Applying gradient of the test functions
-    applyGradientTestFunctions( stack,
-                                stack.element.basis.getValuesAtQuadPts(),
-                                stack.element.basis.getGradientValuesAtQuadPts(),
-                                stack.element.getQuadValues(),
-                                stack.element.getDofsOut() );
-    writeAddField( stack, stack.element.getDofsOut(), stack.kernelComponent.m_dst );
+      writeAddField( stack, fields.m_elemsToNodes, dofs_out, fields.m_dst );
 
-    // constexpr localIndex num_dofs_1d = StackVariables::num_dofs_1d;
-    // real64 maxForce = 0;
-    // // TODO put this into a lambda "iterator" function
-    // auto & dofs_out = stack.element.getDofsOut();
-    // loop<thread_x> (stack.ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
-    // {
-    //   loop<thread_y> (stack.ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
-    //   {
-    //     for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
-    //     {
-    //       maxForce = fmax( maxForce, fabs( dofs_out[ dof_x ][ dof_y ][ dof_z ] ) );
-    //     }
-    //   } );
-    // } );
-    // return maxForce;
+    } );
     return 0.0;
   }
 
   /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
-
+  /// The arrays containing input/output displacement.
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_src;
   arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const m_dst;
 };
