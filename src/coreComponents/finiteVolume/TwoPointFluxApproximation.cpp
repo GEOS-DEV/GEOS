@@ -31,6 +31,8 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 
 #include "LvArray/src/tensorOps.hpp"
 
@@ -100,6 +102,13 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
 
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > const permeabilityAcc =
+    elemManager.constructMaterialExtrinsicAccessor< constitutive::PermeabilityBase, extrinsicMeshData::permeability::permeability >( true );
+  ElementRegionManager::ElementViewConst< arrayView3d< real64 const > > const permeability = permeabilityAcc.toNestedViewConst();
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > const dPerm_dPresAcc =
+    elemManager.constructMaterialExtrinsicAccessor< constitutive::PermeabilityBase, extrinsicMeshData::permeability::dPerm_dPressure >( true );
+  ElementRegionManager::ElementViewConst< arrayView3d< real64 const > > const dPerm_dPres = dPerm_dPresAcc.toNestedViewConst();  
+  
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
     elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
 
@@ -230,12 +239,23 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
     bool const bothSidesOwned = ( elemGhostRank[er0][esr0][ei0] < 0 ) && ( elemGhostRank[er1][esr1][ei1] < 0 );
 
+    /// Transmissibility
+    real64 transmissibility[1][2]{};
+    /// Derivatives of transmissibility with respect to pressure
+    real64 dTrans_dPres[1][2]{};
+    
+    stencilWrapper.computeWeights( iconn,
+				   permeability,
+				   dPerm_dPres,
+				   transmissibility,
+				   dTrans_dPres );
+    
     if( bothSidesOwned ||
         ( ( elemGhostRank[er0][esr0][ei0] < 0 ) && ( myRank < elemGhostRank[er1][esr1][ei1] ) ) ||
         ( ( elemGhostRank[er1][esr1][ei1] < 0 ) && ( myRank < elemGhostRank[er0][esr0][ei0] ) ) )
     {
-      graphFile << iconn << " " << subRegion0.localToGlobalMap()[ei0] << " " << subRegion1.localToGlobalMap()[ei1] << std::endl;
-      graphFile << iconn << " " << subRegion1.localToGlobalMap()[ei1] << " " << subRegion0.localToGlobalMap()[ei0] << std::endl;
+      graphFile << iconn << " " << subRegion0.localToGlobalMap()[ei0] << " " << subRegion1.localToGlobalMap()[ei1] << " " << transmissibility[0][0] << std::endl;
+      graphFile << iconn << " " << subRegion1.localToGlobalMap()[ei1] << " " << subRegion0.localToGlobalMap()[ei0] << " " << transmissibility[0][1] << std::endl;
     }
   } );
 
