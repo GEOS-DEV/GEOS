@@ -65,25 +65,6 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain ) override;
 
-  /**
-   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
-   * last two timesteps.
-   * @param time_n the time corresponding to the field values pressure_n
-   * @param dt the simulation timestep
-   * @param timeSeismo the time at which the seismogram is computed
-   * @param iSeismo the index of the seismogram time in the seismogram array
-   * @param var_at_np1 the field values at time_n + dt
-   * @param var_at_n the field values at time_n
-   * @param var_at_receivers the array holding the trace values, where the output is written
-   */
-  virtual void computeSeismoTrace( real64 const time_n,
-                                   real64 const dt,
-                                   real64 const timeSeismo,
-                                   localIndex iSeismo,
-                                   arrayView1d< real32 const > const var_np1,
-                                   arrayView1d< real32 const > const var_n,
-                                   arrayView2d< real32 > varAtReceivers );
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * sourceCoordinatesString() { return "sourceCoordinates"; }
