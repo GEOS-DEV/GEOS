@@ -222,37 +222,13 @@ public:
 
         // physical gradient of displacement
         real64 grad_phys_u[ dim ][ dim ];
-        for (localIndex i = 0; i < dim; i++)
-        {
-          for (localIndex j = 0; j < dim; j++)
-          {
-            real64 val = 0.0;
-            for (localIndex k = 0; k < dim; k++)
-            {
-              val = val + AdjJ[ i ][ k ] * grad_u[ k ][ j ];
-            }
-            grad_phys_u[ i ][ j ] = val * detJinv;
-          }
-        }
-
-        // Computation of the strain
-        real64 strain[ dim ][ dim ];
-        for (localIndex j = 0; j < dim; j++)
-        {
-          for (localIndex i = 0; i < dim; i++)
-          {
-            strain[ i ][ j ] = 0.5 * ( grad_phys_u[ i ][ j ] + grad_phys_u[ j ][ i ] );
-          }
-        }
+        computePhysicalGradient( detJinv, AdjJ, grad_u, grad_phys_u );
         
-        // Computation of the stress
+        // Computation of the strain
         real64 symm_strain[6];
-        symm_strain[0] = strain[0][0];
-        symm_strain[1] = strain[1][1];
-        symm_strain[2] = strain[2][2];
-        symm_strain[3] = 2 * strain[0][1];
-        symm_strain[4] = 2 * strain[0][2];
-        symm_strain[5] = 2 * strain[1][2];
+        computeStrain( grad_phys_u, symm_strain );
+
+        // Computation of the stress
         real64 symm_stress[6];
         fields.m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( stack.element_index, 0, symm_strain, symm_stress );
         real64 stress[ dim ][ dim ];
@@ -295,7 +271,7 @@ public:
   }
 
 
-  #if 1
+  #if 0
   template< typename POLICY,
             typename KERNEL_TYPE >
   static real64
