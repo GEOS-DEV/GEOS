@@ -197,8 +197,6 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
   // Need to synchronize the two iteration counters
   // contactSolver()->getNonlinearSolverParameters().m_numNewtonIterations = m_nonlinearSolverParameters.m_numNewtonIterations;
 
-  contactSolver()->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -220,7 +218,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
                                                                   gravityVectorData,
                                                                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
-    // Cell-based contributions
+    // 1. Cell-based contributions to Kuu, Kup, Kpu, Kpp blocks
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::PorousSolidBase,
@@ -230,10 +228,16 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
                                                             viewKeyStruct::porousMaterialNamesString(),
                                                             kernelFactory );
 
-    updateOpeningForFlow( domain );
-    assembleForceResidualDerivativeWrtPressure( domain, dofManager, localMatrix, localRhs );
-    assembleFluidMassResidualDerivativeWrtDisplacement( domain, dofManager, localMatrix, localRhs );
+    /// 2.a assemble Kut,
+    contactSolver()->assembleForceResidualDerivativeWrtTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
+    /// 2.b assemble Ktu, Ktt blocks.
+    contactSolver()->assembleTractionResidualDerivativeWrtDisplacementAndTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
+    /// 2.c assemble stabilization
+    contactSolver()->assembleStabilization( mesh, regionNames, dofManager, localMatrix, localRhs );
 
+    /// 3. assemble
+    assembleForceResidualDerivativeWrtPressure( mesh, regionNames, dofManager, localMatrix, localRhs );
+    assembleFluidMassResidualDerivativeWrtDisplacement( mesh, regionNames, dofManager, localMatrix, localRhs );
   } );
 
   // Transmissibility 3D/2D
@@ -456,191 +460,225 @@ void SinglePhasePoromechanicsConformingFractures::
 }
 
 void SinglePhasePoromechanicsConformingFractures::
-  assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
+  assembleForceResidualDerivativeWrtPressure( MeshLevel & mesh,
                                               DofManager const & dofManager,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-//  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+
+  FaceManager const & faceManager = mesh.getFaceManager();
+  NodeManager & nodeManager = mesh.getNodeManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+
+  string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+  string const & presDofKey = dofManager.getKey( m_pressureKey );
+
+  arrayView1d< globalIndex > const &
+  dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+  // Get the coordinates for all nodes
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+
+  elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
   {
-    FaceManager const & faceManager = mesh.getFaceManager();
-    NodeManager & nodeManager = mesh.getNodeManager();
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-
-    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
-    arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
-
-    string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-    string const & presDofKey = dofManager.getKey( m_pressureKey );
-
-    arrayView1d< globalIndex > const &
-    dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
-    globalIndex const rankOffset = dofManager.rankOffset();
-
-    // Get the coordinates for all nodes
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
-
-    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
+    if( subRegion.hasWrapper( flow::pressure::key() ) )
     {
-      if( subRegion.hasWrapper( flow::pressure::key() ) )
+      arrayView1d< globalIndex const > const &
+      presDofNumber = subRegion.getReference< globalIndex_array >( presDofKey );
+      arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( flow::pressure::key() );
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+
+      forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
       {
-        arrayView1d< globalIndex const > const &
-        presDofNumber = subRegion.getReference< globalIndex_array >( presDofKey );
-        arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( flow::pressure::key() );
-        arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+        localIndex const kf0 = elemsToFaces[kfe][0];
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
 
-        forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
+        array1d< real64 > Nbar( 3 );
+        Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
+        Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
+        Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
+        LvArray::tensorOps::normalize< 3 >( Nbar );
+
+        globalIndex rowDOF[12];
+        real64 nodeRHS[12];
+        stackArray1d< real64, 12 > dRdP( 3*numNodesPerFace );
+        globalIndex colDOF[1];
+        colDOF[0] = presDofNumber[kfe];
+
+        for( localIndex kf=0; kf<2; ++kf )
         {
-          localIndex const kf0 = elemsToFaces[kfe][0];
-          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
+          localIndex const faceIndex = elemsToFaces[kfe][kf];
 
-          array1d< real64 > Nbar( 3 );
-          Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
-          Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
-          Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
-          LvArray::tensorOps::normalize< 3 >( Nbar );
-
-          globalIndex rowDOF[12];
-          real64 nodeRHS[12];
-          stackArray1d< real64, 12 > dRdP( 3*numNodesPerFace );
-          globalIndex colDOF[1];
-          colDOF[0] = presDofNumber[kfe];
-
-          for( localIndex kf=0; kf<2; ++kf )
+          for( localIndex a=0; a<numNodesPerFace; ++a )
           {
-            localIndex const faceIndex = elemsToFaces[kfe][kf];
+            // Compute local area contribution for each node
+            array1d< real64 > nodalArea;
+            contactSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
 
-            for( localIndex a=0; a<numNodesPerFace; ++a )
+            real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
+            array1d< real64 > globalNodalForce( 3 );
+            LvArray::tensorOps::scaledCopy< 3 >( globalNodalForce, Nbar, nodalForceMag );
+
+            for( localIndex i=0; i<3; ++i )
             {
-              // Compute local area contribution for each node
-              array1d< real64 > nodalArea;
-              contactSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+              rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
+              // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
+              nodeRHS[3*a+i] = +globalNodalForce[i] * pow( -1, kf );
 
-              real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
-              array1d< real64 > globalNodalForce( 3 );
-              LvArray::tensorOps::scaledCopy< 3 >( globalNodalForce, Nbar, nodalForceMag );
-
-              for( localIndex i=0; i<3; ++i )
-              {
-                rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
-                // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
-                nodeRHS[3*a+i] = +globalNodalForce[i] * pow( -1, kf );
-
-                // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
-                dRdP( 3*a+i ) = -nodalArea[a] * Nbar[i] * pow( -1, kf );
-              }
-            }
-
-            for( localIndex idof = 0; idof < numNodesPerFace * 3; ++idof )
-            {
-              localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[idof] - rankOffset );
-
-              if( localRow >= 0 && localRow < localMatrix.numRows() )
-              {
-                localMatrix.addToRow< parallelHostAtomic >( localRow,
-                                                            colDOF,
-                                                            &dRdP[idof],
-                                                            1 );
-                RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow], nodeRHS[idof] );
-              }
+              // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
+              dRdP( 3*a+i ) = -nodalArea[a] * Nbar[i] * pow( -1, kf );
             }
           }
-        } );
-      }
-    } );
+
+          for( localIndex idof = 0; idof < numNodesPerFace * 3; ++idof )
+          {
+            localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[idof] - rankOffset );
+
+            if( localRow >= 0 && localRow < localMatrix.numRows() )
+            {
+              localMatrix.addToRow< parallelHostAtomic >( localRow,
+                                                          colDOF,
+                                                          &dRdP[idof],
+                                                          1 );
+              RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow], nodeRHS[idof] );
+            }
+          }
+        }
+      } );
+    }
   } );
 }
 
 void SinglePhasePoromechanicsConformingFractures::
-  assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & domain,
+  assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
+                                                      arrayView1d< string const > const & regionNames,
                                                       DofManager const & dofManager,
                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                       arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) )
 {
   GEOSX_MARK_FUNCTION;
-//  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+
+  FaceManager const & faceManager = mesh.getFaceManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+
+  arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+
+  CRSMatrixView< real64 const, localIndex const > const &
+  dFluxResidual_dAperture = getDerivativeFluxResidual_dAperture().toViewConst();
+
+  string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+  string const & presDofKey = dofManager.getKey( m_pressureKey );
+
+  arrayView1d< globalIndex const > const &
+  dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+  // Get the coordinates for all nodes
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+
+  elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                            [&]( localIndex const,
+                                                                 FaceElementSubRegion const & subRegion )
   {
-
-    FaceManager const & faceManager = mesh.getFaceManager();
-    NodeManager const & nodeManager = mesh.getNodeManager();
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-
-    arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
-    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
-
-    CRSMatrixView< real64 const, localIndex const > const &
-    dFluxResidual_dAperture = getDerivativeFluxResidual_dAperture().toViewConst();
-
-    string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-    string const & presDofKey = dofManager.getKey( m_pressureKey );
-
-    arrayView1d< globalIndex const > const &
-    dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
-    globalIndex const rankOffset = dofManager.rankOffset();
-
-    // Get the coordinates for all nodes
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
-
-    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   FaceElementSubRegion const & subRegion )
+    if( subRegion.hasWrapper( flow::pressure::key() ) )
     {
-      if( subRegion.hasWrapper( flow::pressure::key() ) )
+      string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
+
+      SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
+      arrayView2d< real64 const > const & density = fluid.density();
+
+      arrayView1d< globalIndex const > const &
+      presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+      arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
+
+      forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
       {
-        string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+        globalIndex nodeDOF[24];
+        globalIndex elemDOF[1];
+        elemDOF[0] = presDofNumber[kfe];
 
-        SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
-        arrayView2d< real64 const > const & density = fluid.density();
+        array1d< real64 > Nbar( 3 );
+        Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
+        Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
+        Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
+        LvArray::tensorOps::normalize< 3 >( Nbar );
 
-        arrayView1d< globalIndex const > const &
-        presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
-        arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
-        arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
+        stackArray1d< real64, 2*3*4 > dRdU( 2*3*numNodesPerFace );
 
-        forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
+        // Accumulation derivative
+        if( contactSolver()->isElementInOpenState( subRegion, kfe ) )
         {
-          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-          globalIndex nodeDOF[24];
-          globalIndex elemDOF[1];
-          elemDOF[0] = presDofNumber[kfe];
-
-          array1d< real64 > Nbar( 3 );
-          Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
-          Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
-          Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
-          LvArray::tensorOps::normalize< 3 >( Nbar );
-
-          stackArray1d< real64, 2*3*4 > dRdU( 2*3*numNodesPerFace );
-
-          // Accumulation derivative
-          if( contactSolver()->isElementInOpenState( subRegion, kfe ) )
+          for( localIndex kf=0; kf<2; ++kf )
           {
-            for( localIndex kf=0; kf<2; ++kf )
-            {
-              // Compute local area contribution for each node
-              array1d< real64 > nodalArea;
-              contactSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+            // Compute local area contribution for each node
+            array1d< real64 > nodalArea;
+            contactSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
 
-              for( localIndex a=0; a<numNodesPerFace; ++a )
+            for( localIndex a=0; a<numNodesPerFace; ++a )
+            {
+              real64 const dAccumulationResidualdAperture = density[kfe][0] * nodalArea[a];
+              for( localIndex i=0; i<3; ++i )
               {
-                real64 const dAccumulationResidualdAperture = density[kfe][0] * nodalArea[a];
-                for( localIndex i=0; i<3; ++i )
-                {
-                  nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
-                                                            + LvArray::integerConversion< globalIndex >( i );
-                  real64 const dAper_dU = -pow( -1, kf ) * Nbar[i];
-                  dRdU( kf*3*numNodesPerFace + 3*a+i ) = dAccumulationResidualdAperture * dAper_dU;
-                }
+                nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
+                                                          + LvArray::integerConversion< globalIndex >( i );
+                real64 const dAper_dU = -pow( -1, kf ) * Nbar[i];
+                dRdU( kf*3*numNodesPerFace + 3*a+i ) = dAccumulationResidualdAperture * dAper_dU;
               }
             }
+          }
 
+          localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
+
+          localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
+                                                                    nodeDOF,
+                                                                    dRdU.data(),
+                                                                    2 * 3 * numNodesPerFace );
+        }
+
+        // flux derivative
+        bool skipAssembly = true;
+        localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( kfe );
+        arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( kfe );
+        arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( kfe );
+
+        skipAssembly &= !( contactSolver()->isElementInOpenState( subRegion, kfe ) );
+
+        for( localIndex kfe1=0; kfe1<numColumns; ++kfe1 )
+        {
+          real64 const dR_dAper = values[kfe1];
+          localIndex const kfe2 = columns[kfe1];
+
+          skipAssembly &= !( contactSolver()->isElementInOpenState( subRegion, kfe2 ) );
+
+          for( localIndex kf=0; kf<2; ++kf )
+          {
+            // Compute local area contribution for each node
+            array1d< real64 > nodalArea;
+            contactSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe2][kf], nodalArea );
+
+            for( localIndex a=0; a<numNodesPerFace; ++a )
+            {
+              for( localIndex i=0; i<3; ++i )
+              {
+                nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
+                                                          + LvArray::integerConversion< globalIndex >( i );
+                real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] * ( nodalArea[a] / area[kfe2] );
+                dRdU( kf*3*numNodesPerFace + 3*a+i ) = dR_dAper * dAper_dU;
+              }
+            }
+          }
+
+          if( !skipAssembly )
+          {
             localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
 
             localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
@@ -648,59 +686,54 @@ void SinglePhasePoromechanicsConformingFractures::
                                                                       dRdU.data(),
                                                                       2 * 3 * numNodesPerFace );
           }
-
-          // flux derivative
-          bool skipAssembly = true;
-          localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( kfe );
-          arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( kfe );
-          arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( kfe );
-
-          skipAssembly &= !( contactSolver()->isElementInOpenState( subRegion, kfe ) );
-
-          for( localIndex kfe1=0; kfe1<numColumns; ++kfe1 )
-          {
-            real64 const dR_dAper = values[kfe1];
-            localIndex const kfe2 = columns[kfe1];
-
-            skipAssembly &= !( contactSolver()->isElementInOpenState( subRegion, kfe2 ) );
-
-            for( localIndex kf=0; kf<2; ++kf )
-            {
-              // Compute local area contribution for each node
-              array1d< real64 > nodalArea;
-              contactSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe2][kf], nodalArea );
-
-              for( localIndex a=0; a<numNodesPerFace; ++a )
-              {
-                for( localIndex i=0; i<3; ++i )
-                {
-                  nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
-                                                            + LvArray::integerConversion< globalIndex >( i );
-                  real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] * ( nodalArea[a] / area[kfe2] );
-                  dRdU( kf*3*numNodesPerFace + 3*a+i ) = dR_dAper * dAper_dU;
-                }
-              }
-            }
-
-            if( !skipAssembly )
-            {
-              localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
-
-              localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
-                                                                        nodeDOF,
-                                                                        dRdU.data(),
-                                                                        2 * 3 * numNodesPerFace );
-            }
-          }
-        } );
-      }
-    } );
+        }
+      } );
+    }
   } );
 }
 
 void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition & domain )
 {
   Base::updateState( domain );
+
+  updateHydraulicAperture( domain );
+}
+
+void SinglePhasePoromechanicsConformingFractures::updateHydraulicAperture( DomainPartition & domain )
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( FaceElementSubRegion & subRegion )
+    {
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      arrayView2d< real64 const > const & dispJump = subRegion.getReference< array2d< real64 > >( contact::dispJump::key() );
+      arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
+      arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
+      arrayView1d< real64 > const & aperture = subRegion.getReference< array1d< real64 > >( flow::hydraulicAperture::key() );
+      arrayView1d< real64 > const & deltaVolume = subRegion.getReference< array1d< real64 > >( flow::deltaVolume::key() );
+
+      forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
+      {
+        if( ghostRank[kfe] < 0 )
+        {
+          if( contactSolver->isElementInOpenState( subRegion, kfe ) )
+          {
+            aperture[kfe] = dispJump[kfe][0];
+            deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
+          }
+          else
+          {
+            aperture[kfe] = 0.0;
+            deltaVolume[kfe] = 0.0;
+          }
+        }
+      } );
+    } );
+  } );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsConformingFractures, string const &, Group * const )
