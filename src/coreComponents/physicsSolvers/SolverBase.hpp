@@ -821,8 +821,7 @@ string SolverBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
 template< typename BASETYPE, typename LOOKUP_TYPE >
 BASETYPE const & SolverBase::getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key )
 {
-  dataRepository::Group const & constitutiveModels =
-    dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
+  dataRepository::Group const & constitutiveModels = dataGroup.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 
   return constitutiveModels.getGroup< BASETYPE >( key );
 }
@@ -830,8 +829,7 @@ BASETYPE const & SolverBase::getConstitutiveModel( dataRepository::Group const &
 template< typename BASETYPE, typename LOOKUP_TYPE >
 BASETYPE & SolverBase::getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key )
 {
-  Group & constitutiveModels =
-    dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
+  Group & constitutiveModels = dataGroup.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 
   return constitutiveModels.getGroup< BASETYPE >( key );
 }
