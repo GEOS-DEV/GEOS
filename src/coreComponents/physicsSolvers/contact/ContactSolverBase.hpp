@@ -62,6 +62,8 @@ public:
 
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 
+  SolidMechanicsLagrangianFEM * getSolidSolver() { return m_solidSolver; }
+
 protected:
 
   virtual void postProcessInput() override;
