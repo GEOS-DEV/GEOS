@@ -135,7 +135,7 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC & cellBlockManager 
   array2d< localIndex > const blockToSubRegion = this->getCellBlockToSubRegionMap( cellBlockManager );
   this->forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion & elemRegion )
   {
-    FaceElementSubRegion & subRegion = elemRegion.getUniqueSubRegion< FaceElementSubRegion >();
+    SurfaceElementSubRegion & subRegion = elemRegion.getUniqueSubRegion< SurfaceElementSubRegion >();
     // While indicated as containing element subregion information,
     // `relation` currently contains cell block information
     // that will be transformed into element subregion information.
