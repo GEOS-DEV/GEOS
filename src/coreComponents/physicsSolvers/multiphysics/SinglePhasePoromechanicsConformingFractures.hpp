@@ -27,7 +27,7 @@ namespace geosx
 {
 
 class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< LagrangianContactSolver,
-                                                                            SinglePhaseBase >
+                                                                          SinglePhaseBase >
 {
 public:
 
@@ -53,14 +53,15 @@ public:
    * @param parent the parent group of this instantiation of SinglePhasePoromechanicsConformingFractures
    */
   SinglePhasePoromechanicsConformingFractures( const string & name,
-                                  Group * const parent );
+                                               Group * const parent );
 
   /// Destructor for the class
   ~SinglePhasePoromechanicsConformingFractures() override {}
 
   /**
    * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new SinglePhasePoromechanicsConformingFractures object through the object catalog.
+   * @return string that contains the catalog name to generate a new SinglePhasePoromechanicsConformingFractures object through the object
+   * catalog.
    */
   static string catalogName() { return "SinglePhasePoromechanicsConformingFractures"; }
 

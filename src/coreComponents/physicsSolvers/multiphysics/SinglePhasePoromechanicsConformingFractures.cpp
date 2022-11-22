@@ -35,7 +35,7 @@ using namespace dataRepository;
 using namespace fields;
 
 SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingFractures( const string & name,
-                                                                Group * const parent )
+                                                                                          Group * const parent )
   : Base( name, parent )
 {
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
@@ -68,23 +68,23 @@ void SinglePhasePoromechanicsConformingFractures::registerDataOnMesh( Group & me
 }
 
 void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
-                                                                   DofManager & dofManager ) const
+                                                                 DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
 
   /// We need to add 2 coupling terms:
 
-  // 1. Poroemechanical coupling in the bulk 
+  // 1. Poroemechanical coupling in the bulk
   dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
                           SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
 
-  // 2. Traction - pressure coupling in the fracture                        
+  // 2. Traction - pressure coupling in the fracture
   dofManager.addCoupling( SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
                           fields::contact::traction::key(),
                           DofManager::Connector::Elem );
 
-  dofManager.printFieldInfo();                        
+  dofManager.printFieldInfo();
 }
 
 bool SinglePhasePoromechanicsConformingFractures::updateConfiguration( DomainPartition & domain )
@@ -120,16 +120,16 @@ void SinglePhasePoromechanicsConformingFractures::initializePreSubGroups()
 }
 
 void SinglePhasePoromechanicsConformingFractures::setupSystem( DomainPartition & domain,
-                                                                 DofManager & dofManager,
-                                                                 CRSMatrix< real64, globalIndex > & localMatrix,
-                                                                 ParallelVector & rhs,
-                                                                 ParallelVector & solution,
-                                                                 bool const setSparsity )
+                                                               DofManager & dofManager,
+                                                               CRSMatrix< real64, globalIndex > & localMatrix,
+                                                               ParallelVector & rhs,
+                                                               ParallelVector & solution,
+                                                               bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
 
   GEOSX_UNUSED_VAR( setSparsity );
-  
+
   /// 1. Add all coupling terms handled directly by the DofManager
   dofManager.setDomain( domain );
   setupDofs( domain, dofManager );
@@ -164,7 +164,7 @@ void SinglePhasePoromechanicsConformingFractures::setupSystem( DomainPartition &
     pattern.insertNonZeros( localRow, cols, cols + patternOriginal.numNonZeros( localRow ) );
   }
 
-  // Add the nonzeros from coupling 
+  // Add the nonzeros from coupling
   addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView() );
 
   localMatrix.setName( this->getName() + "/matrix" );
@@ -185,19 +185,19 @@ void SinglePhasePoromechanicsConformingFractures::setupSystem( DomainPartition &
 }
 
 void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const time_n,
-                                                                    real64 const dt,
-                                                                    DomainPartition & domain,
-                                                                    DofManager const & dofManager,
-                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                    arrayView1d< real64 > const & localRhs )
+                                                                  real64 const dt,
+                                                                  DomainPartition & domain,
+                                                                  DofManager const & dofManager,
+                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                  arrayView1d< real64 > const & localRhs )
 {
 
-   GEOSX_MARK_FUNCTION;
+  GEOSX_MARK_FUNCTION;
 
   // Need to synchronize the two iteration counters
   // contactSolver()->getNonlinearSolverParameters().m_numNewtonIterations = m_nonlinearSolverParameters.m_numNewtonIterations;
 
-  contactSolver()->assembleSystem(time_n, dt, domain, dofManager, localMatrix, localRhs );
+  contactSolver()->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -232,7 +232,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
 
     updateOpeningForFlow( domain );
     assembleForceResidualDerivativeWrtPressure( domain, dofManager, localMatrix, localRhs );
-    assembleFluidMassResidualDerivativeWrtDisplacement( domain, dofManager, localMatrix, localRhs );                                                        
+    assembleFluidMassResidualDerivativeWrtDisplacement( domain, dofManager, localMatrix, localRhs );
 
   } );
 
@@ -249,9 +249,9 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
 
 
 void SinglePhasePoromechanicsConformingFractures::
-setUpDflux_dApertureMatrix( DomainPartition & domain,
-                            DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                            CRSMatrix< real64, globalIndex > & localMatrix )
+  setUpDflux_dApertureMatrix( DomainPartition & domain,
+                              DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                              CRSMatrix< real64, globalIndex > & localMatrix )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
@@ -261,7 +261,6 @@ setUpDflux_dApertureMatrix( DomainPartition & domain,
 
     {
       localIndex numRows = 0;
-                                                                          auto const & elementSubRegion )
       mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                                           [&]( localIndex const, FaceElementSubRegion const & subRegion )
       {
@@ -588,7 +587,7 @@ void SinglePhasePoromechanicsConformingFractures::
 
     // Get the coordinates for all nodes
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
-    
+
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion const & subRegion )
