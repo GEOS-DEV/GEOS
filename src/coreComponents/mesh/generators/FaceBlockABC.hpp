@@ -93,13 +93,19 @@ public:
   virtual ToCellRelation< array2d< localIndex > > get2dElemToElems() const = 0;
 
   /**
-   * @brief Get the 3d edge of each 2d faces (geometrical edges in 3d).
+   * @brief Get @e one 3d edge equivalent for each 2d faces (geometrical edges in 3d).
    * @return The mapping of size @p num2dFaces.
    * @note 2d face numbering is local to the FaceBlockABC. 3d edge numbering is local to the rank.
    *
    * The current @p FaceBlockABC has its own 2d faces (which are segments in terms of 3d geometry).
    * Those segments are edges in the volumic mesh.
    * The current mapping informs which edge (in the volumic mesh) is the geometrical equivalent of the 2d face of the @p FaceBlockABC.
+   *
+   * @note Instead of returning only @e one 3d edge, we should actually return 2.
+   * But this mapping is used to distinguish between the 2d faces: which ones are the same, which ones are different.
+   * As such, since we are careful to always return the smallest edge index,
+   * knowing one unique 3d edge for any given 2d face is enough.
+   * @deprecated This computational trick could be replaced by something more explicit.
    */
   virtual array1d< localIndex > get2dFaceToEdge() const = 0;
 
