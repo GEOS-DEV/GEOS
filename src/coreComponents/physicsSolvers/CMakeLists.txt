@@ -70,6 +70,7 @@ set( physicsSolvers_headers
      multiphysics/MultiphasePoromechanicsSolver.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
      multiphysics/SinglePhasePoromechanicsKernel.hpp
+     multiphysics/ThermalSinglePhasePoromechanicsKernel.hpp     
      multiphysics/SinglePhasePoromechanicsEFEMKernel.hpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.hpp
      multiphysics/SinglePhasePoromechanicsSolver.hpp

@@ -54,43 +54,37 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
-  void smallStrainUpdateSinglePhase( localIndex const k,
-                                     localIndex const q,
-                                     real64 const & fluidPressure_n,
-                                     real64 const & fluidPressure,
-                                     real64 const ( &strainIncrement )[6],
-                                     real64 const & gravityAcceleration,
-                                     real64 const ( &gravityVector )[3],
-                                     real64 const & solidDensity,
-                                     real64 const & fluidDensity_n,
-                                     real64 const & fluidDensity,
-                                     real64 const & dFluidDensity_dPressure,
-                                     real64 ( & totalStress )[6],
-                                     real64 ( & dTotalStress_dPressure )[6],
-                                     real64 ( & bodyForce )[3],
-                                     real64 ( & dBodyForce_dVolStrainIncrement )[3],
-                                     real64 ( & dBodyForce_dPressure )[3],
-                                     real64 & fluidMassContentIncrement,
-                                     real64 & dFluidMassContent_dPressure,
-                                     real64 & dFluidMassContent_dVolStrainIncrement,
-                                     DiscretizationOps & stiffness ) const
+  void smallStrainUpdatePoromechanics( localIndex const k,
+                                       localIndex const q,
+                                       real64 const & pressure_n,
+                                       real64 const & pressure,
+                                       real64 const & deltaTemperature,
+                                       real64 const ( &strainIncrement )[6],
+                                       real64 ( & totalStress )[6],
+                                       real64 ( & dTotalStress_dPressure )[6],
+                                       real64 ( & dTotalStress_dTemperature )[6],
+                                       DiscretizationOps & stiffness,
+                                       real64 & porosity,
+                                       real64 & porosity_n,
+                                       real64 & dPorosity_dVolStrain,
+                                       real64 & dPorosity_dPressure,
+                                       real64 & dPorosity_dTemperature,
+                                       real64 & dSolidDensity_dPressure ) const
   {
+    GEOSX_UNUSED_VAR( deltaTemperature, dTotalStress_dTemperature, dPorosity_dTemperature );
+
     // Compute total stress increment and its derivative
     computeTotalStress( k,
                         q,
-                        fluidPressure,
+                        pressure,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure,
                         stiffness );
 
     // Compute porosity and its derivatives
-    real64 const deltaFluidPressure = fluidPressure - fluidPressure_n;
-    real64 porosity;
-    real64 porosity_n;
+    real64 const deltaFluidPressure = pressure - pressure_n;
     real64 porosityInit;
-    real64 dPorosity_dVolStrain;
-    real64 dPorosity_dPressure;
     computePorosity( k,
                      q,
                      deltaFluidPressure,
@@ -101,31 +95,8 @@ public:
                      dPorosity_dVolStrain,
                      dPorosity_dPressure );
 
-    // Compute body force vector and its derivatives
-    if( gravityAcceleration > 0.0 )
-    {
-      computeBodyForce( solidDensity,
-                        fluidDensity,
-                        dFluidDensity_dPressure,
-                        porosity,
-                        dPorosity_dVolStrain,
-                        dPorosity_dPressure,
-                        gravityVector,
-                        bodyForce,
-                        dBodyForce_dVolStrainIncrement,
-                        dBodyForce_dPressure );
-    }
-
-    // Compute fluid mass contents and  its derivatives
-    fluidMassContentIncrement = porosity * fluidDensity - porosity_n * fluidDensity_n;
-    dFluidMassContent_dVolStrainIncrement = dPorosity_dVolStrain * fluidDensity;
-    dFluidMassContent_dPressure = dPorosity_dPressure * fluidDensity + porosity * dFluidDensity_dPressure;
-
-// TODO uncomment once we start using permeability model in flow.
-//    m_permUpdate.updateFromPressureStrain( k,
-//                                           q,
-//                                           pressure,
-//                                           volStrain );
+    // Save the derivative of solid density wrt pressure for the computation of the body force
+    dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure();
   }
 
   template< int NUM_MAX_COMPONENTS >
