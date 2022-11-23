@@ -19,9 +19,9 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
 
-#include "physicsSolvers/fluidFlow/SinglePhasePoromechanicsSolver.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/solidMechanics/LagrangianContactSolver.hpp"
+#include "physicsSolvers/contact/LagrangianContactSolver.hpp"
 
 namespace geosx
 {
@@ -78,7 +78,7 @@ public:
    * @brief accessor for the pointer to the poromechanics solver
    * @return a pointer to the flow solver
    */
-  SinglePhasePoromechanics * poromechanicsSolver() const
+  SinglePhasePoromechanicsSolver * poromechanicsSolver() const
   {
     return std::get< toUnderlying( SolverType::Poromechanics ) >( m_solvers );
   }
@@ -115,9 +115,13 @@ public:
   virtual void updateState( DomainPartition & domain ) override final;
 
 
-  virtual void implicitStepComplete( real64 const & time_n,
-                                     real64 const & dt,
-                                     DomainPartition & domain ) override;
+  // virtual void implicitStepComplete( real64 const & time_n,
+  //                                    real64 const & dt,
+  //                                    DomainPartition & domain ) override;
+
+  bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
+
+  bool updateConfiguration( DomainPartition & domain ) override final;
 
   /**@}*/
 
@@ -140,15 +144,15 @@ private:
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs );
 
-   /**
+  /**
    * @Brief add the nnz induced by the flux-aperture coupling
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param rowLenghts the nnz in each row
    */
   void addTransmissibilityCouplingNNZ( DomainPartition const & domain,
-                                  DofManager const & dofManager,
-                                  arrayView1d< localIndex > const & rowLengths ) const;
+                                       DofManager const & dofManager,
+                                       arrayView1d< localIndex > const & rowLengths ) const;
 
   /**
    * @Brief add the sparsity pattern induced by the flux-aperture coupling
@@ -157,27 +161,27 @@ private:
    * @param pattern the sparsity pattern
    */
   void addTransmissibilityCouplingPattern( DomainPartition const & domain,
-                                      DofManager const & dofManager,
-                                      SparsityPatternView< globalIndex > const & pattern ) const;
-  
+                                           DofManager const & dofManager,
+                                           SparsityPatternView< globalIndex > const & pattern ) const;
+
   /**
    * @brief Set up the Dflux_dApertureMatrix object
-   * 
-   * @param domain 
-   * @param dofManager 
-   * @param localMatrix 
+   *
+   * @param domain
+   * @param dofManager
+   * @param localMatrix
    */
   void setUpDflux_dApertureMatrix( DomainPartition & domain,
                                    DofManager const & dofManager,
                                    CRSMatrix< real64, globalIndex > & localMatrix );
-  
+
   /**
-   * @brief 
-   * 
-   * @param domain 
+   * @brief
+   *
+   * @param domain
    */
-  void updateHydraulicAperture( DomainPartition & domain ) const;
-                                                                             
+  void updateHydraulicAperture( DomainPartition & domain );
+
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
   {
@@ -195,6 +199,8 @@ private:
   }
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
+
+  string const m_pressureKey = SinglePhaseBase::viewKeyStruct::elemDofFieldString();
 };
 
 } /* namespace geosx */

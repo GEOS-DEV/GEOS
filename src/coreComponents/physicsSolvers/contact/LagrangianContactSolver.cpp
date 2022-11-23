@@ -572,7 +572,7 @@ void LagrangianContactSolver::assembleSystem( real64 const time,
   {
     assembleForceResidualDerivativeWrtTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
     assembleTractionResidualDerivativeWrtDisplacementAndTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
-    assembleStabilization( mesh, regionNames, dofManager, localMatrix, localRhs );
+    assembleStabilization( mesh, domain.getNumericalMethodManager(), dofManager, localMatrix, localRhs );
   } );
 }
 
@@ -868,7 +868,7 @@ void LagrangianContactSolver::computeFaceNodalArea( arrayView2d< real64 const, n
 }
 
 void LagrangianContactSolver::
-  assembleForceResidualDerivativeWrtTraction( MeshLevel & mesh,
+  assembleForceResidualDerivativeWrtTraction( MeshLevel const & mesh,
                                               arrayView1d< string const > const & regionNames,
                                               DofManager const & dofManager,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -877,7 +877,7 @@ void LagrangianContactSolver::
   GEOSX_MARK_FUNCTION;
 
   FaceManager const & faceManager = mesh.getFaceManager();
-  NodeManager & nodeManager = mesh.getNodeManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
@@ -1245,7 +1245,7 @@ void LagrangianContactSolver::
 }
 
 void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
-                                                     arrayView1d< string const > const & regionNames,
+                                                     NumericalMethodsManager const & numericalMethodManager,
                                                      DofManager const & dofManager,
                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                      arrayView1d< real64 > const & localRhs )
@@ -1260,7 +1260,6 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
   globalIndex const rankOffset = dofManager.rankOffset();
 
   // Get the finite volume method used to compute the stabilization
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( m_stabilizationName );
 
@@ -1861,6 +1860,30 @@ real64 LagrangianContactSolver::setNextDt( real64 const & currentDt,
 {
   GEOSX_UNUSED_VAR( domain );
   return currentDt;
+}
+
+bool LagrangianContactSolver::isElementInOpenState( FaceElementSubRegion const & subRegion,
+                                                    localIndex const kfe ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  using namespace fields::contact;
+
+  // It can be used only thanks to the global synchronization in AssembleSystem (SynchronizeFractureState)
+  bool res = false;
+  if( subRegion.hasWrapper( contact::traction::key() ) )
+  {
+    arrayView1d< integer const > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
+    if( kfe >= 0 && kfe < subRegion.size() )
+    {
+      res = ( fractureState[kfe] == FractureState::Open );
+    }
+    else
+    {
+      GEOSX_ERROR( "isElementInOpenState called with index out of range: " << kfe << " not in [0," << subRegion.size() << "]" );
+    }
+  }
+  return res;
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, LagrangianContactSolver, string const &, Group * const )
