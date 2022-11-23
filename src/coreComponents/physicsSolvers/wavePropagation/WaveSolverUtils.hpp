@@ -64,23 +64,23 @@ struct WaveSolverUtils
   }
 
   static void computeSeismoTrace( real64 const time_n,
-                                         real64 const dt,
-                                         real64 const timeSeismo,
-                                         localIndex iSeismo,
-                                         arrayView2d< localIndex const > const receiverNodeIds,
-                                         arrayView2d< real64 const > const receiverConstants,
-                                         arrayView1d< localIndex const > const receiverIsLocal,
-                                         localIndex const nsamplesSeismoTrace,
-                                         localIndex const outputSeismoTrace,
-                                         arrayView1d< real32 const > const var_np1,
-                                         arrayView1d< real32 const > const var_n,
-                                         arrayView2d< real32 > varAtReceivers )
+                                  real64 const dt,
+                                  real64 const timeSeismo,
+                                  localIndex iSeismo,
+                                  arrayView2d< localIndex const > const receiverNodeIds,
+                                  arrayView2d< real64 const > const receiverConstants,
+                                  arrayView1d< localIndex const > const receiverIsLocal,
+                                  localIndex const nsamplesSeismoTrace,
+                                  localIndex const outputSeismoTrace,
+                                  arrayView1d< real32 const > const var_np1,
+                                  arrayView1d< real32 const > const var_n,
+                                  arrayView2d< real32 > varAtReceivers )
   {
     real64 const time_np1 = time_n + dt;
-    
+
     real32 const a1 = (std::abs( dt ) < 1e-8) ? 1.0 : (time_np1 - timeSeismo)/dt;
     real32 const a2 = 1.0 - a1;
-  
+
     if( nsamplesSeismoTrace > 0 )
     {
       forAll< parallelDevicePolicy< 32 > >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
@@ -100,7 +100,7 @@ struct WaveSolverUtils
         }
       } );
     }
-  
+
     // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized.
     // Output will then only be done via the previous code.
     if( iSeismo == nsamplesSeismoTrace - 1 )

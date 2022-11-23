@@ -257,7 +257,6 @@ struct PrecomputeSourceAndReceiverKernel
             receiverIsLocal[ircv] = 1;
 
             real64 Ntest[FE_TYPE::numNodes];
-            //finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
