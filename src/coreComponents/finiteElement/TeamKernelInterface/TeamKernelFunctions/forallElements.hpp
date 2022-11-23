@@ -174,7 +174,7 @@ struct KernelConfiguration< ThreadingModel::Distributed3D, num_threads_1d, batch
   : ctx( ctx )
   {
     using RAJA::RangeSegment;
-    loop<thread_x>( ctx, RangeSegment( 0, num_threads_1d ), [&]( localIndex const tid )
+    loop<thread_x>( ctx, RangeSegment( 0, num_threads_x ), [&]( localIndex const tid )
     {
       tidx = tid % num_threads_1d;
       tidy = ( tid % ( num_threads_1d * num_threads_1d ) ) / num_threads_1d;
