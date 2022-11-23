@@ -508,9 +508,9 @@ struct VelocityComputation
 
         for( localIndex i = 0; i < numNodesPerElem; ++i )
         {
-          uelemx[i]+=dt*flowx[i]/density[i];
-          uelemy[i]+=dt*flowy[i]/density[i];
-          uelemz[i]+=dt*flowz[i]/density[i];
+          uelemx[i]+=dt*flowx[i]/density[k];
+          uelemy[i]+=dt*flowy[i]/density[k];
+          uelemz[i]+=dt*flowz[i]/density[k];
         }
 
         for( localIndex i = 0; i < numNodesPerElem; ++i )
