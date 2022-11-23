@@ -441,7 +441,7 @@ compute2dElemToNodesAndFaces( vtkSmartPointer< vtkDataSet > vtkMesh,
     elem2dToFaces[i][1] = faces[1];
   }
 
-  return { elem2dToNodes, elem2dToFaces };
+  return std::make_tuple( elem2dToNodes, elem2dToFaces );
 }
 
 /**
@@ -555,7 +555,7 @@ compute2dFaceAnd2dElemToEdges( vtkSmartPointer< vtkDataSet > vtkMesh,
     face2dToEdges.emplace_back( pairToEdge( p, nodeToEdges ) );
   }
 
-  return { face2dToEdges, elem2dToEdges };
+  return std::make_tuple( face2dToEdges, elem2dToEdges );
 }
 
 /**
