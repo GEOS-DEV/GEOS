@@ -117,6 +117,8 @@ MeshLevel::MeshLevel( string const & name,
   m_faceManager->edgeList() = source.m_faceManager->edgeList();
   m_faceManager->faceCenter() = source.m_faceManager->faceCenter();
   m_faceManager->faceNormal() = source.m_faceManager->faceNormal();
+  m_faceManager->getDomainBoundaryIndicator() = source.m_faceManager->getDomainBoundaryIndicator();
+  m_faceManager->elementList() = source.m_faceManager->elementList();
 
   // Faces
   ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceManager->nodeList();
@@ -404,35 +406,45 @@ MeshLevel::MeshLevel( string const & name,
       }
 
       //Fill a temporary array which contains the Gauss-Lobatto points depending on the order
-      array1d< real64 > GaussLobattoPts( 4 );
+      array1d< real64 > GaussLobattoPts( order+1 );
 
-      if( order==1 )
+      switch( order )
       {
-        GaussLobattoPts[0] = -1.0;
-        GaussLobattoPts[1] = 1.0;
-      }
-
-      if( order==3 )
-      {
-        GaussLobattoPts[0] = -1.0;
-        GaussLobattoPts[1] = -1./sqrt( 5 );
-        GaussLobattoPts[2] = 1./sqrt( 5 );
-        GaussLobattoPts[3] = 1.;
-      }
-
-      if( order==5 )
-      {
-        static constexpr real64 sqrt__7_plus_2sqrt7__ = 3.50592393273573196;
-        static constexpr real64 sqrt__7_mins_2sqrt7__ = 1.30709501485960033;
-
-        static constexpr real64 sqrt_inv21 = 0.218217890235992381;
-
-        GaussLobattoPts[0] = -1.0;
-        GaussLobattoPts[1] = -sqrt_inv21*sqrt__7_plus_2sqrt7__;
-        GaussLobattoPts[2] = -sqrt_inv21*sqrt__7_mins_2sqrt7__;
-        GaussLobattoPts[3] = sqrt_inv21*sqrt__7_mins_2sqrt7__;
-        GaussLobattoPts[4] = sqrt_inv21*sqrt__7_plus_2sqrt7__;
-        GaussLobattoPts[5] = 1.0;
+        case 1:
+          GaussLobattoPts[0] = -1.0;
+          GaussLobattoPts[1] = 1.0;
+          break;
+        case 2:
+          GaussLobattoPts[0] = -1.0;
+          GaussLobattoPts[1] = 0.0;
+          GaussLobattoPts[2] = 1.0;
+          break;
+        case 3:
+          static constexpr real64 sqrt5 = 2.2360679774997897;
+          GaussLobattoPts[0] = -1.0;
+          GaussLobattoPts[1] = -1./sqrt5;
+          GaussLobattoPts[2] = 1./sqrt5;
+          GaussLobattoPts[3] = 1.;
+          break;
+        case 4:
+          static constexpr real64 sqrt3_7 = 0.6546536707079771;
+          GaussLobattoPts[0] = -1.0;
+          GaussLobattoPts[1] = -sqrt3_7;
+          GaussLobattoPts[2] = 0.0;
+          GaussLobattoPts[3] = sqrt3_7;
+          GaussLobattoPts[4] = 1.0;
+          break;
+        case 5:
+          static constexpr real64 sqrt__7_plus_2sqrt7__ = 3.50592393273573196;
+          static constexpr real64 sqrt__7_mins_2sqrt7__ = 1.30709501485960033;
+          static constexpr real64 sqrt_inv21 = 0.218217890235992381;
+          GaussLobattoPts[0] = -1.0;
+          GaussLobattoPts[1] = -sqrt_inv21*sqrt__7_plus_2sqrt7__;
+          GaussLobattoPts[2] = -sqrt_inv21*sqrt__7_mins_2sqrt7__;
+          GaussLobattoPts[3] = sqrt_inv21*sqrt__7_mins_2sqrt7__;
+          GaussLobattoPts[4] = sqrt_inv21*sqrt__7_plus_2sqrt7__;
+          GaussLobattoPts[5] = 1.0;
+          break;
       }
 
       //Three 1D arrays to contains the GL points in the new coordinates knowing the mesh nodes

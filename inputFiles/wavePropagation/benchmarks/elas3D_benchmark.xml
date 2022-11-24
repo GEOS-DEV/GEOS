@@ -99,7 +99,8 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="1"/>
+        order="1"
+        formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>
 
@@ -210,15 +211,15 @@
   <Tasks>
     <PackCollection
       name="displacementxCollection"
-      objectPath="nodeManager"
+      objectPath="/Problem/domain/MeshBodies/mesh/meshLevels/FE1/nodeManager"
       fieldName="displacementx_np1"/>
     <PackCollection
       name="displacementyCollection"
-      objectPath="nodeManager"
+      objectPath="/Problem/domain/MeshBodies/mesh/meshLevels/FE1/nodeManager"
       fieldName="displacementy_np1"/>
     <PackCollection
       name="displacementzCollection"
-      objectPath="nodeManager"
+      objectPath="/Problem/domain/MeshBodies/mesh/meshLevels/FE1/nodeManager"
       fieldName="displacementz_np1"/>
   </Tasks>
 

@@ -23,7 +23,7 @@
 
 #include <chrono>
 
-#include "finiteElement/elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp"
+#include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 
 using namespace geosx;
 using namespace finiteElement;
