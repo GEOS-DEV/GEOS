@@ -80,7 +80,8 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="1"/>
+        order="1"
+        formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>
 
