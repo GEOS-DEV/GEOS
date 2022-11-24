@@ -628,33 +628,20 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       string const & fluidName = subRegion.getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
       SingleFluidBase & fluidBase = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
 
-      constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
-      {
-        typename TYPEOFREF( fluid ) ::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
+      BoundaryStencilWrapper const stencilWrapper = stencil.createKernelWrapper();
 
-        typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
-        typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
-        typename FluxKernel::PermeabilityAccessors permAccessors( elemManager, this->getName() );
-
-        FaceDirichletBCKernel::launch( stencil.createKernelWrapper(),
-                                       flowAccessors.get< fields::ghostRank >(),
-                                       elemDofNumber.toNestedViewConst(),
-                                       dofManager.rankOffset(),
-                                       permAccessors.get< fields::permeability::permeability >(),
-                                       permAccessors.get< fields::permeability::dPerm_dPressure >(),
-                                       flowAccessors.get< fields::flow::pressure >(),
-                                       flowAccessors.get< fields::flow::gravityCoefficient >(),
-                                       fluidAccessors.get< fields::singlefluid::density >(),
-                                       fluidAccessors.get< fields::singlefluid::dDensity_dPressure >(),
-                                       flowAccessors.get< fields::flow::mobility >(),
-                                       flowAccessors.get< fields::flow::dMobility_dPressure >(),
-                                       presFace,
-                                       gravCoefFace,
-                                       fluidWrapper,
-                                       dt,
-                                       localMatrix,
-                                       localRhs );
-      } );
+      singlePhaseFVMKernels::
+        DirichletFaceBasedAssemblyKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                   dofKey,
+                                                   this->getName(),
+                                                   faceManager,
+                                                   elemManager,
+                                                   stencilWrapper,
+                                                   fluidBase,
+                                                   dt,
+                                                   localMatrix,
+                                                   localRhs );
     } );
   } );
 
