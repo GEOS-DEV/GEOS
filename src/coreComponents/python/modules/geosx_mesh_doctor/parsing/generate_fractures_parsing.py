@@ -1,10 +1,9 @@
 import logging
 import textwrap
 
-from checks import GENERATE_FRACTURES
 from checks.generate_fractures import Options, Result
 
-from . import cli_parsing
+from . import cli_parsing, GENERATE_FRACTURES
 
 __POLICY = "policy"
 __FIELD_POLICY = "field"

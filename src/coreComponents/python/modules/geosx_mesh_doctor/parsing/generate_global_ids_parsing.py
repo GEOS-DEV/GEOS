@@ -1,10 +1,9 @@
 import logging
 import textwrap
 
-from checks import GENERATE_GLOBAL_IDS
 from checks.generate_global_ids import Options, Result
 
-from . import cli_parsing
+from . import cli_parsing, GENERATE_GLOBAL_IDS
 
 __OUTPUT_FILE = "output"
 
