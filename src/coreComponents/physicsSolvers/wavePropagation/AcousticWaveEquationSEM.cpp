@@ -206,6 +206,7 @@ void AcousticWaveEquationSEM::postProcessInput()
 
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
+  real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
   real64 dt = 0;
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
@@ -226,7 +227,7 @@ void AcousticWaveEquationSEM::postProcessInput()
   {
     m_nsamplesSeismoTrace = 0;
   }
-  localIndex const nsamples = int(maxTime/dt) + 1;
+  localIndex const nsamples = int((maxTime - minTime)/dt) + 1;
 
 
   localIndex numNodesPerElem = getNumNodesPerElem();
@@ -465,6 +466,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
+    FaceManager & faceManager0 = this->getGroupByPath< FaceManager >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/faceManager" );
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
@@ -501,7 +503,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
+	acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
         kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                                X,
@@ -961,7 +963,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
 
-    if( computeGradient )
+    if( computeGradient && cycleNumber >= 0)
     {
 
       arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
@@ -1017,7 +1019,11 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
 
-    if( computeGradient )
+    EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+    real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
+    int const maxCycle = int(round(maxTime/dt));
+
+    if( computeGradient && cycleNumber <= maxCycle)
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -1042,16 +1048,19 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
         constexpr localIndex numNodesPerElem = 8;
-
+	arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
         GEOSX_MARK_SCOPE ( updatePartialGradient );
         forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const eltIdx )
         {
-          for( localIndex i = 0; i < numNodesPerElem; ++i )
-          {
-            localIndex nodeIdx = elemsToNodes[eltIdx][i];
-            grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
-          }
-        } );
+	  if(elemGhostRank[eltIdx]<0)
+	  {
+	    for( localIndex i = 0; i < numNodesPerElem; ++i )
+	    {
+	      localIndex nodeIdx = elemsToNodes[eltIdx][i];
+	      grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
+	    }
+	  }
+	} );
       } );
     }
 
@@ -1105,7 +1114,11 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                             "",
                                                             kernelFactory );
 
-    addSourceToRightHandSide( cycleNumber, rhs );
+    EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+    real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
+    integer const cycleForSource = int(round( -minTime/dt + cycleNumber));
+
+    addSourceToRightHandSide( cycleForSource, rhs );
 
     /// calculate your time integrators
     real64 const dt2 = dt*dt;
@@ -1204,11 +1217,12 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                   domain.getNeighbors(),
                                   true );
 
-    // compute the seismic traces since last step.
+    /// compute the seismic traces since last step.
     arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
-
-    computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
-
+    if(time_n >= 0)
+    {
+      computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
+    }
     /// prepare next step
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
