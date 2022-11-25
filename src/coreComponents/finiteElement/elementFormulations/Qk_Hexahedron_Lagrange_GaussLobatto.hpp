@@ -389,11 +389,10 @@ public:
   template< typename FUNC >
   GEOSX_HOST_DEVICE
   static void
-  evaluateGradient(int q,
-                   real64 const (&X)[numNodes][3],
-                   real64 const (&coords)[3],
-                   FUNC && func);
-
+  evaluateGradient( int q,
+                    real64 const (&X)[numNodes][3],
+                    real64 const (&coords)[3],
+                    FUNC && func );
 
 
 
@@ -805,8 +804,8 @@ GEOSX_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeElasticStiffnessTerm( int q,
-                      real64 const (&X)[numNodes][3],
-                      FUNC && func)
+                             real64 const (&X)[numNodes][3],
+                             FUNC && func )
 {
   real64 J[3][3] = {{0}};
   int qa, qb, qc;
@@ -929,14 +928,14 @@ computeElasticStiffnessTerm( int q,
             GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
             detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
             GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
-            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ), 
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ),
             J,
             0,
-            1);
+            1 );
     }
   }
 
-    for( int i=0; i<num1dNodes; i++ )
+  for( int i=0; i<num1dNodes; i++ )
   {
     for( int j=0; j<num1dNodes; j++ )
     {
@@ -944,10 +943,10 @@ computeElasticStiffnessTerm( int q,
             GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
             detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
             GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
-            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ), 
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ),
             J,
             1,
-            0);
+            0 );
     }
   }
 
@@ -959,28 +958,28 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-evaluateGradient(int q,
-                 real64 const (&X)[numNodes][3],
-                 real64 const (&coords)[3],
-                 FUNC && func )
+evaluateGradient( int q,
+                  real64 const (&X)[numNodes][3],
+                  real64 const (&coords)[3],
+                  FUNC && func )
 {
   real64 J[3][3] = {{0}};
   int qa, qb, qc;
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
   jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
-  GEOSX_UNUSED_VAR(detJ);
-   real64 Grad[3] =  { GL_BASIS::gradient( qa, coords[0] )*
-          GL_BASIS::value( qb, coords[1] )*
-          GL_BASIS::value( qc, coords[2] ),
-          GL_BASIS::value( qa, coords[0] )*
-          GL_BASIS::gradient( qb, coords[1] )*
-          GL_BASIS::value( qc, coords[2] ),
-          GL_BASIS::value( qa, coords[0] )*
-          GL_BASIS::value( qb, coords[1] )*
-          GL_BASIS::gradient( qc, coords[2] )};
-   func(Grad,J );
-  
+  GEOSX_UNUSED_VAR( detJ );
+  real64 Grad[3] =  { GL_BASIS::gradient( qa, coords[0] )*
+                      GL_BASIS::value( qb, coords[1] )*
+                      GL_BASIS::value( qc, coords[2] ),
+                      GL_BASIS::value( qa, coords[0] )*
+                      GL_BASIS::gradient( qb, coords[1] )*
+                      GL_BASIS::value( qc, coords[2] ),
+                      GL_BASIS::value( qa, coords[0] )*
+                      GL_BASIS::value( qb, coords[1] )*
+                      GL_BASIS::gradient( qc, coords[2] )};
+  func( Grad, J );
+
 
 }
 

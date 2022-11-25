@@ -270,15 +270,15 @@ struct PrecomputeSourceAndReceiverKernel
             //However, we will propably use elastic wave at 1st order for the FWI case.
             for( localIndex q=0; q< numNodesPerElem; ++q )
             {
-              FE_TYPE::evaluateGradient(q,xLocal,coordsOnRefElem, [&] (real64 Grad[3], real64 invJ[3][3])
+              FE_TYPE::evaluateGradient( q, xLocal, coordsOnRefElem, [&] ( real64 Grad[3], real64 invJ[3][3] )
               {
-                 sourceNodeIds[isrc][q] = elemsToNodes[k][q];
-                 sourceConstantsx[isrc][q] = Grad[0] * invJ[0][0] + Grad[1] * invJ[0][1] + Grad[2] * invJ[0][2];
-                 sourceConstantsy[isrc][q] = Grad[0] * invJ[1][0] + Grad[1] * invJ[1][1] + Grad[2] * invJ[1][2];
-                 sourceConstantsz[isrc][q] = Grad[0] * invJ[2][0] + Grad[1] * invJ[2][1] + Grad[2] * invJ[2][2];
+                sourceNodeIds[isrc][q] = elemsToNodes[k][q];
+                sourceConstantsx[isrc][q] = Grad[0] * invJ[0][0] + Grad[1] * invJ[0][1] + Grad[2] * invJ[0][2];
+                sourceConstantsy[isrc][q] = Grad[0] * invJ[1][0] + Grad[1] * invJ[1][1] + Grad[2] * invJ[1][2];
+                sourceConstantsz[isrc][q] = Grad[0] * invJ[2][0] + Grad[1] * invJ[2][1] + Grad[2] * invJ[2][2];
               } );
             }
-         
+
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
               real64 const time = cycle*dt;
@@ -382,7 +382,7 @@ struct MassMatrixKernel
 
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
-        real32 const localIncrement = density[k] * m_finiteElement.computeMassTerm( q, xLocal );     
+        real32 const localIncrement = density[k] * m_finiteElement.computeMassTerm( q, xLocal );
         RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][q]], localIncrement );
       }
     } ); // end loop over element
@@ -429,7 +429,7 @@ struct DampingMatrixKernel
           arrayView1d< real32 const > const velocityVs,
           arrayView1d< real32 > const dampingx,
           arrayView1d< real32 > const dampingy,
-          arrayView1d< real32 > const dampingz)
+          arrayView1d< real32 > const dampingz )
   {
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const f )
     {
@@ -455,12 +455,15 @@ struct DampingMatrixKernel
 
         for( localIndex q = 0; q < numNodesPerFace; ++q )
         {
-          real32 const localIncrementx = density[k] * (velocityVp[k]*abs(faceNormal[f][0]) + velocityVs[k]*sqrt(faceNormal[f][1]*faceNormal[f][1] +
-                                                           faceNormal[f][2]*faceNormal[f][2]) )* m_finiteElement.computeDampingTerm( q, xLocal );
-          real32 const localIncrementy = density[k] * (velocityVp[k]*abs(faceNormal[f][1]) + velocityVs[k]*sqrt(faceNormal[f][0]*faceNormal[f][0] +
-                                                           faceNormal[f][2]*faceNormal[f][2]) )* m_finiteElement.computeDampingTerm( q, xLocal );
-          real32 const localIncrementz = density[k] * (velocityVp[k]*abs(faceNormal[f][2]) + velocityVs[k]*sqrt(faceNormal[f][0]*faceNormal[f][0] +
-                                                           faceNormal[f][1]*faceNormal[f][1]) )*  m_finiteElement.computeDampingTerm( q, xLocal );
+          real32 const localIncrementx = density[k] * (velocityVp[k]*abs( faceNormal[f][0] ) + velocityVs[k]*sqrt( faceNormal[f][1]*faceNormal[f][1] +
+                                                                                                                   faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm( q,
+                                                                                                                                                                                              xLocal );
+          real32 const localIncrementy = density[k] * (velocityVp[k]*abs( faceNormal[f][1] ) + velocityVs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
+                                                                                                                   faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm( q,
+                                                                                                                                                                                              xLocal );
+          real32 const localIncrementz = density[k] * (velocityVp[k]*abs( faceNormal[f][2] ) + velocityVs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
+                                                                                                                   faceNormal[f][1]*faceNormal[f][1] ) )*  m_finiteElement.computeDampingTerm( q,
+                                                                                                                                                                                               xLocal );
 
           RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[facesToNodes[f][q]], localIncrementx );
           RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[facesToNodes[f][q]], localIncrementy );
@@ -622,15 +625,15 @@ public:
 
     m_finiteElementSpace.template computeElasticStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val, real64 J[3][3], int p, int r )
     {
-       real32 const Rxx_ij = val*((stack.lambda+2.0*stack.mu)*J[p][0]*J[r][0]+stack.mu*(J[p][1]*J[r][1]+J[p][2]*J[r][2]));
-       real32 const Ryy_ij = val*((stack.lambda+2.0*stack.mu)*J[p][1]*J[r][1]+stack.mu*(J[p][0]*J[r][0]+J[p][2]*J[r][2]));
-       real32 const Rzz_ij = val*((stack.lambda+2.0*stack.mu)*J[p][2]*J[r][2]+stack.mu*(J[p][0]*J[r][0]+J[p][1]*J[r][1]));
-       real32 const Rxy_ij = val*(stack.lambda*J[p][0]*J[r][1]+stack.mu*J[p][1]*J[r][0]);
-       real32 const Ryx_ij = val*(stack.mu*J[p][0]*J[r][1]+stack.lambda*J[p][1]*J[r][0]);
-       real32 const Rxz_ij = val*(stack.lambda*J[p][0]*J[r][2]+stack.mu*J[p][2]*J[r][0]);
-       real32 const Rzx_ij = val*(stack.mu*J[p][0]*J[r][2]+stack.lambda*J[p][2]*J[r][0]);
-       real32 const Ryz_ij = val*(stack.lambda*J[p][1]*J[r][2]+stack.mu*J[p][2]*J[r][1]);
-       real32 const Rzy_ij = val*(stack.mu*J[p][1]*J[r][2]+stack.lambda*J[p][2]*J[r][1]);
+      real32 const Rxx_ij = val*((stack.lambda+2.0*stack.mu)*J[p][0]*J[r][0]+stack.mu*(J[p][1]*J[r][1]+J[p][2]*J[r][2]));
+      real32 const Ryy_ij = val*((stack.lambda+2.0*stack.mu)*J[p][1]*J[r][1]+stack.mu*(J[p][0]*J[r][0]+J[p][2]*J[r][2]));
+      real32 const Rzz_ij = val*((stack.lambda+2.0*stack.mu)*J[p][2]*J[r][2]+stack.mu*(J[p][0]*J[r][0]+J[p][1]*J[r][1]));
+      real32 const Rxy_ij = val*(stack.lambda*J[p][0]*J[r][1]+stack.mu*J[p][1]*J[r][0]);
+      real32 const Ryx_ij = val*(stack.mu*J[p][0]*J[r][1]+stack.lambda*J[p][1]*J[r][0]);
+      real32 const Rxz_ij = val*(stack.lambda*J[p][0]*J[r][2]+stack.mu*J[p][2]*J[r][0]);
+      real32 const Rzx_ij = val*(stack.mu*J[p][0]*J[r][2]+stack.lambda*J[p][2]*J[r][0]);
+      real32 const Ryz_ij = val*(stack.lambda*J[p][1]*J[r][2]+stack.mu*J[p][2]*J[r][1]);
+      real32 const Rzy_ij = val*(stack.mu*J[p][1]*J[r][2]+stack.lambda*J[p][2]*J[r][1]);
 
       real32 const localIncrementx = (Rxx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rxy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rxz_ij*m_uz_n[m_elemsToNodes[k][j]]);
       real32 const localIncrementy = (Ryx_ij * m_ux_n[m_elemsToNodes[k][j]] + Ryy_ij*m_uy_n[m_elemsToNodes[k][j]] + Ryz_ij*m_uz_n[m_elemsToNodes[k][j]]);

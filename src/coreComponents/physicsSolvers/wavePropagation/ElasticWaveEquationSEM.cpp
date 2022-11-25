@@ -609,8 +609,8 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe,
-                                 [&]
-                                   ( auto const finiteElement )
+                                                                               [&]
+                                                                                 ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
