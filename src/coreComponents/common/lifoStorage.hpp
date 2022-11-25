@@ -16,6 +16,8 @@
 
 #include <deque>
 #include <future>
+#include <condition_variable>
+#include <camp/camp.hpp>
 
 #include "common/fixedSizeDeque.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -23,6 +25,121 @@
 
 namespace geosx
 {
+
+/// Associate mutexes with the fixedSizeDeque
+template< typename T >
+class fixedSizeDequeAndMutexes : public fixedSizeDeque<T, int> {
+public:
+  // Mutex to protect access to the front
+  std::mutex m_frontMutex;
+  // Mutex to protect access to the back
+  std::mutex m_backMutex;
+  // Mutex to prevent two simulteaneous pop (can be an issue for last one)
+  std::mutex m_popMutex;
+  // Mutex to prevent two simulteaneous emplace (can be an issue for last one)
+  std::mutex m_emplaceMutex;
+  /// Condition used to notify when device queue is not full
+  std::condition_variable m_notFullCond;
+  /// Condition used to notify when device queue is not empty
+  std::condition_variable m_notEmptyCond;
+
+  fixedSizeDequeAndMutexes( int maxEntries, int valuesPerEntry, LvArray::MemorySpace space) : fixedSizeDeque<T, int>( maxEntries,  valuesPerEntry, space,  camp::resources::Resource{ camp::resources::Cuda{} } ) {}
+
+  /**
+   * Emplace on front from array with locks.
+   *
+   * @param array The array to emplace
+   * @returns Event to sync with the memcpy.
+   */
+  camp::resources::Event emplaceFront(arrayView1d< T > array)
+  {
+   GEOSX_MARK_FUNCTION;
+    camp::resources::Event e;
+    {
+      std::lock( m_emplaceMutex, m_frontMutex );
+      std::unique_lock< std::mutex > l1( m_emplaceMutex, std::adopt_lock );
+      std::unique_lock< std::mutex > l2( m_frontMutex, std::adopt_lock );
+      m_notFullCond.wait( l1, [ this ]  { return ! this->full(); } );
+      e = fixedSizeDeque<T, int>::emplace_front( array.toSliceConst() );
+    }
+    m_notEmptyCond.notify_all();
+    return e;
+  }
+
+  /**
+   * Pop from front to array with locks
+   *
+   * @param array The array to copy data into
+   * @returns Event to sync with the memcpy.
+   */
+  camp::resources::Event popFront(arrayView1d< T > array)
+  {
+    GEOSX_MARK_FUNCTION;
+    camp::resources::Event e;
+    {
+      std::lock( m_popMutex, m_frontMutex );
+      std::unique_lock< std::mutex > l1( m_popMutex, std::adopt_lock );
+      std::unique_lock< std::mutex > l2( m_frontMutex, std::adopt_lock );
+      m_notEmptyCond.wait( l1, [ this ]  { return ! this->empty(); } );
+      // deadlock can occur if frontMutex is taken after an
+      // emplaceMutex (inside pushAsync) but this is prevented by the
+      // pushWait() in popAsync.
+
+      camp::resources::Resource r = this->getStream();
+      e = LvArray::memcpy( r, array.toSlice(), this->front() );
+      this->pop_front();
+    }
+    m_notFullCond.notify_all();
+    return e;
+  }
+
+  /**
+   * Emplace front from back of given queue
+   *
+   * @param q2 The queue to copy data from.
+   */
+  void emplaceFrontFromBack( fixedSizeDequeAndMutexes< T > &q2 )
+  {
+    GEOSX_MARK_FUNCTION;
+    {
+      std::lock( m_emplaceMutex, m_frontMutex, q2.m_popMutex, q2.m_backMutex );
+      std::unique_lock< std::mutex > lockQ1Emplace( m_emplaceMutex, std::adopt_lock );
+      std::unique_lock< std::mutex > lockQ1Front( m_frontMutex, std::adopt_lock );
+      std::unique_lock< std::mutex > lockQ2Pop( q2.m_popMutex, std::adopt_lock );
+      std::unique_lock< std::mutex > lockQ2Back( q2.m_backMutex, std::adopt_lock );
+      m_notFullCond.wait( lockQ1Emplace, [ this ]  { return !this->full(); } );
+      q2.m_notEmptyCond.wait( lockQ2Pop, [ &q2 ] { return !q2.empty(); } );
+      this->emplace_front( q2.back() ).wait();
+      q2.pop_back();
+    }
+    q2.m_notFullCond.notify_all();
+    m_notEmptyCond.notify_all();
+  }
+
+  /**
+   * Emplace back from front of given queue
+   *
+   * @param q2 The queue to copy data from.
+   */
+  void emplaceBackFromFront( fixedSizeDequeAndMutexes< T > &q2 )
+  {
+    GEOSX_MARK_FUNCTION;
+    {
+      std::lock( q2.m_frontMutex, q2.m_popMutex, m_emplaceMutex, m_backMutex );
+      std::unique_lock< std::mutex > lockQ1Emplace( m_emplaceMutex, std::adopt_lock );
+      std::unique_lock< std::mutex > lockQ1Back( m_backMutex, std::adopt_lock );
+      std::unique_lock< std::mutex > lockQ2Pop( q2.m_popMutex, std::adopt_lock );
+      std::unique_lock< std::mutex > lockQ2Front( q2.m_frontMutex, std::adopt_lock );
+      m_notFullCond.wait( lockQ1Emplace, [ this ]  { return !this->full(); } );
+      q2.m_notEmptyCond.wait( lockQ2Pop, [ &q2 ] { return !q2.empty(); } );
+      this->emplace_back( q2.front() ).wait();
+      q2.pop_front();
+    }
+    m_notEmptyCond.notify_all();
+    q2.m_notFullCond.notify_all();
+  }
+};
+
 /**
  * This class is used to store in a LIFO way buffers, first on device, then on host, then on disk.
  */
@@ -32,80 +149,62 @@ class lifoStorage
 
 private:
 
-  /// Number of buffers to be inserted into the LIFO
+  /// number of buffers to be inserted into the LIFO
   int m_maxNumberOfBuffers;
-  /// Size of one buffer in bytes
+  /// size of one buffer in bytes
   size_t m_bufferSize;
-  /// Name used to store data on disk
+  /// name used to store data on disk
   std::string m_name;
-  /// Camp CUDA stream to handle copies to m_deviceDeque.
-  camp::resources::Resource m_deviceDequeStream{ camp::resources::Cuda{} };
-  /// Camp CUDA stream to handle  copies tp m_hostDeque.
-  camp::resources::Resource m_hostDequeStream{ camp::resources::Cuda{} };
-  /// Queue of data stored on device
-  fixedSizeDeque< T, int > m_deviceDeque;
-  /// Queue of data stored on host memory
-  fixedSizeDeque< T, int > m_hostDeque;
+  /// ueue of data stored on device
+  fixedSizeDequeAndMutexes< T > m_deviceDeque;
+  /// ueue of data stored on host memory
+  fixedSizeDequeAndMutexes< T > m_hostDeque;
 
-  /**
-   * Mutex to protect access to m_deviceDeque
-   *
-   * Only deviceDeque is accessed from user thread, other only from m_worker.
-   */
-  std::mutex m_deviceDequeMutex;
-
-  /// Future to be aware data are effectively copied on host memory from device.
-  std::deque< std::future< void > > m_deviceToDeviceEvents;
-  /// Future to be aware data are effectively copied on host memory from device.
-  std::deque< std::future< void > > m_deviceToHostFutures;
-  /// Future to be aware data are effectively copied on disk from host memory.
-  std::deque< std::future< void > > m_hostToDiskFutures;
-  /// Future to be aware data are effectively copied on host memory from disk.
-  std::deque< std::future< void > > m_diskToHostFutures;
-  //* Future to be aware data are effectively copied on device from host memory.
-  std::deque< std::future< void > > m_hostToDeviceFutures;
-  /// yTo check if pushEvent has been initialized
-  bool m_pushEventInitialized = false;
-  /// Last copy to device event
-  camp::resources::Event m_pushEvent;
-  /// Future to be aware data pop has been completed
-  std::future< void > m_popFuture;
-  /// Counter of buffer stored in LIFO
+  /// counter of buffer stored in LIFO
   int m_bufferCount;
-  /// Counter of buffer stored on disk
+  /// counter of buffer stored on disk
   int m_bufferOnDiskCount;
-  /// Condition used to tell m_worker queue has been filled or processed is stopped.
-  std::condition_variable m_task_queue_not_empty_cond;
-  /// Mutex to protect access to m_task_queue.
-  std::mutex m_task_queue_mutex;
-  /// Queue of task to be executed by m_worker.
-  std::deque< std::packaged_task< void() > > m_task_queue;
-  /// Thread to execute tasks.
-  std::thread m_worker;
-  /// Boolean to keep m_worker alive.
-  bool m_continue;
+
+  // Events associated to ith  copies to device buffer
+  std::vector<camp::resources::Event> m_pushToDeviceEvents;
+  // Events associated to ith  copies from device buffer
+  std::vector<camp::resources::Event> m_popFromDeviceEvents;
+
+  /// condition used to tell m_worker queue has been filled or processed is stopped.
+  std::condition_variable m_task_queue_not_empty_cond[2];
+  /// mutex to protect access to m_task_queue.
+  std::mutex m_task_queue_mutex[2];
+  /// queue of task to be executed by m_worker.
+  std::deque< std::packaged_task< void() > > m_task_queue[2];
+  /// thread to execute tasks.
+  std::thread m_worker[2];
+  /// boolean to keep m_worker alive.
+  bool m_continue = true;
+
 
 public:
   /**
    * A LIFO storage will store numberOfBuffersToStoreDevice buffer on
-   * device, numberOfBuffersToStoreHost on host and the rest on disk.
+   * deevice, numberOfBuffersToStoreHost on host and the rest on disk.
    *
    * @param name                           Prefix of the files used to save the occurenncy of the saved buffer on disk.
    * @param elemCnt                        Number of elments in the LvArray we want to store in the LIFO storage.
    * @param numberOfBuffersToStoreOnDevice Maximum number of array to store on device memory.
    * @param numberOfBuffersToStoreOnHost   Maximum number of array to store on host memory.
-   * @param maxNumberOfBuffers             Number of arrays expected to be stores in the LIFO.
+   * @pparam maxNumberOfBuffers             Number of arrays expected to be stores in the LIFO.
    */
   lifoStorage( std::string name, size_t elemCnt, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
     m_maxNumberOfBuffers( maxNumberOfBuffers ),
     m_bufferSize( elemCnt*sizeof( T ) ),
     m_name( name ),
-    m_deviceDeque( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda, m_deviceDequeStream ),
-    m_hostDeque( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host, m_hostDequeStream ),
+    m_deviceDeque( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda),
+    m_hostDeque( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host ),
     m_bufferCount( 0 ), m_bufferOnDiskCount( 0 ),
-    m_worker( &lifoStorage< T >::wait_and_consume_tasks, this ),
-    m_continue( true )
-  {}
+    m_pushToDeviceEvents( maxNumberOfBuffers ), m_popFromDeviceEvents( maxNumberOfBuffers )
+  {
+    m_worker[0] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 0 );
+    m_worker[1] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 1 );
+  }
 
   /**
    * Build a LIFO storage for a given LvArray array.
@@ -122,8 +221,10 @@ public:
   ~lifoStorage()
   {
     m_continue = false;
-    m_task_queue_not_empty_cond.notify_all();
-    m_worker.join();
+    m_task_queue_not_empty_cond[0].notify_all();
+    m_task_queue_not_empty_cond[1].notify_all();
+    m_worker[0].join();
+    m_worker[1].join();
     GEOSX_ASSERT( m_deviceStorage.empty() && m_hostStorage.empty() && m_diskStorage.empty() && m_task_queue.empty() );
   }
 
@@ -135,46 +236,25 @@ public:
   void pushAsync( arrayView1d< T > array )
   {
     GEOSX_MARK_FUNCTION;
+    //To be sure 2 pushes are not mixed 
+    pushWait();
     int id = m_bufferCount++;
     GEOSX_ERROR_IF( m_deviceDeque.capacity() == 0,
-                    "Cannot save on a Lifo without device storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
+                   "Cannot save on a Lifo without device storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
     GEOSX_ERROR_IF( m_hostDeque.capacity() == 0,
-                    "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
-    {
-      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::pushAcquireLock );
-      m_deviceDequeMutex.lock();
-    }
-    while( m_deviceDeque.full() )
-    {
-      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::pushWaitForCudaBuffer );
-      m_deviceDequeMutex.unlock();
-      m_deviceToHostFutures.front().wait();
-      m_deviceToHostFutures.pop_front();
-      m_deviceDequeMutex.lock();
-    }
-    m_pushEvent = m_deviceDeque.emplace_front( array.toSliceConst() );
-    m_pushEventInitialized = true;
-    m_deviceDequeMutex.unlock();
+                   "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
 
+    m_pushToDeviceEvents[id] = m_deviceDeque.emplaceFront( array );
+
+    if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() )
     {
       GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::pushAddTasks );
-      if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() )
-      {
-        // This buffer will go to host memory
-        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this ) );
-        m_deviceToHostFutures.emplace_back( task.get_future() );
-        m_task_queue.emplace_back( std::move( task ) );
-        m_task_queue_not_empty_cond.notify_all();
-      }
-
-      if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() + m_hostDeque.capacity() )
-      {
-        // This buffer will go to host then to disk
-        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this ) );
-        m_hostToDiskFutures.emplace_back( task.get_future() );
-        m_task_queue.emplace_back( std::move( task ) );
-        m_task_queue_not_empty_cond.notify_all();
-      }
+      // This buffer will go to host memory, and maybe on disk
+      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this, id ) );
+      std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
+      m_task_queue[0].emplace_back( std::move( task ) );
+      lock.unlock();
+      m_task_queue_not_empty_cond[0].notify_all();
     }
   }
 
@@ -184,7 +264,7 @@ public:
   void pushWait()
   {
     GEOSX_MARK_FUNCTION;
-    if ( m_pushEventInitialized ) m_deviceDequeStream.wait_for( &m_pushEvent );
+    if( m_bufferCount > 0 ) m_pushToDeviceEvents[m_bufferCount-1].wait();
   }
 
   /**
@@ -207,8 +287,23 @@ public:
   void popAsync( arrayView1d< T > array )
   {
     GEOSX_MARK_FUNCTION;
+    //wait the last push to avoid race condition
+    pushWait();
+    // Ensure last pop is finished
     popWait();
-    m_popFuture = std::async( std::launch::async, [ array, this ] { pop( array ); } );
+    int id = --m_bufferCount;
+    m_popFromDeviceEvents[id] = m_deviceDeque.popFront( array );
+
+    if( id >= m_deviceDeque.capacity() )
+    {
+      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::popAddTasks );
+      // Trigger pull one buffer from host, and maybe from disk
+      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this, id - m_deviceDeque.capacity() ) );
+      std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
+      m_task_queue[0].emplace_back( std::move( task ) );
+      lock.unlock();
+      m_task_queue_not_empty_cond[0].notify_all();
+    }
   }
 
   /**
@@ -217,7 +312,7 @@ public:
   void popWait()
   {
     GEOSX_MARK_FUNCTION;
-    if( m_popFuture.valid() ) m_popFuture.get();
+    if( m_bufferCount < m_maxNumberOfBuffers) cudaEventSynchronize( m_popFromDeviceEvents[m_bufferCount].get< camp::resources::CudaEvent >().getCudaEvent_t() );
   }
 
   /**
@@ -228,126 +323,112 @@ public:
   void pop( arrayView1d< T > array )
   {
     GEOSX_MARK_FUNCTION;
-    int id = --m_bufferCount;
-
-    {
-      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::popAcquireLock );
-      m_deviceDequeMutex.lock();
-    }
-    while( m_deviceDeque.empty() )
-    {
-      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::popWaitForCudaBuffer );
-      m_deviceDequeMutex.unlock();
-      m_hostToDeviceFutures.front().wait();
-      m_hostToDeviceFutures.pop_front();
-      m_deviceDequeMutex.lock();
-    }
-
-    {
-      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::popMemcpy );
-      camp::resources::Event e = LvArray::memcpy( m_deviceDequeStream, array.toSlice(), m_deviceDeque.front( ) );
-      m_deviceDequeStream.wait_for( &e );
-    }
-    m_deviceDeque.pop_front();
-    m_deviceDequeMutex.unlock();
-
-    {
-      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::popAddTasks );
-      if( id >= m_deviceDeque.capacity() )
-      {
-        // Trigger pull one buffer from host
-        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this ) );
-        m_hostToDeviceFutures.emplace_back( task.get_future() );
-        m_task_queue.emplace_back( std::move( task ) );
-        m_task_queue_not_empty_cond.notify_all();
-      }
-
-      if( id >= m_deviceDeque.capacity() + m_hostDeque.capacity() )
-      {
-        // Trigger pull one buffer from disk
-        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this ) );
-        m_diskToHostFutures.emplace_back( task.get_future() );
-        m_task_queue.emplace_back( std::move( task ) );
-        m_task_queue_not_empty_cond.notify_all();
-      }
-    }
+    popAsync( array );
+    popWait();
   }
 
 
 private:
+
   /**
    * Copy data from device memory to host memory
+   *
+   * @param ID of the buffer to copy on host.
    */
-  void deviceToHost()
+  void deviceToHost( int id )
   {
-    while( m_hostDeque.full() )
+    GEOSX_MARK_FUNCTION;
+    // The copy to host will only start when the data is copied on device buffer
+    m_hostDeque.getStream().wait_for( const_cast< camp::resources::Event * >( &m_pushToDeviceEvents[id] ) );
+    m_hostDeque.emplaceFrontFromBack( m_deviceDeque );
+
+    if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() + m_hostDeque.capacity() )
     {
-      m_hostToDiskFutures.front().wait();
-      m_hostToDiskFutures.pop_front();
+      // This buffer will go to host then maybe to disk
+      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this, id ) );
+      std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
+      m_task_queue[1].emplace_back( std::move( task ) );
+      lock.unlock();
+      m_task_queue_not_empty_cond[1].notify_all();
     }
-    camp::resources::Event e = m_hostDeque.emplace_front( m_deviceDeque.back() );
-    m_hostDequeStream.wait_for( &e );
-    m_deviceDequeMutex.lock();
-    m_deviceDeque.pop_back();
-    m_deviceDequeMutex.unlock();
   }
 
   /**
    * Copy data from host memory to disk
+   *
+   * @param id ID of the buffer to store on disk.
    */
-  void hostToDisk()
+  void hostToDisk( int id )
   {
-    writeOnDisk( m_hostDeque.back().dataIfContiguous() );
-    m_hostDeque.pop_back();
+    GEOSX_MARK_FUNCTION;
+    {
+      std::lock( m_hostDeque.m_popMutex, m_hostDeque.m_backMutex );
+      std::unique_lock< std::mutex > l1( m_hostDeque.m_popMutex, std::adopt_lock );
+      std::unique_lock< std::mutex > l2( m_hostDeque.m_backMutex, std::adopt_lock );
+      writeOnDisk( m_hostDeque.back().dataIfContiguous(), id );
+      m_hostDeque.pop_back();
+    }
+    m_hostDeque.m_notFullCond.notify_all();
   }
 
   /**
    * Copy data from host memory to device memory
+   *
+   * @param id ID of the buffer to load from host memory.
    */
-  void hostToDevice()
+  void hostToDevice( int id )
   {
-    while( m_hostDeque.empty() )
-    {
-      m_diskToHostFutures.front().wait();
-      m_diskToHostFutures.pop_front();
-    }
+    GEOSX_MARK_FUNCTION;
+    m_hostDeque.getStream().wait_for( const_cast< camp::resources::Event * >( &m_popFromDeviceEvents[ id + m_deviceDeque.capacity() ] ) );
+    m_deviceDeque.emplaceBackFromFront( m_hostDeque );
 
-    m_deviceDequeMutex.lock();
-    camp::resources::Event e = m_deviceDeque.emplace_back( m_hostDeque.front() );
-    m_deviceDequeStream.wait_for( &e );
-    m_deviceDequeMutex.unlock();
-    m_hostDeque.pop_front();
+    // enqueue diskToHost on worker #2 if needed
+    if( id >= m_hostDeque.capacity() )
+    {
+        // This buffer will go to host then to disk
+      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this, id - m_hostDeque.capacity() ) );
+      std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
+      m_task_queue[1].emplace_back( std::move( task ) );
+      lock.unlock();
+      m_task_queue_not_empty_cond[1].notify_all();
+    }
   }
 
   /**
    * Copy data from disk to host memory
+   *
+   * @param id ID of the buffer to read on disk.
    */
-  void diskToHost()
+  void diskToHost( int id )
   {
-    while( m_hostDeque.full() )
     {
-      m_hostToDeviceFutures.front().wait();
-      m_hostToDeviceFutures.pop_front();
+      std::lock( m_hostDeque.m_emplaceMutex, m_hostDeque.m_backMutex );
+      std::unique_lock< std::mutex > l1( m_hostDeque.m_emplaceMutex, std::adopt_lock );
+      std::unique_lock< std::mutex > l2( m_hostDeque.m_backMutex, std::adopt_lock );
+      m_hostDeque.m_notFullCond.wait( l1, [ this ]  { return !( m_hostDeque.full() ); } );
+      readOnDisk( const_cast< T * >(m_hostDeque.next_back().dataIfContiguous()), id );
+      m_hostDeque.inc_back();
     }
-    m_hostDeque.inc_back();
-    readOnDisk( const_cast< T * >(m_hostDeque.back().dataIfContiguous()) );
+    m_hostDeque.m_notEmptyCond.notify_all();
   }
 
   /**
    * Write data on disk
    *
    * @param d Data to store on disk.
+   * @param id ID of the buffer to read on disk
    */
-  void writeOnDisk( const T * d )
+  void writeOnDisk( const T * d, int id )
   {
-
+    GEOSX_MARK_FUNCTION;
 
     std::ofstream outfile;
 
-    int id = m_bufferOnDiskCount++;
     int const rank = MpiWrapper::initialized()?MpiWrapper::commRank( MPI_COMM_GEOSX ):0;
     std::string fileName = GEOSX_FMT( "{}_{:08}_{:04}.dat", m_name, id, rank );
-    makeDirsForPath( fileName.substr( 0, fileName.find_last_of( "/\\" ) ) );
+    int lastDirSeparator = fileName.find_last_of( "/\\" );
+    if ( string::npos != lastDirSeparator )
+      makeDirsForPath( fileName.substr( 0,  lastDirSeparator ) );
     std::ofstream wf( fileName, std::ios::out | std::ios::binary );
     GEOSX_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
                     "Could not open file "<< fileName << " for writting: " << strerror( errno ) );
@@ -361,11 +442,11 @@ private:
   /**
    * Read data from disk
    *
-   * @param Handler to store datta read from disk.
+   * @param d  Buffer to store data read from disk.
+   * @param id ID of the buffer on disk.
    */
-  void readOnDisk( T * d )
+  void readOnDisk( T * d, int id )
   {
-    int id = --m_bufferOnDiskCount;
     int const rank = MpiWrapper::initialized()?MpiWrapper::commRank( MPI_COMM_GEOSX ):0;
     std::string fileName = GEOSX_FMT( "{}_{:08}_{:04}.dat", m_name, id, rank );
     std::ifstream wf( fileName, std::ios::in | std::ios::binary );
@@ -378,16 +459,18 @@ private:
 
   /**
    * Execute the tasks pushed in m_task_queue in the given order.
+   *
+   * @param queueId index of the queue (0: queue to handle device/host transfers; 1: host/disk transfers)
    */
-  void wait_and_consume_tasks()
+  void wait_and_consume_tasks(int queueId)
   {
     while( m_continue )
     {
-      std::unique_lock< std::mutex > lock( m_task_queue_mutex );
-      m_task_queue_not_empty_cond.wait( lock, [ this ] { return !( m_task_queue.empty()  && m_continue ); } );
+      std::unique_lock< std::mutex > lock( m_task_queue_mutex[queueId] );
+      m_task_queue_not_empty_cond[queueId].wait( lock, [ this, &queueId ] { return !( m_task_queue[queueId].empty()  && m_continue ); } );
       if( m_continue == false ) break;
-      m_task_queue.front()();
-      m_task_queue.pop_front();
+      m_task_queue[queueId].front()();
+      m_task_queue[queueId].pop_front();
     }
   }
 };

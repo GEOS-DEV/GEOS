@@ -80,11 +80,25 @@ public:
     return m_storage[ POSITIVE_MODULO( m_begin, m_storage.size( 0 ) ) ];
   }
 
+  /// @returns the future first array in the queue after inc_front will be called
+  ArraySlice1D next_front() const
+  {
+    GEOSX_THROW_IF( empty(), "Can't get front from empty queue", std::runtime_error );
+    return m_storage[ POSITIVE_MODULO( m_begin-1, m_storage.size( 0 ) ) ];
+  }
+
   /// @returns the last array of the queue
   ArraySlice1D back() const
   {
     GEOSX_THROW_IF( empty(), "Can't get back from empty queue", std::runtime_error );
     return m_storage[ POSITIVE_MODULO( m_end, m_storage.size( 0 ) ) ];
+  }
+
+  /// @returns the future last array of the queue when inc_back will be called
+  ArraySlice1D next_back() const
+  {
+    GEOSX_THROW_IF( empty(), "Can't get back from empty queue", std::runtime_error );
+    return m_storage[ POSITIVE_MODULO( m_end+1, m_storage.size( 0 ) ) ];
   }
 
   /// Removes first array of the queue
@@ -123,8 +137,9 @@ public:
   camp::resources::Event emplace_front( const ArraySlice1D & src )
   {
     GEOSX_THROW_IF( full(), "Can't emplace in a full  queue", std::runtime_error );
+    camp::resources::Event e = LvArray::memcpy( m_stream, m_storage[ POSITIVE_MODULO( m_begin-1, m_storage.size( 0 ) ) ], src );
     --m_begin;
-    return LvArray::memcpy( m_stream, m_storage[ POSITIVE_MODULO( m_begin, m_storage.size( 0 ) ) ], src );
+    return e;
   }
 
   /**
@@ -135,10 +150,17 @@ public:
   camp::resources::Event emplace_back( const ArraySlice1D & src )
   {
     GEOSX_THROW_IF( full(), "Can't emplace in a full queue", std::runtime_error );
+    camp::resources::Event e = LvArray::memcpy( m_stream, m_storage[ POSITIVE_MODULO( m_end+1, m_storage.size( 0 ) ) ], src );
     ++m_end;
-    return LvArray::memcpy( m_stream, m_storage[ POSITIVE_MODULO( m_end, m_storage.size( 0 ) ) ], src );
+    return e;
 
   }
+
+  camp::resources::Resource getStream()
+  {
+    return m_stream;
+  }
+
 
 private:
   Array2D m_storage;
