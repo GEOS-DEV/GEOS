@@ -5,7 +5,7 @@ import logging
 import textwrap
 from typing import List, Dict, Set
 
-from . import all_checks_helpers
+from . import CheckHelper
 
 __OPTIONS_SEP = ":"
 __KV_SEP = "="
@@ -18,18 +18,6 @@ __QUIET_KEY = "quiet"
 class Arguments:
     vtk_input_file: str
     checks: OrderedDict()
-
-
-def __get_checks_help_msg() -> str:
-    """
-    Gathers all the doc messages into one string.
-    :return: A string.
-    """
-    tmp = []
-    for check_name, check_helper in all_checks_helpers.items():
-        h = check_name + ": " + check_helper.get_help()
-        tmp.append(h)
-    return "\n".join(tmp)
 
 
 def parse_cli_option(s: str) -> Dict[str, str]:
@@ -70,7 +58,7 @@ def parse_and_set_verbosity(cli_args: List[str]) -> None:
     :return: None
     """
     dummy_verbosity_parser = argparse.ArgumentParser(add_help=None)
-    dummy_verbosity_parser.add_argument('-v', '--verbose', action='count', default=1, dest=__VERBOSE_KEY)
+    dummy_verbosity_parser.add_argument('-v', '--verbose', action='count', default=2, dest=__VERBOSE_KEY)
     dummy_verbosity_parser.add_argument('-q', '--quiet', action='count', default=0, dest=__QUIET_KEY)
     args = dummy_verbosity_parser.parse_known_args(cli_args[1:])[0]
     d = vars(args)
@@ -84,9 +72,10 @@ def parse_and_set_verbosity(cli_args: List[str]) -> None:
     logging.info(f"Logger level set to \"{logging.getLevelName(verbosity)}\"")
 
 
-def parse(cli_args: List[str]) -> Arguments:
+def parse(all_checks_helpers: Dict[str, CheckHelper], cli_args: List[str]) -> Arguments:
     """
     Parse the command line arguments and return the corresponding structure.
+    :param all_checks_helpers: All the checks
     :param cli_args: The list of arguments (as strings)
     :return: The struct
     """
@@ -108,14 +97,14 @@ def parse(cli_args: List[str]) -> Arguments:
     misc_grp.add_argument('-v',
                           '--verbose',
                           action='count',
-                          default=1,
+                          default=2,
                           dest=__VERBOSE_KEY,
-                          help="Use -v for warning, -vv for info, -vvv for debug. Defaults to 'ERROR'.")
+                          help="Use -v 'INFO', -vv for 'DEBUG'. Defaults to 'WARNING'.")
     misc_grp.add_argument('-q',
                           '--quiet',
                           action='count',
                           default=0,
-                          dest=__VERBOSE_KEY,
+                          dest=__QUIET_KEY,
                           help="Use -q to reduce the verbosity of the output.")
     misc_grp.add_argument('-i',
                           '--vtk-input-file',
