@@ -377,6 +377,48 @@ public:
                         real64 const (&X)[numNodes][3],
                         FUNC && func );
 
+  template< typename FUNC >
+  GEOSX_HOST_DEVICE
+  static void
+  computeFirstOrderStiffnessTermX( int q,
+                                   real64 const (&X)[numNodes][3],
+                                   FUNC && func );
+
+  template< typename FUNC >
+  GEOSX_HOST_DEVICE
+  static void
+  computeFirstOrderStiffnessTermY( int q,
+                                   real64 const (&X)[numNodes][3],
+                                   FUNC && func );
+
+  template< typename FUNC >
+  GEOSX_HOST_DEVICE
+  static void
+  computeFirstOrderStiffnessTermZ( int q,
+                                   real64 const (&X)[numNodes][3],
+                                   FUNC && func );
+
+  template< typename FUNC >
+  GEOSX_HOST_DEVICE
+  static void
+  computeFirstOrderTransposeStiffnessTermX( int q,
+                                            real64 const (&X)[numNodes][3],
+                                            FUNC && func );
+
+  template< typename FUNC >
+  GEOSX_HOST_DEVICE
+  static void
+  computeFirstOrderTransposeStiffnessTermY( int q,
+                                            real64 const (&X)[numNodes][3],
+                                            FUNC && func );
+
+  template< typename FUNC >
+  GEOSX_HOST_DEVICE
+  static void
+  computeFirstOrderTransposeStiffnessTermZ( int q,
+                                            real64 const (&X)[numNodes][3],
+                                            FUNC && func );  
+
   /**
    * @brief Apply a Jacobian transformation matrix from the parent space to the
    *   physical space on the parent shape function derivatives, producing the
@@ -778,6 +820,168 @@ computeStiffnessTerm( int q,
   }
 }
 
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeFirstOrderStiffnessTermX( int q,
+                                 real64 const (&X)[numNodes][3],
+                                 FUNC && func )
+{
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  
+  for (int i1 = 0; i1 < num1dNodes; ++i1)
+  {
+    real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*GL_BASIS::gradient( i1, GL_BASIS::parentSupportCoord( qa ) );
+    func(GL_BASIS::TensorProduct3D::linearIndex( i1, qb, qc ),
+         GL_BASIS::TensorProduct3D::linearIndex( qa, qb, qc ),
+         detJ*J[0][0]*val,detJ*J[0][1]*val,detJ*J[0][2]*val);
+
+  }
+  
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeFirstOrderStiffnessTermY( int q,
+                                 real64 const (&X)[numNodes][3],
+                                 FUNC && func )
+{
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  
+  for (int i2 = 0; i2 < num1dNodes; ++i2)
+  {
+    real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*GL_BASIS::gradient( i2, GL_BASIS::parentSupportCoord( qb ) );
+    func(GL_BASIS::TensorProduct3D::linearIndex( qa, i2, qc ),
+         GL_BASIS::TensorProduct3D::linearIndex( qa, qb, qc ),
+         detJ*J[1][0]*val,detJ*J[1][1]*val,detJ*J[1][2]*val);
+
+  }
+  
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeFirstOrderStiffnessTermZ( int q,
+                                 real64 const (&X)[numNodes][3],
+                                 FUNC && func )
+{
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  
+  for (int i3 = 0; i3 < num1dNodes; ++i3)
+  {
+    real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*GL_BASIS::gradient( i3, GL_BASIS::parentSupportCoord( qc ) );
+    func(GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i3 ),
+         GL_BASIS::TensorProduct3D::linearIndex( qa, qb, qc ),
+         detJ*J[2][0]*val,detJ*J[2][1]*val,detJ*J[2][2]*val);
+
+  }
+  
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeFirstOrderTransposeStiffnessTermX( int q,
+                                 real64 const (&X)[numNodes][3],
+                                 FUNC && func )
+{
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  
+  for (int i1 = 0; i1 < num1dNodes; ++i1)
+  {
+    real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( i1 ) );
+    func(GL_BASIS::TensorProduct3D::linearIndex( qa, qb, qc ),
+         GL_BASIS::TensorProduct3D::linearIndex( i1, qb, qc ),
+         detJ*J[0][0]*val,detJ*J[0][1]*val,detJ*J[0][2]*val);
+
+  }
+  
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeFirstOrderTransposeStiffnessTermY( int q,
+                                 real64 const (&X)[numNodes][3],
+                                 FUNC && func )
+{
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  
+  for (int i2 = 0; i2 < num1dNodes; ++i2)
+  {
+    real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( i2 ) );
+    func(GL_BASIS::TensorProduct3D::linearIndex( qa, qb, qc ),
+         GL_BASIS::TensorProduct3D::linearIndex( qa, i2, qc ),
+         detJ*J[1][0]*val,detJ*J[1][1]*val,detJ*J[1][2]*val);
+
+  }
+  
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeFirstOrderTransposeStiffnessTermZ( int q,
+                                 real64 const (&X)[numNodes][3],
+                                 FUNC && func )
+{
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  
+  for (int i3 = 0; i3 < num1dNodes; ++i3)
+  {
+    real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*GL_BASIS::gradient( qc, GL_BASIS::parentSupportCoord( i3 ) );
+    func(GL_BASIS::TensorProduct3D::linearIndex( qa, qb, qc ),
+         GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i3 ),
+         detJ*J[2][0]*val,detJ*J[2][1]*val,detJ*J[2][2]*val);
+
+  }
+  
+}
 
 //*************************************************************************************************
 template< typename GL_BASIS >

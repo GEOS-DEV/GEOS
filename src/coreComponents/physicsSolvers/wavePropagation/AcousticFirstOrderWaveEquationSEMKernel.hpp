@@ -309,48 +309,34 @@ struct PrecomputeSourceAndReceiverKernel
 };
 
 template< typename FE_TYPE >
-struct MassAndDampingMatrixKernel
+struct MassMatrixKernel
 {
 
-  MassAndDampingMatrixKernel( FE_TYPE const & finiteElement )
+  MassMatrixKernel( FE_TYPE const & finiteElement )
     : m_finiteElement( finiteElement )
   {}
 
   /**
-   * @brief Launches the precomputation of the mass and damping matrices
+   * @brief Launches the precomputation of the mass matrices
    * @tparam EXEC_POLICY the execution policy
    * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
    * @param[in] numFacesPerElem number of faces per element
-   * @param[in] numNodesPerFace number of nodes per face
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
-   * @param[in] elemsToFaces map from element to faces
-   * @param[in] facesToNodes map from face to nodes
-   * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
-   * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
-   * @param[in] faceNormal normal vectors at the faces
    * @param[in] velocity cell-wise velocity
    * @param[in] density cell-wise density
    * @param[out] mass diagonal of the mass matrix
-   * @param[out] damping diagonal of the damping matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          localIndex const numFacesPerElem,
-          localIndex const numNodesPerFace,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-          arrayView2d< localIndex const > const elemsToFaces,
-          ArrayOfArraysView< localIndex const > const facesToNodes,
-          arrayView1d< integer const > const facesDomainBoundaryIndicator,
-          arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
-          arrayView2d< real64 const > const faceNormal,
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 const > const density,
-          arrayView1d< real32 > const mass,
-          arrayView1d< real32 > const damping )
+          arrayView1d< real32 > const mass )
+
   {
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
@@ -358,7 +344,7 @@ struct MassAndDampingMatrixKernel
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-      real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] * density[k] );
+      real32 const invC2 = 1.0 / ( density[k] * velocity[k] * velocity[k] );
       real64 xLocal[ numNodesPerElem ][ 3 ];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
@@ -368,58 +354,79 @@ struct MassAndDampingMatrixKernel
         }
       }
 
-      real64 N[ numNodesPerElem ];
-      real64 gradN[ numNodesPerElem ][ 3 ];
-
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
-        FE_TYPE::calcN( q, N );
-        real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
-
-        for( localIndex a = 0; a < numNodesPerElem; ++a )
-        {
-          real32 const localIncrement = invC2 * detJ * N[a];
-          RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][a]], localIncrement );
-        }
+        real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][q]], localIncrement );
       }
+    } ); // end loop over element
+  }
 
-      real32 const alpha = 1.0 / velocity[k];
+  /// The finite element space/discretization object for the element type in the subRegion
+  FE_TYPE const & m_finiteElement;
 
-      for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
+};
+
+template< typename FE_TYPE >
+struct DampingMatrixKernel
+{
+
+  DampingMatrixKernel( FE_TYPE const & finiteElement )
+    : m_finiteElement( finiteElement )
+  {}
+
+  /**
+   * @brief Launches the precomputation of the damping matrices
+   * @tparam EXEC_POLICY the execution policy
+   * @tparam ATOMIC_POLICY the atomic policy
+   * @param[in] size the number of cells in the subRegion
+   * @param[in] X coordinates of the nodes
+   * @param[in] facesToElems map from faces to elements
+   * @param[in] facesToNodes map from face to nodes
+   * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
+   * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
+   * @param[in] velocity cell-wise velocity
+   * @param[out] damping diagonal of the damping matrix
+   */
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+  void
+  launch( localIndex const size,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< localIndex const > const facesToElems,
+          ArrayOfArraysView< localIndex const > const facesToNodes,
+          arrayView1d< integer const > const facesDomainBoundaryIndicator,
+          arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
+          arrayView1d< real32 const > const velocity,
+          arrayView1d< real32 > const damping )
+  {
+    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const f )
+    {
+      // face on the domain boundary and not on free surface
+      if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
       {
-        localIndex const iface = elemsToFaces[k][kfe];
-
-        // face on the domain boundary and not on free surface
-        if( facesDomainBoundaryIndicator[iface] == 1 && freeSurfaceFaceIndicator[iface] != 1 )
+        localIndex k = facesToElems( f, 0 );
+        if( k < 0 )
         {
-          for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+          k = facesToElems( f, 1 );
+        }
+
+        real32 const alpha = 1.0 / velocity[k];
+
+        constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
+
+        real64 xLocal[ numNodesPerFace ][ 3 ];
+        for( localIndex a = 0; a < numNodesPerFace; ++a )
+        {
+          for( localIndex i = 0; i < 3; ++i )
           {
-            FE_TYPE::calcN( q, N );
-            real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
-
-            real64 invJ[3][3]{};
-            FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
-
-            for( localIndex a = 0; a < numNodesPerFace; ++a )
-            {
-              // compute ds = || detJ*invJ*normalFace_{kfe} ||
-
-              real32 ds = 0.0;
-              for( localIndex i = 0; i < 3; ++i )
-              {
-                real32 tmp = 0.0;
-                for( localIndex j = 0; j < 3; ++j )
-                {
-                  tmp += invJ[j][i] * faceNormal[iface][j];
-                }
-                ds += tmp * tmp;
-              }
-              ds = sqrt( ds );
-
-              real32 const localIncrement = alpha * detJ * ds * N[a];
-              RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes[iface][a]], localIncrement );
-            }
+            xLocal[a][i] = X( facesToNodes( k, a ), i );
           }
+        }
+
+        for( localIndex q = 0; q < numNodesPerFace; ++q )
+        {
+          real32 const localIncrement = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes[f][q]], localIncrement );
         }
       }
     } ); // end loop over element
@@ -429,6 +436,7 @@ struct MassAndDampingMatrixKernel
   FE_TYPE const & m_finiteElement;
 
 };
+
 
 
 template< typename FE_TYPE >
@@ -492,19 +500,41 @@ struct VelocityComputation
           uelemz[i] = detJ*velocity_z[k][i];
         }
 
-        for( localIndex j = 0; j < numNodesPerElem; ++j )
-        {
-          for( localIndex i = 0; i < numNodesPerElem; ++i )
-          {
-            real32 dfx2 = detJ*gradN[j][0]*N[i];
-            real32 dfy2 = detJ*gradN[j][1]*N[i];
-            real32 dfz2 = detJ*gradN[j][2]*N[i];
+        // for( localIndex j = 0; j < numNodesPerElem; ++j )
+        // {
+        //   for( localIndex i = 0; i < numNodesPerElem; ++i )
+        //   {
+        //     real32 dfx2 = detJ*gradN[j][0]*N[i];
+        //     real32 dfy2 = detJ*gradN[j][1]*N[i];
+        //     real32 dfz2 = detJ*gradN[j][2]*N[i];
 
-            flowx[i] += dfx2*p_np1[elemsToNodes[k][j]];
-            flowy[i] += dfy2*p_np1[elemsToNodes[k][j]];
-            flowz[i] += dfz2*p_np1[elemsToNodes[k][j]];
-          }
-        }
+        //     flowx[i] += dfx2*p_np1[elemsToNodes[k][j]];
+        //     flowy[i] += dfy2*p_np1[elemsToNodes[k][j]];
+        //     flowz[i] += dfz2*p_np1[elemsToNodes[k][j]];
+        //   }
+        // }
+
+        m_finiteElement.template computeFirstOrderTransposeStiffnessTermX(q, xLocal, [&] (int i, int j, real32 dfx1, real32 dfx2, real32 dfx3)
+        {
+          flowx[i] += dfx1*p_np1[elemsToNodes[k][j]];
+          flowy[i] += dfx2*p_np1[elemsToNodes[k][j]];
+          flowz[i] += dfx3*p_np1[elemsToNodes[k][j]];
+        } );
+
+        m_finiteElement.template computeFirstOrderTransposeStiffnessTermY(q, xLocal, [&] (int i, int j, real32 dfy1, real32 dfy2, real32 dfy3)
+        {
+          flowx[i] += dfy1*p_np1[elemsToNodes[k][j]];
+          flowy[i] += dfy2*p_np1[elemsToNodes[k][j]];
+          flowz[i] += dfy3*p_np1[elemsToNodes[k][j]];
+        } );
+
+        m_finiteElement.template computeFirstOrderTransposeStiffnessTermZ(q, xLocal, [&] (int i, int j, real32 dfz1, real32 dfz2, real32 dfz3)
+        {
+          flowx[i] += dfz1*p_np1[elemsToNodes[k][j]];
+          flowy[i] += dfz2*p_np1[elemsToNodes[k][j]];
+          flowz[i] += dfz3*p_np1[elemsToNodes[k][j]];
+
+        } );
 
         for( localIndex i = 0; i < numNodesPerElem; ++i )
         {
@@ -595,22 +625,43 @@ struct PressureComputation
         real32 uelemx[numNodesPerElem] = {0.0};
 
 
-        FE_TYPE::calcN( q, N );
-        real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+        // FE_TYPE::calcN( q, N );
+        // real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
-        for( localIndex j = 0; j < numNodesPerElem; ++j )
+        // for( localIndex j = 0; j < numNodesPerElem; ++j )
+        // {
+        //   for( localIndex i = 0; i < numNodesPerElem; ++i )
+        //   {
+        //     real32 dfx = detJ*gradN[i][0]*N[j];
+        //     real32 dfy = detJ*gradN[i][1]*N[j];
+        //     real32 dfz = detJ*gradN[i][2]*N[j];
+        //     auxx[i] -= dfx*velocity_x[k][j];
+        //     auyy[i] -= dfy*velocity_y[k][j];
+        //     auzz[i] -= dfz*velocity_z[k][j];
+        //   }
+
+        // }
+
+        m_finiteElement.template computeFirstOrderStiffnessTermX(q, xLocal, [&] (int j, int i, real32 dfx1, real32 dfx2, real32 dfx3)
         {
-          for( localIndex i = 0; i < numNodesPerElem; ++i )
-          {
-            real32 dfx = detJ*gradN[i][0]*N[j];
-            real32 dfy = detJ*gradN[i][1]*N[j];
-            real32 dfz = detJ*gradN[i][2]*N[j];
-            auxx[i] -= dfx*velocity_x[k][j];
-            auyy[i] -= dfy*velocity_y[k][j];
-            auzz[i] -= dfz*velocity_z[k][j];
-          }
+          auxx[i] -= dfx1*velocity_x[k][j];
+          auyy[i] -= dfx2*velocity_y[k][j];
+          auzz[i] -= dfx3*velocity_z[k][j];
+        } );
 
-        }
+        m_finiteElement.template computeFirstOrderStiffnessTermY(q, xLocal, [&] (int j, int i, real32 dfy1, real32 dfy2, real32 dfy3)
+        {
+          auxx[i] -= dfy1*velocity_x[k][j];
+          auyy[i] -= dfy2*velocity_y[k][j];
+          auzz[i] -= dfy3*velocity_z[k][j];
+        } );
+
+        m_finiteElement.template computeFirstOrderStiffnessTermZ(q, xLocal, [&] (int j, int i, real32 dfz1, real32 dfz2, real32 dfz3)
+        {
+          auxx[i] -= dfz1*velocity_x[k][j];
+          auyy[i] -= dfz2*velocity_y[k][j];
+          auzz[i] -= dfz3*velocity_z[k][j];
+        } );
 
         // Time update
         for( localIndex i = 0; i < numNodesPerElem; ++i )

@@ -478,7 +478,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
                                                                                           CellElementSubRegion & elementSubRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-      arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
+      arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
       arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensity >();
 
@@ -486,28 +486,27 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
-        using FE_TYPE = TYPEOFREF( finiteElement );
+         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-        localIndex const numNodesPerFace = 4;
+        acousticFirstOrderWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        acousticFirstOrderWaveEquationSEMKernels::
-          MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
-        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
-          ( elementSubRegion.size(),
-          numFacesPerElem,
-          numNodesPerFace,
-          X,
-          elemsToNodes,
-          elemsToFaces,
-          facesToNodes,
-          facesDomainBoundaryIndicator,
-          freeSurfaceFaceIndicator,
-          faceNormal,
-          velocity,
-          density,
-          mass,
-          damping );
+        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               X,
+                                                               elemsToNodes,
+                                                               velocity,
+                                                               density,
+                                                               mass );
+
+        acousticFirstOrderWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
+
+        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
+                                                               X,
+                                                               facesToElements,
+                                                               facesToNodes,
+                                                               facesDomainBoundaryIndicator,
+                                                               freeSurfaceFaceIndicator,
+                                                               velocity,
+                                                               damping );
       } );
     } );
   } );
