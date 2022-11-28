@@ -36,8 +36,14 @@ using namespace fields;
 
 SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & name,
                                                                 Group * const parent )
-  : Base( name, parent )
+  : Base( name, parent ),
+  m_isThermal( 0 )
 {
+  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether the problem is thermal or not." );
+
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
   m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
@@ -92,7 +98,9 @@ void SinglePhasePoromechanicsSolver::initializePreSubGroups()
     {
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      GEOSX_ERROR_IF( porousName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+      GEOSX_THROW_IF( porousName.empty(),
+                      GEOSX_FMT( "{} {} : Solid model not found on subregion {}", catalogName(), getName(), subRegion.getName() ),
+                      InputError );
     } );
   } );
 }
@@ -120,9 +128,22 @@ void SinglePhasePoromechanicsSolver::setupSystem( DomainPartition & domain,
 
 void SinglePhasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups()
 {
-  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM )
+  integer const isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
+  GEOSX_THROW_IF( m_isThermal && !isFlowThermal,
+                  GEOSX_FMT( "{} {}: The flow solver named {} must be thermal if the poromechanics solver is thermal",
+                             catalogName(), getName(), flowSolver()->getName() ),
+                  InputError );
+
+  if( m_isThermal )
   {
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::hybridSinglePhasePoromechanics;
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalSinglePhasePoromechanics;
+  }
+  else
+  {
+    if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM )
+    {
+      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::hybridSinglePhasePoromechanics;
+    }
   }
 }
 
@@ -170,13 +191,14 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    poromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
-                                                                  pDofKey,
-                                                                  dofManager.rankOffset(),
-                                                                  localMatrix,
-                                                                  localRhs,
-                                                                  gravityVectorData,
-                                                                  FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    poromechanicsKernels::SinglePhaseKernelFactory
+    kernelFactory( dispDofNumber,
+                   pDofKey,
+                   dofManager.rankOffset(),
+                   localMatrix,
+                   localRhs,
+                   gravityVectorData,
+                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
     // Cell-based contributions
     solidMechanicsSolver()->getMaxForce() =
