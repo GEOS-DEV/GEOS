@@ -18,6 +18,8 @@
 
 #include "ConstitutiveManager.hpp"
 
+#include "mesh/ElementSubRegionBase.hpp"
+
 namespace geosx
 {
 
@@ -60,10 +62,10 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
                                                dataRepository::Group * const parent,
                                                localIndex const numConstitutivePointsPerParentIndex ) const
 {
-  dataRepository::Group * constitutiveGroup = parent->getGroupPointer( groupKeyStruct::constitutiveModelsString() );
+  dataRepository::Group * constitutiveGroup = parent->getGroupPointer( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
   if( constitutiveGroup == nullptr )
   {
-    constitutiveGroup = &parent->registerGroup( groupKeyStruct::constitutiveModelsString() ).setSizedFromParent( 1 );
+    constitutiveGroup = &parent->registerGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() ).setSizedFromParent( 1 );
     constitutiveGroup->resize( parent->size() );
   }
 
