@@ -669,8 +669,6 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
           velocity_z,
           mass,
           damping,
-          mediumVelocity,
-          density,
           sourceConstants,
           sourceValue,
           sourceIsAccessible,

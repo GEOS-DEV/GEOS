@@ -574,8 +574,6 @@ struct PressureComputation
           arrayView2d< real32 const > const velocity_z,
           arrayView1d< real32 const > const mass,
           arrayView1d< real32 const > const damping,
-          arrayView1d< real32 const > const mediumVelocity,
-          arrayView1d< real32 const > const density,
           arrayView2d< real64 const > const sourceConstants,
           arrayView2d< real32 const > const sourceValue,
           arrayView1d< localIndex const > const sourceIsAccessible,
@@ -589,7 +587,7 @@ struct PressureComputation
     //Pre-mult by the first factor for damping
     forAll< EXEC_POLICY >( size_node, [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-      p_np1[a] *= 1.0-((dt/2)*(damping[a]/mass[a]));
+      p_np1[a] *= 1.0+((dt/2)*(damping[a]/mass[a]));
     } );
 
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -672,7 +670,7 @@ struct PressureComputation
             {
               for( localIndex i = 0; i < numNodesPerElem; ++i )
               {
-                real32 const localIncrement2 = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/(mass[elemsToNodes[k][i]]*mediumVelocity[k]*mediumVelocity[k]*density[k]);
+                real32 const localIncrement2 = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/(mass[elemsToNodes[k][i]]);
                 RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[elemsToNodes[k][i]], localIncrement2 );
               }
             }
@@ -686,7 +684,7 @@ struct PressureComputation
     //Pre-mult by the first factor for damping
     forAll< EXEC_POLICY >( size_node, [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-      p_np1[a] *= 1.0+((dt/2)*(damping[a]/mass[a]));
+      p_np1[a] /= 1.0-((dt/2)*(damping[a]/mass[a]));
     } );
   }
 
