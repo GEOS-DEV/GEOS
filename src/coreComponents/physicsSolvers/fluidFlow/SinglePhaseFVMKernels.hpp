@@ -855,12 +855,12 @@ struct FluxKernel
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
 template< typename FLUIDWRAPPER >
-class DirichletFaceBasedAssemblyKernel : public FaceBasedAssemblyKernel < 1, 
-																		  BoundaryStencilWrapper >
+class DirichletFaceBasedAssemblyKernel : public FaceBasedAssemblyKernel< 1,
+                                                                         BoundaryStencilWrapper >
 {
 public:
 
-  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< 1, 
+  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< 1,
                                                                BoundaryStencilWrapper >;
 
   /**
@@ -878,9 +878,9 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   DirichletFaceBasedAssemblyKernel( globalIndex const rankOffset,
-							        FaceManager const & faceManager,
+                                    FaceManager const & faceManager,
                                     BoundaryStencilWrapper const & stencilWrapper,
-						     	    FLUIDWRAPPER const & fluidWrapper,
+                                    FLUIDWRAPPER const & fluidWrapper,
                                     DofNumberAccessor const & dofNumberAccessor,
                                     SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
                                     SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
@@ -923,12 +923,12 @@ public:
 
     /// Storage for the face local residual
     real64 localFlux;
-   
+
     /// Storage for the face local Jacobian
     real64 localFluxJacobian;
   };
 
-  
+
   /**
    * @brief Performs the setup phase for the kernel.
    * @param[in] iconn the connection index
@@ -937,8 +937,8 @@ public:
   GEOSX_HOST_DEVICE
   void setup( localIndex const iconn,
               StackVariables & stack ) const
-  { 
-    GEOSX_UNUSED_VAR(iconn, stack); 
+  {
+    GEOSX_UNUSED_VAR( iconn, stack );
   }
 
   /**
@@ -952,9 +952,9 @@ public:
   GEOSX_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC && GEOSX_UNUSED_PARAM(compFluxKernelOp) = singlePhaseBaseKernels::NoOpFunc{} ) const
+                    FUNC && GEOSX_UNUSED_PARAM( compFluxKernelOp ) = singlePhaseBaseKernels::NoOpFunc{} ) const
   {
-	using Order = BoundaryStencil::Order;
+    using Order = BoundaryStencil::Order;
     localIndex constexpr numElems = BoundaryStencil::maxNumPointsInFlux;
 
     stackArray1d< real64, numElems > mobility( numElems );
@@ -971,7 +971,7 @@ public:
 
     mobility[Order::ELEM] = m_mob[er][esr][ei];
     singlePhaseBaseKernels::MobilityKernel::compute( faceDens, faceVisc, mobility[Order::FACE] );
-    
+
     dMobility_dP[Order::ELEM] = m_dMob_dPres[er][esr][ei];
     dMobility_dP[Order::FACE] = 0.0;
 
@@ -1007,8 +1007,8 @@ public:
   template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
   void complete( localIndex const iconn,
-			     StackVariables & stack,
-                 FUNC && GEOSX_UNUSED_PARAM(assemblyKernelOp) = singlePhaseBaseKernels::NoOpFunc{} ) const
+                 StackVariables & stack,
+                 FUNC && GEOSX_UNUSED_PARAM( assemblyKernelOp ) = singlePhaseBaseKernels::NoOpFunc{} ) const
   {
     using Order = BoundaryStencil::Order;
 
@@ -1069,7 +1069,7 @@ public:
                    FaceManager const & faceManager,
                    ElementRegionManager const & elemManager,
                    BoundaryStencilWrapper const & stencilWrapper,
-				   SingleFluidBase & fluidBase,
+                   SingleFluidBase & fluidBase,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
@@ -1079,7 +1079,7 @@ public:
       using FluidType = TYPEOFREF( fluid );
       typename FluidType::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
 
-      using kernelType = DirichletFaceBasedAssemblyKernel<  typename FluidType::KernelWrapper >;
+      using kernelType = DirichletFaceBasedAssemblyKernel< typename FluidType::KernelWrapper >;
 
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
@@ -1091,9 +1091,9 @@ public:
       typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
       kernelType kernel( rankOffset,
-		                 faceManager,
+                         faceManager,
                          stencilWrapper,
-		                 fluidWrapper,
+                         fluidWrapper,
                          dofNumberAccessor,
                          singlePhaseFlowAccessors,
                          singlePhaseFluidAccessors,
