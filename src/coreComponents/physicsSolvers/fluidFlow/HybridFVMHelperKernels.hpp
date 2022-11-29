@@ -37,14 +37,14 @@ struct CellConnectivity
 
   GEOSX_HOST_DEVICE
   static bool
-  findNeighbor( localIndex const (&localIds)[3],
-                localIndex const ifaceLoc,
-                arrayView2d< localIndex const > const & elemRegionList,
-                arrayView2d< localIndex const > const & elemSubRegionList,
-                arrayView2d< localIndex const > const & elemList,
-                SortedArrayView< localIndex const > const & regionFilter,
-                arraySlice1d< localIndex const > const & elemToFaces,
-                localIndex ( & neighborIds )[3] )
+  isNeighborFound( localIndex const (&localIds)[3],
+                   localIndex const ifaceLoc,
+                   arrayView2d< localIndex const > const & elemRegionList,
+                   arrayView2d< localIndex const > const & elemSubRegionList,
+                   arrayView2d< localIndex const > const & elemList,
+                   SortedArrayView< localIndex const > const & regionFilter,
+                   arraySlice1d< localIndex const > const & elemToFaces,
+                   localIndex ( & neighborIds )[3] )
   {
     neighborIds[0] = localIds[0];
     neighborIds[1] = localIds[1];

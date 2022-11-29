@@ -218,6 +218,13 @@ Element: CompressibleSolidSlipDependentPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidSlipDependentPermeability.rst
 
 
+.. _XML_CompressibleSolidWillisRichardsPermeability:
+
+Element: CompressibleSolidWillisRichardsPermeability
+====================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability.rst
+
+
 .. _XML_ConstantPermeability:
 
 Element: ConstantPermeability
@@ -314,6 +321,13 @@ Element: ElasticIsotropicPressureDependent
 Element: ElasticOrthotropic
 ===========================
 .. include:: ../../coreComponents/schema/docs/ElasticOrthotropic.rst
+
+
+.. _XML_ElasticSEM:
+
+Element: ElasticSEM
+===================
+.. include:: ../../coreComponents/schema/docs/ElasticSEM.rst
 
 
 .. _XML_ElasticTransverseIsotropic:
@@ -1086,6 +1100,13 @@ Element: WellElementRegion
 .. include:: ../../coreComponents/schema/docs/WellElementRegion.rst
 
 
+.. _XML_WillisRichardsPermeability:
+
+Element: WillisRichardsPermeability
+===================================
+.. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability.rst
+
+
 .. _XML_lassen:
 
 Element: lassen
@@ -1314,6 +1335,13 @@ Datastructure: CompressibleSolidSlipDependentPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidSlipDependentPermeability_other.rst
 
 
+.. _DATASTRUCTURE_CompressibleSolidWillisRichardsPermeability:
+
+Datastructure: CompressibleSolidWillisRichardsPermeability
+==========================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability_other.rst
+
+
 .. _DATASTRUCTURE_ConstantPermeability:
 
 Datastructure: ConstantPermeability
@@ -1417,6 +1445,13 @@ Datastructure: ElasticIsotropicPressureDependent
 Datastructure: ElasticOrthotropic
 =================================
 .. include:: ../../coreComponents/schema/docs/ElasticOrthotropic_other.rst
+
+
+.. _DATASTRUCTURE_ElasticSEM:
+
+Datastructure: ElasticSEM
+=========================
+.. include:: ../../coreComponents/schema/docs/ElasticSEM_other.rst
 
 
 .. _DATASTRUCTURE_ElasticTransverseIsotropic:
@@ -2210,11 +2245,18 @@ Datastructure: WellElementRegion
 .. include:: ../../coreComponents/schema/docs/WellElementRegion_other.rst
 
 
-.. _DATASTRUCTURE_WellElementRegionuniqueSubRegion:
+.. _DATASTRUCTURE_WellElementRegionUniqueSubRegion:
 
-Datastructure: WellElementRegionuniqueSubRegion
+Datastructure: WellElementRegionUniqueSubRegion
 ===============================================
-.. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
+.. include:: ../../coreComponents/schema/docs/WellElementRegionUniqueSubRegion_other.rst
+
+
+.. _DATASTRUCTURE_WillisRichardsPermeability:
+
+Datastructure: WillisRichardsPermeability
+=========================================
+.. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:

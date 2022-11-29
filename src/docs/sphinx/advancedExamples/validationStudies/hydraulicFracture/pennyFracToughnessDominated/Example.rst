@@ -24,11 +24,15 @@ This example uses no external input files. Everything we need is contained withi
   inputFiles/hydraulicFracturing/pennyShapedToughnessDominated_benchmark.xml
 
 
-A python script for post-processing the simulation results is also prepared:
+Python scripts for post-processing and visualizing the simulation results are also prepared:
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracToughnessDominated/pennyFracToughnessDominatedFigure.py
+  inputFiles/hydraulicFracturing/scripts/hydrofractureQueries.py
+
+.. code-block:: console
+
+  inputFiles/hydraulicFracturing/scripts/hydrofractureFigure.py
 
 
 ------------------------------------------------------------------
@@ -162,6 +166,26 @@ The single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to sim
 All constitutive parameters such as density, viscosity, bulk modulus, and shear modulus are specified in the International System of Units.
 
 
+------------------------------
+Time history function
+------------------------------
+
+In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time history information from fields. 
+Either the entire field or specified named sets of indices in the field can be collected.
+In this example, ``pressureCollection``, ``apertureCollection``, ``hydraulicApertureCollection`` and ``areaCollection`` are specified to output the time history of fracture characterisctics (pressure, width and area). 
+``objectPath="ElementRegions/Fracture/FractureSubRegion"`` indicates that these ``PackCollection`` tasks are applied to the fracure element subregion.
+
+.. literalinclude:: ../../../../../../../inputFiles/hydraulicFracturing/pennyShapedToughnessDominated_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_TASKS -->
+    :end-before: <!-- SPHINX_TASKS_END -->
+
+These tasks are triggered using the ``Event`` manager with a ``PeriodicEvent`` defined for the recurring tasks. 
+GEOSX writes one file named after the string defined in the ``filename`` keyword and formatted as a HDF5 file (``pennyShapedToughnessDominated_output.hdf5``). This TimeHistory file contains the collected time history information from specified time history collector.
+This file includes datasets for the simulation time, fluid pressure, element aperture, hydraulic aperture and element area for the propagating hydraulic fracture.
+A Python script is prepared to read and query any specified subset of the time history data for verification and visualization. 
+
+
 -----------------------------------------------------------
 Initial and boundary conditions
 -----------------------------------------------------------
@@ -216,10 +240,36 @@ The following figure shows the distribution of :math:`\sigma_{zz}` at :math:`t=4
 
    Simulation result of :math:`\sigma_{zz}` at :math:`t=400 s`
 
- 
-The figure below compares the asymptotic solutions (curves) and the GEOSX simulation results (markers) for this analysis. The time history plots of fracture radius, fracture aperture and fluid pressure at the point source match the asymptotic solutions, confirming the accuracy of GEOSX simulations. 
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracToughnessDominated/pennyFracToughnessDominatedFigure.py
+First, by running the query script
+
+.. code-block:: console
+
+   python ./hydrofractureQueries.py pennyShapedToughnessDominated
+
+the HDF5 output is postprocessed and temporal evolution of fracture characterisctics (fluid pressure and fracture width at fluid inlet and fracure radius) are saved into a txt file ``model-results.txt``, which can be used for verification and visualization:
+
+.. code-block:: console
+		
+  [['      time', '  pressure', '  aperture', '    length']]
+           2 8.207e+05 0.0004661     8.137
+           4 6.799e+05 0.0005258     10.59
+           6 7.082e+05 0.0006183     11.94
+           8  6.07e+05 0.0006163     13.73
+          10  6.32e+05 0.0006827     14.45
+
+Note: GEOSX python tools ``geosx_xml_tools`` should be installed to run the query script (See :ref:`PythonToolsSetup` for details). 
+ 
+Next, the figure below compares the asymptotic solutions (curves) and the GEOSX simulation results (markers) for this analysis, which is generated using the visualization script: 
+
+.. code-block:: console
+
+   python ./pennyShapedToughnessDominatedFigure.py
+
+
+The time history plots of fracture radius, fracture aperture and fluid pressure at the point source match the asymptotic solutions, confirming the accuracy of GEOSX simulations. 
+
+.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracToughnessDominated/pennyShapedToughnessDominatedFigure.py
 
 
 ------------------------------------------------------------------

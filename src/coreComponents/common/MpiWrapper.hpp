@@ -52,7 +52,6 @@ typedef int MPI_Datatype;
 #define MPI_LONG_LONG_INT  ((MPI_Datatype)0x4c000809)
 #define MPI_UNSIGNED_LONG_LONG ((MPI_Datatype)0x4c000819)
 #define MPI_LONG_LONG      MPI_LONG_LONG_INT
-#define MPI_CXX_BOOL       ((MPI_Datatype)0x0c000000)
 
 typedef int MPI_Op;
 
@@ -594,8 +593,6 @@ ADD_MPI_TYPE_MAP( long long int, MPI_LONG_LONG );
 ADD_MPI_TYPE_MAP( unsigned int, MPI_UNSIGNED );
 ADD_MPI_TYPE_MAP( unsigned long int, MPI_UNSIGNED_LONG );
 ADD_MPI_TYPE_MAP( unsigned long long int, MPI_UNSIGNED_LONG_LONG );
-
-ADD_MPI_TYPE_MAP( bool, MPI_CXX_BOOL );
 
 #undef ADD_MPI_TYPE_MAP
 
