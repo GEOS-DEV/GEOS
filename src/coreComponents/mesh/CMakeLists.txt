@@ -11,7 +11,7 @@ set( mesh_headers
      ElementType.hpp
      EmbeddedSurfaceNodeManager.hpp
      EmbeddedSurfaceSubRegion.hpp
-     ExtrinsicMeshData.hpp
+     MeshFields.hpp
      FaceElementSubRegion.hpp
      FaceManager.hpp
      FieldIdentifiers.hpp
@@ -25,7 +25,7 @@ set( mesh_headers
      ObjectManagerBase.hpp
      Perforation.hpp
      PerforationData.hpp
-     PerforationExtrinsicData.hpp	     
+     PerforationFields.hpp
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
@@ -37,6 +37,7 @@ set( mesh_headers
      generators/CellBlockManagerABC.hpp
      generators/CellBlockUtilities.hpp
      generators/ExternalMeshGeneratorBase.hpp
+     generators/FaceBlock.hpp
      generators/FaceBlockABC.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
@@ -93,6 +94,7 @@ set( mesh_sources
      generators/CellBlockManager.cpp
      generators/CellBlockUtilities.cpp
      generators/ExternalMeshGeneratorBase.cpp
+     generators/FaceBlock.cpp
      generators/InternalMeshGenerator.cpp
      generators/InternalWellGenerator.cpp
      generators/InternalWellboreGenerator.cpp
@@ -133,8 +135,18 @@ endif()
 
 if( ENABLE_VTK )
     message(STATUS "Adding VTKMeshGenerator sources and headers")
-    set( mesh_headers ${mesh_headers} generators/VTKMeshGenerator.hpp generators/VTKMeshGeneratorTools.hpp generators/VTKUtilities.hpp)
-    set( mesh_sources ${mesh_sources} generators/VTKMeshGenerator.cpp generators/VTKMeshGeneratorTools.cpp generators/VTKUtilities.cpp)
+    set( mesh_headers ${mesh_headers}
+         generators/VTKFaceBlockUtilities.hpp
+         generators/VTKMeshGenerator.hpp
+         generators/VTKMeshGeneratorTools.hpp
+         generators/VTKUtilities.hpp
+         )
+    set( mesh_sources ${mesh_sources}
+         generators/VTKFaceBlockUtilities.cpp
+         generators/VTKMeshGenerator.cpp
+         generators/VTKMeshGeneratorTools.cpp
+         generators/VTKUtilities.cpp
+         )
     set( dependencyList ${dependencyList} VTK::IOLegacy VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )
       set( dependencyList ${dependencyList} VTK::IOParallelXML VTK::ParallelMPI )

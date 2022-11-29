@@ -228,7 +228,7 @@ Element: CompressibleSolidSlipDependentPermeability
 .. _XML_CompressibleSolidWillisRichardsPermeability:
 
 Element: CompressibleSolidWillisRichardsPermeability
-===================================================
+====================================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability.rst
 
 
@@ -1100,13 +1100,6 @@ Element: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
-.. _XML_WillisRichardsPermeability:
-
-Element: WillisRichardsPermeability
-==================================
-.. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability.rst
-
-
 .. _XML_WellControls:
 
 Element: WellControls
@@ -1119,6 +1112,13 @@ Element: WellControls
 Element: WellElementRegion
 ==========================
 .. include:: ../../coreComponents/schema/docs/WellElementRegion.rst
+
+
+.. _XML_WillisRichardsPermeability:
+
+Element: WillisRichardsPermeability
+===================================
+.. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability.rst
 
 
 .. _XML_lassen:
@@ -1359,7 +1359,7 @@ Datastructure: CompressibleSolidSlipDependentPermeability
 .. _DATASTRUCTURE_CompressibleSolidWillisRichardsPermeability:
 
 Datastructure: CompressibleSolidWillisRichardsPermeability
-=========================================================
+==========================================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability_other.rst
 
 
@@ -2259,13 +2259,6 @@ Datastructure: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
 
 
-.. _DATASTRUCTURE_WillisRichardsPermeability:
-
-Datastructure: WillisRichardsPermeability
-========================================
-.. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability_other.rst
-
-
 .. _DATASTRUCTURE_WellControls:
 
 Datastructure: WellControls
@@ -2285,6 +2278,13 @@ Datastructure: WellElementRegion
 Datastructure: WellElementRegionUniqueSubRegion
 ===============================================
 .. include:: ../../coreComponents/schema/docs/WellElementRegionUniqueSubRegion_other.rst
+
+
+.. _DATASTRUCTURE_WillisRichardsPermeability:
+
+Datastructure: WillisRichardsPermeability
+=========================================
+.. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:
