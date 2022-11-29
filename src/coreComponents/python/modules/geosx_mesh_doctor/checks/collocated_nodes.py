@@ -1,7 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 import logging
-from typing import Tuple
+from typing import List
 
 import numpy
 
@@ -22,7 +22,8 @@ class Options:
 
 @dataclass(frozen=True)
 class Result:
-    nodes_buckets: Tuple[Tuple[int]]
+    nodes_buckets: List[List[int]]  # Each bucket contains the duplicated node indices.
+    wrong_support_elements: List[int]  # Element indices with support node indices appearing more than once.
 
 
 def __check(mesh, options: Options) -> Result:
@@ -34,7 +35,6 @@ def __check(mesh, options: Options) -> Result:
     locator.InitPointInsertion(output, points.GetBounds())
 
     # original ids to/from filtered ids.
-    # original_to_filtered = numpy.ones(points.GetNumberOfPoints(), dtype=int) * -1
     filtered_to_original = numpy.ones(points.GetNumberOfPoints(), dtype=int) * -1
 
     rejected_points = defaultdict(list)
@@ -59,7 +59,16 @@ def __check(mesh, options: Options) -> Result:
     for n, ns in rejected_points.items():
         tmp.append((n, *ns))
 
-    return Result(nodes_buckets=tmp)
+    # Checking that the support node indices appear only once per element.
+    wrong_support_elements = []
+    for c in range(mesh.GetNumberOfCells()):
+        cell = mesh.GetCell(c)
+        num_points_per_cell = cell.GetNumberOfPoints()
+        if len({cell.GetPointId(i) for i in range(num_points_per_cell)}) != num_points_per_cell:
+            wrong_support_elements.append(c)
+
+    return Result(nodes_buckets=tmp,
+                  wrong_support_elements=wrong_support_elements)
 
 
 def check(vtk_input_file: str, options: Options) -> Result:

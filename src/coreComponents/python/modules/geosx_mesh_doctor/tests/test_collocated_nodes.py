@@ -3,9 +3,14 @@ from typing import Iterator, Tuple
 import pytest
 
 from vtkmodules.vtkCommonCore import (
-    vtkPoints, )
+    vtkPoints,
+)
 from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid, )
+    VTK_TETRA,
+    vtkCellArray,
+    vtkTetra,
+    vtkUnstructuredGrid,
+)
 
 from checks.collocated_nodes import Options, __check
 
@@ -35,6 +40,37 @@ def test_simple_collocated_points(data: Tuple[vtkPoints, int]):
 
     result = __check(mesh, Options(tolerance=1.e-12))
 
+    assert len(result.wrong_support_elements) == 0
     assert len(result.nodes_buckets) == num_nodes_bucket
     if num_nodes_bucket == 1:
         assert len(result.nodes_buckets[0]) == points.GetNumberOfPoints()
+
+
+def test_wrong_support_elements():
+    points = vtkPoints()
+    points.SetNumberOfPoints(4)
+    points.SetPoint(0, (0, 0, 0))
+    points.SetPoint(1, (1, 0, 0))
+    points.SetPoint(2, (0, 1, 0))
+    points.SetPoint(3, (0, 0, 1))
+
+    cell_types = [VTK_TETRA]
+    cells = vtkCellArray()
+    cells.AllocateExact(1, 4)
+
+    tet = vtkTetra()
+    tet.GetPointIds().SetId(0, 0)
+    tet.GetPointIds().SetId(1, 1)
+    tet.GetPointIds().SetId(2, 2)
+    tet.GetPointIds().SetId(3, 0)  # Intentionally wrong
+    cells.InsertNextCell(tet)
+
+    mesh = vtkUnstructuredGrid()
+    mesh.SetPoints(points)
+    mesh.SetCells(cell_types, cells)
+
+    result = __check(mesh, Options(tolerance=1.e-12))
+
+    assert len(result.nodes_buckets) == 0
+    assert len(result.wrong_support_elements) == 1
+    assert result.wrong_support_elements[0] == 0
