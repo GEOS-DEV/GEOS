@@ -18,7 +18,7 @@
 
 #include "ExponentialDecayPermeability.hpp"
 #include "LvArray/src/tensorOps.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 
 namespace geosx
 {
@@ -40,7 +40,7 @@ ExponentialDecayPermeability::ExponentialDecayPermeability( string const & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( " initial permeability of the fracture." );
 
-  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dTraction{}, &m_dPerm_dTraction );
+  registerField( fields::permeability::dPerm_dTraction{}, &m_dPerm_dTraction );
 }
 
 std::unique_ptr< ConstitutiveBase >
