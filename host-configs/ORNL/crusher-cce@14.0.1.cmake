@@ -14,7 +14,7 @@ set( SUITESPARSE_DIR "${GEOSX_TPL_DIR}/suite-sparse-5.10.1-vouqh5scdgojuqw2fkdr5
 # HYPRE options
 set( ENABLE_HYPRE_DEVICE "HIP" CACHE BOOL "" )
 if( ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
-  set( HYPRE_DIR "/gpfs/alpine/csc326/world-shared/victorapm/hypre-b378dca-cce14.0.1_rocm5.1_uvm_rel" CACHE PATH "" ) # victor's build
+  set( HYPRE_DIR "/gpfs/alpine/csc326/world-shared/victorapm/hypre-v2.26.0-11-gb93beb946-cce14.0.1_rocm5.1_uvm_rel" CACHE PATH "" ) # victor's build
 else()
   set( HYPRE_DIR "${GEOSX_TPL_DIR}/hypre-develop-26xg3xxx6q3q3ineijpty36eorhsp7mh" CACHE PATH "" )
 endif()

@@ -150,7 +150,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
                         "Element type Prism10 available only when using the Virtual Element Method" );
         return std::make_unique< H1_Prism10_VEM_Gauss1 >();
       }
-#ifndef GEOSX_USE_HIP
+#if ! defined( GEOSX_USE_HIP )
       case ElementType::Prism11:
       {
         GEOSX_ERROR_IF( m_useVem != 1, "Element type Prism11 available only when using the Virtual Element Method" );
