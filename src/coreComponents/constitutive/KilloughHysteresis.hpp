@@ -69,7 +69,7 @@ public:
     }
     bool isZero() const
     {
-        return (oppositeBound<=0.0) && (imbibitionExtrema<=0.0) && (drainageExtrema<=0.0);
+      return (oppositeBound<=0.0) && (imbibitionExtrema<=0.0) && (drainageExtrema<=0.0);
     }
 
 

@@ -35,48 +35,48 @@ using namespace geosx::dataRepository;
 
 CommandLineOptions g_commandLineOptions;
 char const *xmlInput =
-        "<Problem>\n"
-        "  <Mesh>\n"
-        "    <InternalMesh name=\"mesh\"\n"
-        "                  elementTypes=\"{C3D8}\" \n"
-        "                  xCoords=\"{0, 1}\"\n"
-        "                  yCoords=\"{0, 1}\"\n"
-        "                  zCoords=\"{0, 1}\"\n"
-        "                  nx=\"{1}\"\n"
-        "                  ny=\"{1}\"\n"
-        "                  nz=\"{1}\"\n"
-        "                  cellBlockNames=\"{cb1}\"/>\n"
-        "  </Mesh>\n"
-        "  <ElementRegions>\n"
-        "    <CellElementRegion name=\"region\" cellBlocks=\"{cb1}\" materialList=\"{ relperm }\" />\n"
-        "  </ElementRegions>\n"
-        "  <Constitutive>\n"
-        "   <TableRelativePermeabilityHysteresis \n"
-        "       name=\"relperm\" \n"
-        "       phaseNames=\"{ gas, water }\" \n"
-        "       KilloughModelName =\"KilloughHyst\" \n"
-        "       drainageWettingNonWettingRelPermTableNames=\"{ drainageWaterRelativePermeabilityTable, \n"
-        "                                                  drainageGasRelativePermeabilityTable }\" \n"
-        "       imbibitionNonWettingRelPermTableName=\"imbibitionGasRelativePermeabilityTable\" \n"
-        "       imbibitionWettingRelPermTableName=\"imbibitionWaterRelativePermeabilityTable\"/> \n"
-        "   <KilloughHysteresis \n"
-        "       name=\"KilloughHyst\" /> \n"
-        "</Constitutive> \n"
-        " <Functions>\n"
-        "    <TableFunction name=\"drainageWaterRelativePermeabilityTable\"\n"
-        "                   coordinates=\"{0.0, 1.0}\"\n"
-        "                   values=\"{0.0, 1.}\"/>\n"
-        "    <TableFunction name=\"drainageGasRelativePermeabilityTable\"\n"
-        "                   coordinates=\"{0.0, 1.0}\"\n"
-        "                   values=\"{0.0, 1.}\"/>\n"
-        "    <TableFunction name=\"imbibitionGasRelativePermeabilityTable\"\n"
-        "                   coordinates=\"{0.0, 1.0}\"\n"
-        "                   values=\"{0.0, 1.}\"/>\n"
-        "    <TableFunction name=\"imbibitionWaterRelativePermeabilityTable\"\n"
-        "                   coordinates=\"{0.0, 1.0}\"\n"
-        "                   values=\"{0.0, 1.}\"/>\n"
-        "</Functions>\n"
-        "</Problem>";
+  "<Problem>\n"
+  "  <Mesh>\n"
+  "    <InternalMesh name=\"mesh\"\n"
+  "                  elementTypes=\"{C3D8}\" \n"
+  "                  xCoords=\"{0, 1}\"\n"
+  "                  yCoords=\"{0, 1}\"\n"
+  "                  zCoords=\"{0, 1}\"\n"
+  "                  nx=\"{1}\"\n"
+  "                  ny=\"{1}\"\n"
+  "                  nz=\"{1}\"\n"
+  "                  cellBlockNames=\"{cb1}\"/>\n"
+  "  </Mesh>\n"
+  "  <ElementRegions>\n"
+  "    <CellElementRegion name=\"region\" cellBlocks=\"{cb1}\" materialList=\"{ relperm }\" />\n"
+  "  </ElementRegions>\n"
+  "  <Constitutive>\n"
+  "   <TableRelativePermeabilityHysteresis \n"
+  "       name=\"relperm\" \n"
+  "       phaseNames=\"{ gas, water }\" \n"
+  "       KilloughModelName =\"KilloughHyst\" \n"
+  "       drainageWettingNonWettingRelPermTableNames=\"{ drainageWaterRelativePermeabilityTable, \n"
+  "                                                  drainageGasRelativePermeabilityTable }\" \n"
+  "       imbibitionNonWettingRelPermTableName=\"imbibitionGasRelativePermeabilityTable\" \n"
+  "       imbibitionWettingRelPermTableName=\"imbibitionWaterRelativePermeabilityTable\"/> \n"
+  "   <KilloughHysteresis \n"
+  "       name=\"KilloughHyst\" /> \n"
+  "</Constitutive> \n"
+  " <Functions>\n"
+  "    <TableFunction name=\"drainageWaterRelativePermeabilityTable\"\n"
+  "                   coordinates=\"{0.0, 1.0}\"\n"
+  "                   values=\"{0.0, 1.}\"/>\n"
+  "    <TableFunction name=\"drainageGasRelativePermeabilityTable\"\n"
+  "                   coordinates=\"{0.0, 1.0}\"\n"
+  "                   values=\"{0.0, 1.}\"/>\n"
+  "    <TableFunction name=\"imbibitionGasRelativePermeabilityTable\"\n"
+  "                   coordinates=\"{0.0, 1.0}\"\n"
+  "                   values=\"{0.0, 1.}\"/>\n"
+  "    <TableFunction name=\"imbibitionWaterRelativePermeabilityTable\"\n"
+  "                   coordinates=\"{0.0, 1.0}\"\n"
+  "                   values=\"{0.0, 1.}\"/>\n"
+  "</Functions>\n"
+  "</Problem>";
 
 
 TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string const & name, Group & constbase )
@@ -89,46 +89,46 @@ TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string
   array1d< real64_array > coordinates_dw;
 // Swc = 0.22
 // consistent with Swmaxd = 1-Sgcrd = 1-0 = 1
-  geosx::testing::fill_array(coordinates_dw,{.22, .25, .3, .35, .4, .45, .5, .55, .6, .65, .66, .68, .72, .82, .91, 1.});
+  geosx::testing::fill_array( coordinates_dw, {.22, .25, .3, .35, .4, .45, .5, .55, .6, .65, .66, .68, .72, .82, .91, 1.} );
 
   array1d< real64_array > coordinates_iw;
 // Swc = 0.22
 // consistent with Swmaxi = 1-Sgcri = 1-0.3 = 0.7
-  geosx::testing::fill_array(coordinates_iw,{.22, .25, .3, .35, .4, .45, .5, .55, .6, .65, .66, .7});
+  geosx::testing::fill_array( coordinates_iw, {.22, .25, .3, .35, .4, .45, .5, .55, .6, .65, .66, .7} );
 
   // Gas phase saturation, fifth column of Table 2
   array1d< real64_array > coordinates_dg;
   // Sgcrd = 0.0
   // consistent with Swc = 0.22
-    geosx::testing::fill_array(coordinates_dg,
-                               {0.000, 0.010, 0.030, 0.050, 0.100, 0.150, 0.200, 0.250, 0.300, 0.350, 0.400, 0.450, 0.500,
-                                0.550, 0.600, 0.650, 0.700, 0.750, 0.780});
+  geosx::testing::fill_array( coordinates_dg,
+                              {0.000, 0.010, 0.030, 0.050, 0.100, 0.150, 0.200, 0.250, 0.300, 0.350, 0.400, 0.450, 0.500,
+                               0.550, 0.600, 0.650, 0.700, 0.750, 0.780} );
 
   array1d< real64_array > coordinates_ig;
-   // Sgcri = 0.30;
+  // Sgcri = 0.30;
   // consistent with Swc = 0.22
-    geosx::testing::fill_array(coordinates_ig,{0.300, 0.350, 0.400, 0.450, 0.500, 0.550, 0.600, 0.650, 0.700, 0.750, 0.78});
+  geosx::testing::fill_array( coordinates_ig, {0.300, 0.350, 0.400, 0.450, 0.500, 0.550, 0.600, 0.650, 0.700, 0.750, 0.78} );
 
 
   // then define the bounding drainage and imbibibition relative permeability
 
   // Water phase drainage relperm
   real64_array drainageValues_w;
-    geosx::testing::fill_array(drainageValues_w,{0.00000, 0.00100, 0.00300, 0.01000, 0.01800, 0.03500, 0.04000, 0.05700,
-                                                 0.08800, 0.14500, 0.16000, 0.19000, 0.26300, 0.45500, 0.69200, 1.});
+  geosx::testing::fill_array( drainageValues_w, {0.00000, 0.00100, 0.00300, 0.01000, 0.01800, 0.03500, 0.04000, 0.05700,
+                                                 0.08800, 0.14500, 0.16000, 0.19000, 0.26300, 0.45500, 0.69200, 1.} );
   // Gas phase drainage relperm, seventh column of Table 2
   real64_array drainageValues_g;
-    geosx::testing::fill_array(drainageValues_g, {0.00000, 0.00200, 0.00700, 0.01000, 0.02000, 0.04000, 0.07500,
-                                                  0.12700, 0.18000, 0.24000, 0.31000, 0.37300, 0.46000, 0.55000,
-                                                  0.64000, 0.73000, 0.82500, 0.92000, 1.00000});
+  geosx::testing::fill_array( drainageValues_g, {0.00000, 0.00200, 0.00700, 0.01000, 0.02000, 0.04000, 0.07500,
+                                                 0.12700, 0.18000, 0.24000, 0.31000, 0.37300, 0.46000, 0.55000,
+                                                 0.64000, 0.73000, 0.82500, 0.92000, 1.00000} );
 
   real64_array imbibitionValues_w;
-  geosx::testing::fill_array(imbibitionValues_w, {0, 0.0156, 0.0680, 0.1409, 0.2296, 0.3317, 0.4455, 0.5700,
-                                                  0.7044, 0.8479, 0.8776, 0.9382});
+  geosx::testing::fill_array( imbibitionValues_w, {0, 0.0156, 0.0680, 0.1409, 0.2296, 0.3317, 0.4455, 0.5700,
+                                                   0.7044, 0.8479, 0.8776, 0.9382} );
 
   real64_array imbibitionValues_g;
-      geosx::testing::fill_array(imbibitionValues_g,{0.0000, 0.03361965, 0.09509072, 0.17469281, 0.26895718,
-                                                     0.37587908, 0.49410588, 0.62264458, 0.76072577, 0.90773047, 1.});
+  geosx::testing::fill_array( imbibitionValues_g, {0.0000, 0.03361965, 0.09509072, 0.17469281, 0.26895718,
+                                                   0.37587908, 0.49410588, 0.62264458, 0.76072577, 0.90773047, 1.} );
 
   initializeTable( "drainageWater_swg",
                    coordinates_dw,
@@ -145,7 +145,7 @@ TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string
 
   // 2) Then set up the constitutive model
 
-  auto & relPerm = constbase.getGroupByPath("/Problem/domain/Constitutive").getGroup<TableRelativePermeabilityHysteresis>(name);
+  auto & relPerm = constbase.getGroupByPath( "/Problem/domain/Constitutive" ).getGroup< TableRelativePermeabilityHysteresis >( name );
 
   auto & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 2 );
@@ -172,18 +172,19 @@ class KilloughHysteresisTest : public ::testing::Test
 {
 public:
 
-    KilloughHysteresisTest():
-            state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
-    {}
+  KilloughHysteresisTest():
+    state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
+  {}
 
 protected:
-         void SetUp() override {
-         setupProblemFromXML(state.getProblemManager(), xmlInput);
-         DomainPartition &domain = state.getProblemManager().getDomainPartition();
+  void SetUp() override
+  {
+    setupProblemFromXML( state.getProblemManager(), xmlInput );
+    DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
-    }
+  }
 
-     GeosxState state;
+  GeosxState state;
 
 
 };
@@ -271,8 +272,8 @@ TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
 
   real64 const relTol = 5e-5;
 
-    TableRelativePermeabilityHysteresis&  table = makeTableRelPermHysteresisTwoPhase( "relperm",
-                                                                                   state.getProblemManager().getDomainPartition().getConstitutiveManager() );
+  TableRelativePermeabilityHysteresis & table = makeTableRelPermHysteresisTwoPhase( "relperm",
+                                                                                    state.getProblemManager().getDomainPartition().getConstitutiveManager() );
 
   auto relpermTblWrapper = table.createKernelWrapper();
 
@@ -306,7 +307,7 @@ TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-    g_commandLineOptions = *geosx::basicSetup( argc, argv );
+  g_commandLineOptions = *geosx::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
 
   geosx::basicCleanup();
