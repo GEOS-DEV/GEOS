@@ -1,6 +1,16 @@
-//
-// Created by root on 11/9/22.
-//
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
 
 #include "KilloughHysteresis.hpp"
 
@@ -152,7 +162,7 @@ KilloughHysteresis::createKernelWrapper( arrayView1d< const geosx::real64 > cons
                                          arrayView1d< const geosx::real64 > const & imbibitionRelPermEndPoint,
                                          arrayView1d< const geosx::real64 > const & drainageMaxPhaseVolFraction,
                                          arrayView1d< const geosx::real64 > const & imbibitionMaxPhaseVolFraction,
-                                         arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrapppedVolFrac )
+                                         arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrapppedVolFrac ) const
 {
   return KilloughHysteresis::KernelKilloughHysteresisBase( m_jerauldParam_a,
                                                            m_jerauldParam_b,
@@ -173,7 +183,7 @@ KilloughHysteresis::KernelKilloughHysteresisBase
 KilloughHysteresis::createKernelWrapper( const arrayView1d< const geosx::real64 > & landParam,
                                          const geosx::constitutive::KilloughHysteresis::HysteresisCurve_t & wettingCurve,
                                          const geosx::constitutive::KilloughHysteresis::HysteresisCurve_t & nonWettingCurve,
-                                         const arrayView3d< geosx::real64, cappres::USD_CAPPRES > & phaseTrappedVolFrac )
+                                         const arrayView3d< geosx::real64, cappres::USD_CAPPRES > & phaseTrappedVolFrac ) const
 {
   return KilloughHysteresis::KernelKilloughHysteresisBase( landParam,
                                                            m_killoughCurvatureParamCapPres,
@@ -182,7 +192,7 @@ KilloughHysteresis::createKernelWrapper( const arrayView1d< const geosx::real64 
                                                            phaseTrappedVolFrac );
 }
 
-
+//TODO
 //void KilloughHysteresis::computeLandCoefficient()
 
 
