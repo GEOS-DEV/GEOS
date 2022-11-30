@@ -111,7 +111,12 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
         }
         else if( m_formulation == "SEM" )
         {
+#if !defined( GEOSX_USE_HIP )
           return std::make_unique< Q1_Hexahedron_Lagrange_GaussLobatto >();
+#else
+          GEOSX_ERROR( "Cannot compile this on Crusher." );
+          return nullptr;
+#endif
         }
         else
         {
