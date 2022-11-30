@@ -2,8 +2,8 @@
 // Created by root on 11/8/22.
 //
 
-#ifndef GEOSX_TABLECAPILLARYPRESSUREHYSTERESIS_HPP
-#define GEOSX_TABLECAPILLARYPRESSUREHYSTERESIS_HPP
+#ifndef GEOSX_CONSTITUTIVE_TABLECAPILLARYPRESSUREHYSTERESIS_HPP
+#define GEOSX_CONSTITUTIVE_TABLECAPILLARYPRESSUREHYSTERESIS_HPP
 
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "functions/TableFunction.hpp"
@@ -18,7 +18,7 @@ namespace constitutive
 
 class TableCapillaryPressureHysteresis : public CapillaryPressureBase
 {
-
+  /// useful constant
   static constexpr real64 CAP_INF = std::numeric_limits< real64 >::max();
   static constexpr real64 CAP_INF_DERIV = std::numeric_limits< real64 >::max();
 
@@ -47,65 +47,63 @@ public:
   TableCapillaryPressureHysteresis( std::string const & name,
                                     dataRepository::Group * const parent );
 
-  static std::string catalogName()
-  { return "TableCapillaryPressureHysteresis"; }
-
-  virtual string getCatalogName() const override
-  { return catalogName(); }
+  static std::string catalogName(){ return "TableCapillaryPressureHysteresis"; }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   ///Kernel
   class KernelWrapper final : public CapillaryPressureBaseUpdate
   {
 public:
 
-    KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & wettingNonWettingCapillaryPressureKernelWrappers,
-                   arrayView1d< TableFunction::KernelWrapper const > const & wettingIntermediateCapillaryPressureKernelWrappers,
-                   arrayView1d< TableFunction::KernelWrapper const > const & nonWettingIntermediateCapillaryPressureKernelWrappers,
-                   KilloughHysteresis::KernelKilloughHysteresisBase const & KilloughKernel,
-                   arrayView1d< integer const > const & phaseHasHysteresis,
-                   arrayView1d< real64 const > const & landParam,
-                   real64 const & phaseIntermediateMinVolFraction,
-                   KilloughHysteresis::HysteresisCurve_t const & wettingCurve,
-                   KilloughHysteresis::HysteresisCurve_t const & nonWettingCurve,
-                   arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
-                   arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
-                   arrayView1d< integer const > const & phaseTypes,
-                   arrayView1d< integer const > const & phaseOrder,
-                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
-                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseCapPressure,
-                   arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseCapPressure_dPhaseVolFrac );
-
-
+    KernelWrapper(
+      arrayView1d< TableFunction::KernelWrapper const > const & wettingNonWettingCapillaryPressureKernelWrappers,
+      arrayView1d< TableFunction::KernelWrapper const > const & wettingIntermediateCapillaryPressureKernelWrappers,
+      arrayView1d< TableFunction::KernelWrapper const > const & nonWettingIntermediateCapillaryPressureKernelWrappers,
+      KilloughHysteresis::KernelKilloughHysteresisBase const & KilloughKernel,
+      arrayView1d< integer const > const & phaseHasHysteresis,
+      arrayView1d< real64 const > const & landParam,
+      real64 const & phaseIntermediateMinVolFraction,
+      KilloughHysteresis::HysteresisCurve_t const & wettingCurve,
+      KilloughHysteresis::HysteresisCurve_t const & nonWettingCurve,
+      arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
+      arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
+      arrayView1d< integer const > const & phaseTypes,
+      arrayView1d< integer const > const & phaseOrder,
+      arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
+      arrayView3d< real64, relperm::USD_RELPERM > const & phaseCapPressure,
+      arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseCapPressure_dPhaseVolFrac );
 
     //actual workers
-    GEOSX_HOST_DEVICE
-    void
-    computeImbibitionWettingCapillaryPressure( arrayView1d< TableFunction::KernelWrapper const > const & wettingKernelWapper,
-                                               const KilloughHysteresis::HysteresisCurve_t & wettingCurve,
-                                               const geosx::real64 & landParam,
-                                               const geosx::real64 & phaseVolFraction,
-                                               const geosx::real64 & phaseMinHistoricalVolFraction,
-                                               const real64 & phaseIntermediateMinVolFraction,
-                                               geosx::real64 & phaseTrappedVolFrac,
-                                               geosx::real64 & phaseCapPressure,
-                                               geosx::real64 & dPhaseCapPressure_dPhaseVolFrac ) const;
-
-    GEOSX_HOST_DEVICE
-    void
-    computeImbibitionNonWettingCapillaryPressure( arrayView1d< TableFunction::KernelWrapper const > const & nonWettingKernelWrapper,
-                                                  KilloughHysteresis::HysteresisCurve_t const & nonWettingCurve,
-                                                  const geosx::real64 & landParam,
-                                                  const geosx::real64 & phaseVolFraction,
-                                                  const geosx::real64 & phaseMaxHistoricalVolFraction,
-                                                  geosx::real64 & phaseTrappedVolFrac,
-                                                  geosx::real64 & phaseCapPressure,
-                                                  geosx::real64 & dPhaseCapPressure_dPhaseVolFrac ) const;
-
     GEOSX_HOST_DEVICE
     void computeDrainageCapillaryPressure( TableFunction::KernelWrapper const & drainageRelpermWrapper,
                                            real64 const & phaseVolFraction,
                                            real64 & phaseCapPressure,
                                            real64 & dPhaseCapPressure_dPhaseVolFrac ) const;
+
+    GEOSX_HOST_DEVICE
+    void
+    computeImbibitionWettingCapillaryPressure(
+      const arrayView1d< const TableFunction::KernelWrapper > & wettingKernelWapper,
+      const KilloughHysteresis::HysteresisCurve_t & wettingCurve,
+      const KilloughHysteresis::HysteresisCurve_t & nonWettingCurve,
+      const geosx::real64 & landParam,
+      const geosx::real64 & phaseVolFraction, const geosx::real64 & phaseMinHistoricalVolFraction,
+      const real64 & phaseIntermediateMinVolFraction, geosx::real64 & phaseTrappedVolFrac,
+      geosx::real64 & phaseCapPressure, geosx::real64 & dPhaseCapPressure_dPhaseVolFrac ) const;
+
+    GEOSX_HOST_DEVICE
+    void
+    computeImbibitionNonWettingCapillaryPressure(
+      arrayView1d< TableFunction::KernelWrapper const > const & nonWettingKernelWrapper,
+      KilloughHysteresis::HysteresisCurve_t const & nonWettingCurve,
+      const geosx::real64 & landParam,
+      const geosx::real64 & phaseVolFraction,
+      const geosx::real64 & phaseMaxHistoricalVolFraction,
+      geosx::real64 & phaseTrappedVolFrac,
+      geosx::real64 & phaseCapPressure,
+      geosx::real64 & dPhaseCapPressure_dPhaseVolFrac ) const;
+
+
 
     //wrapper call wrt number of phase
     GEOSX_HOST_DEVICE
@@ -116,7 +114,8 @@ public:
                           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
                           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
                           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-                          arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
+                          arraySlice2d< real64,
+                                        relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
     GEOSX_HOST_DEVICE
     void computeThreePhase( integer const ipWetting,
@@ -141,11 +140,9 @@ public:
     GEOSX_HOST_DEVICE
     virtual void update( localIndex const k,
                          localIndex const q,
-                         arraySlice1d< real64 const,
-                                       compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override;
+                         arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override;
 
 private:
-
 
 
     static constexpr real64 flowReversalBuffer = KilloughHysteresis::KernelKilloughHysteresisBase::flowReversalBuffer;
@@ -184,8 +181,7 @@ private:
   KernelWrapper createKernelWrapper();
 
   //might need it to be virtual one level higher --> from Killough/Hysteresis common class
-  virtual void
-  saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const;
+  virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const override;
 
 
   struct viewKeyStruct : CapillaryPressureBase::viewKeyStruct
@@ -209,19 +205,14 @@ private:
 ///pivot points
     static constexpr char const * wettingPhaseMinVolumeFractionString()
     { return "wettingPhaseMinVolumeFraction"; }
-
     static constexpr char const * drainageWettingPhaseMaxVolumeFractionString()
     { return "drainageWettingPhaseMaxVolumeFraction"; }
-
     static constexpr char const * imbibitionWettingPhaseMaxVolumeFractionString()
     { return "imbibitionWettingPhaseMaxVolumeFraction"; }
-
     static constexpr char const * nonWettingPhaseMaxVolumeFractionString()
     { return "nonWettingPhaseMaxVolumeFraction"; }
-
     static constexpr char const * drainageNonWettingPhaseMinVolumeFractionString()
     { return "drainageNonWettingPhaseMinVolumeFraction"; }
-
     static constexpr char const * imbibitionNonWettingPhaseMinVolumeFractionString()
     { return "imbibitionNonWettingPhaseMinVolumeFraction"; }
 
@@ -233,29 +224,21 @@ private:
     //2phase
     static constexpr char const * drainageWettingNonWettingCapPresTableNameString()
     { return "drainageWettingNonWettingCapPressureTableName"; }
-
     static constexpr char const * imbibitionWettingNonWettingCapPresTableNameString()
     { return "imbibitionWettingNonWettingCapPressureTableName"; }
-
     //3phase
     static constexpr char const * drainageWettingIntermediateCapPresTableNameString()
     { return "drainageWettingIntermediateCapPressureTableName"; }
-
     static constexpr char const * drainageNonWettingIntermediateCapPresTableNameString()
     { return "drainageNonWettingIntermediateCapPressureTableName"; }
-
     static constexpr char const * imbibitionWettingIntermediateCapPresTableNameString()
     { return "imbibitionWettingIntermediateCapPressureTableName"; }
-
     static constexpr char const * imbibitionNonWettingIntermediateCapPresTableNameString()
     { return "imbibitionNonWettingIntermediateCapPressureTableName"; }
-
     static constexpr char const * wettingNonWettingCapillaryPressureKernelWrappersString()
     { return "wettingNonWettingCapillaryPressureKernelWrappers"; }
-
     static constexpr char const * wettingIntermediateCapillaryPressureKernelWrappersString()
     { return "wettingIntermediateCapillaryPressureKernelWrappers"; }
-
     static constexpr char const * nonWettingIntermediateCapillaryPressureKernelWrappersString()
     { return "nonWettingIntermediateCapillaryPressureKernelWrappers"; }
 
@@ -267,21 +250,22 @@ private:
 
 
 private:
+  virtual void postProcessInput() override;
 
+  virtual void initializePreSubGroups() override;
 
   void resizeFields( localIndex const size,
                      localIndex const numPts ) override;
 
-  virtual void postProcessInput() override;
-
-  virtual void initializePreSubGroups() override;
 
   /**
    * @brief Create all the table kernel wrappers needed for the simulation (for all the phases present)
    */
   void createAllTableKernelWrappers();
 
-  KilloughHysteresis::KernelKilloughHysteresisBase createKilloughKernelWrapper();
+  KilloughHysteresis::KernelKilloughHysteresisBase
+  createKilloughKernelWrapper( const KilloughHysteresis::HysteresisCurve_t & wettingCurve,
+                               const KilloughHysteresis::HysteresisCurve_t & nonWettingCurve );
 
   /**
    * @brief Compute the Land coefficient for the wetting and non-wetting phases
@@ -429,4 +413,4 @@ inline void TableCapillaryPressureHysteresis::KernelWrapper::update( const geosx
 } //constitutive
 } // geosx
 
-#endif //GEOSX_TABLECAPILLARYPRESSUREHYSTERESIS_HPP
+#endif //GEOSX_CONSTITUTIVE_TABLECAPILLARYPRESSUREHYSTERESIS_HPP
