@@ -132,6 +132,14 @@ public:
                                        arrayView3d< real64 const > const & convergedPermeability ) const
   { GEOSX_UNUSED_VAR( convergedPorosity, convergedPermeability ); }
 
+
+    /**
+   * @brief Save converged phase volume fraction at the end of a time step (needed for hysteresis)
+   * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
+   */
+    virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
+    { GEOSX_UNUSED_VAR( phaseVolFraction ); }
+
   /*
    * @brief Getter for the number of fluid phases
    * @return the number of fluid phases

@@ -752,6 +752,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       CapillaryPressureBase const & capPressureMaterial =
         getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
       capPressureMaterial.initializeRockState( porosity, permeability ); // this needs to happen before calling updateCapPressureModel
+      capPressureMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac );
       updateCapPressureModel( subRegion );
     }
 
@@ -1951,6 +1952,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
         CapillaryPressureBase const & capPressureMaterial =
           getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressName );
         capPressureMaterial.saveConvergedRockState( porosity, permeability );
+        capPressureMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac );
       }
 
       // Step 6: if the thermal option is on, send the converged porosity and phase volume fraction to the thermal conductivity model
