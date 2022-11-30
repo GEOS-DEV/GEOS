@@ -579,9 +579,6 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
     arrayView1d< real64 const > const presFace =
       faceManager.getField< fields::flow::facePressure >();
 
-    arrayView1d< real64 const > const gravCoefFace =
-      faceManager.getField< fields::flow::gravityCoefficient >();
-
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
     elemDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
