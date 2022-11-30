@@ -74,7 +74,7 @@ HypreInterface::createSolver( LinearSolverParameters params )
 #if defined(GEOSX_USE_SUPERLU_DIST)
       return std::make_unique< SuperLUDist< HypreInterface > >( std::move( params ) );
 #else
-      GEOSX_ERROR("GEOSX is configured without support for SuperLU_dist.");
+      GEOSX_ERROR( "GEOSX is configured without support for SuperLU_dist." );
       return std::unique_ptr< LinearSolverBase< HypreInterface > >( NULL );
 #endif
     }

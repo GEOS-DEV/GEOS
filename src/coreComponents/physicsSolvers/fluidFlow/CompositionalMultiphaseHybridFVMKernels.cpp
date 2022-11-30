@@ -157,9 +157,9 @@ UpwindingHelper::
                              real64 ( & dUpwPhaseGravCoef_dCompDens )[ NP ][ NP-1 ][ NC ][ 2 ][ NC ] )
 {
 #ifdef GEOSX_CRUSHER_SUPPRESSION
-  GEOSX_UNUSED_VAR( localIds, neighborIds,transGravCoef,phaseDens,dPhaseDens,phaseMassDens,dPhaseMassDens,
-                    phaseMob,dPhaseMob,dCompFrac_dCompDens,phaseCompFrac,dPhaseCompFrac,phaseGravTerm,
-                    dPhaseGravTerm_dPres,dPhaseGravTerm_dCompDens,upwPhaseGravCoef,dUpwPhaseGravCoef_dPres,
+  GEOSX_UNUSED_VAR( localIds, neighborIds, transGravCoef, phaseDens, dPhaseDens, phaseMassDens, dPhaseMassDens,
+                    phaseMob, dPhaseMob, dCompFrac_dCompDens, phaseCompFrac, dPhaseCompFrac, phaseGravTerm,
+                    dPhaseGravTerm_dPres, dPhaseGravTerm_dCompDens, upwPhaseGravCoef, dUpwPhaseGravCoef_dPres,
                     dUpwPhaseGravCoef_dCompDens );
   GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
 #else
@@ -742,11 +742,11 @@ AssemblerKernelHelper::
                           arrayView1d< real64 > const & localRhs )
 {
 #ifdef GEOSX_CRUSHER_SUPPRESSION
-  GEOSX_UNUSED_VAR( localIds, rankOffset,elemRegionList,elemSubRegionList,elemList,regionFilter,
-                    faceDofNumber,mimFaceGravCoef,elemToFaces,elemGravCoef,phaseDens,dPhaseDens,phaseMassDens,
-                    dPhaseMassDens,phaseMob,dPhaseMob,dCompFrac_dCompDens,phaseCompFrac,dPhaseCompFrac,
-                    elemDofNumber,transMatrixGrav,oneSidedVolFlux,dOneSidedVolFlux_dPres,
-                    dOneSidedVolFlux_dFacePres,dOneSidedVolFlux_dCompDens,dt,localMatrix,localRhs );
+  GEOSX_UNUSED_VAR( localIds, rankOffset, elemRegionList, elemSubRegionList, elemList, regionFilter,
+                    faceDofNumber, mimFaceGravCoef, elemToFaces, elemGravCoef, phaseDens, dPhaseDens, phaseMassDens,
+                    dPhaseMassDens, phaseMob, dPhaseMob, dCompFrac_dCompDens, phaseCompFrac, dPhaseCompFrac,
+                    elemDofNumber, transMatrixGrav, oneSidedVolFlux, dOneSidedVolFlux_dPres,
+                    dOneSidedVolFlux_dFacePres, dOneSidedVolFlux_dCompDens, dt, localMatrix, localRhs );
   GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
 #else
   using namespace compositionalMultiphaseUtilities;
@@ -1316,11 +1316,11 @@ AssemblerKernel::
            arrayView1d< real64 > const & localRhs )
 {
 #ifdef GEOSX_CRUSHER_SUPPRESSION
-  GEOSX_UNUSED_VAR( er,esr,ei,regionFilter,elemRegionList,elemSubRegionList,elemList,faceDofNumber,
-                    faceGhostRank,facePres,faceGravCoef,mimFaceGravCoef,elemToFaces,elemPres,
-                    elemGravCoef,phaseDens,dPhaseDens,phaseMassDens,dPhaseMassDens,phaseMob,
-                    dPhaseMob,dCompFrac_dCompDens,phaseCompFrac,dPhaseCompFrac,elemDofNumber,
-                    elemGhostRank,rankOffset,dt,transMatrix,transMatrixGrav,localMatrix,localRhs );
+  GEOSX_UNUSED_VAR( er, esr, ei, regionFilter, elemRegionList, elemSubRegionList, elemList, faceDofNumber,
+                    faceGhostRank, facePres, faceGravCoef, mimFaceGravCoef, elemToFaces, elemPres,
+                    elemGravCoef, phaseDens, dPhaseDens, phaseMassDens, dPhaseMassDens, phaseMob,
+                    dPhaseMob, dCompFrac_dCompDens, phaseCompFrac, dPhaseCompFrac, elemDofNumber,
+                    elemGhostRank, rankOffset, dt, transMatrix, transMatrixGrav, localMatrix, localRhs );
   GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
 #else
   // one sided flux

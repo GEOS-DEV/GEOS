@@ -890,8 +890,8 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 #ifdef GEOSX_CRUSHER_SUPPRESSION
-  GEOSX_UNUSED_VAR( numConnections, kernelComponent );
-  GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
+    GEOSX_UNUSED_VAR( numConnections, kernelComponent );
+    GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
 #else
     forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {

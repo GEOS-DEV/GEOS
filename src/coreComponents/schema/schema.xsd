@@ -3929,9 +3929,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--meshBody => Mesh body that contains this region-->
 		<xsd:attribute name="meshBody" type="string" default="" />
-		<!--subRegionType => Type of surface element subregion. Valid options:
-* faceElement
-* embeddedElement-->
+		<!--subRegionType => Type of surface element subregion. Valid options: {faceElement, embeddedElement}.-->
 		<xsd:attribute name="subRegionType" type="geosx_SurfaceElementRegion_SurfaceSubRegionType" default="faceElement" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />

@@ -228,7 +228,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void finalizeCaliper()
 {
-#if defined( GEOSX_USE_CALIPER ) and defined( GEOSX_USE_ADIAK )
+#if defined( GEOSX_USE_CALIPER )and defined( GEOSX_USE_ADIAK )
   adiak::fini();
 #endif
 }

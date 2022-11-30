@@ -83,7 +83,7 @@ constexpr HYPRE_MemoryLocation getMemoryLocation( LvArray::MemorySpace const spa
     case LvArray::MemorySpace::cuda: return HYPRE_MEMORY_DEVICE;
 #endif
 #if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
-  case  LvArray::MemorySpace::hip: return HYPRE_MEMORY_DEVICE;
+    case  LvArray::MemorySpace::hip: return HYPRE_MEMORY_DEVICE;
 #endif
     default: return HYPRE_MEMORY_HOST;
   }
@@ -158,7 +158,8 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
   GEOSX_ERROR_IF( err != cudaSuccess, GEOSX_FMT( "Previous CUDA errors found: {} ({} at {}:{})", msg, cudaGetErrorString( err ), file, line ) );
 #elif GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
   hipError_t const err = hipGetLastError();
-  GEOSX_UNUSED_VAR( msg, file, line ); // on crusher geosx_error_if ultimately resolves to an assert, which drops the content on release builds
+  GEOSX_UNUSED_VAR( msg, file, line ); // on crusher geosx_error_if ultimately resolves to an assert, which drops the content on release
+                                       // builds
   GEOSX_ERROR_IF( err != hipSuccess, GEOSX_FMT( "Previous HIP errors found: {} ({} at {}:{})", msg, hipGetErrorString( err ), file, line ) );
 #else
   GEOSX_UNUSED_VAR( msg, file, line );

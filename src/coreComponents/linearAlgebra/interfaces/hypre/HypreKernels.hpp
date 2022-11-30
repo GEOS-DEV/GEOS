@@ -200,7 +200,10 @@ makeSortedPermutation( HYPRE_Int const * const indices,
   {
     perm[i] = i; // std::iota
   }
-  auto const comp = [indices, map] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int i, HYPRE_Int j ) { return map( indices[i] ) < map( indices[j] ); };
+  auto const comp = [indices, map] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int i, HYPRE_Int j )
+  {
+    return map( indices[i] ) < map( indices[j] );
+  };
   LvArray::sortedArrayManipulation::makeSorted( perm, perm + size, comp );
 }
 
