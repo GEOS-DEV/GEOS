@@ -173,10 +173,14 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
   {
     switch( parentElementShape )
     {
+#if ! defined( GEOSX_USE_HIP )
       case ElementType::Hexahedron:
         GEOSX_ERROR_IF( m_formulation != "SEM",
                         "Element type Hexahedron with order 2 available only when using the Spectral Element Method" );
         return std::make_unique< Q2_Hexahedron_Lagrange_GaussLobatto >();
+#else
+        GEOSX_ERROR( "Cannot compile this on Crusher." );
+#endif
       default:
       {
         GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
@@ -189,6 +193,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
   {
     switch( parentElementShape )
     {
+#if ! defined( GEOSX_USE_HIP )
       case ElementType::Hexahedron:
         GEOSX_ERROR_IF( m_formulation != "SEM",
                         "Element type Hexahedron with order 3 available only when using the Spectral Element Method" );
@@ -208,10 +213,14 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
   {
     switch( parentElementShape )
     {
+#if ! defined( GEOSX_USE_HIP )
       case ElementType::Hexahedron:
         GEOSX_ERROR_IF( m_formulation != "SEM",
                         "Element type Hexahedron with order 4 available only when using the Spectral Element Method" );
         return std::make_unique< Q4_Hexahedron_Lagrange_GaussLobatto >();
+#else
+        GEOSX_ERROR( "Cannot compile this on Crusher." );
+#endif
       default:
       {
         GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
@@ -224,10 +233,14 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
   {
     switch( parentElementShape )
     {
+#if ! defined( GEOSX_USE_HIP )
       case ElementType::Hexahedron:
         GEOSX_ERROR_IF( m_formulation != "SEM",
                         "Element type Hexahedron with order 5 available only when using the Spectral Element Method" );
         return std::make_unique< Q5_Hexahedron_Lagrange_GaussLobatto >();
+#else
+        GEOSX_ERROR( "Cannot compile this on Crusher." );
+#endif
       default:
       {
         GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
