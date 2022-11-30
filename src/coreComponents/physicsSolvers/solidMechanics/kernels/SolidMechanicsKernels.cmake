@@ -43,7 +43,13 @@ set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
                            H1_Prism10_VEM_Gauss1 )
 
 if ( NOT ${ENABLE_HIP} )
-  list(APPEND finiteElementDispatch Q3_Hexahedron_Lagrange_GaussLobatto H1_Prism11_VEM_Gauss1 )
+  list(APPEND finiteElementDispatch
+  Q1_Hexahedron_Lagrange_GaussLobatto
+  Q2_Hexahedron_Lagrange_GaussLobatto
+  Q3_Hexahedron_Lagrange_GaussLobatto
+  Q4_Hexahedron_Lagrange_GaussLobatto
+  Q5_Hexahedron_Lagrange_GaussLobatto
+  H1_Prism11_VEM_Gauss1 )
 endif( )
 
   foreach( KERNELNAME ${kernelNames} )
