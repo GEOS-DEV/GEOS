@@ -26,44 +26,35 @@
 #include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
 #if ! defined( GEOSX_USE_HIP )
-#include "elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp"
+#include "elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
 #include "elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
 #include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "LvArray/src/system.hpp"
 
-#if ! defined( GEOSX_USE_HIP )
-#define BASE_FE_TYPES \
-  finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2, \
-  finiteElement::H1_Wedge_Lagrange1_Gauss6, \
-  finiteElement::H1_Tetrahedron_Lagrange1_Gauss1, \
-  finiteElement::H1_Pyramid_Lagrange1_Gauss5, \
-  finiteElement::Q3_Hexahedron_Lagrange_GaussLobatto
-  // can only use GaussLobatto when not compiling with cce+rocm
-#else
-#define BASE_FE_TYPES \
+#define FE_1_TYPES \
   finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2, \
   finiteElement::H1_Wedge_Lagrange1_Gauss6, \
   finiteElement::H1_Tetrahedron_Lagrange1_Gauss1, \
   finiteElement::H1_Pyramid_Lagrange1_Gauss5
+
+#define GL_FE_TYPES \
+  finiteElement::Q1_Hexahedron_Lagrange_GaussLobatto, \
+  finiteElement::Q2_Hexahedron_Lagrange_GaussLobatto, \
+  finiteElement::Q3_Hexahedron_Lagrange_GaussLobatto, \
+  finiteElement::Q4_Hexahedron_Lagrange_GaussLobatto, \
+  finiteElement::Q5_Hexahedron_Lagrange_GaussLobatto
+
+#if ! defined( GEOSX_USE_HIP )
+  // can only compile GL_FE_TYPES when not using cce+rocm
+#define BASE_FE_TYPES FE_1_TYPES, GL_FE_TYPES
+#else
+#define BASE_FE_TYPES FE_1_TYPES
 #endif
 
-#ifdef GEOSX_DISPATCH_VEM
-#if ! defined( GEOSX_USE_HIP )
-#define VEM_TYPES \
-  finiteElement::H1_Tetrahedron_VEM_Gauss1, \
-  finiteElement::H1_Wedge_VEM_Gauss1, \
-  finiteElement::H1_Hexahedron_VEM_Gauss1, \
-  finiteElement::H1_Prism5_VEM_Gauss1, \
-  finiteElement::H1_Prism6_VEM_Gauss1, \
-  finiteElement::H1_Prism7_VEM_Gauss1, \
-  finiteElement::H1_Prism8_VEM_Gauss1, \
-  finiteElement::H1_Prism9_VEM_Gauss1, \
-  finiteElement::H1_Prism10_VEM_Gauss1, \
-  finiteElement::H1_Prism11_VEM_Gauss1
-  // can only compile h1_prism11_vem_gauss1 when not using cce+rocm
-#else
-#define VEM_TYPES \
+#if defined( GEOSX_DISPATCH_VEM )
+
+#define VEM_1_TYPES \
   finiteElement::H1_Tetrahedron_VEM_Gauss1, \
   finiteElement::H1_Wedge_VEM_Gauss1, \
   finiteElement::H1_Hexahedron_VEM_Gauss1, \
@@ -73,16 +64,30 @@
   finiteElement::H1_Prism8_VEM_Gauss1, \
   finiteElement::H1_Prism9_VEM_Gauss1, \
   finiteElement::H1_Prism10_VEM_Gauss1
-#endif
-#define ALL_FE_TYPES BASE_FE_TYPES, VEM_TYPES
+
+#define VEM_2_TYPES \
+  finiteElement::H1_Prism11_VEM_Gauss1
+  // can only compile h1_prism11_vem_gauss1 when not using cce+rocm
+
+#if ! defined( GEOSX_USE_HIP )
+#define VEM_TYPES VEM_1_TYPES, VEM_2_TYPES
 #else
-#define ALL_FE_TYPES BASE_FE_TYPES
+#define VEM_TYPES VEM_1_TYPES
 #endif
+
+#define ALL_FE_TYPES BASE_FE_TYPES, VEM_TYPES
+
+#else
+
+#define ALL_FE_TYPES BASE_FE_TYPES
+
+#endif
+
 
 
 #define FE_TYPES_2D \
-  finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp  \
-  finiteElement::H1_TriangleFace_Lagrange1_Gauss1.hpp
+  finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2  \
+  finiteElement::H1_TriangleFace_Lagrange1_Gauss1
 
 namespace geosx
 {

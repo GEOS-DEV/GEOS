@@ -7,7 +7,12 @@ set(gtest_geosx_tests
     testTypeDispatch.cpp
    )
 
-set( dependencyList ${parallelDeps} common hdf5 gtest )
+if ( ENABLE_CALIPER )
+  list( APPEND gtest_geosx_tests
+        testCaliperSmoke.cpp )
+endif()
+
+set( dependencyList common hdf5 gtest )
 
 #
 # Add gtest C++ based tests
