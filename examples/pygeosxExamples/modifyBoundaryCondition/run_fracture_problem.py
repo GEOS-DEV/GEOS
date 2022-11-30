@@ -43,7 +43,7 @@ def run_problem():
         time = problem.get_wrapper(time_key).value(False)
         current_flow_rate = -5.0 - np.sin(np.pi * time / 60.0)
         wrapper.set_wrapper_to_value(problem, bc_key, current_flow_rate)
-        if (wrapper.rank == 0):
+        if (rank == 0):
             print('t = %1.4f, q = %1.4f' % (time, current_flow_rate), flush=True)
 
         wrapper.run_queries(problem, records)

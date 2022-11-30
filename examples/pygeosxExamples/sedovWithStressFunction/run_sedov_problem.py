@@ -65,14 +65,15 @@ def run_problem():
 
         # Gather/allgather tests
         tmp = wrapper.gather_wrapper(problem, stress_key)
-        print(wrapper.rank, 'gather', np.shape(tmp), flush=True)
+        print(rank, 'gather', np.shape(tmp), flush=True)
 
         tmp = wrapper.allgather_wrapper(problem, stress_key)
-        print(wrapper.rank, 'allgather', np.shape(tmp), flush=True)
+        print(rank, 'allgather', np.shape(tmp), flush=True)
 
         tmp = wrapper.allgather_wrapper(problem, stress_key, ghost_key=ghost_key)
-        print(wrapper.rank, 'allgather_ghost_filtered', np.shape(tmp), flush=True)
+        print(rank, 'allgather_ghost_filtered', np.shape(tmp), flush=True)
     # PYGEOSX_MAIN_LOOP_END
+        
 
 
 if __name__ == '__main__':
