@@ -38,7 +38,7 @@ def get_global_array_range(local_values):
     return global_min, global_max
 
 
-def gather_array(local_values, allgather=False):
+def gather_array(local_values, allgather=False, concatenate=True):
     # Find buffer size
     N = np.shape(local_values)
     M = np.prod(N)
@@ -79,6 +79,7 @@ def gather_array(local_values, allgather=False):
                 all_values.append(tmp)
 
         # Concatenate into a single array
-        all_values = np.concatenate(all_values, axis=0)
+        if concatenate:
+            all_values = np.concatenate(all_values, axis=0)
 
     return all_values
