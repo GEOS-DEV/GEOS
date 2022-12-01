@@ -191,7 +191,7 @@ struct LinearSolverParameters
     SmootherType smootherType = SmootherType::l1jacobi;         ///< Smoother type
 #else
     string coarseningType = "HMIS";                             ///< Coarsening algorithm
-    SmootherType smootherType = SmootherType::fgs;              ///< Smoother type
+    SmootherType smootherType = SmootherType::l1sgs;            ///< Smoother type
 #endif
 
     integer maxLevels = 20;                                     ///< Maximum number of coarsening levels
