@@ -138,7 +138,8 @@ TEST( VTKImport, cube )
       {
         ASSERT_TRUE( cellBlockManager.getCellBlocks().hasGroup< CellBlockABC >( nameAndSize.first ) );
 
-        CellBlockABC const * h = &cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( nameAndSize.first ); //here pb
+        // here pb
+        CellBlockABC const * h = &cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( nameAndSize.first );
         localIndex const expectedSize = nameAndSize.second;
 
         // 8 nodes, 12 edges and 6 faces per hex.
@@ -154,159 +155,248 @@ TEST( VTKImport, cube )
     }
   };
 
-  string const cubeVTK = testMeshDir + "/cube.vtk";
-  string const cubeVTU = testMeshDir + "/cube.vtu";
-  // string const cubePVTU = testMeshDir + "/cube.pvtu";
-  string const cubeVTS = testMeshDir + "/cube.vts";
-  string const cubePVTS = testMeshDir + "/cube.pvts";
+  std::set< string > const meshFiles{ "cube.vtk",
+                                      "cube_STRUCTURED_POINTS.vtk",
+                                      "cube_RECTILINEAR_GRID.vtk",
+                                      "cube_STRUCTURED_GRID.vtk",
+                                      "cube_UNSTRUCTURED_GRID.vtk",
+                                      "cube.vtu",
+                                      //"cube.pvtu",
+                                      "cube.vts",
+                                      "cube.pvts",
+                                      "cube.vtr",
+                                      "cube.pvtr",
+                                      "cube.vti",
+                                      "cube.pvti" };
+  for( string const & meshFile: meshFiles )
+  {
+    TestMeshImport( testMeshDir + "/" + meshFile, validate );
+  }
 
-  TestMeshImport( cubeVTK, validate );
-  TestMeshImport( cubeVTU, validate );
-  // TestMeshImport( cubePVTU, validate );
-  TestMeshImport( cubeVTS, validate );
-  TestMeshImport( cubePVTS, validate );
 }
 
-TEST( VTKImport, medley )
+TEST( VTKImport, supportedElements )
 {
   SKIP_TEST_IN_PARALLEL( "Neither relevant nor implemented in parallel" );
 
   auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
   {
-    // `medley.vtk` is made of four elements.
-    // - Element 0 is a pyramid, in region 0.
-    // - Element 1 is an hexahedron, in region 1.
+    // `supportedElements.vtk` is made of twelve elements.
+    // `supportedElementsAsVTKPolyhedra.vtk` is the same model with all elements defined as polyhedron.
+    // - Element 0 is a tetrahedron, in region 0.
+    // - Element 1 is a pyramid, in region 1.
     // - Element 2 is a wedge, in region 2.
-    // - Element 3 is a tetrahedron, in region 3.
-    // - Element 4 is a pentagonal prism, in region 4.
-    // - Element 5 is an hexagonal prism, in region 5.
+    // - Element 3 is an hexahedron (converted from VTK_VOXEL), in region 3.
+    // - Element 4 is an hexahedron, in region 3.
+    // - Element 5 is a pentagonal prism, in region 4.
+    // - Element 6 is an hexagonal prism, in region 5.
+    // - Element 7 is an heptagonal prism, in region 6.
+    // - Element 8 is an octagonal prism, in region 7.
+    // - Element 9 is a nonagonal prism, in region 8.
+    // - Element 10 is a decagonal prism, in region 9.
+    // - Element 11 is an hendecagonal prism, in region 10.
     // All the elements belong to a region. Therefore, there is no "-1" region.
-    // It contains 26 nodes, 49 edges, 30 faces.
+    // It contains 143 nodes, 215 edges, 96 faces.
 
-    ASSERT_EQ( cellBlockManager.numNodes(), 26 );
-    ASSERT_EQ( cellBlockManager.numEdges(), 49 );
-    ASSERT_EQ( cellBlockManager.numFaces(), 30 );
+    ASSERT_EQ( cellBlockManager.numNodes(), 143 );
+    ASSERT_EQ( cellBlockManager.numEdges(), 215 );
+    ASSERT_EQ( cellBlockManager.numFaces(), 96 );
 
     SortedArray< localIndex > const & allNodes = cellBlockManager.getNodeSets().at( "all" );
-    ASSERT_EQ( allNodes.size(), 26 );
+    ASSERT_EQ( allNodes.size(), 143 );
 
-    // 6 elements types x 6 regions = 36 sub-groups
-    ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), 36 );
+    // 11 elements types x 11 regions = 121 sub-groups
+    ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), 121 );
 
     // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
-    CellBlockABC const & zone0 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "0_pyramids" );
-    CellBlockABC const & zone1 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "1_hexahedra" );
+    CellBlockABC const & zone0 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "0_tetrahedra" );
+    CellBlockABC const & zone1 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "1_pyramids" );
     CellBlockABC const & zone2 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "2_wedges" );
-    CellBlockABC const & zone3 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "3_tetrahedra" );
+    CellBlockABC const & zone3 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "3_hexahedra" );
     CellBlockABC const & zone4 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "4_pentagonalPrisms" );
     CellBlockABC const & zone5 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "5_hexagonalPrisms" );
+    CellBlockABC const & zone6 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "6_heptagonalPrisms" );
+    CellBlockABC const & zone7 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "7_octagonalPrisms" );
+    CellBlockABC const & zone8 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "8_nonagonalPrisms" );
+    CellBlockABC const & zone9 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "9_decagonalPrisms" );
+    CellBlockABC const & zone10 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "10_hendecagonalPrisms" );
 
-    std::vector< string > const elementNames{ "pyramids", "hexahedra", "wedges", "tetrahedra", "pentagonalPrisms", "hexagonalPrisms" };
-    for( std::size_t prefix: { 0, 1, 2, 3, 4, 5 } )
+    std::vector< string > const elementNames{ "tetrahedra",
+                                              "pyramids",
+                                              "wedges",
+                                              "hexahedra",
+                                              "pentagonalPrisms",
+                                              "hexagonalPrisms",
+                                              "heptagonalPrisms",
+                                              "octagonalPrisms",
+                                              "nonagonalPrisms",
+                                              "decagonalPrisms",
+                                              "hendecagonalPrisms" };
+    for( std::size_t prefix: { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 } )
     {
-      for( std::size_t i = 0; i < 6; ++i )
+      for( std::size_t i = 0; i < 11; ++i )
       {
         string const name = std::to_string( prefix ) + "_" + elementNames[i];
         CellBlockABC const & zone = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( name );
-        ASSERT_EQ( zone.size(), prefix == i ? 1 : 0 );
+        // zone3 contains two hexahedra converted from VTK_VOXEL and VTK_HEXAHEDRON or corresponding VTK_POLYHEDRON
+        if( prefix == 3 )
+        {
+          ASSERT_EQ( zone.size(), prefix == i ? 2 : 0 );
+        }
+        else
+        {
+          ASSERT_EQ( zone.size(), prefix == i ? 1 : 0 );
+        }
       }
     }
 
-    // Pyramid
+    // Tetrahedron
     auto elementToNodes = zone0.getElemToNodes();
-    ASSERT_EQ( elementToNodes.size( 1 ), 5 );
-    ASSERT_EQ( zone0.getElemToEdges().size( 1 ), 8 );
-    ASSERT_EQ( zone0.getElemToFaces().size( 1 ), 5 );
-    EXPECT_EQ( elementToNodes( 0, 0 ), 1 );
-    EXPECT_EQ( elementToNodes( 0, 1 ), 4 );
+    ASSERT_EQ( elementToNodes.size( 1 ), 4 );
+    ASSERT_EQ( zone0.getElemToEdges().size( 1 ), 6 );
+    ASSERT_EQ( zone0.getElemToFaces().size( 1 ), 4 );
+    EXPECT_EQ( elementToNodes( 0, 0 ), 0 );
+    EXPECT_EQ( elementToNodes( 0, 1 ), 1 );
     EXPECT_EQ( elementToNodes( 0, 2 ), 2 );
     EXPECT_EQ( elementToNodes( 0, 3 ), 3 );
-    EXPECT_EQ( elementToNodes( 0, 4 ), 0 );
 
-    // Hexahedron
+    // Pyramid
     elementToNodes = zone1.getElemToNodes();
-    ASSERT_EQ( elementToNodes.size( 1 ), 8 );
-    ASSERT_EQ( zone1.getElemToEdges().size( 1 ), 12 );
-    ASSERT_EQ( zone1.getElemToFaces().size( 1 ), 6 );
-    EXPECT_EQ( elementToNodes( 0, 0 ), 1 );
-    EXPECT_EQ( elementToNodes( 0, 1 ), 2 );
-    EXPECT_EQ( elementToNodes( 0, 2 ), 4 );
-    EXPECT_EQ( elementToNodes( 0, 3 ), 3 );
-    EXPECT_EQ( elementToNodes( 0, 4 ), 5 );
-    EXPECT_EQ( elementToNodes( 0, 5 ), 6 );
-    EXPECT_EQ( elementToNodes( 0, 6 ), 8 );
-    EXPECT_EQ( elementToNodes( 0, 7 ), 7 );
+    ASSERT_EQ( elementToNodes.size( 1 ), 5 );
+    ASSERT_EQ( zone1.getElemToEdges().size( 1 ), 8 );
+    ASSERT_EQ( zone1.getElemToFaces().size( 1 ), 5 );
+    EXPECT_EQ( elementToNodes( 0, 0 ), 4 );
+    EXPECT_EQ( elementToNodes( 0, 1 ), 5 );
+    EXPECT_EQ( elementToNodes( 0, 2 ), 7 );
+    EXPECT_EQ( elementToNodes( 0, 3 ), 6 );
+    EXPECT_EQ( elementToNodes( 0, 4 ), 8 );
 
     // Wedges
     elementToNodes = zone2.getElemToNodes();
     ASSERT_EQ( elementToNodes.size( 1 ), 6 );
     ASSERT_EQ( zone2.getElemToEdges().size( 1 ), 9 );
     ASSERT_EQ( zone2.getElemToFaces().size( 1 ), 5 );
-    EXPECT_EQ( elementToNodes( 0, 0 ), 5 );
-    EXPECT_EQ( elementToNodes( 0, 1 ), 8 );
-    EXPECT_EQ( elementToNodes( 0, 2 ), 9 );
-    EXPECT_EQ( elementToNodes( 0, 3 ), 10 );
-    EXPECT_EQ( elementToNodes( 0, 4 ), 6 );
-    EXPECT_EQ( elementToNodes( 0, 5 ), 7 );
+    EXPECT_EQ( elementToNodes( 0, 0 ), 9 );
+    EXPECT_EQ( elementToNodes( 0, 1 ), 12 );
+    EXPECT_EQ( elementToNodes( 0, 2 ), 11 );
+    EXPECT_EQ( elementToNodes( 0, 3 ), 14 );
+    EXPECT_EQ( elementToNodes( 0, 4 ), 10 );
+    EXPECT_EQ( elementToNodes( 0, 5 ), 13 );
 
-    // Tetrahedron
+    // Hexahedron (from VTK_VOXEL and VTK_HEXAHEDRON or corresponding VTK_POLYHEDRON)
     elementToNodes = zone3.getElemToNodes();
-    ASSERT_EQ( elementToNodes.size( 1 ), 4 );
-    ASSERT_EQ( zone3.getElemToEdges().size( 1 ), 6 );
-    ASSERT_EQ( zone3.getElemToFaces().size( 1 ), 4 );
-    EXPECT_EQ( elementToNodes( 0, 0 ), 7 );
-    EXPECT_EQ( elementToNodes( 0, 1 ), 8 );
-    EXPECT_EQ( elementToNodes( 0, 2 ), 10 );
-    EXPECT_EQ( elementToNodes( 0, 3 ), 11 );
+    ASSERT_EQ( elementToNodes.size( 1 ), 8 );
+    ASSERT_EQ( zone3.getElemToEdges().size( 1 ), 12 );
+    ASSERT_EQ( zone3.getElemToFaces().size( 1 ), 6 );
+
+    EXPECT_EQ( elementToNodes( 0, 0 ), 15 );
+    EXPECT_EQ( elementToNodes( 0, 1 ), 16 );
+    EXPECT_EQ( elementToNodes( 0, 2 ), 17 );
+    EXPECT_EQ( elementToNodes( 0, 3 ), 18 );
+    EXPECT_EQ( elementToNodes( 0, 4 ), 19 );
+    EXPECT_EQ( elementToNodes( 0, 5 ), 20 );
+    EXPECT_EQ( elementToNodes( 0, 6 ), 21 );
+    EXPECT_EQ( elementToNodes( 0, 7 ), 22 );
+
+    EXPECT_EQ( elementToNodes( 1, 0 ), 23 );
+    EXPECT_EQ( elementToNodes( 1, 1 ), 24 );
+    EXPECT_EQ( elementToNodes( 1, 2 ), 26 );
+    EXPECT_EQ( elementToNodes( 1, 3 ), 25 );
+    EXPECT_EQ( elementToNodes( 1, 4 ), 27 );
+    EXPECT_EQ( elementToNodes( 1, 5 ), 28 );
+    EXPECT_EQ( elementToNodes( 1, 6 ), 30 );
+    EXPECT_EQ( elementToNodes( 1, 7 ), 29 );
 
     // Pentagonal prism
     elementToNodes = zone4.getElemToNodes();
     ASSERT_EQ( elementToNodes.size( 1 ), 10 );
     ASSERT_EQ( zone4.getElemToEdges().size( 1 ), 15 );
     ASSERT_EQ( zone4.getElemToFaces().size( 1 ), 7 );
-    EXPECT_EQ( elementToNodes( 0, 0 ), 2 );
-    EXPECT_EQ( elementToNodes( 0, 1 ), 12 );
-    EXPECT_EQ( elementToNodes( 0, 2 ), 13 );
-    EXPECT_EQ( elementToNodes( 0, 3 ), 14 );
-    EXPECT_EQ( elementToNodes( 0, 4 ), 3 );
-    EXPECT_EQ( elementToNodes( 0, 5 ), 6 );
-    EXPECT_EQ( elementToNodes( 0, 6 ), 15 );
-    EXPECT_EQ( elementToNodes( 0, 7 ), 16 );
-    EXPECT_EQ( elementToNodes( 0, 8 ), 17 );
-    EXPECT_EQ( elementToNodes( 0, 9 ), 7 );
+    for( int i=0; i < elementToNodes.size( 1 ); ++i )
+    {
+      EXPECT_EQ( elementToNodes( 0, i ), 31+i );
+    }
 
     // Hexagonal prism
     elementToNodes = zone5.getElemToNodes();
     ASSERT_EQ( elementToNodes.size( 1 ), 12 );
     ASSERT_EQ( zone5.getElemToEdges().size( 1 ), 18 );
     ASSERT_EQ( zone5.getElemToFaces().size( 1 ), 8 );
-    EXPECT_EQ( elementToNodes( 0, 0 ), 1 );
-    EXPECT_EQ( elementToNodes( 0, 1 ), 4 );
-    EXPECT_EQ( elementToNodes( 0, 2 ), 18 );
-    EXPECT_EQ( elementToNodes( 0, 3 ), 19 );
-    EXPECT_EQ( elementToNodes( 0, 4 ), 20 );
-    EXPECT_EQ( elementToNodes( 0, 5 ), 21 );
-    EXPECT_EQ( elementToNodes( 0, 6 ), 5 );
-    EXPECT_EQ( elementToNodes( 0, 7 ), 8 );
-    EXPECT_EQ( elementToNodes( 0, 8 ), 22 );
-    EXPECT_EQ( elementToNodes( 0, 9 ), 23 );
-    EXPECT_EQ( elementToNodes( 0, 10 ), 24 );
-    EXPECT_EQ( elementToNodes( 0, 11 ), 25 );
+    for( int i=0; i < elementToNodes.size( 1 ); ++i )
+    {
+      EXPECT_EQ( elementToNodes( 0, i ), 41+i );
+    }
 
-    for( auto const & z: { &zone0, &zone1, &zone2, &zone3, &zone4, &zone5 } )
+    // Heptagonal prism
+    elementToNodes = zone6.getElemToNodes();
+    ASSERT_EQ( elementToNodes.size( 1 ), 14 );
+    ASSERT_EQ( zone6.getElemToEdges().size( 1 ), 21 );
+    ASSERT_EQ( zone6.getElemToFaces().size( 1 ), 9 );
+    for( int i=0; i < elementToNodes.size( 1 ); ++i )
+    {
+      EXPECT_EQ( elementToNodes( 0, i ), 53+i );
+    }
+
+    // Octagonal prism
+    elementToNodes = zone7.getElemToNodes();
+    ASSERT_EQ( elementToNodes.size( 1 ), 16 );
+    ASSERT_EQ( zone7.getElemToEdges().size( 1 ), 24 );
+    ASSERT_EQ( zone7.getElemToFaces().size( 1 ), 10 );
+    for( int i=0; i < elementToNodes.size( 1 ); ++i )
+    {
+      EXPECT_EQ( elementToNodes( 0, i ), 67+i );
+    }
+
+    // Nonagonal prism
+    elementToNodes = zone8.getElemToNodes();
+    ASSERT_EQ( elementToNodes.size( 1 ), 18 );
+    ASSERT_EQ( zone8.getElemToEdges().size( 1 ), 27 );
+    ASSERT_EQ( zone8.getElemToFaces().size( 1 ), 11 );
+    for( int i=0; i < elementToNodes.size( 1 ); ++i )
+    {
+      EXPECT_EQ( elementToNodes( 0, i ), 83+i );
+    }
+
+    // Decagonal prism
+    elementToNodes = zone9.getElemToNodes();
+    ASSERT_EQ( elementToNodes.size( 1 ), 20 );
+    ASSERT_EQ( zone9.getElemToEdges().size( 1 ), 30 );
+    ASSERT_EQ( zone9.getElemToFaces().size( 1 ), 12 );
+    for( int i=0; i < elementToNodes.size( 1 ); ++i )
+    {
+      EXPECT_EQ( elementToNodes( 0, i ), 101+i );
+    }
+
+    // Hendecagonal prism
+    elementToNodes = zone10.getElemToNodes();
+    ASSERT_EQ( elementToNodes.size( 1 ), 22 );
+    ASSERT_EQ( zone10.getElemToEdges().size( 1 ), 33 );
+    ASSERT_EQ( zone10.getElemToFaces().size( 1 ), 13 );
+    for( int i=0; i < elementToNodes.size( 1 ); ++i )
+    {
+      EXPECT_EQ( elementToNodes( 0, i ), 121+i );
+    }
+
+    for( auto const & z: { &zone0, &zone1, &zone2, &zone4, &zone5, &zone6, &zone7, &zone8, &zone9, &zone10 } )
     {
       ASSERT_EQ( z->size(), 1 );
       ASSERT_EQ( z->getElemToNodes().size( 0 ), 1 );
       ASSERT_EQ( z->getElemToEdges().size( 0 ), 1 );
       ASSERT_EQ( z->getElemToFaces().size( 0 ), 1 );
     }
+
+    ASSERT_EQ( zone3.size(), 2 );
+    ASSERT_EQ( zone3.getElemToNodes().size( 0 ), 2 );
+    ASSERT_EQ( zone3.getElemToEdges().size( 0 ), 2 );
+    ASSERT_EQ( zone3.getElemToFaces().size( 0 ), 2 );
   };
 
-  string const medleyVTK = testMeshDir + "/medley.vtk";
-
+  string const medleyVTK = testMeshDir + "/supportedElements.vtk";
   TestMeshImport( medleyVTK, validate );
-}
 
+  string const medleyVTK42 = testMeshDir + "/supportedElementsAsVTKPolyhedra.vtk";
+  TestMeshImport( medleyVTK42, validate );
+}
 
 int main( int argc, char * * argv )
 {

@@ -1,12 +1,15 @@
 import numpy as np
 import hdf5_wrapper
+from typing import Union, Dict
 
 
-def print_database_iterative(database, level=0):
+def print_database_iterative(database: hdf5_wrapper.hdf5_wrapper, level: int = 0) -> None:
     """
-    @brief print the database targets iteratively by level
-    @param database the wrapper for the current database
-    @param level the depth within the database
+    Print the database targets iteratively by level
+
+    Args:
+        database (hdf5_wrapper.hdf5_wrapper) the wrapper for the current database
+        level (int): the depth within the database
     """
     # Note: you can also iterate over the hdf5_wrapper object directly
     for k in database.keys():
@@ -21,15 +24,16 @@ def print_database_iterative(database, level=0):
             print()
 
 
-def read_write_hdf5_database_example():
+def read_write_hdf5_database_example() -> None:
     """
-    @brief simple demonstration of hdf5_wrapper
+    Simple demonstration of hdf5_wrapper
     """
 
     # ------------------------
     # Generate test data
     # ------------------------
-    source_a = {
+    nested_dict_type = Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
+    source_a: nested_dict_type = {
         '1D_double_array': np.random.randn(10),
         'string_array': np.array(['a', 'list', 'of', 'strings']),
         'child_a': {
@@ -37,7 +41,7 @@ def read_write_hdf5_database_example():
         }
     }
 
-    source_b = {
+    source_b: nested_dict_type = {
         '1D_integer_array': np.random.randint(0, 100, 5),
         'child_b': {
             '3D_double_array': np.random.randn(4, 5, 2)

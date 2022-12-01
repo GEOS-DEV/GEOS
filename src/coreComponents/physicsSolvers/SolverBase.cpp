@@ -118,12 +118,7 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( 0 );
       string const meshBodyName = meshBody.getName();
 
-//      Group const & meshLevels = meshBody.getMeshLevels();
-
       string const meshLevelName = m_discretizationName;
-//      GEOSX_ERROR_IF( !meshLevels.hasGroup<MeshLevel>(meshLevelName),
-//                      "Specified MeshBody named ("<<meshBodyName<<") does not contain a MeshLevel named "<<meshLevelName );
-
 
       string const regionName = target;
       auto const key = std::make_pair( meshBodyName, meshLevelName );
@@ -135,13 +130,7 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
       GEOSX_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
                       "MeshBody ("<<meshBodyName<<") is specified in targetRegions, but does not exist." );
 
-//      MeshBody const & meshBody = meshBodies.getGroup<MeshBody>( meshBodyName );
-
-//      Group const & meshLevels = meshBody.getMeshLevels();
-
       string const meshLevelName = m_discretizationName;
-//      GEOSX_ERROR_IF( !meshLevels.hasGroup<MeshLevel>(meshLevelName),
-//                      "Specified MeshBody named ("<<meshBodyName<<") does not contain a MeshLevel named "<<meshLevelName );
 
       string const regionName = targetTokens[1];
 
@@ -252,7 +241,7 @@ bool SolverBase::execute( real64 const time_n,
 
     if( dtRemaining > 0.0 )
     {
-      setNextDt( dtAccepted, nextDt );
+      nextDt = setNextDt( dtAccepted, domain );
       nextDt = std::min( nextDt, dtRemaining );
     }
 
@@ -265,42 +254,78 @@ bool SolverBase::execute( real64 const time_n,
   GEOSX_ERROR_IF( dtRemaining > 0.0, "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps." );
 
   // Decide what to do with the next Dt for the event running the solver.
-  setNextDt( nextDt, m_nextDt );
+  m_nextDt = setNextDt( nextDt, domain );
 
   return false;
 }
 
-void SolverBase::setNextDt( real64 const & currentDt,
-                            real64 & nextDt )
+real64 SolverBase::setNextDt( real64 const & currentDt,
+                              DomainPartition & domain )
 {
-  setNextDtBasedOnNewtonIter( currentDt, nextDt );
+  real64 const nextDtNewton = setNextDtBasedOnNewtonIter( currentDt );
+  real64 const nextDtStateChange = setNextDtBasedOnStateChange( currentDt, domain );
+
+  if( nextDtNewton < nextDtStateChange ) // time step size decided based on convergence
+  {
+    integer const iterDecreaseLimit = m_nonlinearSolverParameters.timeStepDecreaseIterLimit();
+    integer const iterIncreaseLimit = m_nonlinearSolverParameters.timeStepIncreaseIterLimit();
+    if( nextDtNewton > currentDt )
+    {
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Newton solver converged in less than {} iterations, time-step required will be increased.",
+                                            getName(), iterIncreaseLimit ) );
+    }
+    else if( nextDtNewton < currentDt )
+    {
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Newton solver converged in more than {} iterations, time-step required will be decreased.",
+                                            getName(), iterDecreaseLimit ) );
+    }
+  }
+  else // time step size decided based on state change
+  {
+    if( nextDtStateChange > currentDt )
+    {
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Time-step required will be increased based on state change.",
+                                            getName() ) );
+    }
+    else if( nextDtStateChange < currentDt )
+    {
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Time-step required will be decreased based on state change.",
+                                            getName() ) );
+    }
+  }
+
+  return std::min( nextDtNewton, nextDtStateChange );
 }
 
-void SolverBase::setNextDtBasedOnNewtonIter( real64 const & currentDt,
-                                             real64 & nextDt )
+real64 SolverBase::setNextDtBasedOnStateChange( real64 const & currentDt,
+                                                DomainPartition & domain )
+{
+  GEOSX_UNUSED_VAR( currentDt, domain );
+  return LvArray::NumericLimits< real64 >::max; // i.e., not implemented
+}
+
+real64 SolverBase::setNextDtBasedOnNewtonIter( real64 const & currentDt )
 {
   integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
-  integer const iterCutLimit = m_nonlinearSolverParameters.dtCutIterLimit();
-  integer const iterIncLimit = m_nonlinearSolverParameters.dtIncIterLimit();
+  integer const iterDecreaseLimit = m_nonlinearSolverParameters.timeStepDecreaseIterLimit();
+  integer const iterIncreaseLimit = m_nonlinearSolverParameters.timeStepIncreaseIterLimit();
 
-  if( newtonIter < iterIncLimit )
+  real64 nextDt = 0;
+  if( newtonIter < iterIncreaseLimit )
   {
-    // Easy convergence, let's double the time-step.
-    nextDt = currentDt * 2;
-    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Newton solver converged in less than {} iterations, time-step required will be doubled.",
-                                          getName(), iterIncLimit ) );
+    // Easy convergence, let's increase the time-step.
+    nextDt = currentDt * m_nonlinearSolverParameters.timeStepIncreaseFactor();
   }
-  else if( newtonIter > iterCutLimit )
+  else if( newtonIter > iterDecreaseLimit )
   {
     // Tough convergence let us make the time-step smaller!
-    nextDt = currentDt / 2;
-    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Newton solver converged in more than {} iterations, time-step required will be halved.",
-                                          getName(), iterCutLimit ) );
+    nextDt = currentDt * m_nonlinearSolverParameters.timeStepDecreaseFactor();
   }
   else
   {
     nextDt = currentDt;
   }
+  return nextDt;
 }
 
 real64 SolverBase::linearImplicitStep( real64 const & time_n,
@@ -621,7 +646,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
   bool const allowNonConverged = m_nonlinearSolverParameters.m_allowNonConverged > 0;
 
-  integer & dtAttempt = m_nonlinearSolverParameters.m_numdtAttempts;
+  integer & dtAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
 
   integer const & maxConfigurationIter = m_nonlinearSolverParameters.m_maxNumConfigurationAttempts;
 
@@ -729,7 +754,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                                        DomainPartition & domain )
 {
   integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
-  integer & dtAttempt = m_nonlinearSolverParameters.m_numdtAttempts;
+  integer & dtAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
   integer & configurationLoopIter = m_nonlinearSolverParameters.m_numConfigurationAttempts;
   integer const minNewtonIter = m_nonlinearSolverParameters.m_minIterNewton;
   real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
@@ -798,10 +823,21 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
     // if the residual norm is less than the Newton tolerance we denote that we have
     // converged and break from the Newton loop immediately.
-
     if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
     {
       isNewtonConverged = true;
+      break;
+    }
+
+    // if the residual norm is above the max allowed residual norm, we break from
+    // the Newton loop to avoid crashes due to Newton divergence
+    if( residualNorm > m_nonlinearSolverParameters.m_maxAllowedResidualNorm )
+    {
+      string const maxAllowedResidualNormString = NonlinearSolverParameters::viewKeysStruct::maxAllowedResidualNormString;
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
+                                            maxAllowedResidualNormString,
+                                            m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
+      isNewtonConverged = false;
       break;
     }
 

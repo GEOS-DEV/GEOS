@@ -7,7 +7,11 @@ Carbon Storage
 .. toctree::
    :maxdepth: 1
 
-   isothermalLeakyWell/Example
-  
+   buckleyLeverett/Example
 
+   isothermalLeakyWell/Example
+
+   thermalLeakyWell/Example
+
+   isothermalHystInjection/Example
 

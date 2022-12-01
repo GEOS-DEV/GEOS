@@ -56,7 +56,7 @@ FiniteElementDiscretization::~FiniteElementDiscretization()
 void FiniteElementDiscretization::postProcessInput()
 {
 //  GEOSX_ERROR_IF_NE_MSG( m_order, 1, "Higher order finite element spaces are currently not supported." );
-  GEOSX_ERROR_IF_NE_MSG( m_formulation, "default", "Only standard element formulations are currently supported." );
+  GEOSX_ERROR_IF( m_formulation != "default" && m_formulation != "SEM", "Only standard element formulations and spectral element formulations are currently supported." );
   GEOSX_ERROR_IF_GT_MSG( m_useVem, 1, "The flag useVirtualElements can be either 0 or 1" );
 }
 
@@ -108,6 +108,10 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
         {
           return std::make_unique< H1_Hexahedron_VEM_Gauss1 >();
         }
+        else if( m_formulation == "SEM" )
+        {
+          return std::make_unique< Q1_Hexahedron_Lagrange_GaussLobatto >();
+        }
         else
         {
           return std::make_unique< H1_Hexahedron_Lagrange1_GaussLegendre2 >();
@@ -125,6 +129,52 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
                         "Element type Prism6 available only when using the Virtual Element Method" );
         return std::make_unique< H1_Prism6_VEM_Gauss1 >();
       }
+      case ElementType::Prism7:
+      {
+        GEOSX_ERROR_IF( m_useVem != 1,
+                        "Element type Prism7 available only when using the Virtual Element Method" );
+        return std::make_unique< H1_Prism7_VEM_Gauss1 >();
+      }
+      case ElementType::Prism8:
+      {
+        GEOSX_ERROR_IF( m_useVem != 1,
+                        "Element type Prism8 available only when using the Virtual Element Method" );
+        return std::make_unique< H1_Prism8_VEM_Gauss1 >();
+      }
+      case ElementType::Prism9:
+      {
+        GEOSX_ERROR_IF( m_useVem != 1,
+                        "Element type Prism9 available only when using the Virtual Element Method" );
+        return std::make_unique< H1_Prism9_VEM_Gauss1 >();
+      }
+      case ElementType::Prism10:
+      {
+        GEOSX_ERROR_IF( m_useVem != 1,
+                        "Element type Prism10 available only when using the Virtual Element Method" );
+        return std::make_unique< H1_Prism10_VEM_Gauss1 >();
+      }
+      case ElementType::Prism11:
+      {
+        GEOSX_ERROR_IF( m_useVem != 1,
+                        "Element type Prism11 available only when using the Virtual Element Method" );
+        return std::make_unique< H1_Prism11_VEM_Gauss1 >();
+      }
+      default:
+      {
+        GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
+      }
+    }
+    return {};
+  }
+
+  if( m_order==2 )
+  {
+    switch( parentElementShape )
+    {
+      case ElementType::Hexahedron:
+        GEOSX_ERROR_IF( m_formulation != "SEM",
+                        "Element type Hexahedron with order 2 available only when using the Spectral Element Method" );
+        return std::make_unique< Q2_Hexahedron_Lagrange_GaussLobatto >();
       default:
       {
         GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
@@ -138,6 +188,8 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     switch( parentElementShape )
     {
       case ElementType::Hexahedron:
+        GEOSX_ERROR_IF( m_formulation != "SEM",
+                        "Element type Hexahedron with order 3 available only when using the Spectral Element Method" );
         return std::make_unique< Q3_Hexahedron_Lagrange_GaussLobatto >();
       default:
       {
@@ -147,6 +199,37 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     return {};
   }
 
+  if( m_order==4 )
+  {
+    switch( parentElementShape )
+    {
+      case ElementType::Hexahedron:
+        GEOSX_ERROR_IF( m_formulation != "SEM",
+                        "Element type Hexahedron with order 4 available only when using the Spectral Element Method" );
+        return std::make_unique< Q4_Hexahedron_Lagrange_GaussLobatto >();
+      default:
+      {
+        GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
+      }
+    }
+    return {};
+  }
+
+  if( m_order==5 )
+  {
+    switch( parentElementShape )
+    {
+      case ElementType::Hexahedron:
+        GEOSX_ERROR_IF( m_formulation != "SEM",
+                        "Element type Hexahedron with order 5 available only when using the Spectral Element Method" );
+        return std::make_unique< Q5_Hexahedron_Lagrange_GaussLobatto >();
+      default:
+      {
+        GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
+      }
+    }
+    return {};
+  }
   GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
   return {};
 }

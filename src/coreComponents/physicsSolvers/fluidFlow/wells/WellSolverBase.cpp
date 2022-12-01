@@ -19,13 +19,13 @@
 #include "WellSolverBase.hpp"
 
 #include "mesh/DomainPartition.hpp"
-#include "mesh/PerforationExtrinsicData.hpp"
+#include "mesh/PerforationFields.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 
 namespace geosx
 {
@@ -89,7 +89,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
                                                                             WellElementSubRegion & subRegion )
     {
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::gravityCoefficient >( getName() );
+      subRegion.registerField< fields::well::gravityCoefficient >( getName() );
 
       subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
@@ -97,7 +97,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
         setSizedFromParent( 0 );
 
       PerforationData * const perforationData = subRegion.getPerforationData();
-      perforationData->registerExtrinsicData< extrinsicMeshData::well::gravityCoefficient >( getName() );
+      perforationData->registerField< fields::well::gravityCoefficient >( getName() );
     } );
   } );
 }
@@ -154,14 +154,6 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
   {
     initializeWells( domain );
   }
-
-//  // backup fields used in time derivative approximation
-//  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-//                                                MeshLevel & mesh,
-//                                                arrayView1d< string const > const & regionNames )
-//  {
-//    backupFields( mesh, regionNames );
-//  } );
 }
 
 void WellSolverBase::assembleSystem( real64 const time,
@@ -185,6 +177,9 @@ void WellSolverBase::assembleSystem( real64 const time,
 
   // then compute the perforation rates (later assembled by the coupled solver)
   computePerforationRates( domain );
+
+  // then apply a special treatment to the wells that are shut
+  shutDownWell( time, dt, domain, dofManager, localMatrix, localRhs );
 }
 
 void WellSolverBase::updateState( DomainPartition & domain )
@@ -200,14 +195,6 @@ void WellSolverBase::updateState( DomainPartition & domain )
       updateSubRegionState( subRegion );
     } );
   } );
-}
-
-void WellSolverBase::initializePreSubGroups()
-{
-  SolverBase::initializePreSubGroups();
-
-  FlowSolverBase const & flowSolver = getParent().getGroup< FlowSolverBase >( getFlowSolverName() );
-  m_numDofPerResElement = flowSolver.numDofPerCell();
 }
 
 void WellSolverBase::initializePostInitialConditionsPreSubGroups()
@@ -247,14 +234,10 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
       real64 const refElev = wellControls.getReferenceElevation();
 
       arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter();
-      arrayView1d< real64 > const wellElemGravCoef =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
+      arrayView1d< real64 > const wellElemGravCoef = subRegion.getField< fields::well::gravityCoefficient >();
 
-      arrayView2d< real64 const > const perfLocation =
-        perforationData.getExtrinsicData< extrinsicMeshData::perforation::location >();
-
-      arrayView1d< real64 > const perfGravCoef =
-        perforationData.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
+      arrayView2d< real64 const > const perfLocation = perforationData.getField< fields::perforation::location >();
+      arrayView1d< real64 > const perfGravCoef = perforationData.getField< fields::well::gravityCoefficient >();
 
       forAll< serialPolicy >( perforationData.size(), [=]( localIndex const iperf )
       {

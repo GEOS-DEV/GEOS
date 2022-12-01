@@ -23,6 +23,11 @@
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
+#include "mesh/PerforationFields.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 
 namespace geosx
 {
@@ -175,23 +180,67 @@ public:
   WELL_SOLVER *
   wellSolver() const { return std::get< toUnderlying( SolverType::Well ) >( m_solvers ); }
 
-protected:
-
-  virtual void
-  postProcessInput() override
-  {
-    Base::postProcessInput();
-
-    wellSolver()->setFlowSolverName( m_names[toUnderlying( SolverType::Reservoir )] );
-  }
-
   virtual void
   initializePostInitialConditionsPreSubGroups() override
   {
     Base::initializePostInitialConditionsPreSubGroups( );
 
-    coupledReservoirAndWellsInternal::initializePostInitialConditionsPreSubGroups( this );
+    DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                                 MeshLevel & meshLevel,
+                                                                                 arrayView1d< string const > const & regionNames )
+    {
+      ElementRegionManager & elemManager = meshLevel.getElemManager();
+
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > const elemCenter =
+        elemManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+
+      // loop over the wells
+      elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                  WellElementSubRegion & subRegion )
+      {
+        array1d< array1d< arrayView3d< real64 const > > > const permeability =
+          elemManager.constructMaterialFieldAccessor< constitutive::PermeabilityBase,
+                                                      fields::permeability::permeability >();
+
+        PerforationData & perforationData = *subRegion.getPerforationData();
+        WellControls const & wellControls = wellSolver()->getWellControls( subRegion );
+
+        // compute the Peaceman index (if not read from XML)
+        perforationData.computeWellTransmissibility( meshLevel, subRegion, permeability );
+
+        // if the log level is 1, we output the value of the transmissibilities
+        if( wellControls.getLogLevel() >= 2 )
+        {
+          arrayView2d< real64 const > const perfLocation =
+            perforationData.getField< fields::perforation::location >();
+          arrayView1d< real64 const > const perfTrans =
+            perforationData.getField< fields::perforation::wellTransmissibility >();
+
+          // get the element region, subregion, index
+          arrayView1d< localIndex const > const resElemRegion =
+            perforationData.getField< fields::perforation::reservoirElementRegion >();
+          arrayView1d< localIndex const > const resElemSubRegion =
+            perforationData.getField< fields::perforation::reservoirElementSubRegion >();
+          arrayView1d< localIndex const > const resElemIndex =
+            perforationData.getField< fields::perforation::reservoirElementIndex >();
+
+          forAll< serialPolicy >( perforationData.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+          {
+            GEOSX_LOG_RANK( GEOSX_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
+                                       perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
+                                       elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][0],
+                                       elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][1],
+                                       elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][2],
+                                       perfTrans[iperf] ) );
+          } );
+        }
+      } );
+    } );
   }
+
+protected:
 
   /**
    * @Brief loop over perforations and increase Jacobian matrix row lengths for reservoir and well elements accordingly

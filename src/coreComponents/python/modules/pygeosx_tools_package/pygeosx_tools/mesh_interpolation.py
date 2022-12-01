@@ -1,8 +1,13 @@
 import numpy as np
-from scipy import stats
+from scipy import stats    # type: ignore[import]
+from typing import Dict, Iterable, List, Tuple, Callable, Union
 
 
-def apply_to_bins(fn, position, value, bins, collapse_edges=True):
+def apply_to_bins(fn: Callable[[Union[float, np.ndarray]], float],
+                  position: np.ndarray,
+                  value: np.ndarray,
+                  bins: np.ndarray,
+                  collapse_edges: bool = True):
     """
     Apply a function to values that are located within a series of bins
     Note: if a bin is empty, this function will fill a nan value

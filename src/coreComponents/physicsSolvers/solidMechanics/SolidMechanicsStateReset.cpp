@@ -27,6 +27,7 @@ namespace geosx
 
 using namespace constitutive;
 using namespace dataRepository;
+using namespace fields;
 
 SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
                                                     Group * const parent ):
@@ -85,9 +86,12 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
 
       NodeManager & nodeManager = mesh.getNodeManager();
 
-      nodeManager.velocity().zero();
-      nodeManager.incrementalDisplacement().zero();
-      nodeManager.totalDisplacement().zero();
+      if( nodeManager.hasField< solidMechanics::velocity >() )
+      {
+        nodeManager.getField< solidMechanics::velocity >().zero();
+      }
+      nodeManager.getField< solidMechanics::totalDisplacement >().zero();
+      nodeManager.getField< solidMechanics::incrementalDisplacement >().zero();
     }
 
     // Option 2: enable / disable inelastic behavior
@@ -97,7 +101,7 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
                                                                             CellElementSubRegion & subRegion )
     {
       string const & solidMaterialName = subRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString() );
-      Group & constitutiveModels = subRegion.getGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
+      Group & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 
       GEOSX_LOG_LEVEL_RANK_0( 2, GEOSX_FMT( "Task `{}`: at time {}s, solid model `{}` is setting inelastic behavior to `{}` on subRegion `{}`. ",
                                             getName(), time_n, solidMaterialName,
