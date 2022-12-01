@@ -716,13 +716,13 @@ public:
 
   /**
    * @brief This is a const function to construct a ParticleViewAccessor to access the data registered on the mesh.
-   * @tparam TRAIT data type
+   * @tparam FIELD_TRAIT field type
    * @param neighborName neighbor data name
    * @return ParticleViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
    */
-  template< typename TRAIT >
-  ParticleViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
-  constructExtrinsicAccessor( string const & neighborName = string() ) const;
+  template< typename FIELD_TRAIT >
+  ParticleViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
+  constructFieldAccessor( string const & neighborName = string() ) const;
 
   /**
    * @brief This is a const function to construct a ParticleViewAccessor to access the data registered on the mesh.
@@ -808,32 +808,31 @@ public:
   /**
    * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
    * regions/materials.
-   * @tparam TRAIT mesh data trait
+   * @tparam FIELD_TRAIT field trait
    * @param regionNames list of region names
    * @param materialNames list of corresponding material names
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
    * list
-   * @return ParticleViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   * @return ParticleViewAccessor that contains traits::ViewTypeConst< typename FIELD_TRAIT::type > data
    */
-  template< typename TRAIT >
-  ParticleViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
-  constructMaterialExtrinsicAccessor( arrayView1d< string const > const & regionNames,
-                                      arrayView1d< string const > const & materialNames,
-                                      bool const allowMissingViews = false ) const;
+  template< typename FIELD_TRAIT >
+  ParticleViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
+  constructMaterialFieldAccessor( arrayView1d< string const > const & regionNames,
+                                  arrayView1d< string const > const & materialNames,
+                                  bool const allowMissingViews = false ) const;
 
   /**
    * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
    * material type.
-   * @tparam MATERIALTYPE base type of material model
-   * @tparam TRAIT mesh data trait
+   * @tparam MATERIAL_TYPE base type of material model
+   * @tparam FIELD_TRAIT field trait
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
    * list
    * @return ParticleViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
    */
-  template< typename MATERIALTYPE, typename TRAIT >
-  ParticleViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
-  constructMaterialExtrinsicAccessor( bool const allowMissingViews = false ) const;
-
+  template< typename MATERIAL_TYPE, typename FIELD_TRAIT >
+  ParticleViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
+  constructMaterialFieldAccessor( bool const allowMissingViews = false ) const;
 
   /**
    * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
@@ -1120,14 +1119,13 @@ ParticleManager::constructViewAccessor( string const & viewName, string const & 
   return viewAccessor;
 }
 
-template< typename TRAIT >
-ParticleManager::ParticleViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
-ParticleManager::constructExtrinsicAccessor( string const & neighborName ) const
+template< typename FIELD_TRAIT >
+ParticleManager::ParticleViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
+ParticleManager::constructFieldAccessor( string const & neighborName ) const
 {
-  return constructViewAccessor< typename TRAIT::type,
-                                traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key(), neighborName );
+  return constructViewAccessor< typename FIELD_TRAIT::type,
+                                traits::ViewTypeConst< typename FIELD_TRAIT::type > >( FIELD_TRAIT::key(), neighborName );
 }
-
 
 template< typename T, int NDIM, typename PERM >
 ParticleManager::ParticleViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
@@ -1365,28 +1363,27 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
   return accessor;
 }
 
-template< typename TRAIT >
-ParticleManager::ParticleViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
-ParticleManager::constructMaterialExtrinsicAccessor( arrayView1d< string const > const & regionNames,
-                                      arrayView1d< string const > const & materialNames,
-                                      bool const allowMissingViews ) const
+template< typename FIELD_TRAIT >
+ParticleManager::ParticleViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
+ParticleManager::constructMaterialFieldAccessor( arrayView1d< string const > const & regionNames,
+                                                 arrayView1d< string const > const & materialNames,
+                                                 bool const allowMissingViews ) const
 {
-  return constructMaterialViewAccessor< typename TRAIT::type,
-                                        traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key(),
-                                                                                         regionNames,
-                                                                                         materialNames,
-                                                                                         allowMissingViews );
+  return constructMaterialViewAccessor< typename FIELD_TRAIT::type,
+                                        traits::ViewTypeConst< typename FIELD_TRAIT::type > >( FIELD_TRAIT::key(),
+                                                                                               regionNames,
+                                                                                               materialNames,
+                                                                                               allowMissingViews );
 }
 
-template< typename MATERIALTYPE, typename TRAIT >
-ParticleManager::ParticleViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
-ParticleManager::constructMaterialExtrinsicAccessor( bool const allowMissingViews ) const
+template< typename MATERIAL_TYPE, typename FIELD_TRAIT >
+ParticleManager::ParticleViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
+ParticleManager::constructMaterialFieldAccessor( bool const allowMissingViews ) const
 {
-  GEOSX_UNUSED_VAR(allowMissingViews);
-  return constructMaterialViewAccessor< MATERIALTYPE, typename TRAIT::type,
-                                        traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key() );
+  GEOSX_UNUSED_VAR( allowMissingViews );
+  return constructMaterialViewAccessor< MATERIAL_TYPE, typename FIELD_TRAIT::type,
+                                        traits::ViewTypeConst< typename FIELD_TRAIT::type > >( FIELD_TRAIT::key() );
 }
-
 
 template< typename T, int NDIM, typename PERM >
 ParticleManager::ParticleViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >

@@ -21,12 +21,14 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
+#include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-
-#include "SolidMechanicsLagrangianFEMKernels.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "NeighborAccessors.hpp"
+#include "MPMSolverBaseFields.hpp"
 
 namespace geosx
 {
@@ -169,7 +171,10 @@ public:
     static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
     static constexpr char const * forceExternalString() { return "externalForce"; }
     static constexpr char const * forceInternalString() { return "internalForce"; }
+    static constexpr char const * massString() { return "mass"; }
+    static constexpr char const * velocityString() { return "velocity"; }
     static constexpr char const * momentumString() { return "momentum"; }
+    static constexpr char const * accelerationString() { return "acceleration"; }
     static constexpr char const * forceContactString() { return "contactForce"; }
     static constexpr char const * damageString() { return "damage"; }
     static constexpr char const * maxDamageString() { return "maxDamage"; }
@@ -181,10 +186,6 @@ public:
 
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
-
-  void initialize (NodeManager & nodeManager,
-                   ParticleManager & particleManager,
-                   SpatialPartition & partition );
 
 protected:
   virtual void postProcessInput() override final;
@@ -200,14 +201,15 @@ protected:
 
   int m_prescribedBcTable;
   array1d< int > m_boundaryConditionTypes; // TODO: Surely there's a way to have just one variable here
-  array2d< double > m_bcTable;
+  array2d< real64 > m_bcTable;
 
   int m_prescribedBoundaryFTable;
   int m_fTableInterpType;
-  array2d< double > m_fTable;
+  array2d< real64 > m_fTable;
   array1d< real64 > m_domainF;
   array1d< real64 > m_domainL;
 
+  int m_needsNeighborList;
   real64 m_neighborRadius;
 
   int m_cpdiDomainScaling;
@@ -222,8 +224,6 @@ protected:
   int m_planeStrain;
   int m_numDims;
 
-
-
   std::array< real64, 3 > m_hEl;                // Grid spacing in x-y-z
   std::array< real64, 3 > m_xLocalMin;          // Minimum local grid coordinate including ghost nodes
   std::array< real64, 3 > m_xLocalMax;          // Maximum local grid coordinate including ghost nodes
@@ -231,8 +231,9 @@ protected:
   std::array< real64, 3 > m_xLocalMaxNoGhost;   // Maximum local grid coordinate EXCLUDING ghost nodes
   std::array< real64, 3 > m_xGlobalMin;         // Minimum global grid coordinate excluding buffer nodes
   std::array< real64, 3 > m_xGlobalMax;         // Maximum global grid coordinate excluding buffer nodes
-  std::array< real64, 3 > m_domainLengths;      // Length of each edge of grid
-  std::array< int, 3 > m_nEl;                   // Number of elements in each grid direction including buffer cells
+  std::array< real64, 3 > m_partitionExtent;    // Length of each edge of partition including buffer and ghost cells
+  std::array< real64, 3 > m_domainExtent;       // Length of each edge of global domain excluding buffer cells
+  std::array< int, 3 > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
   array3d< int > m_ijkMap;                      // Map from indices in each spatial dimension to local node ID
 
   int m_voigtMap[3][3];
@@ -240,17 +241,40 @@ protected:
 private:
   virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const override;
 
+  void initialize( NodeManager & nodeManager,
+                   ParticleManager & particleManager,
+                   SpatialPartition & partition );
+  
+  void resizeGrid( SpatialPartition & partition,
+                   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                   real64 const dt );
+
   void syncGridFields( std::vector< std::string > const & fieldNames,
                        DomainPartition & domain,
                        NodeManager & nodeManager,
                        MeshLevel & mesh );
 
-  void enforceGridVectorFieldSymmetryBC( array3d< real64 > & vectorField,
-                                         arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridReferencePosition,
+  void singleFaceVectorFieldSymmetryBC( const int face,
+                                        array3d< real64 > & vectorMultiField,
+                                        arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                        Group & nodeSets );
+
+  void enforceGridVectorFieldSymmetryBC( array3d< real64 > & vectorMultiField,
+                                         arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                          Group & nodeSets );
 
+  void applyEssentialBCs( const real64 dt,
+                          const real64 time_n,
+                          array3d< real64 > & velocity,
+                          array3d< real64 > & acceleration,
+                          array2d< real64 > & mass
+                          ,
+                          arrayView1d< int > const ghostRank,
+                          arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                          Group & nodeSets );
+
   void computeGridSurfaceNormals( ParticleManager & particleManager,
-                                  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridReferencePosition,
+                                  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                   array3d< real64 > & gridSurfaceNormal );
 
   void normalizeGridSurfaceNormals( array2d< real64 > & gridMass,
@@ -292,6 +316,8 @@ private:
   void setGridFieldLabels( NodeManager & nodeManager );
 
   void solverProfiling( std::string label );
+
+  void solverProfilingIf( std::string label, bool condition );
 
 };
 

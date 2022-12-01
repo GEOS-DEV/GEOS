@@ -38,7 +38,7 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setApplyDefaultValue( 0 ). // default to zero initial stress
     setDescription( "Current Material Stress" ).
-    setDimLabels( 1, voightLabels );
+    setDimLabels( 2, voightLabels );
 
   registerWrapper( viewKeyStruct::oldStressString(), &m_oldStress ).
     setApplyDefaultValue( 0 ). // default to zero initial stress

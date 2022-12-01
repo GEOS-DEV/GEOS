@@ -38,6 +38,7 @@ set( mesh_headers
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
+     ToParticleRelation.hpp
      WellElementRegion.hpp
      WellElementSubRegion.hpp
      generators/CellBlock.hpp
@@ -104,6 +105,7 @@ set( mesh_sources
      SurfaceElementRegion.cpp
      SurfaceElementSubRegion.cpp
      ToElementRelation.cpp
+     ToParticleRelation.cpp
      WellElementRegion.cpp
      WellElementSubRegion.cpp
      generators/CellBlock.cpp

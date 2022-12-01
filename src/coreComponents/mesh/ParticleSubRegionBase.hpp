@@ -24,6 +24,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "constitutive/solid/SolidBase.hpp"
+#include "ToParticleRelation.hpp"
 
 namespace geosx
 {
@@ -264,6 +265,20 @@ public:
   virtual void setParticleType( ParticleType const particleType )
   { m_particleType = particleType; }
 
+  /**
+   * @brief Provide an immutable accessor to the particle neighbor list.
+   * @return const reference to neighbor list
+   */
+  OrderedVariableToManyParticleRelation const & neighborList() const
+  { return m_neighborList; }
+
+  /**
+   * @brief Get a mutable accessor to the particle neighbor list.
+   * @return reference to neighbor list
+   */
+  OrderedVariableToManyParticleRelation & neighborList()
+  { return m_neighborList; }
+
   ///@}
 
   /**
@@ -384,9 +399,12 @@ protected:
   /// Indices of particles that are not ghosts
   std::vector< localIndex > m_nonGhostIndices;
 
+  /// Neighbor list
+  OrderedVariableToManyParticleRelation m_neighborList;
+
 };
 
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_ */
+#endif /* GEOSX_MESH_PARTICLESUBREGIONBASE_HPP_ */

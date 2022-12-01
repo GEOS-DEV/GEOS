@@ -85,6 +85,7 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsMPM.hpp
+     solidMechanics/MPMSolverBaseFields.hpp
      solidMechanics/kernels/ExplicitFiniteStrain.hpp
      solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp
      solidMechanics/kernels/ExplicitSmallStrain.hpp
