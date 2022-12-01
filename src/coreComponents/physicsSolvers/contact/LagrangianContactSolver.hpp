@@ -156,8 +156,6 @@ private:
 
   real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
 
-  bool m_setupSolidSolverDofs;
-
   void createPreconditioner( DomainPartition const & domain );
 
   void computeFaceDisplacementJump( DomainPartition & domain );
