@@ -479,7 +479,6 @@ struct VelocityComputation
 
       for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
       {
-        real64 gradN[ numNodesPerElem ][ 3 ];
         real32 uelemx[numNodesPerElem] = {0.0};
         real32 uelemy[numNodesPerElem] = {0.0};
         real32 uelemz[numNodesPerElem] = {0.0};
