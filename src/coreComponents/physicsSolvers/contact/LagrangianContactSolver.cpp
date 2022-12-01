@@ -217,7 +217,10 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
                                                     real64 const & dt,
                                                     DomainPartition & domain )
 {
-  m_solidSolver->implicitStepComplete( time_n, dt, domain );
+  if( m_setupSolidSolverDofs )
+  {
+    m_solidSolver->implicitStepComplete( time_n, dt, domain );
+  }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -515,8 +518,10 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
                                          DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
-  m_solidSolver->setupDofs( domain, dofManager );
-
+  if( m_setupSolidSolverDofs )
+  {
+    m_solidSolver->setupDofs( domain, dofManager );
+  }
   // restrict coupling to fracture regions only
   map< std::pair< string, string >, array1d< string > > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
@@ -1661,8 +1666,11 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
                                                    DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-
-  m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+  
+  if( m_setupSolidSolverDofs )
+  {
+    m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+  }
 
   dofManager.addVectorToField( localSolution,
                                contact::traction::key(),

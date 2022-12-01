@@ -41,7 +41,8 @@ using namespace fields::contact;
 ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
   SolverBase( name, parent ),
-  m_solidSolver( nullptr )
+  m_solidSolver( nullptr ),
+  m_setupSolidSolverDofs(true)
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -56,7 +57,6 @@ ContactSolverBase::ContactSolverBase( const string & name,
     setDescription( "Name of the fracture region." );
 
 }
-
 
 void ContactSolverBase::postProcessInput()
 {
@@ -214,13 +214,16 @@ void ContactSolverBase::applyBoundaryConditions( real64 const time,
                                                  arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-
+  
+  if( m_setupSolidSolverDofs )
+  {
   m_solidSolver->applyBoundaryConditions( time,
                                           dt,
                                           domain,
                                           dofManager,
                                           localMatrix,
                                           localRhs );
+  }
 }
 
 real64 ContactSolverBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),

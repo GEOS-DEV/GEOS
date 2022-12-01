@@ -142,7 +142,7 @@ public:
   string getStabilizationName() const { return m_stabilizationName; }
 
   bool isElementInOpenState( FaceElementSubRegion const & subRegion,
-                             localIndex const kfe ) const;
+                             localIndex const kfe ) const;          
 
 protected:
   virtual void postProcessInput() override final;
@@ -155,6 +155,8 @@ private:
   real64 const m_slidingCheckTolerance = 0.05;
 
   real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
+
+  bool m_setupSolidSolverDofs;
 
   void createPreconditioner( DomainPartition const & domain );
 

@@ -39,6 +39,11 @@ SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingF
   : Base( name, parent )
 {}
 
+void SinglePhasePoromechanicsConformingFractures::initializePostInitialConditionsPostSubGroups()
+{
+  contactSolver()->setSolidSolverDofFlags(false);
+}
+
 void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition const & domain,
                                                                  DofManager & dofManager ) const
 {
@@ -327,7 +332,7 @@ void SinglePhasePoromechanicsConformingFractures::
             for( localIndex k1=0; k1<numFluxElems; ++k1 )
             {
               // The coupling with the nodal displacements of the cell itself has already been added by the dofManager
-              // so we only add the coupling with the nodal displacements of the neighbours.
+              // so we only add the coupling with the nodal displacements of the neighbors.
               if( k1 != k0 )
               {
                 localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
@@ -368,12 +373,13 @@ void SinglePhasePoromechanicsConformingFractures::
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( contactSolver()->getStabilizationName() );
 
-    // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
-    // SurfaceGenerator const &
-    // surfaceGenerator = this->getParent().getGroup< SurfaceGenerator >( "SurfaceGen" ); ///Matteo: change this!
-    SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( "fractureRegionName" );
-    FaceElementSubRegion const & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
+    SurfaceElementRegion const & fractureRegion = 
+                        elemManager.getRegion< SurfaceElementRegion >( contactSolver()->getFractureRegionName() );
+    FaceElementSubRegion const & fractureSubRegion = 
+                        fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
+    
     GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( flow::pressure::key() ), "The fracture subregion must contain pressure field." );
+    
     arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
     GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 

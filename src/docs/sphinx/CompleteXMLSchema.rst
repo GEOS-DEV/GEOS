@@ -848,6 +848,13 @@ Element: SinglePhasePoromechanics
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics.rst
 
 
+.. _XML_SinglePhasePoromechanicsConformingFractures:
+
+Element: SinglePhasePoromechanicsConformingFractures
+====================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures.rst
+
+
 .. _XML_SinglePhasePoromechanicsEmbeddedFractures:
 
 Element: SinglePhasePoromechanicsEmbeddedFractures
@@ -1984,6 +1991,13 @@ Datastructure: SinglePhaseHybridFVM
 Datastructure: SinglePhasePoromechanics
 =======================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsConformingFractures:
+
+Datastructure: SinglePhasePoromechanicsConformingFractures
+==========================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures:

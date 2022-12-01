@@ -26,12 +26,11 @@
 namespace geosx
 {
 
-class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< LagrangianContactSolver,
-                                                                          SinglePhasePoromechanicsSolver >
+class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< SinglePhasePoromechanicsSolver, LagrangianContactSolver >
 {
 public:
 
-  using Base = CoupledSolver< LagrangianContactSolver, SinglePhasePoromechanicsSolver >;
+  using Base = CoupledSolver< SinglePhasePoromechanicsSolver, LagrangianContactSolver  >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -40,8 +39,8 @@ public:
 
   enum class SolverType : integer
   {
-    Contact = 0,
-    Poromechanics = 1
+    Poromechanics = 0,
+    Contact = 1
   };
 
   /// String used to form the solverName used to register solvers in CoupledSolver
@@ -122,6 +121,8 @@ public:
   bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
 
   bool updateConfiguration( DomainPartition & domain ) override final;
+
+  void initializePostInitialConditionsPostSubGroups() override final;
 
   /**@}*/
 
