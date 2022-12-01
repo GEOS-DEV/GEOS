@@ -156,6 +156,24 @@ namespace geosx
     }
   }
 
+  void SpatialPartition::updateSizes( arrayView1d< real64 > const domainL,
+                                      real64 const dt )
+  {
+    for(int i=0; i<3; i++)
+    {
+      real64 ratio = 1.0 + domainL[i] * dt;
+      m_min[i] *= ratio;
+      m_max[i] *= ratio;
+      //m_PartitionLocations[i] *= ratio; ?
+      m_blockSize[i] *= ratio;
+      m_gridSize[i] *= ratio;
+      m_gridMin[i] *= ratio;
+      m_gridMax[i] *= ratio;
+      m_contactGhostMin[i] *= ratio;
+      m_contactGhostMax[i] *= ratio;      
+    }
+  }
+
   void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
                                    real64 const ( &max )[ 3 ] )
   {

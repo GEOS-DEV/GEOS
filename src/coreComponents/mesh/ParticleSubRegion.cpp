@@ -52,6 +52,28 @@ void ParticleSubRegion::setParticleRank(int rank, int np)
   }
 }
 
+int ParticleSubRegion::numNodesMappedTo()
+{
+  switch( m_particleType ) // TODO: Make this a ParticleSubRegion method
+  {
+    case ParticleType::SinglePoint:
+    {
+      return 8;
+      break;
+    }
+    case ParticleType::CPDI:
+    {
+      return 64;
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Particle type \"" << m_particleType << "\" is not yet supported." );
+      return -1; // Needed to compile
+    }
+  }
+}
+
 void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock )
 {
   // Defines the (unique) particle type of this cell particle region,
@@ -105,8 +127,8 @@ void ParticleSubRegion::flagOutOfRangeParticles( std::array< real64, 3 > const &
                       {-1, -1,  1},
                       {-1, -1, -1} };
   
-  std::array< real64, 3 > globalMin; // including buffer nodes
-  std::array< real64, 3 > globalMax; // including buffer nodes
+  std::array< real64, 3 > globalMin; // including buffer cells
+  std::array< real64, 3 > globalMax; // including buffer cells
   for( int i=0; i<3; i++)
   {
     globalMin[i] = xGlobalMin[i] - hEl[i];
@@ -205,7 +227,7 @@ void ParticleSubRegion::cpdiDomainScaling( int p,
     if( m_planeStrain ) // 2D cpdi domain scaling
     {
       // Initialize l-vectors.  Eq. 8a-d in the CPDI domain scaling paper.
-      array2d< real64 > l;
+      array2d< real64 > l; // TODO: Massive slowdown has been demonstrated when allocating arrays for every particle like this instead of allocating once and re-using. Large re-factoring effort needed to fix this...
       l.resize( 2, 3 );
 
       // l[0] = r1 + r2; // la
@@ -300,10 +322,10 @@ void ParticleSubRegion::getAllWeights( int const p,
                                        std::array< real64, 3 > const & xMin,
                                        std::array< real64, 3 > const & hx,
                                        array3d< int > const & ijkMap,
-                                       arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X,
-                                       std::vector< int > & nodeIDs,
-                                       std::vector< real64 > & weights,
-                                       std::vector< std::vector< real64 > > & gradWeights )
+                                       arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const g_X,
+                                       arrayView1d< int > const nodeIDs,
+                                       arrayView1d< real64 > const weights,
+                                       arrayView2d< real64 > const gradWeights )
 {
   arraySlice1d< real64 > const & p_x = m_particleCenter[p];
 
@@ -319,25 +341,14 @@ void ParticleSubRegion::getAllWeights( int const p,
         centerIJK[i] = std::floor( ( p_x[i] - xMin[i] ) / hx[i] );
       }
 
-      // get node IDs
-      for(int i=0; i<2; i++)
-      {
-        for(int j=0; j<2; j++)
-        {
-          for(int k=0; k<2; k++)
-          {
-            nodeIDs.push_back( ijkMap[centerIJK[0]+i][centerIJK[1]+j][centerIJK[2]+k] );
-          }
-        }
-      }
-
-      // get weights and grad weights
+      // get node IDs, weights and grad weights
+      int node = 0;
       int corner = ijkMap[centerIJK[0]][centerIJK[1]][centerIJK[2]];
       auto corner_x = g_X[corner];
 
-      real64 xRel = (p_x[0] - corner_x[0])/hx[0];
-      real64 yRel = (p_x[1] - corner_x[1])/hx[1];
-      real64 zRel = (p_x[2] - corner_x[2])/hx[2];
+      real64 xRel = (p_x[0] - corner_x[0]) / hx[0];
+      real64 yRel = (p_x[1] - corner_x[1]) / hx[1];
+      real64 zRel = (p_x[2] - corner_x[2]) / hx[2];
 
       for(int i=0; i<2; i++)
       {
@@ -351,10 +362,12 @@ void ParticleSubRegion::getAllWeights( int const p,
           {
             real64 zWeight = k*zRel + (1-k)*(1.0-zRel);
             real64 dzWeight = k/hx[2] - (1-k)/hx[2];
-            weights.push_back(xWeight*yWeight*zWeight);
-            gradWeights[0].push_back(dxWeight*yWeight*zWeight);
-            gradWeights[1].push_back(xWeight*dyWeight*zWeight);
-            gradWeights[2].push_back(xWeight*yWeight*dzWeight);
+            nodeIDs[node] = ijkMap[centerIJK[0]+i][centerIJK[1]+j][centerIJK[2]+k] ;
+            weights[node] = xWeight * yWeight * zWeight;
+            gradWeights[node][0] = dxWeight * yWeight * zWeight;
+            gradWeights[node][1] = xWeight * dyWeight * zWeight;
+            gradWeights[node][2] = xWeight * yWeight * dzWeight;
+            node++;
           }
         }
       }
@@ -365,14 +378,14 @@ void ParticleSubRegion::getAllWeights( int const p,
     case ParticleType::CPDI:
     {
       // Precalculated things
-      int signs[8][3] = { { -1, -1, -1},
-                          {  1, -1, -1},
-                          {  1,  1, -1},
-                          { -1,  1, -1},
-                          { -1, -1,  1},
-                          {  1, -1,  1},
-                          {  1,  1,  1},
-                          { -1,  1,  1} };
+      int signs[8][3] = { { -1, -1, -1 },
+                          {  1, -1, -1 },
+                          {  1,  1, -1 },
+                          { -1,  1, -1 },
+                          { -1, -1,  1 },
+                          {  1, -1,  1 },
+                          {  1,  1,  1 },
+                          { -1,  1,  1 } };
 
       real64 alpha[8][8];
       real64 cpdiVolume, oneOverV;
@@ -415,11 +428,9 @@ void ParticleSubRegion::getAllWeights( int const p,
       alpha[7][2]=oneOverV*(-(p_r1[1]*p_r2[0]) + p_r1[0]*p_r2[1] + p_r1[1]*p_r3[0] + p_r2[1]*p_r3[0] - p_r1[0]*p_r3[1] - p_r2[0]*p_r3[1]);
 
       // get IJK associated with each corner
-      std::vector< std::vector< int > > cornerIJK;
-      cornerIJK.resize(8); // CPDI can map to up to 8 cells
+      int cornerIJK[8][3]; // CPDI can map to up to 8 cells
       for(int corner=0; corner<8; corner++)
       {
-        cornerIJK[corner].resize(3);
         for(int i=0; i<3; i++)
         {
           real64 cornerPositionComponent = p_x[i] + signs[corner][0] * m_particleRVectors[p][0][i] + signs[corner][1] * m_particleRVectors[p][1][i] + signs[corner][2] * m_particleRVectors[p][2][i];
@@ -427,23 +438,9 @@ void ParticleSubRegion::getAllWeights( int const p,
         }
       }
 
-      // get node IDs associated with each corner from IJK map
+      // get node IDs associated with each corner from IJK map, along with weights and grad weights
       // *** The order in which we access the IJK map must match the order we evaluate the shape functions! ***
-      for(int corner=0; corner<8; corner++)
-      {
-        for(int i=0; i<2; i++)
-        {
-          for(int j=0; j<2; j++)
-          {
-            for(int k=0; k<2; k++)
-            {
-              nodeIDs.push_back( ijkMap[cornerIJK[corner][0]+i][cornerIJK[corner][1]+j][cornerIJK[corner][2]+k] );
-            }
-          }
-        }
-      }
-
-      // get weights and grad weights
+      int node = 0;
       for(int corner=0; corner<8; corner++)
       {
         int cornerNode = ijkMap[cornerIJK[corner][0]][cornerIJK[corner][1]][cornerIJK[corner][2]];
@@ -454,24 +451,26 @@ void ParticleSubRegion::getAllWeights( int const p,
         y = p_x[1] + signs[corner][0] * m_particleRVectors[p][0][1] + signs[corner][1] * m_particleRVectors[p][1][1] + signs[corner][2] * m_particleRVectors[p][2][1];
         z = p_x[2] + signs[corner][0] * m_particleRVectors[p][0][2] + signs[corner][1] * m_particleRVectors[p][1][2] + signs[corner][2] * m_particleRVectors[p][2][2];
 
-        real64 xRel = ( x - cornerNodePosition[0] ) / hx[0];
-        real64 yRel = ( y - cornerNodePosition[1] ) / hx[1];
-        real64 zRel = ( z - cornerNodePosition[2] ) / hx[2];
+        real64 xRel = (x - cornerNodePosition[0]) / hx[0];
+        real64 yRel = (y - cornerNodePosition[1]) / hx[1];
+        real64 zRel = (z - cornerNodePosition[2]) / hx[2];
 
         for(int i=0; i<2; i++)
         {
-          real64 xWeight = i * xRel + ( 1 - i ) * ( 1.0 - xRel );
+          real64 xWeight = i * xRel + (1 - i) * (1.0 - xRel);
           for(int j=0; j<2; j++)
           {
-            real64 yWeight = j * yRel + ( 1 - j ) * ( 1.0 - yRel );
+            real64 yWeight = j * yRel + (1 - j) * (1.0 - yRel);
             for(int k=0; k<2; k++)
             {
-              real64 zWeight = k * zRel + ( 1 - k ) * ( 1.0 - zRel );
+              real64 zWeight = k * zRel + (1 - k) * (1.0 - zRel);
               real64 weight = xWeight * yWeight * zWeight;
-              weights.push_back( 0.125 * weight );
-              gradWeights[0].push_back( alpha[corner][0] * weight );
-              gradWeights[1].push_back( alpha[corner][1] * weight );
-              gradWeights[2].push_back( alpha[corner][2] * weight );
+              nodeIDs[node] = ijkMap[cornerIJK[corner][0]+i][cornerIJK[corner][1]+j][cornerIJK[corner][2]+k];
+              weights[node] =  0.125 * weight;
+              gradWeights[node][0] = alpha[corner][0] * weight;
+              gradWeights[node][1] = alpha[corner][1] * weight;
+              gradWeights[node][2] = alpha[corner][2] * weight;
+              node++;
             }
           }
         }

@@ -84,6 +84,11 @@ public:
   void setParticleRank( int rank, int np );
 
   /**
+   * @brief Get the maximum number of nodes a particle could map to
+   */
+  int numNodesMappedTo();
+
+  /**
    * @brief Fill the ParticleSubRegion by copying those of the source ParticleBlock
    * @param particleBlock the ParticleBlock which properties (connectivity info) will be copied.
    */
@@ -117,10 +122,10 @@ public:
                       std::array< real64, 3 > const & xMin,
                       std::array< real64, 3 > const & hx,
                       array3d< int > const & ijkMap,
-                      arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X,
-                      std::vector< int > & nodeIDs,
-                      std::vector< real64 > & weights,
-                      std::vector< std::vector< real64 > > & gradWeights );
+                      arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const g_X,
+                      arrayView1d< int > const nodeIDs,
+                      arrayView1d< real64 > const weights,
+                      arrayView2d< real64 > const gradWeights );
 
   /**
    * @name Miscellaneous
