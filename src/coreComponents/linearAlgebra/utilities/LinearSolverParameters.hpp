@@ -186,21 +186,27 @@ struct LinearSolverParameters
       rigidBodyModes, ///< Rigid body modes
     };
 
-    integer maxLevels = 20;                         ///< Maximum number of coarsening levels
-    CycleType cycleType = CycleType::V;             ///< AMG cycle type
-    SmootherType smootherType = SmootherType::fgs;  ///< Smoother type
-    CoarseType coarseType = CoarseType::direct;     ///< Coarse-level solver/smoother
-    string coarseningType = "HMIS";                 ///< Coarsening algorithm
-    integer interpolationType = 6;                  ///< Coarsening algorithm
-    integer numSweeps = 2;                          ///< Number of smoother sweeps
-    integer numFunctions = 1;                       ///< Number of amg functions
-    integer aggresiveNumLevels = 0;                 ///< Number of levels for aggressive coarsening.
-    PreOrPost preOrPostSmoothing = PreOrPost::both; ///< Pre and/or post smoothing
-    real64 threshold = 0.0;                         ///< Threshold for "strong connections" (for classical and smoothed-aggregation AMG)
-    integer separateComponents = false;             ///< Apply a separate component filter before AMG construction
+#if defined(GEOSX_USE_HYPRE_CUDA) || defined(GEOSX_USE_HYPRE_HIP)
+    string coarseningType = "PMIS";                             ///< Coarsening algorithm
+    SmootherType smootherType = SmootherType::l1jacobi;         ///< Smoother type
+#else
+    string coarseningType = "HMIS";                             ///< Coarsening algorithm
+    SmootherType smootherType = SmootherType::fgs;              ///< Smoother type
+#endif
+
+    integer maxLevels = 20;                                     ///< Maximum number of coarsening levels
+    CycleType cycleType = CycleType::V;                         ///< AMG cycle type
+    CoarseType coarseType = CoarseType::direct;                 ///< Coarse-level solver/smoother
+    integer interpolationType = 6;                              ///< Coarsening algorithm
+    integer numSweeps = 1;                                      ///< Number of smoother sweeps
+    integer numFunctions = 1;                                   ///< Number of amg functions
+    integer aggresiveNumLevels = 0;                             ///< Number of levels for aggressive coarsening.
+    PreOrPost preOrPostSmoothing = PreOrPost::both;             ///< Pre and/or post smoothing
+    real64 threshold = 0.0;                                     ///< Threshold for "strong connections" (for classical and smoothed-aggregation AMG)
+    integer separateComponents = false;                         ///< Apply a separate component filter before AMG construction
     NullSpaceType nullSpaceType = NullSpaceType::constantModes; ///< Null space type [constantModes,rigidBodyModes]
   }
-  amg;                                              ///< Algebraic Multigrid (AMG) parameters
+  amg;                                                          ///< Algebraic Multigrid (AMG) parameters
 
   /// Multigrid reduction parameters
   struct MGR
