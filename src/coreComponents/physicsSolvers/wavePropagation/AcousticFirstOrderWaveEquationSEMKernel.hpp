@@ -487,28 +487,14 @@ struct VelocityComputation
         real32 flowy[numNodesPerElem] = {0.0};
         real32 flowz[numNodesPerElem] = {0.0};
 
-        real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
         for( localIndex i = 0; i < numNodesPerElem; ++i )
         {
-          uelemx[i] = detJ*velocity_x[k][i];
-          uelemy[i] = detJ*velocity_y[k][i];
-          uelemz[i] = detJ*velocity_z[k][i];
+          real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
+          uelemx[i] = massLoc*velocity_x[k][i];
+          uelemy[i] = massLoc*velocity_y[k][i];
+          uelemz[i] = massLoc*velocity_z[k][i];
         }
-
-        // for( localIndex j = 0; j < numNodesPerElem; ++j )
-        // {
-        //   for( localIndex i = 0; i < numNodesPerElem; ++i )
-        //   {
-        //     real32 dfx2 = detJ*gradN[j][0]*N[i];
-        //     real32 dfy2 = detJ*gradN[j][1]*N[i];
-        //     real32 dfz2 = detJ*gradN[j][2]*N[i];
-
-        //     flowx[i] += dfx2*p_np1[elemsToNodes[k][j]];
-        //     flowy[i] += dfy2*p_np1[elemsToNodes[k][j]];
-        //     flowz[i] += dfz2*p_np1[elemsToNodes[k][j]];
-        //   }
-        // }
 
         m_finiteElement.template computeFirstOrderStiffnessTermX(q, xLocal, [&] (int i, int j, real32 dfx1, real32 dfx2, real32 dfx3)
         {
@@ -534,13 +520,14 @@ struct VelocityComputation
 
         for( localIndex i = 0; i < numNodesPerElem; ++i )
         {
+          real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
           uelemx[i]+=dt*flowx[i]/density[k];
           uelemy[i]+=dt*flowy[i]/density[k];
           uelemz[i]+=dt*flowz[i]/density[k];
 
-          velocity_x[k][i] = uelemx[i]/(detJ);
-          velocity_y[k][i] = uelemy[i]/(detJ);
-          velocity_z[k][i] = uelemz[i]/(detJ);
+          velocity_x[k][i] = uelemx[i]/massLoc;
+          velocity_y[k][i] = uelemy[i]/massLoc;
+          velocity_z[k][i] = uelemz[i]/massLoc;
         }
 
       }
@@ -612,24 +599,6 @@ struct PressureComputation
         real32 auyy[numNodesPerElem]  = {0.0};
         real32 auzz[numNodesPerElem]  = {0.0};
         real32 uelemx[numNodesPerElem] = {0.0};
-
-
-        // FE_TYPE::calcN( q, N );
-        // real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
-
-        // for( localIndex j = 0; j < numNodesPerElem; ++j )
-        // {
-        //   for( localIndex i = 0; i < numNodesPerElem; ++i )
-        //   {
-        //     real32 dfx = detJ*gradN[i][0]*N[j];
-        //     real32 dfy = detJ*gradN[i][1]*N[j];
-        //     real32 dfz = detJ*gradN[i][2]*N[j];
-        //     auxx[i] -= dfx*velocity_x[k][j];
-        //     auyy[i] -= dfy*velocity_y[k][j];
-        //     auzz[i] -= dfz*velocity_z[k][j];
-        //   }
-
-        // }
 
         m_finiteElement.template computeFirstOrderStiffnessTermX(q, xLocal, [&] (int i, int j, real32 dfx1, real32 dfx2, real32 dfx3)
         {
