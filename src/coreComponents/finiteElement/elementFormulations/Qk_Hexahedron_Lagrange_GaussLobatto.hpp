@@ -377,7 +377,14 @@ public:
                         real64 const (&X)[numNodes][3],
                         FUNC && func );
 
-
+  /**
+   * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
+   *   stiffness matrix R for the elastic case, i.e., the superposition matrix of first derivatives
+   *   of the shape functions.
+   * @param q The quadrature point index
+   * @param X Array containing the coordinates of the support points.
+   * @param func Callback function accepting three parameters: i, j and R_ij
+   */
   template< typename FUNC >
   GEOSX_HOST_DEVICE
   static void
