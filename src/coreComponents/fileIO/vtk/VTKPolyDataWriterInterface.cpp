@@ -25,9 +25,11 @@
 #include <vtkCellArray.h>
 #include <vtkCellData.h>
 #include <vtkDoubleArray.h>
+#include <vtkPassThrough.h>
 #include <vtkPointData.h>
 #include <vtkPoints.h>
 #include <vtkSmartPointer.h>
+#include <vtkThreshold.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkXMLUnstructuredGridWriter.h>
 
@@ -1011,12 +1013,35 @@ int toVtkOutputMode( VTKOutputMode const mode )
 }
 
 void VTKPolyDataWriterInterface::writeUnstructuredGrid( string const & path,
-                                                        vtkUnstructuredGrid * const ug ) const
+                                                        vtkUnstructuredGrid * ug ) const
 {
+  vtkSmartPointer< vtkAlgorithm > filter;
+
+  // If we want to get rid of the ghost ranks, we use the appropriate `vtkThreshold` filter.
+  // If we don't, to keep the symetry in the code, we use a `vtkPassThrough`
+  // that will allow a more generic code down the line.
+  if( ug->GetCellData()->HasArray( ObjectManagerBase::viewKeyStruct::ghostRankString() ) )
+  {
+    auto threshold = vtkSmartPointer< vtkThreshold >::New();
+    // Ghost ranks values are integers, and negative values mean that the cell is owned by another rank.
+    // Removing the cells with negative ghost ranks remove duplicated cells in the vtk output.
+    threshold->SetUpperThreshold( -0.5 );
+    threshold->SetInputArrayToProcess( 0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_CELLS, ObjectManagerBase::viewKeyStruct::ghostRankString() );
+
+    filter = threshold;
+  }
+  else
+  {
+    filter = vtkSmartPointer< vtkPassThrough >::New();
+  }
+
+  filter->SetInputDataObject( ug );
+  filter->Update();
+
   makeDirectory( path );
   string const vtuFilePath = joinPath( path, getRankFileName( MpiWrapper::commRank() ) + ".vtu" );
   auto const vtuWriter = vtkSmartPointer< vtkXMLUnstructuredGridWriter >::New();
-  vtuWriter->SetInputData( ug );
+  vtuWriter->SetInputData( filter->GetOutputDataObject( 0 ) );
   vtuWriter->SetFileName( vtuFilePath.c_str() );
   vtuWriter->SetDataMode( toVtkOutputMode( m_outputMode ) );
   vtuWriter->Write();
