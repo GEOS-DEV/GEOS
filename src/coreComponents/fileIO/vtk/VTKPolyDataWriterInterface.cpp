@@ -48,6 +48,7 @@ VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string name ):
   m_outputDir( "." ),
   m_outputName( std::move( name ) ),
   m_pvd( m_outputName + ".pvd" ),
+  m_writeGhostCells( false ),
   m_plotLevel( PlotLevel::LEVEL_1 ),
   m_requireFieldRegistrationCheck( true ),
   m_previousCycle( -1 ),
@@ -1020,7 +1021,7 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( string const & path,
   // If we want to get rid of the ghost ranks, we use the appropriate `vtkThreshold` filter.
   // If we don't, to keep the symetry in the code, we use a `vtkPassThrough`
   // that will allow a more generic code down the line.
-  if( ug->GetCellData()->HasArray( ObjectManagerBase::viewKeyStruct::ghostRankString() ) )
+  if( !m_writeGhostCells && ug->GetCellData()->HasArray( ObjectManagerBase::viewKeyStruct::ghostRankString() ) )
   {
     auto threshold = vtkSmartPointer< vtkThreshold >::New();
     // Ghost ranks values are integers, and negative values mean that the cell is owned by another rank.
