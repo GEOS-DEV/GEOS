@@ -172,7 +172,7 @@ void testValuesAgainstReference( TBL_WRAPPER const & cappresTblWrapper,
   StackArray< real64, 4, constitutive::CapillaryPressureBase::MAX_NUM_PHASES * constitutive::CapillaryPressureBase::MAX_NUM_PHASES,
               relperm::LAYOUT_RELPERM_DS > dPhaseCapPres_dPhaseVolFrac( 1, 1, numPhases, numPhases );
 
-  cappresTblWrapper.computeTwoPhase( ipWetting,
+  cappresTblWrapper.computeTwoPhaseWetting( ipWetting,
                                      ipNonWetting,
                                      phaseVolFraction[0],
                                      phaseMaxHistoricalVolFraction[0],
@@ -219,7 +219,7 @@ TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
   auto cappresTblWrapper = table.createKernelWrapper();
 
   // all saturations are wetting saturations
-  auto ncycles = 3;
+  auto ncycles = 1;
   for( integer count = 0; count < ncycles; ++count )
   {
     // drainage
