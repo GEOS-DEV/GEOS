@@ -80,6 +80,17 @@ void computePhysicalGradient( real64 const detJinv,
     }
   }
 }
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void computeSymmetricGradient( real64 const (& grad_phys)[3][3], real64 (& symm_strain)[6] )
+{
+  symm_strain[0] = grad_phys[0][0];
+  symm_strain[1] = grad_phys[1][1];
+  symm_strain[2] = grad_phys[2][2];
+  symm_strain[5] = grad_phys[0][1] + grad_phys[1][0];
+  symm_strain[4] = grad_phys[0][2] + grad_phys[2][0];
+  symm_strain[3] = grad_phys[1][2] + grad_phys[2][1];
 }
 
 GEOSX_HOST_DEVICE
@@ -89,9 +100,9 @@ void computeStrain( real64 const (& grad_phys)[3][3], real64 (& symm_strain)[6] 
   symm_strain[0] = grad_phys[0][0];
   symm_strain[1] = grad_phys[1][1];
   symm_strain[2] = grad_phys[2][2];
-  symm_strain[3] = grad_phys[0][1] + grad_phys[1][0];
-  symm_strain[4] = grad_phys[0][2] + grad_phys[2][0];
-  symm_strain[5] = grad_phys[1][2] + grad_phys[2][1];
+  symm_strain[5] = 0.5 * ( grad_phys[0][1] + grad_phys[1][0] );
+  symm_strain[4] = 0.5 * ( grad_phys[0][2] + grad_phys[2][0] );
+  symm_strain[3] = 0.5 * ( grad_phys[1][2] + grad_phys[2][1] );
 }
 
 // } // namespace finiteElement
