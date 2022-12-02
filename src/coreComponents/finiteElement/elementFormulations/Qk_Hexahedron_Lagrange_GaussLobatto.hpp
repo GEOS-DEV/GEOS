@@ -393,6 +393,12 @@ public:
                                FUNC && func );
 
 
+  /**
+   * @brief evaluate the gradient of a basis function at a given point 
+   * @param q The quadrature point index
+   * @param X Array containing the coordinates of the support points.
+   * @param func Callback function accepting parameters: the gradient vector and the Jacobian 
+   */
   template< typename FUNC >
   GEOSX_HOST_DEVICE
   static void
