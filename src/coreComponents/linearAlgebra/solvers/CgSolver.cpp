@@ -70,9 +70,10 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   // Compute initial rk =  b - Ax
   m_operator.residual( x, b, r );
 
-//  std::cout << "x0: \n" << x << std::endl;
+  std::cout << "x0: \n" << x << std::endl;
+  std::cout << "b: \n" << b << std::endl;
 
-//  std::cout << "residual: \n" << r << std::endl;
+  std::cout << "residual: \n" << r << std::endl;
 
   // Compute the target absolute tolerance
   real64 const rnorm0 = r.norm2();
@@ -116,11 +117,11 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 
     // Update p = z + beta*p
     p.axpby( 1.0, z, beta );
-//    std::cout << "p("<<k<<"): \n" << p << std::endl;
+    std::cout << "p("<<k<<"): \n" << p << std::endl;
 
     // Compute Ap
     m_operator.apply( p, Ap );
-//    std::cout << "Ap("<<k<<"): \n" << Ap << std::endl;
+    std::cout << "Ap("<<k<<"): \n" << Ap << std::endl;
 
     // compute alpha
     real64 const pAp = p.dot( Ap );

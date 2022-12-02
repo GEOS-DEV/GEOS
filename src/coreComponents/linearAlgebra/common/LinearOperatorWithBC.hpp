@@ -57,6 +57,7 @@ public:
     m_diagPolicy( diagPolicy ),
     m_diagonal( m_dofManager.numLocalDofs() )
   {
+    std::cout<<"LinearOperatorWithBC::LinearOperatorWithBC - bp0"<<std::endl;
     using POLICY = parallelDevicePolicy<>;
     switch (m_diagPolicy)
     {
@@ -75,6 +76,8 @@ public:
         // TODO: compute diagonal
         break;
     }
+    std::cout<<"LinearOperatorWithBC::LinearOperatorWithBC - bp1"<<std::endl;
+
     // compute m_constrainedDofIndices and m_rhsContributions
     FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
     globalIndex totalSize = 0;
@@ -94,12 +97,16 @@ public:
         totalSize += targetSet.size();
       } );
     } );
+
+    std::cout<<"LinearOperatorWithBC::LinearOperatorWithBC - bp2"<<std::endl;
+
     // NOTE: we're not checking for duplicates.
     m_constrainedDofIndices.reserve( totalSize );
     m_rhsContributions.reserve( totalSize );
 
+    std::cout<<"LinearOperatorWithBC::LinearOperatorWithBC - bp3"<<std::endl;
     setupBoundaryConditions( solver, fsManager );
-
+    std::cout<<"LinearOperatorWithBC::LinearOperatorWithBC - bp4"<<std::endl;
     // TODO: sort m_constrainedDofIndices and m_rhsContributions together
 
     srcWithBC.create( dofManager.numLocalDofs(), this->comm() );
@@ -126,12 +133,13 @@ public:
                             string const & fieldName )
       {
         array1d< globalIndex > dofArray( targetSet.size() );
+        dofArray.setName("dofArray");
         arrayView1d< globalIndex > const & dof = dofArray.toView();
 
         array1d< real64 > rhsContributionArray( targetSet.size() );
+        rhsContributionArray.setName("rhsContributionArray");
         arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView(); 
-        arrayView1d< globalIndex const > const & dofMap =
-          targetGroup.getReference< array1d< globalIndex > >( m_dofManager.getKey( fieldName ) );
+        arrayView1d< globalIndex const > const & dofMap = targetGroup.getReference< array1d< globalIndex > >( m_dofManager.getKey( fieldName ) );
         int const component = bc.getComponent();
         bc.computeRhsContribution< FieldSpecificationEqual, 
                                    parallelDevicePolicy<> >( targetSet,
@@ -180,6 +188,8 @@ public:
     } );
     srcWithBC.close();
     solution.close();
+
+    std::cout<< "srcWithBC: " << srcWithBC << std::endl;
 
     // Bottom contribution to rhs
     tmpRhs = rhs;

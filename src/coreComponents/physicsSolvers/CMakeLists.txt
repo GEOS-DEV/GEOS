@@ -96,6 +96,8 @@ set( physicsSolvers_headers
      solidMechanics/kernels/ImplicitSmallStrainNewmark_impl.hpp
      solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp
      solidMechanics/kernels/ImplicitSmallStrainQuasiStatic_impl.hpp
+     solidMechanics/kernels/SmallStrainResidual.hpp
+     solidMechanics/kernels/SmallStrainResidual_impl.hpp
      solidMechanics/SolidMechanicsStateReset.hpp
      solidMechanics/SolidMechanicsStatistics.hpp       
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp

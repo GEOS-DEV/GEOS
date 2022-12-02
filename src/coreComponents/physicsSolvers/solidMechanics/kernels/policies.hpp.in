@@ -5,6 +5,7 @@ using ExplicitSmallStrainPolicy = @ExplicitSmallStrainPolicy@;
 using ExplicitFiniteStrainPolicy = @ExplicitFiniteStrainPolicy@;
 using ImplicitSmallStrainNewmarkPolicy = @ImplicitSmallStrainNewmarkPolicy@;
 using ImplicitSmallStrainQuasiStaticPolicy = @ImplicitSmallStrainQuasiStaticPolicy@;
+using SmallStrainResidualPolicy = @SmallStrainResidualPolicy@;
 
 
 #endif /* GEOSX_CORECOMPONENTS_PHYSICSSOLVERSE_SOLIDMECHANICS_KERNELS_CONFIG_HPP */

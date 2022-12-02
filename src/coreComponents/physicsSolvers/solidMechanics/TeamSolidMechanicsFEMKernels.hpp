@@ -348,7 +348,7 @@ public:
   }
 
 
-  #if 1
+  #if 0
   template< typename POLICY,
             typename KERNEL_TYPE >
   static real64
@@ -358,50 +358,69 @@ public:
     GEOSX_MARK_FUNCTION;
     constexpr int dims=3;
 
-    forAll< parallelDevicePolicy<32> >( numElems,
+  traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > const elemsToNodes = kernelComponent.m_elemsToNodes;
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = kernelComponent.m_X;
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const src = kernelComponent.m_src;
+  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const dst = kernelComponent.m_dst;
+  typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutiveUpdate = kernelComponent.m_constitutiveUpdate;
+
+
+    forAll< parallelDevicePolicy<> >( numElems,
                       [=] GEOSX_DEVICE ( localIndex const k )
     {
 
       real64 xLocal[numNodesPerElem][dims];
       real64 srcLocal[numNodesPerElem][dims];
       real64 dstLocal[numNodesPerElem][dims] = {};
+      localIndex nodeIndices[numNodesPerElem];
 
       for( localIndex a=0; a<numNodesPerElem; ++a )
       {
-        localIndex const nodeIndex = kernelComponent.m_elemsToNodes( k, a );
+        nodeIndices[a] = elemsToNodes( k, a );
+      }
+
+      for( localIndex a=0; a<numNodesPerElem; ++a )
+      {
         for( int i=0; i<dims; ++i )
         {
-          xLocal[ a ][ i ] = kernelComponent.m_X( nodeIndex, i );
-          srcLocal[ a ][ i ] = kernelComponent.m_src( nodeIndex, i );
+          xLocal[ a ][ i ] = X( nodeIndices[a],i);
+          srcLocal[ a ][ i ] = src( nodeIndices[a],i);
         }
       }
 
 
       for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
       {
-        real64 dNdX[ numNodesPerElem ][ dims ];
-        real64 const detJ = kernelComponent.m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, xLocal, dNdX );
-        /// Macro to substitute in the shape function derivatives.
-        real64 strain[6] = {0};
-        FE_TYPE::symmetricGradient( dNdX, srcLocal, strain );
+        // real64 dNdX[ numNodesPerElem ][ dims ];
+        // real64 const detJ = FE_TYPE::calcGradN( q, xLocal, dNdX );
+        // /// Macro to substitute in the shape function derivatives.
+        // real64 strain[6] = {0};
+        // FE_TYPE::symmetricGradient( dNdX, srcLocal, strain );
 
-        real64 stressLocal[ 6 ] = {0};
-        kernelComponent.m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
+        // real64 stressLocal[ 6 ] = {0};
+        // constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
 
-        for( localIndex c = 0; c < 6; ++c )
+        // for( localIndex c = 0; c < 6; ++c )
+        // {
+        //   stressLocal[ c ] *= -detJ;
+        // }
+        // FE_TYPE::plusGradNajAij( dNdX, stressLocal, dstLocal );
+      }
+      for( localIndex a = 0; a < numNodesPerElem; ++a )
+      {
+        for( int i = 0; i < numDofPerTestSupportPoint; ++i )
         {
-          stressLocal[ c ] *= -detJ;
+          dstLocal[a][i] += xLocal[ a ][ i ] ;
         }
-        FE_TYPE::plusGradNajAij( dNdX, stressLocal, dstLocal );
       }
 
       
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
-        localIndex const nodeIndex = kernelComponent.m_elemsToNodes( k, a );
-        for( int b = 0; b < numDofPerTestSupportPoint; ++b )
+//        localIndex const nodeIndex = elemsToNodes( k, a );
+        for( int i = 0; i < numDofPerTestSupportPoint; ++i )
         {
-          RAJA::atomicAdd< parallelDeviceAtomic >( &kernelComponent.m_dst( nodeIndex, b ), dstLocal[ a ][ b ] );
+          RAJA::atomicAdd< parallelDeviceAtomic >( &(dst[nodeIndices[a]][i]), dstLocal[ a ][ i ] );
         }
       }
 
