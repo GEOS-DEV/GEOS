@@ -293,7 +293,7 @@ void WellControls::postProcessInput()
                                      << viewKeyStruct::targetBHPString() << " or " << viewKeyStruct::targetBHPTableNameString(),
                     InputError );
   }
-  else if( m_targetBHPTableName.empty() )
+  else if( m_targetBHP <= 0.0 && m_targetBHPTableName.empty() )
   {
     m_targetBHP = isProducer() ? minimumBHP : maximumBHP;
     GEOSX_LOG_LEVEL_RANK_0( 1, "WellControls '" << getName() << "': Setting " << viewKeyStruct::targetBHPString() << " to default value "
