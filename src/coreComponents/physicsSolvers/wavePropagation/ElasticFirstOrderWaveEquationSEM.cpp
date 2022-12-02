@@ -470,13 +470,12 @@ void ElasticFirstOrderWaveEquationSEM::saveSeismo( localIndex iseismo, real32 va
 void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
 
-  WaveSolverBase::initializePostInitialConditionsPreSubGroups();
+ WaveSolverBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   real64 const time = 0.0;
   applyFreeSurfaceBC( time, domain );
-
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -487,64 +486,70 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
 
+    /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
+    arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
-
-    /// Get table containing all the face normals
     arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
 
-    arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
-
+    /// get face to node map
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
+    // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
-
+    mass.zero();
+    /// damping matrix to be computed for each dof in the boundary of the mesh
     arrayView1d< real32 > const dampingx = nodeManager.getField< fields::DampingVectorx >();
     arrayView1d< real32 > const dampingy = nodeManager.getField< fields::DampingVectory >();
     arrayView1d< real32 > const dampingz = nodeManager.getField< fields::DampingVectorz >();
-
     dampingx.zero();
     dampingy.zero();
     dampingz.zero();
+
+    /// get array of indicators: 1 if face is on the free surface; 0 otherwise
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
 
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-      arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
-
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
+      arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
       arrayView1d< real32 > const density = elementSubRegion.getField< fields::MediumDensity >();
       arrayView1d< real32 > const velocityVp = elementSubRegion.getField< fields::MediumVelocityVp >();
       arrayView1d< real32 > const velocityVs = elementSubRegion.getField< fields::MediumVelocityVs >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
+
+      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe,
+                                                                               [&]
+                                                                                 ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-        localIndex const numNodesPerFace = facesToNodes.sizeOfArray( 0 );
+        elasticFirstOrderWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        elasticFirstOrderWaveEquationSEMKernels::MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
-        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                              numFacesPerElem,
-                                                              numNodesPerFace,
-                                                              X,
-                                                              elemsToNodes,
-                                                              elemsToFaces,
-                                                              facesToNodes,
-                                                              facesDomainBoundaryIndicator,
-                                                              freeSurfaceFaceIndicator,
-                                                              faceNormal,
-                                                              density,
-                                                              velocityVp,
-                                                              velocityVs,
-                                                              dampingx,
-                                                              dampingy,
-                                                              dampingz,
-                                                              mass );
+        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               X,
+                                                               elemsToNodes,
+                                                               density,
+                                                               mass );
+
+        elasticFirstOrderWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
+
+        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
+                                                               X,
+                                                               facesToElements,
+                                                               facesToNodes,
+                                                               facesDomainBoundaryIndicator,
+                                                               freeSurfaceFaceIndicator,
+                                                               faceNormal,
+                                                               density,
+                                                               velocityVp,
+                                                               velocityVs,
+                                                               dampingx,
+                                                               dampingy,
+                                                               dampingz );
       } );
     } );
   } );
