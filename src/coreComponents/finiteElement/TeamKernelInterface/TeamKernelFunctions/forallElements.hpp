@@ -222,6 +222,7 @@ void forallElements( localIndex const numElems, KernelComponents const & fields,
       } );
     } );
   } );
+  parallelDeviceSync();
 }
 
 } // namespace finiteElement

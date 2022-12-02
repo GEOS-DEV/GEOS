@@ -216,12 +216,14 @@ public:
         // Compute D_q u_q = - w_q * det(J_q) * J_q^-1 * sigma ( J_q^-1, grad( u_q ) )
         real64 Jinv[ dim ][ dim ];
         real64 const detJ = computeInverseAndDeterminant( J, Jinv );
+
         real64 stress[ dim ][ dim ];
         computeStress( stack, fields.m_constitutiveUpdate, 0, Jinv, grad_ref_u, stress );
 
         // Apply - w_q * det(J_q) * J_q^-1
         real64 D[ dim ][ dim ];
         computeReferenceGradient( Jinv, stress, D );
+
         real64 const weight = 1.0; //stack.weights( quad_index );
         applyQuadratureWeights( weight, detJ, D );
 
