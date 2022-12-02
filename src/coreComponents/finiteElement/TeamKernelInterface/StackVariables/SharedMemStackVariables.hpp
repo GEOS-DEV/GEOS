@@ -26,14 +26,18 @@
 namespace geosx
 {
 
+namespace stackVariables
+{
+
 // TODO: Rename in ShareMemBuffersStackVariables ?
 template < localIndex buffer_size, localIndex num_buffers, localIndex batch_size >
-struct SharedMemStackVariables
+struct SharedMemBuffers
 {
+  // TODO: use SharedTensor
   real64 (* shared_mem_buffers)[buffer_size];
 
   GEOSX_HOST_DEVICE
-  SharedMemStackVariables( LaunchContext & ctx )
+  SharedMemBuffers( LaunchContext & ctx )
   {
     GEOSX_STATIC_SHARED real64 shared_buffers[batch_size][num_buffers][buffer_size];
 
@@ -48,6 +52,8 @@ struct SharedMemStackVariables
     return shared_mem_buffers[i];
   }
 };
+
+} // namespace stackVariables
 
 } // namespace geosx
 

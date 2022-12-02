@@ -5,7 +5,7 @@
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <MatrixFreeSolidMechanicsFEM
-      name="matrixFreeSolve"
+      name="Solver"
       discretization="FE1"
       targetRegions="{ mesh1/Region1 }">
       <NonlinearSolverParameters
@@ -18,8 +18,8 @@
         krylovMaxIter="1000"/>
     </MatrixFreeSolidMechanicsFEM>
 
-    <!--SolidMechanicsLagrangianSSLE
-      name="matrixSolve"
+    <!-- <SolidMechanicsLagrangianSSLE
+      name="Solver"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ mesh1/Region1 }">
@@ -31,7 +31,7 @@
         preconditionerType="none"
         logLevel="2"
         krylovMaxIter="300"/>
-    </SolidMechanicsLagrangianSSLE-->
+    </SolidMechanicsLagrangianSSLE> -->
   </Solvers>
 
   <Mesh>
@@ -52,7 +52,7 @@
     <PeriodicEvent
       name="solverApplications"
       forceDt="1.0"
-      target="/Solvers/matrixFreeSolve"/>
+      target="/Solvers/Solver"/>
 
     <!--PeriodicEvent
       name="outputs"

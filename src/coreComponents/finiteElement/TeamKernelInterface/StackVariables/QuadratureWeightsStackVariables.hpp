@@ -27,13 +27,40 @@
 namespace geosx
 {
 
+namespace stackVariables
+{
+
 template < localIndex num_quads_1d >
-struct QuadratureWeightsStackVariables
+struct StackQuadratureWeights;
+
+template < >
+struct StackQuadratureWeights< 2 >
+{
+  // real64 weights[num_quads_1d];
+
+  GEOSX_HOST_DEVICE
+  StackQuadratureWeights( LaunchContext & ctx )
+  {
+    // Initialize quadrature weights
+    // TODO generalize/use threads
+    // weights[0] = 1.0;
+    // weights[1] = 1.0;
+  }
+
+  GEOSX_HOST_DEVICE
+  real64 operator()( TensorIndex const & quad_index )
+  {
+    return 1.0; //(*weights)[ quad_index.x ] * (*weights)[ quad_index.y ] * (*weights)[ quad_index.z ];
+  }
+};
+
+template < localIndex num_quads_1d >
+struct SharedQuadratureWeights
 {
   real64 ( * weights )[num_quads_1d];
 
   GEOSX_HOST_DEVICE
-  QuadratureWeightsStackVariables( LaunchContext & ctx )
+  SharedQuadratureWeights( LaunchContext & ctx )
   {
     // Initialize quadrature weights
     GEOSX_STATIC_SHARED real64 s_weights[num_quads_1d];
@@ -49,6 +76,8 @@ struct QuadratureWeightsStackVariables
     return (*weights)[ quad_index.x ] * (*weights)[ quad_index.y ] * (*weights)[ quad_index.z ];
   }
 };
+
+} // namespace stackVariables
 
 } // namespace geosx
 

@@ -40,6 +40,7 @@ template < typename StackVariables,
            localIndex num_dofs_1d,
            localIndex num_quads_1d >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void computeGradGradLocalDiagonal( StackVariables & stack,
                                    real64 const (& basis)[num_dofs_1d][num_quads_1d],
                                    real64 const (& basis_gradient)[num_dofs_1d][num_quads_1d],
@@ -49,11 +50,11 @@ void computeGradGradLocalDiagonal( StackVariables & stack,
   using RAJA::RangeSegment;
   LaunchContext & ctx = stack.ctx;
 
-  constexpr localIndex DIM = 3;
+  constexpr localIndex Dim = 3;
 
-  for (int i = 0; i < DIM; ++i)
+  for (int i = 0; i < Dim; ++i)
   {
-    for (int j = 0; j < DIM; ++j)
+    for (int j = 0; j < Dim; ++j)
     {
       // first tensor contraction, along z direction
       SharedTensor< num_quads_1d, num_quads_1d, num_dofs_1d > QQD( stack.shared_mem[0] );
@@ -124,6 +125,90 @@ void computeGradGradLocalDiagonal( StackVariables & stack,
       }
       
       ctx.teamSync();
+    }
+  }
+}
+
+// Stack version
+template < typename StackVariables,
+           localIndex num_dofs_1d,
+           localIndex num_quads_1d >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void computeGradGradLocalDiagonal(
+  StackVariables & stack,
+  real64 const (& basis)[num_dofs_1d][num_quads_1d],
+  real64 const (& basis_gradient)[num_dofs_1d][num_quads_1d],
+  tensor::StaticDTensor< num_quads_1d, num_quads_1d, num_quads_1d, 3, 3 > const & q_values,
+  tensor::StaticDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > & diag )
+{
+  constexpr localIndex Dim = 3;
+
+  for (int i = 0; i < Dim; ++i)
+  {
+    for (int j = 0; j < Dim; ++j)
+    {
+      // first tensor contraction, along z direction
+      tensor::StaticDTensor< num_quads_1d, num_quads_1d, num_dofs_1d > QQD;
+      for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
+      {
+        for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
+        {
+          for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
+          {
+            QQD( quad_x, quad_y, dof_z ) = 0.0;
+            for (int quad_z = 0; quad_z < num_quads_1d; ++quad_z)
+            {
+              const double Bz = basis[dof_z][quad_z];
+              const double Gz = basis_gradient[dof_z][quad_z];
+              const double L = i==2 ? Gz : Bz;
+              const double R = j==2 ? Gz : Bz;
+              const double O = q_values( quad_x, quad_y, quad_z, i, j );
+              QQD( quad_x, quad_y, dof_z ) += L * O * R;
+            }
+          }
+        }
+      }
+
+      // second tensor contraction, along y direction
+      tensor::StaticDTensor< num_quads_1d, num_dofs_1d, num_dofs_1d > QDD;
+      for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
+      {
+        for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
+        {
+          for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
+          {
+            QDD( quad_x, dof_y, dof_z ) = 0.0;
+            for (int quad_y = 0; quad_y < num_quads_1d; ++quad_y)
+            {
+              const double By = basis[dof_y][quad_y];
+              const double Gy = basis_gradient[dof_y][quad_y];
+              const double L = i==1 ? Gy : By;
+              const double R = j==1 ? Gy : By;
+              QDD( quad_x, dof_y, dof_z ) += L * QQD( quad_x, quad_y, dof_z ) * R;
+            }
+          }
+        }
+      }
+
+      // third tensor contraction, along x direction
+      for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
+      {
+        for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
+        {
+          for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
+          {
+            for (int quad_x = 0; quad_x < num_quads_1d; ++quad_x)
+            {
+              const double Bx = basis[dof_x][quad_x];
+              const double Gx = basis_gradient[dof_x][quad_x];
+              const double L = i==0 ? Gx : Bx;
+              const double R = j==0 ? Gx : Bx;
+              diag( dof_x, dof_y, dof_z ) += L * QDD( quad_x, dof_y, dof_z ) * R;
+            }
+          }
+        }
+      }
     }
   }
 }

@@ -38,5 +38,9 @@
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/applyGradientTestFunctions.hpp"
 /// Functions to compute the diagonal of a "grad-grad" operator.
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/gradGradDiagonal.hpp"
+/// Iterator on all quadrature point indices
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/forallQuadratureIndices.hpp"
+/// Iterator on all element indices
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/forallElements.hpp"
 
 #endif /* GEOSX_FINITEELEMENT_TEAMKERNELFUNCTION_HPP_ */
