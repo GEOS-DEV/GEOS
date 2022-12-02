@@ -495,21 +495,21 @@ struct VelocityComputation
           uelemz[i] = massLoc*velocity_z[k][i];
         }
 
-        m_finiteElement.template computeFirstOrderStiffnessTermX(q, xLocal, [&] (int i, int j, real32 dfx1, real32 dfx2, real32 dfx3)
+        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           flowx[j] += dfx1*p_np1[elemsToNodes[k][i]];
           flowy[j] += dfx2*p_np1[elemsToNodes[k][i]];
           flowz[j] += dfx3*p_np1[elemsToNodes[k][i]];
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY(q, xLocal, [&] (int i, int j, real32 dfy1, real32 dfy2, real32 dfy3)
+        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           flowx[j] += dfy1*p_np1[elemsToNodes[k][i]];
           flowy[j] += dfy2*p_np1[elemsToNodes[k][i]];
           flowz[j] += dfy3*p_np1[elemsToNodes[k][i]];
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ(q, xLocal, [&] (int i, int j, real32 dfz1, real32 dfz2, real32 dfz3)
+        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           flowx[j] += dfz1*p_np1[elemsToNodes[k][i]];
           flowy[j] += dfz2*p_np1[elemsToNodes[k][i]];
@@ -599,21 +599,21 @@ struct PressureComputation
         real32 auzz[numNodesPerElem]  = {0.0};
         real32 uelemx[numNodesPerElem] = {0.0};
 
-        m_finiteElement.template computeFirstOrderStiffnessTermX(q, xLocal, [&] (int i, int j, real32 dfx1, real32 dfx2, real32 dfx3)
+        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           auxx[i] -= dfx1*velocity_x[k][j];
           auyy[i] -= dfx2*velocity_y[k][j];
           auzz[i] -= dfx3*velocity_z[k][j];
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY(q, xLocal, [&] (int i, int j, real32 dfy1, real32 dfy2, real32 dfy3)
+        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           auxx[i] -= dfy1*velocity_x[k][j];
           auyy[i] -= dfy2*velocity_y[k][j];
           auzz[i] -= dfy3*velocity_z[k][j];
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ(q, xLocal, [&] (int i, int j, real32 dfz1, real32 dfz2, real32 dfz3)
+        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           auxx[i] -= dfz1*velocity_x[k][j];
           auyy[i] -= dfz2*velocity_y[k][j];
