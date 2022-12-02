@@ -40,6 +40,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_surfaceTemp( 0.0 ),
   m_isCrossflowEnabled( 1 ),
   m_initialPressureCoefficient( 0.1 ),
+  m_rateSign( -1.0 ),
   m_targetTotalRateTable( nullptr ),
   m_targetPhaseRateTable( nullptr ),
   m_targetBHPTable( nullptr )
@@ -220,6 +221,16 @@ void WellControls::postProcessInput()
                                    << " must be specified for multiphase simulations",
                   InputError );
 
+  // 1.c) Set the multiplier for the rates
+  if( isProducer() )
+  {
+    m_rateSign = -1.0;
+  }
+  else
+  {
+    m_rateSign = 1.0;
+  }
+
   // 2) check injection stream
   if( !m_injectionStream.empty())
   {
@@ -298,7 +309,7 @@ void WellControls::postProcessInput()
   else
   {
     FunctionManager & functionManager = FunctionManager::getInstance();
-    m_targetBHPTable = &(functionManager.getGroup< TableFunction >( m_targetBHPTableName ));
+    m_targetBHPTable = &(functionManager.getGroup< TableFunction const >( m_targetBHPTableName ));
 
     GEOSX_THROW_IF( m_targetBHPTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
                     "WellControls '" << getName() << "': The interpolation method for the time-dependent rate table "
@@ -315,7 +326,7 @@ void WellControls::postProcessInput()
   else
   {
     FunctionManager & functionManager = FunctionManager::getInstance();
-    m_targetTotalRateTable = &(functionManager.getGroup< TableFunction >( m_targetTotalRateTableName ));
+    m_targetTotalRateTable = &(functionManager.getGroup< TableFunction const >( m_targetTotalRateTableName ));
 
     GEOSX_THROW_IF( m_targetTotalRateTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
                     "WellControls '" << getName() << "': The interpolation method for the time-dependent rate table "
@@ -332,32 +343,12 @@ void WellControls::postProcessInput()
   else
   {
     FunctionManager & functionManager = FunctionManager::getInstance();
-    m_targetPhaseRateTable = &(functionManager.getGroup< TableFunction >( m_targetPhaseRateTableName ));
+    m_targetPhaseRateTable = &(functionManager.getGroup< TableFunction const >( m_targetPhaseRateTableName ));
 
     GEOSX_THROW_IF( m_targetPhaseRateTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
                     "WellControls '" << getName() << "': The interpolation method for the time-dependent rate table "
                                      << m_targetPhaseRateTable->getName() << " should be TableFunction::InterpolationType::Lower",
                     InputError );
-  }
-}
-
-void WellControls::initializePreSubGroups()
-{
-  // For producer, the user has specified a positive rate
-  // Therefore, we multiply it by -1 before the simulation starts to have the correct sign in the equations
-  if( isProducer() )
-  {
-    array1d< real64 > & phaseRateTableValues = m_targetPhaseRateTable->getValues();
-    for( localIndex i = 0; i < phaseRateTableValues.size(); ++i )
-    {
-      phaseRateTableValues( i ) *= -1;
-    }
-
-    array1d< real64 > & totalRateTableValues = m_targetTotalRateTable->getValues();
-    for( localIndex i = 0; i < totalRateTableValues.size(); ++i )
-    {
-      totalRateTableValues( i ) *= -1;
-    }
   }
 }
 

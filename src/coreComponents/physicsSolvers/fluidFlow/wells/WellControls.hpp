@@ -174,7 +174,7 @@ public:
    */
   real64 getTargetTotalRate( real64 const & currentTime ) const
   {
-    return m_targetTotalRateTable->evaluate( &currentTime );
+    return m_rateSign * m_targetTotalRateTable->evaluate( &currentTime );
   }
 
   /**
@@ -183,7 +183,7 @@ public:
    */
   real64 getTargetPhaseRate( real64 const & currentTime ) const
   {
-    return m_targetPhaseRateTable->evaluate( &currentTime );
+    return m_rateSign * m_targetPhaseRateTable->evaluate( &currentTime );
   }
   /**
    * @brief Get the target phase name
@@ -305,8 +305,6 @@ protected:
 
   virtual void postProcessInput() override;
 
-  virtual void initializePreSubGroups() override;
-
 private:
 
   /// Well type (as Type enum)
@@ -366,14 +364,17 @@ private:
   /// Tuning coefficient for the initial well pressure
   real64 m_initialPressureCoefficient;
 
+  /// Rate sign. +1 for injector, -1 for producer
+  real64 m_rateSign;
+
   /// Total rate table
-  TableFunction * m_targetTotalRateTable;
+  TableFunction const * m_targetTotalRateTable;
 
   /// Phase rate table
-  TableFunction * m_targetPhaseRateTable;
+  TableFunction const * m_targetPhaseRateTable;
 
   /// BHP table
-  TableFunction * m_targetBHPTable;
+  TableFunction const * m_targetBHPTable;
 };
 
 ENUM_STRINGS( WellControls::Type,
