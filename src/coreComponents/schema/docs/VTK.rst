@@ -13,6 +13,7 @@ parallelThreads             integer                  1        Number of plot fil
 plotFileRoot                string                   VTK      Name of the root file for this output.                                                                                                                                                   
 plotLevel                   integer                  1        Level detail plot. Only fields with lower of equal plot level will be output.                                                                                                            
 writeFEMFaces               integer                  0        (no description available)                                                                                                                                                               
+writeGhostCells             integer                  0        Should the vtk files contain the ghost cells or not.                                                                                                                                     
 =========================== ======================== ======== ======================================================================================================================================================================================== 
 
 
