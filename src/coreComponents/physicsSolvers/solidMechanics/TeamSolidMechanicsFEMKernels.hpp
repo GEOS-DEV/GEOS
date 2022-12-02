@@ -183,9 +183,9 @@ public:
     constexpr localIndex batch_size = 32;
 
     using KernelConf = finiteElement::KernelConfiguration< threading_model, num_threads_1d, batch_size >;
-    using Stack = StackVariables<KernelConf>;
+    using Stack = StackVariables< KernelConf >;
 
-    finiteElement::forallElements<KernelConf>( numElems, fields, [=] GEOSX_HOST_DEVICE ( Stack & stack )
+    finiteElement::forallElements< KernelConf >( numElems, fields, [=] GEOSX_HOST_DEVICE ( Stack & stack )
     {
       typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > dofs_in;
       typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3 > nodes;
@@ -206,58 +206,25 @@ public:
       {
         constexpr localIndex dim = 3;
         // Load q-local gradients
-        real64 grad_u[ dim ][ dim ];
-        qLocalLoad( quad_index, Gu, grad_u );
+        real64 grad_ref_u[ dim ][ dim ];
+        qLocalLoad( quad_index, Gu, grad_ref_u );
 
         // load q-local jacobian
         real64 J[ dim ][ dim ];
         qLocalLoad( quad_index, Jac, J );
 
-        // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
-        real64 const detJ = determinant( J );
-
-        real64 const detJinv = 1.0 / detJ;
-
-        real64 AdjJ[ dim ][ dim ];
-        adjugate( J, AdjJ );
-
-        // physical gradient of displacement
-        real64 grad_phys_u[ dim ][ dim ];
-        computePhysicalGradient( detJinv, AdjJ, grad_u, grad_phys_u );
-        
-        // Computation of the strain
-        real64 symm_strain[6];
-        computeStrain( grad_phys_u, symm_strain );
-
-        // Computation of the stress
-        real64 symm_stress[6];
-        fields.m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( stack.element_index, 0, symm_strain, symm_stress );
+        // Compute D_q u_q = - w_q * det(J_q) * J_q^-1 * sigma ( J_q^-1, grad( u_q ) )
+        real64 Jinv[ dim ][ dim ];
+        real64 const detJ = computeInverseAndDeterminant( J, Jinv );
         real64 stress[ dim ][ dim ];
-        stress[0][0] = symm_stress[0];
-        stress[1][1] = symm_stress[1];
-        stress[2][2] = symm_stress[2];
-        stress[0][1] = symm_stress[3];
-        stress[0][2] = symm_stress[4];
-        stress[1][2] = symm_stress[5];
-        stress[1][0] = symm_stress[3];
-        stress[2][0] = symm_stress[4];
-        stress[2][1] = symm_stress[5];
+        computeStress( stack, fields.m_constitutiveUpdate, 0, Jinv, grad_ref_u, stress );
 
-        // Apply J^-T
-        real64 const weight = 1.0; //stack.weights( quad_index );
+        // Apply - w_q * det(J_q) * J_q^-1
         real64 D[ dim ][ dim ];
-        for (localIndex i = 0; i < dim; i++)
-        {
-          for (localIndex j = 0; j < dim; j++)
-          {
-            real64 val = 0.0;
-            for (localIndex k = 0; k < dim; k++)
-            {
-              val = val + AdjJ[ k ][ i ] * stress[ k ][ j ];
-            }
-            D[ i ][ j ] = weight * val;
-          }
-        }
+        computeReferenceGradient( Jinv, stress, D );
+        real64 const weight = 1.0; //stack.weights( quad_index );
+        applyQuadratureWeights( weight, detJ, D );
+
         qLocalWrite( quad_index, D, Gu );
       } );
 
