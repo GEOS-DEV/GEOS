@@ -51,13 +51,14 @@ struct StackBasis
   StackBasis( LaunchContext & ctx )
   {
     // basis: computation of the shape functions at quadrature points
+    real64 const w = 0.57735026919; // 1.0/sqrt( 3 )
     for ( int dof = 0; dof < num_dofs_1d; dof++ )
     {
       for ( int quad = 0; quad < num_quads_1d; quad++ )
       {
         basis[ dof ][ quad ] =
           LagrangeBasis<num_dofs_1d-1>::value(
-          dof, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( quad ) );
+          dof, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( quad ) );
       }
     }
 
@@ -68,7 +69,7 @@ struct StackBasis
       {
         basis_gradient[ dof ][ quad ] =
           LagrangeBasis<num_dofs_1d-1>::gradient(
-          dof, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( quad ) );
+          dof, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( quad ) );
       }
     }
   }
@@ -105,44 +106,33 @@ struct StackBasis
 template < localIndex num_dofs_1d, localIndex num_quads_1d >
 struct SharedBasis
 {
+  template < typename Stack >
   GEOSX_HOST_DEVICE
-  SharedBasis( LaunchContext & ctx )
+  SharedBasis( Stack & stack )
   {
-    using RAJA::RangeSegment;
-
     // basis: shape functions at quadrature points
     GEOSX_STATIC_SHARED real64 s_basis[num_dofs_1d][num_quads_1d];
     basis = &s_basis;
-    loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
-    {
-      loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex d)
-      {
-        loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex q)
-        {
-          GEOSX_UNUSED_VAR( tidz );
-          s_basis[ d ][ q ] =
-            LagrangeBasis<num_dofs_1d-1>::value(
-            d, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
-        } );
-      } );
-    } );
-
     // basis gradient: gradient of the shape functions at quadrature points
     GEOSX_STATIC_SHARED real64 s_basis_gradient[num_dofs_1d][num_quads_1d];
     basis_gradient = &s_basis_gradient;
-    loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
+
+    if ( stack.batch_index == 0 )
     {
-      loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex d)
+      real64 const w = 0.57735026919; // 1.0/sqrt( 3 )
+      loop3D( stack, num_dofs_1d, num_quads_1d, 1,
+              [&]( localIndex const d, localIndex const q, localIndex const unused )
       {
-        loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex q)
-        {
-          GEOSX_UNUSED_VAR( tidz );
-          s_basis_gradient[ d ][ q ] =
-            LagrangeBasis<num_dofs_1d-1>::gradient(
-            d, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
-        } );
+        GEOSX_UNUSED_VAR( unused );
+        s_basis[ d ][ q ] =
+          LagrangeBasis<num_dofs_1d-1>::value(
+          d, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
+        s_basis_gradient[ d ][ q ] =
+          LagrangeBasis<num_dofs_1d-1>::gradient(
+          d, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
       } );
-    } );
+    }
+    stack.ctx.teamSync();
   }
 
   // basis accessor

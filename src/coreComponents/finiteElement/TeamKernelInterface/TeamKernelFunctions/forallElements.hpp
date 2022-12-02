@@ -174,7 +174,7 @@ struct KernelConfiguration< ThreadingModel::Distributed3D, num_threads_1d, batch
   : ctx( ctx )
   {
     using RAJA::RangeSegment;
-    loop<thread_x>( ctx, RangeSegment( 0, num_threads_1d ), [&]( localIndex const tid )
+    loop<thread_x>( ctx, RangeSegment( 0, num_threads_x ), [&]( localIndex const tid )
     {
       tidx = tid % num_threads_1d;
       tidy = ( tid % ( num_threads_1d * num_threads_1d ) ) / num_threads_1d;
@@ -204,7 +204,7 @@ void forallElements( localIndex const numElems, KernelComponents const & fields,
   [=] GEOSX_HOST_DEVICE ( LaunchContext ctx )
   {
     using RAJA::RangeSegment;
-    typename KernelComponents::StackVariables<KernelConfig> stack( ctx );
+    typename KernelComponents::template StackVariables<KernelConfig> stack( ctx );
 
     // Each block of threads treats "batch_size" elements.
     loop<team_x>( ctx, RangeSegment( 0, num_batches ), [&]( localIndex const & block_index )
@@ -222,6 +222,7 @@ void forallElements( localIndex const numElems, KernelComponents const & fields,
       } );
     } );
   } );
+  parallelDeviceSync();
 }
 
 } // namespace finiteElement
