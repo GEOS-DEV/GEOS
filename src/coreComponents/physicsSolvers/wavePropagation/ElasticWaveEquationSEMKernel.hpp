@@ -212,7 +212,9 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real32 > const sourceValue,
           real64 const dt,
           real32 const timeSourceFrequency,
-          localIndex const rickerOrder )
+          localIndex const rickerOrder,
+          R1Tensor const sourceForce,
+          R2SymTensor const sourceMoment )
   {
 
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -265,18 +267,23 @@ struct PrecomputeSourceAndReceiverKernel
                                                              coordsOnRefElem );
             sourceIsAccessible[isrc] = 1;
 
-            //Compute source coefficients: this generate a P-wave and an "unwanted" S-wave. It is classical in the case of the elastic wave
-            // equation at order 2, the S-wave can be attenuated by refining the mesh or get to high order
-            //However, we will propably use elastic wave at 1st order for the FWI case.
+            real64 N[FE_TYPE::numNodes];
+            real64 gradN[FE_TYPE::numNodes][3];
+            FE_TYPE::calcN( coordsOnRefElem, N );
+            FE_TYPE::calcGradN( coordsOnRefElem, xLocal, gradN );
+            R2SymTensor moment = sourceMoment;
             for( localIndex q=0; q< numNodesPerElem; ++q )
             {
-              FE_TYPE::evaluateGradient( q, xLocal, coordsOnRefElem, [&] ( real64 Grad[3], real64 invJ[3][3] )
-              {
-                sourceNodeIds[isrc][q] = elemsToNodes[k][q];
-                sourceConstantsx[isrc][q] = Grad[0] * invJ[0][0] + Grad[1] * invJ[0][1] + Grad[2] * invJ[0][2];
-                sourceConstantsy[isrc][q] = Grad[0] * invJ[1][0] + Grad[1] * invJ[1][1] + Grad[2] * invJ[1][2];
-                sourceConstantsz[isrc][q] = Grad[0] * invJ[2][0] + Grad[1] * invJ[2][1] + Grad[2] * invJ[2][2];
-              } );
+              real64 inc[3] = { 0, 0, 0 };
+              sourceNodeIds[isrc][q] = elemsToNodes[k][q];
+              inc[0] += sourceForce[0] * N[q];
+              inc[1] += sourceForce[1] * N[q];
+              inc[2] += sourceForce[2] * N[q];
+
+              LvArray::tensorOps::Ri_add_symAijBj< 3 >( inc, moment.data, gradN[q] );
+              sourceConstantsx[isrc][q] += inc[0];
+              sourceConstantsy[isrc][q] += inc[1];
+              sourceConstantsz[isrc][q] += inc[2];
             }
 
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
@@ -320,7 +327,7 @@ struct PrecomputeSourceAndReceiverKernel
             receiverIsLocal[ircv] = 1;
 
             real64 Ntest[numNodesPerElem];
-            //finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
+
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
@@ -623,7 +630,7 @@ public:
                               StackVariables & stack ) const
   {
 
-    m_finiteElementSpace.template computeElasticStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val, real64 J[3][3], int p, int r )
+    m_finiteElementSpace.template computeFirstOrderStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val, real64 J[3][3], int p, int r )
     {
       real32 const Rxx_ij = val*((stack.lambda+2.0*stack.mu)*J[p][0]*J[r][0]+stack.mu*(J[p][1]*J[r][1]+J[p][2]*J[r][2]));
       real32 const Ryy_ij = val*((stack.lambda+2.0*stack.mu)*J[p][1]*J[r][1]+stack.mu*(J[p][0]*J[r][0]+J[p][2]*J[r][2]));

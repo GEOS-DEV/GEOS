@@ -93,6 +93,19 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-component)" );
 
+  registerWrapper( viewKeyStruct::sourceForceString(), &m_sourceForce ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setApplyDefaultValue( { 0.0, 0.0, 0.0 } ).
+    setDescription( "Force of the source: 3 real values for a vector source, and 6 real values for a tensor source (in Voigt notation)."
+                    "The default value is { 0, 0, 0 } (no net force)." );
+
+  registerWrapper( viewKeyStruct::sourceMomentString(), &m_sourceMoment ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setApplyDefaultValue( { 1.0, 1.0, 1.0, 0.0, 0.0, 0.0 } ).
+    setDescription( "Moment of the source: 6 real values describing a symmetric tensor in Voigt notation."
+                    "The default value is { 1, 1, 1, 0, 0, 0 } (diagonal moment, corresponding to a pure explosion)." );
 }
 
 ElasticWaveEquationSEM::~ElasticWaveEquationSEM()
@@ -292,9 +305,9 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
 
   sourceNodeIds.setValues< EXEC_POLICY >( -1 );
-  sourceConstantsx.setValues< EXEC_POLICY >( -1 );
-  sourceConstantsy.setValues< EXEC_POLICY >( -1 );
-  sourceConstantsz.setValues< EXEC_POLICY >( -1 );
+  sourceConstantsx.setValues< EXEC_POLICY >( 0 );
+  sourceConstantsy.setValues< EXEC_POLICY >( 0 );
+  sourceConstantsz.setValues< EXEC_POLICY >( 0 );
   sourceIsAccessible.zero();
 
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
@@ -302,7 +315,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
   receiverNodeIds.setValues< EXEC_POLICY >( -1 );
-  receiverConstants.setValues< EXEC_POLICY >( -1 );
+  receiverConstants.setValues< EXEC_POLICY >( 0 );
   receiverIsLocal.zero();
 
   real32 const timeSourceFrequency = this->m_timeSourceFrequency;
@@ -366,7 +379,9 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
         sourceValue,
         dt,
         timeSourceFrequency,
-        rickerOrder );
+        rickerOrder,
+        m_sourceForce,
+        m_sourceMoment );
     } );
   } );
 }
