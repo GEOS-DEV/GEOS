@@ -284,10 +284,21 @@ void WellControls::postProcessInput()
                   " The keywords " << viewKeyStruct::targetBHPString() << " and " << viewKeyStruct::targetBHPTableNameString() << " cannot be specified together",
                   InputError );
 
-  GEOSX_THROW_IF( ((m_targetBHP <= 0.0 && m_targetBHPTableName.empty())),
-                  "WellControls '" << getName() << "': You have to provide well BHP by specifying either "
-                                   << viewKeyStruct::targetBHPString() << " or " << viewKeyStruct::targetBHPTableNameString(),
-                  InputError );
+  // 6.1) If the well is under BHP control then the BHP must be specified.
+  //      Otherwise the BHP will be set to a default value.
+  if( m_currentControl == Control::BHP )
+  {
+    GEOSX_THROW_IF( ((m_targetBHP <= 0.0 && m_targetBHPTableName.empty())),
+                    "WellControls '" << getName() << "': You have to provide well BHP by specifying either "
+                                     << viewKeyStruct::targetBHPString() << " or " << viewKeyStruct::targetBHPTableNameString(),
+                    InputError );
+  }
+  else if( m_targetBHPTableName.empty() )
+  {
+    m_targetBHP = isProducer() ? minimumBHP : maximumBHP;
+    GEOSX_LOG_LEVEL_RANK_0( 1, "WellControls '" << getName() << "': Setting " << viewKeyStruct::targetBHPString() << " to default value "
+                                                << m_targetBHP << "." );
+  }
 
   // 7) Make sure that the flag disabling crossflow is not used for producers
   GEOSX_THROW_IF( isProducer() && m_isCrossflowEnabled == 0,

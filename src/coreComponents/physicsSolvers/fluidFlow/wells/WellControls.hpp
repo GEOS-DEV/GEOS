@@ -375,6 +375,12 @@ private:
 
   /// BHP table
   TableFunction const * m_targetBHPTable;
+
+  /// Default BHP for rate controlled injectors
+  static constexpr real64 maximumBHP = 1.01325e8;
+
+  /// Default BHP for rate controlled producers
+  static constexpr real64 minimumBHP = 1.01325e5;
 };
 
 ENUM_STRINGS( WellControls::Type,
