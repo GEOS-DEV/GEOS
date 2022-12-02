@@ -42,6 +42,8 @@ real64 determinant( real64 const (& J)[3][3] )
   return detJ;
 }
 
+// J: phys_dim x ref_dim, AdjJ: ref_dim x phys_dim
+// J^-1 := detJinv * AdjJ.
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void adjugate( real64 const (& J)[3][3], real64 (& AdjJ)[3][3] )
@@ -57,6 +59,12 @@ void adjugate( real64 const (& J)[3][3], real64 (& AdjJ)[3][3] )
   AdjJ[2][2] = (J[0][0] * J[1][1]) - (J[0][1] * J[1][0]);
 }
 
+
+// Compute the gradient of a vectorial field in physical coordinates
+// from the gradient in reference coordinates. Using the formula:
+//   grad_phys := J^-1 * grad,
+// with
+//   J^-1 := detJinv * AdjJ.
 template < localIndex ref_dim,
            localIndex phys_dim,
            localIndex num_comp >
