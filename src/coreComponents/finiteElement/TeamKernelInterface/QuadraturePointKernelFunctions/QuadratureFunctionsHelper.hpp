@@ -57,26 +57,29 @@ void adjugate( real64 const (& J)[3][3], real64 (& AdjJ)[3][3] )
   AdjJ[2][2] = (J[0][0] * J[1][1]) - (J[0][1] * J[1][0]);
 }
 
+template < localIndex ref_dim,
+           localIndex phys_dim,
+           localIndex num_comp >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void computePhysicalGradient( real64 const detJinv,
-                              real64 const (& AdjJ)[3][3],
-                              real64 const (& grad)[3][3],
-                              real64 (& grad_phys)[3][3] )
+                              real64 const (& AdjJ)[ref_dim][phys_dim],
+                              real64 const (& grad)[num_comp][ref_dim],
+                              real64 (& grad_phys)[num_comp][phys_dim] )
 {
-  constexpr localIndex dim = 3;
-  for (localIndex i = 0; i < dim; i++)
+  for (localIndex c = 0; c < num_comp; c++)
   {
-    for (localIndex j = 0; j < dim; j++)
+    for (localIndex i = 0; i < phys_dim; i++)
     {
       real64 val = 0.0;
-      for (localIndex k = 0; k < dim; k++)
+      for (localIndex j = 0; j < ref_dim; j++)
       {
-        val = val + AdjJ[ i ][ k ] * grad[ k ][ j ];
+        val = val + AdjJ[ j ][ i ] * grad[ c ][ j ];
       }
-      grad_phys[ i ][ j ] = val * detJinv;
+      grad_phys[ c ][ i ] = detJinv * val;
     }
   }
+}
 }
 
 GEOSX_HOST_DEVICE
