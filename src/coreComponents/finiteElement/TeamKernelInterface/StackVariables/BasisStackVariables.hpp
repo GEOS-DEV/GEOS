@@ -51,13 +51,14 @@ struct StackBasis
   StackBasis( LaunchContext & ctx )
   {
     // basis: computation of the shape functions at quadrature points
+    real64 const w = 0.57735026919; // 1.0/sqrt( 3 )
     for ( int dof = 0; dof < num_dofs_1d; dof++ )
     {
       for ( int quad = 0; quad < num_quads_1d; quad++ )
       {
         basis[ dof ][ quad ] =
           LagrangeBasis<num_dofs_1d-1>::value(
-          dof, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( quad ) );
+          dof, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( quad ) );
       }
     }
 
@@ -68,7 +69,7 @@ struct StackBasis
       {
         basis_gradient[ dof ][ quad ] =
           LagrangeBasis<num_dofs_1d-1>::gradient(
-          dof, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( quad ) );
+          dof, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( quad ) );
       }
     }
   }
@@ -118,16 +119,17 @@ struct SharedBasis
 
     if ( stack.batch_index == 0 )
     {
+      real64 const w = 0.57735026919; // 1.0/sqrt( 3 )
       loop3D( stack, num_dofs_1d, num_quads_1d, 1,
               [&]( localIndex const d, localIndex const q, localIndex const unused )
       {
         GEOSX_UNUSED_VAR( unused );
         s_basis[ d ][ q ] =
           LagrangeBasis<num_dofs_1d-1>::value(
-          d, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
+          d, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
         s_basis_gradient[ d ][ q ] =
           LagrangeBasis<num_dofs_1d-1>::gradient(
-          d, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
+          d, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
       } );
     }
     stack.ctx.teamSync();
