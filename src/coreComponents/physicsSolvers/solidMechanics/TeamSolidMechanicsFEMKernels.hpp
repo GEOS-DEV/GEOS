@@ -187,17 +187,18 @@ public:
 
     finiteElement::forallElements<KernelConf>( numElems, fields, [=] GEOSX_HOST_DEVICE ( Stack & stack )
     {
-      typename Stack::Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > dofs_in, nodes;
+      typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > dofs_in;
+      typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3 > nodes;
       readField( stack, fields.m_elemsToNodes, fields.m_X, nodes );
       readField( stack, fields.m_elemsToNodes, fields.m_src, dofs_in );
 
       typename Stack::Basis basis( stack );
       /// Computation of the Jacobians
-      typename Stack::Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3, 3 > Jac;
+      typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3, 3 > Jac;
       interpolateGradientAtQuadraturePoints( stack, basis, nodes, Jac );
 
       /// Computation of the Gradient of the solution field
-      typename Stack::Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3, 3 > Gu;
+      typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3, 3 > Gu;
       interpolateGradientAtQuadraturePoints( stack, basis, dofs_in, Gu );
 
       /// QFunction
@@ -261,7 +262,7 @@ public:
       } );
 
       /// Application of the test functions
-      typename Stack::Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > dofs_out;
+      typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > dofs_out;
       applyGradientTestFunctions( stack, basis, Gu, dofs_out );
 
       writeAddField( stack, fields.m_elemsToNodes, dofs_out, fields.m_dst );

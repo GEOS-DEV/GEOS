@@ -204,7 +204,7 @@ void forallElements( localIndex const numElems, KernelComponents const & fields,
   [=] GEOSX_HOST_DEVICE ( LaunchContext ctx )
   {
     using RAJA::RangeSegment;
-    typename KernelComponents::StackVariables<KernelConfig> stack( ctx );
+    typename KernelComponents::template StackVariables<KernelConfig> stack( ctx );
 
     // Each block of threads treats "batch_size" elements.
     loop<team_x>( ctx, RangeSegment( 0, num_batches ), [&]( localIndex const & block_index )
