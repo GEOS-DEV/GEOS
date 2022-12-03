@@ -59,11 +59,11 @@ struct KernelConfiguration< ThreadingModel::Serial, num_threads_1d, batchSize >
   KernelConfiguration( LaunchContext & ctx )
   : ctx( ctx )
   {
-    using RAJA::RangeSegment;
-    loop<thread_z>( ctx, RangeSegment( 0, batch_size ), [&]( const int batch_ind )
-    {
-      batch_index = batch_ind;
-    } );
+    // using RAJA::RangeSegment;
+    // loop<thread_z>( ctx, RangeSegment( 0, batch_size ), [&]( const int batch_ind )
+    // {
+    //   batch_index = batch_ind;
+    // } );
   }
 };
 
@@ -95,10 +95,6 @@ struct KernelConfiguration< ThreadingModel::Distributed1D, num_threads_1d, batch
     loop<thread_x>( ctx, RangeSegment( 0, num_threads_1d ), [&]( localIndex const tid_x )
     {
       tidx = tid_x;
-    } );
-    loop<thread_z>( ctx, RangeSegment( 0, batch_size ), [&]( localIndex const batch_ind )
-    {
-      batch_index = batch_ind;
     } );
   }
 };
@@ -138,10 +134,6 @@ struct KernelConfiguration< ThreadingModel::Distributed2D, num_threads_1d, batch
     {
       tidy = tid_y;
     } );
-    loop<thread_z>( ctx, RangeSegment( 0, batch_size ), [&]( localIndex const batch_ind )
-    {
-      batch_index = batch_ind;
-    } );
   }
 };
 
@@ -180,10 +172,6 @@ struct KernelConfiguration< ThreadingModel::Distributed3D, num_threads_1d, batch
       tidy = ( tid % ( num_threads_1d * num_threads_1d ) ) / num_threads_1d;
       tidz = tid / ( num_threads_1d * num_threads_1d );
     } );
-    loop<thread_z>( ctx, RangeSegment( 0, batch_size ), [&]( localIndex const batch_ind )
-    {
-      batch_index = batch_ind;
-    } );
   }
 };
 
@@ -215,6 +203,7 @@ void forallElements( localIndex const numElems, KernelComponents const & fields,
         localIndex const element_index = block_index * batch_size + batch_index;
         if ( element_index < numElems )
         {
+          stack.batch_index = batch_index;
           stack.element_index = element_index;
 
           element_kernel( stack );
