@@ -198,6 +198,14 @@ public:
                            real64 const (&X)[numNodes][3],
                            real64 ( &gradN )[numNodes][3] );
 
+
+  GEOSX_HOST_DEVICE
+  static real64 calcGradN( localIndex const qa,
+                           localIndex const qb,
+                           localIndex const qc,
+                           real64 const (&X)[numNodes][3],
+                           real64 ( &gradN )[numNodes][3] );
+
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
    *   coordinates.
@@ -416,7 +424,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
 {
 
 /// Options for how to calculate the parent gradients.
-  #define PARENT_GRADIENT_METHOD 2
+#define PARENT_GRADIENT_METHOD 2
 #if PARENT_GRADIENT_METHOD == 1
   // This option calculates the basis values at the quadrature point for each
   // linear basis index.
@@ -432,6 +440,25 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
   real64 const psi2[2] = { 0.5 - 0.5 * quadratureCoords[2],
                            0.5 + 0.5 * quadratureCoords[2] };
   constexpr real64 dpsi[2] = { -0.5, 0.5 };
+
+  // Loop over the linear basis indices in each direction.
+  for( int a=0; a<2; ++a )
+  {
+    for( int b=0; b<2; ++b )
+    {
+      for( int c=0; c<2; ++c )
+      {
+
+        real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2[c],
+                                  psi0[a] * dpsi[b] * psi2[c],
+                                  psi0[a] * psi1[b] * dpsi[c] };
+        localIndex const nodeIndex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
+
+        func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
+      }
+    }
+  }
+
 #elif PARENT_GRADIENT_METHOD == 2
   // This option calculates the product of linear basis prior to use.
   // The tensor product basis gradient may be expressed as a permutation of the
@@ -457,46 +484,34 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
 
 //  constexpr static real64 psiProduct[3] = { psiProduct0, psiProduct1, psiProduct2 };
 //  constexpr short dpsi[2] = { dpsi0, dpsi1 };
-#endif
+
 
   // Loop over the linear basis indices in each direction.
+  #pragma unroll
   for( int a=0; a<2; ++a )
   {
-#if PARENT_GRADIENT_METHOD == 2
     int const qaa = ( a^qa ); // abs(a-qa)
-#endif
+    #pragma unroll
     for( int b=0; b<2; ++b )
     {
-#if PARENT_GRADIENT_METHOD == 2
       int const qbb = ( b^qb );
-#endif
+      #pragma unroll
       for( int c=0; c<2; ++c )
       {
-#if PARENT_GRADIENT_METHOD == 2
         int const qcc = ( c^qc );
-#endif
-
-#if PARENT_GRADIENT_METHOD == 1
-        real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2[c],
-                                  psi0[a] * dpsi[b] * psi2[c],
-                                  psi0[a] * psi1[b] * dpsi[c] };
-#elif PARENT_GRADIENT_METHOD == 2
-
-
-//        const real64 dNdXi[3] = { dpsi[a] * psiProductFunc( qbb + qcc ),
-//                                  dpsi[b] * psiProductFunc( qaa + qcc ),
-//                                  dpsi[c] * psiProductFunc( qaa + qbb ) };
 
         real64 const dNdXi[3] = { dpsi[a] * psiProduct[ qbb + qcc ],
                                   dpsi[b] * psiProduct[ qaa + qcc ],
                                   dpsi[c] * psiProduct[ qaa + qbb ] };
-#endif
+
         localIndex const nodeIndex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
 
         func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
       }
     }
   }
+
+#endif
 }
 
 //*************************************************************************************************
@@ -507,11 +522,24 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
                                                    real64 const (&X)[numNodes][3],
                                                    real64 (& gradN)[numNodes][3] )
 {
-  real64 J[3][3] = {{0}};
 
 
   int qa, qb, qc;
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+
+  return calcGradN( qa, qb, qc, X, gradN );
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64
+H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const qa,
+                                                  localIndex const qb,
+                                                  localIndex const qc,
+                                                   real64 const (&X)[numNodes][3],
+                                                   real64 (& gradN)[numNodes][3] )
+{
+  real64 J[3][3] = {{0}};
 
   jacobianTransformation( qa, qb, qc, X, J );
 
@@ -555,23 +583,23 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
                                                   real64 (& J)[3][3] )
   {
     real64 const * const GEOSX_RESTRICT Xnode = X[nodeIndex];
-    for( int i = 0; i < 3; ++i )
-    {
-      for( int j = 0; j < 3; ++j )
-      {
-        J[i][j] = J[i][j] + dNdXi[ j ] * Xnode[i];
-      }
-    }
+    // for( int i = 0; i < 3; ++i )
+    // {
+    //   for( int j = 0; j < 3; ++j )
+    //   {
+    //     J[i][j] = J[i][j] + dNdXi[ j ] * Xnode[i];
+    //   }
+    // }
 
-//    J[0][0] = J[0][0] + dNdXi[0] * Xnode[0];
-//    J[0][1] = J[0][1] + dNdXi[1] * Xnode[0];
-//    J[0][2] = J[0][2] + dNdXi[2] * Xnode[0];
-//    J[1][0] = J[1][0] + dNdXi[0] * Xnode[1];
-//    J[1][1] = J[1][1] + dNdXi[1] * Xnode[1];
-//    J[1][2] = J[1][2] + dNdXi[2] * Xnode[1];
-//    J[2][0] = J[2][0] + dNdXi[0] * Xnode[2];
-//    J[2][1] = J[2][1] + dNdXi[1] * Xnode[2];
-//    J[2][2] = J[2][2] + dNdXi[2] * Xnode[2];
+   J[0][0] = J[0][0] + dNdXi[0] * Xnode[0];
+   J[0][1] = J[0][1] + dNdXi[1] * Xnode[0];
+   J[0][2] = J[0][2] + dNdXi[2] * Xnode[0];
+   J[1][0] = J[1][0] + dNdXi[0] * Xnode[1];
+   J[1][1] = J[1][1] + dNdXi[1] * Xnode[1];
+   J[1][2] = J[1][2] + dNdXi[2] * Xnode[1];
+   J[2][0] = J[2][0] + dNdXi[0] * Xnode[2];
+   J[2][1] = J[2][1] + dNdXi[1] * Xnode[2];
+   J[2][2] = J[2][2] + dNdXi[2] * Xnode[2];
 
   }, X, J );
 }

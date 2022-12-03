@@ -73,13 +73,13 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( l
     for( int i=0; i<numDofPerTrialSupportPoint; ++i )
     {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-      stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+      stack.xLocal[ a ][ i ] = m_X( nodeIndex, i );
 #endif
 
 #if UPDATE_STRESS==2
-      stack.varLocal[ a ][ i ] = m_vel[ nodeIndex ][ i ] * m_dt;
+      stack.varLocal[ a ][ i ] = m_vel( nodeIndex, i ) * m_dt;
 #else
-      stack.varLocal[ a ][ i ] = m_u[ nodeIndex ][ i ];
+      stack.varLocal[ a ][ i ] = m_u( nodeIndex, i );
 #endif
     }
   }
@@ -105,26 +105,26 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   real64 stressLocal[ 6 ] = {0};
 #if UPDATE_STRESS == 2
   m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, strain, stressLocal );
-#else
-  m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
-#endif
-
   for( localIndex c = 0; c < 6; ++c )
   {
-#if UPDATE_STRESS == 2
     stressLocal[ c ] *= -detJ;
-#elif UPDATE_STRESS == 1
-    stressLocal[ c ] = -( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * detJ;   // TODO: decide on
-                                                                                                     // initial stress
-                                                                                                     // strategy
+  }
+#else
+  m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
+  for( localIndex c = 0; c < 6; ++c )
+  {
+#if UPDATE_STRESS == 1
+    stressLocal[ c ] = -( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * detJ;
 #else
     stressLocal[ c ] *= -detJ;
 #endif
   }
+#endif
+
 
   FE_TYPE::plusGradNajAij( dNdX, stressLocal, stack.fLocal );
 
-#else
+#else //!defined( USE_JACOBIAN )
   real64 invJ[3][3];
   real64 const detJ = FE_TYPE::inverseJacobianTransformation( q, stack.xLocal, invJ );
 
@@ -134,25 +134,26 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   real64 stressLocal[ 6 ] = {0};
 #if UPDATE_STRESS == 2
   m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, strain, stressLocal );
-#else
-  m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
-#endif
-
   for( localIndex c = 0; c < 6; ++c )
   {
-#if UPDATE_STRESS == 2
     stressLocal[ c ] *= detJ;
-#elif UPDATE_STRESS == 1
-    stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * DETJ;   // TODO: decide on
-                                                                                                    // initial stress
-                                                                                                    // strategy
+  }
+
+#else
+  m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
+  for( localIndex c = 0; c < 6; ++c )
+  {
+#if UPDATE_STRESS == 1
+    stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * DETJ;
 #else
     stressLocal[ c ] *= DETJ;
 #endif
   }
 
-  FE_TYPE::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
 #endif
+
+  FE_TYPE::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
+#endif // !defined( USE_JACOBIAN )
 }
 
 template< typename SUBREGION_TYPE,
