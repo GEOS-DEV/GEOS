@@ -172,6 +172,8 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
 
   GEOSX_MARK_FUNCTION;
 
+  synchronizeNonLinearParameters();
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )

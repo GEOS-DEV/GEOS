@@ -43,41 +43,23 @@
   </Solvers>
 
   <Mesh>
-    <!-- <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ -3, 3 }"
-      yCoords="{ 0, 6 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 6 }"
-      ny="{ 6 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cb1 }"/> -->
-
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -2, 2 }"
-      yCoords="{  -2, 2 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{  -1, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{  12 }"
-      ny="{  12 }"
+      nx="{ 2 }"
+      ny="{ 1 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
-    <!-- <Box
+    <Box
       name="fracture"
-      xMin="{ -0.01, 0.9, -0.01 }"
-      xMax="{ 0.01,  4.5,  1.01 }"/>-->
-    <BoundedPlane
-      name="fracture"
-      normal="{1.0, 0.0, 0.0}"
-      origin="{0.0, 0.0, 0.0}"
-      lengthVector="{0.0, 1.0, 0.0}"
-      widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 2, 10 }"/>
+      xMin="{ -0.01, -1, -0.01 }"
+      xMax="{ 0.01,  1,  1.01 }"/>
   </Geometry>
 
   <Events
@@ -153,7 +135,7 @@
       scale="1"/>
 
     <FieldSpecification
-      name="xnegconstraint"
+      name="xconstraint"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       component="0"
@@ -161,7 +143,7 @@
       setNames="{ xneg, xpos }"/>
 
     <FieldSpecification
-      name="yposconstraint"
+      name="yconstraint"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       component="1"
