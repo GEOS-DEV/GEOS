@@ -92,7 +92,9 @@ void SinglePhasePoromechanicsSolver::initializePreSubGroups()
     {
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      GEOSX_ERROR_IF( porousName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+      GEOSX_THROW_IF( porousName.empty(),
+                      GEOSX_FMT( "{} {} : Solid model not found on subregion {}", catalogName(), getName(), subRegion.getName() ),
+                      InputError );
     } );
   } );
 }
@@ -170,13 +172,14 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    poromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
-                                                                  pDofKey,
-                                                                  dofManager.rankOffset(),
-                                                                  localMatrix,
-                                                                  localRhs,
-                                                                  gravityVectorData,
-                                                                  FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    poromechanicsKernels::SinglePhasePoromechanicsKernelFactory
+    kernelFactory( dispDofNumber,
+                   pDofKey,
+                   dofManager.rankOffset(),
+                   localMatrix,
+                   localRhs,
+                   gravityVectorData,
+                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
     // Cell-based contributions
     solidMechanicsSolver()->getMaxForce() =
@@ -189,14 +192,17 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                               viewKeyStruct::porousMaterialNamesString(),
                                                               kernelFactory );
 
+    flowSolver()->assemblePoroelasticFluxTerms( time_n, dt,
+                                                domain,
+                                                dofManager,
+                                                localMatrix,
+                                                localRhs,
+                                                " " );
+
+
   } );
 
-  flowSolver()->assemblePoroelasticFluxTerms( time_n, dt,
-                                              domain,
-                                              dofManager,
-                                              localMatrix,
-                                              localRhs,
-                                              " " );
+
 }
 
 void SinglePhasePoromechanicsSolver::createPreconditioner()
