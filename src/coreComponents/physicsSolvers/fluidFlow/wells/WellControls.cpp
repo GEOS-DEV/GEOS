@@ -43,7 +43,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_rateSign( -1.0 ),
   m_targetTotalRateTable( nullptr ),
   m_targetPhaseRateTable( nullptr ),
-  m_targetBHPTable( nullptr )
+  m_targetBHPTable( nullptr ),
+  m_statusTable( nullptr )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -139,6 +140,11 @@ WellControls::WellControls( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::targetPhaseRateTableNameString(), &m_targetPhaseRateTableName ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the phase rate table when the rate is a time dependent function" );
+
+  registerWrapper( viewKeyStruct::statusTableNameString(), &m_statusTableName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of the well status table when the status of the well is a time dependent function. \n"
+                    "If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut." );
 }
 
 
@@ -361,6 +367,29 @@ void WellControls::postProcessInput()
                                      << m_targetPhaseRateTable->getName() << " should be TableFunction::InterpolationType::Lower",
                     InputError );
   }
+
+  // 12) Create the time-dependent well status table
+  if( m_statusTableName.empty())
+  {
+    // All well controls without a specified status function will use the same "Open" status function.
+    m_statusTableName = GEOSX_FMT( "{0}_OpenStatus_table", dataRepository::keys::wellControls );
+    FunctionManager & functionManager = FunctionManager::getInstance();
+    m_statusTable = functionManager.getGroupPointer< TableFunction const >( m_statusTableName );
+    if( m_statusTable==nullptr )
+    {
+      m_statusTable = createWellTable( m_statusTableName, 1.0 );
+    }
+  }
+  else
+  {
+    FunctionManager & functionManager = FunctionManager::getInstance();
+    m_statusTable = &(functionManager.getGroup< TableFunction const >( m_statusTableName ));
+
+    GEOSX_THROW_IF( m_statusTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
+                    "WellControls '" << getName() << "': The interpolation method for the time-dependent rate table "
+                                     << m_targetPhaseRateTable->getName() << " should be TableFunction::InterpolationType::Lower",
+                    InputError );
+  }
 }
 
 bool WellControls::isWellOpen( real64 const & currentTime ) const
@@ -370,8 +399,11 @@ bool WellControls::isWellOpen( real64 const & currentTime ) const
   {
     isOpen = false;
   }
+  if( m_statusTable->evaluate( &currentTime ) < LvArray::NumericLimits< real64 >::epsilon )
+  {
+    isOpen = false;
+  }
   return isOpen;
 }
-
 
 } //namespace geosx
