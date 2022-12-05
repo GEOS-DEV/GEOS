@@ -85,6 +85,23 @@ void BoundedPlane::postProcessInput()
   findRectangleLimits();
 }
 
+void BoundedPlane::updateExistingRectangle(real64 const incL, real64 const incW)
+{
+
+  //change dimensions
+  m_dimensions[0] = m_dimensions[0]+incL;
+  m_dimensions[1] = m_dimensions[1]+incW;
+
+  //translate origin
+  // R1Tensor translation{incL, incW, 0.0};
+  // m_origin = m_origin + 
+  // LvArray::tensorOps::add< 3 >( m_points[1], origin );
+
+  m_tolerance = m_tolerance * std::min( m_dimensions[0], m_dimensions[1] );
+
+  findRectangleLimits();
+}
+
 void BoundedPlane::findRectangleLimits()
 {
   real64 lengthVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_lengthVector );

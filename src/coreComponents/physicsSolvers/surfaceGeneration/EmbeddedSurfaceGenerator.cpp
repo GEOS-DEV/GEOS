@@ -242,12 +242,173 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 {}
 
-real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+real64 EmbeddedSurfaceGenerator::solverStep( real64 const & time_n,
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
                                              const int GEOSX_UNUSED_PARAM( cycleNumber ),
                                              DomainPartition & domain )
 {
   real64 rval = 0;
+    /*
+   * Here we generate embedded elements for fractures (or faults) that already exist in the domain and
+   * were specified in the input file.
+   */
+  std::cout<<time_n<<std::endl;
+  if(time_n > 0)
+  {
+    // Get geometric object manager
+    GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();
+
+    // Get meshLevel
+    MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
+
+    // Get managers
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
+    NodeManager & nodeManager = meshLevel.getNodeManager();
+    EmbeddedSurfaceNodeManager & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
+    EdgeManager & edgeManager = meshLevel.getEdgeManager();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
+
+    // Get EmbeddedSurfaceSubRegions
+    SurfaceElementRegion & embeddedSurfaceRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
+    EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion = embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+
+    localIndex localNumberOfSurfaceElems         = 0;
+
+    NewObjectLists newObjects;
+
+    // Loop over all the fracture planes
+    geometricObjManager.forSubGroups< BoundedPlane >( [&]( BoundedPlane & fracture )
+    {
+      //modify fracture (BoundedPlane)
+      //add 1 element?
+      fracture.updateExistingRectangle(0.5,0.5);
+
+      /* 1. Find out if an element is cut by the fracture or not.
+      * Loop over all the elements and for each one of them loop over the nodes and compute the
+      * dot product between the distance between the plane center and the node and the normal
+      * vector defining the plane. If two scalar products have different signs the plane cuts the
+      * cell. If a nodes gives a 0 dot product it has to be neglected or the method won't work.
+      */
+      real64 const planeCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fracture.getCenter() );
+      real64 const normalVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fracture.getNormal() );
+      // Initialize variables
+      globalIndex nodeIndex;
+      integer isPositive, isNegative;
+      real64 distVec[ 3 ];
+
+      elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
+        [&]( localIndex const er, localIndex const esr, ElementRegionBase &, CellElementSubRegion & subRegion )
+      {
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes = subRegion.nodeList();
+        FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
+
+        arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+        auto fracturedElements = subRegion.fracturedElementsList();
+        //LvArray::SortedArrayView< localIndex > fracturedElements = subRegion.fracturedElementsList();
+
+        forAll< serialPolicy >( subRegion.size(), [ &, ghostRank,
+                                                    cellToNodes,
+                                                    nodesCoord ] ( localIndex const cellIndex )
+        {
+          //this checks if element cellIndex is already fractured
+          bool notFractured = true;
+          for( localIndex a : fracturedElements )
+          {   
+            if(a == cellIndex)
+            {
+              notFractured = false;
+            }
+          }
+          //end check
+          if( ghostRank[cellIndex] < 0 && notFractured ) //add constraint to only operate on unfractured elements
+          {
+            isPositive = 0;
+            isNegative = 0;
+            for( localIndex kn = 0; kn < subRegion.numNodesPerElement(); kn++ )
+            {
+              nodeIndex = cellToNodes[cellIndex][kn];
+              LvArray::tensorOps::copy< 3 >( distVec, nodesCoord[nodeIndex] );
+              LvArray::tensorOps::subtract< 3 >( distVec, planeCenter );
+              // check if the dot product is zero
+              if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) > 0 )
+              {
+                isPositive = 1;
+              }
+              else if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) < 0 )
+              {
+                isNegative = 1;
+              }
+            } // end loop over nodes
+            if( isPositive * isNegative == 1 )
+            {
+              bool added = embeddedSurfaceSubRegion.addNewEmbeddedSurface( cellIndex,
+                                                                          er,
+                                                                          esr,
+                                                                          nodeManager,
+                                                                          embSurfNodeManager,
+                                                                          edgeManager,
+                                                                          cellToEdges,
+                                                                          &fracture );
+
+              if( added )
+              {
+                GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+
+                // Add the information to the CellElementSubRegion
+                subRegion.addFracturedElement( cellIndex, localNumberOfSurfaceElems );
+
+                embeddedSurfaceSubRegion.computeConnectivityIndex( localNumberOfSurfaceElems, cellToNodes, nodesCoord );
+
+                newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( localNumberOfSurfaceElems );
+
+                localNumberOfSurfaceElems++;
+              }
+            }
+          }
+        } );// end loop over cells
+      } );// end loop over subregions
+    } );// end loop over thick planes
+
+    // add all new nodes to newObject list
+    for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
+    {
+      newObjects.newNodes.insert( ni );
+    }
+
+    // Set the ghostRank form the parent cell
+    ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
+      elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+
+    embeddedSurfaceSubRegion.inheritGhostRank( cellElemGhostRank );
+
+    setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
+
+    embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
+                                                                domain.getNeighbors(),
+                                                                newObjects,
+                                                                m_mpiCommOrder,
+                                                                this->m_fractureRegionName );
+
+    addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
+
+    EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
+
+    // Populate EdgeManager for embedded surfaces.
+    EdgeManager & embSurfEdgeManager = meshLevel.getEmbSurfEdgeManager();
+
+    EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion.edgeList();
+
+    localIndex numOfPoints = embSurfNodeManager.size();
+
+    // Create the edges
+    embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
+    // Node to cell map
+    embSurfNodeManager.setElementMaps( elemManager );
+    // Node to edge map
+    embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
+    embSurfNodeManager.compressRelationMaps();
+  }
   /*
    * This should be the method that generates new fracture elements based on the propagation criterion of choice.
    */

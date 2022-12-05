@@ -73,6 +73,11 @@ public:
   void findRectangleLimits();
 
   /**
+   * @brief increment plane size by incL in length and incW in width
+   */
+  void updateExistingRectangle(real64 const incL, real64 const incW);
+
+  /**
    * @name Getters
    */
   ///@{
