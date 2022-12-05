@@ -20,9 +20,13 @@
 #include "functions/TableFunction.hpp"
 
 #include "constitutive/KilloughHysteresis.hpp"
+#include "CapillaryPressureExtrinsicData.hpp"
 
 namespace geosx
 {
+
+
+
 
 namespace constitutive
 {
@@ -34,6 +38,8 @@ class TableCapillaryPressureHysteresis : public CapillaryPressureBase
 //          std::numeric_limits< real64 >::max();
   static constexpr real64 CAP_INF_DERIV = 1e9;
 //          std::numeric_limits< real64 >::max();
+
+  typedef extrinsicMeshData::cappres::ModeIndexType ModeIndexType;
 
 public:
 
@@ -47,16 +53,7 @@ public:
     };
   };
 
-  enum ModeIndexType : integer
-  {
-//    enum : integer
-//    {
-      DRAINAGE = 0,//to be used in array of Kernels
-      IMBIBITION = 1,
-      DRAINAGE_TO_IMBIBITION = 2,
-      IMBIBITION_TO_DRAINAGE = 3
-//    };
-  };
+
 
 
   TableCapillaryPressureHysteresis( std::string const & name,
@@ -84,7 +81,7 @@ public:
       arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
       arrayView1d< integer const > const & phaseTypes,
       arrayView1d< integer const > const & phaseOrder,
-      ModeIndexType & mode,
+      arrayView1d< integer > const & mode,
       arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
       arrayView3d< real64, relperm::USD_RELPERM > const & phaseCapPressure,
       arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseCapPressure_dPhaseVolFrac );
@@ -98,14 +95,17 @@ public:
 
     GEOSX_HOST_DEVICE
     void
-    computeImbibitionWettingCapillaryPressure(
-      const arrayView1d< const TableFunction::KernelWrapper > & wettingKernelWapper,
-      const KilloughHysteresis::HysteresisCurve_t & wettingCurve,
-      const KilloughHysteresis::HysteresisCurve_t & nonWettingCurve,
-      const geosx::real64 & landParam,
-      const geosx::real64 & phaseVolFraction, const geosx::real64 & phaseMinHistoricalVolFraction,
-      const real64 & phaseIntermediateMinVolFraction, geosx::real64 & phaseTrappedVolFrac,
-      geosx::real64 & phaseCapPressure, geosx::real64 & dPhaseCapPressure_dPhaseVolFrac ) const;
+    computeImbibitionWettingCapillaryPressure( const arrayView1d< const TableFunction::KernelWrapper > & wettingKernelWapper,
+                                               const KilloughHysteresis::HysteresisCurve_t & wettingCurve,
+                                               const KilloughHysteresis::HysteresisCurve_t & nonWettingCurve,
+                                               const geosx::real64 & landParam,
+                                               const geosx::real64 & phaseVolFraction,
+                                               const geosx::real64 & phaseMinHistoricalVolFraction,
+                                               const real64 & phaseIntermediateMinVolFraction,
+                                               geosx::real64 & phaseTrappedVolFrac,
+                                               geosx::real64 & phaseCapPressure,
+                                               geosx::real64 & dPhaseCapPressure_dPhaseVolFrac,
+                                               const ModeIndexType & mode ) const;
 
     GEOSX_HOST_DEVICE
     void
@@ -115,7 +115,8 @@ public:
             const KilloughHysteresis::HysteresisCurve_t &wettingCurve, const geosx::real64 &landParam,
             const geosx::real64 &phaseVolFraction, const geosx::real64 &phaseMaxHistoricalVolFraction,
             geosx::real64 &phaseTrappedVolFrac, geosx::real64 &phaseCapPressure,
-            geosx::real64 &dPhaseCapPressure_dPhaseVolFrac) const;
+            geosx::real64 &dPhaseCapPressure_dPhaseVolFrac,
+            const ModeIndexType& mode) const;
 
 
 
@@ -128,8 +129,8 @@ public:
                           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
                           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
                           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseCapPressure,
-                          arraySlice2d< real64,
-                                        relperm::USD_RELPERM_DS - 2 > const & dPhaseCapPressure_dPhaseVolFrac ) const;
+                          arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseCapPressure_dPhaseVolFrac,
+                          ModeIndexType& mode) const;
 
 
       GEOSX_HOST_DEVICE
@@ -140,8 +141,8 @@ public:
                             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
                             arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
                             arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseCapPressure,
-                            arraySlice2d< real64,
-                                    relperm::USD_RELPERM_DS - 2 > const & dPhaseCapPressure_dPhaseVolFrac ) const;
+                            arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseCapPressure_dPhaseVolFrac,
+                            ModeIndexType& mode) const;
 
     GEOSX_HOST_DEVICE
     void computeThreePhase( integer const ipWetting,
@@ -152,7 +153,8 @@ public:
                             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
                             arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
                             arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseCapPressure,
-                            arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseCapPressure_dPhaseVolFrac ) const;
+                            arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseCapPressure_dPhaseVolFrac,
+                            ModeIndexType& mode) const;
 
     //uppermost call-wrappers
     GEOSX_HOST_DEVICE
@@ -161,7 +163,8 @@ public:
                           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
                           arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseTrappedVolFrac,
                           arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPressure,
-                          arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPressure_dPhaseVolFrac ) const;
+                          arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPressure_dPhaseVolFrac,
+                          ModeIndexType& mode) const;
 
     GEOSX_HOST_DEVICE
     virtual void update( localIndex const k,
@@ -172,7 +175,7 @@ private:
 
 
     static constexpr real64 flowReversalBuffer = KilloughHysteresis::KernelKilloughHysteresisBase::flowReversalBuffer;
-    ModeIndexType& m_mode;
+//    ModeIndexType& m_mode;
 
     //2p
     arrayView1d< TableFunction::KernelWrapper const > const m_wettingNonWettingCapillaryPressureKernelWrappers;
@@ -186,6 +189,7 @@ private:
     arrayView1d< integer const > m_phaseHasHysteresis;
     arrayView1d< real64 const > m_landParam;
 
+
     /// needed in 3p-wetting hysteresis as we need to get the max accessible pore space
     real64 const m_phaseIntermediateMinVolFraction;
 
@@ -198,6 +202,8 @@ private:
     /// Maximum historical phase volume fraction for each phase
     arrayView2d< real64 const, compflow::USD_PHASE > m_phaseMaxHistoricalVolFraction;
 
+    // Drainage / Imbibition flags cellwise
+    arrayView1d< ModeIndexType > m_mode;
 
   };
 
@@ -273,8 +279,8 @@ private:
     static constexpr char const * phaseIntermediateMinVolFractionString()
     { return "phaseIntermediateMinVolFraction";}
     //to decide wheter drainage/drainage to imbibition or imbibition/imbibition to drainage
-      static constexpr char const * modeTypeString()
-      { return "modeType";}
+    static constexpr char const * modeTypeString()
+    { return "modeType";}
 
   };
 
@@ -308,7 +314,7 @@ private:
   KilloughHysteresis::KernelKilloughHysteresisBase m_KilloughKernel;
   string m_KilloughModelName;
 
-  ModeIndexType m_mode;
+  array1d< integer > m_mode;
 
   //TODO impl
 //  array1d< integer >  m_tCurveOption;
@@ -366,8 +372,8 @@ inline void TableCapillaryPressureHysteresis::KernelWrapper::compute( arraySlice
                                                                       arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
                                                                       arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseTrappedVolFrac,
                                                                       arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPressure,
-                                                                      arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPressure_dPhaseVolFrac
-
+                                                                      arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPressure_dPhaseVolFrac,
+                                                                      ModeIndexType& mode
                                                                       ) const
 {
   LvArray::forValuesInSlice( dPhaseCapPressure_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
@@ -387,7 +393,8 @@ inline void TableCapillaryPressureHysteresis::KernelWrapper::compute( arraySlice
                        phaseMinHistoricalVolFraction,
                        phaseTrappedVolFrac,
                        phaseCapPressure,
-                       dPhaseCapPressure_dPhaseVolFrac );
+                       dPhaseCapPressure_dPhaseVolFrac,
+                       mode );
 
   }
   else if( ipWater < 0 )
@@ -399,7 +406,8 @@ inline void TableCapillaryPressureHysteresis::KernelWrapper::compute( arraySlice
                                 phaseMinHistoricalVolFraction,
                                 phaseTrappedVolFrac,
                                 phaseCapPressure,
-                                dPhaseCapPressure_dPhaseVolFrac);
+                                dPhaseCapPressure_dPhaseVolFrac,
+                                mode );
   }
   else if( ipOil < 0 )
   {
@@ -410,7 +418,8 @@ inline void TableCapillaryPressureHysteresis::KernelWrapper::compute( arraySlice
                      phaseMinHistoricalVolFraction,
                      phaseTrappedVolFrac,
                      phaseCapPressure,
-                     dPhaseCapPressure_dPhaseVolFrac );
+                     dPhaseCapPressure_dPhaseVolFrac,
+                     mode );
   }
   else if( ipGas < 0 )
   {
@@ -421,7 +430,8 @@ inline void TableCapillaryPressureHysteresis::KernelWrapper::compute( arraySlice
                              phaseMinHistoricalVolFraction,
                              phaseTrappedVolFrac,
                              phaseCapPressure,
-                             dPhaseCapPressure_dPhaseVolFrac);
+                             dPhaseCapPressure_dPhaseVolFrac,
+                             mode );
   }
 
 
@@ -439,7 +449,8 @@ inline void TableCapillaryPressureHysteresis::KernelWrapper::update( const geosx
            m_phaseMinHistoricalVolFraction[k],
            m_phaseTrappedVolFrac[k][q],
            m_phaseCapPressure[k][q],
-           m_dPhaseCapPressure_dPhaseVolFrac[k][q] );
+           m_dPhaseCapPressure_dPhaseVolFrac[k][q],
+           m_mode[k] );
 }
 
 

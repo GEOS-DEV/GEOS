@@ -189,59 +189,124 @@ void testValuesAgainstReference( TBL_WRAPPER const & cappresTblWrapper,
 /// gtest magicwand
 TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
 {
+
+  /// testing drainage to imbibition transistion
   //define eps to avoid falling in the out of range case
-  real64 const eps = 0.00001;
-  real64 const shy[3] = { 0.2 + eps, 0.3, 0.4 };
-  // which correspond resp to 0.4, 0.36, 0.32 trapped sat
-
-  localIndex const nDecreasingWaterSat = 11;
-  real64 const decreasingWaterSat[] = { 0.9 - eps, 0.8, 0.7, 0.65, 0.6, 0.55, 0.5, 0.4, 0.3, 0.25, 0.2 + eps };
-
-  localIndex const nIncreasingWaterSat = 11;
-  localIndex const offset[3] = { 0, 2, 3 };
-  real64 const increasingWaterSat[] = { 0.2 + eps, 0.25, 0.3, 0.4, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9 - eps  };
-
-  /// Reference data
-  real64 const drainageCapPres_w_values[] =
-  { 1054.093, 1118.667, 1196.569, 1241.826, 1292.065, 1350.937, 1415.730, 1586.798, 1835.227, 2018.952, 2236.068  };
-
-  real64 const scanningCapPres_w_i[][nIncreasingWaterSat] =
-  { {2236.068, 1929.0456, 1651.251, 1305.843, 1100.016, 1082.189, 1070.461, 1063.032, 1058.364, 1054.239, 1054.093},
-    {1835.226, 1835.226, 1835.226, 1364.184, 1119.252, 1090.195, 1072.584, 1062.267, 1056.403, 1054.093, 1054.093},
-    { 1586.7984285714285, 1586.7984285714285, 1586.7984285714285, 1586.7984285714285, 1168.670, 1107.583, 1075.298, 1058.607, 1054.093, 1054.093, 1054.093} };
-
-  real64 const relTol = 5e-5;
-
-  // saved cycle
-  TableCapillaryPressureHysteresis & table = makeTableCapPresHysteresisTwoPhase( "cappres",
-                                                                                 state.getProblemManager().getDomainPartition().getConstitutiveManager() );
-//    initialize( table );
-  auto cappresTblWrapper = table.createKernelWrapper();
-
-  // all saturations are wetting saturations
-  auto ncycles = 1;
-  for( integer count = 0; count < ncycles; ++count )
   {
-    // drainage
-    for( integer iSat = 0; iSat < nDecreasingWaterSat; ++iSat )
-    {
-      if( decreasingWaterSat[iSat] < shy[count] )
-      {
-        break;         // exit as the drainage bounding curve is not scanned anymore
-      }
-      testValuesAgainstReference( cappresTblWrapper,
-                                  decreasingWaterSat[iSat], decreasingWaterSat[iSat],
-                                  drainageCapPres_w_values[iSat],
-                                  relTol );
-    }
+    real64 const eps = 0.00001;
+    real64 const shy[3] = { 0.2 + eps, 0.3, 0.4 };
+    // which correspond resp to 0.4, 0.36, 0.32 trapped sat
 
-    // imbibition
-    for( integer iSat = offset[count]; iSat < nIncreasingWaterSat; ++iSat )
+    localIndex const nDecreasingWaterSat = 11;
+    real64 const decreasingWaterSat[] = { 0.9 - eps, 0.8, 0.7, 0.65, 0.6, 0.55, 0.5, 0.4, 0.3, 0.25, 0.2 + eps };
+
+    localIndex const nIncreasingWaterSat = 11;
+    localIndex const offset[3] = { 0, 2, 3 };
+    real64 const increasingWaterSat[] = { 0.2 + eps, 0.25, 0.3, 0.4, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9 - eps };
+
+    /// Reference data
+    real64 const drainageCapPres_w_values[] =
+      { 1054.093, 1118.667, 1196.569, 1241.826, 1292.065, 1350.937, 1415.730, 1586.798, 1835.227, 2018.952, 2236.068 };
+
+    real64 const scanningCapPres_w_i[][nIncreasingWaterSat] =
+      { { 2236.068,           1929.0456,          1651.251,           1305.843,           1100.016, 1082.189, 1070.461, 1063.032, 1058.364, 1054.239, 1054.093 },
+        { 1835.226,           1835.226,           1835.226,           1364.184,           1119.252, 1090.195, 1072.584, 1062.267, 1056.403, 1054.093, 1054.093 },
+        { 1586.7984285714285, 1586.7984285714285, 1586.7984285714285, 1586.7984285714285, 1168.670, 1107.583, 1075.298, 1058.607, 1054.093, 1054.093, 1054.093 } };
+
+    real64 const relTol = 5e-5;
+
+    // saved cycle
+    TableCapillaryPressureHysteresis & table = makeTableCapPresHysteresisTwoPhase( "cappres",
+                                                                                   state.getProblemManager()
+                                                                                        .getDomainPartition()
+                                                                                        .getConstitutiveManager() );
+//    initialize( table );
+    auto cappresTblWrapper = table.createKernelWrapper();
+
+    // all saturations are wetting saturations
+    auto ncycles = 1;
+    for( integer count = 0; count < ncycles; ++count )
     {
-      testValuesAgainstReference( cappresTblWrapper,
-                                  increasingWaterSat[iSat], shy[count],
-                                  scanningCapPres_w_i[count][iSat],
-                                  relTol );
+      // drainage
+      for( integer iSat = 0; iSat < nDecreasingWaterSat; ++iSat )
+      {
+        if( decreasingWaterSat[iSat] < shy[count] )
+        {
+          break;         // exit as the drainage bounding curve is not scanned anymore
+        }
+        testValuesAgainstReference( cappresTblWrapper,
+                                    decreasingWaterSat[iSat], decreasingWaterSat[iSat],
+                                    drainageCapPres_w_values[iSat],
+                                    relTol );
+      }
+
+      // imbibition
+      for( integer iSat = offset[count]; iSat < nIncreasingWaterSat; ++iSat )
+      {
+        testValuesAgainstReference( cappresTblWrapper,
+                                    increasingWaterSat[iSat], shy[count],
+                                    scanningCapPres_w_i[count][iSat],
+                                    relTol );
+      }
+    }
+  }
+
+
+  /// testing drainage to imbibition transistion
+  {
+    real64 const eps = 0.00001;
+    real64 const shy[3] = { 0.4, 0.3, 0.2 + eps };
+    // which correspond resp to 0.4, 0.36, 0.32 trapped sat
+
+    localIndex const nIncreasingWaterSat = 5;
+    real64 const increasingWaterSat[] = { 0.1 + eps, 0.25, 0.3, 0.4, 0.5  };
+
+    localIndex const offset[3] = { 0, 2, 3 };
+    localIndex const nDecreasingWaterSat = 5;
+    real64 const decreasingWaterSat[] = { 0.4, 0.35, 0.3, 0.25, 0.2 + eps };
+
+    /// Reference data
+    real64 const imbibitionCapPres_w_values[] =
+      {};
+
+    real64 const scanningCapPres_nw_i[][nIncreasingWaterSat] =
+      { {},
+        {},
+        {} };
+
+    real64 const relTol = 5e-5;
+
+    // saved cycle
+    TableCapillaryPressureHysteresis & table = makeTableCapPresHysteresisTwoPhase( "cappres",
+                                                                                   state.getProblemManager().getDomainPartition().getConstitutiveManager() );
+//    initialize( table );
+    auto cappresTblWrapper = table.createKernelWrapper();
+
+    // all saturations are wetting saturations
+    auto ncycles = 1;
+    for( integer count = 0; count < ncycles; ++count )
+    {
+      // drainage
+      for( integer iSat = 0; iSat < nIncreasingWaterSat; ++iSat )
+      {
+        if( increasingWaterSat[iSat] > shy[count] )
+        {
+          break;         // exit as the drainage bounding curve is not scanned anymore
+        }
+        testValuesAgainstReference( cappresTblWrapper,
+                                    increasingWaterSat[iSat], increasingWaterSat[iSat],
+                                    imbibitionCapPres_w_values[iSat],
+                                    relTol );
+      }
+
+      // imbibition
+      for( integer iSat = offset[count]; iSat < nDecreasingWaterSat; ++iSat )
+      {
+        testValuesAgainstReference( cappresTblWrapper,
+                                    decreasingWaterSat[iSat], shy[count],
+                                    scanningCapPres_nw_i[count][iSat],
+                                    relTol );
+      }
     }
   }
 }
