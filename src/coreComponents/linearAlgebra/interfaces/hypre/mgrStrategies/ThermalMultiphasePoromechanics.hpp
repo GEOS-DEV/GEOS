@@ -13,11 +13,11 @@
  */
 
 /**
- * @file MultiphasePoromechanics.hpp
+ * @file ThermalMultiphasePoromechanics.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRMULTIPHASEPOROMECHANICS_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRMULTIPHASEPOROMECHANICS_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRTHERMALMULTIPHASEPOROMECHANICS_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRTHERMALMULTIPHASEPOROMECHANICS_HPP_
 
 #include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
@@ -31,7 +31,7 @@ namespace mgr
 {
 
 /**
- * @brief MultiphasePoromechanics strategy.
+ * @brief ThermalMultiphasePoromechanics strategy.
  *
  * Labels description stored in point_marker_array
  *   - dofLabel: 0             = nodal displacement, x-component
@@ -40,33 +40,36 @@ namespace mgr
  *   - dofLabel: 3             = pressure
  *   - dofLabel: 4             = density
  *             ...             = densities
- *   - dofLabel: numLabels - 1 = density
+ *   - dofLabel: numLabels - 2 = density
+ *   - dofLabel: numLabels - 1 = temperature
  *
- * 3-level MGR reduction strategy based on CompositionalMultiphaseFVM
+ * 3-level MGR reduction strategy based on ThermalCompositionalMultiphaseFVM
  *   - 1st level: eliminate displacements (0,1,2)
  *   - 2nd level: eliminate the reservoir density associated with the volume constraint (numLabels - 1)
  *   - 3nd level: eliminate the other reservoir densities
- *   - The coarse grid is solved with BoomerAMG.
+ *   - The coarse grid (pressure and temperature) is solved with BoomerAMG.
  *
  */
-class MultiphasePoromechanics : public MGRStrategyBase< 3 >
+class ThermalMultiphasePoromechanics : public MGRStrategyBase< 3 >
 {
 public:
   /**
    * @brief Constructor.
    * @param numComponentsPerField array with number of components for each field
    */
-  explicit MultiphasePoromechanics( arrayView1d< int const > const & numComponentsPerField )
+  explicit ThermalMultiphasePoromechanics( arrayView1d< int const > const & numComponentsPerField )
     : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] + numComponentsPerField[1] ) )
   {
     // Level 0: eliminate displacement degrees of freedom
     m_labels[0].resize( m_numBlocks - 3 );
     std::iota( m_labels[0].begin(), m_labels[0].end(), 3 );
     // Level 1: eliminate last density which corresponds to the volume constraint equation
-    m_labels[1].resize( m_numBlocks - 4 );
+    m_labels[1].resize( m_numBlocks - 5 );
     std::iota( m_labels[1].begin(), m_labels[1].end(), 3 );
+    m_labels[1].push_back( m_numBlocks-1 ); // temperature
     // Level 2: eliminate the remaining reservoir densities
     m_labels[2].push_back( 3 ); // pressure
+    m_labels[2].push_back( m_numBlocks-1 ); // temperature
 
     setupLabels();
 
@@ -124,6 +127,7 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.coarseSolver.ptr, 2 ) ); // pressure and temperature
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.coarseSolver.ptr, 1 ) );
 
     mgrData.coarseSolver.setup = HYPRE_BoomerAMGSetup;
@@ -138,4 +142,4 @@ public:
 
 } // namespace geosx
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRMULTIPHASEPOROMECHANICS_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRTHERMALMULTIPHASEPOROMECHANICS_HPP_*/

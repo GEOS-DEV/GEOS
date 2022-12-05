@@ -13,7 +13,7 @@
  */
 
 /**
- * @file MultiphasePoroelasticSolver.hpp
+ * @file MultiphasePoromechanicsSolver.hpp
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_
@@ -137,9 +137,14 @@ protected:
 
     /// Multiplier on stabilization
     constexpr static char const * stabilizationMultiplierString() { return "stabilizationMultiplier"; }
+
+    /// Flag to determine whether or not this is aa thermal simulation
+    constexpr static char const * isThermalString() { return "isThermal"; }
   };
 
   virtual void initializePreSubGroups() override;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /// Type of stabilization used in the simulation
   StabilizationType m_stabilizationType;
@@ -149,6 +154,9 @@ protected:
 
   /// Multiplier on stabilization constant
   real64 m_stabilizationMultiplier;
+
+  /// flag to determine whether or not this is a thermal simulation
+  integer m_isThermal;
 
 };
 

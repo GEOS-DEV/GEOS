@@ -13,7 +13,7 @@
  */
 
 /**
- * @file MultiphasePoroelasticSolver.cpp
+ * @file MultiphasePoromechanicsSolver.cpp
  */
 
 #include "MultiphasePoromechanicsSolver.hpp"
@@ -35,7 +35,8 @@ using namespace fields;
 
 MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & name,
                                                               Group * const parent )
-  : Base( name, parent )
+  : Base( name, parent ),
+  m_isThermal( 0 )
 {
   registerWrapper( viewKeyStruct::stabilizationTypeString(), &m_stabilizationType ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -52,6 +53,11 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Constant multiplier of stabilization strength." );
+
+  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether the problem is thermal or not." );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -141,8 +147,8 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
                                                               solidMechanicsSolver()->getDiscretizationName(),
                                                               viewKeyStruct::porousMaterialNamesString(),
                                                               kernelFactory );
-  } );
 
+  } );
 
   // Face-based contributions
   if( m_stabilizationType == StabilizationType::Global ||
@@ -225,6 +231,23 @@ void MultiphasePoromechanicsSolver::initializePreSubGroups()
     } );
   } );
 }
+
+void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups()
+{
+  SolverBase::initializePostInitialConditionsPreSubGroups();
+
+  integer const isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
+  GEOSX_THROW_IF( m_isThermal && !isFlowThermal,
+                  GEOSX_FMT( "{} {}: The flow solver named {} must be thermal if the poromechanics solver is thermal",
+                             catalogName(), getName(), flowSolver()->getName() ),
+                  InputError );
+
+  if( m_isThermal )
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalMultiphasePoromechanics;
+  }
+}
+
 
 void MultiphasePoromechanicsSolver::updateStabilizationParameters( DomainPartition & domain ) const
 {
