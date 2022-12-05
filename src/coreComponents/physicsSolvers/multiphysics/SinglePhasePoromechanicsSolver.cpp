@@ -170,13 +170,14 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    poromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
-                                                                  pDofKey,
-                                                                  dofManager.rankOffset(),
-                                                                  localMatrix,
-                                                                  localRhs,
-                                                                  gravityVectorData,
-                                                                  FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    poromechanicsKernels::SinglePhasePoromechanicsKernelFactory
+    kernelFactory( dispDofNumber,
+                   pDofKey,
+                   dofManager.rankOffset(),
+                   localMatrix,
+                   localRhs,
+                   gravityVectorData,
+                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
     // Cell-based contributions
     solidMechanicsSolver()->getMaxForce() =

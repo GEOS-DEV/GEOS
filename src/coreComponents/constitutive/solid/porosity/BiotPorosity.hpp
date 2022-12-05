@@ -69,24 +69,31 @@ public:
   real64 dGrainDensity_dPressure() const { return 1.0 / m_grainBulkModulus; }
 
   GEOSX_HOST_DEVICE
-  void updateFromPressureAndStrain( localIndex const k,
-                                    localIndex const q,
-                                    real64 const & deltaPressure,
-                                    real64 const (&strainIncrement)[6],
-                                    real64 & dPorosity_dPressure,
-                                    real64 & dPorosity_dVolStrain ) const
+  void updateFromPressureTemperatureAndStrain( localIndex const k,
+                                               localIndex const q,
+                                               real64 const & deltaPressure,
+                                               real64 const & deltaTemperature,
+                                               real64 const (&strainIncrement)[6],
+                                               real64 const & thermalExpansionCoefficient,
+                                               real64 & dPorosity_dVolStrain,
+                                               real64 & dPorosity_dPressure,
+                                               real64 & dPorosity_dTemperature ) const
   {
     real64 const biotSkeletonModulusInverse = (m_biotCoefficient[k] - m_referencePorosity[k]) / m_grainBulkModulus;
+    real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * m_biotCoefficient[k];
 
-    real64 const porosity = m_porosity_n[k][q] +
-                            +m_biotCoefficient[k] * LvArray::tensorOps::symTrace< 3 >( strainIncrement ) + biotSkeletonModulusInverse * deltaPressure;
-
-    dPorosity_dPressure = biotSkeletonModulusInverse;
+    real64 const porosity = m_porosity_n[k][q]
+                            + m_biotCoefficient[k] * LvArray::tensorOps::symTrace< 3 >( strainIncrement )
+                            + biotSkeletonModulusInverse * deltaPressure
+                            + porosityThermalExpansion * deltaTemperature;
 
     dPorosity_dVolStrain = m_biotCoefficient[k];
+    dPorosity_dPressure = biotSkeletonModulusInverse;
+    dPorosity_dTemperature = porosityThermalExpansion;
 
     savePorosity( k, q, porosity, biotSkeletonModulusInverse );
   }
+
 
   GEOSX_HOST_DEVICE
   void updateBiotCoefficient( localIndex const k,

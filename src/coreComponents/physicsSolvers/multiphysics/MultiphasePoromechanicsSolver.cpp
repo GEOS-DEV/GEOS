@@ -13,7 +13,7 @@
  */
 
 /**
- * @file MultiphasePoroelasticSolver.cpp
+ * @file MultiphasePoromechanicsSolver.cpp
  */
 
 #include "MultiphasePoromechanicsSolver.hpp"
@@ -23,6 +23,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanicsKernel.hpp"
+#include "physicsSolvers/multiphysics/ThermalMultiphasePoromechanicsKernel.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
@@ -35,7 +36,8 @@ using namespace fields;
 
 MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & name,
                                                               Group * const parent )
-  : Base( name, parent )
+  : Base( name, parent ),
+  m_isThermal( 0 )
 {
   registerWrapper( viewKeyStruct::stabilizationTypeString(), &m_stabilizationType ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -52,6 +54,11 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Constant multiplier of stabilization strength." );
+
+  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether the problem is thermal or not." );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -121,28 +128,56 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    poromechanicsKernels::MultiphaseKernelFactory kernelFactory( displacementDofNumber,
-                                                                 flowDofKey,
-                                                                 dofManager.rankOffset(),
-                                                                 gravityVectorData,
-                                                                 numComponents,
-                                                                 numPhases,
-                                                                 FlowSolverBase::viewKeyStruct::fluidNamesString(),
-                                                                 localMatrix,
-                                                                 localRhs );
+    if( m_isThermal )
+    {
+      thermalPoromechanicsKernels::ThermalMultiphasePoromechanicsKernelFactory
+      kernelFactory( displacementDofNumber,
+                     flowDofKey,
+                     dofManager.rankOffset(),
+                     numComponents,
+                     numPhases,
+                     localMatrix,
+                     localRhs,
+                     gravityVectorData,
+                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
-    // Cell-based contributions
-    solidMechanicsSolver()->getMaxForce() =
-      finiteElement::
-        regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                      constitutive::PorousSolidBase,
-                                      CellElementSubRegion >( mesh,
-                                                              regionNames,
-                                                              solidMechanicsSolver()->getDiscretizationName(),
-                                                              viewKeyStruct::porousMaterialNamesString(),
-                                                              kernelFactory );
+      // Cell-based contributions
+      solidMechanicsSolver()->getMaxForce() =
+        finiteElement::
+          regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                        constitutive::PorousSolidBase,
+                                        CellElementSubRegion >( mesh,
+                                                                regionNames,
+                                                                solidMechanicsSolver()->getDiscretizationName(),
+                                                                viewKeyStruct::porousMaterialNamesString(),
+                                                                kernelFactory );
+    }
+    else
+    {
+      poromechanicsKernels::MultiphasePoromechanicsKernelFactory
+      kernelFactory( displacementDofNumber,
+                     flowDofKey,
+                     dofManager.rankOffset(),
+                     numComponents,
+                     numPhases,
+                     localMatrix,
+                     localRhs,
+                     gravityVectorData,
+                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
+
+      // Cell-based contributions
+      solidMechanicsSolver()->getMaxForce() =
+        finiteElement::
+          regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                        constitutive::PorousSolidBase,
+                                        CellElementSubRegion >( mesh,
+                                                                regionNames,
+                                                                solidMechanicsSolver()->getDiscretizationName(),
+                                                                viewKeyStruct::porousMaterialNamesString(),
+                                                                kernelFactory );
+    }
+
   } );
-
 
   // Face-based contributions
   if( m_stabilizationType == StabilizationType::Global ||
@@ -203,6 +238,12 @@ void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )
 void MultiphasePoromechanicsSolver::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
+
+  integer const isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
+  GEOSX_THROW_IF( m_isThermal && !isFlowThermal,
+                  GEOSX_FMT( "{} {}: The flow solver named {} must be thermal if the poromechanics solver is thermal",
+                             catalogName(), getName(), flowSolver()->getName() ),
+                  InputError );
 
   GEOSX_THROW_IF( m_stabilizationType == StabilizationType::Local,
                   catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",
