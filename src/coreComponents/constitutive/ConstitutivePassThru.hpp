@@ -28,6 +28,7 @@
 #include "solid/DruckerPragerExtended.hpp"
 #include "solid/ModifiedCamClay.hpp"
 #include "solid/DelftEgg.hpp"
+#include "solid/LayeredModel.hpp"
 #include "solid/ElasticIsotropic.hpp"
 #include "solid/ElasticIsotropicPressureDependent.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
@@ -82,6 +83,7 @@ struct ConstitutivePassThru< SolidBase >
     ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
                                  DamageVolDev< ElasticIsotropic >,
                                  Damage< ElasticIsotropic >,
+                                 LayeredModel< ElasticIsotropic , DruckerPrager >,
                                  DruckerPragerExtended,
                                  ModifiedCamClay,
                                  DelftEgg,
@@ -156,6 +158,20 @@ struct ConstitutivePassThru< PorousSolidBase >
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
                                                                                        std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+/**
+ * Specialization for the LayeredModel models.
+ */
+template<>
+struct ConstitutivePassThru< LayeredModelBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< LayeredModel< ElasticIsotropic , DruckerPrager > >::execute( constitutiveRelation,
+                                                                                              std::forward< LAMBDA >( lambda ) );
   }
 };
 
