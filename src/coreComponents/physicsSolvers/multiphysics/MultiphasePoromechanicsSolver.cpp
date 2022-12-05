@@ -121,15 +121,16 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    poromechanicsKernels::MultiphaseKernelFactory kernelFactory( displacementDofNumber,
-                                                                 flowDofKey,
-                                                                 dofManager.rankOffset(),
-                                                                 gravityVectorData,
-                                                                 numComponents,
-                                                                 numPhases,
-                                                                 FlowSolverBase::viewKeyStruct::fluidNamesString(),
-                                                                 localMatrix,
-                                                                 localRhs );
+    poromechanicsKernels::MultiphasePoromechanicsKernelFactory
+    kernelFactory( displacementDofNumber,
+                   flowDofKey,
+                   dofManager.rankOffset(),
+                   numComponents,
+                   numPhases,
+                   localMatrix,
+                   localRhs,
+                   gravityVectorData,
+                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
     // Cell-based contributions
     solidMechanicsSolver()->getMaxForce() =

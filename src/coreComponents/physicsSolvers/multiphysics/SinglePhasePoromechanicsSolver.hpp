@@ -122,6 +122,7 @@ protected:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
+    constexpr static char const * isThermalString() { return "isThermal"; }
   };
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
@@ -131,6 +132,9 @@ protected:
 private:
 
   void createPreconditioner();
+
+  /// flag to determine whether or not this is a thermal simulation
+  integer m_isThermal;
 
 };
 

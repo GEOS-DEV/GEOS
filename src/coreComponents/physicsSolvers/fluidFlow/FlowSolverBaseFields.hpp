@@ -88,6 +88,14 @@ DECLARE_FIELD( temperature,
                WRITE_AND_READ,
                "Temperature" );
 
+DECLARE_FIELD( initialTemperature,
+               "initialTemperature",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Initial temperature" );
+
 DECLARE_FIELD( faceTemperature,
                "faceTemperature",
                array1d< real64 >,
