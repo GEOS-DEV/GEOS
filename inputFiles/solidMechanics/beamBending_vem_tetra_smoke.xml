@@ -31,7 +31,8 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="1"/>
+        order="1"
+          useVirtualElements="1"/>
     </FiniteElements>
   </NumericalMethods>
 
@@ -41,7 +42,7 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{ C3D8 }"
+      elementTypes="{ C3D4 }"
       xCoords="{ 0, 80 }"
       yCoords="{ 0, 8 }"
       zCoords="{ 0, 4 }"
