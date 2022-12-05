@@ -545,22 +545,38 @@ struct StressComputation
         }
 
         //Volume integral
-        for( localIndex j = 0; j < numNodesPerElem; ++j )
+        m_finiteElement.template computeFirstOrderStiffnessTermX(q, xLocal, [&] (int i, int j, real32 dfx1, real32 dfx2, real32 dfx3)
         {
-          for( localIndex i = 0; i < numNodesPerElem; ++i )
-          {
-            real32 dfx2 = detJ*gradN[j][0]*N[i];
-            real32 dfy2 = detJ*gradN[j][1]*N[i];
-            real32 dfz2 = detJ*gradN[j][2]*N[i];
-            auxx[i]+= dfx2*ux_np1[elemsToNodes[k][j]];
-            auyy[i]+= dfy2*uy_np1[elemsToNodes[k][j]];
-            auzz[i]+= dfz2*uz_np1[elemsToNodes[k][j]];
-            auxy[i]+= dfx2*uy_np1[elemsToNodes[k][j]]+dfy2*ux_np1[elemsToNodes[k][j]];
-            auxz[i]+= dfx2*uz_np1[elemsToNodes[k][j]]+dfz2*ux_np1[elemsToNodes[k][j]];
-            auyz[i]+= dfy2*uz_np1[elemsToNodes[k][j]]+dfz2*uy_np1[elemsToNodes[k][j]];
-          }
+            auxx[j]+= dfx1*ux_np1[elemsToNodes[k][i]];
+            auyy[j]+= dfx2*uy_np1[elemsToNodes[k][i]];
+            auzz[j]+= dfx3*uz_np1[elemsToNodes[k][i]];
+            auxy[j]+= dfx1*uy_np1[elemsToNodes[k][i]]+dfx2*ux_np1[elemsToNodes[k][i]];
+            auxz[j]+= dfx1*uz_np1[elemsToNodes[k][i]]+dfx3*ux_np1[elemsToNodes[k][i]];
+            auyz[j]+= dfx2*uz_np1[elemsToNodes[k][i]]+dfx3*uy_np1[elemsToNodes[k][i]];
 
-        }
+        } );
+
+        m_finiteElement.template computeFirstOrderStiffnessTermY(q, xLocal, [&] (int i, int j, real32 dfy1, real32 dfy2, real32 dfy3)
+        {
+            auxx[j]+= dfy1*ux_np1[elemsToNodes[k][i]];
+            auyy[j]+= dfy2*uy_np1[elemsToNodes[k][i]];
+            auzz[j]+= dfy3*uz_np1[elemsToNodes[k][i]];
+            auxy[j]+= dfy1*uy_np1[elemsToNodes[k][i]]+dfy2*ux_np1[elemsToNodes[k][i]];
+            auxz[j]+= dfy1*uz_np1[elemsToNodes[k][i]]+dfy3*ux_np1[elemsToNodes[k][i]];
+            auyz[j]+= dfy2*uz_np1[elemsToNodes[k][i]]+dfy3*uy_np1[elemsToNodes[k][i]];
+
+        } );
+
+        m_finiteElement.template computeFirstOrderStiffnessTermZ(q, xLocal, [&] (int i, int j, real32 dfz1, real32 dfz2, real32 dfz3)
+        {
+            auxx[j]+= dfz1*ux_np1[elemsToNodes[k][i]];
+            auyy[j]+= dfz2*uy_np1[elemsToNodes[k][i]];
+            auzz[j]+= dfz3*uz_np1[elemsToNodes[k][i]];
+            auxy[j]+= dfz1*uy_np1[elemsToNodes[k][i]]+dfz2*ux_np1[elemsToNodes[k][i]];
+            auxz[j]+= dfz1*uz_np1[elemsToNodes[k][i]]+dfz3*ux_np1[elemsToNodes[k][i]];
+            auyz[j]+= dfz2*uz_np1[elemsToNodes[k][i]]+dfz3*uy_np1[elemsToNodes[k][i]];
+
+        } );
 
         //Time integration
         for( localIndex i = 0; i < numNodesPerElem; ++i )
@@ -660,11 +676,6 @@ struct VelocityComputation
 
       for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
       {
-        real64 N[numNodesPerElem];
-        real64 gradN[ numNodesPerElem ][ 3 ];
-
-        FE_TYPE::calcN( q, N );
-        real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
         real32 uelemx[numNodesPerElem] = {0.0};
         real32 uelemy[numNodesPerElem] = {0.0};
@@ -674,19 +685,27 @@ struct VelocityComputation
         real32 flowz[numNodesPerElem] = {0.0};
 
         // Stiffness part
-        for( localIndex j = 0; j < numNodesPerElem; ++j )
+        m_finiteElement.template computeFirstOrderStiffnessTermX(q, xLocal, [&] (int i, int j, real32 dfx1, real32 dfx2, real32 dfx3)
         {
-          for( localIndex i = 0; i < numNodesPerElem; ++i )
-          {
-            real32 dfx = detJ*gradN[i][0]*N[j];
-            real32 dfy = detJ*gradN[i][1]*N[j];
-            real32 dfz = detJ*gradN[i][2]*N[j];
-            flowx[i] -= stressxx[k][j]*dfx + stressxy[k][j]*dfy + stressxz[k][j]*dfz;
-            flowy[i] -= stressxy[k][j]*dfx + stressyy[k][j]*dfy + stressyz[k][j]*dfz;
-            flowz[i] -= stressxz[k][j]*dfx + stressyz[k][j]*dfy + stresszz[k][j]*dfz;
-          }
+          flowx[i] -= stressxx[k][j]*dfx1 + stressxy[k][j]*dfx2 + stressxz[k][j]*dfx3;
+          flowy[i] -= stressxy[k][j]*dfx1 + stressyy[k][j]*dfx2 + stressyz[k][j]*dfx3;
+          flowz[i] -= stressxz[k][j]*dfx1 + stressyz[k][j]*dfx2 + stresszz[k][j]*dfx3;
 
-        }
+        } );
+
+        m_finiteElement.template computeFirstOrderStiffnessTermY(q, xLocal, [&] (int i, int j, real32 dfy1, real32 dfy2, real32 dfy3)
+        {
+          flowx[i] -= stressxx[k][j]*dfy1 + stressxy[k][j]*dfy2 + stressxz[k][j]*dfy3;
+          flowy[i] -= stressxy[k][j]*dfy1 + stressyy[k][j]*dfy2 + stressyz[k][j]*dfy3;
+          flowz[i] -= stressxz[k][j]*dfy1 + stressyz[k][j]*dfy2 + stresszz[k][j]*dfy3;
+        } );
+
+        m_finiteElement.template computeFirstOrderStiffnessTermZ(q, xLocal, [&] (int i, int j, real32 dfz1, real32 dfz2, real32 dfz3)
+        {
+          flowx[i] -= stressxx[k][j]*dfz1 + stressxy[k][j]*dfz2 + stressxz[k][j]*dfz3;
+          flowy[i] -= stressxy[k][j]*dfz1 + stressyy[k][j]*dfz2 + stressyz[k][j]*dfz3;
+          flowz[i] -= stressxz[k][j]*dfz1 + stressyz[k][j]*dfz2 + stresszz[k][j]*dfz3;
+        } );
 
         // Time update
         for( localIndex i = 0; i < numNodesPerElem; ++i )
