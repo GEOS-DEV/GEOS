@@ -33,6 +33,7 @@ TEST( LinearSolverParametersEnums, SolverType )
   ASSERT_EQ( "gmres", toString( EnumType::gmres ) );
   ASSERT_EQ( "fgmres", toString( EnumType::fgmres ) );
   ASSERT_EQ( "bicgstab", toString( EnumType::bicgstab ) );
+  ASSERT_EQ( "expBicgstab", toString( EnumType::expBicgstab ) );
   ASSERT_EQ( "preconditioner", toString( EnumType::preconditioner ) );
 }
 

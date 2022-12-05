@@ -213,6 +213,8 @@ void HypreVector::axpby( real64 const alpha,
                          HypreVector const & x,
                          real64 const beta )
 {
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( x.ready() );
   if( &x != this )
   {
     scale( beta );
@@ -221,6 +223,46 @@ void HypreVector::axpby( real64 const alpha,
   else
   {
     scale( alpha + beta );
+  }
+}
+
+void HypreVector::axpbypcz( real64 const alpha,
+                            HypreVector const & x,
+                            real64 const beta,
+                            HypreVector const & y,
+                            real64 const gamma )
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( x.ready() );
+  GEOSX_LAI_ASSERT( y.ready() );
+  if( ( &x != &y ) && ( &y != this ) )
+  {
+    GEOSX_LAI_ASSERT_EQ( localSize(), x.localSize() );
+    GEOSX_LAI_ASSERT_EQ( localSize(), y.localSize() );
+
+    arrayView1d< real64 > const my_values = m_values.toView();
+    arrayView1d< real64 const > const x_values = x.m_values.toViewConst();
+    arrayView1d< real64 const > const y_values = y.m_values.toViewConst();
+    forAll< hypre::execPolicy >( localSize(), [alpha, beta, gamma, my_values, x_values, y_values] GEOSX_HYPRE_DEVICE ( localIndex const i )
+    {
+      my_values[i] = alpha * x_values[i] + beta * y_values[i] + gamma * my_values[i];
+    } );
+  }
+  else if( ( &x != &y ) && ( &y == this ) )
+  {
+    axpby( alpha, x, beta + gamma );
+  }
+  else if( ( &x == &y ) && ( &y != this ) )
+  {
+    axpby( alpha + beta, x, gamma );
+  }
+  else if( ( &x == this ) && ( &y != this ) )
+  {
+    axpby( beta, y, alpha + gamma );
+  }
+  else
+  {
+    scale( alpha + beta + gamma );
   }
 }
 

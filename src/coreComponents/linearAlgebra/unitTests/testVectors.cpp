@@ -278,6 +278,43 @@ TYPED_TEST_P( VectorTest, dotProduct )
   EXPECT_DOUBLE_EQ( dp, x.globalSize() );
 }
 
+TYPED_TEST_P( VectorTest, nonBlockingDotProduct )
+{
+  using Vector = typename TypeParam::ParallelVector;
+
+  Vector x;
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
+
+  Vector y( x );
+  y.reciprocal();
+
+  std::future< real64 > request = x.iDot( y );
+
+  real64 const dp = request.get();
+  EXPECT_DOUBLE_EQ( dp, x.globalSize() );
+}
+
+TYPED_TEST_P( VectorTest, nonBlockingDotProductMultiple )
+{
+  using Vector = typename TypeParam::ParallelVector;
+
+  Vector x;
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
+
+  Vector y( x );
+  y.reciprocal();
+
+  Vector z( x );
+  z.reciprocal();
+  z.scale( 3.0 );
+
+  std::future< std::array< real64, 2 > > request = x.iDotMultiple( y, z );
+
+  std::array< real64, 2 > const dp = request.get();
+  EXPECT_DOUBLE_EQ( dp[0], x.globalSize() );
+  EXPECT_DOUBLE_EQ( dp[1], 3*x.globalSize() );
+}
+
 TYPED_TEST_P( VectorTest, axpy )
 {
   using Vector = typename TypeParam::ParallelVector;
@@ -307,6 +344,25 @@ TYPED_TEST_P( VectorTest, axpby )
   x.axpby( alpha, y, beta );
 
   compareVectors( x, y, false, ops::identity, ops::multiply{ alpha + beta } );
+}
+
+TYPED_TEST_P( VectorTest, axpbypcz )
+{
+  using Vector = typename TypeParam::ParallelVector;
+
+  real64 const alpha = 2.0;
+  real64 const beta = 3.0;
+  real64 const gamma = 4.0;
+
+  Vector z;
+  createAndAssemble< parallelDevicePolicy<> >( 3, z );
+
+  Vector x( z );
+  x.scale( alpha );
+  Vector y( z );
+  z.axpbypcz( 1.0, x, beta, y, gamma );
+
+  compareVectors( z, y, false, ops::identity, ops::multiply{ alpha + beta + gamma } );
 }
 
 TYPED_TEST_P( VectorTest, norm1 )
@@ -358,8 +414,11 @@ REGISTER_TYPED_TEST_SUITE_P( VectorTest,
                              scaleValues,
                              reciprocal,
                              dotProduct,
+                             nonBlockingDotProduct,
+                             nonBlockingDotProductMultiple,
                              axpy,
                              axpby,
+                             axpbypcz,
                              norm1,
                              norm2,
                              normInf );

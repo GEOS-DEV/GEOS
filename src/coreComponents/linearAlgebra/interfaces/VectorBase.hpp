@@ -23,6 +23,8 @@
 #include "common/MpiWrapper.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
+#include <future>
+
 namespace geosx
 {
 
@@ -214,6 +216,103 @@ protected:
    */
   virtual real64 dot( Vector const & vec ) const = 0;
 
+public:
+
+  /**
+   * @brief Local part of the dot product with the vector vec.
+   * @param vec vector to dot-product with
+   * @return local part of the dot product
+   */
+  real64 localDot( Vector const & vec ) const
+  {
+    GEOSX_LAI_ASSERT( ready() );
+    GEOSX_LAI_ASSERT( vec.ready() );
+    GEOSX_LAI_ASSERT_EQ( localSize(), vec.localSize() );
+
+    arrayView1d< real64 const > const my_values = values();
+    arrayView1d< real64 const > const vec_values = vec.values();
+
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > result( 0.0 );
+    forAll< parallelDevicePolicy<> >( localSize(), [result, my_values, vec_values] GEOSX_DEVICE ( localIndex const i )
+    {
+      result += my_values[i] * vec_values[i];
+    } );
+
+    return result.get();
+  }
+
+protected:
+
+  /**
+   * @brief Starts a nonblocking dot product computation with the vector vec.
+   * @param vec vector to dot-product with
+   * @return a future object managing the asynchronous dot product completion
+   * @note Each call to iDot must be paired with a call to std::future::get(),
+   *       which returns the dot product
+   */
+  std::future< real64 > iDot( Vector const & vec ) const
+  {
+    struct ReduceData
+    {
+      MPI_Request request{};
+      real64 value{};
+    };
+    std::unique_ptr< ReduceData > data = std::make_unique< ReduceData >();
+    data->value = localDot( vec );
+
+    MpiWrapper::iAllReduce( &data->value,
+                            &data->value,
+                            1,
+                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                            comm(),
+                            &data->request );
+
+    return std::async( std::launch::deferred, [data = std::move( data )]
+    {
+      MpiWrapper::wait( &data->request, MPI_STATUS_IGNORE );
+      return data->value;
+    } );
+  }
+
+  /**
+   * @brief Starts a nonblocking dot product computation with the vectors vecs.
+   * @tparam VECS variadic pack of vector types
+   * @param vecs vectors to dot-product with
+   * @return a future object managing the asynchronous dot products completion
+   * @note Each call to iDot must be paired with a call to std::future::get(), which
+   *       returns an std::array containing the dot products
+   */
+  template< typename ... VECS >
+  std::future< std::array< real64, sizeof...( VECS ) > > iDotMultiple( VECS const & ... vecs ) const
+  {
+    std::size_t constexpr numVecs = sizeof...( VECS );
+
+    struct ReduceData
+    {
+      MPI_Request request{};
+      std::array< real64, numVecs > values{};
+    };
+    std::unique_ptr< ReduceData > data = std::make_unique< ReduceData >();
+
+    LvArray::typeManipulation::forEachArg( [&, idx = 0]( Vector const & vec ) mutable
+    {
+      data->values[idx++] = localDot( vec );
+    }, vecs ... );
+
+    MpiWrapper::iAllReduce( data->values.data(),
+                            data->values.data(),
+                            data->values.size(),
+                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                            comm(),
+                            &data->request );
+
+    return std::async( std::launch::deferred, [data = std::move( data )]
+    {
+      MpiWrapper::wait( &data->request, MPI_STATUS_IGNORE );
+      return data->values;
+    } );
+  }
+
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
    * @param x vector to copy
@@ -239,6 +338,20 @@ protected:
   virtual void axpby( real64 const alpha,
                       Vector const & x,
                       real64 const beta ) = 0;
+
+  /**
+   * @brief Update vector <tt>z</tt> as <tt>z</tt> = <tt>alpha*x + beta*y + gamma*z</tt>.
+   * @param alpha scaling factor for first added vector
+   * @param x first vector to add
+   * @param beta scaling factor for second added vector
+   * @param y second vector to add
+   * @param gamma scaling factor for self vector
+   */
+  virtual void axpbypcz( real64 const alpha,
+                         Vector const & x,
+                         real64 const beta,
+                         Vector const & y,
+                         real64 const gamma ) = 0;
 
   /**
    * @brief Compute the component-wise multiplication <tt>y</tt> = <tt>v * x</tt>.

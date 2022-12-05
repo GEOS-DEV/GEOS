@@ -42,6 +42,7 @@ struct LinearSolverParameters
     gmres,         ///< GMRES
     fgmres,        ///< Flexible GMRES
     bicgstab,      ///< BiCGStab
+    expBicgstab,   ///< Experimental biCGStab
     preconditioner ///< Preconditioner only
   };
 
@@ -259,6 +260,7 @@ ENUM_STRINGS( LinearSolverParameters::SolverType,
               "gmres",
               "fgmres",
               "bicgstab",
+              "expBicgstab",
               "preconditioner" );
 
 /// Declare strings associated with enumeration values.

@@ -13,7 +13,7 @@
  */
 
 /**
- * @file GMRESsolver.cpp
+ * @file GmresSolver.cpp
  */
 
 #include "GmresSolver.hpp"

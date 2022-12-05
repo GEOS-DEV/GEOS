@@ -88,6 +88,13 @@ public:
   using VectorBase::open;
   using VectorBase::zero;
   using VectorBase::values;
+  using VectorBase::iDot;
+  /// @cond DO_NOT_DOCUMENT
+  //  Wordaround to pass testDoxygenCheck since cannot avoid weird
+  //  warning while forwarding this function
+  //
+  using VectorBase::iDotMultiple;
+  /// @endcond
 
   /**
    * @copydoc VectorBase<EpetraVector>::created
@@ -121,6 +128,12 @@ public:
   virtual void axpby( real64 const alpha,
                       EpetraVector const & x,
                       real64 const beta ) override;
+
+  virtual void axpbypcz( real64 const alpha,
+                         EpetraVector const & x,
+                         real64 const beta,
+                         EpetraVector const & y,
+                         real64 const gamma ) override;
 
   virtual void pointwiseProduct( EpetraVector const & x,
                                  EpetraVector & y ) const override;

@@ -13,7 +13,7 @@
  */
 
 /**
- * @file BiCGSTABsolver.cpp
+ * @file BicgstabSolver.cpp
  *
  */
 

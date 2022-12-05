@@ -20,6 +20,11 @@
 #define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORVIEW_HPP_
 
 #include "common/common.hpp"
+#include "common/MpiWrapper.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
+
+#include <future>
+#include <numeric>
 
 namespace geosx
 {
@@ -89,6 +94,12 @@ public:
   void zero();
 
   /**
+   * @brief Set vector elements to a constant value.
+   * @param value value to set vector elements to
+   */
+  void set( real64 const value );
+
+  /**
    * @brief Set vector elements to random entries.
    * @param seed the random seed to use
    */
@@ -100,6 +111,27 @@ public:
    * @return the dot product
    */
   real64 dot( BlockVectorView const & x ) const;
+
+  /**
+   * @brief Starts a nonblocking dot product computation with the block vector x.
+   * @param x the block vector to dot-product with
+   * @return a future object managing the asynchronous dot product completion
+   * @note Each call to iDot must be paired with a call to std::future::get(), which
+   *       returns the dot product
+   */
+  std::future< real64 > iDot( BlockVectorView const & sum ) const;
+
+
+  /**
+   * @brief Starts a nonblocking dot product computation with the block vectors vecs.
+   * @tparam VECS variadic pack of vector types to dot product with
+   * @param vecs vectors to dot-product with
+   * @return a future object managing the asynchronous dot products completion
+   * @note Each call to iDot must be paired with a call to std::future::get(), which
+   *       returns an std::array containing the dot products
+   */
+  template< typename ... VECS >
+  std::future< std::array< real64, sizeof...( VECS ) > > iDotMultiple( VECS const & ... dotProducts ) const;
 
   /**
    * @brief 2-norm of the block vector.
@@ -133,6 +165,22 @@ public:
   void axpby( real64 const alpha,
               BlockVectorView const & x,
               real64 const beta );
+
+  /**
+   * @brief Update vector <tt>z</tt> as <tt>z = alpha*x + beta*y + gamma*z</tt>.
+   * @note The naming convention follows the logic of the BLAS library.
+   *
+   * @param alpha scaling factor for first added vector
+   * @param x first vector to add
+   * @param beta scaling factor for second added vector
+   * @param y second vector to add
+   * @param gamma scaling factor for self vector
+   */
+  void axpbypcz( real64 const alpha,
+                 BlockVectorView const & x,
+                 real64 const beta,
+                 BlockVectorView const & y,
+                 real64 const gamma );
 
   ///@}
 
@@ -285,6 +333,15 @@ void BlockVectorView< VECTOR >::zero()
 }
 
 template< typename VECTOR >
+void BlockVectorView< VECTOR >::set( real64 const value )
+{
+  for( localIndex i = 0; i < blockSize(); i++ )
+  {
+    block( i ).set( value );
+  }
+}
+
+template< typename VECTOR >
 void BlockVectorView< VECTOR >::rand( unsigned const seed )
 {
   for( localIndex i = 0; i < blockSize(); i++ )
@@ -303,6 +360,58 @@ real64 BlockVectorView< VECTOR >::dot( BlockVectorView const & src ) const
     accum += block( i ).dot( src.block( i ) );
   }
   return accum;
+}
+
+template< typename VECTOR >
+std::future< real64 >
+BlockVectorView< VECTOR >::iDot( BlockVectorView const & vec ) const
+{
+  GEOSX_LAI_ASSERT_EQ( blockSize(), vec.blockSize() );
+  std::vector< std::future< real64 > > results;
+  for( localIndex i = 0; i < blockSize(); ++i )
+  {
+    results.emplace_back( block( i ).iDot( vec.block( i ) ) );
+  }
+
+  return std::async( std::launch::deferred, [results = std::move( results )]() mutable
+  {
+    return std::accumulate( results.begin(), results.end(), 0.0,
+                            []( real64 const sum, std::future< real64 > & f ){ return sum + f.get(); } );
+  } );
+}
+
+template< typename VECTOR >
+template< typename ... VECS >
+std::future< std::array< real64, sizeof...( VECS ) > >
+BlockVectorView< VECTOR >::iDotMultiple( VECS const & ... vecs ) const
+{
+  LvArray::typeManipulation::forEachArg( [&]( BlockVectorView< VECTOR > const & vec )
+  {
+   GEOSX_LAI_ASSERT_EQ( blockSize(), vec.blockSize() );
+  }, vecs ... );
+
+  std::size_t constexpr numVecs = sizeof...( VECS );
+  using DotProducts = std::array< real64, numVecs >;
+
+  std::vector< std::future< DotProducts > > results;
+  for( localIndex i = 0; i < blockSize(); ++i )
+  {
+    results.emplace_back( block( i ).iDotMultiple( vecs.block( i )... ) );
+  }
+
+  return std::async( std::launch::deferred, [results = std::move( results )]() mutable
+  {
+    return std::accumulate( results.begin(), results.end(), DotProducts{},
+                            []( DotProducts dotProducts, std::future< DotProducts > & f )
+    {
+      std::array< real64, numVecs > const subArrayDotProducts = f.get();
+      for( std::size_t i = 0; i < numVecs; ++i )
+      {
+        dotProducts[i] += subArrayDotProducts[i];
+      }
+      return dotProducts;
+    } );
+  } );
 }
 
 template< typename VECTOR >
@@ -348,6 +457,21 @@ void BlockVectorView< VECTOR >::axpby( real64 const alpha,
   for( localIndex i = 0; i < blockSize(); i++ )
   {
     block( i ).axpby( alpha, x.block( i ), beta );
+  }
+}
+
+template< typename VECTOR >
+void BlockVectorView< VECTOR >::axpbypcz( real64 const alpha,
+                                          BlockVectorView const & x,
+                                          real64 const beta,
+                                          BlockVectorView const & y,
+                                          real64 const gamma )
+{
+  GEOSX_LAI_ASSERT_EQ( blockSize(), x.blockSize() );
+  GEOSX_LAI_ASSERT_EQ( blockSize(), y.blockSize() );
+  for( localIndex i = 0; i < blockSize(); i++ )
+  {
+    block( i ).axpbypcz( alpha, x.block( i ), beta, y.block( i ), gamma );
   }
 }
 

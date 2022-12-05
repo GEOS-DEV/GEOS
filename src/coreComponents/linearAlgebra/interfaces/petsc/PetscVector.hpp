@@ -99,6 +99,10 @@ public:
   using VectorBase::open;
   using VectorBase::zero;
   using VectorBase::values;
+  using VectorBase::iDot;
+  /// @cond DO_NOT_DOCUMENT
+  using VectorBase::iDotMultiple;
+  /// @endcond
 
   /**
    * @copydoc VectorBase<PetscVector>::created
@@ -132,6 +136,12 @@ public:
   virtual void axpby( real64 const alpha,
                       PetscVector const & x,
                       real64 const beta ) override;
+
+  virtual void axpbypcz( real64 const alpha,
+                         PetscVector const & x,
+                         real64 const beta,
+                         PetscVector const & y,
+                         real64 const gamma ) override;
 
   virtual void pointwiseProduct( PetscVector const & x,
                                  PetscVector & y ) const override;

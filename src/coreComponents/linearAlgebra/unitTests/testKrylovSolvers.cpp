@@ -41,7 +41,23 @@ LinearSolverParameters params_BiCGSTAB()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 500;
+  //////////
+  parameters.logLevel = 2;
+  //////////
   parameters.solverType = geosx::LinearSolverParameters::SolverType::bicgstab;
+  return parameters;
+}
+
+LinearSolverParameters params_ExpBiCGSTAB()
+{
+  LinearSolverParameters parameters;
+  parameters.krylov.relTolerance = 1e-8;
+  parameters.krylov.maxIterations = 500;
+  parameters.krylov.maxRestart = 40;
+  //////////
+  parameters.logLevel = 2;
+  //////////
+  parameters.solverType = geosx::LinearSolverParameters::SolverType::expBicgstab;
   return parameters;
 }
 
@@ -81,7 +97,8 @@ protected:
 
   void test( LinearSolverParameters const & params )
   {
-    sol_true.rand( 1984 );
+    //sol_true.rand( 1984 );
+    sol_true.set( 0.2 );
     sol_comp.zero();
     matrix.apply( sol_true, rhs_true );
 
@@ -122,7 +139,7 @@ protected:
   void SetUp() override
   {
     // Compute matrix and preconditioner
-    globalIndex constexpr n = 100;
+    globalIndex constexpr n = 100; //5
     geosx::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
     this->precond.setup( this->matrix );
 
@@ -148,6 +165,11 @@ TYPED_TEST_P( KrylovSolverTest, BiCGSTAB )
   this->test( params_BiCGSTAB() );
 }
 
+TYPED_TEST_P( KrylovSolverTest, ExpBiCGSTAB )
+{
+  this->test( params_ExpBiCGSTAB() );
+}
+
 TYPED_TEST_P( KrylovSolverTest, GMRES )
 {
   this->test( params_GMRES() );
@@ -156,6 +178,7 @@ TYPED_TEST_P( KrylovSolverTest, GMRES )
 REGISTER_TYPED_TEST_SUITE_P( KrylovSolverTest,
                              CG,
                              BiCGSTAB,
+                             ExpBiCGSTAB,
                              GMRES );
 
 #ifdef GEOSX_USE_TRILINOS
@@ -238,6 +261,11 @@ TYPED_TEST_P( KrylovSolverBlockTest, BiCGSTAB )
   this->test( params_BiCGSTAB() );
 }
 
+//TYPED_TEST_P( KrylovSolverBlockTest, ExpBiCGSTAB )
+//{
+//  this->test( params_ExpBiCGSTAB() );
+//}
+
 TYPED_TEST_P( KrylovSolverBlockTest, GMRES )
 {
   this->test( params_GMRES() );
@@ -246,6 +274,7 @@ TYPED_TEST_P( KrylovSolverBlockTest, GMRES )
 REGISTER_TYPED_TEST_SUITE_P( KrylovSolverBlockTest,
                              CG,
                              BiCGSTAB,
+                             //ExpBiCGSTAB,
                              GMRES );
 
 #ifdef GEOSX_USE_TRILINOS
