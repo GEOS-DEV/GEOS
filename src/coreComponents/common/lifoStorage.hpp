@@ -18,11 +18,16 @@
 #include <future>
 #include <condition_variable>
 #include <camp/camp.hpp>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "common/fixedSizeDeque.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/TimingMacros.hpp"
 
+#define LIFO_MARK_FUNCTION if (std::getenv("LIFO_TRACE_ON") != NULL) GEOSX_MARK_FUNCTION;
+#define LIFO_MARK_SCOPE(a)  if (std::getenv("LIFO_TRACE_ON") != NULL) GEOSX_MARK_SCOPE(a);
 namespace geosx
 {
 
@@ -53,14 +58,23 @@ public:
    */
   camp::resources::Event emplaceFront(arrayView1d< T > array)
   {
-   GEOSX_MARK_FUNCTION;
+   LIFO_MARK_FUNCTION;
     camp::resources::Event e;
     {
-      std::lock( m_emplaceMutex, m_frontMutex );
+      {
+        LIFO_MARK_SCOPE(waitingForMutex);
+        std::lock( m_emplaceMutex, m_frontMutex );
+      }
       std::unique_lock< std::mutex > l1( m_emplaceMutex, std::adopt_lock );
       std::unique_lock< std::mutex > l2( m_frontMutex, std::adopt_lock );
-      m_notFullCond.wait( l1, [ this ]  { return ! this->full(); } );
-      e = fixedSizeDeque<T, int>::emplace_front( array.toSliceConst() );
+      {
+        LIFO_MARK_SCOPE(waitingForBuffer);
+        m_notFullCond.wait( l1, [ this ]  { return ! this->full(); } );
+      }
+      {
+        LIFO_MARK_SCOPE(copy);
+        e = fixedSizeDeque<T, int>::emplace_front( array.toSliceConst() );
+      }
     }
     m_notEmptyCond.notify_all();
     return e;
@@ -74,20 +88,28 @@ public:
    */
   camp::resources::Event popFront(arrayView1d< T > array)
   {
-    GEOSX_MARK_FUNCTION;
+    LIFO_MARK_FUNCTION;
     camp::resources::Event e;
     {
-      std::lock( m_popMutex, m_frontMutex );
+      {
+        LIFO_MARK_SCOPE(waitingForMutex);
+        std::lock( m_popMutex, m_frontMutex );
+      }
       std::unique_lock< std::mutex > l1( m_popMutex, std::adopt_lock );
       std::unique_lock< std::mutex > l2( m_frontMutex, std::adopt_lock );
-      m_notEmptyCond.wait( l1, [ this ]  { return ! this->empty(); } );
+      {
+        LIFO_MARK_SCOPE(waitingForBuffer);
+        m_notEmptyCond.wait( l1, [ this ]  { return ! this->empty(); } );
+      }
       // deadlock can occur if frontMutex is taken after an
       // emplaceMutex (inside pushAsync) but this is prevented by the
       // pushWait() in popAsync.
-
-      camp::resources::Resource r = this->getStream();
-      e = LvArray::memcpy( r, array.toSlice(), this->front() );
-      this->pop_front();
+      {
+        LIFO_MARK_SCOPE(copy);
+        camp::resources::Resource r = this->getStream();
+        e = LvArray::memcpy( r, array.toSlice(), this->front() );
+        this->pop_front();
+      }
     }
     m_notFullCond.notify_all();
     return e;
@@ -100,15 +122,22 @@ public:
    */
   void emplaceFrontFromBack( fixedSizeDequeAndMutexes< T > &q2 )
   {
-    GEOSX_MARK_FUNCTION;
+    LIFO_MARK_FUNCTION;
     {
       std::lock( m_emplaceMutex, m_frontMutex, q2.m_popMutex, q2.m_backMutex );
       std::unique_lock< std::mutex > lockQ1Emplace( m_emplaceMutex, std::adopt_lock );
       std::unique_lock< std::mutex > lockQ1Front( m_frontMutex, std::adopt_lock );
       std::unique_lock< std::mutex > lockQ2Pop( q2.m_popMutex, std::adopt_lock );
       std::unique_lock< std::mutex > lockQ2Back( q2.m_backMutex, std::adopt_lock );
-      m_notFullCond.wait( lockQ1Emplace, [ this ]  { return !this->full(); } );
-      q2.m_notEmptyCond.wait( lockQ2Pop, [ &q2 ] { return !q2.empty(); } );
+      {
+        LIFO_MARK_SCOPE(WaitForBufferToEmplace);
+        m_notFullCond.wait( lockQ1Emplace, [ this ]  { return !this->full(); } );
+      }
+      {
+        LIFO_MARK_SCOPE(WaitForBufferToPop);
+        q2.m_notEmptyCond.wait( lockQ2Pop, [ &q2 ] { return !q2.empty(); } );
+      }
+      LIFO_MARK_SCOPE(Transfert);
       this->emplace_front( q2.back() ).wait();
       q2.pop_back();
     }
@@ -123,7 +152,7 @@ public:
    */
   void emplaceBackFromFront( fixedSizeDequeAndMutexes< T > &q2 )
   {
-    GEOSX_MARK_FUNCTION;
+    LIFO_MARK_FUNCTION;
     {
       std::lock( q2.m_frontMutex, q2.m_popMutex, m_emplaceMutex, m_backMutex );
       std::unique_lock< std::mutex > lockQ1Emplace( m_emplaceMutex, std::adopt_lock );
@@ -167,8 +196,12 @@ private:
 
   // Events associated to ith  copies to device buffer
   std::vector<camp::resources::Event> m_pushToDeviceEvents;
+  // Futures associated to push to host in case we have no device buffers
+  std::vector< std::future< void > > m_pushToHostFutures;
   // Events associated to ith  copies from device buffer
   std::vector<camp::resources::Event> m_popFromDeviceEvents;
+  // Futures associated to pop from host in case we have no device buffers
+  std::vector< std::future< void > > m_popFromHostFutures;
 
   /// condition used to tell m_worker queue has been filled or processed is stopped.
   std::condition_variable m_task_queue_not_empty_cond[2];
@@ -200,7 +233,10 @@ public:
     m_deviceDeque( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda),
     m_hostDeque( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host ),
     m_bufferCount( 0 ), m_bufferOnDiskCount( 0 ),
-    m_pushToDeviceEvents( maxNumberOfBuffers ), m_popFromDeviceEvents( maxNumberOfBuffers )
+    m_pushToDeviceEvents( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 ),
+    m_pushToHostFutures( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers ),
+    m_popFromDeviceEvents( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 ),
+    m_popFromHostFutures( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers )
   {
     m_worker[0] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 0 );
     m_worker[1] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 1 );
@@ -235,27 +271,51 @@ public:
    */
   void pushAsync( arrayView1d< T > array )
   {
-    GEOSX_MARK_FUNCTION;
+    LIFO_MARK_FUNCTION;
     //To be sure 2 pushes are not mixed 
     pushWait();
     int id = m_bufferCount++;
-    GEOSX_ERROR_IF( m_deviceDeque.capacity() == 0,
-                   "Cannot save on a Lifo without device storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
     GEOSX_ERROR_IF( m_hostDeque.capacity() == 0,
                    "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
 
-    m_pushToDeviceEvents[id] = m_deviceDeque.emplaceFront( array );
-
-    if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() )
+    if ( m_deviceDeque.capacity() > 0 )
     {
-      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::pushAddTasks );
-      // This buffer will go to host memory, and maybe on disk
-      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this, id ) );
+      m_pushToDeviceEvents[id] = m_deviceDeque.emplaceFront( array );
+
+      if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() )
+      {
+        LIFO_MARK_SCOPE( geosx::lifoStorage<T>::pushAddTasks );
+        // This buffer will go to host memory, and maybe on disk
+        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this, id ) );
+        std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
+        m_task_queue[0].emplace_back( std::move( task ) );
+        lock.unlock();
+        m_task_queue_not_empty_cond[0].notify_all();
+      }
+    }
+    else
+    {
+      std::packaged_task< void() > task( std::bind( [ this ] ( int id, arrayView1d< T > array ) {
+        m_hostDeque.emplaceFront( array );
+
+        if( m_maxNumberOfBuffers - id > m_hostDeque.capacity() )
+        {
+          LIFO_MARK_SCOPE( geosx::lifoStorage<T>::pushAddTasks );
+          // This buffer will go to host memory, and maybe on disk
+          std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this, id) );
+          std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
+          m_task_queue[1].emplace_back( std::move( task ) );
+          lock.unlock();
+          m_task_queue_not_empty_cond[1].notify_all();
+        }
+      }, id, array ) );
+      m_pushToHostFutures[id] = task.get_future();
       std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
       m_task_queue[0].emplace_back( std::move( task ) );
       lock.unlock();
       m_task_queue_not_empty_cond[0].notify_all();
     }
+
   }
 
   /**
@@ -263,8 +323,19 @@ public:
    */
   void pushWait()
   {
-    GEOSX_MARK_FUNCTION;
-    if( m_bufferCount > 0 ) m_pushToDeviceEvents[m_bufferCount-1].wait();
+    LIFO_MARK_FUNCTION;
+
+    if ( m_bufferCount > 0 )
+    {
+      if( m_deviceDeque.capacity() > 0 )
+      {
+        m_pushToDeviceEvents[m_bufferCount-1].wait();
+      }
+      else
+      {
+        m_pushToHostFutures[m_bufferCount-1].wait();
+      }
+    }
   }
 
   /**
@@ -274,7 +345,7 @@ public:
    */
   void push( arrayView1d< T > array )
   {
-    GEOSX_MARK_FUNCTION;
+    LIFO_MARK_FUNCTION;
     pushAsync( array );
     pushWait();
   }
@@ -286,19 +357,44 @@ public:
    */
   void popAsync( arrayView1d< T > array )
   {
-    GEOSX_MARK_FUNCTION;
+    LIFO_MARK_FUNCTION;
     //wait the last push to avoid race condition
     pushWait();
     // Ensure last pop is finished
     popWait();
     int id = --m_bufferCount;
-    m_popFromDeviceEvents[id] = m_deviceDeque.popFront( array );
-
-    if( id >= m_deviceDeque.capacity() )
+    if ( m_deviceDeque.capacity() > 0 )
     {
-      GEOSX_MARK_SCOPE( geosx::lifoStorage<T>::popAddTasks );
-      // Trigger pull one buffer from host, and maybe from disk
-      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this, id - m_deviceDeque.capacity() ) );
+      m_popFromDeviceEvents[id] = m_deviceDeque.popFront( array );
+
+      if( id >= m_deviceDeque.capacity() )
+      {
+        LIFO_MARK_SCOPE( geosx::lifoStorage<T>::popAddTasks );
+        // Trigger pull one buffer from host, and maybe from disk
+        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this, id - m_deviceDeque.capacity() ) );
+        std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
+        m_task_queue[0].emplace_back( std::move( task ) );
+        lock.unlock();
+        m_task_queue_not_empty_cond[0].notify_all();
+      }
+    }
+    else
+    {
+      std::packaged_task< void() > task( std::bind ( [ this ] (int id, arrayView1d< T > array ) {
+        m_hostDeque.popFront( array );
+
+        if( id >= m_hostDeque.capacity() )
+        {
+          LIFO_MARK_SCOPE( geosx::lifoStorage<T>::popAddTasks );
+          // Trigger pull one buffer from host, and maybe from disk
+          std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this, id  - m_hostDeque.capacity() ) );
+          std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
+          m_task_queue[1].emplace_back( std::move( task ) );
+          lock.unlock();
+          m_task_queue_not_empty_cond[1].notify_all();
+        }
+     }, id, array ) );
+      m_popFromHostFutures[id] = task.get_future();
       std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
       m_task_queue[0].emplace_back( std::move( task ) );
       lock.unlock();
@@ -311,8 +407,18 @@ public:
    */
   void popWait()
   {
-    GEOSX_MARK_FUNCTION;
-    if( m_bufferCount < m_maxNumberOfBuffers) cudaEventSynchronize( m_popFromDeviceEvents[m_bufferCount].get< camp::resources::CudaEvent >().getCudaEvent_t() );
+    LIFO_MARK_FUNCTION;
+    if( m_bufferCount < m_maxNumberOfBuffers )
+    {
+      if ( m_deviceDeque.capacity() > 0 )
+      {
+        cudaEventSynchronize( m_popFromDeviceEvents[m_bufferCount].get< camp::resources::CudaEvent >().getCudaEvent_t() );
+      }
+      else
+      {
+        m_popFromHostFutures[m_bufferCount].wait();
+      }
+    }
   }
 
   /**
@@ -322,7 +428,7 @@ public:
    */
   void pop( arrayView1d< T > array )
   {
-    GEOSX_MARK_FUNCTION;
+    LIFO_MARK_FUNCTION;
     popAsync( array );
     popWait();
   }
@@ -337,7 +443,7 @@ private:
    */
   void deviceToHost( int id )
   {
-    GEOSX_MARK_FUNCTION;
+    LIFO_MARK_FUNCTION;
     // The copy to host will only start when the data is copied on device buffer
     m_hostDeque.getStream().wait_for( const_cast< camp::resources::Event * >( &m_pushToDeviceEvents[id] ) );
     m_hostDeque.emplaceFrontFromBack( m_deviceDeque );
@@ -360,7 +466,7 @@ private:
    */
   void hostToDisk( int id )
   {
-    GEOSX_MARK_FUNCTION;
+    LIFO_MARK_FUNCTION;
     {
       std::lock( m_hostDeque.m_popMutex, m_hostDeque.m_backMutex );
       std::unique_lock< std::mutex > l1( m_hostDeque.m_popMutex, std::adopt_lock );
@@ -378,7 +484,7 @@ private:
    */
   void hostToDevice( int id )
   {
-    GEOSX_MARK_FUNCTION;
+    LIFO_MARK_FUNCTION;
     m_hostDeque.getStream().wait_for( const_cast< camp::resources::Event * >( &m_popFromDeviceEvents[ id + m_deviceDeque.capacity() ] ) );
     m_deviceDeque.emplaceBackFromFront( m_hostDeque );
 
@@ -401,6 +507,7 @@ private:
    */
   void diskToHost( int id )
   {
+    LIFO_MARK_FUNCTION;
     {
       std::lock( m_hostDeque.m_emplaceMutex, m_hostDeque.m_backMutex );
       std::unique_lock< std::mutex > l1( m_hostDeque.m_emplaceMutex, std::adopt_lock );
@@ -411,6 +518,17 @@ private:
     }
     m_hostDeque.m_notEmptyCond.notify_all();
   }
+  /**
+   * Checks if a directory exists.
+   *
+   * @param dirName Directory name to check existence of.
+   * @return true is dirName exists and is a directory.
+   */
+  bool dirExists( const std::string& dirName )
+  {
+    struct stat buffer;
+    return stat( dirName.c_str(), &buffer ) == 0;
+  }
 
   /**
    * Write data on disk
@@ -420,23 +538,24 @@ private:
    */
   void writeOnDisk( const T * d, int id )
   {
-    GEOSX_MARK_FUNCTION;
+    LIFO_MARK_FUNCTION;
 
     std::ofstream outfile;
 
     int const rank = MpiWrapper::initialized()?MpiWrapper::commRank( MPI_COMM_GEOSX ):0;
     std::string fileName = GEOSX_FMT( "{}_{:08}_{:04}.dat", m_name, id, rank );
     int lastDirSeparator = fileName.find_last_of( "/\\" );
-    if ( string::npos != lastDirSeparator )
-      makeDirsForPath( fileName.substr( 0,  lastDirSeparator ) );
-    std::ofstream wf( fileName, std::ios::out | std::ios::binary );
-    GEOSX_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
-                    "Could not open file "<< fileName << " for writting: " << strerror( errno ) );
-    if( wf )
-      wf.write( (char *)d, m_bufferSize );
-    GEOSX_ERROR_IF( wf.bad() || wf.fail(),
-                    "An error occured while writting "<< fileName << ": " << strerror( errno ) );
-    wf.close();
+    std::string dirName = fileName.substr( 0,  lastDirSeparator );
+    if ( string::npos != lastDirSeparator && !dirExists( dirName ))
+      makeDirsForPath( dirName );
+    {
+      LIFO_MARK_SCOPE(ofstreamWrite);
+      const int fileDesc = open( fileName.c_str(), O_CREAT | O_WRONLY | O_DIRECT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH );
+      GEOSX_ERROR_IF( fileDesc == -1,
+                      "Could not open file "<< fileName << " for writting: " << strerror( errno ) );
+      write( fileDesc, (char *)d, m_bufferSize );
+      close( fileDesc );
+    }
   }
 
   /**
@@ -447,13 +566,14 @@ private:
    */
   void readOnDisk( T * d, int id )
   {
+    LIFO_MARK_FUNCTION;
     int const rank = MpiWrapper::initialized()?MpiWrapper::commRank( MPI_COMM_GEOSX ):0;
     std::string fileName = GEOSX_FMT( "{}_{:08}_{:04}.dat", m_name, id, rank );
-    std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-    GEOSX_ERROR_IF( !wf,
+    const int fileDesc = open( fileName.c_str(), O_RDONLY | O_DIRECT );
+    GEOSX_ERROR_IF( fileDesc == -1,
                     "Could not open file "<< fileName << " for reading: " << strerror( errno ) );
-    wf.read( (char *)d, m_bufferSize );
-    wf.close();
+    read( fileDesc, (char *)d, m_bufferSize );
+    close( fileDesc );
     remove( fileName.c_str() );
   }
 
@@ -464,13 +584,22 @@ private:
    */
   void wait_and_consume_tasks(int queueId)
   {
+    LIFO_MARK_FUNCTION;
     while( m_continue )
     {
       std::unique_lock< std::mutex > lock( m_task_queue_mutex[queueId] );
-      m_task_queue_not_empty_cond[queueId].wait( lock, [ this, &queueId ] { return !( m_task_queue[queueId].empty()  && m_continue ); } );
+      {
+        LIFO_MARK_SCOPE(waitForTask);
+        m_task_queue_not_empty_cond[queueId].wait( lock, [ this, &queueId ] { return !( m_task_queue[queueId].empty()  && m_continue ); } );
+      }
       if( m_continue == false ) break;
-      m_task_queue[queueId].front()();
+      std::packaged_task< void() > task( std::move( m_task_queue[queueId].front() ) );
       m_task_queue[queueId].pop_front();
+      lock.unlock();
+      {
+        LIFO_MARK_SCOPE(runningTask);
+        task();
+      }
     }
   }
 };

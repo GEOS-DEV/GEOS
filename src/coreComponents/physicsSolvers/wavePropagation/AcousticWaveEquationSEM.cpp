@@ -982,6 +982,8 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
       if ( NULL == std::getenv("DISABLE_LIFO") )
       {
+        // Need to tell LvArray data is on GPU to avoir HtoD copy
+        p_dt2.move( MemorySpace::cuda, false );
         m_lifo->pushAsync( p_dt2 );
       }
       else
@@ -990,12 +992,14 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
         p_dt2.move( MemorySpace::host, false );
         int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
         std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
+        const int fileDesc = open( fileName.c_str(), O_CREAT | O_WRONLY | O_DIRECT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH );
+
         std::ofstream wf( fileName, std::ios::out | std::ios::binary );
-        GEOSX_THROW_IF( !wf,
+        GEOSX_THROW_IF( fileDesc == -1,
                         "Could not open file "<< fileName << " for writting",
                         InputError );
-        wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
-        wf.close();
+        write( fileDesc, (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+        close( fileDesc );
         GEOSX_THROW_IF( !wf.good(),
                         "An error occured while writting "<< fileName,
                         InputError );
@@ -1050,14 +1054,13 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 
         int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
         std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
-        std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-        GEOSX_THROW_IF( !wf,
-                        "Could not open file "<< fileName << " for reading",
-                        InputError );
+        const int fileDesc = open( fileName.c_str(), O_RDONLY | O_DIRECT );
+        GEOSX_ERROR_IF( fileDesc == -1,
+                        "Could not open file "<< fileName << " for reading: " << strerror( errno ) );
         // maybe better with registerTouch()
         p_dt2.move( MemorySpace::host, true );
-        wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
-        wf.close();
+        read( fileDesc, (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+        close( fileDesc );
         remove( fileName.c_str() );
       }
       elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,

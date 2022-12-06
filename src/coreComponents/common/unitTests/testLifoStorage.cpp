@@ -66,12 +66,8 @@ using namespace geosx;
 
 
 template< typename POLICY >
-void testLifoStorage( )
+void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfElementsOnHost, int totalNumberOfBuffers )
 {
-  int elemCnt = 10;
-  int numberOfElementsOnDevice = 2;
-  int numberOfElementsOnHost = 3;
-  int totalNumberOfBuffers = 10;
 
   array1d< float > array( elemCnt );
   array.move( RAJAHelper< POLICY >::space );
@@ -97,13 +93,8 @@ void testLifoStorage( )
 }
 
 template< typename POLICY >
-void testLifoStorageAsync( )
+void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int numberOfElementsOnHost, int totalNumberOfBuffers )
 {
-  int elemCnt = 10;
-  int numberOfElementsOnDevice = 2;
-  int numberOfElementsOnHost = 3;
-  int totalNumberOfBuffers = 10;
-
   array1d< float > array( elemCnt );
   array.move( RAJAHelper< POLICY >::space );
   lifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
@@ -130,26 +121,36 @@ void testLifoStorageAsync( )
 }
 
 
-TEST( LifoStorageTest, LifoStorageHost )
+TEST( LifoStorageTest, LifoStorageBufferOnHost )
 {
-  testLifoStorage< serialPolicy >( );
+  testLifoStorage< serialPolicy >( 10, 2, 3, 10 );
+}
+
+TEST( LifoStorageTest, LifoStorageBufferOnHostNoDeviceBuffer )
+{
+  testLifoStorage< serialPolicy >( 10, 0, 3, 10 );
 }
 
 
-TEST( LifoStorageTest, LifoStorageCUDA )
+TEST( LifoStorageTest, LifoStorageBufferOnCUDA )
 {
-  testLifoStorage< parallelDevicePolicy< > >( );
+  testLifoStorage< parallelDevicePolicy< > >( 10, 2, 3, 10 );
 }
 
-TEST( LifoStorageTest, LifoStorageAsyncHost )
+TEST( LifoStorageTest, LifoStorageBufferOnCUDANoDeviceBuffer )
 {
-  testLifoStorageAsync< serialPolicy >( );
+  testLifoStorage< parallelDevicePolicy< > >( 10, 0, 3, 10 );
+}
+
+TEST( LifoStorageTest, LifoStorageAsyncBufferOnHost )
+{
+  testLifoStorageAsync< serialPolicy >( 10, 2, 3, 10 );
 }
 
 
-TEST( LifoStorageTest, LifoStorageAsyncCUDA )
+TEST( LifoStorageTest, LifoStorageAsyncBufferOnCUDA )
 {
-  testLifoStorageAsync< parallelDevicePolicy< > >( );
+  testLifoStorageAsync< parallelDevicePolicy< > >( 10, 2, 3, 10 );
 }
 
 int main( int ac, char * av[] )
