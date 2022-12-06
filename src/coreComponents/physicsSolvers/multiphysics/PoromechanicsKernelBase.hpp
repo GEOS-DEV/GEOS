@@ -263,6 +263,4 @@ protected:
 
 } // namespace geosx
 
-#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
-
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELBASE_HPP_

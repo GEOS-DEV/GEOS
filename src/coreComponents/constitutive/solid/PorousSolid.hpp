@@ -203,9 +203,9 @@ private:
     dTotalStress_dPressure[4] = 0;
     dTotalStress_dPressure[5] = 0;
 
-    dTotalStress_dTemperature[0] = -thermalExpansionCoefficientTimesBulkModulus;
-    dTotalStress_dTemperature[1] = -thermalExpansionCoefficientTimesBulkModulus;
-    dTotalStress_dTemperature[2] = -thermalExpansionCoefficientTimesBulkModulus;
+    dTotalStress_dTemperature[0] = -3 * thermalExpansionCoefficientTimesBulkModulus;
+    dTotalStress_dTemperature[1] = -3 * thermalExpansionCoefficientTimesBulkModulus;
+    dTotalStress_dTemperature[2] = -3 * thermalExpansionCoefficientTimesBulkModulus;
     dTotalStress_dTemperature[3] = 0;
     dTotalStress_dTemperature[4] = 0;
     dTotalStress_dTemperature[5] = 0;

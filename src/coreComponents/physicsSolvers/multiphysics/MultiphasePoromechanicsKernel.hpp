@@ -930,6 +930,4 @@ using MultiphasePoromechanicsKernelFactory =
 
 } // namespace geosx
 
-#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
-
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
