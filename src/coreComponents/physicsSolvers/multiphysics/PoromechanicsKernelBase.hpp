@@ -76,7 +76,7 @@ public:
   /**
    * @brief Constructor
    * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
-   * @param inputGravityVector The gravity vector.
+   * @param gravityVector The gravity vector.
    */
   PoromechanicsKernelBase( NodeManager const & nodeManager,
                            EdgeManager const & edgeManager,
@@ -90,7 +90,7 @@ public:
                            globalIndex const rankOffset,
                            CRSMatrixView< real64, globalIndex const > const inputMatrix,
                            arrayView1d< real64 > const inputRhs,
-                           real64 const (&inputGravityVector)[3],
+                           real64 const (&gravityVector)[3],
                            string const fluidModelKey ):
     Base( nodeManager,
           edgeManager,
@@ -106,8 +106,8 @@ public:
     m_X( nodeManager.referencePosition() ),
     m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
     m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
-    m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
-    m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
+    m_gravityVector{ gravityVector[0], gravityVector[1], gravityVector[2] },
+    m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( gravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
     m_pressure_n( elementSubRegion.template getField< fields::flow::pressure_n >() ),
@@ -192,7 +192,7 @@ public:
     real64 dLocalResidualMomentum_dPressure[numDispDofPerElem][1]{};
 
     /// C-array storage for the element local row degrees of freedom.
-    globalIndex localPressureDofIndex[1]{};
+    globalIndex localPressureDofIndex{};
 
   };
   //*****************************************************************************
@@ -210,23 +210,24 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
+    integer constexpr numDims = 3;
     for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
-      for( integer i = 0; i < 3; ++i )
+      for( integer i = 0; i < numDims; ++i )
       {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
         stack.xLocal[a][i] = m_X[localNodeIndex][i];
 #endif
         stack.u_local[a][i] = m_disp[localNodeIndex][i];
         stack.uhat_local[a][i] = m_uhat[localNodeIndex][i];
-        stack.localRowDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
-        stack.localColDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
+        stack.localRowDofIndex[a*numDims+i] = m_dofNumber[localNodeIndex]+i;
+        stack.localColDofIndex[a*numDims+i] = m_dofNumber[localNodeIndex]+i;
       }
     }
 
-    stack.localPressureDofIndex[0] = m_flowDofNumber[k];
+    stack.localPressureDofIndex = m_flowDofNumber[k];
   }
 
 protected:
@@ -242,6 +243,7 @@ protected:
 
   /// The gravity vector.
   real64 const m_gravityVector[3]{};
+  /// The L2-norm of the gravity vector
   real64 const m_gravityAcceleration;
 
   /// The rank global density
