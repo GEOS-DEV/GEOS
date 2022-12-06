@@ -19,6 +19,7 @@ CompressibleSolidCarmanKozenyPermeability   node :ref:`DATASTRUCTURE_Compressibl
 CompressibleSolidConstantPermeability       node :ref:`DATASTRUCTURE_CompressibleSolidConstantPermeability`       
 CompressibleSolidParallelPlatesPermeability node :ref:`DATASTRUCTURE_CompressibleSolidParallelPlatesPermeability` 
 CompressibleSolidSlipDependentPermeability  node :ref:`DATASTRUCTURE_CompressibleSolidSlipDependentPermeability`  
+CompressibleSolidWillisRichardsPermeability node :ref:`DATASTRUCTURE_CompressibleSolidWillisRichardsPermeability` 
 ConstantPermeability                        node :ref:`DATASTRUCTURE_ConstantPermeability`                        
 Coulomb                                     node :ref:`DATASTRUCTURE_Coulomb`                                     
 DamageElasticIsotropic                      node :ref:`DATASTRUCTURE_DamageElasticIsotropic`                      
@@ -64,6 +65,7 @@ TableRelativePermeabilityHysteresis         node :ref:`DATASTRUCTURE_TableRelati
 ThermalCompressibleSinglePhaseFluid         node :ref:`DATASTRUCTURE_ThermalCompressibleSinglePhaseFluid`         
 VanGenuchtenBakerRelativePermeability       node :ref:`DATASTRUCTURE_VanGenuchtenBakerRelativePermeability`       
 VanGenuchtenCapillaryPressure               node :ref:`DATASTRUCTURE_VanGenuchtenCapillaryPressure`               
+WillisRichardsPermeability                  node :ref:`DATASTRUCTURE_WillisRichardsPermeability`                  
 =========================================== ==== ================================================================ 
 
 

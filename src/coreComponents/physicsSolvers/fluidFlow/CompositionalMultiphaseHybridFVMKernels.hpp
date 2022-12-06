@@ -21,12 +21,12 @@
 
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
+#include "constitutive/fluid/MultiFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/ObjectManagerBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
@@ -38,6 +38,7 @@ namespace compositionalMultiphaseHybridFVMKernels
 {
 
 using namespace constitutive;
+
 
 // struct to specify local and neighbor derivatives
 struct Pos
@@ -552,18 +553,18 @@ struct FluxKernel
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using CompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::phaseMobility,
-                      extrinsicMeshData::flow::dPhaseMobility,
-                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
+    StencilAccessors< fields::flow::phaseMobility,
+                      fields::flow::dPhaseMobility,
+                      fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseDensity,
-                              extrinsicMeshData::multifluid::dPhaseDensity,
-                              extrinsicMeshData::multifluid::phaseMassDensity,
-                              extrinsicMeshData::multifluid::dPhaseMassDensity,
-                              extrinsicMeshData::multifluid::phaseCompFraction,
-                              extrinsicMeshData::multifluid::dPhaseCompFraction >;
+                              fields::multifluid::phaseDensity,
+                              fields::multifluid::dPhaseDensity,
+                              fields::multifluid::phaseMassDensity,
+                              fields::multifluid::dPhaseMassDensity,
+                              fields::multifluid::phaseCompFraction,
+                              fields::multifluid::dPhaseCompFraction >;
 
 
   /**
@@ -665,15 +666,15 @@ public:
                        MultiFluidBase const & fluid,
                        RelativePermeabilityBase const & relperm )
     : Base(),
-    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
-    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseVisc( fluid.phaseViscosity() ),
     m_dPhaseVisc( fluid.dPhaseViscosity() ),
     m_phaseRelPerm( relperm.phaseRelPerm() ),
     m_dPhaseRelPerm_dPhaseVolFrac( relperm.dPhaseRelPerm_dPhaseVolFraction() ),
-    m_phaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >() ),
-    m_dPhaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility >() )
+    m_phaseMob( subRegion.getField< fields::flow::phaseMobility >() ),
+    m_dPhaseMob( subRegion.getField< fields::flow::dPhaseMobility >() )
   {}
 
   /**
@@ -988,7 +989,7 @@ namespace internal
 {
 
 template< typename T, typename LAMBDA >
-void KernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
+void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 {
   static_assert( std::is_integral< T >::value, "KernelLaunchSelectorFaceSwitch: type should be integral" );
 
@@ -1006,30 +1007,40 @@ void KernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 
 } // namespace internal
 
+template< typename KERNELWRAPPER, typename INNER_PRODUCT, typename ... ARGS >
+void simpleKernelLaunchSelector( localIndex numFacesInElem, ARGS && ... args )
+{
+  internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NUM_FACES )
+  {
+    KERNELWRAPPER::template launch< INNER_PRODUCT, NUM_FACES() >( std::forward< ARGS >( args )... );
+  } );
+}
+
+
 template< typename KERNELWRAPPER, typename IP_TYPE, typename ... ARGS >
-void KernelLaunchSelector( integer numFacesInElem, integer numComps, integer numPhases, ARGS && ... args )
+void kernelLaunchSelector( integer numFacesInElem, integer numComps, integer numPhases, ARGS && ... args )
 {
   // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
   if( numPhases == 2 )
   {
     if( numComps == 2 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 2, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 3 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 3, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 4 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 4, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 5 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 5, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else
@@ -1041,22 +1052,22 @@ void KernelLaunchSelector( integer numFacesInElem, integer numComps, integer num
   {
     if( numComps == 2 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 2, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 3 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 3, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 4 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 4, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 5 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 5, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else

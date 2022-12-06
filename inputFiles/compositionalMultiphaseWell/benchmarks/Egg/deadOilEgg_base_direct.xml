@@ -13,9 +13,9 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         newtonMaxIter="25"
-        dtCutIterLimit="0.9"
-        dtIncIterLimit="0.6"
-        timestepCutFactor="0.1"
+        timeStepDecreaseIterLimit="0.9"
+        timeStepIncreaseIterLimit="0.6"
+        timeStepCutFactor="0.1"
         maxTimeStepCuts="10"
         lineSearchAction="None"/>
       <LinearSolverParameters
@@ -28,6 +28,8 @@
       targetRegions="{ reservoir }"
       discretization="fluidTPFA"
       temperature="297.15"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
       maxCompFractionChange="0.3"
       logLevel="1"
       useMass="1"/>
@@ -379,22 +381,22 @@
   <Tasks>
     <PackCollection
       name="wellRateCollection1"
-      objectPath="ElementRegions/wellRegion1/wellRegion1uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion1/wellRegion1UniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate"/>
 
     <PackCollection
       name="wellRateCollection2"
-      objectPath="ElementRegions/wellRegion2/wellRegion2uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion2/wellRegion2UniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate"/>
 
     <PackCollection
       name="wellRateCollection3"
-      objectPath="ElementRegions/wellRegion3/wellRegion3uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion3/wellRegion3UniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate"/>
 
     <PackCollection
       name="wellRateCollection4"
-      objectPath="ElementRegions/wellRegion4/wellRegion4uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion4/wellRegion4UniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate"/>
   </Tasks>
 

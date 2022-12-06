@@ -20,9 +20,9 @@
 #ifndef GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
 #define GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
 
-#include "physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
+#include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
 #include "SolidMechanicsEFEMKernelsHelper.hpp"
-#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
+#include "physicsSolvers/contact/ContactFields.hpp"
 
 namespace geosx
 {
@@ -43,15 +43,15 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class EFEMKernelsBase :
-  public solidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
-                                                          CONSTITUTIVE_TYPE,
-                                                          FE_TYPE >
+  public solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE,
+                                                                             CONSTITUTIVE_TYPE,
+                                                                             FE_TYPE >
 {
 public:
   /// Alias for the base class;
-  using Base = solidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
-                                                                CONSTITUTIVE_TYPE,
-                                                                FE_TYPE >;
+  using Base = solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE,
+                                                                                   CONSTITUTIVE_TYPE,
+                                                                                   FE_TYPE >;
 
   /// Number of nodes per element...which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
@@ -102,9 +102,9 @@ public:
           inputMatrix,
           inputRhs,
           inputGravityVector ),
-    m_w( embeddedSurfSubRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >().toView() ),
-    m_tractionVec( embeddedSurfSubRegion.getExtrinsicData< extrinsicMeshData::contact::traction >().toViewConst() ),
-    m_dTraction_dJump( embeddedSurfSubRegion.getExtrinsicData< extrinsicMeshData::contact::dTraction_dJump >().toViewConst() ),
+    m_w( embeddedSurfSubRegion.getField< fields::contact::dispJump >().toView() ),
+    m_tractionVec( embeddedSurfSubRegion.getField< fields::contact::traction >().toViewConst() ),
+    m_dTraction_dJump( embeddedSurfSubRegion.getField< fields::contact::dTraction_dJump >().toViewConst() ),
     m_nVec( embeddedSurfSubRegion.getNormalVector().toViewConst() ),
     m_tVec1( embeddedSurfSubRegion.getTangentVector1().toViewConst() ),
     m_tVec2( embeddedSurfSubRegion.getTangentVector2().toViewConst() ),
