@@ -72,11 +72,16 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
 setup( localIndex const k,
        StackVariables & stack ) const
 {
-  for( localIndex a=0; a<numNodesPerElem; ++a )
+  m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
+  localIndex const numSupportPoints =
+    m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+  stack.numRows =  3 * numSupportPoints;
+  stack.numCols = stack.numRows;
+  for( localIndex a = 0; a < numSupportPoints; ++a )
   {
     localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
-    for( int i=0; i<3; ++i )
+    for( int i = 0; i < 3; ++i )
     {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
       stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
@@ -87,6 +92,13 @@ setup( localIndex const k,
       stack.localColDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
     }
   }
+  // Add stabilization to block diagonal parts of the local jacobian
+  // (this is a no-operation with FEM classes)
+  real64 const stabilizationScaling = computeStabilizationScaling( k );
+  m_finiteElementSpace.template addGradGradStabilizationMatrix
+  < FE_TYPE, numDofPerTrialSupportPoint, true >( stack.feStack,
+                                                 stack.localJacobian,
+                                                 -stabilizationScaling );
 }
 
 template< typename SUBREGION_TYPE,
@@ -101,7 +113,8 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
                                                                                                           STRESS_MODIFIER && stressModifier ) const
 {
   real64 dNdX[ numNodesPerElem ][ 3 ];
-  real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
+                                                                           stack.feStack, dNdX );
 
   real64 strainInc[6] = {0};
   real64 stress[6] = {0};
@@ -115,22 +128,29 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
   stressModifier( stress );
   for( localIndex i=0; i<6; ++i )
   {
-    stress[i] *= -detJ;
+    stress[i] *= -detJxW;
   }
 
-  real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJ,
-                                   m_gravityVector[1] * m_density( k, q )* detJ,
-                                   m_gravityVector[2] * m_density( k, q )* detJ };
+  real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJxW,
+                                   m_gravityVector[1] * m_density( k, q )* detJxW,
+                                   m_gravityVector[2] * m_density( k, q )* detJxW };
 
   real64 N[numNodesPerElem];
-  FE_TYPE::calcN( q, N );
+  FE_TYPE::calcN( q, stack.feStack, N );
   FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
                                    stress,
                                    N,
                                    gravityForce,
                                    reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
-  stiffness.template BTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian ); // need to use full BTDB compute for hip
-  //stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
+  real64 const stabilizationScaling = computeStabilizationScaling( k );
+  m_finiteElementSpace.template
+  addEvaluatedGradGradStabilizationVector< FE_TYPE,
+                                           numDofPerTrialSupportPoint >( stack.feStack,
+                                                                         stack.uhat_local,
+                                                                         reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
+                                                                         -stabilizationScaling );
+  stiffness.template BTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian ); // need to use full BTDB compute for hip
+  //stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
 }
 
 
@@ -146,10 +166,10 @@ real64 ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYP
   real64 maxForce = 0;
 
   // TODO: Does this work if BTDB is non-symmetric?
-  // the lower-fill causes a segfault on amd gpus with hip as of rocm@5.1.0 and cce@14.0.1
-  // CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
-
-  for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
+  //CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
+  localIndex const numSupportPoints =
+    m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+  for( int localNode = 0; localNode < numSupportPoints; ++localNode )
   {
     for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
     {
@@ -160,7 +180,7 @@ real64 ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYP
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.localRowDofIndex,
                                                                               stack.localJacobian[ numDofPerTestSupportPoint * localNode + dim ],
-                                                                              numNodesPerElem * numDofPerTrialSupportPoint );
+                                                                              stack.numRows );
 
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] );
       maxForce = fmax( maxForce, fabs( stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] ) );

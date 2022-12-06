@@ -151,7 +151,7 @@ static constexpr int STIFFNESS_USD = LvArray::typeManipulation::getStrideOneDime
 namespace compflow
 {
 
-#if defined(GEOSX_USE_DEVICE)
+#if defined( GEOSX_USE_DEVICE )
 
 /// Component global density/fraction array layout
 using LAYOUT_COMP = RAJA::PERM_JI;

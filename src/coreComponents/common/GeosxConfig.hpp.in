@@ -169,5 +169,13 @@
 #cmakedefine CUDAToolkit_VERSION @CUDAToolkit_VERSION@
 
 
+#if defined(GEOSX_USE_CUDA) || defined(GEOSX_USE_HIP)
+// This needs to be placed into this header in order to appropriately replace
+//  the old usage of GEOSX_USE_CUDA, since we detect whether it is defined
+//  rather than a value, not having it in the *same* header can cauase nebulous
+//  compilation problems including the USD of arrays changing depending the scope
+#define GEOSX_USE_DEVICE
+#endif
+
 #endif  /* GEOSX_CONFIG_HPP */
 

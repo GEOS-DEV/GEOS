@@ -41,7 +41,7 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{ C3D8 }"
+      elementTypes="{ C3D4 }"
       xCoords="{ 0, 80 }"
       yCoords="{ 0, 8 }"
       zCoords="{ 0, 4 }"

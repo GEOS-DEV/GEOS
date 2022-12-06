@@ -7,6 +7,8 @@
 #
 ###############################################################################
 
+set( GEOSX_BUILD_SHARED_LIBS ON CACHE BOOL "" )
+set( GEOSX_BUILD_OBJ_LIBS OFF CACHE BOOL "" )
 # Fortran
 set(ENABLE_FORTRAN OFF CACHE BOOL "")
 
