@@ -477,15 +477,15 @@ struct VelocityComputation
         }
       }
 
+      real32 uelemx[numNodesPerElem] = {0.0};
+      real32 uelemy[numNodesPerElem] = {0.0};
+      real32 uelemz[numNodesPerElem] = {0.0};
+      real32 flowx[numNodesPerElem] = {0.0};
+      real32 flowy[numNodesPerElem] = {0.0};
+      real32 flowz[numNodesPerElem] = {0.0};
+
       for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
       {
-        real32 uelemx[numNodesPerElem] = {0.0};
-        real32 uelemy[numNodesPerElem] = {0.0};
-        real32 uelemz[numNodesPerElem] = {0.0};
-        real32 flowx[numNodesPerElem] = {0.0};
-        real32 flowy[numNodesPerElem] = {0.0};
-        real32 flowz[numNodesPerElem] = {0.0};
-
 
         for( localIndex i = 0; i < numNodesPerElem; ++i )
         {
@@ -517,18 +517,17 @@ struct VelocityComputation
 
         } );
 
-        for( localIndex i = 0; i < numNodesPerElem; ++i )
-        {
-          real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
-          uelemx[i]+=dt*flowx[i]/density[k];
-          uelemy[i]+=dt*flowy[i]/density[k];
-          uelemz[i]+=dt*flowz[i]/density[k];
+      }
+      for( localIndex i = 0; i < numNodesPerElem; ++i )
+      {
+        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
+        uelemx[i]+=dt*flowx[i]/density[k];
+        uelemy[i]+=dt*flowy[i]/density[k];
+        uelemz[i]+=dt*flowz[i]/density[k];
 
-          velocity_x[k][i] = uelemx[i]/massLoc;
-          velocity_y[k][i] = uelemy[i]/massLoc;
-          velocity_z[k][i] = uelemz[i]/massLoc;
-        }
-
+        velocity_x[k][i] = uelemx[i]/massLoc;
+        velocity_y[k][i] = uelemy[i]/massLoc;
+        velocity_z[k][i] = uelemz[i]/massLoc;
       }
     } );
   }
@@ -590,14 +589,15 @@ struct PressureComputation
         }
       }
 
+      real32 auxx[numNodesPerElem]  = {0.0};
+      real32 auyy[numNodesPerElem]  = {0.0};
+      real32 auzz[numNodesPerElem]  = {0.0};
+      real32 uelemx[numNodesPerElem] = {0.0};
+
 
       for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
       {
 
-        real32 auxx[numNodesPerElem]  = {0.0};
-        real32 auyy[numNodesPerElem]  = {0.0};
-        real32 auzz[numNodesPerElem]  = {0.0};
-        real32 uelemx[numNodesPerElem] = {0.0};
 
         m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
@@ -620,31 +620,33 @@ struct PressureComputation
           auzz[i] -= dfz3*velocity_z[k][j];
         } );
 
-        for( localIndex i = 0; i < numNodesPerElem; ++i )
-        {
-          real32 diag=(auxx[i]+auyy[i]+auzz[i]);
-          uelemx[i]+=dt*diag;
 
-          real32 const localIncrement = uelemx[i]/mass[elemsToNodes[k][i]];
-          RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[elemsToNodes[k][i]], localIncrement );
-        }
 
-        //Source Injection
-        for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
+      }
+
+      for( localIndex i = 0; i < numNodesPerElem; ++i )
+      {
+        real32 diag=(auxx[i]+auyy[i]+auzz[i]);
+        uelemx[i]+=dt*diag;
+
+        real32 const localIncrement = uelemx[i]/mass[elemsToNodes[k][i]];
+        RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[elemsToNodes[k][i]], localIncrement );
+      }
+
+      //Source Injection
+      for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
+      {
+        if( sourceIsAccessible[isrc] == 1 )
         {
-          if( sourceIsAccessible[isrc] == 1 )
+          if( sourceElem[isrc]==k )
           {
-            if( sourceElem[isrc]==k )
+            for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
-              for( localIndex i = 0; i < numNodesPerElem; ++i )
-              {
-                real32 const localIncrement2 = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/(mass[elemsToNodes[k][i]]);
-                RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[elemsToNodes[k][i]], localIncrement2 );
-              }
+              real32 const localIncrement2 = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/(mass[elemsToNodes[k][i]]);
+              RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[elemsToNodes[k][i]], localIncrement2 );
             }
           }
         }
-
       }
 
     } );
