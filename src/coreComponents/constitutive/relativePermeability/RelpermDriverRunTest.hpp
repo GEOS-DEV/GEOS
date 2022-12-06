@@ -77,9 +77,9 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
   }
 
 
-  arrayView3d< real64 const, relperm::USD_RELPERM > const saturation = saturationValues;
+  arrayView3d< real64 const, relperm::USD_RELPERM > const saturation = saturationValues.toViewConst();
 
-  // perform relperm update using table (Swet,Snonwet) and save resulting total density, etc.
+  // perform relperm update using table (Swet,Snonwet) and save resulting relative permeabilities
   // note: column indexing should be kept consistent with output file header below.
 
   relperm.setMinMaxToDrainage( 0 );
@@ -179,7 +179,7 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
   }
 
-  arrayView3d< real64 const, relperm::USD_RELPERM > const saturation = saturationValues;
+  arrayView3d< real64 const, relperm::USD_RELPERM > const saturation = saturationValues.toViewConst();
 
   // perform relperm update using table (Swet,Snonwet) and save resulting total density, etc.
   // note: column indexing should be kept consistent with output file header below.

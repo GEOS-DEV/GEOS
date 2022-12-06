@@ -47,12 +47,6 @@ def main(fname):
 
     if (isThreePhase):
 
-        # some preporcessing
-        # Kro = interpolate.interp2d( Sw, Sg, T[:,4], kind='linear' )
-        # X,Y = np.meshgrid(Sw,Sg)
-        # X_ternary = ( (1-Y[:]) / np.cos(np.pi/6) ) - ( X[:] / np.tan(np.pi/3) )
-        # X_ternary = np.reshape(X_ternary,(X.shape[0],X.shape[1]))
-        # Y_ternary = X
 
         # try #2
         npt = int(np.sqrt(T[:, 4].shape[0]))

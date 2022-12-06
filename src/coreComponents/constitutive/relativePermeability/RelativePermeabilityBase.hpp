@@ -183,6 +183,8 @@ protected:
 
   virtual void postProcessInput() override;
 
+  std::tuple< integer, integer > phaseIndex() const;
+
   // phase names read from input
   string_array m_phaseNames;
 

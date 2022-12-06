@@ -434,50 +434,13 @@ private:
   { return m_imbibitionPhaseMinVolFraction; };
 
 
-  /// for use in RelpermDriver to browse the drainage curves
-  /// by setting the MaxHistoricalNonWettingSat to Snwmin and MinWettingSat to Sw
-  GEOSX_HOST_DEVICE
-  std::tuple< integer, integer, integer > getPhaseIndex() const
-  {
-    using PT = PhaseType;
-    integer const ipWater = m_phaseOrder[PT::WATER];
-    integer const ipOil = m_phaseOrder[PT::OIL];
-    integer const ipGas = m_phaseOrder[PT::GAS];
-
-    integer ipWetting = -1, ipNonWetting = -1, ipInter = -1;
-
-    if( ipWater >= 0 && ipOil >= 0 && ipGas >= 0 )
-    {
-      ipWetting = ipWater;
-      ipInter = ipOil;
-      ipNonWetting = ipGas;
-    }
-    else if( ipWater < 0 )
-    {
-      ipWetting = ipOil;
-      ipNonWetting = ipGas;
-    }
-    else if( ipOil < 0 )
-    {
-      ipWetting = ipWater;
-      ipNonWetting = ipGas;
-    }
-    else if( ipGas < 0 )
-    {
-      ipWetting = ipWater;
-      ipNonWetting = ipOil;
-    }
-
-    //maybe a bit too pythonic
-    return std::make_tuple( ipWetting, ipInter, ipNonWetting );
-  }
 
   GEOSX_HOST_DEVICE
   void setMinMaxToDrainage( localIndex const k )
   {
 
-    integer ipWetting, ipNonWetting, ipInter;
-    std::tie( ipWetting, ipInter, ipNonWetting ) = getPhaseIndex();
+    integer ipWetting, ipNonWetting;
+    std::tie( ipWetting, ipNonWetting ) = phaseIndex();
 
     if( m_phaseHasHysteresis[ipNonWetting] )
     {
@@ -497,8 +460,8 @@ private:
   void setMinMaxToImbibition( localIndex const k )
   {
 
-    integer ipWetting, ipNonWetting, ipInter;
-    std::tie( ipWetting, ipInter, ipNonWetting ) = getPhaseIndex();
+    integer ipWetting, ipNonWetting;
+    std::tie( ipWetting, ipNonWetting ) = phaseIndex();
 
     if( m_phaseHasHysteresis[ipNonWetting] )
     {

@@ -1,6 +1,16 @@
-//
-// Created by root on 10/24/22.
-//
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
 
 #include "RelpermDriver.hpp"
 
@@ -97,7 +107,7 @@ bool RelpermDriver::execute( const geosx::real64 GEOSX_UNUSED_PARAM( time_n ),
 {
   // this code only makes sense in serial
 
-  GEOSX_THROW_IF( MpiWrapper::commRank() > 0, "PVTDriver should only be run in serial", std::runtime_error );
+  GEOSX_THROW_IF( MpiWrapper::commRank() > 0, "RelpermDriver should only be run in serial", std::runtime_error );
 
 
   constitutive::ConstitutiveManager
@@ -107,7 +117,7 @@ bool RelpermDriver::execute( const geosx::real64 GEOSX_UNUSED_PARAM( time_n ),
 
   if( getLogLevel() > 0 )
   {
-    GEOSX_LOG_RANK_0( "Launching PVT Driver" );
+    GEOSX_LOG_RANK_0( "Launching Relperm Driver" );
     GEOSX_LOG_RANK_0( "  Relperm .................. " << m_relpermName );
     GEOSX_LOG_RANK_0( "  Type ................... " << baseRelperm.getCatalogName() );
     GEOSX_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
@@ -163,7 +173,7 @@ void RelpermDriver::resizeTables()
   integer const ipOil = baseRelperm.getPhaseOrder()[PT::OIL];
   integer const ipGas = baseRelperm.getPhaseOrder()[PT::GAS];
 
-  real64 minSw, minSnw;
+  real64 minSw = 0., minSnw = 0.;
   if( baseRelperm.numFluidPhases() > 2 )
   {
     minSw = baseRelperm.getPhaseMinVolumeFraction()[ipWater];
@@ -171,12 +181,12 @@ void RelpermDriver::resizeTables()
   }
   else
   {
-    if( ipWater < 0 )
+    if( ipWater < 0 )// a.k.a o/g
     {
       minSw = 0;
       minSnw = baseRelperm.getPhaseMinVolumeFraction()[ipGas];
     }
-    else if( ipGas < 0 )
+    else if( ipGas < 0 || ipOil < 0 )// a.k.a w/o or w/g
     {
       minSnw = 0;
       minSw = baseRelperm.getPhaseMinVolumeFraction()[ipWater];
@@ -187,6 +197,7 @@ void RelpermDriver::resizeTables()
   // set input columns
 
   resizeTable< RELPERM_TYPE >();
+  // 3-phase branch
   if( m_numPhases > 2 )
   {
     for( integer ni = 0; ni < m_numSteps + 1; ++ni )
@@ -203,7 +214,7 @@ void RelpermDriver::resizeTables()
       }
     }
   }
-  else
+  else // 2-phase branch
   {
     for( integer ni = 0; ni < m_numSteps + 1; ++ni )
     {
@@ -322,4 +333,4 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         RelpermDriver,
                         string const &, dataRepository::Group * const )
 
-};
+}

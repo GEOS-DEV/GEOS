@@ -1,6 +1,16 @@
-//
-// Created by root on 10/24/22.
-//
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
 
 #ifndef GEOSX_RELPERMDRIVER_HPP_
 #define GEOSX_RELPERMDRIVER_HPP_
@@ -34,7 +44,7 @@ public:
 
   /**
    * @brief Run test using loading protocol in table
-   * @param i Fluid constitutive model
+   * @param i Relperm constitutive model
    * @param table Table with input/output time history
    */
   template< typename RELPERM_TYPE >
@@ -91,7 +101,6 @@ private:
   integer m_numSteps;      ///< Number of load steps
   integer m_numColumns;    ///< Number of columns in data table (depends on number of fluid phases)
   integer m_numPhases;     ///< Number of fluid phases
-  integer m_numComponents; ///< Number of fluid components
 
   string m_relpermName;               ///< relPermType identifier
   string m_outputFile;              ///< Output file (optional, no output if not specified)
