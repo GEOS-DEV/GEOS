@@ -6,7 +6,7 @@ import re
 
 
 def populate_input(fname):
-    T = np.loadtxt(fname)
+    T = np.loadtxt(fname) 
     return T
 
 
@@ -49,11 +49,12 @@ def main(fname):
 
 
         # try #2
+        eps = - 1e-10
         npt = int(np.sqrt(T[:, 4].shape[0]))
         print(f'npt {npt}, shape{T[:, 4].shape[0]}')
         Kro_ = np.reshape(T[:, 4], (npt, npt))
-        Sw = np.reshape(Sw, (npt, npt))
-        Sg = np.reshape(Sg, (npt, npt))
+        Sw = np.reshape(Sw + eps, (npt, npt))
+        Sg = np.reshape(Sg + eps, (npt, npt))
         X_ternary = ((1 - Sg[:]) / np.cos(np.pi / 6)) - (Sw[:] / np.tan(np.pi / 3))
         X_ternary = np.reshape(X_ternary, (npt, npt))
         Y_ternary = Sw
