@@ -63,7 +63,8 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
                                                     Group * const parent ):
   SolverBase( name, parent ),
   m_fractureRegionName(),
-  m_mpiCommOrder( 0 )
+  m_mpiCommOrder( 0 ),
+  m_propagationVelocity{0.0, 0.0, 0.0}
 {
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
@@ -71,7 +72,11 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
 
   registerWrapper( viewKeyStruct::mpiCommOrderString(), &m_mpiCommOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to enable MPI consistent communication ordering" );
+    setDescription( "Flag to enable MPI consistent communication ordering" );    
+
+  registerWrapper( viewKeyStruct::propagationVelocityString(), &m_propagationVelocity ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "2D array with propagation speed in the x and y directions" );
 
 }
 
@@ -243,7 +248,7 @@ void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 {}
 
 real64 EmbeddedSurfaceGenerator::solverStep( real64 const & time_n,
-                                             real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                             real64 const & dt,
                                              const int GEOSX_UNUSED_PARAM( cycleNumber ),
                                              DomainPartition & domain )
 {
@@ -281,7 +286,7 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & time_n,
     {
       //modify fracture (BoundedPlane)
       //add 1 element?
-      fracture.updateExistingRectangle(0.5,0.5);
+      fracture.updateExistingRectangle(dt*m_propagationVelocity[0], dt*m_propagationVelocity[1]);
 
       /* 1. Find out if an element is cut by the fracture or not.
       * Loop over all the elements and for each one of them loop over the nodes and compute the

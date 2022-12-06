@@ -113,6 +113,7 @@ private:
     constexpr static char const * solidMaterialNameString() {return "solidMaterialNames"; }
     constexpr static char const * fractureRegionNameString() {return "fractureRegion"; }
     constexpr static char const * mpiCommOrderString() { return "mpiCommOrder"; }
+    constexpr static char const * propagationVelocityString() { return "propagationVelocity"; }
 
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
     // relation.
@@ -121,8 +122,12 @@ private:
 
   // fracture region name
   string m_fractureRegionName;
+
   // Flag for consistent communication ordering
   int m_mpiCommOrder;
+
+  // Dimensions of the bounded plane
+  R1Tensor m_propagationVelocity;
 };
 
 } /* namespace geosx */
