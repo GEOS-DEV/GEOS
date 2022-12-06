@@ -6,7 +6,7 @@
 #define GEOSX_RELPERMDRIVERRUNTEST_HPP_
 
 #include "RelpermDriver.hpp"
-#include "TableRelativePermeabilityHysteresis.hpp"
+#include "constitutive/relativePermeability/TableRelativePermeabilityHysteresis.hpp"
 #include "layouts.hpp"
 
 
@@ -82,7 +82,7 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
   // perform relperm update using table (Swet,Snonwet) and save resulting relative permeabilities
   // note: column indexing should be kept consistent with output file header below.
 
-  relperm.setMinMaxToDrainage( 0 );
+  relperm.setMinMaxToDrainage( this );
   forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
                                     [numPhases, kernelWrapper, saturation, table,
                                      offset] GEOSX_HOST_DEVICE ( localIndex const i )
@@ -101,7 +101,7 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
   //loop in charge of hysteresis values
   offset += numPhases;
-  relperm.setMinMaxToImbibition( 0 );
+  relperm.setMinMaxToImbibition( this );
   forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
                                     [numPhases, kernelWrapper, saturation, table,
                                      offset] GEOSX_HOST_DEVICE ( localIndex const i )

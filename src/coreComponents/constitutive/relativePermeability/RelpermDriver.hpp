@@ -16,11 +16,15 @@
 #define GEOSX_RELPERMDRIVER_HPP_
 
 #include "events/tasks/TaskBase.hpp"
-#include "TableRelativePermeabilityHysteresis.hpp"
 
 namespace geosx
 {
 
+//fwd declare
+namespace constitutive
+{
+class TableRelativePermeabilityHysteresis;
+}
 
 class RelpermDriver : public TaskBase
 {
@@ -66,6 +70,49 @@ public:
    * @brief Read in a baseline table from file and compare with computed one (for unit testing purposes)
    */
   void compareWithBaseline();
+
+  void setMinMaxToDrainage( const integer ipWetting,
+                            const integer ipNonWetting,
+                            arrayView1d< integer const > const & phaseHasHysteresis,
+                            arrayView2d< real64, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
+                            arrayView1d< real64 const> const & drainagePhaseMaxVolFraction,
+                            arrayView2d< real64, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
+                            arrayView1d< real64 const > const & drainagePhaseMinVolFraction ) const
+  {
+    if( phaseHasHysteresis[ipNonWetting] )
+    {
+      phaseMaxHistoricalVolFraction[0][ipNonWetting] = drainagePhaseMaxVolFraction[ipNonWetting];
+      std::cout << " new Max NWet Historical " << phaseMaxHistoricalVolFraction[0][ipNonWetting] << std::endl;
+    }
+    if( phaseHasHysteresis[ipWetting] )
+    {
+      phaseMinHistoricalVolFraction[0][ipWetting] = drainagePhaseMinVolFraction[ipWetting];
+      std::cout << " new Min Wet Historical " << phaseMinHistoricalVolFraction[0][ipWetting] << std::endl;
+    }
+  }
+
+  void setMinMaxToImbibition( const integer ipWetting,
+                              const integer ipNonWetting,
+                              arrayView1d< integer const > const & phaseHasHysteresis,
+                              arrayView2d< real64, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
+                              arrayView1d< real64 const > const & drainagePhaseMaxVolFraction,
+                              arrayView2d< real64, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
+                              arrayView1d< real64 const > const & drainagePhaseMinVolFraction ) const
+  {
+
+    if( phaseHasHysteresis[ipNonWetting] )
+    {
+      phaseMaxHistoricalVolFraction[0][ipNonWetting] = drainagePhaseMinVolFraction[ipNonWetting];
+      std::cout << " new Max NWet Historical " << phaseMaxHistoricalVolFraction[0][ipNonWetting] << std::endl;
+    }
+    if( phaseHasHysteresis[ipWetting] )
+    {
+      phaseMinHistoricalVolFraction[0][ipWetting] = drainagePhaseMaxVolFraction[ipWetting];
+      std::cout << " new Min Wet Historical " << phaseMinHistoricalVolFraction[0][ipWetting] << std::endl;
+    }
+  }
+
+
 
 private:
 

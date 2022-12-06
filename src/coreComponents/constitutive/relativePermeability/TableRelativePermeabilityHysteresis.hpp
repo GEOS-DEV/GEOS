@@ -19,11 +19,12 @@
 #ifndef GEOSX_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP
 #define GEOSX_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP
 
-#include <tuple>
-
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
 #include "functions/TableFunction.hpp"
+#include "constitutive/relativePermeability/RelpermDriver.hpp"
+
+
 
 namespace geosx
 {
@@ -436,41 +437,40 @@ private:
 
 
   GEOSX_HOST_DEVICE
-  void setMinMaxToDrainage( localIndex const k )
+  void setMinMaxToDrainage( geosx::RelpermDriver *  driver )
   {
 
     integer ipWetting, ipNonWetting;
     std::tie( ipWetting, ipNonWetting ) = phaseIndex();
 
-    if( m_phaseHasHysteresis[ipNonWetting] )
-    {
-      m_phaseMaxHistoricalVolFraction[k][ipNonWetting] = m_drainagePhaseMaxVolFraction[ipNonWetting];
-      std::cout << " new Max NWet Historical " << m_phaseMaxHistoricalVolFraction[k][ipNonWetting] << std::endl;
-    }
-    if( m_phaseHasHysteresis[ipWetting] )
-    {
-      m_phaseMinHistoricalVolFraction[k][ipWetting] = m_drainagePhaseMinVolFraction[ipWetting];
-      std::cout << " new Min Wet Historical " << m_phaseMinHistoricalVolFraction[k][ipWetting] << std::endl;
-    }
+    driver->setMinMaxToDrainage( ipWetting,
+                                ipNonWetting,
+                                m_phaseHasHysteresis,
+                                m_phaseMaxHistoricalVolFraction,
+                                m_drainagePhaseMaxVolFraction,
+                                m_phaseMinHistoricalVolFraction,
+                                m_drainagePhaseMinVolFraction );
   }
+
+
 
   /// for use in RelpermDriver to browse the drainage curves
   /// by setting the MaxNonWettingSat to Snwmin and MinWettingSat to Sw
   GEOSX_HOST_DEVICE
-  void setMinMaxToImbibition( localIndex const k )
+  void setMinMaxToImbibition( geosx::RelpermDriver *  driver )
   {
 
     integer ipWetting, ipNonWetting;
     std::tie( ipWetting, ipNonWetting ) = phaseIndex();
 
-    if( m_phaseHasHysteresis[ipNonWetting] )
-    {
-      m_phaseMaxHistoricalVolFraction[k][ipNonWetting] = m_drainagePhaseMinVolFraction[ipNonWetting];
-    }
-    if( m_phaseHasHysteresis[ipWetting] )
-    {
-      m_phaseMinHistoricalVolFraction[k][ipWetting] = m_drainagePhaseMaxVolFraction[ipWetting];
-    }
+
+    driver->setMinMaxToImbibition( ipWetting,
+                                ipNonWetting,
+                                m_phaseHasHysteresis,
+                                m_phaseMaxHistoricalVolFraction,
+                                m_drainagePhaseMaxVolFraction,
+                                m_phaseMinHistoricalVolFraction,
+                                m_drainagePhaseMinVolFraction );
   }
 
 private:
