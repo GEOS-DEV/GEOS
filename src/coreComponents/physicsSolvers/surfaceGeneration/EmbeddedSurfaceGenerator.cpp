@@ -277,15 +277,14 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & time_n,
     SurfaceElementRegion & embeddedSurfaceRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
     EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion = embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
-    localIndex localNumberOfSurfaceElems         = 0;
+    localIndex localNumberOfSurfaceElems = embeddedSurfaceSubRegion.size(); //this should not be zero
 
-    NewObjectLists newObjects;
+    NewObjectLists newObjects; //this should probably not be re-initialized
 
     // Loop over all the fracture planes
     geometricObjManager.forSubGroups< BoundedPlane >( [&]( BoundedPlane & fracture )
     {
       //modify fracture (BoundedPlane)
-      //add 1 element?
       fracture.updateExistingRectangle(dt*m_propagationVelocity[0], dt*m_propagationVelocity[1]);
 
       /* 1. Find out if an element is cut by the fracture or not.
@@ -310,7 +309,6 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & time_n,
         arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
         auto fracturedElements = subRegion.fracturedElementsList();
-        //LvArray::SortedArrayView< localIndex > fracturedElements = subRegion.fracturedElementsList();
 
         forAll< serialPolicy >( subRegion.size(), [ &, ghostRank,
                                                     cellToNodes,
@@ -363,8 +361,9 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & time_n,
                 // Add the information to the CellElementSubRegion
                 subRegion.addFracturedElement( cellIndex, localNumberOfSurfaceElems );
 
+                // localNumberOfSurfaceElems might be wrong at this point
                 embeddedSurfaceSubRegion.computeConnectivityIndex( localNumberOfSurfaceElems, cellToNodes, nodesCoord );
-
+                // newObjects might be wrong at this point
                 newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( localNumberOfSurfaceElems );
 
                 localNumberOfSurfaceElems++;
@@ -375,7 +374,7 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & time_n,
       } );// end loop over subregions
     } );// end loop over thick planes
 
-    // add all new nodes to newObject list
+    // add all new nodes to newObject list - verify this
     for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
     {
       newObjects.newNodes.insert( ni );
