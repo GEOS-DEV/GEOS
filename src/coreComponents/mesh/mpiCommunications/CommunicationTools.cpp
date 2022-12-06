@@ -689,10 +689,10 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
 
   waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
 
+/*
   fixReceiveLists( nodeManager, neighbors );
   fixReceiveLists( edgeManager, neighbors );
   fixReceiveLists( faceManager, neighbors );
-
   waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
 
   nodeManager.fixUpDownMaps( false );
@@ -701,6 +701,7 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
   verifyGhostingConsistency( edgeManager, neighbors );
   faceManager.fixUpDownMaps( false );
   verifyGhostingConsistency( faceManager, neighbors );
+*/
   elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
   {
     subRegion.fixUpDownMaps( false );
@@ -712,6 +713,7 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
   nodeManager.compressRelationMaps();
   edgeManager.compressRelationMaps();
   faceManager.compressRelationMaps();
+
 }
 
 void CommunicationTools::synchronizePackSendRecvSizes( FieldIdentifiers const & fieldsToBeSync,

@@ -132,12 +132,6 @@ void CellBlock::resize( dataRepository::indexType const numElements )
   m_elementsToFaces.resize( numElements );
 }
 
-void CellBlock::resizeO3mesh( dataRepository::indexType const numElements )
-{ 
-  this->resize(numElements);
-  m_elementsToNodes.resize( this->numElements(), 64 );
-}
-
 localIndex CellBlock::getFaceNodes( localIndex const cellIndex,
                                     localIndex const faceNum,
                                     Span< localIndex > const nodesInFaces ) const
@@ -148,5 +142,19 @@ localIndex CellBlock::getFaceNodes( localIndex const cellIndex,
                               m_elementsToNodes,
                               nodesInFaces );
 }
+
+arrayView1d< localIndex > CellBlock::getGlobalInformation()
+{
+  m_globalInfo.resize(9);
+  return m_globalInfo.toView();
+}
+
+array1d< localIndex > CellBlock::getPartitionInformation() 
+{
+  m_numNodesPerElement = 64;
+  m_elementsToNodes.resize( this->numElements(), m_numNodesPerElement); 
+  return m_globalInfo;
+}
+
 
 }

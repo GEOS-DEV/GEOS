@@ -21,7 +21,6 @@
 
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlock.hpp"
-#include "common/DataTypes.hpp"
 #include "mesh/generators/FaceBlock.hpp"
 
 namespace geosx
@@ -85,11 +84,7 @@ public:
    *
    * @note This is meant to be used as a values setter.
    */
-  arrayView1d< globalIndex > getNodeLocalToGlobal();
-
-  array1d< localIndex > setO3Information( string const & regionName ) override;
-
-  arrayView1d< localIndex > getGlobalInformation();
+  arrayView1d< globalIndex > getNodeLocalToGlobal() override;
 
   std::map< string, SortedArray< localIndex > > const & getNodeSets() const override;
 
@@ -109,7 +104,7 @@ public:
    *
    * The nodes coordinates and nodes local to global mappings get resized to @p numNodes.
    */
-  void setNumNodes( localIndex numNodes ); // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
+  void setNumNodes( localIndex numNodes ) override; // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
 
   localIndex numNodes() const override;
 
@@ -231,7 +226,6 @@ private:
   ToCellRelation< array2d< localIndex > > m_faceToCells;
 
   array1d< globalIndex > m_nodeLocalToGlobal;
-  array1d< localIndex > m_globalInfo;
 
   std::map< string, SortedArray< localIndex > > m_nodeSets;
 

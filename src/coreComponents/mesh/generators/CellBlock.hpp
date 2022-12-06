@@ -195,8 +195,10 @@ public:
    * @param numElements The new number of elements.
    */
   void resize( dataRepository::indexType const numElements ) override final;
+  
+  arrayView1d< localIndex > getGlobalInformation();
 
-  void resizeO3mesh( dataRepository::indexType const numElements );
+  array1d< localIndex > getPartitionInformation();
 
   ///@}
 
@@ -235,6 +237,8 @@ private:
 
   /// Type of element in this subregion.
   ElementType m_elementType;
+
+  array1d< localIndex > m_globalInfo;
 
   std::list< dataRepository::WrapperBase * > getExternalProperties() override
   {

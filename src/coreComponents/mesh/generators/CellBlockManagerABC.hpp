@@ -186,14 +186,15 @@ public:
    */
   virtual array1d< globalIndex > getNodeLocalToGlobal() const = 0;
 
-
-  virtual array1d< localIndex > setO3Information( string const & regionName ) = 0;
+  virtual arrayView1d< globalIndex > getNodeLocalToGlobal()  = 0; 
 
   /**
    * @brief Returns the node sets. Key of the map is the name of the set.
    * @return A reference to constant map.
    */
   virtual std::map< string, SortedArray< localIndex > > const & getNodeSets() const = 0;
+
+  virtual void setNumNodes( localIndex numNodes ) = 0;
 };
 
 }

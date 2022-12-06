@@ -43,10 +43,10 @@
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "mesh/utilities/MeshMapUtilities.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "schema/schemaUtilities.hpp"
+#include "mesh/utilities/MeshMapUtilities.hpp"
 
 // System includes
 #include <vector>
@@ -164,6 +164,7 @@ void ProblemManager::problemSetup()
   initialize();
 
   importFields();
+
 }
 
 
@@ -566,13 +567,13 @@ void ProblemManager::generateMesh()
         string const & discretizationName = feDiscretization->getName();
         arrayView1d< string const > const regionNames = discretizationPair.second;
         CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
-        CellBlockManager & cellBlockManager0 = meshBody.getGroup< CellBlockManager >( keys::cellManager );
 
         // create a high order MeshLevel
         if( order > 1 )
         {
           MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
-                                                       discretizationName, cellBlockManager0,
+                                                       discretizationName,
+                                                       cellBlockManager,
                                                        order );
 
           this->generateMeshLevel( mesh,
@@ -602,10 +603,10 @@ void ProblemManager::generateMesh()
   }
 
 
-
   Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
   domain.setupCommunications( useNonblockingMPI );
+
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
@@ -731,6 +732,13 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   FaceManager & faceManager = meshLevel.getFaceManager();
   ElementRegionManager & elemManager = meshLevel.getElemManager();
 
+//  GeometricObjectManager & geometricObjects = this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
+
+//  MeshUtilities::generateNodesets( geometricObjects, nodeManager );
+
+
+//  nodeManager.constructGlobalToLocalMap();
+
 
   if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
   {
@@ -740,7 +748,9 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     faceManager.setGeometricalRelations( cellBlockManager,
                                          elemManager,
                                          nodeManager );
+
     nodeManager.constructGlobalToLocalMap( cellBlockManager );
+
     // Edge, face and element region managers rely on the sets provided by the node manager.
     // This is why `nodeManager.buildSets` is called first.
     nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
@@ -757,32 +767,27 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     faceManager.setDomainBoundaryObjects();
     nodeManager.setDomainBoundaryObjects( faceManager );
     edgeManager.setDomainBoundaryObjects( faceManager );
-  }
+  
     meshLevel.generateSets();
 
-
-    if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+    elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
     {
-      elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
-      {
-        subRegion.setupRelatedObjectsInRelations( meshLevel );
-        subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
-        subRegion.setMaxGlobalIndex();
-      } );
-      elemManager.setMaxGlobalIndex();
-    }
-  
+      subRegion.setupRelatedObjectsInRelations( meshLevel );
+      subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+      subRegion.setMaxGlobalIndex();
+    } );
+    elemManager.setMaxGlobalIndex();
+  }
+
   else if (!meshLevel.isShallowCopyOf(
     getDomainPartition().getMeshBodies().getGroup< MeshBody >(0).getMeshLevels().getGroup< MeshLevel >( 0 )))
   {
-
-    //nodeManager.setGeometricalRelations( cellBlockManager, true, elemManager );
-    nodeManager.resize( cellBlockManager.numNodes() );
+    elemManager.generateMesh( cellBlockManager );
     ToCellRelation< ArrayOfArrays< localIndex > > const toCellBlock = cellBlockManager.getNodeToElements();
     array2d< localIndex > const blockToSubRegion = elemManager.getCellBlockToSubRegionMap( cellBlockManager );
     meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( blockToSubRegion.toViewConst(),
                                                                          toCellBlock,
-                                                                         nodeManager.toElementRelation());
+                                                                         nodeManager.toElementRelation()); 
 
     edgeManager.setGeometricalRelations( cellBlockManager );
 
@@ -804,14 +809,13 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
 
     meshLevel.generateSets();
 
+
     elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
     {
-      subRegion.constructGlobalToLocalMap();
       subRegion.setupRelatedObjectsInRelations( meshLevel );
       subRegion.setMaxGlobalIndex();
     } );
     elemManager.setMaxGlobalIndex();
-
   }
 
 }
@@ -852,7 +856,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
         ElementRegionManager & elemManager = meshLevel.getElemManager();
         FaceManager const & faceManager = meshLevel.getFaceManager();
         EdgeManager const & edgeManager = meshLevel.getEdgeManager();
-        //arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
         for( auto const & regionName : regionNames )
         {
@@ -886,7 +890,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
                   localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-                  //feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >( X, &subRegion, meshData, finiteElement );
+                  feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >( X, &subRegion, meshData, finiteElement );
 
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
                                                                                               meshLevel.getName(),
