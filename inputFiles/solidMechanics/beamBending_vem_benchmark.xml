@@ -15,14 +15,17 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ mesh1/Region2 }"
-      >
+      targetRegions="{ Region2 }"
+      logLevel="1">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        solverType="gmres"
+        krylovTol="1.0e-6"
+        preconditionerType="amg"
+        logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
@@ -31,7 +34,8 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="1"/>
+        order="1"
+        useVirtualElements="1"/>
     </FiniteElements>
   </NumericalMethods>
 
@@ -45,9 +49,9 @@
       xCoords="{ 0, 80 }"
       yCoords="{ 0, 8 }"
       zCoords="{ 0, 4 }"
-      nx="{ 80 }"
-      ny="{ 8 }"
-      nz="{ 4 }"
+      nx="{ 160 }"
+      ny="{ 16 }"
+      nz="{ 8 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 

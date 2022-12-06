@@ -847,31 +847,112 @@ struct FluxKernel
   }
 };
 
-struct FaceDirichletBCKernel
-{
-  template< typename VIEWTYPE >
-  using ElementViewConst = FluxKernel::ElementViewConst< VIEWTYPE >;
+/******************************** DirichletFaceBasedAssemblyKernel ********************************/
 
-  template< typename FLUID_WRAPPER >
+/**
+ * @class DirichFaceBasedAssemblyKernel
+ * @tparam FLUIDWRAPPER the type of the fluid wrapper
+ * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
+ */
+template< typename FLUIDWRAPPER >
+class DirichletFaceBasedAssemblyKernel : public FaceBasedAssemblyKernel< 1,
+                                                                         BoundaryStencilWrapper >
+{
+public:
+
+  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< 1,
+                                                               BoundaryStencilWrapper >;
+
+  /**
+   * @brief Constructor for the kernel interface
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] faceManager the face manager
+   * @param[in] stencilWrapper reference to the stencil wrapper
+   * @param[in] fluidWrapper reference to the fluid wrapper
+   * @param[in] dofNumberAccessor
+   * @param[in] singlePhaseFlowAccessors
+   * @param[in] singlePhaseFluidAccessors
+   * @param[in] permeabilityAccessors
+   * @param[in] dt time step size
+   * @param[inout] localMatrix the local CRS matrix
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  DirichletFaceBasedAssemblyKernel( globalIndex const rankOffset,
+                                    FaceManager const & faceManager,
+                                    BoundaryStencilWrapper const & stencilWrapper,
+                                    FLUIDWRAPPER const & fluidWrapper,
+                                    DofNumberAccessor const & dofNumberAccessor,
+                                    SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
+                                    SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
+                                    PermeabilityAccessors const & permeabilityAccessors,
+                                    real64 const & dt,
+                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                    arrayView1d< real64 > const & localRhs )
+    : Base( rankOffset,
+            stencilWrapper,
+            dofNumberAccessor,
+            singlePhaseFlowAccessors,
+            singlePhaseFluidAccessors,
+            permeabilityAccessors,
+            dt,
+            localMatrix,
+            localRhs ),
+    m_facePres( faceManager.getField< fields::flow::facePressure >() ),
+    m_faceGravCoef( faceManager.getField< fields::flow::gravityCoefficient >() ),
+    m_fluidWrapper( fluidWrapper )
+  {}
+
+
+  /**
+   * @struct StackVariables
+   * @brief Kernel variables (dof numbers, jacobian and residual) located on the stack
+   */
+  struct StackVariables
+  {
+public:
+
+    /**
+     * @brief Constructor for the stack variables
+     * @param[in] size size of the stencil for this connection
+     * @param[in] numElems number of elements for this connection
+     */
+    GEOSX_HOST_DEVICE
+    StackVariables( localIndex const GEOSX_UNUSED_PARAM( size ),
+                    localIndex GEOSX_UNUSED_PARAM( numElems ) )
+    {}
+
+    /// Storage for the face local residual
+    real64 localFlux;
+
+    /// Storage for the face local Jacobian
+    real64 localFluxJacobian;
+  };
+
+
+  /**
+   * @brief Performs the setup phase for the kernel.
+   * @param[in] iconn the connection index
+   * @param[in] stack the stack variables
+   */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void compute( arraySlice1d< localIndex const > const & seri,
-                       arraySlice1d< localIndex const > const & sesri,
-                       arraySlice1d< localIndex const > const & sefi,
-                       real64 const trans,
-                       real64 const dTrans_dPres,
-                       ElementViewConst< arrayView1d< real64 const > > const & pres,
-                       ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                       ElementViewConst< arrayView2d< real64 const > > const & dens,
-                       ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
-                       ElementViewConst< arrayView1d< real64 const > > const & mob,
-                       ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
-                       arrayView1d< real64 const > const & presFace,
-                       arrayView1d< real64 const > const & gravCoefFace,
-                       FLUID_WRAPPER const & fluidWrapper,
-                       real64 const dt,
-                       real64 & flux,
-                       real64 & dFlux_dP )
+  void setup( localIndex const iconn,
+              StackVariables & stack ) const
+  {
+    GEOSX_UNUSED_VAR( iconn, stack );
+  }
+
+  /**
+   * @brief Compute the local Dirichlet face flux contributions to the residual and Jacobian
+   * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
+   * @param[in] iconn the connection index
+   * @param[inout] stack the stack variables
+   * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
+   */
+  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
+  GEOSX_HOST_DEVICE
+  void computeFlux( localIndex const iconn,
+                    StackVariables & stack,
+                    FUNC && GEOSX_UNUSED_PARAM( compFluxKernelOp ) = singlePhaseBaseKernels::NoOpFunc{} ) const
   {
     using Order = BoundaryStencil::Order;
     localIndex constexpr numElems = BoundaryStencil::maxNumPointsInFlux;
@@ -879,107 +960,154 @@ struct FaceDirichletBCKernel
     stackArray1d< real64, numElems > mobility( numElems );
     stackArray1d< real64, numElems > dMobility_dP( numElems );
 
-    localIndex const er  = seri[ Order::ELEM ];
-    localIndex const esr = sesri[ Order::ELEM ];
-    localIndex const ei  = sefi[ Order::ELEM ];
-    localIndex const kf  = sefi[ Order::FACE ];
+    localIndex const er  = m_seri( iconn, Order::ELEM );
+    localIndex const esr = m_sesri( iconn, Order::ELEM );
+    localIndex const ei  = m_sei( iconn, Order::ELEM );
+    localIndex const kf  = m_sei( iconn, Order::FACE );
 
     // Get flow quantities on the elem/face
     real64 faceDens, faceVisc;
-    fluidWrapper.compute( presFace[kf], faceDens, faceVisc );
+    m_fluidWrapper.compute( m_facePres[kf], faceDens, faceVisc );
 
-    mobility[Order::ELEM] = mob[er][esr][ei];
+    mobility[Order::ELEM] = m_mob[er][esr][ei];
     singlePhaseBaseKernels::MobilityKernel::compute( faceDens, faceVisc, mobility[Order::FACE] );
 
-    dMobility_dP[Order::ELEM] = dMob_dPres[er][esr][ei];
+    dMobility_dP[Order::ELEM] = m_dMob_dPres[er][esr][ei];
     dMobility_dP[Order::FACE] = 0.0;
 
     // Compute average density
-    real64 const densMean = 0.5 * ( dens[er][esr][ei][0] + faceDens );
-    real64 const dDens_dP = 0.5 * dDens_dPres[er][esr][ei][0];
+    real64 const densMean = 0.5 * ( m_dens[er][esr][ei][0] + faceDens );
+    real64 const dDens_dP = 0.5 * m_dDens_dPres[er][esr][ei][0];
 
     // Evaluate potential difference
-    real64 const potDif = (pres[er][esr][ei] - presFace[kf])
-                          - densMean * (gravCoef[er][esr][ei] - gravCoefFace[kf]);
-    real64 const dPotDif_dP = 1.0 - dDens_dP * gravCoef[er][esr][ei];
+    real64 const potDif = (m_pres[er][esr][ei] - m_facePres[kf])
+                          - densMean * (m_gravCoef[er][esr][ei] - m_faceGravCoef[kf]);
+    real64 const dPotDif_dP = 1.0 - dDens_dP * m_gravCoef[er][esr][ei];
+
+    real64 trans;
+    real64 dTrans_dPerm[3];
+    m_stencilWrapper.computeWeights( iconn, m_permeability, trans, dTrans_dPerm );
+    real64 const dTrans_dPres = LvArray::tensorOps::AiBi< 3 >( dTrans_dPerm, m_dPerm_dPres[er][esr][ei][0] );
 
     real64 const f = trans * potDif;
     real64 const dF_dP = trans * dPotDif_dP + dTrans_dPres * potDif;
 
     // Upwind mobility
     localIndex const k_up = ( potDif >= 0 ) ? Order::ELEM : Order::FACE;
-    flux = dt * mobility[k_up] * f;
-    dFlux_dP = dt * ( mobility[k_up] * dF_dP + dMobility_dP[k_up] * f );
+
+    stack.localFlux = m_dt * mobility[k_up] * f;
+    stack.localFluxJacobian = m_dt * ( mobility[k_up] * dF_dP + dMobility_dP[k_up] * f );
   }
 
-  template< typename FLUID_WRAPPER >
-  static void launch( BoundaryStencilWrapper const & stencil,
-                      ElementViewConst< arrayView1d< integer const > > const & ghostRank,
-                      ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
-                      globalIndex const rankOffset,
-                      ElementViewConst< arrayView3d< real64 const > > const & perm,
-                      ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-                      ElementViewConst< arrayView1d< real64 const > > const & pres,
-                      ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                      ElementViewConst< arrayView2d< real64 const > > const & dens,
-                      ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
-                      ElementViewConst< arrayView1d< real64 const > > const & mob,
-                      ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
-                      arrayView1d< real64 const > const & presFace,
-                      arrayView1d< real64 const > const & gravCoefFace,
-                      FLUID_WRAPPER const & fluidWrapper,
-                      real64 const dt,
-                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                      arrayView1d< real64 > const & localRhs )
+  /**
+   * @brief Performs the complete phase for the kernel.
+   * @param[in] iconn the connection index
+   * @param[inout] stack the stack variables
+   */
+  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
+  GEOSX_HOST_DEVICE
+  void complete( localIndex const iconn,
+                 StackVariables & stack,
+                 FUNC && GEOSX_UNUSED_PARAM( assemblyKernelOp ) = singlePhaseBaseKernels::NoOpFunc{} ) const
   {
-    BoundaryStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-    BoundaryStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-    BoundaryStencil::IndexContainerViewConstType const & sefi = stencil.getElementIndices();
+    using Order = BoundaryStencil::Order;
 
-    forAll< parallelDevicePolicy<> >( seri.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    localIndex const er = m_seri( iconn, Order::ELEM );
+    localIndex const esr = m_sesri( iconn, Order::ELEM );
+    localIndex const ei = m_sei( iconn, Order::ELEM );
+
+    if( m_ghostRank[er][esr][ei] < 0 )
     {
-      localIndex const er  = seri( iconn, BoundaryStencil::Order::ELEM );
-      localIndex const esr = sesri( iconn, BoundaryStencil::Order::ELEM );
-      localIndex const ei  = sefi( iconn, BoundaryStencil::Order::ELEM );
+      // Add to global residual/jacobian
+      globalIndex const dofIndex = m_dofNumber[er][esr][ei];
+      localIndex const localRow = LvArray::integerConversion< localIndex >( dofIndex - m_rankOffset );
 
-      real64 trans;
-      real64 dTrans_dPerm[3];
-      stencil.computeWeights( iconn, perm, trans, dTrans_dPerm );
-      real64 const dTrans_dPres = LvArray::tensorOps::AiBi< 3 >( dTrans_dPerm, dPerm_dPres[er][esr][ei][0] );
-
-      real64 flux, fluxJacobian;
-
-      compute( seri[iconn],
-               sesri[iconn],
-               sefi[iconn],
-               trans,
-               dTrans_dPres,
-               pres,
-               gravCoef,
-               dens,
-               dDens_dPres,
-               mob,
-               dMob_dPres,
-               presFace,
-               gravCoefFace,
-               fluidWrapper,
-               dt,
-               flux,
-               fluxJacobian );
-
-      if( ghostRank[er][esr][ei] < 0 )
-      {
-        // Add to global residual/jacobian
-        globalIndex const dofIndex = dofNumber[er][esr][ei];
-        localIndex const localRow = LvArray::integerConversion< localIndex >( dofIndex - rankOffset );
-
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], flux );
-        localMatrix.addToRow< parallelDeviceAtomic >( localRow, &dofIndex, &fluxJacobian, 1 );
-      }
-    } );
-
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow], stack.localFlux );
+      m_localMatrix.addToRow< parallelDeviceAtomic >( localRow, &dofIndex, &stack.localFluxJacobian, 1 );
+    }
   }
+
+protected:
+
+  /// Views on face pressure, temperature, and composition
+  arrayView1d< real64 const > const m_facePres;
+
+  /// View on the face gravity coefficient
+  arrayView1d< real64 const > const m_faceGravCoef;
+
+  /// Reference to the fluid wrapper
+  FLUIDWRAPPER const m_fluidWrapper;
 };
+
+
+/**
+ * @class DirichletFaceBasedAssemblyKernelFactory
+ */
+class DirichletFaceBasedAssemblyKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey string to get the element degrees of freedom numbers
+   * @param[in] solverName name of the solver (to name accessors)
+   * @param[in] faceManager reference to the face manager
+   * @param[in] elemManager reference to the element region manager
+   * @param[in] stencilWrapper reference to the boundary stencil wrapper
+   * @param[in] fluidBase the single phase fluid constitutive model
+   * @param[in] dt time step size
+   * @param[inout] localMatrix the local CRS matrix
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( globalIndex const rankOffset,
+                   string const & dofKey,
+                   string const & solverName,
+                   FaceManager const & faceManager,
+                   ElementRegionManager const & elemManager,
+                   BoundaryStencilWrapper const & stencilWrapper,
+                   SingleFluidBase & fluidBase,
+                   real64 const & dt,
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   arrayView1d< real64 > const & localRhs )
+  {
+    constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
+    {
+      using FluidType = TYPEOFREF( fluid );
+      typename FluidType::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
+
+      using kernelType = DirichletFaceBasedAssemblyKernel< typename FluidType::KernelWrapper >;
+
+      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
+        elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+
+      dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
+
+      typename kernelType::SinglePhaseFlowAccessors singlePhaseFlowAccessors( elemManager, solverName );
+      typename kernelType::SinglePhaseFluidAccessors singlePhaseFluidAccessors( elemManager, solverName );
+      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+
+      kernelType kernel( rankOffset,
+                         faceManager,
+                         stencilWrapper,
+                         fluidWrapper,
+                         dofNumberAccessor,
+                         singlePhaseFlowAccessors,
+                         singlePhaseFluidAccessors,
+                         permeabilityAccessors,
+                         dt,
+                         localMatrix,
+                         localRhs );
+
+      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+    } );
+  }
+
+};
+
 
 /******************************** AquiferBCKernel ********************************/
 
