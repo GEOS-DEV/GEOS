@@ -191,7 +191,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
     std::string lifoPrefix = GEOSX_FMT( "lifo/pdt2_shot{:06}_rank{:04}", m_shotIndex, rank );
-    m_lifo = std::unique_ptr< lifoStorage < real32 > >( new lifoStorage< real32 >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize ) );
+    m_lifo = std::unique_ptr< lifoStorage< real32 > >( new lifoStorage< real32 >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize ) );
 
   } );
 }
@@ -971,7 +971,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
       arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
 
-      if ( NULL == std::getenv("DISABLE_LIFO") )
+      if( NULL == std::getenv( "DISABLE_LIFO" ) )
       {
         m_lifo->pushWait();
       }
@@ -980,7 +980,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
         p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
       } );
 
-      if ( NULL == std::getenv("DISABLE_LIFO") )
+      if( NULL == std::getenv( "DISABLE_LIFO" ) )
       {
         // Need to tell LvArray data is on GPU to avoir HtoD copy
         p_dt2.move( MemorySpace::cuda, false );
@@ -1044,7 +1044,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 
       arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
 
-      if ( NULL == std::getenv("DISABLE_LIFO") )
+      if( NULL == std::getenv( "DISABLE_LIFO" ) )
       {
         m_lifo->pop( p_dt2 );
       }

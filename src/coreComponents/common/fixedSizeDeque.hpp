@@ -41,8 +41,8 @@ public:
    * @param space          Space used to store que queue.
    * @param stream         Camp resource to perform the copies.
    */
-  fixedSizeDeque( IndexType maxEntries, IndexType valuesPerEntry, LvArray::MemorySpace space, camp::resources::Resource stream):
-    m_stream(stream)
+  fixedSizeDeque( IndexType maxEntries, IndexType valuesPerEntry, LvArray::MemorySpace space, camp::resources::Resource stream ):
+    m_stream( stream )
   {
     GEOSX_THROW_IF( maxEntries < 0, "Fixed sized queue size must be positive", std::runtime_error );
     GEOSX_THROW_IF( valuesPerEntry < 0, "Fixed sized queue array size must be positive", std::runtime_error );
