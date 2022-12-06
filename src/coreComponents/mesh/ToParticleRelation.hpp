@@ -48,10 +48,10 @@ public:
   template< typename ... DIMS >
   void resize( DIMS... newdims )
   {
-    m_numParticles.resizeDefault( newdims, 0 );
     m_toParticleRegion.resize( newdims ... );
     m_toParticleSubRegion.resize( newdims ... );
     m_toParticleIndex.resize( newdims ... );
+    m_numParticles.resizeDefault( m_toParticleRegion.size(), 0 );
   }
 
   /**
