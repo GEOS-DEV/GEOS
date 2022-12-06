@@ -72,6 +72,8 @@ void FluxApproximationBase::initializePreSubGroups()
       {
         // Group structure: mesh1/finiteVolumeStencils/myTPFA
         Group * stencilParentGroup = mesh.getGroupPointer( groupKeyStruct::stencilMeshGroupString() );
+        // There can be more than one FluxApproximation object so we check if the the group has
+        // already been registered.
         if ( stencilParentGroup == nullptr )
         {
           stencilParentGroup = &(mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() ));
@@ -85,6 +87,8 @@ void FluxApproximationBase::initializePreSubGroups()
       }
       else
       {
+        // There can be more than one FluxApproximation object so we check if the the group has
+        // already been registered.
         if ( !mesh.hasGroup( groupKeyStruct::stencilMeshGroupString() ) )
         { 
           Group & parentMesh = mesh.getShallowParent();
