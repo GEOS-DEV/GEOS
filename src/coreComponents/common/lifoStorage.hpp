@@ -49,6 +49,13 @@ public:
   /// Condition used to notify when device queue is not empty
   std::condition_variable m_notEmptyCond;
 
+  /**
+   * Create a fixed size double ended queue with associated mutexes and condition variables.
+   *
+   * @param maxEntries     Maximum number of array to store in the queue.
+   * @param valuesPerEntry Number of values in each array of the deque.
+   * @param space          Space used to store que queue.
+   */
   fixedSizeDequeAndMutexes( int maxEntries, int valuesPerEntry, LvArray::MemorySpace space ): fixedSizeDeque< T, int >( maxEntries, valuesPerEntry, space,
                                                                                                                         camp::resources::Resource{ camp::resources::Cuda{} } ) {}
 
@@ -226,7 +233,7 @@ public:
    * @param elemCnt                        Number of elments in the LvArray we want to store in the LIFO storage.
    * @param numberOfBuffersToStoreOnDevice Maximum number of array to store on device memory.
    * @param numberOfBuffersToStoreOnHost   Maximum number of array to store on host memory.
-   * @pparam maxNumberOfBuffers             Number of arrays expected to be stores in the LIFO.
+   * @param maxNumberOfBuffers             Number of arrays expected to be stores in the LIFO.
    */
   lifoStorage( std::string name, size_t elemCnt, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
     m_maxNumberOfBuffers( maxNumberOfBuffers ),

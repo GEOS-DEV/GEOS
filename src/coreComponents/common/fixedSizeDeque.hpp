@@ -133,6 +133,7 @@ public:
    * Add one array (copy of src) at the front of the queue
    *
    * @param src Array to emplace at the front of the queue
+   * @return Event associated to the copy.
    */
   camp::resources::Event emplace_front( const ArraySlice1D & src )
   {
@@ -146,6 +147,7 @@ public:
    * Add one array (copy of src) at the end of the queue
    *
    * @param src Array to emplace at the end of the queue
+   * @return Event associated to the copy.
    */
   camp::resources::Event emplace_back( const ArraySlice1D & src )
   {
@@ -156,6 +158,11 @@ public:
 
   }
 
+  /**
+   * Getter for the associated stream.
+   *
+   * @return the associated stream.
+   */
   camp::resources::Resource getStream()
   {
     return m_stream;
