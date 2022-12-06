@@ -43,7 +43,6 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsMPMKernels.hpp"
 
 
 namespace geosx
@@ -51,7 +50,6 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace solidMechanicsMPMKernels;
 namespace tOps = LvArray::tensorOps;
 
 SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
@@ -68,6 +66,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_fTable(),
   m_needsNeighborList( 0 ),
   m_neighborRadius( -1.0 ),
+  m_binSizeMultiplier( 1 ),
   m_cpdiDomainScaling( 0 ),
   m_smallMass( DBL_MAX ),
   m_numContactGroups(),
@@ -133,6 +132,11 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( -1.0 ).
     setDescription( "Neighbor radius for SPH-type calculations" );
+
+  registerWrapper( "binSizeMultiplier", &m_binSizeMultiplier ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "Multiplier for setting bin size, used to speed up particle neighbor sorting" );
 
   registerWrapper( "cpdiDomainScaling", &m_cpdiDomainScaling ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -292,15 +296,30 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
                                                                   [&]( localIndex const,
                                                                        ParticleSubRegion & subRegion )
       {
+        string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
+        
         subRegion.registerWrapper< array1d< int > >( "isBad" ). // TODO: Change this to a std::set/LvArray::SortedArray that we push indices into?
           setPlotLevel( PlotLevel::NOPLOT ).
           setDescription( "An array that remembers particles that should be deleted at the end of the time step." );
 
-        subRegion.registerWrapper< array1d< int > >( "massOfNeighbors" ).
+        subRegion.registerWrapper< array2d< real64 > >( "particleStress" ).
           setPlotLevel( PlotLevel::LEVEL_0 ).
-          setDescription( "An array holding the number of neighbors around each particle, self-inclusive." );
+          setDimLabels( 2, voightLabels ).
+          setDescription( "An array that stores particle stresses. Component ordering is Voigt notation." );
 
-        subRegion.excludeWrappersFromPacking( { "isBad", "massOfNeighbors" } ); // Copied from FEM solver, not sure if needed here
+        subRegion.registerWrapper< array1d< real64 > >( "particleDensity" ).
+          setPlotLevel( PlotLevel::LEVEL_0 ).
+          setDescription( "An array that stores particle densities." );
+
+        subRegion.registerWrapper< array1d< real64 > >( "particleDamage" ).
+          setPlotLevel( PlotLevel::LEVEL_0 ).
+          setDescription( "An array that stores particle damage." );
+
+        subRegion.registerWrapper< array1d< real64 > >( "particleDamageGradient" ).
+          setPlotLevel( PlotLevel::LEVEL_0 ).
+          setDescription( "An array that stores particle damage gradient." );
+
+        //subRegion.excludeWrappersFromPacking( { "isBad", "massOfNeighbors" } ); // Copied from FEM solver, not sure if needed here
       } );
     }
     else // Background grid field registration
@@ -486,12 +505,12 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       BCTableSize = BCTable1D.size();
     }
 
-    MPI_Bcast( &BCTableSize, 1, MPI_INT, 0, MPI_COMM_WORLD ); // Broadcast the size of BCTable1D to other processes
+    MPI_Bcast( &BCTableSize, 1, MPI_INT, 0, MPI_COMM_GEOSX ); // Broadcast the size of BCTable1D to other processes
     if( rank != 0 ) // All processes except for root resize their versions of BCTable1D
     {
       BCTable1D.resize( BCTableSize );
     }
-    MPI_Bcast( BCTable1D.data(), BCTableSize, MPI_DOUBLE, 0, MPI_COMM_WORLD ); // Broadcast BCTable1D to other processes
+    MPI_Bcast( BCTable1D.data(), BCTableSize, MPI_DOUBLE, 0, MPI_COMM_GEOSX ); // Broadcast BCTable1D to other processes
 
     // Technically don't need to reshape BCTable1D into a 2D array, but it makes things more readable and should have little runtime penalty
     m_bcTable.resize( BCTableSize / 7, 7 ); // Initialize size of m_BCTable
@@ -526,12 +545,12 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       FTableSize = FTable1D.size();
     }
 
-    MPI_Bcast( &FTableSize, 1, MPI_INT, 0, MPI_COMM_WORLD ); // Broadcast the size of FTable1D to other processes
+    MPI_Bcast( &FTableSize, 1, MPI_INT, 0, MPI_COMM_GEOSX ); // Broadcast the size of FTable1D to other processes
     if( rank != 0 ) // All processes except for root resize their versions of FTable1D
     {
       FTable1D.resize( FTableSize );
     }
-    MPI_Bcast( FTable1D.data(), FTableSize, MPI_DOUBLE, 0, MPI_COMM_WORLD ); // Broadcast FTable1D to other processes
+    MPI_Bcast( FTable1D.data(), FTableSize, MPI_DOUBLE, 0, MPI_COMM_GEOSX ); // Broadcast FTable1D to other processes
 
     // Techinically don't need to reshape FTable1D into a 2D array, but it makes things more readable and should have little runtime penalty
     m_fTable.resize( FTableSize / 4, 4 ); // Initialize size of m_fTable
@@ -706,7 +725,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
                    1,
                    MPI_DOUBLE,
                    MPI_MIN,
-                   MPI_COMM_WORLD );
+                   MPI_COMM_GEOSX );
     m_smallMass = fmin( globalMinMass * 1.0e-12, m_smallMass );
 
     // deformation gradient - TODO: there's probably a LvArray function that makes this a one-liner - I don't think the ParticleSubRegionBase constructor can easily initialize this to identity
@@ -750,7 +769,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
                  1,
                  MPI_INT,
                  MPI_MAX,
-                 MPI_COMM_WORLD );
+                 MPI_COMM_GEOSX );
 
   // Number of contact groups
   m_numContactGroups = maxGlobalGroupNumber + 1;
@@ -837,14 +856,19 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   // This currently has to be done every time time because isBad is not handled by the repartitioning/ghosting code
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
+    // Get references
     array1d< int > & isBad = subRegion.getReference< array1d< int > >( "isBad" );
-    array1d< int > & massOfNeighbors = subRegion.getReference< array1d< int > >( "massOfNeighbors" );
+    array1d< real64 > & particleDamage = subRegion.getReference< array1d< real64 > >( "particleDamage" );
+
+    // Resize
     isBad.resize( subRegion.size() );
-    massOfNeighbors.resize( subRegion.size() );
+    particleDamage.resize( subRegion.size() );
+
+    // Set values
     for( int p=0; p<subRegion.size(); p++ )
     {
       isBad[p] = 0;
-      massOfNeighbors[p] = 0;
+      particleDamage[p] = 0.0;
     }
   } );
   
@@ -905,69 +929,50 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   if( m_needsNeighborList == 1 )
   {
-    array1d< real64 > xBA(3); // relative position
-    
-    particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionA )
+    if( cycleNumber == 0)
     {
-      OrderedVariableToManyParticleRelation & neighborList = subRegionA.neighborList();
-      neighborList.resize(0); // Clear the existing neighbor list. It would be better to resize each particle's array to zero.
-      neighborList.resize(subRegionA.size());
-      arrayView2d< real64 > const xA = subRegionA.getParticleCenter();
-      for( localIndex a: subRegionA.nonGhostIndices() )
-      {
-        particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionB )
-        {
-          ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegionB.getParent().getParent() );
-          localIndex regionIndex = region.getIndexInParent();
-          localIndex subRegionIndex = subRegionB.getIndexInParent();
-          arrayView2d< real64 > const xB = subRegionB.getParticleCenter();
-          for( localIndex b=0; b<subRegionB.size(); b++ )
-          {
-            tOps::copy< 3 >( xBA, xB[b] ); // copy xB into xBA
-            tOps::subtract< 3 >( xBA, xA[a] ); // subtract xA from xBA
-            real64 rSquared = tOps::l2NormSquared< 3 >( xBA );
-            if( rSquared <= m_neighborRadius * m_neighborRadius ) // Would you be my neighbor?
-            {
-              regionIndex = subRegionIndex;
-              subRegionIndex = regionIndex;
-              insert( neighborList,
-                      a,
-                      regionIndex,
-                      subRegionIndex,
-                      b );
-            }
-          }
-        } );
-      }
-    } );
+      optimizeBinSort( particleManager );
+    }
+    else
+    {
+      (void) computeNeighborList( particleManager );
+    }
   }
 
-  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-  {
-    // Get neighbor list
-    OrderedVariableToManyParticleRelation & neighborList = subRegion.neighborList();
-    arrayView1d< localIndex const > numNeighborsAll = neighborList.m_numParticles.toViewConst();
-    ArrayOfArraysView< localIndex const > neighborRegions = neighborList.m_toParticleRegion.toViewConst();
-    ArrayOfArraysView< localIndex const > neighborSubRegions = neighborList.m_toParticleSubRegion.toViewConst();
-    ArrayOfArraysView< localIndex const > neighborIndices = neighborList.m_toParticleIndex.toViewConst();
+  // // Get mass accessor
+  // ParticleManager::ParticleViewAccessor< arrayView1d< real64 const > > particleMassAccessor = particleManager.constructFieldAccessor< fields::mpm::particleMass >();
 
-    // Get mass accessor
-    ParticleManager::ParticleViewAccessor< arrayView1d< real64 const > > particleMassAccessor = particleManager.constructFieldAccessor< fields::mpm::particleMass >();
+  // // Perform neighbor operations
+  // particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  // {
+  //   // Get result array
+  //   arrayView1d< real64 > const massOfNeighbors = subRegion.getReference< array1d< real64 > >( "massOfNeighbors" );
+    
+  //   // Get neighbor list
+  //   OrderedVariableToManyParticleRelation & neighborList = subRegion.neighborList();
+  //   arrayView1d< localIndex const > numNeighborsAll = neighborList.m_numParticles.toViewConst();
+  //   ArrayOfArraysView< localIndex const > neighborRegions = neighborList.m_toParticleRegion.toViewConst();
+  //   ArrayOfArraysView< localIndex const > neighborSubRegions = neighborList.m_toParticleSubRegion.toViewConst();
+  //   ArrayOfArraysView< localIndex const > neighborIndices = neighborList.m_toParticleIndex.toViewConst();
 
-    // Loop over neighbors
-    for( localIndex p: subRegion.nonGhostIndices() )
-    {
-      localIndex numNeighbors = numNeighborsAll[p];
-      arraySlice1d< localIndex const > regionIndices = neighborRegions[p];
-      arraySlice1d< localIndex const > subRegionIndices = neighborSubRegions[p];
-      arraySlice1d< localIndex const > particleIndices = neighborIndices[p];
+  //   // Loop over neighbors
+  //   for( localIndex p: subRegion.nonGhostIndices() )
+  //   {
+  //     localIndex numNeighbors = numNeighborsAll[p];
+  //     arraySlice1d< localIndex const > regionIndices = neighborRegions[p];
+  //     arraySlice1d< localIndex const > subRegionIndices = neighborSubRegions[p];
+  //     arraySlice1d< localIndex const > particleIndices = neighborIndices[p];
 
-      for( localIndex neighborIndex=0; neighborIndex<numNeighbors; neighborIndex++ )
-      {
-        real64 neighborMass = particleMassAccessor[regionIndices[neighborIndex]][subRegionIndices[neighborIndex]][particleIndices[neighborIndex]];
-      }
-    }
-  } );
+  //     for( localIndex neighborIndex = 0; neighborIndex < numNeighbors; neighborIndex++ )
+  //     {
+  //       localIndex regionIndex = regionIndices[neighborIndex];
+  //       localIndex subRegionIndex = subRegionIndices[neighborIndex];
+  //       localIndex particleIndex = particleIndices[neighborIndex];
+  //       real64 neighborMass = particleMassAccessor[regionIndex][subRegionIndex][particleIndex];
+  //       massOfNeighbors[p] += neighborMass;
+  //     }
+  //   }
+  // } );
 
 
   //#######################################################################################
@@ -2201,6 +2206,185 @@ void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & s
 void SolidMechanicsMPM::setConstitutiveNames( ParticleSubRegionBase & subRegion ) const
 {
   GEOSX_UNUSED_VAR( subRegion );
+}
+
+real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager )
+{
+  // Time this function
+  real64 tStart = MPI_Wtime();
+  
+  // Expand bin limits by neighbor radius to account for the buffer zone of ghost particles outside the patch limits
+  real64 neighborRadiusSquared = m_neighborRadius * m_neighborRadius;
+  real64 xmin = m_xLocalMinNoGhost[0] - m_neighborRadius,
+         xmax = m_xLocalMaxNoGhost[0] + m_neighborRadius,
+         ymin = m_xLocalMinNoGhost[1] - m_neighborRadius,
+         ymax = m_xLocalMaxNoGhost[1] + m_neighborRadius,
+         zmin = m_xLocalMinNoGhost[2] - m_neighborRadius,
+         zmax = m_xLocalMaxNoGhost[2] + m_neighborRadius;
+
+  // Initialize bin sort
+  real64 binWidth = m_binSizeMultiplier * m_neighborRadius;
+  int nxbins = std::ceil( ( xmax - xmin ) / binWidth ),
+      nybins = std::ceil( ( ymax - ymin ) / binWidth ),
+      nzbins = m_planeStrain ? 1 : std::ceil( ( zmax - zmin ) / binWidth );
+  int nbins = nxbins * nybins * nzbins;
+  real64 dx = ( xmax - xmin ) / nxbins,
+         dy = ( ymax - ymin ) / nybins,
+         dz = ( zmax - zmin ) / nzbins;
+
+  // Declare and add particles to bins
+  std::vector<std::vector< ArrayOfArrays<int> >> bins; // This is horrible
+  bins.resize( particleManager.numRegions() );
+  particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion & region ) // idk why this requires a template argument and the subregion loops don't
+  {
+    localIndex regionIndex = region.getIndexInParent();
+    bins[regionIndex].resize( region.numSubRegions() );
+    region.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+    {
+      localIndex subRegionIndex = subRegion.getIndexInParent();
+      bins[regionIndex][subRegionIndex].resize( nbins );
+      arrayView2d< real64 > const p_x = subRegion.getParticleCenter();
+      for( localIndex p=0; p<subRegion.size(); p++ )
+      {
+        // Particle bin ijk indices
+        int i, j, k;
+        i = std::floor( ( p_x[p][0] - xmin ) / dx ),
+        j = std::floor( ( p_x[p][1] - ymin ) / dy ),
+        k = std::floor( ( p_x[p][2] - zmin ) / dz );
+
+        // Bin number
+        int b = i + j * nxbins + k * nxbins * nybins;
+        bins[regionIndex][subRegionIndex].emplaceBack( b, p );
+      }
+    } );
+  } );
+
+  // Perform neighbor search over appropriate bins
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionA )
+  {
+    // Declare relative position    
+    array1d< real64 > xBA(3);
+
+    // Get and initialize neighbor list
+    OrderedVariableToManyParticleRelation & neighborList = subRegionA.neighborList();
+    neighborList.resize(0); // Clear the existing neighbor list. It would be better to resize each particle's array to zero to avoid the next line
+    neighborList.resize(subRegionA.size());
+
+    // Get 'this' particle's location
+    arrayView2d< real64 > const xA = subRegionA.getParticleCenter();
+
+    // Find neighbors of 'this' particle
+    for( localIndex a: subRegionA.nonGhostIndices() )
+    {
+      // Bin ijk indices bounding a sphere of radius m_neighborRadius centered at 'this' particle
+      int imin, imax, jmin, jmax, kmin, kmax;
+      imin = std::floor( ( xA[a][0] - m_neighborRadius - xmin ) / dx ),
+      jmin = std::floor( ( xA[a][1] - m_neighborRadius - ymin ) / dy ),
+      kmin = std::floor( ( xA[a][2] - m_neighborRadius - zmin ) / dz );
+      imax = std::floor( ( xA[a][0] + m_neighborRadius - xmin ) / dx ),
+      jmax = std::floor( ( xA[a][1] + m_neighborRadius - ymin ) / dy ),
+      kmax = std::floor( ( xA[a][2] + m_neighborRadius - zmin ) / dz );
+
+      // Adjust bin ijk indices if necessary
+      imin = std::max( imin, 0 );
+      imax = std::min( imax, nxbins-1 );
+      jmin = std::max( jmin, 0 );
+      jmax = std::min( jmax, nybins-1 );
+      kmin = std::max( kmin, 0 );
+      kmax = std::min( kmax, nzbins-1 );
+
+      // Inner subregion loop
+      particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionB )
+      {
+        // Get region and subregion indices
+        ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegionB.getParent().getParent() );
+        localIndex regionIndex = region.getIndexInParent();
+        localIndex subRegionIndex = subRegionB.getIndexInParent();
+
+        // Get 'other' particle location
+        arrayView2d< real64 > const xB = subRegionB.getParticleCenter();
+
+        // Loop over bins
+        for( int iBin=imin; iBin<=imax; iBin++ )
+        {
+          for( int jBin=jmin; jBin<=jmax; jBin++ )
+          {
+            for( int kBin=kmin; kBin<=kmax; kBin++ )
+            {
+              int bin = iBin + jBin * nxbins + kBin * nxbins * nybins;
+              for( localIndex b: bins[regionIndex][subRegionIndex][bin] )
+              {
+                tOps::copy< 3 >( xBA, xB[b] ); // copy xB into xBA
+                tOps::subtract< 3 >( xBA, xA[a] ); // subtract xA from xBA
+                real64 rSquared = tOps::l2NormSquared< 3 >( xBA );
+                if( rSquared <= neighborRadiusSquared ) // Would you be my neighbor?
+                {
+                  insert( neighborList,
+                          a,
+                          regionIndex,
+                          subRegionIndex,
+                          b );
+                }
+              }
+            }
+          }
+        }
+      } );
+    }
+  } );
+
+  return( MPI_Wtime() - tStart );
+}
+
+void SolidMechanicsMPM::optimizeBinSort( ParticleManager & particleManager )
+{
+  // Each partition determines its optimal multiplier which results in the minimum time for neighbor list construction
+  // The global multiplier is set by a weighted average of each partition's multiplier, with the number of particles
+  // on the partition being the weight factor.
+
+  // Start
+  int optimalMultiplier;
+
+  // Identify the largest possible multiplier - we can limit this if it's prohibitive to check larger multipliers in large 3D sims
+  real64 xL = m_xLocalMaxNoGhost[0] - m_xLocalMinNoGhost[0] + 2 * m_neighborRadius;
+  real64 yL = m_xLocalMaxNoGhost[1] - m_xLocalMinNoGhost[1] + 2 * m_neighborRadius;
+  real64 zL = m_xLocalMaxNoGhost[2] - m_xLocalMinNoGhost[2] + 2 * m_neighborRadius;
+  int maxMultiplier = std::max( std::ceil( xL / m_neighborRadius), std::max( std::ceil( yL / m_neighborRadius), std::ceil( zL / m_neighborRadius) ));
+  maxMultiplier = std::max( maxMultiplier, 1 );
+
+  // Identify this partition's optimal multiplier
+  real64 minTime = DBL_MAX;
+  for( int multiplier=1; multiplier<=maxMultiplier; multiplier++)
+  {
+    m_binSizeMultiplier = multiplier;
+    real64 sortingTime = computeNeighborList( particleManager );
+    if( sortingTime < minTime )
+    {
+      minTime = sortingTime;
+      optimalMultiplier = multiplier;
+    }
+  }
+
+  // MPI comms
+  int globalNumberOfParticles;
+  real64 globalWeightedMultiplier;
+  int localNumberOfParticles = particleManager.getNumberOfParticles();
+  real64 localWeightedMultiplier = optimalMultiplier * localNumberOfParticles;
+  MPI_Allreduce( &localWeightedMultiplier,
+                 &globalWeightedMultiplier,
+                 1,
+                 MPI_DOUBLE,
+                 MPI_SUM,
+                 MPI_COMM_GEOSX );
+  MPI_Allreduce( &localNumberOfParticles,
+                 &globalNumberOfParticles,
+                 1,
+                 MPI_INT,
+                 MPI_SUM,
+                 MPI_COMM_GEOSX );
+
+  // Set bin size multiplier
+  m_binSizeMultiplier = std::max( (int) std::round( globalWeightedMultiplier / globalNumberOfParticles ), 1 );
 }
 
 
