@@ -6,7 +6,6 @@
 #define GEOSX_RELPERMDRIVERRUNTEST_HPP_
 
 #include "RelpermDriver.hpp"
-#include "constitutive/relativePermeability/TableRelativePermeabilityHysteresis.hpp"
 #include "layouts.hpp"
 
 

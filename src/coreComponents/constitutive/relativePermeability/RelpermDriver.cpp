@@ -329,6 +329,50 @@ void RelpermDriver::compareWithBaseline()
   file.close();
 }
 
+void RelpermDriver::setMinMaxToImbibition( const integer ipWetting,
+                                           const integer ipNonWetting,
+                                           arrayView1d< integer const > const & phaseHasHysteresis,
+                                           arrayView2d< real64, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
+                                           arrayView1d< real64 const > const & drainagePhaseMaxVolFraction,
+                                           arrayView2d< real64, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
+                                           arrayView1d< real64 const > const & drainagePhaseMinVolFraction ) const
+{
+
+  if( phaseHasHysteresis[ipNonWetting] )
+  {
+    phaseMaxHistoricalVolFraction[0][ipNonWetting] = drainagePhaseMinVolFraction[ipNonWetting];
+    std::cout << " new Max NWet Historical " << phaseMaxHistoricalVolFraction[0][ipNonWetting] << std::endl;
+  }
+  if( phaseHasHysteresis[ipWetting] )
+  {
+    phaseMinHistoricalVolFraction[0][ipWetting] = drainagePhaseMaxVolFraction[ipWetting];
+    std::cout << " new Min Wet Historical " << phaseMinHistoricalVolFraction[0][ipWetting] << std::endl;
+  }
+}
+
+
+void RelpermDriver::setMinMaxToDrainage( const integer ipWetting,
+                                         const integer ipNonWetting,
+                                         arrayView1d< integer const > const & phaseHasHysteresis,
+                                         arrayView2d< real64, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
+                                         arrayView1d< real64 const > const & drainagePhaseMaxVolFraction,
+                                         arrayView2d< real64, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
+                                         arrayView1d< real64 const > const & drainagePhaseMinVolFraction ) const
+{
+  if( phaseHasHysteresis[ipNonWetting] )
+  {
+    phaseMaxHistoricalVolFraction[0][ipNonWetting] = drainagePhaseMaxVolFraction[ipNonWetting];
+    std::cout << " new Max NWet Historical " << phaseMaxHistoricalVolFraction[0][ipNonWetting] << std::endl;
+  }
+  if( phaseHasHysteresis[ipWetting] )
+  {
+    phaseMinHistoricalVolFraction[0][ipWetting] = drainagePhaseMinVolFraction[ipWetting];
+    std::cout << " new Min Wet Historical " << phaseMinHistoricalVolFraction[0][ipWetting] << std::endl;
+  }
+}
+
+
+
 REGISTER_CATALOG_ENTRY( TaskBase,
                         RelpermDriver,
                         string const &, dataRepository::Group * const )

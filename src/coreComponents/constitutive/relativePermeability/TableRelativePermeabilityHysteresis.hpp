@@ -22,12 +22,16 @@
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
 #include "functions/TableFunction.hpp"
-#include "constitutive/relativePermeability/RelpermDriver.hpp"
+//#include "constitutive/relativePermeability/RelpermDriver.hpp"
 
 
 
 namespace geosx
 {
+
+//fwd class
+class RelpermDriver;
+
 namespace constitutive
 {
 
@@ -437,41 +441,41 @@ private:
 
 
   GEOSX_HOST_DEVICE
-  void setMinMaxToDrainage( geosx::RelpermDriver *  driver )
-  {
-
-    integer ipWetting, ipNonWetting;
-    std::tie( ipWetting, ipNonWetting ) = phaseIndex();
-
-    driver->setMinMaxToDrainage( ipWetting,
-                                ipNonWetting,
-                                m_phaseHasHysteresis,
-                                m_phaseMaxHistoricalVolFraction,
-                                m_drainagePhaseMaxVolFraction,
-                                m_phaseMinHistoricalVolFraction,
-                                m_drainagePhaseMinVolFraction );
-  }
+  void setMinMaxToDrainage( geosx::RelpermDriver *  driver );
+//  {
+//
+//    integer ipWetting, ipNonWetting;
+//    std::tie( ipWetting, ipNonWetting ) = phaseIndex();
+//
+//    driver->setMinMaxToDrainage( ipWetting,
+//                                ipNonWetting,
+//                                m_phaseHasHysteresis,
+//                                m_phaseMaxHistoricalVolFraction,
+//                                m_drainagePhaseMaxVolFraction,
+//                                m_phaseMinHistoricalVolFraction,
+//                                m_drainagePhaseMinVolFraction );
+//  }
 
 
 
   /// for use in RelpermDriver to browse the drainage curves
   /// by setting the MaxNonWettingSat to Snwmin and MinWettingSat to Sw
   GEOSX_HOST_DEVICE
-  void setMinMaxToImbibition( geosx::RelpermDriver *  driver )
-  {
-
-    integer ipWetting, ipNonWetting;
-    std::tie( ipWetting, ipNonWetting ) = phaseIndex();
-
-
-    driver->setMinMaxToImbibition( ipWetting,
-                                ipNonWetting,
-                                m_phaseHasHysteresis,
-                                m_phaseMaxHistoricalVolFraction,
-                                m_drainagePhaseMaxVolFraction,
-                                m_phaseMinHistoricalVolFraction,
-                                m_drainagePhaseMinVolFraction );
-  }
+  void setMinMaxToImbibition( geosx::RelpermDriver *  driver );
+//  {
+//
+//    integer ipWetting, ipNonWetting;
+//    std::tie( ipWetting, ipNonWetting ) = phaseIndex();
+//
+//
+//    driver->setMinMaxToImbibition( ipWetting,
+//                                ipNonWetting,
+//                                m_phaseHasHysteresis,
+//                                m_phaseMaxHistoricalVolFraction,
+//                                m_drainagePhaseMaxVolFraction,
+//                                m_phaseMinHistoricalVolFraction,
+//                                m_drainagePhaseMinVolFraction );
+//  }
 
 private:
 
