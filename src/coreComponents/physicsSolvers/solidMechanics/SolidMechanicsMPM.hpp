@@ -27,7 +27,6 @@
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
-#include "NeighborAccessors.hpp"
 #include "MPMSolverBaseFields.hpp"
 
 namespace geosx
@@ -211,6 +210,7 @@ protected:
 
   int m_needsNeighborList;
   real64 m_neighborRadius;
+  int m_binSizeMultiplier;
 
   int m_cpdiDomainScaling;
 
@@ -318,6 +318,10 @@ private:
   void solverProfiling( std::string label );
 
   void solverProfilingIf( std::string label, bool condition );
+
+  real64 computeNeighborList( ParticleManager & particleManager );
+
+  void optimizeBinSort( ParticleManager & particleManager );
 
 };
 
