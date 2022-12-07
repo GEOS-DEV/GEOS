@@ -484,16 +484,18 @@ struct VelocityComputation
       real32 flowy[numNodesPerElem] = {0.0};
       real32 flowz[numNodesPerElem] = {0.0};
 
+      for( localIndex i = 0; i < numNodesPerElem; ++i )
+      {
+        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
+        uelemx[i] = massLoc*velocity_x[k][i];
+        uelemy[i] = massLoc*velocity_y[k][i];
+        uelemz[i] = massLoc*velocity_z[k][i];
+      }
+
       for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
       {
 
-        for( localIndex i = 0; i < numNodesPerElem; ++i )
-        {
-          real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
-          uelemx[i] = massLoc*velocity_x[k][i];
-          uelemy[i] = massLoc*velocity_y[k][i];
-          uelemz[i] = massLoc*velocity_z[k][i];
-        }
+
 
         m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
