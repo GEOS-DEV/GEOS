@@ -33,8 +33,6 @@ set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
                            H1_Tetrahedron_Lagrange1_Gauss1
                            H1_Pyramid_Lagrange1_Gauss5
                            H1_Tetrahedron_VEM_Gauss1
-                           H1_Wedge_VEM_Gauss1
-                           H1_Hexahedron_VEM_Gauss1
                            H1_Prism5_VEM_Gauss1
                            H1_Prism6_VEM_Gauss1
                            H1_Prism7_VEM_Gauss1
@@ -49,6 +47,8 @@ if ( NOT ${ENABLE_HIP} )
   Q3_Hexahedron_Lagrange_GaussLobatto
   Q4_Hexahedron_Lagrange_GaussLobatto
   Q5_Hexahedron_Lagrange_GaussLobatto
+  H1_Hexahedron_VEM_Gauss1
+  H1_Wedge_VEM_Gauss1
   H1_Prism11_VEM_Gauss1 )
 endif( )
 

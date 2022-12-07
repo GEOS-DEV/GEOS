@@ -56,8 +56,6 @@
 
 #define VEM_1_TYPES \
   finiteElement::H1_Tetrahedron_VEM_Gauss1, \
-  finiteElement::H1_Wedge_VEM_Gauss1, \
-  finiteElement::H1_Hexahedron_VEM_Gauss1, \
   finiteElement::H1_Prism5_VEM_Gauss1, \
   finiteElement::H1_Prism6_VEM_Gauss1, \
   finiteElement::H1_Prism7_VEM_Gauss1, \
@@ -66,6 +64,8 @@
   finiteElement::H1_Prism10_VEM_Gauss1
 
 #define VEM_2_TYPES \
+  finiteElement::H1_Hexahedron_VEM_Gauss1, \
+  finiteElement::H1_Wedge_VEM_Gauss1, \
   finiteElement::H1_Prism11_VEM_Gauss1
 // can only compile h1_prism11_vem_gauss1 when not using cce+rocm
 

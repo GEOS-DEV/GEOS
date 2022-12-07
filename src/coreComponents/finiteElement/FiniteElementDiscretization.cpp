@@ -98,7 +98,12 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       {
         if( m_useVem == 1 )
         {
+#if !defined( GEOSX_USE_HIP )
           return std::make_unique< H1_Wedge_VEM_Gauss1 >();
+#else
+          GEOSX_ERROR( "Cannot compile this on Crusher." );
+          return nullptr;
+#endif
         }
         else
         {
@@ -109,7 +114,12 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       {
         if( m_useVem == 1 )
         {
+#if !defined( GEOSX_USE_HIP )
           return std::make_unique< H1_Hexahedron_VEM_Gauss1 >();
+#else
+          GEOSX_ERROR( "Cannot compile this on Crusher." );
+          return nullptr;
+#endif
         }
         else if( m_formulation == "SEM" )
         {
