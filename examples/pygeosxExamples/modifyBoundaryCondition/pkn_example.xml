@@ -25,7 +25,7 @@
       contactRelationName="fractureContact"
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      couplingTypeOption="FIM"
+      couplingType="FIM"
       targetRegions="{ Domain, Fracture }">
       <NonlinearSolverParameters
         newtonMaxIter="50"

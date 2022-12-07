@@ -327,10 +327,10 @@ public:
 
 protected:
 
-  real64 fullyCoupledSolverStep( real64 const & time_n,
-                                 real64 const & dt,
-                                 int const cycleNumber,
-                                 DomainPartition & domain )
+  virtual real64 fullyCoupledSolverStep( real64 const & time_n,
+                                         real64 const & dt,
+                                         int const cycleNumber,
+                                         DomainPartition & domain )
   {
     GEOSX_MARK_FUNCTION;
 

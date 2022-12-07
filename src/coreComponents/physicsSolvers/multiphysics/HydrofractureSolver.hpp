@@ -20,13 +20,12 @@
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 
 namespace geosx
 {
-
-class SinglePhaseBase;
-class SolidMechanicsLagrangianFEM;
-class SurfaceGenerator;
 
 class HydrofractureSolver : public CoupledSolver< SolidMechanicsLagrangianFEM,
                                                   SinglePhaseBase >
@@ -114,19 +113,8 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             int const cycleNumber,
-                             DomainPartition & domain ) override;
-
   virtual real64 setNextDt( real64 const & currentDt,
                             DomainPartition & domain ) override;
-
-
-  virtual real64 explicitStep( real64 const & time_n,
-                               real64 const & dt,
-                               integer const cycleNumber,
-                               DomainPartition & domain ) override;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
@@ -140,12 +128,6 @@ public:
 
   void assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & domain,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix );
-
-
-  real64 splitOperatorStep( real64 const & time_n,
-                            real64 const & dt,
-                            integer const cycleNumber,
-                            DomainPartition & domain );
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
   {
@@ -162,18 +144,8 @@ public:
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }
 
-
-  enum class CouplingTypeOption : integer
-  {
-    FIM,
-    SIM_FixedStress
-  };
-
-
   struct viewKeyStruct : Base::viewKeyStruct
   {
-    constexpr static char const * couplingTypeOptionStringString() { return "couplingTypeOption"; }
-
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
 
     constexpr static char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
@@ -223,7 +195,10 @@ protected:
 
 private:
 
-  CouplingTypeOption m_couplingTypeOption;
+  virtual real64 fullyCoupledSolverStep( real64 const & time_n,
+                                         real64 const & dt,
+                                         int const cycleNumber,
+                                         DomainPartition & domain ) override final;
 
   // name of the contact relation
   string m_contactRelationName;
@@ -243,10 +218,6 @@ private:
   integer m_numResolves[2];
 
 };
-
-ENUM_STRINGS( HydrofractureSolver::CouplingTypeOption,
-              "FIM",
-              "SIM_FixedStress" );
 
 
 } /* namespace geosx */

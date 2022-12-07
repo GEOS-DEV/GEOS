@@ -7,7 +7,7 @@
       name="PhaseFieldSolve"
       solidSolverName="SolidMechSolve"
       damageSolverName="DamageSolve"
-      couplingTypeOption="FixedStress"
+      couplingType="Sequential"
       logLevel="2"
       subcycling="0"
       discretization="FE1"
