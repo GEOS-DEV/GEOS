@@ -170,7 +170,7 @@ public:
   };
 
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : Base::viewKeyStruct
   {
     constexpr static char const * couplingTypeOptionStringString() { return "couplingTypeOption"; }
 

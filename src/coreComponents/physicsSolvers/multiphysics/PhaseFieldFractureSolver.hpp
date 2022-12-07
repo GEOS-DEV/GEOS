@@ -20,7 +20,9 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDFRACTURESOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDFRACTURESOLVER_HPP_
 
-#include "physicsSolvers/CoupledSolver.hpp"
+#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
 
 namespace geosx
 {
@@ -85,17 +87,17 @@ public:
                      real64 const & dt,
                      DomainPartition & domain ) override final;
 
-  virtual void
-  implicitStepComplete( real64 const & time_n,
-                        real64 const & dt,
-                        DomainPartition & domain ) override final;
+  // virtual void
+  // implicitStepComplete( real64 const & time_n,
+  //                       real64 const & dt,
+  //                       DomainPartition & domain ) override final;
 
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  virtual void mapSolutionBetweenSolvers( DomainPartion & Domain, int const idx) override final;
+  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, int const idx) override final;
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : Base::viewKeyStruct
   {
     constexpr static char const * totalMeanStressString() { return "totalMeanStress"; }
     constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }

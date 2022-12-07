@@ -124,7 +124,7 @@ public:
 
 protected:
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : Base::viewKeyStruct
   {
     /// Names of the porous materials
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }

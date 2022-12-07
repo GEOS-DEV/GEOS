@@ -119,7 +119,7 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
 {
 
   GEOSX_MARK_FUNCTION;
-  if( idx == SolverType::Damage )
+  if( idx ==  static_cast< integer >( SolverType::Damage ) )
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
@@ -127,7 +127,7 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
     {
       NodeManager & nodeManager = mesh.getNodeManager();
 
-      string const & damageFieldName = damageSolver().getFieldName();
+      string const & damageFieldName = damageSolver()->getFieldName();
 
       //should get reference to damage field here.
       arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );

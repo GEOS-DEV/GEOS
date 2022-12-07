@@ -27,6 +27,21 @@
 namespace geosx
 {
 
+/// Declare strings associated with enumeration values.
+
+/**
+ * @brief Coupling type.
+  */
+enum class CouplingType : integer
+{
+  FIM,        ///< Fully-implicit coupling
+  Sequential  ///< Sequential coupling
+};
+
+ENUM_STRINGS( CouplingType,
+              "FIM",
+              "Sequential" );
+
 template< typename ... SOLVERS >
 class CoupledSolver : public SolverBase
 {
@@ -40,10 +55,11 @@ public:
    */
   CoupledSolver( const string & name,
                  Group * const parent )
-    : SolverBase( name, parent )
+    : SolverBase( name, parent ),
+    m_subcyclingOption( 0 )
   {
     /// GEOS mainly uses FIM coupling so let's define FIM as the default.
-    this->registerWrapper( viewKeyStruct::couplingTypeStirng(), m_couplingType ).
+    registerWrapper( viewKeyStruct::couplingTypeString(), &m_couplingType ).
        setInputFlag( dataRepository::InputFlags::OPTIONAL ).
        setApplyDefaultValue( CouplingType::FIM ).
        setDescription( "Type of coupling. Options are: Sequential and FIM" );
@@ -213,7 +229,7 @@ public:
   solverStep( real64 const & time_n,
               real64 const & dt,
               int const cycleNumber,
-              DomainPartition & domain ) override final
+              DomainPartition & domain ) override
   {
     GEOSX_MARK_FUNCTION;
 
@@ -224,6 +240,10 @@ public:
     else if( m_couplingType == CouplingType::Sequential )
     {
       return sequentiallyCoupledSolverStep( time_n, dt, cycleNumber, domain );
+    }else
+    {
+      GEOSX_ERROR("Invalid coupling type option.");
+      return 0;
     }
 
   }
@@ -304,25 +324,16 @@ public:
 
   /**@}*/
 
-  /**
-   * @brief Coupling type.
-   */
-  enum class CouplingType : integer
-  {
-    FIM,        ///< Fully-implicit coupling
-    Sequential  ///< Sequential coupling
-  };
-
 protected:
 
   real64 fullyCoupledSolverStep( real64 const & time_n,
                                  real64 const & dt,
                                  int const cycleNumber,
-                                 DomainPartition & domain ) final
+                                 DomainPartition & domain )
   {
     GEOSX_MARK_FUNCTION;
 
-    real64 dt_return = dt;
+    real64 dtReturn = dt;
 
     // setup the coupled linear system
     setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
@@ -331,15 +342,13 @@ protected:
     implicitStepSetup( time_n, dt, domain );
 
     // currently the only method is implicit time integration
-    dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+    dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
     // complete time step
-    implicitStepComplete( time_n, dt_return, domain );
+    implicitStepComplete( time_n, dtReturn, domain );
 
-    return dt_return;
+    return dtReturn;
   }
-
-  virtual void mapSolutionBetweenSolvers( DomainPartion & Domain, integer const idx);
 
   real64 sequentiallyCoupledSolverStep( real64 const & time_n,
                                         real64 const & dt,
@@ -348,7 +357,7 @@ protected:
   {
     GEOSX_MARK_FUNCTION;
 
-    real64 dt_return = dt;
+    real64 dtReturn = dt;
 
     real64 dtReturnTemporary;
 
@@ -394,13 +403,11 @@ protected:
         {
           GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter << " iterations! *****\n" );
           isConverged = true;
-          break;
         }
         else if( m_subcyclingOption == 0 && iter > 0 )
         {
           GEOSX_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
           isConverged = true;
-          break;
         }
 
         mapSolutionBetweenSolvers( domain, idx() );
@@ -409,9 +416,13 @@ protected:
         {
           iter = 0;
           dtReturn = dtReturnTemporary;
-          continue;
         }
       } );
+
+      if ( isConverged )
+      {
+        break;
+      }
 
       // Add convergence check:
       ++iter;
@@ -421,8 +432,11 @@ protected:
 
     implicitStepComplete( time_n, dt, domain );
 
-    return dt_return;
+    return dtReturn;
   }
+
+  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx)
+  {}
 
   virtual void
   postProcessInput() override
@@ -455,12 +469,11 @@ protected:
   /// Type of coupling
   CouplingType m_couplingType;
 
+  int m_subcyclingOption;
+
 };
 
-/// Declare strings associated with enumeration values.
-ENUM_STRINGS( CoupledSolver::CouplingType,
-              "FIM",
-              "Sequential" );
+
 
 } /* namespace geosx */
 
