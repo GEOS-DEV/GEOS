@@ -93,7 +93,7 @@ public:
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  void mapDamageToQuadrature( DomainPartition & domain );
+  virtual void mapSolutionBetweenSolvers( DomainPartion & Domain, int const idx) override final;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {

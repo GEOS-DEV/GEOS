@@ -334,6 +334,8 @@ protected:
     return dt_return;
   }
 
+  virtual void mapSolutionBetweenSolvers( DomainPartion & Domain, integer const idx);
+
   real64 sequentiallyCoupledSolverStep( real64 const & time_n,
                                         real64 const & dt,
                                         int const cycleNumber,
@@ -396,7 +398,7 @@ protected:
           break;
         }
 
-        // mapSolutionInSequentialStep( domain, idx);
+        mapSolutionBetweenSolvers( domain, idx() );
 
         if( dtReturnTemporary < dtReturn )
         {
