@@ -36,13 +36,13 @@ template< typename T >
 class fixedSizeDequeAndMutexes : public fixedSizeDeque< T, int >
 {
 public:
-  // Mutex to protect access to the front
+  /// Mutex to protect access to the front
   std::mutex m_frontMutex;
-  // Mutex to protect access to the back
+  /// Mutex to protect access to the back
   std::mutex m_backMutex;
-  // Mutex to prevent two simulteaneous pop (can be an issue for last one)
+  /// Mutex to prevent two simulteaneous pop (can be an issue for last one)
   std::mutex m_popMutex;
-  // Mutex to prevent two simulteaneous emplace (can be an issue for last one)
+  /// Mutex to prevent two simulteaneous emplace (can be an issue for last one)
   std::mutex m_emplaceMutex;
   /// Condition used to notify when device queue is not full
   std::condition_variable m_notFullCond;
