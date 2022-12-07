@@ -95,7 +95,7 @@ public:
                                   globalIndex const rankOffset,
                                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                   arrayView1d< real64 > const inputRhs,
-                                  real64 const (&inputGravityVector)[3],
+                                  real64 const (&gravityVector)[3],
                                   string const fluidModelKey ):
     Base( nodeManager,
           edgeManager,
@@ -109,7 +109,7 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs,
-          inputGravityVector,
+          gravityVector,
           fluidModelKey ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density() ),
     m_fluidDensity_n( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density_n() ),
@@ -218,7 +218,7 @@ public:
   }
 
   /**
-   * @brief Helper function to compute the body force term and its derivatives wrt primary variables
+   * @brief Helper function to compute the body force term (\rho g) and its derivatives wrt primary variables
    * @param[in] k the element index
    * @param[in] q the quadrature point index
    * @param[in] porosity the element porosity
@@ -537,13 +537,13 @@ public:
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localResidualMomentum[numDofPerTestSupportPoint * localNode + dim] );
         maxForce = fmax( maxForce, fabs( stack.localResidualMomentum[numDofPerTestSupportPoint * localNode + dim] ) );
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                                stack.localPressureDofIndex,
+                                                                                &stack.localPressureDofIndex,
                                                                                 stack.dLocalResidualMomentum_dPressure[numDofPerTestSupportPoint * localNode + dim],
                                                                                 1 );
       }
     }
 
-    localIndex const dof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex[0] - m_dofRankOffset );
+    localIndex const dof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex - m_dofRankOffset );
     if( 0 <= dof && dof < m_matrix.numRows() )
     {
       m_matrix.template addToRowBinarySearchUnsorted< serialAtomic >( dof,
@@ -551,7 +551,7 @@ public:
                                                                       stack.dLocalResidualMass_dDisplacement[0],
                                                                       nUDof );
       m_matrix.template addToRow< serialAtomic >( dof,
-                                                  stack.localPressureDofIndex,
+                                                  &stack.localPressureDofIndex,
                                                   stack.dLocalResidualMass_dPressure[0],
                                                   1 );
       RAJA::atomicAdd< serialAtomic >( &m_rhs[dof], stack.localResidualMass[0] );
@@ -584,7 +584,5 @@ using SinglePhasePoromechanicsKernelFactory =
 } // namespace poromechanicsKernels
 
 } // namespace geosx
-
-#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_

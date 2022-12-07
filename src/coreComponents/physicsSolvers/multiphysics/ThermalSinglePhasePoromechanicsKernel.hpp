@@ -140,7 +140,7 @@ public:
       Base::StackVariables(),
             dLocalResidualMomentum_dTemperature{ {0.0} },
       dLocalResidualMass_dTemperature{ {0.0} },
-      localTemperatureDofIndex{ 0 }
+      localTemperatureDofIndex{}
     {}
 
     // Storage for helper variables used in the quadrature point kernel
@@ -176,7 +176,7 @@ public:
     real64 dLocalResidualEnergy_dTemperature[1][1]{};
 
     /// C-array storage for the element local row degrees of freedom.
-    globalIndex localTemperatureDofIndex[1]{};
+    globalIndex localTemperatureDofIndex{};
 
   };
   //*****************************************************************************
@@ -191,7 +191,7 @@ public:
               StackVariables & stack ) const
   {
     Base::setup( k, stack );
-    stack.localTemperatureDofIndex[0] = m_flowDofNumber[k]+1;
+    stack.localTemperatureDofIndex = m_flowDofNumber[k]+1;
     stack.deltaTemperatureFromInit = m_temperature[k] - m_initialTemperature[k];
     stack.deltaTemperatureFromLastStep = m_temperature[k] - m_temperature_n[k];
   }
@@ -323,17 +323,16 @@ public:
     stack.dFluidMassIncrement_dTemperature = dPorosity_dTemperature * m_fluidDensity( k, q ) + porosity * m_dFluidDensity_dTemperature( k, q );
 
     // Step 3: compute fluid energy increment and its derivatives wrt vol strain, pressure, and temperature
-    real64 const fluidEnergy = porosity * m_fluidDensity( k, q ) * m_fluidInternalEnergy( k, q );
+    real64 const fluidMass = porosity * m_fluidDensity( k, q );
+    real64 const fluidEnergy = fluidMass * m_fluidInternalEnergy( k, q );
     real64 const fluidEnergy_n = porosity_n * m_fluidDensity_n( k, q ) * m_fluidInternalEnergy_n( k, q );
     stack.fluidEnergyIncrement = fluidEnergy - fluidEnergy_n;
 
-    stack.dFluidEnergyIncrement_dVolStrainIncrement = stack.dFluidEnergyIncrement_dVolStrainIncrement * m_fluidInternalEnergy( k, q );
-    stack.dFluidEnergyIncrement_dPressure = dPorosity_dPressure * m_fluidDensity( k, q ) * m_fluidInternalEnergy( k, q )
-                                            + porosity * m_dFluidDensity_dPressure( k, q ) * m_fluidInternalEnergy( k, q )
-                                            + porosity * m_fluidDensity( k, q ) * m_dFluidInternalEnergy_dPressure( k, q );
-    stack.dFluidEnergyIncrement_dTemperature = dPorosity_dTemperature * m_fluidDensity( k, q ) * m_fluidInternalEnergy( k, q )
-                                               + porosity * m_dFluidDensity_dTemperature( k, q ) * m_fluidInternalEnergy( k, q )
-                                               + porosity * m_fluidDensity( k, q ) * m_dFluidInternalEnergy_dTemperature( k, q );
+    stack.dFluidEnergyIncrement_dVolStrainIncrement = stack.dFluidMassIncrement_dVolStrainIncrement * m_fluidInternalEnergy( k, q );
+    stack.dFluidEnergyIncrement_dPressure = stack.dFluidMassIncrement_dPressure * m_fluidInternalEnergy( k, q )
+                                            + fluidMass * m_dFluidInternalEnergy_dPressure( k, q );
+    stack.dFluidEnergyIncrement_dTemperature = stack.dFluidMassIncrement_dTemperature * m_fluidInternalEnergy( k, q )
+                                               + fluidMass * m_dFluidInternalEnergy_dTemperature( k, q );
   }
 
   /**
@@ -529,7 +528,7 @@ public:
         if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                                stack.localTemperatureDofIndex,
+                                                                                &stack.localTemperatureDofIndex,
                                                                                 stack.dLocalResidualMomentum_dTemperature[numDofPerTestSupportPoint * localNode + dim],
                                                                                 1 );
       }
@@ -537,18 +536,18 @@ public:
 
     // Step 2: assemble the derivatives of mass balance residual wrt temperature into the global matrix
 
-    localIndex const massDof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex[0] - m_dofRankOffset );
+    localIndex const massDof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex - m_dofRankOffset );
     if( 0 <= massDof && massDof < m_matrix.numRows() )
     {
       m_matrix.template addToRow< serialAtomic >( massDof,
-                                                  stack.localTemperatureDofIndex,
+                                                  &stack.localTemperatureDofIndex,
                                                   stack.dLocalResidualMass_dTemperature[0],
                                                   1 );
     }
 
     // Step 3: assemble the energy balance and its derivatives into the global matrix
 
-    localIndex const energyDof = LvArray::integerConversion< localIndex >( stack.localTemperatureDofIndex[0] - m_dofRankOffset );
+    localIndex const energyDof = LvArray::integerConversion< localIndex >( stack.localTemperatureDofIndex - m_dofRankOffset );
     if( 0 <= energyDof && energyDof < m_matrix.numRows() )
     {
       m_matrix.template addToRowBinarySearchUnsorted< serialAtomic >( energyDof,
@@ -556,11 +555,11 @@ public:
                                                                       stack.dLocalResidualEnergy_dDisplacement[0],
                                                                       nUDof );
       m_matrix.template addToRow< serialAtomic >( energyDof,
-                                                  stack.localPressureDofIndex,
+                                                  &stack.localPressureDofIndex,
                                                   stack.dLocalResidualEnergy_dPressure[0],
                                                   1 );
       m_matrix.template addToRow< serialAtomic >( energyDof,
-                                                  stack.localTemperatureDofIndex,
+                                                  &stack.localTemperatureDofIndex,
                                                   stack.dLocalResidualEnergy_dTemperature[0],
                                                   1 );
 
