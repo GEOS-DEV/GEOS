@@ -52,7 +52,7 @@ __geosx_linux_build: &__geosx_linux_build
     -e CMAKE_BUILD_TYPE
     -e GEOSX_DIR=${GEOSX_DIR}
     -e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF}
-    -e ENABLE_HYPRE_CUDA=${ENABLE_HYPRE_CUDA:-OFF}
+    -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU}
     -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON}
     ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG}
     ${TRAVIS_BUILD_DIR_MOUNT_POINT}/scripts/travis_build_and_test.sh ${BUILD_AND_TEST_ARGS};
@@ -83,7 +83,7 @@ __geosx_osx_build: &__geosx_osx_build
     -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -bt Release
     -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe" -DENABLE_VTK:BOOL=OFF
   - cd build-darwin-clang-release
-  - make -j $(nproc) 
+  - make -j $(nproc)
   - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
 
 __geosx_auto_deploy: &__geosx_auto_deploy
@@ -199,7 +199,7 @@ jobs:
     - CMAKE_BUILD_TYPE=Debug
     - BUILD_AND_TEST_ARGS="--disable-unit-tests --build-exe-only"
     - ENABLE_HYPRE=ON
-    - ENABLE_HYPRE_CUDA=ON
+    - ENABLE_HYPRE_DEVICE=CUDA
     - ENABLE_TRILINOS=OFF
   - stage: builds
     name: Ubuntu CUDA (18.04, clang 8.0.0 + gcc 8.3.1, open-mpi 2.1.1, cuda-10.1.243)
@@ -209,7 +209,7 @@ jobs:
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS="--disable-unit-tests --reduce-install-logs"
     - ENABLE_HYPRE=ON
-    - ENABLE_HYPRE_CUDA=ON
+    - ENABLE_HYPRE_DEVICE=CUDA
     - ENABLE_TRILINOS=OFF
   - stage: builds
     name: Centos (7.6, gcc 8.3.1, open-mpi 1.10.7, cuda 10.1.243)
