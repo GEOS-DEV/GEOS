@@ -224,12 +224,13 @@ public:
     } );
   }
 
-
+  /// This method is meant to be kept final. Derived CoupledSolvers are expected, if needed,
+  /// to override fullyCoupledSolverStep and/or sequentiallyCoupledSolverStep.
   real64
   solverStep( real64 const & time_n,
               real64 const & dt,
               int const cycleNumber,
-              DomainPartition & domain ) override
+              DomainPartition & domain ) override final
   {
     GEOSX_MARK_FUNCTION;
 
@@ -351,10 +352,10 @@ protected:
     return dtReturn;
   }
 
-  real64 sequentiallyCoupledSolverStep( real64 const & time_n,
-                                        real64 const & dt,
-                                        int const cycleNumber,
-                                        DomainPartition & domain )
+  virtual real64 sequentiallyCoupledSolverStep( real64 const & time_n,
+                                                real64 const & dt,
+                                                int const cycleNumber,
+                                                DomainPartition & domain )
   {
     GEOSX_MARK_FUNCTION;
 

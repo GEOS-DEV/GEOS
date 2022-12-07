@@ -93,12 +93,6 @@ public:
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  virtual real64
-  solverStep( real64 const & time_n,
-              real64 const & dt,
-              int const cycleNumber,
-              DomainPartition & domain ) override;
-
   /**
    * @Brief add extra nnz to each row induced by the coupling
    * @param domain the physical domain object
