@@ -135,6 +135,12 @@ public:
   }
 
   GEOSX_HOST_DEVICE
+  virtual real64 getShearModulus( localIndex const k ) const override final
+  {
+    return m_shearModulus[k];
+  }
+
+  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
