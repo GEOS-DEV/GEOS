@@ -82,7 +82,7 @@
 /// Denotes HYPRE using HIP
 #define GEOSX_USE_HYPRE_HIP 2
 /// Macro determining what parellel interface hypre is using
-#define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_CUDA
+#define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_CPU
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
 #define GEOSX_USE_SUPERLU_DIST

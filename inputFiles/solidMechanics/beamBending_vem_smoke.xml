@@ -20,9 +20,11 @@
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
-        newtonMaxIter="8"/>
+        newtonMaxIter="8"
+        logLevel="3"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        directParallel="0"
+        logLevel="2"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
