@@ -42,6 +42,12 @@ public:
                  Group * const parent )
     : SolverBase( name, parent )
   {
+    /// GEOS mainly uses FIM coupling so let's define FIM as the default.
+    this->registerWrapper( viewKeyStruct::couplingTypeStirng(), m_couplingType ).
+       setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+       setApplyDefaultValue( CouplingType::FIM ).
+       setDescription( "Type of coupling. Options are: Sequential and FIM" );
+
     forEachArgInTuple( m_solvers, [&]( auto solver, auto idx )
     {
       using SolverType = TYPEOFPTR( solver );
@@ -52,8 +58,7 @@ public:
     } );
 
     this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
-      setInputFlag( dataRepository::InputFlags::FALSE );
-
+      setInputFlag( dataRepository::InputFlags::FALSE );  
   }
 
   /// deleted copy constructor
@@ -434,6 +439,12 @@ protected:
       } );
     }
   }
+
+
+  struct viewKeyStruct : SolverBase::viewKeyStruct
+  {
+    constexpr static char const * couplingTypeString() { return "couplingType"; }
+  };
 
   /// Pointers of the single-physics solvers
   std::tuple< SOLVERS *... > m_solvers;
