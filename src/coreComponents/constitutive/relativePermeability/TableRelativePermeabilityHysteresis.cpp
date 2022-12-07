@@ -669,44 +669,6 @@ TableRelativePermeabilityHysteresis::KernelWrapper::KernelWrapper( arrayView1d< 
 {}
 
 
-//relpermDriver
-GEOSX_HOST_DEVICE
-void TableRelativePermeabilityHysteresis::setMinMaxToDrainage( geosx::RelpermDriver *  driver )
-{
-
-  integer ipWetting, ipNonWetting;
-  std::tie( ipWetting, ipNonWetting ) = phaseIndex();
-
-  driver->setMinMaxToDrainage( ipWetting,
-                               ipNonWetting,
-                               m_phaseHasHysteresis,
-                               m_phaseMaxHistoricalVolFraction,
-                               m_drainagePhaseMaxVolFraction,
-                               m_phaseMinHistoricalVolFraction,
-                               m_drainagePhaseMinVolFraction );
-}
-
-
-
-/// for use in RelpermDriver to browse the drainage curves
-/// by setting the MaxNonWettingSat to Snwmin and MinWettingSat to Sw
-GEOSX_HOST_DEVICE
-void TableRelativePermeabilityHysteresis::setMinMaxToImbibition( geosx::RelpermDriver *  driver )
-{
-
-  integer ipWetting, ipNonWetting;
-  std::tie( ipWetting, ipNonWetting ) = phaseIndex();
-
-
-  driver->setMinMaxToImbibition( ipWetting,
-                                 ipNonWetting,
-                                 m_phaseHasHysteresis,
-                                 m_phaseMaxHistoricalVolFraction,
-                                 m_drainagePhaseMaxVolFraction,
-                                 m_phaseMinHistoricalVolFraction,
-                                 m_drainagePhaseMinVolFraction );
-}
-
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, TableRelativePermeabilityHysteresis, std::string const &, Group * const )
 

@@ -5,7 +5,8 @@
 #ifndef GEOSX_RELPERMDRIVERRUNTEST_HPP_
 #define GEOSX_RELPERMDRIVERRUNTEST_HPP_
 
-#include "RelpermDriver.hpp"
+#include "constitutive/relativePermeability/RelpermDriver.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "layouts.hpp"
 
 
@@ -45,10 +46,11 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
   integer const ipGas = relperm.getPhaseOrder()[PT::GAS];
   localIndex offset = std::max( std::max( ipOil, ipWater ), std::max( ipOil, ipGas ) ) + 1;
 
+  integer ipWetting = -1, ipNonWetting = -1;
+  std::tie( ipWetting, ipNonWetting ) = relperm.phaseIndex();
+
   for( integer n = 0; n < table.size( 0 ); ++n )
   {
-
-
     if( m_numPhases > 2 )
     {
       saturationValues[0][n][ipWater] = table( n, 0, ipWater + 1 );
@@ -78,10 +80,32 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
   arrayView3d< real64 const, relperm::USD_RELPERM > const saturation = saturationValues.toViewConst();
 
-  // perform relperm update using table (Swet,Snonwet) and save resulting relative permeabilities
-  // note: column indexing should be kept consistent with output file header below.
+  auto const & phaseHasHysteresis = relperm.template getReference< array1d< integer > >( TableRelativePermeabilityHysteresis::viewKeyStruct::phaseHasHysteresisString());
 
-  relperm.setMinMaxToDrainage( this );
+  arrayView2d< real64, compflow::USD_PHASE > phaseMaxHistoricalVolFraction = relperm.template getField< fields::relperm::phaseMaxHistoricalVolFraction >().reference();
+  arrayView2d< real64, compflow::USD_PHASE >  phaseMinHistoricalVolFraction = relperm.template getField< fields::relperm::phaseMinHistoricalVolFraction >().reference();
+
+  arrayView1d< real64 > const drainagePhaseMinVolFraction = relperm.template getReference< array1d< real64 > >(
+    TableRelativePermeabilityHysteresis::viewKeyStruct::drainagePhaseMinVolumeFractionString());
+  arrayView1d< real64 > const drainagePhaseMaxVolFraction = relperm.template getReference< array1d< real64 > >(
+    TableRelativePermeabilityHysteresis::viewKeyStruct::drainagePhaseMaxVolumeFractionString());
+
+  //setting for drainage
+  {
+    if( phaseHasHysteresis[ipNonWetting] )
+    {
+      phaseMaxHistoricalVolFraction[0][ipNonWetting] = drainagePhaseMaxVolFraction[ipNonWetting];
+      std::cout << " new Max NWet Historical " << phaseMaxHistoricalVolFraction[0][ipNonWetting] << std::endl;
+    }
+    if( phaseHasHysteresis[ipWetting] )
+    {
+      phaseMinHistoricalVolFraction[0][ipWetting] = drainagePhaseMinVolFraction[ipWetting];
+      std::cout << " new Min Wet Historical " << phaseMinHistoricalVolFraction[0][ipWetting] << std::endl;
+    }
+  }
+
+
+
   forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
                                     [numPhases, kernelWrapper, saturation, table,
                                      offset] GEOSX_HOST_DEVICE ( localIndex const i )
@@ -100,7 +124,23 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
   //loop in charge of hysteresis values
   offset += numPhases;
-  relperm.setMinMaxToImbibition( this );
+
+//setting for imbibition
+  {
+    if( phaseHasHysteresis[ipNonWetting] )
+    {
+      phaseMaxHistoricalVolFraction[0][ipNonWetting] = drainagePhaseMinVolFraction[ipNonWetting];
+      std::cout << " new Max NWet Historical " << phaseMaxHistoricalVolFraction[0][ipNonWetting] << std::endl;
+    }
+    if( phaseHasHysteresis[ipWetting] )
+    {
+      phaseMinHistoricalVolFraction[0][ipWetting] = drainagePhaseMaxVolFraction[ipWetting];
+      std::cout << " new Min Wet Historical " << phaseMinHistoricalVolFraction[0][ipWetting] << std::endl;
+    }
+  }
+
+
+
   forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
                                     [numPhases, kernelWrapper, saturation, table,
                                      offset] GEOSX_HOST_DEVICE ( localIndex const i )

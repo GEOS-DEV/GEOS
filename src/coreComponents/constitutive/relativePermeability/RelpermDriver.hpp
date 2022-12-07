@@ -66,25 +66,6 @@ public:
    */
   void compareWithBaseline();
 
-  void setMinMaxToDrainage( const integer ipWetting,
-                            const integer ipNonWetting,
-                            arrayView1d< integer const > const & phaseHasHysteresis,
-                            arrayView2d< real64, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
-                            arrayView1d< real64 const > const & drainagePhaseMaxVolFraction,
-                            arrayView2d< real64, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
-                            arrayView1d< real64 const > const & drainagePhaseMinVolFraction ) const;
-
-
-  void setMinMaxToImbibition( const integer ipWetting,
-                              const integer ipNonWetting,
-                              arrayView1d< integer const > const & phaseHasHysteresis,
-                              arrayView2d< real64, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
-                              arrayView1d< real64 const > const & drainagePhaseMaxVolFraction,
-                              arrayView2d< real64, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
-                              arrayView1d< real64 const > const & drainagePhaseMinVolFraction ) const;
-
-
-
 private:
 
   template< typename RELPERM_TYPE >
