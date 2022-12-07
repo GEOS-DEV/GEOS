@@ -87,15 +87,10 @@ public:
                      real64 const & dt,
                      DomainPartition & domain ) override final;
 
-  // virtual void
-  // implicitStepComplete( real64 const & time_n,
-  //                       real64 const & dt,
-  //                       DomainPartition & domain ) override final;
-
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, int const idx) override final;
+  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, int const idx ) override final;
 
   struct viewKeyStruct : Base::viewKeyStruct
   {

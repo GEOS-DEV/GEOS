@@ -31,7 +31,7 @@ namespace geosx
 
 /**
  * @brief Coupling type.
-  */
+ */
 enum class CouplingType : integer
 {
   FIM,        ///< Fully-implicit coupling
@@ -60,9 +60,9 @@ public:
   {
     /// GEOS mainly uses FIM coupling so let's define FIM as the default.
     registerWrapper( viewKeyStruct::couplingTypeString(), &m_couplingType ).
-       setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-       setApplyDefaultValue( CouplingType::FIM ).
-       setDescription( "Type of coupling. Options are: Sequential and FIM" );
+      setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+      setApplyDefaultValue( CouplingType::FIM ).
+      setDescription( "Type of coupling. Options are: Sequential and FIM" );
 
     forEachArgInTuple( m_solvers, [&]( auto solver, auto idx )
     {
@@ -74,7 +74,7 @@ public:
     } );
 
     this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
-      setInputFlag( dataRepository::InputFlags::FALSE );  
+      setInputFlag( dataRepository::InputFlags::FALSE );
   }
 
   /// deleted copy constructor
@@ -240,9 +240,10 @@ public:
     else if( m_couplingType == CouplingType::Sequential )
     {
       return sequentiallyCoupledSolverStep( time_n, dt, cycleNumber, domain );
-    }else
+    }
+    else
     {
-      GEOSX_ERROR("Invalid coupling type option.");
+      GEOSX_ERROR( "Invalid coupling type option." );
       return 0;
     }
 
@@ -419,7 +420,7 @@ protected:
         }
       } );
 
-      if ( isConverged )
+      if( isConverged )
       {
         break;
       }
@@ -435,7 +436,7 @@ protected:
     return dtReturn;
   }
 
-  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx)
+  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx )
   {}
 
   virtual void
@@ -444,7 +445,7 @@ protected:
     setSubSolvers();
 
     // We need to set the minimum number of newton's iterations to 0 for the sequentially
-    // coupled approach to converge. 
+    // coupled approach to converge.
     if( m_couplingType == CouplingType::Sequential )
     {
       forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
