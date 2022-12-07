@@ -57,7 +57,12 @@ public:
    * @param space          Space used to store que queue.
    */
   fixedSizeDequeAndMutexes( int maxEntries, int valuesPerEntry, LvArray::MemorySpace space ): fixedSizeDeque< T, int >( maxEntries, valuesPerEntry, space,
-                                                                                                                        camp::resources::Resource{ camp::resources::Cuda{} } ) {}
+#ifdef GEOSX_USE_CUDA
+                                                                                                                        camp::resources::Resource{ camp::resources::Cuda{} }
+#else
+                                                                                                                        camp::resources::Resource{ camp::resources::Host{} }
+#endif
+                                                                                                                        ) {}
 
   /**
    * Emplace on front from array with locks.
@@ -304,14 +309,14 @@ public:
     }
     else
     {
-      std::packaged_task< void() > task( std::bind( [ this ] ( int id, arrayView1d< T > array ) {
-        m_hostDeque.emplaceFront( array );
+      std::packaged_task< void() > task( std::bind( [ this ] ( int pushId, arrayView1d< T > pushedArray ) {
+        m_hostDeque.emplaceFront( pushedArray );
 
-        if( m_maxNumberOfBuffers - id > m_hostDeque.capacity() )
+        if( m_maxNumberOfBuffers - pushId > m_hostDeque.capacity() )
         {
           LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
           // This buffer will go to host memory, and maybe on disk
-          std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this, id ) );
+          std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this, pushId ) );
           std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
           m_task_queue[1].emplace_back( std::move( task ) );
           lock.unlock();
@@ -389,14 +394,14 @@ public:
     }
     else
     {
-      std::packaged_task< void() > task( std::bind ( [ this ] ( int id, arrayView1d< T > array ) {
-        m_hostDeque.popFront( array );
+      std::packaged_task< void() > task( std::bind ( [ this ] ( int popId, arrayView1d< T > poppedArray ) {
+        m_hostDeque.popFront( poppedArray );
 
-        if( id >= m_hostDeque.capacity() )
+        if( popId >= m_hostDeque.capacity() )
         {
           LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
           // Trigger pull one buffer from host, and maybe from disk
-          std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this, id  - m_hostDeque.capacity() ) );
+          std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this, popId  - m_hostDeque.capacity() ) );
           std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
           m_task_queue[1].emplace_back( std::move( task ) );
           lock.unlock();
@@ -421,7 +426,9 @@ public:
     {
       if( m_deviceDeque.capacity() > 0 )
       {
+#ifdef GEOSX_USE_CUDA
         cudaEventSynchronize( m_popFromDeviceEvents[m_bufferCount].get< camp::resources::CudaEvent >().getCudaEvent_t() );
+#endif
       }
       else
       {
