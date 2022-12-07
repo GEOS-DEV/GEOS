@@ -510,118 +510,116 @@ struct StressComputation
       mu[k] = density[k] * velocityVs[k] * velocityVs[k];
       lambda[k] = density[k] * velocityVp[k] * velocityVp[k] - 2.0*mu[k];
 
+      real32 uelemxx[numNodesPerElem] = {0.0};
+      real32 uelemyy[numNodesPerElem] = {0.0};
+      real32 uelemzz[numNodesPerElem] = {0.0};
+      real32 uelemxy[numNodesPerElem] = {0.0};
+      real32 uelemxz[numNodesPerElem] = {0.0};
+      real32 uelemyz[numNodesPerElem]= {0.0};
+      real32 auxx[numNodesPerElem] = {0.0};
+      real32 auyy[numNodesPerElem] = {0.0};
+      real32 auzz[numNodesPerElem] = {0.0};
+      real32 auxy[numNodesPerElem] = {0.0};
+      real32 auxz[numNodesPerElem] = {0.0};
+      real32 auyz[numNodesPerElem] = {0.0};
+
+
+      //Pre-multiplication by mass matrix
+      for( localIndex i = 0; i < numNodesPerElem; ++i )
+      {
+        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
+        uelemxx[i] = massLoc*stressxx[k][i];
+        uelemyy[i] = massLoc*stressyy[k][i];
+        uelemzz[i] = massLoc*stresszz[k][i];
+        uelemxy[i] = massLoc*stressxy[k][i];
+        uelemxz[i] = massLoc*stressxz[k][i];
+        uelemyz[i] = massLoc*stressyz[k][i];
+      }
+
       for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
       {
-        real64 N[numNodesPerElem];
-        real64 gradN[ numNodesPerElem ][ 3 ];
-
-
-        real32 uelemxx[numNodesPerElem] = {0.0};
-        real32 uelemyy[numNodesPerElem] = {0.0};
-        real32 uelemzz[numNodesPerElem] = {0.0};
-        real32 uelemxy[numNodesPerElem] = {0.0};
-        real32 uelemxz[numNodesPerElem] = {0.0};
-        real32 uelemyz[numNodesPerElem]= {0.0};
-        real32 auxx[numNodesPerElem] = {0.0};
-        real32 auyy[numNodesPerElem] = {0.0};
-        real32 auzz[numNodesPerElem] = {0.0};
-        real32 auxy[numNodesPerElem] = {0.0};
-        real32 auxz[numNodesPerElem] = {0.0};
-        real32 auyz[numNodesPerElem] = {0.0};
-
-
-        FE_TYPE::calcN( q, N );
-        real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
-
-        //Pre-multiplication by mass matrix
-        for( localIndex i = 0; i < numNodesPerElem; ++i )
-        {
-          uelemxx[i] = detJ*stressxx[k][i];
-          uelemyy[i] = detJ*stressyy[k][i];
-          uelemzz[i] = detJ*stresszz[k][i];
-          uelemxy[i] = detJ*stressxy[k][i];
-          uelemxz[i] = detJ*stressxz[k][i];
-          uelemyz[i] = detJ*stressyz[k][i];
-        }
 
         //Volume integral
-        m_finiteElement.template computeFirstOrderStiffnessTermX(q, xLocal, [&] (int i, int j, real32 dfx1, real32 dfx2, real32 dfx3)
+        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
-            auxx[j]+= dfx1*ux_np1[elemsToNodes[k][i]];
-            auyy[j]+= dfx2*uy_np1[elemsToNodes[k][i]];
-            auzz[j]+= dfx3*uz_np1[elemsToNodes[k][i]];
-            auxy[j]+= dfx1*uy_np1[elemsToNodes[k][i]]+dfx2*ux_np1[elemsToNodes[k][i]];
-            auxz[j]+= dfx1*uz_np1[elemsToNodes[k][i]]+dfx3*ux_np1[elemsToNodes[k][i]];
-            auyz[j]+= dfx2*uz_np1[elemsToNodes[k][i]]+dfx3*uy_np1[elemsToNodes[k][i]];
+          auxx[j]+= dfx1*ux_np1[elemsToNodes[k][i]];
+          auyy[j]+= dfx2*uy_np1[elemsToNodes[k][i]];
+          auzz[j]+= dfx3*uz_np1[elemsToNodes[k][i]];
+          auxy[j]+= dfx1*uy_np1[elemsToNodes[k][i]]+dfx2*ux_np1[elemsToNodes[k][i]];
+          auxz[j]+= dfx1*uz_np1[elemsToNodes[k][i]]+dfx3*ux_np1[elemsToNodes[k][i]];
+          auyz[j]+= dfx2*uz_np1[elemsToNodes[k][i]]+dfx3*uy_np1[elemsToNodes[k][i]];
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY(q, xLocal, [&] (int i, int j, real32 dfy1, real32 dfy2, real32 dfy3)
+        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
-            auxx[j]+= dfy1*ux_np1[elemsToNodes[k][i]];
-            auyy[j]+= dfy2*uy_np1[elemsToNodes[k][i]];
-            auzz[j]+= dfy3*uz_np1[elemsToNodes[k][i]];
-            auxy[j]+= dfy1*uy_np1[elemsToNodes[k][i]]+dfy2*ux_np1[elemsToNodes[k][i]];
-            auxz[j]+= dfy1*uz_np1[elemsToNodes[k][i]]+dfy3*ux_np1[elemsToNodes[k][i]];
-            auyz[j]+= dfy2*uz_np1[elemsToNodes[k][i]]+dfy3*uy_np1[elemsToNodes[k][i]];
+          auxx[j]+= dfy1*ux_np1[elemsToNodes[k][i]];
+          auyy[j]+= dfy2*uy_np1[elemsToNodes[k][i]];
+          auzz[j]+= dfy3*uz_np1[elemsToNodes[k][i]];
+          auxy[j]+= dfy1*uy_np1[elemsToNodes[k][i]]+dfy2*ux_np1[elemsToNodes[k][i]];
+          auxz[j]+= dfy1*uz_np1[elemsToNodes[k][i]]+dfy3*ux_np1[elemsToNodes[k][i]];
+          auyz[j]+= dfy2*uz_np1[elemsToNodes[k][i]]+dfy3*uy_np1[elemsToNodes[k][i]];
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ(q, xLocal, [&] (int i, int j, real32 dfz1, real32 dfz2, real32 dfz3)
+        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
-            auxx[j]+= dfz1*ux_np1[elemsToNodes[k][i]];
-            auyy[j]+= dfz2*uy_np1[elemsToNodes[k][i]];
-            auzz[j]+= dfz3*uz_np1[elemsToNodes[k][i]];
-            auxy[j]+= dfz1*uy_np1[elemsToNodes[k][i]]+dfz2*ux_np1[elemsToNodes[k][i]];
-            auxz[j]+= dfz1*uz_np1[elemsToNodes[k][i]]+dfz3*ux_np1[elemsToNodes[k][i]];
-            auyz[j]+= dfz2*uz_np1[elemsToNodes[k][i]]+dfz3*uy_np1[elemsToNodes[k][i]];
+          auxx[j]+= dfz1*ux_np1[elemsToNodes[k][i]];
+          auyy[j]+= dfz2*uy_np1[elemsToNodes[k][i]];
+          auzz[j]+= dfz3*uz_np1[elemsToNodes[k][i]];
+          auxy[j]+= dfz1*uy_np1[elemsToNodes[k][i]]+dfz2*ux_np1[elemsToNodes[k][i]];
+          auxz[j]+= dfz1*uz_np1[elemsToNodes[k][i]]+dfz3*ux_np1[elemsToNodes[k][i]];
+          auyz[j]+= dfz2*uz_np1[elemsToNodes[k][i]]+dfz3*uy_np1[elemsToNodes[k][i]];
 
         } );
 
-        //Time integration
-        for( localIndex i = 0; i < numNodesPerElem; ++i )
-        {
-          real32 diag = lambda[k]*(auxx[i]+auyy[i]+auzz[i]);
-          uelemxx[i]+= dt*(diag+2*mu[k]*auxx[i]);
-          uelemyy[i]+= dt*(diag+2*mu[k]*auyy[i]);
-          uelemzz[i]+= dt*(diag+2*mu[k]*auzz[i]);
-          uelemxy[i]+= dt*mu[k]*auxy[i];
-          uelemxz[i]+= dt*mu[k]*auxz[i];
-          uelemyz[i]+= dt*mu[k]*auyz[i];
-        }
+      }
+      //Time integration
+      for( localIndex i = 0; i < numNodesPerElem; ++i )
+      {
+        real32 diag = lambda[k]*(auxx[i]+auyy[i]+auzz[i]);
+        uelemxx[i]+= dt*(diag+2*mu[k]*auxx[i]);
+        uelemyy[i]+= dt*(diag+2*mu[k]*auyy[i]);
+        uelemzz[i]+= dt*(diag+2*mu[k]*auzz[i]);
+        uelemxy[i]+= dt*mu[k]*auxy[i];
+        uelemxz[i]+= dt*mu[k]*auxz[i];
+        uelemyz[i]+= dt*mu[k]*auyz[i];
+      }
 
-        // Multiplication by inverse mass matrix
-        for( localIndex i = 0; i < numNodesPerElem; ++i )
-        {
-          stressxx[k][i] = uelemxx[i]/(detJ);
-          stressyy[k][i] = uelemyy[i]/(detJ);
-          stresszz[k][i] = uelemzz[i]/(detJ);
-          stressxy[k][i] = uelemxy[i]/(detJ);
-          stressxz[k][i] = uelemxz[i]/(detJ);
-          stressyz[k][i] = uelemyz[i]/(detJ);
-        }
+      // Multiplication by inverse mass matrix
+      for( localIndex i = 0; i < numNodesPerElem; ++i )
+      {
+        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
+        stressxx[k][i] = uelemxx[i]/massLoc;
+        stressyy[k][i] = uelemyy[i]/massLoc;
+        stresszz[k][i] = uelemzz[i]/massLoc;
+        stressxy[k][i] = uelemxy[i]/massLoc;
+        stressxz[k][i] = uelemxz[i]/massLoc;
+        stressyz[k][i] = uelemyz[i]/massLoc;
+      }
 
 
-        //Source injection
-        for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
+      //Source injection
+      for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
+      {
+        if( sourceIsLocal[isrc] == 1 )
         {
-          if( sourceIsLocal[isrc] == 1 )
+          if( sourceElem[isrc]==k )
           {
-            if( sourceElem[isrc]==k )
+            for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
-              for( localIndex i = 0; i < numNodesPerElem; ++i )
-              {
-                real32 const localIncrement = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/(detJ);
-                RAJA::atomicAdd< ATOMIC_POLICY >( &stressxx[k][i], localIncrement );
-                RAJA::atomicAdd< ATOMIC_POLICY >( &stressyy[k][i], localIncrement );
-                RAJA::atomicAdd< ATOMIC_POLICY >( &stresszz[k][i], localIncrement );
-              }
-
+              real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
+              real32 const localIncrement = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/massLoc;
+              RAJA::atomicAdd< ATOMIC_POLICY >( &stressxx[k][i], localIncrement );
+              RAJA::atomicAdd< ATOMIC_POLICY >( &stressyy[k][i], localIncrement );
+              RAJA::atomicAdd< ATOMIC_POLICY >( &stresszz[k][i], localIncrement );
             }
 
           }
+
         }
       }
+
     } );
   }
 
@@ -674,18 +672,19 @@ struct VelocityComputation
         }
       }
 
+      real32 uelemx[numNodesPerElem] = {0.0};
+      real32 uelemy[numNodesPerElem] = {0.0};
+      real32 uelemz[numNodesPerElem] = {0.0};
+      real32 flowx[numNodesPerElem] = {0.0};
+      real32 flowy[numNodesPerElem] = {0.0};
+      real32 flowz[numNodesPerElem] = {0.0};
+
       for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
       {
 
-        real32 uelemx[numNodesPerElem] = {0.0};
-        real32 uelemy[numNodesPerElem] = {0.0};
-        real32 uelemz[numNodesPerElem] = {0.0};
-        real32 flowx[numNodesPerElem] = {0.0};
-        real32 flowy[numNodesPerElem] = {0.0};
-        real32 flowz[numNodesPerElem] = {0.0};
 
         // Stiffness part
-        m_finiteElement.template computeFirstOrderStiffnessTermX(q, xLocal, [&] (int i, int j, real32 dfx1, real32 dfx2, real32 dfx3)
+        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           flowx[i] -= stressxx[k][j]*dfx1 + stressxy[k][j]*dfx2 + stressxz[k][j]*dfx3;
           flowy[i] -= stressxy[k][j]*dfx1 + stressyy[k][j]*dfx2 + stressyz[k][j]*dfx3;
@@ -693,38 +692,38 @@ struct VelocityComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY(q, xLocal, [&] (int i, int j, real32 dfy1, real32 dfy2, real32 dfy3)
+        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           flowx[i] -= stressxx[k][j]*dfy1 + stressxy[k][j]*dfy2 + stressxz[k][j]*dfy3;
           flowy[i] -= stressxy[k][j]*dfy1 + stressyy[k][j]*dfy2 + stressyz[k][j]*dfy3;
           flowz[i] -= stressxz[k][j]*dfy1 + stressyz[k][j]*dfy2 + stresszz[k][j]*dfy3;
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ(q, xLocal, [&] (int i, int j, real32 dfz1, real32 dfz2, real32 dfz3)
+        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           flowx[i] -= stressxx[k][j]*dfz1 + stressxy[k][j]*dfz2 + stressxz[k][j]*dfz3;
           flowy[i] -= stressxy[k][j]*dfz1 + stressyy[k][j]*dfz2 + stressyz[k][j]*dfz3;
           flowz[i] -= stressxz[k][j]*dfz1 + stressyz[k][j]*dfz2 + stresszz[k][j]*dfz3;
         } );
 
-        // Time update
-        for( localIndex i = 0; i < numNodesPerElem; ++i )
-        {
-          uelemx[i]+=dt*flowx[i];
-          uelemy[i]+=dt*flowy[i];
-          uelemz[i]+=dt*flowz[i];
-        }
+      }
+      // Time update
+      for( localIndex i = 0; i < numNodesPerElem; ++i )
+      {
+        uelemx[i]+=dt*flowx[i];
+        uelemy[i]+=dt*flowy[i];
+        uelemz[i]+=dt*flowz[i];
+      }
 
-        // Mult by inverse mass matrix + damping matrix
-        for( localIndex i = 0; i < numNodesPerElem; ++i )
-        {
-          real32 localIncrement1 = uelemx[i]/mass[elemsToNodes[k][i]];
-          real32 localIncrement2 = uelemy[i]/mass[elemsToNodes[k][i]];
-          real32 localIncrement3 = uelemz[i]/mass[elemsToNodes[k][i]];
-          RAJA::atomicAdd< ATOMIC_POLICY >( &ux_np1[elemsToNodes[k][i]], localIncrement1 );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &uy_np1[elemsToNodes[k][i]], localIncrement2 );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &uz_np1[elemsToNodes[k][i]], localIncrement3 );
-        }
+      // Mult by inverse mass matrix + damping matrix
+      for( localIndex i = 0; i < numNodesPerElem; ++i )
+      {
+        real32 localIncrement1 = uelemx[i]/mass[elemsToNodes[k][i]];
+        real32 localIncrement2 = uelemy[i]/mass[elemsToNodes[k][i]];
+        real32 localIncrement3 = uelemz[i]/mass[elemsToNodes[k][i]];
+        RAJA::atomicAdd< ATOMIC_POLICY >( &ux_np1[elemsToNodes[k][i]], localIncrement1 );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &uy_np1[elemsToNodes[k][i]], localIncrement2 );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &uz_np1[elemsToNodes[k][i]], localIncrement3 );
       }
 
     } );
