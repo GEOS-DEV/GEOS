@@ -313,7 +313,7 @@ protected:
   real64 fullyCoupledSolverStep( real64 const & time_n,
                                  real64 const & dt,
                                  int const cycleNumber,
-                                 DomainPartition & domain ) override final
+                                 DomainPartition & domain ) final
   {
     GEOSX_MARK_FUNCTION;
 
@@ -358,18 +358,16 @@ protected:
     } );
 
     // need to check what to do with this. this->implicitStepSetup( time_n, dt, domain );
-
     NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
     integer & iter = solverParams.m_numNewtonIterations;
     iter = 0;
     bool isConverged = false;
-
     /// Sequential coupling loop
     while( iter < solverParams.m_maxIterNewton )
     {
       if( iter == 0 )
       {
-        // reset the states of all slave solvers if any of them has been reset
+        // Reset the states of all solvers if any of them had to restart
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
           solver->resetStateToBeginningOfStep( domain );
@@ -380,13 +378,25 @@ protected:
       forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
       {
         GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << solver->getName() );
-
         dtReturnTemporary = solver->nonlinearImplicitStep( time_n,
                                                            dtReturn,
                                                            cycleNumber,
                                                            domain );
 
-        // mapSolutionInSequentialStep( domain, idx);                                                   
+        if( solver->getNonlinearSolverParameters().m_numNewtonIterations == 0 && iter > 0 )
+        {
+          GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter << " iterations! *****\n" );
+          isConverged = true;
+          break;
+        }
+        else if( m_subcyclingOption == 0 && iter > 0 )
+        {
+          GEOSX_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
+          isConverged = true;
+          break;
+        }
+
+        // mapSolutionInSequentialStep( domain, idx);
 
         if( dtReturnTemporary < dtReturn )
         {
@@ -397,19 +407,12 @@ protected:
       } );
 
       // Add convergence check:
-      
-
       ++iter;
     }
 
-    GEOSX_ERROR_IF( !isConverged, getName() << "sequentialStep did not converge!" );
+    GEOSX_ERROR_IF( !isConverged, getName() << "::sequentiallyCoupledSolverStep did not converge!" );
 
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
-    {
-      solver->implicitStepComplete( time_n, dt, domain );
-    } );
-
-    this->implicitStepComplete( time_n, dt, domain );
+    implicitStepComplete( time_n, dt, domain );
 
     return dt_return;
   }
@@ -418,6 +421,16 @@ protected:
   postProcessInput() override
   {
     setSubSolvers();
+
+    // We need to set the minimum number of newton's iterations to 0 for the sequentially
+    // coupled approach to converge. 
+    if( m_couplingType == CouplingType::Sequential )
+    {
+      forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+      {
+        solver->getNonlinearSolverParameters().m_minIterNewton = 0;
+      } );
+    }
   }
 
   /// Pointers of the single-physics solvers

@@ -17,20 +17,29 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldFractureSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldFractureSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDFRACTURESOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDFRACTURESOLVER_HPP_
 
-#include "codingUtilities/EnumStrings.hpp"
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/CoupledSolver.hpp"
 
 namespace geosx
 {
 
-class PhaseFieldFractureSolver : public SolverBase
+class PhaseFieldFractureSolver : public CoupledSolver< SolidMechanicsLagrangianFEM, PhaseFieldDamageFEM >
 {
 public:
+
+  using Base = CoupledSolver< SolidMechanicsLagrangianFEM, PhaseFieldDamageFEM >;
+  using Base::m_solvers;
+  using Base::m_dofManager;
+  using Base::m_localMatrix;
+  using Base::m_rhs;
+  using Base::m_solution;
+  using Base::m_couplingType;
+
   PhaseFieldFractureSolver( const string & name,
                             Group * const parent );
+
   ~PhaseFieldFractureSolver() override;
 
   /**
@@ -40,6 +49,33 @@ public:
   static string catalogName()
   {
     return "PhaseFieldFracture";
+  }
+
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "PhaseFieldFracture"; }
+
+  enum class SolverType : integer
+  {
+    SolidMechanics = 0,
+    Damage = 1
+  };
+
+  /**
+   * @brief accessor for the pointer to the solid mechanics solver
+   * @return a pointer to the solid mechanics solver
+   */
+  SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
+  {
+    return std::get< toUnderlying( SolverType::SolidMechanics ) >( m_solvers );
+  }
+
+  /**
+   * @brief accessor for the pointer to the flow solver
+   * @return a pointer to the flow solver
+   */
+  PhaseFieldDamageFEM * damageSolver() const
+  {
+    return std::get< toUnderlying( SolverType::Damage ) >( m_solvers );
   }
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override final;
@@ -57,55 +93,21 @@ public:
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  virtual real64
-  solverStep( real64 const & time_n,
-              real64 const & dt,
-              int const cycleNumber,
-              DomainPartition & domain ) override;
-
-  real64 splitOperatorStep( real64 const & time_n,
-                            real64 const & dt,
-                            integer const cycleNumber,
-                            DomainPartition & domain );
-
   void mapDamageToQuadrature( DomainPartition & domain );
-
-  enum class CouplingTypeOption : integer
-  {
-    FixedStress,
-    TightlyCoupled
-  };
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static char const * couplingTypeOptionString() { return "couplingTypeOption"; }
-
     constexpr static char const * totalMeanStressString() { return "totalMeanStress"; }
     constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }
-
-    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
-    constexpr static char const * damageSolverNameString() { return "damageSolverName"; }
-    constexpr static char const * subcyclingOptionString() { return "subcycling"; }
   };
 
 protected:
-  virtual void postProcessInput() override final;
+  virtual void postProcessInput() override final {}
 
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
-
-private:
-
-  string m_solidSolverName;
-  string m_damageSolverName;
-  CouplingTypeOption m_couplingTypeOption;
-  integer m_subcyclingOption;
+  virtual void initializePostInitialConditionsPreSubGroups() override final {}
 
 };
 
-ENUM_STRINGS( PhaseFieldFractureSolver::CouplingTypeOption,
-              "FixedStress",
-              "TightlyCoupled" );
-
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldFractureSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDFRACTURESOLVER_HPP_ */

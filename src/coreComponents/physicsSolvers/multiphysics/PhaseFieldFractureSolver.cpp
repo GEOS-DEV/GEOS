@@ -25,8 +25,6 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
 {
@@ -36,34 +34,15 @@ using namespace constitutive;
 
 PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
                                                     Group * const parent ):
-  SolverBase( name, parent ),
-  m_solidSolverName(),
-  m_damageSolverName(),
-  m_couplingTypeOption( CouplingTypeOption::FixedStress )
-
+  Base( name, parent )
 {
-  registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription(
-    "Name of the solid mechanics solver to use in the PhaseFieldFracture solver" );
-
-  registerWrapper( viewKeyStruct::damageSolverNameString(), &m_damageSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription(
-    "Name of the damage mechanics solver to use in the PhaseFieldFracture solver" );
-
-  registerWrapper( viewKeyStruct::couplingTypeOptionString(), &m_couplingTypeOption ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Coupling option. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
-
-  registerWrapper( viewKeyStruct::subcyclingOptionString(), &m_subcyclingOption ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "turn on subcycling on each load step" );
-
+  m_couplingType = CouplingType::Sequential;  
 }
 
 void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
 {
+  Base::registerDataOnMesh( meshBodies );
+
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
                                                     arrayView1d< string const > const & )
@@ -106,33 +85,6 @@ void PhaseFieldFractureSolver::implicitStepSetup( real64 const & GEOSX_UNUSED_PA
     } );
   } );
 }
-
-void PhaseFieldFractureSolver::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-{}
-
-void PhaseFieldFractureSolver::postProcessInput()
-{
-  if( m_couplingTypeOption == CouplingTypeOption::FixedStress )
-  {
-    // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it
-    // will never converge.
-    SolidMechanicsLagrangianFEM &
-    solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-    integer & minNewtonIterSolid = solidSolver.getNonlinearSolverParameters().m_minIterNewton;
-
-    PhaseFieldDamageFEM &
-    damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
-    integer & minNewtonIterFluid = damageSolver.getNonlinearSolverParameters().m_minIterNewton;
-
-    minNewtonIterSolid = 0;
-    minNewtonIterFluid = 0;
-  }
-}
-
-void PhaseFieldFractureSolver::initializePostInitialConditionsPreSubGroups()
-{}
 
 PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
 {
