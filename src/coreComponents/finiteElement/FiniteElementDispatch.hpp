@@ -45,13 +45,6 @@
   finiteElement::Q4_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q5_Hexahedron_Lagrange_GaussLobatto
 
-#if !defined( GEOSX_USE_HIP )
-// can only compile GL_FE_TYPES when not using cce+rocm
-#define BASE_FE_TYPES FE_1_TYPES, GL_FE_TYPES
-#else
-#define BASE_FE_TYPES FE_1_TYPES
-#endif
-
 #if defined( GEOSX_DISPATCH_VEM )
 
 #define VEM_1_TYPES \
@@ -69,18 +62,25 @@
   finiteElement::H1_Prism11_VEM_Gauss1
 // can only compile h1_prism11_vem_gauss1 when not using cce+rocm
 
-#if !defined( GEOSX_USE_HIP )
+#if ! defined( GEOSX_USE_HIP )
 #define VEM_TYPES VEM_1_TYPES, VEM_2_TYPES
 #else
 #define VEM_TYPES VEM_1_TYPES
 #endif
 
-#define ALL_FE_TYPES BASE_FE_TYPES, VEM_TYPES
+#define BASE_FE_TYPES FE_1_TYPES, VEM_TYPES
 
 #else
 
-#define ALL_FE_TYPES BASE_FE_TYPES
+#define BASE_FE_TYPES FE_1_TYPES
 
+#endif
+
+#if ! defined( GEOSX_USE_HIP )
+// can only compile GL_FE_TYPES when not using cce+rocm
+#define ALL_FE_TYPES BASE_FE_TYPES, GL_FE_TYPES
+#else
+#define ALL_FE_TYPES BASE_FE_TYPES
 #endif
 
 

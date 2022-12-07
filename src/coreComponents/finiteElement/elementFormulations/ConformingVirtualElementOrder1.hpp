@@ -592,13 +592,13 @@ private:
 
 /// Convenience typedef for VEM on tetrahedra.
 using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 3 >;
-#ifndef GEOSX_USE_HIP
+#if ! defined( GEOSX_USE_HIP )
 /// Convenience typedef for VEM on hexahedra.
 using H1_Hexahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 8, 4 >;
 #endif
 /// Convenience typedef for VEM on pyramids.
 using H1_Pyramid_VEM_Gauss1 = ConformingVirtualElementOrder1< 5, 4 >;
-#ifndef GEOSX_USE_HIP
+#if ! defined( GEOSX_USE_HIP )
 /// Convenience typedef for VEM on wedges.
 using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 4 >;
 #endif
@@ -615,7 +615,7 @@ using H1_Prism9_VEM_Gauss1 = ConformingVirtualElementOrder1< 18, 9 >;
 /// Convenience typedef for VEM on prism10.
 using H1_Prism10_VEM_Gauss1 = ConformingVirtualElementOrder1< 20, 10 >;
 /// Convenience typedef for VEM on prism11.
-#ifndef GEOSX_USE_HIP
+#if ! defined( GEOSX_USE_HIP )
 using H1_Prism11_VEM_Gauss1 = ConformingVirtualElementOrder1< 22, 11 >;
 #endif
 }

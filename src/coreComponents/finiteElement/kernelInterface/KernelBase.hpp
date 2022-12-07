@@ -32,7 +32,7 @@
  * FE_TYPES apply.
  */
 #ifndef SELECTED_FE_TYPES
-#define SELECTED_FE_TYPES BASE_FE_TYPES
+#define SELECTED_FE_TYPES ALL_FE_TYPES
 #endif
 
 namespace geosx
