@@ -316,10 +316,10 @@ public:
         {
           LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
           // This buffer will go to host memory, and maybe on disk
-          std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this, pushId ) );
-          std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
-          m_task_queue[1].emplace_back( std::move( task ) );
-          lock.unlock();
+          std::packaged_task< void() > t2( std::bind( &lifoStorage< T >::hostToDisk, this, pushId ) );
+          std::unique_lock< std::mutex > l2( m_task_queue_mutex[1] );
+          m_task_queue[1].emplace_back( std::move( t2 ) );
+          l2.unlock();
           m_task_queue_not_empty_cond[1].notify_all();
         }
       }, id, array ) );
@@ -401,10 +401,10 @@ public:
         {
           LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
           // Trigger pull one buffer from host, and maybe from disk
-          std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this, popId  - m_hostDeque.capacity() ) );
-          std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
-          m_task_queue[1].emplace_back( std::move( task ) );
-          lock.unlock();
+          std::packaged_task< void() > task2( std::bind( &lifoStorage< T >::diskToHost, this, popId  - m_hostDeque.capacity() ) );
+          std::unique_lock< std::mutex > lock2( m_task_queue_mutex[1] );
+          m_task_queue[1].emplace_back( std::move( task2 ) );
+          lock2.unlock();
           m_task_queue_not_empty_cond[1].notify_all();
         }
       }, id, array ) );
