@@ -75,10 +75,13 @@
   #define HYPRE_VERSION_PATCH @HYPRE_VERSION_PATCH@
 #endif
 
-/// Macro defined when using cuda in HYPRE  (CMake option ENABLE_HYPRE_DEVICE)
+/// Denotes HYPRE using CPU
 #define GEOSX_USE_HYPRE_CPU 0
+/// Denotes HYPRE using CUDA
 #define GEOSX_USE_HYPRE_CUDA 1
+/// Denotes HYPRE using HIP
 #define GEOSX_USE_HYPRE_HIP 2
+/// Macro determining what parellel interface hypre is using
 #cmakedefine GEOSX_USE_HYPRE_DEVICE @GEOSX_USE_HYPRE_DEVICE@
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
@@ -167,7 +170,6 @@
 
 /// Version information for CUDAToolkit
 #cmakedefine CUDAToolkit_VERSION @CUDAToolkit_VERSION@
-
 
 #if defined(GEOSX_USE_CUDA) || defined(GEOSX_USE_HIP)
 // This needs to be placed into this header in order to appropriately replace
