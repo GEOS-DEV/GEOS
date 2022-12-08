@@ -54,7 +54,6 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
   this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
 
-
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()

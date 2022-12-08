@@ -74,6 +74,14 @@ struct MultiFluidVarSlice
 template< typename T, int NDIM, int USD, int USD_DC >
 struct MultiFluidVarView
 {
+  /// @cond DO_NOT_DOCUMENT
+  /// We need these SMFs to enable and avoid host-device errors with CUDA. Otherwise rule of 0 would be fine.
+  MultiFluidVarView() = default;
+  MultiFluidVarView( MultiFluidVarView const & ) = default;
+  MultiFluidVarView & operator=( MultiFluidVarView const & ) = default;
+  MultiFluidVarView & operator=( MultiFluidVarView && ) = default;
+  /// @endcond DO_NOT_DOCUMENT
+
   ArrayView< T, NDIM, USD > value;        ///< View into property values
   ArrayView< T, NDIM + 1, USD_DC > derivs; ///< View into property derivatives w.r.t. pressure, temperature, compositions
 

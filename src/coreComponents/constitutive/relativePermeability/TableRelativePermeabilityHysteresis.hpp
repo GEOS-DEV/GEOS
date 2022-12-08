@@ -137,7 +137,7 @@ public:
      * update here
      */
     GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+
     void computeDrainageRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
                                  real64 const & phaseVolFraction,
                                  real64 & phaseRelPerm,
@@ -180,7 +180,7 @@ public:
      * @param[out] dPhaseRelPerm_dPhaseVolFrac derivative of the relative permeability wrt phase volume fraction for the wetting phase
      */
     GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+
     void computeImbibitionWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
                                           TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
                                           real64 const & jerauldParam_a,
@@ -214,7 +214,7 @@ public:
      * @param[out] dPhaseRelPerm_dPhaseVolFrac derivative of the relative permeability wrt phase volume fraction for the non-wetting phase
      */
     GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+
     void computeImbibitionNonWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
                                              TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
                                              real64 const & jerauldParam_a,
@@ -243,7 +243,7 @@ public:
      *         using computeDrainageRelPerm (in drainage) or using one of the imbibition update functions implementing Killough's method
      */
     GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+
     void computeTwoPhase( integer const ipWetting,
                           integer const ipNonWetting,
                           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
@@ -267,7 +267,7 @@ public:
      *         using computeDrainageRelPerm (in drainage) or using one of the imbibition update functions implementing Killough's method
      */
     GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+
     void computeThreePhase( integer const ipWetting,
                             integer const ipInter,
                             integer const ipNonWetting,
@@ -287,7 +287,7 @@ public:
      * @param[out] dPhaseRelPerm_dPhaseVolFrac derivatives of relative permeabilities wrt phase volume fraction for all the phases
      */
     GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+
     void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
                   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
@@ -296,7 +296,7 @@ public:
                   arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
     GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+
     virtual void update( localIndex const k,
                          localIndex const q,
                          arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override;
@@ -516,7 +516,7 @@ private:
 };
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeDrainageRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
@@ -530,7 +530,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeTrappedCriticalPhaseVolFraction( real64 const & Scrd,
@@ -548,7 +548,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeImbibitionWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
                                    TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
@@ -633,7 +634,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeImbibitionNonWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
@@ -711,7 +712,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeTwoPhase( integer const ipWetting,
@@ -798,7 +799,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeThreePhase( integer const ipWetting,
@@ -921,7 +922,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
@@ -987,7 +988,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   update( localIndex const k,
