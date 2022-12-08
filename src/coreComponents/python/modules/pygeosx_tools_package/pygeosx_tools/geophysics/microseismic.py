@@ -34,12 +34,14 @@ class JointSet():
                  region_name='Region',
                  solid_name='rock',
                  fluid_name='',
+                 mesh_level='FE1',
                  allow_repeating=False,
                  shear_modulus=1.0e9):
         # GEOSX object names / keys
         self.region_name = region_name
         self.solid_name = solid_name
         self.fluid_name = fluid_name
+        self.mesh_level = mesh_level
         self.sigma_key = ''
         self.pressure_key = ''
 
@@ -111,14 +113,14 @@ class JointSet():
         self.rotation = [self.get_rotation_matrix(s, d) for s, d in zip(self.strike, self.dip)]
         self.sigma_sdn_offset = np.zeros((self.N, 3, 3))
         self.fail_count = np.zeros(self.N, dtype=int)
-        self.sigma_key = wrapper.get_matching_wrapper_path(problem, [self.region_name, self.solid_name, 'stress'])
+        self.sigma_key = wrapper.get_matching_wrapper_path(problem, [self.mesh_level, self.region_name, self.solid_name, 'stress'])
 
         self.sigma_n = np.zeros(self.N)
         self.tau = np.zeros(self.N)
         self.pressure = np.zeros(self.N)
 
         if self.fluid_name:
-            self.pressure_key = wrapper.get_matching_wrapper_path(problem, [self.region_name, 'pressure'])
+            self.pressure_key = wrapper.get_matching_wrapper_path(problem, [self.mesh_level, self.region_name, 'pressure'])
 
     def choose_random_locations(self, problem, density):
         """
@@ -129,10 +131,10 @@ class JointSet():
             density (float): Joint density (#/m3)
         """
         # Find key values
-        ghost_key_node = wrapper.get_matching_wrapper_path(problem, ['nodeManager', 'ghostRank'])
-        node_position_key = wrapper.get_matching_wrapper_path(problem, ['nodeManager', 'ReferencePosition'])
-        node_element_key = wrapper.get_matching_wrapper_path(problem, ['nodeManager', 'elemList'])
-        element_node_key = wrapper.get_matching_wrapper_path(problem, ['ElementRegions', self.region_name, 'nodeList'])
+        ghost_key_node = wrapper.get_matching_wrapper_path(problem, [self.mesh_level, 'nodeManager', 'ghostRank'])
+        node_position_key = wrapper.get_matching_wrapper_path(problem, [self.mesh_level, 'nodeManager', 'ReferencePosition'])
+        node_element_key = wrapper.get_matching_wrapper_path(problem, [self.mesh_level, 'nodeManager', 'elemList'])
+        element_node_key = wrapper.get_matching_wrapper_path(problem, [self.mesh_level, 'ElementRegions', self.region_name, 'nodeList'])
 
         # Find the region extents
         ghost_rank = wrapper.get_wrapper(problem, ghost_key_node)
@@ -357,6 +359,9 @@ class MicroseismicAnalysis():
         self.catalog_requires_sync = False
         self.catalog_all = {}
 
+    def __len__(self):
+        return len(self.catalog_all['t'])
+
     def add_joint_set(self, problem, set_name, **xargs):
         """
         Add a joint set to a given region
@@ -443,11 +448,35 @@ class MicroseismicAnalysis():
         """
         self.sync_catalog()
         if (parallel_io.rank == 0):
-            pointsToVTK(fname,
-                        self.catalog_all['x'],
-                        self.catalog_all['y'],
-                        self.catalog_all['z'],
-                        data=self.catalog_all)
+            if len(self.catalog_all['x']):
+                pointsToVTK(fname,
+                            self.catalog_all['x'],
+                            self.catalog_all['y'],
+                            self.catalog_all['z'],
+                            data=self.catalog_all)
+            else:
+                empty_catalog = {k: np.zeros(1) for k in self.catalog_order}
+                pointsToVTK(fname,
+                            np.zeros(1),
+                            np.zeros(1) - 1e-6,
+                            np.zeros(1) + 1e-6,
+                            data=empty_catalog)
+
+    def save_stereonet(self, fname, density=True, poles=True):
+        import matplotlib.pyplot as plt
+        import mplstereonet
+
+        if len(self):
+            f = plt.figure()
+            ax = f.add_subplot(111, projection='equal_angle_stereonet')
+            if density:
+                cax = ax.density_contourf(self.catalog_all['strike'], self.catalog_all['dip'], measurement='poles')
+                f.colorbar(cax)
+            if poles:
+                ax.pole(self.catalog_all['strike'], self.catalog_all['dip'])
+            ax.grid(True)
+            plt.savefig(fname)
+            
 
     def save_all_joints(self, fname):
         """
