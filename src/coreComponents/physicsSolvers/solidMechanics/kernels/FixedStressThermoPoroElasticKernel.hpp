@@ -111,7 +111,6 @@ public:
     m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_density( inputConstitutiveType.getDensity() ),
-    m_initialFluidPressure( elementSubRegion.template getField< fields::flow::initialPressure >() ),
     m_fluidPressure_n( elementSubRegion.template getField< fields::flow::pressure_n >() ),
     m_fluidPressure( elementSubRegion.template getField< fields::flow::pressure >() ),
     m_initialTemperature( elementSubRegion.template getField< fields::flow::initialTemperature >() ),
@@ -211,7 +210,6 @@ public:
     // Evaluate total stress and its derivatives
     m_constitutiveUpdate.smallStrainUpdateThermalSinglePhase( k,
                                                               q,
-                                                              m_initialFluidPressure[k],
                                                               m_fluidPressure_n[k],
                                                               m_fluidPressure[k],
                                                               m_initialTemperature[k],
@@ -289,9 +287,6 @@ protected:
 
   /// The rank global densities
   arrayView2d< real64 const > const m_density;
-
-  /// The rank-global initial fluid pressure array
-  arrayView1d< real64 const > const m_initialFluidPressure;
 
   /// The rank-global fluid pressure arrays.
   arrayView1d< real64 const > const m_fluidPressure_n;
