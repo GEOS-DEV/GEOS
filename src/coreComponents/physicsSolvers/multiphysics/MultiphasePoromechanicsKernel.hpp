@@ -809,11 +809,11 @@ public:
 
     real64 maxForce = 0;
 
-    constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
+    constexpr int numDisplacementDofs = numNodesPerElem * numDofPerTestSupportPoint;
 
     // Apply equation/variable change transformation(s)
-    real64 work[nUDof > ( maxNumComponents + 1 ) ? nUDof : maxNumComponents + 1];
-    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, nUDof, stack.dLocalResidualMass_dDisplacement, work );
+    real64 work[numDisplacementDofs > ( maxNumComponents + 1 ) ? numDisplacementDofs : maxNumComponents + 1];
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, numDisplacementDofs, stack.dLocalResidualMass_dDisplacement, work );
     shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, 1, stack.dLocalResidualMass_dPressure, work );
     shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, m_numComponents, stack.dLocalResidualMass_dComponents, work );
     shiftElementsAheadByOneAndReplaceFirstElementWithSum( m_numComponents, stack.localResidualMass );
@@ -852,7 +852,7 @@ public:
         m_matrix.template addToRowBinarySearchUnsorted< serialAtomic >( dof + i,
                                                                         stack.localRowDofIndex,
                                                                         stack.dLocalResidualMass_dDisplacement[i],
-                                                                        nUDof );
+                                                                        numDisplacementDofs );
         m_matrix.template addToRow< serialAtomic >( dof + i,
                                                     &stack.localPressureDofIndex,
                                                     stack.dLocalResidualMass_dPressure[i],

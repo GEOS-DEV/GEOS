@@ -520,7 +520,7 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
-    constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
+    constexpr int numDisplacementDofs = numNodesPerElem * numDofPerTestSupportPoint;
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {
@@ -549,7 +549,7 @@ public:
       m_matrix.template addToRowBinarySearchUnsorted< serialAtomic >( dof,
                                                                       stack.localRowDofIndex,
                                                                       stack.dLocalResidualMass_dDisplacement[0],
-                                                                      nUDof );
+                                                                      numDisplacementDofs );
       m_matrix.template addToRow< serialAtomic >( dof,
                                                   &stack.localPressureDofIndex,
                                                   stack.dLocalResidualMass_dPressure[0],

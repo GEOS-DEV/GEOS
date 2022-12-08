@@ -516,7 +516,7 @@ public:
   {
     real64 const maxForce = Base::complete( k, stack );
 
-    constexpr integer nUDof = numNodesPerElem * numDofPerTestSupportPoint;
+    constexpr integer numDisplacementDofs = numNodesPerElem * numDofPerTestSupportPoint;
 
     // Step 1: assemble the derivatives of linear momentum balance wrt temperature into the global matrix
 
@@ -553,7 +553,7 @@ public:
       m_matrix.template addToRowBinarySearchUnsorted< serialAtomic >( energyDof,
                                                                       stack.localRowDofIndex,
                                                                       stack.dLocalResidualEnergy_dDisplacement[0],
-                                                                      nUDof );
+                                                                      numDisplacementDofs );
       m_matrix.template addToRow< serialAtomic >( energyDof,
                                                   &stack.localPressureDofIndex,
                                                   stack.dLocalResidualEnergy_dPressure[0],
@@ -571,16 +571,16 @@ public:
 
 protected:
 
-  /// The rank global density derivative wrt temperature
+  /// Views on fluid density derivative wrt temperature
   arrayView2d< real64 const > const m_dFluidDensity_dTemperature;
 
-  /// The rank global internal energy
+  /// Views on fluid internal energy
   arrayView2d< real64 const > const m_fluidInternalEnergy_n;
   arrayView2d< real64 const > const m_fluidInternalEnergy;
   arrayView2d< real64 const > const m_dFluidInternalEnergy_dPressure;
   arrayView2d< real64 const > const m_dFluidInternalEnergy_dTemperature;
 
-  /// The rank-global fluid temperature arrays.
+  /// Views on temperature
   arrayView1d< real64 const > const m_temperature_n;
   arrayView1d< real64 const > const m_initialTemperature;
   arrayView1d< real64 const > const m_temperature;
@@ -600,7 +600,5 @@ using ThermalSinglePhasePoromechanicsKernelFactory =
 } // namespace thermalPoromechanicsKernels
 
 } // namespace geosx
-
-#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_THERMALSINGLEPHASEPOROMECHANICSKERNEL_HPP_
