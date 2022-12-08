@@ -99,6 +99,8 @@ public:
     computeTotalStress( k,
                         q,
                         fluidPressure,
+                        0.0, // to pass something for the initial temperature
+                        0.0, // to pass something for the temperature
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure,
@@ -151,7 +153,6 @@ public:
   GEOSX_HOST_DEVICE
   void smallStrainUpdateThermalSinglePhase( localIndex const k,
                                             localIndex const q,
-                                            real64 const & initialFluidPressure,
                                             real64 const & fluidPressure_n,
                                             real64 const & fluidPressure,
                                             real64 const & initialTemperature,
@@ -161,19 +162,20 @@ public:
                                             real64 ( & totalStress )[6],
                                             DiscretizationOps & stiffness ) const
   {
-    real64 effectiveMeanStressIncrement = 0.0;
-
+    GEOSX_UNUSED_VAR( initialFluidPressure ); 
+    
+    real64 dTotalStress_dPressure[6]; 
+    
     // Compute total stress increment and its derivative
-    computeTotalStressThermal( k,
-                               q,
-                               initialFluidPressure,
-                               fluidPressure,
-                               initialTemperature,
-                               temperature,
-                               strainIncrement,
-                               effectiveMeanStressIncrement,
-                               totalStress,
-                               stiffness );
+    computeTotalStress( k,
+                        q,
+                        fluidPressure,
+                        initialTemperature,
+                        temperature,
+                        strainIncrement,
+                        totalStress,
+                        dTotalStress_dPressure,
+                        stiffness );
 
     // Compute porosity
     real64 const deltaFluidPressure = fluidPressure - fluidPressure_n;
@@ -182,6 +184,8 @@ public:
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
+
+    real64 const effectiveMeanStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
     real64 const totalMeanStressIncrement = effectiveMeanStressIncrement - biotCoefficient * deltaFluidPressure - 3 * thermalExpansionCoefficient * bulkModulus * deltaTemperature;
 
@@ -237,6 +241,8 @@ public:
     computeTotalStress( k,
                         q,
                         fluidPressure,
+                        0.0, // to pass something for the initial temperature
+                        0.0, // to pass something for the temperature
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure,
@@ -535,6 +541,8 @@ private:
   void computeTotalStress( localIndex const k,
                            localIndex const q,
                            real64 const & fluidPressure,
+                           real64 const & initialTemperature,
+                           real64 const & temperature,
                            real64 const ( &strainIncrement )[6],
                            real64 ( & totalStress )[6],
                            real64 ( & dTotalStress_dPressure )[6],
@@ -551,7 +559,16 @@ private:
 
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
 
+    // Add the contribution of the pore pressure into the total stress
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * fluidPressure );
+
+    // Add the contribution of the thermal expansion into the total stress
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
+
+    updateThermalExpansionCoefficient( k );
+
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -3 * thermalExpansionCoefficient * bulkModulus * ( temperature - initialTemperature ) );
 
     dTotalStress_dPressure[0] = -biotCoefficient;
     dTotalStress_dPressure[1] = -biotCoefficient;
@@ -559,44 +576,6 @@ private:
     dTotalStress_dPressure[3] = 0;
     dTotalStress_dPressure[4] = 0;
     dTotalStress_dPressure[5] = 0;
-  }
-
-  GEOSX_HOST_DEVICE
-  void computeTotalStressThermal( localIndex const k,
-                                  localIndex const q,
-                                  real64 const & initialFluidPressure,
-                                  real64 const & fluidPressure,
-                                  real64 const & initialTemperature,
-                                  real64 const & temperature,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 & effectiveMeanStressIncrement,
-                                  real64 ( & totalStress )[6],
-                                  DiscretizationOps & stiffness ) const
-  {
-    // Compute total stress increment and its derivative w.r.t. pressure
-    m_solidUpdate.smallStrainUpdate( k,
-                                     q,
-                                     strainIncrement,
-                                     totalStress, // first effective stress increment accumulated
-                                     stiffness );
-
-    updateBiotCoefficient( k );
-
-    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-    real64 const initialBiotCoefficient = biotCoefficient; // temporary
-
-    // Add the contribution of the pore pressure into the total stress
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * fluidPressure + initialBiotCoefficient * initialFluidPressure );
-
-    // Add the contribution of the thermal expansion into the total stress
-    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
-    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
-
-    effectiveMeanStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
-
-    updateThermalExpansionCoefficient( k );
-
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -3 * thermalExpansionCoefficient * bulkModulus * ( temperature - initialTemperature ) );
   }
 };
 
