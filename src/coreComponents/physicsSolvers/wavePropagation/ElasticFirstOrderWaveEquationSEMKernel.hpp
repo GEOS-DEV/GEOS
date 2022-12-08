@@ -643,6 +643,7 @@ struct VelocityComputation
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
+          localIndex const size_node,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView2d< real32 const > const stressxx,
@@ -652,11 +653,22 @@ struct VelocityComputation
           arrayView2d< real32 const > const stressxz,
           arrayView2d< real32 const > const stressyz,
           arrayView1d< const real32 > const mass,
+          arrayView1d< real32 const > const dampingx,
+          arrayView1d< real32 const > const dampingy,
+          arrayView1d< real32 const > const dampingz,
           real64 const dt,
           arrayView1d< real32 > const ux_np1,
           arrayView1d< real32 > const uy_np1,
           arrayView1d< real32 > const uz_np1 )
   {
+    
+    forAll< EXEC_POLICY >( size_node, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      ux_np1[a] *= 1.0-((dt/2)*(dampingx[a]/mass[a]));
+      uy_np1[a] *= 1.0-((dt/2)*(dampingy[a]/mass[a]));
+      uz_np1[a] *= 1.0-((dt/2)*(dampingz[a]/mass[a]));
+    } );
+
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
 
@@ -726,6 +738,12 @@ struct VelocityComputation
         RAJA::atomicAdd< ATOMIC_POLICY >( &uz_np1[elemsToNodes[k][i]], localIncrement3 );
       }
 
+    } );
+    forAll< EXEC_POLICY >( size_node, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      ux_np1[a] /= 1.0+((dt/2)*(dampingx[a]/mass[a]));
+      uy_np1[a] /= 1.0+((dt/2)*(dampingy[a]/mass[a]));
+      uz_np1[a] /= 1.0+((dt/2)*(dampingz[a]/mass[a]));
     } );
   }
 

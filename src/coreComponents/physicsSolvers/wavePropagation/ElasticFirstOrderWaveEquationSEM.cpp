@@ -669,6 +669,10 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
+    arrayView1d< real32 > const dampingx = nodeManager.getField< fields::DampingVectorx >();
+    arrayView1d< real32 > const dampingy = nodeManager.getField< fields::DampingVectory >();
+    arrayView1d< real32 > const dampingz = nodeManager.getField< fields::DampingVectorz >();
+
 
     arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
     arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
@@ -732,6 +736,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
           VelocityComputation< FE_TYPE > kernel2( finiteElement );
         kernel2.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( elementSubRegion.size(),
+          nodeManager.size(),
           X,
           elemsToNodes,
           stressxx,
@@ -741,6 +746,9 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
           stressxz,
           stressyz,
           mass,
+          dampingx,
+          dampingy,
+          dampingz,
           dt,
           ux_np1,
           uy_np1,
