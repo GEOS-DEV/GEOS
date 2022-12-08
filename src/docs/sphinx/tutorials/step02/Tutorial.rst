@@ -35,15 +35,13 @@ The XML input file for this test case is located at:
 
 .. code-block:: console
 
-  inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity_smoke.xml
+  inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_hex_gravity_smoke.xml
 
-The mesh file format used in this tutorial is called `MSH
-<https://gmsh.info/doc/texinfo/gmsh.html#MSH-file-format>`_.
+The mesh file format used in this tutorial is `vtk <https://vtk.org/>`_.
 This format is a standard scientific meshing format not specific to GEOSX.
-It is maintained as the native format of the meshing tool `Gmsh <https://gmsh.info>`__.
-MSH is designed for unstructured meshes and contains a
+``vtk`` is a multi-purpose mesh format (structured, unstructured, serial, parallel, multi-block...) and contains a
 compact and complete representation of the mesh geometry and of its properties.
-The mesh file used here is human-readable ASCII.
+The mesh file used here is human-readable ASCII, and there is a binary storage as well.
 It contains a list of nodes with their (x,y,z) coordinates,
 and a list of elements that are constructed from these nodes.
 
@@ -71,7 +69,7 @@ can process are slightly different
 than either structured grid or corner-point grids.
 The differences are worth pointing out here. In GEOSX:
 
- - **hexahedra can have irregular shapes**: no pillars are needed and
+ - **Hexahedra can have irregular shapes**: no pillars are needed and
    vertices can be anywhere in space. This is useful for grids that turn, fold,
    or are heavily bent. Hexahedral blocks should nevertheless have 8 distinct
    vertices that are not coalesced.
@@ -79,7 +77,7 @@ The differences are worth pointing out here. In GEOSX:
    in some solvers (finite element solvers), but it is best to avoid such situations
    and label elements according to their actual shape.
    Butterfly cells, flat cells, negative or zero volume cells will cause problems.
- - **the mesh needs to be conformal:** in 3D, this means that neighboring
+ - **The mesh needs to be conformal:** in 3D, this means that neighboring
    grid blocks have to share exactly a complete face. Note that corner-point
    grids do not have this requirement and neighboring blocks can be offset.
    When importing grids
@@ -92,7 +90,7 @@ The differences are worth pointing out here. In GEOSX:
    GEOSX can run finite element and finite volume simulations on the same mesh
    without problems, going seamlessly from one numerical method to the other.
    This is key to enabling multiphysics simulation.
- - **there is no assumption of overall structure**: GEOSX does not need to know
+ - **There is no assumption of overall structure**: GEOSX does not need to know
    a number of block in the X, Y, Z direction (no NX, NY, NZ) and does not assume that the
    mesh is a full cartesian domain that the interesting parts of the reservoir
    must be carved out from.
@@ -106,21 +104,13 @@ The differences are worth pointing out here. In GEOSX:
 
 
 
-Importing an external mesh with PAMELA
-----------------------------------------
+Importing an external mesh with VTK
+-----------------------------------
 
-In this first part of the tutorial, we use a hexahedral mesh provided with GEOSX.
+In this first part of the tutorial, we use an hexahedral mesh provided to GEOSX.
 This hexahedral mesh is strictly identical to the grid used in the first tutorial (:ref:`TutorialSinglePhaseFlowWithInternalMesh`), but instead of using
-the internal grid generator GEOSX, we specify it with spatial node coordinates in MSH format.
-
-
-The process by which grids are imported into GEOSX is worth explaining.
-To import external grid into GEOSX, we use an external component (submodule) called **PAMELA**.
-PAMELA (Parallel Meshing Library) was developed as a stand-alone utility to import grids
-in multiple formats and write them into memory for GEOSX.
-Although PAMELA is not necessary to run GEOSX (the internal grid
-generator of GEOSX has plenty of interesting features), you need
-PAMELA if you want to import external grids.
+the internal grid generator GEOSX, we specify it with spatial node coordinates in ``vtk`` format.
+To import external grid into GEOSX, we did develop a component directly using the **vtk** library.
 
 
 So here, our mesh consists of a simple sugar-cube stack of size 10x10x10.
@@ -142,27 +132,26 @@ we inspect the following XML file:
 
 .. code-block:: console
 
-  inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity_smoke.xml
+  inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_hex_gravity_smoke.xml
 
 
 In the XML ``Mesh`` tag, instead of an ``InternalMesh`` tag,
-we have a ``PAMELAMesh`` tag.
-We see that a file called ``cube_10x10x10_hex.msh`` is
-imported using PAMELA, and this object is instantiated with a user-defined ``name`` value.
-The file here contains geometric information in
-`MSH <http://gmsh.info>`__
-format (it can also contain properties, as we will see in the next tutorial).
+we have a ``VTKMesh`` tag.
+We see that a file called ``cube_10x10x10_hex.vtk`` is
+imported using ``vtk``, and this object is instantiated with a user-defined ``name`` value.
+The file here contains geometric information in `vtk <https://vtk.org/>`__ format
+(it can also contain properties, as we will see in the next tutorial).
 
-.. literalinclude::    ../../../../../inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity_smoke.xml
+.. literalinclude::    ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_hex_gravity_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_EXT_HEX_MESH -->
   :end-before: <!-- SPHINX_TUT_EXT_HEX_MESH_END -->
 
-Here are the first few lines of the msh file :
+Here is the ``vtk`` file :
 
 .. literalinclude::
-   ../../../../../inputFiles/singlePhaseFlow/pamela_test/cube_10x10x10_hex.msh
-   :caption: cube_10x10x10_hex.msh
+   ../../../../../inputFiles/singlePhaseFlow/vtk/cube_10x10x10_hex.vtk
+   :caption: cube_10x10x10_hex.vtk
    :lines: 1-20
 
 GEOSX can run different physical solvers on different regions of the mesh at different times.
@@ -176,7 +165,7 @@ Here, the entire field is one region called ``Domain``,
 and contains multiple constitutive models, including ``water``, ``rockPorosity``, and ``rockPerm``.
 
 
-.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity_base.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_hex_gravity_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_EXT_HEX_ELEM_REGIONS -->
   :end-before: <!-- SPHINX_TUT_EXT_HEX_ELEM_REGIONS_END -->
@@ -187,10 +176,9 @@ Running GEOSX
 
 The command to run GEOSX is
 
-
 .. code-block:: console
 
-  path/to/geosx -i ../../../../../inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity_smoke.xml
+  path/to/geosx -i ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_hex_gravity_smoke.xml
 
 Note that all paths for files included in the XML file are relative
 to this XML file, not to the GEOSX executable.
@@ -201,53 +189,30 @@ In our case, the first lines are:
 
 .. code-block:: console
 
-  Adding Solver of type SinglePhaseFlow, named SinglePhaseFlow
-  Adding Mesh: PAMELAMesh, CubeHex
-  Adding Geometric Object: Box, all
-  Adding Geometric Object: Box, left
+  Adding Mesh: VTKMesh, CubeHex
   Adding Event: PeriodicEvent, solverApplications
   Adding Event: PeriodicEvent, outputs
   Adding Event: PeriodicEvent, restarts
-  Adding Output: Silo, siloWellPump
+  Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
+  Adding Geometric Object: Box, left
+  Adding Output: Silo, siloOutput
   Adding Output: Restart, restartOutput
   Adding Object CellElementRegion named Domain from ObjectManager::Catalog.
 
 This indicates initialization of GEOSX.
-The mesh preprocessing tool PAMELA is launched next,
+The mesh preprocessing tool ``VTKMesh`` is launched next,
 with console messages as follows.
 
   .. code-block:: console
 
-
-    0 >>> **********************************************************************
-    0 >>>                          PAMELA Library Import tool
-    0 >>> **********************************************************************
-    0 >>> GMSH FORMAT IDENTIFIED
-    0 >>> *** Importing Gmsh mesh format...
-    0 >>> Reading nodes...
-    0 >>> Done0
-    0 >>> Reading elements...
-    0 >>> Number of nodes = 1331
-    0 >>> Number of triangles = 0
-    0 >>> Number of quadrilaterals = 0
-    0 >>> Number of tetrahedra = 0
-    0 >>> Number of hexahedra = 1000
-    0 >>> Number of pyramids = 0
-    0 >>> Number of wedges = 0
-    0 >>> *** Done
-    0 >>> *** Creating Polygons from Polyhedra...
-    0 >>> 3300 polygons have been created
-    0 >>> *** Done
-    0 >>> *** Perform partitioning...
-    0 >>> TRIVIAL partioning...
-    0 >>> Ghost elements...
-    0 >>> Clean mesh...
-    0 >>> *** Done...
-    0 >>> Clean Adjacency...
-    0 >>> *** Done...
-    Writing into the GEOSX mesh data structure
-    Running simulation
-
+  VTKMesh 'CubeHex': reading mesh from /path/to/inputFiles/singlePhaseFlow/vtk/cube_10x10x10_hex.vtk
+  Generating global Ids from VTK mesh
+  VTKMesh 'CubeHex': generating GEOSX mesh data structure
+  Number of nodes: 1331
+    Number of elems: 1000
+               C3D8: 1000
+  Load balancing:  min  avg  max
+  (element/rank): 1000 1000 1000
 
 Notice the specification of the number of nodes (1331), and hexahedra (1000).
 After the adjacency calculations, GEOSX starts the simulation itself.
@@ -257,11 +222,22 @@ At the end of your simulation, you should see something like:
 
 .. code-block:: console
 
-  Time: 99s, dt:1s, Cycle: 99
+  Time: 96s, dt:2s, Cycle: 48
+  Time: 98s, dt:2s, Cycle: 49
   Cleaning up events
-  Writing out restart file at 3D_10x10x10_compressible_pamela_hex_gravity_smoke_restart_000000100/rank_0000000.hdf5
+  SinglePhaseFlow, number of time steps: 50
+  SinglePhaseFlow, number of successful nonlinear iterations: 50
+  SinglePhaseFlow, number of successful linear iterations: 450
+  SinglePhaseFlow, number of time step cuts: 0
+  SinglePhaseFlow, number of discarded nonlinear iterations: 0
+  SinglePhaseFlow, number of discarded linear iterations: 0
+  Umpire            HOST sum across ranks:    2.6 MB
+  Umpire            HOST         rank max:    2.6 MB
+  total time                         3.518s
+  initialization time                0.132s
+  run time                           3.076s
 
-  init time = 0.081181s, run time = 5.4595s
+  Process finished with exit code 0
 
 Once this is done, GEOSX is finished and we can inspect the outcome.
 
@@ -313,7 +289,7 @@ We use GEOSX to compute the pressure inside each grid block.
 
 The set-up for this problem is almost identical to
 the hexahedral mesh set-up. We simply point our ``Mesh`` tag to
-include a tetrahedral grid. The beauty of not relying on I,J,K indices
+include a tetrahedral grid. The interest of not relying on I,J,K indices
 for any property specification or well trajectory
 makes it **easy to try different meshes for the same physical problems with GEOSX**.
 Swapping out meshes without requiring other modifications
@@ -324,15 +300,15 @@ Like before, the XML file for this problem is the following:
 
 .. code-block:: console
 
-   inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity_smoke.xml
+   inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_tetra_gravity_smoke.xml
 
 
 The only difference, is that now, the ``Mesh`` tag points GEOSX to
-a different mesh file called ``cube_10x10x10_tet.msh``.
-This file contains nodes and tetrahedral elements in `Gmsh`_ format,
+a different mesh file called ``cube_10x10x10_tet.vtk``.
+This file contains nodes and tetrahedral elements in `vtk`_ format,
 representing a different discretization of the exact same 10x10x10 cubic domain.
 
-.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity_smoke.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_tetra_gravity_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_EXT_TETRA_MESH -->
   :end-before: <!-- SPHINX_TUT_EXT_TETRA_MESH_END -->
@@ -343,16 +319,16 @@ The mesh now looks like this:
   :width: 400px
 
 
-And the MSH file starts as follows (notice the tetrahedral point coordinates as real numbers):
+And the ``vtk`` file starts as follows (notice the tetrahedral point coordinates as real numbers):
 
 .. literalinclude::
-   ../../../../../inputFiles/singlePhaseFlow/pamela_test/cube_10x10x10_tet.msh
-   :caption: cube_10x10x10_tet.msh
+   ../../../../../inputFiles/singlePhaseFlow/vtk/cube_10x10x10_tet.vtk
+   :caption: cube_10x10x10_tet.vtk
    :lines: 1-20
 
 Again, the entire field is one region called ``Domain`` and contains ``water`` and ``rock`` only.
 
-.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity_base.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_tetra_gravity_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_EXT_TETRA_ELEM_REGIONS -->
   :end-before: <!-- SPHINX_TUT_EXT_TETRA_ELEM_REGIONS_END -->
@@ -365,7 +341,7 @@ The command to run GEOSX is
 
 .. code-block:: console
 
-  path/to/geosx -i ../../../../../inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity_smoke.xml
+  path/to/geosx -i ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_tetra_gravity_smoke.xml
 
 Again, all paths for files included in the XML file are relative
 to this XML file, not to the GEOSX executable.
@@ -375,56 +351,31 @@ In our case, the first lines are:
 
 .. code-block:: console
 
-  Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
-  Adding Mesh: PAMELAMesh, CubeTetra
-  Adding Geometric Object: Box, left
+  Adding Mesh: VTKMesh, CubeTetra
   Adding Event: PeriodicEvent, solverApplications
   Adding Event: PeriodicEvent, outputs
   Adding Event: PeriodicEvent, restarts
-  Adding Output: Silo, siloWellPump
+  Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
+  Adding Geometric Object: Box, left
+  Adding Output: Silo, siloOutput
   Adding Output: Restart, restartOutput
   Adding Object CellElementRegion named Domain from ObjectManager::Catalog.
-  Reading external mesh from /****/inputFiles/singlePhaseFlow/pamela_test/cube_10x10x10_tet.msh
-
 
 Followed by:
 
 .. code-block:: console
 
-  0 >>> **********************************************************************
-  0 >>>                          PAMELA Library Import tool
-  0 >>> **********************************************************************
-  0 >>> GMSH FORMAT IDENTIFIED
-  0 >>> *** Importing Gmsh mesh format...
-  0 >>> Reading nodes...
-  0 >>> Done0
-  0 >>> Reading elements...
-  0 >>> Number of nodes = 366
-  0 >>> Number of triangles = 624
-  0 >>> Number of quadrilaterals = 0
-  0 >>> Number of tetrahedra = 1153
-  0 >>> Number of hexahedra = 0
-  0 >>> Number of pyramids = 0
-  0 >>> Number of wedges = 0
-  0 >>> *** Done
-  0 >>> *** Creating Polygons from Polyhedra...
-  0 >>> 1994 polygons have been created
-  0 >>> *** Done
-  0 >>> *** Perform partitioning...
-  0 >>> TRIVIAL partioning...
-  0 >>> Ghost elements...
-  0 >>> Clean mesh...
-  0 >>> *** Done...
-  0 >>> Clean Adjacency...
-  0 >>> *** Done...
-  Writing into the GEOSX mesh data structure
-    Domain/DEFAULT_TETRA/water is allocated with 1 quadrature points.
-    Domain/DEFAULT_TETRA/rock is allocated with 1 quadrature points.
-    Domain/DEFAULT_TETRA/rockPerm is allocated with 1 quadrature points.
-    Domain/DEFAULT_TETRA/rockPorosity is allocated with 1 quadrature points.
-    Domain/DEFAULT_TETRA/nullSolid is allocated with 1 quadrature points.
-  PAMELAMesh CubeTetra: importing field data from mesh dataset
-
+  VTKMesh 'CubeTetra': reading mesh from /path/to/inputFiles/singlePhaseFlow/vtk/cube_10x10x10_tet.vtk
+  Generating global Ids from VTK mesh
+  VTKMesh 'CubeTetra': generating GEOSX mesh data structure
+  Number of nodes:  366
+    Number of elems: 1153
+               C3D4: 1153
+  Load balancing:  min  avg  max
+  (element/rank): 1153 1153 1153
+  regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = CubeTetra, Level0, Domain, tetrahedra
+  CubeTetra/Level0/Domain/tetrahedra/water allocated 1 quadrature points
+  CubeTetra/Level0/Domain/tetrahedra/rock allocated 1 quadrature points
 
 We see that we have now 366 nodes and 1153 tetrahedral elements.
 And finally, when the simulation is successfully done we see:
@@ -445,11 +396,19 @@ And finally, when the simulation is successfully done we see:
   Time: 98s, dt:1s, Cycle: 98
   Time: 99s, dt:1s, Cycle: 99
   Cleaning up events
-  Umpire            HOST sum across ranks:    4.9 MB
-  Umpire            HOST         rank max:    4.9 MB
-  total time                         3.164s
-  initialization time                0.178s
-  run time                           2.659s
+  SinglePhaseFlow, number of time steps: 100
+  SinglePhaseFlow, number of successful nonlinear iterations: 100
+  SinglePhaseFlow, number of successful linear iterations: 1000
+  SinglePhaseFlow, number of time step cuts: 0
+  SinglePhaseFlow, number of discarded nonlinear iterations: 0
+  SinglePhaseFlow, number of discarded linear iterations: 0
+  Umpire            HOST sum across ranks:    1.9 MB
+  Umpire            HOST         rank max:    1.9 MB
+  total time                         5.837s
+  initialization time                0.094s
+  run time                           5.432s
+
+  Process finished with exit code 0
 
 
 Visualization of results in VisIt
@@ -480,9 +439,5 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
 **For more details**
 
   - A complete description of the Internal Mesh generator is found here :ref:`Meshes`.
-  - PAMELA being an external submodule has less documentation, but the same :ref:`Meshes` page may get you started.
-  - GEOSX can handle tetrahedra, hexahedra, pyramids, wedges, and any combination thereof in one mesh.
-    For more information on how MSH formats can help you specify these mesh types, see the `Gmsh`_ website.
-
-
-.. _Gmsh: https://gmsh.info
+  - ``vtk`` is extensively documented. You can start browsing `here <https://vtk.org/documentation/>`_.
+  - GEOSX can handle tetrahedra, hexahedra, pyramids, wedges, prisms, and any combination thereof in one mesh.
