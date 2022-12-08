@@ -29,19 +29,6 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
-// old additional headers to be probably removed
-// #include "common/DataLayouts.hpp"
-// #include "constitutive/ConstitutiveManager.hpp"
-// #include "discretizationMethods/NumericalMethodsManager.hpp"
-// #include "finiteElement/Kinematics.h"
-// #include "mesh/DomainPartition.hpp"
-// #include "mainInterface/ProblemManager.hpp"
-// #include "mesh/MeshForLoopInterface.hpp"
-// #include "mesh/utilities/ComputationalGeometry.hpp"
-// #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-// #include "common/GEOS_RAJA_Interface.hpp"
-// #include "finiteElement/FiniteElementDispatch.hpp"
-
 namespace geosx
 {
 

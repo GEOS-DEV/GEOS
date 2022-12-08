@@ -79,6 +79,7 @@ public:
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
+  using Base::m_meshData;
 
   /**
    * @brief Constructor
@@ -246,7 +247,10 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    for( localIndex a=0; a<numNodesPerElem; ++a )
+    m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
+    localIndex const numSupportPoints =
+      m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    for( localIndex a=0; a<numSupportPoints; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
@@ -267,6 +271,21 @@ public:
     {
       stack.localComponentDofIndices[flowDofIndex] = stack.localPressureDofIndex[0] + flowDofIndex + 1;
     }
+
+    // Add stabilization to block diagonal parts of the local dResidualMomentum_dDisplacement (this
+    // is a no-operation with FEM classes)
+    real64 const stabilizationScaling = computeStabilizationScaling( k );
+    m_finiteElementSpace.template addGradGradStabilizationMatrix
+    < FE_TYPE, numDofPerTrialSupportPoint, false >( stack.feStack,
+                                                    stack.dLocalResidualMomentum_dDisplacement,
+                                                    -stabilizationScaling );
+    m_finiteElementSpace.template
+    addEvaluatedGradGradStabilizationVector< FE_TYPE,
+                                             numDofPerTrialSupportPoint >
+      ( stack.feStack,
+      stack.uhat_local,
+      reinterpret_cast< real64 (&)[numNodesPerElem][numDofPerTestSupportPoint] >(stack.localResidualMomentum),
+      -stabilizationScaling );
 
   }
 
@@ -305,8 +324,9 @@ public:
     // determinant of the Jacobian transformation matrix times the quadrature weight (detJxW)
     real64 N[numNodesPerElem];
     real64 dNdX[numNodesPerElem][3];
-    FE_TYPE::calcN( q, N );
-    real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+    FE_TYPE::calcN( q, stack.feStack, N );
+    real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
+                                                                             stack.feStack, dNdX );
 
     // Compute strain increment
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
@@ -531,17 +551,19 @@ public:
     GEOSX_UNUSED_VAR( k );
 
     real64 maxForce = 0;
-
-    constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
+    localIndex const numSupportPoints =
+      m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    int nUDof = numSupportPoints * numDofPerTestSupportPoint;
+    constexpr int nMaxUDof = FE_TYPE::maxSupportPoints * numDofPerTestSupportPoint;
 
     // Apply equation/variable change transformation(s)
-    real64 work[nUDof > ( numMaxComponents + 1 ) ? nUDof : numMaxComponents + 1];
+    real64 work[nMaxUDof > ( numMaxComponents + 1 ) ? nMaxUDof : numMaxComponents + 1];
     shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, nUDof, stack.dLocalResidualMass_dDisplacement, work );
     shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, 1, stack.dLocalResidualMass_dPressure, work );
     shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, m_numComponents, stack.dLocalResidualMass_dComponents, work );
     shiftElementsAheadByOneAndReplaceFirstElementWithSum( m_numComponents, stack.localResidualMass );
 
-    for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
+    for( int localNode = 0; localNode < numSupportPoints; ++localNode )
     {
       for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
       {
@@ -550,7 +572,7 @@ public:
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 stack.localRowDofIndex,
                                                                                 stack.dLocalResidualMomentum_dDisplacement[numDofPerTestSupportPoint * localNode + dim],
-                                                                                numNodesPerElem * numDofPerTrialSupportPoint );
+                                                                                nUDof );
 
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localResidualMomentum[numDofPerTestSupportPoint * localNode + dim] );
         maxForce = fmax( maxForce, fabs( stack.localResidualMomentum[numDofPerTestSupportPoint * localNode + dim] ) );
@@ -651,6 +673,20 @@ protected:
 
   /// Number of phases
   localIndex const m_numPhases;
+
+  /**
+   * @brief Get a parameter representative of the stiffness, used as physical scaling for the
+   * stabilization matrix.
+   * @param[in] k Element index.
+   * @return A parameter representative of the stiffness matrix dstress/dstrain
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  real64 computeStabilizationScaling( localIndex const k ) const
+  {
+    // TODO: generalize this to other constitutive models (currently we assume linear elasticity).
+    return 2.0 * m_constitutiveUpdate.getShearModulus( k );
+  }
 
 };
 
