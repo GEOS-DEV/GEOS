@@ -3,7 +3,7 @@
 <Problem>
 
   <Included>
-    <File name="./-3D_10x10x10_compressible_hex_gravity_base.xml"/>
+    <File name="./3D_10x10x10_compressible_hex_gravity_base.xml"/>
   </Included>
 
 
