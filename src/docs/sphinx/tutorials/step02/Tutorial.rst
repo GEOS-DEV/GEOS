@@ -35,7 +35,7 @@ The XML input file for this test case is located at:
 
 .. code-block:: console
 
-  inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_hex_gravity_smoke.xml
+  inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_hex_gravity_smoke.xml
 
 The mesh file format used in this tutorial is `vtk <https://vtk.org/>`_.
 This format is a standard scientific meshing format not specific to GEOSX.
@@ -132,7 +132,7 @@ we inspect the following XML file:
 
 .. code-block:: console
 
-  inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_hex_gravity_smoke.xml
+  inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_hex_gravity_smoke.xml
 
 
 In the XML ``Mesh`` tag, instead of an ``InternalMesh`` tag,
@@ -142,7 +142,7 @@ imported using ``vtk``, and this object is instantiated with a user-defined ``na
 The file here contains geometric information in `vtk <https://vtk.org/>`__ format
 (it can also contain properties, as we will see in the next tutorial).
 
-.. literalinclude::    ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_hex_gravity_smoke.xml
+.. literalinclude::    ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_hex_gravity_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_EXT_HEX_MESH -->
   :end-before: <!-- SPHINX_TUT_EXT_HEX_MESH_END -->
@@ -165,7 +165,7 @@ Here, the entire field is one region called ``Domain``,
 and contains multiple constitutive models, including ``water``, ``rockPorosity``, and ``rockPerm``.
 
 
-.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_hex_gravity_base.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_hex_gravity_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_EXT_HEX_ELEM_REGIONS -->
   :end-before: <!-- SPHINX_TUT_EXT_HEX_ELEM_REGIONS_END -->
@@ -178,7 +178,7 @@ The command to run GEOSX is
 
 .. code-block:: console
 
-  path/to/geosx -i ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_hex_gravity_smoke.xml
+  path/to/geosx -i ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_hex_gravity_smoke.xml
 
 Note that all paths for files included in the XML file are relative
 to this XML file, not to the GEOSX executable.
@@ -300,7 +300,7 @@ Like before, the XML file for this problem is the following:
 
 .. code-block:: console
 
-   inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_tetra_gravity_smoke.xml
+   inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_tetra_gravity_smoke.xml
 
 
 The only difference, is that now, the ``Mesh`` tag points GEOSX to
@@ -308,7 +308,7 @@ a different mesh file called ``cube_10x10x10_tet.vtk``.
 This file contains nodes and tetrahedral elements in `vtk`_ format,
 representing a different discretization of the exact same 10x10x10 cubic domain.
 
-.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_tetra_gravity_smoke.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_tetra_gravity_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_EXT_TETRA_MESH -->
   :end-before: <!-- SPHINX_TUT_EXT_TETRA_MESH_END -->
@@ -328,7 +328,7 @@ And the ``vtk`` file starts as follows (notice the tetrahedral point coordinates
 
 Again, the entire field is one region called ``Domain`` and contains ``water`` and ``rock`` only.
 
-.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_tetra_gravity_base.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_tetra_gravity_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_EXT_TETRA_ELEM_REGIONS -->
   :end-before: <!-- SPHINX_TUT_EXT_TETRA_ELEM_REGIONS_END -->
@@ -341,7 +341,7 @@ The command to run GEOSX is
 
 .. code-block:: console
 
-  path/to/geosx -i ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_vtk_tetra_gravity_smoke.xml
+  path/to/geosx -i ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_tetra_gravity_smoke.xml
 
 Again, all paths for files included in the XML file are relative
 to this XML file, not to the GEOSX executable.
