@@ -185,5 +185,8 @@
   <Outputs>
     <VTK
       name="thermoPoroVTKOutput"/>
+
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 </Problem>
