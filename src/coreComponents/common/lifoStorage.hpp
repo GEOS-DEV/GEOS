@@ -296,7 +296,7 @@ public:
     {
       m_pushToDeviceEvents[id] = m_deviceDeque.emplaceFront( array );
 
-      if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() )
+      if( m_maxNumberOfBuffers - id > (int)m_deviceDeque.capacity() )
       {
         LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
         // This buffer will go to host memory, and maybe on disk
@@ -312,7 +312,7 @@ public:
       std::packaged_task< void() > task( std::bind( [ this ] ( int pushId, arrayView1d< T > pushedArray ) {
         m_hostDeque.emplaceFront( pushedArray );
 
-        if( m_maxNumberOfBuffers - pushId > m_hostDeque.capacity() )
+        if( m_maxNumberOfBuffers - pushId > (int)m_hostDeque.capacity() )
         {
           LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
           // This buffer will go to host memory, and maybe on disk
@@ -381,7 +381,7 @@ public:
     {
       m_popFromDeviceEvents[id] = m_deviceDeque.popFront( array );
 
-      if( id >= m_deviceDeque.capacity() )
+      if( id >= (int)m_deviceDeque.capacity() )
       {
         LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
         // Trigger pull one buffer from host, and maybe from disk
@@ -397,7 +397,7 @@ public:
       std::packaged_task< void() > task( std::bind ( [ this ] ( int popId, arrayView1d< T > poppedArray ) {
         m_hostDeque.popFront( poppedArray );
 
-        if( popId >= m_hostDeque.capacity() )
+        if( popId >= (int)m_hostDeque.capacity() )
         {
           LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
           // Trigger pull one buffer from host, and maybe from disk
@@ -464,7 +464,7 @@ private:
     m_hostDeque.getStream().wait_for( const_cast< camp::resources::Event * >( &m_pushToDeviceEvents[id] ) );
     m_hostDeque.emplaceFrontFromBack( m_deviceDeque );
 
-    if( m_maxNumberOfBuffers - id > m_deviceDeque.capacity() + m_hostDeque.capacity() )
+    if( m_maxNumberOfBuffers - id > (int)(m_deviceDeque.capacity() + m_hostDeque.capacity()) )
     {
       // This buffer will go to host then maybe to disk
       std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this, id ) );
@@ -505,7 +505,7 @@ private:
     m_deviceDeque.emplaceBackFromFront( m_hostDeque );
 
     // enqueue diskToHost on worker #2 if needed
-    if( id >= m_hostDeque.capacity() )
+    if( id >= (int)m_hostDeque.capacity() )
     {
       // This buffer will go to host then to disk
       std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this, id - m_hostDeque.capacity() ) );
@@ -562,14 +562,14 @@ private:
     std::string fileName = GEOSX_FMT( "{}_{:08}_{:04}.dat", m_name, id, rank );
     int lastDirSeparator = fileName.find_last_of( "/\\" );
     std::string dirName = fileName.substr( 0, lastDirSeparator );
-    if( string::npos != lastDirSeparator && !dirExists( dirName ))
+    if( string::npos != (size_t)lastDirSeparator && !dirExists( dirName ))
       makeDirsForPath( dirName );
     {
       LIFO_MARK_SCOPE( ofstreamWrite );
       const int fileDesc = open( fileName.c_str(), O_CREAT | O_WRONLY | O_DIRECT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH );
       GEOSX_ERROR_IF( fileDesc == -1,
                       "Could not open file "<< fileName << " for writting: " << strerror( errno ) );
-      write( fileDesc, (char *)d, m_bufferSize );
+      write( fileDesc, (const void *)d, m_bufferSize );
       close( fileDesc );
     }
   }
@@ -588,7 +588,7 @@ private:
     const int fileDesc = open( fileName.c_str(), O_RDONLY | O_DIRECT );
     GEOSX_ERROR_IF( fileDesc == -1,
                     "Could not open file "<< fileName << " for reading: " << strerror( errno ) );
-    read( fileDesc, (char *)d, m_bufferSize );
+    read( fileDesc, (void *)d, m_bufferSize );
     close( fileDesc );
     remove( fileName.c_str() );
   }
