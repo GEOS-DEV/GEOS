@@ -229,7 +229,7 @@ The keywords for the element types are :
 - pentagonalPrisms
 - hexagonalPrisms
 - heptagonalPrisms
-- ctagonalPrisms
+- octagonalPrisms
 - nonagonalPrisms
 - decagonalPrisms
 - hendecagonalPrisms

@@ -203,7 +203,7 @@ This indicates initialization of GEOSX.
 The mesh preprocessing tool ``VTKMesh`` is launched next,
 with console messages as follows.
 
-  .. code-block:: console
+.. code-block:: console
 
   VTKMesh 'CubeHex': reading mesh from /path/to/inputFiles/singlePhaseFlow/vtk/cube_10x10x10_hex.vtk
   Generating global Ids from VTK mesh
