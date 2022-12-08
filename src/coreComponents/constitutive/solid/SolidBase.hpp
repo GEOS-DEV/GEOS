@@ -635,6 +635,8 @@ public:
     static constexpr char const * oldStressString() { return "oldStress"; }            ///< Old stress key
     static constexpr char const * densityString() { return "density"; }                ///< Density key
     static constexpr char const * defaultDensityString() { return "defaultDensity"; }  ///< Default density key
+    static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; } ///< Thermal expansion coefficient key
+    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultThermalExpansionCoefficient"; } ///< Default thermal expansion coefficient key
   };
 
   /**
@@ -761,6 +763,12 @@ protected:
 
   /// The default density for new allocations.
   real64 m_defaultDensity = 0;
+
+  /// The thermal expansion coefficient for each upper level dimension (i.e. cell) of *this
+  array1d< real64 > m_thermalExpansionCoefficient;
+
+  /// The default value of the thermal expansion coefficient for any new allocations
+  real64 m_defaultThermalExpansionCoefficient;
 
   /// Flag to disable inelasticity (plasticity, damage, etc.)
   bool m_disableInelasticity = false;

@@ -30,7 +30,8 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent ),
   m_newStress( 0, 0, 6 ),
   m_oldStress( 0, 0, 6 ),
-  m_density()
+  m_density(),
+  m_thermalExpansionCoefficient()
 {
   string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
 
@@ -51,6 +52,15 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default Material Density" );
+
+  registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
+    setApplyDefaultValue( -1 ).
+    setDescription( "Thermal Expansion Coefficient Field" );
+
+  registerWrapper( viewKeyStruct::defaultThermalExpansionCoefficientString(), &m_defaultThermalExpansionCoefficient ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Thermal Expansion Coefficient" );
 }
 
 
@@ -62,6 +72,9 @@ void SolidBase::postProcessInput()
 {
   this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).
     setApplyDefaultValue( m_defaultDensity );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::thermalExpansionCoefficientString() ).
+    setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
 }
 
 

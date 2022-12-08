@@ -63,6 +63,7 @@ public:
                              arrayView1d< real64 const > const & c44,
                              arrayView1d< real64 const > const & c55,
                              arrayView1d< real64 const > const & c66,
+                             arrayView1d< real64 const > const & thermalExpansionCoefficient,
                              arrayView3d< real64, solid::STRESS_USD > const & newStress,
                              arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                              bool const & disableInelasticity ):
@@ -75,7 +76,8 @@ public:
     m_c33( c33 ),
     m_c44( c44 ),
     m_c55( c55 ),
-    m_c66( c66 )
+    m_c66( c66 ),
+    m_thermalExpansionCoefficient( thermalExpansionCoefficient )
   {}
 
   /// Deleted default constructor
@@ -156,6 +158,12 @@ public:
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( &stiffness )[6][6] ) const override final;
 
+  GEOSX_HOST_DEVICE
+  virtual real64 getThermalExpansionCoefficient( localIndex const k ) const override final
+  {
+    return m_thermalExpansionCoefficient[k];
+  }
+
 
 private:
   /// A reference to the ArrayView holding c11 for each element.
@@ -184,6 +192,9 @@ private:
 
   /// A reference to the ArrayView holding c66 for each element.
   arrayView1d< real64 const > const m_c66;
+
+  /// A reference to the ArrayView holding the thermal expansion coefficient for each element.
+  arrayView1d< real64 const > const m_thermalExpansionCoefficient;
 };
 
 
@@ -706,6 +717,7 @@ public:
                                       m_c44,
                                       m_c55,
                                       m_c66,
+                                      m_thermalExpansionCoefficient,
                                       m_newStress,
                                       m_oldStress,
                                       m_disableInelasticity );
@@ -732,6 +744,7 @@ public:
                           m_c44,
                           m_c55,
                           m_c66,
+                          m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity );

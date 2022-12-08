@@ -436,12 +436,6 @@ public:
 
     /// string/key for shear modulus
     static constexpr char const * shearModulusString() { return "shearModulus"; }
-
-    /// string/key for thermal expansion coefficient
-    static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; }
-
-    /// string/key for default thermal expansion coefficient
-    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultThermalExpansionCoefficient"; }
   };
 
   /**
@@ -547,13 +541,6 @@ protected:
 
   /// The shear modulus for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_shearModulus;
-
-  /// The default value of the thermal expansion coefficient for any new allocations.
-  array1d< real64 > m_thermalExpansionCoefficient;
-
-  /// The thermal expansion coefficient for each upper level dimension (i.e. cell) of *this
-  real64 m_defaultThermalExpansionCoefficient;
-
 
 };
 
