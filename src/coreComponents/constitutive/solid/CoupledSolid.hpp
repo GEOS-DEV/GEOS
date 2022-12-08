@@ -81,15 +81,6 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  virtual void updateStateFromPressure( localIndex const k,
-                                        localIndex const q,
-                                        real64 const & pressure,
-                                        real64 const & pressure_n ) const
-  {
-    GEOSX_UNUSED_VAR( k, q, pressure, pressure_n );
-  }
-
-  GEOSX_HOST_DEVICE
   virtual void updateStateFromPressureAndTemperature( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & pressure,

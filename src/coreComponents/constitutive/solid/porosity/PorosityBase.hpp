@@ -128,17 +128,6 @@ public:
     return m_initialPorosity[k][q];
   }
 
-
-  GEOSX_HOST_DEVICE
-  virtual void updateFromPressure( localIndex const k,
-                                   localIndex const q,
-                                   real64 const & pressure,
-                                   real64 const & pressure_n ) const
-  {
-    GEOSX_UNUSED_VAR( k, q, pressure, pressure_n );
-    GEOSX_ERROR( "updateFromPressure is not implemented for porosityBase." );
-  }
-
   GEOSX_HOST_DEVICE
   virtual void updateFromPressureAndTemperature( localIndex const k,
                                                  localIndex const q,

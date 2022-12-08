@@ -54,15 +54,6 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
-  virtual void updateStateFromPressure( localIndex const k,
-                                        localIndex const q,
-                                        real64 const & pressure,
-                                        real64 const & pressure_n ) const override final
-  {
-    m_porosityUpdate.updateFromPressure( k, q, pressure, pressure_n );
-  }
-
-  GEOSX_HOST_DEVICE
   virtual void updateStateFromPressureAndTemperature( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & pressure,
@@ -161,9 +152,7 @@ public:
                                             real64 const ( &strainIncrement )[6],
                                             real64 ( & totalStress )[6],
                                             DiscretizationOps & stiffness ) const
-  {
-    GEOSX_UNUSED_VAR( initialFluidPressure ); 
-    
+  {    
     real64 dTotalStress_dPressure[6]; 
     
     // Compute total stress increment and its derivative
