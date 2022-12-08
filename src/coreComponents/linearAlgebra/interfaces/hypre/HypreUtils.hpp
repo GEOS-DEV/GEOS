@@ -31,11 +31,9 @@
 #if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA || GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
 /// Host-device marker for custom hypre kernels
 #define GEOSX_HYPRE_DEVICE GEOSX_DEVICE
-#define GEOSX_HYPRE_HOST_DEVICE GEOSX_HOST_DEVICE
 #else
 /// Host-device marker for custom hypre kernels
 #define GEOSX_HYPRE_DEVICE
-#define GEOSX_HYPRE_HOST_DEVICE
 #endif
 
 namespace geosx

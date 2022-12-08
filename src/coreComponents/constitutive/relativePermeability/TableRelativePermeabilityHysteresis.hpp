@@ -137,7 +137,6 @@ public:
      * update here
      */
     GEOSX_HOST_DEVICE
-
     void computeDrainageRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
                                  real64 const & phaseVolFraction,
                                  real64 & phaseRelPerm,
@@ -180,7 +179,6 @@ public:
      * @param[out] dPhaseRelPerm_dPhaseVolFrac derivative of the relative permeability wrt phase volume fraction for the wetting phase
      */
     GEOSX_HOST_DEVICE
-
     void computeImbibitionWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
                                           TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
                                           real64 const & jerauldParam_a,
@@ -214,7 +212,6 @@ public:
      * @param[out] dPhaseRelPerm_dPhaseVolFrac derivative of the relative permeability wrt phase volume fraction for the non-wetting phase
      */
     GEOSX_HOST_DEVICE
-
     void computeImbibitionNonWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
                                              TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
                                              real64 const & jerauldParam_a,
@@ -243,7 +240,6 @@ public:
      *         using computeDrainageRelPerm (in drainage) or using one of the imbibition update functions implementing Killough's method
      */
     GEOSX_HOST_DEVICE
-
     void computeTwoPhase( integer const ipWetting,
                           integer const ipNonWetting,
                           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
@@ -267,7 +263,6 @@ public:
      *         using computeDrainageRelPerm (in drainage) or using one of the imbibition update functions implementing Killough's method
      */
     GEOSX_HOST_DEVICE
-
     void computeThreePhase( integer const ipWetting,
                             integer const ipInter,
                             integer const ipNonWetting,
@@ -287,7 +282,6 @@ public:
      * @param[out] dPhaseRelPerm_dPhaseVolFrac derivatives of relative permeabilities wrt phase volume fraction for all the phases
      */
     GEOSX_HOST_DEVICE
-
     void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
                   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
@@ -296,7 +290,6 @@ public:
                   arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
     GEOSX_HOST_DEVICE
-
     virtual void update( localIndex const k,
                          localIndex const q,
                          arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override;
