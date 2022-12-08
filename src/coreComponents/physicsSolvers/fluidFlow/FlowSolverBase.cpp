@@ -38,29 +38,12 @@ using namespace dataRepository;
 using namespace constitutive;
 
 template< typename POROUSWRAPPER_TYPE >
-void execute1( POROUSWRAPPER_TYPE porousWrapper,
-               CellElementSubRegion & subRegion,
-               arrayView1d< real64 const > const & pressure,
-               arrayView1d< real64 const > const & pressure_n )
-{
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const k )
-  {
-    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
-    {
-      porousWrapper.updateStateFromPressure( k, q,
-                                             pressure[k],
-                                             pressure_n[k] );
-    }
-  } );
-}
-
-template< typename POROUSWRAPPER_TYPE >
-void execute2( POROUSWRAPPER_TYPE porousWrapper,
-               CellElementSubRegion & subRegion,
-               arrayView1d< real64 const > const & pressure,
-               arrayView1d< real64 const > const & pressure_n,
-               arrayView1d< real64 const > const & temperature,
-               arrayView1d< real64 const > const & temperature_n )
+void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE porousWrapper,
+                                                              CellElementSubRegion & subRegion,
+                                                              arrayView1d< real64 const > const & pressure,
+                                                              arrayView1d< real64 const > const & pressure_n,
+                                                              arrayView1d< real64 const > const & temperature,
+                                                              arrayView1d< real64 const > const & temperature_n )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const k )
   {
@@ -76,11 +59,11 @@ void execute2( POROUSWRAPPER_TYPE porousWrapper,
 }
 
 template< typename POROUSWRAPPER_TYPE >
-void execute3( POROUSWRAPPER_TYPE porousWrapper,
-               SurfaceElementSubRegion & subRegion,
-               arrayView1d< real64 const > const & pressure,
-               arrayView1d< real64 const > const & oldHydraulicAperture,
-               arrayView1d< real64 const > const & newHydraulicAperture )
+void updatePorosityAndPermeabilityFromPressureAndAperture( POROUSWRAPPER_TYPE porousWrapper,
+                                                           SurfaceElementSubRegion & subRegion,
+                                                           arrayView1d< real64 const > const & pressure,
+                                                           arrayView1d< real64 const > const & oldHydraulicAperture,
+                                                           arrayView1d< real64 const > const & newHydraulicAperture )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const k )
   {
@@ -314,14 +297,8 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    if( m_isThermal )
-    {
-      execute2( porousWrapper, subRegion, pressure, pressure_n, temperature, temperature_n );
-    }
-    else
-    {
-      execute1( porousWrapper, subRegion, pressure, pressure_n );
-    }
+    updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_n, temperature, temperature_n );
+
   } );
 }
 
@@ -341,7 +318,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    execute3( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+    updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
 
   } );
 }
