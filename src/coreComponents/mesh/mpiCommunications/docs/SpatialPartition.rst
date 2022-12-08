@@ -54,12 +54,12 @@ In the command line to run GEOSX, the user can specify the partitioning pattern 
 Graph-based partitioning
 ---------------------------
 
-The Graph-based partitioning is used only when importing exernal meshes using the ``PAMELAMesh``
-(see :ref:`TutorialFieldCase` section for more details using external meshes). While importing the
-mesh, PAMELA computes the graph of connectivity between all the volume elements of the mesh. The partitioning
-is then done using the METIS_ library. The graph is not weighted so the expected result is as mesh divided
-in ``n`` parts, with ``n`` being the number of MPI ranks used for simulation containing a similar amount
-of cells.
+The Graph-based partitioning is used only when importing exernal meshes using the ``VTKMesh``
+(see :ref:`TutorialFieldCase` section for more details using external meshes).
+While importing themesh, ``vtk`` computes the graph of connectivity between all the volume elements of the mesh.
+The partitioning is then done using whether a KD-tree or the PTSCOTCH_, METIS_, PARMETIS_ libraries.
+The graph is not weighted so the expected result is as mesh divided in ``n`` parts,
+with ``n`` being the number of MPI ranks used for simulation containing a similar amount of cells.
 
 Ghost ranks
 ===============
@@ -82,3 +82,5 @@ If the visualization method involves interpolation, such as interpolating a zona
 the interpretation near partition boundaries is not accurate.
 
 .. _METIS: http://glaros.dtc.umn.edu/gkhome/metis/metis/overview
+.. _PARMETIS: http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview
+.. _PTSCOTCH: https://www.labri.fr/perso/pelegrin/scotch/
