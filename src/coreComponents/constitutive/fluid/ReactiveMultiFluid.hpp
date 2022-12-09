@@ -108,7 +108,6 @@ public:
      */
     KernelWrapper( arrayView1d< real64 const > componentMolarWeight,
                    bool const useMass,
-                   bool const isThermal,
                    PhaseProp::ViewType phaseFraction,
                    PhaseProp::ViewType phaseDensity,
                    PhaseProp::ViewType phaseMassDensity,
@@ -207,6 +206,8 @@ ReactiveMultiFluid::KernelWrapper::
                     arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
                     arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const
 {
+  GEOSX_UNUSED_VAR( pressure );
+
   // 2. solve for equilibrium
   m_equilibriumReactions.updateConcentrations( temperature,
                                                primarySpeciesTotalConcentration,

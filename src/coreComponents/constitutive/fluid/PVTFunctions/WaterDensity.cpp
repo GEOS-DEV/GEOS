@@ -40,6 +40,7 @@ WaterDensity::WaterDensity( string const & name,
                    componentNames,
                    componentMolarWeight )
 {
+  GEOSX_UNUSED_VAR( inputParams );
   m_waterDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
 }
 

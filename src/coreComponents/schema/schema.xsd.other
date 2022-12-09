@@ -1896,8 +1896,6 @@
 		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--kineticReactionRates => kineticReactionRates-->
 		<xsd:attribute name="kineticReactionRates" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->
@@ -1952,8 +1950,6 @@
 		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
-		<!--initialTotalMassDensity => Initial total mass density-->
-		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--kineticReactionRates => kineticReactionRates-->
 		<xsd:attribute name="kineticReactionRates" type="real64_array2d" />
 		<!--phaseCompFraction => Phase component fraction-->

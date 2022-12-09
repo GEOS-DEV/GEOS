@@ -16,7 +16,7 @@
  * @file ReactiveMultiFluid.cpp
  */
 #include "ReactiveMultiFluid.hpp"
-#include "ReactiveMultiFluidExtrinsicData.hpp"
+#include "ReactiveMultiFluidFields.hpp"
 
 
 namespace geosx
@@ -36,10 +36,10 @@ ReactiveMultiFluid::
   m_numSecondarySpecies = 11;
   m_numKineticReactions = 2;
 
-  registerExtrinsicData( extrinsicMeshData::reactivefluid::primarySpeciesConcentration{}, &m_primarySpeciesConcentration );
-  registerExtrinsicData( extrinsicMeshData::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
-  registerExtrinsicData( extrinsicMeshData::reactivefluid::primarySpeciesTotalConcentration{}, &m_primarySpeciesTotalConcentration );
-  registerExtrinsicData( extrinsicMeshData::reactivefluid::kineticReactionRates{}, &m_kineticReactionRates );
+  registerField( fields::reactivefluid::primarySpeciesConcentration{}, &m_primarySpeciesConcentration );
+  registerField( fields::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
+  registerField( fields::reactivefluid::primarySpeciesTotalConcentration{}, &m_primarySpeciesTotalConcentration );
+  registerField( fields::reactivefluid::kineticReactionRates{}, &m_kineticReactionRates );
 }
 
 bool ReactiveMultiFluid::isThermal() const

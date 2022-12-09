@@ -185,7 +185,6 @@ template< typename FLUID_TYPE >
 void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table )
 {
   // get number of phases and components
-  localIndex const numPhases = fluid.numFluidPhases();
   localIndex const numPrimarySpecies = fluid.numPrimarySpecies();
   localIndex const numSecondarySpecies = fluid.numSecondarySpecies();
   localIndex const numKineticReactions = fluid.numKineticReactions();

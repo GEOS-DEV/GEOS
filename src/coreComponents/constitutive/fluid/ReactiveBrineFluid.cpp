@@ -17,7 +17,7 @@
  */
 #include "ReactiveBrineFluid.hpp"
 
-#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
+#include "constitutive/fluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 
 namespace geosx
@@ -70,11 +70,11 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
   {
-    getExtrinsicData< extrinsicMeshData::multifluid::phaseEnthalpy >().
+    getField< fields::multifluid::phaseEnthalpy >().
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRestartFlags( RestartFlags::WRITE_AND_READ );
 
-    getExtrinsicData< extrinsicMeshData::multifluid::phaseInternalEnergy >().
+    getField< fields::multifluid::phaseInternalEnergy >().
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRestartFlags( RestartFlags::WRITE_AND_READ );
   }
@@ -236,7 +236,6 @@ ReactiveBrineFluid< PHASE > ::KernelWrapper::
                  arrayView2d< real64, compflow::USD_COMP > const & kineticReactionRates )
   : ReactiveMultiFluid::KernelWrapper( std::move( componentMolarWeight ),
                                        useMass,
-                                       isThermal,
                                        std::move( phaseFraction ),
                                        std::move( phaseDensity ),
                                        std::move( phaseMassDensity ),

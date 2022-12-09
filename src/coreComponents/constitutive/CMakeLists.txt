@@ -57,7 +57,7 @@ set( constitutive_headers
      fluid/ProppantSlurryFluid.hpp
      fluid/ReactiveBrineFluid.hpp
      fluid/ReactiveMultiFluid.hpp
-     fluid/ReactiveMultiFluidExtrinsicData.hpp
+     fluid/ReactiveMultiFluidFields.hpp
      fluid/ReactiveFluidDriver.hpp
      fluid/reactiveFluidSelector.hpp
      fluid/SingleFluidBase.hpp

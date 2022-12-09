@@ -132,7 +132,7 @@ void WaterDensityUpdate::compute( real64 const & pressure,
                                   arraySlice1d< real64, USD3 > const & dValue,
                                   bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( phaseComposition, useMass );
+  GEOSX_UNUSED_VAR( phaseComposition, dPhaseComposition, useMass );
 
   using Deriv = multifluid::DerivativeOffset;
 
