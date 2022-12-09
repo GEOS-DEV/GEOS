@@ -129,13 +129,15 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
 
       string const & damageFieldName = damageSolver()->getFieldName();
 
+      string const & discretizationName = damageSolver()->getDiscretizationName();
+
       //should get reference to damage field here.
       arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
 
       ElementRegionManager & elemManager = mesh.getElemManager();
 
       // begin region loop
-      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [this, nodalDamage]
+      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [discretizationName, nodalDamage]
                                                                   ( localIndex const,
                                                                   CellElementSubRegion & elementSubRegion )
       {
@@ -143,7 +145,7 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
         constitutive::SolidBase &
         solidModel = elementSubRegion.getConstitutiveModel< constitutive::SolidBase >( solidModelName );
 
-        ConstitutivePassThru< DamageBase >::execute( solidModel, [this, &elementSubRegion, nodalDamage]( auto & damageModel )
+        ConstitutivePassThru< DamageBase >::execute( solidModel, [&elementSubRegion, discretizationName, nodalDamage]( auto & damageModel )
         {
           using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
           typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
@@ -152,7 +154,7 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
 
           finiteElement::FiniteElementBase const &
-          fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_discretizationName );
+          fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( discretizationName );
 
           finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [nodalDamage, &elementSubRegion, damageFieldOnMaterial, elemNodes]( auto & finiteElement )
           {
