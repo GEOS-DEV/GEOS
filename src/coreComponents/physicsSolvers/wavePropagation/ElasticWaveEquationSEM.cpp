@@ -430,16 +430,13 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
         /// convert dipole data (pairs of geophones) to average strain data and
         for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
         {
-          // store strain data in the x-component of the receiver
-          xCompRcv[iSample][ircv] =
+          // store strain data in the z-component of the receiver (copied to x after resize)
+          zCompRcv[iSample][ircv] =
             cd * ca * ( xCompRcv[iSample][numReceiversGlobal+ircv] - xCompRcv[iSample][ircv] )
             + cd * sa * ( yCompRcv[iSample][numReceiversGlobal+ircv] - yCompRcv[iSample][ircv] )
             + sd * ( zCompRcv[iSample][numReceiversGlobal+ircv] - zCompRcv[iSample][ircv] );
-          xCompRcv[iSample][ircv] /= linearDASGeometry[ircv][2];
+          zCompRcv[iSample][ircv] /= linearDASGeometry[ircv][2];
 
-          /// set the y and z components to zero to avoid any confusion
-          yCompRcv[iSample][ircv] = 0.0;
-          zCompRcv[iSample][ircv] = 0.0;
         }
       }
     } );
@@ -455,7 +452,7 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
         std::ofstream f( GEOSX_FMT( "dasTraceReceiver{:03}.txt", ircv ), std::ios::app );
         for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
         {
-          f<< iSample << " " << xCompRcv[iSample][ircv] << std::endl;
+          f<< iSample << " " << zCompRcv[iSample][ircv] << std::endl;
         }
         f.close();
       }
@@ -464,9 +461,25 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
 
   /// resize the receiver arrays by dropping the extra pair to avoid confusion
   /// the remaining x-component contains DAS data, the other components are set to zero
-  m_displacementXNp1AtReceivers.resize( numReceiversGlobal, 3 );
-  m_displacementYNp1AtReceivers.resize( numReceiversGlobal, 3 );
-  m_displacementZNp1AtReceivers.resize( numReceiversGlobal, 3 );
+  m_displacementXNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  arrayView2d< real32 > const dasReceiver = m_displacementXNp1AtReceivers.toView();
+  forAll< EXEC_POLICY >( numReceiversGlobal, [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
+  {
+    if( receiverIsLocal[ircv] == 1 )
+    {
+      /// convert dipole data (pairs of geophones) to average strain data and
+      for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
+      {
+        // store strain data in the z-component of the receiver (copied to x after resize)
+        dasReceiver[iSample][ircv] = zCompRcv[iSample][ircv];
+      }
+    }
+  } );
+  /// set the y and z components to zero to avoid any confusion
+  m_displacementYNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_displacementYNp1AtReceivers.zero();
+  m_displacementZNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_displacementZNp1AtReceivers.zero();
 }
 
 void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber,
