@@ -56,26 +56,39 @@ public:
   //move to private ?
   struct HysteresisCurve_t
   {
-    real64 oppositeBound;
-    real64 imbibitionExtrema;
-    real64 drainageExtrema;
-    HysteresisCurve_t( real64 const & opp, real64 const & imbE, real64 const & drainE )
+    real64 oppositeBoundSat = -1.;
+    real64 imbibitionExtremaSat = -1.;
+    real64 drainageExtremaSat = -1.;
+
+    real64 oppositeBoundValue = -1.;
+    real64 imbibitionExtremaValue = -1.;
+    real64 drainageExtremaValue = -1.;
+
+    HysteresisCurve_t() = default;
+
+    HysteresisCurve_t( std::pair<real64,real64> const & opp, std::pair<real64,real64> const & imbE, std::pair<real64,real64> const & drainE )
     {
-      oppositeBound = opp; imbibitionExtrema = imbE; drainageExtrema = drainE;
+        setPoints(opp, imbE, drainE);
     }
+
+    void setPoints( std::pair<real64,real64> const & opp, std::pair<real64,real64> const & imbE, std::pair<real64,real64> const & drainE )
+    {
+          oppositeBoundSat = opp.first; imbibitionExtremaSat = imbE.first; drainageExtremaSat = drainE.first;
+          oppositeBoundValue = opp.second; imbibitionExtremaValue = imbE.second; drainageExtremaValue = drainE.second;
+    }
+
     bool isWetting() const
     {
-      return ((drainageExtrema > oppositeBound) ?  PhaseWettability::WETTING : PhaseWettability::NONWETTING) == PhaseWettability::WETTING;
+      return ((drainageExtremaSat > oppositeBoundSat) ? PhaseWettability::WETTING : PhaseWettability::NONWETTING) == PhaseWettability::WETTING;
     }
     bool isZero() const
     {
-      return (oppositeBound<=0.0) && (imbibitionExtrema<=0.0) && (drainageExtrema<=0.0);
+      return (oppositeBoundSat<=0.0) && (imbibitionExtremaSat <= 0.0) && (drainageExtremaSat <= 0.0);
     }
-
-
 
   };
 
+  //temporary interface functions
   static array1d< real64 > toDrainagePhaseMinVolFraction( HysteresisCurve_t const & c1, HysteresisCurve_t const & c2 )
   {
     array1d< real64 > ret;
@@ -83,8 +96,8 @@ public:
 
     if( c1.isWetting() && !c2.isWetting())
     {
-      ret[0] = c1.oppositeBound;
-      ret[1] = c2.drainageExtrema;
+      ret[0] = c1.oppositeBoundSat;
+      ret[1] = c2.drainageExtremaSat;
     }
     else if( !c1.isWetting() && c2.isWetting() )
     {
@@ -105,8 +118,8 @@ public:
 
     if( c1.isWetting() && !c2.isWetting())
     {
-      ret[0] = c1.drainageExtrema;
-      ret[1] = c2.oppositeBound;
+      ret[0] = c1.drainageExtremaSat;
+      ret[1] = c2.oppositeBoundSat;
     }
     else if( !c1.isWetting() && c2.isWetting() )
     {
@@ -127,8 +140,8 @@ public:
 
     if( c1.isWetting() && !c2.isWetting())
     {
-      ret[0] = c1.oppositeBound;
-      ret[1] = c2.imbibitionExtrema;
+      ret[0] = c1.oppositeBoundSat;
+      ret[1] = c2.imbibitionExtremaSat;
     }
     else if( !c1.isWetting() && c2.isWetting() )
     {
@@ -149,8 +162,8 @@ public:
 
     if( c1.isWetting() && !c2.isWetting())
     {
-      ret[0] = c1.imbibitionExtrema;
-      ret[1] = c2.oppositeBound;
+      ret[0] = c1.imbibitionExtremaSat;
+      ret[1] = c2.oppositeBoundSat;
     }
     else if( !c1.isWetting() && c2.isWetting() )
     {
@@ -314,7 +327,7 @@ private:
   real64 m_jerauldParam_b;
 
   /// Curvature parameter introduced for wetting phase hysteresis in Killough
-  real64 m_killoughCurvatureParam;
+  real64 m_killoughCurvatureParamRelPerm;
   real64 m_killoughCurvatureParamCapPres;
 
 
@@ -334,8 +347,8 @@ KilloughHysteresis::KernelKilloughHysteresisBase::
   if( hcurve.isWetting())
   {
     //unpack values
-    real64 const Smxd = hcurve.drainageExtrema;
-    real64 const Swc = hcurve.oppositeBound;
+    real64 const Smxd = hcurve.drainageExtremaSat;
+    real64 const Swc = hcurve.oppositeBoundSat;
 
     real64 const A = 1 + m_jerauldParam_a * ( Shy - Swc );
     real64 const numerator = Shy - Smxd;
@@ -345,8 +358,8 @@ KilloughHysteresis::KernelKilloughHysteresisBase::
   else
   {
     //unpack values
-    real64 const Scrd = hcurve.drainageExtrema;
-    real64 const Smx = hcurve.oppositeBound;
+    real64 const Scrd = hcurve.drainageExtremaSat;
+    real64 const Smx = hcurve.oppositeBoundSat;
 
     real64 const A = 1 + m_jerauldParam_a * ( Smx - Shy );
     real64 const numerator = Shy - Scrd;

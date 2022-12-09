@@ -132,7 +132,8 @@ void TableRelativePermeability::initializePreSubGroups()
   string const fullName = getFullName();
   real64 phaseMinVolFrac = 0.0;
   real64 phaseMaxVolFrac = 0.0;
-  real64 phaseRelPermEndPoint = 0.0;
+  real64 phaseRelPermMinEndPoint = 0.0;
+  real64 phaseRelPermMaxEndPoint = 0.0;
 
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
@@ -146,12 +147,13 @@ void TableRelativePermeability::initializePreSubGroups()
                                  m_wettingNonWettingRelPermTableNames[ip] ),
                       InputError );
       TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( m_wettingNonWettingRelPermTableNames[ip] );
-      TableRelativePermeabilityHelpers::
-        validateRelativePermeabilityTable( relPermTable, // input
-                                           fullName,
-                                           phaseMinVolFrac, // output
-                                           phaseMaxVolFrac,
-                                           phaseRelPermEndPoint );
+        TableRelativePermeabilityHelpers::
+        validateRelativePermeabilityTable(relPermTable, // input
+                                          fullName,
+                                          phaseMinVolFrac, // output
+                                          phaseMaxVolFrac,
+                                          phaseRelPermMinEndPoint,
+                                          phaseRelPermMaxEndPoint);
       if( ip == 0 ) // wetting phase is either water, or oil (for two-phase oil-gas systems)
       {
         integer const ipWetting = ( m_phaseOrder[PhaseType::WATER] >= 0 ) ? m_phaseOrder[PhaseType::WATER] : m_phaseOrder[PhaseType::OIL];
@@ -174,12 +176,13 @@ void TableRelativePermeability::initializePreSubGroups()
                                  m_wettingIntermediateRelPermTableNames[ip] ),
                       InputError );
       TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( m_wettingIntermediateRelPermTableNames[ip] );
-      TableRelativePermeabilityHelpers::
-        validateRelativePermeabilityTable( relPermTable, // input
-                                           fullName,
-                                           phaseMinVolFrac, // output
-                                           phaseMaxVolFrac,
-                                           phaseRelPermEndPoint );
+        TableRelativePermeabilityHelpers::
+        validateRelativePermeabilityTable(relPermTable, // input
+                                          fullName,
+                                          phaseMinVolFrac, // output
+                                          phaseMaxVolFrac,
+                                          phaseRelPermMinEndPoint,
+                                          phaseRelPermMaxEndPoint);
 
       if( ip == 0 ) // wetting phase is water
       {
@@ -198,12 +201,13 @@ void TableRelativePermeability::initializePreSubGroups()
                                  m_nonWettingIntermediateRelPermTableNames[ip] ),
                       InputError );
       TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( m_nonWettingIntermediateRelPermTableNames[ip] );
-      TableRelativePermeabilityHelpers::
-        validateRelativePermeabilityTable( relPermTable, // input
-                                           fullName,
-                                           phaseMinVolFrac, // output
-                                           phaseMaxVolFrac,
-                                           phaseRelPermEndPoint );
+        TableRelativePermeabilityHelpers::
+        validateRelativePermeabilityTable(relPermTable, // input
+                                          fullName,
+                                          phaseMinVolFrac, // output
+                                          phaseMaxVolFrac,
+                                          phaseRelPermMinEndPoint,
+                                          phaseRelPermMaxEndPoint);
 
       if( ip == 0 ) // non-wetting phase is gas
       {
