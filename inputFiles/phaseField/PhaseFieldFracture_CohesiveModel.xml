@@ -10,7 +10,6 @@
       couplingType="Sequential"
       logLevel="1"
       subcycling="0"
-      discretization="FE1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="2"/>
@@ -23,8 +22,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region1 }"
-      >
+      targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="50"
         newtonTol="1.0e-12"/>

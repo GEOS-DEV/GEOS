@@ -10,7 +10,6 @@
       couplingType="Sequential"
       logLevel="2"
       subcycling="0"
-      discretization="FE1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="50"/>

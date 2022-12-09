@@ -55,14 +55,18 @@ public:
    */
   CoupledSolver( const string & name,
                  Group * const parent )
-    : SolverBase( name, parent ),
-    m_subcyclingOption( 0 )
+    : SolverBase( name, parent )
   {
     /// GEOS mainly uses FIM coupling so let's define FIM as the default.
     registerWrapper( viewKeyStruct::couplingTypeString(), &m_couplingType ).
       setInputFlag( dataRepository::InputFlags::OPTIONAL ).
       setApplyDefaultValue( CouplingType::FIM ).
       setDescription( "Type of coupling. Options are: Sequential and FIM" );
+
+    registerWrapper( viewKeyStruct::subcyclingOptionString(), &m_subcyclingOption ).
+      setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+      setApplyDefaultValue( 0 ).
+      setDescription( "Flag to decide whether to iterate between sequentially coupled solvers or not." );
 
     forEachArgInTuple( m_solvers, [&]( auto solver, auto idx )
     {
@@ -395,22 +399,11 @@ protected:
 
       forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
       {
-        GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << solver->getName() );
+        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "  Iteration {:2}: {}", iter+1, solver->getName() ) );
         dtReturnTemporary = solver->nonlinearImplicitStep( time_n,
                                                            dtReturn,
                                                            cycleNumber,
                                                            domain );
-
-        if( solver->getNonlinearSolverParameters().m_numNewtonIterations == 0 && iter > 0 )
-        {
-          GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter << " iterations! *****\n" );
-          isConverged = true;
-        }
-        else if( m_subcyclingOption == 0 && iter > 0 )
-        {
-          GEOSX_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
-          isConverged = true;
-        }
 
         mapSolutionBetweenSolvers( domain, idx() );
 
@@ -420,12 +413,13 @@ protected:
           dtReturn = dtReturnTemporary;
         }
       } );
-
+      
+      isConverged = checkSequentialConvergence( iter );
+      
       if( isConverged )
       {
         break;
       }
-
       // Add convergence check:
       ++iter;
     }
@@ -439,6 +433,30 @@ protected:
 
   virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx )
   {}
+
+  bool checkSequentialConvergence( int const & iter ) const
+  {
+    bool isConverged = true;
+    if( m_subcyclingOption == 0 )
+    {
+      GEOSX_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
+    }
+    else
+    {
+      forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+      {
+        if( solver->getNonlinearSolverParameters().m_numNewtonIterations > 0 )
+        {
+          isConverged = false;
+        }
+      } );
+      if( isConverged )
+      {
+        GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter + 1 << " iterations! *****\n" );
+      }
+    }
+    return isConverged;
+  }
 
   virtual void
   postProcessInput() override
@@ -460,6 +478,7 @@ protected:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * couplingTypeString() { return "couplingType"; }
+    constexpr static char const * subcyclingOptionString() { return "subcycling"; }
   };
 
   /// Pointers of the single-physics solvers
