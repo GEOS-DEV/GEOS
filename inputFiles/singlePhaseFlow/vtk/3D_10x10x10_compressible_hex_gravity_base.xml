@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 
 <Problem>
+  <!-- SPHINX_TUT_EXT_HEX_SOLVER -->
   <Solvers
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="1"
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
@@ -17,6 +17,7 @@
     </SinglePhaseFVM>
   </Solvers>
 
+  <!-- SPHINX_TUT_EXT_HEX_SOLVER_END -->
   <Geometry>
     <Box
       name="left"
@@ -24,6 +25,7 @@
       xMax="{ 0.9, 11, 11 }"/>
   </Geometry>
 
+  <!-- SPHINX_TUT_EXT_HEX_NUM_METHODS -->
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
@@ -32,13 +34,17 @@
     </FiniteVolume>
   </NumericalMethods>
 
+  <!-- SPHINX_TUT_EXT_HEX_NUM_METHODS_END -->
+  <!-- SPHINX_TUT_EXT_HEX_ELEM_REGIONS -->
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ DEFAULT_WEDGE }"
+      cellBlocks="{ hexahedra }"
       materialList="{ water, rock }"/>
   </ElementRegions>
 
+  <!-- SPHINX_TUT_EXT_HEX_ELEM_REGIONS_END -->
+  <!-- SPHINX_TUT_EXT_HEX_CONSTITUTIVE -->
   <Constitutive>
     <CompressibleSinglePhaseFluid
       name="water"
@@ -68,12 +74,14 @@
       permeabilityComponents="{ 2.0e-14, 2.0e-14, 2.0e-14 }"/>
   </Constitutive>
 
+  <!-- SPHINX_TUT_EXT_HEX_CONSTITUTIVE_END -->
+  <!-- SPHINX_TUT_EXT_HEX_FIELDS -->
   <FieldSpecifications>
     <FieldSpecification
       name="Porosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain/DEFAULT_WEDGE"
+      objectPath="ElementRegions"
       fieldName="rockPorosity_referencePorosity"
       scale="0.05"/>
 
@@ -81,7 +89,7 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain/DEFAULT_WEDGE"
+      objectPath="ElementRegions"
       fieldName="pressure"
       scale="1e6"/>
 
@@ -93,10 +101,10 @@
       setNames="{ left }"/>
   </FieldSpecifications>
 
+  <!-- SPHINX_TUT_EXT_HEX_FIELDS_END -->
   <Outputs>
     <Silo
-      name="siloWellPump"/>
-
+      name="siloOutput"/>
     <Restart
       name="restartOutput"/>
   </Outputs>

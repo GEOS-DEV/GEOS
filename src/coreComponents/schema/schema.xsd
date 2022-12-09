@@ -249,10 +249,6 @@
 					<xsd:selector xpath="InternalWellbore" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="MeshPAMELAMeshUniqueName">
-					<xsd:selector xpath="PAMELAMesh" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 				<xsd:unique name="MeshVTKMeshUniqueName">
 					<xsd:selector xpath="VTKMesh" />
 					<xsd:field xpath="@name" />
@@ -1242,7 +1238,6 @@ stress - traction is applied to the faces as specified by the inner product of i
 				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
-			<xsd:element name="PAMELAMesh" type="PAMELAMeshType" />
 			<xsd:element name="VTKMesh" type="VTKMeshType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -1350,22 +1345,6 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="zBias" type="real64_array" default="{1}" />
 		<!--zCoords => z-coordinates of each mesh block vertex-->
 		<xsd:attribute name="zCoords" type="real64_array" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="PAMELAMeshType">
-		<!--fieldNamesInGEOSX => Names of fields in GEOSX to import into-->
-		<xsd:attribute name="fieldNamesInGEOSX" type="string_array" default="{}" />
-		<!--fieldsToImport => Fields to be imported from the external mesh file-->
-		<xsd:attribute name="fieldsToImport" type="string_array" default="{}" />
-		<!--file => Path to the mesh file-->
-		<xsd:attribute name="file" type="path" use="required" />
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
-		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
-		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
-		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -3929,9 +3908,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--meshBody => Mesh body that contains this region-->
 		<xsd:attribute name="meshBody" type="string" default="" />
-		<!--subRegionType => Type of surface element subregion. Valid options:
-* faceElement
-* embeddedElement-->
+		<!--subRegionType => Type of surface element subregion. Valid options: {faceElement, embeddedElement}.-->
 		<xsd:attribute name="subRegionType" type="geosx_SurfaceElementRegion_SurfaceSubRegionType" default="faceElement" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
