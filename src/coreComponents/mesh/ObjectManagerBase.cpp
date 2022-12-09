@@ -843,6 +843,19 @@ void ObjectManagerBase::copyObject( const localIndex source, const localIndex de
   }
 }
 
+void ObjectManagerBase::eraseObject( const localIndex erasedIndex )
+{
+  for( auto & nameToWrapper: wrappers() )
+  {
+    WrapperBase * wrapper = nameToWrapper.second;
+    if( wrapper->sizedFromParent() )
+    {
+      //GEOSX_LOG_RANK(erasedIndex << ": " << wrapper->getName());
+      wrapper->erase( erasedIndex );
+    }
+  }
+}
+
 void ObjectManagerBase::setMaxGlobalIndex()
 {
   m_maxGlobalIndex = MpiWrapper::max( m_localMaxGlobalIndex, MPI_COMM_GEOSX );

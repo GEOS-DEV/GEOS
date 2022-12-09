@@ -168,45 +168,6 @@ public:
   { return m_particleVolume; }
 
   /**
-   * @brief Get the initial volume of each particle in this subregion.
-   * @return an arrayView1d of const initial particle volumes
-   */
-  arrayView1d< real64 const > getParticleInitialVolume() const
-  { return m_particleInitialVolume; }
-
-  /**
-   * @copydoc getParticleInitialVolume() const
-   */
-  arrayView1d< real64 > getParticleInitialVolume()
-  { return m_particleInitialVolume; }
-
-  /**
-   * @brief Get the mass of each particle in this subregion.
-   * @return an arrayView1d of const particle masses
-   */
-  arrayView1d< real64 const > getParticleMass() const
-  { return m_particleMass; }
-
-  /**
-   * @copydoc getParticleMass() const
-   */
-  arrayView1d< real64 > getParticleMass()
-  { return m_particleMass; }
-
-  /**
-   * @brief Get the deformation gradient of each particle in this subregion.
-   * @return an arrayView3d of const particle deformation gradients
-   */
-  arrayView3d< real64 const > getParticleDeformationGradient() const
-  { return m_particleDeformationGradient; }
-
-  /**
-   * @copydoc getParticleDeformationGradient() const
-   */
-  arrayView3d< real64 > getParticleDeformationGradient()
-  { return m_particleDeformationGradient; }
-
-  /**
    * @brief Get the r-vectors of each particle in this subregion.
    * @return an arrayView3d of const particle r-vectors
    */
@@ -218,7 +179,6 @@ public:
    */
   arrayView3d< real64 > getParticleRVectors()
   { return m_particleRVectors; }
-
 
   /**
    * @brief Get the group in which the constitutive models of this subregion are registered.
@@ -305,20 +265,8 @@ public:
     /// @return String key for the member level field for the current particle volume.
     static constexpr char const * particleVolumeString() { return "particleVolume"; }
 
-    /// @return String key for the member level field for the initial particle volume.
-    static constexpr char const * particleInitialVolumeString() { return "particleInitialVolume"; }
-
-    /// @return String key for the member level field for the particle volume.
-    static constexpr char const * particleMassString() { return "particleMass"; }
-
-    /// @return String key for the member level field for the particle volume.
-    static constexpr char const * particleDeformationGradientString() { return "particleDeformationGradient"; }
-
     /// @return String key for the member level field for the particle volume.
     static constexpr char const * particleRVectorsString() { return "particleRVectors"; }
-
-    /// @return String key for the member level field for the particle volume.
-    static constexpr char const * particleInitialRVectorsString() { return "particleInitialRVectors"; }
   };
 
   /**
@@ -339,11 +287,7 @@ public:
                        int const & startingIndex,
                        int const & numberOfIncomingParticles );
 
-  void erase(localIndex pp, string solidMaterialName);
-
-  void eraseVector(array2d< real64 > & vector, localIndex index, int vectorLength);
-
-  void eraseTensor(array3d< real64 > & tensor, localIndex index, int dim1, int dim2);
+  void erase(localIndex p );
 
   void setNonGhostIndices();
 
@@ -378,23 +322,11 @@ protected:
   /// Member level field for the current particle volume.
   array1d< real64 > m_particleVolume;
 
-  /// Member level field for the initial particle volume.
-  array1d< real64 > m_particleInitialVolume;
-
-  /// Member level field for the particle mass.
-  array1d< real64 > m_particleMass;
-
-  /// Member level field for the particle deformation gradient.
-  array3d< real64 > m_particleDeformationGradient;
-
   /// Type of particles in this subregion.
   ParticleType m_particleType;
 
   /// current half-R-vectors (center to face)
   array3d< real64 > m_particleRVectors;
-
-  /// initial half-R-vectors (center to face)
-  array3d< real64 > m_particleInitialRVectors;
 
   /// Indices of particles that are not ghosts
   std::vector< localIndex > m_nonGhostIndices;

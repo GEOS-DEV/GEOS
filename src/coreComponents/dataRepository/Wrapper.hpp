@@ -444,6 +444,78 @@ public:
   }
 
 
+  /// @cond DO_NOT_DOCUMENT
+  struct erase_wrapper // This should probably be in LvArray?
+  {
+    template< typename TYPE >
+    static void erase( TYPE &, localIndex const )
+    {}
+    
+    template< typename TYPE >
+    static void erase( array1d< TYPE > & array, localIndex const erasedIndex )
+    {
+      array.erase(erasedIndex);
+    }
+
+    template< typename TYPE >
+    static void erase( array2d< TYPE > & array, localIndex const erasedIndex )
+    {
+      int dim1 = array.size(1);
+      int oldSize = array.size(0);
+      int newSize = oldSize-1;
+
+      array1d< TYPE > temp( dim1 * oldSize );
+      for(int i = 0; i < dim1 * oldSize; i++)
+      {
+        temp[i] = array[ i / dim1 ][ i % dim1 ];
+      }
+      for(int i = dim1 - 1; i >= 0; i--)
+      {
+        temp.erase( dim1 * erasedIndex + i );
+      }
+      array.resize( newSize, dim1 );
+      for(int i = 0; i < dim1 * newSize; i++) // TODO: This can maybe be optimized to start from 'index' since everything before 'index' should be unchanged.
+      {                                       //       Depends on whether 'resize' preserves existing entries.
+        array[ i / dim1 ][ i % dim1] = temp[i];
+      }
+    }
+
+    template< typename TYPE >
+    static void erase( array3d< TYPE > & array, localIndex const erasedIndex )
+    {
+      int oldSize = array.size(0);
+      int newSize = oldSize - 1;
+
+      int dim1 = array.size(1);
+      int dim2 = array.size(2);
+      int tensorSize = dim1 * dim2;
+
+      array1d< real64 > temp( tensorSize * oldSize );
+      for(int i = 0; i < tensorSize * oldSize; i++)
+      {
+        temp[i] = array[ i / tensorSize ][ i / dim2 % dim1 ][ i % dim2 ];
+      }
+      for(int i = tensorSize - 1; i >= 0; i--)
+      {
+        temp.erase( tensorSize * erasedIndex + i );
+      }
+      array.resize( newSize, dim1, dim2 );
+      for(int i = 0; i < tensorSize * newSize; i++)
+      {
+        array[ i / tensorSize ][ i / dim2 % dim1 ][ i % dim2 ] = temp[i];
+      }
+    }
+  };
+  /// @endcond
+
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  void erase( localIndex const erasedIndex ) override
+  {
+    erase_wrapper::erase( reference(), erasedIndex );
+  }
+
+
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void move( LvArray::MemorySpace const space, bool const touch ) const override
   { return wrapperHelpers::move( *m_data, space, touch ); }

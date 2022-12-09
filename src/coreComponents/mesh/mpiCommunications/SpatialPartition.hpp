@@ -74,8 +74,7 @@ public:
   int getColor() override;
 
   void repartitionMasterParticles( ParticleSubRegion & subRegion,
-                                   MPI_iCommData & icomm,
-                                   string solidMaterialName );
+                                   MPI_iCommData & icomm );
 
   void getGhostParticlesFromNeighboringPartitions( DomainPartition & domain,
                                                    MPI_iCommData & icomm,

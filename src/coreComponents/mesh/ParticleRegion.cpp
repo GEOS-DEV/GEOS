@@ -84,14 +84,14 @@ array2d< real64 > ParticleRegion::getParticleCorners() const
     }
     else
     {
+      arrayView3d< real64 const > particleRVectors = subRegion.getParticleRVectors(); 
       for( int p=0; p<subRegion.size(); p++ )
       {
-        array2d< real64 > const rVectors = subRegion.computeRVectorsTemp( p );
         for( int corner=0; corner<8; corner++ )
         {
           for( int i=0; i<3; i++ )
           {
-            coords[index][i] = particleCenter[p][i] + signs[corner][0]*rVectors[0][i] + signs[corner][1]*rVectors[1][i] + signs[corner][2]*rVectors[2][i];
+            coords[index][i] = particleCenter[p][i] + signs[corner][0]*particleRVectors[p][0][i] + signs[corner][1]*particleRVectors[p][1][i] + signs[corner][2]*particleRVectors[p][2][i];
           }
           index++;
         }

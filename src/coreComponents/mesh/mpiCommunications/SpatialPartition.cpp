@@ -328,8 +328,7 @@ namespace geosx
   }
 
   void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion,
-                                                     MPI_iCommData & icomm,
-                                                     string solidMaterialName )
+                                                     MPI_iCommData & icomm )
   {
 
     /*
@@ -521,11 +520,11 @@ namespace geosx
         if( particleRankAfter[p] == -1 )
         {
           GEOSX_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[p] );
-          subRegion.erase(p, solidMaterialName);
+          subRegion.erase(p);
         }
         else if( particleRankAfter[p] != m_rank )
         {
-          subRegion.erase(p, solidMaterialName);
+          subRegion.erase(p);
         }
       }
       // Resize particle region owning this subregion
@@ -733,7 +732,7 @@ namespace geosx
       {
         if( particleRankNew[p] == -1 )
         {
-          //subRegion.erase(p, solidMaterialName);
+          //subRegion.erase(p);
         }
       }
 

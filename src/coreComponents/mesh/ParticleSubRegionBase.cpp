@@ -35,18 +35,14 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   m_particleCenter(),
   m_particleVelocity(),
   m_particleVolume(),
-  m_particleInitialVolume(),
-  m_particleMass(),
-  m_particleDeformationGradient(),
   m_particleType(),
-  m_particleRVectors(),
-  m_particleInitialRVectors()
+  m_particleRVectors()
 {
   registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
 
   registerWrapper( viewKeyStruct::particleRankString(), &m_particleRank ).
-    setPlotLevel( PlotLevel::NOPLOT );
+    setPlotLevel( PlotLevel::LEVEL_1 );
 
   registerWrapper( viewKeyStruct::particleIDString(), &m_particleID ).
     setPlotLevel( PlotLevel::LEVEL_1 );
@@ -65,24 +61,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   registerWrapper( viewKeyStruct::particleVolumeString(), &m_particleVolume ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 
-  registerWrapper( viewKeyStruct::particleInitialVolumeString(), &m_particleInitialVolume ).
-    setPlotLevel( PlotLevel::NOPLOT );
-
-  registerWrapper( viewKeyStruct::particleMassString(), &m_particleMass ).
-    setPlotLevel( PlotLevel::LEVEL_1 );
-
   registerWrapper( viewKeyStruct::particleRVectorsString(), &m_particleRVectors ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    reference().resizeDimension< 1, 2 >( 3, 3 );
-
-  registerWrapper( viewKeyStruct::particleInitialRVectorsString(), &m_particleInitialRVectors ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    reference().resizeDimension< 1, 2 >( 3, 3 );
-
-  // The only things that should be registered here are those that are read in from the input files. So e.g. particle mass shouldn't be here since it's not specified in any input file, whereas particle volume is.
-  // A solver(?) should then on the first cycle register particle mass and calculate it from volume and density. Same idea for other similarly post-processed and/or solver-specific fields.
-
-  registerWrapper( viewKeyStruct::particleDeformationGradientString(), &m_particleDeformationGradient ).
     setPlotLevel( PlotLevel::NOPLOT ).
     reference().resizeDimension< 1, 2 >( 3, 3 );
 }
@@ -132,90 +111,19 @@ void ParticleSubRegionBase::particleUnpack( buffer_type & buffer,
   this->unpack( receiveBufferPtr, indices, 0, false, events );
 }
 
-void ParticleSubRegionBase::erase( localIndex pp, string solidMaterialName )
+void ParticleSubRegionBase::erase( localIndex p )
 {
+  // The new subregion size
   int newSize = this->size()-1;
 
-  // Get constitutive fields
-  SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( solidMaterialName );
-  array2d< real64 > & particleDensity = constitutiveRelation.getDensityFull();
-  array3d< real64 > & particleStress = constitutiveRelation.getStressFull();
-
-  // Density:
-  this->eraseVector( particleDensity, pp, 1 );
-
-  // Stress:
-  this->eraseTensor( particleStress, pp, 1, 6 );
-
-  // Resize constitutive manager, I guess
-  constitutiveRelation.resize(newSize);
-
-  // Scalar fields:
-  m_particleRank.erase(pp); // TODO: Automatically loop over all registered wrappers
-  m_particleID.erase(pp);
-  m_particleGroup.erase(pp);
-  m_particleVolume.erase(pp);
-  m_particleInitialVolume.erase(pp);
-  m_particleMass.erase(pp);
-
-  // real64 vector fields:
-  this->eraseVector( m_particleCenter, pp, 3 );
-  this->eraseVector( m_particleVelocity, pp, 3 );
-
-  // real64 matrix fields:
-  this->eraseTensor( m_particleDeformationGradient, pp, 3, 3 );
-  this->eraseTensor( m_particleRVectors, pp, 3, 3 );
-  this->eraseTensor( m_particleInitialRVectors, pp, 3, 3 );
+  // Call ObjectManagerBase::eraseObject
+  this->eraseObject(p);
 
   // Decrement the size of this subregion
   this->resize(newSize);
 
   // Reconstruct the list of non-ghost indices
   this->setNonGhostIndices();
-}
-
-void ParticleSubRegionBase::eraseVector(array2d< real64 > & vector, localIndex index, int vectorLength)
-{
-  int oldSize = this->size();
-  int newSize = this->size()-1;
-
-  array1d< real64 > temp( vectorLength * oldSize );
-  for(int i = 0; i < vectorLength * oldSize; i++)
-  {
-    temp[i] = vector[ i / vectorLength ][ i % vectorLength ];
-  }
-  for(int i = vectorLength - 1; i >= 0; i--)
-  {
-    temp.erase( vectorLength * index + i );
-  }
-  vector.resize( newSize, vectorLength );
-  for(int i = 0; i < vectorLength * newSize; i++) // TODO: This can maybe be optimized to start from 'index' since everything before 'index' should be unchanged.
-  {                                               //       Depends on whether 'resize' preserves existing entries.
-    vector[ i / vectorLength ][ i % vectorLength] = temp[i];
-  }
-}
-
-void ParticleSubRegionBase::eraseTensor(array3d< real64 > & tensor, localIndex index, int dim1, int dim2)
-{
-  int oldSize = this->size();
-  int newSize = this->size()-1;
-
-  int tensorSize = dim1 * dim2;
-
-  array1d< real64 > temp( tensorSize * oldSize );
-  for(int i = 0; i < tensorSize * oldSize; i++)
-  {
-    temp[i] = tensor[ i / tensorSize ][ i / dim2 % dim1 ][ i % dim2 ];
-  }
-  for(int i = tensorSize - 1; i >= 0; i--)
-  {
-    temp.erase( tensorSize * index + i );
-  }
-  tensor.resize( newSize, dim1, dim2 );
-  for(int i = 0; i < tensorSize * newSize; i++)
-  {
-    tensor[ i / tensorSize ][ i / dim2 % dim1 ][ i % dim2 ] = temp[i];
-  }
 }
 
 void ParticleSubRegionBase::setNonGhostIndices()

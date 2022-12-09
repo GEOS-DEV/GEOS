@@ -284,8 +284,8 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     particleBlock.setParticleCenter(particleCenter);
     particleBlock.setParticleVelocity(particleVelocity);
     particleBlock.setParticleGroup(particleGroup);
-    particleBlock.setParticleInitialVolume(particleVolume);
-    particleBlock.setParticleInitialRVectors(particleRVectors);
+    particleBlock.setParticleVolume(particleVolume);
+    particleBlock.setParticleRVectors(particleRVectors);
   } // loop over particle blocks
 
   // Resize particle regions

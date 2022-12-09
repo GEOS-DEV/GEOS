@@ -43,6 +43,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "MPMSolverBaseFields.hpp"
 
 
 namespace geosx
@@ -140,6 +141,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "cpdiDomainScaling", &m_cpdiDomainScaling ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( 0 ).
     setDescription( "Option for CPDI domain scaling" );
 
   registerWrapper( "smallMass", &m_smallMass ).
@@ -259,6 +261,8 @@ SolidMechanicsMPM::~SolidMechanicsMPM()
 
 void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 {
+  using namespace fields::mpm;
+  
   ExecutableGroup::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
@@ -296,30 +300,25 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
                                                                   [&]( localIndex const,
                                                                        ParticleSubRegion & subRegion )
       {
-        string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
+        // Registration automatically allocates the 1st dimension (i.e. particle index) of the associated arrays.
+        // Vector/tensor fields need to have their other dimensions specified.
         
-        subRegion.registerWrapper< array1d< int > >( "isBad" ). // TODO: Change this to a std::set/LvArray::SortedArray that we push indices into?
-          setPlotLevel( PlotLevel::NOPLOT ).
-          setDescription( "An array that remembers particles that should be deleted at the end of the time step." );
+        string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
 
-        subRegion.registerWrapper< array2d< real64 > >( "particleStress" ).
-          setPlotLevel( PlotLevel::LEVEL_0 ).
-          setDimLabels( 2, voightLabels ).
-          setDescription( "An array that stores particle stresses. Component ordering is Voigt notation." );
+        // Single-indexed fields (scalars)
+        subRegion.registerField< isBad >( getName() );
+        subRegion.registerField< particleMass >( getName() );
+        subRegion.registerField< particleInitialVolume >( getName() );
+        subRegion.registerField< particleDensity >( getName() );
+        subRegion.registerField< particleDamage >( getName() );
 
-        subRegion.registerWrapper< array1d< real64 > >( "particleDensity" ).
-          setPlotLevel( PlotLevel::LEVEL_0 ).
-          setDescription( "An array that stores particle densities." );
+        // Double-indexed fields (vectors and symmetric tensors stored in Voigt notation)
+        subRegion.registerField< particleStress >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
+        subRegion.registerField< particleDamageGradient >( getName() ).reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerWrapper< array1d< real64 > >( "particleDamage" ).
-          setPlotLevel( PlotLevel::LEVEL_0 ).
-          setDescription( "An array that stores particle damage." );
-
-        subRegion.registerWrapper< array1d< real64 > >( "particleDamageGradient" ).
-          setPlotLevel( PlotLevel::LEVEL_0 ).
-          setDescription( "An array that stores particle damage gradient." );
-
-        //subRegion.excludeWrappersFromPacking( { "isBad", "massOfNeighbors" } ); // Copied from FEM solver, not sure if needed here
+        // Triple-indexed fields (vectors of vectors, non-symmetric tensors)
+        subRegion.registerField< particleInitialRVectors >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
+        subRegion.registerField< particleDeformationGradient >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
       } );
     }
     else // Background grid field registration
@@ -701,19 +700,38 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   // Set particle masses based on their volume and density. Set deformation gradient to identity;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
+    // Getters
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName ); // For the time being we restrict our attention to elastic isotropic solids. TODO: Have all constitutive models automatically calculate a wave speed.
-    arrayView2d< real64 > const particleDensity = constitutiveRelation.getDensity(); // 2d array because there's a density for each quadrature point, we just access with [particle][0]
+    arrayView2d< real64 > const constitutiveDensity = constitutiveRelation.getDensity();
+    arrayView1d< real64 > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
-    arrayView1d< real64 > const particleMass = subRegion.getParticleMass();
-    arrayView3d< real64 > const particleDeformationGradient = subRegion.getParticleDeformationGradient();
+    arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
+    arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView1d< real64 > const particleInitialVolume = subRegion.getField< fields::mpm::particleInitialVolume >();
+    arrayView3d< real64 > const particleInitialRVectors = subRegion.getField< fields::mpm::particleInitialRVectors >();
 
-    // Set particle masses and small mass threshold
+    // Set initial volume and R-vectors
+    for(int p=0; p<subRegion.size(); p++)
+    {
+      particleInitialVolume[p] = particleVolume[p];
+      for(int i=0; i<3; i++)
+      {
+        for(int j=0; j<3; j++)
+        {
+          particleInitialRVectors[p][i][j] = particleRVectors[p][i][j];
+        }
+      }
+    }
+
+    // Pull density from constitutive model, set particle masses and small mass threshold
     real64 localMinMass = 0.0;
     real64 globalMinMass;
     for(int p=0; p<subRegion.size(); p++)
     {
-      particleMass[p] = particleDensity[p][0] * particleVolume[p]; // TODO: This should probably be done in ParticleMeshGenerator...
+      particleDensity[p] = constitutiveDensity[p][0];
+      particleMass[p] = particleDensity[p] * particleVolume[p];
       localMinMass = particleMass[p] < localMinMass ? particleMass[p] : localMinMass;
     }
     if( subRegion.size() == 0 ) // Handle empty partitions
@@ -728,18 +746,18 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
                    MPI_COMM_GEOSX );
     m_smallMass = fmin( globalMinMass * 1.0e-12, m_smallMass );
 
-    // deformation gradient - TODO: there's probably a LvArray function that makes this a one-liner - I don't think the ParticleSubRegionBase constructor can easily initialize this to identity
+    // Initialize deformation gradient
     for(int p=0; p<subRegion.size(); p++)
     {
-      for(int i=0; i<3; i++)
-      {
-        for(int j=0; j<3; j++)
-        {
-          particleDeformationGradient[p][i][j] = i==j ? 1.0 : 0.0;
-        }
-      }
+      tOps::addIdentity< 3 >( particleDeformationGradient[p], 1.0 );
+      // for(int i=0; i<3; i++)
+      // {
+      //   for(int j=0; j<3; j++)
+      //   {
+      //     particleDeformationGradient[p][i][j] = i==j ? 1.0 : 0.0;
+      //   }
+      // }
     }
-
   } );
 
 
@@ -841,6 +859,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   array3d< real64 > & gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::surfaceNormalString() );
   array3d< real64 > & gridMaterialPosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::materialPositionString() );
 
+
   //#######################################################################################
   solverProfilingIf( "At time step zero, perform initialization calculations", cycleNumber == 0 );
   //#######################################################################################
@@ -853,12 +872,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   solverProfiling( "Initialize solver-registered particle fields" );
   //#######################################################################################
-  // This currently has to be done every time time because isBad is not handled by the repartitioning/ghosting code
+  // This currently has to be done every time step because isBad is not handled by the repartitioning/ghosting code
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     // Get references
-    array1d< int > & isBad = subRegion.getReference< array1d< int > >( "isBad" );
-    array1d< real64 > & particleDamage = subRegion.getReference< array1d< real64 > >( "particleDamage" );
+    array1d< int > & isBad = subRegion.getField< fields::mpm::isBad >();
+    array1d< real64 > & particleDamage = subRegion.getField< fields::mpm::particleDamage >();
 
     // Resize
     isBad.resize( subRegion.size() );
@@ -998,6 +1017,22 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   //#######################################################################################
+  solverProfilingIf( "Perform r-vector scaling (CPDI domain scaling)", m_cpdiDomainScaling == 1 );
+  //#######################################################################################
+  if( m_cpdiDomainScaling == 1 )
+  {
+    particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+    {
+      if( subRegion.getParticleType() == ParticleType::CPDI )
+      {
+        real64 lCrit = m_planeStrain ? 0.49999 * fmin( m_hEl[0], m_hEl[1] ) : 0.49999 * fmin( m_hEl[0], fmin( m_hEl[1], m_hEl[2] ) );
+        subRegion.cpdiDomainScaling( lCrit, m_planeStrain );
+      }
+    } );
+  }
+
+
+  //#######################################################################################
   solverProfiling( "Particle-to-grid interpolation" );
   //#######################################################################################
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -1005,14 +1040,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     // subregion fields
     arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
     arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
-    arrayView1d< real64 > const particleMass = subRegion.getParticleMass();
+    arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
     arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
 
-    // constitutive fields
-    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
-    arrayView3d< real64, solid::STRESS_USD > const particleStress = constitutiveRelation.getStress();
+    // solver fields
+    arrayView2d< real64 > const particleStress = subRegion.getField< fields::mpm::particleStress >();
 
     // initialize mapping helpers
     int numNodesMappedTo = subRegion.numNodesMappedTo();
@@ -1022,11 +1055,11 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
     for( localIndex p: subRegion.nonGhostIndices() )
     {
-      auto const & p_x = particleCenter[p]; // auto = LvArray::ArraySlice<double, 1, 0, int>
-      auto const & p_v = particleVelocity[p]; // auto = LvArray::ArraySlice<double, 1, 0, int>
+      arraySlice1d< real64 > const p_x = particleCenter[p]; // auto = LvArray::ArraySlice<double, 1, 0, int>
+      arraySlice1d< real64 > const p_v = particleVelocity[p]; // auto = LvArray::ArraySlice<double, 1, 0, int>
       real64 const & p_m = particleMass[p];
       real64 const & p_vol = particleVolume[p];
-      auto const & p_stress = particleStress[p][0];
+      arraySlice1d< real64 > const p_stress = particleStress[p];
       int const & p_group = particleGroup[p];
 
       // Get interpolation kernel
@@ -1233,23 +1266,24 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     // Registered by subregion
     arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
     arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
-    arrayView1d< real64 > const particleMass = subRegion.getParticleMass();
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
-    arrayView1d< real64 > const particleInitialVolume = subRegion.getParticleInitialVolume();
-    arrayView3d< real64 > const particleDeformationGradient = subRegion.getParticleDeformationGradient();
     arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
     arrayView1d< globalIndex > particleID = subRegion.getParticleID();
 
     // Registered by constitutive model
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ElasticIsotropic & constitutiveRelation = getConstitutiveModel< ElasticIsotropic >( subRegion, solidMaterialName ); // again, limiting to elastic isotropic for now
-    arrayView2d< real64 > const particleDensity = constitutiveRelation.getDensity();
-    arrayView3d< real64, solid::STRESS_USD > const particleStress = constitutiveRelation.getStress();
     arrayView1d< real64 > const shearModulus = constitutiveRelation.shearModulus();
     arrayView1d< real64 > const bulkModulus = constitutiveRelation.bulkModulus();
 
     // Registered by MPM solver
-    arrayView1d< int > const isBad = subRegion.getReference< array1d< int > >( "isBad" );
+    arrayView1d< int > const isBad = subRegion.getField< fields::mpm::isBad >();
+    arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView1d< real64 > const particleInitialVolume = subRegion.getField< fields::mpm::particleInitialVolume >();
+    arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 > const particleInitialRVectors = subRegion.getField< fields::mpm::particleInitialRVectors >();
+    arrayView1d< real64 > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
+    arrayView2d< real64 > const particleStress = subRegion.getField< fields::mpm::particleStress >();
 
     // Initialize mapping helpers
     int numNodesMappedTo = subRegion.numNodesMappedTo();
@@ -1260,15 +1294,16 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     // Particle loop - we might be able to get rid of this someday and have everything happen via MPMParticleSubRegion methods
     for( localIndex p: subRegion.nonGhostIndices() )
     {
-      auto const & p_x = particleCenter[p];
-      auto const & p_v = particleVelocity[p];
+      arraySlice1d< real64 > const p_x = particleCenter[p];
+      arraySlice1d< real64 > const p_v = particleVelocity[p];
       real64 & p_m = particleMass[p];
       real64 & p_vol = particleVolume[p];
       real64 const & p_vol0 = particleInitialVolume[p];
-      real64 & p_rho = particleDensity[p][0];
-      auto const & p_F = particleDeformationGradient[p]; // auto = LvArray::ArraySlice<double, 2, 1, int>
-      auto const & p_stress = particleStress[p][0];
+      real64 & p_rho = particleDensity[p];
+      arraySlice2d< real64 > const p_F = particleDeformationGradient[p]; // auto = LvArray::ArraySlice<double, 2, 1, int>
+      arraySlice1d< real64 > const p_stress = particleStress[p];
       int const & p_group = particleGroup[p];
+      arraySlice2d< real64 > const p_rvec0 = particleInitialRVectors[p];
       real64 p_L[3][3] = { {0} }; // Velocity gradient
       real64 p_D[3][3] = { {0} }; // Rate of deformation
       real64 p_Diso[3][3] = { {0} }; // Rate of deformation
@@ -1370,12 +1405,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       }
       p_vol = p_vol0 * detF;
       p_rho = p_m / p_vol;
-      subRegion.computeRVectors( p );
-      if( m_cpdiDomainScaling == 1 && subRegion.getParticleType() == ParticleType::CPDI )
-      {
-        real64 lCrit = m_planeStrain ? 0.49999 * fmin( m_hEl[0], m_hEl[1] ) : 0.49999 * fmin( m_hEl[0], fmin( m_hEl[1], m_hEl[2] ) );
-        subRegion.cpdiDomainScaling( p, lCrit, m_planeStrain );
-      }
+      subRegion.computeRVectors( p, p_F, p_rvec0 );
 
       // Particle constitutive update - hyperelastic model from vortex MMS paper
       real64 lambda = bulkModulus[p] - 2.0 * shearModulus[p] / 3.0;
@@ -1420,12 +1450,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ElasticIsotropic & constitutiveRelation = getConstitutiveModel< ElasticIsotropic >( subRegion, solidMaterialName ); // For the time being we restrict our attention to elastic isotropic solids. TODO: Have all constitutive models automatically calculate a wave speed.
-    arrayView2d< real64 > const rho = constitutiveRelation.getDensity();
+    arrayView1d< real64 > const rho = subRegion.getField< fields::mpm::particleDensity >();
     arrayView1d< real64 > const g = constitutiveRelation.shearModulus();
     arrayView1d< real64 > const k = constitutiveRelation.bulkModulus();
     for( localIndex p: subRegion.nonGhostIndices() )
     {
-      wavespeed = std::max( wavespeed, sqrt( ( k[p] + (4.0/3.0) * g[p] ) / rho[p][0] ) + tOps::l2Norm< 3 >( particleVelocity[p] ) );
+      wavespeed = std::max( wavespeed, sqrt( ( k[p] + (4.0/3.0) * g[p] ) / rho[p] ) + tOps::l2Norm< 3 >( particleVelocity[p] ) );
     }
   } );
 
@@ -1442,7 +1472,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   {
     string solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     
-    arrayView1d< int > const isBad = subRegion.getReference< array1d< int > >( "isBad" );
+    arrayView1d< int > const isBad = subRegion.getField< fields::mpm::isBad >();
     arrayView1d< int > const particleRank = subRegion.getParticleRank();
 
     subRegion.flagOutOfRangeParticles( m_xGlobalMin, m_xGlobalMax, m_hEl, isBad ); // This skips ghost particles
@@ -1451,7 +1481,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     {                                          //       We could also do away with the rank check since only master particles are ever evaluated for deletion.
       if( isBad[p] == 1 && particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) )
       {
-        subRegion.erase(p, solidMaterialName);
+        subRegion.erase(p);
       }
     }
   } );
@@ -1466,7 +1496,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     {
       // We need to pass the constitutive relation so we can erase constitutive fields
       string solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-      partition.repartitionMasterParticles( subRegion, m_iComm, solidMaterialName );
+      partition.repartitionMasterParticles( subRegion, m_iComm );
     } );
   }
 

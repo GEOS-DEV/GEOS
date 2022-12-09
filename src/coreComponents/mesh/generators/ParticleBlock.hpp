@@ -105,17 +105,17 @@ public:
   void setParticleGroup(array1d< int > const particleGroup)
   { m_particleGroup = particleGroup; }
 
-  array1d< real64 > getParticleInitialVolume() const override
-  { return m_particleInitialVolume; }
+  array1d< real64 > getParticleVolume() const override
+  { return m_particleVolume; }
 
-  void setParticleInitialVolume(array1d< real64 > const particleInitialVolume)
-  { m_particleInitialVolume = particleInitialVolume; }
+  void setParticleVolume(array1d< real64 > const particleVolume)
+  { m_particleVolume = particleVolume; }
 
-  array3d< real64 > getParticleInitialRVectors() const override
-  { return m_particleInitialRVectors; }
+  array3d< real64 > getParticleRVectors() const override
+  { return m_particleRVectors; }
 
-  void setParticleInitialRVectors(array3d< real64 > const particleInitialRVectors)
-  { m_particleInitialRVectors = particleInitialRVectors; }
+  void setParticleRVectors(array3d< real64 > const particleRVectors)
+  { m_particleRVectors = particleRVectors; }
 
   bool hasRVectors() const override
   { return m_hasRVectors; }
@@ -171,8 +171,8 @@ private:
   /// Member level field for the particle velocity.
   array2d< real64 > m_particleVelocity;
 
-  /// Member level field for the initial particle volume.
-  array1d< real64 > m_particleInitialVolume;
+  /// Member level field for the particle volume.
+  array1d< real64 > m_particleVolume;
 
   /// Type of particles in this subregion.
   ParticleType m_particleType;
@@ -180,8 +180,8 @@ private:
   /// Bool flag for whether particles in this block have r-vectors defining its domain
   bool m_hasRVectors;
 
-  /// initial R-vectors
-  array3d< real64 > m_particleInitialRVectors;
+  /// R-vectors
+  array3d< real64 > m_particleRVectors;
 
   std::list< dataRepository::WrapperBase * > getExternalProperties() override
   {
