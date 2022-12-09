@@ -155,11 +155,11 @@ it into the GEOSX mesh data structure.
 
 The supported mesh elements for volume elements consist of the following:
 
-- 4 nodes tetrahedra,
-- 5 nodes pyramids,
-- 6 nodes wedges,
-- 8 nodes hexahedra,
-- prims up to 11 nodes.
+- 4-node tetrahedra,
+- 5-node pyramids,
+- 6-node wedges,
+- 8-node hexahedra,
+- n-gonal prisms (n = 7, ..., 11).
 
 The mesh can be divided in several regions.
 These regions are intended to support different physics
