@@ -194,7 +194,9 @@ or to define different constitutive properties.
 An ``ElementRegion`` is defined as a set of ``CellBlocks``.
 A ``CellBlock`` is an ensemble of elements with the same element geometry.
 
-.. image:: mesh_multi.png
+.. figure:: mesh_multi.png
+   :align: center
+   :width: 500
 
 In the example presented above, the mesh is is composed of two regions (*Top* and *Bot*).
 Each region contains 3 ``CellBlocks``.
