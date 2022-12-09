@@ -123,21 +123,6 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
                            std::runtime_error );
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-    fsManager.apply< FaceManager >( 0.0,
-                                    mesh,
-                                    fields::flow::pressure::key(),
-                                    [&] ( FieldSpecificationBase const & bc,
-                                          string const &,
-                                          SortedArrayView< localIndex const > const &,
-                                          FaceManager &,
-                                          string const & )
-    {
-      GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
-                        "A face Dirichlet boundary condition named " << bc.getName() << " was requested in the XML file. \n"
-                                                                                        "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
-
-    } );
-
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
       GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<

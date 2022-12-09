@@ -1636,10 +1636,10 @@ void printMeshStatistics( vtkDataSet & mesh,
     localIndex const localElemsOfType =
       std::accumulate( typeToCells.second.begin(), typeToCells.second.end(), localIndex{},
                        []( auto const s, auto const & region ) { return s + region.second.size(); } );
-    numLocalElems = localElemsOfType;
+    numLocalElems += localElemsOfType;
 
     globalIndex const globalElemsOfType = MpiWrapper::sum( globalIndex{ localElemsOfType }, comm );
-    numGlobalElems = globalElemsOfType;
+    numGlobalElems += globalElemsOfType;
     elemCounts[typeToCells.first] = globalElemsOfType;
   }
 
