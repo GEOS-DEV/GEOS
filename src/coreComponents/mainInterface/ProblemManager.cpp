@@ -478,7 +478,7 @@ void ProblemManager::postProcessInput()
   {
     partition.setPartitions( xpar, ypar, zpar );
     int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
-    // Case : Using MPI domain decomposition and partition are not defined (mainly pamela usage)
+    // Case : Using MPI domain decomposition and partition are not defined (mainly for external mesh readers)
     if( mpiSize > 1 && xpar == 1 && ypar == 1 && zpar == 1 )
     {
       //TODO  confirm creates no issues with MPI_Cart_Create

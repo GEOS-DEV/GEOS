@@ -63,7 +63,7 @@ protected:
   /// Scale factor that will be applied to the point coordinates (after translation)
   R1Tensor m_scale;
 
-  /// Names of the fields to be copied from PAMELA to GEOSX data structure
+  /// Names of the fields to be copied from an external reader into GEOSX data structure
   array1d< string > m_fieldsToImport;
 
   /// String array of the GEOSX user declared fields
