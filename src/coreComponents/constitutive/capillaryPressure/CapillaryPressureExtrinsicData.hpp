@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREEXTRINSICDATA_HPP_
 #define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREEXTRINSICDATA_HPP_
 
-#include "constitutive/capillaryPressure/layouts.hpp"
+#include "constitutive/capillaryPressure/Layouts.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
 
 #include "dataRepository/BufferOps.hpp"

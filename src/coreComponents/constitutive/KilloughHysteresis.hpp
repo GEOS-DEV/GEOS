@@ -18,8 +18,8 @@
 #include "constitutive/ConstitutiveBase.hpp"
 #include "functions/TableFunction.hpp"
 
-#include "relativePermeability/layouts.hpp"
-#include "capillaryPressure/layouts.hpp"
+#include "relativePermeability/Layouts.hpp"
+#include "capillaryPressure/Layouts.hpp"
 
 
 
