@@ -145,7 +145,7 @@ public:
     m_parent.resize( 1 );
   }
 
-  void initialize( BASE * model )
+  void initialize( BASE & model )
   {
     m_model = &model;
     m_parent.initialize();

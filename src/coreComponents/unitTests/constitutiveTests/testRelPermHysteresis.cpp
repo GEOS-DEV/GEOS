@@ -33,53 +33,7 @@ using namespace geosx::dataRepository;
 // by doing an imbibition cycles for the data provided "Reservoir simulation with history-dependent saturation functions",
 // Killough, J. E., Society of Petroleum Engineers Journal, 16(01), 37-48 (1976).
 
-CommandLineOptions g_commandLineOptions;
-char const *xmlInput =
-  "<Problem>\n"
-  "  <Mesh>\n"
-  "    <InternalMesh name=\"mesh\"\n"
-  "                  elementTypes=\"{C3D8}\" \n"
-  "                  xCoords=\"{0, 1}\"\n"
-  "                  yCoords=\"{0, 1}\"\n"
-  "                  zCoords=\"{0, 1}\"\n"
-  "                  nx=\"{1}\"\n"
-  "                  ny=\"{1}\"\n"
-  "                  nz=\"{1}\"\n"
-  "                  cellBlockNames=\"{cb1}\"/>\n"
-  "  </Mesh>\n"
-  "  <ElementRegions>\n"
-  "    <CellElementRegion name=\"region\" cellBlocks=\"{cb1}\" materialList=\"{ relperm }\" />\n"
-  "  </ElementRegions>\n"
-  "  <Constitutive>\n"
-  "   <TableRelativePermeabilityHysteresis \n"
-  "       name=\"relperm\" \n"
-  "       phaseNames=\"{ gas, water }\" \n"
-  "       KilloughModelName =\"KilloughHyst\" \n"
-  "       drainageWettingNonWettingRelPermTableNames=\"{ drainageWaterRelativePermeabilityTable, \n"
-  "                                                  drainageGasRelativePermeabilityTable }\" \n"
-  "       imbibitionNonWettingRelPermTableName=\"imbibitionGasRelativePermeabilityTable\" \n"
-  "       imbibitionWettingRelPermTableName=\"imbibitionWaterRelativePermeabilityTable\"/> \n"
-  "   <KilloughHysteresis \n"
-  "       name=\"KilloughHyst\" /> \n"
-  "</Constitutive> \n"
-  " <Functions>\n"
-  "    <TableFunction name=\"drainageWaterRelativePermeabilityTable\"\n"
-  "                   coordinates=\"{0.0, 1.0}\"\n"
-  "                   values=\"{0.0, 1.}\"/>\n"
-  "    <TableFunction name=\"drainageGasRelativePermeabilityTable\"\n"
-  "                   coordinates=\"{0.0, 1.0}\"\n"
-  "                   values=\"{0.0, 1.}\"/>\n"
-  "    <TableFunction name=\"imbibitionGasRelativePermeabilityTable\"\n"
-  "                   coordinates=\"{0.0, 1.0}\"\n"
-  "                   values=\"{0.0, 1.}\"/>\n"
-  "    <TableFunction name=\"imbibitionWaterRelativePermeabilityTable\"\n"
-  "                   coordinates=\"{0.0, 1.0}\"\n"
-  "                   values=\"{0.0, 1.}\"/>\n"
-  "</Functions>\n"
-  "</Problem>";
-
-
-TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string const & name, Group & constbase )
+TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string const & name, Group & parent )
 {
   // 1) First, define the tables (to values that matters for our use cases)
 
@@ -145,7 +99,7 @@ TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string
 
   // 2) Then set up the constitutive model
 
-  auto & relPerm = constbase.getGroupByPath( "/Problem/domain/Constitutive" ).getGroup< TableRelativePermeabilityHysteresis >( name );
+  auto & relPerm = parent.registerGroup< TableRelativePermeabilityHysteresis >( name );
 
   auto & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 2 );
@@ -168,24 +122,9 @@ TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string
   return relPerm;
 }
 
-class KilloughHysteresisTest : public ::testing::Test
+class KilloughHysteresisTest : public ConstitutiveTestBase< TableRelativePermeabilityHysteresis >
 {
 public:
-
-  KilloughHysteresisTest():
-    state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
-  {}
-
-protected:
-  void SetUp() override
-  {
-    setupProblemFromXML( state.getProblemManager(), xmlInput );
-    DomainPartition & domain = state.getProblemManager().getDomainPartition();
-
-  }
-
-  GeosxState state;
-
 
 };
 
@@ -272,10 +211,9 @@ TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
 
   real64 const relTol = 5e-5;
 
-  TableRelativePermeabilityHysteresis & table = makeTableRelPermHysteresisTwoPhase( "relperm",
-                                                                                    state.getProblemManager().getDomainPartition().getConstitutiveManager() );
-
-  auto relpermTblWrapper = table.createKernelWrapper();
+  // saved cycle
+  initialize( makeTableRelPermHysteresisTwoPhase( "relPerm", m_parent ) );
+  auto relpermTblWrapper = m_model->createKernelWrapper();
 
   // all saturations are nonwetting saturations
   for( integer count = 0; count < 3; ++count )
@@ -307,7 +245,9 @@ TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  g_commandLineOptions = *geosx::basicSetup( argc, argv );
+
+  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
+
   int const result = RUN_ALL_TESTS();
 
   geosx::basicCleanup();
