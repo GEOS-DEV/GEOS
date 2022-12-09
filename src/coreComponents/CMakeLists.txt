@@ -110,8 +110,7 @@ endif()
 
 geosx_add_code_checks( PREFIX coreComponents
                        EXCLUDES cmake
-                       src/coreComponents/constitutive/PVTPackage
-                       src/coreComponents/mesh/PAMELA )
+                       src/coreComponents/constitutive/PVTPackage )
 
 if( ENABLE_UNCRUSTIFY )
   add_test( NAME testUncrustifyCheck
