@@ -818,7 +818,7 @@ void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
                                            integer const dofsPerNode ) const
 {
   localIndex const maxRowEntries = maxRowLength();
-  integer const temp = maxRowEntries % dofsPerNode; 
+  integer const temp = maxRowEntries % dofsPerNode;
   GEOSX_LAI_ASSERT_EQ( temp, 0 );
 
   CRSMatrix< real64 > tempMat;

@@ -564,7 +564,7 @@ PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
     std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residual );
-  }  
+  }
 
   return residual;
 }

@@ -332,6 +332,15 @@ public:
 
 protected:
 
+  /**
+   * @brief Fully coupled solution approach solution step.
+   *
+   * @param time_n the current time
+   * @param dt timestep size
+   * @param cycleNumber
+   * @param domain the domain partition
+   * @return real64 size of the accepted timestep
+   */
   virtual real64 fullyCoupledSolverStep( real64 const & time_n,
                                          real64 const & dt,
                                          int const cycleNumber,
@@ -355,7 +364,16 @@ protected:
 
     return dtReturn;
   }
-
+  /**
+   * @brief Sequentially coupled solver step. It solves a nonlinear system of
+   * equations using a sequential approach.
+   *
+   * @param time_n the current time
+   * @param dt timestep size
+   * @param cycleNumber
+   * @param domain the domain partition
+   * @return real64 size of the accepted timestep
+   */
   virtual real64 sequentiallyCoupledSolverStep( real64 const & time_n,
                                                 real64 const & dt,
                                                 int const cycleNumber,
@@ -413,9 +431,9 @@ protected:
           dtReturn = dtReturnTemporary;
         }
       } );
-      
+
       isConverged = checkSequentialConvergence( iter );
-      
+
       if( isConverged )
       {
         break;
@@ -431,6 +449,12 @@ protected:
     return dtReturn;
   }
 
+  /**
+   * @brief Maps the solution obtained from one solver to the fields used by the other solver(s)
+   *
+   * @param Domain the domain parition
+   * @param idx the index of the solver withing this coupled solver.
+   */
   virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx )
   {}
 
