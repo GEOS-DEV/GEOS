@@ -80,23 +80,7 @@ public:
     return std::get< toUnderlying( SolverType::Damage ) >( m_solvers );
   }
 
-  virtual void registerDataOnMesh( Group & MeshBodies ) override final;
-
-  virtual void
-  implicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition & domain ) override final;
-
-  virtual void
-  resetStateToBeginningOfStep( DomainPartition & domain ) override;
-
-  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, int const idx ) override final;
-
-  struct viewKeyStruct : Base::viewKeyStruct
-  {
-    constexpr static char const * totalMeanStressString() { return "totalMeanStress"; }
-    constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }
-  };
+  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
 
 protected:
 

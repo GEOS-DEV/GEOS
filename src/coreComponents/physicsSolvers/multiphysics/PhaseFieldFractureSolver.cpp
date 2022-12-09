@@ -39,80 +39,9 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
   m_couplingType = CouplingType::Sequential;
 }
 
-void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
-{
-  Base::registerDataOnMesh( meshBodies );
-
-  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                    MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & )
-  {
-    ElementRegionManager & elemManager = meshLevel.getElemManager();
-
-    elemManager.forElementSubRegions< CellElementSubRegion,
-                                      FaceElementSubRegion >( [&] ( auto & elementSubRegion )
-    {
-      elementSubRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::totalMeanStressString() ).
-        setDescription( "Total Mean Stress" );
-      elementSubRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() ).
-        setDescription( "Total Mean Stress" );
-    } );
-  } );
-}
-
-void PhaseFieldFractureSolver::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                  real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                                  DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
-  {
-
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
-      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString() );
-
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > oldTotalMeanStress =
-      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() );
-
-    //***** loop over all elements and initialize the derivative arrays *****
-    forAllElemsInMesh( mesh, [ &]( localIndex const er, localIndex const esr, localIndex const k )
-    {
-      oldTotalMeanStress[er][esr][k] = totalMeanStress[er][esr][k];
-    } );
-  } );
-}
-
 PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
 {
   // TODO Auto-generated destructor stub
-}
-
-void PhaseFieldFractureSolver::resetStateToBeginningOfStep( DomainPartition & domain )
-{
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
-  {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
-      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString() );
-
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > oldTotalMeanStress =
-      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() );
-
-    //***** loop over all elements and initialize the derivative arrays *****
-    forAllElemsInMesh( mesh, [ &]( localIndex const er,
-                                   localIndex const esr,
-                                   localIndex const k )
-    {
-      totalMeanStress[er][esr][k] = oldTotalMeanStress[er][esr][k];
-    } );
-  } );
 }
 
 void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const idx )
