@@ -36,22 +36,7 @@ namespace cappres
 using array3dLayoutCapPressure = array3d< real64, constitutive::cappres::LAYOUT_CAPPRES >;
 using array4dLayoutCapPressure_dS = array4d< real64, constitutive::cappres::LAYOUT_CAPPRES_DS >;
 
-  enum ModeIndexType : integer
-  {
-    DRAINAGE = 0,//to be used in array of Kernels
-    IMBIBITION = 1,
-    DRAINAGE_TO_IMBIBITION = 2,
-    IMBIBITION_TO_DRAINAGE = 3
-    };
-//  };
 
-//class ExpF{};
-//inline std::enable_if< bufferOps::can_memcpy< ModeIndexType >, bool>::type
-//inline std::enable_if< geosx::bufferOps::can_memcpy< ModeIndexType >, localIndex >::type test(){ return localIndex(0); };
-
-//inline
-//std::ostream & operator<<( std::ostream & os, ModeIndexType const & mode )
-//{ return os << static_cast< int >( mode ); }
 
 
 EXTRINSIC_MESH_DATA_TRAIT( phaseTrappedVolFraction,
@@ -86,13 +71,6 @@ EXTRINSIC_MESH_DATA_TRAIT( jFuncMultiplier,
                            WRITE_AND_READ,
                            "Multiplier for the Leverett J-function" );
 
-EXTRINSIC_MESH_DATA_TRAIT( mode,
-                           "mode",
-                           array1d< integer >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Imbibition/drainage status mode" );
 }
 
 }

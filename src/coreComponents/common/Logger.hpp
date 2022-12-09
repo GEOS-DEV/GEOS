@@ -481,21 +481,6 @@ struct InputError : public std::runtime_error
 /**
  * @brief Exception class used to report errors in logic flow.
  */
-    struct LogicError : public std::logic_error {
-        /**
-         * @brief Constructor
-         * @param what the error message
-         */
-        LogicError(std::string const &what) :
-                std::logic_error(what) {}
-
-        /**
-         * @brief Constructor
-         * @param what the error message
-         */
-        LogicError(char const *const what) :
-                std::logic_error(what) {}
-    };
 
 /**
  * @brief Exception class used for special control flow.

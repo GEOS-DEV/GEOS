@@ -173,13 +173,13 @@ void testValuesAgainstReference( TBL_WRAPPER const & cappresTblWrapper,
               relperm::LAYOUT_RELPERM_DS > dPhaseCapPres_dPhaseVolFrac( 1, 1, numPhases, numPhases );
 
   cappresTblWrapper.computeTwoPhaseWetting( ipWetting,
-                                     ipNonWetting,
-                                     phaseVolFraction[0],
-                                     phaseMaxHistoricalVolFraction[0],
-                                     phaseMinHistoricalVolFraction[0],
-                                     phaseTrappedVolFrac[0][0],
-                                     phaseCapPres[0][0],
-                                     dPhaseCapPres_dPhaseVolFrac[0][0] );
+                                            ipNonWetting,
+                                            phaseVolFraction[0],
+                                            phaseMaxHistoricalVolFraction[0],
+                                            phaseMinHistoricalVolFraction[0],
+                                            phaseTrappedVolFrac[0][0],
+                                            phaseCapPres[0][0],
+                                            dPhaseCapPres_dPhaseVolFrac[0][0] );
 
   checkRelativeError( phaseCapPres[0][0][ipWetting], refCapPres_w, relTol );
   //TODO check phaseTrappedVolFraction
@@ -206,20 +206,20 @@ TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
 
     /// Reference data
     real64 const drainageCapPres_w_values[] =
-      { 1054.093, 1118.667, 1196.569, 1241.826, 1292.065, 1350.937, 1415.730, 1586.798, 1835.227, 2018.952, 2236.068 };
+    { 1054.093, 1118.667, 1196.569, 1241.826, 1292.065, 1350.937, 1415.730, 1586.798, 1835.227, 2018.952, 2236.068 };
 
     real64 const scanningCapPres_w_i[][nIncreasingWaterSat] =
-      { { 2236.068,           1929.0456,          1651.251,           1305.843,           1100.016, 1082.189, 1070.461, 1063.032, 1058.364, 1054.239, 1054.093 },
-        { 1835.226,           1835.226,           1835.226,           1364.184,           1119.252, 1090.195, 1072.584, 1062.267, 1056.403, 1054.093, 1054.093 },
-        { 1586.7984285714285, 1586.7984285714285, 1586.7984285714285, 1586.7984285714285, 1168.670, 1107.583, 1075.298, 1058.607, 1054.093, 1054.093, 1054.093 } };
+    { { 2236.068, 1929.0456, 1651.251, 1305.843, 1100.016, 1082.189, 1070.461, 1063.032, 1058.364, 1054.239, 1054.093 },
+      { 1835.226, 1835.226, 1835.226, 1364.184, 1119.252, 1090.195, 1072.584, 1062.267, 1056.403, 1054.093, 1054.093 },
+      { 1586.7984285714285, 1586.7984285714285, 1586.7984285714285, 1586.7984285714285, 1168.670, 1107.583, 1075.298, 1058.607, 1054.093, 1054.093, 1054.093 } };
 
     real64 const relTol = 5e-5;
 
     // saved cycle
     TableCapillaryPressureHysteresis & table = makeTableCapPresHysteresisTwoPhase( "cappres",
                                                                                    state.getProblemManager()
-                                                                                        .getDomainPartition()
-                                                                                        .getConstitutiveManager() );
+                                                                                     .getDomainPartition()
+                                                                                     .getConstitutiveManager() );
 //    initialize( table );
     auto cappresTblWrapper = table.createKernelWrapper();
 
@@ -267,12 +267,12 @@ TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
 
     /// Reference data
     real64 const imbibitionCapPres_w_values[] =
-      {};
+    {};
 
     real64 const scanningCapPres_nw_i[][nIncreasingWaterSat] =
-      { {},
-        {},
-        {} };
+    { {},
+      {},
+      {} };
 
     real64 const relTol = 5e-5;
 

@@ -27,11 +27,11 @@ namespace constitutive
 {
 
 void
-TableRelativePermeabilityHelpers::validateRelativePermeabilityTable(TableFunction const &relPermTable,
-                                                                    string const &fullConstitutiveName,
-                                                                    real64 &phaseMinVolFrac, real64 &phaseMaxVolFrac,
-                                                                    real64 &phaseRelPermMinEndPoint,
-                                                                    real64 &phaseRelPermMaxEndPoint)
+TableRelativePermeabilityHelpers::validateRelativePermeabilityTable( TableFunction const & relPermTable,
+                                                                     string const & fullConstitutiveName,
+                                                                     real64 & phaseMinVolFrac, real64 & phaseMaxVolFrac,
+                                                                     real64 & phaseRelPermMinEndPoint,
+                                                                     real64 & phaseRelPermMaxEndPoint )
 {
   ArrayOfArraysView< real64 const > coords = relPermTable.getCoordinates();
 

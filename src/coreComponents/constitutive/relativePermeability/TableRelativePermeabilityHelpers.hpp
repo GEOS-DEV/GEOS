@@ -38,9 +38,9 @@ struct TableRelativePermeabilityHelpers
    * @param[out] phaseRelPermMinEndPoint the end-point relative permeability
    */
   static
-  void validateRelativePermeabilityTable(TableFunction const &relPermTable, string const &fullConstitutiveName,
-                                         real64 &phaseMinVolFrac, real64 &phaseMaxVolFrac,
-                                         real64 &phaseRelPermMinEndPoint, real64 &phaseRelPermMaxEndPoint);
+  void validateRelativePermeabilityTable( TableFunction const & relPermTable, string const & fullConstitutiveName,
+                                          real64 & phaseMinVolFrac, real64 & phaseMaxVolFrac,
+                                          real64 & phaseRelPermMinEndPoint, real64 & phaseRelPermMaxEndPoint );
 
 };
 

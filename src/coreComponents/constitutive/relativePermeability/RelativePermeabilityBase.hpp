@@ -133,7 +133,7 @@ public:
   arrayView3d< real64 const, relperm::USD_RELPERM > phaseRelPerm() const { return m_phaseRelPerm; }
   arrayView4d< real64 const, relperm::USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
 
-  static std::tuple< integer, integer > phaseIndex(arrayView1d<integer const> const & phaseOrder);
+  static std::tuple< integer, integer > phaseIndex( arrayView1d< integer const > const & phaseOrder );
   /**
    * @brief Save converged phase volume fraction at the end of a time step (needed for hysteresis)
    * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
@@ -189,39 +189,39 @@ protected:
 
 /// for use in RelpermDriver to browse the drainage curves
 /// by setting the MaxHistoricalNonWettingSat to Snwmin and MinWettingSat to Sw
-inline std::tuple< integer, integer > RelativePermeabilityBase::phaseIndex(arrayView1d<integer const> const& phaseOrder)
-    {
-        using PT = PhaseType;
-        integer const ipWater = phaseOrder[PT::WATER];
-        integer const ipOil = phaseOrder[PT::OIL];
-        integer const ipGas = phaseOrder[PT::GAS];
+inline std::tuple< integer, integer > RelativePermeabilityBase::phaseIndex( arrayView1d< integer const > const & phaseOrder )
+{
+  using PT = PhaseType;
+  integer const ipWater = phaseOrder[PT::WATER];
+  integer const ipOil = phaseOrder[PT::OIL];
+  integer const ipGas = phaseOrder[PT::GAS];
 
-        integer ipWetting = -1, ipNonWetting = -1;
+  integer ipWetting = -1, ipNonWetting = -1;
 
-        if( ipWater >= 0 && ipOil >= 0 && ipGas >= 0 )
-        {
-            ipWetting = ipWater;
-            ipNonWetting = ipGas;
-        }
-        else if( ipWater < 0 )
-        {
-            ipWetting = ipOil;
-            ipNonWetting = ipGas;
-        }
-        else if( ipOil < 0 )
-        {
-            ipWetting = ipWater;
-            ipNonWetting = ipGas;
-        }
-        else if( ipGas < 0 )
-        {
-            ipWetting = ipWater;
-            ipNonWetting = ipOil;
-        }
+  if( ipWater >= 0 && ipOil >= 0 && ipGas >= 0 )
+  {
+    ipWetting = ipWater;
+    ipNonWetting = ipGas;
+  }
+  else if( ipWater < 0 )
+  {
+    ipWetting = ipOil;
+    ipNonWetting = ipGas;
+  }
+  else if( ipOil < 0 )
+  {
+    ipWetting = ipWater;
+    ipNonWetting = ipGas;
+  }
+  else if( ipGas < 0 )
+  {
+    ipWetting = ipWater;
+    ipNonWetting = ipOil;
+  }
 
-        //maybe a bit too pythonic
-        return std::make_tuple( ipWetting, ipNonWetting );
-    }
+  //maybe a bit too pythonic
+  return std::make_tuple( ipWetting, ipNonWetting );
+}
 
 
 

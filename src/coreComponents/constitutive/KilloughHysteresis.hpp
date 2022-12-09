@@ -52,8 +52,6 @@ public:
     };
   };
 
-
-  //move to private ?
   struct HysteresisCurve_t
   {
     real64 oppositeBoundSat = -1.;
@@ -66,15 +64,15 @@ public:
 
     HysteresisCurve_t() = default;
 
-    HysteresisCurve_t( std::pair<real64,real64> const & opp, std::pair<real64,real64> const & imbE, std::pair<real64,real64> const & drainE )
+    HysteresisCurve_t( std::pair< real64, real64 > const & opp, std::pair< real64, real64 > const & imbE, std::pair< real64, real64 > const & drainE )
     {
-        setPoints(opp, imbE, drainE);
+      setPoints( opp, imbE, drainE );
     }
 
-    void setPoints( std::pair<real64,real64> const & opp, std::pair<real64,real64> const & imbE, std::pair<real64,real64> const & drainE )
+    void setPoints( std::pair< real64, real64 > const & opp, std::pair< real64, real64 > const & imbE, std::pair< real64, real64 > const & drainE )
     {
-          oppositeBoundSat = opp.first; imbibitionExtremaSat = imbE.first; drainageExtremaSat = drainE.first;
-          oppositeBoundValue = opp.second; imbibitionExtremaValue = imbE.second; drainageExtremaValue = drainE.second;
+      oppositeBoundSat = opp.first; imbibitionExtremaSat = imbE.first; drainageExtremaSat = drainE.first;
+      oppositeBoundValue = opp.second; imbibitionExtremaValue = imbE.second; drainageExtremaValue = drainE.second;
     }
 
     bool isWetting() const
@@ -88,96 +86,9 @@ public:
 
   };
 
-  //temporary interface functions
-  static array1d< real64 > toDrainagePhaseMinVolFraction( HysteresisCurve_t const & c1, HysteresisCurve_t const & c2 )
-  {
-    array1d< real64 > ret;
-    ret.resize( 2 );
-
-    if( c1.isWetting() && !c2.isWetting())
-    {
-      ret[0] = c1.oppositeBoundSat;
-      ret[1] = c2.drainageExtremaSat;
-    }
-    else if( !c1.isWetting() && c2.isWetting() )
-    {
-      return toDrainagePhaseMinVolFraction( c2, c1 );
-    }
-    else
-    {
-      GEOSX_THROW( "not the good type", InputError );
-    }
-
-    return ret;
-  }
-
-  static array1d< real64 > toDrainagePhaseMaxVolFraction( HysteresisCurve_t const & c1, HysteresisCurve_t const & c2 )
-  {
-    array1d< real64 > ret;
-    ret.resize( 2 );
-
-    if( c1.isWetting() && !c2.isWetting())
-    {
-      ret[0] = c1.drainageExtremaSat;
-      ret[1] = c2.oppositeBoundSat;
-    }
-    else if( !c1.isWetting() && c2.isWetting() )
-    {
-      return toDrainagePhaseMinVolFraction( c2, c1 );
-    }
-    else
-    {
-      GEOSX_THROW( "not the good type", InputError );
-    }
-
-    return ret;
-  }
-
-  static array1d< real64 > toImbibitionPhaseMinVolFraction( HysteresisCurve_t const & c1, HysteresisCurve_t const & c2 )
-  {
-    array1d< real64 > ret;
-    ret.resize( 2 );
-
-    if( c1.isWetting() && !c2.isWetting())
-    {
-      ret[0] = c1.oppositeBoundSat;
-      ret[1] = c2.imbibitionExtremaSat;
-    }
-    else if( !c1.isWetting() && c2.isWetting() )
-    {
-      return toDrainagePhaseMinVolFraction( c2, c1 );
-    }
-    else
-    {
-      GEOSX_THROW( "not the good type", InputError );
-    }
-
-    return ret;
-  }
-
-  static array1d< real64 > toImbibitionPhaseMaxVolFraction( HysteresisCurve_t const & c1, HysteresisCurve_t const & c2 )
-  {
-    array1d< real64 > ret;
-    ret.resize( 2 );
-
-    if( c1.isWetting() && !c2.isWetting())
-    {
-      ret[0] = c1.imbibitionExtremaSat;
-      ret[1] = c2.oppositeBoundSat;
-    }
-    else if( !c1.isWetting() && c2.isWetting() )
-    {
-      return toDrainagePhaseMinVolFraction( c2, c1 );
-    }
-    else
-    {
-      GEOSX_THROW( "not the good type", InputError );
-    }
-
-    return ret;
-  }
-
   KilloughHysteresis( std::string const & name, Group * const parent );
+
+  void setRelPermParameters( real64 const & jerauldA, real64 const & jerauldB, real64 const & relpermCurv );
 
   static std::string catalogName() { return "KilloughHysteresis"; }
 
@@ -187,8 +98,8 @@ public:
 
 //  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
-//  GEOSX_HOST_DEVICE
-//  void computeLandCoefficient();
+  GEOSX_HOST_DEVICE
+  void computeLandCoefficient( HysteresisCurve_t const & hcruve, real64 & landParam );
 
 
   class KernelKilloughHysteresisBase
@@ -214,28 +125,23 @@ public:
      * @param[in] imbibitionMaxPhaseVolFraction imbibition maximum volume fraction for the wetting and non-wetting phase
      * @param[out] phaseTrappedVolFrac trapped saturation for each phase
      */
-    //TODO refactor end point and min as a struct _RelpermData_
-    KernelKilloughHysteresisBase( real64 const & jerauldParam_a,
-                                  real64 const & jerauldParam_b,
-                                  real64 const & killoughCruvParam,
-                                  real64 const & killoughCruvPcParam,
-                                  arrayView1d< real64 const > const & landParam,
-                                  arrayView1d< real64 const > const & drainageMinPhaseVolFraction,
-                                  arrayView1d< real64 const > const & imbibitionMinPhaseVolFraction,
-                                  arrayView1d< real64 const > const & drainageRelPermEndPoint,
-                                  arrayView1d< real64 const > const & imbibitionRelPermEndPoint,
-                                  arrayView1d< real64 const > const & drainageMaxPhaseVolFraction,
-                                  arrayView1d< real64 const > const & imbibitionMaxPhaseVolFraction,
-                                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrapppedVolFrac );
+
 
     KernelKilloughHysteresisBase( arrayView1d< real64 const > const & landParam,
-                                  real64 const & killoughCurvaturePCParam,
-                                  HysteresisCurve_t const & wettingCurve,
-                                  HysteresisCurve_t const & nonWettingCurve,
+                                  real64 const & jerauldParamA,
+                                  real64 const & jerauldParamB,
+                                  real64 const & killoughCurvatureParam,
                                   arrayView3d< real64, cappres::USD_CAPPRES > const & phaseTrappedVolFrac );
 
 
+    /// @cond DO_NOT_DOCUMENT
+    /// We need these SMFs to enable array1d< KernelWrapper > and avoid
+    /// host-device errors with CUDA. Otherwise rule of 0 would be fine.
+
     KernelKilloughHysteresisBase() = default;
+    KernelKilloughHysteresisBase( KernelKilloughHysteresisBase const & ) = default;
+    KernelKilloughHysteresisBase( KernelKilloughHysteresisBase && ) = default;
+    KernelKilloughHysteresisBase & operator=( KernelKilloughHysteresisBase const & ) = default;
 
     /**
      * @brief Function computing the trapped critical phase volume fraction (Sgcrt)
@@ -253,10 +159,10 @@ public:
                                                  real64 const & landParam,
                                                  real64 & Scrt ) const;
 
+
     real64 getJerauldParamA() const;
     real64 getJerauldParamB() const;
     real64 getCurvatureParam() const;
-    real64 getCurvatureParamPc() const;
 
 private:
 //from overnested
@@ -265,46 +171,15 @@ private:
     /// Parameter b introduced by Jerauld in the Land model
     real64 m_jerauldParam_b;
 
-    real64 m_killoughCurvatureParam;
-
-    real64 m_killoughCurvatureParamCapPres;
+    real64 m_killoughCurvatureParamRelPerm;
 
     //from main Relperm Class
     // Trapping parameter from the Land model (typically called C)
     arrayView1d< real64 const > m_landParam;
-    /// Minimum volume fraction for each phase in drainage (deduced from the drainage table)
-    arrayView1d< real64 const > m_drainagePhaseMinVolFraction;
-
-    /// Minimum volume fraction for each phase in imbibition (deduced from the imbibition table)
-    arrayView1d< real64 const > m_imbibitionPhaseMinVolFraction;
-
-    /// Relperm endpoint for each phase in drainage (deduced from the drainage table)
-    arrayView1d< real64 const > m_drainagePhaseRelPermEndPoint;
-
-    /// Relperm endpoint for each phase in imbibition (deduced from the imbibition table)
-    arrayView1d< real64 const > m_imbibitionPhaseRelPermEndPoint;
-
-    /// Maximum volume fraction for each phase
-    arrayView1d< real64 const > m_drainagePhaseMaxVolFraction;
-
-    /// Maximum volume fraction for each phase
-    arrayView1d< real64 const > m_imbibitionPhaseMaxVolFraction;
-
 
   };
 
   KernelKilloughHysteresisBase createKernelWrapper( arrayView1d< real64 const > const & landParam,
-                                                    arrayView1d< real64 const > const & drainageMinPhaseVolFraction,
-                                                    arrayView1d< real64 const > const & imbibitionMinPhaseVolFraction,
-                                                    arrayView1d< real64 const > const & drainageRelPermEndPoint,
-                                                    arrayView1d< real64 const > const & imbibitionRelPermEndPoint,
-                                                    arrayView1d< real64 const > const & drainageMaxPhaseVolFraction,
-                                                    arrayView1d< real64 const > const & imbibitionMaxPhaseVolFraction,
-                                                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrapppedVolFrac ) const;
-
-  KernelKilloughHysteresisBase createKernelWrapper( arrayView1d< real64 const > const & landParam,
-                                                    HysteresisCurve_t const & wettingCurve,
-                                                    HysteresisCurve_t const & nonWettingCurve,
                                                     arrayView3d< real64, cappres::USD_CAPPRES > const & phaseTrappedVolFrac ) const;
 
 
@@ -315,7 +190,8 @@ private:
     static constexpr char const * jerauldParameterBString() { return "jerauldParameterB"; }
 
     static constexpr char const * killoughCurvatureParameterString() { return "killoughCurvatureParameter"; }
-    static constexpr char const * killoughCurvatureCapPresParameterString() { return "killoughCurvatureCapPresParameter"; }
+    static constexpr char const * killoughCurvatureCapPresParameterString() { return "killoughCurvatureCapPresParameter";}
+
   };
 
 private:
@@ -328,8 +204,6 @@ private:
 
   /// Curvature parameter introduced for wetting phase hysteresis in Killough
   real64 m_killoughCurvatureParamRelPerm;
-  real64 m_killoughCurvatureParamCapPres;
-
 
 };
 

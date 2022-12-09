@@ -125,7 +125,6 @@ void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group &
 
 
 
-
 } // namespace constitutive
 
 } // namespace geosx
