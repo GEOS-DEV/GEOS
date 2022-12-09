@@ -27,7 +27,6 @@
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
-#include "MPMSolverBaseFields.hpp"
 
 namespace geosx
 {

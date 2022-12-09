@@ -104,18 +104,23 @@ public:
   /**
    * @brief This function modifies m_particleRVectors using the particle deformation gradient. Used by solvers.
    * @param p the local particle index
+   * @param F the particle deformation gradient
+   * @param intialRVectors the particle's initial R-Vectors
    */
-  void computeRVectors( int const p );
+  void computeRVectors( int const p,
+                        arraySlice2d< real64 > const F,
+                        arraySlice2d< real64 > const initialRVectors );
 
   /**
    * @brief This function returns a matrix of r-vectors based on the current particle deformation gradient. Used for plotting.
-   * @param p the local particle index
+   * @param F the particle deformation gradient
+   * @param intialRVectors the particle's initial R-Vectors
    * @return The matrix of current r-vectors
    */
-  array2d< real64 > computeRVectorsTemp( int const p ) const;       
+  array2d< real64 > computeRVectorsTemp( arraySlice2d< real64 > const F,
+                                         arraySlice2d< real64 > const initialRVectors ) const;  
 
-  void cpdiDomainScaling( int p,
-                          real64 lCrit,
+  void cpdiDomainScaling( real64 lCrit,
                           int m_planeStrain );
 
   void getAllWeights( int const p,

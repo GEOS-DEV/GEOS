@@ -144,6 +144,12 @@ public:
   virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) = 0;
 
   /**
+   * @brief Calls T::erase(erasedIndex)
+   * @param[in] erasedIndex index to erase
+   */
+  virtual void erase( localIndex const erasedIndex ) = 0;
+
+  /**
    * @brief Calls T::move(space, touch)
    * @param[in] space A CHAI execution space to move the data into
    * @param[in] touch whether to register a touch in target space

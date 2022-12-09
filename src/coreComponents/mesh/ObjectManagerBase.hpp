@@ -425,6 +425,12 @@ public:
   void copyObject( localIndex const source, localIndex const destination );
 
   /**
+   * @brief Erase object from this object manager
+   * @param erasedIndex The local index of the object to be erased.
+   */
+  void eraseObject( localIndex const erasedIndex );
+
+  /**
    * @brief Computes the maximum global index allong all the MPI ranks.
    */
   virtual void setMaxGlobalIndex();
