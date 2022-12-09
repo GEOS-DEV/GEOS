@@ -32,13 +32,77 @@ namespace fields
 namespace mpm
 {
 
+DECLARE_FIELD( isBad,
+               "isBad",
+               array1d< int >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "An array that remembers particles that should be deleted at the end of the time step." );
+
 DECLARE_FIELD( particleMass,
                "particleMass",
                array1d< real64 >,
                0,
                LEVEL_1,
                WRITE_AND_READ,
-               "ParticleMass" );
+               "An array that stores particle masses." );
+
+DECLARE_FIELD( particleInitialVolume,
+               "particleInitialVolume",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "ParticleInitialVolume" );
+
+DECLARE_FIELD( particleInitialRVectors,
+               "particleInitialRVectors",
+               array3d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "ParticleInitialRVectors" );
+
+DECLARE_FIELD( particleDeformationGradient,
+               "particleDeformationGradient",
+               array3d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "ParticleDeformationGradient" );
+
+DECLARE_FIELD( particleStress,
+               "particleStress",
+               array2d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that holds particle stresses in Voigt notation." );
+
+DECLARE_FIELD( particleDensity,
+               "particleDensity",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that holds particle densities." );
+
+DECLARE_FIELD( particleDamage,
+               "particleDamage",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that holds particle damage values." );
+
+DECLARE_FIELD( particleDamageGradient,
+               "particleDamageGradient",
+               array2d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that holds particle damage gradients as calculated with an SPH kernel." );               
 
 }
 

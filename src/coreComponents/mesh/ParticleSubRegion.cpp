@@ -84,12 +84,8 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   m_particleGroup = particleBlock.getParticleGroup();
   m_particleCenter = particleBlock.getParticleCenter();
   m_particleVelocity = particleBlock.getParticleVelocity();
-  m_particleInitialVolume = particleBlock.getParticleInitialVolume();
-  m_particleVolume = m_particleInitialVolume;
-  //m_particleDeformationGradient.resize(particleBlock.size(),3,3); // handled by ParticleSubRegionBase constructor?
-  m_particleInitialRVectors = particleBlock.getParticleInitialRVectors();
-  m_particleRVectors = m_particleInitialRVectors;
-  //m_particleMass.resize(particleBlock.size()); // handled by ParticleSubRegionBase constructor?
+  m_particleVolume = particleBlock.getParticleVolume();
+  m_particleRVectors = particleBlock.getParticleRVectors();
   m_hasRVectors = particleBlock.hasRVectors();
 
 
@@ -181,25 +177,25 @@ void ParticleSubRegion::flagOutOfRangeParticles( std::array< real64, 3 > const &
   }
 }
 
-void ParticleSubRegion::computeRVectors( int const p )
+void ParticleSubRegion::computeRVectors( int const p,
+                                         arraySlice2d< real64 > const F,
+                                         arraySlice2d< real64 > const initialRVectors )
 {
-  arraySlice2d< real64 const > const p_F = m_particleDeformationGradient[p];
   if(m_hasRVectors)
   {
     for(int i=0; i<3; i++)
     {
       for(int j=0; j<3; j++)
       {
-        m_particleRVectors[p][i][j] = p_F[j][0]*m_particleInitialRVectors[p][i][0] + p_F[j][1]*m_particleInitialRVectors[p][i][1] + p_F[j][2]*m_particleInitialRVectors[p][i][2];
+        m_particleRVectors[p][i][j] = F[j][0]*initialRVectors[i][0] + F[j][1]*initialRVectors[i][1] + F[j][2]*initialRVectors[i][2];
       }
     }
   }
 }
 
-array2d< real64 > ParticleSubRegion::computeRVectorsTemp( int const p ) const
+array2d< real64 > ParticleSubRegion::computeRVectorsTemp( arraySlice2d< real64 > const F,
+                                                          arraySlice2d< real64 > const initialRVectors ) const
 {
-  arraySlice2d< real64 const > const p_F = m_particleDeformationGradient[p];
-
   array2d< real64 > rVectors;
   rVectors.resize( 3, 3 );
 
@@ -207,19 +203,18 @@ array2d< real64 > ParticleSubRegion::computeRVectorsTemp( int const p ) const
   {
     for(int j=0; j<3; j++)
     {
-      rVectors[i][j] = p_F[j][0]*m_particleInitialRVectors[p][i][0] + p_F[j][1]*m_particleInitialRVectors[p][i][1] + p_F[j][2]*m_particleInitialRVectors[p][i][2];
+      rVectors[i][j] = F[j][0]*initialRVectors[i][0] + F[j][1]*initialRVectors[i][1] + F[j][2]*initialRVectors[i][2];
     }
   }
 
   return rVectors;
 }
 
-void ParticleSubRegion::cpdiDomainScaling( int p,
-                                           real64 lCrit,
+void ParticleSubRegion::cpdiDomainScaling( real64 lCrit,
                                            int m_planeStrain )
 {
-//  for( int p=0; p<this->size(); p++ )
-//  {
+ for( int p=0; p<this->size(); p++ )
+ {
     arraySlice1d< real64 > r1 = m_particleRVectors[p][0];
     arraySlice1d< real64 > r2 = m_particleRVectors[p][1];
     arraySlice1d< real64 > r3 = m_particleRVectors[p][2];
@@ -315,7 +310,7 @@ void ParticleSubRegion::cpdiDomainScaling( int p,
         LvArray::tensorOps::scaledAdd< 3 >( r3, l[3], 0.25 );
       }
     }
-//  }
+ }
 }
 
 void ParticleSubRegion::getAllWeights( int const p,
