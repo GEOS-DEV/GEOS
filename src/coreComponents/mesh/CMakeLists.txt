@@ -121,14 +121,6 @@ if( ENABLE_CUDA_NVTOOLSEXT )
   set( dependencyList ${dependencyList} CUDA::nvToolsExt )
 endif()
 
-if( ENABLE_PAMELA )
-    message( STATUS "Adding PAMELAMeshGenerator sources and headers" )
-    list( APPEND mesh_headers generators/PAMELAMeshGenerator.hpp )
-    list( APPEND mesh_sources generators/PAMELAMeshGenerator.cpp )
-    add_subdirectory( PAMELA )
-    list( APPEND dependencyList PAMELA )
-endif()
-
 if( ENABLE_VTK )
     message(STATUS "Adding VTKMeshGenerator sources and headers")
     set( mesh_headers ${mesh_headers}
@@ -171,5 +163,4 @@ endif()
 
 add_subdirectory( unitTests )
 
-geosx_add_code_checks( PREFIX mesh
-                       EXCLUDES PAMELA )
+geosx_add_code_checks( PREFIX mesh )

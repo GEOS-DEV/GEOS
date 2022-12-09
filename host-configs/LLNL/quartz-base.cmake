@@ -26,7 +26,6 @@ set(PAPI_PREFIX /usr/tce/packages/papi/papi-5.4.3 CACHE PATH "")
 set(ENABLE_OPENMP ON CACHE BOOL "")
 
 # GEOSX specific options
-set(ENABLE_PAMELA ON CACHE BOOL "")
 set(ENABLE_PVTPackage ON CACHE BOOL "")
 set(ENABLE_PETSC OFF CACHE BOOL "Enables PETSc." FORCE)
 

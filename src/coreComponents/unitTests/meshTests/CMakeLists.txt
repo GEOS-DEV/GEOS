@@ -13,12 +13,6 @@ set( gtest_geosx_mpi_tests
      testNeighborCommunicator.cpp
      )
 
-if( ENABLE_PAMELA )
-  list( APPEND gtest_geosx_tests
-        testPAMELAImport.cpp
-        )
-endif()
-
 if( ENABLE_VTK )
   list( APPEND gtest_geosx_tests
         testVTKImport.cpp
@@ -28,7 +22,7 @@ if( ENABLE_VTK )
         )
 endif()
 
-if( ENABLE_VTK OR ENABLE_PAMELA )
+if( ENABLE_VTK )
   set( TEST_MESH_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
   configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshDirName.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshDirName.hpp )
 endif()

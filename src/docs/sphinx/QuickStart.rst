@@ -89,7 +89,7 @@ The main repository of interest is obviously GEOSX itself: `GEOSX <https://githu
 
 We also rely on two types of dependencies: first-party and third-party.
 First-party dependencies are projects directly associated with the GEOSX effort, but kept in separate repositories because they form stand-alone tools.
-For example, there is a geologic mesh handling package called `PAMELA <https://github.com/GEOSX/PAMELA>`_ and an equation-of-state package called `PVTPackage <https://github.com/GEOSX/PVTPackage>`_.
+For example, there is an equation-of-state package called `PVTPackage <https://github.com/GEOSX/PVTPackage>`_ or the streamlined CMake-based foundation  `BTL <https://github.com/LLNL/blt`_.
 These packages are handled as `Git Submodules <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_, which provides a transparent way of coordinating multiple code development projects.
 Most users will never have to worry that these modules are in fact separate projects from GEOSX.
 
@@ -163,7 +163,7 @@ First, using a terminal, create the ``codes`` directory wherever you like.
   cd codes
 
 Inside this directory, we can clone the GEOSX repository.
-We will also use some Git commands to initialize and download the submodules (e.g. PAMELA).
+We will also use some Git commands to initialize and download the submodules (e.g. ``LvArray``).
 Note that most users will not have access to our integrated tests repository, and so we "deinit" (deactivate) this submodule.
 Developers who will be working with the integratedTests repository should skip this line.
 
@@ -192,7 +192,6 @@ This submodule is not required for building GEOSX. If you see an error message h
    git submodule update --init src/cmake/blt
    git submodule update --init src/coreComponents/LvArray
    git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
-   git submodule update --init src/coreComponents/mesh/PAMELA
    git submodule update --init src/coreComponents/constitutive/PVTPackage
    cd ..
 
@@ -280,8 +279,7 @@ A typical one may look like:
   set(ENABLE_CUDA OFF CACHE BOOL "" FORCE)
   set(ENABLE_OPENMP OFF CACHE BOOL "" FORCE)
 
-  # enable PAMELA and PVTPackage
-  set(ENABLE_PAMELA ON CACHE BOOL "" FORCE)
+  # enable PVTPackage
   set(ENABLE_PVTPackage ON CACHE BOOL "" FORCE)
 
   # enable tests
@@ -294,7 +292,7 @@ A typical one may look like:
 
 The various ``set()`` commands are used to set environment variables that control the build.
 You will see in the above example that we set the C++ compiler to ``/user/bin/clang++`` and so forth.
-We also disable CUDA and OpenMP, but enable PAMELA and PVTPackage.
+We also disable CUDA and OpenMP, but enable PVTPackage.
 The final line is related to our unit test suite.  See the :ref:`BuildGuide` for more details on available options.
 
 .. note::
