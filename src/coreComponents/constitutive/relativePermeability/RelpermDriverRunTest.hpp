@@ -78,7 +78,7 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
   }
 
 
-  arrayView3d< real64 const, relperm::USD_RELPERM > const saturation = saturationValues.toViewConst();
+  arrayView3d< real64 const, relperm::USD_RELPERM > saturation = saturationValues.toView();
 
   auto const & phaseHasHysteresis = relperm.template getReference< array1d< integer > >( TableRelativePermeabilityHysteresis::viewKeyStruct::phaseHasHysteresisString());
 
@@ -218,7 +218,7 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
   }
 
-  arrayView3d< real64 const, relperm::USD_RELPERM > const saturation = saturationValues.toViewConst();
+  arrayView3d< real64 const, relperm::USD_RELPERM > saturation = saturationValues.toView();
 
   // perform relperm update using table (Swet,Snonwet) and save resulting total density, etc.
   // note: column indexing should be kept consistent with output file header below.
