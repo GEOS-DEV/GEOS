@@ -1078,6 +1078,14 @@ void EpetraMatrix::write( string const & filename,
   }
 }
 
+void EpetraMatrix::read( string const & filename,
+                         MPI_Comm const & comm )
+{
+  GEOSX_UNUSED_VAR( filename );
+  GEOSX_UNUSED_VAR( comm );
+  GEOSX_ERROR( "Method not implementer yet" );
+}
+
 void EpetraMatrix::multiply( bool const transA,
                              EpetraMatrix const & B,
                              bool const transB,

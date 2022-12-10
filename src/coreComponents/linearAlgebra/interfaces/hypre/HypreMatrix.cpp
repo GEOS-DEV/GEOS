@@ -1272,7 +1272,7 @@ void HypreMatrix::write( string const & filename,
   {
     case LAIOutputFormat::NATIVE_ASCII:
     {
-      GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixPrintIJ( m_parcsr_mat, 1, 1, filename.c_str() ) );
+      GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixPrintIJ( m_parcsr_mat, 0, 0, filename.c_str() ) );
       break;
     }
     case LAIOutputFormat::MATRIX_MARKET:
@@ -1327,6 +1327,15 @@ void HypreMatrix::write( string const & filename,
       GEOSX_ERROR( "Unsupported matrix output format" );
     }
   }
+}
+
+void HypreMatrix::read( string const & filename,
+                        MPI_Comm const & comm )
+{
+  reset();
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixRead( filename.c_str(), comm, HYPRE_PARCSR, &m_ij_mat ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetObject( m_ij_mat, (void * *) &m_parcsr_mat ) );
+  m_assembled = true;
 }
 
 real64 HypreMatrix::norm1() const

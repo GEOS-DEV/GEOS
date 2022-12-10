@@ -1287,4 +1287,13 @@ void PetscMatrix::write( string const & filename,
   GEOSX_LAI_CHECK_ERROR( PetscViewerDestroy( &viewer ) );
 }
 
+void PetscMatrix::read( string const & filename,
+                        MPI_Comm const & comm )
+{
+  GEOSX_UNUSED_VAR( filename );
+  GEOSX_UNUSED_VAR( comm );
+  GEOSX_ERROR( "Method not implementer yet" );
+}
+
+
 } // end geosx namespace

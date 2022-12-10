@@ -370,6 +370,9 @@ public:
   virtual void write( string const & filename,
                       LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const override;
 
+  virtual void read( string const & filename,
+                     MPI_Comm const & comm ) override;
+
   ///@}
 
   /**

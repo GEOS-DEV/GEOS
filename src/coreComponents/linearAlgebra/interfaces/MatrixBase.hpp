@@ -938,6 +938,15 @@ protected:
   virtual void write( string const & filename,
                       LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const = 0;
 
+  /**
+   * @brief Read the matrix from filename.
+   * @param filename name of the input file
+   * @param comm MPI communicator.
+   *
+   */
+  virtual void read( string const & filename,
+                     MPI_Comm const & comm ) = 0;
+
   ///@}
 
   /**
