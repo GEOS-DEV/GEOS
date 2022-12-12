@@ -20,7 +20,6 @@
 #include <camp/camp.hpp>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
 
 #include "common/fixedSizeDeque.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -228,7 +227,6 @@ private:
   /// boolean to keep m_worker alive.
   bool m_continue = true;
 
-
 public:
   /**
    * A LIFO storage will store numberOfBuffersToStoreDevice buffer on
@@ -252,6 +250,9 @@ public:
     m_popFromDeviceEvents( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 ),
     m_popFromHostFutures( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers )
   {
+#ifndef GEOSX_USE_CUDA
+    GEOSX_ERROR_IF( m_deviceDeque.capacity() != 0, "Cannot use device storage in LIFO without CUDA support" );
+#endif
     m_worker[0] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 0 );
     m_worker[1] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 1 );
   }
@@ -558,20 +559,19 @@ private:
 
     std::ofstream outfile;
 
-    int const rank = MpiWrapper::initialized()?MpiWrapper::commRank( MPI_COMM_GEOSX ):0;
-    std::string fileName = GEOSX_FMT( "{}_{:08}_{:04}.dat", m_name, id, rank );
+    std::string fileName = GEOSX_FMT( "{}_{:08}.dat", m_name, id );
     int lastDirSeparator = fileName.find_last_of( "/\\" );
     std::string dirName = fileName.substr( 0, lastDirSeparator );
     if( string::npos != (size_t)lastDirSeparator && !dirExists( dirName ))
       makeDirsForPath( dirName );
-    {
-      LIFO_MARK_SCOPE( ofstreamWrite );
-      const int fileDesc = open( fileName.c_str(), O_CREAT | O_WRONLY | O_DIRECT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH );
-      GEOSX_ERROR_IF( fileDesc == -1,
-                      "Could not open file "<< fileName << " for writting: " << strerror( errno ) );
-      write( fileDesc, (const void *)d, m_bufferSize );
-      close( fileDesc );
-    }
+
+    std::ofstream wf( fileName, std::ios::out | std::ios::binary );
+    GEOSX_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
+                    "Could not open file "<< fileName << " for writting" );
+    wf.write( (char *)d, m_bufferSize );
+    GEOSX_ERROR_IF( wf.bad() || wf.fail(),
+                    "An error occured while writting "<< fileName );
+    wf.close();
   }
 
   /**
@@ -583,13 +583,12 @@ private:
   void readOnDisk( T * d, int id )
   {
     LIFO_MARK_FUNCTION;
-    int const rank = MpiWrapper::initialized()?MpiWrapper::commRank( MPI_COMM_GEOSX ):0;
-    std::string fileName = GEOSX_FMT( "{}_{:08}_{:04}.dat", m_name, id, rank );
-    const int fileDesc = open( fileName.c_str(), O_RDONLY | O_DIRECT );
-    GEOSX_ERROR_IF( fileDesc == -1,
-                    "Could not open file "<< fileName << " for reading: " << strerror( errno ) );
-    read( fileDesc, (void *)d, m_bufferSize );
-    close( fileDesc );
+    std::string fileName = GEOSX_FMT( "{}_{:08}.dat", m_name, id );
+    std::ifstream wf( fileName, std::ios::in | std::ios::binary );
+    GEOSX_ERROR_IF( !wf,
+                    "Could not open file "<< fileName << " for reading" );
+    wf.read( (char *)d, m_bufferSize );
+    wf.close();
     remove( fileName.c_str() );
   }
 

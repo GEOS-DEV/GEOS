@@ -15,8 +15,8 @@ endif()
 
 set( dependencyList common hdf5 gtest )
 
+list( APPEND gtest_geosx_tests testLifoStorage.cpp )
 if( ENABLE_CUDA )
-  list( APPEND gtest_geosx_tests testLifoStorage.cpp )
   set( dependencyList ${dependencyList} cuda )
 endif()
 

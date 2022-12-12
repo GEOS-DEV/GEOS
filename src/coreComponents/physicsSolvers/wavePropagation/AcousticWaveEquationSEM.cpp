@@ -190,7 +190,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
     arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-    std::string lifoPrefix = GEOSX_FMT( "lifo/pdt2_shot{:06}_rank{:04}", m_shotIndex, rank );
+    std::string lifoPrefix = GEOSX_FMT( "lifo/rank_{:05}/pdt2_shot{:06}", rank, m_shotIndex );
     m_lifo = std::unique_ptr< lifoStorage< real32 > >( new lifoStorage< real32 >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize ) );
 
   } );
@@ -946,6 +946,17 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
   } );
 
 }
+/**
+ * Checks if a directory exists.
+ *
+ * @param dirName Directory name to check existence of.
+ * @return true is dirName exists and is a directory.
+ */
+bool dirExists( const std::string & dirName )
+{
+  struct stat buffer;
+  return stat( dirName.c_str(), &buffer ) == 0;
+}
 
 real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                      real64 const & dt,
@@ -991,15 +1002,22 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
         GEOSX_MARK_SCOPE ( DirectWrite );
         p_dt2.move( MemorySpace::host, false );
         int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-        std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
-        const int fileDesc = open( fileName.c_str(), O_CREAT | O_WRONLY | O_DIRECT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH );
+        std::string fileName = GEOSX_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
+        int lastDirSeparator = fileName.find_last_of( "/\\" );
+        std::string dirName = fileName.substr( 0, lastDirSeparator );
+        if( string::npos != (size_t)lastDirSeparator && !dirExists( dirName ))
+          makeDirsForPath( dirName );
+
+        //std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
+        //const int fileDesc = open( fileName.c_str(), O_CREAT | O_WRONLY | O_DIRECT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP |
+        // S_IROTH | S_IWOTH );
 
         std::ofstream wf( fileName, std::ios::out | std::ios::binary );
-        GEOSX_THROW_IF( fileDesc == -1,
+        GEOSX_THROW_IF( !wf,
                         "Could not open file "<< fileName << " for writting",
                         InputError );
-        write( fileDesc, (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
-        close( fileDesc );
+        wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+        wf.close( );
         GEOSX_THROW_IF( !wf.good(),
                         "An error occured while writting "<< fileName,
                         InputError );
@@ -1053,14 +1071,19 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         GEOSX_MARK_SCOPE ( DirectRead );
 
         int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-        std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
-        const int fileDesc = open( fileName.c_str(), O_RDONLY | O_DIRECT );
-        GEOSX_ERROR_IF( fileDesc == -1,
-                        "Could not open file "<< fileName << " for reading: " << strerror( errno ) );
+        std::string fileName = GEOSX_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
+        std::ifstream wf( fileName, std::ios::in | std::ios::binary );
+        GEOSX_THROW_IF( !wf,
+                        "Could not open file "<< fileName << " for reading",
+                        InputError );
+        //std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
+        //const int fileDesc = open( fileName.c_str(), O_RDONLY | O_DIRECT );
+        //GEOSX_ERROR_IF( fileDesc == -1,
+        //                "Could not open file "<< fileName << " for reading: " << strerror( errno ) );
         // maybe better with registerTouch()
         p_dt2.move( MemorySpace::host, true );
-        read( fileDesc, (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
-        close( fileDesc );
+        wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+        wf.close( );
         remove( fileName.c_str() );
       }
       elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
