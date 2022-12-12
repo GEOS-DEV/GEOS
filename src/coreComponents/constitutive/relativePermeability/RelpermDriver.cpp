@@ -65,7 +65,7 @@ void RelpermDriver::outputResults()
   fprintf( fp, "# columns %d-%d = phase vol fractions\n", 2, 1 + m_numPhases );
   fprintf( fp, "# columns %d-%d = phase relperm\n", 2 + m_numPhases, 1 + 2 * m_numPhases );
 
-  if( ( m_numPhases == 2 && m_table.size( 2 ) > 5 ) || m_table.size( 2 ) > 7 )
+  if( ( m_numPhases == 2 && m_table.size( 1 ) > 5 ) || m_table.size( 1 ) > 7 )
   {
     fprintf( fp, "# columns %d-%d = phase relperm (hyst)\n", 1 + 2 * m_numPhases, 1 + 3 * m_numPhases );
   }
@@ -73,9 +73,9 @@ void RelpermDriver::outputResults()
 
   for( integer n = 0; n < m_table.size( 0 ); ++n )
   {
-    for( integer col = 0; col < m_table.size( 2 ); ++col )
+    for( integer col = 0; col < m_table.size( 1 ); ++col )
     {
-      fprintf( fp, "%.4e ", m_table( n, 0, col ) );
+      fprintf( fp, "%.4e ", m_table( n, col ) );
     }
     fprintf( fp, "\n" );
   }
@@ -206,11 +206,11 @@ void RelpermDriver::resizeTables()
       {
 
         integer index = ni * ( m_numSteps + 1 ) + nj;
-        m_table( index, 0, TIME ) = minSw + index * dSw;
-        m_table( index, 0, ipWater + 1 ) = minSw + nj * dSw;
-        m_table( index, 0, ipGas + 1 ) = minSnw + ni * dSw;
-        m_table( index, 0, ipOil + 1 ) =
-          1. - m_table( index, 0, ipWater + 1 ) - m_table( index, 0, ipOil + 1 );
+        m_table( index,  TIME ) = minSw + index * dSw;
+        m_table( index,  ipWater + 1 ) = minSw + nj * dSw;
+        m_table( index,  ipGas + 1 ) = minSnw + ni * dSw;
+        m_table( index,  ipOil + 1 ) =
+          1. - m_table( index, ipWater + 1 ) - m_table( index, ipOil + 1 );
       }
     }
   }
@@ -219,21 +219,21 @@ void RelpermDriver::resizeTables()
     for( integer ni = 0; ni < m_numSteps + 1; ++ni )
     {
       integer index = ni;
-      m_table( index, 0, TIME ) = minSw + index * dSw;
+      m_table( index, TIME ) = minSw + index * dSw;
       if( ipWater < 0 )
       {
-        m_table( index, 0, ipGas + 1 ) = minSnw + ni * dSw;
-        m_table( index, 0, ipOil + 1 ) = 1. - m_table( index, 0, ipGas + 1 );
+        m_table( index, ipGas + 1 ) = minSnw + ni * dSw;
+        m_table( index, ipOil + 1 ) = 1. - m_table( index, ipGas + 1 );
       }
       else if( ipGas < 0 )
       {
-        m_table( index, 0, ipWater + 1 ) = minSw + ni * dSw;
-        m_table( index, 0, ipOil + 1 ) = 1. - m_table( index, 0, ipWater + 1 );
+        m_table( index, ipWater + 1 ) = minSw + ni * dSw;
+        m_table( index, ipOil + 1 ) = 1. - m_table( index, ipWater + 1 );
       }
       else if( ipOil < 0 )
       {
-        m_table( index, 0, ipWater + 1 ) = minSw + ni * dSw;
-        m_table( index, 0, ipGas + 1 ) = 1. - m_table( index, 0, ipWater + 1 );
+        m_table( index, ipWater + 1 ) = minSw + ni * dSw;
+        m_table( index, ipGas + 1 ) = 1. - m_table( index, ipWater + 1 );
       }
     }
 
@@ -249,11 +249,11 @@ RelpermDriver::resizeTable()
 {
   if( m_numPhases > 2 )
   {
-    m_table.resize( ( m_numSteps + 1 ) * ( m_numSteps + 1 ), 1, 1 + 3 * m_numPhases );
+    m_table.resize( ( m_numSteps + 1 ) * ( m_numSteps + 1 ), 1 + 3 * m_numPhases );
   }
   else
   {
-    m_table.resize( m_numSteps + 1, 1, 1 + 3 * m_numPhases );
+    m_table.resize( m_numSteps + 1, 1 + 3 * m_numPhases );
   }
 
 }
@@ -264,11 +264,11 @@ RelpermDriver::resizeTable()
 {
   if( m_numPhases > 2 )
   {
-    m_table.resize( ( m_numSteps + 1 ) * ( m_numSteps + 1 ), 1, 1 + 2 * m_numPhases );
+    m_table.resize( ( m_numSteps + 1 ) * ( m_numSteps + 1 ), 1 + 2 * m_numPhases );
   }
   else
   {
-    m_table.resize( m_numSteps + 1, 1, 1 + 2 * m_numPhases );
+    m_table.resize( m_numSteps + 1, 1 + 2 * m_numPhases );
   }
 }
 
@@ -299,12 +299,12 @@ void RelpermDriver::compareWithBaseline()
   // and always of size 1
   for( integer row = 0; row < m_table.size( 0 ); ++row )
   {
-    for( integer col = 0; col < m_table.size( 2 ); ++col )
+    for( integer col = 0; col < m_table.size( 1 ); ++col )
     {
       GEOSX_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
       file >> value;
 
-      real64 const error = fabs( m_table[row][0][col] - value ) / ( fabs( value ) + 1 );
+      real64 const error = fabs( m_table[row][col] - value ) / ( fabs( value ) + 1 );
       GEOSX_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row + 1
                                                                                           << " (row "
                                                                                           << row + m_numColumns

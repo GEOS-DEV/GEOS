@@ -8,5 +8,5 @@
 
 namespace geosx
 {
-template void RelpermDriver::runTest< geosx::constitutive::VanGenuchtenBakerRelativePermeability >( geosx::constitutive::VanGenuchtenBakerRelativePermeability &, arrayView3d< real64 > const & );
+template void RelpermDriver::runTest< geosx::constitutive::VanGenuchtenBakerRelativePermeability >( geosx::constitutive::VanGenuchtenBakerRelativePermeability &, arrayView2d< real64 > const & );
 }
