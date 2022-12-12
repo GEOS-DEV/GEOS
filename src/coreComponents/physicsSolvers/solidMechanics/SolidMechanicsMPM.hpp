@@ -210,6 +210,7 @@ protected:
   int m_needsNeighborList;
   real64 m_neighborRadius;
   int m_binSizeMultiplier;
+  int m_useDamageAsSurfaceFlag;
 
   int m_cpdiDomainScaling;
 
@@ -321,6 +322,22 @@ private:
   real64 computeNeighborList( ParticleManager & particleManager );
 
   void optimizeBinSort( ParticleManager & particleManager );
+
+  real64 kernel( const real64 & r ); // distance from particle to query point
+
+  array1d< real64 > kernelGradient( arraySlice1d< real64 > const x, // query point
+                                    arraySlice1d< real64 > const xp, // particle location
+                                    const real64 & r ); // distance from particle to query point
+
+  real64 computeKernelField( arraySlice1d< real64 > const x,   // query point
+                             arrayView2d< real64 > const xp,   // List of neighbor particle locations.
+                             arrayView1d< real64 > const Vp,   // List of neighbor particle volumes.
+                             arrayView1d< real64 > const fp ); // scalar field values (e.g. damage) at neighbor particles
+
+  array1d< real64 > computeKernelFieldGradient( arraySlice1d< real64 > const x,   // query point
+                                                arrayView2d< real64 > const xp,   // List of neighbor particle locations.
+                                                arrayView1d< real64 > const Vp,   // List of neighbor particle volumes.
+                                                arrayView1d< real64 > const fp ); // scalar field values (e.g. damage) at neighbor particles
 
 };
 

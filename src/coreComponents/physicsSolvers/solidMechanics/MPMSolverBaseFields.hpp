@@ -88,13 +88,13 @@ DECLARE_FIELD( particleDensity,
                WRITE_AND_READ,
                "An array that holds particle densities." );
 
-DECLARE_FIELD( particleDamage,
-               "particleDamage",
-               array1d< real64 >,
-               0,
-               LEVEL_1,
-               WRITE_AND_READ,
-               "An array that holds particle damage values." );
+// DECLARE_FIELD( particleDamage,
+//                "particleDamage",
+//                array1d< real64 >,
+//                0,
+//                LEVEL_1,
+//                WRITE_AND_READ,
+//                "An array that holds particle damage values." );
 
 DECLARE_FIELD( particleDamageGradient,
                "particleDamageGradient",
@@ -102,7 +102,15 @@ DECLARE_FIELD( particleDamageGradient,
                0,
                LEVEL_1,
                WRITE_AND_READ,
-               "An array that holds particle damage gradients as calculated with an SPH kernel." );               
+               "An array that holds particle damage gradients as calculated with an SPH kernel." );           
+
+DECLARE_FIELD( particleSurfaceFlag,
+               "particleSurfaceFlag",
+               array1d< int >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that holds particle surface flags." );      
 
 }
 

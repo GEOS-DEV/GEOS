@@ -60,6 +60,8 @@ public:
 
   virtual array1d< int > getParticleGroup() const = 0;
 
+  virtual array1d< real64 > getParticleDamage() const = 0;
+
   virtual array2d< real64 > getParticleCenter() const = 0;
 
   virtual array2d< real64 > getParticleVelocity() const = 0;

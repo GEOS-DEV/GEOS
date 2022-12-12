@@ -82,6 +82,7 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   m_particleType = particleBlock.getParticleType();
   m_particleID = particleBlock.getParticleID();
   m_particleGroup = particleBlock.getParticleGroup();
+  m_particleDamage = particleBlock.getParticleDamage();
   m_particleCenter = particleBlock.getParticleCenter();
   m_particleVelocity = particleBlock.getParticleVelocity();
   m_particleVolume = particleBlock.getParticleVolume();

@@ -210,6 +210,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     array2d< real64 > particleCenter(npInBlock,3);
     array2d< real64 > particleVelocity(npInBlock,3);
     array1d< int > particleGroup(npInBlock);
+    array1d< real64 > particleDamage(npInBlock);
     array1d< real64 > particleVolume(npInBlock);
     array3d< real64 > particleRVectors(npInBlock,3,3); // TODO: Flatten the r-vector array into a 1x9 for each particle
 
@@ -234,10 +235,13 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       // Group
       particleGroup[index] = particleData[particleType][i][8];
 
+      // Damage
+      particleDamage[index] = particleData[particleType][i][9];
+
       // Volume and R-Vectors
       if(particleType == "SinglePoint")
       {
-        particleVolume[index] = particleData[particleType][i][9];
+        particleVolume[index] = particleData[particleType][i][10];
         double a = std::pow(particleVolume[index],1.0/3.0);
         particleRVectors[index][0][0] = a;
         particleRVectors[index][0][1] = 0.0;
@@ -252,15 +256,15 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       else if(particleType == "CPDI")
       {
         double x1, y1, z1, x2, y2, z2, x3, y3, z3;
-        x1 = particleData[particleType][i][9];
-        y1 = particleData[particleType][i][10];
-        z1 = particleData[particleType][i][11];
-        x2 = particleData[particleType][i][12];
-        y2 = particleData[particleType][i][13];
-        z2 = particleData[particleType][i][14];
-        x3 = particleData[particleType][i][15];
-        y3 = particleData[particleType][i][16];
-        z3 = particleData[particleType][i][17];
+        x1 = particleData[particleType][i][10];
+        y1 = particleData[particleType][i][11];
+        z1 = particleData[particleType][i][12];
+        x2 = particleData[particleType][i][13];
+        y2 = particleData[particleType][i][14];
+        z2 = particleData[particleType][i][15];
+        x3 = particleData[particleType][i][16];
+        y3 = particleData[particleType][i][17];
+        z3 = particleData[particleType][i][18];
         particleRVectors[index][0][0] = x1;
         particleRVectors[index][0][1] = y1;
         particleRVectors[index][0][2] = z1;
@@ -284,6 +288,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     particleBlock.setParticleCenter(particleCenter);
     particleBlock.setParticleVelocity(particleVelocity);
     particleBlock.setParticleGroup(particleGroup);
+    particleBlock.setParticleDamage(particleDamage);
     particleBlock.setParticleVolume(particleVolume);
     particleBlock.setParticleRVectors(particleRVectors);
   } // loop over particle blocks
