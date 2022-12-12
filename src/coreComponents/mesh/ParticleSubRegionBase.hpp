@@ -110,6 +110,19 @@ public:
   { return m_particleGroup; }
 
   /**
+   * @brief Get the damage of each particle in this subregion.
+   * @return an arrayView1d of const particle damage
+   */
+  arrayView1d< real64 const > getParticleDamage() const
+  { return m_particleDamage; }
+
+  /**
+   * @copydoc getParticleGroup() const
+   */
+  arrayView1d< real64 > getParticleDamage()
+  { return m_particleDamage; }
+
+  /**
    * @brief Get the ghost rank of each particle in this subregion.
    * @return an arrayView1d of const particle ghost ranks
    */
@@ -253,6 +266,9 @@ public:
     /// @return String key for the member level field for the particle contact group.
     static constexpr char const * particleGroupString() { return "particleGroup"; }
 
+    /// @return String key for the member level field for the particle damage.
+    static constexpr char const * particleDamageString() { return "particleDamage"; }
+
     /// @return String key for the member level field for the particle ghost rank.
     static constexpr char const * particleRankString() { return "particleRank"; }
 
@@ -310,8 +326,11 @@ protected:
   /// Member level field for the particle global ID.
   array1d< globalIndex > m_particleID;
 
-    /// Member level field for the particle contact group.
+  /// Member level field for the particle contact group.
   array1d< int > m_particleGroup;
+
+  /// Member level field for the particle damage.
+  array1d< real64 > m_particleDamage;
 
   /// Member level field for the particle center.
   array2d< real64 > m_particleCenter;

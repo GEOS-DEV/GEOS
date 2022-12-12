@@ -105,6 +105,12 @@ public:
   void setParticleGroup(array1d< int > const particleGroup)
   { m_particleGroup = particleGroup; }
 
+  array1d< real64 > getParticleDamage() const override
+  { return m_particleDamage; }
+
+  void setParticleDamage(array1d< real64 > const particleDamage)
+  { m_particleDamage = particleDamage; }
+
   array1d< real64 > getParticleVolume() const override
   { return m_particleVolume; }
 
@@ -164,6 +170,9 @@ private:
 
   /// Member level field for the particle contact group.
   array1d< int > m_particleGroup;
+
+  /// Member level field for the particle damage.
+  array1d< real64 > m_particleDamage;
 
   /// Member level field for the particle center.
   array2d< real64 > m_particleCenter;
