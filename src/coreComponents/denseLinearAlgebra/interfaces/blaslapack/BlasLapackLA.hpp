@@ -15,11 +15,11 @@
 /**
  * @file BlasLapackLA.hpp
  */
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKLA_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKLA_HPP_
+#ifndef GEOSX_DENSELINEARALGEBRA_INTERFACES_BLASLAPACK_BLASLAPACKLA_HPP_
+#define GEOSX_DENSELINEARALGEBRA_INTERFACES_BLASLAPACK_BLASLAPACKLA_HPP_
 
 #include "common/DataTypes.hpp"
-#include "linearAlgebra/common/common.hpp"
+#include "denseLinearAlgebra/common/common.hpp"
 
 #include <complex>
 
@@ -444,6 +444,25 @@ struct BlasLapackLA
                              MatColMajor< real64 > const & Ainv );
 
   /**
+   * @brief Solves the linear system ;
+   * \p Ainv  \p solution = \p rhs.
+   *
+   * @param [in]  A GEOSX array2d.
+   * @param [in]  rhs GEOSX array1d.
+   * @param [out] solution GEOSX array1d.
+   */
+  static void solveLinearSystem( MatRowMajor< real64 const > const & A,
+                                 Vec< real64 const > const & rhs,
+                                 Vec< real64 > const & solution );
+
+  /**
+   * @copydoc solveLinearSystem( MatRowMajor<real64 const> const &, Vec< real64 const > const &, Vec< real64 const > const & )
+   */
+  static void solveLinearSystem( MatColMajor< real64 const > const & A,
+                                 Vec< real64 const > const & rhs,
+                                 Vec< real64 > const & solution );
+
+  /**
    * @brief Vector copy;
    * \p Y = \p X.
    *
@@ -576,4 +595,4 @@ struct BlasLapackLA
 
 }
 
-#endif /*GEOSX_LINEARALGEBRA_BLASLAPACKLA_HPP_*/
+#endif /*GEOSX_DENSELINEARALGEBRA_BLASLAPACK_BLASLAPACKLA_HPP_*/
