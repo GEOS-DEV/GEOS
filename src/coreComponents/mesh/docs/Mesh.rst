@@ -150,28 +150,21 @@ Supported Formats
 =================
 
 GEOSX provides features to run simulations on unstructured meshes.
-It uses PAMELA_ to read the external meshes and its API to write
+It uses VTK_ to read the external meshes and its API to write
 it into the GEOSX mesh data structure.
-
-The supported mesh format are:
-
-- The GMSH_ file format (.msh v2).
-- The ECLIPSE file formats (.egrid, .grdecl)
 
 The supported mesh elements for volume elements consist of the following:
 
-- 4 nodes tetrahedra,
-- 5 nodes pyramids,
-- 6 nodes wedges,
-- 8 nodes hexahedra,
+- 4-node tetrahedra,
+- 5-node pyramids,
+- 6-node wedges,
+- 8-node hexahedra,
+- n-gonal prisms (n = 7, ..., 11).
 
 The mesh can be divided in several regions.
 These regions are intended to support different physics
 or to define different constitutive properties.
-
-- For the GMSH file format, the regions are defined using the `physical entity names`_
-  provided by GMSH.
-- For the ECLIPSE file formats, the regions have to be first defined using the ECLIPSE software.
+We usually use the ``attribute`` field is usually considered to define the regions.
 
 .. _ImportingExternalMesh:
 
@@ -189,8 +182,9 @@ The mesh block has the following syntax:
 .. code-block:: xml
 
   <Mesh>
-    <PAMELAMesh name="MyMeshName"
-                file="/path/to/the/mesh/file.msh"/>
+    <VTKMesh
+      name="MyMeshName"
+      file="/path/to/the/mesh/file.vtk"/>
   </Mesh>
 
 We advise users to use absolute path to the mesh file.
@@ -200,7 +194,9 @@ or to define different constitutive properties.
 An ``ElementRegion`` is defined as a set of ``CellBlocks``.
 A ``CellBlock`` is an ensemble of elements with the same element geometry.
 
-.. image:: mesh.svg
+.. figure:: mesh_multi.png
+   :align: center
+   :width: 500
 
 In the example presented above, the mesh is is composed of two regions (*Top* and *Bot*).
 Each region contains 3 ``CellBlocks``.
@@ -210,8 +206,14 @@ The ``ElementRegions`` are defined as below :
 .. code-block:: xml
 
   <ElementRegions>
-    <ElementRegion name="Top" cellBlocks="Top_HEX Top_WEDGE Top_TETRA" materialList="water rock"/>
-    <ElementRegion name="Bot" cellBlocks="Bot_HEX Bot_WEDGE Bot_TETRA" materialList="water rock"/>
+    <ElementRegion
+      name="Top"
+      cellBlocks="Top_hexahedra Top_wedges Top_tetrahedra"
+      materialList="water rock"/>
+    <ElementRegion
+      name="Bot"
+      cellBlocks="Bot_hexahedra Bot_wedges Bot_tetrahedra"
+      materialList="water rock"/>
   </ElementRegions>
 
 You have to use the following syntax to declare your ``CellBlocks`` :
@@ -222,32 +224,27 @@ You have to use the following syntax to declare your ``CellBlocks`` :
 
 The keywords for the element types are :
 
-- TETRA
-- WEDGE
-- PYR
-- HEX
+- hexahedra
+- tetrahedra
+- wedges
+- pyramids
+- pentagonalPrisms
+- hexagonalPrisms
+- heptagonalPrisms
+- octagonalPrisms
+- nonagonalPrisms
+- decagonalPrisms
+- hendecagonalPrisms
+- polyhedra
 
-If the regions are not named in the file (it happens with all the eclipse grids and several GMSH mesh
-files), the name of the region is ``DEFAULT``, e.g:
-
-.. code-block:: xml
-
-  <ElementRegions>
-    <ElementRegion name="Default" cellBlocks="DEFAULT_HEX" materialList="water rock"/>
-  </ElementRegions>
-
-Using the gmsh file format, regions can be easily named
-as a preprocessed step using the gmsh software of directly editing the file following the syntax
-defined in the documentation_.
-
-An example of a gmsh file with all the physical regions defined is used in :ref:`TutorialFieldCase`.
+An example of a ``vtk`` file with all the physical regions defined is used in :ref:`TutorialFieldCase`.
 
 Importing surfaces
 ******************
 
-Surfaces are imported throught point sets in GEOSX. This feature is supported using only the gmsh file format.
+Surfaces are imported through point sets in GEOSX. This feature is supported using only the ``vtk`` file format.
 In the same way than the regions, the surfaces of interests can be defined using the `physical entity names`_.
-The surfaces are automatically import in GEOSX if they exist in the gmsh file.
+The surfaces are automatically import in GEOSX if they exist in the ``vtk`` file.
 Within GEOSX, the point set will have the same name than the one given in the file. This name can be used
 again to impose boundary condition. For instance, if a surface is named "Bottom" and the user wants to
 impose a Dirichlet boundary condition of 0 on it, it can be easily done using this syntax.
@@ -262,10 +259,7 @@ impose a Dirichlet boundary condition of 0 on it, it can be easily done using th
     scale="0.0"
     setNames="{ Bottom }"/>
 
-The name of the surface of interest appears under the keyword ``setNames``. Again, an example of a gmsh file
-with the surfaces fully defined is available within :ref:`TutorialFieldCase`.
+The name of the surface of interest appears under the keyword ``setNames``. Again, an example of a ``vtk`` file
+with the surfaces fully defined is available within :ref:`TutorialFieldCase` or :ref:`ExampleIsothermalHystInjection`.
 
-.. _PAMELA: https://github.com/GEOSX/PAMELA
-.. _GMSH: http://gmsh.info
-.. _documentation: https://gmsh.info/doc/texinfo/gmsh.html#MSH-file-format-version-2-_0028Legacy_0029
-.. _`physical entity names`: https://gmsh.info/doc/texinfo/gmsh.html#Elementary-entities-vs-physical-groups
+.. _VTK: https://vtk.org

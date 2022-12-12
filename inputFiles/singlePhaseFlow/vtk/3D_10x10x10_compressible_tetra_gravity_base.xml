@@ -1,13 +1,13 @@
 <?xml version="1.0" ?>
 
 <Problem>
+  <!-- SPHINX_TUT_EXT_TETRA_SOLVERS -->
   <Solvers
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Bot }">
+      targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
@@ -17,33 +17,36 @@
     </SinglePhaseFVM>
   </Solvers>
 
+  <!-- SPHINX_TUT_EXT_TETRA_SOLVERS_END -->
+
   <Geometry>
     <Box
-      name="midplane"
-      xMin="{ -0.1, -0.1, 4.9 }"
-      xMax="{ 10.1, 10.1, 5.1 }"/>
+      name="left"
+      xMin="{ -1, -1, -1 }"
+      xMax="{ 0.9, 11, 11 }"/>
   </Geometry>
 
+
+  <!-- SPHINX_TUT_EXT_TETRA_NUM_METHODS -->
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-      />
+        />
     </FiniteVolume>
   </NumericalMethods>
 
+  <!-- SPHINX_TUT_EXT_TETRA_NUM_METHODS_END -->
+  <!-- SPHINX_TUT_EXT_TETRA_ELEM_REGIONS -->
   <ElementRegions>
     <CellElementRegion
-      name="Top"
-      cellBlocks="{ Top_TETRA }"
-      materialList="{ }"/>
-
-    <CellElementRegion
-      name="Bot"
-      cellBlocks="{ Bottom_TETRA }"
+      name="Domain"
+      cellBlocks="{ tetrahedra }"
       materialList="{ water, rock }"/>
   </ElementRegions>
 
+  <!-- SPHINX_TUT_EXT_TETRA_ELEM_REGIONS_END -->
+  <!-- SPHINX_TUT_EXT_TETRA_CONSTITUTIVE -->
   <Constitutive>
     <CompressibleSinglePhaseFluid
       name="water"
@@ -73,35 +76,37 @@
       permeabilityComponents="{ 2.0e-14, 2.0e-14, 2.0e-14 }"/>
   </Constitutive>
 
+  <!-- SPHINX_TUT_EXT_TETRA_CONSTITUTIVE_END -->
+  <!-- SPHINX_TUT_EXT_TETRA_FIELDS -->
   <FieldSpecifications>
     <FieldSpecification
-      name="BotPorosity"
+      name="Porosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Bot/Bottom_TETRA"
+      objectPath="ElementRegions"
       fieldName="rockPorosity_referencePorosity"
       scale="0.05"/>
 
     <FieldSpecification
-      name="BotInitialPressure"
+      name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Bot/Bottom_TETRA"
+      objectPath="ElementRegions"
       fieldName="pressure"
       scale="1e6"/>
 
     <FieldSpecification
-      name="MidplanePressure"
-      setNames="{ midplane }"
+      name="boundaryPressure"
       objectPath="faceManager"
       fieldName="pressure"
-      scale="2e6"/>
+      scale="1.1e6"
+      setNames="{ left }"/>
   </FieldSpecifications>
 
+  <!-- SPHINX_TUT_EXT_TETRA_FIELDS_END -->
   <Outputs>
     <Silo
       name="siloOutput"/>
-
     <Restart
       name="restartOutput"/>
   </Outputs>
