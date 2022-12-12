@@ -9,8 +9,7 @@
       solidSolverName="lagsolve"
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      couplingType="FIM"
-      logLevel="1"
+            logLevel="1"
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="2">

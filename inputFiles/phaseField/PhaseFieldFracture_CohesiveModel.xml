@@ -7,9 +7,7 @@
       name="PhaseFieldSolve"
       solidSolverName="SolidMechSolve"
       damageSolverName="DamageSolve"
-      couplingType="Sequential"
       logLevel="1"
-      subcycling="0"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="2"/>
