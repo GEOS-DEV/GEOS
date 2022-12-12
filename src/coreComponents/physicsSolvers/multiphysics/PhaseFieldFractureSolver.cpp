@@ -36,7 +36,8 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
                                                     Group * const parent ):
   Base( name, parent )
 {
-  m_couplingType = CouplingType::Sequential;
+  // Only sequential coupling implemented for this solver 
+  getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
 }
 
 PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
@@ -85,14 +86,17 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
           finiteElement::FiniteElementBase const &
           fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( discretizationName );
 
-          finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [nodalDamage, &elementSubRegion, damageFieldOnMaterial, elemNodes]( auto & finiteElement )
-          {
-            using FE_TYPE = TYPEOFREF( finiteElement );
-            constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
-            constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
+          integer const numElems = elementSubRegion.size();
 
-            forAll< serialPolicy >( elementSubRegion.size(), [nodalDamage, damageFieldOnMaterial, elemNodes] ( localIndex const k )
+          finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [=] ( auto & finiteElement )
+          {
+            using FE_TYPE = TYPEOFREF( finiteElement );           
+
+            forAll< parallelDevicePolicy<> >( numElems, [=] ( localIndex const k )
             {
+              constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+              constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
+
               for( localIndex q = 0; q < n_q_points; ++q )
               {
                 real64 N[ numNodesPerElement ];
@@ -105,10 +109,7 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
                   //solution is probably not going to work because the solution of the coupled solver
                   //has both damage and displacements. Using the damageResult field from the Damage solver
                   //is probably better
-                  //            std::cout<<"q, N, Dnode = "<<q<<", "<<feDiscretization->m_finiteElement->value(a, q)<<",
-                  // "<<nodalDamage[elemNodes(k, a)]<<std::endl;
                 }
-                //          std::cout<<"damage("<<k<<","<<q<<") = "<<damageFieldOnMaterial(k,q)<<std::endl;
               }
             } );
           } );

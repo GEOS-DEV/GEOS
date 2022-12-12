@@ -90,6 +90,9 @@ public:
 
     static constexpr auto numConfigurationAttemptsString    = "numConfigurationAttempts";
     static constexpr auto maxNumConfigurationAttemptsString = "maxNumConfigurationAttempts";
+
+    static constexpr auto couplingTypeString     = "couplingType";
+    static constexpr auto subcyclingOptionString = "subcycling";
   } viewKeys;
 
 
@@ -149,6 +152,15 @@ public:
   {
     Linear,    ///< linear decrease of line search scaling factor.
     Parabolic, ///< use parabolic interpolation to define line search scaling factor.
+  };
+
+  /**
+   * @brief Coupling type.
+   */
+  enum class CouplingType : integer
+  {
+    FIM,      ///< Fully-implicit coupling
+    Sequential ///< Sequential coupling
   };
 
 
@@ -211,6 +223,11 @@ public:
 
   /// Max number of times that the configuration can be changed
   integer m_maxNumConfigurationAttempts;
+  
+  /// Type of coupling
+  CouplingType m_couplingType;
+
+  integer m_subcyclingOption;
 };
 
 ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,
@@ -221,6 +238,12 @@ ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,
 ENUM_STRINGS( NonlinearSolverParameters::LineSearchInterpolationType,
               "Linear",
               "Parabolic" );
+
+ENUM_STRINGS( NonlinearSolverParameters::CouplingType,
+             "FIM",
+             "Sequential" );
+
+
 
 } /* namespace geosx */
 

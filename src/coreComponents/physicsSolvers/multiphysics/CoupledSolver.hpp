@@ -27,21 +27,6 @@
 namespace geosx
 {
 
-/// Declare strings associated with enumeration values.
-
-/**
- * @brief Coupling type.
- */
-enum class CouplingType : integer
-{
-  FIM,        ///< Fully-implicit coupling
-  Sequential  ///< Sequential coupling
-};
-
-ENUM_STRINGS( CouplingType,
-              "FIM",
-              "Sequential" );
-
 template< typename ... SOLVERS >
 class CoupledSolver : public SolverBase
 {
@@ -57,17 +42,6 @@ public:
                  Group * const parent )
     : SolverBase( name, parent )
   {
-    /// GEOS mainly uses FIM coupling so let's define FIM as the default.
-    registerWrapper( viewKeyStruct::couplingTypeString(), &m_couplingType ).
-      setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-      setApplyDefaultValue( CouplingType::FIM ).
-      setDescription( "Type of coupling. Options are: Sequential and FIM" );
-
-    registerWrapper( viewKeyStruct::subcyclingOptionString(), &m_subcyclingOption ).
-      setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-      setApplyDefaultValue( 0 ).
-      setDescription( "Flag to decide whether to iterate between sequentially coupled solvers or not." );
-
     forEachArgInTuple( m_solvers, [&]( auto solver, auto idx )
     {
       using SolverType = TYPEOFPTR( solver );
@@ -238,11 +212,11 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    if( m_couplingType == CouplingType::FIM )
+    if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::FIM )
     {
       return fullyCoupledSolverStep( time_n, dt, cycleNumber, domain );
     }
-    else if( m_couplingType == CouplingType::Sequential )
+    else if(getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
     {
       return sequentiallyCoupledSolverStep( time_n, dt, cycleNumber, domain );
     }
@@ -456,12 +430,14 @@ protected:
    * @param idx the index of the solver withing this coupled solver.
    */
   virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx )
-  {}
+  {
+    GEOSX_UNUSED_VAR( Domain, idx );
+  }
 
   bool checkSequentialConvergence( int const & iter ) const
   {
     bool isConverged = true;
-    if( m_subcyclingOption == 0 )
+    if( getNonlinearSolverParameters().m_subcyclingOption == 0 )
     {
       GEOSX_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
     }
@@ -489,7 +465,7 @@ protected:
 
     // We need to set the minimum number of newton's iterations to 0 for the sequentially
     // coupled approach to converge.
-    if( m_couplingType == CouplingType::Sequential )
+    if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
     {
       forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
       {
@@ -498,27 +474,14 @@ protected:
     }
   }
 
-
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    constexpr static char const * couplingTypeString() { return "couplingType"; }
-    constexpr static char const * subcyclingOptionString() { return "subcycling"; }
-  };
+  struct viewKeyStruct : SolverBase::viewKeyStruct {};
 
   /// Pointers of the single-physics solvers
   std::tuple< SOLVERS *... > m_solvers;
 
   /// Names of the single-physics solvers
   std::array< string, sizeof...( SOLVERS ) > m_names;
-
-  /// Type of coupling
-  CouplingType m_couplingType;
-
-  int m_subcyclingOption;
-
 };
-
-
 
 } /* namespace geosx */
 

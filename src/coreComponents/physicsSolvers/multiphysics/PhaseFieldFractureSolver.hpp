@@ -37,7 +37,6 @@ public:
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
-  using Base::m_couplingType;
 
   PhaseFieldFractureSolver( const string & name,
                             Group * const parent );
