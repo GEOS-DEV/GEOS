@@ -427,11 +427,11 @@ protected:
    * @brief Maps the solution obtained from one solver to the fields used by the other solver(s)
    *
    * @param Domain the domain parition
-   * @param idx the index of the solver withing this coupled solver.
+   * @param solverType the index of the solver withing this coupled solver.
    */
-  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx )
+  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const solverType )
   {
-    GEOSX_UNUSED_VAR( Domain, idx );
+    GEOSX_UNUSED_VAR( Domain, solverType );
   }
 
   bool checkSequentialConvergence( int const & iter ) const

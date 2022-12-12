@@ -45,11 +45,11 @@ PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
   // TODO Auto-generated destructor stub
 }
 
-void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const idx )
+void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
 
   GEOSX_MARK_FUNCTION;
-  if( idx ==  static_cast< integer >( SolverType::Damage ) )
+  if( solverType ==  static_cast< integer >( SolverType::Damage ) )
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
