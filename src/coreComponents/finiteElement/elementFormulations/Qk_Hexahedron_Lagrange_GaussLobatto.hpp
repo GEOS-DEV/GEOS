@@ -406,34 +406,18 @@ public:
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
    *   stiffness matrix R for the elastic case, i.e., the superposition matrix of first derivatives
-   *   of the shape functions.
+   *   of the shape functions. This callback returns the two indices indices i and j of matrix R and the value 
+   *   R[i][j] associated to those two indices. 
    * @param q The quadrature point index
    * @param X Array containing the coordinates of the support points.
-   * @param func Callback function accepting three parameters: i, j and R_ij
+   * @param stiffnessVal Callback function accepting three parameters: i, j and R_ij
    */
   template< typename FUNC >
   GEOSX_HOST_DEVICE
   static void
   computeFirstOrderStiffnessTerm( int q,
                                   real64 const (&X)[numNodes][3],
-                                  FUNC && func );
-
-
-  /**
-   * @brief evaluate the gradient of a basis function at a given point
-   * @param q The quadrature point index
-   * @param X Array containing the coordinates of the support points.
-   * @param coords the coordinate of the point where the gradient will be applied
-   * @param func Callback function accepting parameters: the gradient vector and the Jacobian
-   */
-  template< typename FUNC >
-  GEOSX_HOST_DEVICE
-  static void
-  evaluateGradient( int q,
-                    real64 const (&X)[numNodes][3],
-                    real64 const (&coords)[3],
-                    FUNC && func );
-
+                                  FUNC && stiffnessVal );
 
 
   /**
@@ -1073,38 +1057,6 @@ computeFirstOrderStiffnessTerm( int q,
   }
 
 }
-
-template< typename GL_BASIS >
-template< typename FUNC >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-evaluateGradient( int q,
-                  real64 const (&X)[numNodes][3],
-                  real64 const (&coords)[3],
-                  FUNC && func )
-{
-  real64 J[3][3] = {{0}};
-  int qa, qb, qc;
-  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-  jacobianTransformation( qa, qb, qc, X, J );
-  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
-  GEOSX_UNUSED_VAR( detJ );
-  real64 Grad[3] =  { GL_BASIS::gradient( qa, coords[0] )*
-                      GL_BASIS::value( qb, coords[1] )*
-                      GL_BASIS::value( qc, coords[2] ),
-                      GL_BASIS::value( qa, coords[0] )*
-                      GL_BASIS::gradient( qb, coords[1] )*
-                      GL_BASIS::value( qc, coords[2] ),
-                      GL_BASIS::value( qa, coords[0] )*
-                      GL_BASIS::value( qb, coords[1] )*
-                      GL_BASIS::gradient( qc, coords[2] )};
-  func( Grad, J );
-
-
-}
-
 
 //*************************************************************************************************
 template< typename GL_BASIS >
