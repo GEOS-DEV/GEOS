@@ -557,8 +557,6 @@ private:
   {
     LIFO_MARK_FUNCTION;
 
-    std::ofstream outfile;
-
     std::string fileName = GEOSX_FMT( "{}_{:08}.dat", m_name, id );
     int lastDirSeparator = fileName.find_last_of( "/\\" );
     std::string dirName = fileName.substr( 0, lastDirSeparator );
@@ -568,7 +566,7 @@ private:
     std::ofstream wf( fileName, std::ios::out | std::ios::binary );
     GEOSX_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
                     "Could not open file "<< fileName << " for writting" );
-    wf.write( (char *)d, m_bufferSize );
+    wf.write( (const char *)d, m_bufferSize );
     GEOSX_ERROR_IF( wf.bad() || wf.fail(),
                     "An error occured while writting "<< fileName );
     wf.close();

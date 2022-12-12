@@ -87,7 +87,7 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
     float * dataPointer = array.data();
     forAll< POLICY >( elemCnt, [dataPointer, totalNumberOfBuffers, j, elemCnt] GEOSX_HOST_DEVICE ( int i )
     {
-      GEOSX_ERROR_IF_NE( dataPointer[ i ], (totalNumberOfBuffers-j-1)*elemCnt+i );
+      PORTABLE_EXPECT_EQ( dataPointer[ i ], (float)(totalNumberOfBuffers-j-1)*elemCnt+i );
     } );
   }
 }
@@ -115,7 +115,7 @@ void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int number
     float * dataPointer = array.data();
     forAll< POLICY >( elemCnt, [dataPointer, totalNumberOfBuffers, j, elemCnt] GEOSX_HOST_DEVICE ( int i )
     {
-      GEOSX_ERROR_IF_NE( dataPointer[ i ], (totalNumberOfBuffers-j-1)*elemCnt+i );
+      PORTABLE_EXPECT_EQ( dataPointer[ i ], (float)(totalNumberOfBuffers-j-1)*elemCnt+i );
     } );
   }
 }
