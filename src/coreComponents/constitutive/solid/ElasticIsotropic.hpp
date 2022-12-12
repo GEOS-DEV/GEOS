@@ -144,7 +144,6 @@ public:
     return m_thermalExpansionCoefficient[k];
   }
 
-
   // TODO: confirm hyper stress/strain measures before activatiing
 
   /*
@@ -544,10 +543,10 @@ protected:
   /// The shear modulus for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_shearModulus;
 
-  /// The default value of the thermal expansion coefficient for any new allocations.
+  /// The thermal expansion coefficient for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_thermalExpansionCoefficient;
 
-  /// The thermal expansion coefficient for each upper level dimension (i.e. cell) of *this
+  /// The default value of the thermal expansion coefficient for any new allocations.
   real64 m_defaultThermalExpansionCoefficient;
 
 

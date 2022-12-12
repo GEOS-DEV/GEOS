@@ -204,7 +204,7 @@ public:
     real64 dLocalResidualEnergy_dComponents[1][maxNumComponents]{};
 
     /// C-array storage for the element local row degrees of freedom.
-    globalIndex localTemperatureDofIndex[1]{};
+    globalIndex localTemperatureDofIndex{};
 
   };
   //*****************************************************************************
@@ -225,7 +225,7 @@ public:
     // initialize displacement dof and pressure/components dofs
     Base::setup( k, stack );
 
-    stack.localTemperatureDofIndex[0] = stack.localPressureDofIndex[0] + m_numComponents + 1;
+    stack.localTemperatureDofIndex = stack.localPressureDofIndex + m_numComponents + 1;
     stack.deltaTemperatureFromInit = m_temperature[k] - m_initialTemperature[k];
     stack.deltaTemperatureFromLastStep = m_temperature[k] - m_temperature_n[k];
   }
@@ -339,9 +339,8 @@ public:
 
       for( integer ip = 0; ip < m_numPhases; ++ip )
       {
-        dTotalMassDensity_dTemperature = dTotalMassDensity_dTemperature
-                                         + dPhaseVolFrac( ip, Deriv::dT ) * phaseMassDensity( ip )
-                                         + phaseVolFrac( ip ) * dPhaseMassDensity( ip, Deriv::dT );
+        dTotalMassDensity_dTemperature += dPhaseVolFrac( ip, Deriv::dT ) * phaseMassDensity( ip )
+                                          + phaseVolFrac( ip ) * dPhaseMassDensity( ip, Deriv::dT );
       }
 
       // Step 2: compute mixture density as an average between total mass density and solid density
@@ -469,9 +468,8 @@ public:
     stack.dPoreVolConstraint_dTemperature = 0.0;
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
-      stack.dPoreVolConstraint_dTemperature = stack.dPoreVolConstraint_dTemperature
-                                              - dPhaseVolFrac( ip, Deriv::dT ) * porosity
-                                              - phaseVolFrac( ip ) * dPorosity_dTemperature;
+      stack.dPoreVolConstraint_dTemperature += -dPhaseVolFrac( ip, Deriv::dT ) * porosity
+                                               - phaseVolFrac( ip ) * dPorosity_dTemperature;
     }
   }
 
@@ -670,7 +668,7 @@ public:
 
     real64 const maxForce = Base::complete( k, stack );
 
-    constexpr integer nUDof = numNodesPerElem * numDofPerTestSupportPoint;
+    constexpr integer numDisplacementDofs = numNodesPerElem * numDofPerTestSupportPoint;
 
     // Apply equation/variable change transformation(s)
     real64 work[maxNumComponents + 1]{};
@@ -686,7 +684,7 @@ public:
         if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                                stack.localTemperatureDofIndex,
+                                                                                &stack.localTemperatureDofIndex,
                                                                                 stack.dLocalResidualMomentum_dTemperature[numDofPerTestSupportPoint * localNode + dim],
                                                                                 1 );
       }
@@ -694,13 +692,13 @@ public:
 
     // Step 2: assemble the derivatives of mass balance residual wrt temperature into the global matrix
 
-    localIndex const massDof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex[0] - m_dofRankOffset );
+    localIndex const massDof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex - m_dofRankOffset );
     if( 0 <= massDof && massDof < m_matrix.numRows() )
     {
       for( localIndex i = 0; i < m_numComponents; ++i )
       {
         m_matrix.template addToRow< serialAtomic >( massDof + i,
-                                                    stack.localTemperatureDofIndex,
+                                                    &stack.localTemperatureDofIndex,
                                                     stack.dLocalResidualMass_dTemperature[i],
                                                     1 );
       }
@@ -709,26 +707,26 @@ public:
     // Step 3: assemble the derivatives of pore-volume constraint residual wrt temperature into the global matrix
 
     m_matrix.template addToRow< serialAtomic >( massDof + m_numComponents,
-                                                stack.localTemperatureDofIndex,
+                                                &stack.localTemperatureDofIndex,
                                                 stack.dLocalResidualPoreVolConstraint_dTemperature[0],
                                                 1 );
 
 
     // Step 4: assemble the energy balance and its derivatives into the global matrix
 
-    localIndex const energyDof = LvArray::integerConversion< localIndex >( stack.localTemperatureDofIndex[0] - m_dofRankOffset );
+    localIndex const energyDof = LvArray::integerConversion< localIndex >( stack.localTemperatureDofIndex - m_dofRankOffset );
     if( 0 <= energyDof && energyDof < m_matrix.numRows() )
     {
       m_matrix.template addToRowBinarySearchUnsorted< serialAtomic >( energyDof,
                                                                       stack.localRowDofIndex,
                                                                       stack.dLocalResidualEnergy_dDisplacement[0],
-                                                                      nUDof );
+                                                                      numDisplacementDofs );
       m_matrix.template addToRow< serialAtomic >( energyDof,
-                                                  stack.localPressureDofIndex,
+                                                  &stack.localPressureDofIndex,
                                                   stack.dLocalResidualEnergy_dPressure[0],
                                                   1 );
       m_matrix.template addToRow< serialAtomic >( energyDof,
-                                                  stack.localTemperatureDofIndex,
+                                                  &stack.localTemperatureDofIndex,
                                                   stack.dLocalResidualEnergy_dTemperature[0],
                                                   1 );
       m_matrix.template addToRow< serialAtomic >( energyDof,
