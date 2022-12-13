@@ -406,8 +406,8 @@ public:
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
    *   stiffness matrix R for the elastic case, i.e., the superposition matrix of first derivatives
-   *   of the shape functions. This callback returns the two indices indices i and j of matrix R and the value 
-   *   R[i][j] associated to those two indices. 
+   *   of the shape functions. This callback returns the two indices indices i and j of matrix R and the value
+   *   R[i][j] associated to those two indices.
    * @param q The quadrature point index
    * @param X Array containing the coordinates of the support points.
    * @param stiffnessVal Callback function accepting three parameters: i, j and R_ij
