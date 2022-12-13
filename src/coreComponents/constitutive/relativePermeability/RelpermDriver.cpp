@@ -206,10 +206,10 @@ void RelpermDriver::resizeTables()
       {
 
         integer index = ni * ( m_numSteps + 1 ) + nj;
-        m_table( index,  TIME ) = minSw + index * dSw;
-        m_table( index,  ipWater + 1 ) = minSw + nj * dSw;
-        m_table( index,  ipGas + 1 ) = minSnw + ni * dSw;
-        m_table( index,  ipOil + 1 ) =
+        m_table( index, TIME ) = minSw + index * dSw;
+        m_table( index, ipWater + 1 ) = minSw + nj * dSw;
+        m_table( index, ipGas + 1 ) = minSnw + ni * dSw;
+        m_table( index, ipOil + 1 ) =
           1. - m_table( index, ipWater + 1 ) - m_table( index, ipOil + 1 );
       }
     }

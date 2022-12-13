@@ -28,8 +28,8 @@ using namespace constitutive;
 //specific to Hysteresis
 template< typename RELPERM_TYPE >
 std::enable_if_t< std::is_same< TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
-RelpermDriver::runTest(RELPERM_TYPE & relperm,
-                       const arrayView2d<real64> &table )
+RelpermDriver::runTest( RELPERM_TYPE & relperm,
+                        const arrayView2d< real64 > & table )
 {
   // get number of phases and components
   integer const numPhases = relperm.numFluidPhases();
@@ -120,12 +120,12 @@ RelpermDriver::runTest(RELPERM_TYPE & relperm,
                                     [numPhases, kernelWrapper, saturation, table,
                                      offset] GEOSX_HOST_DEVICE ( integer const n )
   {
-      // nw phase set max to snw_max to get the imbibition bounding curve
-      kernelWrapper.update( 0, 0, saturation[n] );
-      for( integer p = 0; p < numPhases; ++p )
-      {
-        table( n, offset + 1 + p ) = kernelWrapper.relperm()( 0, 0, p );
-      }
+    // nw phase set max to snw_max to get the imbibition bounding curve
+    kernelWrapper.update( 0, 0, saturation[n] );
+    for( integer p = 0; p < numPhases; ++p )
+    {
+      table( n, offset + 1 + p ) = kernelWrapper.relperm()( 0, 0, p );
+    }
   } );
 
   //loop in charge of hysteresis values
@@ -151,13 +151,13 @@ RelpermDriver::runTest(RELPERM_TYPE & relperm,
                                     [numPhases, kernelWrapper, saturation, table,
                                      offset] GEOSX_HOST_DEVICE ( integer const n )
   {
-      // nw phase set max to snw_max to get the imbibition bounding curve
+    // nw phase set max to snw_max to get the imbibition bounding curve
 
-      kernelWrapper.update( 0, 0, saturation[n] );
-      for( integer p = 0; p < numPhases; ++p )
-      {
-        table( n, offset + 1 + p ) = kernelWrapper.relperm()( 0, 0, p );
-      }
+    kernelWrapper.update( 0, 0, saturation[n] );
+    for( integer p = 0; p < numPhases; ++p )
+    {
+      table( n, offset + 1 + p ) = kernelWrapper.relperm()( 0, 0, p );
+    }
   } );
 
 
@@ -165,8 +165,8 @@ RelpermDriver::runTest(RELPERM_TYPE & relperm,
 
 template< typename RELPERM_TYPE >
 std::enable_if_t< !std::is_same< TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
-RelpermDriver::runTest(RELPERM_TYPE & relperm,
-                       const arrayView2d<real64> &table )
+RelpermDriver::runTest( RELPERM_TYPE & relperm,
+                        const arrayView2d< real64 > & table )
 {
   // get number of phases and components
 
@@ -229,11 +229,11 @@ RelpermDriver::runTest(RELPERM_TYPE & relperm,
                                     [numPhases, kernelWrapper, saturation, table,
                                      offset] GEOSX_HOST_DEVICE ( integer const n )
   {
-      kernelWrapper.update( 0, 0, saturation[n] );
-      for( integer p = 0; p < numPhases; ++p )
-      {
-        table( n, offset + 1 + p ) = kernelWrapper.relperm()( 0, 0, p );
-      }
+    kernelWrapper.update( 0, 0, saturation[n] );
+    for( integer p = 0; p < numPhases; ++p )
+    {
+      table( n, offset + 1 + p ) = kernelWrapper.relperm()( 0, 0, p );
+    }
   } );
 
 }
