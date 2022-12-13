@@ -71,6 +71,16 @@ public:
 
   virtual void generateMesh( DomainPartition & domain ) override;
 
+  /**
+   * @brief import fields from the mesh  on the array accessible via the given wrapper.
+   * @param cellBlockName name of the cell block to copy data from.
+   * @param wrapperName name of the wrapper
+   * @param fieldIndex Index of the field
+   * @param wrapper Wrapper to access the array
+   * @param importMaterial Indicate if we want to import material or regular fields
+   */
+  virtual void importFieldsOnArray( string const cellBlockName, string const wrapperName, int fieldIndex, dataRepository::WrapperBase & wrapper, bool importMaterial ) const {}
+
   virtual void importFields( DomainPartition & domain ) const override;
 
   virtual void freeResources() override;
