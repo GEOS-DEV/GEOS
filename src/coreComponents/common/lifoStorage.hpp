@@ -43,9 +43,9 @@ public:
   std::mutex m_popMutex;
   /// Mutex to prevent two simulteaneous emplace (can be an issue for last one)
   std::mutex m_emplaceMutex;
-  /// Condition used to notify when device queue is not full
+  /// Condition used to notify when queue is not full
   std::condition_variable m_notFullCond;
-  /// Condition used to notify when device queue is not empty
+  /// Condition used to notify when queue is not empty
   std::condition_variable m_notEmptyCond;
 
   /**
@@ -197,8 +197,10 @@ private:
   size_t m_bufferSize;
   /// name used to store data on disk
   std::string m_name;
+#ifdef GEOSX_USE_CUDA
   /// ueue of data stored on device
   fixedSizeDequeAndMutexes< T > m_deviceDeque;
+#endif
   /// ueue of data stored on host memory
   fixedSizeDequeAndMutexes< T > m_hostDeque;
 
@@ -207,12 +209,16 @@ private:
   /// counter of buffer stored on disk
   int m_bufferOnDiskCount;
 
+#ifdef GEOSX_USE_CUDA
   // Events associated to ith  copies to device buffer
   std::vector< camp::resources::Event > m_pushToDeviceEvents;
+#endif
   // Futures associated to push to host in case we have no device buffers
   std::vector< std::future< void > > m_pushToHostFutures;
+#ifdef GEOSX_USE_CUDA
   // Events associated to ith  copies from device buffer
   std::vector< camp::resources::Event > m_popFromDeviceEvents;
+#endif
   // Futures associated to pop from host in case we have no device buffers
   std::vector< std::future< void > > m_popFromHostFutures;
 
@@ -242,7 +248,9 @@ public:
     m_maxNumberOfBuffers( maxNumberOfBuffers ),
     m_bufferSize( elemCnt*sizeof( T ) ),
     m_name( name ),
+#ifdef GEOSX_USE_CUDA
     m_deviceDeque( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda ),
+#endif
     m_hostDeque( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host ),
     m_bufferCount( 0 ), m_bufferOnDiskCount( 0 ),
     m_pushToDeviceEvents( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 ),
@@ -276,7 +284,10 @@ public:
     m_task_queue_not_empty_cond[1].notify_all();
     m_worker[0].join();
     m_worker[1].join();
-    GEOSX_ASSERT( m_deviceStorage.empty() && m_hostStorage.empty() && m_diskStorage.empty() && m_task_queue.empty() );
+#ifdef GEOSX_USE_CUDA
+    GEOSX_ASSERT( m_deviceStorage.empty() );
+#endif
+    GEOSX_ASSERT( m_hostStorage.empty() && m_diskStorage.empty() && m_task_queue.empty() );
   }
 
   /**
@@ -293,6 +304,7 @@ public:
     GEOSX_ERROR_IF( m_hostDeque.capacity() == 0,
                     "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
 
+#ifdef GEOSX_USE_CUDA
     if( m_deviceDeque.capacity() > 0 )
     {
       m_pushToDeviceEvents[id] = m_deviceDeque.emplaceFront( array );
@@ -309,6 +321,7 @@ public:
       }
     }
     else
+#endif
     {
       std::packaged_task< void() > task( std::bind( [ this ] ( int pushId, arrayView1d< T > pushedArray ) {
         m_hostDeque.emplaceFront( pushedArray );
@@ -342,11 +355,13 @@ public:
 
     if( m_bufferCount > 0 )
     {
+#ifdef GEOSX_USE_CUDA
       if( m_deviceDeque.capacity() > 0 )
       {
         m_pushToDeviceEvents[m_bufferCount-1].wait();
       }
       else
+#endif
       {
         m_pushToHostFutures[m_bufferCount-1].wait();
       }
@@ -378,6 +393,7 @@ public:
     // Ensure last pop is finished
     popWait();
     int id = --m_bufferCount;
+#ifdef GEOSX_USE_CUDA
     if( m_deviceDeque.capacity() > 0 )
     {
       m_popFromDeviceEvents[id] = m_deviceDeque.popFront( array );
@@ -394,6 +410,7 @@ public:
       }
     }
     else
+#endif
     {
       std::packaged_task< void() > task( std::bind ( [ this ] ( int popId, arrayView1d< T > poppedArray ) {
         m_hostDeque.popFront( poppedArray );
@@ -425,6 +442,7 @@ public:
     LIFO_MARK_FUNCTION;
     if( m_bufferCount < m_maxNumberOfBuffers )
     {
+#ifdef GEOSX_USE_CUDA
       if( m_deviceDeque.capacity() > 0 )
       {
 #ifdef GEOSX_USE_CUDA
@@ -432,6 +450,7 @@ public:
 #endif
       }
       else
+#endif
       {
         m_popFromHostFutures[m_bufferCount].wait();
       }
@@ -458,6 +477,7 @@ private:
    *
    * @param ID of the buffer to copy on host.
    */
+#ifdef GEOSX_USE_CUDA
   void deviceToHost( int id )
   {
     LIFO_MARK_FUNCTION;
@@ -475,6 +495,7 @@ private:
       m_task_queue_not_empty_cond[1].notify_all();
     }
   }
+#endif
 
   /**
    * Copy data from host memory to disk
@@ -499,6 +520,7 @@ private:
    *
    * @param id ID of the buffer to load from host memory.
    */
+#ifdef GEOSX_USE_CUDA
   void hostToDevice( int id )
   {
     LIFO_MARK_FUNCTION;
@@ -516,6 +538,7 @@ private:
       m_task_queue_not_empty_cond[1].notify_all();
     }
   }
+#endif
 
   /**
    * Copy data from disk to host memory
