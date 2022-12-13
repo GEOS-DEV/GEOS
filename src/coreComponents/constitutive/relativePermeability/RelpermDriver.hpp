@@ -48,13 +48,13 @@ public:
    */
   template< typename RELPERM_TYPE >
   std::enable_if_t< std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
-  runTest( RELPERM_TYPE & relperm,
-           arrayView3d< real64 > const & table );
+  runTest(RELPERM_TYPE & relperm,
+          const arrayView2d<real64, 1> &table );
 
   template< typename RELPERM_TYPE >
   std::enable_if_t< !std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
-  runTest( RELPERM_TYPE & relperm,
-           arrayView3d< real64 > const & table );
+  runTest(RELPERM_TYPE & relperm,
+          const arrayView2d<real64, 1> &table );
 
   /**
    * @brief Ouput table to file for easy plotting
@@ -104,7 +104,7 @@ private:
   string m_relpermName;               ///< relPermType identifier
   string m_outputFile;              ///< Output file (optional, no output if not specified)
 
-  array3d< real64 > m_table; ///< Table storing time-history of input/output
+  array2d< real64 > m_table; ///< Table storing time-history of input/output
 
   Path m_baselineFile; ///< Baseline file (optional, for unit testing of solid models)
 

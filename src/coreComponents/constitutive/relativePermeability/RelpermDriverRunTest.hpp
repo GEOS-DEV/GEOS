@@ -1,6 +1,16 @@
-//
-// Created by root on 10/24/22.
-//
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
 
 #ifndef GEOSX_RELPERMDRIVERRUNTEST_HPP_
 #define GEOSX_RELPERMDRIVERRUNTEST_HPP_
@@ -18,8 +28,8 @@ using namespace constitutive;
 //specific to Hysteresis
 template< typename RELPERM_TYPE >
 std::enable_if_t< std::is_same< TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
-RelpermDriver::runTest( RELPERM_TYPE & relperm,
-                        arrayView3d< real64 > const & table )
+RelpermDriver::runTest(RELPERM_TYPE & relperm,
+                       const arrayView2d<real64> &table )
 {
   // get number of phases and components
   integer const numPhases = relperm.numFluidPhases();
@@ -31,14 +41,14 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
   // set saturation to user specified feed
   // it is more convenient to provide input in molar, so perform molar to mass conversion here
 
-  array3d< real64, relperm::LAYOUT_RELPERM > saturationValues;
+  array2d< real64, compflow::LAYOUT_PHASE > saturationValues;
   if( numPhases > 2 )
   {
-    saturationValues.resize( 1, ( m_numSteps + 1 ) * ( m_numSteps + 1 ), numPhases );
+    saturationValues.resize( ( m_numSteps + 1 ) * ( m_numSteps + 1 ), numPhases );
   }
   else
   {
-    saturationValues.resize( 1, m_numSteps + 1, numPhases );
+    saturationValues.resize( m_numSteps + 1, numPhases );
   }
   using PT = typename RELPERM_TYPE::PhaseType;
   integer const ipWater = relperm.getPhaseOrder()[PT::WATER];
@@ -53,32 +63,32 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
   {
     if( m_numPhases > 2 )
     {
-      saturationValues[0][n][ipWater] = table( n, 0, ipWater + 1 );
-      saturationValues[0][n][ipOil] = table( n, 0, ipOil + 1 );
-      saturationValues[0][n][ipGas] = table( n, 0, ipGas + 1 );
+      saturationValues[n][ipWater] = table( n, ipWater + 1 );
+      saturationValues[n][ipOil] = table( n, ipOil + 1 );
+      saturationValues[n][ipGas] = table( n, ipGas + 1 );
     }
     else//two-phase
     {
       if( ipWater < 0 )
       {
-        saturationValues[0][n][ipOil] = table( n, 0, ipOil + 1 );
-        saturationValues[0][n][ipGas] = table( n, 0, ipGas + 1 );
+        saturationValues[n][ipOil] = table( n, ipOil + 1 );
+        saturationValues[n][ipGas] = table( n, ipGas + 1 );
       }
       else if( ipGas < 0 )
       {
-        saturationValues[0][n][ipWater] = table( n, 0, ipWater + 1 );
-        saturationValues[0][n][ipOil] = table( n, 0, ipOil + 1 );
+        saturationValues[n][ipWater] = table( n, ipWater + 1 );
+        saturationValues[n][ipOil] = table( n, ipOil + 1 );
       }
       else if( ipOil < 0 )
       {
-        saturationValues[0][n][ipWater] = table( n, 0, ipWater + 1 );
-        saturationValues[0][n][ipGas] = table( n, 0, ipGas + 1 );
+        saturationValues[n][ipWater] = table( n, ipWater + 1 );
+        saturationValues[n][ipGas] = table( n, ipGas + 1 );
       }
     }
   }
 
 
-  arrayView3d< real64 const, relperm::USD_RELPERM > saturation = saturationValues.toView();
+  arrayView2d< real64 const, compflow::USD_PHASE > const saturation = saturationValues.toViewConst();
 
   auto const & phaseHasHysteresis = relperm.template getReference< array1d< integer > >( TableRelativePermeabilityHysteresis::viewKeyStruct::phaseHasHysteresisString());
 
@@ -108,18 +118,14 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
   forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
                                     [numPhases, kernelWrapper, saturation, table,
-                                     offset] GEOSX_HOST_DEVICE ( localIndex const i )
+                                     offset] GEOSX_HOST_DEVICE ( integer const n )
   {
-    for( integer n = 0; n < saturation.size( 1 ); ++n )
-    {
-
       // nw phase set max to snw_max to get the imbibition bounding curve
-      kernelWrapper.update( i, 0, saturation[0][n] );
+      kernelWrapper.update( 0, 0, saturation[n] );
       for( integer p = 0; p < numPhases; ++p )
       {
-        table( n, 0, offset + 1 + p ) = kernelWrapper.relperm()( i, 0, p );
+        table( n, offset + 1 + p ) = kernelWrapper.relperm()( 0, 0, p );
       }
-    }
   } );
 
   //loop in charge of hysteresis values
@@ -143,19 +149,15 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
   forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
                                     [numPhases, kernelWrapper, saturation, table,
-                                     offset] GEOSX_HOST_DEVICE ( localIndex const i )
+                                     offset] GEOSX_HOST_DEVICE ( integer const n )
   {
-    for( integer n = 0; n < saturation.size( 1 ); ++n )
-    {
-
       // nw phase set max to snw_max to get the imbibition bounding curve
 
-      kernelWrapper.update( i, 0, saturation[0][n] );
+      kernelWrapper.update( 0, 0, saturation[n] );
       for( integer p = 0; p < numPhases; ++p )
       {
-        table( n, 0, offset + 1 + p ) = kernelWrapper.relperm()( i, 0, p );
+        table( n, offset + 1 + p ) = kernelWrapper.relperm()( 0, 0, p );
       }
-    }
   } );
 
 
@@ -163,8 +165,8 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
 template< typename RELPERM_TYPE >
 std::enable_if_t< !std::is_same< TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
-RelpermDriver::runTest( RELPERM_TYPE & relperm,
-                        arrayView3d< real64 > const & table )
+RelpermDriver::runTest(RELPERM_TYPE & relperm,
+                       const arrayView2d<real64> &table )
 {
   // get number of phases and components
 
@@ -177,14 +179,14 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
   // set saturation to user specified feed
   // it is more convenient to provide input in molar, so perform molar to mass conversion here
 
-  array3d< real64, relperm::LAYOUT_RELPERM > saturationValues;
+  array2d< real64, compflow::LAYOUT_PHASE > saturationValues;
   if( numPhases > 2 )
   {
-    saturationValues.resize( 1, ( m_numSteps + 1 ) * ( m_numSteps + 1 ), numPhases );
+    saturationValues.resize(( m_numSteps + 1 ) * ( m_numSteps + 1 ), numPhases );
   }
   else
   {
-    saturationValues.resize( 1, m_numSteps + 1, numPhases );
+    saturationValues.resize( m_numSteps + 1, numPhases );
   }
   using PT = typename RELPERM_TYPE::PhaseType;
   integer const ipWater = relperm.getPhaseOrder()[PT::WATER];
@@ -198,44 +200,40 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
     if( m_numPhases > 2 )
     {
-      saturationValues[0][n][ipWater] = table( n, 0, ipWater + 1 );
-      saturationValues[0][n][ipOil] = table( n, 0, ipOil + 1 );
-      saturationValues[0][n][ipGas] = table( n, 0, ipGas + 1 );
+      saturationValues[n][ipWater] = table( n, ipWater + 1 );
+      saturationValues[n][ipOil] = table( n, ipOil + 1 );
+      saturationValues[n][ipGas] = table( n, ipGas + 1 );
     }
     else//two-phase
     {
       if( ipWater < 0 )
       {
-        saturationValues[0][n][ipOil] = table( n, 0, ipOil + 1 );
-        saturationValues[0][n][ipGas] = table( n, 0, ipGas + 1 );
+        saturationValues[n][ipOil] = table( n, ipOil + 1 );
+        saturationValues[n][ipGas] = table( n, ipGas + 1 );
       }
       else if( ipGas < 0 )
       {
-        saturationValues[0][n][ipWater] = table( n, 0, ipWater + 1 );
-        saturationValues[0][n][ipOil] = table( n, 0, ipOil + 1 );
+        saturationValues[n][ipWater] = table( n, ipWater + 1 );
+        saturationValues[n][ipOil] = table( n, ipOil + 1 );
       }
     }
 
   }
 
-  arrayView3d< real64 const, relperm::USD_RELPERM > saturation = saturationValues.toView();
+  arrayView2d< real64 const, compflow::USD_PHASE > const saturation = saturationValues.toViewConst();
 
   // perform relperm update using table (Swet,Snonwet) and save resulting total density, etc.
   // note: column indexing should be kept consistent with output file header below.
 
   forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
                                     [numPhases, kernelWrapper, saturation, table,
-                                     offset] GEOSX_HOST_DEVICE ( localIndex const i )
+                                     offset] GEOSX_HOST_DEVICE ( integer const n )
   {
-    for( integer n = 0; n < saturation.size( 1 ); ++n )
-    {
-
-      kernelWrapper.update( i, 0, saturation[0][n] );
+      kernelWrapper.update( 0, 0, saturation[n] );
       for( integer p = 0; p < numPhases; ++p )
       {
-        table( n, 0, offset + 1 + p ) = kernelWrapper.relperm()( i, 0, p );
+        table( n, offset + 1 + p ) = kernelWrapper.relperm()( 0, 0, p );
       }
-    }
   } );
 
 }
