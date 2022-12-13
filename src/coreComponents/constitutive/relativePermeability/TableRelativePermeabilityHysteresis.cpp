@@ -98,9 +98,9 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
     setSizedFromParent( 0 );
 
   registerField( fields::relperm::phaseMaxHistoricalVolFraction{},
-                         &m_phaseMaxHistoricalVolFraction );
+                 &m_phaseMaxHistoricalVolFraction );
   registerField( fields::relperm::phaseMinHistoricalVolFraction{},
-                         &m_phaseMinHistoricalVolFraction );
+                 &m_phaseMinHistoricalVolFraction );
 
   /// Killough data
   registerWrapper( viewKeyStruct::KilloughModelString(), &m_KilloughModel )
@@ -129,13 +129,15 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
     setInputFlag(
     InputFlags::FALSE ).         // will be deduced from tables
     setSizedFromParent(
-    0 );
+    0 )
+    .setRestartFlags( RestartFlags::NO_WRITE );
 
   registerWrapper( viewKeyStruct::nonWettingCurveString(), &m_nonWettingCurve ).
     setInputFlag(
     InputFlags::FALSE ).         // will be deduced from tables
     setSizedFromParent(
-    0 );
+    0 )
+    .setRestartFlags( RestartFlags::NO_WRITE );
 
   //Forwarded to KilloughHysteresis
   registerWrapper( KilloughHysteresis::viewKeyStruct::jerauldParameterAString(), &m_jerauldParam_a ).
@@ -313,7 +315,7 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateWettingRelPer
                                drainagePhaseMaxVolFraction, imbibitionPhaseMaxVolFraction ),
                     InputError );
 
-    GEOSX_THROW_IF( imbibitionPhaseRelPermMaxEndPoint >= drainagePhaseRelPermMaxEndPoint,
+    GEOSX_THROW_IF( imbibitionPhaseRelPermMaxEndPoint > drainagePhaseRelPermMaxEndPoint,
                     GEOSX_FMT( "{}: the maximum wetting-phase relperm must be smaller in imbibition (compared to the drainage value).\n"
                                "However, we found that the drainage maximum wetting-phase relperm is {}, "
                                "whereas the imbibition maximum wetting-phase relperm is {}",
