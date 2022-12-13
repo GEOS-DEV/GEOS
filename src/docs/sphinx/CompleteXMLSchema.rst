@@ -596,13 +596,6 @@ Element: Outputs
 .. include:: ../../coreComponents/schema/docs/Outputs.rst
 
 
-.. _XML_PAMELAMesh:
-
-Element: PAMELAMesh
-===================
-.. include:: ../../coreComponents/schema/docs/PAMELAMesh.rst
-
-
 .. _XML_PML:
 
 Element: PML
@@ -1739,13 +1732,6 @@ Datastructure: NumericalMethods
 Datastructure: Outputs
 ======================
 .. include:: ../../coreComponents/schema/docs/Outputs_other.rst
-
-
-.. _DATASTRUCTURE_PAMELAMesh:
-
-Datastructure: PAMELAMesh
-=========================
-.. include:: ../../coreComponents/schema/docs/PAMELAMesh_other.rst
 
 
 .. _DATASTRUCTURE_PML:
