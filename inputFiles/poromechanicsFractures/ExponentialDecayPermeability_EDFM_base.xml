@@ -124,7 +124,7 @@
 
     <ExponentialDecayPermeability 
       name="fracturePerm"
-      empiricalConstant="0.27"
+      empiricalConstant="0.27e-6"
       initialPermeability="{1.0e-12, 1.0e-12, 1.0e-12}"/>
       
     <FrictionlessContact
