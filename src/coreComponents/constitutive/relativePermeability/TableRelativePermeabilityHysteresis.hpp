@@ -644,8 +644,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
       phaseVolFraction[ipNonWetting] >= phaseMaxHistoricalVolFraction[ipNonWetting] - flowReversalBuffer )
   {
     // for reporting purposes, compute Sgcrt first
-    real64 const Shy = ( phaseVolFraction[ipNonWetting] < m_nonWettingCurve.drainageExtremaSat )
-      ? phaseVolFraction[ipNonWetting] : m_nonWettingCurve.drainageExtremaSat; // to make sure that Shy < Smax
+    real64 const Shy = ( phaseVolFraction[ipNonWetting] < m_nonWettingCurve.oppositeBoundSat )
+      ? phaseVolFraction[ipNonWetting] : m_nonWettingCurve.oppositeBoundSat; // to make sure that Shy < Smax
     real64 Scrt = 0;
     m_KilloughKernel.computeTrappedCriticalPhaseVolFraction( m_nonWettingCurve,
                                                              Shy,
@@ -726,8 +726,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
       phaseVolFraction[ipNonWetting] >= phaseMaxHistoricalVolFraction[ipNonWetting] - flowReversalBuffer )
   {
     // 2.a) compute Sgcrt for reporting purposes
-    real64 const Shy = ( phaseVolFraction[ipNonWetting] < m_nonWettingCurve.drainageExtremaSat )
-      ? phaseVolFraction[ipNonWetting] : m_nonWettingCurve.drainageExtremaSat; // to make sure that Shy < Smax
+    real64 const Shy = ( phaseVolFraction[ipNonWetting] < m_nonWettingCurve.oppositeBoundSat)
+      ? phaseVolFraction[ipNonWetting] : m_nonWettingCurve.oppositeBoundSat; // to make sure that Shy < Smax
     real64 Scrt = 0;
     m_KilloughKernel.computeTrappedCriticalPhaseVolFraction( m_nonWettingCurve,
                                                              Shy,
