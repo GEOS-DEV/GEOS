@@ -21,17 +21,18 @@
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanicsKernel.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
 
 namespace geosx
 {
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace extrinsicMeshData;
+using namespace fields;
 
 MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & name,
                                                               Group * const parent )
@@ -81,8 +82,8 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
       if( m_stabilizationType == StabilizationType::Global ||
           m_stabilizationType == StabilizationType::Local )
       {
-        subRegion.registerExtrinsicData< extrinsicMeshData::flow::macroElementIndex >( getName() );
-        subRegion.registerExtrinsicData< extrinsicMeshData::flow::elementStabConstant >( getName() );
+        subRegion.registerField< fields::flow::macroElementIndex >( getName() );
+        subRegion.registerField< fields::flow::elementStabConstant >( getName() );
       }
     } );
   } );
@@ -105,46 +106,79 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
 {
   GEOSX_MARK_FUNCTION;
 
+  real64 poromechanicsMaxForce = 0.0;
+  real64 mechanicsMaxForce = 0.0;
+
+  // step 1: apply the full poromechanics coupling on the target regions on the poromechanics solver
+
+  set< string > poromechanicsRegionNames;
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    NodeManager const & nodeManager = mesh.getNodeManager();
-
-    string const displacementDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-    arrayView1d< globalIndex const > const & displacementDofNumber = nodeManager.getReference< globalIndex_array >( displacementDofKey );
+    poromechanicsRegionNames.insert( regionNames.begin(), regionNames.end() );
 
     string const flowDofKey = dofManager.getKey( CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString() );
 
-    localIndex const numComponents = flowSolver()->numFluidComponents();
-    localIndex const numPhases = flowSolver()->numFluidPhases();
+    poromechanicsMaxForce =
+      assemblyLaunch< constitutive::PorousSolidBase,
+                      poromechanicsKernels::MultiphaseKernelFactory >( mesh,
+                                                                       dofManager,
+                                                                       regionNames,
+                                                                       viewKeyStruct::porousMaterialNamesString(),
+                                                                       localMatrix,
+                                                                       localRhs,
+                                                                       flowDofKey,
+                                                                       flowSolver()->numFluidComponents(),
+                                                                       flowSolver()->numFluidPhases(),
+                                                                       FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
-    real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
-
-    poromechanicsKernels::MultiphaseKernelFactory kernelFactory( displacementDofNumber,
-                                                                 flowDofKey,
-                                                                 dofManager.rankOffset(),
-                                                                 gravityVectorData,
-                                                                 numComponents,
-                                                                 numPhases,
-                                                                 FlowSolverBase::viewKeyStruct::fluidNamesString(),
-                                                                 localMatrix,
-                                                                 localRhs );
-
-    // Cell-based contributions
-    solidMechanicsSolver()->getMaxForce() =
-      finiteElement::
-        regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                      constitutive::PorousSolidBase,
-                                      CellElementSubRegion >( mesh,
-                                                              regionNames,
-                                                              solidMechanicsSolver()->getDiscretizationName(),
-                                                              viewKeyStruct::porousMaterialNamesString(),
-                                                              kernelFactory );
   } );
 
 
-  // Face-based contributions
+  // step 2: apply mechanics solver on its target regions not included in the poromechanics solver target regions
+
+  solidMechanicsSolver()->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                                        MeshLevel & mesh,
+                                                                                        arrayView1d< string const > const & regionNames )
+  {
+
+    // collect the target region of the mechanics solver not included in the poromechanics target regions
+    array1d< string > filteredRegionNames;
+    filteredRegionNames.reserve( regionNames.size() );
+    for( string const & regionName : regionNames )
+    {
+      // if the mechanics target region is not included in the poromechanics target region, save the string
+      if( poromechanicsRegionNames.count( regionName ) == 0 )
+      {
+        filteredRegionNames.emplace_back( regionName );
+      }
+    }
+
+    // if the array is empty, the mechanics and poromechanics solver target regions overlap perfectly, there is nothing to do
+    if( filteredRegionNames.empty() )
+    {
+      return;
+    }
+
+    mechanicsMaxForce =
+      assemblyLaunch< constitutive::SolidBase,
+                      solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
+                                                                                dofManager,
+                                                                                filteredRegionNames.toViewConst(),
+                                                                                SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                                                localMatrix,
+                                                                                localRhs );
+
+  } );
+
+
+  solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
+
+
+  // step 3: compute the fluxes (face-based contributions)
+
   if( m_stabilizationType == StabilizationType::Global ||
       m_stabilizationType == StabilizationType::Local )
   {
@@ -258,8 +292,8 @@ void MultiphasePoromechanicsSolver::updateStabilizationParameters( DomainPartiti
                                                                                               ElementSubRegionBase & subRegion )
 
     {
-      arrayView1d< integer > const macroElementIndex = subRegion.getExtrinsicData< extrinsicMeshData::flow::macroElementIndex >();
-      arrayView1d< real64 > const elementStabConstant = subRegion.getExtrinsicData< extrinsicMeshData::flow::elementStabConstant >();
+      arrayView1d< integer > const macroElementIndex = subRegion.getField< fields::flow::macroElementIndex >();
+      arrayView1d< real64 > const elementStabConstant = subRegion.getField< fields::flow::elementStabConstant >();
 
       geosx::constitutive::CoupledSolidBase const & porousSolid =
         getConstitutiveModel< geosx::constitutive::CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() ) );

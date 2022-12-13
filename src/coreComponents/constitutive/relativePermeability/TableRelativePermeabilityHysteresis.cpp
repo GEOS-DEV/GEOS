@@ -18,10 +18,9 @@
 
 #include "TableRelativePermeabilityHysteresis.hpp"
 
-#include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "constitutive/relativePermeability/TableRelativePermeabilityHelpers.hpp"
 #include "functions/FunctionManager.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 
 namespace geosx
 {
@@ -98,9 +97,9 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
     .                                                                                  // will be deduced from tables
     setSizedFromParent( 0 );
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseMaxHistoricalVolFraction{},
+  registerField( fields::relperm::phaseMaxHistoricalVolFraction{},
                          &m_phaseMaxHistoricalVolFraction );
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseMinHistoricalVolFraction{},
+  registerField( fields::relperm::phaseMinHistoricalVolFraction{},
                          &m_phaseMinHistoricalVolFraction );
 
   /// Killough data
