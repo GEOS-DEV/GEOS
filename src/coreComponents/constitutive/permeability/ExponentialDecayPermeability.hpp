@@ -34,10 +34,12 @@ public:
   ExponentialDecayPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                                       arrayView3d< real64 > const & dPerm_dPressure,
                                       arrayView4d< real64 > const & dPerm_dTraction,
+                                      arrayView4d< real64 > const & dPerm_dDispJump,
                                       real64 const empiricalConstant,
                                       R1Tensor const & initialPermeability )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_dPerm_dTraction( dPerm_dTraction ),
+    m_dPerm_dDispJump( dPerm_dDispJump ),
     m_empiricalConstant( empiricalConstant ),
     m_initialPermeability( initialPermeability )
   {}
@@ -46,7 +48,8 @@ public:
   void compute( real64 const ( &traction )[3],
                 R1Tensor const & initialPermeability,
                 arraySlice1d< real64 > const & permeability,
-                arraySlice2d< real64 > const & dPerm_dTraction ) const;
+                arraySlice2d< real64 > const & dPerm_dTraction,
+                arraySlice2d< real64 > const & dPerm_dDispJump ) const;
 
   GEOSX_HOST_DEVICE
   virtual void updateFromApertureAndShearDisplacement( localIndex const k,
@@ -62,13 +65,17 @@ public:
     compute( traction,
              m_initialPermeability,
              m_permeability[k][0],
-             m_dPerm_dTraction[k][0] );
+             m_dPerm_dTraction[k][0],
+             m_dPerm_dDispJump[k][0] );
   }
 
 private:
 
   /// Derivative of fracture permeability to effective normal stress applied on the fracture surfaces
   arrayView4d< real64 > m_dPerm_dTraction;
+
+  /// Derivative of fracture permeability to shear displacement jump between fracture surfaces
+  arrayView4d< real64 > m_dPerm_dDispJump;
 
   /// An empirical constant
   real64 m_empiricalConstant;
@@ -107,6 +114,7 @@ public:
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure,
                           m_dPerm_dTraction,
+                          m_dPerm_dDispJump,
                           m_empiricalConstant,
                           m_initialPermeability );
   }
@@ -115,6 +123,9 @@ private:
 
   /// Derivative of fracture permeability to traction acting on fracture surfaces
   array4d< real64 > m_dPerm_dTraction;
+
+  /// Derivative of fracture permeability to shear displacement jump between fracture surfaces
+  array4d< real64 > m_dPerm_dDispJump;
 
   /// An empirical constant
   real64 m_empiricalConstant;
@@ -136,7 +147,8 @@ GEOSX_FORCE_INLINE
 void ExponentialDecayPermeabilityUpdate::compute( real64 const ( &traction )[3],
                                                   R1Tensor const & initialPermeability,
                                                   arraySlice1d< real64 > const & permeability,
-                                                  arraySlice2d< real64 > const & dPerm_dTraction ) const
+                                                  arraySlice2d< real64 > const & dPerm_dTraction,
+                                                  arraySlice2d< real64 > const & dPerm_dDispJump ) const
 {
   real64 const effNormalStress = -traction[0];
 
@@ -151,6 +163,9 @@ void ExponentialDecayPermeabilityUpdate::compute( real64 const ( &traction )[3],
     dPerm_dTraction[i][0] = initialPermeability[i] * dpermMultiplier_dTraction;
     dPerm_dTraction[i][1] = 0.0;
     dPerm_dTraction[i][2] = 0.0;
+    dPerm_dDispJump[i][0] = 0.0;
+    dPerm_dDispJump[i][1] = 0.0;
+    dPerm_dDispJump[i][2] = 0.0;
   }
 }
 

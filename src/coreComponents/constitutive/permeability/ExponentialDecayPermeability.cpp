@@ -41,6 +41,7 @@ ExponentialDecayPermeability::ExponentialDecayPermeability( string const & name,
     setDescription( " initial permeability of the fracture." );
 
   registerField( fields::permeability::dPerm_dTraction{}, &m_dPerm_dTraction );
+  registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
 }
 
 std::unique_ptr< ConstitutiveBase >
@@ -55,6 +56,7 @@ void ExponentialDecayPermeability::allocateConstitutiveData( dataRepository::Gro
 {
 // NOTE: enforcing 1 quadrature point
   m_dPerm_dTraction.resize( 0, 1, 3, 3 );
+  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
 
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
