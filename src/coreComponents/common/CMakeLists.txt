@@ -33,9 +33,6 @@ set( common_sources
      initializeEnvironment.cpp
    )
 
-# NVHPC won't build it with -x cu
-set_source_files_properties( BufferAllocator.cpp PROPERTIES LANGUAGE CXX )
-
 set( dependencyList lvarray pugixml RAJA chai conduit::conduit fmt::fmt )
 
 if ( ENABLE_MKL )
