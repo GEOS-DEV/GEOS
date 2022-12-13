@@ -253,14 +253,15 @@ public:
 #endif
     m_hostDeque( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host ),
     m_bufferCount( 0 ), m_bufferOnDiskCount( 0 ),
+#ifdef GEOSX_USE_CUDA
     m_pushToDeviceEvents( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 ),
+#endif
     m_pushToHostFutures( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers ),
+#ifdef GEOSX_USE_CUDA
     m_popFromDeviceEvents( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 ),
+#endif
     m_popFromHostFutures( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers )
   {
-#ifndef GEOSX_USE_CUDA
-    GEOSX_ERROR_IF( m_deviceDeque.capacity() != 0, "Cannot use device storage in LIFO without CUDA support" );
-#endif
     m_worker[0] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 0 );
     m_worker[1] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 1 );
   }
