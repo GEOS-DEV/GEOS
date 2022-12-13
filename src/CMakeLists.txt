@@ -97,6 +97,7 @@ endif()
 
 if( ENABLE_CUDA )
   set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
+  set( extraComponentsLinkList ${extraComponentsLinkList} cusparse )
 endif()
 
 if ( GEOSX_BUILD_SHARED_LIBS )

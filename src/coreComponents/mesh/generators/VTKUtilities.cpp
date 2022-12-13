@@ -1496,20 +1496,6 @@ string getElementTypeName( ElementType const type )
 }
 
 /**
- * @brief Builds the cell block name.
- * @param[in] type The element name.
- * @param[in] regionId The region Id.
- * @return The name.
- * @warning This name will be visible in the input file... Consider refactoring with great care.
- */
-string buildCellBlockName( ElementType const type, int const regionId )
-{
-  GEOSX_ERROR_IF_LT_MSG( regionId, -1, "Invalid region id" );
-  string const cellTypeName = getElementTypeName( type );
-  return regionId != -1 ? std::to_string( regionId ) + "_" + cellTypeName : cellTypeName;
-}
-
-/**
  * @brief Collect a set of material field names registered in a subregion.
  * @param subRegion the target subregion
  * @return a set of wrapper names
@@ -1689,70 +1675,22 @@ findArraysForImport( vtkDataSet & mesh,
   return arrays;
 }
 
+/**
+ * @brief Builds the cell block name.
+ * @param[in] type The element name.
+ * @param[in] regionId The region Id.
+ * @return The name.
+ * @warning This name will be visible in the input file... Consider refactoring with great care.
+ */
+string buildCellBlockName( ElementType const type, int const regionId )
+{
+  GEOSX_ERROR_IF_LT_MSG( regionId, -1, "Invalid region id" );
+  string const cellTypeName = getElementTypeName( type );
+  return regionId != -1 ? std::to_string( regionId ) + "_" + cellTypeName : cellTypeName;
+}
+
 } // namespace vtk
 
-
-
-void importFieldOnCellElementSubRegion( integer const logLevel,
-                                        integer const regionId,
-                                        ElementType const elemType,
-                                        std::vector< vtkIdType > const & cellIds,
-                                        ElementRegionManager & elemManager,
-                                        arrayView1d< string const > const & fieldNames,
-                                        std::vector< vtkDataArray * > const & srcArrays,
-                                        FieldIdentifiers & fieldsToBeSync )
-{
-  string const cellBlockName = vtk::buildCellBlockName( elemType, regionId );
-
-  elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex,
-                                                                         localIndex,
-                                                                         ElementRegionBase const & region,
-                                                                         CellElementSubRegion & subRegion )
-  {
-    // We don't know how the user mapped cell blocks to regions, so we must check all of them
-    if( subRegion.getName() != cellBlockName )
-    {
-      return;
-    }
-    std::unordered_set< string > const materialWrapperNames = vtk::getMaterialWrapperNames( subRegion );
-
-    // Writing properties
-    for( localIndex i = 0; i < fieldNames.size(); ++i )
-    {
-      // Get source
-      vtkDataArray * vtkArray = srcArrays[i];
-
-      // Find destination
-      string const wrapperName = fieldNames[i];
-      if( !subRegion.hasWrapper( wrapperName ) )
-      {
-        // Skip - the user may have not enabled a particular physics model/solver on this dstRegion.
-        GEOSX_LOG_RANK_0_IF( logLevel >= 1, GEOSX_FMT( "Skipping import of {} -> {} on {}/{} (field not found)",
-                                                       vtkArray->GetName(), wrapperName, region.getName(), subRegion.getName() ) );
-
-        continue;
-      }
-
-      // Now that we know that the subRegion has this wrapper, we can add the wrapperName to the list of fields to
-      // synchronize
-      fieldsToBeSync.addElementFields( {wrapperName}, {region.getName()} );
-
-      WrapperBase & wrapper = subRegion.getWrapperBase( wrapperName );
-
-      GEOSX_LOG_RANK_0_IF( logLevel >= 1, GEOSX_FMT( "Importing field {} -> {} on {}/{}",
-                                                     vtkArray->GetName(), wrapperName, region.getName(), subRegion.getName() ) );
-
-      if( materialWrapperNames.count( wrapperName ) > 0 && wrapper.numArrayDims() > 1 )
-      {
-        vtk::importMaterialField( cellIds, vtkArray, wrapper );
-      }
-      else
-      {
-        vtk::importRegularField( cellIds, vtkArray, wrapper );
-      }
-    }
-  } );
-}
 
 /**
  * @brief Build node sets

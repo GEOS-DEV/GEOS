@@ -131,6 +131,17 @@ std::vector< vtkDataArray * >
 findArraysForImport( vtkDataSet & mesh,
                      arrayView1d< string const > const & srcFieldNames );
 
+string buildCellBlockName( ElementType const type, int const regionId );
+
+void importMaterialField( std::vector< vtkIdType > const & cellIds,
+                          vtkDataArray * vtkArray,
+                          WrapperBase & wrapper );
+
+void importRegularField( std::vector< vtkIdType > const & cellIds,
+                         vtkDataArray * vtkArray,
+                         WrapperBase & wrapper );
+
+
 } // namespace vtk
 
 /**
@@ -175,28 +186,6 @@ void writeSurfaces( integer const logLevel,
                     vtkDataSet & mesh,
                     const geosx::vtk::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager );
-
-/**
- * @brief Import data on 3d cells restricted to cells in a specific region
- *
- * @param logLevel the log level
- * @param regionId The id of the region
- * @param elemType The type of the element to store the data
- * @param cellIds The cell ids of the specific region
- * @param elemManager The instance that stores the elements.
- * @param fieldNames An array of the fields names
- * @param srcArrays an array of data to import
- * @param fieldsToBeSync Indentifies the fields to synchronize
- */
-void importFieldOnCellElementSubRegion( integer const logLevel,
-                                        integer const regionId,
-                                        ElementType const elemType,
-                                        std::vector< vtkIdType > const & cellIds,
-                                        ElementRegionManager & elemManager,
-                                        arrayView1d< string const > const & fieldNames,
-                                        std::vector< vtkDataArray * > const & srcArrays,
-                                        FieldIdentifiers & fieldsToBeSync );
-
 
 } // namespace geosx
 

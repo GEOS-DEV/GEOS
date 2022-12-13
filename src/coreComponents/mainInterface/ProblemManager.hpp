@@ -21,6 +21,7 @@
 #define GEOSX_MAININTERFACE_PROBLEMMANAGER_HPP_
 
 #include "events/EventManager.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geosx
 {
@@ -226,6 +227,7 @@ public:
     dataRepository::ViewKey outputDirectory          = {"outputDirectory"};          ///< Output directory key
     dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};        ///< Flag to use non-block MPI key
     dataRepository::ViewKey suppressPinned           = {"suppressPinned"};           ///< Flag to suppress use of pinned
+    dataRepository::ViewKey fieldNamesInGEOSX        = {"fieldNamesInGEOSX"};        ///< Names of the fields in GEOSX
                                                                                      ///< memory key
   } viewKeys; ///< Command line input viewKeys
 
@@ -366,6 +368,9 @@ private:
 
   /// The FieldSpecificationManager
   FieldSpecificationManager * m_fieldSpecificationManager;
+
+  /// String array of the GEOSX user declared fields
+  array1d< string > m_fieldNamesInGEOSX;
 };
 
 } /* namespace geosx */

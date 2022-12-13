@@ -105,6 +105,28 @@ void setupOpenMP()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void setupCUDA()
+{
+#ifdef GEOSX_USE_CUDA
+  int cudaDeviceCount;
+  cudaError_t err = cudaGetDeviceCount(&cudaDeviceCount);
+  GEOSX_ERROR_IF(cudaSuccess != err, cudaGetErrorString(err));
+  GEOSX_LOG_RANK_0( "Number of CUDA devices: " << cudaDeviceCount );
+  if ( MpiWrapper::initialized() )
+  {
+    int rank = MpiWrapper::commRank();
+    int device = (rank+1)%cudaDeviceCount;
+    GEOSX_LOG_RANK( device );
+    err = cudaSetDevice( device );
+    GEOSX_ERROR_IF( cudaSuccess != err, cudaGetErrorString(err) );
+  }
+  //  size_t free, total;
+  //GEOSX_ERROR_IF( CUDA_SUCCESS != cuMemGetInfo(&free, &total), "Error in cuMemGetInfo() call" );
+  //GEOSX_LOG_RANK( "Memory available on device: " << total << " B, free: " << free << " B " );
+#endif
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupMPI( int argc, char * argv[] )
 {
   if( !MpiWrapper::initialized() )
@@ -282,6 +304,7 @@ static void addUmpireHighWaterMarks()
 void setupEnvironment( int argc, char * argv[] )
 {
   setupMPI( argc, argv );
+  setupCUDA();
   setupLogger();
   setupLvArray();
   setupOpenMP();

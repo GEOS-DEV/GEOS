@@ -75,13 +75,4 @@ void MeshManager::generateMeshLevels( DomainPartition & domain )
   } );
 }
 
-void MeshManager::importFields( DomainPartition & domain )
-{
-  forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
-  {
-    meshGen.importFields( domain );
-  } );
-}
-
-
 } /* namespace geosx */

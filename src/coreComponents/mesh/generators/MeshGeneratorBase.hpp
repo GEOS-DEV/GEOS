@@ -19,9 +19,13 @@
 #ifndef GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP
 #define GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
+#include <string>
+
 #include "dataRepository/Group.hpp"
+#include "dataRepository/WrapperBase.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
+
 
 namespace geosx
 {
@@ -78,13 +82,14 @@ public:
   virtual void generateMesh( DomainPartition & domain ) = 0;
 
   /**
-   * @brief Import data from external sources (e.g. dataset that comes with a mesh).
-   * @param[in] domain the domain partition
+   * @brief import fields from the mesh  on the array accessible via the given wrapper.
+   * @param cellBlockName name of the cell block to copy data from.
+   * @param wrapperName name of the wrapper
+   * @param fieldIndex Index of the field
+   * @param wrapper Wrapper to access the array
+   * @param importMaterial Indicate if we want to import material or regular fields
    */
-  virtual void importFields( DomainPartition & domain ) const
-  {
-    GEOSX_UNUSED_VAR( domain );
-  }
+  virtual void importFieldsOnArray( string const cellBlockName, string const wrapperName, int fieldIndex, dataRepository::WrapperBase & wrapper, bool importMaterial ) const = 0;
 
   /**
    * @brief Free internal resources associated with mesh/data import.
@@ -93,8 +98,9 @@ public:
    * Once this method is called, they can release any memory allocated.
    */
   virtual void freeResources() {}
-};
 
+  virtual string getSourceName( localIndex index ) const { return ""; }//= 0;
+};
 }
 
 #endif /* GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP */
