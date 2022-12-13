@@ -144,6 +144,12 @@ public:
     return m_thermalExpansionCoefficient[k];
   }
 
+  GEOSX_HOST_DEVICE
+  virtual real64 getShearModulus( localIndex const k ) const override final
+  {
+    return m_shearModulus[k];
+  }
+
   // TODO: confirm hyper stress/strain measures before activatiing
 
   /*

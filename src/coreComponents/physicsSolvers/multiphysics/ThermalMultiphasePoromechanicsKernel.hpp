@@ -105,13 +105,13 @@ public:
                                         FE_TYPE const & finiteElementSpace,
                                         CONSTITUTIVE_TYPE & inputConstitutiveType,
                                         arrayView1d< globalIndex const > const inputDispDofNumber,
-                                        string const inputFlowDofKey,
                                         globalIndex const rankOffset,
-                                        localIndex const numComponents,
-                                        localIndex const numPhases,
                                         CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                         arrayView1d< real64 > const inputRhs,
                                         real64 const (&inputGravityVector)[3],
+                                        string const inputFlowDofKey,
+                                        localIndex const numComponents,
+                                        localIndex const numPhases,
                                         string const fluidModelKey ):
     Base( nodeManager,
           edgeManager,
@@ -121,13 +121,13 @@ public:
           finiteElementSpace,
           inputConstitutiveType,
           inputDispDofNumber,
-          inputFlowDofKey,
           rankOffset,
-          numComponents,
-          numPhases,
           inputMatrix,
           inputRhs,
           inputGravityVector,
+          inputFlowDofKey,
+          numComponents,
+          numPhases,
           fluidModelKey ),
     m_rockInternalEnergy_n( inputConstitutiveType.getInternalEnergy_n() ),
     m_rockInternalEnergy( inputConstitutiveType.getInternalEnergy() ),
@@ -762,19 +762,17 @@ protected:
 using ThermalMultiphasePoromechanicsKernelFactory =
   finiteElement::KernelFactory< ThermalMultiphasePoromechanicsKernel,
                                 arrayView1d< globalIndex const > const,
-                                string const,
                                 globalIndex const,
-                                localIndex const,
-                                localIndex const,
                                 CRSMatrixView< real64, globalIndex const > const,
                                 arrayView1d< real64 > const,
                                 real64 const (&)[3],
+                                string const,
+                                localIndex const,
+                                localIndex const,
                                 string const >;
 
 } // namespace thermalporomechanicsKernels
 
 } // namespace geosx
-
-#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_THERMALMULTIPHASEPOROMECHANICSKERNEL_HPP_
