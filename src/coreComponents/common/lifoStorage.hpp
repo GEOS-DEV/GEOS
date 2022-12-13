@@ -255,12 +255,13 @@ public:
     m_bufferCount( 0 ), m_bufferOnDiskCount( 0 ),
 #ifdef GEOSX_USE_CUDA
     m_pushToDeviceEvents( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 ),
-#endif
     m_pushToHostFutures( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers ),
-#ifdef GEOSX_USE_CUDA
     m_popFromDeviceEvents( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 ),
-#endif
     m_popFromHostFutures( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers )
+#else
+    m_pushToHostFutures( maxNumberOfBuffers ),
+    m_popFromHostFutures( maxNumberOfBuffers )
+#endif
   {
     m_worker[0] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 0 );
     m_worker[1] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 1 );
@@ -285,10 +286,6 @@ public:
     m_task_queue_not_empty_cond[1].notify_all();
     m_worker[0].join();
     m_worker[1].join();
-#ifdef GEOSX_USE_CUDA
-    GEOSX_ASSERT( m_deviceStorage.empty() );
-#endif
-    GEOSX_ASSERT( m_hostStorage.empty() && m_diskStorage.empty() && m_task_queue.empty() );
   }
 
   /**
