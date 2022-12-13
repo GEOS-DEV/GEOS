@@ -97,11 +97,11 @@ def main():
     pp_imp = np.empty(len(rows[:, 23]))
     y_imp = np.empty(len(rows[:, 23]))
     for i in range(0, len(rows[:, 23])):
-        pp_imp[i] = float(rows[i, 32])
-        sxx_imp[i] = ((float(rows[i, 23]) - bBiot * pp_imp[i]) - (Stress[0] - bBiot * Pr_i)) / 1.0e6
-        syy_imp[i] = ((float(rows[i, 24]) - bBiot * pp_imp[i]) - (Stress[1] - bBiot * Pr_i)) / 1.0e6
-        sxy_imp[i] = float(rows[i, 28]) / 1.0e6
-        y_imp[i] = float(rows[i, 36])
+        pp_imp[i] = float(rows[i, 22])
+        sxx_imp[i] = ((float(rows[i, 14]) - bBiot * pp_imp[i]) - (Stress[0] - bBiot * Pr_i)) / 1.0e6
+        syy_imp[i] = ((float(rows[i, 15]) - bBiot * pp_imp[i]) - (Stress[1] - bBiot * Pr_i)) / 1.0e6
+        sxy_imp[i] = float(rows[i, 19]) / 1.0e6
+        y_imp[i] = float(rows[i, 26])
 
     # Load simulation result for case with permeable fault
     file = open("result_per.csv")
@@ -119,11 +119,11 @@ def main():
     pp_per = np.empty(len(rows[:, 23]))
     y_per = np.empty(len(rows[:, 23]))
     for i in range(0, len(rows[:, 23])):
-        pp_per[i] = float(rows[i, 32])
-        sxx_per[i] = ((float(rows[i, 23]) - bBiot * pp_per[i]) - (Stress[0] - bBiot * Pr_i)) / 1.0e6
-        syy_per[i] = ((float(rows[i, 24]) - bBiot * pp_per[i]) - (Stress[1] - bBiot * Pr_i)) / 1.0e6
-        sxy_per[i] = float(rows[i, 28]) / 1.0e6
-        y_per[i] = float(rows[i, 36])
+        pp_per[i] = float(rows[i, 22])
+        sxx_per[i] = ((float(rows[i, 14]) - bBiot * pp_per[i]) - (Stress[0] - bBiot * Pr_i)) / 1.0e6
+        syy_per[i] = ((float(rows[i, 15]) - bBiot * pp_per[i]) - (Stress[1] - bBiot * Pr_i)) / 1.0e6
+        sxy_per[i] = float(rows[i, 19]) / 1.0e6
+        y_per[i] = float(rows[i, 26])
 
     # Load analytical solution
     y_ana, sxx_per_ana, syy_per_ana, sxy_per_ana, sxx_imp_ana, syy_imp_ana, sxy_imp_ana = np.loadtxt(

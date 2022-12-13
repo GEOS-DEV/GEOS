@@ -423,6 +423,5 @@ blt                 develop
 LvArray             develop
 integratedTests     develop
 hdf5_interface      master
-PAMELA              master
 PVTPackage          master
 ================    ================

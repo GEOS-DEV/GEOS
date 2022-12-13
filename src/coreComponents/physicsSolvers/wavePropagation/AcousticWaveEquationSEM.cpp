@@ -254,6 +254,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const
   X = nodeManager.referencePosition().toViewConst();
+
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
 
@@ -303,7 +304,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
     GEOSX_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                    "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
+                    "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
                     InputError );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
@@ -313,9 +314,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-    finiteElement::dispatch3D( fe,
-                               [&]
-                                 ( auto const finiteElement )
+    finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
@@ -349,9 +348,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         rickerOrder );
     } );
   } );
-
 }
-
 
 void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
 {
@@ -468,15 +465,12 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
-    //TODO: Please make a shallow copy of face normal in the constructo for the new mesh level
-    FaceManager & faceManager0 = this->getGroupByPath< FaceManager >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/faceManager" );
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
-    /// get table containing all the face normals
-    arrayView2d< real64 const > const faceNormal  = faceManager0.faceNormal();
+    /// get face to node map
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
@@ -494,7 +488,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     {
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-      arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
+      arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
 
       /// Partial gradient if gradient as to be computed
@@ -503,30 +497,28 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-      finiteElement::dispatch3D( fe,
-                                 [&]
-                                   ( auto const finiteElement )
+      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-        localIndex const numNodesPerFace = facesToNodes.sizeOfArray( 0 );
+        acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        acousticWaveEquationSEMKernels::MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
+        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               X,
+                                                               elemsToNodes,
+                                                               velocity,
+                                                               mass );
 
-        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                              numFacesPerElem,
-                                                              numNodesPerFace,
-                                                              X,
-                                                              elemsToNodes,
-                                                              elemsToFaces,
-                                                              facesToNodes,
-                                                              facesDomainBoundaryIndicator,
-                                                              freeSurfaceFaceIndicator,
-                                                              faceNormal,
-                                                              velocity,
-                                                              mass,
-                                                              damping );
+        acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
+
+        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
+                                                               X,
+                                                               facesToElements,
+                                                               facesToNodes,
+                                                               facesDomainBoundaryIndicator,
+                                                               freeSurfaceFaceIndicator,
+                                                               velocity,
+                                                               damping );
       } );
     } );
   } );
@@ -773,9 +765,7 @@ void AcousticWaveEquationSEM::initializePML()
       real32 const xMin[3]{param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
       real32 const xMax[3]{param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
 
-      finiteElement::dispatch3D( fe,
-                                 [&]
-                                   ( auto const finiteElement )
+      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
@@ -922,9 +912,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
       real32 const r = param.reflectivityPML;
 
       /// Get the type of the elements in the subregion
-      finiteElement::dispatch3D( fe,
-                                 [&]
-                                   ( auto const finiteElement )
+      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 

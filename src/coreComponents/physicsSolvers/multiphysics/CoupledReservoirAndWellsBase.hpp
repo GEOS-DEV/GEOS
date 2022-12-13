@@ -193,6 +193,9 @@ public:
     {
       ElementRegionManager & elemManager = meshLevel.getElemManager();
 
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > const elemCenter =
+        elemManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+
       // loop over the wells
       elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                   WellElementSubRegion & subRegion )
@@ -215,10 +218,21 @@ public:
           arrayView1d< real64 const > const perfTrans =
             perforationData.getField< fields::perforation::wellTransmissibility >();
 
+          // get the element region, subregion, index
+          arrayView1d< localIndex const > const resElemRegion =
+            perforationData.getField< fields::perforation::reservoirElementRegion >();
+          arrayView1d< localIndex const > const resElemSubRegion =
+            perforationData.getField< fields::perforation::reservoirElementSubRegion >();
+          arrayView1d< localIndex const > const resElemIndex =
+            perforationData.getField< fields::perforation::reservoirElementIndex >();
+
           forAll< serialPolicy >( perforationData.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
           {
-            GEOSX_LOG_RANK( GEOSX_FMT( "The perforation at ({},{},{}) has a transmissibility of {} Pa.s.rm^3/s/Pa",
+            GEOSX_LOG_RANK( GEOSX_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
                                        perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
+                                       elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][0],
+                                       elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][1],
+                                       elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][2],
                                        perfTrans[iperf] ) );
           } );
         }
