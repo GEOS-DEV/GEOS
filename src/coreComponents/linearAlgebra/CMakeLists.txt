@@ -51,7 +51,11 @@ set( linearAlgebra_sources
      solvers/SeparateComponentPreconditioner.cpp
    )
 
+<<<<<<< HEAD
 set( dependencyList mesh denseLinearAlgebra)
+=======
+set( dependencyList mesh denseLinearAlgebra )
+>>>>>>> origin/develop
 
 
 list( APPEND linearAlgebra_headers

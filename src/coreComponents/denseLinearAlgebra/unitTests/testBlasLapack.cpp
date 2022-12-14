@@ -19,7 +19,6 @@
 // Source includes
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
-#include "mainInterface/GeosxState.hpp"
 
 #include "common/DataTypes.hpp"
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"

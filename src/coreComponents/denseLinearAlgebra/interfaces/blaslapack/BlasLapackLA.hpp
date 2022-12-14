@@ -19,7 +19,7 @@
 #define GEOSX_DENSELINEARALGEBRA_INTERFACES_BLASLAPACK_BLASLAPACKLA_HPP_
 
 #include "common/DataTypes.hpp"
-#include "denseLinearAlgebra/common/common.hpp"
+#include "denseLinearAlgebra/common/layouts.hpp"
 
 #include <complex>
 
@@ -445,7 +445,14 @@ struct BlasLapackLA
 
   /**
    * @brief Solves the linear system ;
+<<<<<<< HEAD:src/coreComponents/denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp
    * \p Ainv  \p solution = \p rhs.
+=======
+   * \p A  \p solution = \p rhs.
+   *
+   * @details The method is intended for the solution of a small dense linear system.
+   * It employs lapack method dgetr.
+>>>>>>> origin/develop:src/coreComponents/denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp
    *
    * @param [in]  A GEOSX array2d.
    * @param [in]  rhs GEOSX array1d.
@@ -457,6 +464,11 @@ struct BlasLapackLA
 
   /**
    * @copydoc solveLinearSystem( MatRowMajor<real64 const> const &, Vec< real64 const > const &, Vec< real64 const > const & )
+<<<<<<< HEAD:src/coreComponents/denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp
+=======
+   *
+   * @note this function first applies a matrix permutation and then calls the row major version of the function.
+>>>>>>> origin/develop:src/coreComponents/denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp
    */
   static void solveLinearSystem( MatColMajor< real64 const > const & A,
                                  Vec< real64 const > const & rhs,
