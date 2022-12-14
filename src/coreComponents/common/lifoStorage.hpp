@@ -234,6 +234,12 @@ private:
   bool m_continue = true;
 
 public:
+
+// to avoid unused parameter when building without CUDA support
+#ifndef GEOSX_USE_CUDA
+#define numberOfBuffersToStoreDevice
+#endif
+
   /**
    * A LIFO storage will store numberOfBuffersToStoreDevice buffer on
    * deevice, numberOfBuffersToStoreHost on host and the rest on disk.
