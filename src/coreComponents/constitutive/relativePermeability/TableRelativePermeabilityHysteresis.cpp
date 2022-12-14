@@ -32,8 +32,7 @@ namespace constitutive
 
 TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::string const & name,
                                                                           Group * const parent )
-  : RelativePermeabilityBase( name, parent ),
-  m_KilloughModel( name, parent )
+  : RelativePermeabilityBase( name, parent )
 {
   // drainage table names
 
@@ -106,6 +105,11 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
   registerWrapper( viewKeyStruct::KilloughModelString(), &m_KilloughModel )
     .setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
+
+
+    registerWrapper( viewKeyStruct::KilloughModelWrapperString(), &m_KilloughKernel )
+            .setSizedFromParent( 0 ).
+            setRestartFlags( RestartFlags::NO_WRITE );
 
 
   registerWrapper( viewKeyStruct::drainageRelPermKernelWrappersString(),
@@ -468,11 +472,8 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
 
   // Note: for simplicity, the notations are taken from IX documentation (although this breaks our phaseVolFrac naming convention)
   using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
-
-  {
     m_KilloughModel.computeLandCoefficient( m_wettingCurve, m_landParam[IPT::WETTING] );
     m_KilloughModel.computeLandCoefficient( m_nonWettingCurve, m_landParam[IPT::NONWETTING] );
-  }
 }
 
 void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()

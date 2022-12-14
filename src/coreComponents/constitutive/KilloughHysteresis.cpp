@@ -62,32 +62,23 @@ void KilloughHysteresis::setRelPermParameters( const geosx::real64 & jerauldA,
 }
 
 
-KilloughHysteresis::KilloughHysteresis( const std::string & name,
-                                        geosx::dataRepository::Group * const parent )
-  :
-  ConstitutiveBase( name, parent )
-{
-  //register through TableRelativePermeabilityHysteresis or TableCapillaryPressureHysteresis
-}
-
-
 void KilloughHysteresis::postProcessInput()
 {
   GEOSX_THROW_IF( m_jerauldParam_a < 0,
                   GEOSX_FMT( "{}: the parameter {} must be positive",
-                             getFullName(),
+                             getCatalogName(),
                              viewKeyStruct::jerauldParameterAString() ),
                   InputError );
 
   GEOSX_THROW_IF( m_jerauldParam_b < 0,
                   GEOSX_FMT( "{}: the paramater {} must be postitive",
-                             getFullName(),
+                             getCatalogName(),
                              viewKeyStruct::jerauldParameterBString() ),
                   InputError );
 
   GEOSX_THROW_IF( m_killoughCurvatureParamRelPerm < 0,
                   GEOSX_FMT( "{}: the paramater {} must be postitive",
-                             getFullName(),
+                             getCatalogName(),
                              viewKeyStruct::killoughCurvatureParameterString() ),
                   InputError );
 
@@ -95,7 +86,7 @@ void KilloughHysteresis::postProcessInput()
 
 KilloughHysteresis::KernelKilloughHysteresisBase
 KilloughHysteresis::createKernelWrapper( const arrayView1d< const geosx::real64 > & landParam,
-                                         const arrayView3d< geosx::real64, cappres::USD_CAPPRES > & phaseTrappedVolFrac ) const
+                                         const arrayView3d< geosx::real64, relperm::USD_RELPERM > & phaseTrappedVolFrac ) const
 {
   return KilloughHysteresis::KernelKilloughHysteresisBase( landParam,
                                                            m_jerauldParam_a,
@@ -121,7 +112,7 @@ void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisC
     GEOSX_THROW_IF(  (Smxi - Smxd) > 0,
                      GEOSX_FMT( "{}: For wetting phase hysteresis, imbibition end-point saturation Smxi( {} ) must be smaller than the drainage saturation end-point Smxd( {} ).\n"
                                 "Crossing relative permeability curves.\n",
-                                getFullName(),
+                                getCatalogName(),
                                 Smxi,
                                 Smxd ),
                      InputError );
@@ -138,7 +129,7 @@ void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisC
     GEOSX_THROW_IF( (Scrd - Scri) > 0,
                     GEOSX_FMT( "{}: For non-wetting phase hysteresis, drainage trapped saturation Scrd( {} ) must be smaller than the imbibition saturation Scri( {} ).\n"
                                "Crossing relative permeability curves.\n",
-                               getFullName(),
+                               getCatalogName(),
                                Scrd,
                                Scri ),
                     InputError );
@@ -149,6 +140,5 @@ void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisC
 
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, KilloughHysteresis, std::string const &, Group * const )
 }//end namespace
 }//end namespace

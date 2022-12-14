@@ -39,7 +39,7 @@ namespace constitutive
 
 
 //should be up to constitutiveBase or some new SCALConstitutiveBase but for now let's POC on relativePermeabilityBase
-class KilloughHysteresis : public ConstitutiveBase
+class KilloughHysteresis
 {
 public:
 
@@ -86,15 +86,13 @@ public:
 
   };
 
-  KilloughHysteresis( std::string const & name, Group * const parent );
-
   void setRelPermParameters( real64 const & jerauldA, real64 const & jerauldB, real64 const & relpermCurv );
 
   static std::string catalogName() { return "KilloughHysteresis"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  string getCatalogName() const { return catalogName(); }
 
-  virtual void postProcessInput() override;
+  void postProcessInput();
 
 //  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
@@ -183,15 +181,12 @@ private:
                                                     arrayView3d< real64, cappres::USD_CAPPRES > const & phaseTrappedVolFrac ) const;
 
 
-
   struct viewKeyStruct
   {
     static constexpr char const * jerauldParameterAString() { return "jerauldParameterA"; }
     static constexpr char const * jerauldParameterBString() { return "jerauldParameterB"; }
 
     static constexpr char const * killoughCurvatureParameterString() { return "killoughCurvatureParameter"; }
-    static constexpr char const * killoughCurvatureCapPresParameterString() { return "killoughCurvatureCapPresParameter";}
-
   };
 
 private:

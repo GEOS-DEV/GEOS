@@ -501,10 +501,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 
     // Step 1.b: get the trapped from wetting data
     real64 const Shy = ( phaseMinHistoricalVolFraction > Swc ) ? phaseMinHistoricalVolFraction : Swc;
-    real64 const A = 1 + m_KilloughKernel.getJerauldParamA() * ( Shy - Swc );
-    real64 const numerator = Shy - Smxd;
-    real64 const denom = A + m_landParam[IPT::WETTING] * pow( ( Smxd - Shy ) / ( Smxd - Swc ), 1 + m_KilloughKernel.getJerauldParamB()/m_landParam[IPT::WETTING] );
-    real64 const Scrt = Smxd + numerator / denom;
+    real64 Scrt = 0.;
+    m_KilloughKernel.computeTrappedCriticalPhaseVolFraction(m_wettingCurve,Shy,m_landParam[IPT::WETTING],Scrt);
 
     // Step 1.c: find the new endpoint
     // this is the saturation for the scanning curve endpoint
@@ -514,8 +512,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                                                                    ( Smxd - Smxi ) ), m_KilloughKernel.getCurvatureParam() );
 
     // Step 2: get the normalized value of saturation
-    real64 const ratio = ( Smxi - Swc ) / ( Scrt - Shy );
-    real64 const Snorm = Smxi - ( Scrt - S ) * ratio; // normalized saturation from equation 2.166
+    real64 const ratio = ( Scrt - S ) / ( Scrt - Shy );
+    real64 const Snorm = Smxi -  ( Smxi - Swc ) * ratio; // normalized saturation from equation 2.166
     real64 const dSnorm_dS =  ratio;
     real64 dkri_dSnorm = 0.0;
     auto const & imbibitionRelPermKernelWrapper = m_imbibitionRelPermKernelWrappers[IPT::WETTING];
