@@ -18,9 +18,9 @@ def ternatry_figure(int):
     plt.axis('square')
 
     # add minor lines ?
-    plt.text(1 / np.sqrt(3) - 0.03, 1 + 0.03, '$S_w$')
-    plt.text(2 / np.sqrt(3) + 0.01, 0 - 0.03, '$S_o$')
-    plt.text(0 - 0.05, 0 - 0.03, '$S_g$')
+    plt.text(1 / np.sqrt(3) - 0.03, 1 + 0.03, '$S_g$')
+    plt.text(2 / np.sqrt(3) + 0.01, 0 - 0.03, '$S_w$')
+    plt.text(0 - 0.05, 0 - 0.03, '$S_o$')
 
     h.tight_layout()
     return h
