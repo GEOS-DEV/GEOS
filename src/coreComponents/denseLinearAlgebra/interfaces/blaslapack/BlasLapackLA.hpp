@@ -447,8 +447,8 @@ struct BlasLapackLA
    * @brief Solves the linear system ;
    * \p A  \p solution = \p rhs.
    *
-   * @note It employs lapack method dgetr. 
-   * 
+   * @note It employs lapack method dgetr.
+   *
    * @param [in]  A GEOSX array2d.
    * @param [in]  rhs GEOSX array1d.
    * @param [out] solution GEOSX array1d.
@@ -459,8 +459,8 @@ struct BlasLapackLA
 
   /**
    * @copydoc solveLinearSystem( MatRowMajor<real64 const> const &, Vec< real64 const > const &, Vec< real64 const > const & )
-   * 
-   * @note this function first applies a matrix permutation and then calls the row major version of the function. 
+   *
+   * @note this function first applies a matrix permutation and then calls the row major version of the function.
    */
   static void solveLinearSystem( MatColMajor< real64 const > const & A,
                                  Vec< real64 const > const & rhs,
