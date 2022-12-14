@@ -955,9 +955,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   if( m_damageFieldPartitioning == 1 )
   {
     // Get volume, position, damage, surface flag
-    ParticleManager::ParticleViewAccessor< arrayView1d< real64 const > > particleVolumeAccessor = particleManager.constructViewAccessor< arrayView1d< real64 const > >( "particleVolume" );
-    ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particlePositionAccessor = particleManager.constructViewAccessor< arrayView2d< real64 const > >( "particleCenter" );
-    ParticleManager::ParticleViewAccessor< arrayView1d< real64 const > > particleDamageAccessor = particleManager.constructViewAccessor< arrayView1d< real64 const > >( "particleDamage" );
+    ParticleManager::ParticleViewAccessor< arrayView1d< real64 const > > particleVolumeAccessor = particleManager.constructArrayViewAccessor< real64, 1 >( "particleVolume" );
+    ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particlePositionAccessor = particleManager.constructArrayViewAccessor< real64, 2 >( "particleCenter" );
+    ParticleManager::ParticleViewAccessor< arrayView1d< real64 const > > particleDamageAccessor = particleManager.constructArrayViewAccessor< real64, 1 >( "particleDamage" );
     ParticleManager::ParticleViewAccessor< arrayView1d< int const > > particleSurfaceFlagAccessor = particleManager.constructFieldAccessor< fields::mpm::particleSurfaceFlag >();
 
     // Perform neighbor operations
@@ -973,10 +973,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       // Get particle position and damage field gradient
       arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
       arrayView2d< real64 > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
-      arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();
+
+      // Declare arrays for holding neighbor data
+      array1d< real64 > neighborVolumes;
+      array2d< real64 > neighborPositions;
+      array1d< real64 > neighborDamages;
 
       // Loop over neighbors
-      for( localIndex p: subRegion.nonGhostIndices() )
+      for( localIndex& p: subRegion.nonGhostIndices() )
       {
         // Get number of neighbors and accessor indices
         localIndex numNeighbors = numNeighborsAll[p];
@@ -984,10 +988,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
         arraySlice1d< localIndex const > subRegionIndices = neighborSubRegions[p];
         arraySlice1d< localIndex const > particleIndices = neighborIndices[p];
 
-        // Declare arrays for holding neighbor data
-        array1d< real64 > neighborVolumes(numNeighbors);
-        array2d< real64 > neighborPositions(numNeighbors,3);
-        array1d< real64 > neighborDamages(numNeighbors);
+        // Size neighbor data arrays
+        neighborVolumes.resize(numNeighbors);
+        neighborPositions.resize(numNeighbors,3);
+        neighborDamages.resize(numNeighbors);
 
         // Populate neighbor data arrays
         for( localIndex neighborIndex = 0; neighborIndex < numNeighbors; neighborIndex++ )
@@ -1013,10 +1017,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                                      neighborPositions,
                                                      neighborVolumes,
                                                      neighborDamages ) );
-        particleDamage[p] = computeKernelField( particlePosition[p],
-                                                neighborPositions,
-                                                neighborVolumes,
-                                                neighborDamages );
       }
     } );
   }
@@ -1081,7 +1081,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     array1d< real64 > weights(numNodesMappedTo); // shape function value for each node
     array2d< real64 > gradWeights(numNodesMappedTo, 3); // shape function gradient value for each node; 1st index = direction, 2nd index = node
 
-    for( localIndex p: subRegion.nonGhostIndices() )
+    for( localIndex& p: subRegion.nonGhostIndices() )
     {
       arraySlice1d< real64 > const p_x = particleCenter[p]; // auto = LvArray::ArraySlice<double, 1, 0, int>
       arraySlice1d< real64 > const p_v = particleVelocity[p]; // auto = LvArray::ArraySlice<double, 1, 0, int>
@@ -1320,7 +1320,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     array2d< real64 > gradWeights(numNodesMappedTo, 3); // shape function gradient value for each node; 1st index = direction, 2nd index = node
 
     // Particle loop - we might be able to get rid of this someday and have everything happen via MPMParticleSubRegion methods
-    for( localIndex p: subRegion.nonGhostIndices() )
+    for( localIndex& p: subRegion.nonGhostIndices() )
     {
       arraySlice1d< real64 > const p_x = particleCenter[p];
       arraySlice1d< real64 > const p_v = particleVelocity[p];
@@ -1481,7 +1481,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     arrayView1d< real64 > const rho = subRegion.getField< fields::mpm::particleDensity >();
     arrayView1d< real64 > const g = constitutiveRelation.shearModulus();
     arrayView1d< real64 > const k = constitutiveRelation.bulkModulus();
-    for( localIndex p: subRegion.nonGhostIndices() )
+    for( localIndex& p: subRegion.nonGhostIndices() )
     {
       wavespeed = std::max( wavespeed, sqrt( ( k[p] + (4.0/3.0) * g[p] ) / rho[p] ) + tOps::l2Norm< 3 >( particleVelocity[p] ) );
     }
@@ -1509,7 +1509,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     {                                          //       We could also do away with the rank check since only master particles are ever evaluated for deletion.
       if( isBad[p] == 1 && particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) )
       {
-        subRegion.erase(p);
+        subRegion.erase(p); // TODO: If we never get efficient erasure in multidimensional arrays, pass a list of indices so we only have to flatten things once
       }
     }
   } );
@@ -1851,7 +1851,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
     array1d< real64 > weights(numNodesMappedTo); // shape function value for each node
     array2d< real64 > gradWeights(numNodesMappedTo, 3); // shape function gradient value for each node; 1st index = direction, 2nd index = node
 
-    for( localIndex p: subRegion.nonGhostIndices() )
+    for( localIndex& p: subRegion.nonGhostIndices() )
     {
       // Get interpolation kernel
       subRegion.getAllWeights( p,
@@ -2331,7 +2331,7 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
     arrayView2d< real64 > const xA = subRegionA.getParticleCenter();
 
     // Find neighbors of 'this' particle
-    for( localIndex a: subRegionA.nonGhostIndices() )
+    for( localIndex& a: subRegionA.nonGhostIndices() )
     {
       // Bin ijk indices bounding a sphere of radius m_neighborRadius centered at 'this' particle
       int imin, imax, jmin, jmax, kmin, kmax;
@@ -2497,6 +2497,7 @@ real64 SolidMechanicsMPM::computeKernelField( arraySlice1d< real64 > const x,  /
   // and xp, fp, will be lists for just the neighbors of the particle.
 
   // Initialize
+  array1d< real64 > relativePosition(3);
   real64 kernelVal,
          d = 0.0,
          k = 0.0;
@@ -2504,7 +2505,6 @@ real64 SolidMechanicsMPM::computeKernelField( arraySlice1d< real64 > const x,  /
   // Sum
   for( localIndex p = 0 ; p < Vp.size() ; ++p )
   {
-    array1d< real64 > relativePosition(3);
     tOps::copy< 3 >(relativePosition, x); // relativePosition = x
     tOps::subtract< 3 >(relativePosition, xp[p]); // relativePosition = x - xp
     real64 r = tOps::l2Norm< 3 >(relativePosition);
@@ -2524,6 +2524,64 @@ real64 SolidMechanicsMPM::computeKernelField( arraySlice1d< real64 > const x,  /
   }
 }
 
+// array1d< real64 > SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< real64 > const x,  // query point
+//                                                                  arrayView2d< real64 > const xp,  // List of neighbor particle locations.
+//                                                                  arrayView1d< real64 > const Vp,  // List of neighbor particle volumes.
+//                                                                  arrayView1d< real64 > const fp ) // scalar field values (e.g. damage) at neighbor particles
+// {
+//   // Compute the kernel scalar field at a point, for a given list of neighbor particles.
+//   // The lists xp, fp, and the length np could refer to all the particles in the patch,
+//   // but generally this function will be evaluated with x equal to some particle center,
+//   // and xp, fp, will be lists for just the neighbors of the particle.
+//   // TODO: Modify to also "return" the kernel field value
+
+//   // Scalar kernel field values
+//   real64 kernelVal,
+//          f = 0.0,
+//          k = 0.0,
+//          r;
+
+//   // Gradient of the scalar field
+//   array1d< real64 > relativePosition(3),
+//                     kernelFieldGradient(3),
+//                     kernelGradVal(3),
+//                     fGrad(3),
+//                     kGrad(3);
+//   fGrad.zero();
+//   kGrad.zero();
+
+//   for( localIndex p = 0 ; p < Vp.size() ; ++p )
+//   {
+
+//     tOps::copy< 3 >(relativePosition, x); // relativePosition = x
+//     tOps::subtract< 3 >(relativePosition, xp[p]); // relativePosition = x - xp
+//     r = tOps::l2Norm< 3 >(relativePosition);
+
+//     kernelVal = kernel( r );
+//     k += Vp[p] * kernelVal;
+//     f += Vp[p] * fp[p] * kernelVal;
+
+//     kernelGradVal = kernelGradient( x, xp[p], r );
+//     tOps::scaledAdd< 3 >(kGrad, kernelGradVal, Vp[p]);
+//     tOps::scaledAdd< 3 >(fGrad, kernelGradVal, Vp[p] * fp[p]);
+//   }
+
+//   // Return the normalized kernel field gradient (which eliminates edge effects)
+//   if( k != 0.0 )
+//   {
+//     //kernelField = f/k;
+//     tOps::scaledCopy< 3 >(kernelFieldGradient, fGrad, 1.0 / k); // kernelFieldGradient = fGrad / k
+//     tOps::scaledAdd< 3 >(kernelFieldGradient, kGrad, -f / (k * k)); // kernelFieldGradient = fGrad / k - f * kGrad / (k * k)
+//   }
+//   else
+//   {
+//     //kernelField = 0.0;
+//     kernelFieldGradient.zero();
+//   }
+
+//   return kernelFieldGradient;
+// }
+
 array1d< real64 > SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< real64 > const x,  // query point
                                                                  arrayView2d< real64 > const xp,  // List of neighbor particle locations.
                                                                  arrayView1d< real64 > const Vp,  // List of neighbor particle volumes.
@@ -2541,36 +2599,46 @@ array1d< real64 > SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< r
          k = 0.0,
          r;
 
-  // gradient of the scalar field
+  // Gradient of the scalar field
+  real64 relativePosition[3],
+         fGrad[3],
+         kGrad[3];
+  fGrad[0] = 0.0;
+  fGrad[1] = 0.0;
+  fGrad[2] = 0.0;
+  kGrad[0] = 0.0;
+  kGrad[1] = 0.0;
+  kGrad[2] = 0.0;
   array1d< real64 > kernelFieldGradient(3),
-                    kernelGradVal(3),
-                    fGrad(3),
-                    kGrad(3);
-  fGrad.zero();
-  kGrad.zero();
+                    kernelGradVal(3);
 
   for( localIndex p = 0 ; p < Vp.size() ; ++p )
   {
-    array1d< real64 > relativePosition(3);
-    tOps::copy< 3 >(relativePosition, x); // relativePosition = x
-    tOps::subtract< 3 >(relativePosition, xp[p]); // relativePosition = x - xp
-    r = tOps::l2Norm< 3 >(relativePosition);
+    relativePosition[0] = x[0] - xp[p][0];
+    relativePosition[1] = x[1] - xp[p][1];
+    relativePosition[2] = x[2] - xp[p][2];
+    r = sqrt( relativePosition[0] * relativePosition[0] + relativePosition[1] * relativePosition[1] + relativePosition[2] * relativePosition[2] );
 
     kernelVal = kernel( r );
     k += Vp[p] * kernelVal;
     f += Vp[p] * fp[p] * kernelVal;
 
     kernelGradVal = kernelGradient( x, xp[p], r );
-    tOps::scaledAdd< 3 >(kGrad, kernelGradVal, Vp[p]);
-    tOps::scaledAdd< 3 >(fGrad, kernelGradVal, Vp[p] * fp[p]);
+    kGrad[0] += kernelGradVal[0] * Vp[p];
+    kGrad[1] += kernelGradVal[1] * Vp[p];
+    kGrad[2] += kernelGradVal[2] * Vp[p];
+    fGrad[0] += kernelGradVal[0] * Vp[p] * fp[p];
+    fGrad[1] += kernelGradVal[1] * Vp[p] * fp[p];
+    fGrad[2] += kernelGradVal[2] * Vp[p] * fp[p];
   }
 
   // Return the normalized kernel field gradient (which eliminates edge effects)
   if( k != 0.0 )
   {
     //kernelField = f/k;
-    tOps::scaledCopy< 3 >(kernelFieldGradient, fGrad, 1.0 / k); // kernelFieldGradient = fGrad / k
-    tOps::scaledAdd< 3 >(kernelFieldGradient, kGrad, -f / (k * k)); // kernelFieldGradient = fGrad / k - f * kGrad / (k * k)
+    kernelFieldGradient[0] = fGrad[0] / k - f * kGrad[0] / (k * k);
+    kernelFieldGradient[1] = fGrad[1] / k - f * kGrad[1] / (k * k);
+    kernelFieldGradient[2] = fGrad[2] / k - f * kGrad[2] / (k * k);
   }
   else
   {

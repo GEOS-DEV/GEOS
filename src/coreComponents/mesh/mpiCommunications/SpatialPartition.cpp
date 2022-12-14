@@ -348,192 +348,201 @@ namespace geosx
      *
      */
 
-    // MPM-specific code where we assume there are 2 mesh bodies and only one of them has particles
-    // dataRepository::Group & meshBodies = domain.getMeshBodies();
-    // MeshBody & meshBody1 = meshBodies.getGroup< MeshBody >(0);
-    // MeshBody & meshBody2 = meshBodies.getGroup< MeshBody >(1);
-    // MeshBody & particles = meshBody1.hasParticles() ? meshBody1 : meshBody2;
-    // ParticleManager & particleManager = particles.getBaseDiscretization().getParticleManager();
+    // (1) Identify any particles that are master on the current partition, but whose center lies
+    // outside of the partition domain.  Rank() for particles is defined such that it always
+    // equals the rank of the owning process. Thus a particle is master iff Rank==partition.rank
+    //
+    // Temporarily set the ghost rank of any particle to be moved to "-1".  If the particle is
+    // requested by another partition, its ghost rank will be updated.  Any particle that still
+    // has a Rank=-1 at the end of this function is lost and needs to be deleted.  This
+    // should only happen if it has left the global domain (hopefully at an outflow b.c.).
+    bool profile = false;
+    ParticleRegion & region1 = dynamicCast< ParticleRegion & >( subRegion.getParent().getParent() );
+    int index = region1.getIndexInParent();
+    real64 time = MpiWrapper::wtime();
 
-    // particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-    // {
+    arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
+    arrayView1d< localIndex > const particleRank = subRegion.getParticleRank();
+    array1d< R1Tensor > outOfDomainParticleCoordinates;
+    std::vector< localIndex > outOfDomainParticleLocalIndices;
+    unsigned int nn = m_neighbors.size(); // Number of partition neighbors.
 
-      // (1) Identify any particles that are master on the current partition, but whose center lies
-      // outside of the partition domain.  Rank() for particles is defined such that it always
-      // equals the rank of the owning process. Thus a particle is master iff Rank==partition.rank
-      //
-      // Temporarily set the ghost rank of any particle to be moved to "-1".  If the particle is
-      // requested by another partition, its ghost rank will be updated.  Any particle that still
-      // has a Rank=-1 at the end of this function is lost and needs to be deleted.  This
-      // should only happen if it has left the global domain (hopefully at an outflow b.c.).
+    for (localIndex pp = 0; pp < subRegion.size(); pp++)
+    {
+      bool inPartition = true;
+      R1Tensor p_x;
+      for(int i=0; i<3; i++)
+      {
+        p_x[i] = particleCenter[pp][i];
+        inPartition = inPartition && isCoordInPartition( p_x[i], i);
+      }
+      if( particleRank[pp]==this->m_rank && !inPartition )
+      {
+        GEOSX_LOG_RANK_IF( profile, "I have out-of-domain master particles!");
+        outOfDomainParticleCoordinates.emplace_back( p_x );  // Store the coordinate of the out-of-domain particle
+        outOfDomainParticleLocalIndices.push_back( pp );     // Store the local index "pp" for the current coordinate.
+        particleRank[pp] = -1;                               // Temporarily set particleRank of out-of-domain particle to -1 until it is requested by someone.
+      }
+    }
 
-      arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
-      arrayView1d< localIndex > const particleRank = subRegion.getParticleRank();
-      array1d< R1Tensor > outOfDomainParticleCoordinates;
-      std::vector< localIndex > outOfDomainParticleLocalIndices;
-      unsigned int nn = m_neighbors.size(); // Number of partition neighbors.
 
-      for (localIndex pp = 0; pp < subRegion.size(); pp++)
+    // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
+    GEOSX_LOG_RANK_IF( profile, index << ": " << "1: " << MpiWrapper::wtime() - time );
+    time = MpiWrapper::wtime();
+
+    std::vector< array1d< R1Tensor > > particleCoordinatesReceivedFromNeighbors(nn);
+
+    sendCoordinateListToNeighbors( outOfDomainParticleCoordinates.toView(),  // input: Single list of coordinates sent to all neighbors
+                                   icomm,                                    // input: Solver MPI communicator
+                                   particleCoordinatesReceivedFromNeighbors  // output: List of lists of coordinates received from each neighbor.
+                                  );
+
+
+    // (3) check the received lists for particles that are in the domain of the
+    //     current partition.  make a list of the locations in the coordinate list
+    //     of the particles that are to be owned by the current partition.
+    GEOSX_LOG_RANK_IF( profile, index << ": " << "2: " << MpiWrapper::wtime() - time );
+    time = MpiWrapper::wtime();
+
+    std::vector< array1d< localIndex > > particleListIndicesRequestingFromNeighbors(nn);
+    for(size_t n=0; n<nn; n++ )
+    {
+      // Loop through the unpacked list and make a list of the index of any point in partition interior domain
+      for(int pp=0; pp<particleCoordinatesReceivedFromNeighbors[n].toView().size(); pp++)
       {
         bool inPartition = true;
-        R1Tensor p_x;
-        for(int i=0; i<3; i++)
+        for(int j=0; j<3; j++)
         {
-          p_x[i] = particleCenter[pp][i];
-          inPartition = inPartition && isCoordInPartition( p_x[i], i);
+          inPartition = inPartition && isCoordInPartition( particleCoordinatesReceivedFromNeighbors[n].toView()[pp][j], j );
         }
-        if( particleRank[pp]==this->m_rank && !inPartition )
+        if( inPartition )
         {
-          outOfDomainParticleCoordinates.emplace_back( p_x );  // Store the coordinate of the out-of-domain particle
-          outOfDomainParticleLocalIndices.push_back( pp );     // Store the local index "pp" for the current coordinate.
-          particleRank[pp] = -1;                               // Temporarily set particleRank of out-of-domain particle to -1 until it is requested by someone.
+          // Request particle to be transferred, and take ownership
+          particleListIndicesRequestingFromNeighbors[n].emplace_back(pp);
         }
       }
+    }
 
 
-      // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
+    // (4) Pack and send/receive list of requested indices to each neighbor.  These are the indices
+    //     in the list of coordinates, not the LocalIndices on the sending processor. Unpack it
+    //     and store the request list.
+    GEOSX_LOG_RANK_IF( profile, index << ": " << "3: " << MpiWrapper::wtime() - time );
+    time = MpiWrapper::wtime();
 
-      std::vector< array1d< R1Tensor > > particleCoordinatesReceivedFromNeighbors(nn);
+    std::vector< array1d< localIndex > > particleListIndicesRequestedFromNeighbors(nn);
 
-      sendCoordinateListToNeighbors( outOfDomainParticleCoordinates.toView(),  // input: Single list of coordinates sent to all neighbors
-                                     icomm,                                    // input: Solver MPI communicator
-                                     particleCoordinatesReceivedFromNeighbors  // output: List of lists of coordinates received from each neighbor.
-                                    );
+    sendListOfIndicesToNeighbors< localIndex >( particleListIndicesRequestingFromNeighbors,
+                                                icomm,
+                                                particleListIndicesRequestedFromNeighbors );
 
 
-      // (3) check the received lists for particles that are in the domain of the
-      //     current partition.  make a list of the locations in the coordinate list
-      //     of the particles that are to be owned by the current partition.
+    // (5) Update the ghost rank of the out-of-domain particles to be equal to the rank
+    //     of the partition requesting to own the particle.
+    GEOSX_LOG_RANK_IF( profile, index << ": " << "4: " << MpiWrapper::wtime() - time );
+    time = MpiWrapper::wtime();
 
-      std::vector< array1d< localIndex > > particleListIndicesRequestingFromNeighbors(nn);
+    std::vector< array1d< localIndex > > particleLocalIndicesRequestedFromNeighbors(nn);
+    {
+      unsigned int numberOfRequestedParticles = 0;
+      std::vector< int > outOfDomainParticleRequests( outOfDomainParticleLocalIndices.size(), 0 );
+
       for(size_t n=0; n<nn; n++ )
       {
-        // Loop through the unpacked list and make a list of the index of any point in partition interior domain
-        for(int pp=0; pp<particleCoordinatesReceivedFromNeighbors[n].toView().size(); pp++)
+        int ni = particleListIndicesRequestedFromNeighbors[n].size();
+        numberOfRequestedParticles += ni;
+
+        // The corresponding local index for each item in the request list is stored here:
+        particleLocalIndicesRequestedFromNeighbors[n].resize(ni);
+
+        for(int k=0; k<ni; k++)
         {
-          bool inPartition = true;
-          for(int j=0; j<3; j++)
-          {
-            inPartition = inPartition && isCoordInPartition( particleCoordinatesReceivedFromNeighbors[n].toView()[pp][j], j );
-          }
-          if( inPartition )
-          {
-            // Request particle to be transferred, and take ownership
-            particleListIndicesRequestingFromNeighbors[n].emplace_back(pp);
-          }
+          int i = particleListIndicesRequestedFromNeighbors[n][k];
+          outOfDomainParticleRequests[i] += 1;
+          localIndex pp = outOfDomainParticleLocalIndices[i];
+
+          particleLocalIndicesRequestedFromNeighbors[n][k] = pp;
+          // Set ghost rank of the particle equal to neighbor rank.
+          particleRank[pp] = m_neighbors[n].neighborRank();
         }
       }
 
-
-      // (4) Pack and send/receive list of requested indices to each neighbor.  These are the indices
-      //     in the list of coordinates, not the LocalIndices on the sending processor. Unpack it
-      //     and store the request list.
-
-      std::vector< array1d< localIndex > > particleListIndicesRequestedFromNeighbors(nn);
-
-      sendListOfIndicesToNeighbors< localIndex >( particleListIndicesRequestingFromNeighbors,
-                                                  icomm,
-                                                  particleListIndicesRequestedFromNeighbors );
-
-
-      // (5) Update the ghost rank of the out-of-domain particles to be equal to the rank
-      //     of the partition requesting to own the particle.
-
-      std::vector< array1d< localIndex > > particleLocalIndicesRequestedFromNeighbors(nn);
+      // Check that there is exactly one processor requesting each out-of-domain particle.
+      if (numberOfRequestedParticles != outOfDomainParticleLocalIndices.size())
       {
-        unsigned int numberOfRequestedParticles = 0;
-        std::vector< int > outOfDomainParticleRequests( outOfDomainParticleLocalIndices.size(), 0 );
-
-        for(size_t n=0; n<nn; n++ )
-        {
-          int ni = particleListIndicesRequestedFromNeighbors[n].size();
-          numberOfRequestedParticles += ni;
-
-          // The corresponding local index for each item in the request list is stored here:
-          particleLocalIndicesRequestedFromNeighbors[n].resize(ni);
-
-          for(int k=0; k<ni; k++)
-          {
-            int i = particleListIndicesRequestedFromNeighbors[n][k];
-            outOfDomainParticleRequests[i] += 1;
-            localIndex pp = outOfDomainParticleLocalIndices[i];
-
-            particleLocalIndicesRequestedFromNeighbors[n][k] = pp;
-            // Set ghost rank of the particle equal to neighbor rank.
-            particleRank[pp] = m_neighbors[n].neighborRank();
-          }
-        }
-
-        // Check that there is exactly one processor requesting each out-of-domain particle.
-        if (numberOfRequestedParticles != outOfDomainParticleLocalIndices.size())
-        {
-          std::cout << "Rank " << m_rank << " has requests for " << numberOfRequestedParticles << " out of " << outOfDomainParticleLocalIndices.size() << " out-of-domain particles" << std::endl;
-        }
-        for (size_t i=0; i<outOfDomainParticleRequests.size(); i++)
-        {
-          if (outOfDomainParticleRequests[i] != 1)
-          {
-            std::cout << "Rank " << m_rank << " particle as " << outOfDomainParticleRequests[i] << " != 1 requests!" << std::endl;
-          }
-        }
+        std::cout << "Rank " << m_rank << " has requests for " << numberOfRequestedParticles << " out of " << outOfDomainParticleLocalIndices.size() << " out-of-domain particles" << std::endl;
       }
-
-
-      // (5.1) Resize particle subRegion to accommodate incoming particles.
-      //       Keep track of the starting indices and number of particles coming from each neighbor.
-
-      int oldSize = subRegion.size();
-      int newSize = subRegion.size();
-      std::vector<int> newParticleStartingIndices(nn);
-      std::vector<int> numberOfIncomingParticles(nn);
-      for(size_t n=0; n<nn; n++)
+      for (size_t i=0; i<outOfDomainParticleRequests.size(); i++)
       {
-        numberOfIncomingParticles[n] = particleListIndicesRequestingFromNeighbors[n].size();
-        newParticleStartingIndices[n] = newSize;
-        newSize += numberOfIncomingParticles[n];
-      }
-      if(newSize > oldSize)
-      {
-        subRegion.resize(newSize); // TODO: Does this handle constitutive fields owned by the subRegion?
-      }
-
-
-      // (6) Pack a buffer for the particles to be sent to each neighbor, and send/receive
-
-      //int sizeBeforeParticleSend = subRegion.size(); // subregion size changes after this, so we need this here to use to size the deletion loop
-      sendParticlesToNeighbor( subRegion,
-                               newParticleStartingIndices,
-                               numberOfIncomingParticles,
-                               icomm,
-                               particleLocalIndicesRequestedFromNeighbors );
-
-
-      // (7) Delete any out-of-domain particles that were not requested by a neighbor.  These particles
-      //     will still have Rank=-1. This should only happen if the particle has left the global domain.
-      //     which will hopefully only occur at outflow boundary conditions.  If it happens for a particle in
-      //     the global domain, print a warning.
-
-      arrayView2d< real64 > const particleCenterAfter = subRegion.getParticleCenter();
-      arrayView1d< int > const particleRankAfter = subRegion.getParticleRank();
-      for(int p = subRegion.size()-1; p>=0; p--)
-      {
-        if( particleRankAfter[p] == -1 )
+        if (outOfDomainParticleRequests[i] != 1)
         {
-          GEOSX_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[p] );
-          subRegion.erase(p);
-        }
-        else if( particleRankAfter[p] != m_rank )
-        {
-          subRegion.erase(p);
+          std::cout << "Rank " << m_rank << " particle as " << outOfDomainParticleRequests[i] << " != 1 requests!" << std::endl;
         }
       }
-      // Resize particle region owning this subregion
-      ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegion.getParent().getParent() );
-      int newRegionSize = region.getNumberOfParticles();
-      region.resize(newRegionSize);
+    }
 
-    //} );
 
+    // (5.1) Resize particle subRegion to accommodate incoming particles.
+    //       Keep track of the starting indices and number of particles coming from each neighbor.
+    GEOSX_LOG_RANK_IF( profile, index << ": " << "5: " << MpiWrapper::wtime() - time );
+    time = MpiWrapper::wtime();
+
+    int oldSize = subRegion.size();
+    int newSize = subRegion.size();
+    std::vector<int> newParticleStartingIndices(nn);
+    std::vector<int> numberOfIncomingParticles(nn);
+    for(size_t n=0; n<nn; n++)
+    {
+      numberOfIncomingParticles[n] = particleListIndicesRequestingFromNeighbors[n].size();
+      newParticleStartingIndices[n] = newSize;
+      newSize += numberOfIncomingParticles[n];
+    }
+    if(newSize > oldSize)
+    {
+      subRegion.resize(newSize); // TODO: Does this handle constitutive fields owned by the subRegion?
+    }
+
+
+    // (6) Pack a buffer for the particles to be sent to each neighbor, and send/receive
+    GEOSX_LOG_RANK_IF( profile, index << ": " << "6: " << MpiWrapper::wtime() - time );
+    time = MpiWrapper::wtime();
+
+    //int sizeBeforeParticleSend = subRegion.size(); // subregion size changes after this, so we need this here to use to size the deletion loop
+    sendParticlesToNeighbor( subRegion,
+                              newParticleStartingIndices,
+                              numberOfIncomingParticles,
+                              icomm,
+                              particleLocalIndicesRequestedFromNeighbors );
+
+
+    // (7) Delete any out-of-domain particles that were not requested by a neighbor.  These particles
+    //     will still have Rank=-1. This should only happen if the particle has left the global domain.
+    //     which will hopefully only occur at outflow boundary conditions.  If it happens for a particle in
+    //     the global domain, print a warning.
+    GEOSX_LOG_RANK_IF( profile, index << ": " << "7: " << MpiWrapper::wtime() - time );
+    time = MpiWrapper::wtime();
+
+    arrayView2d< real64 > const particleCenterAfter = subRegion.getParticleCenter();
+    arrayView1d< int > const particleRankAfter = subRegion.getParticleRank();
+    for(int p = subRegion.size()-1; p>=0; p--)
+    {
+      if( particleRankAfter[p] == -1 )
+      {
+        GEOSX_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[p] );
+        subRegion.erase(p);
+      }
+      else if( particleRankAfter[p] != m_rank )
+      {
+        subRegion.erase(p);
+      }
+    }
+    // Resize particle region owning this subregion
+    ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegion.getParent().getParent() );
+    int newRegionSize = region.getNumberOfParticles();
+    region.resize(newRegionSize);
+
+
+    GEOSX_LOG_RANK_IF( profile, index << ": " << "8: " << MpiWrapper::wtime() - time );
   }
 
 
