@@ -447,7 +447,8 @@ struct BlasLapackLA
    * @brief Solves the linear system ;
    * \p A  \p solution = \p rhs.
    *
-   * @note It employs lapack method dgetr.
+   * @details The method is intended for the solution of a small dense linear system.
+   * It employs lapack method dgetr.
    *
    * @param [in]  A GEOSX array2d.
    * @param [in]  rhs GEOSX array1d.
