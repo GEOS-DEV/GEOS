@@ -28,12 +28,6 @@
 #define LIFO_MARK_FUNCTION if( std::getenv( "LIFO_TRACE_ON" ) != NULL ) GEOSX_MARK_FUNCTION;
 #define LIFO_MARK_SCOPE( a )  if( std::getenv( "LIFO_TRACE_ON" ) != NULL ) GEOSX_MARK_SCOPE( a );
 
-// to avoid unused parameter when building without CUDA support
-#ifdef GEOSX_USE_CUDA
-#define ONLY_CUDA_PARAM( X ) X
-#else
-#define ONLY_CUDA_PARAM( X ) GEOSX_UNUSED_PARAM( X )
-#endif
 
 namespace geosx
 {
@@ -254,7 +248,7 @@ public:
    * @param numberOfBuffersToStoreOnHost   Maximum number of array to store on host memory.
    * @param maxNumberOfBuffers             Number of arrays expected to be stores in the LIFO.
    */
-  lifoStorage( std::string name, size_t elemCnt, int ONLY_CUDA_PARAM( numberOfBuffersToStoreOnDevice ), int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
+  lifoStorage( std::string name, size_t elemCnt, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
     m_maxNumberOfBuffers( maxNumberOfBuffers ),
     m_bufferSize( elemCnt*sizeof( T ) ),
     m_name( name ),
@@ -273,6 +267,9 @@ public:
     m_popFromHostFutures( maxNumberOfBuffers )
 #endif
   {
+#ifndef GEOSX_USE_CUDA
+    GEOSX_UNUSED_VAR( numberOfBuffersToStoreOnDevice );
+#endif
     m_worker[0] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 0 );
     m_worker[1] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 1 );
   }
