@@ -106,14 +106,14 @@ void prolongVector( arrayView1d< real64 const > const & coarseValues,
   
 
   // Compute prolonged vector entries
-  integer i;
-  integer j;
-  integer k;
-  for( int iNode = 0; iNode < nnodes; ++iNode )
+  // for( int iNode = 0; iNode < nnodes; ++iNode )
+  forAll< parallelDevicePolicy<> >( nnodes, [=] GEOSX_HOST_DEVICE ( localIndex const iNode )
   {
     // Get fine node multi-index
+    integer i;
+    integer j;
+    integer k;
     getIJKFromGlobalID( iNode, ni, nj, nk, i, j, k );
-    // std::cout << iNode << ": " << i << ", " << j << ", " << k << std::endl;
 
     // Compute I, J, K indeces of the bottom, south, west coarse vertex closest to the
     // processed fine scale node along with fine scale offsets
@@ -206,7 +206,11 @@ void prolongVector( arrayView1d< real64 const > const & coarseValues,
         {
           for( integer li = 0; li <= DI ; ++li )
           {
+#if 1
+            localIndex const ind = getGlobalIDFromIJK( I+li, J+lj, K+lk, NI, NJ, NK ) + iDof * NNODES;
+#else
             localIndex const ind = getGlobalIDFromIJK( I+li, J+lj, K+lk, NI, NJ, NK ) * numDofPerNode + iDof;
+#endif
             real64 const wI = DI > 0
                             ? 1.0 - (real64)li + std::pow(-1.0, 1+li) * (real64)OI / RI
                             : 1;
@@ -217,12 +221,26 @@ void prolongVector( arrayView1d< real64 const > const & coarseValues,
                             ? 1.0 - (real64)lk + std::pow(-1.0, 1+lk) * (real64)OK / RK
                             : 1;
             value += wI * wJ * wK * coarseValues[ ind ];
+	    ////////////////
+	    //GEOSX_LOG_RANK_VAR( iNode );
+	    //GEOSX_LOG_RANK_VAR( wI );
+	    //GEOSX_LOG_RANK_VAR( wJ );
+	    //GEOSX_LOG_RANK_VAR( wK );
+	    //GEOSX_LOG_RANK_VAR( ind );
+	    //GEOSX_LOG_RANK_VAR( coarseValues[ ind ] );
+	    //GEOSX_LOG_RANK_VAR( wI * wJ * wK * coarseValues[ ind ] );
+	    //GEOSX_LOG_RANK_VAR( value );
+	    ////////////////
           }
         }
       }
+#if 1
+      fineValues[ iNode + iDof * nnodes ] = value;
+#else
       fineValues[ iNode*numDofPerNode + iDof ] = value;
+#endif
     }
-  }
+  } );
 
   
   return;
@@ -254,7 +272,8 @@ void restrictVector( arrayView1d< real64 const > const & fineValues,
   // ...
 
   // Compute prolonged vector entries
-  for( localIndex iNode = 0; iNode < NNODES; ++iNode )
+  //for( localIndex iNode = 0; iNode < NNODES; ++iNode )
+  forAll< parallelDevicePolicy<> >( NNODES, [=] GEOSX_HOST_DEVICE ( localIndex const iNode )
   {
     // Get coarse node multi-index and corresponding fine node multi-index
     localIndex I;
@@ -284,7 +303,11 @@ void restrictVector( arrayView1d< real64 const > const & fineValues,
         {
           for( integer di = diMin; di <= diMax; ++di )
           {
+#if 1
+            localIndex const ind = getGlobalIDFromIJK( i+di, j+dj, k+dk, ni, nj, nk ) + iDof * nnodes;
+#else
             localIndex const ind = getGlobalIDFromIJK( i+di, j+dj, k+dk, ni, nj, nk ) * numDofPerNode + iDof;
+#endif
             real64 const wI = di > 0
                             ? 1.0 - (real64)di / RI
                             : 1.0 + (real64)di / RI;
@@ -298,9 +321,13 @@ void restrictVector( arrayView1d< real64 const > const & fineValues,
           }
         }
       }
+#if 1
+      coarseValues[ iNode + iDof * NNODES ] = value;
+#else
       coarseValues[ iNode*numDofPerNode + iDof ] = value;
+#endif
     }
-  }
+  } );
 
   return;
 }
@@ -441,10 +468,28 @@ PreconditionerTwoLevel ()
   values[ 105 ] = 2.206796923324806e-01;
   values[ 106 ] = 8.348798827094354e-01;
   values[ 107 ] = 5.176335258800429e-01;
+#if 1
+  Vector vH_GPU;
+  vH_GPU.create( coarseSpaceDim, comm );
+  arrayView1d< real64 > const values_GPU = vH_GPU.open();
+  int counter = 0;
+  for( int i = 0; i < coarseSpaceDim; i += numDofPerNode)
+  {
+    values_GPU[counter] = values[i];
+    values_GPU[counter+36] = values[i+1];
+    values_GPU[counter+72] = values[i+2];
+    counter += 1;
+  }
+  vH_GPU.close();
+#endif
   vH.close();
 
   // Prolong vector
+#if 1
+  arrayView1d< real64 const > const vH_input = vH_GPU.values();
+#else
   arrayView1d< real64 const > const vH_input = vH.values();
+#endif
   arrayView1d< real64 > const vh_output = vh.open();
   prolongVector( vH_input, vh_output, mesh, numDofPerNode );
   vh.close();
