@@ -106,6 +106,14 @@ public:
                                    arrayView1d< real32 const > const var_n,
                                    arrayView2d< real32 > varAtReceivers ) override;
 
+  void compute2dVariableSeismoTrace( real64 const time_n,
+                                   real64 const dt,
+                                   real64 const timeSeismo,
+                                   localIndex const iSeismo,
+                                   arrayView2d< real32 const > const var_np1,
+                                   arrayView2d< real32 const > const var_n,
+                                   arrayView2d< real32 > varAtReceivers );
+
   /**
    * TODO: move implementation into WaveSolverBase
    * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
@@ -119,6 +127,12 @@ public:
                                        real64 const dt,
                                        arrayView1d< real32 const > const var_np1,
                                        arrayView1d< real32 const > const var_n,
+                                       arrayView2d< real32 > varAtReceivers );
+
+    virtual void compute2dVariableAllSeismoTraces( real64 const time_n,
+                                       real64 const dt,
+                                       arrayView2d< real32 const > const var_np1,
+                                       arrayView2d< real32 const > const var_n,
                                        arrayView2d< real32 > varAtReceivers );
 
 
@@ -146,7 +160,14 @@ public:
 
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
 
+    static constexpr char const * uxNp1AtReceiversString() { return "uxNp1AtReceivers"; }
+    static constexpr char const * uyNp1AtReceiversString() { return "uyNp1AtReceivers"; }
+    static constexpr char const * uzNp1AtReceiversString() { return "uzNp1AtReceivers"; }
+
+
+
     static constexpr char const * sourceElemString() { return "sourceElem"; }
+    static constexpr char const * receiverElemString() { return "sourceRcv"; }
 
   } waveEquationViewKeys;
 
@@ -225,8 +246,20 @@ private:
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
 
+   /// Pressure_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_uxNp1AtReceivers;
+
+   /// Pressure_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_uyNp1AtReceivers;
+
+   /// Pressure_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_uzNp1AtReceivers;
+
   /// Array containing the elements which contain a source
   array1d< localIndex > m_sourceElem;
+
+  /// Array containing the elements which contain a receiver
+  array1d< localIndex > m_sourceRcv;
 
 };
 

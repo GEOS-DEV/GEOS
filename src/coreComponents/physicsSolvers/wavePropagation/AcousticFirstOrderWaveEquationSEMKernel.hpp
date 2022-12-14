@@ -200,6 +200,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real64 > const sourceConstants,
           arrayView2d< real64 const > const receiverCoordinates,
           arrayView1d< localIndex > const receiverIsLocal,
+          arrayView1d< localIndex > const rcvElem,
           arrayView2d< localIndex > const receiverNodeIds,
           arrayView2d< real64 > const receiverConstants,
           arrayView2d< real32 > const sourceValue,
@@ -290,6 +291,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                              X,
                                                              coordsOnRefElem );
             receiverIsLocal[ircv] = 1;
+            rcvElem[ircv] = k;
 
             real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
