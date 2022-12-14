@@ -16,8 +16,8 @@
  * @file BlasLapackFunctions.h
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKFUNCTIONS_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKFUNCTIONS_HPP_
+#ifndef GEOSX_DENSELINEARALGEBRA_INTERFACES_BLASLAPACK_BLASLAPACKFUNCTIONS_HPP_
+#define GEOSX_DENSELINEARALGEBRA_INTERFACES_BLASLAPACK_BLASLAPACKFUNCTIONS_HPP_
 
 /// This macro provide a flexible interface for Fortran naming convetion for compiled objects
 #ifdef FORTRAN_MANGLE_NO_UNDERSCORE
@@ -151,7 +151,18 @@ void GEOSX_dgeev( char const * JOBVL,
                   int * LWORK,
                   int * INFO );
 
+#define GEOSX_dgetrs FORTRAN_MANGLE( dgetrs )
+void GEOSX_dgetrs( char const * TRANS,
+                   int const * N,
+                   int const * NRHS,
+                   double * A,
+                   int const * LDA,
+                   int const * IPIV,
+                   double * B,
+                   int const * LDB,
+                   int * INFO );
+
 }
 #endif
 
-#endif //GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKFUNCTIONS_HPP_
+#endif //GEOSX_DENSELINEARALGEBRA_INTERFACES_BLASLAPACKFUNCTIONS_HPP_

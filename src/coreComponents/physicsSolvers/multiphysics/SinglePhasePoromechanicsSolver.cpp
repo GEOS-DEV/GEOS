@@ -23,7 +23,7 @@
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsKernel.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
