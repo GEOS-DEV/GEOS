@@ -19,7 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_UTILITIES_ARNOLDI_HPP_
 #define GEOSX_LINEARALGEBRA_UTILITIES_ARNOLDI_HPP_
 
-#include "interfaces/dense/BlasLapackLA.hpp"
+#include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 #include "common/LinearOperator.hpp"
 
 namespace geosx

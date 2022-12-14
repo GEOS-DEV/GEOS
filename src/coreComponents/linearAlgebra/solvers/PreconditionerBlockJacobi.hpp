@@ -17,7 +17,7 @@
 
 #include "linearAlgebra/common/LinearOperator.hpp"
 #include "linearAlgebra/common/PreconditionerBase.hpp"
-#include "linearAlgebra/interfaces/dense/BlasLapackLA.hpp"
+#include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 
 namespace geosx
 {
