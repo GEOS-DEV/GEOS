@@ -13,7 +13,7 @@
  */
 
 /**
- * @file PoroelasticSolverEmbeddedFractures.cpp
+ * @file SinglePhasePoromechanicsSolverEmbeddedFractures.cpp
  */
 
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
@@ -23,8 +23,8 @@
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsEFEMKernel.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsKernel.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
@@ -417,11 +417,11 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 
     // 1. Cell-based contributions of standard poroelasticity
     poromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
-                                                                  pDofKey,
                                                                   dofManager.rankOffset(),
                                                                   localMatrix,
                                                                   localRhs,
                                                                   gravityVectorData,
+                                                                  pDofKey,
                                                                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
     solidMechanicsSolver()->getMaxForce() =
