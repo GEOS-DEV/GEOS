@@ -12,6 +12,10 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+/***
+ *  @file KilloughHysteresis.cpp
+ */
+
 #include "KilloughHysteresis.hpp"
 
 
@@ -96,7 +100,7 @@ KilloughHysteresis::createKernelWrapper( const arrayView1d< const geosx::real64 
 }
 
 //TODO
-void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisCurve_t const & hcurve,
+void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisCurve const & hcurve,
                                                  real64 & landParam )
 {
 

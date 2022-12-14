@@ -19,10 +19,11 @@
 #ifndef GEOSX_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP
 #define GEOSX_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP
 
-#include "constitutive/KilloughHysteresis.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
 #include "functions/TableFunction.hpp"
+///helper model class with data struct for curves and computing reciepe for trapped and LandCoeff
+#include "constitutive/KilloughHysteresis.hpp"
 
 namespace geosx
 {
@@ -107,8 +108,8 @@ public:
                    KilloughHysteresis::KernelKilloughHysteresisBase const & KilloughKernel,
                    arrayView1d< integer const > const & phaseHasHysteresis,
                    arrayView1d< real64 const > const & landParam,
-                   KilloughHysteresis::HysteresisCurve_t const & wettingCurve,
-                   KilloughHysteresis::HysteresisCurve_t const & nonWettingCurve,
+                   KilloughHysteresis::HysteresisCurve const & wettingCurve,
+                   KilloughHysteresis::HysteresisCurve const & nonWettingCurve,
                    arrayView1d< integer const > const & phaseTypes,
                    arrayView1d< integer const > const & phaseOrder,
                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
@@ -278,8 +279,8 @@ private:
     /// Trapping parameter from the Land model (typically called C)
     arrayView1d< real64 const > m_landParam;
 
-    KilloughHysteresis::HysteresisCurve_t const & m_wettingCurve;
-    KilloughHysteresis::HysteresisCurve_t const & m_nonWettingCurve;
+    KilloughHysteresis::HysteresisCurve const & m_wettingCurve;
+    KilloughHysteresis::HysteresisCurve const & m_nonWettingCurve;
 
     /// Minimum historical phase volume fraction for each phase
     arrayView2d< real64 const, compflow::USD_PHASE > m_phaseMinHistoricalVolFraction;
@@ -305,7 +306,7 @@ private:
     ///Land Coeff
     static constexpr char const * landParameterString() { return "landParameter"; }
 
-    //and packed curves data struct
+    ///and packed curves data struct
     static constexpr char const * wettingCurveString() { return "wettingCurve"; };
     static constexpr char const * nonWettingCurveString() { return "nonWettingCurve"; };
 
@@ -438,8 +439,8 @@ private:
   /// Maximum historical phase volume fraction for each phase
   array2d< real64, compflow::LAYOUT_PHASE > m_phaseMaxHistoricalVolFraction;
 
-  KilloughHysteresis::HysteresisCurve_t m_wettingCurve;
-  KilloughHysteresis::HysteresisCurve_t m_nonWettingCurve;
+  KilloughHysteresis::HysteresisCurve m_wettingCurve;
+  KilloughHysteresis::HysteresisCurve m_nonWettingCurve;
 
 };
 
@@ -502,7 +503,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     // Step 1.b: get the trapped from wetting data
     real64 const Shy = ( phaseMinHistoricalVolFraction > Swc ) ? phaseMinHistoricalVolFraction : Swc;
     real64 Scrt = 0.;
-    m_KilloughKernel.computeTrappedCriticalPhaseVolFraction(m_wettingCurve,Shy,m_landParam[IPT::WETTING],Scrt);
+    m_KilloughKernel.computeTrappedCriticalPhaseVolFraction( m_wettingCurve, Shy, m_landParam[IPT::WETTING], Scrt );
 
     // Step 1.c: find the new endpoint
     // this is the saturation for the scanning curve endpoint

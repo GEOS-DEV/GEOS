@@ -107,9 +107,9 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
     setRestartFlags( RestartFlags::NO_WRITE );
 
 
-    registerWrapper( viewKeyStruct::KilloughModelWrapperString(), &m_KilloughKernel )
-            .setSizedFromParent( 0 ).
-            setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( viewKeyStruct::KilloughModelWrapperString(), &m_KilloughKernel )
+    .setSizedFromParent( 0 ).
+    setRestartFlags( RestartFlags::NO_WRITE );
 
 
   registerWrapper( viewKeyStruct::drainageRelPermKernelWrappersString(),
@@ -472,8 +472,8 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
 
   // Note: for simplicity, the notations are taken from IX documentation (although this breaks our phaseVolFrac naming convention)
   using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
-    m_KilloughModel.computeLandCoefficient( m_wettingCurve, m_landParam[IPT::WETTING] );
-    m_KilloughModel.computeLandCoefficient( m_nonWettingCurve, m_landParam[IPT::NONWETTING] );
+  m_KilloughModel.computeLandCoefficient( m_wettingCurve, m_landParam[IPT::WETTING] );
+  m_KilloughModel.computeLandCoefficient( m_nonWettingCurve, m_landParam[IPT::NONWETTING] );
 }
 
 void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
@@ -606,8 +606,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::KernelWrapper( arrayView1d< 
                                                                    KilloughHysteresis::KernelKilloughHysteresisBase const & killoughHystWrappers,
                                                                    arrayView1d< integer const > const & phaseHasHysteresis,
                                                                    arrayView1d< real64 const > const & landParam,
-                                                                   KilloughHysteresis::HysteresisCurve_t const & wettingCurve,
-                                                                   KilloughHysteresis::HysteresisCurve_t const & nonWettingCurve,
+                                                                   KilloughHysteresis::HysteresisCurve const & wettingCurve,
+                                                                   KilloughHysteresis::HysteresisCurve const & nonWettingCurve,
                                                                    arrayView1d< integer const > const & phaseTypes,
                                                                    arrayView1d< integer const > const & phaseOrder,
                                                                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,

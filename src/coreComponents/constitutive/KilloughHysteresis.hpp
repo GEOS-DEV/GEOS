@@ -12,6 +12,10 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+/**
+ * @file TableRelativePermeabilityHysteresis.hpp
+ */
+
 #ifndef GEOSX_KILLOUGHHYSTERESIS_HPP
 #define GEOSX_KILLOUGHHYSTERESIS_HPP
 
@@ -20,8 +24,6 @@
 
 #include "relativePermeability/Layouts.hpp"
 #include "capillaryPressure/Layouts.hpp"
-
-
 
 namespace geosx
 {
@@ -52,7 +54,7 @@ public:
     };
   };
 
-  struct HysteresisCurve_t
+  struct HysteresisCurve
   {
     real64 oppositeBoundSat = -1.;
     real64 imbibitionExtremaSat = -1.;
@@ -62,9 +64,9 @@ public:
     real64 imbibitionExtremaValue = -1.;
     real64 drainageExtremaValue = -1.;
 
-    HysteresisCurve_t() = default;
+    HysteresisCurve() = default;
 
-    HysteresisCurve_t( std::pair< real64, real64 > const & opp, std::pair< real64, real64 > const & imbE, std::pair< real64, real64 > const & drainE )
+    HysteresisCurve( std::pair< real64, real64 > const & opp, std::pair< real64, real64 > const & imbE, std::pair< real64, real64 > const & drainE )
     {
       setPoints( opp, imbE, drainE );
     }
@@ -94,10 +96,8 @@ public:
 
   void postProcessInput();
 
-//  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
-
   GEOSX_HOST_DEVICE
-  void computeLandCoefficient( HysteresisCurve_t const & hcruve, real64 & landParam );
+  void computeLandCoefficient( HysteresisCurve const & hcruve, real64 & landParam );
 
 
   class KernelKilloughHysteresisBase
@@ -142,22 +142,19 @@ public:
     KernelKilloughHysteresisBase & operator=( KernelKilloughHysteresisBase const & ) = default;
 
     /**
-     * @brief Function computing the trapped critical phase volume fraction (Sgcrt)
-     * @param[in] Scrd the drainage critical phase volume fraction
+     * @brief Function computing the trapped critical phase volume fraction
+     * @param[in] hcurve the hysteresis curve to be used and dispatched on
      * @param[in] Shy the max historical phase volume fraction
-     * @param[in] Smx the max phase volume fraction (= end-point phase volume fraction)
-       //  * @param[in] jerauldParam_a first (modification) parameter proposed by Jerauld
-       //  * @param[in] jerauldParam_b second (exponent) parameter proposed by Jerauld
      * @param[in] landParam Land trapping parameter
      * @param[out] Scrt the trapped critical phase volume fraction
      */
     GEOSX_HOST_DEVICE
-    void computeTrappedCriticalPhaseVolFraction( HysteresisCurve_t const & hcurve,
+    void computeTrappedCriticalPhaseVolFraction( HysteresisCurve const & hcurve,
                                                  real64 const & Shy,
                                                  real64 const & landParam,
                                                  real64 & Scrt ) const;
 
-
+    ///parameter getters (may be unneeded in the end)
     real64 getJerauldParamA() const;
     real64 getJerauldParamB() const;
     real64 getCurvatureParam() const;
@@ -168,11 +165,10 @@ private:
     real64 m_jerauldParam_a;
     /// Parameter b introduced by Jerauld in the Land model
     real64 m_jerauldParam_b;
-
+    /// Parameter curvature for wetting hysteresis endpoint interpolation
     real64 m_killoughCurvatureParamRelPerm;
 
-    //from main Relperm Class
-    // Trapping parameter from the Land model (typically called C)
+    /// Trapping parameter from the Land model (typically called C)
     arrayView1d< real64 const > m_landParam;
 
   };
@@ -207,7 +203,7 @@ private:
 GEOSX_HOST_DEVICE
 inline void
 KilloughHysteresis::KernelKilloughHysteresisBase::
-  computeTrappedCriticalPhaseVolFraction( HysteresisCurve_t const & hcurve,
+  computeTrappedCriticalPhaseVolFraction( HysteresisCurve const & hcurve,
                                           real64 const & Shy,
                                           real64 const & landParam,
                                           real64 & Scrt ) const
