@@ -13,7 +13,7 @@
  */
 
 /**
- * @file PoroelasticSolverEmbeddedFractures.cpp
+ * @file SinglePhasePoromechanicsSolverEmbeddedFractures.cpp
  */
 
 #include "SinglePhasePoromechanicsSolverEmbeddedFractures.hpp"
@@ -23,8 +23,8 @@
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsEFEMKernel.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsKernel.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
