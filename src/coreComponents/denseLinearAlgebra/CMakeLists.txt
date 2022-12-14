@@ -2,6 +2,7 @@
 # Specify all headers
 #
 set( denseLinearAlgebra_headers
+     common/layouts.hpp
      interfaces/blaslapack/BlasLapackFunctions.h
      interfaces/blaslapack/BlasLapackLA.hpp
    )
