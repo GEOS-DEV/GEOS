@@ -512,8 +512,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                                                                    ( Smxd - Smxi ) ), m_KilloughKernel.getCurvatureParam() );
 
     // Step 2: get the normalized value of saturation
-    real64 const ratio = ( Scrt - S ) / ( Scrt - Shy );
-    real64 const Snorm = Smxi -  ( Smxi - Swc ) * ratio; // normalized saturation from equation 2.166
+    real64 const ratio = ( Smxi - Swc )/ ( Scrt - Shy );// non S-deps part (isolated for derivatives calculations)
+    real64 const Snorm = Smxi - ( Scrt - S ) * ratio; // normalized saturation from equation 2.166
     real64 const dSnorm_dS =  ratio;
     real64 dkri_dSnorm = 0.0;
     auto const & imbibitionRelPermKernelWrapper = m_imbibitionRelPermKernelWrappers[IPT::WETTING];
@@ -575,7 +575,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   {
     // Step 2: compute the normalized saturation, S_norm, at which the imbibition relperm curve will be evaluated.
     //         This is equation 2.166 from the IX technical description.
-    real64 const ratio = ( Smx - Scri ) / ( Shy - Scrt );
+    real64 const ratio = ( Smx - Scri ) / ( Shy - Scrt ); // non S-deps part (isolated for derivatives calculations)
     real64 const Snorm = Scri + ( S - Scrt ) * ratio; // normalized saturation from equation 2.166
     real64 const dSnorm_dS = ratio;
 
