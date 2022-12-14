@@ -92,7 +92,7 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
           {
             using FE_TYPE = TYPEOFREF( finiteElement );           
 
-            forAll< parallelDevicePolicy<> >( numElems, [=] ( localIndex const k )
+            forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
             {
               constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
               constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
