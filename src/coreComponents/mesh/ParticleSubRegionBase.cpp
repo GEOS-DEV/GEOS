@@ -115,19 +115,22 @@ void ParticleSubRegionBase::particleUnpack( buffer_type & buffer,
   this->unpack( receiveBufferPtr, indices, 0, false, events );
 }
 
-void ParticleSubRegionBase::erase( localIndex p )
+void ParticleSubRegionBase::erase( std::set< localIndex > const & indicesToErase )
 {
-  // The new subregion size
-  int newSize = this->size()-1;
+  if(indicesToErase.size() > 0)
+  {
+    // The new subregion size
+    int newSize = (this->size()) - indicesToErase.size();
 
-  // Call ObjectManagerBase::eraseObject
-  this->eraseObject(p);
+    // Call ObjectManagerBase::eraseObject
+    this->eraseObject(indicesToErase);
 
-  // Decrement the size of this subregion
-  this->resize(newSize);
+    // Decrease the size of this subregion
+    this->resize(newSize);
 
-  // Reconstruct the list of non-ghost indices
-  this->setNonGhostIndices();
+    // Reconstruct the list of non-ghost indices
+    this->setNonGhostIndices();
+  }
 }
 
 void ParticleSubRegionBase::setNonGhostIndices()

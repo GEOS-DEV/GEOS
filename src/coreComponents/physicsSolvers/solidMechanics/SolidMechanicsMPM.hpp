@@ -305,13 +305,9 @@ private:
                                          arraySlice1d< real64 > fA,
                                          arraySlice1d< real64 > fB );
 
-  real64 subtractDot( const arraySlice1d< real64 > & u,
-                      const arraySlice1d< real64 > & v,
-                      const arraySlice1d< real64 > & n );
-
-  void computeOrthonormalBasis( const array1d< real64 > & e1,  // input "normal" unit vector.
-                                array1d< real64 > & e2,        // output "tangential" unit vector.
-                                array1d< real64 > & e3 );      // output "tangential" unit vector.
+  void computeOrthonormalBasis( const real64* e1,  // input "normal" unit vector.
+                                real64* e2,        // output "tangential" unit vector.
+                                real64* e3 );      // output "tangential" unit vector.
 
   void setGridFieldLabels( NodeManager & nodeManager );
 
@@ -325,19 +321,21 @@ private:
 
   real64 kernel( const real64 & r ); // distance from particle to query point
 
-  array1d< real64 > kernelGradient( arraySlice1d< real64 > const x, // query point
-                                    arraySlice1d< real64 > const xp, // particle location
-                                    const real64 & r ); // distance from particle to query point
+  void kernelGradient( arraySlice1d< real64 > const x,  // query point
+                       arraySlice1d< real64 > const xp, // particle location
+                       const real64 & r,                // distance from particle to query point
+                       real64* result );
 
-  real64 computeKernelField( arraySlice1d< real64 > const x,   // query point
-                             arrayView2d< real64 > const xp,   // List of neighbor particle locations.
-                             arrayView1d< real64 > const Vp,   // List of neighbor particle volumes.
-                             arrayView1d< real64 > const fp ); // scalar field values (e.g. damage) at neighbor particles
+  real64 computeKernelField( arraySlice1d< real64 > const x,    // query point
+                             arrayView2d< real64 > const xp,    // List of neighbor particle locations.
+                             arrayView1d< real64 > const Vp,    // List of neighbor particle volumes.
+                             arrayView1d< real64 > const fp );  // scalar field values (e.g. damage) at neighbor particles
 
-  array1d< real64 > computeKernelFieldGradient( arraySlice1d< real64 > const x,   // query point
-                                                arrayView2d< real64 > const xp,   // List of neighbor particle locations.
-                                                arrayView1d< real64 > const Vp,   // List of neighbor particle volumes.
-                                                arrayView1d< real64 > const fp ); // scalar field values (e.g. damage) at neighbor particles
+  void computeKernelFieldGradient( arraySlice1d< real64 > const x,   // query point
+                                   arrayView2d< real64 > const xp,   // List of neighbor particle locations.
+                                   arrayView1d< real64 > const Vp,   // List of neighbor particle volumes.
+                                   arrayView1d< real64 > const fp,   // scalar field values (e.g. damage) at neighbor particles
+                                   arraySlice1d< real64 > const result ); 
 
 };
 

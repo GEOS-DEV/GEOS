@@ -194,23 +194,6 @@ void ParticleSubRegion::computeRVectors( int const p,
   }
 }
 
-array2d< real64 > ParticleSubRegion::computeRVectorsTemp( arraySlice2d< real64 > const F,
-                                                          arraySlice2d< real64 > const initialRVectors ) const
-{
-  array2d< real64 > rVectors;
-  rVectors.resize( 3, 3 );
-
-  for(int i=0; i<3; i++)
-  {
-    for(int j=0; j<3; j++)
-    {
-      rVectors[i][j] = F[j][0]*initialRVectors[i][0] + F[j][1]*initialRVectors[i][1] + F[j][2]*initialRVectors[i][2];
-    }
-  }
-
-  return rVectors;
-}
-
 void ParticleSubRegion::cpdiDomainScaling( real64 lCrit,
                                            int m_planeStrain )
 {
@@ -223,24 +206,23 @@ void ParticleSubRegion::cpdiDomainScaling( real64 lCrit,
     if( m_planeStrain ) // 2D cpdi domain scaling
     {
       // Initialize l-vectors.  Eq. 8a-d in the CPDI domain scaling paper.
-      array2d< real64 > l; // TODO: Massive slowdown has been demonstrated when allocating arrays for every particle like this instead of allocating once and re-using. Large re-factoring effort needed to fix this...
-      l.resize( 2, 3 );
-
-      // l[0] = r1 + r2; // la
-      LvArray::tensorOps::copy< 3 >( l[0], r1 );
-      LvArray::tensorOps::add< 3 >( l[0], r2 );
-      // l[1] = r1 - r2; // lb
-      LvArray::tensorOps::copy< 3 >( l[1], r1 );
-      LvArray::tensorOps::subtract< 3 >( l[1], r2 );
+      real64 l[2][3];
+      for(int i=0; i<3; i++)
+      {
+        l[0][i] = r1[i] + r2[i]; // la
+        l[1][i] = r1[i] - r2[i]; // lb
+      }
 
       // scale l-vectors if needed.  Eq. 9 in the CPDI domain scaling paper.
       bool scale = false;
       for( int i = 0 ; i < 2 ; i++ )
       {
-        real64 lLength = LvArray::tensorOps::l2Norm< 3 >( l[i] );
+        real64 lLength = sqrt(l[i][0] * l[i][0] + l[i][1] * l[i][1] + l[i][2] * l[i][2]);
         if( lLength > lCrit )
         {
-          LvArray::tensorOps::scale< 3 >( l[i], lCrit / lLength );
+          l[i][0] *= lCrit / lLength;
+          l[i][1] *= lCrit / lLength;
+          l[i][2] *= lCrit / lLength;
           scale = true;
         }
       }
@@ -248,45 +230,35 @@ void ParticleSubRegion::cpdiDomainScaling( real64 lCrit,
       // reconstruct r-vectors.  eq. 11 in the CPDI domain scaling paper.
       if( scale )
       {
-        // r1 = 0.5 * ( l[0] + l[1] );
-        LvArray::tensorOps::scaledCopy< 3 >( r1, l[0], 0.5 );
-        LvArray::tensorOps::scaledAdd< 3 >( r1, l[1], 0.5 );
-        // r2 = 0.5 * ( l[0] - l[1] );
-        LvArray::tensorOps::scaledCopy< 3 >( r2, l[0], 0.5 );
-        LvArray::tensorOps::scaledAdd< 3 >( r2, l[1], -0.5 );
+        for(int i=0; i<3; i++)
+        {
+          r1[i] = 0.5 * (l[0][i] + l[1][i]);
+          r2[i] = 0.5 * (l[0][i] - l[1][i]);
+        }
       }
     }
     else // 3D cpdi domain scaling
     {
       // Initialize l-vectors.  Eq. 8a-d in the CPDI domain scaling paper.
-      array2d< real64 > l;
-      l.resize( 4, 3 );
-
-      // l[0] = r1 + r2 + r3; // la
-      LvArray::tensorOps::copy< 3 >( l[0], r1 );
-      LvArray::tensorOps::add< 3 >( l[0], r2 );
-      LvArray::tensorOps::add< 3 >( l[0], r3 );
-      // l[1] = r1 - r2 + r3; // lb
-      LvArray::tensorOps::copy< 3 >( l[1], r1 );
-      LvArray::tensorOps::subtract< 3 >( l[1], r2 );
-      LvArray::tensorOps::add< 3 >( l[1], r3 );
-      // l[2] = r2 - r1 + r3; // lc
-      LvArray::tensorOps::copy< 3 >( l[2], r2 );
-      LvArray::tensorOps::subtract< 3 >( l[2], r1 );
-      LvArray::tensorOps::add< 3 >( l[2], r3 );
-      // l[3] = r3 - r1 - r2; // ld
-      LvArray::tensorOps::copy< 3 >( l[3], r3 );
-      LvArray::tensorOps::subtract< 3 >( l[3], r1 );
-      LvArray::tensorOps::subtract< 3 >( l[3], r2 );
+      real64 l[4][3];
+      for(int i=0; i<3; i++)
+      {
+        l[0][i] = r1[i] + r2[i] + r3[i]; // la
+        l[1][i] = r1[i] - r2[i] + r3[i]; // lb
+        l[2][i] = r2[i] - r1[i] + r3[i]; // lc
+        l[3][i] = r3[i] - r1[i] - r2[i]; // ld
+      }
 
       // scale l vectors if needed.  Eq. 9 in the CPDI domain scaling paper.
       bool scale = false;
       for( int i = 0 ; i < 4 ; i++ )
       {
-        real64 lLength = LvArray::tensorOps::l2Norm< 3 >( l[i] );
+        real64 lLength = sqrt(l[i][0] * l[i][0] + l[i][1] * l[i][1] + l[i][2] * l[i][2]);
         if( lLength > lCrit )
         {
-          LvArray::tensorOps::scale< 3 >( l[i], lCrit / lLength );
+          l[i][0] *= lCrit / lLength;
+          l[i][1] *= lCrit / lLength;
+          l[i][2] *= lCrit / lLength;
           scale = true;
         }
       }
@@ -294,21 +266,12 @@ void ParticleSubRegion::cpdiDomainScaling( real64 lCrit,
       // reconstruct r vectors.  eq. 11 in the CPDI domain scaling paper.
       if( scale )
       {
-        // r1 = 0.25 * ( l[0] + l[1] - l[2] - l[3] );
-        LvArray::tensorOps::scaledCopy< 3 >( r1, l[0], 0.25 );
-        LvArray::tensorOps::scaledAdd< 3 >( r1, l[1], 0.25 );
-        LvArray::tensorOps::scaledAdd< 3 >( r1, l[2], -0.25 );
-        LvArray::tensorOps::scaledAdd< 3 >( r1, l[3], -0.25 );
-        // r2 = 0.25 * ( l[0] - l[1] + l[2] - l[3] );
-        LvArray::tensorOps::scaledCopy< 3 >( r2, l[0], 0.25 );
-        LvArray::tensorOps::scaledAdd< 3 >( r2, l[1], -0.25 );
-        LvArray::tensorOps::scaledAdd< 3 >( r2, l[2], 0.25 );
-        LvArray::tensorOps::scaledAdd< 3 >( r2, l[3], -0.25 );
-        // r3 = 0.25 * ( l[0] + l[1] + l[2] + l[3] );
-        LvArray::tensorOps::scaledCopy< 3 >( r3, l[0], 0.25 );
-        LvArray::tensorOps::scaledAdd< 3 >( r3, l[1], 0.25 );
-        LvArray::tensorOps::scaledAdd< 3 >( r3, l[2], 0.25 );
-        LvArray::tensorOps::scaledAdd< 3 >( r3, l[3], 0.25 );
+        for(int i=0; i<3; i++)
+        {
+          r1[i] = 0.25 * ( l[0][i] + l[1][i] - l[2][i] - l[3][i] );
+          r2[i] = 0.25 * ( l[0][i] - l[1][i] + l[2][i] - l[3][i] );
+          r3[i] = 0.25 * ( l[0][i] + l[1][i] + l[2][i] + l[3][i] );
+        }
       }
     }
  }

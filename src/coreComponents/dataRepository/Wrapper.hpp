@@ -405,9 +405,9 @@ public:
     static void copy( Array< U, NDIM, PERMUTATION > const & array, localIndex const sourceIndex, localIndex const destIndex )
     {
       LvArray::forValuesInSliceWithIndices( array[ sourceIndex ],
-                                            [destIndex, &array]( U const & sourceVal, auto const ... indices )
+                                            [destIndex, &array]( U const & sourceVal, auto const ... indicesToErase )
       {
-        array( destIndex, indices ... ) = sourceVal;
+        array( destIndex, indicesToErase ... ) = sourceVal;
       } );
     }
 
@@ -448,81 +448,83 @@ public:
   struct erase_wrapper // This should probably be in LvArray?
   {
     template< typename TYPE >
-    static void erase( TYPE &, localIndex const )
+    static void erase( TYPE &, std::set< localIndex > const & )
     {}
     
     template< typename TYPE >
-    static void erase( array1d< TYPE > & array, localIndex const erasedIndex )
+    static void erase( array1d< TYPE > & array, std::set< localIndex > const & indicesToErase )
     {
-      array.erase(erasedIndex);
+      int newSize = array.size(0) - indicesToErase.size();
+      std::set< localIndex >::iterator it = indicesToErase.begin();
+      int offset = 0;
+      for(localIndex i=*it; i<newSize; i++)
+      {
+        if(i+offset == *it)
+        {
+            offset++;
+            it++;
+        }
+        array[i] = array[i+offset];
+      }
+      array.resize(newSize);
     }
 
     template< typename TYPE >
-    static void erase( array2d< TYPE > & array, localIndex const erasedIndex )
+    static void erase( array2d< TYPE > & array, std::set< localIndex > const & indicesToErase )
     {
+      int newSize = array.size(0) - indicesToErase.size();
       int dim1 = array.size(1);
-      int oldSize = array.size(0);
-      int newSize = oldSize-1;
-
-      // Flatten array
-      array1d< TYPE > temp( dim1 * oldSize );
-      for(int i = 0; i < dim1 * oldSize; i++)
+      std::set< localIndex >::iterator it = indicesToErase.begin();
+      int offset = 0;
+      for(localIndex i=*it; i<newSize; i++)
       {
-        temp[i] = array[ i / dim1 ][ i % dim1 ];
+        if(i+offset == *it)
+        {
+            offset++;
+            it++;
+        }
+        for(int j=0; j<dim1; j++)
+        {
+          array[i][j] = array[i+offset][j];
+        }
       }
-
-      // Erase from flattened array
-      for(int i = dim1 - 1; i >= 0; i--)
-      {
-        temp.erase( dim1 * erasedIndex + i );
-      }
-
-      // Unflatten array
-      array.resize( newSize );
-      for(int i = dim1 * erasedIndex; i < dim1 * newSize; i++)
-      {
-        array[ i / dim1 ][ i % dim1] = temp[i];
-      }
+      array.resize(newSize);
     }
 
     template< typename TYPE >
-    static void erase( array3d< TYPE > & array, localIndex const erasedIndex )
+    static void erase( array3d< TYPE > & array, std::set< localIndex > const & indicesToErase )
     {
-      int oldSize = array.size(0);
-      int newSize = oldSize - 1;
-
+      int newSize = array.size(0) - indicesToErase.size();
       int dim1 = array.size(1);
       int dim2 = array.size(2);
-      int tensorSize = dim1 * dim2;
-
-      // Flatten array
-      array1d< real64 > temp( tensorSize * oldSize );
-      for(int i = 0; i < tensorSize * oldSize; i++)
+      std::set< localIndex >::iterator it = indicesToErase.begin();
+      int offset = 0;
+      for(localIndex i=*it; i<newSize; i++)
       {
-        temp[i] = array[ i / tensorSize ][ i / dim2 % dim1 ][ i % dim2 ];
+        if(i+offset == *it)
+        {
+            offset++;
+            it++;
+        }
+        for(int j=0; j<dim1; j++)
+        {
+          for(int k=0; k<dim2; k++)
+          {
+            array[i][j][k] = array[i+offset][j][k];
+          }
+        }
       }
-
-      // Erase from flattened array
-      for(int i = tensorSize - 1; i >= 0; i--)
-      {
-        temp.erase( tensorSize * erasedIndex + i );
-      }
-
-      // Unflatten array
-      array.resize( newSize );
-      for(int i = tensorSize * erasedIndex; i < tensorSize * newSize; i++)
-      {
-        array[ i / tensorSize ][ i / dim2 % dim1 ][ i % dim2 ] = temp[i];
-      }
+      array.resize(newSize);
     }
   };
   /// @endcond
 
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  void erase( localIndex const erasedIndex ) override
+  void erase( std::set< localIndex> const & indicesToErase ) override
   {
-    erase_wrapper::erase( reference(), erasedIndex );
+    GEOSX_ERROR_IF( indicesToErase.size() == 0, "Wrapper::erase() can only be called on a populated set of indices!");
+    erase_wrapper::erase( reference(), indicesToErase );
   }
 
 
