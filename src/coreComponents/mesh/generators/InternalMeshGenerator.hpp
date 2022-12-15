@@ -189,7 +189,7 @@ private:
   array1d< integer > m_lastElemIndexForBlock[3];
 
   /// Array of number of elements per direction
-  int m_numElemsTotal[3];
+  integer m_numElemsTotal[3];
 
   /// String array listing the element type present
   array1d< string > m_elementType;
@@ -256,7 +256,7 @@ private:
    */
   inline globalIndex nodeGlobalIndex( int const index[3] )
   {
-    return index[0]*(m_numElemsTotal[1]+1)*(m_numElemsTotal[2]+1) + index[1]*(m_numElemsTotal[2]+1) + index[2];
+    return index[0] + index[1]*(m_numElemsTotal[0]+1) + index[2]*(m_numElemsTotal[0]+1)*(m_numElemsTotal[1]+1);
   }
 
   /**
@@ -265,7 +265,7 @@ private:
    */
   inline globalIndex elemGlobalIndex( int const index[3] )
   {
-    return index[0]*m_numElemsTotal[1]*m_numElemsTotal[2] + index[1]*m_numElemsTotal[2] + index[2];
+    return index[0] + index[1]*m_numElemsTotal[0] + index[2]*m_numElemsTotal[0]*m_numElemsTotal[1];
   }
 
   /**
