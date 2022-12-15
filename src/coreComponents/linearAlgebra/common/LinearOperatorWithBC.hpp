@@ -20,6 +20,12 @@
 namespace geosx
 {
 
+/**
+ * @brief Wrapper for a linear operator applying the boundary conditions in a matrix-free fashion.
+ * 
+ * @tparam Vector The type of vectors used.
+ * @tparam PrimaryFieldType The type of the primary field.
+ */
 template < typename Vector, typename PrimaryFieldType >
 class LinearOperatorWithBC : public LinearOperator< Vector >
 {
@@ -42,6 +48,17 @@ public:
   //   int const numComponents;
   // };
 
+  /**
+   * @brief Construct a new linear operator with boundary conditions wrapping the given linear operator.
+   * 
+   * @param solver 
+   * @param unconstrained_op The linear operator without boundary conditions.
+   * @param domain 
+   * @param dofManager 
+   * @param fieldName 
+   * @param time 
+   * @param diagPolicy The digonal policy to apply the boundary conditions.
+   */
   LinearOperatorWithBC( SolverBase const & solver,
                         LinearOperator< Vector > const & unconstrained_op,
                         DomainPartition & domain,
@@ -58,6 +75,8 @@ public:
     m_diagonal( m_dofManager.numLocalDofs() )
   {
     using POLICY = parallelDevicePolicy<>;
+
+    // Compute the "diagonal"
     switch (m_diagPolicy)
     {
       case DiagPolicy::DiagonalOne:
@@ -75,6 +94,7 @@ public:
         // TODO: compute diagonal
         break;
     }
+
     // compute m_constrainedDofIndices and m_rhsContributions
     FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
     globalIndex totalSize = 0;
@@ -106,6 +126,12 @@ public:
     tmpRhs.create( dofManager.numLocalDofs(), this->comm() );
   }
 
+  /**
+   * @brief Compute the boundary condition.
+   * 
+   * @param solver 
+   * @param fsManager 
+   */
   void setupBoundaryConditions( SolverBase const & solver,
                                 FieldSpecificationManager const & fsManager )
   {
@@ -157,6 +183,13 @@ public:
     } );
   }
 
+  /**
+   * @brief Compute the contributions of the boundary conditions on the right hand side and the
+   * initial guess.
+   * 
+   * @param rhs The right hand side vector.
+   * @param solution The initial guess vector.
+   */
   void computeConstrainedRHS( ParallelVector & rhs, ParallelVector & solution ) const
   {
     GEOSX_MARK_FUNCTION;
@@ -198,6 +231,12 @@ public:
     rhs.close();
   }
 
+  /**
+   * @brief Apply the linear operator with the boundary conditions.
+   * 
+   * @param src The input vector.
+   * @param dst The output vector.
+   */
   virtual void apply( ParallelVector const & src, ParallelVector & dst ) const
   {
     GEOSX_MARK_FUNCTION;
