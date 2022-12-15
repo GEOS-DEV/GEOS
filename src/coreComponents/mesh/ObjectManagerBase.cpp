@@ -843,15 +843,14 @@ void ObjectManagerBase::copyObject( const localIndex source, const localIndex de
   }
 }
 
-void ObjectManagerBase::eraseObject( const localIndex erasedIndex )
+void ObjectManagerBase::eraseObject( std::set< localIndex > const & indicesToErase )
 {
   for( auto & nameToWrapper: wrappers() )
   {
     WrapperBase * wrapper = nameToWrapper.second;
     if( wrapper->sizedFromParent() )
     {
-      //GEOSX_LOG_RANK(erasedIndex << ": " << wrapper->getName());
-      wrapper->erase( erasedIndex );
+      wrapper->erase( indicesToErase );
     }
   }
 }
