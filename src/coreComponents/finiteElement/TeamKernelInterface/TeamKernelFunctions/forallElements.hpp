@@ -24,6 +24,8 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "tensor/tensor_types.hpp"
 #include "tensor/tensor_traits.hpp"
+#include "finiteElement/TeamKernelInterface/StackVariables/BasisStackVariables.hpp"
+#include "finiteElement/TeamKernelInterface/StackVariables/SharedMemBuffersStackVariables.hpp"
 
 namespace geosx
 {
@@ -91,9 +93,12 @@ struct KernelConfiguration< ThreadingModel::Serial, num_threads_1d, batchSize >
   template < typename T, localIndex... Dims >
   using Tensor = tensor::StaticTensor< T, Dims... >;
 
-  /// Index inside a batch of elements
+  template < localIndex num_dofs, localIndex num_quads >
+  using Basis = geosx::stackVariables::template StackBasis< num_dofs, num_quads >;
+
+  // Index inside a batch of elements
   localIndex batch_index;
-  /// RAJA launch context
+  // RAJA launch context
   LaunchContext & ctx;
 
   GEOSX_HOST_DEVICE
@@ -115,11 +120,14 @@ struct KernelConfiguration< ThreadingModel::Distributed1D, num_threads_1d, batch
   template < typename T, localIndex... Dims >
   using Tensor = tensor::Static2dThreadTensor< T, Dims... >; // FIXME
 
-  /// Thread index x
+  template < localIndex num_dofs, localIndex num_quads >
+  using Basis = geosx::stackVariables::template SharedBasis< num_dofs, num_quads >;
+
+  // Thread index x
   localIndex tidx;
-  /// Index inside a batch of elements
+  // Index inside a batch of elements
   localIndex batch_index;
-  /// RAJA launch context
+  // RAJA launch context
   LaunchContext & ctx;
 
   GEOSX_HOST_DEVICE
@@ -147,18 +155,27 @@ struct KernelConfiguration< ThreadingModel::Distributed2D, num_threads_1d, batch
   template < typename T, localIndex... Dims >
   using Tensor = tensor::Static2dThreadTensor< T, Dims... >;
 
-  /// Thread index x
+  template < localIndex num_dofs, localIndex num_quads >
+  using Basis = geosx::stackVariables::template SharedBasis< num_dofs, num_quads >;
+
+  // Thread index x
   localIndex tidx;
-  /// Thread index y
+  // Thread index y
   localIndex tidy;
-  /// Index inside a batch of elements
+  // Index inside a batch of elements
   localIndex batch_index;
-  /// RAJA launch context
+  // RAJA launch context
   LaunchContext & ctx;
+  // Shared memory buffers, using buffers allows to avoid using too much shared memory.
+  static constexpr localIndex dim = 3;
+  static constexpr localIndex buffer_size = num_threads_1d * num_threads_1d * num_threads_1d;
+  static constexpr localIndex num_buffers = 2 * dim;
+  geosx::stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
+
 
   GEOSX_HOST_DEVICE
   KernelConfiguration( LaunchContext & ctx )
-  : ctx( ctx )
+  : ctx( ctx ), shared_mem( ctx )
   {
     using RAJA::RangeSegment;
     loop<thread_x>( ctx, RangeSegment( 0, num_threads_1d ), [&]( localIndex const tid_x )
@@ -185,20 +202,28 @@ struct KernelConfiguration< ThreadingModel::Distributed3D, num_threads_1d, batch
   template < typename T, localIndex... Dims >
   using Tensor = tensor::Static3dThreadTensor< T, Dims... >;
 
-  /// Thread index x
+  template < localIndex num_dofs, localIndex num_quads >
+  using Basis = geosx::stackVariables::template SharedBasis< num_dofs, num_quads >;
+
+  // Thread index x
   localIndex tidx;
-  /// Thread index y
+  // Thread index y
   localIndex tidy;
-  /// Thread index z
+  // Thread index z
   localIndex tidz;
-  /// Index inside a batch of elements
+  // Index inside a batch of elements
   localIndex batch_index;
-  /// RAJA launch context
+  // RAJA launch context
   LaunchContext & ctx;
+  // Shared memory buffers, using buffers allows to avoid using too much shared memory.
+  static constexpr localIndex dim = 3;
+  static constexpr localIndex buffer_size = num_threads_1d * num_threads_1d * num_threads_1d * dim * dim;
+  static constexpr localIndex num_buffers = 1;
+  geosx::stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
 
   GEOSX_HOST_DEVICE
   KernelConfiguration( LaunchContext & ctx )
-  : ctx( ctx )
+  : ctx( ctx ), shared_mem( ctx )
   {
     using RAJA::RangeSegment;
     loop<thread_x>( ctx, RangeSegment( 0, num_threads_x ), [&]( localIndex const tid )
