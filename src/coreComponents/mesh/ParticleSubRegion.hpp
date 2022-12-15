@@ -111,15 +111,6 @@ public:
                         arraySlice2d< real64 > const F,
                         arraySlice2d< real64 > const initialRVectors );
 
-  /**
-   * @brief This function returns a matrix of r-vectors based on the current particle deformation gradient. Used for plotting.
-   * @param F the particle deformation gradient
-   * @param intialRVectors the particle's initial R-Vectors
-   * @return The matrix of current r-vectors
-   */
-  array2d< real64 > computeRVectorsTemp( arraySlice2d< real64 > const F,
-                                         arraySlice2d< real64 > const initialRVectors ) const;  
-
   void cpdiDomainScaling( real64 lCrit,
                           int m_planeStrain );
 

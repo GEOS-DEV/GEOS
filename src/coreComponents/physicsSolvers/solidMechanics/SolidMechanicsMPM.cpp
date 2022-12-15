@@ -1000,7 +1000,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
           localIndex subRegionIndex = subRegionIndices[neighborIndex];
           localIndex particleIndex = particleIndices[neighborIndex];
           neighborVolumes[neighborIndex] = particleVolumeAccessor[regionIndex][subRegionIndex][particleIndex];
-          tOps::copy< 3 >( neighborPositions[neighborIndex], particlePositionAccessor[regionIndex][subRegionIndex][particleIndex] );
+          neighborPositions[neighborIndex][0] = particlePositionAccessor[regionIndex][subRegionIndex][particleIndex][0];
+          neighborPositions[neighborIndex][1] = particlePositionAccessor[regionIndex][subRegionIndex][particleIndex][1];
+          neighborPositions[neighborIndex][2] = particlePositionAccessor[regionIndex][subRegionIndex][particleIndex][2];
           if( particleSurfaceFlagAccessor[regionIndex][subRegionIndex][particleIndex] == 2 )
           {
             neighborDamages[neighborIndex] = 1.0;
@@ -1012,11 +1014,11 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
         }
 
         // Call kernel field gradient function
-        tOps::copy< 3 >( particleDamageGradient[p],
-                         computeKernelFieldGradient( particlePosition[p],
-                                                     neighborPositions,
-                                                     neighborVolumes,
-                                                     neighborDamages ) );
+        computeKernelFieldGradient( particlePosition[p],          // input
+                                    neighborPositions,            // input
+                                    neighborVolumes,              // input
+                                    neighborDamages,              // input
+                                    particleDamageGradient[p] );  // OUTPUT
       }
     } );
   }
@@ -1109,7 +1111,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
         for(int i=0; i<m_numDims; i++)
         {
           gridMomentum[mappedNode][fieldIndex][i] += p_m * p_v[i] * weights[g];
-          gridMaterialPosition[mappedNode][fieldIndex][i] += p_m * (p_x[i] - gridPosition[mappedNode][i]) * weights[g];
+          gridMaterialPosition[mappedNode][fieldIndex][i] += p_m * (p_x[i] - gridPosition[mappedNode][i]) * weights[g]; // TODO: Switch to volume weighting?
           for(int k=0; k<3; k++)
           {
             int voigt = m_voigtMap[k][i];
@@ -1498,10 +1500,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   // 2.) Particles with unacceptable Jacobian (<0.1 or >10)
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    string solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-    
+    // Get relevant particle arrays
     arrayView1d< int > const isBad = subRegion.getField< fields::mpm::isBad >();
     arrayView1d< int > const particleRank = subRegion.getParticleRank();
+
+    // Initialize the set of particles to delete
+    std::set< localIndex > indicesToErase;
 
     subRegion.flagOutOfRangeParticles( m_xGlobalMin, m_xGlobalMax, m_hEl, isBad ); // This skips ghost particles
 
@@ -1509,8 +1513,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     {                                          //       We could also do away with the rank check since only master particles are ever evaluated for deletion.
       if( isBad[p] == 1 && particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) )
       {
-        subRegion.erase(p); // TODO: If we never get efficient erasure in multidimensional arrays, pass a list of indices so we only have to flatten things once
+        indicesToErase.insert(p);
       }
+      subRegion.erase(indicesToErase);
     }
   } );
 
@@ -1522,8 +1527,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   {
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
     {
-      // We need to pass the constitutive relation so we can erase constitutive fields
-      string solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
       partition.repartitionMasterParticles( subRegion, m_iComm );
     } );
   }
@@ -1805,14 +1808,14 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
   {
     std::ofstream file;
-    //can't enable exception now because of gcc bug that raises ios_base::failure with useless message
-    //file.exceptions(file.exceptions() | std::ios::failbit);
+    // can't enable exception now because of gcc bug that raises ios_base::failure with useless message
+    // file.exceptions(file.exceptions() | std::ios::failbit);
     file.open( "reactionHistory.csv", std::ios::out | std::ios::app );
     if( file.fail() )
     {
       throw std::ios_base::failure( std::strerror( errno ) );
     }
-    //make sure write fails with exception if something is wrong
+    // make sure write fails with exception if something is wrong
     file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
     file << std::setprecision( std::numeric_limits<long double>::digits10 )
          << time_n + dt << ","
@@ -1994,120 +1997,120 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( const int & separable,
   // This should be good for corners against flat surfaces.
 
   // nAB = mA > mB ? nA : -nB;
-  array1d< real64 > nAB(3); // TODO: Should be allocated outside the loop, shown to be very slow. Requires large refactor though.
+  real64 nAB[3];
   if( mA > mB )
   {
-    tOps::copy< 3 >( nAB, nA );
+    nAB[0] = nA[0];
+    nAB[1] = nA[1];
+    nAB[2] = nA[2];
   }
   else
   {
-    tOps::scaledCopy< 3 >( nAB, nB, -1.0 );
+    nAB[0] = -nB[0];
+    nAB[1] = -nB[1];
+    nAB[2] = -nB[2];
   }
-  tOps::normalize< 3 >( nAB );
+  real64 norm = sqrt(nAB[0] * nAB[0] + nAB[1] * nAB[1] + nAB[2] * nAB[2]);
+  nAB[0] /= norm;
+  nAB[1] /= norm;
+  nAB[2] /= norm;
 
-  // gap = ( xB - xA ) * nAB - minCellLength;
-  real64 minCellLength = m_planeStrain ? std::min( m_hEl[0], m_hEl[1] ) : std::min( m_hEl[0], std::min( m_hEl[1], m_hEl[2] ) );
-  real64 gap = subtractDot( xB, xA, nAB ) - minCellLength;
+  real64 weightedSpacingProjection = m_planeStrain ?
+                                     0.65 * ( fabs(nAB[0]) * m_hEl[0] + fabs(nAB[1]) * m_hEl[1] ) :
+                                     0.65 * ( fabs(nAB[0]) * m_hEl[0] + fabs(nAB[1]) * m_hEl[1] + fabs(nAB[2]) * m_hEl[2] ); // TODO: What should these weights be?
+  real64 gap = (xB[0] - xA[0]) * nAB[0] + (xB[1] - xA[1]) * nAB[1] + (xB[2] - xA[2]) * nAB[2] - weightedSpacingProjection;
 
   // Total momentum for the contact pair.
-  array1d< real64 > qAB(3);
-  tOps::copy< 3 >( qAB, qA );
-  tOps::add< 3 >( qAB, qB );
+  real64 qAB[3];
+  qAB[0] = qA[0] + qB[0];
+  qAB[1] = qA[1] + qB[1];
+  qAB[2] = qA[2] + qB[2];
 
   // Center-of-mass velocity for the contact pair.
-  array1d< real64 > vAB(3);
-  tOps::scaledCopy< 3 >( vAB, qAB, 1.0/mAB );
+  real64 vAB[3];
+  vAB[0] = qAB[0] / mAB;
+  vAB[1] = qAB[1] / mAB;
+  vAB[2] = qAB[2] / mAB;
 
-  // Compute s1AB and s2AB, to form an orthonormal basis.  This uses the method by E. Herbold, to ensure
-  // consistency between surfaces.
-  array1d< real64 > s1AB(3), s2AB(3); // Tangential vectors for the contact pair
+  // Compute s1AB and s2AB, to form an orthonormal basis. This uses the method by E. Herbold
+  // to ensure consistency between surfaces.
+  real64 s1AB[3], s2AB[3]; // Tangential vectors for the contact pair
   computeOrthonormalBasis( nAB, s1AB, s2AB );
+
+  // Compute force decomposition, declare increment in fA from "this" contact pair
+  real64 fnor =  ( mA / dt ) * ( (vAB[0] - vA[0]) * nAB[0]  + (vAB[1] - vA[1]) * nAB[1]  + (vAB[2] - vA[2]) * nAB[2] ),
+         ftan1 = ( mA / dt ) * ( (vAB[0] - vA[0]) * s1AB[0] + (vAB[1] - vA[1]) * s1AB[1] + (vAB[2] - vA[2]) * s1AB[2] ),
+         ftan2 = ( mA / dt ) * ( (vAB[0] - vA[0]) * s2AB[0] + (vAB[1] - vA[1]) * s2AB[1] + (vAB[2] - vA[2]) * s2AB[2] );
+  real64 dfA[3];
 
   // Check for separability, and enforce either slip, or no-slip contact, accordingly
   if( separable == 0 )
   {
     // Surfaces are bonded, treat as single velocity field by applying normal force to prevent
     // interpenetration, and tangential force to prevent slip.
-    real64 fnor =  ( mA / dt ) * subtractDot( vAB, vA, nAB ),
-           ftan1 = ( mA / dt ) * subtractDot( vAB, vA, s1AB ),
-           ftan2 = ( mA / dt ) * subtractDot( vAB, vA, s2AB );
-
-    tOps::scaledCopy< 3 >( fA, nAB, fnor );
-    tOps::scaledAdd< 3 >( fA, s1AB, ftan1 );
-    tOps::scaledAdd< 3 >( fA, s2AB, ftan2 );
-    tOps::scaledCopy< 3 >( fB, fA, -1.0 );
+    dfA[0] = fnor * nAB[0] + ftan1 * s1AB[0] + ftan2 * s2AB[0];
+    dfA[1] = fnor * nAB[1] + ftan1 * s1AB[1] + ftan2 * s2AB[1];
+    dfA[2] = fnor * nAB[2] + ftan1 * s1AB[2] + ftan2 * s2AB[2];
+    fA[0] += dfA[0];
+    fA[1] += dfA[1];
+    fA[2] += dfA[2];
+    fB[0] -= dfA[0];
+    fB[1] -= dfA[1];
+    fB[2] -= dfA[2];
   }
   else
   {
-    // Surfaces are separable, for frictional contact, apply a normal force to
+    // Surfaces are separable. For frictional contact, apply a normal force to
     // prevent interpenetration, and tangential force to prevent slip unless f_tan > mu*f_nor
-
-    real64 contact = 0.0;
-    if( m_contactGapCorrection == 1 )
+    real64 contact;
+    real64 test = (vA[0] - vAB[0]) * nAB[0] + (vA[1] - vAB[1]) * nAB[1] + (vA[2] - vAB[2]) * nAB[2];
+    if( m_contactGapCorrection == 1 ) // TODO: Implement soft/ramped contact option?
     {
-      contact = ( subtractDot( vA, vAB, nAB ) > 0 ) && ( gap <= 0 ) ? 1. : 0.;
-    }
-    else if( m_contactGapCorrection == 2 )
-    {
-      if( subtractDot( vA, vAB, nAB ) > 0 )
-      {
-        if( gap <= 0.0 )
-        {
-          contact = 1.0;
-        }
-        else if( gap < minCellLength )
-        {
-          contact = 1.0 - gap/minCellLength;
-        }
-      }
+      contact = test > 0.0 && gap < 0.0 ? 1.0 : 0.0;
     }
     else
     {
-      contact = subtractDot( vA, vAB, nAB ) > 0 ? 1. : 0.;
+      contact = test > 0.0 ? 1.0 : 0.0;
     }
 
-    // Determine forces for no normal interpenetration and tangential sticking
-    real64 fnor = contact * ( mA / dt ) * subtractDot( vAB, vA, nAB ),
-           ftan1 = ( mA / dt ) * subtractDot( vAB, vA, s1AB ),
-           ftan2 = ( mA / dt ) * subtractDot( vAB, vA, s2AB );
+    // Modify normal contact force
+    fnor *= contact;
+
+    // Determine force for tangential sticking
     real64 ftanMag = sqrt( ftan1 * ftan1 + ftan2 * ftan2 );
 
     // Get direction of tangential contact force
-    array1d< real64 > sAB(3);
+    real64 sAB[3];
     if( ftanMag > 0.0 )
     {
-      tOps::scaledCopy< 3 >( sAB, s1AB, ftan1 );
-      tOps::scaledAdd< 3 >( sAB, s2AB, ftan2 );
-      tOps::scale< 3 >( sAB, 1.0 / ftanMag );
-      //tOps::normalize< 3 >( sAB );
+      sAB[0] = (s1AB[0] * ftan1 + s2AB[0] * ftan2) / ftanMag;
+      sAB[0] = (s1AB[1] * ftan1 + s2AB[1] * ftan2) / ftanMag;
+      sAB[0] = (s1AB[2] * ftan1 + s2AB[2] * ftan2) / ftanMag;
     }
     else
     {
-      tOps::fill< 3 >( sAB, 0.0 );
+      sAB[0] = 0.0;
+      sAB[1] = 0.0;
+      sAB[2] = 0.0;
     }
 
-    // Update fA and fB - tangential force is bounded by friction
-    tOps::scaledAdd< 3 >( fA, nAB, fnor );
-    tOps::scaledAdd< 3 >( fA, sAB, std::min( m_frictionCoefficient * std::abs( fnor ), ftanMag ) );
-    tOps::scaledAdd< 3 >( fB, fA, -1.0 );
+    // Update fA and fB - tangential force is friction bounded by sticking force
+    real64 ftan = std::min( m_frictionCoefficient * std::abs( fnor ), ftanMag ); // This goes to zero when contact=0 due to the std::min
+    dfA[0] = fnor * nAB[0] + ftan * sAB[0];
+    dfA[1] = fnor * nAB[1] + ftan * sAB[1];
+    dfA[2] = fnor * nAB[2] + ftan * sAB[2];
+    fA[0] += dfA[0];
+    fA[1] += dfA[1];
+    fA[2] += dfA[2];
+    fB[0] -= dfA[0];
+    fB[1] -= dfA[1];
+    fB[2] -= dfA[2];
   }
 }
 
-real64 SolidMechanicsMPM::subtractDot( const arraySlice1d< real64 > & u,
-                                       const arraySlice1d< real64 > & v,
-                                       const arraySlice1d< real64 > & n )
-{
-  // Calculates (u-v).n
-  // This is done so much in the contact subroutines that it's nice to have a separate function for it
-  array1d< real64 > u_minus_v(3);
-  tOps::copy< 3 >( u_minus_v, u );
-  tOps::subtract< 3 >( u_minus_v, v );
-  return tOps::AiBi< 3 >( u_minus_v, n );
-}
-
-void SolidMechanicsMPM::computeOrthonormalBasis( const array1d< real64 > & e1, // input "normal" unit vector.
-                                                 array1d< real64 > & e2,       // output "tangential" unit vector.
-                                                 array1d< real64 > & e3 )      // output "tangential" unit vector.
+void SolidMechanicsMPM::computeOrthonormalBasis( const real64* e1, // input "normal" unit vector.
+                                                 real64* e2,       // output "tangential" unit vector.
+                                                 real64* e3 )      // output "tangential" unit vector.
 {
   // This routine takes in a normalized vector and gives two orthogonal vectors.
   // It is rather arbitrary, in general, how this is done; however, this routine
@@ -2158,7 +2161,10 @@ void SolidMechanicsMPM::computeOrthonormalBasis( const array1d< real64 > & e1, /
   e3[0] =  e1y * e2z - e1z * e2y;
   e3[1] = -e1x * e2z + e1z * e2x;
   e3[2] =  e1x * e2y - e1y * e2x;
-  tOps::normalize< 3 >( e3 );
+  real64 e3norm = sqrt( e3[0] * e3[0] + e3[1] * e3[1] + e3[2] * e3[2] );
+  e3[0] /= e3norm;
+  e3[1] /= e3norm;
+  e3[2] /= e3norm;
 }
 
 void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
@@ -2320,7 +2326,7 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionA )
   {
     // Declare relative position    
-    array1d< real64 > xBA(3);
+    real64 xBA[3];
 
     // Get and initialize neighbor list
     OrderedVariableToManyParticleRelation & neighborList = subRegionA.neighborList();
@@ -2369,11 +2375,12 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
             for( int kBin=kmin; kBin<=kmax; kBin++ )
             {
               int bin = iBin + jBin * nxbins + kBin * nxbins * nybins;
-              for( localIndex b: bins[regionIndex][subRegionIndex][bin] )
+              for( localIndex & b: bins[regionIndex][subRegionIndex][bin] )
               {
-                tOps::copy< 3 >( xBA, xB[b] ); // copy xB into xBA
-                tOps::subtract< 3 >( xBA, xA[a] ); // subtract xA from xBA
-                real64 rSquared = tOps::l2NormSquared< 3 >( xBA );
+                xBA[0] = xB[b][0] - xA[a][0];
+                xBA[1] = xB[b][1] - xA[a][1];
+                xBA[2] = xB[b][2] - xA[a][2];
+                real64 rSquared = xBA[0] * xBA[0] + xBA[1] * xBA[1] + xBA[2] * xBA[2];
                 if( rSquared <= neighborRadiusSquared ) // Would you be my neighbor?
                 {
                   insert( neighborList,
@@ -2461,29 +2468,30 @@ real64 SolidMechanicsMPM::kernel( const real64 & r ) // distance from particle t
   }
 }
 
-array1d< real64 > SolidMechanicsMPM::kernelGradient( arraySlice1d< real64 > const x, // query point
-                                                     arraySlice1d< real64 > const xp, // particle location
-                                                     const real64 & r ) // distance from particle to query point.
+void SolidMechanicsMPM::kernelGradient( arraySlice1d< real64 > const x,  // query point
+                                        arraySlice1d< real64 > const xp, // particle location
+                                        const real64 & r,                // distance from particle to query point.
+                                        real64* result )
 {
   // Compute the value of a particle kernel function gradient at some point.
-
-  array1d< real64 > kernelGradient(3);
   
+  real64 s;
   const real64 R = m_neighborRadius; // kernel Radius
   const real64 norm = m_planeStrain ? 1.0610329539459689051/(R*R) : 1.1936620731892150183/(R*R*R); // kernel should integrate to unity
 
   if( r < R )
   {
-    const real64 s = norm * 6.0 * ( r - R ) / ( R * R * R );
-    tOps::copy< 3 >( kernelGradient, x ); // kernelGradient = x
-    tOps::subtract< 3 >( kernelGradient, xp ); // kernelGradient = x - xp
-    tOps::scale< 3 >( kernelGradient, s ); // kernelGradient = s * (x - xp)
+    s = norm * 6.0 * ( r - R ) / ( R * R * R );
+    result[0] = s * (x[0] - xp[0]);
+    result[1] = s * (x[1] - xp[1]);
+    result[2] = s * (x[2] - xp[2]);
   }
   else
   {
-    kernelGradient.zero();
+    result[0] = 0.0;
+    result[1] = 0.0;
+    result[2] = 0.0;
   }
-  return kernelGradient;
 }
 
 real64 SolidMechanicsMPM::computeKernelField( arraySlice1d< real64 > const x,  // query point
@@ -2497,26 +2505,26 @@ real64 SolidMechanicsMPM::computeKernelField( arraySlice1d< real64 > const x,  /
   // and xp, fp, will be lists for just the neighbors of the particle.
 
   // Initialize
-  array1d< real64 > relativePosition(3);
+  real64 relativePosition[3];
   real64 kernelVal,
-         d = 0.0,
-         k = 0.0;
+         f = 0.0,
+         k = 0.0,
+         r;
 
   // Sum
   for( localIndex p = 0 ; p < Vp.size() ; ++p )
   {
-    tOps::copy< 3 >(relativePosition, x); // relativePosition = x
-    tOps::subtract< 3 >(relativePosition, xp[p]); // relativePosition = x - xp
-    real64 r = tOps::l2Norm< 3 >(relativePosition);
+    relativePosition[0] = x[0] - xp[p][0];
+    r = sqrt( relativePosition[0] * relativePosition[0] + relativePosition[1] * relativePosition[1] + relativePosition[2] * relativePosition[2] );
     kernelVal = kernel( r );
     k += Vp[p] * kernelVal;
-    d += Vp[p] * fp[p] * kernelVal;
+    f += Vp[p] * fp[p] * kernelVal;
   }
 
   // Return the normalized kernel field (which eliminates edge effects)
-  if( k != 0.0 )
+  if( k > 0.0 )
   {
-    return ( d / k );
+    return ( f / k );
   }
   else
   {
@@ -2524,68 +2532,11 @@ real64 SolidMechanicsMPM::computeKernelField( arraySlice1d< real64 > const x,  /
   }
 }
 
-// array1d< real64 > SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< real64 > const x,  // query point
-//                                                                  arrayView2d< real64 > const xp,  // List of neighbor particle locations.
-//                                                                  arrayView1d< real64 > const Vp,  // List of neighbor particle volumes.
-//                                                                  arrayView1d< real64 > const fp ) // scalar field values (e.g. damage) at neighbor particles
-// {
-//   // Compute the kernel scalar field at a point, for a given list of neighbor particles.
-//   // The lists xp, fp, and the length np could refer to all the particles in the patch,
-//   // but generally this function will be evaluated with x equal to some particle center,
-//   // and xp, fp, will be lists for just the neighbors of the particle.
-//   // TODO: Modify to also "return" the kernel field value
-
-//   // Scalar kernel field values
-//   real64 kernelVal,
-//          f = 0.0,
-//          k = 0.0,
-//          r;
-
-//   // Gradient of the scalar field
-//   array1d< real64 > relativePosition(3),
-//                     kernelFieldGradient(3),
-//                     kernelGradVal(3),
-//                     fGrad(3),
-//                     kGrad(3);
-//   fGrad.zero();
-//   kGrad.zero();
-
-//   for( localIndex p = 0 ; p < Vp.size() ; ++p )
-//   {
-
-//     tOps::copy< 3 >(relativePosition, x); // relativePosition = x
-//     tOps::subtract< 3 >(relativePosition, xp[p]); // relativePosition = x - xp
-//     r = tOps::l2Norm< 3 >(relativePosition);
-
-//     kernelVal = kernel( r );
-//     k += Vp[p] * kernelVal;
-//     f += Vp[p] * fp[p] * kernelVal;
-
-//     kernelGradVal = kernelGradient( x, xp[p], r );
-//     tOps::scaledAdd< 3 >(kGrad, kernelGradVal, Vp[p]);
-//     tOps::scaledAdd< 3 >(fGrad, kernelGradVal, Vp[p] * fp[p]);
-//   }
-
-//   // Return the normalized kernel field gradient (which eliminates edge effects)
-//   if( k != 0.0 )
-//   {
-//     //kernelField = f/k;
-//     tOps::scaledCopy< 3 >(kernelFieldGradient, fGrad, 1.0 / k); // kernelFieldGradient = fGrad / k
-//     tOps::scaledAdd< 3 >(kernelFieldGradient, kGrad, -f / (k * k)); // kernelFieldGradient = fGrad / k - f * kGrad / (k * k)
-//   }
-//   else
-//   {
-//     //kernelField = 0.0;
-//     kernelFieldGradient.zero();
-//   }
-
-//   return kernelFieldGradient;
-// }
-
-array1d< real64 > SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< real64 > const x,  // query point
-                                                                 arrayView2d< real64 > const xp,  // List of neighbor particle locations.
-                                                                 arrayView1d< real64 > const Vp,  // List of neighbor particle volumes.
-                                                                 arrayView1d< real64 > const fp ) // scalar field values (e.g. damage) at neighbor particles
+void SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< real64 > const x,  // query point
+                                                    arrayView2d< real64 > const xp,  // List of neighbor particle locations.
+                                                    arrayView1d< real64 > const Vp,  // List of neighbor particle volumes.
+                                                    arrayView1d< real64 > const fp,  // scalar field values (e.g. damage) at neighbor particles
+                                                    arraySlice1d< real64 > const result )
 {
   // Compute the kernel scalar field at a point, for a given list of neighbor particles.
   // The lists xp, fp, and the length np could refer to all the particles in the patch,
@@ -2601,16 +2552,9 @@ array1d< real64 > SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< r
 
   // Gradient of the scalar field
   real64 relativePosition[3],
-         fGrad[3],
-         kGrad[3];
-  fGrad[0] = 0.0;
-  fGrad[1] = 0.0;
-  fGrad[2] = 0.0;
-  kGrad[0] = 0.0;
-  kGrad[1] = 0.0;
-  kGrad[2] = 0.0;
-  array1d< real64 > kernelFieldGradient(3),
-                    kernelGradVal(3);
+         fGrad[3] = {0.0, 0.0, 0.0},
+         kGrad[3] = {0.0, 0.0, 0.0},
+         kernelGradVal[3];
 
   for( localIndex p = 0 ; p < Vp.size() ; ++p )
   {
@@ -2623,7 +2567,7 @@ array1d< real64 > SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< r
     k += Vp[p] * kernelVal;
     f += Vp[p] * fp[p] * kernelVal;
 
-    kernelGradVal = kernelGradient( x, xp[p], r );
+    kernelGradient( x, xp[p], r, kernelGradVal );
     kGrad[0] += kernelGradVal[0] * Vp[p];
     kGrad[1] += kernelGradVal[1] * Vp[p];
     kGrad[2] += kernelGradVal[2] * Vp[p];
@@ -2633,20 +2577,20 @@ array1d< real64 > SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< r
   }
 
   // Return the normalized kernel field gradient (which eliminates edge effects)
-  if( k != 0.0 )
+  if( k > 0.0 )
   {
     //kernelField = f/k;
-    kernelFieldGradient[0] = fGrad[0] / k - f * kGrad[0] / (k * k);
-    kernelFieldGradient[1] = fGrad[1] / k - f * kGrad[1] / (k * k);
-    kernelFieldGradient[2] = fGrad[2] / k - f * kGrad[2] / (k * k);
+    result[0] = fGrad[0] / k - f * kGrad[0] / (k * k);
+    result[1] = fGrad[1] / k - f * kGrad[1] / (k * k);
+    result[2] = fGrad[2] / k - f * kGrad[2] / (k * k);
   }
   else
   {
     //kernelField = 0.0;
-    kernelFieldGradient.zero();
+    result[0] = 0.0;
+    result[1] = 0.0;
+    result[2] = 0.0;
   }
-
-  return kernelFieldGradient;
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsMPM, string const &, dataRepository::Group * const )

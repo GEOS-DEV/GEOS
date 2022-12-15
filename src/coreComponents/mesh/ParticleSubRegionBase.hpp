@@ -303,7 +303,7 @@ public:
                        int const & startingIndex,
                        int const & numberOfIncomingParticles );
 
-  void erase(localIndex p );
+  void erase( std::set< localIndex > const & indicesToErase );
 
   void setNonGhostIndices();
 

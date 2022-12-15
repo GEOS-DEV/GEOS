@@ -428,7 +428,7 @@ public:
    * @brief Erase object from this object manager
    * @param erasedIndex The local index of the object to be erased.
    */
-  void eraseObject( localIndex const erasedIndex );
+  void eraseObject( std::set< localIndex > const & indicesToErase );
 
   /**
    * @brief Computes the maximum global index allong all the MPI ranks.

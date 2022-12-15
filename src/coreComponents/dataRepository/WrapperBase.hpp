@@ -144,10 +144,10 @@ public:
   virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) = 0;
 
   /**
-   * @brief Calls T::erase(erasedIndex)
-   * @param[in] erasedIndex index to erase
+   * @brief Calls T::erase(indicesToErase)
+   * @param[in] indicesToErase indices to erase
    */
-  virtual void erase( localIndex const erasedIndex ) = 0;
+  virtual void erase( std::set< localIndex> const & indicesToErase ) = 0;
 
   /**
    * @brief Calls T::move(space, touch)
