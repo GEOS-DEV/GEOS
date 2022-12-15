@@ -65,9 +65,17 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setSizedFromParent( 0 );
 
+  registerWrapper( viewKeyStruct::waterOilMaxRelPermString(), &m_waterOilMaxRelPerm ).
+    setInputFlag( InputFlags::FALSE ). // will be deduced from tables
+    setSizedFromParent( 0 );
+
   registerWrapper( viewKeyStruct::relPermKernelWrappersString(), &m_relPermKernelWrappers ).
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
+
+  registerWrapper( viewKeyStruct::flagInterpolatorString(), &m_flagInterpolator).
+    setInputFlag( InputFlags::OPTIONAL).
+    setDefaultValue(0);
 }
 
 void TableRelativePermeability::postProcessInput()
@@ -128,6 +136,8 @@ void TableRelativePermeability::initializePreSubGroups()
 
   integer const numPhases = m_phaseNames.size();
   m_phaseMinVolumeFraction.resize( MAX_NUM_PHASES );
+  m_waterOilMaxRelPerm.resize(MAX_NUM_PHASES );
+
 
   string const fullName = getFullName();
   real64 phaseMinVolFrac = 0.0;
@@ -156,11 +166,13 @@ void TableRelativePermeability::initializePreSubGroups()
       {
         integer const ipWetting = ( m_phaseOrder[PhaseType::WATER] >= 0 ) ? m_phaseOrder[PhaseType::WATER] : m_phaseOrder[PhaseType::OIL];
         m_phaseMinVolumeFraction[ipWetting] = phaseMinVolFrac;
+//          m_waterOilMaxRelPerm[m_phaseOrder[PhaseType::OIL]] = phaseRelPermEndPoint;//todo correct
       }
       else if( ip == 1 ) // non-wetting phase is either oil (for two-phase oil-water systems), or gas
       {
         integer const ipNonWetting = ( m_phaseOrder[PhaseType::GAS] >= 0 ) ? m_phaseOrder[PhaseType::GAS] : m_phaseOrder[PhaseType::OIL];
         m_phaseMinVolumeFraction[ipNonWetting] = phaseMinVolFrac;
+//        m_gasOilRelPermMaxValue[ip] = phaseRelPermEndPoint;//todo correct
       }
     }
   }
@@ -188,6 +200,7 @@ void TableRelativePermeability::initializePreSubGroups()
       else if( ip == 1 ) // intermediate phase is oil
       {
         m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
+          m_waterOilMaxRelPerm[m_phaseOrder[PhaseType::OIL]] = phaseRelPermEndPoint;//todo correct
       }
     }
     for( integer ip = 0; ip < m_nonWettingIntermediateRelPermTableNames.size(); ++ip )
@@ -212,6 +225,7 @@ void TableRelativePermeability::initializePreSubGroups()
       else if( ip == 1 ) // intermediate phase is oil
       {
         m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
+//          m_waterOilRelPermMaxValue[m_phaseOrder[PhaseType::OIL]] = phaseRelPermEndPoint;//todo correct
       }
     }
   }
@@ -276,6 +290,7 @@ TableRelativePermeability::createKernelWrapper()
   // then we create the actual TableRelativePermeability::KernelWrapper
   return KernelWrapper( m_relPermKernelWrappers,
                         m_phaseMinVolumeFraction,
+                        m_flagInterpolator,
                         m_phaseTypes,
                         m_phaseOrder,
                         m_phaseRelPerm,
