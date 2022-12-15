@@ -44,7 +44,6 @@ set(ENABLE_PAPI OFF CACHE BOOL "")
 set(SILO_BUILD_TYPE powerpc64-unknown-linux-gnu CACHE STRING "")
 
 # GEOSX specific options
-set(ENABLE_PAMELA ON CACHE BOOL "")
 set(ENABLE_PVTPackage ON CACHE BOOL "")
 set(ENABLE_PETSC OFF CACHE BOOL "" FORCE )
 
