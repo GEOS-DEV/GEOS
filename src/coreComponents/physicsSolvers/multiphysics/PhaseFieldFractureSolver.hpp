@@ -87,6 +87,44 @@ protected:
 
 };
 
+
+template< typename FE_TYPE >
+struct DamageInterpolationKernel
+{
+  DamageInterpolationKernel( CellElementSubRegion const & subRegion ):
+    m_numElems( subRegion.size() )
+  {}
+
+  void interpolateDamage( arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodes,
+                          arrayView1d< real64 const > const nodalDamage,
+                          arrayView2d< real64 > damageFieldOnMaterial )
+  {
+    forAll< parallelDevicePolicy<> >( m_numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+      constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
+
+      for( localIndex q = 0; q < n_q_points; ++q )
+      {
+        real64 N[ numNodesPerElement ];
+        FE_TYPE::calcN( q, N );
+
+        damageFieldOnMaterial( k, q ) = 0;
+        for( localIndex a = 0; a < numNodesPerElement; ++a )
+        {
+          damageFieldOnMaterial( k, q ) += N[a] * nodalDamage[elemToNodes( k, a )];
+          //solution is probably not going to work because the solution of the coupled solver
+          //has both damage and displacements. Using the damageResult field from the Damage solver
+          //is probably better
+        }
+      }
+
+    } );
+  }
+
+  localIndex m_numElems;
+};
+
 } /* namespace geosx */
 
 #endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDFRACTURESOLVER_HPP_ */

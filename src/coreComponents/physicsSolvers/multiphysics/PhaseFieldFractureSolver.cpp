@@ -36,7 +36,7 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
                                                     Group * const parent ):
   Base( name, parent )
 {
-  // Only sequential coupling implemented for this solver 
+  // Only sequential coupling implemented for this solver
   getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
 }
 
@@ -81,43 +81,25 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
           typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
 
           arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_damage;
-          arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodes = elementSubRegion.nodeList();
 
           finiteElement::FiniteElementBase const &
           fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( discretizationName );
 
           integer const numElems = elementSubRegion.size();
 
-          finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [=] ( auto & finiteElement )
+          finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [=, &elementSubRegion] ( auto & finiteElement )
           {
-            using FE_TYPE = TYPEOFREF( finiteElement );           
+            using FE_TYPE = TYPEOFREF( finiteElement );
 
-            forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-            {
-              constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
-              constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
+            DamageInterpolationKernel< FE_TYPE > interpolationKernel( elementSubRegion );
 
-              for( localIndex q = 0; q < n_q_points; ++q )
-              {
-                real64 N[ numNodesPerElement ];
-                FE_TYPE::calcN( q, N );
-
-                damageFieldOnMaterial( k, q ) = 0;
-                for( localIndex a = 0; a < numNodesPerElement; ++a )
-                {
-                  damageFieldOnMaterial( k, q ) += N[a] * nodalDamage[elemNodes( k, a )];
-                  //solution is probably not going to work because the solution of the coupled solver
-                  //has both damage and displacements. Using the damageResult field from the Damage solver
-                  //is probably better
-                }
-              }
-            } );
+            interpolationKernel.interpolateDamage( elemToNodes, nodalDamage, damageFieldOnMaterial );
           } );
         } );
       } );
     } );
   }
-
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldFractureSolver, string const &, Group * const )

@@ -223,7 +223,7 @@ public:
 
   /// Max number of times that the configuration can be changed
   integer m_maxNumConfigurationAttempts;
-  
+
   /// Type of coupling
   CouplingType m_couplingType;
 
@@ -240,8 +240,8 @@ ENUM_STRINGS( NonlinearSolverParameters::LineSearchInterpolationType,
               "Parabolic" );
 
 ENUM_STRINGS( NonlinearSolverParameters::CouplingType,
-             "FIM",
-             "Sequential" );
+              "FIM",
+              "Sequential" );
 
 
 

@@ -216,7 +216,7 @@ public:
     {
       return fullyCoupledSolverStep( time_n, dt, cycleNumber, domain );
     }
-    else if(getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
+    else if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
     {
       return sequentiallyCoupledSolverStep( time_n, dt, cycleNumber, domain );
     }
