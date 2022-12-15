@@ -3,15 +3,15 @@
 <Problem>
 
   <Included>
-    <File name="./3D_10x10x10_compressible_pamela_hex_gravity_base.xml"/>
+    <File name="./3D_10x10x10_compressible_hex_gravity_base.xml"/>
   </Included>
 
 
   <!-- SPHINX_TUT_EXT_HEX_MESH -->
   <Mesh>
-    <PAMELAMesh
+    <VTKMesh
       name="CubeHex"
-      file="cube_10x10x10_hex.msh"/>
+      file="cube_10x10x10_hex.vtk"/>
   </Mesh>
   <!-- SPHINX_TUT_EXT_HEX_MESH_END -->
 
@@ -31,7 +31,7 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="2"
-      target="/Outputs/siloWellPump"/>
+      target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="restarts"
