@@ -20,13 +20,14 @@
 #ifndef GEOSX_FINITEELEMENT_TEAMKERNELBASE_STACKVARIABLES_HPP_
 #define GEOSX_FINITEELEMENT_TEAMKERNELBASE_STACKVARIABLES_HPP_
 
+// A simple structure representing the shape functions and their derivatives evaluated at quadrature points.
 #include "finiteElement/TeamKernelInterface/StackVariables/BasisStackVariables.hpp"
+// A simple structure containing quadrature weights.
 #include "finiteElement/TeamKernelInterface/StackVariables/QuadratureWeightsStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/MeshStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/ElementStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/VectorElementStackVariables.hpp"
 
+// An object containing shared mewmory.
 #include "finiteElement/TeamKernelInterface/StackVariables/SharedMemStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/SharedStackVariables.hpp"
+// A set of shared memory buffers.
+#include "finiteElement/TeamKernelInterface/StackVariables/SharedMemBuffersStackVariables.hpp"
 
 #endif
