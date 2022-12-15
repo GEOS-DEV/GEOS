@@ -104,6 +104,35 @@ real64 computeInverseAndDeterminant( real64 const (& J)[3][3], real64 (& Jinv)[3
  *   grad_phys := J^-1 * grad_ref.
  * @tparam ref_dim The dimension of the reference coordinate space.
  * @tparam phys_dim The dimension of the physical coordinate space.
+ * @param Jinv The inverse of the mesh jacobian matrix.
+ * @param grad_ref The gradient of the field in reference coordinates.
+ * @param grad_phys The gradient of the field in physical coordinates.
+ */
+template < localIndex ref_dim,
+           localIndex phys_dim >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void computePhysicalGradient( real64 const (& Jinv)[ref_dim][phys_dim],
+                              real64 const (& grad_ref)[ref_dim],
+                              real64 (& grad_phys)[phys_dim] )
+{
+  for (localIndex i = 0; i < phys_dim; i++)
+  {
+    real64 val = 0.0;
+    for (localIndex j = 0; j < ref_dim; j++)
+    {
+      val = val + Jinv[ j ][ i ] * grad_ref[ j ];
+    }
+    grad_phys[ i ] = val;
+  }
+}
+
+/**
+ * @brief Compute the gradient of a vectorial field in physical coordinates
+ * from the gradient in reference coordinates. Using the formula:
+ *   grad_phys := J^-1 * grad_ref.
+ * @tparam ref_dim The dimension of the reference coordinate space.
+ * @tparam phys_dim The dimension of the physical coordinate space.
  * @tparam num_comp The number of components of the field.
  * @param Jinv The inverse of the mesh jacobian matrix.
  * @param grad_ref The gradient of the field in reference coordinates.
@@ -129,6 +158,39 @@ void computePhysicalGradient( real64 const (& Jinv)[ref_dim][phys_dim],
       }
       grad_phys[ c ][ i ] = val;
     }
+  }
+}
+
+/**
+ * @brief Compute the gradient of a vectorial field in physical coordinates
+ * from the gradient in reference coordinates. Using the formula:
+ *   grad_phys := J^-1 * grad,
+ * with
+ *   J^-1 := detJinv * AdjJ.
+ * @tparam ref_dim The dimension of the reference coordinate space.
+ * @tparam phys_dim The dimension of the physical coordinate space.
+ * @param detJinv The inverse of the determinant of the mesh jacobian matrix.
+ * @param AdjJ The adjugate of the mesh jacobian matrix.
+ * @param grad_ref The gradient of the field in reference coordinates.
+ * @param grad_phys The gradient of the field in physical coordinates.
+ */ 
+template < localIndex ref_dim,
+           localIndex phys_dim >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void computePhysicalGradient( real64 const detJinv,
+                              real64 const (& AdjJ)[ref_dim][phys_dim],
+                              real64 const (& grad_ref)[ref_dim],
+                              real64 (& grad_phys)[phys_dim] )
+{
+  for (localIndex i = 0; i < phys_dim; i++)
+  {
+    real64 val = 0.0;
+    for (localIndex j = 0; j < ref_dim; j++)
+    {
+      val = val + AdjJ[ j ][ i ] * grad_ref[ j ];
+    }
+    grad_phys[ i ] = detJinv * val;
   }
 }
 
@@ -176,6 +238,35 @@ void computePhysicalGradient( real64 const detJinv,
  *   grad_ref := J^-T * grad_phys.
  * @tparam ref_dim The dimension of the reference coordinate space.
  * @tparam phys_dim The dimension of the physical coordinate space.
+ * @param Jinv The inverse of the mesh jacobian matrix.
+ * @param grad_phys The gradient of the field in physical coordinates.
+ * @param grad_ref The gradient of the field in reference coordinates. 
+ */
+template < localIndex ref_dim,
+           localIndex phys_dim >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void computeReferenceGradient( real64 const (& Jinv)[ref_dim][phys_dim],
+                               real64 const (& grad_phys)[phys_dim],
+                               real64 (& grad_ref)[ref_dim] )
+{
+  for (localIndex i = 0; i < ref_dim; i++)
+  {
+    real64 val = 0.0;
+    for (localIndex j = 0; j < phys_dim; j++)
+    {
+      val = val + Jinv[ i ][ j ] * grad_phys[ j ];
+    }
+    grad_ref[ i ] = val;
+  }
+}
+
+/**
+ * @brief Compute the gradient of a vectorial field in reference coordinates
+ * from the gradient in physical coordinates. Using the formula:
+ *   grad_ref := J^-T * grad_phys.
+ * @tparam ref_dim The dimension of the reference coordinate space.
+ * @tparam phys_dim The dimension of the physical coordinate space.
  * @tparam num_comp The number of components of the field.
  * @param Jinv The inverse of the mesh jacobian matrix.
  * @param grad_phys The gradient of the field in physical coordinates.
@@ -201,6 +292,39 @@ void computeReferenceGradient( real64 const (& Jinv)[ref_dim][phys_dim],
       }
       grad_ref[ c ][ i ] = val;
     }
+  }
+}
+
+/**
+ * @brief Compute the gradient of a vectorial field in reference coordinates
+ * from the gradient in physical coordinates. Using the formula:
+ *   grad_phys := J^-T * grad,
+ * with
+ *   J^-1 := detJinv * AdjJ.
+ * @tparam ref_dim The dimension of the reference coordinate space.
+ * @tparam phys_dim The dimension of the physical coordinate space.
+ * @param detJinv The inverse of the determinant of the mesh jacobian matrix.
+ * @param AdjJ The adjugate of the mesh jacobian matrix.
+ * @param grad_phys The gradient of the field in physical coordinates.
+ * @param grad_ref The gradient of the field in reference coordinates. 
+ */
+template < localIndex ref_dim,
+           localIndex phys_dim >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void computeReferenceGradient( real64 const detJinv,
+                               real64 const (& AdjJ)[ref_dim][phys_dim],
+                               real64 const (& grad_phys)[phys_dim],
+                               real64 (& grad_ref)[ref_dim] )
+{
+  for (localIndex i = 0; i < ref_dim; i++)
+  {
+    real64 val = 0.0;
+    for (localIndex j = 0; j < phys_dim; j++)
+    {
+      val = val + AdjJ[ i ][ j ] * grad_phys[ j ];
+    }
+    grad_ref[ i ] = detJinv * val;
   }
 }
 
@@ -245,18 +369,41 @@ void computeReferenceGradient( real64 const detJinv,
 /**
  * @brief Apply the quadrature weights for numerical integration.
  * 
+ * @tparam dim The dimension of the space.
  * @param weight The quadrature point weight.
  * @param detJ The determinant of the mesh jacobian.
  * @param field The integrated field.
  */
+template < localIndex dim >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void applyQuadratureWeights( real64 const weight, real64 const detJ, real64 (& field)[3][3] )
+void applyQuadratureWeights( real64 const weight, real64 const detJ, real64 (& field)[dim] )
 {
   const real64 w = - weight * detJ;
-  for (localIndex j = 0; j < 3; j++)
+  for (localIndex i = 0; i < dim; i++)
   {
-    for (localIndex i = 0; i < 3; i++)
+    field[i] = w * field[i];
+  }
+}
+
+/**
+ * @brief Apply the quadrature weights for numerical integration.
+ * 
+ * @tparam num_comp The number of components of the field.
+ * @tparam dim The diemsnion of the space.
+ * @param weight The quadrature point weight.
+ * @param detJ The determinant of the mesh jacobian.
+ * @param field The integrated field.
+ */
+template < localIndex num_comp, localIndex dim >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void applyQuadratureWeights( real64 const weight, real64 const detJ, real64 (& field)[num_comp][dim] )
+{
+  const real64 w = - weight * detJ;
+  for (localIndex j = 0; j < dim; j++)
+  {
+    for (localIndex i = 0; i < num_comp; i++)
     {
       field[i][j] = w * field[i][j];
     }    
