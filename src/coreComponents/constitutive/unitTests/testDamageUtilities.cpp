@@ -6,6 +6,7 @@
 #include "../solid/DamageSpectralUtilities.hpp"
 #include "LvArray/src/tensorOps.hpp"
 #include "LvArray/src/output.hpp"
+#include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 
 #include <gtest/gtest.h>
 using namespace geosx;
