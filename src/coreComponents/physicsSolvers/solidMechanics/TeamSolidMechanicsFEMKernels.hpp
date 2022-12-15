@@ -28,12 +28,9 @@
 #include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/QuadratureFunctionsHelper.hpp"
 #include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/qLocalLoad.hpp"
 #include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/qLocalWrite.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/MeshStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/VectorElementStackVariables.hpp"
 #include "finiteElement/TeamKernelInterface/StackVariables/BasisStackVariables.hpp"
 #include "finiteElement/TeamKernelInterface/StackVariables/QuadratureWeightsStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/SharedStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/SharedMemStackVariables.hpp"
+#include "finiteElement/TeamKernelInterface/StackVariables/SharedMemBuffersStackVariables.hpp"
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
