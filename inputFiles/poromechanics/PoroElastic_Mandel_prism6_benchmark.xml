@@ -2,14 +2,14 @@
 
 <Problem>
   <Included>
-    <File name="./PoroElastic_Mandel_prism6_base.xml"/>
+    <File name="./PoroElastic_Mandel_prism6_base_hybrid.xml"/>
   </Included>
 
   <!-- SPHINX_MESH -->
   <Mesh>
     <VTKMesh
         name="mesh"
-        file="mandel_prism6_0115_cells.vtk"/>
+        file="cd ../../../GEOSXDATA/DataSets/mandelMeshes/mandel_prism6_0430_cells.vtu"/>
   </Mesh>
   <!-- SPHINX_MESH_END -->
 </Problem>

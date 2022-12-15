@@ -31,10 +31,10 @@
     <!-- SPHINX_MECHANICALSOLVER_END -->
 
     <!-- SPHINX_SINGLEPHASEFVM -->
-    <SinglePhaseFVM
+    <SinglePhaseHybridFVM
         name="SinglePhaseFlow"
         logLevel="1"
-        discretization="singlePhaseTPFA"
+        discretization="singlePhaseHybridMimetic"
         targetRegions="{ Domain }"/>
     <!-- SPHINX_SINGLEPHASEFVM_END -->
   </Solvers>
@@ -48,10 +48,14 @@
     </FiniteElements>
 
     <FiniteVolume>
-      <TwoPointFluxApproximation
-          name="singlePhaseTPFA"/>
+      <HybridMimeticDiscretization
+        name="singlePhaseHybridMimetic"
+        innerProductType="TPFA"/>
     </FiniteVolume>
   </NumericalMethods>
+
+        <!-- innerProductType="beiraoDaVeigaLipnikovManzini"/>   -->
+  
   <!-- SPHINX_NUMERICAL_END -->
 
   <!-- SPHINX_ELEMENTREGIONS -->
@@ -84,7 +88,7 @@
 
     <ConstantPermeability
         name="shalePerm"
-        permeabilityComponents="{ 1.0e-12, 0.0, 1.0e-12 }"/>
+        permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
 
     <CompressibleSinglePhaseFluid
         name="water"
@@ -112,12 +116,12 @@
     <Box
         name="yneg"
         xMin="{ -0.01, -0.01, -0.01 }"
-        xMax="{ +0.01, +1.01, +1.01 }"/>
+        xMax="{ +1.01, +0.01, +1.01 }"/>
 
     <Box
         name="ypos"
-        xMin="{ -0.01, +0.009, -0.01 }"
-        xMax="{ +1.01, +0.011, +1.01 }"/>
+        xMin="{ -0.01, +0.09, -0.01 }"
+        xMax="{ +1.01, +0.11, +1.01 }"/>
 
     <Box
         name="zneg"
@@ -133,12 +137,37 @@
   <!-- SPHINX_BC -->
   <FieldSpecifications>
     <FieldSpecification
-        name="initialPressure"
-        initialCondition="1"
-        setNames="{ all }"
-        objectPath="ElementRegions/Domain/hexagonalPrisms"
-        fieldName="pressure"
-        scale="4934.86"/>
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/hexagonalPrisms"
+      fieldName="pressure"
+      scale="4934.86"/>
+
+    <FieldSpecification
+      name="initial_sigma_x"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="shaleSolid_stress"
+      component="0"
+      scale="4934.86"/>
+    <FieldSpecification
+      name="initial_sigma_y"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="shaleSolid_stress"
+      component="1"
+      scale="4934.86"/>
+    <FieldSpecification
+      name="initial_sigma_z"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="shaleSolid_stress"
+      component="2"
+      scale="4934.86"/>
     
     <FieldSpecification
         name="xInitialDisplacement"
@@ -283,13 +312,6 @@
         target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
-        name="solverApplication0"
-        beginTime="0.0"
-        endTime="10.0"
-        forceDt="0.0025"
-        target="/Solvers/poroSolve"/> 
-
-    <PeriodicEvent
         name="pressureCollection" 
         target="/Tasks/pressureCollection"/>
 
@@ -305,7 +327,15 @@
     <PeriodicEvent
         name="displacementOutput"
         targetExactTimestep="0" 
-        target="/Outputs/displacementHistoryOutput" />   
+        target="/Outputs/displacementHistoryOutput" />
+
+    <PeriodicEvent
+        name="solverApplication0"
+        beginTime="0.0"
+        endTime="10.0"
+        forceDt="0.0025"
+        target="/Solvers/poroSolve"/> 
+
   </Events>
   
 
