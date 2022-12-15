@@ -29,6 +29,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 #include "SolidMechanicsFields.hpp"
+#include "LvArray/src/output.hpp"
 
 namespace geosx
 {
@@ -70,6 +71,14 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
   dst.zero();
   arrayView1d< real64 const > const localSrc = src.values();
   arrayView1d< real64 > const localDst = dst.open();
+
+    // {
+    // std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp1"<<std::endl;
+    // LvArray::print< parallelDevicePolicy< 32 > >( localSrc );
+    // std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp2"<<std::endl;
+    // }
+
+
 
   for( auto const & target: m_meshTargets )
   {
@@ -115,6 +124,13 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
                                                                    kernelFactory );
 #endif
   }
+
+  // {
+  //   std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp3"<<std::endl;
+  //   LvArray::print< parallelDevicePolicy< 32 > >( localDst );
+  //   std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp4"<<std::endl;
+  // }
+
   dst.close();
 }
 
@@ -210,7 +226,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  std::cout<<"MatrixFreeSolidMechanicsFEM::solverStep - begin"<<std::endl;
+  // std::cout<<"MatrixFreeSolidMechanicsFEM::solverStep - begin"<<std::endl;
   m_dofManager.setDomain( domain );
   setupDofs( domain, m_dofManager );
   m_dofManager.reorderByRank();
@@ -219,16 +235,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
   m_solution.setName( this->getName() + "/solution" );
   m_solution.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
-  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp1"<<std::endl;
-
-  // std::cout<<"calling setupSystem..."<<std::flush;
-  // setupSystem( domain,
-  //              m_dofManager,
-  //              m_localMatrix,
-  //              m_rhs,
-  //              m_solution,
-  //              false );
-  // std::cout<<"done.";
+  //std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp1"<<std::endl;
 
   MatrixFreeSolidMechanicsFEMOperator unconstrained_solid_mechanics(
     domain,
@@ -236,7 +243,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
     m_dofManager,
     this->getDiscretizationName() );
 
-  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp2"<<std::endl;
+  //std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp2"<<std::endl;
 
   LinearOperatorWithBC< ParallelVector, FieldType > constrained_solid_mechanics(
     *this,
@@ -247,44 +254,40 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
     time_n+dt,
     LinearOperatorWithBC< ParallelVector, FieldType >::DiagPolicy::DiagonalOne );
 
-  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp3"<<std::endl;
+//   std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp3"<<std::endl;
+
+//  std::cout<< "m_rhs0: "<<std::endl<< m_rhs << std::endl;
 
   constrained_solid_mechanics.computeConstrainedRHS( m_rhs, m_solution );
 
-  std::cout<< "solution: " << m_solution << std::endl;
+//  std::cout<< "m_rhs: "<<std::endl<< m_rhs << std::endl;
+//  std::cout<< "solution: " <<std::endl<< m_solution << std::endl;
 
-
-  arrayView1d< real64 > const localRhs = m_rhs.open();
-  localRhs.move( LvArray::MemorySpace::host );
-  m_rhs.close();
-
-  std::cout<< "rhs: " << localRhs << std::endl;
-
-  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp4"<<std::endl;
+//   std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp4"<<std::endl;
 
 
   MatrixFreePreconditionerIdentity< HypreInterface > identity( m_dofManager );
 
-  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp5"<<std::endl;
+//  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp5"<<std::endl;
 
   auto & params = m_linearSolverParameters.get();
   params.isSymmetric = true;
 
-  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp6"<<std::endl;
+//  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp6"<<std::endl;
 
   CgSolver< ParallelVector > solver( params, constrained_solid_mechanics, identity );
   
-    std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp7"<<std::endl;
+//    std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp7"<<std::endl;
 
   solver.solve( m_rhs, m_solution );
 
-  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp8"<<std::endl;
+//  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp8"<<std::endl;
 
 //  std::cout << "m_solution: " << m_solution << std::endl;
 
   applySystemSolution( m_dofManager, m_solution.values(), 1.0, domain );
 
-  std::cout<<"MatrixFreeSolidMechanicsFEM::solverStep - end"<<std::endl;
+//  std::cout<<"MatrixFreeSolidMechanicsFEM::solverStep - end"<<std::endl;
 
   return dt;
 }
@@ -293,7 +296,7 @@ void MatrixFreeSolidMechanicsFEM::setupDofs( DomainPartition const & GEOSX_UNUSE
                                              DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
-  std::cout<<"MatrixFreeSolidMechanicsFEM::setupDofs - begin"<<std::endl;
+//  std::cout<<"MatrixFreeSolidMechanicsFEM::setupDofs - begin"<<std::endl;
 
   dofManager.addField( fields::solidMechanics::totalDisplacement::key(),
                        FieldLocation::Node,
@@ -304,7 +307,7 @@ void MatrixFreeSolidMechanicsFEM::setupDofs( DomainPartition const & GEOSX_UNUSE
                           fields::solidMechanics::totalDisplacement::key(),
                           DofManager::Connector::Elem );
 
-  std::cout<<"MatrixFreeSolidMechanicsFEM::setupDofs - end"<<std::endl;
+//  std::cout<<"MatrixFreeSolidMechanicsFEM::setupDofs - end"<<std::endl;
 
 }
 
@@ -346,7 +349,7 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
                                                   DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  std::cout<<"MatrixFreeSolidMechanicsFEM::applySystemSolution - begin"<<std::endl;
+//  std::cout<<"MatrixFreeSolidMechanicsFEM::applySystemSolution - begin"<<std::endl;
   dofManager.addVectorToField( localSolution,
                                fields::solidMechanics::totalDisplacement::key(),
                                fields::solidMechanics::totalDisplacement::key(),
@@ -376,7 +379,7 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
   //                                                        domain.getNeighbors(),
   //                                                        true );
   // } );
-    std::cout<<"MatrixFreeSolidMechanicsFEM::applySystemSolution - end"<<std::endl;
+//    std::cout<<"MatrixFreeSolidMechanicsFEM::applySystemSolution - end"<<std::endl;
 
 }
 

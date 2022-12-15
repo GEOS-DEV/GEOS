@@ -247,21 +247,22 @@ kernelLaunch( localIndex const numElems,
 {
   GEOSX_MARK_FUNCTION;
 
+//  printf( "numElems = %d\n", numElems );
 
 #if 1
   forAll< POLICY >( numElems,
                     [=] GEOSX_DEVICE ( localIndex const k )
   {
-
+//    printf( "k = %d\n", k );
     typename KERNEL_TYPE::StackVariables stack;
 
     kernelComponent.setup( k, stack );
-//    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
-      for( integer qc=0; qc<2; ++qc )
-      for( integer qb=0; qb<2; ++qb )
-      for( integer qa=0; qa<2; ++qa )
+    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
+      // for( integer qc=0; qc<2; ++qc )
+      // for( integer qb=0; qb<2; ++qb )
+      // for( integer qa=0; qa<2; ++qa )
     {
-      int const q = qa + 2 * qb + 4*qc;
+//      int const q = qa + 2 * qb + 4*qc;
       kernelComponent.quadraturePointKernel( k, q, stack );
     }
     kernelComponent.complete( k, stack );

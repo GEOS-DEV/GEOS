@@ -324,7 +324,7 @@ void HypreVector::print( std::ostream & os ) const
       globalIndex const firstRowID = ilower();
       forAll< serialPolicy >( localSize(), [&, data]( localIndex const i )
       {
-        if( i%3==0 )
+//        if( i%3==0 )
         {
           GEOSX_FMT_TO( str, sizeof( str ), lineFormat,
                         rank,

@@ -17,8 +17,46 @@
 
 #include "linearAlgebra/common/LinearOperator.hpp"
 
+#include "LvArray/src/output.hpp"
+
 namespace geosx
 {
+
+
+template< typename T >
+inline real64 bcFieldValue( T const & field, 
+                     localIndex const index, 
+                     int const component )
+{
+  return field(index, component );
+} 
+
+template<>
+inline real64 bcFieldValue<arrayView1d<real64 const>>( arrayView1d<real64 const> const & field, 
+                                                localIndex const index, 
+                                                int const )
+{
+  return field[index];
+}
+
+
+template< typename T >
+inline real64 fieldLinearIndex( T const & field, 
+                                localIndex const index0,
+                                localIndex const index1 )
+{
+  return field.linearIndex(index0, index1 );
+} 
+
+template<>
+inline real64 fieldLinearIndex<arrayView1d<real64 const>>( arrayView1d<real64 const> const & field, 
+                                                           localIndex const index0,
+                                                           localIndex const index1 )
+{
+  return index0;
+}
+
+
 
 template < typename Vector, typename PrimaryFieldType >
 class LinearOperatorWithBC : public LinearOperator< Vector >
@@ -57,7 +95,6 @@ public:
     m_diagPolicy( diagPolicy ),
     m_diagonal( m_dofManager.numLocalDofs() )
   {
-    std::cout<<"LinearOperatorWithBC::LinearOperatorWithBC - bp0"<<std::endl;
     using POLICY = parallelDevicePolicy<>;
     switch (m_diagPolicy)
     {
@@ -76,7 +113,6 @@ public:
         // TODO: compute diagonal
         break;
     }
-    std::cout<<"LinearOperatorWithBC::LinearOperatorWithBC - bp1"<<std::endl;
 
     // compute m_constrainedDofIndices and m_rhsContributions
     FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
@@ -98,15 +134,13 @@ public:
       } );
     } );
 
-    std::cout<<"LinearOperatorWithBC::LinearOperatorWithBC - bp2"<<std::endl;
-
+    
     // NOTE: we're not checking for duplicates.
+    m_constrainedIndices.reserve( totalSize );
     m_constrainedDofIndices.reserve( totalSize );
     m_rhsContributions.reserve( totalSize );
 
-    std::cout<<"LinearOperatorWithBC::LinearOperatorWithBC - bp3"<<std::endl;
     setupBoundaryConditions( solver, fsManager );
-    std::cout<<"LinearOperatorWithBC::LinearOperatorWithBC - bp4"<<std::endl;
     // TODO: sort m_constrainedDofIndices and m_rhsContributions together
 
     srcWithBC.create( dofManager.numLocalDofs(), this->comm() );
@@ -132,6 +166,14 @@ public:
                             dataRepository::Group & targetGroup,
                             string const & fieldName )
       {
+        array1d< localIndex > indexArray( targetSet.size() );
+        int count = 0;
+        for( localIndex const index : targetSet )
+        {
+          indexArray[ count++ ] = fieldLinearIndex( field, index, bc.getComponent() ) ;
+        }
+
+
         array1d< globalIndex > dofArray( targetSet.size() );
         dofArray.setName("dofArray");
         arrayView1d< globalIndex > const & dof = dofArray.toView();
@@ -141,26 +183,31 @@ public:
         arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView(); 
         arrayView1d< globalIndex const > const & dofMap = targetGroup.getReference< array1d< globalIndex > >( m_dofManager.getKey( fieldName ) );
         int const component = bc.getComponent();
+        int const rankOffset = m_dofManager.rankOffset();
+        // we need to write a new variant of this function that calculates the rhs contribution to the original array2d instead of the dof vector.
         bc.computeRhsContribution< FieldSpecificationEqual, 
                                    parallelDevicePolicy<> >( targetSet,
-                                                                      m_time,
-                                                                      1.0, // TODO: double check
-                                                                      targetGroup,
-                                                                      dofMap,
-                                                                      m_dofManager.rankOffset(),
-                                                                      m_diagonal.toViewConst(),
-                                                                      dof,
-                                                                      rhsContribution,
-                                                                      [=] GEOSX_HOST_DEVICE (localIndex const a)->real64
-                                                                      {
-                                                                        return field.data()[a*3+component];
-                                                                      } );
-                                                                      //field );
+                                                             m_time,
+                                                             1.0, // TODO: double check
+                                                             targetGroup,
+                                                             dofMap,
+                                                             rankOffset,
+                                                             m_diagonal.toViewConst(),
+                                                             dof,
+                                                             rhsContribution,
+                                                             [=] GEOSX_HOST_DEVICE (localIndex const a)->real64
+                                                             {
+                                                               return bcFieldValue( field, a, component );
+                                                             } );
+                                                             //field );
 
-        dofArray.move( LvArray::MemorySpace::host, false );
+        dof.move( LvArray::MemorySpace::host, false );
         rhsContribution.move( LvArray::MemorySpace::host, false );
+
         m_constrainedDofIndices.insert( m_constrainedDofIndices.size(), dofArray.begin(), dofArray.end() );
         m_rhsContributions.insert( m_rhsContributions.size(), rhsContribution.begin(), rhsContribution.end() );
+        m_constrainedIndices.insert( m_constrainedIndices.size(), indexArray.begin(), indexArray.end() );
+        
       } );
     } );
   }
@@ -175,7 +222,7 @@ public:
     srcWithBC.zero();
     arrayView1d< real64 > const localBC = srcWithBC.open();
     arrayView1d< real64 > const initSolution = solution.open();
-    arrayView1d< localIndex const > const localBCIndices = m_constrainedDofIndices.toViewConst();
+    arrayView1d< localIndex const > const localBCIndices = m_constrainedIndices.toViewConst();
     arrayView1d< real64 const > const localDiag = m_diagonal.toViewConst();
     arrayView1d< real64 const > const localRhsContributions = m_rhsContributions.toViewConst();
     forAll< POLICY >( m_constrainedDofIndices.size(),
@@ -189,11 +236,11 @@ public:
     srcWithBC.close();
     solution.close();
 
-    std::cout<< "srcWithBC: " << srcWithBC << std::endl;
 
     // Bottom contribution to rhs
     tmpRhs = rhs;
     m_unconstrained_op.apply( srcWithBC, rhs );
+
     rhs.axpby( 1.0, tmpRhs, -1.0 );
 
     // D_GG x_BC
@@ -202,7 +249,7 @@ public:
                       [ localRhs, localBCIndices, localRhsContributions ] GEOSX_HOST_DEVICE
                         ( localIndex const i )
     {
-      localIndex const idx = localBCIndices[ i ];
+      localIndex const idx = localBCIndices[ i ]; 
       localRhs[ idx ] = localRhsContributions [ i ];
     } );
     rhs.close();
@@ -217,7 +264,7 @@ public:
     srcWithBC = src;
 
     arrayView1d< real64 > const localSrcWithBC = srcWithBC.open();
-    arrayView1d< localIndex const > const localBCIndices = m_constrainedDofIndices.toViewConst();
+    arrayView1d< localIndex const > const localBCIndices = m_constrainedIndices.toViewConst();
 //    std::cout << "constrained ind: " << localBCIndices << std::endl;
 
     static bool zero = true;
@@ -302,8 +349,9 @@ private:
   string m_fieldName;
   real64 const m_time;
   DiagPolicy m_diagPolicy;
+  array1d<localIndex> m_constrainedIndices;
+  array1d<real64> m_rhsContributions;
   array1d< localIndex > m_constrainedDofIndices;
-  array1d< real64 > m_rhsContributions;
 
   mutable ParallelVector srcWithBC;
   mutable ParallelVector tmpRhs;
