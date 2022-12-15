@@ -122,6 +122,7 @@ public:
                    arrayView1d< real64 const > const & imbibitionRelPermEndPoint,
                    arrayView1d< integer const > const & phaseTypes,
                    arrayView1d< integer const > const & phaseOrder,
+                   integer const & flagInterpolator,
                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
@@ -326,6 +327,10 @@ private:
     /// Maximum historical phase volume fraction for each phase
     arrayView2d< real64 const, compflow::USD_PHASE > m_phaseMaxHistoricalVolFraction;
 
+    array1d< real64 > const m_waterOilRelPermMaxValue;
+
+    integer const m_flagInterpolator;
+
   };
 
   /**
@@ -361,6 +366,8 @@ private:
     static constexpr char const * imbibitionWettingRelPermTableNameString() { return "imbibitionWettingRelPermTableName"; }
     static constexpr char const * imbibitionNonWettingRelPermTableNameString() { return "imbibitionNonWettingRelPermTableName"; }
 
+    static constexpr char const * waterOilMaxRelPermString() { return "waterOilMaxRelPerm"; }
+    static constexpr char const * flagInterpolatorString() { return "flagInterpolator"; }
   };
 
 private:
@@ -480,6 +487,11 @@ private:
 
   /// Maximum historical phase volume fraction for each phase
   array2d< real64, compflow::LAYOUT_PHASE > m_phaseMaxHistoricalVolFraction;
+
+
+  array1d< real64 > m_waterOilMaxRelPerm;
+
+  integer m_flagInterpolator;
 
 };
 
@@ -805,15 +817,33 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   // use saturation-weighted interpolation
   real64 const shiftedWettingVolFrac = (phaseVolFraction[ipWetting] - m_drainagePhaseMinVolFraction[ipWetting]);
 
-  relpermInterpolators::Baker::compute( shiftedWettingVolFrac,
-                                        phaseVolFraction[ipNonWetting],
-                                        m_phaseOrder,
-                                        interRelPerm_wi,
-                                        dInterRelPerm_wi_dInterVolFrac,
-                                        interRelPerm_nwi,
-                                        dInterRelPerm_nwi_dInterVolFrac,
-                                        phaseRelPerm[ipInter],
-                                        dPhaseRelPerm_dPhaseVolFrac[ipInter] );
+    if (m_flagInterpolator == 0) {
+        relpermInterpolators::Baker::compute( shiftedWettingVolFrac,
+                                              phaseVolFraction[ipNonWetting],
+                                              m_phaseOrder,
+                                              interRelPerm_wi,
+                                              dInterRelPerm_wi_dInterVolFrac,
+                                              interRelPerm_nwi,
+                                              dInterRelPerm_nwi_dInterVolFrac,
+                                              phaseRelPerm[ipInter],
+                                              dPhaseRelPerm_dPhaseVolFrac[ipInter] );
+
+    } else {
+        relpermInterpolators::Stone2::compute(shiftedWettingVolFrac,
+                                              phaseVolFraction[ipNonWetting],
+                                              m_phaseOrder,
+                                              m_waterOilRelPermMaxValue[ipNonWetting],
+                                              interRelPerm_wi,
+                                              dInterRelPerm_wi_dInterVolFrac,
+                                              interRelPerm_nwi,
+                                              dInterRelPerm_nwi_dInterVolFrac,
+                                              phaseRelPerm[ipWetting],
+                                              dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting],
+                                              phaseRelPerm[ipNonWetting],
+                                              dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting],
+                                              phaseRelPerm[ipInter],
+                                              dPhaseRelPerm_dPhaseVolFrac[ipInter] );
+    }
 }
 
 GEOSX_HOST_DEVICE

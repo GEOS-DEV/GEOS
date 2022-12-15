@@ -41,7 +41,7 @@ public:
     : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
                                       phaseRelPerm,
-                                      dPhaseRelPerm_dPhaseVolFrac ),
+                                      dPhaseRelPerm_dPhaseVolFrac),
     m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
     m_phaseRelPermExponent( phaseRelPermExponent ),
     m_phaseRelPermMaxValue( phaseRelPermMaxValue ),

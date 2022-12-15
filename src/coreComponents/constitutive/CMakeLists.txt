@@ -73,8 +73,9 @@ set( constitutive_headers
      relativePermeability/RelativePermeabilityInterpolators.hpp
      relativePermeability/TableRelativePermeability.hpp
      relativePermeability/TableRelativePermeabilityHelpers.hpp
-     relativePermeability/TableRelativePermeabilityHysteresis.hpp     
+#     relativePermeability/TableRelativePermeabilityHysteresis.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
+     relativePermeability/VanGenuchtenStone2RelativePermeability.hpp
      relativePermeability/layouts.hpp
      relativePermeability/relativePermeabilitySelector.hpp
      solid/CompressibleSolid.hpp

@@ -13,11 +13,11 @@
  */
 
 /**
- * @file VanGenuchtenBakerRelativePermeability.hpp
+ * @file VanGenuchtenStone2RelativePermeability.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_VANGENUCHTENBAKERRELATIVEPERMEABILITY_HPP
-#define GEOSX_CONSTITUTIVE_VANGENUCHTENBAKERRELATIVEPERMEABILITY_HPP
+#ifndef GEOSX_CONSTITUTIVE_VANGENUCHTENSTONE2RELATIVEPERMEABILITY_HPP
+#define GEOSX_CONSTITUTIVE_VANGENUCHTENSTONE2RELATIVEPERMEABILITY_HPP
 
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
@@ -27,11 +27,11 @@ namespace geosx
 namespace constitutive
 {
 
-class VanGenuchtenBakerRelativePermeabilityUpdate final : public RelativePermeabilityBaseUpdate
+class VanGenuchtenStone2RelativePermeabilityUpdate final : public RelativePermeabilityBaseUpdate
 {
 public:
 
-  VanGenuchtenBakerRelativePermeabilityUpdate( arrayView1d< real64 const > const & phaseMinVolumeFraction,
+  VanGenuchtenStone2RelativePermeabilityUpdate( arrayView1d< real64 const > const & phaseMinVolumeFraction,
                                                arrayView1d< real64 const > const & waterOilRelPermExponentInv,
                                                arrayView1d< real64 const > const & waterOilRelPermMaxValue,
                                                arrayView1d< real64 const > const & gasOilRelPermExponentInv,
@@ -105,18 +105,18 @@ private:
 
 };
 
-class VanGenuchtenBakerRelativePermeability : public RelativePermeabilityBase
+class VanGenuchtenStone2RelativePermeability : public RelativePermeabilityBase
 {
 public:
 
-  VanGenuchtenBakerRelativePermeability( string const & name, dataRepository::Group * const parent );
+  VanGenuchtenStone2RelativePermeability( string const & name, dataRepository::Group * const parent );
 
-  static string catalogName() { return "VanGenuchtenBakerRelativePermeability"; }
+  static string catalogName() { return "VanGenuchtenStone2RelativePermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = VanGenuchtenBakerRelativePermeabilityUpdate;
+  using KernelWrapper = VanGenuchtenStone2RelativePermeabilityUpdate;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -154,7 +154,7 @@ protected:
 
 GEOSX_HOST_DEVICE
 inline void
-VanGenuchtenBakerRelativePermeabilityUpdate::
+VanGenuchtenStone2RelativePermeabilityUpdate::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
            arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
            arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
@@ -259,37 +259,37 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
     real64 const shiftedWaterVolFrac = (phaseVolFraction[ipWater] - m_phaseMinVolumeFraction[ipWater]);
 
     // TODO: change name of the class and add template to choose interpolation
-    relpermInterpolators::Baker::compute( shiftedWaterVolFrac,
-                                          phaseVolFraction[ipGas],
-                                          m_phaseOrder,
-                                          oilRelPerm_wo,
-                                          dOilRelPerm_wo_dOilVolFrac,
-                                          oilRelPerm_go,
-                                          dOilRelPerm_go_dOilVolFrac,
-                                          phaseRelPerm[ipOil],
-                                          dPhaseRelPerm_dPhaseVolFrac[ipOil] );
+//    relpermInterpolators::Stone2::compute( shiftedWaterVolFrac,
+//                                          phaseVolFraction[ipGas],
+//                                          m_phaseOrder,
+//                                          oilRelPerm_wo,
+//                                          dOilRelPerm_wo_dOilVolFrac,
+//                                          oilRelPerm_go,
+//                                          dOilRelPerm_go_dOilVolFrac,
+//                                          phaseRelPerm[ipOil],
+//                                          dPhaseRelPerm_dPhaseVolFrac[ipOil] );
 
-//      relpermInterpolators::Stone2::compute(shiftedWaterVolFrac,
-//                                            phaseVolFraction[ipGas],
-//                                            m_phaseOrder,
-//                                            m_waterOilRelPermMaxValue[ipOil],
-//                                            oilRelPerm_wo,
-//                                            dOilRelPerm_wo_dOilVolFrac,
-//                                            oilRelPerm_go,
-//                                            dOilRelPerm_go_dOilVolFrac,
-//                                            phaseRelPerm[ipWater],
-//                                            dPhaseRelPerm_dPhaseVolFrac[ipWater][ipWater],
-//                                            phaseRelPerm[ipGas],
-//                                            dPhaseRelPerm_dPhaseVolFrac[ipGas][ipGas],
-//                                            phaseRelPerm[ipOil],
-//                                            dPhaseRelPerm_dPhaseVolFrac[ipOil] );
+      relpermInterpolators::Stone2::compute(shiftedWaterVolFrac,
+                                            phaseVolFraction[ipGas],
+                                            m_phaseOrder,
+                                            m_waterOilRelPermMaxValue[ipOil],
+                                            oilRelPerm_wo,
+                                            dOilRelPerm_wo_dOilVolFrac,
+                                            oilRelPerm_go,
+                                            dOilRelPerm_go_dOilVolFrac,
+                                            phaseRelPerm[ipWater],
+                                            dPhaseRelPerm_dPhaseVolFrac[ipWater][ipWater],
+                                            phaseRelPerm[ipGas],
+                                            dPhaseRelPerm_dPhaseVolFrac[ipGas][ipGas],
+                                            phaseRelPerm[ipOil],
+                                            dPhaseRelPerm_dPhaseVolFrac[ipOil] );
   }
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
-VanGenuchtenBakerRelativePermeabilityUpdate::
+VanGenuchtenStone2RelativePermeabilityUpdate::
   evaluateVanGenuchtenFunction( real64 const & scaledVolFrac,
                                 real64 const & dScaledVolFrac_dVolFrac,
                                 real64 const & exponentInv,
@@ -325,4 +325,4 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
 
 } // namespace geosx
 
-#endif //GEOSX_CONSTITUTIVE_VANGENUCHTENBAKERRELATIVEPERMEABILITY_HPP
+#endif //GEOSX_CONSTITUTIVE_VANGENUCHTENSTONE2RELATIVEPERMEABILITY_HPP
