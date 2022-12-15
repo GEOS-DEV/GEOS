@@ -47,7 +47,7 @@ struct RAJAHelper< parallelHostPolicy >
 
 #endif
 
-#if defined(LVARRAY_USE_CUDA)
+#if defined(GEOSX_USE_CUDA)
 
 template< unsigned long THREADS_PER_BLOCK >
 using devicePolicy = RAJA::cuda_exec< THREADS_PER_BLOCK >;
@@ -131,7 +131,13 @@ TEST( LifoStorageTest, LifoStorageBufferOnHostNoDeviceBuffer )
   testLifoStorage< serialPolicy >( 10, 0, 3, 10 );
 }
 
+TEST( LifoStorageTest, LifoStorageAsyncBufferOnHost )
+{
+  testLifoStorageAsync< serialPolicy >( 10, 2, 3, 10 );
+}
 
+
+#ifdef GEOSX_USE_CUDA
 TEST( LifoStorageTest, LifoStorageBufferOnCUDA )
 {
   testLifoStorage< parallelDevicePolicy< > >( 10, 2, 3, 10 );
@@ -142,16 +148,11 @@ TEST( LifoStorageTest, LifoStorageBufferOnCUDANoDeviceBuffer )
   testLifoStorage< parallelDevicePolicy< > >( 10, 0, 3, 10 );
 }
 
-TEST( LifoStorageTest, LifoStorageAsyncBufferOnHost )
-{
-  testLifoStorageAsync< serialPolicy >( 10, 2, 3, 10 );
-}
-
-
 TEST( LifoStorageTest, LifoStorageAsyncBufferOnCUDA )
 {
   testLifoStorageAsync< parallelDevicePolicy< > >( 10, 2, 3, 10 );
 }
+#endif
 
 int main( int ac, char * av[] )
 {
