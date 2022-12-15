@@ -137,8 +137,6 @@ public:
     static constexpr localIndex num_dofs_1d = 2; // TODO
     static constexpr localIndex num_quads_1d = 2; // TODO
 
-    using Basis = stackVariables::StackBasis<num_dofs_1d,num_quads_1d>;
-
     /**
      * @brief Constructor
      */
@@ -146,13 +144,6 @@ public:
     StackVariables( LaunchContext & ctx ):
       Base::template StackVariables<KernelConfig>( ctx )
     {}
-
-    /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
-    // static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d;
-    // static constexpr localIndex num_buffers = 2 * dim;
-    // static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
-    // static constexpr localIndex num_buffers = 1;
-    // stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
   };
 
   template< typename POLICY, // ignored
@@ -190,7 +181,7 @@ public:
       readField( stack, fields.m_elemsToNodes, fields.m_X, mesh_nodes );
       readField( stack, fields.m_elemsToNodes, fields.m_src, dofs_in );
 
-      typename Stack::Basis basis( stack );
+      typename Stack::template Basis< num_dofs_1d, num_quads_1d > basis( stack );
       /// Computation of the Jacobians
       typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3, 3 > mesh_jacobians;
       interpolateGradientAtQuadraturePoints( stack, basis, mesh_nodes, mesh_jacobians );
