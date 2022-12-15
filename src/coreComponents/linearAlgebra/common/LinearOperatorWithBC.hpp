@@ -223,14 +223,15 @@ public:
     arrayView1d< real64 > const localBC = srcWithBC.open();
     arrayView1d< real64 > const initSolution = solution.open();
     arrayView1d< localIndex const > const localBCIndices = m_constrainedIndices.toViewConst();
+    arrayView1d< localIndex const > const localBCDofs = m_constrainedDofIndices.toViewConst();
     arrayView1d< real64 const > const localDiag = m_diagonal.toViewConst();
     arrayView1d< real64 const > const localRhsContributions = m_rhsContributions.toViewConst();
     forAll< POLICY >( m_constrainedDofIndices.size(),
-                      [ initSolution, localBC, localBCIndices, localDiag, localRhsContributions ] GEOSX_HOST_DEVICE
+                      [ initSolution, localBC, localBCIndices, localBCDofs, localDiag, localRhsContributions ] GEOSX_HOST_DEVICE
                         ( localIndex const i )
     {
       localIndex const idx = localBCIndices[ i ];
-      localBC[ idx ] = localRhsContributions [ i ] / localDiag[ idx ];
+      localBC[ idx ] = localRhsContributions [ i ] / localDiag[ localBCDofs[i] ];
       initSolution[idx] = localBC[ idx ];
     } );
     srcWithBC.close();
@@ -239,7 +240,14 @@ public:
 
     // Bottom contribution to rhs
     tmpRhs = rhs;
+    
+    // std::cout<<"LinearOperatorWithBC::computeConstrainedRHS - srcWithBC"<<std::endl;
+    // std::cout<<srcWithBC<<std::endl;
     m_unconstrained_op.apply( srcWithBC, rhs );
+
+    // std::cout<<"LinearOperatorWithBC::computeConstrainedRHS - rhs"<<std::endl;
+    // std::cout<<rhs<<std::endl;
+
 
     rhs.axpby( 1.0, tmpRhs, -1.0 );
 

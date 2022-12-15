@@ -226,7 +226,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  // std::cout<<"MatrixFreeSolidMechanicsFEM::solverStep - begin"<<std::endl;
+//  std::cout<<"MatrixFreeSolidMechanicsFEM::solverStep - begin"<<std::endl;
   m_dofManager.setDomain( domain );
   setupDofs( domain, m_dofManager );
   m_dofManager.reorderByRank();
@@ -235,7 +235,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
   m_solution.setName( this->getName() + "/solution" );
   m_solution.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
-  //std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp1"<<std::endl;
+//  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp1"<<std::endl;
 
   MatrixFreeSolidMechanicsFEMOperator unconstrained_solid_mechanics(
     domain,
@@ -243,7 +243,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
     m_dofManager,
     this->getDiscretizationName() );
 
-  //std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp2"<<std::endl;
+//  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp2"<<std::endl;
 
   LinearOperatorWithBC< ParallelVector, FieldType > constrained_solid_mechanics(
     *this,
@@ -254,9 +254,9 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
     time_n+dt,
     LinearOperatorWithBC< ParallelVector, FieldType >::DiagPolicy::DiagonalOne );
 
-//   std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp3"<<std::endl;
+//  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp3"<<std::endl;
 
-//  std::cout<< "m_rhs0: "<<std::endl<< m_rhs << std::endl;
+// std::cout<< "m_rhs0: "<<std::endl<< m_rhs << std::endl;
 
   constrained_solid_mechanics.computeConstrainedRHS( m_rhs, m_solution );
 
@@ -268,20 +268,20 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
 
   MatrixFreePreconditionerIdentity< HypreInterface > identity( m_dofManager );
 
-//  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp5"<<std::endl;
+// std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp5"<<std::endl;
 
   auto & params = m_linearSolverParameters.get();
   params.isSymmetric = true;
 
-//  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp6"<<std::endl;
+// std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp6"<<std::endl;
 
   CgSolver< ParallelVector > solver( params, constrained_solid_mechanics, identity );
   
-//    std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp7"<<std::endl;
+//   std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp7"<<std::endl;
 
   solver.solve( m_rhs, m_solution );
 
-//  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp8"<<std::endl;
+// std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp8"<<std::endl;
 
 //  std::cout << "m_solution: " << m_solution << std::endl;
 

@@ -206,6 +206,8 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
     stressLocal[ c ] *= -detJ;
   }
   FE_TYPE::plusGradNajAij( dNdX, stressLocal, fLocal );
+
+
 }
 
 template< typename SUBREGION_TYPE,
@@ -214,7 +216,7 @@ template< typename SUBREGION_TYPE,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
-                                                                                    real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
+                                                                                    real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const
 {
   for( localIndex a = 0; a < numNodesPerElem; ++a )
   {
@@ -249,7 +251,9 @@ kernelLaunch( localIndex const numElems,
 
 //  printf( "numElems = %d\n", numElems );
 
-#if 1
+
+#define KERNEL_OPTION 2
+#if KERNEL_OPTION == 1
   forAll< POLICY >( numElems,
                     [=] GEOSX_DEVICE ( localIndex const k )
   {
@@ -257,21 +261,22 @@ kernelLaunch( localIndex const numElems,
     typename KERNEL_TYPE::StackVariables stack;
 
     kernelComponent.setup( k, stack );
-    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
-      // for( integer qc=0; qc<2; ++qc )
-      // for( integer qb=0; qb<2; ++qb )
-      // for( integer qa=0; qa<2; ++qa )
+    //for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
+      for( integer qa=0; qc<2; ++qa )
+      for( integer qb=0; qb<2; ++qb )
+      for( integer qc=0; qa<2; ++qc )
     {
-//      int const q = qa + 2 * qb + 4*qc;
+      int const q = qa + 2 * qb + 4*qc;
       kernelComponent.quadraturePointKernel( k, q, stack );
     }
     kernelComponent.complete( k, stack );
   } );
-#elif 1    
+#elif KERNEL_OPTION == 2
+
     forAll< POLICY >( numElems,
                       [=] GEOSX_DEVICE ( localIndex const k )
     {
-      real64 fLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+      real64 fLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ] = {{0}};
       real64 varLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
       real64 xLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
 
@@ -286,63 +291,6 @@ kernelLaunch( localIndex const numElems,
 
     } );
 #else
-   traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > const elemsToNodes = kernelComponent.m_elemsToNodes;
-   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = kernelComponent.m_X;
-   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const src = kernelComponent.m_input;
-   arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const dst = kernelComponent.m_res;
-   typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutiveUpdate = kernelComponent.m_constitutiveUpdate;
-
-  constexpr int numNodesPerElem = KERNEL_TYPE::numNodesPerElem;
-  constexpr int dims = 3;
-    forAll< POLICY >( numElems,
-                      [=] GEOSX_DEVICE ( localIndex const k )
-    {
-
-      real64 xLocal[numNodesPerElem][dims];
-      real64 srcLocal[numNodesPerElem][dims];
-      real64 dstLocal[numNodesPerElem][dims] = {};
-      localIndex nodeIndices[numNodesPerElem];
-
-      for( localIndex a=0; a<numNodesPerElem; ++a )
-      {
-        nodeIndices[a] = elemsToNodes( k, a );
-        for( int i=0; i<dims; ++i )
-        {
-          xLocal[ a ][ i ] = X[ nodeIndices[a] ][i];
-          srcLocal[ a ][ i ] = src[ nodeIndices[a] ][i];
-        }
-      }
-
-
-      for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
-      {
-        real64 dNdX[ numNodesPerElem ][ dims ];
-        real64 const detJ = FE_TYPE::calcGradN( q, xLocal, dNdX );
-        /// Macro to substitute in the shape function derivatives.
-        real64 strain[6] = {0};
-        FE_TYPE::symmetricGradient( dNdX, srcLocal, strain );
-
-        real64 stressLocal[ 6 ] = {0};
-        constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
-
-        for( localIndex c = 0; c < 6; ++c )
-        {
-          stressLocal[ c ] *= -detJ;
-        }
-        FE_TYPE::plusGradNajAij( dNdX, stressLocal, dstLocal );
-      }
-
-      
-      for( localIndex a = 0; a < numNodesPerElem; ++a )
-      {
-        for( int b = 0; b < numDofPerTestSupportPoint; ++b )
-        {
-          RAJA::atomicAdd< parallelDeviceAtomic >( &(dst[ nodeIndices[a] ][b]), dstLocal[ a ][ b ] );
-        }
-      }
-
-    } );
-
 
 #endif
   return 0;

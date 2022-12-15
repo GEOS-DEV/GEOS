@@ -210,7 +210,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   real64 complete( localIndex const k,
-                   real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const;
+                   real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const;
 
 
 

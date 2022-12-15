@@ -15,7 +15,7 @@
         directParallel="0"
         logLevel="200"
         krylovTol="1.0e-20"
-        krylovMaxIter="1000"/>
+        krylovMaxIter="3"/>
     </MatrixFreeSolidMechanicsFEM>
 
     <!-- <SolidMechanicsLagrangianSSLE
@@ -41,9 +41,9 @@
       xCoords="{ 0, 1 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 2 }"
-      ny="{ 2 }"
-      nz="{ 2 }"
+      nx="{ 100 }"
+      ny="{ 100 }"
+      nz="{ 100 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
