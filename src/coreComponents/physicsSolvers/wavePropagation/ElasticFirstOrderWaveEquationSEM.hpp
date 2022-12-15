@@ -120,6 +120,29 @@ public:
                                        arrayView1d< real32 const > const var_n,
                                        arrayView2d< real32 > varAtReceivers );
 
+    virtual void compute2dVariableSeismoTrace( real64 const time_n,
+                                   real64 const dt,
+                                   real64 const timeSeismo,
+                                   localIndex const iSeismo,
+                                   arrayView2d< real32 const > const var_np1,
+                                   arrayView2d< real32 const > const var_n,
+                                   arrayView2d< real32 > varAtReceivers );
+
+  /**
+   * TODO: move implementation into WaveSolverBase
+   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
+   * @param time_n the time corresponding to the field values pressure_n
+   * @param dt the simulation timestep
+   * @param var_np1 the field values at time_n + dt
+   * @param var_n the field values at time_n
+   * @param varAtreceivers the array holding the trace values, where the output is written
+   */
+  virtual void compute2dVariableAllSeismoTraces( real64 const time_n,
+                                       real64 const dt,
+                                       arrayView2d< real32 const > const var_np1,
+                                       arrayView2d< real32 const > const var_n,
+                                       arrayView2d< real32 > varAtReceivers );
+
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information
    */
@@ -145,6 +168,14 @@ public:
     static constexpr char const * displacementxNp1AtReceiversString() { return "displacementxNp1AtReceivers"; }
     static constexpr char const * displacementyNp1AtReceiversString() { return "displacementyNp1AtReceivers"; }
     static constexpr char const * displacementzNp1AtReceiversString() { return "displacementzNp1AtReceivers"; }
+
+    static constexpr char const * sigmaxxNp1AtReceiversString() { return "sigmaxxNp1AtReceivers"; }
+    static constexpr char const * sigmayyNp1AtReceiversString() { return "sigmayyNp1AtReceivers"; }
+    static constexpr char const * sigmazzNp1AtReceiversString() { return "sigmazzNp1AtReceivers"; }
+    static constexpr char const * sigmaxyNp1AtReceiversString() { return "sigmaxyNp1AtReceivers"; }
+    static constexpr char const * sigmaxzNp1AtReceiversString() { return "sigmaxzNp1AtReceivers"; }
+    static constexpr char const * sigmayzNp1AtReceiversString() { return "sigmayzNp1AtReceivers"; }
+
 
   } waveEquationViewKeys;
 
@@ -223,9 +254,29 @@ private:
   /// Displacement_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_displacementzNp1AtReceivers;
 
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_sigmaxxNp1AtReceivers;
+
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_sigmayyNp1AtReceivers;
+
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_sigmazzNp1AtReceivers;
+
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_sigmaxyNp1AtReceivers;
+
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_sigmaxzNp1AtReceivers;
+
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_sigmayzNp1AtReceivers;
+
   /// Array containing the elements which contain a source
   array1d< localIndex > m_sourceElem;
 
+  /// Array containing the elements which contain a receiver
+  array1d< localIndex > m_rcvElem;
 
 };
 
