@@ -385,10 +385,10 @@ namespace geosx
 
     std::vector< array1d< R1Tensor > > particleCoordinatesReceivedFromNeighbors(nn);
 
-    sendCoordinateListToNeighbors( outOfDomainParticleCoordinates.toView(),  // input: Single list of coordinates sent to all neighbors
-                                   icomm,                                    // input: Solver MPI communicator
-                                   particleCoordinatesReceivedFromNeighbors  // output: List of lists of coordinates received from each neighbor.
-                                  );
+    sendCoordinateListToNeighbors( outOfDomainParticleCoordinates.toView(),     // input: Single list of coordinates sent to all neighbors
+                                   icomm,                                       // input: Solver MPI communicator
+                                   particleCoordinatesReceivedFromNeighbors );  // output: List of lists of coordinates received from each neighbor.
+                                  
 
 
     // (3) check the received lists for particles that are in the domain of the
@@ -506,7 +506,7 @@ namespace geosx
     arrayView2d< real64 > const particleCenterAfter = subRegion.getParticleCenter();
     arrayView1d< int > const particleRankAfter = subRegion.getParticleRank();
     std::set< localIndex > indicesToErase;
-    for(localIndex p=0; p<subRegion.size(); p--)
+    for(int p=0; p<subRegion.size(); p++)
     {
       if( particleRankAfter[p] == -1 )
       {
@@ -717,14 +717,14 @@ namespace geosx
 
       // (8) Delete any particles that have ghostRank=-1.  These will be ghosts from
       //     a previous step for which the master is no longer in the ghost domain,
-      // arrayView1d< localIndex > const particleRankNew = subRegion.getParticleRank();
-      // for (int p=subRegion.size()-1; p>=0; --p)
-      // {
-      //   if( particleRankNew[p] == -1 )
-      //   {
-      //     subRegion.erase(p);
-      //   }
-      // }
+      arrayView1d< localIndex > const particleRankNew = subRegion.getParticleRank();
+      for (int p=subRegion.size()-1; p>=0; --p)
+      {
+        if( particleRankNew[p] == -1 )
+        {
+          //subRegion.erase(p);
+        }
+      }
 
     } );
   }

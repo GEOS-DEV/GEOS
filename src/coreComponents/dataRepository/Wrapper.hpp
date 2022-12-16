@@ -454,17 +454,22 @@ public:
     template< typename TYPE >
     static void erase( array1d< TYPE > & array, std::set< localIndex > const & indicesToErase )
     {
-      int newSize = array.size(0) - indicesToErase.size();
+      int oldSize = array.size(0);
+      int numToErase = indicesToErase.size();
+      int newSize = oldSize - numToErase;
       std::set< localIndex >::iterator it = indicesToErase.begin();
       int offset = 0;
-      for(localIndex i=*it; i<newSize; i++)
+      for(localIndex i=*it+1; i<oldSize; i++)
       {
-        if(i+offset == *it)
+        if(i == *it + 1)
         {
-            offset++;
+          offset++;
+          if(offset < numToErase)
+          {
             it++;
+          }
         }
-        array[i] = array[i+offset];
+        array[i-offset] = array[i];
       }
       array.resize(newSize);
     }
@@ -472,20 +477,25 @@ public:
     template< typename TYPE >
     static void erase( array2d< TYPE > & array, std::set< localIndex > const & indicesToErase )
     {
-      int newSize = array.size(0) - indicesToErase.size();
+      int oldSize = array.size(0);
+      int numToErase = indicesToErase.size();
+      int newSize = oldSize - numToErase;
       int dim1 = array.size(1);
       std::set< localIndex >::iterator it = indicesToErase.begin();
       int offset = 0;
-      for(localIndex i=*it; i<newSize; i++)
+      for(localIndex i=*it+1; i<oldSize; i++)
       {
-        if(i+offset == *it)
+        if(i == *it + 1)
         {
-            offset++;
+          offset++;
+          if(offset < numToErase)
+          {
             it++;
+          }
         }
         for(int j=0; j<dim1; j++)
         {
-          array[i][j] = array[i+offset][j];
+          array[i-offset][j] = array[i][j];
         }
       }
       array.resize(newSize);
@@ -494,23 +504,28 @@ public:
     template< typename TYPE >
     static void erase( array3d< TYPE > & array, std::set< localIndex > const & indicesToErase )
     {
-      int newSize = array.size(0) - indicesToErase.size();
+      int oldSize = array.size(0);
+      int numToErase = indicesToErase.size();
+      int newSize = oldSize - numToErase;
       int dim1 = array.size(1);
       int dim2 = array.size(2);
       std::set< localIndex >::iterator it = indicesToErase.begin();
       int offset = 0;
-      for(localIndex i=*it; i<newSize; i++)
+       for(localIndex i=*it+1; i<oldSize; i++)
       {
-        if(i+offset == *it)
+        if(i == *it + 1)
         {
-            offset++;
+          offset++;
+          if(offset < numToErase)
+          {
             it++;
+          }
         }
         for(int j=0; j<dim1; j++)
         {
           for(int k=0; k<dim2; k++)
           {
-            array[i][j][k] = array[i+offset][j][k];
+            array[i-offset][j][k] = array[i][j][k];
           }
         }
       }
