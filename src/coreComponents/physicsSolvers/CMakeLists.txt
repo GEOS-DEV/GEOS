@@ -67,11 +67,14 @@ set( physicsSolvers_headers
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/HydrofractureSolverKernels.hpp
-     multiphysics/MultiphasePoromechanicsKernel.hpp
+     multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp
+     multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp     
      multiphysics/MultiphasePoromechanicsSolver.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
-     multiphysics/SinglePhasePoromechanicsKernel.hpp
-     multiphysics/SinglePhasePoromechanicsEFEMKernel.hpp
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp     
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.hpp
      multiphysics/SinglePhasePoromechanicsSolver.hpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.hpp
@@ -167,6 +170,7 @@ set( physicsSolvers_sources
    )
 
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
+  include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)	
 
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )
