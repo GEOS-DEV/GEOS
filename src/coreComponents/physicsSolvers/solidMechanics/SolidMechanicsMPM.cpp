@@ -1507,7 +1507,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     // Initialize the set of particles to delete
     std::set< localIndex > indicesToErase;
 
-    subRegion.flagOutOfRangeParticles( m_xGlobalMin, m_xGlobalMax, m_hEl, isBad ); // This skips ghost particles
+    subRegion.flagOutOfRangeParticles( m_xGlobalMin, m_xGlobalMax, m_hEl, isBad ); // This skips ghost particles, which are instead deleted during repartitioning
 
     for( int p=subRegion.size()-1; p>=0; p-- ) // TODO: Looping over a set containing indices ordered largest->smallest would be more elegant and probably faster.
     {                                          //       We could also do away with the rank check since only master particles are ever evaluated for deletion.
@@ -1515,8 +1515,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       {
         indicesToErase.insert(p);
       }
-      subRegion.erase(indicesToErase);
     }
+    subRegion.erase(indicesToErase);
   } );
 
 
