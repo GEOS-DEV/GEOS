@@ -528,7 +528,7 @@ public:
 
   using ThermalSinglePhaseFlowAccessors =
     StencilAccessors< fields::flow::temperature,
-                      fields::flow::dMobility_dPressure,
+                      //fields::flow::dMobility_dPressure,
                       fields::flow::dMobility_dTemperature >;
 
   using ThermalSinglePhaseFluidAccessors =
@@ -544,15 +544,18 @@ public:
 
   /**
    * @brief Constructor for the kernel interface
-   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] rankOffset the offset of the MPI rank
    * @param[in] faceManager the face manager
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] fluidWrapper reference to the fluid wrapper
-   * @param[in] dofNumberAccessor
-   * @param[in] singlePhaseFlowAccessors
-   * @param[in] singlePhaseFluidAccessors
-   * @param[in] permeabilityAccessors
-   * @param[in] dt time step size
+   * @param[in] dofNumberAccessor the degree of freedom number accessor
+   * @param[in] singlePhaseFlowAccessors the single phase flow accessor
+   * @param[in] thermalSinglePhaseFlowAccessors the thermal single phase flow accessor
+   * @param[in] singlePhaseFluidAccessors the single phase fluid accessor
+   * @param[in] thermalSinglePhaseFluidAccessors the thermal single phase fluid accessor
+   * @param[in] permeabilityAccessors the permeability accessor
+   * @param[in] thermalConductivityAccessors the thermal conductivity accessor
+   * @param[in] dt the time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
@@ -584,7 +587,6 @@ public:
             localRhs ),
     m_temp( thermalSinglePhaseFlowAccessors.get( fields::flow::temperature {} ) ),
     m_faceTemp( faceManager.getField< fields::flow::faceTemperature >() ),
-    m_dMob_dPres( thermalSinglePhaseFlowAccessors.get( fields::flow::dMobility_dPressure {} ) ),
     m_dMob_dTemp( thermalSinglePhaseFlowAccessors.get( fields::flow::dMobility_dTemperature {} ) ),
     m_dDens_dTemp( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dDensity_dTemperature {} ) ),
     m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
@@ -730,7 +732,6 @@ protected:
   arrayView1d< real64 const > const m_faceTemp;
 
   /// Views on derivatives of fluid mobilities
-  ElementViewConst< arrayView1d< real64 const > > const m_dMob_dPres;
   ElementViewConst< arrayView1d< real64 const > > const m_dMob_dTemp;
 
   /// Views on derivatives of fluid densities
