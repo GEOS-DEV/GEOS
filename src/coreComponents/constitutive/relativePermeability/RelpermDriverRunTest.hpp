@@ -57,7 +57,7 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
   localIndex offset = std::max( std::max( ipOil, ipWater ), std::max( ipOil, ipGas ) ) + 1;
 
   integer ipWetting = -1, ipNonWetting = -1;
-  std::tie( ipWetting, ipNonWetting ) = relperm.phaseIndex();
+  std::tie( ipWetting, ipNonWetting ) = relperm.wettingAndNonWettingPhaseIndices();
 
   for( integer n = 0; n < table.size( 0 ); ++n )
   {
@@ -105,12 +105,12 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
     if( phaseHasHysteresis[ipNonWetting] )
     {
       phaseMaxHistoricalVolFraction[0][ipNonWetting] = drainagePhaseMaxVolFraction[ipNonWetting];
-      std::cout << " new Max NWet Historical " << phaseMaxHistoricalVolFraction[0][ipNonWetting] << std::endl;
+      GEOSX_LOG( GEOSX_FMT( "New max non-wetting phase historical phase volume fraction: {}", phaseMaxHistoricalVolFraction[0][ipNonWetting] ) );
     }
     if( phaseHasHysteresis[ipWetting] )
     {
       phaseMinHistoricalVolFraction[0][ipWetting] = drainagePhaseMinVolFraction[ipWetting];
-      std::cout << " new Min Wet Historical " << phaseMinHistoricalVolFraction[0][ipWetting] << std::endl;
+      GEOSX_LOG( GEOSX_FMT( "New min wetting phase historical phase volume fraction: {}", phaseMinHistoricalVolFraction[0][ipWetting] ) );
     }
   }
 
@@ -136,12 +136,12 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
     if( phaseHasHysteresis[ipNonWetting] )
     {
       phaseMaxHistoricalVolFraction[0][ipNonWetting] = drainagePhaseMinVolFraction[ipNonWetting];
-      std::cout << " new Max NWet Historical " << phaseMaxHistoricalVolFraction[0][ipNonWetting] << std::endl;
+      GEOSX_LOG( GEOSX_FMT( "New max non-wetting phase historical phase volume fraction: {}", phaseMaxHistoricalVolFraction[0][ipNonWetting] ) );
     }
     if( phaseHasHysteresis[ipWetting] )
     {
       phaseMinHistoricalVolFraction[0][ipWetting] = drainagePhaseMaxVolFraction[ipWetting];
-      std::cout << " new Min Wet Historical " << phaseMinHistoricalVolFraction[0][ipWetting] << std::endl;
+      GEOSX_LOG( GEOSX_FMT( "New min wetting phase historical phase volume fraction: {}", phaseMinHistoricalVolFraction[0][ipWetting] ) );
     }
   }
 

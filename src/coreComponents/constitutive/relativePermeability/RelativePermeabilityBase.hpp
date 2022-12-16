@@ -146,7 +146,7 @@ public:
   arrayView1d< integer const > getPhaseOrder() const { return m_phaseOrder; }
   virtual arrayView1d< real64 const > getPhaseMinVolumeFraction() const = 0;
 
-  std::tuple< integer, integer > phaseIndex() const;
+  std::tuple< integer, integer > wettingAndNonWettingPhaseIndices() const;
   /**
    * @brief Save converged phase volume fraction at the end of a time step (needed for hysteresis)
    * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
