@@ -80,6 +80,20 @@ if( ENABLE_VTK )
         )
 endif()
 
+if (ENABLE_VTK AND ENABLE_FESAPI)
+  list( APPEND fileIO_headers 
+        Outputs/RESQMLOutput.hpp 
+        RESQML/RESQMLWriterInterface.hpp
+        )
+  list( APPEND fileIO_sources 
+        Outputs/RESQMLOutput.cpp 
+        RESQML/RESQMLWriterInterface.cpp
+        )
+  list( APPEND dependencyList 
+        FesapiCpp
+        )
+endif()
+
 if ( ENABLE_CUDA )
   list( APPEND dependencyList  cuda )
 endif()
