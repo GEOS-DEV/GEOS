@@ -625,7 +625,7 @@ computeMassTerm( int q,
   int qa, qb, qc;
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
   jacobianTransformation( qa, qb, qc, X, J );
-  return std::abs( LvArray::tensorOps::determinant< 3 >( J ) )*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc );
+  return LvArray::math::abs( LvArray::tensorOps::determinant< 3 >( J ) )*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc );
 }
 
 template< typename GL_BASIS >
