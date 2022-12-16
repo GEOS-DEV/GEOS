@@ -61,6 +61,7 @@ public:
     BHP,  /**< The well operates at a specified bottom hole pressure (BHP) */
     PHASEVOLRATE, /**< The well operates at a specified phase volumetric flow rate */
     TOTALVOLRATE, /**< The well operates at a specified total volumetric flow rate */
+    UNINITIALIZED, /**< This is the current well control before postProcessInput (needed to restart from file properly) */
   };
 
 
@@ -263,8 +264,10 @@ public:
     static constexpr char const * refElevString() { return "referenceElevation"; }
     /// String key for the well type
     static constexpr char const * typeString() { return "type"; }
-    /// String key for the well control
-    static constexpr char const * controlString() { return "control"; }
+    /// String key for the well input control
+    static constexpr char const * inputControlString() { return "control"; }
+    /// String key for the well current control
+    static constexpr char const * currentControlString() { return "currentControl"; }
     /// String key for the well target BHP
     static constexpr char const * targetBHPString() { return "targetBHP"; }
     /// String key for the well target rate
@@ -314,6 +317,9 @@ private:
 
   /// Gravity coefficient of the reference elevation
   real64 m_refGravCoef;
+
+  /// Input well controls as a Control enum
+  Control m_inputControl;
 
   /// Well controls as a Control enum
   Control m_currentControl;
@@ -377,7 +383,9 @@ ENUM_STRINGS( WellControls::Type,
 ENUM_STRINGS( WellControls::Control,
               "BHP",
               "phaseVolRate",
-              "totalVolRate" );
+              "totalVolRate",
+              "uninitialized" );
+
 
 } //namespace geosx
 

@@ -49,23 +49,21 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
   m_hasCapPressure( hasCapPressure ),
   m_dt( dt ),
   m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
-  m_permeability( permeabilityAccessors.get( extrinsicMeshData::permeability::permeability {} ) ),
-  m_dPerm_dPres( permeabilityAccessors.get( extrinsicMeshData::permeability::dPerm_dPressure {} ) ),
-  m_ghostRank( compFlowAccessors.get( extrinsicMeshData::ghostRank {} ) ),
-  m_gravCoef( compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient {} ) ),
-  m_pres( compFlowAccessors.get( extrinsicMeshData::flow::pressure {} ) ),
-  m_dCompFrac_dCompDens( compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity {} ) ),
-  m_dPhaseVolFrac_dPres( compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure {} ) ),
-  m_dPhaseVolFrac_dCompDens( compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity {} ) ),
-  m_phaseMob( compFlowAccessors.get( extrinsicMeshData::flow::phaseMobility {} ) ),
-  m_dPhaseMob_dPres( compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dPressure {} ) ),
-  m_dPhaseMob_dCompDens( compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity {} ) ),
-  m_phaseMassDens( multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity {} ) ),
-  m_dPhaseMassDens( multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity {} ) ),
-  m_phaseCompFrac( multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction {} ) ),
-  m_dPhaseCompFrac( multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction {} ) ),
-  m_phaseCapPressure( capPressureAccessors.get( extrinsicMeshData::cappres::phaseCapPressure {} ) ),
-  m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( extrinsicMeshData::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
+  m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
+  m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
+  m_ghostRank( compFlowAccessors.get( fields::ghostRank {} ) ),
+  m_gravCoef( compFlowAccessors.get( fields::flow::gravityCoefficient {} ) ),
+  m_pres( compFlowAccessors.get( fields::flow::pressure {} ) ),
+  m_dCompFrac_dCompDens( compFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity {} ) ),
+  m_dPhaseVolFrac( compFlowAccessors.get( fields::flow::dPhaseVolumeFraction {} ) ),
+  m_phaseMob( compFlowAccessors.get( fields::flow::phaseMobility {} ) ),
+  m_dPhaseMob( compFlowAccessors.get( fields::flow::dPhaseMobility {} ) ),
+  m_phaseMassDens( multiFluidAccessors.get( fields::multifluid::phaseMassDensity {} ) ),
+  m_dPhaseMassDens( multiFluidAccessors.get( fields::multifluid::dPhaseMassDensity {} ) ),
+  m_phaseCompFrac( multiFluidAccessors.get( fields::multifluid::phaseCompFraction {} ) ),
+  m_dPhaseCompFrac( multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction {} ) ),
+  m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
+  m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
   m_localMatrix( localMatrix ),
   m_localRhs( localRhs )
 {}
@@ -482,8 +480,7 @@ AquiferBCKernel::
            arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens,
            arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
-           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres,
-           arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac_dCompDens,
+           arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac,
            arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac,
            arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac,
            arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens,
@@ -525,12 +522,12 @@ AquiferBCKernel::
         real64 const phaseDensVolFrac = phaseDens[ip] * phaseVolFrac[ip];
         real64 const phaseFlux = aquiferVolFlux * phaseDensVolFrac;
         real64 const dPhaseFlux_dPres = dAquiferVolFlux_dPres * phaseDensVolFrac
-                                        + aquiferVolFlux * ( dPhaseDens[ip][Deriv::dP] * phaseVolFrac[ip] + phaseDens[ip] * dPhaseVolFrac_dPres[ip] );
+                                        + aquiferVolFlux * ( dPhaseDens[ip][Deriv::dP] * phaseVolFrac[ip] + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dP] );
 
         applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens[ip], dProp_dC, Deriv::dC );
         for( integer ic = 0; ic < NC; ++ic )
         {
-          dPhaseFlux_dCompDens[ic] = aquiferVolFlux * ( dProp_dC[ic] * phaseVolFrac[ip] + phaseDens[ip] * dPhaseVolFrac_dCompDens[ip][ic] );
+          dPhaseFlux_dCompDens[ic] = aquiferVolFlux * ( dProp_dC[ic] * phaseVolFrac[ip] + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC+ic] );
         }
 
         for( integer ic = 0; ic < NC; ++ic )
@@ -566,8 +563,7 @@ AquiferBCKernel::
           ElementViewConst< arrayView1d< real64 const > > const & presOld,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
-          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
-          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dCompDens,
+          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
@@ -622,8 +618,7 @@ AquiferBCKernel::
                                     phaseDens[er][esr][ei][0],
                                     dPhaseDens[er][esr][ei][0],
                                     phaseVolFrac[er][esr][ei],
-                                    dPhaseVolFrac_dPres[er][esr][ei],
-                                    dPhaseVolFrac_dCompDens[er][esr][ei],
+                                    dPhaseVolFrac[er][esr][ei],
                                     phaseCompFrac[er][esr][ei][0],
                                     dPhaseCompFrac[er][esr][ei][0],
                                     dCompFrac_dCompDens[er][esr][ei],
@@ -681,8 +676,7 @@ AquiferBCKernel::
                   ElementViewConst< arrayView1d< real64 const > > const & dPres, \
                   ElementViewConst< arrayView1d< real64 const > > const & gravCoef, \
                   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac, \
-                  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres, \
-                  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dCompDens, \
+                  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac, \
                   ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens, \
                   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
                   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens, \

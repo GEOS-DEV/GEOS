@@ -43,7 +43,7 @@ struct MeshHelper< FieldLocation::Node >
 
   static LocalIndexType constexpr invalid_local_index{ -1 };
 
-  static constexpr char const * managerGroupName() { return MeshLevel::groupStructKeys::nodeManagerString; }
+  static constexpr char const * managerGroupName() { return MeshLevel::groupStructKeys::nodeManagerString(); }
   static constexpr char const * mapViewKey() { return ElementSubRegionBase::viewKeyStruct::nodeListString(); }
   static constexpr char const * syncObjName = "node";
 
@@ -59,7 +59,7 @@ struct MeshHelper< FieldLocation::Edge >
 
   static LocalIndexType constexpr invalid_local_index{ -1 };
 
-  static constexpr char const * managerGroupName() { return MeshLevel::groupStructKeys::edgeManagerString; }
+  static constexpr char const * managerGroupName() { return MeshLevel::groupStructKeys::edgeManagerString(); }
   static constexpr char const * mapViewKey() { return ElementSubRegionBase::viewKeyStruct::edgeListString(); }
   static constexpr char const * syncObjName = "edge";
 
@@ -75,7 +75,7 @@ struct MeshHelper< FieldLocation::Face >
 
   static LocalIndexType constexpr invalid_local_index{ -1 };
 
-  static constexpr char const * managerGroupName() { return MeshLevel::groupStructKeys::faceManagerString; }
+  static constexpr char const * managerGroupName() { return MeshLevel::groupStructKeys::faceManagerString(); }
   static constexpr char const * mapViewKey() { return ElementSubRegionBase::viewKeyStruct::faceListString(); }
   static constexpr char const * syncObjName = "face";
 
@@ -91,7 +91,7 @@ struct MeshHelper< FieldLocation::Elem >
 
   static LocalIndexType constexpr invalid_local_index{ -1, -1, -1 };
 
-  static constexpr auto managerGroupName() { return MeshLevel::groupStructKeys::elemManagerString; }
+  static constexpr auto managerGroupName() { return MeshLevel::groupStructKeys::elemManagerString(); }
   static constexpr auto syncObjName = "elems";
 
   template< typename MANAGER >

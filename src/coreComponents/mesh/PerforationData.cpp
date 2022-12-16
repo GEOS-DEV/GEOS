@@ -20,6 +20,7 @@
 
 #include "common/MpiWrapper.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/PerforationFields.hpp"
 #include "utilities/ComputationalGeometry.hpp"
 
 namespace geosx
@@ -33,12 +34,13 @@ PerforationData::PerforationData( string const & name, Group * const parent )
   m_location( 0, 3 )
 {
   registerWrapper( viewKeyStruct::numPerforationsGlobalString(), &m_numPerforationsGlobal );
-  registerWrapper( viewKeyStruct::reservoirElementRegionString(), &m_toMeshElements.m_toElementRegion );
-  registerWrapper( viewKeyStruct::reservoirElementSubregionString(), &m_toMeshElements.m_toElementSubRegion );
-  registerWrapper( viewKeyStruct::reservoirElementIndexString(), &m_toMeshElements.m_toElementIndex );
-  registerWrapper( viewKeyStruct::wellElementIndexString(), &m_wellElementIndex );
-  registerWrapper( viewKeyStruct::locationString(), &m_location );
-  registerWrapper( viewKeyStruct::wellTransmissibilityString(), &m_wellTransmissibility );
+
+  registerField( fields::perforation::reservoirElementRegion{}, &m_toMeshElements.m_toElementRegion );
+  registerField( fields::perforation::reservoirElementSubRegion{}, &m_toMeshElements.m_toElementSubRegion );
+  registerField( fields::perforation::reservoirElementIndex{}, &m_toMeshElements.m_toElementIndex );
+  registerField( fields::perforation::wellElementIndex{}, &m_wellElementIndex );
+  registerField( fields::perforation::location{}, &m_location );
+  registerField( fields::perforation::wellTransmissibility{}, &m_wellTransmissibility );
 }
 
 PerforationData::~PerforationData()

@@ -81,6 +81,8 @@ public:
   std::unique_ptr< finiteElement::FiniteElementBase >
   factory( ElementType const parentElementShape ) const;
 
+  int getOrder() const { return m_order; }
+
 private:
 
   struct viewKeyStruct
@@ -113,6 +115,10 @@ FiniteElementDiscretization::
                                    FE_TYPE & finiteElement ) const
 {
   GEOSX_MARK_FUNCTION;
+
+  // do not precompute shape functions in case of SEM formulation (not needed)
+  if( m_formulation == "SEM" )
+    return;
 
   array4d< real64 > & dNdX = elementSubRegion->dNdX();
   array2d< real64 > & detJ = elementSubRegion->detJ();

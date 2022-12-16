@@ -21,7 +21,7 @@
 #define GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
+#include "physicsSolvers/contact/ContactFields.hpp"
 
 namespace geosx
 {
@@ -47,8 +47,6 @@ public:
                 real64 const & dt,
                 integer const cycleNumber,
                 DomainPartition & domain ) override final;
-
-  // virtual bool updateConfiguration( DomainPartition & domain ) override;
 
   virtual void
   applyBoundaryConditions( real64 const time,
@@ -79,8 +77,8 @@ protected:
                                      integer const state1 )
   {
     return state0 == state1
-           || ( state0 == extrinsicMeshData::contact::FractureState::NewSlip && state1 == extrinsicMeshData::contact::FractureState::Slip )
-           || ( state0 == extrinsicMeshData::contact::FractureState::Slip && state1 == extrinsicMeshData::contact::FractureState::NewSlip );
+           || ( state0 == fields::contact::FractureState::NewSlip && state1 == fields::contact::FractureState::Slip )
+           || ( state0 == fields::contact::FractureState::Slip && state1 == fields::contact::FractureState::NewSlip );
   }
 
   void synchronizeFractureState( DomainPartition & domain ) const;

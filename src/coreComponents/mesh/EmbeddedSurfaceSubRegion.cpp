@@ -24,7 +24,7 @@
 #include "NodeManager.hpp"
 #include "MeshLevel.hpp"
 #include "BufferOps.hpp"
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 
 namespace geosx
 {
@@ -260,7 +260,7 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex
                                        pointGhostRank[ originalIndices[ j ] ] );
 
         arrayView1d< localIndex > const & parentIndex =
-          embSurfNodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
+          embSurfNodeManager.getField< fields::parentEdgeIndex >();
 
         parentIndex[nodeIndex] = pointParentIndex[ originalIndices[ j ] ];
 

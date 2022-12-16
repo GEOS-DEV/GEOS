@@ -38,25 +38,23 @@ string toLower( string const & input )
 /**
  * String tokenizing function
  **/
-string_array tokenize( string const & str,
-                       string const & delimiters )
+template< typename RETURN_TYPE >
+RETURN_TYPE tokenize( string const & str,
+                      string const & delimiters,
+                      bool const treatConsecutiveDelimAsOne )
 {
   if( str.empty() )
   {
     return {};
   }
 
-  auto const isNonSpace = []( char const c ){ return !isspace( c ); };
-  bool const usesNonWhitespaceDelimiters = std::any_of( delimiters.begin(), delimiters.end(), isNonSpace );
-
-  // When only whitespace delimiters, skip multiple adjacent delimiters; otherwise don't and keep empty tokens
-  string_array tokens;
-  size_t lastPos = usesNonWhitespaceDelimiters ? 0 : str.find_first_not_of( delimiters, 0 );
+  RETURN_TYPE tokens;
+  size_t lastPos = 0;
   size_t newPos;
   while( ( newPos = str.find_first_of( delimiters, lastPos ) ) != string::npos )
   {
     tokens.emplace_back( str.substr( lastPos, newPos - lastPos ) );
-    lastPos = usesNonWhitespaceDelimiters ? newPos + 1 : str.find_first_not_of( delimiters, newPos );
+    lastPos = !treatConsecutiveDelimAsOne ? newPos + 1 : str.find_first_not_of( delimiters, newPos );
   }
   if( lastPos != string::npos )
   {
@@ -65,6 +63,15 @@ string_array tokenize( string const & str,
 
   return tokens;
 }
+
+template string_array tokenize< string_array >( string const & str,
+                                                string const & delimiters,
+                                                bool const treatConsecutiveDelimAsOne );
+
+template std::vector< string > tokenize< std::vector< string > >( string const & str,
+                                                                  string const & delimiters,
+                                                                  bool const treatConsecutiveDelimAsOne );
+
 
 string trim( string const & str,
              string const & charsToRemove )

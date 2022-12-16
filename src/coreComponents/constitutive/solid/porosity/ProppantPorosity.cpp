@@ -13,10 +13,11 @@
  */
 
 /**
- * @file ProppantPorosityModel.cpp
+ * @file ProppantPorosity.cpp
  */
 
-#include "ProppantPorosity.hpp"
+#include "constitutive/solid/porosity/ProppantPorosity.hpp"
+#include "constitutive/solid/porosity/PorosityFields.hpp"
 
 namespace geosx
 {
@@ -52,7 +53,7 @@ void ProppantPorosity::allocateConstitutiveData( dataRepository::Group & parent,
 
 void ProppantPorosity::postProcessInput()
 {
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() ).
+  getField< fields::porosity::referencePorosity >().
     setApplyDefaultValue( m_defaultReferencePorosity );
 }
 

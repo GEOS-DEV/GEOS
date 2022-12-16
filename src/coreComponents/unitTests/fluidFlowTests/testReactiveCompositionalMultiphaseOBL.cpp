@@ -15,9 +15,9 @@
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBLExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBL.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
@@ -202,10 +202,10 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
     operators[op] = std::to_string( op );
   }
 
-  solver.forMeshTargets( domain.getMeshBodies(),
-                         [&]( string const,
-                              MeshLevel & mesh,
-                              arrayView1d< string const > const & regionNames )
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                         [&]( string const,
+                                              MeshLevel & mesh,
+                                              arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -217,25 +217,25 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
       arrayView1d< string const > const & components = solver.componentNames();
 
       arrayView1d< real64 > const & pres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+        subRegion.getField< fields::flow::pressure >();
 
       arrayView1d< real64 const > const & pres_n =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
+        subRegion.getField< fields::flow::pressure_n >();
 
       arrayView2d< real64, compflow::USD_COMP > const & compFrac =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+        subRegion.getField< fields::flow::globalCompFraction >();
 
       arrayView2d< real64 const, compflow::USD_COMP > const & compFrac_n =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction_n >();
+        subRegion.getField< fields::flow::globalCompFraction_n >();
 
       arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLVals =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >();
+        subRegion.getField< fields::flow::OBLOperatorValues >();
 
       arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLVals_n =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues_n >();
+        subRegion.getField< fields::flow::OBLOperatorValues_n >();
 
       arrayView3d< real64 const, compflow::USD_OBL_DER > const & OBLDers =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorDerivatives >();
+        subRegion.getField< fields::flow::OBLOperatorDerivatives >();
 
       // reset the solver state to zero out variable updates
       solver.resetStateToBeginningOfStep( domain );
@@ -344,10 +344,10 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
 
   string const dofKey = dofManager.getKey( ReactiveCompositionalMultiphaseOBL::viewKeyStruct::elemDofFieldString() );
 
-  solver.forMeshTargets ( domain.getMeshBodies(),
-                          [&]( string const,
-                               MeshLevel & mesh,
-                               arrayView1d< string const > const & regionNames )
+  solver.forDiscretizationOnMeshTargets ( domain.getMeshBodies(),
+                                          [&]( string const,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -360,11 +360,11 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
         subRegion.getReference< array1d< globalIndex > >( dofKey );
 
       arrayView1d< real64 > const & pres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+        subRegion.getField< fields::flow::pressure >();
       pres.move( LvArray::MemorySpace::host, false );
 
       arrayView2d< real64, compflow::USD_COMP > const & compFrac =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+        subRegion.getField< fields::flow::globalCompFraction >();
       compFrac.move( LvArray::MemorySpace::host, false );
 
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
@@ -385,10 +385,10 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
           pres.move( LvArray::MemorySpace::cuda, false );
 #endif
 
-          solver.forMeshTargets( domain.getMeshBodies(),
-                                 [&]( string const,
-                                      MeshLevel & mesh2,
-                                      arrayView1d< string const > const & regionNames2 )
+          solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                                 [&]( string const,
+                                                      MeshLevel & mesh2,
+                                                      arrayView1d< string const > const & regionNames2 )
           {
             ElementRegionManager & elementRegionManager2 = mesh2.getElemManager();
             elementRegionManager2.forElementSubRegions( regionNames2,
@@ -421,10 +421,10 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
 #endif
 
 
-          solver.forMeshTargets( domain.getMeshBodies(),
-                                 [&]( string const,
-                                      MeshLevel & mesh2,
-                                      arrayView1d< string const > const & regionNames2 )
+          solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                                 [&]( string const,
+                                                      MeshLevel & mesh2,
+                                                      arrayView1d< string const > const & regionNames2 )
           {
             ElementRegionManager & elementRegionManager2 = mesh2.getElemManager();
             elementRegionManager2.forElementSubRegions( regionNames2,

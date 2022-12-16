@@ -183,7 +183,7 @@ private:
   /// growing the data size in the file)
   MPI_Comm m_subcomm;
   /// Whether the size of the collected data has changed between writes to file
-  bool m_sizeChanged;
+  int m_sizeChanged;
 };
 
 }

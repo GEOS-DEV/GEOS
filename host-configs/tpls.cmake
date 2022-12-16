@@ -48,6 +48,10 @@ if(EXISTS ${GEOSX_TPL_DIR}/fmt)
   set(FMT_DIR ${GEOSX_TPL_DIR}/fmt CACHE PATH "" FORCE)
 endif()
 
+if(EXISTS ${GEOSX_TPL_DIR}/fesapi)
+  set(FESAPI_DIR ${GEOSX_TPL_DIR}/fesapi CACHE PATH "" FORCE)
+endif()
+
 #
 # Math TPLs
 #
@@ -73,6 +77,10 @@ endif()
 
 if(EXISTS ${GEOSX_TPL_DIR}/hypre)
   set(HYPRE_DIR ${GEOSX_TPL_DIR}/hypre CACHE PATH "" FORCE)
+endif()
+
+if(EXISTS ${GEOSX_TPL_DIR}/scotch)
+  set(SCOTCH_DIR ${GEOSX_TPL_DIR}/scotch CACHE PATH "" FORCE)
 endif()
 
 if(EXISTS ${GEOSX_TPL_DIR}/petsc AND (NOT DEFINED ENABLE_PETSC OR ENABLE_PETSC))

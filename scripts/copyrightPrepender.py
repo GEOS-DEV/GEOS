@@ -93,6 +93,7 @@ old_copyright_str_arr = old_copyright_str.split("\n")[:-1]
 
 max_copyright_lines = max(len(copyright_str_arr), len(old_copyright_str_arr))
 
+
 def getLineToBeginAt(lines):
     """Given the LINES of a file return the line at which to begin writing the new copyright
        header. If no header needs to be written return -1.
@@ -136,6 +137,7 @@ def getLineToBeginAt(lines):
     print "\t Missing copyright statement."
     return -2
 
+
 def checkAndAddCopyrightHeader(filename, testOnly=False):
     """Update the copyright header on the given file. If testOnly file is not updated.
     """
@@ -153,7 +155,7 @@ def checkAndAddCopyrightHeader(filename, testOnly=False):
 
         line_to_begin_at = getLineToBeginAt(lines)
 
-        if line_to_begin_at==-2:
+        if line_to_begin_at == -2:
             print("Check missing or malformed copyright (including empty lines) : {}".format(filename))
 
         if line_to_begin_at >= 0 and not testOnly:
@@ -163,6 +165,7 @@ def checkAndAddCopyrightHeader(filename, testOnly=False):
             f.writelines(lines[line_to_begin_at:])
             print "\t Prepended copyright statement."
 
+
 def fileNameGenerator(rootDir, validExtensions, isRecursive=False):
     """Generator function for file names whose extensions are in the validExtensions tuple.
        Files are rooted in rootDir, and process is recursive if isRecursive==True.
@@ -170,26 +173,37 @@ def fileNameGenerator(rootDir, validExtensions, isRecursive=False):
 
     if isRecursive:
         for path, dirlist, filelist in os.walk(rootDir):
-            for f in (f for f in filelist if f.lower().endswith(validExtensions) ):
+            for f in (f for f in filelist if f.lower().endswith(validExtensions)):
                 yield os.path.join(path, f)
     else:
         for f in os.listdir(rootDir):
             if f.lower().endswith(validExtensions):
                 yield os.path.join(rootDir, f)
 
+
 if __name__ == "__main__":
 
     ## Setup the argument parser, dir is required first argument
     parser = argparse.ArgumentParser(description="Append LLNL copyright message to files.")
-    parser.add_argument("dir", type=str, help="specify directory containing files on which we want to operate.") # TODO -- should we accept multiple directories?
+    parser.add_argument("dir", type=str, help="specify directory containing files on which we want to operate."
+                        )    # TODO -- should we accept multiple directories?
 
     # Option to recursively search for files
-    parser.add_argument("-r", "--recursive", dest='isRecursive', action='store_true', help="add flag to recursively descend to subdirectories.")
+    parser.add_argument("-r",
+                        "--recursive",
+                        dest='isRecursive',
+                        action='store_true',
+                        help="add flag to recursively descend to subdirectories.")
     parser.add_argument("--no-recursive", dest='isRecursive', action='store_false')
     parser.set_defaults(isRecursive=False)
 
     # Test run to see which files might require a copyright notice.
-    parser.add_argument("-t", "--test", action='store_true', help="add flag if we only want to see which files are missing copyright statements, but not to modify any files.")
+    parser.add_argument(
+        "-t",
+        "--test",
+        action='store_true',
+        help="add flag if we only want to see which files are missing copyright statements, but not to modify any files."
+    )
 
     # Additional possible featues to be implemented
     #
@@ -201,6 +215,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ## Iterate through files, check for and add copyright notice
-    print "Looking at directory {}".format( args.dir )
+    print "Looking at directory {}".format(args.dir)
     for fullFileName in fileNameGenerator(args.dir, valid_extensions, args.isRecursive):
         checkAndAddCopyrightHeader(fullFileName, args.test)

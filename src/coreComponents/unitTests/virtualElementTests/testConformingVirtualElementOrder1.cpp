@@ -124,7 +124,9 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
 
   stackArray1d< real64, VEM::numNodes > stabTimeMonomialDofs( numCellPoints );
   real64 stabilizationMatrix[maxSupportPoints][maxSupportPoints]{};
-  feBase.template addGradGradStabilizationMatrix< VEM >( stack, stabilizationMatrix );
+  feBase.template addGradGradStabilizationMatrix< VEM, 1, false >( stack,
+
+                                                                   stabilizationMatrix );
   stabTimeMonomialDofsNorm( 0 ) = 0.0;
   for( localIndex i = 0; i < numCellPoints; ++i )
   {
@@ -297,7 +299,7 @@ TEST( ConformingVirtualElementOrder1, hexahedra )
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys
                                                                         .meshManager );
   meshManager.generateMeshLevels( domain );
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   ElementRegionManager & elementManager = mesh.getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
   elementManager.processInputFileRecursive( topLevelNode );
@@ -350,7 +352,7 @@ TEST( ConformingVirtualElementOrder1, wedges )
   MeshManager & meshManager = problemManager.getGroup< MeshManager >
                                 ( problemManager.groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   ElementRegionManager & elementManager = mesh.getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
   elementManager.processInputFileRecursive( topLevelNode );

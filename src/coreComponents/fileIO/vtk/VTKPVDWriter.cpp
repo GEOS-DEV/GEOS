@@ -52,5 +52,13 @@ void VTKPVDWriter::addData( real64 time, string const & filePath ) const
   dataSetNode.append_attribute( "timestep" ) = time;
   dataSetNode.append_attribute( "file" ) = filePath.c_str();
 }
+
+void VTKPVDWriter::reinitData() const
+{
+  auto collectionNode = m_pvdFile.child( "VTKFile" ).child( "Collection" );
+
+  while( collectionNode.remove_child( "DataSet" ) )
+  {}
+}
 }
 }

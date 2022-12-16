@@ -30,3 +30,22 @@ add_custom_command( TARGET pygeosx
 target_include_directories( pygeosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks( PREFIX pygeosx )
+
+install(TARGETS pygeosx LIBRARY DESTINATION lib)
+
+add_subdirectory( unitTests )
+
+
+# Python formatting
+if ( ENABLE_YAPF )
+    set( pygeosx_scripts )
+    file( GLOB_RECURSE pygeosx_scripts "*py" )
+
+    # Note: blt throws an error if sources doesn't include a c-file, so include dummy.cpp
+    blt_add_code_checks( PREFIX  pygeosx_scripts_yapf_style
+                         SOURCES ${pygeosx_scripts} ${CMAKE_SOURCE_DIR}/coreComponents/dummy.cpp
+                         YAPF_CFG_FILE ${PROJECT_SOURCE_DIR}/yapf.cfg )
+
+endif()
+
+

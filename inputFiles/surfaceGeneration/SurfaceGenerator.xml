@@ -11,6 +11,7 @@
       >
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
+        maxAllowedResidualNorm="1e10"  
         newtonMaxIter="8"/>
       <LinearSolverParameters
         directParallel="0"/>
@@ -19,7 +20,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Region2 }"
-      
       rockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>
@@ -127,7 +127,7 @@
       name="xneg"
       component="0"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       scale="-0.1"
       setNames="{ xneg }"/>
 
@@ -135,7 +135,7 @@
       name="xpos"
       component="0"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       scale="0.1"
       setNames="{ xpos }"/>
 
@@ -143,7 +143,7 @@
       name="zneg"
       component="2"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       scale="-0.1"
       setNames="{ zneg }"/>
 
@@ -151,7 +151,7 @@
       name="zpos"
       component="2"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       scale="0.1"
       setNames="{ zpos }"/>
 
@@ -159,7 +159,7 @@
       name="bot"
       component="1"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       scale="-0.1"
       setNames="{ yneg }"/>
 
@@ -167,7 +167,7 @@
       name="top"
       component="1"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       scale="0.1"
       setNames="{ ypos }"/>
   </FieldSpecifications>

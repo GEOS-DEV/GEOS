@@ -23,6 +23,7 @@
 #include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "mesh/MeshManager.hpp"
+#include "mesh/utilities/MeshMapUtilities.hpp"
 #include "schema/schemaUtilities.hpp"
 
 namespace geosx
@@ -118,10 +119,36 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
 void ElementRegionManager::generateMesh( CellBlockManagerABC & cellBlockManager )
 {
-  this->forElementRegions< CellElementRegion, SurfaceElementRegion >( [&]( auto & elemRegion )
+  this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
   {
     elemRegion.generateMesh( cellBlockManager.getCellBlocks() );
   } );
+  this->forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion & elemRegion )
+  {
+    elemRegion.generateMesh( cellBlockManager.getFaceBlocks() );
+  } );
+
+  // Some mappings of the surfaces subregions point to elements in other subregions and regions.
+  // For the moment, those mappings only point to cell block indices.
+  // The following makes use of cell block to subregions mappings to finalize the surfaces information.
+  // It also creates the mappings concerning the regions.
+  array2d< localIndex > const blockToSubRegion = this->getCellBlockToSubRegionMap( cellBlockManager );
+  this->forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion & elemRegion )
+  {
+    SurfaceElementSubRegion & subRegion = elemRegion.getUniqueSubRegion< SurfaceElementSubRegion >();
+    // While indicated as containing element subregion information,
+    // `relation` currently contains cell block information
+    // that will be transformed into element subregion information.
+    // This is why we copy the information into a temporary,
+    // which frees space for the final information (of same size).
+    FixedToManyElementRelation & relation = subRegion.getToCellRelation();
+    ToCellRelation< array2d< localIndex > > const tmp( relation.m_toElementSubRegion,
+                                                       relation.m_toElementIndex );
+    meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( blockToSubRegion.toViewConst(),
+                                                                           tmp,
+                                                                           relation );
+  } );
+
 }
 
 void ElementRegionManager::generateWells( MeshManager & meshManager,

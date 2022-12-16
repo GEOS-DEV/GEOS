@@ -67,14 +67,20 @@ void FieldSpecificationManager::expandObjectCatalogs()
 
 void FieldSpecificationManager::applyInitialConditions( MeshLevel & mesh ) const
 {
-  apply( 0.0, mesh, "", "",
-         [&]( FieldSpecificationBase const & bc,
-              string const &,
-              SortedArrayView< localIndex const > const & targetSet,
-              Group & targetGroup,
-              string const fieldName )
+  this->forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs )
   {
-    bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
+    if( fs.initialCondition() )
+    {
+      fs.apply< dataRepository::Group >( mesh,
+                                         [&]( FieldSpecificationBase const & bc,
+                                              string const &,
+                                              SortedArrayView< localIndex const > const & targetSet,
+                                              Group & targetGroup,
+                                              string const fieldName )
+      {
+        bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
+      } );
+    }
   } );
 }
 

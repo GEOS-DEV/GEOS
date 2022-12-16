@@ -1,9 +1,13 @@
-
 import numpy as np
-from scipy import stats
+from scipy import stats    # type: ignore[import]
+from typing import Dict, Iterable, List, Tuple, Callable, Union
 
 
-def apply_to_bins(fn, position, value, bins, collapse_edges=True):
+def apply_to_bins(fn: Callable[[Union[float, np.ndarray]], float],
+                  position: np.ndarray,
+                  value: np.ndarray,
+                  bins: np.ndarray,
+                  collapse_edges: bool = True):
     """
     Apply a function to values that are located within a series of bins
     Note: if a bin is empty, this function will fill a nan value
@@ -26,7 +30,7 @@ def apply_to_bins(fn, position, value, bins, collapse_edges=True):
         Nr -= 2
         Ibin -= 1
         Ibin[Ibin == -1] = 0
-        Ibin[Ibin == Nr] = Nr-1
+        Ibin[Ibin == Nr] = Nr - 1
 
     # Apply functions to bins
     binned_values = np.zeros(Nr)
@@ -104,5 +108,3 @@ def get_realizations(x, bins, targets):
     for k, t in targets.items():
         results[k] = get_random_realization(x, bins, **t)
     return results
-
-

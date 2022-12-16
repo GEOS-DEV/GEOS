@@ -13,12 +13,11 @@
  */
 
 /**
- * @file PoroelasticSolverEmbeddedFractures.hpp
- *
+ * @file SinglePhasePoromechanicsSolverEmbeddedFractures.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVEREMBEDDEDFRACTURES_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVEREMBEDDEDFRACTURES_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVEREMBEDDEDFRACTURES_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVEREMBEDDEDFRACTURES_HPP_
 
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
 
@@ -36,7 +35,8 @@ public:
 
   /**
    * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
+   * @return string that contains the catalog name to generate a new SinglePhasePoromechanicsEmbeddedFractures object through the object
+   * catalog.
    */
   static string catalogName() { return "SinglePhasePoromechanicsEmbeddedFractures"; }
 
@@ -65,12 +65,6 @@ public:
                   DofManager const & dofManager,
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
-
-  void
-  assembleCouplingTerms( DomainPartition const & domain,
-                         DofManager const & dofManager,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                         arrayView1d< real64 > const & localRhs );
 
   virtual void
   applyBoundaryConditions( real64 const time_n,
@@ -143,9 +137,6 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
-
-  // virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
-
 private:
 
   string m_fracturesSolverName;
@@ -157,4 +148,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVEREMBEDDEDFRACTURES_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVEREMBEDDEDFRACTURES_HPP_ */

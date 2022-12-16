@@ -36,6 +36,7 @@ void CellElementStencilTPFA::reserve( localIndex const size )
   m_faceNormal.reserve( 3 * size );
   m_cellToFaceVec.reserve( 6 * size );
   m_transMultiplier.reserve( size );
+  m_geometricStabilizationCoef.reserve( size );
 }
 
 void CellElementStencilTPFA::add( localIndex const numPts,
@@ -65,6 +66,7 @@ void CellElementStencilTPFA::add( localIndex const numPts,
 }
 
 void CellElementStencilTPFA::addVectors( real64 const & transMultiplier,
+                                         real64 const & geometricStabilizationCoef,
                                          real64 const (&faceNormal)[3],
                                          real64 const (&cellToFaceVec)[2][3] )
 {
@@ -73,8 +75,10 @@ void CellElementStencilTPFA::addVectors( real64 const & transMultiplier,
   m_faceNormal.resize( newSize );
   m_cellToFaceVec.resize( newSize );
   m_transMultiplier.resize( newSize );
+  m_geometricStabilizationCoef.resize( newSize );
 
   m_transMultiplier[oldSize] = transMultiplier;
+  m_geometricStabilizationCoef[oldSize] = geometricStabilizationCoef;
 
   LvArray::tensorOps::copy< 3 >( m_faceNormal[oldSize], faceNormal );
   for( localIndex a=0; a<2; a++ )
@@ -92,7 +96,8 @@ CellElementStencilTPFA::createKernelWrapper() const
            m_weights,
            m_faceNormal,
            m_cellToFaceVec,
-           m_transMultiplier };
+           m_transMultiplier,
+           m_geometricStabilizationCoef };
 }
 
 CellElementStencilTPFAWrapper::
@@ -102,14 +107,16 @@ CellElementStencilTPFAWrapper::
                                  WeightContainerType const & weights,
                                  arrayView2d< real64 > const & faceNormal,
                                  arrayView3d< real64 > const & cellToFaceVec,
-                                 arrayView1d< real64 > const & transMultiplier )
+                                 arrayView1d< real64 > const & transMultiplier,
+                                 arrayView1d< real64 > const & geometricStabilizationCoef )
   : StencilWrapperBase( elementRegionIndices,
                         elementSubRegionIndices,
                         elementIndices,
                         weights ),
   m_faceNormal( faceNormal ),
   m_cellToFaceVec( cellToFaceVec ),
-  m_transMultiplier( transMultiplier )
+  m_transMultiplier( transMultiplier ),
+  m_geometricStabilizationCoef( geometricStabilizationCoef )
 {}
 
 } /* namespace geosx */

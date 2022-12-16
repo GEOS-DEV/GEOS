@@ -79,17 +79,27 @@ public:
     static constexpr auto writeCellElementMesh = "writeCellElementMesh";
     static constexpr auto writeFaceElementMesh = "writeFaceElementMesh";
     static constexpr auto plotLevel = "plotLevel";
-
+    static constexpr auto onlyPlotSpecifiedFieldNames = "onlyPlotSpecifiedFieldNames";
+    static constexpr auto fieldNames = "fieldNames";
   } siloOutputViewKeys;
   /// @endcond
 
 private:
+
+  void postProcessInput() override;
+
   string m_plotFileRoot;
   integer m_writeEdgeMesh;
   integer m_writeFaceMesh;
   integer m_writeCellElementMesh;
   integer m_writeFaceElementMesh;
   integer m_plotLevel;
+
+  /// flag to decide whether we only plot the specified field names
+  integer m_onlyPlotSpecifiedFieldNames;
+
+  /// array of names of the fields to output
+  array1d< string > m_fieldNames;
 
 };
 

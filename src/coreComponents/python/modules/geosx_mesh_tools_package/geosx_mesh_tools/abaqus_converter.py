@@ -1,26 +1,29 @@
-
-import meshio
-from meshio._mesh import CellBlock
+import meshio    # type: ignore[import]
+from meshio._mesh import CellBlock    # type: ignore[import]
 import numpy as np
-import argparse
 import logging
-import sys
 
 
-def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
+def convert_abaqus_to_gmsh(input_mesh: str, output_mesh: str, logger: logging.Logger = None) -> int:
     """
-    @brief Convert an abaqus mesh to gmsh 2 format, preserving nodeset information.
-    @details If the code encounters any issues with region/element indices,
-             the conversion will attempt to continue, with errors
-             indicated by -1 values in the output file.
-    @param input_mesh path of the input abaqus file
-    @param output_mesh path of the output gmsh file
-    @param logger an instance of logging.Logger
+    Convert an abaqus mesh to gmsh 2 format, preserving nodeset information.
+
+    If the code encounters any issues with region/element indices,
+    the conversion will attempt to continue, with errors
+    indicated by -1 values in the output file.
+
+    Args:
+        input_mesh (str): path of the input abaqus file
+        output_mesh (str): path of the output gmsh file
+        logger (logging.Logger): an instance of logging.Logger
+
+    Returns:
+        int: Number of potential warnings encountered during conversion
     """
     # Initialize the logger if it is empty
     if not logger:
-      logging.basicConfig(level=logging.WARNING)
-      logger = logging.getLogger(__name__)
+        logging.basicConfig(level=logging.WARNING)
+        logger = logging.getLogger(__name__)
 
     # Keep track of the number of warnings
     n_warnings = 0
@@ -124,28 +127,44 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
     return (n_warnings > 0)
 
 
-def main():
+def convert_abaqus_to_vtu(input_mesh: str, output_mesh: str, logger: logging.Logger = None) -> int:
     """
-    @brief Entry point for the abaqus convertor console script
-    @arg input_mesh Input abaqus file name
-    @arg output_mesh Output gmsh file name
+    Convert an abaqus mesh to vtu format, preserving nodeset information.
+    
+    If the code encounters any issues with region/element indices, the conversion will 
+    attempt to continue, with errors indicated by -1 values in the output file.
+    
+    Args:
+        input_mesh (str): path of the input abaqus file
+        output_mesh (str): path of the output vtu file
+        logger (logging.Logger): a logger instance
+
+    Returns:
+        int: Number of potential warnings encountered during conversion
     """
+    # Initialize the logger if it is empty
+    if not logger:
+        logging.basicConfig(level=logging.WARNING)
+        logger = logging.getLogger(__name__)
 
-    # Parse the user arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('input', type=str, help='Input abaqus mesh file name')
-    parser.add_argument('output', type=str, help='Output gmsh mesh file name')
-    parser.add_argument('-v', '--verbose', help='Increase verbosity level', action="store_true")
-    args = parser.parse_args()
+    # Keep track of the number of warnings
+    n_warnings = 0
 
-    # Set up a logger
-    logging.basicConfig(level=logging.WARNING)
-    logger = logging.getLogger(__name__)
-    if args.verbose:
-      logger.setLevel(logging.INFO)
+    # Load the mesh
+    logger.info('Reading abaqus mesh...')
+    mesh = meshio.read(input_mesh, file_format="abaqus")
 
-    # Call the converter
-    err = convert_abaqus_to_gmsh(args.input, args.output, logger)
-    if err:
-        sys.exit('Warnings detected: check the output file for potential errors!')
+    # Converting nodesets to binary masks
+    for k, nodeset in mesh.point_sets.items():
+        mesh.point_data[k] = np.zeros(len(mesh.points), dtype=int)
+        mesh.point_data[k][nodeset] = 1
 
+    # Overwrite point sets to suppress conversion warnings
+    mesh.point_sets = {}
+
+    # Write the final mesh
+    logger.info('Writing vtu mesh...')
+    meshio.write(output_mesh, mesh, file_format="vtu")
+    logger.info('Done!')
+
+    return (n_warnings > 0)

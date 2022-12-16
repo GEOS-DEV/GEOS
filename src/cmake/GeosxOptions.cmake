@@ -20,7 +20,6 @@ option( RAJA_ENABLE_OPENMP "" OFF )
 option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
-option( ENABLE_PAMELA "" ON )
 option( ENABLE_PVTPackage "" ON )
 
 option( ENABLE_UNCRUSTIFY "" ON )
@@ -31,6 +30,7 @@ option( ENABLE_FORTRAN "Enables Fortran support" OFF )
 
 option( ENABLE_METIS "Enables METIS" ON )
 option( ENABLE_PARMETIS "Enables PARMETIS" ON )
+option( ENABLE_SCOTCH "Enables SCOTCH" ON )
 
 option( ENABLE_VTK "Enables VTK" ON )
 
@@ -74,9 +74,9 @@ endif()
 
 ### BUILD & BLT SETUP ###
 
-option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" ON )
+option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF )
 
-option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
+option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " ON )
 
 set( GEOSX_PARALLEL_COMPILE_JOBS "" CACHE STRING "Maximum number of concurrent compilation jobs" )
 if( GEOSX_PARALLEL_COMPILE_JOBS )
@@ -122,9 +122,27 @@ blt_append_custom_compiler_flag( FLAGS_VAR GEOSX_NINJA_FLAGS
                                  CLANG   "-fcolor-diagnostics"
                                )
 
+# clang-13 and gcc complains about unused-but-set variable.
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-Wunused-but-set-variable" CXX_UNUSED_BUT_SET_VAR)
+if (ENABLE_GBENCHMARK)
+    blt_add_target_compile_flags(TO benchmark
+                                FLAGS $<$<AND:$<BOOL:${CXX_UNUSED_BUT_SET_VAR}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-unused-but-set-variable>
+                                )
+endif()
+
 if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOSX_NINJA_FLAGS}" )
 endif()
+
+#set(CMAKE_CUDA_STANDARD 14 CACHE STRING "" FORCE)
+#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELEASE 
+#                                 DEFAULT "-O3 -DNDEBUG -Xcompiler -DNDEBUG -Xcompiler -O3" )
+#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELWITHDEBINFO 
+#                                 DEFAULT "-lineinfo ${CMAKE_CUDA_FLAGS_RELEASE}" )
+#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_DEBUG 
+#                                 DEFAULT "-G -O0 -Xcompiler -O0" )
+
 
 if( CMAKE_HOST_APPLE )
 #    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")

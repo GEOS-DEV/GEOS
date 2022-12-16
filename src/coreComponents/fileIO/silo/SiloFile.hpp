@@ -662,7 +662,32 @@ public:
     m_siloDirectory = joinPath( path, "siloFiles" );
   }
 
+  /**
+   * @brief Set the flag to decide whether we only plot the fields specified by fieldNames, or if we also plot fields based on plotLevel
+   * @param[in] onlyPlotSpecifiedFieldNames the flag
+   */
+  void setOnlyPlotSpecifiedFieldNamesFlag( integer const onlyPlotSpecifiedFieldNames )
+  {
+    m_onlyPlotSpecifiedFieldNames = onlyPlotSpecifiedFieldNames;
+  }
+
+  /**
+   * @brief Set the names of the fields to output
+   * @param[in] fieldNames the fields to output
+   */
+  void setFieldNames( arrayView1d< string const > const & fieldNames )
+  {
+    m_fieldNames.insert( fieldNames.begin(), fieldNames.end() );
+  }
+
 private:
+
+  /**
+   * @brief Check if plotting is enabled for this field
+   * @param[in] wrapper the wrapper
+   * @return true if this wrapper should be plot, false otherwise
+   */
+  bool isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const;
 
   /// pointer to the DBfile that this class is working on
   DBfile * m_dbFilePtr;
@@ -702,6 +727,16 @@ private:
   integer m_writeFaceElementMesh;
 
   dataRepository::PlotLevel m_plotLevel;
+
+  /// Flag to decide whether we only plot the fields specified by fieldNames, or if we also plot fields based on plotLevel
+  integer m_onlyPlotSpecifiedFieldNames;
+
+  /// Flag to decide whether we check that the specified fieldNames are actually registered
+  bool m_requireFieldRegistrationCheck;
+
+  /// Names of the fields to output
+  std::set< string > m_fieldNames;
+
 
   bool m_ghostFlags;
 };

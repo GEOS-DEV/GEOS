@@ -11,7 +11,7 @@ set( mesh_headers
      ElementType.hpp
      EmbeddedSurfaceNodeManager.hpp
      EmbeddedSurfaceSubRegion.hpp
-     ExtrinsicMeshData.hpp
+     MeshFields.hpp
      FaceElementSubRegion.hpp
      FaceManager.hpp
      FieldIdentifiers.hpp
@@ -20,10 +20,12 @@ set( mesh_headers
      MeshForLoopInterface.hpp
      MeshLevel.hpp
      MeshManager.hpp
+     MeshObjectPath.hpp
      NodeManager.hpp
      ObjectManagerBase.hpp
      Perforation.hpp
      PerforationData.hpp
+     PerforationFields.hpp
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
@@ -35,6 +37,8 @@ set( mesh_headers
      generators/CellBlockManagerABC.hpp
      generators/CellBlockUtilities.hpp
      generators/ExternalMeshGeneratorBase.hpp
+     generators/FaceBlock.hpp
+     generators/FaceBlockABC.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
@@ -76,6 +80,7 @@ set( mesh_sources
      MeshBody.cpp
      MeshLevel.cpp
      MeshManager.cpp
+     MeshObjectPath.cpp
      NodeManager.cpp
      ObjectManagerBase.cpp
      Perforation.cpp
@@ -89,6 +94,7 @@ set( mesh_sources
      generators/CellBlockManager.cpp
      generators/CellBlockUtilities.cpp
      generators/ExternalMeshGeneratorBase.cpp
+     generators/FaceBlock.cpp
      generators/InternalMeshGenerator.cpp
      generators/InternalWellGenerator.cpp
      generators/InternalWellboreGenerator.cpp
@@ -115,22 +121,34 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-if( ENABLE_PAMELA )
-    message( STATUS "Adding PAMELAMeshGenerator sources and headers" )
-    list( APPEND mesh_headers generators/PAMELAMeshGenerator.hpp )
-    list( APPEND mesh_sources generators/PAMELAMeshGenerator.cpp )
-    add_subdirectory( PAMELA )
-    list( APPEND dependencyList PAMELA )
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
 endif()
 
 if( ENABLE_VTK )
     message(STATUS "Adding VTKMeshGenerator sources and headers")
-    set( mesh_headers ${mesh_headers} generators/VTKMeshGenerator.hpp generators/VTKMeshGeneratorTools.hpp )
-    set( mesh_sources ${mesh_sources} generators/VTKMeshGenerator.cpp generators/VTKMeshGeneratorTools.cpp )
+    set( mesh_headers ${mesh_headers}
+         generators/VTKFaceBlockUtilities.hpp
+         generators/VTKMeshGenerator.hpp
+         generators/VTKMeshGeneratorTools.hpp
+         generators/VTKUtilities.hpp
+         )
+    set( mesh_sources ${mesh_sources}
+         generators/VTKFaceBlockUtilities.cpp
+         generators/VTKMeshGenerator.cpp
+         generators/VTKMeshGeneratorTools.cpp
+         generators/VTKUtilities.cpp
+         )
     set( dependencyList ${dependencyList} VTK::IOLegacy VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )
       set( dependencyList ${dependencyList} VTK::IOParallelXML VTK::ParallelMPI )
     endif()
+endif()
+
+if( ENABLE_SCOTCH )
+    set( mesh_headers ${mesh_headers} generators/PTScotchInterface.hpp )
+    set( mesh_sources ${mesh_sources} generators/PTScotchInterface.cpp )
+    set( dependencyList ${dependencyList} ptscotch )
 endif()
 
 blt_add_library( NAME       mesh
@@ -142,5 +160,11 @@ blt_add_library( NAME       mesh
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks( PREFIX mesh
-                       EXCLUDES PAMELA )
+if( ENABLE_VTK )
+    # Avoid compiling with nvcc which sometimes segfaults in debug
+    set_source_files_properties( generators/VTKMeshGeneratorTools.cpp PROPERTIES LANGUAGE CXX )
+endif()
+
+add_subdirectory( unitTests )
+
+geosx_add_code_checks( PREFIX mesh )

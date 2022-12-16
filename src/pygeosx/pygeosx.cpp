@@ -24,6 +24,7 @@
 #include "physicsSolvers/python/PySolverType.hpp"
 #include "fileIO/python/PyHistoryCollectionType.hpp"
 #include "fileIO/python/PyHistoryOutputType.hpp"
+#include "fileIO/python/PyVTKOutputType.hpp"
 #include "mainInterface/initialization.hpp"
 #include "LvArray/src/python/PyArray.hpp"
 
@@ -398,6 +399,11 @@ PyInit_pygeosx()
   }
 
   if( !LvArray::python::addTypeToModule( module, geosx::python::getPyHistoryOutputType(), "HistoryOutput" ) )
+  {
+    return nullptr;
+  }
+
+  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyVTKOutputType(), "VTKOutput" ) )
   {
     return nullptr;
   }

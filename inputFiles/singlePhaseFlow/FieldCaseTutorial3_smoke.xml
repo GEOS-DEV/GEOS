@@ -7,8 +7,8 @@
 
   <!-- SPHINX_FIELD_CASE_MESH -->
   <Mesh>
-    <PAMELAMesh name="SyntheticMesh"
-                file="synthetic.msh" />
+    <VTKMesh name="SyntheticMesh"
+                file="synthetic.vtu" />
   </Mesh>
   <!-- SPHINX_FIELD_CASE_MESH_END -->
 

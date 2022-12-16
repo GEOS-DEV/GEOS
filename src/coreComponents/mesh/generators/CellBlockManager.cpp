@@ -28,6 +28,7 @@ CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
   m_nodesPositions( 0, 3 )
 {
   this->registerGroup< Group >( viewKeyStruct::cellBlocks() );
+  this->registerGroup< Group >( viewKeyStruct::faceBlocks() );
 }
 
 void CellBlockManager::resize( integer_array const & numElements,
@@ -618,6 +619,11 @@ Group & CellBlockManager::getCellBlocks()
   return this->getGroup( viewKeyStruct::cellBlocks() );
 }
 
+Group & CellBlockManager::getFaceBlocks()
+{
+  return this->getGroup( viewKeyStruct::faceBlocks() );
+}
+
 localIndex CellBlockManager::numNodes() const
 {
   return m_numNodes;
@@ -668,6 +674,11 @@ localIndex CellBlockManager::numEdges() const
 CellBlock & CellBlockManager::registerCellBlock( string const & name )
 {
   return this->getCellBlocks().registerGroup< CellBlock >( name );
+}
+
+FaceBlock & CellBlockManager::registerFaceBlock( string const & name )
+{
+  return this->getFaceBlocks().registerGroup< FaceBlock >( name );
 }
 
 array2d< real64, nodes::REFERENCE_POSITION_PERM > CellBlockManager::getNodePositions() const

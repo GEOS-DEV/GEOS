@@ -13,13 +13,14 @@ set(MPIEXEC "/usr/local/bin/mpirun" CACHE PATH "")
 
 set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE)
 
-set(ENABLE_PAMELA ON CACHE BOOL "" FORCE)
 set(ENABLE_PVTPackage ON CACHE BOOL "" FORCE)
 
 set(CUDA_ENABLED "OFF" CACHE PATH "" FORCE)
 set(ENABLE_OPENMP "OFF" CACHE PATH "" FORCE)
 
 set(ENABLE_CALIPER "OFF" CACHE PATH "" FORCE )
+
+set(GEOSX_BUILD_OBJ_LIBS ON CACHE BOOL "" FORCE)
 
 set( BLAS_LIBRARIES /usr/local/opt/openblas/lib/libblas.dylib CACHE PATH "" FORCE )
 set( LAPACK_LIBRARIES /usr/local/opt/openblas/lib/liblapack.dylib CACHE PATH "" FORCE )

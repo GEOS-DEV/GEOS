@@ -1241,6 +1241,7 @@ Pack( buffer_unit_type * & buffer,
       arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
 {
   localIndex sizeOfPackedChars=0;
+  array1d< globalIndex > junk;
 
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
   for( localIndex a=0; a<indices.size(); ++a )
@@ -1251,7 +1252,6 @@ Pack( buffer_unit_type * & buffer,
     typename mapBase< localIndex, array1d< globalIndex >, SORTED >::const_iterator
       iterUnmappedGI = unmappedGlobalIndices.find( li );
 
-    array1d< globalIndex > junk;
     array1d< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
                                                 junk :
                                                 iterUnmappedGI->second;
@@ -1276,6 +1276,7 @@ Pack( buffer_unit_type * & buffer,
       arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
 {
   localIndex sizeOfPackedChars=0;
+  SortedArray< globalIndex > junk;
 
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
   for( localIndex a=0; a<indices.size(); ++a )
@@ -1286,7 +1287,6 @@ Pack( buffer_unit_type * & buffer,
     typename mapBase< localIndex, SortedArray< globalIndex >, SORTED >::const_iterator
       iterUnmappedGI = unmappedGlobalIndices.find( li );
 
-    SortedArray< globalIndex > junk;
     SortedArray< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
                                                     junk :
                                                     iterUnmappedGI->second;
@@ -1321,6 +1321,7 @@ Unpack( buffer_unit_type const * & buffer,
                                                                      "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
   indices.resize( numIndicesUnpacked );
+  array1d< globalIndex > unmappedIndices;
 
   for( localIndex a=0; a<indices.size(); ++a )
   {
@@ -1339,7 +1340,7 @@ Unpack( buffer_unit_type const * & buffer,
       li = globalToLocalMap.at( gi );
     }
 
-    array1d< globalIndex > unmappedIndices;
+    unmappedIndices.resize( 0 );
     sizeOfUnpackedChars += Unpack( buffer,
                                    var,
                                    li,
@@ -1469,6 +1470,16 @@ Unpack( buffer_unit_type const * & buffer,
   // local indices of known global indices
   std::vector< localIndex > mapped;
 
+  // local indices of known objects not yet present in the map
+  std::vector< localIndex > mappedNew;
+
+  // storage for new values that don't fit into existing capacity
+  array1d< localIndex > indiciesToInsert;
+  ArrayOfSets< localIndex > valuesToInsert;
+  indiciesToInsert.reserve( numIndicesUnpacked );
+  valuesToInsert.reserve( numIndicesUnpacked );
+  valuesToInsert.reserveValues( numIndicesUnpacked * 12 ); // guesstimate
+
   for( localIndex a=0; a<numIndicesUnpacked; ++a )
   {
     globalIndex gi;
@@ -1495,6 +1506,7 @@ Unpack( buffer_unit_type const * & buffer,
     sizeOfUnpackedChars += Unpack( buffer, set_length );
 
     mapped.clear();
+    mappedNew.clear();
     unmapped.clear();
 
     // again, the global indices being unpacked here are for
@@ -1519,16 +1531,68 @@ Unpack( buffer_unit_type const * & buffer,
       }
     }
 
-    // insert known local indices into the set of indices
-    //  related to the local index
-    localIndex const numUniqueMapped = LvArray::sortedArrayManipulation::makeSortedUnique( mapped.begin(), mapped.end() );
-    var.insertIntoSet( li, mapped.begin(), mapped.begin() + numUniqueMapped );
+    // insert known local indices into the set of indices related to the local index
+    mapped.resize( LvArray::sortedArrayManipulation::makeSortedUnique( mapped.begin(), mapped.end() ) );
+    std::set_difference( mapped.begin(), mapped.end(), var[li].begin(), var[li].end(), std::back_inserter( mappedNew ) );
+    localIndex const numNewValues = LvArray::integerConversion< localIndex >( mappedNew.size() );
 
-    // insert unknown global indices related to the local index
-    //  into an additional mapping to resolve externally
-    localIndex const numUniqueUnmapped = LvArray::sortedArrayManipulation::makeSortedUnique( unmapped.begin(), unmapped.end() );
-    unmappedGlobalIndices[li].insert( unmapped.begin(), unmapped.begin() + numUniqueUnmapped );
+    // check if we have enough capacity to insert new indices
+    if( numNewValues <= var.capacityOfSet( li ) - var.sizeOfSet( li ) )
+    {
+      // all good, just insert new entries
+      var.insertIntoSet( li, mappedNew.begin(), mappedNew.end() );
+    }
+    else
+    {
+      // need to stash away and rebuild the map later
+      localIndex const k = indiciesToInsert.size();
+      indiciesToInsert.emplace_back( li );
+      valuesToInsert.appendSet( numNewValues );
+      valuesToInsert.insertIntoSet( k, mappedNew.begin(), mappedNew.end() );
+    }
+
+    // insert unknown global indices related to the local index into an additional mapping to resolve externally
+    unmapped.resize( LvArray::sortedArrayManipulation::makeSortedUnique( unmapped.begin(), unmapped.end() ) );
+    unmappedGlobalIndices[li].insert( unmapped.begin(), unmapped.end() );
   }
+
+  // If there were element lists that didn't fit in the map, rebuild the whole thing
+  if( !indiciesToInsert.empty() )
+  {
+    // Copy old capacities (no way to direct copy, must kernel launch)
+    array1d< localIndex > newCapacities( var.size() );
+    forAll< parallelHostPolicy >( var.size(), [var = var.toViewConst(), newCapacities = newCapacities.toView()]( localIndex const k )
+    {
+      newCapacities[k] = var.capacityOfSet( k );
+    } );
+
+    // Add new capacities where needed
+    for( localIndex i = 0; i < indiciesToInsert.size(); ++i )
+    {
+      newCapacities[indiciesToInsert[i]] += valuesToInsert.sizeOfSet( i );
+    }
+
+    // Allocate new map
+    ArrayOfSets< localIndex > newVar;
+    newVar.resizeFromCapacities< parallelHostPolicy >( var.size(), newCapacities.data() );
+
+    // Fill new map with old values
+    forAll< parallelHostPolicy >( var.size(), [var = var.toViewConst(), newVar = newVar.toView()]( localIndex const k )
+    {
+      newVar.insertIntoSet( k, var[k].begin(), var[k].end() );
+    } );
+
+    // Insert new values
+    for( localIndex i = 0; i < indiciesToInsert.size(); ++i )
+    {
+      localIndex const k = indiciesToInsert[i];
+      newVar.insertIntoSet( k, valuesToInsert[i].begin(), valuesToInsert[i].end() );
+    }
+
+    // Replace the old map
+    var = std::move( newVar );
+  }
+
   return sizeOfUnpackedChars;
 }
 
@@ -1607,6 +1671,7 @@ Pack( buffer_unit_type * & buffer,
       arraySlice1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
 {
   localIndex sizeOfPackedChars = 0;
+  array1d< globalIndex > junk;
 
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
   for( localIndex a=0; a<indices.size(); ++a )
@@ -1617,7 +1682,6 @@ Pack( buffer_unit_type * & buffer,
     typename mapBase< localIndex, array1d< globalIndex >, SORTED >::const_iterator
       iterUnmappedGI = unmappedGlobalIndices.find( li );
 
-    array1d< globalIndex > junk;
     array1d< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
                                                 junk :
                                                 iterUnmappedGI->second;
@@ -1653,6 +1717,7 @@ Unpack( buffer_unit_type const * & buffer,
                                                                      "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
   indices.resize( numIndicesUnpacked );
+  array1d< globalIndex > unmappedIndices;
 
   for( localIndex a=0; a<numIndicesUnpacked; ++a )
   {
@@ -1672,8 +1737,8 @@ Unpack( buffer_unit_type const * & buffer,
     }
 
     arraySlice1d< localIndex, USD - 1 > varSlice = var[li];
-    array1d< globalIndex > unmappedIndices;
 
+    unmappedIndices.resize( 0 );
     sizeOfUnpackedChars += Unpack( buffer,
                                    varSlice,
                                    unmappedIndices,

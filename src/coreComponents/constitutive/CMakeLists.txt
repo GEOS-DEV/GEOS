@@ -10,7 +10,7 @@ set( constitutive_headers
      NullModel.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/CapillaryPressureBase.hpp
-     capillaryPressure/CapillaryPressureExtrinsicData.hpp
+     capillaryPressure/CapillaryPressureFields.hpp
      capillaryPressure/JFunctionCapillaryPressure.hpp          
      capillaryPressure/TableCapillaryPressure.hpp
      capillaryPressure/TableCapillaryPressureHelpers.hpp          
@@ -28,9 +28,10 @@ set( constitutive_headers
      fluid/DeadOilFluid.hpp
      fluid/MultiFluidBase.hpp
      fluid/MultiFluidUtils.hpp
-     fluid/MultiFluidExtrinsicData.hpp
+     fluid/MultiFluidFields.hpp
      fluid/PhaseModel.hpp
      fluid/PVTDriver.hpp
+     fluid/PVTDriverRunTest.hpp
      fluid/PVTOData.hpp
      fluid/PVTFunctions/PhillipsBrineDensity.hpp
      fluid/PVTFunctions/PhillipsBrineViscosity.hpp
@@ -51,9 +52,10 @@ set( constitutive_headers
      fluid/ParticleFluidBase.hpp
      fluid/ProppantSlurryFluid.hpp
      fluid/SingleFluidBase.hpp
-     fluid/SingleFluidExtrinsicData.hpp
+     fluid/SingleFluidFields.hpp
      fluid/SlurryFluidBase.hpp
-     fluid/SlurryFluidExtrinsicData.hpp     
+     fluid/SlurryFluidFields.hpp
+     fluid/ThermalCompressibleSinglePhaseFluid.hpp
      fluid/layouts.hpp
      fluid/multiFluidSelector.hpp
      fluid/particleFluidSelector.hpp
@@ -63,13 +65,14 @@ set( constitutive_headers
      permeability/ConstantPermeability.hpp
      permeability/ParallelPlatesPermeability.hpp
      permeability/PermeabilityBase.hpp
-     permeability/PermeabilityExtrinsicData.hpp     
+     permeability/PermeabilityFields.hpp
      permeability/ProppantPermeability.hpp     
-     permeability/SlipDependentPermeability.hpp 
+     permeability/SlipDependentPermeability.hpp
+     permeability/WillisRichardsPermeability.hpp  
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/RelativePermeabilityBase.hpp 
-     relativePermeability/RelativePermeabilityExtrinsicData.hpp
+     relativePermeability/RelativePermeabilityFields.hpp
      relativePermeability/RelativePermeabilityInterpolators.hpp
      relativePermeability/TableRelativePermeability.hpp
      relativePermeability/TableRelativePermeabilityHelpers.hpp
@@ -105,15 +108,22 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
      solid/SolidModelDiscretizationOpsOrthotropic.hpp
      solid/TriaxialDriver.hpp
+     solid/porosity/PorosityFields.hpp
      solid/porosity/BiotPorosity.hpp
      solid/porosity/PorosityBase.hpp
+     solid/porosity/PorosityFields.hpp
      solid/porosity/PressurePorosity.hpp
      solid/porosity/ProppantPorosity.hpp
-     thermalConductivity/ConstantThermalConductivity.hpp
-     thermalConductivity/ThermalConductivityBase.hpp
-     thermalConductivity/ThermalConductivityExtrinsicData.hpp
-     thermalConductivity/thermalConductivitySelector.hpp
-     thermalConductivity/VolumeWeightedThermalConductivity.hpp
+     thermalConductivity/MultiPhaseConstantThermalConductivity.hpp
+     thermalConductivity/MultiPhaseThermalConductivityBase.hpp
+     thermalConductivity/MultiPhaseThermalConductivityFields.hpp
+     thermalConductivity/multiPhaseThermalConductivitySelector.hpp
+     thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.hpp
+     thermalConductivity/SinglePhaseConstantThermalConductivity.hpp
+     thermalConductivity/SinglePhaseThermalConductivityBase.hpp
+     thermalConductivity/SinglePhaseThermalConductivityFields.hpp
+     thermalConductivity/singlePhaseThermalConductivitySelector.hpp
+     thermalConductivity/ThermalConductivityFields.hpp
    )
 #
 # Specify all sources
@@ -138,6 +148,12 @@ set( constitutive_sources
      fluid/DeadOilFluid.cpp
      fluid/MultiFluidBase.cpp
      fluid/PVTDriver.cpp
+     fluid/PVTDriverRunTestDeadOilFluid.cpp
+     fluid/PVTDriverRunTestCompositionalMultiphaseFluid.cpp
+     fluid/PVTDriverRunTestCO2BrinePhillipsFluid.cpp
+     fluid/PVTDriverRunTestCO2BrinePhillipsThermalFluid.cpp
+     fluid/PVTDriverRunTestCO2BrineEzrokhiFluid.cpp
+     fluid/PVTDriverRunTestCO2BrineEzrokhiThermalFluid.cpp
      fluid/PVTOData.cpp
      fluid/PVTFunctions/PhillipsBrineDensity.cpp
      fluid/PVTFunctions/PhillipsBrineViscosity.cpp
@@ -156,12 +172,14 @@ set( constitutive_sources
      fluid/ProppantSlurryFluid.cpp
      fluid/SingleFluidBase.cpp
      fluid/SlurryFluidBase.cpp
+     fluid/ThermalCompressibleSinglePhaseFluid.cpp
      permeability/CarmanKozenyPermeability.cpp
      permeability/ConstantPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
      permeability/PermeabilityBase.cpp
      permeability/ProppantPermeability.cpp     
      permeability/SlipDependentPermeability.cpp
+     permeability/WillisRichardsPermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/RelativePermeabilityBase.cpp
@@ -191,9 +209,11 @@ set( constitutive_sources
      solid/porosity/PorosityBase.cpp
      solid/porosity/PressurePorosity.cpp
      solid/porosity/ProppantPorosity.cpp
-     thermalConductivity/ConstantThermalConductivity.cpp     
-     thermalConductivity/ThermalConductivityBase.cpp
-     thermalConductivity/VolumeWeightedThermalConductivity.cpp     
+     thermalConductivity/MultiPhaseConstantThermalConductivity.cpp     
+     thermalConductivity/MultiPhaseThermalConductivityBase.cpp
+     thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.cpp    
+     thermalConductivity/SinglePhaseConstantThermalConductivity.cpp     
+     thermalConductivity/SinglePhaseThermalConductivityBase.cpp
    )
 
 set( dependencyList events dataRepository functions)

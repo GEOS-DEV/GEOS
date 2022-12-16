@@ -71,7 +71,8 @@ public:
                    arrayView1d< integer const > const & phaseOrder,
                    integer const & flagInterpolator,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                   arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac );
+                   arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac );
 
 
     GEOSX_HOST_DEVICE
@@ -91,6 +92,7 @@ public:
 
     GEOSX_HOST_DEVICE
     void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                  arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
                   arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                   arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
@@ -286,6 +288,7 @@ GEOSX_HOST_DEVICE
 inline void
 TableRelativePermeability::KernelWrapper::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
            arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
            arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
@@ -330,6 +333,21 @@ TableRelativePermeability::KernelWrapper::
                      phaseRelPerm,
                      dPhaseRelPerm_dPhaseVolFrac );
   }
+
+  // update trapped phase volume fraction
+  if( ipWater >= 0 )
+  {
+    phaseTrappedVolFrac[ipWater] = LvArray::math::min( phaseVolFraction[ipWater], m_phaseMinVolumeFraction[ipWater] );
+  }
+  if( ipGas >= 0 )
+  {
+    phaseTrappedVolFrac[ipGas] = LvArray::math::min( phaseVolFraction[ipGas], m_phaseMinVolumeFraction[ipGas] );
+  }
+  if( ipOil >= 0 )
+  {
+    phaseTrappedVolFrac[ipOil] = LvArray::math::min( phaseVolFraction[ipOil], m_phaseMinVolumeFraction[ipOil] );
+  }
+
 }
 
 GEOSX_HOST_DEVICE
@@ -340,8 +358,10 @@ TableRelativePermeability::KernelWrapper::
           arraySlice1d< geosx::real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const
 {
   compute( phaseVolFraction,
+           m_phaseTrappedVolFrac[k][q],
            m_phaseRelPerm[k][q],
            m_dPhaseRelPerm_dPhaseVolFrac[k][q] );
+
 }
 
 } // namespace constitutive

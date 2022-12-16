@@ -60,7 +60,7 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
   MeshManager & meshManager = problemManager->getGroup< MeshManager >( problemManager->groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
 
-  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
+  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
   elementManager.processInputFileRecursive( topLevelNode );
   elementManager.postProcessInputRecursive();
@@ -105,7 +105,7 @@ template<>
 struct testMeshHelper< FieldLocation::Node >
 {
   static constexpr auto managerKey()
-  { return MeshLevel::groupStructKeys::nodeManagerString; }
+  { return MeshLevel::groupStructKeys::nodeManagerString(); }
 
   static constexpr auto elemMapKey()
   { return ElementSubRegionBase::viewKeyStruct::nodeListString(); }
@@ -117,7 +117,7 @@ template<>
 struct testMeshHelper< FieldLocation::Face >
 {
   static constexpr auto managerKey()
-  { return MeshLevel::groupStructKeys::faceManagerString; }
+  { return MeshLevel::groupStructKeys::faceManagerString(); }
 
   static constexpr auto elemMapKey()
   { return ElementSubRegionBase::viewKeyStruct::faceListString(); }

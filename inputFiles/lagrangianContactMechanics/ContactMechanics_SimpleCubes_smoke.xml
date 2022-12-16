@@ -65,7 +65,6 @@
     <PeriodicEvent
       name="solverApplications"
       beginTime="0.0"
-      endTime="10.0"
       forceDt="1.0"
       target="/Solvers/lagrangiancontact"/>
 

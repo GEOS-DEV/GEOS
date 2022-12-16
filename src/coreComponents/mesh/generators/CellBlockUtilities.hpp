@@ -24,6 +24,30 @@ namespace geosx
 {
 
 /**
+ * @brief Container for maps from a mesh object (node, edge or face) to cells.
+ * @tparam T underlying map type
+ */
+template< typename T >
+struct ToCellRelation
+{
+  T toBlockIndex; ///< Map containing a list of cell block indices for each object
+  T toCellIndex;  ///< Map containing cell indices, same shape as above
+
+  /**
+   * @brief Constructor by values.
+   * @param toBlockIndex_ Map containing a list of cell block indices for each object
+   * @param toCellIndex_ Map containing cell indices, same shape as above
+   */
+  ToCellRelation( T const & toBlockIndex_,
+                  T const & toCellIndex_ )
+    : toBlockIndex( toBlockIndex_ ),
+    toCellIndex( toCellIndex_ )
+  { }
+
+  ToCellRelation() = default;
+};
+
+/**
  * @brief Free function that generates face to edges, edge to faces and edge to nodes mappings.
  * @param[in] numNodes The number of nodes.
  * @param[in] faceToNodeMap Face to node mappings as an input.
@@ -83,7 +107,7 @@ computeUniqueValueOffsets( ArrayOfArraysView< T const > const & sortedLists )
   } );
 
   // Perform an inplace prefix-sum to get the unique edge offset.
-  RAJA::inclusive_scan_inplace< POLICY >( uniqueValueOffsets.begin(), uniqueValueOffsets.end() );
+  RAJA::inclusive_scan_inplace< POLICY >( RAJA::make_span( uniqueValueOffsets.data(), uniqueValueOffsets.size() ) );
   return uniqueValueOffsets;
 }
 

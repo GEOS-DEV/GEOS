@@ -24,9 +24,8 @@
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      discretization="FE1"
       couplingTypeOption="FIM"
       logLevel="1"
       targetRegions="{Fracture}"

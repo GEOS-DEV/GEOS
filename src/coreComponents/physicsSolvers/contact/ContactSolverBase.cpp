@@ -36,7 +36,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace extrinsicMeshData::contact;
+using namespace fields::contact;
 
 ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
@@ -55,8 +55,6 @@ ContactSolverBase::ContactSolverBase( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fracture region." );
 
-  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-    setInputFlag( InputFlags::FALSE );
 }
 
 
@@ -68,34 +66,37 @@ void ContactSolverBase::postProcessInput()
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
-  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+  using namespace fields::contact;
+
+  forDiscretizationOnMeshTargets( meshBodies,
+                                  [&]( string const,
+                                       MeshLevel & meshLevel,
+                                       arrayView1d< string const > const regionNames )
   {
-    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
-
     ElementRegionManager & elemManager = meshLevel.getElemManager();
+    elemManager.forElementRegions< SurfaceElementRegion >( regionNames,
+                                                           [&] ( localIndex const,
+                                                                 SurfaceElementRegion & region )
     {
-      elemManager.forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
+      region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
       {
-        region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
-        {
-          subRegion.registerExtrinsicData< dispJump >( getName() ).
-            reference().resizeDimension< 1 >( 3 );
+        subRegion.registerField< dispJump >( getName() ).
+          reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< deltaDispJump >( getName() ).
-            reference().resizeDimension< 1 >( 3 );
+        subRegion.registerField< deltaDispJump >( getName() ).
+          reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< oldDispJump >( getName() ).
-            reference().resizeDimension< 1 >( 3 );
+        subRegion.registerField< oldDispJump >( getName() ).
+          reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< traction >( getName() ).
-            reference().resizeDimension< 1 >( 3 );
+        subRegion.registerField< traction >( getName() ).
+          reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< fractureState >( getName() );
+        subRegion.registerField< fractureState >( getName() );
 
-          subRegion.registerExtrinsicData< oldFractureState >( getName() );
-        } );
+        subRegion.registerField< oldFractureState >( getName() );
       } );
-    }
+    } );
   } );
 }
 
@@ -137,7 +138,7 @@ void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
   elemManager.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion const & subRegion )
   {
     arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-    arrayView1d< integer const > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
+    arrayView1d< integer const > const & fractureState = subRegion.getField< fields::contact::fractureState >();
 
     RAJA::ReduceSum< parallelHostReduce, localIndex > stickCount( 0 ), slipCount( 0 ), openCount( 0 );
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -192,9 +193,9 @@ void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & d
     globalIndex numSlip  = 0;
     globalIndex numOpen  = 0;
 
-    forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                 MeshLevel const & mesh,
-                                                 arrayView1d< string const > const & )
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel const & mesh,
+                                                                 arrayView1d< string const > const & )
     {
       computeFractureStateStatistics( mesh, numStick, numSlip, numOpen );
 
@@ -232,17 +233,15 @@ real64 ContactSolverBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   return dt;
 }
 
-
-
 void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) const
 {
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     FieldIdentifiers fieldsToBeSync;
 
-    fieldsToBeSync.addElementFields( { extrinsicMeshData::contact::fractureState::key() }, { getFractureRegionName() } );
+    fieldsToBeSync.addElementFields( { fields::contact::fractureState::key() }, { getFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

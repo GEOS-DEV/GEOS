@@ -18,7 +18,7 @@
 
 #include "CompressibleSinglePhaseFluid.hpp"
 
-#include "SingleFluidExtrinsicData.hpp"
+#include "SingleFluidFields.hpp"
 
 namespace geosx
 {
@@ -33,7 +33,6 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
   m_densityModelType( ExponentApproximationType::Linear ),
   m_viscosityModelType( ExponentApproximationType::Linear )
 {
-
   registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default value for density." );
@@ -76,6 +75,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
     setApplyDefaultValue( m_viscosityModelType ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Type of viscosity model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
+
 }
 
 CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
@@ -85,8 +85,8 @@ void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Gro
 {
   SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  getExtrinsicData< extrinsicMeshData::singlefluid::density >().setApplyDefaultValue( m_defaultDensity );
-  getExtrinsicData< extrinsicMeshData::singlefluid::viscosity >().setApplyDefaultValue( m_defaultViscosity );
+  getField< fields::singlefluid::density >().setApplyDefaultValue( m_defaultDensity );
+  getField< fields::singlefluid::viscosity >().setApplyDefaultValue( m_defaultViscosity );
 
   m_density.setValues< serialPolicy >( m_referenceDensity );
   m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
@@ -130,8 +130,8 @@ void CompressibleSinglePhaseFluid::postProcessInput()
   real64 dRho_dP;
   real64 dVisc_dP;
   createKernelWrapper().compute( m_referencePressure, m_referenceDensity, dRho_dP, m_referenceViscosity, dVisc_dP );
-  getExtrinsicData< extrinsicMeshData::singlefluid::dDensity_dPressure >().setDefaultValue( dRho_dP );
-  getExtrinsicData< extrinsicMeshData::singlefluid::dViscosity_dPressure >().setDefaultValue( dVisc_dP );
+  getField< fields::singlefluid::dDensity_dPressure >().setDefaultValue( dRho_dP );
+  getField< fields::singlefluid::dViscosity_dPressure >().setDefaultValue( dVisc_dP );
 }
 
 CompressibleSinglePhaseFluid::KernelWrapper
