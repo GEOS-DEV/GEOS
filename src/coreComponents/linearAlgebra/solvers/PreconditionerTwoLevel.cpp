@@ -29,31 +29,53 @@ namespace
 
 struct twoLevelStructuredMesh
 {
-  integer nDim = 3;
-  localIndex numCoarsePoints[3] = { 4, 3, 3 };
-  integer refinementFactor[3] = { 4, 2, 3 };
-  
-  void printInfo()
+  constexpr static integer nDim = 3;
+  localIndex numCoarsePoints[nDim]{};
+  integer refinementFactors[nDim]{};
+
+  twoLevelStructuredMesh()
   {
-    std::cout << "twoLevelMesh Info" << std::endl;
-    std::cout << "nDim: " << nDim << std::endl;
-    std::cout << "numCoarsePoints:";
-    for( int iDim = 0; iDim < nDim; ++iDim )
-    {
-      std::cout << " " << numCoarsePoints[iDim];
-    }
-    std::cout << std::endl;
-    std::cout << "refinementFactor:";
-    for( int iDim = 0; iDim < nDim; ++iDim )
-    {
-      std::cout << " " << refinementFactor[iDim];
-    }
-    std::cout << std::endl;
+    readFromFile( "twoLevelMesh.txt" );
+  }	  
+  
+  //void printInfo()
+  //{
+  //  std::cout << "twoLevelMesh Info" << std::endl;
+  //  std::cout << "nDim: " << nDim << std::endl;
+  //  std::cout << "numCoarsePoints:";
+  //  for( int iDim = 0; iDim < nDim; ++iDim )
+  //  {
+  //    std::cout << " " << numCoarsePoints[iDim];
+  //  }
+  //  std::cout << std::endl;
+  //  std::cout << "refinementFactors:";
+  //  for( int iDim = 0; iDim < nDim; ++iDim )
+  //  {
+  //    std::cout << " " << refinementFactors[iDim];
+  //  }
+  //  std::cout << std::endl;
+  //  return;
+  //}
+
+  void readFromFile( string const & filename )
+  {	  
+    std::ifstream TLMeshFile( filename );
+    GEOSX_ERROR_IF( !TLMeshFile, GEOSX_FMT( "Unable to open file for writing: {}", filename ) );
+    std::string str;
+    TLMeshFile >> str;
+    TLMeshFile >> numCoarsePoints[0];
+    TLMeshFile >> numCoarsePoints[1];
+    TLMeshFile >> numCoarsePoints[2];
+    TLMeshFile >> str;
+    TLMeshFile >> refinementFactors[0];
+    TLMeshFile >> refinementFactors[1];
+    TLMeshFile >> refinementFactors[2];
     return;
-  }
+  }	  
 
 };   
 
+GEOSX_HOST_DEVICE
 void getIJKFromGlobalID( localIndex const & IND,
                          localIndex const & NI,
                          localIndex const & NJ,
@@ -69,6 +91,7 @@ void getIJKFromGlobalID( localIndex const & IND,
   return;
 }
 
+GEOSX_HOST_DEVICE
 localIndex getGlobalIDFromIJK( localIndex const & I,
                                localIndex const & J,
                                localIndex const & K,
@@ -91,9 +114,9 @@ void prolongVector( arrayView1d< real64 const > const & coarseValues,
   localIndex const NNODES = NI*NK*NK;
   
   // Refinement factors in I, J and K
-  integer const RI = mesh.refinementFactor[0];
-  integer const RJ = mesh.refinementFactor[1];
-  integer const RK = mesh.refinementFactor[2];
+  integer const RI = mesh.refinementFactors[0];
+  integer const RJ = mesh.refinementFactors[1];
+  integer const RK = mesh.refinementFactors[2];
 
   // Compute fine mesh number of points
   localIndex const ni = ( NI - 1 ) * RI + 1;
@@ -106,7 +129,6 @@ void prolongVector( arrayView1d< real64 const > const & coarseValues,
   
 
   // Compute prolonged vector entries
-  // for( int iNode = 0; iNode < nnodes; ++iNode )
   forAll< parallelDevicePolicy<> >( nnodes, [=] GEOSX_HOST_DEVICE ( localIndex const iNode )
   {
     // Get fine node multi-index
@@ -206,19 +228,19 @@ void prolongVector( arrayView1d< real64 const > const & coarseValues,
         {
           for( integer li = 0; li <= DI ; ++li )
           {
-#if 1
+#if GEOSX_ENABLE_CUDA
             localIndex const ind = getGlobalIDFromIJK( I+li, J+lj, K+lk, NI, NJ, NK ) + iDof * NNODES;
 #else
             localIndex const ind = getGlobalIDFromIJK( I+li, J+lj, K+lk, NI, NJ, NK ) * numDofPerNode + iDof;
 #endif
             real64 const wI = DI > 0
-                            ? 1.0 - (real64)li + std::pow(-1.0, 1+li) * (real64)OI / RI
+                            ? 1.0 - (real64)li + pow(-1.0, 1+li) * (real64)OI / RI
                             : 1;
             real64 const wJ = DJ > 0
-                            ? 1.0 - (real64)lj + std::pow(-1.0, 1+lj) * (real64)OJ / RJ
+                            ? 1.0 - (real64)lj + pow(-1.0, 1+lj) * (real64)OJ / RJ
                             : 1;
             real64 const wK = DK > 0
-                            ? 1.0 - (real64)lk + std::pow(-1.0, 1+lk) * (real64)OK / RK
+                            ? 1.0 - (real64)lk + pow(-1.0, 1+lk) * (real64)OK / RK
                             : 1;
             value += wI * wJ * wK * coarseValues[ ind ];
 	    ////////////////
@@ -234,7 +256,7 @@ void prolongVector( arrayView1d< real64 const > const & coarseValues,
           }
         }
       }
-#if 1
+#if GEOSX_ENABLE_CUDA
       fineValues[ iNode + iDof * nnodes ] = value;
 #else
       fineValues[ iNode*numDofPerNode + iDof ] = value;
@@ -258,9 +280,9 @@ void restrictVector( arrayView1d< real64 const > const & fineValues,
   localIndex const NNODES = NI*NK*NK;
   
   // Refinement factors in I, J and K
-  integer const RI = mesh.refinementFactor[0];
-  integer const RJ = mesh.refinementFactor[1];
-  integer const RK = mesh.refinementFactor[2];
+  integer const RI = mesh.refinementFactors[0];
+  integer const RJ = mesh.refinementFactors[1];
+  integer const RK = mesh.refinementFactors[2];
 
   // Compute fine mesh number of points
   localIndex const ni = ( NI - 1 ) * RI + 1;
@@ -303,7 +325,7 @@ void restrictVector( arrayView1d< real64 const > const & fineValues,
         {
           for( integer di = diMin; di <= diMax; ++di )
           {
-#if 1
+#if GEOSX_ENABLE_CUDA
             localIndex const ind = getGlobalIDFromIJK( i+di, j+dj, k+dk, ni, nj, nk ) + iDof * nnodes;
 #else
             localIndex const ind = getGlobalIDFromIJK( i+di, j+dj, k+dk, ni, nj, nk ) * numDofPerNode + iDof;
@@ -321,7 +343,7 @@ void restrictVector( arrayView1d< real64 const > const & fineValues,
           }
         }
       }
-#if 1
+#if GEOSX_ENABLE_CUDA
       coarseValues[ iNode + iDof * NNODES ] = value;
 #else
       coarseValues[ iNode*numDofPerNode + iDof ] = value;
@@ -344,9 +366,9 @@ PreconditionerTwoLevel ()
   integer const numDofPerNode = 3;
   localIndex const localCoarseSize = mesh.numCoarsePoints[0] * mesh.numCoarsePoints[1] * mesh.numCoarsePoints[2];
   localIndex const coarseSpaceDim = localCoarseSize * numDofPerNode;
-  localIndex const localFineSize = ( ( mesh.numCoarsePoints[0] - 1 ) * mesh.refinementFactor[0] + 1 ) 
-		                 * ( ( mesh.numCoarsePoints[1] - 1 ) * mesh.refinementFactor[1] + 1 )
-				 * ( ( mesh.numCoarsePoints[2] - 1 ) * mesh.refinementFactor[2] + 1 );
+  localIndex const localFineSize = ( ( mesh.numCoarsePoints[0] - 1 ) * mesh.refinementFactors[0] + 1 ) 
+		                 * ( ( mesh.numCoarsePoints[1] - 1 ) * mesh.refinementFactors[1] + 1 )
+				 * ( ( mesh.numCoarsePoints[2] - 1 ) * mesh.refinementFactors[2] + 1 );
   localIndex const fineSpaceDim = localFineSize * numDofPerNode;
 
   Vector vH;
@@ -360,6 +382,9 @@ PreconditionerTwoLevel ()
   wH.create( coarseSpaceDim, comm );
   vh.create( fineSpaceDim, comm );
   arrayView1d< real64 > const values = vH.open();
+  values.move( LvArray::MemorySpace::host, true );
+  //forAll< serialPolicy >( 1, [values] ( localIndex const i )
+  //{
   values[   0 ] = 8.984169707017889e-01;
   values[   1 ] = 1.730556422508585e-01;
   values[   2 ] = 4.984730689116268e-01;
@@ -468,10 +493,12 @@ PreconditionerTwoLevel ()
   values[ 105 ] = 2.206796923324806e-01;
   values[ 106 ] = 8.348798827094354e-01;
   values[ 107 ] = 5.176335258800429e-01;
-#if 1
+  //} );
+#if GEOSX_ENABLE_CUDA
   Vector vH_GPU;
   vH_GPU.create( coarseSpaceDim, comm );
   arrayView1d< real64 > const values_GPU = vH_GPU.open();
+  values_GPU.move( LvArray::MemorySpace::host, true );
   int counter = 0;
   for( int i = 0; i < coarseSpaceDim; i += numDofPerNode)
   {
@@ -485,7 +512,7 @@ PreconditionerTwoLevel ()
   vH.close();
 
   // Prolong vector
-#if 1
+#if GEOSX_ENABLE_CUDA
   arrayView1d< real64 const > const vH_input = vH_GPU.values();
 #else
   arrayView1d< real64 const > const vH_input = vH.values();
@@ -501,7 +528,25 @@ PreconditionerTwoLevel ()
   restrictVector( vh_input, wH_output, mesh, numDofPerNode );
   wH.close();
 
+#if GEOSX_ENABLE_CUDA
+  Vector wH_CPU;
+  wH_CPU.create( coarseSpaceDim, comm );
+  arrayView1d< real64 > const values_CPU = wH_CPU.open();
+  arrayView1d< real64 const > const values_wH = wH.open();
+  values_CPU.move( LvArray::MemorySpace::host, true );
+  int counter = 0;
+  for( int i = 0; i < coarseSpaceDim; i += numDofPerNode)
+  {
+    values_CPU[counter]   = values_wH[i];
+    values_CPU[counter+1] = values_wH[i+36];
+    values_CPU[counter+2] = values_wH[i+72];
+    counter += 1;
+  }
+  wH_CPU.close();
+  wH_CPU.write("wH");
+#else
   wH.write("wH");
+#endif
 
 
 }

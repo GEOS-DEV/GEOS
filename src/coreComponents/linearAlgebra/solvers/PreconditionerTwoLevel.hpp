@@ -61,6 +61,17 @@ public:
     GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
     dst.copy( src );
   }
+
+private:
+
+  // Coarse operator
+  Matrix coarseMatrix;
+
+  // Fine operator (temporary, to be replaced by the matrix free operator)
+  Matrix fineMatrix;
+
+  // The inverse of the diagonal of the fine operator (Jacobi smoother)
+  Vector m_diagInv;
 };
 
 }
