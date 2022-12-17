@@ -146,8 +146,9 @@ def __build_boundary_mesh(mesh, options: Options) -> Result:
         cell_centers.append(numpy.array(cell_centers_mesh.GetPoint(cell_centers_mesh.GetCell(ic).GetPointId(0))))
 
     n = vtkPolyDataNormals()
-    n.ConsistencyOn()
-    n.AutoOrientNormalsOn()
+    n.ConsistencyOff()  # TODO review the options!
+    n.FlipNormalsOn()
+    n.AutoOrientNormalsOff()
     n.ComputeCellNormalsOn()
     n.SetInputData(boundary_mesh)
     n.Update()

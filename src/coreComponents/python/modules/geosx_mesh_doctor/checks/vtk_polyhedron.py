@@ -12,6 +12,7 @@ from vtkmodules.vtkCommonDataModel import (
     VTK_POLYHEDRON,
     vtkCellArray,
     vtkUnstructuredGrid,
+    vtkTetra,
 )
 
 import vtk
@@ -142,15 +143,44 @@ def __analyze_face_stream(face_stream: FaceStream):
         order_1 = 1 if face_nodes_1[face_nodes_1.index(node_0) + 1] == node_1 else -1
         # Same order of nodes means that the normals of the faces or not both (in|out)ward.
         if order_0 * order_1 == 1:
-            logging.warning(f"Inconsistent order between faces {face_index_0} and {face_index_1}.")
+            pass
+            # logging.warning(f"Inconsistent order between faces {face_index_0} and {face_index_1}.")
         else:
-            logging.warning(f"Consistent order between faces {face_index_0} and {face_index_1}.")
+            # logging.warning(f"Consistent order between faces {face_index_0} and {face_index_1}.")
             graph.add_edge(face_index_0, face_index_1)
-    # Consider adding the wrong and bad connections between the faces in thegraph,
+    # Consider adding the wrong and bad connections between the faces in the graph,
     # then return the graph and let the algo continue.
     return tuple(networkx.connected_components(graph))
     # TODO I should be able to colour the graphs of the connected components with two colors.
     #      Then I have two choices.
+
+
+def select_flip(points, connected_components, face_stream: FaceStream) -> Iterable[int]:  # The selected component to split.
+    assert len(connected_components) == 2  # TODO use some coloring here
+    volumes = []
+    for cc in connected_components:
+        vol = 0.
+        fs = face_stream.flip_faces(cc)
+        for face_indices in fs.face_nodes:
+            if len(face_indices) == 4:
+                a, b = face_indices[0:3], (face_indices[2], face_indices[3], face_indices[0])
+                for tmp in a, b:
+                    vol += vtkTetra.ComputeVolume(
+                        points.GetPoint(tmp[0]),
+                        points.GetPoint(tmp[1]),
+                        points.GetPoint(tmp[2]),
+                        (0., 0., 0.)
+                    )
+            else:
+                vol += vtkTetra.ComputeVolume(
+                    points.GetPoint(face_indices[0]),
+                    points.GetPoint(face_indices[1]),
+                    points.GetPoint(face_indices[2]),
+                    (0., 0., 0.)
+                )
+        volumes.append(vol)
+    print(f"Volumes are {volumes} and we take index {numpy.argmax(volumes)}.")
+    return connected_components[numpy.argmax(volumes)]
 
 
 def __check(mesh, options: Options) -> Result:
@@ -167,15 +197,9 @@ def __check(mesh, options: Options) -> Result:
         face_stream = FaceStream.build_from_vtk_id_list(pt_ids)
         connected_components = __analyze_face_stream(face_stream)
         assert len(connected_components) in (1, 2)  # TODO Some tricky cells may have more than 2?
-        print(connected_components)
-        # TODO flip the faces, check if faces are now directed outwards.
-        # TODO One trick, for prisms, could be to have the "big faces" not facing each other.
-        cc = connected_components  # alias
-        if len(cc) > 1:  # TODO this is totally random (and wrong)...
-            fs = face_stream.flip_faces(cc[0] if len(cc[0]) < len(cc[1]) else cc[1])
-        else:
-            fs = face_stream
-        new_face_ids = to_vtk_id_list(fs.dump())
+        # print(connected_components)
+        cc = select_flip(points, connected_components, face_stream)
+        new_face_ids = to_vtk_id_list(face_stream.flip_faces(cc).dump())
         output_mesh.InsertNextCell(VTK_POLYHEDRON, new_face_ids)
     return output_mesh
 
