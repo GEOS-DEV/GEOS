@@ -157,6 +157,9 @@ public:
     static constexpr char const * displacementYNp1AtReceiversString() { return "displacementYNp1AtReceivers"; }
     static constexpr char const * displacementZNp1AtReceiversString() { return "displacementZNp1AtReceivers"; }
 
+    static constexpr char const * sourceForceString() { return "sourceForce"; }
+    static constexpr char const * sourceMomentString() { return "sourceMoment"; }
+
   } waveEquationViewKeys;
 
 
@@ -207,6 +210,8 @@ private:
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
 
+  localIndex getNumNodesPerElem();
+
 
   /// save the sismo trace in file
   void saveSeismo( localIndex iseismo, real32 val, string const & filename ) override;
@@ -243,6 +248,13 @@ private:
 
   /// Displacement_np1 at the receiver location for each time step for each receiver (z-component)
   array2d< real32 > m_displacementZNp1AtReceivers;
+
+  /// Vector describing the force of the source
+  R1Tensor m_sourceForce;
+
+  /// Symmetric tensor describing the moment of the source
+  R2SymTensor m_sourceMoment;
+
 };
 
 
