@@ -141,6 +141,20 @@ protected:
 
   virtual void initializePreSubGroups() override;
 
+private:
+
+  template< typename CONSTITUTIVE_BASE,
+            typename KERNEL_WRAPPER,
+            typename ... PARAMS >
+  real64 assemblyLaunch( MeshLevel & mesh,
+                         DofManager const & dofManager,
+                         arrayView1d< string const > const & regionNames,
+                         string const & materialNamesString,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs,
+                         PARAMS && ... params );
+
+
   /// Type of stabilization used in the simulation
   StabilizationType m_stabilizationType;
 
@@ -156,6 +170,44 @@ ENUM_STRINGS( MultiphasePoromechanicsSolver::StabilizationType,
               "None",
               "Global",
               "Local" );
+
+template< typename CONSTITUTIVE_BASE,
+          typename KERNEL_WRAPPER,
+          typename ... PARAMS >
+real64 MultiphasePoromechanicsSolver::assemblyLaunch( MeshLevel & mesh,
+                                                      DofManager const & dofManager,
+                                                      arrayView1d< string const > const & regionNames,
+                                                      string const & materialNamesString,
+                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                      arrayView1d< real64 > const & localRhs,
+                                                      PARAMS && ... params )
+{
+  GEOSX_MARK_FUNCTION;
+
+  NodeManager const & nodeManager = mesh.getNodeManager();
+
+  string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
+  arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+
+  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+
+  KERNEL_WRAPPER kernelWrapper( dofNumber,
+                                dofManager.rankOffset(),
+                                localMatrix,
+                                localRhs,
+                                gravityVectorData,
+                                std::forward< PARAMS >( params )... );
+
+  return finiteElement::
+           regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                         CONSTITUTIVE_BASE,
+                                         CellElementSubRegion >( mesh,
+                                                                 regionNames,
+                                                                 solidMechanicsSolver()->getDiscretizationName(),
+                                                                 materialNamesString,
+                                                                 kernelWrapper );
+}
+
 
 } /* namespace geosx */
 
