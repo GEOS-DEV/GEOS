@@ -8,6 +8,11 @@ import numpy
 from vtkmodules.vtkCommonCore import (
     vtkIdList,
 )
+from vtkmodules.vtkCommonDataModel import (
+    VTK_POLYHEDRON,
+    vtkCellArray,
+    vtkUnstructuredGrid,
+)
 
 import vtk
 import networkx
@@ -36,7 +41,15 @@ def _iter(id_list: vtkIdList) -> Iterator[int]:  # TODO duplicated
         yield id_list.GetId(i)
 
 
-def parse_face_stream(ids: vtkIdList):
+def to_vtk_id_list(data):  # TODO move to utility
+    result = vtkIdList()
+    result.Allocate(len(data))
+    for d in data:
+        result.InsertNextId(d)
+    return result
+
+
+def parse_face_stream(ids: vtkIdList):  # TODO move to FaceStream.build_from_vtk_id_list
     """
     Parses the face stream raw information and converts it into a tuple of tuple of integers,
     each tuple of integer being the nodes of a face.
@@ -107,18 +120,18 @@ def __analyze_face_stream(face_stream: FaceStream):
             edges_to_face_indices[frozenset(face_indices)].append(face_index)
     for face_indices in edges_to_face_indices.values():
         assert len(face_indices) == 2
-    # Computing the graph degree
+    # TODO check that there is only one link (edge) between two faces.
+    # Computing the graph degree for validation
     degrees = defaultdict(int)
     for face_indices in edges_to_face_indices.values():
         for face_index in face_indices:
             degrees[face_index] += 1
     for face_index, degree in degrees.items():
         assert len(face_stream[face_index]) == degree
-    # for pair in edges_to_face_indices.values():
-    #     assert len(pair) == 2
-    #     graph.add_edge(*pair)
-    # for face_index, face_nodes in enumerate(face_stream):  # networkx is overkill for this
-    #     assert graph.degree(face_index) == len(face_nodes)
+    # Connecting the faces. Neighbor faces with consistent normals (i.e. facing both inward or outward)
+    # will be connected. This will allow us to extract connected components with consistent orientations.
+    # Another step will then reconcile all the components such that all the normals of the cell
+    # will consistently point outward.
     graph = networkx.Graph()
     for edge, face_indices in edges_to_face_indices.items():
         face_index_0, face_index_1 = face_indices
@@ -127,33 +140,44 @@ def __analyze_face_stream(face_stream: FaceStream):
         node_0, node_1 = edge
         order_0 = 1 if face_nodes_0[face_nodes_0.index(node_0) + 1] == node_1 else -1
         order_1 = 1 if face_nodes_1[face_nodes_1.index(node_0) + 1] == node_1 else -1
+        # Same order of nodes means that the normals of the faces or not both (in|out)ward.
         if order_0 * order_1 == 1:
             logging.warning(f"Inconsistent order between faces {face_index_0} and {face_index_1}.")
-            # graph.add_edge(face_index_0, face_index_1, connection=-1)  # TODO do not add this connection if we want it removed!
         else:
             logging.warning(f"Consistent order between faces {face_index_0} and {face_index_1}.")
-            # graph.add_edge(face_index_0, face_index_1, connection=1)
             graph.add_edge(face_index_0, face_index_1)
-
-    # for e in graph.edges:
-    #     if graph.edges[e]["connection"] == -1:  # TODO Use dict and constant for connection
-    #         graph.remove_edge(*e)
+    # Consider adding the wrong and bad connections between the faces in thegraph,
+    # then return the graph and let the algo continue.
     return tuple(networkx.connected_components(graph))
-    # return graph
+    # TODO I should be able to colour the graphs of the connected components with two colors.
+    #      Then I have two choices.
 
 
 def __check(mesh, options: Options) -> Result:
-    num_cells = mesh.GetNumberOfCells()
-    for ic in range(num_cells):
+    points = mesh.GetPoints()
+    output_mesh = vtkUnstructuredGrid()
+    output_mesh.SetPoints(points)
+
+    for ic in range(mesh.GetNumberOfCells()):
         c = mesh.GetCell(ic)
-        if not c.GetCellType() == vtk.VTK_POLYHEDRON:
+        if not c.GetCellType() == VTK_POLYHEDRON:
             continue
         pt_ids = vtk.vtkIdList()
         mesh.GetFaceStream(ic, pt_ids)
         face_stream = FaceStream.build_from_vtk_id_list(pt_ids)
         connected_components = __analyze_face_stream(face_stream)
-        assert len(connected_components) in (1, 2)
-        # TODO flip the faces, check if faces are now directed outwards
+        assert len(connected_components) in (1, 2)  # TODO Some tricky cells may have more than 2?
+        print(connected_components)
+        # TODO flip the faces, check if faces are now directed outwards.
+        # TODO One trick, for prisms, could be to have the "big faces" not facing each other.
+        cc = connected_components  # alias
+        if len(cc) > 1:  # TODO this is totally random (and wrong)...
+            fs = face_stream.flip_faces(cc[0] if len(cc[0]) < len(cc[1]) else cc[1])
+        else:
+            fs = face_stream
+        new_face_ids = to_vtk_id_list(fs.dump())
+        output_mesh.InsertNextCell(VTK_POLYHEDRON, new_face_ids)
+    return output_mesh
 
 
 def check(vtk_input_file: str, options: Options) -> Result:
