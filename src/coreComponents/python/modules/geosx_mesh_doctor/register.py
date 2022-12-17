@@ -7,6 +7,7 @@ from parsing import (
     ELEMENT_VOLUMES,
     GENERATE_FRACTURES,
     GENERATE_GLOBAL_IDS,
+    NON_CONFORMAL,
     SELF_INTERSECTING_ELEMENTS,
 )
 
@@ -82,6 +83,20 @@ __HELPERS[GENERATE_GLOBAL_IDS] = __get_generate_global_ids_check_helper
 __CHECKS[GENERATE_GLOBAL_IDS] = __get_generate_global_ids_check
 
 
+def __get_non_conformal_check_helper() -> CheckHelper:
+    import parsing.non_conformal_parsing
+    return __build_check_helper(parsing.non_conformal_parsing)
+
+
+def __get_non_conformal_check():
+    from checks import non_conformal
+    return non_conformal.check
+
+
+__HELPERS[NON_CONFORMAL] = __get_non_conformal_check_helper
+__CHECKS[NON_CONFORMAL] = __get_non_conformal_check
+
+
 def __get_self_intersecting_elements_check_helper() -> CheckHelper:
     import parsing.self_intersecting_elements_parsing
     return __build_check_helper(parsing.self_intersecting_elements_parsing)
@@ -95,6 +110,8 @@ def __get_self_intersecting_elements_check():
 __HELPERS[SELF_INTERSECTING_ELEMENTS] = __get_self_intersecting_elements_check_helper
 __CHECKS[SELF_INTERSECTING_ELEMENTS] = __get_self_intersecting_elements_check
 
+
+# TODO use importlib
 
 def __load_checks() -> Dict[str, Callable[[str, Any], Any]]:
     """
