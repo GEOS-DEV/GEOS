@@ -239,6 +239,34 @@ protected:
   int m_voigtMap[3][3];
 
 private:
+  struct BinKey
+  {
+    localIndex regionIndex;
+    localIndex subRegionIndex;
+    localIndex binIndex;
+      
+    bool operator==(BinKey const & other) const
+    {
+      return (regionIndex == other.regionIndex && subRegionIndex == other.subRegionIndex && binIndex == other.binIndex);
+    }
+  };
+  
+  struct BinKeyHash
+  {
+    std::size_t operator()(BinKey const & k) const
+    {
+      using std::size_t;
+      using std::hash;
+      
+      // Compute individual hash values for first,
+      // second and third and combine them using XOR
+      // and bit shifting:
+      return ((std::hash<localIndex>()(k.regionIndex)
+            ^ (std::hash<localIndex>()(k.subRegionIndex) << 1)) >> 1)
+            ^ (std::hash<localIndex>()(k.binIndex) << 1);
+    }
+  };
+
   virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const override;
 
   void initialize( NodeManager & nodeManager,
