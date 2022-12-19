@@ -528,7 +528,6 @@ public:
 
   using ThermalSinglePhaseFlowAccessors =
     StencilAccessors< fields::flow::temperature,
-                      //fields::flow::dMobility_dPressure,
                       fields::flow::dMobility_dTemperature >;
 
   using ThermalSinglePhaseFluidAccessors =
