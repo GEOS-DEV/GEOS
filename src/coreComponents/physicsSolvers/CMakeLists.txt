@@ -57,6 +57,7 @@ set( physicsSolvers_headers
      fluidFlow/wells/SinglePhaseWell.hpp
      fluidFlow/wells/SinglePhaseWellFields.hpp
      fluidFlow/wells/SinglePhaseWellKernels.hpp
+     fluidFlow/wells/WellConstants.hpp
      fluidFlow/wells/WellControls.hpp
      fluidFlow/wells/WellSolverBase.hpp
      fluidFlow/wells/WellSolverBaseFields.hpp
