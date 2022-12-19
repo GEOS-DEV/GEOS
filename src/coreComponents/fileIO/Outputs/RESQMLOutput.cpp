@@ -68,17 +68,17 @@ RESQMLOutput::~RESQMLOutput()
 
 void RESQMLOutput::postProcessInput()
 { 
-  MeshManager & meshManager = this->getGroupByPath< MeshManager >( "/Problem/Mesh" );
-  RESQMLMeshGenerator* resqmlMeshGenerator = meshManager.getGroupPointer< RESQMLMeshGenerator >( m_objectName );
+  // MeshManager & meshManager = this->getGroupByPath< MeshManager >( "/Problem/Mesh" );
+  // RESQMLMeshGenerator* resqmlMeshGenerator = meshManager.getGroupPointer< RESQMLMeshGenerator >( m_objectName );
 
-  GEOSX_THROW_IF( resqmlMeshGenerator == nullptr,
-                  getName() << ": RESQMLMesh not found: " << m_objectName,
-                  InputError );
+  // GEOSX_THROW_IF( resqmlMeshGenerator == nullptr,
+  //                 getName() << ": RESQMLMesh not found: " << m_objectName,
+  //                 InputError );
                   
   m_writer.setOutputLocation( getOutputDirectory(), m_plotFileRoot );
   m_writer.setFieldNames( m_fieldNames.toViewConst() );
   m_writer.setOnlyPlotSpecifiedFieldNamesFlag( m_onlyPlotSpecifiedFieldNames );
-  m_writer.setParentRepresentation(resqmlMeshGenerator->getParentRepresentation());  
+  // m_writer.setParentRepresentation(resqmlMeshGenerator->getParentRepresentation());  
 }
 
 void RESQMLOutput::setPlotFileRoot( string const & root )
