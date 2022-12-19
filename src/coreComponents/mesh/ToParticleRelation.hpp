@@ -126,7 +126,8 @@ void erase( OrderedVariableToManyParticleRelation & relation,
             localIndex const ei );
 
 /**
- * @brief Insert a particle relation for an object in the relation.
+ * @brief Insert a particle relation for an object in the relation. Checks for
+ *        existing membership.
  * @param relation The relationship mapping to insert a single particle relation for
  *                 a single object into.
  * @param firstIndex The object index to insert a particle relation from.
@@ -140,6 +141,47 @@ void insert( OrderedVariableToManyParticleRelation & relation,
              localIndex const esr,
              localIndex const ei );
 
+/**
+ * @brief Insert a particle relation for an object in the relation. This is slightly
+ *        faster than "insert" because it does NOT check for existing membership.
+ * @param relation The relationship mapping to insert a single particle relation for
+ *                 a single object into.
+ * @param firstIndex The object index to insert a particle relation from.
+ * @param er The particle region to insert.
+ * @param esr The particle subregion to insert.
+ * @param ei The particle index to insert.
+ */
+void fastInsert( OrderedVariableToManyParticleRelation & relation,
+                 localIndex const firstIndex,
+                 localIndex const er,
+                 localIndex const esr,
+                 localIndex const ei );
+
+/**
+ * @brief Insert a particle relation for several objects in the relation.
+ *        Does NOT check for existing membership.
+ * @param relation The relationship mapping to insert a single particle relation for
+ *                 a single object into.
+ * @param firstIndex The object index to insert a particle relation from.
+ * @param erArray The array of particle regions to insert.
+ * @param esrArray The array of particle subregions to insert.
+ * @param eiArray The array of particle indices to insert.
+ */
+void insertMany( OrderedVariableToManyParticleRelation & relation,
+                 localIndex const firstIndex,
+                 std::vector<localIndex> const & erArray,
+                 std::vector<localIndex> const & esrArray,
+                 std::vector<localIndex> const & eiArray );
+
+/**
+ * @brief Reserve a set number of entities for a particle to relate to
+ * @param relation The relationship mapping to insert a single particle relation for
+ *                 a single object into.
+ * @param firstIndex The object index to insert a particle relation from.
+ * @param numToReserve Number of entities to reserve
+ */
+void reserveNeighbors( OrderedVariableToManyParticleRelation & relation,
+                       int const numToReserve );
 
 
 } /* namespace geosx */
