@@ -192,10 +192,6 @@ private:
 
   localIndex getNumNodesPerElem();
 
-
-  /// save the sismo trace in file
-  void saveSeismo( localIndex iseismo, real32 val, string const & filename ) override;
-
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
 
