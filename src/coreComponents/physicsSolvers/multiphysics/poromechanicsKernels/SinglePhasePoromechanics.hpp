@@ -73,7 +73,7 @@ public:
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
-
+  using Base::m_meshData;
 
   /**
    * @brief Constructor
@@ -176,6 +176,15 @@ public:
   GEOSX_HOST_DEVICE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
+
+  /**
+   * @brief Get a parameter representative of the stiffness, used as physical scaling for the
+   * stabilization matrix.
+   * @param[in] k Element index.
+   * @return A parameter representative of the stiffness matrix dstress/dstrain
+   */
+  GEOSX_HOST_DEVICE
+  real64 computeStabilizationScaling( localIndex const k ) const;
 
   /**
    * @copydoc geosx::finiteElement::KernelBase::kernelLaunch

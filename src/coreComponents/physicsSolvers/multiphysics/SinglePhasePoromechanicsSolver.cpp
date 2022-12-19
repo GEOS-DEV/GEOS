@@ -16,6 +16,8 @@
  * @file SinglePhasePoromechanicsSolver.cpp
  */
 
+#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
+
 #include "SinglePhasePoromechanicsSolver.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
