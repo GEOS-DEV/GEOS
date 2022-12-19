@@ -686,7 +686,8 @@ void ProblemManager::importFields()
                                               region.getName(), subRegion.getName() ) );
 
 
-        generator.importFieldsOnArray( region.getName(), wrapperName, i, wrapper, materialWrapperNames.count( wrapperName ) > 0 && wrapper.numArrayDims() > 1);
+        bool const isMaterialField = materialWrapperNames.count( wrapperName ) > 0 && wrapper.numArrayDims() > 1;
+        generator.importFieldsOnArray( region.getName(), wrapperName, i, wrapper, isMaterialField );
       }
     } );
 
