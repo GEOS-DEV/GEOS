@@ -86,7 +86,7 @@
       target="/Tasks/twoPhaseFlowStatistics"/>
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="1e4"
+      forceDt="1e4"
       target="/Solvers/multiphasePoroelasticity"/>
     <PeriodicEvent
       name="restarts"
