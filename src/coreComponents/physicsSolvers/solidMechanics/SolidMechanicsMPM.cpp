@@ -2295,17 +2295,41 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
          dy = ( ymax - ymin ) / nybins,
          dz = ( zmax - zmin ) / nzbins;
 
-  // Declare and add particles to bins
-  std::vector<std::vector< ArrayOfArrays<int> >> bins; // This is horrible
-  bins.resize( particleManager.numRegions() );
+  // Declare bin key and bins data structure
+  BinKey binKey;
+  std::unordered_map< BinKey, std::vector<localIndex>, BinKeyHash > bins;
+
+  // Reverse entries in bins based on even distribution of particles in partition - OPTIONAL
   particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion & region ) // idk why this requires a template argument and the subregion loops don't
   {
-    localIndex regionIndex = region.getIndexInParent();
-    bins[regionIndex].resize( region.numSubRegions() );
+    binKey.regionIndex = region.getIndexInParent();
     region.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
     {
-      localIndex subRegionIndex = subRegion.getIndexInParent();
-      bins[regionIndex][subRegionIndex].resize( nbins );
+      binKey.subRegionIndex = subRegion.getIndexInParent();      
+      int numReserved = std::ceil(subRegion.size() / nbins);
+
+      // Loop over bins
+      for( int i=0; i<nxbins; i++ )
+      {
+        for( int j=0; j<nybins; j++ )
+        {
+          for( int k=0; k<nzbins; k++ )
+          {
+            binKey.binIndex = i + j * nxbins + k * nxbins * nybins;
+            bins[binKey].reserve(numReserved);
+          }
+        }
+      }
+    } );
+  } );
+
+  // Populate bins with local particle indices
+  particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion & region ) // idk why this requires a template argument and the subregion loops don't
+  {
+    binKey.regionIndex = region.getIndexInParent();
+    region.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+    {
+      binKey.subRegionIndex = subRegion.getIndexInParent();
       arrayView2d< real64 > const p_x = subRegion.getParticleCenter();
       for( localIndex p=0; p<subRegion.size(); p++ )
       {
@@ -2316,8 +2340,10 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
         k = std::floor( ( p_x[p][2] - zmin ) / dz );
 
         // Bin number
-        int b = i + j * nxbins + k * nxbins * nybins;
-        bins[regionIndex][subRegionIndex].emplaceBack( b, p );
+        binKey.binIndex = i + j * nxbins + k * nxbins * nybins;        
+
+        // Add particle to bin
+        bins[binKey].push_back(p);
       }
     } );
   } );
@@ -2332,6 +2358,8 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
     OrderedVariableToManyParticleRelation & neighborList = subRegionA.neighborList();
     neighborList.resize(0); // Clear the existing neighbor list. It would be better to resize each particle's array to zero to avoid the next line
     neighborList.resize(subRegionA.size());
+    int numToReserve = m_planeStrain == 1 ? 13 : 33; // Assuming square/cubic cells, 2 particles per cell in each dimension, and a neighbor radius equal to the cell edge length
+    reserveNeighbors(neighborList, numToReserve);
 
     // Get 'this' particle's location
     arrayView2d< real64 > const xA = subRegionA.getParticleCenter();
@@ -2361,21 +2389,26 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
       {
         // Get region and subregion indices
         ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegionB.getParent().getParent() );
-        localIndex regionIndex = region.getIndexInParent();
-        localIndex subRegionIndex = subRegionB.getIndexInParent();
+        binKey.regionIndex = region.getIndexInParent();
+        binKey.subRegionIndex = subRegionB.getIndexInParent();
 
         // Get 'other' particle location
         arrayView2d< real64 > const xB = subRegionB.getParticleCenter();
 
+        // Declare temporary array of local neighbor indices
+        std::vector< localIndex > localIndices;
+        localIndices.reserve(numToReserve);
+
         // Loop over bins
+        int count = 0; // Count the number of neighbors on this subregion
         for( int iBin=imin; iBin<=imax; iBin++ )
         {
           for( int jBin=jmin; jBin<=jmax; jBin++ )
           {
             for( int kBin=kmin; kBin<=kmax; kBin++ )
             {
-              int bin = iBin + jBin * nxbins + kBin * nxbins * nybins;
-              for( localIndex & b: bins[regionIndex][subRegionIndex][bin] )
+              binKey.binIndex = iBin + jBin * nxbins + kBin * nxbins * nybins;
+              for( localIndex & b: bins[binKey] )
               {
                 xBA[0] = xB[b][0] - xA[a][0];
                 xBA[1] = xB[b][1] - xA[a][1];
@@ -2383,16 +2416,29 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
                 real64 rSquared = xBA[0] * xBA[0] + xBA[1] * xBA[1] + xBA[2] * xBA[2];
                 if( rSquared <= neighborRadiusSquared ) // Would you be my neighbor?
                 {
-                  insert( neighborList,
-                          a,
-                          regionIndex,
-                          subRegionIndex,
-                          b );
+                  count++;
+                  localIndices.push_back(b);
+                  // fastInsert( neighborList,
+                  //             a,
+                  //             binKey.regionIndex,
+                  //             binKey.subRegionIndex,
+                  //             b );
                 }
               }
             }
           }
         }
+
+        // Populate the temporary arrays of neighbor region and subregion indices
+        std::vector< localIndex > regionIndices(count, binKey.regionIndex);
+        std::vector< localIndex > subRegionIndices(count, binKey.subRegionIndex);
+
+        // Insert indices into neighbor list
+        insertMany( neighborList,
+                    a,
+                    regionIndices,
+                    subRegionIndices,
+                    localIndices );
       } );
     }
   } );
