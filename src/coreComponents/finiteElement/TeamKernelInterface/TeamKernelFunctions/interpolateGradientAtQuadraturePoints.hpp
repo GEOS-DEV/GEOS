@@ -351,37 +351,27 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
   // Contraction on the first dimension
   tensor::StaticDTensor< num_quads_1d, num_dofs_1d, num_dofs_1d > Bu, Gu;
   #pragma unroll
-  for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
+  for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
   {
     #pragma unroll
-    for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
+    for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
     {
-      real64 bu[num_dofs_1d];
-      real64 gu[num_dofs_1d];
       #pragma unroll
-      for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
+      for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
       {
-        bu[dof_z] = 0.0;
-        gu[dof_z] = 0.0;
-      }
-      #pragma unroll
-      for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
-      {
-        real64 const b = basis[dof_x][quad_x];
-        real64 const g = basis_gradient[dof_x][quad_x];
+        real64 bu = 0.0;
+        real64 gu = 0.0;
         #pragma unroll
-        for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
+        for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
         {
+          real64 const b = basis[dof_x][quad_x];
+          real64 const g = basis_gradient[dof_x][quad_x];
           real64 const val = dofs( dof_x, dof_y, dof_z );
-          bu[dof_z] += b * val; // assumes dofs in shared
-          gu[dof_z] += g * val; // assumes dofs in shared
+          bu = bu + b * val;
+          gu = gu + g * val;
         }
-      }
-      #pragma unroll
-      for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
-      {
-        Bu( quad_x, dof_y, dof_z ) = bu[dof_z];
-        Gu( quad_x, dof_y, dof_z ) = gu[dof_z];
+        Bu( quad_x, dof_y, dof_z ) = bu;
+        Gu( quad_x, dof_y, dof_z ) = gu;
       }
     }
   }
@@ -389,42 +379,31 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
   // Contraction on the second dimension
   tensor::StaticDTensor< num_quads_1d, num_quads_1d, num_dofs_1d > BBu, BGu, GBu;
   #pragma unroll
-  for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
+  for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
   {
     #pragma unroll
-    for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
+    for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
     {
-      real64 bbu[num_dofs_1d];
-      real64 bgu[num_dofs_1d];
-      real64 gbu[num_dofs_1d];
       #pragma unroll
-      for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
+      for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
       {
-        bbu[dof_z] = 0.0;
-        bgu[dof_z] = 0.0;
-        gbu[dof_z] = 0.0;
-      }
-      #pragma unroll
-      for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
-      {
-        real64 const b = basis[dof_y][quad_y];
-        real64 const g = basis_gradient[dof_y][quad_y];
+        real64 bbu = 0.0;
+        real64 bgu = 0.0;
+        real64 gbu = 0.0;
         #pragma unroll
-        for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
+        for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
         {
+          real64 const b = basis[dof_y][quad_y];
+          real64 const g = basis_gradient[dof_y][quad_y];
           real64 const bu = Bu( quad_x, dof_y, dof_z );
           real64 const gu = Gu( quad_x, dof_y, dof_z );
-          bbu[dof_z] += b * bu;
-          bgu[dof_z] += b * gu;
-          gbu[dof_z] += g * bu;
+          bbu = bbu + b * bu;
+          bgu = bgu + b * gu;
+          gbu = gbu + g * bu;
         }
-      }
-      #pragma unroll
-      for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
-      {
-        BBu( quad_x, quad_y, dof_z ) = bbu[dof_z];
-        BGu( quad_x, quad_y, dof_z ) = bgu[dof_z];
-        GBu( quad_x, quad_y, dof_z ) = gbu[dof_z];
+        BBu( quad_x, quad_y, dof_z ) = bbu;
+        BGu( quad_x, quad_y, dof_z ) = bgu;
+        GBu( quad_x, quad_y, dof_z ) = gbu;
       }
     }
   }
@@ -436,31 +415,20 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
     #pragma unroll
     for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
     {
-      // Cache values in registers to read them only once from shared
-      real64 bbu[num_dofs_1d];
-      real64 bgu[num_dofs_1d];
-      real64 gbu[num_dofs_1d];
-      #pragma unroll
-      for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
-      {
-        bbu[dof_z] = BBu( quad_x, quad_y, dof_z );
-        bgu[dof_z] = BGu( quad_x, quad_y, dof_z );
-        gbu[dof_z] = GBu( quad_x, quad_y, dof_z );
-      }
       #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         real64 bbgu = 0.0;
         real64 bgbu = 0.0;
-        real64 gbbu = 0.0;
+        real64 gbbu = 0.0; 
         #pragma unroll
         for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
         {
           real64 const b = basis[dof_z][quad_z];
           real64 const g = basis_gradient[dof_z][quad_z];
-          bbgu += b * bgu[dof_z];
-          bgbu += b * gbu[dof_z];
-          gbbu += g * bbu[dof_z];
+          bbgu = bbgu + b * BGu( quad_x, quad_y, dof_z );
+          bgbu = bgbu + b * GBu( quad_x, quad_y, dof_z );
+          gbbu = gbbu + g * BBu( quad_x, quad_y, dof_z );
         }
         q_values( quad_x, quad_y, quad_z, 0 ) = bbgu;
         q_values( quad_x, quad_y, quad_z, 1 ) = bgbu;

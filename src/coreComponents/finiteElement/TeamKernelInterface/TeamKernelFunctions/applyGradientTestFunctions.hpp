@@ -361,44 +361,34 @@ void applyGradientTestFunctions(
   // Contraction on the first dimension
   tensor::StaticDTensor< num_dofs_1d, num_quads_1d, num_quads_1d > Gqx, Bqy, Bqz;
   #pragma unroll
-  for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
+  for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
   {
     #pragma unroll
-    for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
+    for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
     {
-      real64 gqx[ num_quads_1d ];
-      real64 bqy[ num_quads_1d ];
-      real64 bqz[ num_quads_1d ];
       #pragma unroll
-      for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
+      for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
       {
-        gqx[ quad_z ] = 0.0;
-        bqy[ quad_z ] = 0.0;
-        bqz[ quad_z ] = 0.0;
-      }
-      #pragma unroll
-      for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
-      {
-        real64 const b = basis[ dof_x ][ quad_x ];
-        real64 const g = basis_gradient[ dof_x ][ quad_x ];
+        real64 gqx = 0.0;
+        real64 bqy = 0.0;
+        real64 bqz = 0.0;
         #pragma unroll
-        for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
+        for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
         {
-          // assumes quads in shared
+          real64 const b = basis[ dof_x ][ quad_x ];
+          real64 const g = basis_gradient[ dof_x ][ quad_x ];
+
           real64 const qx = q_values( quad_x, quad_y, quad_z, 0 );
           real64 const qy = q_values( quad_x, quad_y, quad_z, 1 );
           real64 const qz = q_values( quad_x, quad_y, quad_z, 2 );
-          gqx[ quad_z ] += g * qx;
-          bqy[ quad_z ] += b * qy;
-          bqz[ quad_z ] += b * qz;
+
+          gqx = gqx + g * qx;
+          bqy = bqy + b * qy;
+          bqz = bqz + b * qz;
         }
-      }
-      #pragma unroll
-      for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
-      {
-        Gqx( dof_x, quad_y, quad_z ) = gqx[ quad_z ];
-        Bqy( dof_x, quad_y, quad_z ) = bqy[ quad_z ];
-        Bqz( dof_x, quad_y, quad_z ) = bqz[ quad_z ];
+        Gqx( dof_x, quad_y, quad_z ) = gqx;
+        Bqy( dof_x, quad_y, quad_z ) = bqy;
+        Bqz( dof_x, quad_y, quad_z ) = bqz;
       }
     }
   }
@@ -406,43 +396,32 @@ void applyGradientTestFunctions(
   // Contraction on the second dimension
   tensor::StaticDTensor< num_dofs_1d, num_dofs_1d, num_quads_1d > BGqx, GBqy, BBqz;
   #pragma unroll
-  for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
+  for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
   {
     #pragma unroll
-    for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
+    for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
     {
-      real64 bgqx[num_quads_1d];
-      real64 gbqy[num_quads_1d];
-      real64 bbqz[num_quads_1d];
       #pragma unroll
-      for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
+      for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
       {
-        bgqx[quad_z] = 0.0;
-        gbqy[quad_z] = 0.0;
-        bbqz[quad_z] = 0.0;
-      }
-      #pragma unroll
-      for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
-      {
-        real64 const b = basis[dof_y][quad_y];
-        real64 const g = basis_gradient[dof_y][quad_y];
+        real64 bgqx = 0.0;
+        real64 gbqy = 0.0;
+        real64 bbqz = 0.0;
         #pragma unroll
-        for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
+        for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
         {
+          real64 const b = basis[dof_y][quad_y];
+          real64 const g = basis_gradient[dof_y][quad_y];
           real64 const gqx = Gqx( dof_x, quad_y, quad_z );
           real64 const bqy = Bqy( dof_x, quad_y, quad_z );
           real64 const bqz = Bqz( dof_x, quad_y, quad_z );
-          bgqx[quad_z] += b * gqx;
-          gbqy[quad_z] += g * bqy;
-          bbqz[quad_z] += b * bqz;
+          bgqx += b * gqx;
+          gbqy += g * bqy;
+          bbqz += b * bqz;
         }
-      }
-      #pragma unroll
-      for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
-      {
-        BGqx( dof_x, dof_y, quad_z ) = bgqx[quad_z];
-        GBqy( dof_x, dof_y, quad_z ) = gbqy[quad_z];
-        BBqz( dof_x, dof_y, quad_z ) = bbqz[quad_z];
+        BGqx( dof_x, dof_y, quad_z ) = bgqx;
+        GBqy( dof_x, dof_y, quad_z ) = gbqy;
+        BBqz( dof_x, dof_y, quad_z ) = bbqz;
       }
     }
   }
@@ -454,17 +433,6 @@ void applyGradientTestFunctions(
     #pragma unroll
     for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
     {
-      // Cache values in registers to read them only once from shared
-      real64 bgqx[num_quads_1d];
-      real64 gbqy[num_quads_1d];
-      real64 bbqz[num_quads_1d];
-      #pragma unroll
-      for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
-      {
-        bgqx[quad_z] = BGqx( dof_x, dof_y, quad_z );
-        gbqy[quad_z] = GBqy( dof_x, dof_y, quad_z );
-        bbqz[quad_z] = BBqz( dof_x, dof_y, quad_z );
-      }
       #pragma unroll
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
@@ -472,9 +440,14 @@ void applyGradientTestFunctions(
         #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
+          real64 const bgqx = BGqx( dof_x, dof_y, quad_z );
+          real64 const gbqy = GBqy( dof_x, dof_y, quad_z );
+          real64 const bbqz = BBqz( dof_x, dof_y, quad_z );
           real64 const b = basis[dof_z][quad_z];
           real64 const g = basis_gradient[dof_z][quad_z];
-          res += b * bgqx[quad_z] + b * gbqy[quad_z] + g * bbqz[quad_z];
+          res = res + b * bgqx;
+          res = res + b * gbqy;
+          res = res + g * bbqz;
         }
         dofs( dof_x, dof_y, dof_z ) = res;
       }
