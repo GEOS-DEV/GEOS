@@ -20,7 +20,7 @@
 #define GEOSX_FILEIO_OUTPUTS_RESQMLOUTPUT_HPP_
 
 #include "OutputBase.hpp"
-#include "fileIO/vtk/RESQMLWriterInterface.hpp"
+#include "fileIO/RESQML/RESQMLWriterInterface.hpp"
 
 namespace geosx
 {

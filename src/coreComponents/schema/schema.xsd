@@ -268,6 +268,10 @@
 					<xsd:selector xpath="Python" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="OutputsRESQMLUniqueName">
+					<xsd:selector xpath="RESQML" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="OutputsRestartUniqueName">
 					<xsd:selector xpath="Restart" />
 					<xsd:field xpath="@name" />
@@ -1633,6 +1637,7 @@ the relative residual norm satisfies:
 			<xsd:element name="Blueprint" type="BlueprintType" />
 			<xsd:element name="ChomboIO" type="ChomboIOType" />
 			<xsd:element name="Python" type="PythonType" />
+			<xsd:element name="RESQML" type="RESQMLType" />
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
 			<xsd:element name="TimeHistory" type="TimeHistoryType" />
@@ -1674,6 +1679,24 @@ the relative residual norm satisfies:
 		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="RESQMLType">
+		<!--childDirectory => Child directory path-->
+		<xsd:attribute name="childDirectory" type="string" default="" />
+		<!--fieldNames => Names of the fields to output. If this attribute is specified, GEOSX outputs all the fields specified by the user, regardless of their `plotLevel`-->
+		<xsd:attribute name="fieldNames" type="string_array" default="{}" />
+		<!--objectName => The name of the object from which to retrieve field values.-->
+		<xsd:attribute name="objectName" type="string" use="required" />
+		<!--onlyPlotSpecifiedFieldNames => If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`-->
+		<xsd:attribute name="onlyPlotSpecifiedFieldNames" type="integer" default="0" />
+		<!--parallelThreads => Number of plot files.-->
+		<xsd:attribute name="parallelThreads" type="integer" default="1" />
+		<!--plotFileRoot => Name of the root file for this output.-->
+		<xsd:attribute name="plotFileRoot" type="string" default="RESQML" />
+		<!--plotLevel => Level detail plot. Only fields with lower of equal plot level will be output.-->
+		<xsd:attribute name="plotLevel" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

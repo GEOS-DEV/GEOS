@@ -15,7 +15,7 @@
 #ifndef GEOSX_FILEIO_VTK_RESQMLWRITERINTERFACE_HPP_
 #define GEOSX_FILEIO_VTK_RESQMLWRITERINTERFACE_HPP_
 
-#include "VTKPolyDataWriterInterface.hpp"
+#include "fileIO/vtk/VTKPolyDataWriterInterface.hpp"
 #include "dataRepository/Group.hpp"
 
 #include "fesapi/common/EpcDocument.h"

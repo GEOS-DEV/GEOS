@@ -424,6 +424,7 @@
 			<xsd:element name="Blueprint" type="BlueprintType" />
 			<xsd:element name="ChomboIO" type="ChomboIOType" />
 			<xsd:element name="Python" type="PythonType" />
+			<xsd:element name="RESQML" type="RESQMLType" />
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
 			<xsd:element name="TimeHistory" type="TimeHistoryType" />
@@ -433,6 +434,7 @@
 	<xsd:complexType name="BlueprintType" />
 	<xsd:complexType name="ChomboIOType" />
 	<xsd:complexType name="PythonType" />
+	<xsd:complexType name="RESQMLType" />
 	<xsd:complexType name="RestartType" />
 	<xsd:complexType name="SiloType" />
 	<xsd:complexType name="TimeHistoryType">
