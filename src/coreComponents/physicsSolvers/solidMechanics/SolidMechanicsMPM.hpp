@@ -175,6 +175,7 @@ public:
     static constexpr char const * accelerationString() { return "acceleration"; }
     static constexpr char const * forceContactString() { return "contactForce"; }
     static constexpr char const * damageString() { return "damage"; }
+    static constexpr char const * damageGradientString() { return "damageGradient"; }
     static constexpr char const * maxDamageString() { return "maxDamage"; }
     static constexpr char const * surfaceNormalString() { return "surfaceNormal"; }
     static constexpr char const * materialPositionString() { return "materialPosition"; }
@@ -280,7 +281,8 @@ private:
   void syncGridFields( std::vector< std::string > const & fieldNames,
                        DomainPartition & domain,
                        NodeManager & nodeManager,
-                       MeshLevel & mesh );
+                       MeshLevel & mesh,
+                       MPI_Op op );
 
   void singleFaceVectorFieldSymmetryBC( const int face,
                                         array3d< real64 > & vectorMultiField,
@@ -302,8 +304,7 @@ private:
                           Group & nodeSets );
 
   void computeGridSurfaceNormals( ParticleManager & particleManager,
-                                  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const gridPosition,
-                                  array3d< real64 > & gridSurfaceNormal );
+                                  NodeManager & nodeManager );
 
   void normalizeGridSurfaceNormals( array2d< real64 > & gridMass,
                                     array3d< real64 > & gridSurfaceNormal );
@@ -365,6 +366,12 @@ private:
                                    arrayView1d< real64 > const fp,   // scalar field values (e.g. damage) at neighbor particles
                                    arraySlice1d< real64 > const result ); 
 
+  void computeDamageFieldGradient( ParticleManager & particleManager );
+
+  void updateSurfaceFlagOverload( ParticleManager & particleManager );
+
+  void projectDamageFieldGradientToGrid( ParticleManager & particleManager,
+                                         NodeManager & nodeManager );
 };
 
 ENUM_STRINGS( SolidMechanicsMPM::TimeIntegrationOption,

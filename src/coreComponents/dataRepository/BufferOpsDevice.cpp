@@ -237,9 +237,39 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
         ++threadBuffer;
       } );
     }
+    else if(op == MPI_MAX)
+    {
+      int count = 0;
+      real64 LHSNormSquared = 0.0, RHSNormSquared = 0.0;
+
+      // Identify if existing value or incoming value has higher norm
+      LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer, &LHSNormSquared, &RHSNormSquared, &count] GEOSX_DEVICE ( T & value )
+      {
+        LHSNormSquared += value * value; // "value" can be an R1Tensor, in which case this becomes the dot product
+        RHSNormSquared += (*threadBuffer) * (*threadBuffer);
+        ++threadBuffer;
+        ++count;
+      } );
+
+      // Roll back threadBuffer
+      for(int i=0; i<count; i++)
+      {
+        --threadBuffer;
+      }
+
+      // Load in the buffer if it had higher norm
+      if( LHSNormSquared < RHSNormSquared )
+      {
+        LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOSX_DEVICE ( T & value )
+        {
+          value = *threadBuffer;
+          ++threadBuffer;
+        } );
+      }
+    }
     else
     {
-      GEOSX_ERROR("Unsupported MPI operator, MPI_SUM or MPI_REPLACE are supported.");
+      GEOSX_ERROR("Unsupported MPI operator! MPI_SUM, MPI_REPLACE and MPI_MAX are supported.");
     }
   } ) );
 
