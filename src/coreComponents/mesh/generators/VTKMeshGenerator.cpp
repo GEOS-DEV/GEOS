@@ -129,7 +129,7 @@ string VTKMeshGenerator::getSourceName( localIndex index ) const {
   return vtkArray->GetName();
 }
 
-void VTKMeshGenerator::importFieldsOnArray( string const regionName, string const geosxFieldName, string const meshFieldName, WrapperBase & wrapper, bool importMaterial ) const
+void VTKMeshGenerator::importFieldsOnArray( string const regionName, string const meshFieldName, WrapperBase & wrapper, bool importMaterial ) const
 {
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': importing field data from mesh dataset", catalogName(), getName() ) );
   GEOSX_ASSERT_MSG( m_vtkMesh, "Must call generateMesh() before importFields()" );
@@ -147,8 +147,6 @@ void VTKMeshGenerator::importFieldsOnArray( string const regionName, string cons
         // We don't know how the user mapped cell blocks to regions, so we must check all of them
         if( regionName != cellBlockName ) continue;
 
-        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Importing field {} -> {}",
-                                              vtkArray->GetName(), geosxFieldName ) );
         if( importMaterial )
         {
           vtk::importMaterialField( regionCells.second, vtkArray, wrapper );

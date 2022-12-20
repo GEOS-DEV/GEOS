@@ -103,7 +103,7 @@ public:
    */
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  virtual void importFieldsOnArray( string const cellBlockName, string const meshFieldName, string const geosxFieldName, dataRepository::WrapperBase & wrapper, bool importMaterial ) const override {}
+  virtual void importFieldsOnArray( string const cellBlockName, string const meshFieldName, dataRepository::WrapperBase & wrapper, bool importMaterial ) const override {}
 
   ///@}
 

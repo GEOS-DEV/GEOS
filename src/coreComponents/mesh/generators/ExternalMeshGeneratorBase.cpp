@@ -52,11 +52,6 @@ ExternalMeshGeneratorBase::ExternalMeshGeneratorBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Names of fields in GEOSX to import into" );
 
-  GEOSX_ERROR_IF_NE_MSG ( m_fieldsToImport.size(), m_fieldNamesInGEOSX.size(), "fieldsToImport and fieldNamesInGEOSX sizes should match" );
-  for ( int i = 0; i < m_fieldsToImport.size(); i++)
-  {
-    MeshGeneratorBase::m_fieldsMapping[ m_fieldsToImport[ i ] ] = m_fieldNamesInGEOSX[ i ];
-  }
 }
 
 void ExternalMeshGeneratorBase::postProcessInput()
@@ -67,6 +62,17 @@ void ExternalMeshGeneratorBase::postProcessInput()
                                     viewKeyStruct::fieldsToImportString(),
                                     viewKeyStruct::fieldNamesInGEOSXString() ),
                          InputError );
+
+  for ( int i = 0; i < m_fieldsToImport.size(); i++)
+  {
+    GEOSX_THROW_IF( m_fieldsMapping.count( m_fieldsToImport[ i ] ) > 0,
+                    GEOSX_FMT( "Mesh '{}': '{}' allready present in list of fields to import",
+                               getName(),
+                               m_fieldsToImport[ i ] ),
+                    InputError );
+
+    MeshGeneratorBase::m_fieldsMapping[ m_fieldsToImport[ i ] ] = m_fieldNamesInGEOSX[ i ];
+  }
 }
 
 } // namespace geosx

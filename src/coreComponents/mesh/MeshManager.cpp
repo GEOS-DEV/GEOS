@@ -83,7 +83,7 @@ void MeshManager::generateMeshLevels( DomainPartition & domain )
  * @param subRegion the target subregion
  * @return a set of wrapper names
  */
-  std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const & subRegion )
+std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const & subRegion )
 {
   using namespace constitutive;
   std::unordered_set< string > materialWrapperNames;
@@ -117,7 +117,7 @@ void MeshManager::importFields( DomainPartition & domain )
     {
       std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
       // Writing properties
-      for( const auto& pair : fieldNamesMapping )
+      for( const auto & pair : fieldNamesMapping )
       {
         const string & meshFieldName = pair.first;
         const string & geosxFieldName = pair.second;
@@ -135,12 +135,12 @@ void MeshManager::importFields( DomainPartition & domain )
         // synchronize
         fieldsToBeSync.addElementFields( {geosxFieldName}, {region.getName()} );
         WrapperBase & wrapper = subRegion.getWrapperBase( geosxFieldName );
-        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Importing field on {}/{}",
+        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Importing field {} -> {} on {}/{}",
+                                              meshFieldName, geosxFieldName,
                                               region.getName(), subRegion.getName() ) );
 
-
         bool const isMaterialField = materialWrapperNames.count( geosxFieldName ) > 0 && wrapper.numArrayDims() > 1;
-        generator.importFieldsOnArray( region.getName(), geosxFieldName, meshFieldName, wrapper, isMaterialField );
+        generator.importFieldsOnArray( region.getName(), meshFieldName, wrapper, isMaterialField );
       }
     } );
 

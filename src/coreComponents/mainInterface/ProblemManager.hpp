@@ -21,7 +21,6 @@
 #define GEOSX_MAININTERFACE_PROBLEMMANAGER_HPP_
 
 #include "events/EventManager.hpp"
-#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geosx
 {

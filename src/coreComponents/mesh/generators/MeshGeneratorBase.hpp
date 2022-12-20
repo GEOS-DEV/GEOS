@@ -84,12 +84,11 @@ public:
   /**
    * @brief import fields from the mesh  on the array accessible via the given wrapper.
    * @param cellBlockName name of the cell block to copy data from.
-   * @param geosxFieldName name of the field in GEOSX
    * @param meshFieldName name of the field in the meshd
    * @param wrapper Wrapper to access the array
    * @param importMaterial Indicate if we want to import material or regular fields
    */
-  virtual void importFieldsOnArray( string const cellBlockName, string const geosxFieldName, string const meshFieldName, dataRepository::WrapperBase & wrapper, bool importMaterial ) const = 0;
+  virtual void importFieldsOnArray( string const cellBlockName, string const meshFieldName, dataRepository::WrapperBase & wrapper, bool importMaterial ) const = 0;
 
   /**
    * @brief Free internal resources associated with mesh/data import.
