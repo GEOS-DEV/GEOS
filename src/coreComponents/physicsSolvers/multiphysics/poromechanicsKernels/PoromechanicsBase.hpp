@@ -68,11 +68,13 @@ public:
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
   /// will be the actual number of nodes per element.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
+  using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
+  using Base::m_meshData;
 
   /**
    * @brief Constructor
@@ -212,7 +214,12 @@ public:
               StackVariables & stack ) const
   {
     integer constexpr numDims = 3;
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
+
+    m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
+    localIndex const numSupportPoints =
+      m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+
+    for( localIndex a=0; a<numSupportPoints; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
@@ -229,6 +236,35 @@ public:
     }
 
     stack.localPressureDofIndex = m_flowDofNumber[k];
+
+    // Add stabilization to block diagonal parts of the local dResidualMomentum_dDisplacement (this
+    // is a no-operation with FEM classes)
+    real64 const stabilizationScaling = computeStabilizationScaling( k );
+    m_finiteElementSpace.template addGradGradStabilizationMatrix
+    < FE_TYPE, numDofPerTrialSupportPoint, false >( stack.feStack,
+                                                    stack.dLocalResidualMomentum_dDisplacement,
+                                                    -stabilizationScaling );
+    m_finiteElementSpace.template
+    addEvaluatedGradGradStabilizationVector< FE_TYPE,
+                                             numDofPerTrialSupportPoint >
+      ( stack.feStack,
+      stack.uhat_local,
+      reinterpret_cast< real64 (&)[numNodesPerElem][numDofPerTestSupportPoint] >(stack.localResidualMomentum),
+      -stabilizationScaling );
+  }
+
+  /**
+   * @brief Get a parameter representative of the stiffness, used as physical scaling for the
+   * stabilization matrix.
+   * @param[in] k Element index.
+   * @return A parameter representative of the stiffness matrix dstress/dstrain
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  real64 computeStabilizationScaling( localIndex const k ) const
+  {
+    // TODO: generalize this to other constitutive models (currently we assume linear elasticity).
+    return 2.0 * m_constitutiveUpdate.getShearModulus( k );
   }
 
 protected:

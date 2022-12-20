@@ -372,8 +372,9 @@ quadraturePointKernel( localIndex const k,
   // determinant of the Jacobian transformation matrix times the quadrature weight (detJxW)
   real64 N[numNodesPerElem]{};
   real64 dNdX[numNodesPerElem][3]{};
-  FE_TYPE::calcN( q, N );
-  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+  FE_TYPE::calcN( q, stack.feStack, N );
+  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
+                                                                           stack.feStack, dNdX );
 
   // Step 2: compute strain increment
   real64 strainIncrement[6]{};
@@ -404,10 +405,11 @@ complete( localIndex const k,
 {
   GEOSX_UNUSED_VAR( k );
   real64 maxForce = 0;
+  localIndex const numSupportPoints =
+    m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+  integer numDisplacementDofs = numSupportPoints * numDofPerTestSupportPoint;
 
-  constexpr int numDisplacementDofs = numNodesPerElem * numDofPerTestSupportPoint;
-
-  for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
+  for( int localNode = 0; localNode < numSupportPoints; ++localNode )
   {
     for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
     {
@@ -420,7 +422,7 @@ complete( localIndex const k,
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.localRowDofIndex,
                                                                               stack.dLocalResidualMomentum_dDisplacement[numDofPerTestSupportPoint * localNode + dim],
-                                                                              numNodesPerElem * numDofPerTrialSupportPoint );
+                                                                              numDisplacementDofs );
 
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localResidualMomentum[numDofPerTestSupportPoint * localNode + dim] );
       maxForce = fmax( maxForce, fabs( stack.localResidualMomentum[numDofPerTestSupportPoint * localNode + dim] ) );
@@ -446,7 +448,6 @@ complete( localIndex const k,
   }
   return maxForce;
 }
-
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,

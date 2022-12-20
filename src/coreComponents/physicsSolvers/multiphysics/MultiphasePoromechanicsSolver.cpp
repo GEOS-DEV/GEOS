@@ -16,6 +16,8 @@
  * @file MultiphasePoromechanicsSolver.cpp
  */
 
+#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
+
 #include "MultiphasePoromechanicsSolver.hpp"
 
 #include "constitutive/fluid/MultiFluidBase.hpp"

@@ -75,6 +75,7 @@ public:
   using Base::m_solidDensity;
   using Base::m_pressure;
   using Base::m_pressure_n;
+  using Base::m_meshData;
 
   /**
    * @brief Constructor
@@ -235,6 +236,7 @@ public:
   GEOSX_HOST_DEVICE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
+
 
   /**
    * @copydoc geosx::finiteElement::KernelBase::kernelLaunch

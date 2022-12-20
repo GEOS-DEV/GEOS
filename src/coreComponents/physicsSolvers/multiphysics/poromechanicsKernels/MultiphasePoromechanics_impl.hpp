@@ -313,6 +313,7 @@ computeFluidIncrement( localIndex const k,
     real64 const phaseAmount = porosity * phaseVolFrac( ip ) * phaseDensity( ip );
     real64 const phaseAmount_n = porosity_n * phaseVolFrac_n( ip ) * phaseDensity_n( ip );
 
+    real64 const dPhaseAmount_dVolStrain = dPorosity_dVolStrain * phaseVolFrac( ip ) * phaseDensity( ip );
     real64 const dPhaseAmount_dP = dPorosity_dPressure * phaseVolFrac( ip ) * phaseDensity( ip )
                                    + porosity * ( dPhaseVolFrac( ip, Deriv::dP ) * phaseDensity( ip )
                                                   + phaseVolFrac( ip ) * dPhaseDensity( ip, Deriv::dP ) );
@@ -338,8 +339,7 @@ computeFluidIncrement( localIndex const k,
 
       stack.dCompMassIncrement_dPressure[ic] += dPhaseAmount_dP * phaseCompFrac( ip, ic )
                                                 + phaseAmount * dPhaseCompFrac( ip, ic, Deriv::dP );
-      stack.dCompMassIncrement_dVolStrainIncrement[ic] +=
-        dPorosity_dVolStrain * phaseVolFrac( ip ) * phaseDensity( ip ) * phaseCompFrac( ip, ic );
+      stack.dCompMassIncrement_dVolStrainIncrement[ic] += dPhaseAmount_dVolStrain * phaseCompFrac( ip, ic );
 
       applyChainRule( m_numComponents,
                       dGlobalCompFrac_dGlobalCompDensity,
@@ -356,7 +356,7 @@ computeFluidIncrement( localIndex const k,
 
     // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
     // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
-    fluidIncrementKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount_dP, dPhaseAmount_dC );
+    fluidIncrementKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount_dVolStrain, dPhaseAmount_dP, dPhaseAmount_dC );
 
   }
 }
@@ -417,6 +417,7 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
   constexpr FunctionSpace pressureTrialSpace = FunctionSpace::P0;
 
   // Step 1: compute local linear momentum balance residual
+
   LinearFormUtilities::compute< displacementTestSpace,
                                 DifferentialOperator::SymmetricGradient >
   (
@@ -618,8 +619,9 @@ quadraturePointKernel( localIndex const k,
   // determinant of the Jacobian transformation matrix times the quadrature weight (detJxW)
   real64 N[numNodesPerElem]{};
   real64 dNdX[numNodesPerElem][3]{};
-  FE_TYPE::calcN( q, N );
-  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+  FE_TYPE::calcN( q, stack.feStack, N );
+  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
+                                                                           stack.feStack, dNdX );
 
   // Step 2: compute strain increment
   real64 strainIncrement[6]{};
@@ -656,17 +658,19 @@ complete( localIndex const k,
   GEOSX_UNUSED_VAR( k );
 
   real64 maxForce = 0;
-
-  constexpr int numDisplacementDofs = numNodesPerElem * numDofPerTestSupportPoint;
+  localIndex const numSupportPoints =
+    m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+  integer numDisplacementDofs = numSupportPoints * numDofPerTestSupportPoint;
+  constexpr integer maxNumDisplacementDofs = FE_TYPE::maxSupportPoints * numDofPerTestSupportPoint;
 
   // Apply equation/variable change transformation(s)
-  real64 work[numDisplacementDofs > ( maxNumComponents + 1 ) ? numDisplacementDofs : maxNumComponents + 1];
+  real64 work[maxNumDisplacementDofs > ( maxNumComponents + 1 ) ? maxNumDisplacementDofs : maxNumComponents + 1];
   shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, numDisplacementDofs, stack.dLocalResidualMass_dDisplacement, work );
   shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, 1, stack.dLocalResidualMass_dPressure, work );
   shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, m_numComponents, stack.dLocalResidualMass_dComponents, work );
   shiftElementsAheadByOneAndReplaceFirstElementWithSum( m_numComponents, stack.localResidualMass );
 
-  for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
+  for( int localNode = 0; localNode < numSupportPoints; ++localNode )
   {
     for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
     {
@@ -678,7 +682,7 @@ complete( localIndex const k,
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.localRowDofIndex,
                                                                               stack.dLocalResidualMomentum_dDisplacement[numDofPerTestSupportPoint * localNode + dim],
-                                                                              numNodesPerElem * numDofPerTrialSupportPoint );
+                                                                              numDisplacementDofs );
 
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localResidualMomentum[numDofPerTestSupportPoint * localNode + dim] );
       maxForce = fmax( maxForce, fabs( stack.localResidualMomentum[numDofPerTestSupportPoint * localNode + dim] ) );
