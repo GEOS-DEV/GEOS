@@ -155,7 +155,7 @@ inline void FrictionlessContactUpdates::computeTraction( localIndex const k,
 {
   GEOSX_UNUSED_VAR( k, oldDispJump );
 
-  bool const isOpen = fractureState == extrinsicMeshData::contact::FractureState::Open;
+  bool const isOpen = fractureState == fields::contact::FractureState::Open;
 
   tractionVector[0] = isOpen ? 0.0 : m_penaltyStiffness * dispJump[0];
   tractionVector[1] = 0.0;
@@ -172,7 +172,7 @@ inline void FrictionlessContactUpdates::updateFractureState( localIndex const k,
                                                              integer & fractureState ) const
 {
   GEOSX_UNUSED_VAR( k, tractionVector );
-  using namespace extrinsicMeshData::contact;
+  using namespace fields::contact;
   fractureState = dispJump[0] > m_displacementJumpThreshold ? FractureState::Open : FractureState::Stick;
 }
 

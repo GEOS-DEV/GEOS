@@ -112,7 +112,8 @@ BrooksCoreyRelativePermeability::createKernelWrapper()
                         m_phaseTypes,
                         m_phaseOrder,
                         m_phaseRelPerm,
-                        m_dPhaseRelPerm_dPhaseVolFrac );
+                        m_dPhaseRelPerm_dPhaseVolFrac,
+                        m_phaseTrappedVolFrac );
 }
 
 //START_SPHINX_INCLUDE_01

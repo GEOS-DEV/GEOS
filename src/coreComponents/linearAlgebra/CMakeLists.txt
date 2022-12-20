@@ -12,8 +12,6 @@ set( linearAlgebra_headers
      interfaces/InterfaceTypes.hpp
      interfaces/MatrixBase.hpp
      interfaces/VectorBase.hpp
-     interfaces/dense/BlasLapackFunctions.h
-     interfaces/dense/BlasLapackLA.hpp
      solvers/BicgstabSolver.hpp
      solvers/BlockPreconditioner.hpp
      solvers/CgSolver.hpp
@@ -45,7 +43,6 @@ set( linearAlgebra_headers
 #
 set( linearAlgebra_sources
      DofManager.cpp
-     interfaces/dense/BlasLapackLA.cpp
      solvers/BicgstabSolver.cpp
      solvers/BlockPreconditioner.cpp
      solvers/CgSolver.cpp
@@ -54,7 +51,7 @@ set( linearAlgebra_sources
      solvers/SeparateComponentPreconditioner.cpp
    )
 
-set( dependencyList mesh blas lapack )
+set( dependencyList mesh denseLinearAlgebra )
 
 
 list( APPEND linearAlgebra_headers
@@ -110,8 +107,10 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/Hydrofracture.hpp
           interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp      
           interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp
+          interfaces/hypre/mgrStrategies/MultiphasePoromechanicsReservoirFVM.hpp	  
           interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp
+          interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp	  
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp
         )
@@ -159,6 +158,10 @@ endif()
 
 if ( ENABLE_CUDA )
     list( APPEND dependencyList cuda )
+endif()
+
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
 endif()
 
 blt_add_library( NAME       linearAlgebra

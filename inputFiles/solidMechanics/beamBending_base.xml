@@ -28,15 +28,6 @@
       target="/Outputs/restartOutput"/>
   </Events>
 
-  <!-- SPHINX_FEDiscretization -->
-  <NumericalMethods>
-    <FiniteElements>
-      <FiniteElementSpace
-        name="FE1"
-        order="1"/>
-    </FiniteElements>
-  </NumericalMethods>
-
   <!-- SPHINX_FEDiscretizationEnd -->
   <ElementRegions>
     <CellElementRegion
@@ -62,7 +53,7 @@
     <FieldSpecification
       name="xnegconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xneg }"/>
@@ -70,7 +61,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ xneg }"/>
@@ -78,7 +69,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>

@@ -90,8 +90,8 @@ Any solver information specified in the single-physics XML blocks will not be ta
 Here, we instruct GEOSX to perform at most ``newtonMaxIter = "10"`` Newton iterations. 
 GEOSX will adjust the time step size as follows:
 
-- if the Newton solver converges in ``dtIncIterLimit x newtonMaxIter = 5`` iterations or fewer, GEOSX will double the time step size for the next time step,
-- if the Newton solver converges in ``dtCutIterLimit x newtonMaxIter = 8`` iterations or more, GEOSX will reduce the time step size for the next time step by a factor ``timestepCutFactor = 0.1``,
+- if the Newton solver converges in ``timeStepIncreaseIterLimit x newtonMaxIter = 5`` iterations or fewer, GEOSX will double the time step size for the next time step,
+- if the Newton solver converges in ``timeStepDecreaseIterLimit x newtonMaxIter = 8`` iterations or more, GEOSX will reduce the time step size for the next time step by a factor ``timestepCutFactor = 0.1``,
 - if the Newton solver fails to converge in ``newtonMaxIter = 10``, GEOSX will cut the time step size by a factor ``timestepCutFactor = 0.1`` and restart from the previous converged time step.
 
 The maximum number of time step cuts is specified by the attribute ``maxTimeStepCuts``.
@@ -220,10 +220,10 @@ In this section of the input file, we follow the procedure already described in
 
 We associate a **CellElementRegion** named ``reservoir`` to the reservoir mesh.
 Since we have imported a mesh with one region consisting of hexahedral cells, we
-must set the attribute ``cellBlocks`` to ``DEFAULT_HEX``.
+must set the attribute ``cellBlocks`` to ``hexahedra``.
 
 .. note::
-        If you use a name that is not ``DEFAULT_HEX`` for this attribute, GEOSX will throw an error at the beginning of the simulation.
+        If you use a name that is not ``hexahedra`` for this attribute, GEOSX will throw an error at the beginning of the simulation.
 
 We also associate a **WellElementRegion** to each well. As the **CellElementRegion**,
 it contains a ``materialList`` that must point (by name) to the constitutive models
@@ -279,7 +279,7 @@ attribute (here, 0 or 1) is used to point to a specific entry of the ``phaseName
 in the **DeadOilFluid** block. 
 
 Note that we also define the uniform porosity field here since it is not included in the mesh file
-imported by the **PAMELAMesh**.
+imported by the **VTKMesh**.
 
 .. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_base_iterative.xml
   :language: xml

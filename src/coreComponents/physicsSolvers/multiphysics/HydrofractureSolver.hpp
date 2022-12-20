@@ -119,8 +119,8 @@ public:
                              int const cycleNumber,
                              DomainPartition & domain ) override;
 
-  virtual void setNextDt( real64 const & currentDt,
-                          real64 & nextDt ) override;
+  virtual real64 setNextDt( real64 const & currentDt,
+                            DomainPartition & domain ) override;
 
 
   virtual real64 explicitStep( real64 const & time_n,

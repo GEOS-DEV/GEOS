@@ -19,6 +19,7 @@ CompressibleSolidCarmanKozenyPermeability   node         :ref:`XML_CompressibleS
 CompressibleSolidConstantPermeability       node         :ref:`XML_CompressibleSolidConstantPermeability`       
 CompressibleSolidParallelPlatesPermeability node         :ref:`XML_CompressibleSolidParallelPlatesPermeability` 
 CompressibleSolidSlipDependentPermeability  node         :ref:`XML_CompressibleSolidSlipDependentPermeability`  
+CompressibleSolidWillisRichardsPermeability node         :ref:`XML_CompressibleSolidWillisRichardsPermeability` 
 ConstantPermeability                        node         :ref:`XML_ConstantPermeability`                        
 Coulomb                                     node         :ref:`XML_Coulomb`                                     
 DamageElasticIsotropic                      node         :ref:`XML_DamageElasticIsotropic`                      
@@ -62,9 +63,13 @@ TableRelativePermeabilityHysteresis         node         :ref:`XML_TableRelative
 ThermalCompressibleSinglePhaseFluid         node         :ref:`XML_ThermalCompressibleSinglePhaseFluid`         
 VanGenuchtenBakerRelativePermeability       node         :ref:`XML_VanGenuchtenBakerRelativePermeability`       
 VanGenuchtenCapillaryPressure               node         :ref:`XML_VanGenuchtenCapillaryPressure`               
+<<<<<<< HEAD
 ViscoDruckerPrager                          node         :ref:`XML_ViscoDruckerPrager`                          
 ViscoExtendedDruckerPrager                  node         :ref:`XML_ViscoExtendedDruckerPrager`                  
 ViscoModifiedCamClay                        node         :ref:`XML_ViscoModifiedCamClay`                        
+=======
+WillisRichardsPermeability                  node         :ref:`XML_WillisRichardsPermeability`                  
+>>>>>>> develop
 =========================================== ==== ======= ====================================================== 
 
 

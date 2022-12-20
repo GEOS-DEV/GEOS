@@ -139,10 +139,17 @@ public:
   }
 
   GEOSX_HOST_DEVICE
+<<<<<<< HEAD
   virtual void viscousStateUpdate( localIndex const k,
                                    localIndex const q,
                                    real64 beta ) const override;
 
+=======
+  virtual real64 getShearModulus( localIndex const k ) const override final
+  {
+    return m_shearModulus[k];
+  }
+>>>>>>> develop
 
   // TODO: confirm hyper stress/strain measures before activatiing
 
@@ -474,6 +481,17 @@ public:
    *         shear modulus (at every element).
    */
   arrayView1d< real64 const > const shearModulus() const { return m_shearModulus; }
+
+  GEOSX_HOST_DEVICE
+  virtual arrayView1d< real64 const > getBulkModulus() const override final
+  {
+    return m_bulkModulus;
+  }
+  GEOSX_HOST_DEVICE
+  virtual arrayView1d< real64 const > getShearModulus() const override final
+  {
+    return m_shearModulus;
+  }
 
   /**
    * @brief Create a instantiation of the ElasticIsotropicUpdate class
