@@ -126,6 +126,17 @@ public:
   Tensor<T, SIZE_TPARAM> & operator+=( const double& rhs );
   Tensor<T, SIZE_TPARAM> & operator+=( const Tensor<T, SIZE_TPARAM>& rhs );
 
+  /// Define dot product. TODO: Check compatibility of lhs and rhs.
+  friend double operator*(const Tensor<T, SIZE_TPARAM>& lhs, const Tensor<T, SIZE_TPARAM>& rhs)
+  {
+    double result = 0;
+    for( int i = 0; i < SIZE_TPARAM; ++i )
+    {
+      result += lhs.data[i] * rhs.data[i];
+    }
+    return result;
+  };
+
   /// Underlying array
   T data[SIZE] = {};
 

@@ -114,6 +114,12 @@ public:
   void cpdiDomainScaling( real64 lCrit,
                           int m_planeStrain );
 
+  void getMappedNodes( int const p,
+                       std::array< real64, 3 > const & xMin,
+                       std::array< real64, 3 > const & hx,
+                       array3d< int > const & ijkMap,
+                       arrayView1d< localIndex > const nodeIDs );
+
   void getAllWeights( int const p,
                       std::array< real64, 3 > const & xMin,
                       std::array< real64, 3 > const & hx,
