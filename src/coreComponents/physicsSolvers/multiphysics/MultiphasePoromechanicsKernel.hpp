@@ -450,6 +450,7 @@ public:
       real64 const phaseAmount = porosity * phaseVolFrac( ip ) * phaseDensity( ip );
       real64 const phaseAmount_n = porosity_n * phaseVolFrac_n( ip ) * phaseDensity_n( ip );
 
+      real64 const dPhaseAmount_dVolStrain = dPorosity_dVolStrain * phaseVolFrac( ip ) * phaseDensity( ip );
       real64 const dPhaseAmount_dP = dPorosity_dPressure * phaseVolFrac( ip ) * phaseDensity( ip )
                                      + porosity * ( dPhaseVolFrac( ip, Deriv::dP ) * phaseDensity( ip )
                                                     + phaseVolFrac( ip ) * dPhaseDensity( ip, Deriv::dP ) );
@@ -475,8 +476,7 @@ public:
 
         stack.dCompMassIncrement_dPressure[ic] += dPhaseAmount_dP * phaseCompFrac( ip, ic )
                                                   + phaseAmount * dPhaseCompFrac( ip, ic, Deriv::dP );
-        stack.dCompMassIncrement_dVolStrainIncrement[ic] +=
-          dPorosity_dVolStrain * phaseVolFrac( ip ) * phaseDensity( ip ) * phaseCompFrac( ip, ic );
+        stack.dCompMassIncrement_dVolStrainIncrement[ic] += dPhaseAmount_dVolStrain * phaseCompFrac( ip, ic );
 
         applyChainRule( m_numComponents,
                         dGlobalCompFrac_dGlobalCompDensity,
@@ -493,7 +493,7 @@ public:
 
       // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
       // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
-      fluidIncrementKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount_dP, dPhaseAmount_dC );
+      fluidIncrementKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount_dVolStrain, dPhaseAmount_dP, dPhaseAmount_dC );
 
     }
   }

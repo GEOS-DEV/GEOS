@@ -253,6 +253,10 @@ void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )
                                                                    CellElementSubRegion & subRegion )
     {
       flowSolver()->updateFluidState( subRegion );
+      if( m_isThermal )
+      {
+        flowSolver()->updateSolidInternalEnergyModel( subRegion );
+      }
     } );
   } );
 }

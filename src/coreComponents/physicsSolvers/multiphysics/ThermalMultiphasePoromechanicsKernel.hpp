@@ -133,6 +133,7 @@ public:
     m_rockInternalEnergy( inputConstitutiveType.getInternalEnergy() ),
     m_dRockInternalEnergy_dTemperature( inputConstitutiveType.getDinternalEnergy_dTemperature() ),
     m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() ),
+    m_initialTemperature( elementSubRegion.template getField< fields::flow::initialTemperature >() ),
     m_temperature( elementSubRegion.template getField< fields::flow::temperature >() )
   {
     // extract fluid constitutive data views
@@ -369,6 +370,13 @@ public:
   {
     using Deriv = constitutive::multifluid::DerivativeOffset;
 
+    stack.fluidEnergyIncrement = 0.0;
+    stack.dFluidEnergyIncrement_dVolStrainIncrement = 0.0;
+    stack.dFluidEnergyIncrement_dPressure = 0.0;
+    stack.dFluidEnergyIncrement_dTemperature = 0.0;
+    LvArray::tensorOps::fill< maxNumComponents >( stack.dFluidEnergyIncrement_dComponents, 0.0 );
+    LvArray::tensorOps::fill< maxNumComponents >( stack.dCompMassIncrement_dTemperature, 0.0 );
+
     Base::computeFluidIncrement( k, q,
                                  porosity,
                                  porosity_n,
@@ -378,6 +386,7 @@ public:
                                  stack, [&]( real64 const & ip,
                                              real64 const & phaseAmount,
                                              real64 const & phaseAmount_n,
+                                             real64 const & dPhaseAmount_dVolStrain,
                                              real64 const & dPhaseAmount_dP,
                                              real64 const (&dPhaseAmount_dC)[maxNumComponents] )
     {
@@ -417,7 +426,8 @@ public:
       // local accumulation
       stack.fluidEnergyIncrement += phaseAmount * phaseInternalEnergy( ip ) - phaseAmount_n * phaseInternalEnergy_n( ip );
 
-      // derivatives w.r.t. pressure and temperature
+      // derivatives w.r.t. vol strain increment, pressure and temperature
+      stack.dFluidEnergyIncrement_dVolStrainIncrement += dPhaseAmount_dVolStrain * phaseInternalEnergy( ip );
       stack.dFluidEnergyIncrement_dPressure += dPhaseAmount_dP * phaseInternalEnergy( ip )
                                                + phaseAmount * dPhaseInternalEnergy( ip, Deriv::dP );
       stack.dFluidEnergyIncrement_dTemperature += dPhaseAmount_dT * phaseInternalEnergy( ip )
@@ -433,14 +443,13 @@ public:
     } );
 
     // Step 3: assemble the solid part of the accumulation term
-
     real64 const oneMinusPoro = 1 - porosity;
 
     // local accumulation and derivatives w.r.t. pressure and temperature
-    stack.fluidEnergyIncrement += oneMinusPoro * m_rockInternalEnergy( k, q ) - ( 1 - porosity_n ) * m_rockInternalEnergy_n( k, q );
-    stack.dFluidEnergyIncrement_dPressure += -dPorosity_dPressure * m_rockInternalEnergy( k, q );
-    stack.dFluidEnergyIncrement_dTemperature += -dPorosity_dTemperature * m_rockInternalEnergy( k, q ) + oneMinusPoro * m_dRockInternalEnergy_dTemperature( k, q );
-
+    stack.fluidEnergyIncrement += oneMinusPoro * m_rockInternalEnergy( k, 0 ) - ( 1 - porosity_n ) * m_rockInternalEnergy_n( k, 0 );
+    stack.dFluidEnergyIncrement_dVolStrainIncrement += -dPorosity_dVolStrain * m_rockInternalEnergy( k, 0 );
+    stack.dFluidEnergyIncrement_dPressure += -dPorosity_dPressure * m_rockInternalEnergy( k, 0 );
+    stack.dFluidEnergyIncrement_dTemperature += -dPorosity_dTemperature * m_rockInternalEnergy( k, 0 ) + oneMinusPoro * m_dRockInternalEnergy_dTemperature( k, 0 );
   }
 
   GEOSX_HOST_DEVICE
@@ -623,6 +632,18 @@ public:
       stack.dFluidEnergyIncrement_dTemperature,
       1.0,
       detJxW );
+
+    BilinearFormUtilities::compute< pressureTestSpace,
+                                    pressureTrialSpace,
+                                    DifferentialOperator::Identity,
+                                    DifferentialOperator::Identity >
+    (
+      stack.dLocalResidualEnergy_dComponents,
+      1.0,
+      stack.dFluidEnergyIncrement_dComponents,
+      1.0,
+      detJxW );
+
   }
 
   GEOSX_HOST_DEVICE
@@ -681,7 +702,10 @@ public:
       for( integer dim = 0; dim < numDofPerTestSupportPoint; ++dim )
       {
         localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[numDofPerTestSupportPoint*localNode + dim] - m_dofRankOffset );
-        if( dof < 0 || dof >= m_matrix.numRows() ) continue;
+        if( dof < 0 || dof >= m_matrix.numRows() )
+        {
+          continue;
+        }
 
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 &stack.localTemperatureDofIndex,
@@ -711,10 +735,10 @@ public:
                                                 stack.dLocalResidualPoreVolConstraint_dTemperature[0],
                                                 1 );
 
-
     // Step 4: assemble the energy balance and its derivatives into the global matrix
 
     localIndex const energyDof = LvArray::integerConversion< localIndex >( stack.localTemperatureDofIndex - m_dofRankOffset );
+
     if( 0 <= energyDof && energyDof < m_matrix.numRows() )
     {
       m_matrix.template addToRowBinarySearchUnsorted< serialAtomic >( energyDof,
