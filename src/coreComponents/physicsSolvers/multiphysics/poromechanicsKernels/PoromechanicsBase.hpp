@@ -13,15 +13,16 @@
  */
 
 /**
- * @file PoromechanicsKernelBase.hpp
+ * @file PoromechanicsBase.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELBASE_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_POROMECHANICSBASE_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_POROMECHANICSBASE_HPP_
 
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 namespace geosx
 {
@@ -47,7 +48,7 @@ namespace poromechanicsKernels
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class PoromechanicsKernelBase :
+class PoromechanicsBase :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
                                             FE_TYPE,
@@ -67,31 +68,33 @@ public:
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
   /// will be the actual number of nodes per element.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
+  using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
+  using Base::m_meshData;
 
   /**
    * @brief Constructor
    * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param gravityVector The gravity vector.
    */
-  PoromechanicsKernelBase( NodeManager const & nodeManager,
-                           EdgeManager const & edgeManager,
-                           FaceManager const & faceManager,
-                           localIndex const targetRegionIndex,
-                           SUBREGION_TYPE const & elementSubRegion,
-                           FE_TYPE const & finiteElementSpace,
-                           CONSTITUTIVE_TYPE & inputConstitutiveType,
-                           arrayView1d< globalIndex const > const inputDispDofNumber,
-                           globalIndex const rankOffset,
-                           CRSMatrixView< real64, globalIndex const > const inputMatrix,
-                           arrayView1d< real64 > const inputRhs,
-                           real64 const (&gravityVector)[3],
-                           string const inputFlowDofKey,
-                           string const fluidModelKey ):
+  PoromechanicsBase( NodeManager const & nodeManager,
+                     EdgeManager const & edgeManager,
+                     FaceManager const & faceManager,
+                     localIndex const targetRegionIndex,
+                     SUBREGION_TYPE const & elementSubRegion,
+                     FE_TYPE const & finiteElementSpace,
+                     CONSTITUTIVE_TYPE & inputConstitutiveType,
+                     arrayView1d< globalIndex const > const inputDispDofNumber,
+                     globalIndex const rankOffset,
+                     CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                     arrayView1d< real64 > const inputRhs,
+                     real64 const (&gravityVector)[3],
+                     string const inputFlowDofKey,
+                     string const fluidModelKey ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -201,7 +204,7 @@ public:
    * @brief Copy global values from primary field to a local stack array.
    * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
    *
-   * For the PoromechanicsKernelBase implementation, global values from the displacement,
+   * For the PoromechanicsBase implementation, global values from the displacement,
    * incremental displacement, and degree of freedom numbers are placed into
    * element local stack storage.
    */
@@ -211,7 +214,12 @@ public:
               StackVariables & stack ) const
   {
     integer constexpr numDims = 3;
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
+
+    m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
+    localIndex const numSupportPoints =
+      m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+
+    for( localIndex a=0; a<numSupportPoints; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
@@ -228,6 +236,35 @@ public:
     }
 
     stack.localPressureDofIndex = m_flowDofNumber[k];
+
+    // Add stabilization to block diagonal parts of the local dResidualMomentum_dDisplacement (this
+    // is a no-operation with FEM classes)
+    real64 const stabilizationScaling = computeStabilizationScaling( k );
+    m_finiteElementSpace.template addGradGradStabilizationMatrix
+    < FE_TYPE, numDofPerTrialSupportPoint, false >( stack.feStack,
+                                                    stack.dLocalResidualMomentum_dDisplacement,
+                                                    -stabilizationScaling );
+    m_finiteElementSpace.template
+    addEvaluatedGradGradStabilizationVector< FE_TYPE,
+                                             numDofPerTrialSupportPoint >
+      ( stack.feStack,
+      stack.uhat_local,
+      reinterpret_cast< real64 (&)[numNodesPerElem][numDofPerTestSupportPoint] >(stack.localResidualMomentum),
+      -stabilizationScaling );
+  }
+
+  /**
+   * @brief Get a parameter representative of the stiffness, used as physical scaling for the
+   * stabilization matrix.
+   * @param[in] k Element index.
+   * @return A parameter representative of the stiffness matrix dstress/dstrain
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  real64 computeStabilizationScaling( localIndex const k ) const
+  {
+    // TODO: generalize this to other constitutive models (currently we assume linear elasticity).
+    return 2.0 * m_constitutiveUpdate.getShearModulus( k );
   }
 
 protected:
@@ -263,4 +300,4 @@ protected:
 
 } // namespace geosx
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELBASE_HPP_
+#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_POROMECHANICSBASE_HPP_

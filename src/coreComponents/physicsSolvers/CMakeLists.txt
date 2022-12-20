@@ -57,6 +57,7 @@ set( physicsSolvers_headers
      fluidFlow/wells/SinglePhaseWell.hpp
      fluidFlow/wells/SinglePhaseWellFields.hpp
      fluidFlow/wells/SinglePhaseWellKernels.hpp
+     fluidFlow/wells/WellConstants.hpp
      fluidFlow/wells/WellControls.hpp
      fluidFlow/wells/WellSolverBase.hpp
      fluidFlow/wells/WellSolverBaseFields.hpp
@@ -66,17 +67,21 @@ set( physicsSolvers_headers
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/HydrofractureSolverKernels.hpp
-     multiphysics/MultiphasePoromechanicsKernel.hpp
      multiphysics/MultiphasePoromechanicsSolver.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
-     multiphysics/PoromechanicsKernelBase.hpp
-     multiphysics/SinglePhasePoromechanicsKernel.hpp
-     multiphysics/SinglePhasePoromechanicsEFEMKernel.hpp
+     multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp
+     multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp     
+     multiphysics/poromechanicsKernels/PoromechanicsBase.hpp
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp     
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp
+     multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp
+     multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp     
      multiphysics/SinglePhasePoromechanicsFluxKernels.hpp
      multiphysics/SinglePhasePoromechanicsSolver.hpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.hpp
      multiphysics/SinglePhaseReservoirAndWells.hpp
-     multiphysics/ThermalMultiphasePoromechanicsKernel.hpp	     
      simplePDE/LaplaceBaseH1.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
@@ -168,6 +173,7 @@ set( physicsSolvers_sources
    )
 
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
+  include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)	
 
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )

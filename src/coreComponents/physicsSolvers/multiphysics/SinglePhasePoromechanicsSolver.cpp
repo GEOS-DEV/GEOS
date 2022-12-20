@@ -16,6 +16,8 @@
  * @file SinglePhasePoromechanicsSolver.cpp
  */
 
+#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
+
 #include "SinglePhasePoromechanicsSolver.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
@@ -23,7 +25,7 @@
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsKernel.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
@@ -93,7 +95,9 @@ void SinglePhasePoromechanicsSolver::initializePreSubGroups()
     {
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      GEOSX_ERROR_IF( porousName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+      GEOSX_THROW_IF( porousName.empty(),
+                      GEOSX_FMT( "{} {} : Solid model not found on subregion {}", catalogName(), getName(), subRegion.getName() ),
+                      InputError );
     } );
   } );
 }
@@ -161,7 +165,6 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
   real64 poromechanicsMaxForce = 0.0;
   real64 mechanicsMaxForce = 0.0;
-
 
   // step 1: apply the full poromechanics coupling on the target regions on the poromechanics solver
 
@@ -236,6 +239,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                               localMatrix,
                                               localRhs,
                                               " " );
+
 }
 
 void SinglePhasePoromechanicsSolver::createPreconditioner()

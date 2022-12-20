@@ -16,14 +16,16 @@
  * @file MultiphasePoromechanicsSolver.cpp
  */
 
+#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
+
 #include "MultiphasePoromechanicsSolver.hpp"
 
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/multiphysics/MultiphasePoromechanicsKernel.hpp"
-#include "physicsSolvers/multiphysics/ThermalMultiphasePoromechanicsKernel.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
@@ -195,7 +197,6 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
                                                                                 localRhs );
 
   } );
-
 
   solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
 
