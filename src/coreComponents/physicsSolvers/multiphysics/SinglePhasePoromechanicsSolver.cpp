@@ -16,6 +16,8 @@
  * @file SinglePhasePoromechanicsSolver.cpp
  */
 
+#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
+
 #include "SinglePhasePoromechanicsSolver.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
@@ -23,10 +25,11 @@
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsKernel.hpp"
-#include "physicsSolvers/multiphysics/ThermalSinglePhasePoromechanicsKernel.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
 
 namespace geosx
 {
@@ -172,81 +175,107 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 {
 
   GEOSX_MARK_FUNCTION;
+
+  real64 poromechanicsMaxForce = 0.0;
+  real64 mechanicsMaxForce = 0.0;
+
+  // step 1: apply the full poromechanics coupling on the target regions on the poromechanics solver
+
+  set< string > poromechanicsRegionNames;
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    NodeManager const & nodeManager = mesh.getNodeManager();
+    poromechanicsRegionNames.insert( regionNames.begin(), regionNames.end() );
 
-    string const dofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-    arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-
-    string const pDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
-
-    real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+    string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
     if( m_isThermal )
     {
-      thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory
-      kernelFactory( dispDofNumber,
-                     pDofKey,
-                     dofManager.rankOffset(),
-                     localMatrix,
-                     localRhs,
-                     gravityVectorData,
-                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
-
-      // Cell-based contributions
-      solidMechanicsSolver()->getMaxForce() =
-        finiteElement::
-          regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                        constitutive::PorousSolidBase,
-                                        CellElementSubRegion >( mesh,
-                                                                regionNames,
-                                                                solidMechanicsSolver()->getDiscretizationName(),
-                                                                viewKeyStruct::porousMaterialNamesString(),
-                                                                kernelFactory );
-
-      flowSolver()->assembleFluxTerms( time_n, dt,
-                                       domain,
-                                       dofManager,
-                                       localMatrix,
-                                       localRhs );
-
+      poromechanicsMaxForce =
+        assemblyLaunch< constitutive::PorousSolidBase,
+                        thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory >( mesh,
+                                                                                                     dofManager,
+                                                                                                     regionNames,
+                                                                                                     viewKeyStruct::porousMaterialNamesString(),
+                                                                                                     localMatrix,
+                                                                                                     localRhs,
+                                                                                                     flowDofKey,
+                                                                                                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
     else
     {
-      poromechanicsKernels::SinglePhasePoromechanicsKernelFactory
-      kernelFactory( dispDofNumber,
-                     pDofKey,
-                     dofManager.rankOffset(),
-                     localMatrix,
-                     localRhs,
-                     gravityVectorData,
-                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
+      poromechanicsMaxForce =
+        assemblyLaunch< constitutive::PorousSolidBase,
+                        poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
+                                                                                       dofManager,
+                                                                                       regionNames,
+                                                                                       viewKeyStruct::porousMaterialNamesString(),
+                                                                                       localMatrix,
+                                                                                       localRhs,
+                                                                                       flowDofKey,
+                                                                                       FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    }
+  } );
 
-      // Cell-based contributions
-      solidMechanicsSolver()->getMaxForce() =
-        finiteElement::
-          regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                        constitutive::PorousSolidBase,
-                                        CellElementSubRegion >( mesh,
-                                                                regionNames,
-                                                                solidMechanicsSolver()->getDiscretizationName(),
-                                                                viewKeyStruct::porousMaterialNamesString(),
-                                                                kernelFactory );
+  // step 2: apply mechanics solver on its target regions not included in the poromechanics solver target regions
+
+  solidMechanicsSolver()->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                                        MeshLevel & mesh,
+                                                                                        arrayView1d< string const > const & regionNames )
+  {
+
+    // collect the target region of the mechanics solver not included in the poromechanics target regions
+    array1d< string > filteredRegionNames;
+    filteredRegionNames.reserve( regionNames.size() );
+    for( string const & regionName : regionNames )
+    {
+      // if the mechanics target region is not included in the poromechanics target region, save the string
+      if( poromechanicsRegionNames.count( regionName ) == 0 )
+      {
+        filteredRegionNames.emplace_back( regionName );
+      }
     }
 
+    // if the array is empty, the mechanics and poromechanics solver target regions overlap perfectly, there is nothing to do
+    if( filteredRegionNames.empty() )
+    {
+      return;
+    }
+
+    mechanicsMaxForce =
+      assemblyLaunch< constitutive::SolidBase,
+                      solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
+                                                                                dofManager,
+                                                                                filteredRegionNames.toViewConst(),
+                                                                                SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                                                localMatrix,
+                                                                                localRhs );
+  } );
+
+  solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
+
+
+  // step 3: compute the fluxes (face-based contributions)
+
+  if( m_isThermal )
+  {
+    flowSolver()->assembleFluxTerms( time_n, dt,
+                                     domain,
+                                     dofManager,
+                                     localMatrix,
+                                     localRhs );
+  }
+  else
+  {
     flowSolver()->assemblePoroelasticFluxTerms( time_n, dt,
                                                 domain,
                                                 dofManager,
                                                 localMatrix,
                                                 localRhs,
                                                 " " );
-
-
-  } );
-
+  }
 
 }
 
@@ -291,7 +320,10 @@ void SinglePhasePoromechanicsSolver::updateState( DomainPartition & domain )
                                                                    CellElementSubRegion & subRegion )
     {
       flowSolver()->updateFluidState( subRegion );
-
+      if( m_isThermal )
+      {
+        flowSolver()->updateSolidInternalEnergyModel( subRegion );
+      }
     } );
   } );
 }

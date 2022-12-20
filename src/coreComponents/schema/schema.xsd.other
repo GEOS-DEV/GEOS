@@ -345,7 +345,6 @@
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
-			<xsd:element name="PAMELAMesh" type="PAMELAMeshType" />
 			<xsd:element name="VTKMesh" type="VTKMeshType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -372,11 +371,6 @@
 		<xsd:attribute name="xCoords" type="real64_array" />
 		<!--yCoords => y-coordinates of each mesh block vertex-->
 		<xsd:attribute name="yCoords" type="real64_array" />
-	</xsd:complexType>
-	<xsd:complexType name="PAMELAMeshType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="meshLevels" type="meshLevelsType" />
-		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="VTKMeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -924,6 +918,7 @@
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
+			<xsd:element name="RelpermDriver" type="RelpermDriverType" />
 			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="SolidMechanicsStatistics" type="SolidMechanicsStatisticsType" />
@@ -933,6 +928,7 @@
 	<xsd:complexType name="CompositionalMultiphaseStatisticsType" />
 	<xsd:complexType name="PVTDriverType" />
 	<xsd:complexType name="PackCollectionType" />
+	<xsd:complexType name="RelpermDriverType" />
 	<xsd:complexType name="SinglePhaseStatisticsType" />
 	<xsd:complexType name="SolidMechanicsStateResetType" />
 	<xsd:complexType name="SolidMechanicsStatisticsType" />
@@ -1454,6 +1450,8 @@
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageSpectralElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
@@ -1472,6 +1470,8 @@
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageVolDevElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
@@ -1490,6 +1490,8 @@
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DeadOilFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
@@ -1568,6 +1570,8 @@
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--virginCompressionIndex => Virgin compression index-->
 		<xsd:attribute name="virginCompressionIndex" type="real64_array" />
 	</xsd:complexType>
@@ -1592,6 +1596,8 @@
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
@@ -1604,6 +1610,8 @@
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicPressureDependentType">
 		<!--density => Material Density-->
@@ -1690,6 +1698,8 @@
 		<xsd:attribute name="stateVariable" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="FrictionlessContactType" />
 	<xsd:complexType name="JFunctionCapillaryPressureType">
@@ -2035,7 +2045,6 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
-			<xsd:element name="PAMELAMesh" type="PAMELAMeshType" />
 			<xsd:element name="VTKMesh" type="VTKMeshType" />
 		</xsd:choice>
 	</xsd:complexType>

@@ -596,13 +596,6 @@ Element: Outputs
 .. include:: ../../coreComponents/schema/docs/Outputs.rst
 
 
-.. _XML_PAMELAMesh:
-
-Element: PAMELAMesh
-===================
-.. include:: ../../coreComponents/schema/docs/PAMELAMesh.rst
-
-
 .. _XML_PML:
 
 Element: PML
@@ -797,6 +790,13 @@ Element: Python
 Element: ReactiveCompositionalMultiphaseOBL
 ===========================================
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL.rst
+
+
+.. _XML_RelpermDriver:
+
+Element: RelpermDriver
+======================
+.. include:: ../../coreComponents/schema/docs/RelpermDriver.rst
 
 
 .. _XML_Restart:
@@ -1734,13 +1734,6 @@ Datastructure: Outputs
 .. include:: ../../coreComponents/schema/docs/Outputs_other.rst
 
 
-.. _DATASTRUCTURE_PAMELAMesh:
-
-Datastructure: PAMELAMesh
-=========================
-.. include:: ../../coreComponents/schema/docs/PAMELAMesh_other.rst
-
-
 .. _DATASTRUCTURE_PML:
 
 Datastructure: PML
@@ -1935,6 +1928,13 @@ Datastructure: Python
 Datastructure: ReactiveCompositionalMultiphaseOBL
 =================================================
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL_other.rst
+
+
+.. _DATASTRUCTURE_RelpermDriver:
+
+Datastructure: RelpermDriver
+============================
+.. include:: ../../coreComponents/schema/docs/RelpermDriver_other.rst
 
 
 .. _DATASTRUCTURE_Restart:
