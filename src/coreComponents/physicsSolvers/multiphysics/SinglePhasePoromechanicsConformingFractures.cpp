@@ -41,7 +41,7 @@ SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingF
 
 void SinglePhasePoromechanicsConformingFractures::initializePostInitialConditionsPostSubGroups()
 {
-  contactSolver()->setSolidSolverDofFlags(false);
+  contactSolver()->setSolidSolverDofFlags( false );
 }
 
 void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition const & domain,
@@ -187,13 +187,13 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    poromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
-                                                                  dofManager.rankOffset(),
-                                                                  localMatrix,
-                                                                  localRhs,
-                                                                  gravityVectorData,
-                                                                  pDofKey,
-                                                                  FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    poromechanicsKernels::SinglePhasePoromechanicsKernelFactory kernelFactory( dispDofNumber,
+                                                                               dofManager.rankOffset(),
+                                                                               localMatrix,
+                                                                               localRhs,
+                                                                               gravityVectorData,
+                                                                               pDofKey,
+                                                                               FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
     // 1. Cell-based contributions to Kuu, Kup, Kpu, Kpp blocks
     finiteElement::
@@ -375,13 +375,13 @@ void SinglePhasePoromechanicsConformingFractures::
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( contactSolver()->getStabilizationName() );
 
-    SurfaceElementRegion const & fractureRegion = 
-                        elemManager.getRegion< SurfaceElementRegion >( contactSolver()->getFractureRegionName() );
-    FaceElementSubRegion const & fractureSubRegion = 
-                        fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
-    
+    SurfaceElementRegion const & fractureRegion =
+      elemManager.getRegion< SurfaceElementRegion >( contactSolver()->getFractureRegionName() );
+    FaceElementSubRegion const & fractureSubRegion =
+      fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
+
     GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( flow::pressure::key() ), "The fracture subregion must contain pressure field." );
-    
+
     arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
     GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
@@ -461,8 +461,8 @@ void SinglePhasePoromechanicsConformingFractures::
   // Get the coordinates for all nodes
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
-  elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, 
-                                                            [&]( localIndex const, 
+  elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                            [&]( localIndex const,
                                                                  FaceElementSubRegion const & subRegion )
   {
     arrayView1d< globalIndex const > const &
