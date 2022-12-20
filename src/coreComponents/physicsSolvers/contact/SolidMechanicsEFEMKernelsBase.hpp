@@ -230,7 +230,7 @@ public:
   //END_kernelLauncher
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const

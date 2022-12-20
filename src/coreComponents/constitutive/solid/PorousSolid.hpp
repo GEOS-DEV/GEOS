@@ -54,7 +54,7 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void smallStrainUpdateSinglePhase( localIndex const k,
                                      localIndex const q,
                                      real64 const & fluidPressure_n,
@@ -131,7 +131,7 @@ public:
 
   template< int NUM_MAX_COMPONENTS >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void smallStrainUpdateMultiphase( localIndex const k,
                                     localIndex const q,
                                     localIndex const NP,
@@ -347,7 +347,7 @@ public:
    * @param stiffness the stiffness array
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void getElasticStiffness( localIndex const k, localIndex const q, real64 ( & stiffness )[6][6] ) const
   {
     m_solidUpdate.getElasticStiffness( k, q, stiffness );
@@ -361,7 +361,7 @@ private:
 
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void updateBiotCoefficient( localIndex const k ) const
   {
     // This call is not general like this.
@@ -371,7 +371,7 @@ private:
   }
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void computeBodyForce( real64 const & solidDensity,
                          real64 const & fluidDensity,
                          real64 const & dFluidDensity_dPressure,
@@ -398,7 +398,7 @@ private:
 
   template< int NUM_MAX_COMPONENTS >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void computeBodyForce( real64 const & solidDensity,
                          real64 const & fluidTotalMassDensity,
                          real64 const & dFluidTotalMassDensity_dPressure,
@@ -427,7 +427,7 @@ private:
   }
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void computePorosity( localIndex const k,
                         localIndex const q,
                         real64 const & deltaFluidPressure,
@@ -451,7 +451,7 @@ private:
   }
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void computeTotalStress( localIndex const k,
                            localIndex const q,
                            real64 const & fluidPressure,

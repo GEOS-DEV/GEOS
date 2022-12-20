@@ -166,7 +166,7 @@ private:
   arrayView1d< real64 const > const m_c66;
 };
 
-GEOSX_FORCE_INLINE
+inline
 GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::getElasticStiffness( localIndex const k,
                                                              localIndex const q,
@@ -192,7 +192,7 @@ void ElasticTransverseIsotropicUpdates::getElasticStiffness( localIndex const k,
   stiffness[5][5] = m_c66[k];
 }
 
-GEOSX_FORCE_INLINE
+inline
 GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
                                                                              localIndex const q,
@@ -210,7 +210,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( loc
   stress[5] = m_c66[k]*totalStrain[5];
 }
 
-GEOSX_FORCE_INLINE
+inline
 GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                                   localIndex const q,
@@ -223,7 +223,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex con
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                                   localIndex const q,
                                                                   real64 const ( &totalStrain )[6],
@@ -238,7 +238,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex con
   stiffness.m_c66 = m_c66[k];
 }
 
-GEOSX_FORCE_INLINE
+inline
 GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                                       localIndex const q,
@@ -250,7 +250,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   saveStress( k, q, stress );                                           // m_newStress = stress
 }
 
-GEOSX_FORCE_INLINE
+inline
 GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                            localIndex const q,
@@ -263,7 +263,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                            localIndex const q,
                                                            real64 const ( &strainIncrement )[6],
@@ -278,7 +278,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
   stiffness.m_c66 = m_c66[k];
 }
 
-GEOSX_FORCE_INLINE
+inline
 GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::hypoUpdate( localIndex const k,
                                                     localIndex const q,

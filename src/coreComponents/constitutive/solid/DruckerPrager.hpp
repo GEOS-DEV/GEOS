@@ -107,7 +107,7 @@ public:
                                   DiscretizationOps & stiffness ) const final;
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
@@ -135,7 +135,7 @@ private:
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
                                               real64 const ( &strainIncrement )[6],
@@ -292,7 +292,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
                                               real64 const ( &strainIncrement )[6],

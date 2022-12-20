@@ -95,7 +95,7 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
    * @param scale Scaling constant
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void scaleParams( real64 const scale )
   {
     m_bulkModulus *= scale;
@@ -114,7 +114,7 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsIsotropic::BTDB( BASIS_GRADIENT const & gradN,
                                                  real64 const & detJxW,
                                                  real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
@@ -151,7 +151,7 @@ void SolidModelDiscretizationOpsIsotropic::BTDB( BASIS_GRADIENT const & gradN,
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsIsotropic::upperBTDB( BASIS_GRADIENT const & gradN,
                                                       real64 const & detJxW,
                                                       real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
@@ -190,7 +190,7 @@ void SolidModelDiscretizationOpsIsotropic::upperBTDB( BASIS_GRADIENT const & gra
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsIsotropic::diagBTDB( BASIS_GRADIENT const & gradN,
                                                      real64 const & detJxW,
                                                      real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS *3] )
@@ -221,7 +221,7 @@ void SolidModelDiscretizationOpsIsotropic::diagBTDB( BASIS_GRADIENT const & grad
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsIsotropic::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
                                                            real64 const & detJxW,
                                                            real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] )

@@ -212,7 +212,7 @@ struct UpwindingHelper
    * @param[in] posd position (local or neighbor) of the downwind element
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static
   void
   setIndicesForMobilityRatioUpwinding( localIndex const (&localIds)[ 3 ],

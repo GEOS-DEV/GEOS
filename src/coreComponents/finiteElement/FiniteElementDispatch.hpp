@@ -56,13 +56,13 @@
   finiteElement::H1_Prism9_VEM_Gauss1, \
   finiteElement::H1_Prism10_VEM_Gauss1
 
+// can only compile these when not using cce+rocm
 #define VEM_2_TYPES \
   finiteElement::H1_Hexahedron_VEM_Gauss1, \
   finiteElement::H1_Wedge_VEM_Gauss1, \
   finiteElement::H1_Prism11_VEM_Gauss1
-// can only compile h1_prism11_vem_gauss1 when not using cce+rocm
 
-#if !defined( GEOSX_USE_HIP )
+#if ! defined( GEOSX_USE_HIP )
 #define VEM_TYPES VEM_1_TYPES, VEM_2_TYPES
 #else
 #define VEM_TYPES VEM_1_TYPES
@@ -76,7 +76,7 @@
 
 #endif
 
-#if !defined( GEOSX_USE_HIP )
+#if ! defined( GEOSX_USE_HIP )
 // can only compile GL_FE_TYPES when not using cce+rocm
 #define ALL_FE_TYPES BASE_FE_TYPES, GL_FE_TYPES
 #else

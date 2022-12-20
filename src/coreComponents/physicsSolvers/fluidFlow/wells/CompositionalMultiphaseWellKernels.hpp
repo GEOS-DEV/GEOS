@@ -82,7 +82,7 @@ struct ControlEquationHelper
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static
   void
   switchControl( bool const isProducer,
@@ -98,7 +98,7 @@ struct ControlEquationHelper
 
   template< integer NC >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void
   compute( globalIndex const rankOffset,
            WellControls::Control const currentControl,
@@ -134,7 +134,7 @@ struct FluxKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void
     computeExit( real64 const & dt,
                  real64 const ( &compFlux )[NC],
@@ -147,7 +147,7 @@ struct FluxKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void
     compute( real64 const & dt,
              real64 const ( &compFlux )[NC],
@@ -185,7 +185,7 @@ struct PressureRelationKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void
     compute( real64 const & gravCoef,
              real64 const & gravCoefNext,
@@ -263,7 +263,7 @@ struct PerforationKernel
 
   template< integer NC, integer NP >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void
   compute( bool const & disableReservoirToWellFlow,
            real64 const & resPres,
@@ -338,7 +338,7 @@ struct AccumulationKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void
     compute( integer const numPhases,
              real64 const & volume,
@@ -388,7 +388,7 @@ struct VolumeBalanceKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void
     compute( integer const numPhases,
              real64 const & volume,
@@ -538,7 +538,7 @@ public:
    */
   template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void compute( localIndex const ei,
                 FUNC && totalMassDensityKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {

@@ -133,7 +133,7 @@ struct ProppantUpdateKernel
 struct AccumulationKernel
 {
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static
   void
   compute( localIndex const NC,
@@ -409,7 +409,7 @@ struct ProppantPackVolumeKernel
                                   ElementView< arrayView1d< real64 > > const & proppantPackVolFrac );
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static
   void
   computeProppantPackVolume( localIndex const numElems,
@@ -439,7 +439,7 @@ struct ProppantPackVolumeKernel
                              arrayView1d< real64 > const & proppantLiftFlux );
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static
   void
   updateProppantPackVolume( localIndex const numElems,

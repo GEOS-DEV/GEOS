@@ -93,7 +93,7 @@ protected:
    * @param[in] stress Stress to be save to m_newStress[k][q]
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void saveStress( localIndex const k,
                    localIndex const q,
                    real64 const ( &stress )[6] ) const
@@ -395,7 +395,7 @@ public:
    * @param[in] q Quadrature point index.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const
   {

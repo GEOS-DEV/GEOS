@@ -72,7 +72,7 @@ protected:
                                        globalIndex & numOpen ) const;
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static bool compareFractureStates( integer const state0,
                                      integer const state1 )
   {

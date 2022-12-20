@@ -117,7 +117,7 @@ public:
    * @param[out] N The shape function values.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void calcN( real64 const (&coords)[3],
                      real64 ( &N )[numNodes] );
 
@@ -142,7 +142,7 @@ public:
    *   point.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( &N )[numNodes] );
@@ -172,7 +172,7 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
                            StackVariables const & stack,
@@ -232,7 +232,7 @@ private:
    */
   template< typename T >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   constexpr static T linearMap( T const indexT, T const indexL )
   {
     return 2 * indexT + indexL;
@@ -245,7 +245,7 @@ private:
    * @return parent coordinate in the r direction.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   constexpr static real64 parentCoords0( localIndex const a )
   {
     return 0.5 * ( a & 2 );
@@ -258,7 +258,7 @@ private:
    * @return parent coordinate in the s direction.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   constexpr static real64 parentCoords1( localIndex const a )
   {
     return 0.25 * ( a & 4 );
@@ -271,7 +271,7 @@ private:
    * @return parent coordinate in the xi direction.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   constexpr static real64 parentCoords2( localIndex const a )
   {
     return -1.0 + 2 * ( a & 1 );
@@ -284,7 +284,7 @@ private:
    * @return parent coordinate in the r direction.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   constexpr static real64 quadratureParentCoords0( localIndex const q )
   {
     return quadratureCrossSectionCoord + 0.5  * parentCoords0( q );
@@ -297,7 +297,7 @@ private:
    * @return parent coordinate in the r direction.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   constexpr static real64 quadratureParentCoords1( localIndex const q )
   {
     return quadratureCrossSectionCoord + 0.5  * parentCoords1( q );
@@ -310,7 +310,7 @@ private:
    * @return parent coordinate in the xi direction.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   constexpr static real64 quadratureParentCoords2( localIndex const q )
   {
     return parentCoords2( q ) * quadratureLongitudinalCoord;
@@ -347,7 +347,7 @@ private:
 /// @cond Doxygen_Suppress
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 H1_Wedge_Lagrange1_Gauss6::
   jacobianTransformation( int const q,
@@ -385,7 +385,7 @@ H1_Wedge_Lagrange1_Gauss6::
 //*************************************************************************************************
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 H1_Wedge_Lagrange1_Gauss6::
   applyJacobianTransformationToShapeFunctionsDerivatives( int const q,
@@ -424,7 +424,7 @@ H1_Wedge_Lagrange1_Gauss6::
 //*************************************************************************************************
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 H1_Wedge_Lagrange1_Gauss6::calcN( real64 const (&coords)[3],
                                   real64 (& N)[numNodes] )
@@ -444,7 +444,7 @@ H1_Wedge_Lagrange1_Gauss6::calcN( real64 const (&coords)[3],
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 H1_Wedge_Lagrange1_Gauss6::
   calcN( localIndex const q,
@@ -463,7 +463,7 @@ H1_Wedge_Lagrange1_Gauss6::
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void H1_Wedge_Lagrange1_Gauss6::
   calcN( localIndex const q,
          StackVariables const & GEOSX_UNUSED_PARAM( stack ),
@@ -475,7 +475,7 @@ void H1_Wedge_Lagrange1_Gauss6::
 //*************************************************************************************************
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64
 H1_Wedge_Lagrange1_Gauss6::
   calcGradN( localIndex const q,
@@ -494,7 +494,7 @@ H1_Wedge_Lagrange1_Gauss6::
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64 H1_Wedge_Lagrange1_Gauss6::
   calcGradN( localIndex const q,
              real64 const (&X)[numNodes][3],
@@ -507,7 +507,7 @@ real64 H1_Wedge_Lagrange1_Gauss6::
 //*************************************************************************************************
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64
 H1_Wedge_Lagrange1_Gauss6::
   transformedQuadratureWeight( localIndex const q,

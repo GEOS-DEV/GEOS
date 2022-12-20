@@ -66,7 +66,7 @@ public:
    * @param[in] porosity porosity to be saved to m_newPorosity[k][q]
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void savePorosity( localIndex const k,
                      localIndex const q,
                      real64 const & porosity,
@@ -77,7 +77,7 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   real64 getPorosity( localIndex const k,
                       localIndex const q ) const
   {
@@ -86,7 +86,7 @@ public:
 
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   real64 getPorosity_n( localIndex const k,
                         localIndex const q ) const
   {
@@ -94,7 +94,7 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   real64 getInitialPorosity( localIndex const k,
                              localIndex const q ) const
   {

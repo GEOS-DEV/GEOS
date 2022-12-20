@@ -74,13 +74,7 @@ struct MultiFluidVarSlice
 template< typename T, int NDIM, int USD, int USD_DC >
 struct MultiFluidVarView
 {
-  /// @cond DO_NOT_DOCUMENT
-  /// We need these SMFs to enable and avoid host-device errors with CUDA. Otherwise rule of 0 would be fine.
   MultiFluidVarView() = default;
-  MultiFluidVarView( MultiFluidVarView const & ) = default;
-  MultiFluidVarView & operator=( MultiFluidVarView const & ) = default;
-  MultiFluidVarView & operator=( MultiFluidVarView && ) = default;
-  /// @endcond DO_NOT_DOCUMENT
 
   ArrayView< T, NDIM, USD > value;        ///< View into property values
   ArrayView< T, NDIM + 1, USD_DC > derivs; ///< View into property derivatives w.r.t. pressure, temperature, compositions
@@ -88,10 +82,9 @@ struct MultiFluidVarView
   using SliceType = MultiFluidVarSlice< T, NDIM - 2, USD - 2, USD_DC - 2 >;
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   SliceType operator()( localIndex const k, localIndex const q ) const
   {
-    return SliceType( value[k][q], derivs[k][q] );
+    return { value[k][q], derivs[k][q] };
   }
 };
 
@@ -104,7 +97,7 @@ struct MultiFluidVarView
 template< typename T, int NDIM, typename PERM, typename PERM_DC >
 struct MultiFluidVar
 {
-  Array< real64, NDIM, PERM > value;        ///< Property values
+  Array< real64, NDIM, PERM > value;         ///< Property values
   Array< real64, NDIM + 1, PERM_DC > derivs; ///< Property derivatives w.r.t. pressure, temperature, compositions
 
   using ViewType = MultiFluidVarView< T, NDIM, getUSD< PERM >, getUSD< PERM_DC > >;

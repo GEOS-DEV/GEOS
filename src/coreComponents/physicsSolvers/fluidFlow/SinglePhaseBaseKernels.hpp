@@ -38,7 +38,7 @@ namespace singlePhaseBaseKernels
 struct MobilityKernel
 {
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void
   compute( real64 const & dens,
            real64 const & dDens_dPres,
@@ -52,7 +52,7 @@ struct MobilityKernel
   }
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void
   compute( real64 const & dens,
            real64 const & visc,

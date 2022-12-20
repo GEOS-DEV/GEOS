@@ -278,7 +278,7 @@ public:
    * @param[in] stack the stack variables
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void computeFluxDivergence( localIndex const ei,
                               StackVariables & stack ) const
   {
@@ -400,7 +400,7 @@ public:
    * @param[inout] stack the stack variables
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void complete( localIndex const ei,
                  StackVariables & stack ) const
   {

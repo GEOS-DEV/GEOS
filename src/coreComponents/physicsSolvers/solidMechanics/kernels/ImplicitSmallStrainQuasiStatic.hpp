@@ -170,7 +170,7 @@ public:
      * @param a Node index for the row.
      * @param b Node index for the col.
      */
-    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
+    GEOSX_HOST_DEVICE inline constexpr
     void operator() ( localIndex const a, localIndex const b )
     {
       GEOSX_UNUSED_VAR( a );
@@ -182,7 +182,7 @@ public:
      *   integrating the divergence to produce nodal forces.
      * @param stress The stress array.
      */
-    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
+    GEOSX_HOST_DEVICE inline constexpr
     void operator() ( real64 (& stress)[6] )
     {
       GEOSX_UNUSED_VAR( stress );
@@ -210,7 +210,7 @@ public:
    * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
@@ -246,7 +246,7 @@ protected:
    * @return A parameter representative of the stiffness matrix dstress/dstrain
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   real64 computeStabilizationScaling( localIndex const k ) const
   {
     // TODO: generalize this to other constitutive models (currently we assume linear elasticity).

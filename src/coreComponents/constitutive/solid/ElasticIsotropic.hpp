@@ -169,7 +169,7 @@ protected:
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
                                                    localIndex const q,
                                                    real64 ( & stiffness )[6][6] ) const
@@ -199,7 +199,7 @@ void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
                                                 localIndex const q,
                                                 real64 ( & elasticStrain)[6] ) const
@@ -218,7 +218,7 @@ void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
                                                                    localIndex const q,
                                                                    real64 const ( &totalStrain )[6],
@@ -241,7 +241,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex co
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         localIndex const q,
                                                         real64 const ( &totalStrain )[6],
@@ -254,7 +254,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         localIndex const q,
                                                         real64 const ( &totalStrain )[6],
@@ -268,7 +268,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                             localIndex const q,
                                                             real64 const ( &strainIncrement )[6],
@@ -281,7 +281,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
                                                  real64 const ( &strainIncrement )[6],
@@ -294,7 +294,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
                                                  real64 const ( &strainIncrement )[6],
@@ -310,7 +310,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
 // TODO: need to confirm stress / strain measures before activating hyper inferface
 /*
    GEOSX_HOST_DEVICE
-   GEOSX_FORCE_INLINE
+   inline
    void ElasticIsotropicUpdates::hyperUpdate( localIndex const k,
                                            localIndex const q,
                                            real64 const (&FmI)[3][3],

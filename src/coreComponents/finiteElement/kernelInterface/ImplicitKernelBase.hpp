@@ -175,7 +175,7 @@ public:
    *       complete() unless we actually need these dof somewhere else in the kernel.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void setup( localIndex const k,
               StackVariables & stack ) const
   {

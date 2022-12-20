@@ -111,7 +111,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
 {
   template< typename CONTACT_WRAPPER >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void
   computeAccumulationDerivative( CONTACT_WRAPPER const & contactWrapper,
                                  localIndex const numNodesPerFace,
@@ -149,7 +149,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
 
   template< typename CONTACT_WRAPPER >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void
   computeFluxDerivative( CONTACT_WRAPPER const & contactWrapper,
                          localIndex const kfe2,

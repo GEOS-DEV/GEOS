@@ -31,7 +31,7 @@ namespace proppantTransportKernels
 {
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 AccumulationKernel::
   compute( localIndex const numComps,
@@ -996,7 +996,7 @@ void FluxKernel::
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 ProppantPackVolumeKernel::
   computeProppantPackVolume( localIndex const numElems,
@@ -1202,7 +1202,7 @@ void ProppantPackVolumeKernel::
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 ProppantPackVolumeKernel::
   updateProppantPackVolume( localIndex const numElems,

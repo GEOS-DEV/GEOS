@@ -96,7 +96,7 @@ struct PrecomputeSourceAndReceiverKernel
    */
   template< typename FE_TYPE >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static bool
   computeCoordinatesOnReferenceElement( real64 numFacesPerElem,
                                         real64 const (&coords)[3],
@@ -471,7 +471,7 @@ struct PMLKernelHelper
    * @param sigma 3-components array to hold the damping profile in each direction
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void computeDampingProfilePML( real64 const (&xLocal)[3],
                                         real32 const (&xMin)[3],
                                         real32 const (&xMax)[3],
@@ -923,7 +923,7 @@ public:
    * Copies the primary variable, and position into the local stack array.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -946,7 +946,7 @@ public:
    *
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const

@@ -515,7 +515,7 @@ public:
    * @return the size of the stencil at this connection
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   localIndex stencilSize( localIndex const iconn ) const
   { return m_sei[iconn].size(); }
 
@@ -525,7 +525,7 @@ public:
    * @return the number of elements at this connection
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   localIndex numPointsInFlux( localIndex const iconn ) const
   { return m_stencilWrapper.numPointsInFlux( iconn ); }
 
@@ -536,7 +536,7 @@ public:
    * @param[in] stack the stack variables
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
@@ -561,7 +561,7 @@ public:
    */
   template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
                     FUNC && compFluxKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
@@ -834,7 +834,7 @@ public:
    */
   template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void complete( localIndex const iconn,
                  StackVariables & stack,
                  FUNC && assemblyKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
@@ -1531,7 +1531,7 @@ struct CFLFluxKernel
 
   template< integer NC, localIndex NUM_ELEMS, localIndex maxStencilSize >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void
   compute( integer const numPhases,
            localIndex const stencilSize,
@@ -1583,7 +1583,7 @@ struct CFLKernel
 
   template< integer NP >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void
   computePhaseCFL( real64 const & poreVol,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
@@ -1595,7 +1595,7 @@ struct CFLKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void
   computeCompCFL( real64 const & poreVol,
                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > compDens,
@@ -1658,7 +1658,7 @@ struct AquiferBCKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void
     compute( integer const numPhases,
              integer const ipWater,

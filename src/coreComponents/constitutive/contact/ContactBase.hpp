@@ -85,7 +85,7 @@ public:
    * @param[out] dTractionVector_dJump the derivative of the traction vector wrt displacement jump
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   virtual void computeTraction( localIndex const k,
                                 arraySlice1d< real64 const > const & oldDispJump,
                                 arraySlice1d< real64 const > const & dispJump,
@@ -117,7 +117,7 @@ public:
    * @return the updated traction
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   virtual void addPressureToTraction( real64 const & pressure,
                                       arraySlice1d< real64 >const & tractionVector,
                                       real64 & dTraction_dPressure ) const
@@ -133,7 +133,7 @@ public:
    * @return the limit tangential traction norm
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
                                                      real64 & dLimitTangentialTractionNorm_dTraction ) const
   { GEOSX_UNUSED_VAR( normalTraction, dLimitTangentialTractionNorm_dTraction ); return 0; };

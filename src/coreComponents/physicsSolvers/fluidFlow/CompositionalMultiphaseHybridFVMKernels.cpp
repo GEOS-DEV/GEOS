@@ -36,7 +36,7 @@ namespace compositionalMultiphaseHybridFVMKernels
 
 template< integer NC, integer NP >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 UpwindingHelper::
   upwindViscousCoefficient( localIndex const (&localIds)[ 3 ],
@@ -134,7 +134,7 @@ UpwindingHelper::
 
 template< integer NC, integer NP >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 UpwindingHelper::
   upwindBuoyancyCoefficient( localIndex const (&localIds)[ 3 ],
@@ -279,7 +279,7 @@ UpwindingHelper::
 
 template< integer NC, integer NP >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 UpwindingHelper::
   computePhaseGravTerm( localIndex const (&localIds)[ 3 ],
@@ -366,7 +366,7 @@ UpwindingHelper::
 
 template< integer NC, integer NP >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 UpwindingHelper::
   computeUpwindedTotalMobility( localIndex const (&localIds)[ 3 ],
@@ -407,7 +407,7 @@ UpwindingHelper::
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 UpwindingHelper::
   setIndicesForMobilityRatioUpwinding( localIndex const (&localIds)[ 3 ],
@@ -442,7 +442,7 @@ UpwindingHelper::
 
 template< integer NP >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 UpwindingHelper::
   setIndicesForTotalMobilityUpwinding( localIndex const (&localIds)[ 3 ],
@@ -605,7 +605,7 @@ INST_UpwindingHelperNP( 3 );
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 AssemblerKernelHelper::
   applyGradient( arrayView1d< real64 const > const & facePres,
@@ -709,7 +709,7 @@ AssemblerKernelHelper::
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 AssemblerKernelHelper::
   assembleFluxDivergence( localIndex const (&localIds)[ 3 ],
@@ -916,7 +916,7 @@ AssemblerKernelHelper::
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 AssemblerKernelHelper::
   assembleViscousFlux( localIndex const ifaceLoc,
@@ -998,7 +998,7 @@ AssemblerKernelHelper::
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 AssemblerKernelHelper::
   assembleBuoyancyFlux( localIndex const ifaceLoc,
@@ -1060,7 +1060,7 @@ AssemblerKernelHelper::
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 AssemblerKernelHelper::
   assembleFaceConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
@@ -1281,7 +1281,7 @@ INST_AssemblerKernelHelper( 6, 5, 3 );
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 AssemblerKernel::
   compute( localIndex const er, localIndex const esr, localIndex const ei,

@@ -56,7 +56,7 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
                                                                                 StackVariables & stack ) const
 {
@@ -78,7 +78,7 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
                                                                                                 localIndex const q,
                                                                                                 StackVariables & stack ) const

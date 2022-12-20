@@ -67,7 +67,7 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 setup( localIndex const k,
        StackVariables & stack ) const
@@ -106,7 +106,7 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 template< typename STRESS_MODIFIER >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
                                                                                                           localIndex const q,
                                                                                                           StackVariables & stack,
@@ -161,7 +161,7 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64 ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
                                                                                                StackVariables & stack ) const
 {
