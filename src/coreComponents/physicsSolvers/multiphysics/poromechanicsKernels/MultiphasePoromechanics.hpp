@@ -16,10 +16,11 @@
  * @file MultiphasePoromechanics.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_HPP_
 
-#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "codingUtilities/Utilities.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsBase.hpp"
 
 namespace geosx
 {
@@ -46,40 +47,43 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class MultiphasePoromechanics :
-  public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
-                                            CONSTITUTIVE_TYPE,
-                                            FE_TYPE,
-                                            3,
-                                            3 >
+  public PoromechanicsBase< SUBREGION_TYPE,
+                            CONSTITUTIVE_TYPE,
+                            FE_TYPE >
 {
 public:
+
   /// Alias for the base class;
-  using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
-                                                  CONSTITUTIVE_TYPE,
-                                                  FE_TYPE,
-                                                  3,
-                                                  3 >;
+  using Base = PoromechanicsBase< SUBREGION_TYPE,
+                                  CONSTITUTIVE_TYPE,
+                                  FE_TYPE >;
 
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
   /// will be the actual number of nodes per element.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
-  static constexpr int numMaxComponents = 3;
+  static constexpr int maxNumComponents = 3;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
   using Base::m_dofRankOffset;
   using Base::m_matrix;
   using Base::m_rhs;
+  using Base::m_gravityAcceleration;
+  using Base::m_gravityVector;
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
+  using Base::m_solidDensity;
+  using Base::m_pressure_n;
+  using Base::m_pressure;
+  using Base::m_flowDofNumber;
   using Base::m_meshData;
 
   /**
    * @brief Constructor
    * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
-   * @param inputGravityVector The gravity vector.
+   * @param gravityVector The gravity vector.
    */
   MultiphasePoromechanics( NodeManager const & nodeManager,
                            EdgeManager const & edgeManager,
@@ -92,7 +96,7 @@ public:
                            globalIndex const rankOffset,
                            CRSMatrixView< real64, globalIndex const > const inputMatrix,
                            arrayView1d< real64 > const inputRhs,
-                           real64 const (&inputGravityVector)[3],
+                           real64 const (&gravityVector)[3],
                            string const inputFlowDofKey,
                            localIndex const numComponents,
                            localIndex const numPhases,
@@ -110,61 +114,54 @@ public:
   {
 public:
 
-    static constexpr int numDispDofPerElem =  Base::StackVariables::maxNumRows;
-
     /// Constructor.
     GEOSX_HOST_DEVICE
     StackVariables():
-      Base::StackVariables(),
-            xLocal(),
-            u_local(),
-            uhat_local(),
-            localResidualMomentum( Base::StackVariables::localResidual ),
-      dLocalResidualMomentum_dDisplacement( Base::StackVariables::localJacobian ),
-      dLocalResidualMomentum_dPressure{ {0.0} },
-      dLocalResidualMomentum_dComponents{ {0.0} },
-      localResidualMass{ 0.0 },
-      dLocalResidualMass_dDisplacement{ {0.0} },
-      dLocalResidualMass_dPressure{ {0.0} },
-      dLocalResidualMass_dComponents{ {0.0} },
-      localPoreVolumeConstraint{ 0.0 },
-      dLocalPoreVolumeConstraint_dPressure{ {0.0} },
-      dLocalPoreVolumeConstraint_dComponents{ {0.0} },
-      localPressureDofIndex{ 0 },
-      localComponentDofIndices{ 0 }
+      Base::StackVariables()
     {}
 
-#if !defined(CALC_FEM_SHAPE_IN_KERNEL)
-    /// Dummy
-    int xLocal;
-#else
-    /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[numNodesPerElem][3];
-#endif
+    /// Mass accumulation
+    real64 compMassIncrement[maxNumComponents]{};
+    /// Derivative of mass accumulation wrt volumetric strain increment
+    real64 dCompMassIncrement_dVolStrainIncrement[maxNumComponents]{};
+    /// Derivative of mass accumulation wrt pressure
+    real64 dCompMassIncrement_dPressure[maxNumComponents]{};
+    /// Derivative of mass accumulation wrt comp density
+    real64 dCompMassIncrement_dComponents[maxNumComponents][maxNumComponents]{};
 
-    /// Stack storage for the element local nodal displacement
-    real64 u_local[numNodesPerElem][numDofPerTrialSupportPoint];
+    /// Pore volume constraint
+    real64 poreVolConstraint{};
+    /// Derivative of pore volume constraint wrt pressure
+    real64 dPoreVolConstraint_dPressure{};
+    /// Derivative of pore volume constraint wrt comp density
+    real64 dPoreVolConstraint_dComponents[1][maxNumComponents]{};
 
-    /// Stack storage for the element local nodal incremental displacement
-    real64 uhat_local[numNodesPerElem][numDofPerTrialSupportPoint];
+    /// Derivative of body force wrt comp density
+    real64 dBodyForce_dComponents[3][maxNumComponents]{};
 
-    real64 ( &localResidualMomentum )[numDispDofPerElem];
-    real64 ( &dLocalResidualMomentum_dDisplacement )[numDispDofPerElem][numDispDofPerElem];
-    real64 dLocalResidualMomentum_dPressure[numDispDofPerElem][1];
-    real64 dLocalResidualMomentum_dComponents[numDispDofPerElem][numMaxComponents];
+    // Storage for mass residual and degrees of freedom
 
-    real64 localResidualMass[numMaxComponents];
-    real64 dLocalResidualMass_dDisplacement[numMaxComponents][numDispDofPerElem];
-    real64 dLocalResidualMass_dPressure[numMaxComponents][1];
-    real64 dLocalResidualMass_dComponents[numMaxComponents][numMaxComponents];
+    /// Derivative of momemtum balance residual wrt comp density
+    real64 dLocalResidualMomentum_dComponents[Base::StackVariables::numDispDofPerElem][maxNumComponents]{};
 
-    real64 localPoreVolumeConstraint[1];
-    real64 dLocalPoreVolumeConstraint_dPressure[1][1];
-    real64 dLocalPoreVolumeConstraint_dComponents[1][numMaxComponents];
+    /// Mass balance residual
+    real64 localResidualMass[maxNumComponents]{};
+    /// Derivative of mass balance residual wrt volumetric strain increment
+    real64 dLocalResidualMass_dDisplacement[maxNumComponents][Base::StackVariables::numDispDofPerElem]{};
+    /// Derivative of mass balance residual wrt pressure
+    real64 dLocalResidualMass_dPressure[maxNumComponents][1]{};
+    /// Derivative of mass balance residual wrt components
+    real64 dLocalResidualMass_dComponents[maxNumComponents][maxNumComponents]{};
+
+    /// Pore volume constraint residual (sum of saturations = 1)
+    real64 localResidualPoreVolConstraint[1]{};
+    /// Derivative of pore volume constraint residual wrt pressure
+    real64 dLocalResidualPoreVolConstraint_dPressure[1][1]{};
+    /// Derivative of pore volume constraint residual wrt components
+    real64 dLocalResidualPoreVolConstraint_dComponents[1][maxNumComponents]{};
 
     /// C-array storage for the element local row degrees of freedom.
-    globalIndex localPressureDofIndex[1];
-    globalIndex localComponentDofIndices[numMaxComponents];
+    globalIndex localComponentDofIndices[maxNumComponents]{};
 
   };
   //*****************************************************************************
@@ -181,6 +178,123 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
+
+  /**
+   * @brief Helper function to compute 1) the total stress, 2) the body force term, and 3) the fluidMassIncrement
+   * using quantities returned by the PorousSolid constitutive model.
+   * This function also computes the derivatives of these three quantities wrt primary variables
+   * @param[in] k the element index
+   * @param[in] q the quadrature point index
+   * @param[in] strainIncrement the strain increment used in total stress and porosity computation
+   * @param[inout] stack the stack variables
+   */
+  GEOSX_HOST_DEVICE
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const ( &strainIncrement )[6],
+                          StackVariables & stack ) const;
+
+  /**
+   * @brief Helper function to compute the body force term (\rho g) and its derivatives wrt primary variables
+   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @param[in] k the element index
+   * @param[in] q the quadrature point index
+   * @param[in] porosity the element porosity
+   * @param[in] dPorosity_dVolStrain the derivative of porosity wrt volumetric strain increment
+   * @param[in] dPorosity_dPressure the derivative of porosity wrt pressure
+   * @param[in] dPorosity_dTemperature the derivative of porosity wrt temperature
+   * @param[in] dSolidDensity_dPressure the derivative of solid density wrt pressure
+   * @param[inout] stack the stack variables
+   * @param[inout] bodyForceKernelOp the lambda function to customize the kernel
+   */
+  template< typename FUNC = NoOpFunc >
+  GEOSX_HOST_DEVICE
+  void computeBodyForce( localIndex const k,
+                         localIndex const q,
+                         real64 const & porosity,
+                         real64 const & dPorosity_dVolStrain,
+                         real64 const & dPorosity_dPressure,
+                         real64 const & dPorosity_dTemperature,
+                         real64 const & dSolidDensity_dPressure,
+                         StackVariables & stack,
+                         FUNC && bodyForceKernelOp = NoOpFunc{} ) const;
+
+  /**
+   * @brief Helper function to compute the fluid mass increment and its derivatives wrt primary variables
+   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @param[in] k the element index
+   * @param[in] q the quadrature point index
+   * @param[in] porosity the element porosity
+   * @param[in] porosity_n the element porosity at the previous converged time step
+   * @param[in] dPorosity_dVolStrain the derivative of porosity wrt volumetric strain increment
+   * @param[in] dPorosity_dPressure the derivative of porosity wrt pressure
+   * @param[in] dPorosity_dTemperature the derivative of porosity wrt temperature
+   * @param[inout] stack the stack variables
+   * @param[inout] fluidIncrementKernelOp the lambda function to customize the kernel
+   */
+  template< typename FUNC = NoOpFunc >
+  GEOSX_HOST_DEVICE
+  void computeFluidIncrement( localIndex const k,
+                              localIndex const q,
+                              real64 const & porosity,
+                              real64 const & porosity_n,
+                              real64 const & dPorosity_dVolStrain,
+                              real64 const & dPorosity_dPressure,
+                              real64 const & dPorosity_dTemperature,
+                              StackVariables & stack,
+                              FUNC && fluidIncrementKernelOp = NoOpFunc{} ) const;
+
+  /**
+   * @brief Helper function to compute the pore-volume constraint and its derivatives wrt primary variables
+   * @param[in] k the element index
+   * @param[in] porosity the element porosity
+   * @param[in] dPorosity_dVolStrain the derivative of porosity wrt volumetric strain increment
+   * @param[in] dPorosity_dPressure the derivative of porosity wrt pressure
+   * @param[in] dPorosity_dTemperature the derivative of porosity wrt temperature
+   * @param[inout] stack the stack variables
+   */
+  GEOSX_HOST_DEVICE
+  void computePoreVolumeConstraint( localIndex const k,
+                                    real64 const & porosity,
+                                    real64 const & dPorosity_dVolStrain,
+                                    real64 const & dPorosity_dPressure,
+                                    real64 const & dPorosity_dTemperature,
+                                    StackVariables & stack ) const;
+
+  /**
+   * @brief Assemble the local linear momentum balance residual and derivatives using total stress and body force terms
+   * @param[in] N displacement finite element basis functions
+   * @param[in] dNdX basis function derivatives
+   * @param[in] detJxW determinant of the Jacobian transformation matrix times the quadrature weight
+   * @param[inout] stack the stack variables
+   * @detail This function assembles the discretized form of the following equation
+   *   divergence( totalStress ) + bodyForce = 0
+   * with the following dependencies on the strainIncrement tensor and pressure
+   *   totalStress = totalStress( strainIncrement, pressure)
+   *   bodyForce   = bodyForce( strainIncrement, pressure)
+   */
+  GEOSX_HOST_DEVICE
+  void assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
+                                     real64 const ( &dNdX )[numNodesPerElem][3],
+                                     real64 const & detJxW,
+                                     StackVariables & stack ) const;
+
+  /**
+   * @brief Assemble the local mass balance residual and derivatives using fluid mass/energy increment
+   * @param[in] dNdX basis function derivatives
+   * @param[in] detJxW determinant of the Jacobian transformation matrix times the quadrature weight
+   * @param[inout] stack the stack variables
+   * @detail This function assembles the discretized form of the temporal derivative in the following equation
+   *   dFluidMass_dTime + divergence( fluidMassFlux ) = source  (fluid phase mass balance)
+   * with the following dependencies on the strainIncrement tensor and pressure
+   *   fluidMass = fluidMass( strainIncrement, pressure)
+   *   fluidMassFlux = fluidMassFlux( pressure)
+   */
+  GEOSX_HOST_DEVICE
+  void assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
+                                      real64 const & detJxW,
+                                      StackVariables & stack ) const;
+
   GEOSX_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
@@ -192,15 +306,6 @@ public:
   GEOSX_HOST_DEVICE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
-
-  /**
-   * @brief Get a parameter representative of the stiffness, used as physical scaling for the
-   * stabilization matrix.
-   * @param[in] k Element index.
-   * @return A parameter representative of the stiffness matrix dstress/dstrain
-   */
-  GEOSX_HOST_DEVICE
-  real64 computeStabilizationScaling( localIndex const k ) const;
 
   /**
    * @copydoc geosx::finiteElement::KernelBase::kernelLaunch
@@ -217,45 +322,28 @@ public:
 
 
 protected:
-  /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > m_X;
 
-  /// The rank-global displacement array.
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > m_disp;
-
-  /// The rank-global incremental displacement array.
-  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > m_uhat;
-
-  /// The gravity vector.
-  real64 const m_gravityVector[3];
-  real64 const m_gravityAcceleration;
-
-  /// The rank global density
-  arrayView2d< real64 const > m_solidDensity;
-
+  /// Views on phase densities and derivatives
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseDensity;
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseDensity_n;
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseDensity;
 
+  /// Views on phase component fractions and derivatives
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > m_fluidPhaseCompFrac;
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > m_fluidPhaseCompFrac_n;
   arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > m_dFluidPhaseCompFrac;
 
+  /// Views on phase mass densities
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseMassDensity;
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseMassDensity;
 
-  arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseSaturation;
-  arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseSaturation_n;
-  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dFluidPhaseSaturation;
+  /// Views on phase volume fraction (saturation)
+  arrayView2d< real64 const, compflow::USD_PHASE > const m_fluidPhaseVolFrac;
+  arrayView2d< real64 const, compflow::USD_PHASE > const m_fluidPhaseVolFrac_n;
+  arrayView3d< real64 const, compflow::USD_PHASE_DC > const m_dFluidPhaseVolFrac;
 
-  arrayView3d< real64 const, compflow::USD_COMP_DC > m_dGlobalCompFraction_dGlobalCompDensity;
-
-  /// The global degree of freedom number
-  arrayView1d< globalIndex const > m_flowDofNumber;
-
-  /// The rank-global fluid pressure arrays.
-  arrayView1d< real64 const > m_fluidPressure_n;
-  arrayView1d< real64 const > m_fluidPressure;
+  /// Views on derivatives of global comp fraction wrt global comp density
+  arrayView3d< real64 const, compflow::USD_COMP_DC > const m_dGlobalCompFraction_dGlobalCompDensity;
 
   /// Number of components
   localIndex const m_numComponents;
@@ -265,19 +353,20 @@ protected:
 
 };
 
-using MultiphaseKernelFactory = finiteElement::KernelFactory< MultiphasePoromechanics,
-                                                              arrayView1d< globalIndex const > const,
-                                                              globalIndex const,
-                                                              CRSMatrixView< real64, globalIndex const > const,
-                                                              arrayView1d< real64 > const,
-                                                              real64 const (&)[3],
-                                                              string const,
-                                                              localIndex const,
-                                                              localIndex const,
-                                                              string const >;
+using MultiphasePoromechanicsKernelFactory =
+  finiteElement::KernelFactory< MultiphasePoromechanics,
+                                arrayView1d< globalIndex const > const,
+                                globalIndex const,
+                                CRSMatrixView< real64, globalIndex const > const,
+                                arrayView1d< real64 > const,
+                                real64 const (&)[3],
+                                string const,
+                                localIndex const,
+                                localIndex const,
+                                string const >;
 
 } // namespace poromechanicsKernels
 
 } // namespace geosx
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_
+#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_HPP_

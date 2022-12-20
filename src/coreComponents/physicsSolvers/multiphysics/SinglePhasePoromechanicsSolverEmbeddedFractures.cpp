@@ -416,13 +416,14 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
 
 
     // 1. Cell-based contributions of standard poroelasticity
-    poromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
-                                                                  dofManager.rankOffset(),
-                                                                  localMatrix,
-                                                                  localRhs,
-                                                                  gravityVectorData,
-                                                                  pDofKey,
-                                                                  FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    poromechanicsKernels::SinglePhasePoromechanicsKernelFactory
+    kernelFactory( dispDofNumber,
+                   dofManager.rankOffset(),
+                   localMatrix,
+                   localRhs,
+                   gravityVectorData,
+                   pDofKey,
+                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
     solidMechanicsSolver()->getMaxForce() =
       finiteElement::

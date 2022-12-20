@@ -19,6 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
 
+#include "codingUtilities/Utilities.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -42,19 +43,6 @@ using namespace constitutive;
 static constexpr real64 minDensForDivision = 1e-10;
 
 /******************************** PropertyKernelBase ********************************/
-
-/**
- * @brief Internal struct to provide no-op defaults used in the inclusion
- *   of lambda functions into kernel component functions.
- * @struct NoOpFunc
- */
-struct NoOpFunc
-{
-  template< typename ... Ts >
-  GEOSX_HOST_DEVICE
-  constexpr void
-  operator()( Ts && ... ) const {}
-};
 
 /**
  * @class PropertyKernelBase
