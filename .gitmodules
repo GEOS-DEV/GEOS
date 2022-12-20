@@ -10,10 +10,6 @@
 [submodule "integratedTests"]
 	path = integratedTests
 	url = ../../GEOSX/integratedTests.git
-[submodule "src/coreComponents/mesh/PAMELA"]
-	path = src/coreComponents/mesh/PAMELA
-	url = ../../GEOSX/PAMELA.git
-	shallow = true
 [submodule "src/coreComponents/fileIO/coupling/hdf5_interface"]
 	path = src/coreComponents/fileIO/coupling/hdf5_interface
 	url = ../../GEOSX/hdf5_interface.git

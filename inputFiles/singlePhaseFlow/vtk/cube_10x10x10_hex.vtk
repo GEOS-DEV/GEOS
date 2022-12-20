@@ -1,0 +1,7 @@
+# vtk DataFile Version 4.2
+Cube structured points dataset
+ASCII
+DATASET STRUCTURED_POINTS
+DIMENSIONS 11 11 11
+ORIGIN 0.0 0.0 0.0
+SPACING 1.0 1.0 1.0
