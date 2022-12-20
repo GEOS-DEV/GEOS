@@ -23,7 +23,7 @@
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsKernel.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
@@ -188,11 +188,11 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
     poromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
-                                                                  pDofKey,
                                                                   dofManager.rankOffset(),
                                                                   localMatrix,
                                                                   localRhs,
                                                                   gravityVectorData,
+                                                                  pDofKey,
                                                                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
     // 1. Cell-based contributions to Kuu, Kup, Kpu, Kpp blocks
