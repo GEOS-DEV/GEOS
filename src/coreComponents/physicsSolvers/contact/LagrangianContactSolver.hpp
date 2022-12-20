@@ -142,7 +142,7 @@ public:
   string getStabilizationName() const { return m_stabilizationName; }
 
   bool isElementInOpenState( FaceElementSubRegion const & subRegion,
-                             localIndex const kfe ) const;          
+                             localIndex const kfe ) const;
 
 protected:
   virtual void postProcessInput() override final;

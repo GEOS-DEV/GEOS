@@ -30,7 +30,7 @@ class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< Single
 {
 public:
 
-  using Base = CoupledSolver< SinglePhasePoromechanicsSolver, LagrangianContactSolver  >;
+  using Base = CoupledSolver< SinglePhasePoromechanicsSolver, LagrangianContactSolver >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;

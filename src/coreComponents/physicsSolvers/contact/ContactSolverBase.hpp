@@ -64,7 +64,7 @@ public:
 
   SolidMechanicsLagrangianFEM * getSolidSolver() { return m_solidSolver; }
 
-  void setSolidSolverDofFlags(bool const flag) { m_setupSolidSolverDofs = flag; }                 
+  void setSolidSolverDofFlags( bool const flag ) { m_setupSolidSolverDofs = flag; }
 
 protected:
 
@@ -99,7 +99,7 @@ protected:
   /// contact relation name string
   string m_contactRelationName;
 
-  /// 
+  ///
   bool m_setupSolidSolverDofs;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct

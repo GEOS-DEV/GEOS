@@ -74,11 +74,11 @@ void FluxApproximationBase::initializePreSubGroups()
         Group * stencilParentGroup = mesh.getGroupPointer( groupKeyStruct::stencilMeshGroupString() );
         // There can be more than one FluxApproximation object so we check if the the group has
         // already been registered.
-        if ( stencilParentGroup == nullptr )
+        if( stencilParentGroup == nullptr )
         {
           stencilParentGroup = &(mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() ));
         }
-        
+
         Group & stencilGroup = stencilParentGroup->registerGroup( getName() );
 
         registerCellStencil( stencilGroup );
@@ -89,8 +89,8 @@ void FluxApproximationBase::initializePreSubGroups()
       {
         // There can be more than one FluxApproximation object so we check if the the group has
         // already been registered.
-        if ( !mesh.hasGroup( groupKeyStruct::stencilMeshGroupString() ) )
-        { 
+        if( !mesh.hasGroup( groupKeyStruct::stencilMeshGroupString() ) )
+        {
           Group & parentMesh = mesh.getShallowParent();
           Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
           mesh.registerGroup( groupKeyStruct::stencilMeshGroupString(), &parentStencilParentGroup );

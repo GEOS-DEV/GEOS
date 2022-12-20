@@ -42,7 +42,7 @@ ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolver( nullptr ),
-  m_setupSolidSolverDofs(true)
+  m_setupSolidSolverDofs( true )
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -214,15 +214,15 @@ void ContactSolverBase::applyBoundaryConditions( real64 const time,
                                                  arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-  
+
   if( m_setupSolidSolverDofs )
   {
-  m_solidSolver->applyBoundaryConditions( time,
-                                          dt,
-                                          domain,
-                                          dofManager,
-                                          localMatrix,
-                                          localRhs );
+    m_solidSolver->applyBoundaryConditions( time,
+                                            dt,
+                                            domain,
+                                            dofManager,
+                                            localMatrix,
+                                            localRhs );
   }
 }
 

@@ -78,7 +78,7 @@ fi
 if [[ "$*" == *--build-exe-only* ]]; then
   or_die ninja -j $(nproc) geosx
 else
-  or_die ninja -j 2
+  or_die ninja -j $(nproc)
   # Verbosity check for installation to prevent hitting Travis log limit
   if [[ "$*" == *--reduce-install-logs* ]]; then
     or_die ninja install

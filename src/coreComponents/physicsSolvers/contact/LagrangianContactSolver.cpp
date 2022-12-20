@@ -1278,7 +1278,7 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
   SurfaceGenerator const & surfaceGenerator = this->getParent().getGroup< SurfaceGenerator >( "SurfaceGen" );
   SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( surfaceGenerator.getFractureRegionName() );
   FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
-    
+
   GEOSX_ERROR_IF( !fractureSubRegion.hasField< contact::traction >(), "The fracture subregion must contain traction field." );
   arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
   GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
@@ -1667,7 +1667,7 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
                                                    DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  
+
   if( m_setupSolidSolverDofs )
   {
     m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
