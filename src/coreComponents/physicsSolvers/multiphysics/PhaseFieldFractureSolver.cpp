@@ -86,8 +86,6 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
           finiteElement::FiniteElementBase const &
           fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( discretizationName );
 
-          integer const numElems = elementSubRegion.size();
-
           finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [=, &elementSubRegion] ( auto & finiteElement )
           {
             using FE_TYPE = TYPEOFREF( finiteElement );
