@@ -95,7 +95,9 @@ void SinglePhasePoromechanicsSolver::initializePreSubGroups()
     {
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      GEOSX_ERROR_IF( porousName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+      GEOSX_THROW_IF( porousName.empty(),
+                      GEOSX_FMT( "{} {} : Solid model not found on subregion {}", catalogName(), getName(), subRegion.getName() ),
+                      InputError );
     } );
   } );
 }
@@ -164,7 +166,6 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
   real64 poromechanicsMaxForce = 0.0;
   real64 mechanicsMaxForce = 0.0;
 
-
   // step 1: apply the full poromechanics coupling on the target regions on the poromechanics solver
 
   set< string > poromechanicsRegionNames;
@@ -179,14 +180,14 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
     poromechanicsMaxForce =
       assemblyLaunch< constitutive::PorousSolidBase,
-                      poromechanicsKernels::SinglePhaseKernelFactory >( mesh,
-                                                                        dofManager,
-                                                                        regionNames,
-                                                                        viewKeyStruct::porousMaterialNamesString(),
-                                                                        localMatrix,
-                                                                        localRhs,
-                                                                        flowDofKey,
-                                                                        FlowSolverBase::viewKeyStruct::fluidNamesString() );
+                      poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
+                                                                                     dofManager,
+                                                                                     regionNames,
+                                                                                     viewKeyStruct::porousMaterialNamesString(),
+                                                                                     localMatrix,
+                                                                                     localRhs,
+                                                                                     flowDofKey,
+                                                                                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
 
 
@@ -239,6 +240,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                               localMatrix,
                                               localRhs,
                                               " " );
+
 }
 
 void SinglePhasePoromechanicsSolver::createPreconditioner()

@@ -124,7 +124,6 @@ void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group &
 
 /// for use in RelpermDriver to browse the drainage curves
 /// by setting the MaxHistoricalNonWettingSat to Snwmin and MinWettingSat to Sw
-GEOSX_HOST_DEVICE
 std::tuple< integer, integer > RelativePermeabilityBase::wettingAndNonWettingPhaseIndices() const
 {
   using PT = PhaseType;

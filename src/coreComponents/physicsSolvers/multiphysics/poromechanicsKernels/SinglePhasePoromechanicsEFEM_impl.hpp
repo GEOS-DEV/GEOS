@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsEFEM.hpp
+ * @file SinglePhasePoromechanicsEFEM_impl.hpp
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_
