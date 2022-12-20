@@ -145,24 +145,6 @@ enum class LAIOutputFormat
   MATRIX_MARKET
 };
 
-/**
- * Permutation info for row major and column major layouts
- */
-struct MatrixLayout
-{
-  /// typedef LAI row major permutation consistent with RAJA order
-  using ROW_MAJOR_PERM = RAJA::PERM_IJ;
-
-  /// typedef LAI col major permutation consistent with RAJA order
-  using COL_MAJOR_PERM = RAJA::PERM_JI;
-
-  /// row major data unit stride dim
-  constexpr static int const ROW_MAJOR = LvArray::typeManipulation::getStrideOneDimension( ROW_MAJOR_PERM {} );
-
-  /// column major unit stride dim
-  constexpr static int const COL_MAJOR = LvArray::typeManipulation::getStrideOneDimension( COL_MAJOR_PERM {} );
-};
-
 }
 
 #endif //GEOSX_LINEARALGEBRA_INTERFACES_COMMON_HPP_
