@@ -1517,12 +1517,6 @@ std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const
   return materialWrapperNames;
 }
 
-/**
- * @brief Imports 2d and 3d arrays from @p vtkArray to @p wrapper, only for @p cellIds
- * @param cellIds The cells for which we should copy the data.
- * @param vtkArray The source.
- * @param wrapper The destination.
- */
 void importMaterialField( std::vector< vtkIdType > const & cellIds,
                           vtkDataArray * vtkArray,
                           WrapperBase & wrapper )
@@ -1560,12 +1554,6 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
   } );
 }
 
-/**
- * @brief Imports 1d and 2d arrays from @p vtkArray to @p wrapper, only for @p cellIds
- * @param cellIds The cells for which we should copy the data.
- * @param vtkArray The source.
- * @param wrapper The destination.
- */
 void importRegularField( std::vector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
                          WrapperBase & wrapper )

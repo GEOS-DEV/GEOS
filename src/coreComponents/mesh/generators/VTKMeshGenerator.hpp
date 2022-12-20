@@ -92,6 +92,11 @@ public:
 
   virtual void freeResources() override;
 
+  /**
+   * @brief Retrieve the name of a field in the mesh from its index
+   * @param[in] Index of the field in both GEOSX and the input mesh
+   * @return the name of the source field in the mesh
+   */
   virtual string getSourceName( localIndex index ) const override;
 
 private:
