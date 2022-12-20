@@ -258,11 +258,50 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & time_n,
    * were specified in the input file.
    */
   std::cout<<time_n<<std::endl;
+  // if(time_n == 0)
+  // {
+  array2d< real64 > listOfTips;
+  listOfTips.resize( 3, 2 );
+  listOfTips[0][0] = 2.0;
+  listOfTips[0][1] = 1.25;
+  listOfTips[1][0] = 3.5;
+  listOfTips[1][1] = 0.0;
+  listOfTips[2][0] = 3.5;
+  listOfTips[2][1] = -3.0;
+  std::cout<<"init listOfTips"<<std::endl;
+  // array1d< real64 > currentTip;
+  // currentTip.resize( 2 );
+  // currentTip[0] = 0.0;
+  // currentTip[1] = 0.5;
+  array2d< real64 > currentTip;
+  currentTip.resize( 3, 2 );
+  currentTip[0][0] = 0.0;
+  currentTip[0][1] = 0.5;
+  currentTip[1][0] = 2.0;
+  currentTip[1][1] = 1.25;
+  currentTip[2][0] = 3.5;
+  currentTip[2][1] = 0.0;
+  std::cout<<"init currentTip"<<std::endl;
+  // }
+
   if(time_n > 0)
   {
     // Get geometric object manager
     GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();
 
+    // create BoundedPlane from currentTip to newTip (listOfTips[time_n]) - do I need to use new for this allocation?
+    const string newPlaneName = "plane"+std::to_string(time_n);
+    BoundedPlane * newPlane = new BoundedPlane( currentTip[time_n-1][0], currentTip[time_n-1][1], listOfTips[time_n-1][0],
+                                                listOfTips[time_n-1][1], newPlaneName, &geometricObjManager );
+    // //how to update currentTip? - hard coded simple case
+    // std::cout<<"currentTip_x"<<currentTip[0]<<std::endl;
+    // std::cout<<"currentTip_y"<<currentTip[1]<<std::endl;
+    // std::cout<<"updating tip"<<std::endl;
+    // currentTip[0]=listOfTips[time_n][0];
+    // currentTip[1]=listOfTips[time_n][1];
+    // std::cout<<"currentTip_x"<<currentTip[0]<<std::endl;
+    // std::cout<<"currentTip_y"<<currentTip[1]<<std::endl;
+    // std::cout<<"tip updated"<<std::endl;
     // Get meshLevel
     MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
 
@@ -285,7 +324,7 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & time_n,
     geometricObjManager.forSubGroups< BoundedPlane >( [&]( BoundedPlane & fracture )
     {
       //modify fracture (BoundedPlane)
-      fracture.updateExistingRectangle(dt*m_propagationVelocity[0], dt*m_propagationVelocity[1]);
+      //fracture.updateExistingRectangle(dt*m_propagationVelocity[0], dt*m_propagationVelocity[1]);
 
       /* 1. Find out if an element is cut by the fracture or not.
       * Loop over all the elements and for each one of them loop over the nodes and compute the
@@ -345,6 +384,7 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & time_n,
             } // end loop over nodes
             if( isPositive * isNegative == 1 )
             {
+              std::cout<<"plane name: "<<fracture.getName()<<std::endl;
               bool added = embeddedSurfaceSubRegion.addNewEmbeddedSurface( cellIndex,
                                                                           er,
                                                                           esr,
