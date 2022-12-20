@@ -69,6 +69,8 @@ set( constitutive_headers
      permeability/ProppantPermeability.hpp     
      permeability/SlipDependentPermeability.hpp
      permeability/WillisRichardsPermeability.hpp  
+     relativePermeability/RelpermDriver.hpp
+     relativePermeability/RelpermDriverRunTest.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/RelativePermeabilityBase.hpp 
@@ -79,7 +81,7 @@ set( constitutive_headers
      relativePermeability/TableRelativePermeabilityHysteresis.hpp     
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
      relativePermeability/layouts.hpp
-     relativePermeability/relativePermeabilitySelector.hpp
+     relativePermeability/RelativePermeabilitySelector.hpp
      solid/CompressibleSolid.hpp
      solid/ProppantSolid.hpp
      solid/CoupledSolidBase.hpp
@@ -187,6 +189,12 @@ set( constitutive_sources
      relativePermeability/TableRelativePermeabilityHelpers.cpp     
      relativePermeability/TableRelativePermeabilityHysteresis.cpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
+     relativePermeability/RelpermDriver.cpp
+     relativePermeability/RelpermDriverBrooksCoreyBakerRunTest.cpp
+     relativePermeability/RelpermDriverBrooksCoreyRunTest.cpp
+     relativePermeability/RelpermDriverVanGenuchtenBakerRunTest.cpp
+     relativePermeability/RelpermDriverTableRelativeRunTest.cpp
+     relativePermeability/RelpermDriverTableRelativeHysteresisRunTest.cpp
      solid/CompressibleSolid.cpp
      solid/CoupledSolidBase.cpp
      solid/ProppantSolid.cpp
