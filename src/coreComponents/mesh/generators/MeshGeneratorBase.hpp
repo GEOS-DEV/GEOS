@@ -100,10 +100,10 @@ public:
 
   /**
    * @brief Retrieve the name of a field in the mesh from its index
-   * @param[in] Index of the field in both GEOSX and the input mesh
+   * @param[in] index of the field in both GEOSX and the input mesh
    * @return the name of the source field in the mesh
    */
-  virtual string getSourceName( localIndex index ) const { return ""; }//= 0;
+  virtual string getSourceName( localIndex index ) const { GEOSX_UNUSED_VAR(index); return ""; }//= 0;
 
 
  /**
