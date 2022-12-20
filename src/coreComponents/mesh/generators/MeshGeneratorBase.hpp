@@ -84,12 +84,12 @@ public:
   /**
    * @brief import fields from the mesh  on the array accessible via the given wrapper.
    * @param cellBlockName name of the cell block to copy data from.
-   * @param wrapperName name of the wrapper
-   * @param fieldIndex Index of the field
+   * @param geosxFieldName name of the field in GEOSX
+   * @param meshFieldName name of the field in the meshd
    * @param wrapper Wrapper to access the array
    * @param importMaterial Indicate if we want to import material or regular fields
    */
-  virtual void importFieldsOnArray( string const cellBlockName, string const wrapperName, int fieldIndex, dataRepository::WrapperBase & wrapper, bool importMaterial ) const = 0;
+  virtual void importFieldsOnArray( string const cellBlockName, string const geosxFieldName, string const meshFieldName, dataRepository::WrapperBase & wrapper, bool importMaterial ) const = 0;
 
   /**
    * @brief Free internal resources associated with mesh/data import.
@@ -100,6 +100,17 @@ public:
   virtual void freeResources() {}
 
   virtual string getSourceName( localIndex index ) const { return ""; }//= 0;
+
+
+ /**
+  * @brief Get the name mapping between mesh field names and Internal GEOSX field names.
+  * @return The string to string mapping of field names.
+  */
+std::map< string, string > getFieldsMapping( ) { return m_fieldsMapping; }
+
+protected:
+  /// Mesh to GEOSX field names mapping
+  std::map< string, string > m_fieldsMapping;
 };
 }
 

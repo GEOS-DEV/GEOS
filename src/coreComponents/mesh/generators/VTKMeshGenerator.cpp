@@ -129,13 +129,12 @@ string VTKMeshGenerator::getSourceName( localIndex index ) const {
   return vtkArray->GetName();
 }
 
-void VTKMeshGenerator::importFieldsOnArray( string const regionName, string const wrapperName, int fieldNameIdx, WrapperBase & wrapper, bool importMaterial ) const
+void VTKMeshGenerator::importFieldsOnArray( string const regionName, string const geosxFieldName, string const meshFieldName, WrapperBase & wrapper, bool importMaterial ) const
 {
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': importing field data from mesh dataset", catalogName(), getName() ) );
   GEOSX_ASSERT_MSG( m_vtkMesh, "Must call generateMesh() before importFields()" );
 
-  std::vector< vtkDataArray * > const srcArrays = vtk::findArraysForImport( *m_vtkMesh, m_fieldsToImport );
-  vtkDataArray * vtkArray = srcArrays[fieldNameIdx];
+  vtkDataArray * vtkArray = vtk::findArrayForImport( *m_vtkMesh, meshFieldName );
 
   for( auto const & typeRegions : m_cellMap )
   {
@@ -149,7 +148,7 @@ void VTKMeshGenerator::importFieldsOnArray( string const regionName, string cons
         if( regionName != cellBlockName ) continue;
 
         GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Importing field {} -> {}",
-                                              vtkArray->GetName(), wrapperName ) );
+                                              vtkArray->GetName(), geosxFieldName ) );
         if( importMaterial )
         {
           vtk::importMaterialField( regionCells.second, vtkArray, wrapper );

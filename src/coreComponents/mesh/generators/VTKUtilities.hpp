@@ -131,6 +131,14 @@ std::vector< vtkDataArray * >
 findArraysForImport( vtkDataSet & mesh,
                      arrayView1d< string const > const & srcFieldNames );
 
+/**
+ * @brief Collect the data to be imported.
+ * @param[in] mesh an input mesh
+ * @param[in] sourceName a field name
+ * @return A VTK data array pointer.
+ */
+vtkDataArray * findArrayForImport( vtkDataSet & mesh, string const & sourceName );
+
 string buildCellBlockName( ElementType const type, int const regionId );
 
 void importMaterialField( std::vector< vtkIdType > const & cellIds,

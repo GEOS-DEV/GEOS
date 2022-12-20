@@ -52,7 +52,7 @@ public:
 
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  void importFieldsOnArray( string const cellBlockName, string const wrapperName, int fieldIndex, dataRepository::WrapperBase & wrapper, bool importMaterial ) const override {}
+  void importFieldsOnArray( string const cellBlockName, string const geosxFieldNamee, string const meshFieldName, dataRepository::WrapperBase & wrapper, bool importMaterial ) const override {}
 
   /**
    * @return Whether or not a Cartesian mesh is being generated.

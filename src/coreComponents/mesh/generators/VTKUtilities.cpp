@@ -1675,6 +1675,24 @@ findArraysForImport( vtkDataSet & mesh,
   return arrays;
 }
 
+vtkDataArray *
+findArrayForImport( vtkDataSet & mesh,
+                    string const & sourceName )
+{
+  vtkCellData & cellData = *mesh.GetCellData();
+
+  vtkAbstractArray * const curArray = cellData.GetAbstractArray( sourceName.c_str() );
+  GEOSX_THROW_IF( curArray == nullptr,
+                  GEOSX_FMT( "Source field '{}' not found in dataset", sourceName ),
+                  InputError );
+
+  int const dataType = curArray->GetDataType();
+  GEOSX_ERROR_IF( dataType != VTK_FLOAT && dataType != VTK_DOUBLE,
+                  GEOSX_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
+                             sourceName, curArray->GetDataTypeAsString() ) );
+  return vtkDataArray::SafeDownCast( curArray );
+}
+
 /**
  * @brief Builds the cell block name.
  * @param[in] type The element name.

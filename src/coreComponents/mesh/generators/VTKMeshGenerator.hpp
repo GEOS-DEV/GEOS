@@ -88,7 +88,7 @@ public:
    */
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  virtual void importFieldsOnArray( string const regionName, string const wrapperName, int fieldNameIdx, WrapperBase & wrapper, bool importMaterial ) const;// override;
+  virtual void importFieldsOnArray( string const regionName, string const geosxFieldName, string const meshFieldName , WrapperBase & wrapper, bool importMaterial ) const;// override;
 
   virtual void freeResources() override;
 

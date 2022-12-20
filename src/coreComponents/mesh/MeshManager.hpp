@@ -68,6 +68,12 @@ public:
    */
   void generateMeshLevels( DomainPartition & domain );
 
+  /**
+   * @brief Import data from external sources (e.g. dataset that comes with a mesh).
+   * @param[in] domain a reference to the physical domain
+   */
+  void importFields( DomainPartition & domain );
+
 private:
 
   /**

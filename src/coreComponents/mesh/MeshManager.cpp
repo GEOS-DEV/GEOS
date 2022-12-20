@@ -15,9 +15,12 @@
 
 #include "MeshManager.hpp"
 
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "generators/MeshGeneratorBase.hpp"
 #include "common/TimingMacros.hpp"
+
+#include <unordered_set>
 
 namespace geosx
 {
@@ -72,6 +75,79 @@ void MeshManager::generateMeshLevels( DomainPartition & domain )
 
     string const & meshName = meshGen.getName();
     domain.getMeshBodies().registerGroup< MeshBody >( meshName ).createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString() );
+  } );
+}
+
+/**
+ * @brief Collect a set of material field names registered in a subregion.
+ * @param subRegion the target subregion
+ * @return a set of wrapper names
+ */
+  std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const & subRegion )
+{
+  using namespace constitutive;
+  std::unordered_set< string > materialWrapperNames;
+  subRegion.getConstitutiveModels().forSubGroups< ConstitutiveBase >( [&]( ConstitutiveBase const & material )
+  {
+    material.forWrappers( [&]( WrapperBase const & wrapper )
+    {
+      if( wrapper.sizedFromParent() )
+      {
+        materialWrapperNames.insert( ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() ) );
+      }
+    } );
+  } );
+  return materialWrapperNames;
+}
+
+void MeshManager::importFields( DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+  ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getBaseDiscretization().getElemManager();
+
+  forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & generator )
+  {
+    FieldIdentifiers fieldsToBeSync;
+    std::map< string, string > fieldNamesMapping = generator.getFieldsMapping();
+
+    elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex,
+                                                                           localIndex,
+                                                                           ElementRegionBase const & region,
+                                                                           CellElementSubRegion & subRegion )
+    {
+      std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
+      // Writing properties
+      for( const auto& pair : fieldNamesMapping )
+      {
+        const string & meshFieldName = pair.first;
+        const string & geosxFieldName = pair.second;
+        // Find destination
+        if( !subRegion.hasWrapper( geosxFieldName ) )
+        {
+          // Skip - the user may have not enabled a particular physics model/solver on this dstRegion.
+          GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Skipping import of {} -> {} on {}/{} (field not found)",
+                                                meshFieldName, geosxFieldName, region.getName(), subRegion.getName() ) );
+
+          continue;
+        }
+
+        // Now that we know that the subRegion has this wrapper, we can add the geosxFieldName to the list of fields to
+        // synchronize
+        fieldsToBeSync.addElementFields( {geosxFieldName}, {region.getName()} );
+        WrapperBase & wrapper = subRegion.getWrapperBase( geosxFieldName );
+        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Importing field on {}/{}",
+                                              region.getName(), subRegion.getName() ) );
+
+
+        bool const isMaterialField = materialWrapperNames.count( geosxFieldName ) > 0 && wrapper.numArrayDims() > 1;
+        generator.importFieldsOnArray( region.getName(), geosxFieldName, meshFieldName, wrapper, isMaterialField );
+      }
+    } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                         domain.getMeshBody( this->getName() ).getBaseDiscretization(),
+                                                         domain.getNeighbors(),
+                                                         false );
   } );
 }
 

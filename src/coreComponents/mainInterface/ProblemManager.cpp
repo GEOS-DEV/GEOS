@@ -625,27 +625,6 @@ void ProblemManager::generateMesh()
 
 }
 
-/**
- * @brief Collect a set of material field names registered in a subregion.
- * @param subRegion the target subregion
- * @return a set of wrapper names
- */
-  std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const & subRegion )
-{
-  using namespace constitutive;
-  std::unordered_set< string > materialWrapperNames;
-  subRegion.getConstitutiveModels().forSubGroups< ConstitutiveBase >( [&]( ConstitutiveBase const & material )
-  {
-    material.forWrappers( [&]( WrapperBase const & wrapper )
-    {
-      if( wrapper.sizedFromParent() )
-      {
-        materialWrapperNames.insert( ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() ) );
-      }
-    } );
-  } );
-  return materialWrapperNames;
-}
 
 
 void ProblemManager::importFields()
@@ -653,49 +632,10 @@ void ProblemManager::importFields()
   GEOSX_MARK_FUNCTION;
   DomainPartition & domain = getDomainPartition();
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
-  ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getBaseDiscretization().getElemManager();
+  meshManager.importFields( domain );
 
   meshManager.forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & generator )
   {
-    FieldIdentifiers fieldsToBeSync;
-    elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex,
-                                                                           localIndex,
-                                                                           ElementRegionBase const & region,
-                                                                           CellElementSubRegion & subRegion )
-    {
-      std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
-      // Writing properties
-      for( localIndex i = 0; i < m_fieldNamesInGEOSX.size(); ++i )
-      {
-        // Find destination
-        string const wrapperName = m_fieldNamesInGEOSX[i];
-        if( !subRegion.hasWrapper( wrapperName ) )
-        {
-          // Skip - the user may have not enabled a particular physics model/solver on this dstRegion.
-          GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Skipping import of {} -> {} on {}/{} (field not found)",
-                                                generator.getSourceName(i), wrapperName, region.getName(), subRegion.getName() ) );
-
-          continue;
-        }
-
-        // Now that we know that the subRegion has this wrapper, we can add the wrapperName to the list of fields to
-        // synchronize
-        fieldsToBeSync.addElementFields( {wrapperName}, {region.getName()} );
-        WrapperBase & wrapper = subRegion.getWrapperBase( wrapperName );
-        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Importing field on {}/{}",
-                                              region.getName(), subRegion.getName() ) );
-
-
-        bool const isMaterialField = materialWrapperNames.count( wrapperName ) > 0 && wrapper.numArrayDims() > 1;
-        generator.importFieldsOnArray( region.getName(), wrapperName, i, wrapper, isMaterialField );
-      }
-    } );
-
-    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                         domain.getMeshBody( this->getName() ).getBaseDiscretization(),
-                                                         domain.getNeighbors(),
-                                                         false );
-      //      generator.importFields( domain );
     generator.freeResources();
   } );
 }
