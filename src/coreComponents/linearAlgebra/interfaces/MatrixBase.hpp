@@ -939,9 +939,9 @@ protected:
                       LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const = 0;
 
   /**
-   * @brief Read the matrix from filename.
+   * @brief Read the matrix from a file.
    * @param filename name of the input file
-   * @param comm MPI communicator.
+   * @param comm MPI communicator
    *
    */
   virtual void read( string const & filename,
