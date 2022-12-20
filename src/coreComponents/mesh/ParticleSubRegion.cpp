@@ -277,12 +277,105 @@ void ParticleSubRegion::cpdiDomainScaling( real64 lCrit,
  }
 }
 
+void ParticleSubRegion::getMappedNodes( int const p,
+                                        std::array< real64, 3 > const & xMin,
+                                        std::array< real64, 3 > const & hx,
+                                        array3d< int > const & ijkMap,
+                                        arrayView1d< localIndex > const nodeIDs )
+{
+  arraySlice1d< real64 > const & p_x = m_particleCenter[p];
+
+  switch( m_particleType )
+  {
+    case ParticleType::SinglePoint:
+    {
+      // get IJK associated with particle center
+      std::vector<int> centerIJK;
+      centerIJK.resize(3);
+      for(int i=0; i<3; i++)
+      {
+        centerIJK[i] = std::floor( ( p_x[i] - xMin[i] ) / hx[i] );
+      }
+
+      int node = 0;
+      for(int i=0; i<2; i++)
+      {
+        for(int j=0; j<2; j++)
+        {
+          for(int k=0; k<2; k++)
+          {
+            nodeIDs[node] = ijkMap[centerIJK[0]+i][centerIJK[1]+j][centerIJK[2]+k] ;
+            node++;
+          }
+        }
+      }
+
+      break;
+    }
+    case ParticleType::CPDI:
+    {
+      // Precalculated things
+      int signs[8][3] = { { -1, -1, -1 },
+                          {  1, -1, -1 },
+                          {  1,  1, -1 },
+                          { -1,  1, -1 },
+                          { -1, -1,  1 },
+                          {  1, -1,  1 },
+                          {  1,  1,  1 },
+                          { -1,  1,  1 } };
+      real64 p_r1[3], p_r2[3], p_r3[3]; // allowing 1-indexed r-vectors to persist to torture future postdocs >:)
+
+      for(int i=0; i<3; i++)
+      {
+        p_r1[i] = m_particleRVectors[p][0][i];
+        p_r2[i] = m_particleRVectors[p][1][i];
+        p_r3[i] = m_particleRVectors[p][2][i];
+      }
+
+      // get IJK associated with each corner
+      int cornerIJK[8][3]; // CPDI can map to up to 8 cells
+      for(int corner=0; corner<8; corner++)
+      {
+        for(int i=0; i<3; i++)
+        {
+          real64 cornerPositionComponent = p_x[i] + signs[corner][0] * m_particleRVectors[p][0][i] + signs[corner][1] * m_particleRVectors[p][1][i] + signs[corner][2] * m_particleRVectors[p][2][i];
+          cornerIJK[corner][i] = std::floor( ( cornerPositionComponent - xMin[i] ) / hx[i] ); // TODO: Temporarily store the CPDI corners since they're re-used below?
+        }
+      }
+
+      // get node IDs associated with each corner from IJK map
+      int node = 0;
+      for(int corner=0; corner<8; corner++)
+      {
+        for(int i=0; i<2; i++)
+        {
+          for(int j=0; j<2; j++)
+          {
+            for(int k=0; k<2; k++)
+            {
+              nodeIDs[node] = ijkMap[cornerIJK[corner][0]+i][cornerIJK[corner][1]+j][cornerIJK[corner][2]+k];
+              node++;
+            }
+          }
+        }
+      }
+
+      break;
+    }
+
+    default:
+    {
+      GEOSX_ERROR( "Particle type \"" << m_particleType << "\" is not yet supported." );
+    }
+  }
+}
+
 void ParticleSubRegion::getAllWeights( int const p,
                                        std::array< real64, 3 > const & xMin,
                                        std::array< real64, 3 > const & hx,
                                        array3d< int > const & ijkMap,
                                        arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const g_X,
-                                       arrayView1d< int > const nodeIDs,
+                                       arrayView1d< localIndex > const nodeIDs,
                                        arrayView1d< real64 > const weights,
                                        arrayView2d< real64 > const gradWeights )
 {
