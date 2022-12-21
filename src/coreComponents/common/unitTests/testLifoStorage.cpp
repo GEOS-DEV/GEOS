@@ -73,16 +73,20 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
   array.move( RAJAHelper< POLICY >::space );
   lifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
+
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {
 
+  std::cout << "here 1 " << j << std::endl;
     float * dataPointer = array.data();
     forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOSX_HOST_DEVICE ( int i ) { dataPointer[ i ] = j*elemCnt+i; } );
     lifo.push( array );
   }
 
+
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {
+  std::cout << "here 2 " << j << std::endl;
     lifo.pop( array );
     float * dataPointer = array.data();
     forAll< POLICY >( elemCnt, [dataPointer, totalNumberOfBuffers, j, elemCnt] GEOSX_HOST_DEVICE ( int i )
@@ -90,6 +94,8 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
       PORTABLE_EXPECT_EQ( dataPointer[ i ], (float)(totalNumberOfBuffers-j-1)*elemCnt+i );
     } );
   }
+  std::cout << "here 3 " << std::endl;
+
 }
 
 template< typename POLICY >
@@ -99,8 +105,10 @@ void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int number
   array.move( RAJAHelper< POLICY >::space );
   lifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
+
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {
+  std::cout << "here 4 " << j << std::endl;
 
     float * dataPointer = array.data();
     lifo.pushWait( );
@@ -108,8 +116,10 @@ void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int number
     lifo.pushAsync( array );
   }
 
+
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {
+  std::cout << "here 5 " << j << std::endl;
     lifo.popAsync( array );
     lifo.popWait( );
     float * dataPointer = array.data();
@@ -118,6 +128,7 @@ void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int number
       PORTABLE_EXPECT_EQ( dataPointer[ i ], (float)(totalNumberOfBuffers-j-1)*elemCnt+i );
     } );
   }
+  std::cout << "here 6 " << std::endl;
 }
 
 
