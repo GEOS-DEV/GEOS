@@ -57,8 +57,6 @@ void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition
   dofManager.addCoupling( SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
                           fields::contact::traction::key(),
                           DofManager::Connector::Elem );
-
-  dofManager.printFieldInfo();
 }
 
 bool SinglePhasePoromechanicsConformingFractures::updateConfiguration( DomainPartition & domain )
@@ -612,10 +610,14 @@ void SinglePhasePoromechanicsConformingFractures::
 
         localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
 
-        localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
-                                                                  nodeDOF,
-                                                                  dRdU.data(),
-                                                                  2 * 3 * numNodesPerFace );
+        if( localRow > 0 && localRow < localMatrix.numRows() )
+        {
+
+          localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
+                                                                    nodeDOF,
+                                                                    dRdU.data(),
+                                                                    2 * 3 * numNodesPerFace );
+        }
       }
 
       // flux derivative
@@ -655,10 +657,13 @@ void SinglePhasePoromechanicsConformingFractures::
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
 
-          localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
-                                                                    nodeDOF,
-                                                                    dRdU.data(),
-                                                                    2 * 3 * numNodesPerFace );
+          if( localRow > 0 && localRow < localMatrix.numRows() )
+          {
+            localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
+                                                                      nodeDOF,
+                                                                      dRdU.data(),
+                                                                      2 * 3 * numNodesPerFace );
+          }
         }
       }
     } );

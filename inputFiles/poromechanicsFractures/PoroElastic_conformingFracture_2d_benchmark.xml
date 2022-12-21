@@ -5,7 +5,7 @@
     <File
       name="./PoroElastic_conformingFracture_2d_base.xml"/>
   </Included> 
-
+  
   <Mesh>
     <InternalMesh
       name="mesh1"
@@ -13,8 +13,8 @@
       xCoords="{ -1, 1 }"
       yCoords="{  -1, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
+      nx="{ 100 }"
+      ny="{ 100 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -33,10 +33,6 @@
     <PeriodicEvent
       name="outputs"
       target="/Outputs/vtkOutput"/>
-
-    <PeriodicEvent
-      name="restart"
-      target="/Outputs/restarts"/>  
   </Events>
 
 </Problem>
