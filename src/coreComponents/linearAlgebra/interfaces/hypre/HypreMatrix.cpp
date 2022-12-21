@@ -1335,6 +1335,7 @@ void HypreMatrix::read( string const & filename,
   reset();
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixRead( filename.c_str(), comm, HYPRE_PARCSR, &m_ij_mat ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetObject( m_ij_mat, (void * *) &m_parcsr_mat ) );
+  GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixMigrate( m_parcsr_mat, hypre_HandleMemoryLocation(hypre_handle())));
   m_assembled = true;
 }
 

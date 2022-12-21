@@ -7,7 +7,8 @@ set( parallel_tests
      Matrices
      Vectors
      ExternalSolvers
-     KrylovSolvers )
+     KrylovSolvers
+     TwoLevelPreconditioner )
 
 set( nranks 2 )
 

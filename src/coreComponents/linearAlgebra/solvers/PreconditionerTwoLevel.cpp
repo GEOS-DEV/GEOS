@@ -24,24 +24,23 @@ namespace geosx
 {
 
 // --------------------------------------------
-namespace
-{
-
 struct twoLevelStructuredMesh
 {
   constexpr static integer nDim = 3;
+  integer numDofPerNode;
   localIndex numCoarsePoints[nDim]{};
   integer refinementFactors[nDim]{};
 
-  twoLevelStructuredMesh()
-  {
-    readFromFile( "twoLevelMesh.txt" );
-  }	  
+  //twoLevelStructuredMesh()
+  //{
+  //  readFromFile( "twoLevelMesh.txt" );
+  //}	  
   
   //void printInfo()
   //{
   //  std::cout << "twoLevelMesh Info" << std::endl;
   //  std::cout << "nDim: " << nDim << std::endl;
+  //  std::cout << "numDofPerNode: " << numDofPerNode << std::endl;
   //  std::cout << "numCoarsePoints:";
   //  for( int iDim = 0; iDim < nDim; ++iDim )
   //  {
@@ -63,6 +62,8 @@ struct twoLevelStructuredMesh
     GEOSX_ERROR_IF( !TLMeshFile, GEOSX_FMT( "Unable to open file for writing: {}", filename ) );
     std::string str;
     TLMeshFile >> str;
+    TLMeshFile >> numDofPerNode;
+    TLMeshFile >> str;
     TLMeshFile >> numCoarsePoints[0];
     TLMeshFile >> numCoarsePoints[1];
     TLMeshFile >> numCoarsePoints[2];
@@ -74,6 +75,9 @@ struct twoLevelStructuredMesh
   }	  
 
 };   
+
+namespace
+{
 
 GEOSX_HOST_DEVICE
 void getIJKFromGlobalID( localIndex const & IND,
@@ -104,9 +108,10 @@ localIndex getGlobalIDFromIJK( localIndex const & I,
 
 void prolongVector( arrayView1d< real64 const > const & coarseValues,
 		    arrayView1d< real64 > const & fineValues,
-                    twoLevelStructuredMesh const & mesh,
-                    integer const & numDofPerNode )
+                    twoLevelStructuredMesh const & mesh )
 {
+  integer numDofPerNode = mesh.numDofPerNode;
+
   // Coarse mesh number of points
   integer const NI = mesh.numCoarsePoints[0];
   integer const NJ = mesh.numCoarsePoints[1];
@@ -270,9 +275,10 @@ void prolongVector( arrayView1d< real64 const > const & coarseValues,
 
 void restrictVector( arrayView1d< real64 const > const & fineValues,
 		     arrayView1d< real64 > const & coarseValues,
-                     twoLevelStructuredMesh const & mesh,
-                     integer const & numDofPerNode )
+                     twoLevelStructuredMesh const & mesh )
 {
+  integer numDofPerNode = mesh.numDofPerNode;
+
   // Coarse mesh number of points
   integer const NI = mesh.numCoarsePoints[0];
   integer const NJ = mesh.numCoarsePoints[1];
@@ -359,197 +365,226 @@ void restrictVector( arrayView1d< real64 const > const & fineValues,
 
 template< typename LAI >
 PreconditionerTwoLevel< LAI >::
-PreconditionerTwoLevel ()
+PreconditionerTwoLevel ( Matrix const & mat,
+		         Matrix const & matCoarse )
   : Base()
 {
-  twoLevelStructuredMesh mesh;
-  integer const numDofPerNode = 3;
-  localIndex const localCoarseSize = mesh.numCoarsePoints[0] * mesh.numCoarsePoints[1] * mesh.numCoarsePoints[2];
-  localIndex const coarseSpaceDim = localCoarseSize * numDofPerNode;
-  localIndex const localFineSize = ( ( mesh.numCoarsePoints[0] - 1 ) * mesh.refinementFactors[0] + 1 ) 
-		                 * ( ( mesh.numCoarsePoints[1] - 1 ) * mesh.refinementFactors[1] + 1 )
-				 * ( ( mesh.numCoarsePoints[2] - 1 ) * mesh.refinementFactors[2] + 1 );
-  localIndex const fineSpaceDim = localFineSize * numDofPerNode;
 
-  Vector vH;
-  Vector wH;
-  Vector vh;
-  MPI_Comm const comm = MPI_COMM_GEOSX;
-  int const rank = MpiWrapper::commRank( comm );
-  int const nproc = MpiWrapper::commSize( comm );
+  GEOSX_LAI_ASSERT( mat.ready() );
+  GEOSX_LAI_ASSERT_MSG( mat.numLocalRows() == mat.numLocalCols(), "Fine matrix must be square" );
+  this->setup( mat );
+
+  GEOSX_LAI_ASSERT( matCoarse.ready() );
+  GEOSX_LAI_ASSERT_MSG( matCoarse.numLocalRows() == matCoarse.numLocalCols(), "Coarse matrix must be square" );
+  m_coarseMat = &matCoarse;
+
+  m_diagInv.create( mat.numLocalRows(), mat.comm() );
+  mat.extractDiagonal( m_diagInv );
+  m_diagInv.reciprocal();
+
+  m_diagInv.write("jacobi");
+
+  LinearSolverParameters params; 
+  params.isSymmetric = true;
+  params.solverType = LinearSolverParameters::SolverType::direct;
+  params.direct.parallel = 0;
+
+  m_coarseSolver = LAI::createSolver( params );
+  m_coarseSolver->setup( matCoarse );
+
   
-  vH.create( coarseSpaceDim, comm );
-  wH.create( coarseSpaceDim, comm );
-  vh.create( fineSpaceDim, comm );
-  arrayView1d< real64 > const values = vH.open();
-  values.move( LvArray::MemorySpace::host, true );
-  //forAll< serialPolicy >( 1, [values] ( localIndex const i )
-  //{
-  values[   0 ] = 8.984169707017889e-01;
-  values[   1 ] = 1.730556422508585e-01;
-  values[   2 ] = 4.984730689116268e-01;
-  values[   3 ] = 2.262703081123629e-02;
-  values[   4 ] = 9.414463161042915e-01;
-  values[   5 ] = 6.676273433857585e-01;
-  values[   6 ] = 7.476695656612741e-01;
-  values[   7 ] = 7.065466594578906e-01;
-  values[   8 ] = 6.705204299312063e-01;
-  values[   9 ] = 5.298601187793164e-01;
-  values[  10 ] = 6.883938266853351e-01;
-  values[  11 ] = 8.464315203708332e-01;
-  values[  12 ] = 6.785590194065089e-01;
-  values[  13 ] = 4.773825703942811e-01;
-  values[  14 ] = 8.405881411943199e-01;
-  values[  15 ] = 8.237660055988379e-01;
-  values[  16 ] = 6.639589894287550e-01;
-  values[  17 ] = 9.546640985209540e-01;
-  values[  18 ] = 8.348865374630587e-01;
-  values[  19 ] = 3.138753818623718e-01;
-  values[  20 ] = 9.080192489606731e-02;
-  values[  21 ] = 8.744201525171559e-01;
-  values[  22 ] = 1.866423577745185e-01;
-  values[  23 ] = 4.855050980254463e-01;
-  values[  24 ] = 3.674526305826995e-01;
-  values[  25 ] = 1.173122833641906e-01;
-  values[  26 ] = 7.589345951251416e-01;
-  values[  27 ] = 4.895759772029249e-01;
-  values[  28 ] = 3.863219491556974e-01;
-  values[  29 ] = 6.498751386303387e-01;
-  values[  30 ] = 4.357528394476876e-01;
-  values[  31 ] = 5.046460598360366e-01;
-  values[  32 ] = 3.007770337177867e-01;
-  values[  33 ] = 2.146779382915700e-01;
-  values[  34 ] = 1.473342711458868e-01;
-  values[  35 ] = 8.233130359881409e-01;
-  values[  36 ] = 4.151743724253540e-01;
-  values[  37 ] = 9.133220439323685e-01;
-  values[  38 ] = 4.123744225844106e-01;
-  values[  39 ] = 5.350365064480540e-01;
-  values[  40 ] = 8.706237991792931e-03;
-  values[  41 ] = 4.990207991399526e-01;
-  values[  42 ] = 9.818468585627238e-02;
-  values[  43 ] = 6.961308820215216e-01;
-  values[  44 ] = 5.692237745925788e-02;
-  values[  45 ] = 2.877581005668916e-01;
-  values[  46 ] = 3.147101113953451e-01;
-  values[  47 ] = 5.280159866782138e-01;
-  values[  48 ] = 9.624630982308021e-01;
-  values[  49 ] = 3.253391743050699e-01;
-  values[  50 ] = 7.467690503925523e-01;
-  values[  51 ] = 4.390037803917550e-01;
-  values[  52 ] = 2.754445076951573e-02;
-  values[  53 ] = 7.642763681461628e-02;
-  values[  54 ] = 1.629611534086595e-01;
-  values[  55 ] = 8.221273654961192e-01;
-  values[  56 ] = 1.487300662275823e-01;
-  values[  57 ] = 5.891046555546018e-01;
-  values[  58 ] = 8.738749524224014e-01;
-  values[  59 ] = 4.724670802736430e-02;
-  values[  60 ] = 6.035232300905453e-01;
-  values[  61 ] = 7.800933310093185e-01;
-  values[  62 ] = 6.285970419375732e-01;
-  values[  63 ] = 9.795804536483746e-01;
-  values[  64 ] = 5.577203103561332e-01;
-  values[  65 ] = 9.921687439673234e-01;
-  values[  66 ] = 1.297723532738355e-01;
-  values[  67 ] = 8.546265810377777e-01;
-  values[  68 ] = 5.755380415817175e-01;
-  values[  69 ] = 2.261509893455913e-01;
-  values[  70 ] = 6.761157212459386e-01;
-  values[  71 ] = 5.846388626177723e-01;
-  values[  72 ] = 4.293384459064786e-01;
-  values[  73 ] = 3.512763711339811e-01;
-  values[  74 ] = 3.101741591591093e-01;
-  values[  75 ] = 3.901417866500019e-01;
-  values[  76 ] = 2.710763527614077e-01;
-  values[  77 ] = 2.463981969637962e-01;
-  values[  78 ] = 6.578893457789561e-01;
-  values[  79 ] = 5.191700191790319e-01;
-  values[  80 ] = 4.450980676269678e-02;
-  values[  81 ] = 7.985932520668604e-01;
-  values[  82 ] = 8.688837429561447e-01;
-  values[  83 ] = 1.387128427344385e-01;
-  values[  84 ] = 7.009368844277101e-01;
-  values[  85 ] = 2.558834553019614e-01;
-  values[  86 ] = 1.776722341122916e-02;
-  values[  87 ] = 5.616519368822925e-01;
-  values[  88 ] = 1.873775539704424e-01;
-  values[  89 ] = 5.018605249428387e-02;
-  values[  90 ] = 3.323915742354102e-01;
-  values[  91 ] = 8.936256612673193e-01;
-  values[  92 ] = 3.331755152079796e-01;
-  values[  93 ] = 6.182523732470672e-01;
-  values[  94 ] = 8.981638052968632e-01;
-  values[  95 ] = 2.635205945271855e-01;
-  values[  96 ] = 5.394916409379239e-01;
-  values[  97 ] = 8.432502544620608e-01;
-  values[  98 ] = 1.536310267204350e-01;
-  values[  99 ] = 3.238441101768030e-01;
-  values[ 100 ] = 1.558311737470012e-01;
-  values[ 101 ] = 7.219896896661782e-02;
-  values[ 102 ] = 3.502688218288149e-01;
-  values[ 103 ] = 9.680155816687932e-01;
-  values[ 104 ] = 5.266514038048760e-01;
-  values[ 105 ] = 2.206796923324806e-01;
-  values[ 106 ] = 8.348798827094354e-01;
-  values[ 107 ] = 5.176335258800429e-01;
-  //} );
-#if GEOSX_ENABLE_CUDA
-  Vector vH_GPU;
-  vH_GPU.create( coarseSpaceDim, comm );
-  arrayView1d< real64 > const values_GPU = vH_GPU.open();
-  values_GPU.move( LvArray::MemorySpace::host, true );
-  int counter = 0;
-  for( int i = 0; i < coarseSpaceDim; i += numDofPerNode)
-  {
-    values_GPU[counter] = values[i];
-    values_GPU[counter+36] = values[i+1];
-    values_GPU[counter+72] = values[i+2];
-    counter += 1;
-  }
-  vH_GPU.close();
-#endif
-  vH.close();
+  m_mesh = std::make_unique< twoLevelStructuredMesh >();
+  m_mesh->readFromFile( "twoLevelMesh.txt" );
+  integer const numDofPerNode = 1;
+  //  localIndex const localCoarseSize = m_mesh.numCoarsePoints[0] * m_mesh.numCoarsePoints[1] * m_mesh.numCoarsePoints[2];
+  //  localIndex const coarseSpaceDim = localCoarseSize * numDofPerNode;
+  //  localIndex const localFineSize = ( ( m_mesh.numCoarsePoints[0] - 1 ) * m_mesh.refinementFactors[0] + 1 ) 
+  //        	                 * ( ( m_mesh.numCoarsePoints[1] - 1 ) * m_mesh.refinementFactors[1] + 1 )
+  //        			 * ( ( m_mesh.numCoarsePoints[2] - 1 ) * m_mesh.refinementFactors[2] + 1 );
+  //  localIndex const fineSpaceDim = localFineSize * numDofPerNode;
 
-  // Prolong vector
-#if GEOSX_ENABLE_CUDA
-  arrayView1d< real64 const > const vH_input = vH_GPU.values();
-#else
-  arrayView1d< real64 const > const vH_input = vH.values();
-#endif
-  arrayView1d< real64 > const vh_output = vh.open();
-  prolongVector( vH_input, vh_output, mesh, numDofPerNode );
-  vh.close();
-
-  vh.write("vh");
-
-  arrayView1d< real64 const > const vh_input = vh.values();
-  arrayView1d< real64 > const wH_output = wH.open();
-  restrictVector( vh_input, wH_output, mesh, numDofPerNode );
-  wH.close();
-
-#if GEOSX_ENABLE_CUDA
-  Vector wH_CPU;
-  wH_CPU.create( coarseSpaceDim, comm );
-  arrayView1d< real64 > const values_CPU = wH_CPU.open();
-  arrayView1d< real64 const > const values_wH = wH.open();
-  values_CPU.move( LvArray::MemorySpace::host, true );
-  int counter = 0;
-  for( int i = 0; i < coarseSpaceDim; i += numDofPerNode)
-  {
-    values_CPU[counter]   = values_wH[i];
-    values_CPU[counter+1] = values_wH[i+36];
-    values_CPU[counter+2] = values_wH[i+72];
-    counter += 1;
-  }
-  wH_CPU.close();
-  wH_CPU.write("wH");
-#else
-  wH.write("wH");
-#endif
+  //  Vector vH;
+  //  Vector wH;
+  //  Vector vh;
+  //  MPI_Comm const comm = MPI_COMM_GEOSX;
+  //  int const rank = MpiWrapper::commRank( comm );
+  //  int const nproc = MpiWrapper::commSize( comm );
+  //  
+  //  vH.create( coarseSpaceDim, comm );
+  //  wH.create( coarseSpaceDim, comm );
+  //  vh.create( fineSpaceDim, comm );
+  //  arrayView1d< real64 > const values = vH.open();
+  //  values.move( LvArray::MemorySpace::host, true );
+  //  //forAll< serialPolicy >( 1, [values] ( localIndex const i )
+  //  //{
+  //  values[   0 ] = 8.984169707017889e-01;
+  //  values[   1 ] = 1.730556422508585e-01;
+  //  values[   2 ] = 4.984730689116268e-01;
+  //  values[   3 ] = 2.262703081123629e-02;
+  //  values[   4 ] = 9.414463161042915e-01;
+  //  values[   5 ] = 6.676273433857585e-01;
+  //  values[   6 ] = 7.476695656612741e-01;
+  //  values[   7 ] = 7.065466594578906e-01;
+  //  values[   8 ] = 6.705204299312063e-01;
+  //  values[   9 ] = 5.298601187793164e-01;
+  //  values[  10 ] = 6.883938266853351e-01;
+  //  values[  11 ] = 8.464315203708332e-01;
+  //  values[  12 ] = 6.785590194065089e-01;
+  //  values[  13 ] = 4.773825703942811e-01;
+  //  values[  14 ] = 8.405881411943199e-01;
+  //  values[  15 ] = 8.237660055988379e-01;
+  //  values[  16 ] = 6.639589894287550e-01;
+  //  values[  17 ] = 9.546640985209540e-01;
+  //  values[  18 ] = 8.348865374630587e-01;
+  //  values[  19 ] = 3.138753818623718e-01;
+  //  values[  20 ] = 9.080192489606731e-02;
+  //  values[  21 ] = 8.744201525171559e-01;
+  //  values[  22 ] = 1.866423577745185e-01;
+  //  values[  23 ] = 4.855050980254463e-01;
+  //  values[  24 ] = 3.674526305826995e-01;
+  //  values[  25 ] = 1.173122833641906e-01;
+  //  values[  26 ] = 7.589345951251416e-01;
+  //  values[  27 ] = 4.895759772029249e-01;
+  //  values[  28 ] = 3.863219491556974e-01;
+  //  values[  29 ] = 6.498751386303387e-01;
+  //  values[  30 ] = 4.357528394476876e-01;
+  //  values[  31 ] = 5.046460598360366e-01;
+  //  values[  32 ] = 3.007770337177867e-01;
+  //  values[  33 ] = 2.146779382915700e-01;
+  //  values[  34 ] = 1.473342711458868e-01;
+  //  values[  35 ] = 8.233130359881409e-01;
+  //  values[  36 ] = 4.151743724253540e-01;
+  //  values[  37 ] = 9.133220439323685e-01;
+  //  values[  38 ] = 4.123744225844106e-01;
+  //  values[  39 ] = 5.350365064480540e-01;
+  //  values[  40 ] = 8.706237991792931e-03;
+  //  values[  41 ] = 4.990207991399526e-01;
+  //  values[  42 ] = 9.818468585627238e-02;
+  //  values[  43 ] = 6.961308820215216e-01;
+  //  values[  44 ] = 5.692237745925788e-02;
+  //  values[  45 ] = 2.877581005668916e-01;
+  //  values[  46 ] = 3.147101113953451e-01;
+  //  values[  47 ] = 5.280159866782138e-01;
+  //  values[  48 ] = 9.624630982308021e-01;
+  //  values[  49 ] = 3.253391743050699e-01;
+  //  values[  50 ] = 7.467690503925523e-01;
+  //  values[  51 ] = 4.390037803917550e-01;
+  //  values[  52 ] = 2.754445076951573e-02;
+  //  values[  53 ] = 7.642763681461628e-02;
+  //  values[  54 ] = 1.629611534086595e-01;
+  //  values[  55 ] = 8.221273654961192e-01;
+  //  values[  56 ] = 1.487300662275823e-01;
+  //  values[  57 ] = 5.891046555546018e-01;
+  //  values[  58 ] = 8.738749524224014e-01;
+  //  values[  59 ] = 4.724670802736430e-02;
+  //  values[  60 ] = 6.035232300905453e-01;
+  //  values[  61 ] = 7.800933310093185e-01;
+  //  values[  62 ] = 6.285970419375732e-01;
+  //  values[  63 ] = 9.795804536483746e-01;
+  //  values[  64 ] = 5.577203103561332e-01;
+  //  values[  65 ] = 9.921687439673234e-01;
+  //  values[  66 ] = 1.297723532738355e-01;
+  //  values[  67 ] = 8.546265810377777e-01;
+  //  values[  68 ] = 5.755380415817175e-01;
+  //  values[  69 ] = 2.261509893455913e-01;
+  //  values[  70 ] = 6.761157212459386e-01;
+  //  values[  71 ] = 5.846388626177723e-01;
+  //  values[  72 ] = 4.293384459064786e-01;
+  //  values[  73 ] = 3.512763711339811e-01;
+  //  values[  74 ] = 3.101741591591093e-01;
+  //  values[  75 ] = 3.901417866500019e-01;
+  //  values[  76 ] = 2.710763527614077e-01;
+  //  values[  77 ] = 2.463981969637962e-01;
+  //  values[  78 ] = 6.578893457789561e-01;
+  //  values[  79 ] = 5.191700191790319e-01;
+  //  values[  80 ] = 4.450980676269678e-02;
+  //  values[  81 ] = 7.985932520668604e-01;
+  //  values[  82 ] = 8.688837429561447e-01;
+  //  values[  83 ] = 1.387128427344385e-01;
+  //  values[  84 ] = 7.009368844277101e-01;
+  //  values[  85 ] = 2.558834553019614e-01;
+  //  values[  86 ] = 1.776722341122916e-02;
+  //  values[  87 ] = 5.616519368822925e-01;
+  //  values[  88 ] = 1.873775539704424e-01;
+  //  values[  89 ] = 5.018605249428387e-02;
+  //  values[  90 ] = 3.323915742354102e-01;
+  //  values[  91 ] = 8.936256612673193e-01;
+  //  values[  92 ] = 3.331755152079796e-01;
+  //  values[  93 ] = 6.182523732470672e-01;
+  //  values[  94 ] = 8.981638052968632e-01;
+  //  values[  95 ] = 2.635205945271855e-01;
+  //  values[  96 ] = 5.394916409379239e-01;
+  //  values[  97 ] = 8.432502544620608e-01;
+  //  values[  98 ] = 1.536310267204350e-01;
+  //  values[  99 ] = 3.238441101768030e-01;
+  //  values[ 100 ] = 1.558311737470012e-01;
+  //  values[ 101 ] = 7.219896896661782e-02;
+  //  values[ 102 ] = 3.502688218288149e-01;
+  //  values[ 103 ] = 9.680155816687932e-01;
+  //  values[ 104 ] = 5.266514038048760e-01;
+  //  values[ 105 ] = 2.206796923324806e-01;
+  //  values[ 106 ] = 8.348798827094354e-01;
+  //  values[ 107 ] = 5.176335258800429e-01;
+  //  //} );
+//  #if GEOSX_ENABLE_CUDA
+//    Vector vH_GPU;
+//    vH_GPU.create( coarseSpaceDim, comm );
+//    arrayView1d< real64 > const values_GPU = vH_GPU.open();
+//    values_GPU.move( LvArray::MemorySpace::host, true );
+//    int counter = 0;
+//    for( int i = 0; i < coarseSpaceDim; i += numDofPerNode)
+//    {
+//      values_GPU[counter] = values[i];
+//      values_GPU[counter+36] = values[i+1];
+//      values_GPU[counter+72] = values[i+2];
+//      counter += 1;
+//    }
+//    vH_GPU.close();
+//  #endif
+//    vH.close();
+//  
+//    // Prolong vector
+//  #if GEOSX_ENABLE_CUDA
+//    arrayView1d< real64 const > const vH_input = vH_GPU.values();
+//  #else
+//    arrayView1d< real64 const > const vH_input = vH.values();
+//  #endif
+//    arrayView1d< real64 > const vh_output = vh.open();
+//    prolongVector( vH_input, vh_output, m_mesh, numDofPerNode );
+//    vh.close();
+//  
+//    vh.write("vh");
+//  
+//    arrayView1d< real64 const > const vh_input = vh.values();
+//    arrayView1d< real64 > const wH_output = wH.open();
+//    restrictVector( vh_input, wH_output, m_mesh, numDofPerNode );
+//    wH.close();
+//  
+//  #if GEOSX_ENABLE_CUDA
+//    Vector wH_CPU;
+//    wH_CPU.create( coarseSpaceDim, comm );
+//    arrayView1d< real64 > const values_CPU = wH_CPU.open();
+//    arrayView1d< real64 const > const values_wH = wH.open();
+//    values_CPU.move( LvArray::MemorySpace::host, true );
+//    int counter = 0;
+//    for( int i = 0; i < coarseSpaceDim; i += numDofPerNode)
+//    {
+//      values_CPU[counter]   = values_wH[i];
+//      values_CPU[counter+1] = values_wH[i+36];
+//      values_CPU[counter+2] = values_wH[i+72];
+//      counter += 1;
+//    }
+//    wH_CPU.close();
+//    wH_CPU.write("wH");
+//  #else
+//    wH.write("wH");
+//  #endif
 
 
 }
+
+template< typename LAI >
+PreconditionerTwoLevel< LAI >::~PreconditionerTwoLevel() = default;
 
 //template< typename LAI >
 //void PreconditionerTwoLevel< LAI >::setup( Matrix const & mat )
@@ -559,14 +594,26 @@ PreconditionerTwoLevel ()
 //  mat.separateComponentFilter( m_matSC, m_numComp );
 //  m_precond->setup( m_matSC );
 //}
-//
-//template< typename LAI >
-//void PreconditionerTwoLevel< LAI >::apply( Vector const & src,
-//                                                    Vector & dst ) const
-//{
-//  m_precond->apply( src, dst );
-//}
-//
+
+template< typename LAI >
+void PreconditionerTwoLevel< LAI >::apply( Vector const & src,
+                                           Vector & dst ) const
+{
+  //m_precond->apply( src, dst );
+  Vector scr1;
+  Vector scr2;
+  scr1.create( src.localSize(), src.comm() );
+  scr2.create( m_coarseMat->numLocalCols(), m_coarseMat->comm() );
+  arrayView1d< real64 > const values_scr2 = scr2.open();
+  restrictVector( src.values( ), values_scr2, *m_mesh );
+  scr2.close();
+  arrayView1d< real64 > const values_scr1 = scr1.open();
+  prolongVector( scr2.values(), values_scr1, *m_mesh );
+  scr1.close();
+
+  dst = src;
+}
+
 //template< typename LAI >
 //void PreconditionerTwoLevel< LAI >::clear()
 //{

@@ -21,6 +21,8 @@
 namespace geosx
 {
 
+struct twoLevelStructuredMesh;
+
 /**
  * @brief Common interface for two-level preconditioning operator
  * @tparam LAI linear algebra interface providing vectors, matrices and solvers
@@ -44,9 +46,28 @@ public:
    * @param numComp number of components in the field
    * @param precond the actual preconditioner to apply to filtered matrix (ownership transferred)
    */
-  PreconditionerTwoLevel();
+  PreconditionerTwoLevel ( Matrix const & mat,
+                           Matrix const & matCoarse );
 
-  virtual ~PreconditionerTwoLevel() = default;
+  virtual ~PreconditionerTwoLevel() override;
+
+  /**
+   * @brief Clean up the preconditioner setup.
+   *
+   * Releases memory used and allows the matrix to be deleted cleanly.
+   * This method should be called before the matrix used to compute the preconditioner
+   * goes out of scope or is re-created. Some implementations require the matrix
+   * to outlive the preconditioner (for example, Trilinos/ML may crash the program if
+   * deleted after the matrix).
+   *
+   * @note Should be properly overridden in derived classes, which may call this method.
+   */
+   virtual void clear() override
+   {
+     m_coarseSolver.reset();
+     m_coarseMat = nullptr;
+     m_diagInv.reset();
+   }
 
   /**
    * @brief Apply operator to a vector.
@@ -55,20 +76,18 @@ public:
    * @param dst Output vector (dst).
    */
   virtual void apply( Vector const & src,
-                      Vector & dst ) const override
-  {
-    GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
-    GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
-    dst.copy( src );
-  }
+                      Vector & dst ) const override;
 
 private:
 
-  // Coarse operator
-  Matrix coarseMatrix;
+  // Nested mesh data structure
+  std::unique_ptr< twoLevelStructuredMesh > m_mesh;
 
-  // Fine operator (temporary, to be replaced by the matrix free operator)
-  Matrix fineMatrix;
+  // Coarse operator
+  Matrix const * m_coarseMat{};
+
+  // Coarse solver
+  std::unique_ptr< PreconditionerBase< LAI > > m_coarseSolver;
 
   // The inverse of the diagonal of the fine operator (Jacobi smoother)
   Vector m_diagInv;
