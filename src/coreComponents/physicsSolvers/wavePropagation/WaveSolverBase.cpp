@@ -194,43 +194,6 @@ void WaveSolverBase::initializeDAS()
   }
 }
 
-
-real32 WaveSolverBase::evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
-{
-  real32 const o_tpeak = 1.0/f0;
-  real32 pulse = 0.0;
-  if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
-  {
-    return pulse;
-  }
-
-  constexpr real32 pi = M_PI;
-  real32 const lam = (f0*pi)*(f0*pi);
-
-  switch( order )
-  {
-    case 2:
-    {
-      pulse = 2.0*lam*(2.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-    }
-    break;
-    case 1:
-    {
-      pulse = -2.0*lam*(time_n-o_tpeak)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-    }
-    break;
-    case 0:
-    {
-      pulse = -(time_n-o_tpeak)*exp( -2*lam*(time_n-o_tpeak)*(time_n-o_tpeak) );
-    }
-    break;
-    default:
-      GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
-  }
-
-  return pulse;
-}
-
 real64 WaveSolverBase::solverStep( real64 const & time_n,
                                    real64 const & dt,
                                    integer const cycleNumber,
