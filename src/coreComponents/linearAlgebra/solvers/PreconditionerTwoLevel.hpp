@@ -91,6 +91,12 @@ private:
 
   // The inverse of the diagonal of the fine operator (Jacobi smoother)
   Vector m_diagInv;
+
+  // Temporary vectors
+  mutable Vector fineTmp;
+  mutable Vector fineRhs;
+  mutable Vector coarseTmp;
+  mutable Vector coarseRhs;
 };
 
 }
