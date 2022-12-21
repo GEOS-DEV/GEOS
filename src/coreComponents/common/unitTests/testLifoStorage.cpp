@@ -88,9 +88,12 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
   {
   std::cout << "here 2 " << j << std::endl;
     lifo.pop( array );
+  std::cout << "here 2.1 " << j << std::endl;
     float * dataPointer = array.data();
+  std::cout << "here 2.2 " << j << std::endl;
     forAll< POLICY >( elemCnt, [dataPointer, totalNumberOfBuffers, j, elemCnt] GEOSX_HOST_DEVICE ( int i )
     {
+  std::cout << "here 2.3 " << j << "," << i << std::endl;
       PORTABLE_EXPECT_EQ( dataPointer[ i ], (float)(totalNumberOfBuffers-j-1)*elemCnt+i );
     } );
   }
