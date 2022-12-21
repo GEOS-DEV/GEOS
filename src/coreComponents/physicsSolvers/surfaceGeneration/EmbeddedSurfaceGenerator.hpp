@@ -113,7 +113,9 @@ private:
     constexpr static char const * solidMaterialNameString() {return "solidMaterialNames"; }
     constexpr static char const * fractureRegionNameString() {return "fractureRegion"; }
     constexpr static char const * mpiCommOrderString() { return "mpiCommOrder"; }
-    constexpr static char const * propagationVelocityString() { return "propagationVelocity"; }
+    constexpr static char const * tipsXString() { return "tipsX"; }
+    constexpr static char const * tipsYString() { return "tipsY"; }
+    constexpr static char const * currentTipString() { return "crackTip"; }
 
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
     // relation.
@@ -126,8 +128,14 @@ private:
   // Flag for consistent communication ordering
   int m_mpiCommOrder;
 
-  // Dimensions of the bounded plane
-  R1Tensor m_propagationVelocity;
+  // Sequence of tips to follow
+  array1d< real64 > m_tipsX;
+
+  array1d< real64 > m_tipsY;
+
+  // crack tip for 2.5D cases
+  R1Tensor m_currentTip;
+  
 };
 
 } /* namespace geosx */

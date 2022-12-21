@@ -63,8 +63,7 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
                                                     Group * const parent ):
   SolverBase( name, parent ),
   m_fractureRegionName(),
-  m_mpiCommOrder( 0 ),
-  m_propagationVelocity{0.0, 0.0, 0.0}
+  m_mpiCommOrder( 0 )
 {
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
@@ -74,10 +73,17 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable MPI consistent communication ordering" );    
 
-  registerWrapper( viewKeyStruct::propagationVelocityString(), &m_propagationVelocity ).
+  registerWrapper( viewKeyStruct::tipsXString(), &m_tipsX ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "2D array with propagation speed in the x and y directions" );
+    setDescription( "1D array with x coordinates of next tips" );
 
+  registerWrapper( viewKeyStruct::tipsYString(), &m_tipsY ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "1D array with y coordinates of next tips" );  
+
+  registerWrapper( viewKeyStruct::currentTipString(), &m_currentTip ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "initial crack tip" );    
 }
 
 EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
@@ -260,28 +266,28 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & time_n,
   std::cout<<time_n<<std::endl;
   // if(time_n == 0)
   // {
-  array2d< real64 > listOfTips;
-  listOfTips.resize( 3, 2 );
-  listOfTips[0][0] = 2.0;
-  listOfTips[0][1] = 1.25;
-  listOfTips[1][0] = 3.5;
-  listOfTips[1][1] = 0.0;
-  listOfTips[2][0] = 3.5;
-  listOfTips[2][1] = -3.0;
-  std::cout<<"init listOfTips"<<std::endl;
+  // array2d< real64 > listOfTips;
+  // listOfTips.resize( 3, 2 );
+  // listOfTips[0][0] = 2.0;
+  // listOfTips[0][1] = 1.25;
+  // listOfTips[1][0] = 3.5;
+  // listOfTips[1][1] = 0.0;
+  // listOfTips[2][0] = 3.5;
+  // listOfTips[2][1] = -3.0;
+  // std::cout<<"init listOfTips"<<std::endl;
   // array1d< real64 > currentTip;
   // currentTip.resize( 2 );
   // currentTip[0] = 0.0;
   // currentTip[1] = 0.5;
-  array2d< real64 > currentTip;
-  currentTip.resize( 3, 2 );
-  currentTip[0][0] = 0.0;
-  currentTip[0][1] = 0.5;
-  currentTip[1][0] = 2.0;
-  currentTip[1][1] = 1.25;
-  currentTip[2][0] = 3.5;
-  currentTip[2][1] = 0.0;
-  std::cout<<"init currentTip"<<std::endl;
+  // array2d< real64 > currentTip;
+  // currentTip.resize( 3, 2 );
+  // currentTip[0][0] = 0.0;
+  // currentTip[0][1] = 0.5;
+  // currentTip[1][0] = 2.0;
+  // currentTip[1][1] = 1.25;
+  // currentTip[2][0] = 3.5;
+  // currentTip[2][1] = 0.0;
+  // std::cout<<"init currentTip"<<std::endl;
   // }
 
   if(time_n > 0)
@@ -291,17 +297,17 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & time_n,
 
     // create BoundedPlane from currentTip to newTip (listOfTips[time_n]) - do I need to use new for this allocation?
     const string newPlaneName = "plane"+std::to_string(time_n);
-    BoundedPlane * newPlane = new BoundedPlane( currentTip[time_n-1][0], currentTip[time_n-1][1], listOfTips[time_n-1][0],
-                                                listOfTips[time_n-1][1], newPlaneName, &geometricObjManager );
+    BoundedPlane * newPlane = new BoundedPlane( m_currentTip[0], m_currentTip[1], m_tipsX[time_n-1],
+                                                m_tipsY[time_n-1], newPlaneName, &geometricObjManager );
     // //how to update currentTip? - hard coded simple case
-    // std::cout<<"currentTip_x"<<currentTip[0]<<std::endl;
-    // std::cout<<"currentTip_y"<<currentTip[1]<<std::endl;
-    // std::cout<<"updating tip"<<std::endl;
-    // currentTip[0]=listOfTips[time_n][0];
-    // currentTip[1]=listOfTips[time_n][1];
-    // std::cout<<"currentTip_x"<<currentTip[0]<<std::endl;
-    // std::cout<<"currentTip_y"<<currentTip[1]<<std::endl;
-    // std::cout<<"tip updated"<<std::endl;
+    std::cout<<"currentTip_x"<<m_currentTip[0]<<std::endl;
+    std::cout<<"currentTip_y"<<m_currentTip[1]<<std::endl;
+    std::cout<<"updating tip"<<std::endl;
+    m_currentTip[0]=m_tipsX[time_n-1];
+    m_currentTip[1]=m_tipsY[time_n-1];
+    std::cout<<"currentTip_x"<<m_currentTip[0]<<std::endl;
+    std::cout<<"currentTip_y"<<m_currentTip[1]<<std::endl;
+    std::cout<<"tip updated"<<std::endl;
     // Get meshLevel
     MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
 
