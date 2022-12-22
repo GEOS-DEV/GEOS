@@ -212,7 +212,7 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::FIM )
+    if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::FullyImplicit )
     {
       return fullyCoupledSolverStep( time_n, dt, cycleNumber, domain );
     }
@@ -371,7 +371,6 @@ protected:
 
     } );
 
-    // need to check what to do with this. this->implicitStepSetup( time_n, dt, domain );
     NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
     integer & iter = solverParams.m_numNewtonIterations;
     iter = 0;

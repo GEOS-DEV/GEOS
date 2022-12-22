@@ -792,6 +792,13 @@ Element: ReactiveCompositionalMultiphaseOBL
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL.rst
 
 
+.. _XML_RelpermDriver:
+
+Element: RelpermDriver
+======================
+.. include:: ../../coreComponents/schema/docs/RelpermDriver.rst
+
+
 .. _XML_Restart:
 
 Element: Restart
@@ -1921,6 +1928,13 @@ Datastructure: Python
 Datastructure: ReactiveCompositionalMultiphaseOBL
 =================================================
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL_other.rst
+
+
+.. _DATASTRUCTURE_RelpermDriver:
+
+Datastructure: RelpermDriver
+============================
+.. include:: ../../coreComponents/schema/docs/RelpermDriver_other.rst
 
 
 .. _DATASTRUCTURE_Restart:

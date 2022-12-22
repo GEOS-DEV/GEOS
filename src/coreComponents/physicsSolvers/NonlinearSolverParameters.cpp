@@ -129,8 +129,8 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   /// GEOS mainly uses FIM coupling so let's define FIM as the default.
   registerWrapper( viewKeysStruct::couplingTypeString, &m_couplingType ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setApplyDefaultValue( CouplingType::FIM ).
-    setDescription( "Type of coupling. Options are: Sequential and FIM" );
+    setApplyDefaultValue( CouplingType::FullyImplicit ).
+    setDescription( "Type of coupling. Options are: Sequential and FullyImplicit" );
 
   registerWrapper( viewKeysStruct::subcyclingOptionString, &m_subcyclingOption ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).

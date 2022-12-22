@@ -10,9 +10,10 @@
       logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
+        couplingType="Sequential"
         newtonMaxIter="2"/>
       <LinearSolverParameters
-        logLevel="2"/>
+        logLevel="1"/>
     </PhaseFieldFracture>
 
     <SolidMechanicsLagrangianSSLE

@@ -159,7 +159,7 @@ public:
    */
   enum class CouplingType : integer
   {
-    FIM,      ///< Fully-implicit coupling
+    FullyImplicit,      ///< Fully-implicit coupling
     Sequential ///< Sequential coupling
   };
 
@@ -240,7 +240,7 @@ ENUM_STRINGS( NonlinearSolverParameters::LineSearchInterpolationType,
               "Parabolic" );
 
 ENUM_STRINGS( NonlinearSolverParameters::CouplingType,
-              "FIM",
+              "FullyImplicit",
               "Sequential" );
 
 
