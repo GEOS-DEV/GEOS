@@ -36,9 +36,33 @@ namespace geosx
 namespace finiteElement
 {
 
-// @brief Iterator on the elements of TeamKernelBase object. TODO descrine how to use this
-template < typename KernelConfig, typename KernelComponents, typename Lambda >
-void forallElements( localIndex const numElems, KernelComponents const & fields, Lambda && element_kernel )
+template < typename KernelConfig >
+struct KernelContext : public KernelConfig
+{
+  localIndex element_index;
+  static constexpr localIndex dim = 3;
+  static constexpr localIndex num_dofs_mesh_1d = 2; // TODO
+  static constexpr localIndex num_dofs_1d = 2; // TODO
+  static constexpr localIndex num_quads_1d = 2; // TODO
+
+  GEOSX_HOST_DEVICE
+  KernelContext( LaunchContext & ctx )
+    : KernelConfig( ctx ), element_index( -1 )
+  { }
+};
+
+/**
+ * @brief Iterator on the element of a sub-region launching a device kernel.
+ * 
+ * @tparam KernelConfig A KernelConfiguration type ( see kernelConfiguration.hpp ).
+ * @tparam Lambda The type for the body represented as a lambda function.
+ * @param numElems The number of finite elements.
+ * @param element_kernel The body of the element kernel.
+ * 
+ * @todo Remove `fields` if we remove the genericity on the stack variables? Replace StackVariables with KernelContext.
+ */
+template < typename KernelConfig, typename Lambda >
+void forallElements( localIndex const numElems, Lambda && element_kernel )
 {
   constexpr localIndex num_threads_x = KernelConfig::num_threads_x;
   constexpr localIndex num_threads_y = KernelConfig::num_threads_y;
@@ -54,7 +78,7 @@ void forallElements( localIndex const numElems, KernelComponents const & fields,
   [=] GEOSX_HOST_DEVICE ( LaunchContext ctx )
   {
     using RAJA::RangeSegment;
-    typename KernelComponents::template StackVariables<KernelConfig> stack( ctx );
+    KernelContext< KernelConfig > stack( ctx );
 
     // Each block of threads treats "batch_size" elements.
     loop<team_x>( ctx, RangeSegment( 0, num_batches ), [&]( localIndex const & block_index )

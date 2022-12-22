@@ -123,30 +123,6 @@ public:
     GEOSX_UNUSED_VAR( faceManager );
     GEOSX_UNUSED_VAR( targetRegionIndex );
   }
-  
-  //***************************************************************************
-  /**
-   * @class StackVariables
-   * @copydoc geosx::finiteElement::TeamKernelBase::StackVariables
-   *
-   * Adds a stack array for the primary field.
-   */
-  template < typename KernelConfig >
-  struct StackVariables : public Base::template StackVariables< KernelConfig >
-  {
-    static constexpr localIndex dim = 3;
-    static constexpr localIndex num_dofs_mesh_1d = 2; // TODO
-    static constexpr localIndex num_dofs_1d = 2; // TODO
-    static constexpr localIndex num_quads_1d = 2; // TODO
-
-    /**
-     * @brief Constructor
-     */
-    GEOSX_HOST_DEVICE
-    StackVariables( LaunchContext & ctx )
-    : Base::template StackVariables<KernelConfig>( ctx )
-    {}
-  };
 
   template< typename POLICY, // ignored
             typename KERNEL_TYPE >
@@ -173,9 +149,9 @@ public:
     constexpr localIndex batch_size = 32;
 
     using KernelConf = finiteElement::KernelConfiguration< threading_model, num_threads_1d, batch_size >;
-    using Stack = StackVariables<KernelConf>;
+    using Stack = finiteElement::KernelContext< KernelConf >;
 
-    finiteElement::forallElements<KernelConf>( numElems, fields, [=] GEOSX_HOST_DEVICE ( Stack & stack )
+    finiteElement::forallElements<KernelConf>( numElems, [=] GEOSX_HOST_DEVICE ( Stack & stack )
     {
       typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > nodes;
       typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d > dofs_in;
@@ -290,30 +266,6 @@ public:
     GEOSX_UNUSED_VAR( targetRegionIndex );
   }
 
-  //***************************************************************************
-  /**
-   * @class StackVariables
-   * @copydoc geosx::finiteElement::TeamKernelBase::StackVariables
-   *
-   * Adds a stack array for the primary field.
-   */
-  template < typename KernelConfig >
-  struct StackVariables : public Base::template StackVariables< KernelConfig >
-  {
-    static constexpr localIndex dim = 3;
-    static constexpr localIndex num_dofs_mesh_1d = 2; // TODO
-    static constexpr localIndex num_dofs_1d = 2; // TODO
-    static constexpr localIndex num_quads_1d = 2; // TODO
-
-    /**
-     * @brief Constructor
-     */
-    GEOSX_HOST_DEVICE
-    StackVariables( LaunchContext & ctx )
-    : Base::template StackVariables< KernelConfig >( ctx )
-    {}
-  };
-
   template< typename POLICY, // ignored
             typename KERNEL_TYPE >
   static
@@ -338,9 +290,9 @@ public:
     constexpr localIndex batch_size = 32;
 
     using KernelConf = finiteElement::KernelConfiguration< threading_model, num_threads_1d, batch_size >;
-    using Stack = StackVariables<KernelConf>;
+    using Stack = finiteElement::KernelContext< KernelConf >;
 
-    finiteElement::forallElements<KernelConf>( numElems, fields, [=] GEOSX_HOST_DEVICE ( Stack & stack )
+    finiteElement::forallElements<KernelConf>( numElems, [=] GEOSX_HOST_DEVICE ( Stack & stack )
     {
       typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3 > nodes;
       readField( stack, fields.m_elemsToNodes, fields.m_X, nodes );

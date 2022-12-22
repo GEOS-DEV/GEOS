@@ -116,32 +116,6 @@ public:
     m_finiteElementSpace( finiteElementSpace )
   {}
 
-  /**
-   * @struct StackVariables
-   * @brief Kernel variables allocated on the stack.
-   *
-   * ### ImplicitKernelBase::StackVariables Description
-   *
-   * Contains variables that will be allocated on the stack of the main kernel.
-   * This will typically consist of local arrays to hold data mapped from the
-   * global data arrays, and/or local storage for the residual and jacobian
-   * contributions.
-   */
-  template < typename KernelConfig >
-  struct StackVariables: public KernelConfig
-  {
-    /**
-     * @brief Constructor
-     */
-    GEOSX_HOST_DEVICE
-    StackVariables( LaunchContext & ctx )
-      : KernelConfig( ctx ), element_index( -1 )
-    { }
-
-    /// Index of the finite element
-    localIndex element_index;
-  };
-
   /// The element to nodes map.
   traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > const m_elemsToNodes;
 
