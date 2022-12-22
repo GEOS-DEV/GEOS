@@ -14,7 +14,7 @@
 
 
 /**
- * @file QuadratureWeightsStackVariables.hpp
+ * @file QuadratureWeights.hpp
  */
 
 #ifndef GEOSX_FINITEELEMENT_TEAMKERNELBASE_STACKVARIABLES_WEIGHTS_HPP_
@@ -22,7 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "finiteElement/TeamKernelInterface/common.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/common.hpp"
 
 namespace geosx
 {

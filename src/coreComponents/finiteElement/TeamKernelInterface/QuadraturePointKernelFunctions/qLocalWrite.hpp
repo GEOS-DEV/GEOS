@@ -22,7 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
-#include "finiteElement/TeamKernelInterface/common.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/common.hpp"
 #include "tensor/tensor_types.hpp"
 
 namespace geosx
