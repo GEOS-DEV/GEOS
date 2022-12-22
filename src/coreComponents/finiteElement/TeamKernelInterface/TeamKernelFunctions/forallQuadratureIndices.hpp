@@ -31,6 +31,14 @@ namespace geosx
 namespace finiteElement
 {
 
+/**
+ * @brief A simple iterator on quadrature point indices.
+ * 
+ * @tparam Stack The type of the stack variables.
+ * @tparam Lambda The type of the body of the iterator.
+ * @param stack The stack variables.
+ * @param lambda The body of the iterator.
+ */
 template < typename Stack, typename Lambda >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE

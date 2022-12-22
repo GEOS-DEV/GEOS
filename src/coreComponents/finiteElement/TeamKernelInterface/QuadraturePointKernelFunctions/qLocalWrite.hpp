@@ -28,6 +28,14 @@
 namespace geosx
 {
 
+/**
+ * @brief Write a scalar field value local to the quadrature point.
+ * 
+ * @tparam Tensor The type of tensor.
+ * @param quad_index The index of the quadrature point.
+ * @param q_value The field local to the quadrature point.
+ * @param q_field The field at all quadrature points.
+ */
 template < typename Tensor,
            std::enable_if_t<
              tensor::get_tensor_rank< Tensor > == 3,
@@ -41,6 +49,14 @@ void qLocalWrite( TensorIndex const & quad_index,
   q_field( quad_index.x, quad_index.y, quad_index.z ) = q_value;
 }
 
+/**
+ * @brief Write vector field values local to the quadrature point.
+ * 
+ * @tparam Tensor The type of tensor.
+ * @param quad_index The index of the quadrature point.
+ * @param q_value The field local to the quadrature point.
+ * @param q_field The field at all quadrature points.
+ */
 template < typename Tensor,
            localIndex num_comp,
            std::enable_if_t<
@@ -59,6 +75,14 @@ void qLocalWrite( TensorIndex const & quad_index,
   }
 }
 
+/**
+ * @brief Write rank 2 field values local to the quadrature point.
+ * 
+ * @tparam Tensor The type of tensor.
+ * @param quad_index The index of the quadrature point.
+ * @param q_value The field local to the quadrature point.
+ * @param q_field The field at all quadrature points.
+ */
 template < typename Tensor,
            localIndex num_comp_x,
            localIndex num_comp_y,
