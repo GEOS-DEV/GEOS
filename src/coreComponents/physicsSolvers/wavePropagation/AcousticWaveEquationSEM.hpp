@@ -34,12 +34,6 @@ public:
   using EXEC_POLICY = parallelDevicePolicy< 32 >;
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
-
-  /**
-   * @brief Safeguard for timeStep. Used to avoid memory issue due to too small value.
-   */
-  static constexpr real64 epsilonLoc = 1e-8;
-
   AcousticWaveEquationSEM( const std::string & name,
                            Group * const parent );
 
@@ -86,26 +80,6 @@ public:
    * @param rhs the right hand side vector to be computed
    */
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
-
-  /**
-   * TODO: move implementation into WaveSolverBase
-   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
-   * last two timesteps.
-   * @param time_n the time corresponding to the field values pressure_n
-   * @param dt the simulation timestep
-   * @param timeSeismo the time at which the seismogram is computed
-   * @param iSeismo the index of the seismogram time in the seismogram array
-   * @param var_at_np1 the field values at time_n + dt
-   * @param var_at_n the field values at time_n
-   * @param var_at_receivers the array holding the trace values, where the output is written
-   */
-  virtual void computeSeismoTrace( real64 const time_n,
-                                   real64 const dt,
-                                   real64 const timeSeismo,
-                                   localIndex const iSeismo,
-                                   arrayView1d< real32 const > const var_np1,
-                                   arrayView1d< real32 const > const var_n,
-                                   arrayView2d< real32 > varAtReceivers ) override;
 
   /**
    * TODO: move implementation into WaveSolverBase
@@ -190,14 +164,6 @@ private:
    * @param domain the partition domain
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
-
-  /**
-   * @brief Temporary debug function. Saves the sismo trace to a file.
-   * @param iSeismo index number of the seismo trace
-   * @param val value to be written in seismo
-   * @param filename name of the output file
-   */
-  void saveSeismo( localIndex const iSeismo, real32 const val, string const & filename ) override;
 
   localIndex getNumNodesPerElem();
 
