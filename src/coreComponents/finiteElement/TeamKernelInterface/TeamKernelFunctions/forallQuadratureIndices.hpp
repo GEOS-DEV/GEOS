@@ -20,7 +20,7 @@
 #ifndef GEOSX_FINITEELEMENT_TEAMKERNELFUNCTION_FORALL_QUAD_PT_HPP_
 #define GEOSX_FINITEELEMENT_TEAMKERNELFUNCTION_FORALL_QUAD_PT_HPP_
 
-#include "finiteElement/TeamKernelInterface/common.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/common.hpp"
 
 namespace geosx
 {

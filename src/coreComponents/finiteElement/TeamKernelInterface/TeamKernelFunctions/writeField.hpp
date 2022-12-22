@@ -23,7 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "tensor/tensor_types.hpp"
-#include "finiteElement/TeamKernelInterface/common.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/common.hpp"
 
 namespace geosx
 {

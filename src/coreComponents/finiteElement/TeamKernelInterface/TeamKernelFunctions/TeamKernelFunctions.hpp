@@ -29,18 +29,20 @@
 
 
 /// Functions to interpolate a field at quadrature points.
-#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/interpolateAtQuadraturePoints.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/interpolateAtQuadraturePoints/interpolateAtQuadraturePoints.hpp"
 /// Functions to interpolate gradient of a field at quadrature points.
-#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/interpolateGradientAtQuadraturePoints.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/interpolateGradientAtQuadraturePoints/interpolateGradientAtQuadraturePoints.hpp"
 /// Functions to apply test functions.
-#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/applyTestFunctions.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/applyTestFunctions/applyTestFunctions.hpp"
 /// Functions to apply gradient of test functions.
-#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/applyGradientTestFunctions.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/applyGradientTestFunctions/applyGradientTestFunctions.hpp"
 /// Functions to compute the diagonal of a "grad-grad" operator.
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/gradGradDiagonal.hpp"
 /// Iterator on all quadrature point indices
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/forallQuadratureIndices.hpp"
 /// Iterator on all element indices
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/forallElements.hpp"
+/// The configuration object for `forallElements`
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/kernelConfiguration.hpp"
 
 #endif /* GEOSX_FINITEELEMENT_TEAMKERNELFUNCTION_HPP_ */
