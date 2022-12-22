@@ -220,7 +220,7 @@ computeBodyForce( localIndex const k,
 
     // Step 3: finally, get the body force
 
-    LvArray::tensorOps::scaledCopy< 3 >( stack.dBodyForce_dPressure, m_gravityVector, dMixtureDens_dTemperature );
+    LvArray::tensorOps::scaledCopy< 3 >( stack.dBodyForce_dTemperature, m_gravityVector, dMixtureDens_dTemperature );
 
   } );
 }
