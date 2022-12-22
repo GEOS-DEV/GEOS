@@ -23,14 +23,7 @@
 #define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "finiteElement/TeamKernelInterface/TeamKernelBase.hpp"
-#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/TeamKernelFunctions.hpp"
-#include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/QuadratureFunctionsHelper.hpp"
-#include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/qLocalLoad.hpp"
-#include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/qLocalWrite.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/BasisStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/QuadratureWeightsStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/SharedMemBuffersStackVariables.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelInterface.hpp"
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"

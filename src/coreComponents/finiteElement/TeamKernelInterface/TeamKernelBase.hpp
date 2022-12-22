@@ -26,10 +26,8 @@
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "finiteElement/TeamKernelInterface/common.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/common.hpp"
 #include "tensor/tensor_types.hpp"
-#include "common.hpp"
-// #include <cuda.h>
 
 namespace geosx
 {
