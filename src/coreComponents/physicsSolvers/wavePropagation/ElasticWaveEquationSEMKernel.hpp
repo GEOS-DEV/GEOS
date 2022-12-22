@@ -20,6 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
+#include "WaveSolverUtils.hpp"
 
 
 namespace geosx
@@ -31,135 +32,7 @@ namespace elasticWaveEquationSEMKernels
 
 struct PrecomputeSourceAndReceiverKernel
 {
-  /**
-   * @brief Check if the source point is inside an element or not
-   * @param numFacesPerElem number of face on an element
-   * @param elemCenter array containing the center of the elements
-   * @param faceNormal array containing the normal of all faces
-   * @param faceCenter array containing the center of all faces
-   * @param elemsToFaces map to get the global faces from element index and local face index
-   * @param coords coordinate of the point
-   * @return true if coords is inside the element
-   */
 
-  GEOSX_HOST_DEVICE
-  static bool
-  locateSourceElement( real64 const numFacesPerElem,
-                       real64 const (&elemCenter)[3],
-                       arrayView2d< real64 const > const faceNormal,
-                       arrayView2d< real64 const > const faceCenter,
-                       arraySlice1d< localIndex const > const elemsToFaces,
-                       real64 const (&coords)[3] )
-  {
-    //Loop over the element faces
-    real64 tmpVector[3]{};
-    for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
-    {
-
-      localIndex const iface = elemsToFaces[kfe];
-      real64 faceCenterOnFace[3] = {faceCenter[iface][0],
-                                    faceCenter[iface][1],
-                                    faceCenter[iface][2]};
-      real64 faceNormalOnFace[3] = {faceNormal[iface][0],
-                                    faceNormal[iface][1],
-                                    faceNormal[iface][2]};
-
-      //Test to make sure if the normal is outwardly directed
-      LvArray::tensorOps::copy< 3 >( tmpVector, faceCenterOnFace );
-      LvArray::tensorOps::subtract< 3 >( tmpVector, elemCenter );
-      if( LvArray::tensorOps::AiBi< 3 >( tmpVector, faceNormalOnFace ) < 0.0 )
-      {
-        LvArray::tensorOps::scale< 3 >( faceNormalOnFace, -1 );
-      }
-
-      // compute the vector face center to query point
-      LvArray::tensorOps::subtract< 3 >( faceCenterOnFace, coords );
-      localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >( faceNormalOnFace, faceCenterOnFace ));
-
-      // all dot products should be non-negative (we enforce outward normals)
-      if( s < 0 )
-      {
-        return false;
-      }
-
-    }
-    return true;
-  }
-
-  /**
-   * @brief Convert a mesh element point coordinate into a coordinate on the reference element
-   * @tparam FE_TYPE finite element type
-   * @param[in] coords coordinate of the point
-   * @param[in] elemsToNodes map to obtaint global nodes from element index
-   * @param[in] X array of mesh nodes coordinates
-   * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
-   */
-  template< typename FE_TYPE >
-  GEOSX_HOST_DEVICE
-  static void
-  computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
-                                        arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
-                                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
-                                        real64 (& coordsOnRefElem)[3] )
-  {
-    real64 xLocal[FE_TYPE::numNodes][3]{};
-    for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
-    {
-      LvArray::tensorOps::copy< 3 >( xLocal[a], X[ elemsToNodes[a] ] );
-    }
-    // coordsOnRefElem = invJ*(coords-coordsNode_0)
-    real64 invJ[3][3]{};
-    FE_TYPE::invJacobianTransformation( 0, xLocal, invJ );
-    for( localIndex i = 0; i < 3; ++i )
-    {
-      // init at (-1,-1,-1) as the origin of the referential elem
-      coordsOnRefElem[i] = -1.0;
-      for( localIndex j = 0; j < 3; ++j )
-      {
-        coordsOnRefElem[i] += invJ[i][j] * (coords[j] - xLocal[0][j]);
-      }
-    }
-  }
-
-  GEOSX_HOST_DEVICE
-  static real32
-  evaluateRicker( real64 const & time_n,
-                  real64 const & f0,
-                  localIndex const & order )
-  {
-    real32 const o_tpeak = 1.0/f0;
-    real32 pulse = 0.0;
-    if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
-    {
-      return pulse;
-    }
-
-    constexpr real32 pi = M_PI;
-    real32 const lam = (f0*pi)*(f0*pi);
-
-    switch( order )
-    {
-      case 2:
-      {
-        pulse = 2.0*lam*(2.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-      }
-      break;
-      case 1:
-      {
-        pulse = -2.0*lam*(time_n-o_tpeak)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-      }
-      break;
-      case 0:
-      {
-        pulse = -(time_n-o_tpeak)*exp( -2*lam*(time_n-o_tpeak)*(time_n-o_tpeak) );
-      }
-      break;
-      default:
-        GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
-    }
-
-    return pulse;
-  }
   /**
    * @brief Launches the precomputation of the source and receiver terms
    * @tparam EXEC_POLICY execution policy
@@ -249,22 +122,22 @@ struct PrecomputeSourceAndReceiverKernel
 
 
           bool const sourceFound =
-            locateSourceElement( numFacesPerElem,
-                                 center,
-                                 faceNormal,
-                                 faceCenter,
-                                 elemsToFaces[k],
-                                 coords );
+            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+                                                  center,
+                                                  faceNormal,
+                                                  faceCenter,
+                                                  elemsToFaces[k],
+                                                  coords );
 
           if( sourceFound )
           {
             real64 coordsOnRefElem[3]{};
 
 
-            computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                             elemsToNodes[k],
-                                                             X,
-                                                             coordsOnRefElem );
+            WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+                                                                              elemsToNodes[k],
+                                                                              X,
+                                                                              coordsOnRefElem );
             sourceIsAccessible[isrc] = 1;
 
             real64 N[FE_TYPE::numNodes];
@@ -289,7 +162,7 @@ struct PrecomputeSourceAndReceiverKernel
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
               real64 const time = cycle*dt;
-              sourceValue[cycle][isrc] = evaluateRicker( time, timeSourceFrequency, rickerOrder );
+              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
             }
 
           }
@@ -310,19 +183,19 @@ struct PrecomputeSourceAndReceiverKernel
 
           real64 coordsOnRefElem[3]{};
           bool const receiverFound =
-            locateSourceElement( numFacesPerElem,
-                                 center,
-                                 faceNormal,
-                                 faceCenter,
-                                 elemsToFaces[k],
-                                 coords );
+            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+                                                  center,
+                                                  faceNormal,
+                                                  faceCenter,
+                                                  elemsToFaces[k],
+                                                  coords );
 
           if( receiverFound && elemGhostRank[k] < 0 )
           {
-            computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                             elemsToNodes[k],
-                                                             X,
-                                                             coordsOnRefElem );
+            WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+                                                                              elemsToNodes[k],
+                                                                              X,
+                                                                              coordsOnRefElem );
 
             receiverIsLocal[ircv] = 1;
 
