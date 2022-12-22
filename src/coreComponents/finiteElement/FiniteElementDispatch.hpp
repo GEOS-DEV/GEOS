@@ -19,23 +19,27 @@
 #ifndef GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
 #define GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
 
-
 #include "elementFormulations/ConformingVirtualElementOrder1.hpp"
 #include "elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
 #include "elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp"
 #include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
-#include "elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp"
+#include "elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #include "elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
 #include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "LvArray/src/system.hpp"
 
-#define BASE_FE_TYPES \
-  finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2, \
+#define FE_1_TYPES \
+  finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2//, \
+  // finiteElement::H1_Wedge_Lagrange1_Gauss6, \
+  // finiteElement::H1_Tetrahedron_Lagrange1_Gauss1, \
+  // finiteElement::H1_Pyramid_Lagrange1_Gauss5
+#define GL_FE_TYPES \
+  finiteElement::Q1_Hexahedron_Lagrange_GaussLobatto, \
+  finiteElement::Q2_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q3_Hexahedron_Lagrange_GaussLobatto, \
-  finiteElement::H1_Wedge_Lagrange1_Gauss6, \
-  finiteElement::H1_Tetrahedron_Lagrange1_Gauss1, \
-  finiteElement::H1_Pyramid_Lagrange1_Gauss5
+  finiteElement::Q4_Hexahedron_Lagrange_GaussLobatto, \
+  finiteElement::Q5_Hexahedron_Lagrange_GaussLobatto
 #ifdef GEOSX_DISPATCH_VEM
 #define VEM_TYPES \
   finiteElement::H1_Tetrahedron_VEM_Gauss1, \
@@ -48,10 +52,11 @@
   finiteElement::H1_Prism9_VEM_Gauss1, \
   finiteElement::H1_Prism10_VEM_Gauss1, \
   finiteElement::H1_Prism11_VEM_Gauss1
-#define ALL_FE_TYPES BASE_FE_TYPES, VEM_TYPES
+#define BASE_FE_TYPES FE_1_TYPES//, VEM_TYPES
 #else
-#define ALL_FE_TYPES BASE_FE_TYPES
+#define BASE_FE_TYPES FE_1_TYPES
 #endif
+#define ALL_FE_TYPES BASE_FE_TYPES//, GL_FE_TYPES
 
 #define FE_TYPES_2D \
   finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp  \

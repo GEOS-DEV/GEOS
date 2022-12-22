@@ -9,12 +9,13 @@
       discretization="FE1"
       targetRegions="{ mesh1/Region1 }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-7"
         newtonMaxIter="8"/>
       <LinearSolverParameters
         directParallel="0"
-        logLevel="2"
-        krylovMaxIter="30"/>
+        logLevel="200"
+        krylovTol="1.0e-20"
+        krylovMaxIter="3"/>
     </MatrixFreeSolidMechanicsFEM>
 
     <!-- <SolidMechanicsLagrangianSSLE
@@ -40,9 +41,9 @@
       xCoords="{ 0, 1 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 96 }"
-      ny="{ 96 }"
-      nz="{ 48 }"
+      nx="{ 100 }"
+      ny="{ 100 }"
+      nz="{ 100 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 

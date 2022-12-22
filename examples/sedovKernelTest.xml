@@ -28,7 +28,7 @@
   </Mesh>
 
   <Events
-    maxTime="1.0e-5">
+    maxTime="1.0e-3">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent

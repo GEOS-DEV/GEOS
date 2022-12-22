@@ -70,9 +70,10 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   // Compute initial rk =  b - Ax
   m_operator.residual( x, b, r );
 
-//  std::cout << "x0: \n" << x << std::endl;
+  // std::cout << "x0: \n" << x << std::endl;
+  // std::cout << "b: \n" << b << std::endl;
 
-//  std::cout << "residual: \n" << r << std::endl;
+  // std::cout << "residual: \n" << r << std::endl;
 
   // Compute the target absolute tolerance
   real64 const rnorm0 = r.norm2();
