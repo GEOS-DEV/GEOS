@@ -2,104 +2,86 @@
 
 <Problem>
   <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
-    <SinglePhasePoromechanicsEmbeddedFractures
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SinglePhasePoromechanicsConformingFractures
       name="poroSolver"
       targetRegions="{ Domain, Fracture }"
       initialDt="1e-3"
-      fracturesSolverName="fractureMechSolver"
-      flowSolverName="flowSolver"
-      solidSolverName="matrixMechSolver"
+      LagrangianContactSolverName="fractureMechSolver"
+      poromechanicsSolverName="singlePhasePoromechanicsSolver"
       logLevel="1">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
         directParallel="0"/>
-    </SinglePhasePoromechanicsEmbeddedFractures>
+    </SinglePhasePoromechanicsConformingFractures>
 
-    <SolidMechanicsEmbeddedFractures
-      name="fractureMechSolver"
-      targetRegions="{ Domain, Fracture }"
+    <SinglePhasePoromechanics
+      name="singlePhasePoromechanicsSolver"
       solidSolverName="matrixMechSolver"
-      fractureRegionName="Fracture"
-      contactRelationName="fractureContact"/>
+      flowSolverName="flowSolver"
+      logLevel="1"
+      targetRegions="{ Domain, Fracture }">
+    </SinglePhasePoromechanics>
 
-    <SolidMechanicsLagrangianSSLE
+    <LagrangianContact
+      name="fractureMechSolver"
+      solidSolverName="matrixMechSolver"
+      stabilizationName="singlePhaseTPFA_stab"
+      logLevel="1"
+      targetRegions="{ Domain, Fracture }"
+      fractureRegionName="Fracture"
+      discretization="FE1"
+      contactRelationName="fractureContact"/>  
+
+    <SolidMechanics_LagrangianFEM
       name="matrixMechSolver"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Domain }"/>
+      targetRegions="{ Domain, Fracture }"
+      logLevel="1"/>
 
     <SinglePhaseFVM
       name="flowSolver"
+      logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain, Fracture }"/>
+      targetRegions="{ Domain, Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-2"
+        newtonMaxIter="8"
+        allowNonConverged="1"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseFVM>
 
-    <EmbeddedSurfaceGenerator
-      name="SurfaceGenerator"
-      discretization="FE1"
-      targetRegions="{ Domain, Fracture }"
+    <SurfaceGenerator
+      logLevel="0"
+      name="SurfaceGen"
+      targetRegions="{ Domain }"
       fractureRegion="Fracture"
-      logLevel="2"
+      rockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>
 
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 3 }"
-      yCoords="{ 0, 3 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 11 }"
-      ny="{ 11 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cb1 }"/>
-  </Mesh>
-
   <Geometry>
-    <BoundedPlane
-      name="FracturePlane"
-      normal="{ 1, 0, 0 }"
-      origin="{ 1.5, 1.5, 1.5 }"
-      lengthVector="{ 0, 1, 0 }"
-      widthVector="{ 0, 0, 1 }"
-      dimensions="{ 3, 4 }"/>
+    <Box
+      name="fracture"
+      xMin="{ -0.01, -1, -0.01 }"
+      xMax="{ 0.01,  1,  1.01 }"/>
   </Geometry>
 
-  <Events
-    maxTime="10">
-    <SoloEvent
-      name="preFracture"
-      target="/Solvers/SurfaceGenerator"/>
-
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="10"
-      target="/Solvers/poroSolver"/>
-
-    <PeriodicEvent
-      name="outputs"
-      cycleFrequency="10"
-      target="/Outputs/vtkOutput"/>
-
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="10"
-      target="/Outputs/restartOutput"/>
-  </Events>
-
   <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA_stab"/>  
+    </FiniteVolume>
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
         order="1"/>
     </FiniteElements>
-
-    <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="singlePhaseTPFA"/>
-    </FiniteVolume>
   </NumericalMethods>
 
   <ElementRegions>
@@ -110,9 +92,8 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      faceBlock="embeddedSurfaceSubRegion"
-      subRegionType="embeddedElement"
-      materialList="{ water, fractureFilling, fractureContact }"
+      faceBlock="FractureSubRegion"
+      materialList="{ water, fractureFilling, fractureContact, rock}"
       defaultAperture="1e-3"/>
   </ElementRegions>
 
@@ -165,14 +146,30 @@
     <ParallelPlatesPermeability
       name="fracturePerm"/>
 
-    <FrictionlessContact
+    <Coulomb
       name="fractureContact"
-      penaltyStiffness="0.0e8"
+      cohesion="0.0"
+      frictionCoefficient="0.577350269"
       apertureTableName="apertureTable"/>
-    
   </Constitutive>
 
   <FieldSpecifications>
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+      
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ fracture }" 
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
     <FieldSpecification
       name="fracPorosity"
       initialCondition="1"
@@ -182,21 +179,14 @@
       scale="1.00"/>
 
     <FieldSpecification
-      name="initialPressure"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="pressure"/>
-
-    <FieldSpecification
-      name="initialPressureFracture"
+      name="prescribedFracturePressure"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
       scale="1.0e5"/>
 
     <FieldSpecification
-      name="xnegconstraint"
+      name="xconstraint"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       component="0"
@@ -204,12 +194,12 @@
       setNames="{ xneg, xpos }"/>
 
     <FieldSpecification
-      name="yposconstraint"
+      name="yconstraint"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ ypos, yneg }"/>
+      setNames="{ xneg, xpos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -217,7 +207,7 @@
       fieldName="totalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{ zneg, zpos }"/>
+      setNames="{ xneg, xpos }"/>
 
     <FieldSpecification
       name="leftPressure"
@@ -240,15 +230,13 @@
       coordinates="{ -1.0e-3, 0.0 }"
       values="{ 1.0e-6, 1.0e-3 }"/>
   </Functions>
-  
+
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="PoroElastic_embedded"
-      plotLevel="2"
-      format="binary"/>
+      plotFileRoot="poroElastic_conformingFrac"/>
 
     <Restart
-      name="restartOutput"/>
+    name="restarts"/>  
   </Outputs>
 </Problem>

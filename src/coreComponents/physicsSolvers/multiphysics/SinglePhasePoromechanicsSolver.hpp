@@ -117,12 +117,12 @@ public:
 
   /**@}*/
 
-protected:
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
   };
+
+protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 

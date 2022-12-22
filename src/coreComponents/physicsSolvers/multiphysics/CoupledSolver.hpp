@@ -165,11 +165,20 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override
   {
+    /// Fully-coupled assembly.
+
+    // 1. we sync the nonlinear convergence history. The coupled solver parameters are the one being
+    // used. We want to propagate the info to subsolvers. It can be important for solvers that
+    // have special treatment for specific iterations.
+    synchronizeNonLinearParameters();
+
+    // 2. Assemble matrix blocks of each individual solver
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
       solver->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
     } );
 
+    // 3. Assemble coupling blocks
     assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
   }
 
@@ -311,6 +320,15 @@ protected:
   postProcessInput() override
   {
     setSubSolvers();
+  }
+
+  void synchronizeNonLinearParameters()
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->getNonlinearSolverParameters().m_numNewtonIterations =
+        m_nonlinearSolverParameters.m_numNewtonIterations;
+    } );
   }
 
   /// Pointers of the single-physics solvers

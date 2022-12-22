@@ -785,7 +785,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                       m_localMatrix.toViewConstSizes(),
                       localRhs );
 
-//      LvArray::print<serialPolicy>( m_localMatrix.toViewConst() );
+      //  LvArray::print<serialPolicy>( m_localMatrix.toViewConst() );
 
       // apply boundary conditions to system
       applyBoundaryConditions( time_n,
