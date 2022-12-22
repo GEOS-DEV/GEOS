@@ -10,7 +10,6 @@
       logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
-        couplingType="Sequential"
         newtonMaxIter="2"/>
       <LinearSolverParameters
         logLevel="1"/>
@@ -59,7 +58,7 @@
   </Mesh>
 
   <Events
-    maxTime="400.0">
+    maxTime="10.0">
     <!-- <SoloEvent name="siloOutput0"
                    target="/Outputs/SiloOutput"/> -->
     <!-- This event is applied every cycle, and overrides the
@@ -84,7 +83,7 @@
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="200.0"
+      timeFrequency="5.0"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>

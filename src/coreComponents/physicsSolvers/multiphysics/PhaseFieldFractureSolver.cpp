@@ -35,14 +35,19 @@ using namespace constitutive;
 PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
                                                     Group * const parent ):
   Base( name, parent )
-{
-  // Only sequential coupling implemented for this solver
-  getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
-}
+{}
 
 PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
 {
   // TODO Auto-generated destructor stub
+}
+
+void PhaseFieldFractureSolver::postProcessInput()
+{
+  Base::postProcessInput();
+  GEOSX_WARNING_IF( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::FullyImplicit,
+                    "FullyImplicit coupling not implemented for this solver. A sequential coupling approach will be used." );
+  getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
 }
 
 void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )

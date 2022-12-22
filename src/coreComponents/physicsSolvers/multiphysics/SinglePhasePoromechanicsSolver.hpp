@@ -112,8 +112,6 @@ public:
 
   /**@}*/
 
-protected:
-
   struct viewKeyStruct : Base::viewKeyStruct
   {
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }

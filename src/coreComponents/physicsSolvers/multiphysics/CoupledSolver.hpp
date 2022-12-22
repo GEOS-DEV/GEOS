@@ -451,9 +451,10 @@ protected:
     }
     else
     {
+      // TODO: a better convergence check could/should be found.
       forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
       {
-        if( solver->getNonlinearSolverParameters().m_numNewtonIterations > 0 )
+        if( solver->getNonlinearSolverParameters().m_numNewtonIterations > solver->getNonlinearSolverParameters().m_minIterNewton )
         {
           isConverged = false;
         }
@@ -470,20 +471,10 @@ protected:
   postProcessInput() override
   {
     setSubSolvers();
-
-    // We need to set the minimum number of newton's iterations to 0 for the sequentially
-    // coupled approach to converge.
-    if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
-    {
-      forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
-      {
-        solver->getNonlinearSolverParameters().m_minIterNewton = 0;
-      } );
-    }
   }
 
   struct viewKeyStruct : SolverBase::viewKeyStruct {};
-  
+
   void synchronizeNonLinearParameters()
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )

@@ -61,6 +61,8 @@ public:
     Damage = 1
   };
 
+  virtual void postProcessInput() override final;
+
   /**
    * @brief accessor for the pointer to the solid mechanics solver
    * @return a pointer to the solid mechanics solver
