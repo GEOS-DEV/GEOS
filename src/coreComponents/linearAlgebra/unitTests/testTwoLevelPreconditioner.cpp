@@ -17,8 +17,11 @@
  */
 
 #include "common/DataTypes.hpp"
+#include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
+#include "linearAlgebra/solvers/PreconditionerJacobi.hpp"
 #include "linearAlgebra/solvers/PreconditionerTwoLevel.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
+#include "linearAlgebra/solvers/CgSolver.hpp"
 #include "linearAlgebra/unitTests/testLinearAlgebraUtils.hpp"
 
 #include <gtest/gtest.h>
@@ -35,43 +38,31 @@ int main( int argc, char * * argv )
   Ah.read("matrixFine", MPI_COMM_GEOSX );
   AH.read("matrixCoarse", Ah.comm() );
 
-  GEOSX_LOG_RANK_VAR( Ah.numLocalRows() );
-  GEOSX_LOG_RANK_VAR( AH.numLocalRows() );
-
-  PreconditionerTwoLevel< HypreInterface > precond( Ah, AH);
-
-  // Create random tue solution vector
-  HypreVector sol_true;
-  sol_true.create( Ah.numLocalCols(), Ah.comm() );
-  sol_true.rand( 1984 );
-
-  // Create and compute the rhs vector
+  // Create unit rhs
   HypreVector rhs;
   rhs.create( Ah.numLocalRows(), Ah.comm() );
-  Ah.apply( sol_true, rhs );
+  rhs.set(1.0);
 
-  // Create and zero out the computed solution vector
+  // Create solution vector initialized to zero
   HypreVector sol_comp;
-  sol_comp.create( sol_true.localSize(), sol_true.comm() );
+  sol_comp.create( rhs.localSize(), rhs.comm() );
   sol_comp.zero();
 
-  // Create PCG solver
+  // Create preconditioner and PCG solver
   LinearSolverParameters params;
   params.isSymmetric = true;
   params.logLevel = 2;
   params.solverType = LinearSolverParameters::SolverType::cg;
-  std::unique_ptr< KrylovSolver< HypreVector > > const solver = KrylovSolver< HypreVector >::create( params, Ah, precond );
+  
+  PreconditionerTwoLevel< HypreInterface > precond( Ah, AH);
+  //PreconditionerJacobi< HypreInterface > precond;
+  //precond.setup(Ah);
+
+  CgSolver< HypreVector > solver( params, Ah, precond );
 
   // Solve linear system
-  solver->solve( rhs, sol_comp );
+  solver.solve( rhs, sol_comp );
 
   // Check solution
-  EXPECT_TRUE( solver->result().success() );
-
-  HypreVector sol_diff( sol_comp );
-  sol_diff.axpy( -1.0, sol_true );
-  GEOSX_LOG_RANK_VAR( params.krylov.relTolerance );
-  GEOSX_LOG_RANK_VAR( sol_diff.norm2() / sol_true.norm2() );
-
-  GEOSX_LOG_RANK_VAR("Completed");
+  EXPECT_TRUE( solver.result().success() );
 }

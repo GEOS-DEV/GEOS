@@ -382,17 +382,24 @@ PreconditionerTwoLevel ( Matrix const & mat,
   mat.extractDiagonal( m_diagInv );
   m_diagInv.reciprocal();
 
-  m_diagInv.write("jacobi");
-
   LinearSolverParameters params; 
   params.isSymmetric = true;
-  params.solverType = LinearSolverParameters::SolverType::direct;
-  params.direct.parallel = 0;
-  params.logLevel = 2;
+  //params.solverType = LinearSolverParameters::SolverType::direct;
+  //params.direct.parallel = 0;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+  params.amg.smootherType = LinearSolverParameters::AMG::SmootherType::l1jacobi;
+  params.logLevel = 1;
 
-  m_coarseSolver = LAI::createSolver( params );
+  if( params.solverType == LinearSolverParameters::SolverType::direct )
+  {
+    m_coarseSolver = LAI::createSolver( params );
+  }
+  else
+  {
+    m_coarseSolver = LAI::createPreconditioner( params );
+  }
+
   m_coarseSolver->setup( matCoarse );
-
   
   m_mesh = std::make_unique< twoLevelStructuredMesh >();
   m_mesh->readFromFile( "twoLevelMesh.txt" );
@@ -402,7 +409,6 @@ PreconditionerTwoLevel ( Matrix const & mat,
   fineRhs.create( mat.numLocalCols(), mat.comm() );
   coarseTmp.create( m_coarseMat->numLocalCols(), m_coarseMat->comm() );
   coarseRhs.create( m_coarseMat->numLocalCols(), m_coarseMat->comm() );
-
 }
 
 template< typename LAI >
@@ -417,31 +423,26 @@ void PreconditionerTwoLevel< LAI >::apply( Vector const & src,
   // ... Presmoothing with dst initialized to zero 
   dst.zero();
   fineRhs.copy( src );
-  GEOSX_LOG_RANK_VAR( fineRhs.norm2());
   m_diagInv.pointwiseProduct( fineRhs, fineTmp );
   dst.axpy( 1.0, fineTmp );
   this->matrix().residual( fineTmp, fineRhs, fineRhs );
-  GEOSX_LOG_RANK_VAR( fineRhs.norm2());
 
   // ... Coarse-grid correction
-  //arrayView1d< real64 > const values_coarseRhs = coarseRhs.open();
-  //restrictVector( fineRhs.values( ), values_coarseRhs, *m_mesh );
-  //coarseRhs.close();
-  //m_coarseSolver->apply( coarseRhs, coarseTmp );
+  arrayView1d< real64 > const values_coarseRhs = coarseRhs.open();
+  restrictVector( fineRhs.values( ), values_coarseRhs, *m_mesh );
+  coarseRhs.close();
+  m_coarseSolver->apply( coarseRhs, coarseTmp );
 
-  //arrayView1d< real64 > const values_fineTmp = fineTmp.open();
-  //prolongVector( coarseTmp.values( ), values_fineTmp, *m_mesh );
-  //fineTmp.close();
+  arrayView1d< real64 > const values_fineTmp = fineTmp.open();
+  prolongVector( coarseTmp.values( ), values_fineTmp, *m_mesh );
+  fineTmp.close();
 
-  //dst.axpy( 1.0, fineTmp );
-  //this->matrix().residual( fineTmp, fineRhs, fineRhs );
+  dst.axpy( 1.0, fineTmp );
+  this->matrix().residual( fineTmp, fineRhs, fineRhs );
 
   // ... Postsmoothing
-  //m_diagInv.pointwiseProduct( fineRhs, fineTmp );
-  //dst.axpy( 1.0, fineTmp );
-  //
-  //this->matrix().residual( fineTmp, fineRhs, fineRhs );
-  //GEOSX_LOG_RANK_VAR( fineRhs.norm2());
+  m_diagInv.pointwiseProduct( fineRhs, fineTmp );
+  dst.axpy( 1.0, fineTmp );
 }
 
 //template< typename LAI >
