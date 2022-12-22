@@ -171,6 +171,8 @@ protected:
 
   virtual void postProcessInput() override;
 
+  virtual void initializePreSubGroups() override;
+
 private:
 
   void createPVTModels();

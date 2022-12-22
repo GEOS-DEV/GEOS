@@ -119,6 +119,8 @@ protected:
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
   };
 
+protected:
+
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void initializePreSubGroups() override;

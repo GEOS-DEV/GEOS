@@ -10,6 +10,7 @@
       logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
+        couplingType="Sequential"
         newtonMaxIter="50"/>
       <LinearSolverParameters
         directParallel="0"/>

@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsSolverEmbeddedFractures.hpp
+ * @file SinglePhasePoromechanicsEmbeddedFractures.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVEREMBEDDEDFRACTURES_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVEREMBEDDEDFRACTURES_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEMBEDDEDFRACTURES_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEMBEDDEDFRACTURES_HPP_
 
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
 
@@ -26,12 +26,12 @@ namespace geosx
 
 class SolidMechanicsEmbeddedFractures;
 
-class SinglePhasePoromechanicsSolverEmbeddedFractures : public SinglePhasePoromechanicsSolver
+class SinglePhasePoromechanicsEmbeddedFractures : public SinglePhasePoromechanicsSolver
 {
 public:
-  SinglePhasePoromechanicsSolverEmbeddedFractures( const std::string & name,
-                                                   Group * const parent );
-  ~SinglePhasePoromechanicsSolverEmbeddedFractures() override;
+  SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
+                                             Group * const parent );
+  ~SinglePhasePoromechanicsEmbeddedFractures() override;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -142,4 +142,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVEREMBEDDEDFRACTURES_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEMBEDDEDFRACTURES_HPP_ */
