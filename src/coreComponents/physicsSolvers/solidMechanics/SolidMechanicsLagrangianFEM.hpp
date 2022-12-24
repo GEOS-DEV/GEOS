@@ -21,12 +21,12 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
+#include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 namespace geosx
 {
@@ -318,7 +318,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
 
-    string const dofKey = dofManager.getKey( extrinsicMeshData::solidMechanics::totalDisplacement::key() );
+    string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
     arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );

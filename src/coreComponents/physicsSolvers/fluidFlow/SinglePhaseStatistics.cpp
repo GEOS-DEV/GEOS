@@ -21,9 +21,9 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 namespace geosx
 {
@@ -109,11 +109,11 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
 
     arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-    arrayView1d< real64 const > const deltaPres = subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
+    arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+    arrayView1d< real64 const > const deltaPres = subRegion.getField< fields::flow::deltaPressure >();
 
     string const & solidName = subRegion.getReference< string >( SinglePhaseBase::viewKeyStruct::solidNamesString() );
-    Group const & constitutiveModels = subRegion.getGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
+    Group const & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
     CoupledSolidBase const & solid = constitutiveModels.getGroup< CoupledSolidBase >( solidName );
     arrayView1d< real64 const > const refPorosity = solid.getReferencePorosity();
     arrayView2d< real64 const > const porosity = solid.getPorosity();

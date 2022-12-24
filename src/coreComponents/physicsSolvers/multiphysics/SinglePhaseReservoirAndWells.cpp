@@ -20,10 +20,10 @@
 #include "SinglePhaseReservoirAndWells.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "mesh/PerforationExtrinsicData.hpp"
+#include "mesh/PerforationFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVM.hpp"
-#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
@@ -113,7 +113,14 @@ void
 SinglePhaseReservoirAndWells< SinglePhasePoromechanicsSolver >::
 setMGRStrategy()
 {
-  // not implemented yet
+  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM )
+  {
+    GEOSX_LOG_RANK_0( "The MGR strategy for hybrid FVM is not implemented" );
+  }
+  else
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
+  }
 }
 
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >
@@ -175,15 +182,15 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 
       // get the well element indices corresponding to each perforation
       arrayView1d< localIndex const > const & perfWellElemIndex =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
+        perforationData->getField< fields::perforation::wellElementIndex >();
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const & resElementRegion =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
+        perforationData->getField< fields::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const & resElementSubRegion =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
+        perforationData->getField< fields::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const & resElementIndex =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
+        perforationData->getField< fields::perforation::reservoirElementIndex >();
 
       // Insert the entries corresponding to reservoir-well perforations
       // This will fill J_WR, and J_RW
@@ -274,20 +281,20 @@ assembleCouplingTerms( real64 const time_n,
 
       // get well variables on perforations
       arrayView1d< real64 const > const perfRate =
-        perforationData->getExtrinsicData< extrinsicMeshData::well::perforationRate >();
+        perforationData->getField< fields::well::perforationRate >();
       arrayView2d< real64 const > const dPerfRate_dPres =
-        perforationData->getExtrinsicData< extrinsicMeshData::well::dPerforationRate_dPres >();
+        perforationData->getField< fields::well::dPerforationRate_dPres >();
 
       arrayView1d< localIndex const > const perfWellElemIndex =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
+        perforationData->getField< fields::perforation::wellElementIndex >();
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const resElementRegion =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
+        perforationData->getField< fields::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const resElementSubRegion =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
+        perforationData->getField< fields::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const resElementIndex =
-        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
+        perforationData->getField< fields::perforation::reservoirElementIndex >();
 
       // loop over the perforations and add the rates to the residual and jacobian
       forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )

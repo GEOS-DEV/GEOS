@@ -89,7 +89,7 @@ If rate control is used, we add the following constraint for the rate at the top
 .. math::
   q_{(-1,0)} - q^{target} = 0
 
-If the pressure at the top segment becomes larger than the maximum pressure specified by the user, then we switch to pressure control.
+For an injector well, if the pressure at the top segment becomes larger than the target pressure specified by the user, then we switch to pressure control. Similarly for a producer well, if the pressure at the top segment becomes smaller than the target pressure specified by the user, then we switch to pressure control.
 
 To summarize, the compositional multiphase flow solver assembles a set of :math:`n_c+2` equations, i.e., :math:`n_c` mass conservation equations and 1 volume constraint equation in each segment, plus 1 pressure relation at the interface between a segment and the next segment in the direction of the well head.
 For the top segment, the pressure relation is replaced with the control equation.

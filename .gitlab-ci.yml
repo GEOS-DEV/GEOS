@@ -19,7 +19,6 @@ stages:
     - git submodule set-url src/cmake/blt https://github.com/LLNL/blt.git
     - git submodule set-url src/coreComponents/constitutive/PVTPackage https://github.com/GEOSX/PVTPackage.git
     - git submodule set-url integratedTests git@github.com:GEOSX/integratedTests.git
-    - git submodule set-url src/coreComponents/mesh/PAMELA https://github.com/GEOSX/PAMELA.git
     - git submodule set-url src/coreComponents/fileIO/coupling/hdf5_interface https://github.com/GEOSX/hdf5_interface.git
 
     # Update submodules
@@ -27,7 +26,6 @@ stages:
     - git submodule update --init --recursive src/coreComponents/LvArray
     - git submodule update --init --recursive src/coreComponents/constitutive/PVTPackage
     - git submodule update --init --recursive integratedTests
-    - git submodule update --init src/coreComponents/mesh/PAMELA
     - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
 
     - mkdir ${SYSTEM}
@@ -109,8 +107,8 @@ stages:
 .build_on_lassen:
   stage: build
   variables:
-    ALLOC_COMMAND: "lalloc 1 -q pdebug"
-    INTEGRATED_ALLOC_COMMAND: "lalloc 10 -q pdebug"
+    ALLOC_COMMAND: "lalloc 1"
+    INTEGRATED_ALLOC_COMMAND: "lalloc 10"
     SYSTEM: "lassen"
   tags:
     - shell

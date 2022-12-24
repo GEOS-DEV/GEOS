@@ -30,7 +30,7 @@
 #include "finiteVolume/SurfaceElementStencil.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 #include "LvArray/src/tensorOps.hpp"
 
@@ -170,6 +170,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
     stackArray1d< localIndex, 2 > subRegionIndex( 2 );
     stackArray1d< localIndex, 2 > elementIndex( 2 );
     stackArray1d< real64, 2 > stencilWeights( 2 );
+    stackArray1d< real64, 2 > stencilStabilizationWeights( 2 );
     stackArray1d< globalIndex, 2 > stencilCellsGlobalIndex( 2 );
 
     for( localIndex ke = 0; ke < 2; ++ke )
@@ -189,7 +190,11 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
       real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec[ke] );
 
       stencilWeights[ke] = faceArea / c2fDistance;
+      stencilStabilizationWeights[ke] = faceArea * c2fDistance;
     }
+
+    real64 const sumStabilizationWeight =
+      ( stencilStabilizationWeights[0] + stencilStabilizationWeights[1] );
 
     // Ensure elements are added to stencil in order of global indices
     if( stencilCellsGlobalIndex[0] >= stencilCellsGlobalIndex[1] )
@@ -206,7 +211,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
                  stencilWeights.data(),
                  kf );
 
-    stencil.addVectors( transMultiplier[kf], faceNormal, cellToFaceVec );
+    stencil.addVectors( transMultiplier[kf], sumStabilizationWeight, faceNormal, cellToFaceVec );
   } );
 }
 
@@ -379,9 +384,9 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
   ArrayOfArraysView< localIndex const > const & faceToNodesMap = faceManager.nodeList();
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion.faceList();
   array2dLayoutIncrDisplacementConst const incrementalDisplacement =
-    nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::incrementalDisplacement >();
+    nodeManager.getField< fields::solidMechanics::incrementalDisplacement >();
   array2dLayoutTotalDisplacementConst const totalDisplacement =
-    nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
+    nodeManager.getField< fields::solidMechanics::totalDisplacement >();
   arrayView1d< real64 > const aperture = fractureSubRegion.getReference< array1d< real64 > >( "elementAperture" );
 #endif
 
@@ -394,8 +399,8 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
 #endif
 
 #if SET_CREATION_PRESSURE==1
-  arrayView1d< real64 > const fluidPressure_n = fractureSubRegion.getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
-  arrayView1d< real64 > const fluidPressure = fractureSubRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+  arrayView1d< real64 > const fluidPressure_n = fractureSubRegion.getField< fields::flow::pressure_n >();
+  arrayView1d< real64 > const fluidPressure = fractureSubRegion.getField< fields::flow::pressure >();
   // Set the new face elements to some unphysical numbers to make sure they get set by the following routines.
   SortedArrayView< localIndex const > const newFaceElements = fractureSubRegion.m_newFaceElements.toViewConst();
 

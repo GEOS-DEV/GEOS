@@ -13,15 +13,17 @@
  */
 
 /**
- * @file MultiphasePoroelasticSolver.hpp
+ * @file MultiphasePoromechanicsSolver.hpp
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_
 
+#include "constitutive/solid/CoupledSolidBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+
 
 namespace geosx
 {
@@ -101,6 +103,7 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
+
   virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              int const cycleNumber,
@@ -108,7 +111,16 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
+  void updateStabilizationParameters( DomainPartition & domain ) const;
+
   /**@}*/
+
+  enum class StabilizationType : integer
+  {
+    None,
+    Global,
+    Local,
+  };
 
 protected:
 
@@ -116,11 +128,86 @@ protected:
   {
     /// Names of the porous materials
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
+
+    /// Type of stabilization used in the simulation
+    constexpr static char const * stabilizationTypeString() { return "stabilizationType"; }
+
+    /// Names of the regions where the stabilization is applied
+    constexpr static char const * stabilizationRegionNamesString() { return "stabilizationRegionNames"; }
+
+    /// Multiplier on stabilization
+    constexpr static char const * stabilizationMultiplierString() { return "stabilizationMultiplier"; }
   };
 
   virtual void initializePreSubGroups() override;
 
+private:
+
+  template< typename CONSTITUTIVE_BASE,
+            typename KERNEL_WRAPPER,
+            typename ... PARAMS >
+  real64 assemblyLaunch( MeshLevel & mesh,
+                         DofManager const & dofManager,
+                         arrayView1d< string const > const & regionNames,
+                         string const & materialNamesString,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs,
+                         PARAMS && ... params );
+
+
+  /// Type of stabilization used in the simulation
+  StabilizationType m_stabilizationType;
+
+  /// Names of the regions where the stabilization is applied
+  array1d< string > m_stabilizationRegionNames;
+
+  /// Multiplier on stabilization constant
+  real64 m_stabilizationMultiplier;
+
 };
+
+ENUM_STRINGS( MultiphasePoromechanicsSolver::StabilizationType,
+              "None",
+              "Global",
+              "Local" );
+
+template< typename CONSTITUTIVE_BASE,
+          typename KERNEL_WRAPPER,
+          typename ... PARAMS >
+real64 MultiphasePoromechanicsSolver::assemblyLaunch( MeshLevel & mesh,
+                                                      DofManager const & dofManager,
+                                                      arrayView1d< string const > const & regionNames,
+                                                      string const & materialNamesString,
+                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                      arrayView1d< real64 > const & localRhs,
+                                                      PARAMS && ... params )
+{
+  GEOSX_MARK_FUNCTION;
+
+  NodeManager const & nodeManager = mesh.getNodeManager();
+
+  string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
+  arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+
+  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+
+  KERNEL_WRAPPER kernelWrapper( dofNumber,
+                                dofManager.rankOffset(),
+                                localMatrix,
+                                localRhs,
+                                gravityVectorData,
+                                std::forward< PARAMS >( params )... );
+
+  return finiteElement::
+           regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                         CONSTITUTIVE_BASE,
+                                         CellElementSubRegion >( mesh,
+                                                                 regionNames,
+                                                                 solidMechanicsSolver()->getDiscretizationName(),
+                                                                 materialNamesString,
+                                                                 kernelWrapper );
+}
+
 
 } /* namespace geosx */
 

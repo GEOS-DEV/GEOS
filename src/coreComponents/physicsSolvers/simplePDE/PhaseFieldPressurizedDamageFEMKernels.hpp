@@ -20,7 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDPRESSURIZEDDAMAGEKERNELS_HPP_
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 namespace geosx
 {
@@ -114,7 +114,7 @@ public:
           inputMatrix,
           inputRhs ),
     m_X( nodeManager.referencePosition()),
-    m_disp( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
+    m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
     m_quadDamage( inputConstitutiveType.getNewDamage() ),
     m_quadExtDrivingForce( inputConstitutiveType.getExtDrivingForce() ),

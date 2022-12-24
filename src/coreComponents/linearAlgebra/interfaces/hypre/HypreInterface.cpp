@@ -42,6 +42,18 @@ void HypreInterface::initialize()
   hypre_HandleSpgemmUseVendor( hypre_handle() ) = 0;
 #endif
   HYPRE_SetMemoryLocation( hypre::memoryLocation );
+
+  // Hypre version info
+#if defined(HYPRE_DEVELOP_STRING)
+#if defined(HYPRE_BRANCH_NAME)
+  GEOSX_LOG_RANK_0( "  - hypre development version: " << HYPRE_DEVELOP_STRING <<
+                    " (" << HYPRE_BRANCH_NAME << ")" );
+#else
+  GEOSX_LOG_RANK_0( "  - hypre development version: " << HYPRE_DEVELOP_STRING );
+#endif
+#elif defined(HYPRE_RELEASE_VERSION)
+  GEOSX_LOG_RANK_0( "  - hypre release version: " << HYPRE_RELEASE_VERSION );
+#endif
 }
 
 void HypreInterface::finalize()

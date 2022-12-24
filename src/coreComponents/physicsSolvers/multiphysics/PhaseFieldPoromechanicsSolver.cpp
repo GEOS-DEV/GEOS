@@ -343,7 +343,7 @@ void PhaseFieldPoromechanicsSolver::mapDamageAndGradientToQuadrature( DomainPart
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_discretizationName );
 
-        finiteElement::dispatch3D( fe, [xNodes, nodalDamage, &elementSubRegion, damageFieldOnMaterial, damageGradOnMaterial, elemNodes, elemsToNodes]( auto & finiteElement )
+        finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [xNodes, nodalDamage, &elementSubRegion, damageFieldOnMaterial, damageGradOnMaterial, elemNodes, elemsToNodes]( auto & finiteElement )
         {
           forAll< serialPolicy >( elementSubRegion.size(), [xNodes, nodalDamage, damageFieldOnMaterial, damageGradOnMaterial, elemNodes, elemsToNodes] ( localIndex const k )
           {
@@ -394,7 +394,6 @@ void PhaseFieldPoromechanicsSolver::mapDamageAndGradientToQuadrature( DomainPart
     } );
   } );
 }
-
 
 void PhaseFieldPoromechanicsSolver::applyDamageOnTractionBC( DomainPartition & domain )
 {

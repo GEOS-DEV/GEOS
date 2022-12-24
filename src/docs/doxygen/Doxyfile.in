@@ -767,12 +767,11 @@ INPUT = @PROJECT_SOURCE_DIR@/coreComponents/common \
         @PROJECT_SOURCE_DIR@/coreComponents/mesh \
         @PROJECT_SOURCE_DIR@/coreComponents/finiteElement/elementFormulations \
         @PROJECT_SOURCE_DIR@/coreComponents/finiteElement/kernelInterface \
-        @PROJECT_SOURCE_DIR@/coreComponents/mesh/ExtrinsicMeshData.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/mesh/MeshFields.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp \
-        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp \
-        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp \
-        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp \
-        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/kernels/ExplicitFiniteStrain.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/kernels/ExplicitSmallStrain.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/finiteVolume \
         @PROJECT_SOURCE_DIR@/coreComponents/functions \
         @PROJECT_SOURCE_DIR@/coreComponents/fieldSpecification \
@@ -822,7 +821,6 @@ RECURSIVE              = YES
 EXCLUDE                = @PROJECT_SOURCE_DIR@/coreComponents/dataRepository/BufferOps_inline.hpp \
                          @PROJECT_SOURCE_DIR@/coreComponents/common/MpiWrapper.hpp \
                          @PROJECT_SOURCE_DIR@/coreComponents/common/GEOS_RAJA_Interface.hpp \
-                         @PROJECT_SOURCE_DIR@/coreComponents/mesh/PAMELA \
                          @PROJECT_SOURCE_DIR@/coreComponents/constitutive/PVTPackage 
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
@@ -2034,7 +2032,7 @@ EXPAND_AS_DEFINED      = LVARRAY_HOST_DEVICE \
                          CONSTEXPR_WITHOUT_BOUNDS_CHECK \
                          GEOSX_HOST_DEVICE \
                          DISABLE_HD_WARNING \
-                         EXTRINSIC_MESH_DATA_TRAIT \
+                         DECLARE_FIELD \
                          GEOSX_FORCE_INLINE \
                          USING_FINITEELEMENTBASE \ 
                          MAKE_PRINT_MATVIEW
