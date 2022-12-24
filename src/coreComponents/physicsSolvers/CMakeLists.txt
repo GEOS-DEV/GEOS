@@ -70,12 +70,13 @@ set( physicsSolvers_headers
      multiphysics/MultiphasePoromechanicsSolver.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
      multiphysics/PhaseFieldPoromechanicsSolver.hpp
-     multiphysics/SinglePhasePoromechanicsDamageKernel.hpp
      multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp
      multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp     
      multiphysics/poromechanicsKernels/PoromechanicsBase.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp     
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsDamage.hpp  
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsDamage_impl.hpp     
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.hpp

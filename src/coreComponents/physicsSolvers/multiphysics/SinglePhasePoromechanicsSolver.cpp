@@ -26,7 +26,7 @@
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsDamageKernel.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsDamage.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -191,27 +191,27 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
     {
       poromechanicsMaxForce =
         assemblyLaunch< constitutive::PorousDamageSolidBase,
-                        poromechanicsDamageKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
-                                                                                             dofManager,
-                                                                                             regionNames,
-                                                                                             viewKeyStruct::porousMaterialNamesString(),
-                                                                                             localMatrix,
-                                                                                             localRhs,
-                                                                                             flowDofKey,
-                                                                                             FlowSolverBase::viewKeyStruct::fluidNamesString() );
+                        poromechanicsDamageKernels::SinglePhasePoromechanicsDamageKernelFactory >( mesh,
+                                                                                                   dofManager,
+                                                                                                   regionNames,
+                                                                                                   viewKeyStruct::porousMaterialNamesString(),
+                                                                                                   localMatrix,
+                                                                                                   localRhs,
+                                                                                                   flowDofKey,
+                                                                                                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
     else
     {
       poromechanicsMaxForce =
         assemblyLaunch< constitutive::PorousSolidBase,
                         poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
-                                                                                      dofManager,
-                                                                                      regionNames,
-                                                                                      viewKeyStruct::porousMaterialNamesString(),
-                                                                                      localMatrix,
-                                                                                      localRhs,
-                                                                                      flowDofKey,
-                                                                                      FlowSolverBase::viewKeyStruct::fluidNamesString() );
+                                                                                       dofManager,
+                                                                                       regionNames,
+                                                                                       viewKeyStruct::porousMaterialNamesString(),
+                                                                                       localMatrix,
+                                                                                       localRhs,
+                                                                                       flowDofKey,
+                                                                                       FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
   } );
 

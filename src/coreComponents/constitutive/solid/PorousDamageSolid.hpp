@@ -54,94 +54,66 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
-  void smallStrainUpdateSinglePhase( localIndex const k,
-                                     localIndex const q,
-                                     real64 const & initialFluidPressure,
-                                     real64 const & fluidPressure_n,
-                                     real64 const & fluidPressure,
-                                     real64 const ( &strainIncrement )[6],
-                                     real64 const & gravityAcceleration,
-                                     real64 const ( &gravityVector )[3],
-                                     real64 const & solidDensity,
-                                     real64 const & initialFluidDensity,
-                                     real64 const & fluidDensity_n,
-                                     real64 const & fluidDensity,
-                                     real64 const & dFluidDensity_dPressure,
-                                     real64 ( & totalStress )[6],
-                                     real64 ( & dTotalStress_dPressure )[6],
-                                     real64 ( & bodyForceIncrement )[3],
-                                     real64 ( & dBodyForce_dVolStrainIncrement )[3],
-                                     real64 ( & dBodyForce_dPressure )[3],
-                                     real64 ( & fractureFlowTerm )[3],
-                                     real64 ( & dFractureFlowTerm_dPressure )[3],
-                                     real64 & fluidMassContentIncrement,
-                                     real64 & dFluidMassContent_dPressure,
-                                     real64 & dFluidMassContent_dVolStrainIncrement,
-                                     DiscretizationOps & stiffness ) const
+  void smallStrainUpdatePoromechanics( localIndex const k,
+                                       localIndex const q,
+                                       real64 const & pressure_n,
+                                       real64 const & pressure,
+                                       real64 const ( &fluidPressureGradient )[3],
+                                       real64 const & deltaTemperatureFromInit,
+                                       real64 const & deltaTemperatureFromLastStep,
+                                       real64 const ( &strainIncrement )[6],
+                                       real64 ( & totalStress )[6],
+                                       real64 ( & dTotalStress_dPressure )[6],
+                                       real64 ( & dTotalStress_dTemperature )[6],
+                                       DiscretizationOps & stiffness,
+                                       real64 & porosity,
+                                       real64 & porosity_n,
+                                       real64 & dPorosity_dVolStrain,
+                                       real64 & dPorosity_dPressure,
+                                       real64 & dPorosity_dTemperature,
+                                       real64 & dSolidDensity_dPressure,
+                                       real64 ( & fractureFlowTerm )[3],
+                                       real64 ( & dFractureFlowTerm_dPressure )[3]) const
   {
     // Compute total stress increment and its derivative
     computeTotalStress( k,
                         q,
-                        initialFluidPressure,
-                        fluidPressure,
+                        pressure,
+                        deltaTemperatureFromInit,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure,
+                        dTotalStress_dTemperature,
                         stiffness );
 
     // Compute porosity and its derivatives
-    real64 const deltaFluidPressure = fluidPressure - fluidPressure_n;
-    real64 porosity;
-    real64 porosity_n;
+    real64 const deltaPressure = pressure - pressure_n;
     real64 porosityInit;
-    real64 dPorosity_dVolStrain;
-    real64 dPorosity_dPressure;
     computePorosity( k,
                      q,
-                     deltaFluidPressure,
+                     deltaPressure,
+                     deltaTemperatureFromLastStep,
                      strainIncrement,
                      porosity,
                      porosity_n,
                      porosityInit,
                      dPorosity_dVolStrain,
-                     dPorosity_dPressure );
+                     dPorosity_dPressure,
+                     dPorosity_dTemperature );
 
-    // Compute body force vector and its derivatives
-    if( gravityAcceleration > 0.0 )
-    {
-      computeBodyForce( solidDensity,
-                        initialFluidDensity,
-                        fluidDensity,
-                        dFluidDensity_dPressure,
-                        porosityInit,
-                        porosity,
-                        dPorosity_dVolStrain,
-                        dPorosity_dPressure,
-                        gravityVector,
-                        bodyForceIncrement,
-                        dBodyForce_dVolStrainIncrement,
-                        dBodyForce_dPressure );
-    }
 
     // Compute fracture flow term and its derivative w.r.t pressure only
     computeFractureFlowTerm( k,
                              q,
-                             fluidPressure,
+                             pressure,
+                             fluidPressureGradient,
                              fractureFlowTerm,
                              dFractureFlowTerm_dPressure );
 
-    // Compute fluid mass contents and  its derivatives
-    fluidMassContentIncrement = porosity * fluidDensity - porosity_n * fluidDensity_n;
-    dFluidMassContent_dVolStrainIncrement = dPorosity_dVolStrain * fluidDensity;
-    dFluidMassContent_dPressure = dPorosity_dPressure * fluidDensity + porosity * dFluidDensity_dPressure;
-
-// TODO uncomment once we start using permeability model in flow.
-//    m_permUpdate.updateFromPressureStrain( k,
-//                                           q,
-//                                           pressure,
-//                                           volStrain );
-
     updateMatrixPermeability( k );
+
+    // Save the derivative of solid density wrt pressure for the computation of the body force
+    dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure();
   }
 
   /**
@@ -200,55 +172,31 @@ private:
     m_permUpdate.updateDamagePermeability( k, damageAvg );
   }
 
-  // Do we need to consider the damage on the solid density?
-  GEOSX_HOST_DEVICE
-  void computeBodyForce( real64 const & solidDensity,
-                         real64 const & initialFluidDensity,
-                         real64 const & fluidDensity,
-                         real64 const & dFluidDensity_dPressure,
-                         real64 const & porosityInit,
-                         real64 const & porosity,
-                         real64 const & dPorosity_dVolStrain,
-                         real64 const & dPorosity_dPressure,
-                         real64 const ( &gravityVector )[3],
-                         real64 ( & bodyForceIncrement )[3],
-                         real64 ( & dBodyForce_dVolStrainIncrement )[3],
-                         real64 ( & dBodyForce_dPressure )[3] ) const
-  {
-    real64 const mixtureDensity = ( 1.0 - porosity ) * solidDensity
-                                  + porosity * fluidDensity;
-    real64 const initialMixtureDensity = ( 1.0 - porosityInit ) * solidDensity
-                                         + porosityInit * initialFluidDensity;
-    real64 const mixtureDensityIncrement = mixtureDensity - initialMixtureDensity;
-
-    real64 const dMixtureDens_dVolStrainIncrement = dPorosity_dVolStrain * ( -solidDensity + fluidDensity );
-    real64 const dMixtureDens_dPressure = dPorosity_dPressure * ( -solidDensity + fluidDensity )
-                                          + ( 1.0 - porosity ) * m_porosityUpdate.dGrainDensity_dPressure()
-                                          + porosity * dFluidDensity_dPressure;
-
-    LvArray::tensorOps::scaledCopy< 3 >( bodyForceIncrement, gravityVector, mixtureDensityIncrement );
-    LvArray::tensorOps::scaledCopy< 3 >( dBodyForce_dVolStrainIncrement, gravityVector, dMixtureDens_dVolStrainIncrement );
-    LvArray::tensorOps::scaledCopy< 3 >( dBodyForce_dPressure, gravityVector, dMixtureDens_dPressure );
-  }
-
-  // Note: it is a tentative method to compute porosity, and is subject to further changes
   GEOSX_HOST_DEVICE
   void computePorosity( localIndex const k,
                         localIndex const q,
-                        real64 const & deltaFluidPressure,
+                        real64 const & deltaPressure,
+                        real64 const & deltaTemperature,
                         real64 const ( &strainIncrement )[6],
                         real64 & porosity,
                         real64 & porosity_n,
                         real64 & porosityInit,
                         real64 & dPorosity_dVolStrain,
-                        real64 & dPorosity_dPressure ) const
+                        real64 & dPorosity_dPressure,
+                        real64 & dPorosity_dTemperature ) const
   {
-    m_porosityUpdate.updateFromPressureAndStrain( k,
-                                                  q,
-                                                  deltaFluidPressure,
-                                                  strainIncrement,
-                                                  dPorosity_dPressure,
-                                                  dPorosity_dVolStrain );
+    real64 const thermalExpansionCoefficient = 0.0;
+    //   m_solidUpdate.getThermalExpansionCoefficient( k );
+    
+    m_porosityUpdate.updateFromPressureTemperatureAndStrain( k,
+                                                             q,
+                                                             deltaPressure,
+                                                             deltaTemperature,
+                                                             strainIncrement,
+                                                             thermalExpansionCoefficient,
+                                                             dPorosity_dVolStrain,
+                                                             dPorosity_dPressure,
+                                                             dPorosity_dTemperature );
 
     real64 const damage = fmax( fmin( 1.0, m_solidUpdate.getDamage( k, q ) ), 0.0 );
     real64 const damage_n = fmax( fmin( 1.0, m_solidUpdate.getOldDamage( k, q ) ), 0.0 );
@@ -264,11 +212,12 @@ private:
   GEOSX_HOST_DEVICE
   void computeTotalStress( localIndex const k,
                            localIndex const q,
-                           real64 const & initialFluidPressure,
-                           real64 const & fluidPressure,
+                           real64 const & pressure,
+                           real64 const & deltaTemperature,
                            real64 const ( &strainIncrement )[6],
                            real64 ( & totalStress )[6],
                            real64 ( & dTotalStress_dPressure )[6],
+                           real64 ( & dTotalStress_dTemperature )[6],
                            DiscretizationOps & stiffness ) const
   {
     // Compute total stress increment and its derivative w.r.t. pressure
@@ -280,12 +229,15 @@ private:
 
     updateBiotCoefficient( k );
 
+    // Add the contributions of pressure and temperature to the total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-    real64 const initialBiotCoefficient = biotCoefficient; // temporary
+    real64 const thermalExpansionCoefficient = 0;//m_solidUpdate.getThermalExpansionCoefficient( k );
+    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
+    real64 const thermalExpansionCoefficientTimesBulkModulus = thermalExpansionCoefficient * bulkModulus;
 
     real64 const damagedBiotCoefficient = m_solidUpdate.pressureDamageFunction( k, q ) * biotCoefficient;
 
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -damagedBiotCoefficient * fluidPressure + initialBiotCoefficient * initialFluidPressure );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -damagedBiotCoefficient * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * deltaTemperature );
 
     dTotalStress_dPressure[0] = -damagedBiotCoefficient;
     dTotalStress_dPressure[1] = -damagedBiotCoefficient;
@@ -293,28 +245,34 @@ private:
     dTotalStress_dPressure[3] = 0;
     dTotalStress_dPressure[4] = 0;
     dTotalStress_dPressure[5] = 0;
+
+    dTotalStress_dTemperature[0] = -3 * thermalExpansionCoefficientTimesBulkModulus;
+    dTotalStress_dTemperature[1] = -3 * thermalExpansionCoefficientTimesBulkModulus;
+    dTotalStress_dTemperature[2] = -3 * thermalExpansionCoefficientTimesBulkModulus;
+    dTotalStress_dTemperature[3] = 0;
+    dTotalStress_dTemperature[4] = 0;
+    dTotalStress_dTemperature[5] = 0;
   }
 
   GEOSX_HOST_DEVICE
   void computeFractureFlowTerm( localIndex const k,
                                 localIndex const q,
-                                real64 const & fluidPressure,
+                                real64 const & pressure,
+                                real64 const ( &fluidPressureGradient )[3],
                                 real64 ( & fractureFlowTerm )[3],
                                 real64 ( & dFractureFlowTerm_dPressure )[3] ) const
   {
+    GEOSX_UNUSED_VAR( pressure );
+    
     // Compute fracture flow term and its derivative w.r.t pressure
-    real64 damageGrad[3]{};
-    real64 pressureDamageGrad[3]{};
+    real64 const pressureDamage = m_solidUpdate.pressureDamageFunction( k, q ); 
 
-    m_solidUpdate.getDamageGrad( k, q, damageGrad );
+    LvArray::tensorOps::scaledCopy< 3 >( fractureFlowTerm, fluidPressureGradient, -pressureDamage );
 
-    real64 const damage = m_solidUpdate.getDamage( k, q );
-    real64 const pressureDamageDeriv = m_solidUpdate.pressureDamageFunctionDerivative( damage ); 
-
-    LvArray::tensorOps::scaledCopy< 3 >( pressureDamageGrad, damageGrad, pressureDamageDeriv );
-    LvArray::tensorOps::scaledCopy< 3 >( fractureFlowTerm, pressureDamageGrad, fluidPressure );
-
-    LvArray::tensorOps::copy< 3 >( dFractureFlowTerm_dPressure, pressureDamageGrad );
+    for( integer i=0; i<3; ++i )
+    {
+      dFractureFlowTerm_dPressure[i] = 0.0;
+    }
   }
 
 };
