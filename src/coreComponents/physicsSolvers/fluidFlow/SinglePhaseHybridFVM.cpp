@@ -69,26 +69,6 @@ void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
     // primary variables: face pressures at the previous converged time step
     faceManager.registerField< fields::flow::facePressure_n >( getName() );
   } );
-
-  // 3) Register the pressure gradient data 
-  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                    MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
-  {
-    
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   ElementSubRegionBase & subRegion )
-    {
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::pressureGradientString() ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        setRegisteringObjects( this->getName()).
-        setDescription( "An array that holds the cellwise pressure gradient." ).
-        reference().resizeDimension< 1 >( 3 );
-    } ); 
-  } ); 
 }
 
 void SinglePhaseHybridFVM::initializePreSubGroups()
@@ -639,7 +619,7 @@ void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
 
     // get the face-centered pressures
     arrayView1d< real64 const > const facePres =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
+      faceManager.getField< fields::flow::facePressure >();
 
     // get the face center coordinates
     arrayView2d< real64 const > const faceCenter = faceManager.faceCenter();
@@ -651,7 +631,7 @@ void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
         subRegion.template getReference< array2d< real64 > >( viewKeyStruct::pressureGradientString() );
 
       // get the cell-centered pressures
-      arrayView1d< real64 const > const pres = subRegion.template getReference< array1d< real64 > >( "pressure" );
+      arrayView1d< real64 const > const pres = subRegion.template getField< fields::flow::pressure >();
 
       // get the cell center coordinates
       arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();

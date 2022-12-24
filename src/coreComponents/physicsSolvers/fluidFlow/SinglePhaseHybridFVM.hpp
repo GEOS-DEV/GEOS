@@ -156,7 +156,8 @@ public:
                              real64 const & dt,
                              DomainPartition & domain ) override;
 
-  void updatePressureGradient( DomainPartition & domain ); 
+  virtual void updatePressureGradient( DomainPartition & domain ) override final;
+
   /**
    * @brief Function to perform the application of Dirichlet BCs on faces
    * @param[in] time_n current time
@@ -181,9 +182,6 @@ public:
   {
     // primary face-based field
     static constexpr char const * deltaFacePressureString() { return "deltaFacePressure"; }
-
-    // cellwise pressure gradient
-    static constexpr char const * pressureGradientString() { return "pressureGradient"; }
   };
 
   virtual void initializePreSubGroups() override;
