@@ -110,35 +110,9 @@ public:
   }
 
   /**
-<<<<<<< HEAD
-   * @brief Method to fill a MeshData object.
-   * @param nodeManager The node manager.
-   * @param edgeManager The edge manager.
-   * @param faceManager The face manager.
-   * @param cellSubRegion The cell sub-region for which the element has to be initialized.
-   * @param meshData MeshData struct to be filled.
+   * @brief 
+   * 
    */
-  template< typename SUBREGION_TYPE >
-  static void fillMeshData( NodeManager const & nodeManager,
-                            EdgeManager const & edgeManager,
-                            FaceManager const & faceManager,
-                            SUBREGION_TYPE const & cellSubRegion,
-                            MeshData< SUBREGION_TYPE > & meshData );
-
-  /**
-   * @brief Empty setup method.
-   * @param cellIndex The index of the cell with respect to the cell sub region.
-   * @param meshData MeshData struct filled by @ref fillMeshData.
-   * @param stack Object that holds stack variables.
-   */
-  template< typename SUBREGION_TYPE >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void setupStack( localIndex const & cellIndex,
-                          MeshData< SUBREGION_TYPE > const & meshData,
-                          StackVariables & stack );
-
-
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void getSamplingPointCoordInParentSpace( int const & linearIndex,
@@ -174,11 +148,6 @@ public:
    * @param coords coordinates of the given point.
    * @param N An array to pass back the shape function values for each support
    *   point.
-=======
-   * @brief Calculate shape functions values at a single point.
-   * @param[in] coords The parent coordinates at which to evaluate the shape function value
-   * @param[out] N The shape function values.
->>>>>>> origin/develop
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
