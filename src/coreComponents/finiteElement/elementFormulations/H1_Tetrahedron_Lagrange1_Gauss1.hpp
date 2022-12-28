@@ -110,6 +110,7 @@ public:
   }
 
   /**
+<<<<<<< HEAD
    * @brief Method to fill a MeshData object.
    * @param nodeManager The node manager.
    * @param edgeManager The edge manager.
@@ -173,6 +174,11 @@ public:
    * @param coords coordinates of the given point.
    * @param N An array to pass back the shape function values for each support
    *   point.
+=======
+   * @brief Calculate shape functions values at a single point.
+   * @param[in] coords The parent coordinates at which to evaluate the shape function value
+   * @param[out] N The shape function values.
+>>>>>>> origin/develop
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -247,19 +253,6 @@ public:
                                              real64 const (&X)[numNodes][3] );
 
   /**
-   * @brief Empty method, here for compatibility with methods that require a stabilization of the
-   * grad-grad bilinear form.
-   * @tparam MATRIXTYPE The type of @p matrix.
-   * @param stack Stack variables as filled by @ref setupStack.
-   * @param matrix The matrix that needs to be stabilized.
-   */
-  template< typename MATRIXTYPE >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void addGradGradStabilization( StackVariables const & stack,
-                                        MATRIXTYPE & matrix );
-
-  /**
    * @brief Calculates the isoparametric "Jacobian" transformation
    *   matrix/mapping from the parent space to the physical space.
    * @param q The quadrature point index in 3d space.
@@ -295,33 +288,6 @@ private:
 };
 
 /// @cond Doxygen_Suppress
-
-template< typename SUBREGION_TYPE >
-GEOSX_FORCE_INLINE
-void H1_Tetrahedron_Lagrange1_Gauss1::
-  fillMeshData( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-                EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
-                FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
-                SUBREGION_TYPE const & GEOSX_UNUSED_PARAM( cellSubRegion ),
-                MeshData< SUBREGION_TYPE > & GEOSX_UNUSED_PARAM( initialization ) )
-{}
-
-template< typename SUBREGION_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void H1_Tetrahedron_Lagrange1_Gauss1::
-  setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
-              MeshData< SUBREGION_TYPE > const & GEOSX_UNUSED_PARAM( meshData ),
-              StackVariables & GEOSX_UNUSED_PARAM( stack ) )
-{}
-
-template< typename MATRIXTYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void H1_Tetrahedron_Lagrange1_Gauss1::
-  addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-                            MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
-{}
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE

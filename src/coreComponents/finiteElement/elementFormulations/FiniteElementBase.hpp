@@ -158,7 +158,10 @@ public:
                           typename LEAF::template MeshData< SUBREGION_TYPE > & meshData
                           )
   {
-    LEAF::template fillMeshData< SUBREGION_TYPE >( nodeManager, edgeManager, faceManager, cellSubRegion,
+    LEAF::template fillMeshData< SUBREGION_TYPE >( nodeManager,
+                                                   edgeManager,
+                                                   faceManager,
+                                                   cellSubRegion,
                                                    meshData );
   }
 
@@ -333,34 +336,108 @@ public:
   /**
    * @brief Empty method, here for compatibility with methods that require a stabilization of the
    * grad-grad bilinear form.
-   * @tparam MATRIXTYPE The type of @p matrix.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
+   * @tparam MAXSUPPORTPOINTS Maximum number of support points allowed for this element.
+   * @tparam UPPER If true only the upper triangular part of @p matrix is modified.
    * @param stack Stack variables as filled by @ref setupStack.
    * @param matrix The matrix that needs to be stabilized.
+   * @param scaleFactor Scaling of the stabilization matrix.
    */
-  template< typename MATRIXTYPE >
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS, bool UPPER >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void addGradGradStabilization( StackVariables const & stack,
-                                        MATRIXTYPE & matrix )
+                                        real64 ( & matrix )
+                                        [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT]
+                                        [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT],
+                                        real64 const & scaleFactor )
   {
     GEOSX_UNUSED_VAR( stack,
-                      matrix );
+                      matrix,
+                      scaleFactor );
   }
 
 
   /**
    * @brief Add stabilization of grad-grad bilinear form to input matrix.
    * @tparam LEAF Type of the derived finite element implementation.
-   * @tparam MATRIXTYPE Type of the matrix to be filled.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
+   * @tparam UPPER If true only the upper triangular part of @p matrix is modified.
    * @param stack Stack variables created by a call to @ref setup.
    * @param matrix The input matrix to which values have to be added.
+   * @param scaleFactor Optional scaling of the stabilization matrix. Defaults to 1.0.
    */
-  template< typename LEAF, typename MATRIXTYPE >
+  template< typename LEAF, localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER = false >
   GEOSX_HOST_DEVICE
   void addGradGradStabilizationMatrix( typename LEAF::StackVariables const & stack,
-                                       MATRIXTYPE & matrix ) const
+                                       real64 ( & matrix )
+                                       [LEAF::maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT]
+                                       [LEAF::maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT],
+                                       real64 const scaleFactor = 1.0 ) const
   {
-    LEAF::addGradGradStabilization( stack, matrix );
+    LEAF::template addGradGradStabilization< NUMDOFSPERTRIALSUPPORTPOINT,
+                                             LEAF::maxSupportPoints,
+                                             UPPER >( stack,
+                                                      matrix,
+                                                      scaleFactor );
+  }
+
+  /**
+   * @brief Empty method, here for compatibility with methods that require a stabilization of the
+   * grad-grad bilinear form.
+   * @details This method is intended to be used with @p targetVector being the residual and @p dofs
+   * being the degrees of freedom of the previous solution.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @param dofs The degrees of freedom of the function where the stabilization operator has to be
+   * evaluated.
+   * @param targetVector The input vector to which values have to be added, seen in chunks of length
+   * @p NUMDOFSPERTRIALSUPPORTPOINT.
+   * @param scaleFactor Scaling of the stabilization matrix.
+   */
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void addEvaluatedGradGradStabilization( StackVariables const & stack,
+                                                 real64 const ( &dofs )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
+                                                 real64 ( & targetVector )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
+                                                 real64 const scaleFactor )
+  {
+    GEOSX_UNUSED_VAR( stack );
+    GEOSX_UNUSED_VAR( dofs );
+    GEOSX_UNUSED_VAR( targetVector );
+    GEOSX_UNUSED_VAR( scaleFactor );
+  }
+
+  /**
+   * @brief Add a grad-grad stabilization operator evaluated at a provided vector of dofs to input
+   * vector.
+   * @details This method is used to modify a residual consistently when the jacobian includes a
+   * stabilization term.
+   * @tparam LEAF Type of the derived finite element implementation.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
+   * @param stack Stack variables created by a call to @ref setup.
+   * @param dofs The vector of dofs to evaluate the stabilization.
+   * @param targetVector The input vector to which values have to be added, seen in chunks of length
+   * @p NUMDOFSPERTRIALSUPPORTPOINT.
+   * @param scaleFactor Optional scaling of the stabilization matrix. Defaults to 1.0.
+   */
+  template< typename LEAF, localIndex NUMDOFSPERTRIALSUPPORTPOINT >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void
+  addEvaluatedGradGradStabilizationVector( typename LEAF::StackVariables const & stack,
+                                           real64 const ( &dofs )[LEAF::maxSupportPoints]
+                                           [NUMDOFSPERTRIALSUPPORTPOINT],
+                                           real64 ( & targetVector )[LEAF::maxSupportPoints]
+                                           [NUMDOFSPERTRIALSUPPORTPOINT],
+                                           real64 const scaleFactor = 1.0 ) const
+  {
+    LEAF::template
+    addEvaluatedGradGradStabilization< NUMDOFSPERTRIALSUPPORTPOINT, LEAF::maxSupportPoints >( stack,
+                                                                                              dofs,
+                                                                                              targetVector,
+                                                                                              scaleFactor );
   }
 
   /**

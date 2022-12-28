@@ -27,7 +27,7 @@
 #include "constitutive/fluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
-#include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "constitutive/thermalConductivity/multiPhaseThermalConductivitySelector.hpp"
@@ -128,11 +128,11 @@ void CompositionalMultiphaseBase::postProcessInput()
   GEOSX_ERROR_IF_LE_MSG( m_maxCompFracChange, 0.0,
                          "The maximum absolute change in component fraction in a Newton iteration must be larger than 0.0" );
   GEOSX_ERROR_IF_GT_MSG( m_maxRelativePresChange, 1.0,
-                         "The maximum relative change in pressure in a Newton iteration must be smaller or equal to 1.0 (i.e., 100% change)" );
+                         "The maximum relative change in pressure in a Newton iteration must be smaller or equal to 1.0 (i.e., 100 percent change)" );
   GEOSX_ERROR_IF_LE_MSG( m_maxRelativePresChange, 0.0,
                          "The maximum relative change in pressure in a Newton iteration must be larger than 0.0" );
   GEOSX_ERROR_IF_GT_MSG( m_maxRelativeTempChange, 1.0,
-                         "The maximum relative change in temperature in a Newton iteration must be smaller or equal to 1.0 (i.e., 100% change)" );
+                         "The maximum relative change in temperature in a Newton iteration must be smaller or equal to 1.0 (i.e., 100 percent change)" );
   GEOSX_ERROR_IF_LE_MSG( m_maxRelativeTempChange, 0.0,
                          "The maximum relative change in temperature in a Newton iteration must be larger than 0.0" );
 
@@ -1069,16 +1069,36 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 
-    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
-                                                                  ElementSubRegionBase & subRegion )
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames,
+                                                                                                 [&]( localIndex const,
+                                                                                                      auto & subRegion )
     {
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
       fluid.setMassFlag( m_useMass );
+
+      CoupledSolidBase const & porousSolid =
+        getConstitutiveModel< CoupledSolidBase >( subRegion,
+                                                  subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+
+      updatePorosityAndPermeability( subRegion );
+
+      porousSolid.initializeState();
     } );
 
     // Initialize primary variables from applied initial conditions
     initializeFluidState( mesh, regionNames );
+
+    mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames,
+                                                                     [&]( localIndex const,
+                                                                          SurfaceElementRegion & region )
+    {
+      region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+      {
+        subRegion.getWrapper< real64_array >( fields::flow::hydraulicAperture::key() ).
+          setApplyDefaultValue( region.getDefaultAperture() );
+      } );
+    } );
 
   } );
 }

@@ -22,8 +22,6 @@
 #include "FiniteElementBase.hpp"
 #include "codingUtilities/traits.hpp"
 
-#include "mesh/CellElementSubRegion.hpp"
-
 namespace geosx
 {
 namespace finiteElement
@@ -210,20 +208,64 @@ public:
 
   /**
    * @brief Adds a grad-grad stabilization to @p matrix.
-   * @tparam MATRIXTYPE The type of @p matrix.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
+   * @tparam MAXSUPPORTPOINTS Maximum number of support points allowed for this element.
+   * @tparam UPPER If true only the upper triangular part of @p matrix is modified.
    * @param stack Stack variables as filled by @ref setupStack.
    * @param matrix The matrix that needs to be stabilized.
+   * @param scaleFactor Scaling of the stabilization matrix.
    */
-  template< typename MATRIXTYPE >
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS, bool UPPER >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void addGradGradStabilization( StackVariables const & stack, MATRIXTYPE & matrix )
+  static void addGradGradStabilization( StackVariables const & stack,
+                                        real64 ( & matrix )
+                                        [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT]
+                                        [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT],
+                                        real64 const & scaleFactor )
   {
     for( localIndex i = 0; i < stack.numSupportPoints; ++i )
     {
-      for( localIndex j = 0; j < stack.numSupportPoints; ++j )
+      localIndex startCol = (UPPER) ? i : 0;
+      for( localIndex j = startCol; j < stack.numSupportPoints; ++j )
       {
-        matrix[i][j] += stack.stabilizationMatrix[i][j];
+        real64 const contribution = scaleFactor * stack.stabilizationMatrix[i][j];
+        for( localIndex d = 0; d < NUMDOFSPERTRIALSUPPORTPOINT; ++d )
+        {
+          matrix[i*NUMDOFSPERTRIALSUPPORTPOINT + d][j*NUMDOFSPERTRIALSUPPORTPOINT + d] += contribution;
+        }
+      }
+    }
+  }
+
+  /**
+   * @brief Adds a grad-grad stabilization evaluated at @p dofs to @p targetVector.
+   * @details This method is intended to be used with @p targetVector being the residual and @p dofs
+   * being the degrees of freedom of the previous solution.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @param dofs The degrees of freedom of the function where the stabilization operator has to be
+   * evaluated.
+   * @param targetVector The input vector to which values have to be added, seen in chunks of length
+   * @p NUMDOFSPERTRIALSUPPORTPOINT.
+   * @param scaleFactor Scaling of the stabilization matrix.
+   */
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void addEvaluatedGradGradStabilization( StackVariables const & stack,
+                                                 real64 const ( &dofs )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
+                                                 real64 ( & targetVector )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
+                                                 real64 const scaleFactor )
+  {
+    for( localIndex d = 0; d < NUMDOFSPERTRIALSUPPORTPOINT; ++d )
+    {
+      for( localIndex i = 0; i < stack.numSupportPoints; ++i )
+      {
+        for( localIndex j = 0; j < stack.numSupportPoints; ++j )
+        {
+          targetVector[i][d] += scaleFactor * stack.stabilizationMatrix[i][j] * dofs[j][d];
+        }
       }
     }
   }
@@ -387,6 +429,25 @@ public:
   }
 
   /**
+   * @brief This function returns an error, since to get projection of gradients with VEM you have
+   * to use the StackVariables version of this function.
+   * @param[in] coords The parent coordinates at which to evaluate the shape function value
+   * @param[out] N The shape function values. It is set to zero.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( real64 const (&coords)[3],
+                     real64 (& N)[maxSupportPoints] )
+  {
+    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    GEOSX_UNUSED_VAR( coords );
+    for( localIndex i = 0; i < maxSupportPoints; ++i )
+    {
+      N[i] = 0.0;
+    }
+  }
+
+  /**
    * @brief This function returns an error, since there is no reference element defined in the VEM
    * context. It is kept for consistency with other finite element classes.
    * @param q The quadrature point index in 3d space.
@@ -417,8 +478,8 @@ public:
    * to use the StackVariables version of this function.
    * @param q The quadrature point index in 3d space.
    * @param X Array containing the coordinates of the support points.
-   * @param gradN Array to store the gradients of shape functions.
-   * @return A zero matrix.
+   * @param gradN Array to store the gradients of shape functions. It is set to zero.
+   * @return Zero.
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
