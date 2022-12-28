@@ -1527,6 +1527,8 @@ the relative residual norm satisfies:
 	<xsd:complexType name="NonlinearSolverParametersType">
 		<!--allowNonConverged => Allow non-converged solution to be accepted. (i.e. exit from the Newton loop without achieving the desired tolerance)-->
 		<xsd:attribute name="allowNonConverged" type="integer" default="0" />
+		<!--couplingType => Type of coupling. Options are: Sequential and FullyImplicit-->
+		<xsd:attribute name="couplingType" type="geosx_NonlinearSolverParameters_CouplingType" default="FullyImplicit" />
 		<!--lineSearchAction => How the line search is to be used. Options are: 
  * None    - Do not use line search.
 * Attempt - Use line search. Allow exit from line search without achieving smaller residual than starting residual.
@@ -1556,6 +1558,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="newtonMinIter" type="integer" default="1" />
 		<!--newtonTol => The required tolerance in order to exit the Newton iteration loop.-->
 		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
+		<!--subcycling => Flag to decide whether to iterate between sequentially coupled solvers or not.-->
+		<xsd:attribute name="subcycling" type="integer" default="0" />
 		<!--timeStepCutFactor => Factor by which the time step will be cut if a timestep cut is required.-->
 		<xsd:attribute name="timeStepCutFactor" type="real64" default="0.5" />
 		<!--timeStepDecreaseFactor => Factor by which the time step is decreased when the number of Newton iterations is large.-->
@@ -1567,6 +1571,11 @@ the relative residual norm satisfies:
 		<!--timeStepIncreaseIterLimit => Fraction of the max Newton iterations below which the solver asks for the time-step to be increased for the next time step.-->
 		<xsd:attribute name="timeStepIncreaseIterLimit" type="real64" default="0.4" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_NonlinearSolverParameters_CouplingType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|FullyImplicit|Sequential" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="geosx_NonlinearSolverParameters_LineSearchAction">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|None|Attempt|Require" />
@@ -2096,10 +2105,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
 		<xsd:attribute name="contactRelationName" type="string" use="required" />
-		<!--couplingTypeOption => Coupling method. Valid options:
-* FIM
-* SIM_FixedStress-->
-		<xsd:attribute name="couplingTypeOption" type="geosx_HydrofractureSolver_CouplingTypeOption" use="required" />
 		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -2117,11 +2122,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_HydrofractureSolver_CouplingTypeOption">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|FIM|SIM_FixedStress" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:complexType name="LagrangianContactType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -2266,32 +2266,19 @@ Local - Add stabilization only to interiors of macro elements.-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--couplingTypeOption => Coupling option. Valid options:
-* FixedStress
-* TightlyCoupled-->
-		<xsd:attribute name="couplingTypeOption" type="geosx_PhaseFieldFractureSolver_CouplingTypeOption" use="required" />
-		<!--damageSolverName => Name of the damage mechanics solver to use in the PhaseFieldFracture solver-->
+		<!--damageSolverName => Name of the damage solver used by the coupled solver-->
 		<xsd:attribute name="damageSolverName" type="string" use="required" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--solidSolverName => Name of the solid mechanics solver to use in the PhaseFieldFracture solver-->
+		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
-		<!--subcycling => turn on subcycling on each load step-->
-		<xsd:attribute name="subcycling" type="integer" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_PhaseFieldFractureSolver_CouplingTypeOption">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|FixedStress|TightlyCoupled" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:complexType name="ProppantTransportType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
