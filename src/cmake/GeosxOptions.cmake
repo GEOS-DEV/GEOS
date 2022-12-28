@@ -108,7 +108,7 @@ message( "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}" )
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
                                  GNU   "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
-                                 CLANG "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wno-cast-align -Wcast-qual"
+                                 CLANG "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wno-cast-align -Wcast-qual -Wno-unused-parameter -Wno-unused-variable"
                                )
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
@@ -119,7 +119,7 @@ blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
 blt_append_custom_compiler_flag( FLAGS_VAR GEOSX_NINJA_FLAGS
                                  DEFAULT " "
                                  GNU     "-fdiagnostics-color=always"
-                                 CLANG   "-fcolor-diagnostics"
+                                 CLANG   "-fcolor-diagnostics "
                                )
 
 # clang-13 and gcc complains about unused-but-set variable.
@@ -131,9 +131,9 @@ if (ENABLE_GBENCHMARK)
                                 )
 endif()
 
-if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOSX_NINJA_FLAGS}" )
-endif()
+#if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
+#  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOSX_NINJA_FLAGS}" )
+#endif()
 
 #set(CMAKE_CUDA_STANDARD 14 CACHE STRING "" FORCE)
 #blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELEASE 
