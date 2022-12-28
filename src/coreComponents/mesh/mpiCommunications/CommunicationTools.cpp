@@ -689,11 +689,23 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
 
   waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
 
+  // There are cases where the multiple waitOrderedOrWaitAll methods will clash
+  // with each other. Mostly at high processor counts (>256) and large
+  // meshes (~14M elements). Adding in these barriers isolates the wait calls
+  // from each other, and resolves some non-deterministic errors.
+  // IMO, this is a hack and we should revisit the async communication strategy
+  // here.
+  MpiWrapper::barrier();
+
   fixReceiveLists( nodeManager, neighbors );
   fixReceiveLists( edgeManager, neighbors );
   fixReceiveLists( faceManager, neighbors );
 
   waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
+
+  // See above comments for the reason behind this barrier.
+  // RE: isolate multiple async-wait
+  MpiWrapper::barrier();
 
   nodeManager.fixUpDownMaps( false );
   verifyGhostingConsistency( nodeManager, neighbors );
