@@ -82,10 +82,10 @@ void FlowProppantTransportSolver::postStepUpdate( real64 const & time_n,
   proppantTransportSolver()->postStepUpdate( time_n, dt, domain );
 }
 
-real64 FlowProppantTransportSolver::solverStep( real64 const & time_n,
-                                                real64 const & dt,
-                                                int const cycleNumber,
-                                                DomainPartition & domain )
+real64 FlowProppantTransportSolver::sequentiallyCoupledSolverStep( real64 const & time_n,
+                                                                   real64 const & dt,
+                                                                   int const cycleNumber,
+                                                                   DomainPartition & domain )
 {
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
