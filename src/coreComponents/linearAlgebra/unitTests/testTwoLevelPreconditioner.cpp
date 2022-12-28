@@ -35,10 +35,14 @@ int main( int argc, char * * argv )
   HypreMatrix Ah;
   HypreMatrix AH;
 
-  Ah.read("matrixFine", MPI_COMM_GEOSX );
-  AH.read("matrixCoarse", Ah.comm() );
+  GEOSX_LOG_RANK("Reading coarse matrix");
+  AH.read("matrixCoarse", MPI_COMM_GEOSX );
+  GEOSX_LOG_RANK("Reading fine matrix");
+  Ah.read("matrixFine", AH.comm() );
+  GEOSX_LOG_RANK("Reading completed");
 
   // Create unit rhs
+  GEOSX_LOG_RANK("Creating unit RHS");
   HypreVector rhs;
   rhs.create( Ah.numLocalRows(), Ah.comm() );
   rhs.set(1.0);
