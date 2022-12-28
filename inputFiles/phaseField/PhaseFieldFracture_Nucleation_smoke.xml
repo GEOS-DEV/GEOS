@@ -7,12 +7,10 @@
       name="PhaseFieldSolve"
       solidSolverName="SolidMechSolve"
       damageSolverName="DamageSolve"
-      couplingTypeOption="FixedStress"
       logLevel="1"
-      subcycling="0"
-      discretization="FE1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
+        couplingType="Sequential"
         newtonMaxIter="100"/>
       <LinearSolverParameters
         directParallel="0"/>
