@@ -235,13 +235,14 @@ private:
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
     real64 const thermalExpansionCoefficientTimesBulkModulus = thermalExpansionCoefficient * bulkModulus;
 
-    real64 const damagedBiotCoefficient = m_solidUpdate.pressureDamageFunction( k, q ) * biotCoefficient;
+    real64 const pressureDamage = m_solidUpdate.pressureDamageFunction( k, q );
+    real64 const damagedBiotCoefficient = pressureDamage * biotCoefficient;
 
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -damagedBiotCoefficient * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * deltaTemperature );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, (pressureDamage - damagedBiotCoefficient) * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * deltaTemperature );
 
-    dTotalStress_dPressure[0] = -damagedBiotCoefficient;
-    dTotalStress_dPressure[1] = -damagedBiotCoefficient;
-    dTotalStress_dPressure[2] = -damagedBiotCoefficient;
+    dTotalStress_dPressure[0] = pressureDamage - damagedBiotCoefficient;
+    dTotalStress_dPressure[1] = pressureDamage - damagedBiotCoefficient;
+    dTotalStress_dPressure[2] = pressureDamage - damagedBiotCoefficient;
     dTotalStress_dPressure[3] = 0;
     dTotalStress_dPressure[4] = 0;
     dTotalStress_dPressure[5] = 0;
