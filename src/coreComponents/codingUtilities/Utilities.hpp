@@ -373,6 +373,20 @@ void applyChainRuleInPlace( integer const N,
   copy( N, work, df_dxy, firstDeriv );
 }
 
+/**
+ * @brief Internal struct to provide no-op defaults used in the inclusion
+ *   of lambda functions into kernel component functions.
+ * @struct NoOpFunc
+ */
+struct NoOpFunc
+{
+  template< typename ... Ts >
+  GEOSX_HOST_DEVICE
+  constexpr void
+  operator()( Ts && ... ) const {}
+};
+
+
 } // namespace geosx
 
 #endif /* GEOSX_CODINGUTILITIES_UTILITIES_H_ */
