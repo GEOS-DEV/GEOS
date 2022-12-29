@@ -25,7 +25,8 @@
         newtonMaxIter="100"
         newtonTol="1.0e-4"/>
       <LinearSolverParameters
-        solverType="direct"
+        solverType="gmres"
+        preconditionerType="mgr"
         krylovTol="1e-4"/>
     </SinglePhasePoromechanics>
 
@@ -44,7 +45,8 @@
         newtonMaxIter="200"
         newtonTol="1.0e-4"/>
       <LinearSolverParameters
-        solverType="direct"/>
+        solverType="gmres"
+        preconditionerType="amg"/>
     </PhaseFieldDamageFEM>
 
     <SolidMechanicsLagrangianSSLE
@@ -137,18 +139,18 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ 0_hexahedra, 1_hexahedra }"
-      materialList="{ rock, water }"/>
+      materialList="{ concrete, water }"/>
   </ElementRegions>
 
   <Constitutive>
     <PorousDamageElasticIsotropic
-      name="rock"
-      solidModelName="rockSolid"
-      porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      name="concrete"
+      solidModelName="concreteSolid"
+      porosityModelName="concretePorosity"
+      permeabilityModelName="concretePerm"/>
 
     <DamageElasticIsotropic
-      name="rockSolid"
+      name="concreteSolid"
       defaultDensity="2.7e-9"
       defaultBulkModulus="1.67e4"
       defaultShearModulus="1.25e4"
@@ -162,12 +164,12 @@
       deltaCoefficient="6.6"/>
 
     <BiotPorosity
-      name="rockPorosity"
+      name="concretePorosity"
       grainBulkModulus="8.35e4"
       defaultReferencePorosity="0.1"/>
 
     <DamagePermeability
-      name="rockPerm"
+      name="concretePerm"
       bulkPermeability="1.0e-9"/>
 
     <CompressibleSinglePhaseFluid
@@ -187,7 +189,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1"
-      fieldName="rockSolid_stress"
+      fieldName="concreteSolid_stress"
       component="0"
       scale="-8.0"/>
 
@@ -196,7 +198,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1"
-      fieldName="rockSolid_stress"
+      fieldName="concreteSolid_stress"
       component="1"
       scale="-12.0"/>
 
@@ -205,14 +207,14 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1"
-      fieldName="rockSolid_stress"
+      fieldName="concreteSolid_stress"
       component="2"
       scale="0.0"/>
 
     <FieldSpecification 
       name="xconstraint"    
       objectPath="nodeManager" 
-      fieldName="TotalDisplacement" 
+      fieldName="totalDisplacement" 
       component="0" 
       scale="0.0" 
       setNames="{xneg, xpos}"/>
@@ -220,7 +222,7 @@
     <FieldSpecification 
       name="yconstraint"    
       objectPath="nodeManager" 
-      fieldName="TotalDisplacement" 
+      fieldName="totalDisplacement" 
       component="1" 
       scale="0.0" 
       setNames="{yneg, ypos}"/>
@@ -228,7 +230,7 @@
     <FieldSpecification 
       name="zconstraint" 
       objectPath="nodeManager" 
-      fieldName="TotalDisplacement" 
+      fieldName="totalDisplacement" 
       component="2" 
       scale="0.0" 
       setNames="{zneg}"
@@ -304,7 +306,7 @@
   <Outputs>
     <VTK
       name="VTKOutput"
-      plotFileRoot="phaseFieldPoro_nucleation_wellbore2dConcrete_L=0p5_r=4_b=0p8_8-12-0-planeStress-test"/>
+      plotFileRoot="phaseFieldPoro_nucleation_wellbore2dConcrete_L=0p5_r=4_b=0p8_8-12-0-planeStress"/>
 
     <Restart
       name="restartOutput"/>

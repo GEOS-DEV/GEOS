@@ -23,7 +23,7 @@
       damageFlag="1">
       <NonlinearSolverParameters
         newtonMaxIter="100"
-        newtonTol="1.0e-4"/>
+        newtonTol="1.0e-6"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="mgr"
@@ -43,7 +43,7 @@
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="200"
-        newtonTol="1.0e-3"/>
+        newtonTol="1.0e-4"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="amg"/>
@@ -71,39 +71,52 @@
       nodesetNames="{ xneg, xpos, yneg, ypos, zneg, zpos, hole_middle, hole_upper, hole_lower }"/>
   </Mesh>
 
-
   <Events
-    maxTime="43.6">
+    maxTime="1017.0">
  
     <PeriodicEvent
       name="solverApplication0"
-      endTime="42.0"
-      forceDt="1.0"
+      endTime="1000.0"
+      forceDt="1000.0"
       target="/Solvers/phasefieldPoroSolve"/>
 
     <PeriodicEvent
       name="solverApplication1"
-      beginTime="42.0"
-      endTime="43.6"
-      forceDt="0.005"
+      beginTime="1000.0"
+      endTime="1015.5"
+      forceDt="0.5"
+      target="/Solvers/phasefieldPoroSolve"/>
+
+    <PeriodicEvent
+      name="solverApplication2"
+      beginTime="1015.5"
+      endTime="1017.0"
+      forceDt="0.02"
       target="/Solvers/phasefieldPoroSolve"/>
 
     <PeriodicEvent
       name="vtkOutput0"
-      endTime="42.0"
-      forceDt="1.0"
+      endTime="1000.0"
+      forceDt="1000.0"
       target="/Outputs/VTKOutput"/>
 
     <PeriodicEvent
       name="vtkOutput1"
-      beginTime="42.0"
-      endTime="43.6"
-      forceDt="0.005"
+      beginTime="1000.0"
+      endTime="1015.5"
+      forceDt="0.5"
+      target="/Outputs/VTKOutput"/>
+    
+    <PeriodicEvent
+      name="vtkOutput2"
+      beginTime="1015.5"
+      endTime="1017.0"
+      forceDt="0.02"
       target="/Outputs/VTKOutput"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="20"
+      timeFrequency="1000"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
@@ -140,18 +153,18 @@
       defaultDensity="2.7e-9"
       defaultBulkModulus="1.67e4"
       defaultShearModulus="1.25e4"
-      lengthScale="0.4"
+      lengthScale="1.0"
       criticalFractureEnergy="4e-3"
       criticalStrainEnergy="0"
       extDrivingForceFlag="1"
       degradationLowerLimit="1e-6"
-      tensileStrength="5.0"
+      tensileStrength="5.5"
       compressiveStrength="40.0"
-      deltaCoefficient="0.0"/>
+      deltaCoefficient="4.2"/>
 
     <BiotPorosity
       name="concretePorosity"
-      grainBulkModulus="1e20"
+      grainBulkModulus="8.35e4"
       defaultReferencePorosity="0.1"/>
 
     <DamagePermeability
@@ -164,7 +177,7 @@
       defaultViscosity="1.0e-9"
       referencePressure="0.000"
       referenceDensity="1e-9"
-      compressibility="1e-10"
+      compressibility="0.0"
       referenceViscosity="1.0e-9"
       viscosibility="0.0"/>
   </Constitutive>
@@ -200,7 +213,7 @@
     <FieldSpecification 
       name="xconstraint"    
       objectPath="nodeManager" 
-      fieldName="TotalDisplacement" 
+      fieldName="totalDisplacement" 
       component="0" 
       scale="0.0" 
       setNames="{xneg, xpos}"/>
@@ -208,7 +221,7 @@
     <FieldSpecification 
       name="yconstraint"    
       objectPath="nodeManager" 
-      fieldName="TotalDisplacement" 
+      fieldName="totalDisplacement" 
       component="1" 
       scale="0.0" 
       setNames="{yneg, ypos}"/>
@@ -216,7 +229,7 @@
     <FieldSpecification 
       name="zconstraint" 
       objectPath="nodeManager" 
-      fieldName="TotalDisplacement" 
+      fieldName="totalDisplacement" 
       component="2" 
       scale="0.0" 
       setNames="{zneg, zpos}"
@@ -231,11 +244,19 @@
       scale="0.0"
     />
 
+    <FieldSpecification 
+      name="pressureConstraint"
+      setNames="{xminus, xplus, yminus, yplus}"
+      objectPath="ElementRegions/Region1"
+      fieldName="pressure"
+      scale="0.0"
+    />
+
     <FieldSpecification
       name="sourceTerm"
       objectPath="ElementRegions/Region1/0_hexahedra"
       fieldName="pressure"
-      scale="80.0"
+      scale="100.0"
       setNames="{ all }"
       functionName="timeFunction"
       />
@@ -262,7 +283,7 @@
       name="traction"
       setNames="{ hole_middle }"
       objectPath="faceManager"
-      scale="-160.0"
+      scale="-100.0"
       tractionType="normal"
       nodalScaleFlag="1"
       functionName="timeFunction"    
@@ -273,14 +294,36 @@
     <TableFunction
       name="timeFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0, 1, 1e2 }"
+      coordinates="{ 0, 1e3, 1.1e3 }"
       values="{ 0.0, 0.0, 1.0 }"/>
   </Functions>
+
+  <Geometry>
+    <Box
+      name="xplus"
+      xMin="{ 98.9, -100.1, -0.1 }"
+      xMax="{ 100.1, 100.1, 200.1 }"/>
+
+    <Box
+      name="xminus"
+      xMin="{ -100.1, -100.1, -0.1 }"
+      xMax="{ -98.9, 100.1, 200.1 }"/>
+
+    <Box
+      name="yplus"
+      xMin="{-100.1, 98.9, -0.1 }"
+      xMax="{ 100.1, 100.1, 200.1 }"/>
+
+    <Box
+      name="yminus"
+      xMin="{ -100.1, -100.1, -0.1 }"
+      xMax="{ 100.1, -98.9, 200.1 }"/>
+  </Geometry>
 
   <Outputs>
     <VTK
       name="VTKOutput"
-      plotFileRoot="phaseFieldPoro_nucleation_wellboreConcreteNormal"/>
+      plotFileRoot="phaseFieldPoro_nucleation_wellboreConcreteNormal_b=0p8_l=1_pressureGradient"/>
 
     <Restart
       name="restartOutput"/>
