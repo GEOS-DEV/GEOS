@@ -43,6 +43,10 @@ void HypreInterface::initialize()
 #endif
   HYPRE_SetMemoryLocation( hypre::memoryLocation );
 
+#if defined(HYPRE_USING_MEMORY_TRACKER)
+  hypre_MemoryTrackerSetPrint(1);
+#endif
+
   // Hypre version info
 #if defined(HYPRE_DEVELOP_STRING)
 #if defined(HYPRE_BRANCH_NAME)
