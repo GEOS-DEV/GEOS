@@ -14,4 +14,8 @@ set(FORTRAN_MANGLE_NO_UNDERSCORE OFF CACHE BOOL "")
 set(MPI_HOME /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-gcc-8.3.1 CACHE PATH "")
 set(MPI_Fortran_COMPILER ${MPI_HOME}/bin/mpifort CACHE PATH "")
 
+# PYGEOSX
+set(ENABLE_PYGEOSX ON CACHE BOOL "")
+set(Python3_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/python3-lassen/python/bin/python CACHE PATH "")
+
 include(${CMAKE_CURRENT_LIST_DIR}/lassen-base.cmake)

@@ -15,8 +15,9 @@
 #define GEOSX_FUNCTIONS_SYMBOLICFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
-
+#ifdef GEOSX_USE_MATHPRESSO
 #include <mathpresso/mathpresso.h>
+#endif
 
 namespace geosx
 {
@@ -71,7 +72,12 @@ public:
    */
   inline real64 evaluate( real64 const * const input ) const override final
   {
+    #ifdef GEOSX_USE_MATHPRESSO
     return parserExpression.evaluate( reinterpret_cast< void * >( const_cast< real64 * >(input) ) );
+    #else
+    GEOSX_ERROR( "SymbolicFunction evaluation is not enabled in this build of GEOSX" );
+    return 0.0;
+    #endif
   }
 
 
@@ -90,9 +96,11 @@ public:
 
 
 private:
+  #ifdef GEOSX_USE_MATHPRESSO
   // Symbolic math driver objects
   mathpresso::Context parserContext;
   mathpresso::Expression parserExpression;
+  #endif
 
   /// Symbolic expression variable names
   string_array m_variableNames;
