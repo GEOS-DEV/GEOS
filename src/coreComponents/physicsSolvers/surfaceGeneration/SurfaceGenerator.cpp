@@ -460,6 +460,8 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                              0,
                              time_n + dt );
   } );
+  
+  std::cout << "value of rval: " << rval << std::endl;
 
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
 
@@ -477,10 +479,13 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       FluxApproximationBase * const fluxApprox = fvManager.getGroupPointer< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
-        fluxApprox->addToFractureStencil( meshLevel, this->m_fractureRegionName, true );
+        fluxApprox->addToFractureStencil( meshLevel, this->m_fractureRegionName, false );
         FaceElementSubRegion & subRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
         subRegion.m_recalculateFractureConnectorEdges.clear();
-        subRegion.m_newFaceElements.clear();
+        if (time_n == 0.0)
+        { 
+          subRegion.m_newFaceElements.clear(); 
+        }
       }
     }
 

@@ -206,6 +206,10 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
     }
     else
     {
+
+      /// whenever we fracture we set initial values for the primary unknowns.
+      initializeNewFractureElements( domain );
+
       FieldIdentifiers fieldsToBeSync;
 
       fieldsToBeSync.addElementFields( { flow::pressure::key(),
@@ -833,6 +837,205 @@ void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
           }
         }
       }
+    } );
+  } );
+}
+
+void HydrofractureSolver::initializeNewFractureElements( DomainPartition & domain )
+{
+  // add new connectors/connections between face elements to the fracture stencil
+  forAll< serialPolicy >( recalculateFractureConnectorEdges.size(),
+                          [ &allNewElems,
+                            recalculateFractureConnectorEdges,
+                            fractureConnectorsToFaceElements,
+                            fractureRegionIndex,
+                            elemGhostRank,
+                            fluidPressure,
+                            fluidPressure_n,
+                            faceToNodesMap,
+                            totalDisplacement,
+                            aperture,
+                            &fractureSubRegion
+                          ]
+                            ( localIndex const k )
+  {
+    localIndex const fci = recalculateFractureConnectorEdges[k];
+    localIndex const numElems = fractureConnectorsToFaceElements.sizeOfArray( fci );
+    real64 initialPressure = 1.0e99;
+    real64 initialAperture = 1.0e99;
+    SortedArray< localIndex > newElems;
+    bool containsLocalElement = false;
+
+    // loop over all face elements attached to the connector and add them to the stencil
+    for( localIndex kfe=0; kfe<numElems; ++kfe )
+    {
+      localIndex const fractureElementIndex = fractureConnectorsToFaceElements[fci][kfe];
+      containsLocalElement = containsLocalElement || elemGhostRank[fractureRegionIndex][0][fractureElementIndex] < 0;
+
+      // code to initialize new face elements with pressures from neighbors
+      if( fractureSubRegion.m_newFaceElements.count( fractureElementIndex ) == 0 )
+      {
+        initialPressure = std::min( initialPressure, fluidPressure_n[fractureElementIndex] );
+        initialAperture = std::min( initialAperture, aperture[fractureElementIndex] );
+      }
+      else
+      {
+        newElems.insert( fractureElementIndex );
+        allNewElems.insert( fractureElementIndex );
+      }
+    }
+
+    if( !containsLocalElement )
+    {
+      return;
+    }
+
+    // loop over new face elements attached to this connector
+    for( localIndex const newElemIndex : newElems )
+    {
+      fluidPressure[newElemIndex] = std::min( fluidPressure[newElemIndex], initialPressure );
+      // Set the aperture/fluid pressure for the new face element to be the minimum
+      // of the existing value, smallest aperture/pressure from a connected face element.
+      //aperture[newElemIndex] = std::min(aperture[newElemIndex], initialAperture);
+
+      localIndex const faceIndex0 = faceMap( newElemIndex, 0 );
+      localIndex const faceIndex1 = faceMap( newElemIndex, 1 );
+
+      localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray( faceIndex0 );
+
+      bool zeroDisp = true;
+
+      for( localIndex a=0; a<numNodesPerFace; ++a )
+      {
+        localIndex const node0 = faceToNodesMap( faceIndex0, a );
+        localIndex const node1 = faceToNodesMap( faceIndex1, a==0 ? a : numNodesPerFace-a );
+        if( LvArray::math::abs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node0] ) ) > 1.0e-99 &&
+            LvArray::math::abs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node1] ) ) > 1.0e-99 )
+        {
+          zeroDisp = false;
+        }
+      }
+      if( zeroDisp )
+      {
+        aperture[newElemIndex] = 0;
+      }
+    }
+  } );
+
+  SortedArray< localIndex > touchedNodes;
+  forAll< serialPolicy >( allNewElems.size(),
+                          [ &allNewElems
+                            , fluidPressure
+                            , fluidPressure_n
+                            , aperture
+                            , faceMap
+                            , faceNormal
+                            , faceToNodesMap
+                            , &touchedNodes
+                            , incrementalDisplacement
+                            , totalDisplacement
+                            , this
+                          ]( localIndex const k )
+  {
+    localIndex const newElemIndex = allNewElems[k];
+    // if the value of pressure was not set, then set it to zero and punt.
+    if( fluidPressure[newElemIndex] > 1.0e98 )
+    {
+      fluidPressure[newElemIndex] = 0.0;
+    }
+    fluidPressure_n[newElemIndex] = fluidPressure[newElemIndex];
+    // set the initial density of the face element to 0 to enforce mass conservation ( i.e. no creation of mass)
+    dens[newElemIndex] = 0.0;
+    // If the aperture has been set, then we can set the estimate of displacements.
+    if( aperture[newElemIndex] < 1e98 )
+    {
+      localIndex const faceIndex0 = faceMap( newElemIndex, 0 );
+      localIndex const faceIndex1 = faceMap( newElemIndex, 1 );
+
+      real64 newDisp[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[ faceIndex0 ] );
+      LvArray::tensorOps::scale< 3 >( newDisp, -aperture[newElemIndex] );
+      localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray( faceIndex0 );
+      for( localIndex a=0; a<numNodesPerFace; ++a )
+      {
+        localIndex const node0 = faceToNodesMap( faceIndex0, a );
+        localIndex const node1 = faceToNodesMap( faceIndex1, a==0 ? a : numNodesPerFace-a );
+
+        touchedNodes.insert( node0 );
+        touchedNodes.insert( node1 );
+
+        if( node0 != node1 && touchedNodes.count( node0 )==0 )
+        {
+          LvArray::tensorOps::add< 3 >( incrementalDisplacement[node0], newDisp );
+          LvArray::tensorOps::add< 3 >( totalDisplacement[node0], newDisp );
+          LvArray::tensorOps::subtract< 3 >( incrementalDisplacement[node1], newDisp );
+          LvArray::tensorOps::subtract< 3 >( totalDisplacement[node1], newDisp );
+        }
+      }
+    }
+    if( this->getLogLevel() > 1 )
+    {
+      printf( "New elem index, init aper, init press = %4ld, %4.2e, %4.2e \n",
+              newElemIndex,
+              aperture[newElemIndex],
+              fluidPressure[newElemIndex] );
+    }
+  } );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                                        [&]( localIndex const,
+                                                                             FaceElementSubRegion & subRegion )
+    {
+
+      // We get the list of newFractureElements and their connectors.
+      SortedArrayView< localIndex const > const newFractureElements = subRegion.m_newFaceElements.toViewConst();
+      SortedArrayView< localIndex const > const recalculateFractureConnectorEdges = subRegion.m_recalculateFractureConnectorEdges.toViewConst();
+      ArrayOfArraysView< localIndex const > const & fractureConnectorsToFaceElements = subRegion.m_fractureConnectorEdgesToFaceElements.toViewConst();
+
+      // TODO: compute value across ranks.
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Initializing {} new fracture elements.", newFractureElements.size() ) );
+
+      ///  We want to initialize:
+      // 1. pressure and pressure_n.
+      arrayView1d< real64 > const pressure   = subRegion.getField< fields::flow::pressure >();
+      arrayView1d< real64 > const pressure_n = subRegion.getField< fields::flow::pressure_n >();
+      arrayView1d< real64 > const dens = subRegion.getReference< array1d< real64 > >( "density_n" );
+
+      // 2. aperture
+      arrayView1d< real64 > const aperture = subRegion.getReference< array1d< real64 > >( "elementAperture" );
+      arrayView1d< real64 > const apertureF = subRegion.getReference< array1d< real64 > >( "apertureAtFailure" );
+
+      // 3. displacements
+      NodeManager & nodeManager = mesh.getNodeManager();
+      FaceManager const & faceManager = mesh.getFaceManager();
+      ArrayOfArraysView< localIndex const > const & faceToNodesMap = faceManager.nodeList();
+      FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion.faceList();
+      array2dLayoutIncrDisplacementConst const incrementalDisplacement =
+        nodeManager.getField< fields::solidMechanics::incrementalDisplacement >();
+      array2dLayoutTotalDisplacementConst const totalDisplacement =
+        nodeManager.getField< fields::solidMechanics::totalDisplacement >();
+
+      // We first set the values to some unrealistic values to make sure they get reset later.  
+      forAll< parallelHostPolicy >( newFractureElements.size(), [=]( localIndex const k )
+      {
+        localIndex const kfe = newFractureElements[k];
+        pressure[kfe] = 1.0e99;
+        apertureF[kfe] = aperture[kfe];
+        aperture[kfe] = 1.0e99;
+      } );
+
+      forAll< serialPolicy >( newFractureElements.size(), [=] GEOSX_HOST_DEVICE ( int const i )
+      {
+        localIndex const elemIndex = newFractureElements[i];
+
+        pressure[elemIndex] = 55e6;
+        pressure_n[elemIndex] = 55e6;
+      } );
+
+      subRegion.m_newFaceElements.clear();
     } );
   } );
 }

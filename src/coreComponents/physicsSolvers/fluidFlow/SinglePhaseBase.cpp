@@ -104,14 +104,6 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
     } );
 
-    // elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
-    //                                                           [&]( localIndex const,
-    //                                                                FaceElementSubRegion & subRegion )
-    // {
-    //   subRegion.getWrapper< array1d< real64 > >( fields::flow::pressure::key() ).setDefaultValue( 45e6 );
-    //   subRegion.getWrapper< array1d< real64 > >( fields::flow::pressure_n::key() ).setDefaultValue( 45e6 );
-    // } );
-
     FaceManager & faceManager = mesh.getFaceManager();
     {
       faceManager.registerField< facePressure >( getName() );
