@@ -666,7 +666,11 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
   //   can eliminate this. But at present runtimes are the same in either case, as time is mostly just
   //   shifted from the waitall in UnpackAndRebuildSyncLists since the processes are more 'in-sync' when
   //   hitting that point after introducing this barrier.
-  MpiWrapper::barrier();
+  // MpiWrapper::barrier();
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
+
+
 
   auto sendSyncLists = [&] ( int idx )
   {
@@ -695,7 +699,12 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
   // from each other, and resolves some non-deterministic errors.
   // IMO, this is a hack and we should revisit the async communication strategy
   // here.
-  MpiWrapper::barrier();
+  //MpiWrapper::barrier();
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
+
+
+
 
   fixReceiveLists( nodeManager, neighbors );
   fixReceiveLists( edgeManager, neighbors );
@@ -705,7 +714,11 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
 
   // See above comments for the reason behind this barrier.
   // RE: isolate multiple async-wait
-  MpiWrapper::barrier();
+  //MpiWrapper::barrier();
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
+
+
 
   nodeManager.fixUpDownMaps( false );
   verifyGhostingConsistency( nodeManager, neighbors );
