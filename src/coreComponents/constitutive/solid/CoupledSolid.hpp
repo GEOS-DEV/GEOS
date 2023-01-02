@@ -91,6 +91,12 @@ public:
     GEOSX_UNUSED_VAR( k, q, pressure, pressure_n, temperature, temperature_n );
   }
 
+  GEOSX_HOST_DEVICE
+  virtual real64 getShearModulus( localIndex const k ) const
+  {
+    return m_solidUpdate.getShearModulus( k );
+  }
+
 protected:
   typename SOLID_TYPE::KernelWrapper const m_solidUpdate;
 
