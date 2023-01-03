@@ -35,6 +35,15 @@ class RelativePermeabilityBaseUpdate
 public:
 
   /**
+   * @brief Get handle to relperm
+   * @return arrayView for the [elt][gauss][phase] relperm container
+   */
+
+  GEOSX_HOST_DEVICE
+  arrayView3d< real64 const, relperm::USD_RELPERM > relperm() const
+  { return m_phaseRelPerm; }
+
+  /**
    * @brief Get number of elements in this wrapper.
    * @return number of elements
    */
@@ -54,6 +63,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   integer numPhases() const { return LvArray::integerConversion< integer >( m_phaseTypes.size() ); }
+
 
 protected:
 
@@ -133,6 +143,10 @@ public:
   arrayView3d< real64 const, relperm::USD_RELPERM > phaseRelPerm() const { return m_phaseRelPerm; }
   arrayView4d< real64 const, relperm::USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
 
+  arrayView1d< integer const > getPhaseOrder() const { return m_phaseOrder; }
+  virtual arrayView1d< real64 const > getPhaseMinVolumeFraction() const = 0;
+
+  std::tuple< integer, integer > wettingAndNonWettingPhaseIndices() const;
   /**
    * @brief Save converged phase volume fraction at the end of a time step (needed for hysteresis)
    * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
@@ -176,6 +190,8 @@ protected:
   // phase ordering info
   array1d< integer > m_phaseTypes;
   array1d< integer > m_phaseOrder;
+
+protected:
 
   // output quantities
   array3d< real64, relperm::LAYOUT_RELPERM > m_phaseRelPerm;
