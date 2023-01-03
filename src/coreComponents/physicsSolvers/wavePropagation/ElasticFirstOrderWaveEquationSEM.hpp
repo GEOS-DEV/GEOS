@@ -87,26 +87,6 @@ public:
 
   /**
    * TODO: move implementation into WaveSolverBase
-   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
-   * last two timesteps.
-   * @param time_n the time corresponding to the field values pressure_n
-   * @param dt the simulation timestep
-   * @param timeSeismo the time at which the seismogram is computed
-   * @param iSeismo the index of the seismogram time in the seismogram array
-   * @param var_np1 the field values at time_n + dt
-   * @param var_n the field values at time_n
-   * @param varAtreceivers the array holding the trace values, where the output is written
-   */
-  virtual void computeSeismoTrace( real64 const time_n,
-                                   real64 const dt,
-                                   real64 const timeSeismo,
-                                   localIndex const iSeismo,
-                                   arrayView1d< real32 const > const var_np1,
-                                   arrayView1d< real32 const > const var_n,
-                                   arrayView2d< real32 > varAtReceivers ) override;
-
-  /**
-   * TODO: move implementation into WaveSolverBase
    * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
    * @param time_n the time corresponding to the field values pressure_n
    * @param dt the simulation timestep
@@ -120,14 +100,6 @@ public:
                                        arrayView1d< real32 const > const var_n,
                                        arrayView2d< real32 > varAtReceivers );
 
-    virtual void compute2dVariableSeismoTrace( real64 const time_n,
-                                   real64 const dt,
-                                   real64 const timeSeismo,
-                                   localIndex const iSeismo,
-                                   arrayView2d< real32 const > const var_np1,
-                                   arrayView2d< real32 const > const var_n,
-                                   arrayView2d< real32 > varAtReceivers );
-
   /**
    * TODO: move implementation into WaveSolverBase
    * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
@@ -138,10 +110,10 @@ public:
    * @param varAtreceivers the array holding the trace values, where the output is written
    */
   virtual void compute2dVariableAllSeismoTraces( real64 const time_n,
-                                       real64 const dt,
-                                       arrayView2d< real32 const > const var_np1,
-                                       arrayView2d< real32 const > const var_n,
-                                       arrayView2d< real32 > varAtReceivers );
+                                                 real64 const dt,
+                                                 arrayView2d< real32 const > const var_np1,
+                                                 arrayView2d< real32 const > const var_n,
+                                                 arrayView2d< real32 > varAtReceivers );
 
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information
@@ -221,9 +193,6 @@ private:
    * @param domain the partition domain
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
-
-  /// save the sismo trace in file
-  void saveSeismo( localIndex iseismo, real32 valDisplacement, string const & filename ) override;
 
   localIndex getNumNodesPerElem();
 
