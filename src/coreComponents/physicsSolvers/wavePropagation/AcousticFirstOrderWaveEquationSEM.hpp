@@ -88,34 +88,6 @@ public:
 
   /**
    * TODO: move implementation into WaveSolverBase
-   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
-   * last two timesteps.
-   * @param time_n the time corresponding to the field values pressure_n
-   * @param dt the simulation timestep
-   * @param timeSeismo the time at which the seismogram is computed
-   * @param iSeismo the index of the seismogram time in the seismogram array
-   * @param var_at_np1 the field values at time_n + dt
-   * @param var_at_n the field values at time_n
-   * @param var_at_receivers the array holding the trace values, where the output is written
-   */
-  virtual void computeSeismoTrace( real64 const time_n,
-                                   real64 const dt,
-                                   real64 const timeSeismo,
-                                   localIndex const iSeismo,
-                                   arrayView1d< real32 const > const var_np1,
-                                   arrayView1d< real32 const > const var_n,
-                                   arrayView2d< real32 > varAtReceivers ) override;
-
-  void compute2dVariableSeismoTrace( real64 const time_n,
-                                   real64 const dt,
-                                   real64 const timeSeismo,
-                                   localIndex const iSeismo,
-                                   arrayView2d< real32 const > const var_np1,
-                                   arrayView2d< real32 const > const var_n,
-                                   arrayView2d< real32 > varAtReceivers );
-
-  /**
-   * TODO: move implementation into WaveSolverBase
    * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
    * @param time_n the time corresponding to the field values pressure_n
    * @param dt the simulation timestep
@@ -129,11 +101,11 @@ public:
                                        arrayView1d< real32 const > const var_n,
                                        arrayView2d< real32 > varAtReceivers );
 
-    virtual void compute2dVariableAllSeismoTraces( real64 const time_n,
-                                       real64 const dt,
-                                       arrayView2d< real32 const > const var_np1,
-                                       arrayView2d< real32 const > const var_n,
-                                       arrayView2d< real32 > varAtReceivers );
+  virtual void compute2dVariableAllSeismoTraces( real64 const time_n,
+                                                 real64 const dt,
+                                                 arrayView2d< real32 const > const var_np1,
+                                                 arrayView2d< real32 const > const var_n,
+                                                 arrayView2d< real32 > varAtReceivers );
 
 
   /**
@@ -214,14 +186,6 @@ private:
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
 
 
-  /**
-   * @brief Save the seismo trace in file
-   * @param iseismo index number of the seismo trace
-   * @param valPressure value of the pressure for iseismo
-   * @param filename name of the output file
-   */
-  void saveSeismo( localIndex const iseismo, real32 const val, string const & filename ) override;
-
   localIndex getNumNodesPerElem();
 
 
@@ -246,13 +210,13 @@ private:
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
 
-   /// Pressure_np1 at the receiver location for each time step for each receiver
+  /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_uxNp1AtReceivers;
 
-   /// Pressure_np1 at the receiver location for each time step for each receiver
+  /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_uyNp1AtReceivers;
 
-   /// Pressure_np1 at the receiver location for each time step for each receiver
+  /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_uzNp1AtReceivers;
 
   /// Array containing the elements which contain a source
