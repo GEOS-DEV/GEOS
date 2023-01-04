@@ -637,16 +637,15 @@ private:
     LIFO_MARK_FUNCTION;
     while( m_continue )
     {
+      std::unique_lock< std::mutex > lock( m_task_queue_mutex[queueId] );
       {
-        std::unique_lock< std::mutex > lock( m_task_queue_mutex[queueId] );
-        {
-          LIFO_MARK_SCOPE( waitForTask );
-          m_task_queue_not_empty_cond[queueId].wait( lock, [ this, &queueId ] { return !( m_task_queue[queueId].empty()  && m_continue ); } );
-        }
-        if( m_continue == false ) break;
-        std::packaged_task< void() > task( std::move( m_task_queue[queueId].front() ) );
-        m_task_queue[queueId].pop_front();
+        LIFO_MARK_SCOPE( waitForTask );
+        m_task_queue_not_empty_cond[queueId].wait( lock, [ this, &queueId ] { return !( m_task_queue[queueId].empty()  && m_continue ); } );
       }
+      if( m_continue == false ) break;
+      std::packaged_task< void() > task( std::move( m_task_queue[queueId].front() ) );
+      m_task_queue[queueId].pop_front();
+      lock.unlock();
       {
         LIFO_MARK_SCOPE( runningTask );
         task();
