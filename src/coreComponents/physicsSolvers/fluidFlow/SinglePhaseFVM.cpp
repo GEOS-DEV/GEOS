@@ -574,9 +574,39 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
     FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
-    elemDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
-    elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
+    // Take BCs defined for "temperature" field and apply values to "faceTemperature"
+
+    fsManager.apply< FaceManager >( time_n + dt,
+                                    mesh,
+                                    fields::flow::temperature::key(),
+                                    [&] ( FieldSpecificationBase const & fs,
+                                          string const & setName,
+                                          SortedArrayView< localIndex const > const & targetSet,
+                                          FaceManager & targetGroup,
+                                          string const & )
+    {
+      BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+
+      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      {
+        globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
+                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+      }
+
+      if( stencil.size() == 0 )
+      {
+        return;
+      }
+
+      // Specify the bc value of the field
+      fs.applyFieldValue< FieldSpecificationEqual,
+                          parallelDevicePolicy<> >( targetSet,
+                                                    time_n + dt,
+                                                    targetGroup,
+                                                    fields::flow::faceTemperature::key() );
+    } );
 
     // Take BCs defined for "pressure" field and apply values to "facePressure"
     fsManager.apply< FaceManager >( time_n + dt,
@@ -610,6 +640,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                                     targetGroup,
                                                     fields::flow::facePressure::key() );
 
+
       // TODO: currently we just use model from the first cell in this stencil
       //       since it's not clear how to create fluid kernel wrappers for arbitrary models.
       //       Can we just use cell properties for an approximate flux computation?
@@ -622,18 +653,36 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 
       BoundaryStencilWrapper const stencilWrapper = stencil.createKernelWrapper();
 
-      singlePhaseFVMKernels::
-        DirichletFaceBasedAssemblyKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                   dofKey,
-                                                   this->getName(),
-                                                   faceManager,
-                                                   elemManager,
-                                                   stencilWrapper,
-                                                   fluidBase,
-                                                   dt,
-                                                   localMatrix,
-                                                   localRhs );
+      if( m_isThermal )
+      {
+        thermalSinglePhaseFVMKernels::
+          DirichletFaceBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                     dofKey,
+                                                     this->getName(),
+                                                     faceManager,
+                                                     elemManager,
+                                                     stencilWrapper,
+                                                     fluidBase,
+                                                     dt,
+                                                     localMatrix,
+                                                     localRhs );
+      }
+      else
+      {
+        singlePhaseFVMKernels::
+          DirichletFaceBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                     dofKey,
+                                                     this->getName(),
+                                                     faceManager,
+                                                     elemManager,
+                                                     stencilWrapper,
+                                                     fluidBase,
+                                                     dt,
+                                                     localMatrix,
+                                                     localRhs );
+      }
     } );
   } );
 
@@ -718,7 +767,6 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
 
     } );
   } );
-
 
 }
 
