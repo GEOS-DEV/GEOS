@@ -226,8 +226,8 @@ public:
     dataRepository::ViewKey outputDirectory          = {"outputDirectory"};          ///< Output directory key
     dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};        ///< Flag to use non-block MPI key
     dataRepository::ViewKey suppressPinned           = {"suppressPinned"};           ///< Flag to suppress use of pinned
-    dataRepository::ViewKey fieldNamesInGEOSX        = {"fieldNamesInGEOSX"};        ///< Names of the fields in GEOSX
                                                                                      ///< memory key
+    dataRepository::ViewKey fieldNamesInGEOSX        = {"fieldNamesInGEOSX"};        ///< Names of the fields in GEOSX
   } viewKeys; ///< Command line input viewKeys
 
   /// Child group viewKeys
