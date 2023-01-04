@@ -339,16 +339,16 @@ public:
           // This buffer will go to host memory, and maybe on disk
           std::packaged_task< void() > t2( std::bind( &lifoStorage< T >::hostToDisk, this, pushId ) );
           {
-             std::unique_lock< std::mutex > l2( m_task_queue_mutex[1] );
-             m_task_queue[1].emplace_back( std::move( t2 ) );
+            std::unique_lock< std::mutex > l2( m_task_queue_mutex[1] );
+            m_task_queue[1].emplace_back( std::move( t2 ) );
           }
           m_task_queue_not_empty_cond[1].notify_all();
         }
       }, id, array ) );
       m_pushToHostFutures[id] = task.get_future();
       {
-         std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
-         m_task_queue[0].emplace_back( std::move( task ) );
+        std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
+        m_task_queue[0].emplace_back( std::move( task ) );
       }
       m_task_queue_not_empty_cond[0].notify_all();
     }
