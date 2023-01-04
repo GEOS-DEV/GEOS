@@ -16,6 +16,7 @@
 
 #include <deque>
 #include <future>
+#include <mutex>
 #include <condition_variable>
 #include <camp/camp.hpp>
 #include <sys/stat.h>
@@ -76,12 +77,12 @@ public:
     LIFO_MARK_FUNCTION;
     camp::resources::Event e;
     {
+      std::unique_lock< std::mutex > l1( m_emplaceMutex, std::defer_lock );
       {
         LIFO_MARK_SCOPE( waitingForMutex );
         std::lock( m_emplaceMutex, m_frontMutex );
       }
-      std::unique_lock< std::mutex > l1( m_emplaceMutex, std::adopt_lock );
-      std::unique_lock< std::mutex > l2( m_frontMutex, std::adopt_lock );
+      std::lock_guard< std::mutex > l2( m_frontMutex, std::adopt_lock );
       {
         LIFO_MARK_SCOPE( waitingForBuffer );
         m_notFullCond.wait( l1, [ this ]  { return !this->full(); } );
@@ -106,12 +107,12 @@ public:
     LIFO_MARK_FUNCTION;
     camp::resources::Event e;
     {
+      std::unique_lock< std::mutex > l1( m_popMutex, std::defer_lock );
       {
         LIFO_MARK_SCOPE( waitingForMutex );
         std::lock( m_popMutex, m_frontMutex );
       }
-      std::unique_lock< std::mutex > l1( m_popMutex, std::adopt_lock );
-      std::unique_lock< std::mutex > l2( m_frontMutex, std::adopt_lock );
+      std::lock_guard< std::mutex > l2( m_frontMutex, std::adopt_lock );
       {
         LIFO_MARK_SCOPE( waitingForBuffer );
         m_notEmptyCond.wait( l1, [ this ]  { return !this->empty(); } );
@@ -139,11 +140,11 @@ public:
   {
     LIFO_MARK_FUNCTION;
     {
+      std::unique_lock< std::mutex > lockQ1Emplace( m_emplaceMutex, std::defer_lock );
+      std::unique_lock< std::mutex > lockQ2Pop( q2.m_popMutex, std::defer_lock );
       std::lock( m_emplaceMutex, m_frontMutex, q2.m_popMutex, q2.m_backMutex );
-      std::unique_lock< std::mutex > lockQ1Emplace( m_emplaceMutex, std::adopt_lock );
-      std::unique_lock< std::mutex > lockQ1Front( m_frontMutex, std::adopt_lock );
-      std::unique_lock< std::mutex > lockQ2Pop( q2.m_popMutex, std::adopt_lock );
-      std::unique_lock< std::mutex > lockQ2Back( q2.m_backMutex, std::adopt_lock );
+      std::lock_guard< std::mutex > lockQ1Front( m_frontMutex, std::adopt_lock );
+      std::lock_guard< std::mutex > lockQ2Back( q2.m_backMutex, std::adopt_lock );
       {
         LIFO_MARK_SCOPE( WaitForBufferToEmplace );
         m_notFullCond.wait( lockQ1Emplace, [ this ]  { return !this->full(); } );
@@ -169,11 +170,11 @@ public:
   {
     LIFO_MARK_FUNCTION;
     {
+      std::unique_lock< std::mutex > lockQ1Emplace( m_emplaceMutex, std::defer_lock );
+      std::unique_lock< std::mutex > lockQ2Pop( q2.m_popMutex, std::defer_lock );
       std::lock( q2.m_frontMutex, q2.m_popMutex, m_emplaceMutex, m_backMutex );
-      std::unique_lock< std::mutex > lockQ1Emplace( m_emplaceMutex, std::adopt_lock );
-      std::unique_lock< std::mutex > lockQ1Back( m_backMutex, std::adopt_lock );
-      std::unique_lock< std::mutex > lockQ2Pop( q2.m_popMutex, std::adopt_lock );
-      std::unique_lock< std::mutex > lockQ2Front( q2.m_frontMutex, std::adopt_lock );
+      std::lock_guard< std::mutex > lockQ1Back( m_backMutex, std::adopt_lock );
+      std::lock_guard< std::mutex > lockQ2Front( q2.m_frontMutex, std::adopt_lock );
       m_notFullCond.wait( lockQ1Emplace, [ this ]  { return !this->full(); } );
       q2.m_notEmptyCond.wait( lockQ2Pop, [ &q2 ] { return !q2.empty(); } );
       this->emplace_back( q2.front() ).wait();
@@ -319,9 +320,10 @@ public:
         LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
         // This buffer will go to host memory, and maybe on disk
         std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this, id ) );
-        std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
-        m_task_queue[0].emplace_back( std::move( task ) );
-        lock.unlock();
+        {
+          std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
+          m_task_queue[0].emplace_back( std::move( task ) );
+        }
         m_task_queue_not_empty_cond[0].notify_all();
       }
     }
@@ -336,16 +338,18 @@ public:
           LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
           // This buffer will go to host memory, and maybe on disk
           std::packaged_task< void() > t2( std::bind( &lifoStorage< T >::hostToDisk, this, pushId ) );
-          std::unique_lock< std::mutex > l2( m_task_queue_mutex[1] );
-          m_task_queue[1].emplace_back( std::move( t2 ) );
-          l2.unlock();
+          {
+             std::unique_lock< std::mutex > l2( m_task_queue_mutex[1] );
+             m_task_queue[1].emplace_back( std::move( t2 ) );
+          }
           m_task_queue_not_empty_cond[1].notify_all();
         }
       }, id, array ) );
       m_pushToHostFutures[id] = task.get_future();
-      std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
-      m_task_queue[0].emplace_back( std::move( task ) );
-      lock.unlock();
+      {
+         std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
+         m_task_queue[0].emplace_back( std::move( task ) );
+      }
       m_task_queue_not_empty_cond[0].notify_all();
     }
 
@@ -408,9 +412,10 @@ public:
         LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
         // Trigger pull one buffer from host, and maybe from disk
         std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this, id - m_deviceDeque.capacity() ) );
-        std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
-        m_task_queue[0].emplace_back( std::move( task ) );
-        lock.unlock();
+        {
+          std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
+          m_task_queue[0].emplace_back( std::move( task ) );
+        }
         m_task_queue_not_empty_cond[0].notify_all();
       }
     }
@@ -425,16 +430,18 @@ public:
           LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
           // Trigger pull one buffer from host, and maybe from disk
           std::packaged_task< void() > task2( std::bind( &lifoStorage< T >::diskToHost, this, popId  - m_hostDeque.capacity() ) );
-          std::unique_lock< std::mutex > lock2( m_task_queue_mutex[1] );
-          m_task_queue[1].emplace_back( std::move( task2 ) );
-          lock2.unlock();
+          {
+            std::unique_lock< std::mutex > lock2( m_task_queue_mutex[1] );
+            m_task_queue[1].emplace_back( std::move( task2 ) );
+          }
           m_task_queue_not_empty_cond[1].notify_all();
         }
       }, id, array ) );
       m_popFromHostFutures[id] = task.get_future();
-      std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
-      m_task_queue[0].emplace_back( std::move( task ) );
-      lock.unlock();
+      {
+        std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
+        m_task_queue[0].emplace_back( std::move( task ) );
+      }
       m_task_queue_not_empty_cond[0].notify_all();
     }
   }
@@ -494,9 +501,10 @@ private:
     {
       // This buffer will go to host then maybe to disk
       std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this, id ) );
-      std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
-      m_task_queue[1].emplace_back( std::move( task ) );
-      lock.unlock();
+      {
+        std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
+        m_task_queue[1].emplace_back( std::move( task ) );
+      }
       m_task_queue_not_empty_cond[1].notify_all();
     }
   }
@@ -537,9 +545,10 @@ private:
     {
       // This buffer will go to host then to disk
       std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this, id - m_hostDeque.capacity() ) );
-      std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
-      m_task_queue[1].emplace_back( std::move( task ) );
-      lock.unlock();
+      {
+        std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
+        m_task_queue[1].emplace_back( std::move( task ) );
+      }
       m_task_queue_not_empty_cond[1].notify_all();
     }
   }
@@ -628,15 +637,16 @@ private:
     LIFO_MARK_FUNCTION;
     while( m_continue )
     {
-      std::unique_lock< std::mutex > lock( m_task_queue_mutex[queueId] );
       {
-        LIFO_MARK_SCOPE( waitForTask );
-        m_task_queue_not_empty_cond[queueId].wait( lock, [ this, &queueId ] { return !( m_task_queue[queueId].empty()  && m_continue ); } );
+        std::unique_lock< std::mutex > lock( m_task_queue_mutex[queueId] );
+        {
+          LIFO_MARK_SCOPE( waitForTask );
+          m_task_queue_not_empty_cond[queueId].wait( lock, [ this, &queueId ] { return !( m_task_queue[queueId].empty()  && m_continue ); } );
+        }
+        if( m_continue == false ) break;
+        std::packaged_task< void() > task( std::move( m_task_queue[queueId].front() ) );
+        m_task_queue[queueId].pop_front();
       }
-      if( m_continue == false ) break;
-      std::packaged_task< void() > task( std::move( m_task_queue[queueId].front() ) );
-      m_task_queue[queueId].pop_front();
-      lock.unlock();
       {
         LIFO_MARK_SCOPE( runningTask );
         task();
