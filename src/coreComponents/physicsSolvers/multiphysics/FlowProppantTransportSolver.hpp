@@ -80,21 +80,14 @@ public:
     return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
   }
 
-  /**
-   * @defgroup Solver Interface Functions
-   *
-   * These functions provide the primary interface that is required for derived classes
-   */
-  /**@{*/
-
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             int const cycleNumber,
-                             DomainPartition & domain ) override;
-
   /**@}*/
 
 private:
+
+  real64 sequentiallyCoupledSolverStep( real64 const & time_n,
+                                        real64 const & dt,
+                                        int const cycleNumber,
+                                        DomainPartition & domain ) override final;
 
   /**
    * @brief Utility function to perform the pre-step Update

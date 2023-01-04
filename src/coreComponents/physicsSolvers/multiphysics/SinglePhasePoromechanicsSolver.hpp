@@ -108,22 +108,17 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             int const cycleNumber,
-                             DomainPartition & domain ) override;
-
   virtual void updateState( DomainPartition & domain ) override;
 
   /**@}*/
 
-protected:
-
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : Base::viewKeyStruct
   {
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
     constexpr static char const * isThermalString() { return "isThermal"; }
   };
+
+protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
