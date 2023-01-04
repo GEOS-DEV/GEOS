@@ -12,8 +12,6 @@ set( linearAlgebra_headers
      interfaces/InterfaceTypes.hpp
      interfaces/MatrixBase.hpp
      interfaces/VectorBase.hpp
-     interfaces/dense/BlasLapackFunctions.h
-     interfaces/dense/BlasLapackLA.hpp
      solvers/BicgstabSolver.hpp
      solvers/BlockPreconditioner.hpp
      solvers/CgSolver.hpp
@@ -45,7 +43,6 @@ set( linearAlgebra_headers
 #
 set( linearAlgebra_sources
      DofManager.cpp
-     interfaces/dense/BlasLapackLA.cpp
      solvers/BicgstabSolver.cpp
      solvers/BlockPreconditioner.cpp
      solvers/CgSolver.cpp
@@ -54,8 +51,7 @@ set( linearAlgebra_sources
      solvers/SeparateComponentPreconditioner.cpp
    )
 
-set( dependencyList ${parallelDeps} mesh blas lapack )
-
+set( dependencyList ${parallelDeps} mesh denseLinearAlgebra )
 
 list( APPEND linearAlgebra_headers interfaces/direct/SuiteSparse.hpp )
 list( APPEND linearAlgebra_sources interfaces/direct/SuiteSparse.cpp )
