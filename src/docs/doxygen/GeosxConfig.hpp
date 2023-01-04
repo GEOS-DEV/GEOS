@@ -169,7 +169,7 @@
 /* #undef Python3_VERSION */
 
 /// Version information for CUDAToolkit
-#define CUDAToolkit_VERSION 11.6.112
+/* #undef CUDAToolkit_VERSION */
 
 #if defined(GEOSX_USE_CUDA) || defined(GEOSX_USE_HIP)
 // This needs to be placed into this header in order to appropriately replace
