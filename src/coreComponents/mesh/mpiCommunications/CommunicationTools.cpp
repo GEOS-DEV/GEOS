@@ -649,17 +649,18 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
     neighbors[idx].unpackGhosts( meshLevel, commData.commID() );
     return MPI_REQUEST_NULL;
   };
+  // we implement this as a separate phase in order not to impact the unpackGhosts performance by waiting on a request that
+  //  doesn't need to be complete for 'later' ghosts to be unpacked.
+  auto neighborhoodBarrier = [&] ( int idx )
+  {
+    // this requires a complete-phase active wait in order to actually be a barrier
+    //  on the local neighborhood group
+    // additionally we don't need to check the size send request, since this request can complete iff
+    //  the size send has completed already (when using complete-phase active waits)
+    return commData.mpiSendBufferRequest( idx );
+  };
 
-  waitOrderedOrWaitAll( neighbors.size(), { sendGhosts, postRecv, unpackGhosts }, unorderedComms );
-
-  // There are cases where the multiple waitOrderedOrWaitAll methods here will clash with
-  // each other. This typically occurs at higher processor counts (>256) and large meshes
-  // with ~14M elements. Adding the following waitAll methods ensures that the underlying
-  // async MPI communication will not interfere with subsequent async communication calls.
-  // The underlying problem is that for a given phase of async communication, the same
-  // tag numbers are used. This will at least isolate the async calls from each other.
-  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
-  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
+  waitOrderedOrWaitAll( neighbors.size(), { sendGhosts, postRecv, unpackGhosts, neighborhoodBarrier }, unorderedComms );
 
   nodeManager.setReceiveLists();
   edgeManager.setReceiveLists();
@@ -670,11 +671,11 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
     MPI_Request & mpiSizeRecvRequest = commData.mpiRecvBufferSizeRequest( idx );
     MPI_Request & mpiSizeSendRequest = commData.mpiSendBufferSizeRequest( idx );
     MPI_Request & mpiSendRequest = commData.mpiSendBufferRequest( idx );
-    neighbors[idx].prepareAndSendSyncLists( meshLevel,
-                                            commData.commID(),
-                                            mpiSizeRecvRequest,
-                                            mpiSizeSendRequest,
-                                            mpiSendRequest );
+    neighbors[ idx ].prepareAndSendSyncLists( meshLevel,
+                                              commData.commID(),
+                                              mpiSizeRecvRequest,
+                                              mpiSizeSendRequest,
+                                              mpiSendRequest );
     return mpiSizeRecvRequest;
   };
   auto rebuildSyncLists = [&] ( int idx )
@@ -684,23 +685,13 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
     return MPI_REQUEST_NULL;
   };
 
-  waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
-
-  // See above comments for the reason behind these waitAll commands
-  // RE: isolate multiple async-wait calls
-  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
-  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
+  waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists, neighborhoodBarrier }, unorderedComms );
 
   fixReceiveLists( nodeManager, neighbors );
   fixReceiveLists( edgeManager, neighbors );
   fixReceiveLists( faceManager, neighbors );
 
-  waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
-
-  // See above comments for the reason behind these waitAll commands
-  // RE: isolate multiple async-wait
-  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
-  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
+  waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists, neighborhoodBarrier }, unorderedComms );
 
   nodeManager.fixUpDownMaps( false );
   verifyGhostingConsistency( nodeManager, neighbors );
