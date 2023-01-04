@@ -123,12 +123,6 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, comm );
 }
 
-string VTKMeshGenerator::getSourceName( localIndex index ) const {
-  std::vector< vtkDataArray * > const srcArrays = vtk::findArraysForImport( *m_vtkMesh, m_fieldsToImport );
-  vtkDataArray * vtkArray = srcArrays[index];
-  return vtkArray->GetName();
-}
-
 void VTKMeshGenerator::importFieldsOnArray( string const regionName, string const meshFieldName, WrapperBase & wrapper, bool importMaterial ) const
 {
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': importing field data from mesh dataset", catalogName(), getName() ) );

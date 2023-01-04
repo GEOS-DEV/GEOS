@@ -98,14 +98,6 @@ public:
    */
   virtual void freeResources() {}
 
-  /**
-   * @brief Retrieve the name of a field in the mesh from its index
-   * @param[in] index of the field in both GEOSX and the input mesh
-   * @return the name of the source field in the mesh
-   */
-  virtual string getSourceName( localIndex index ) const { GEOSX_UNUSED_VAR(index); return ""; }//= 0;
-
-
  /**
   * @brief Get the name mapping between mesh field names and Internal GEOSX field names.
   * @return The string to string mapping of field names.
