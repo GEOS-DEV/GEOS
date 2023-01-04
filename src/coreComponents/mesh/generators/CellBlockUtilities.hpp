@@ -110,7 +110,7 @@ computeUniqueValueOffsets( ArrayOfArraysView< T const > const & sortedLists )
   // (RAJA's Inclusive scan produces garbage values with CUDA 11.2.2)
   array1d< localIndex > myUniques( numNodes + 1 );
   myUniques[0] = uniqueValueOffsets[0];
-  for (int i = 1; i < uniqueValueOffsets.size(); i++)
+  for( int i = 1; i < uniqueValueOffsets.size(); i++ )
   {
     myUniques[i] = uniqueValueOffsets[i] + myUniques[i - 1];
   }
