@@ -351,35 +351,6 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
   } );
 }
 
-void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
-                                                          string const & faceElementRegionName ) const
-{
-  // TODO Note that all of this initialization should be performed elsewhere.
-  //      This is just here because it was convenient, but it is not appropriate
-  //      to have physics based initialization in the flux approximator.
-
-#if !defined(SET_CREATION_DISPLACEMENT)
-  static_assert( true, "must have SET_CREATION_DISPLACEMENT defined" );
-#endif
-
-#if !defined(ALLOW_CREATION_MASS)
-  static_assert( true, "must have ALLOW_CREATION_MASS defined" );
-#endif
-
-#if !defined(SET_CREATION_PRESSURE)
-  static_assert( true, "must have SET_CREATION_PRESSURE defined" );
-#endif
-
-  ElementRegionManager & elemManager = mesh.getElemManager();
-  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
-    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-
-  SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( faceElementRegionName );
-  localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
-  FaceElementSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
-  
-}
-
 void TwoPointFluxApproximation::cleanMatrixMatrixConnectionsDFM( MeshLevel & mesh,
                                                                  string const & faceElementRegionName ) const
 {
@@ -546,17 +517,11 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
 }
 
 void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
-                                                      string const & faceElementRegionName,
-                                                      bool const initFields ) const
+                                                      string const & faceElementRegionName ) const
 {
   this->addFractureFractureConnectionsDFM( mesh, faceElementRegionName );
   this->cleanMatrixMatrixConnectionsDFM( mesh, faceElementRegionName );
   this->addFractureMatrixConnectionsDFM( mesh, faceElementRegionName );
-
-  if( initFields )
-  {
-    this->initNewFractureFieldsDFM( mesh, faceElementRegionName );
-  }
 }
 
 void TwoPointFluxApproximation::addFractureMatrixConnectionsEDFM( MeshLevel & mesh,
