@@ -307,13 +307,13 @@ struct DampingMatrixKernel
 
         for( localIndex q = 0; q < numNodesPerFace; ++q )
         {
-          real32 const localIncrementx = density[k] * (velocityVp[k]*abs( faceNormal[f][0] ) + velocityVs[k]*sqrt( faceNormal[f][1]*faceNormal[f][1] +
+          real32 const localIncrementx = density[k] * (velocityVp[k]*LvArray::math::abs( faceNormal[f][0] ) + velocityVs[k]*sqrt( faceNormal[f][1]*faceNormal[f][1] +
                                                                                                                    faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm( q,
                                                                                                                                                                                               xLocal );
-          real32 const localIncrementy = density[k] * (velocityVp[k]*abs( faceNormal[f][1] ) + velocityVs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
+          real32 const localIncrementy = density[k] * (velocityVp[k]*LvArray::math::abs( faceNormal[f][1] ) + velocityVs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
                                                                                                                    faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm( q,
                                                                                                                                                                                               xLocal );
-          real32 const localIncrementz = density[k] * (velocityVp[k]*abs( faceNormal[f][2] ) + velocityVs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
+          real32 const localIncrementz = density[k] * (velocityVp[k]*LvArray::math::abs( faceNormal[f][2] ) + velocityVs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
                                                                                                                    faceNormal[f][1]*faceNormal[f][1] ) )*  m_finiteElement.computeDampingTerm( q,
                                                                                                                                                                                                xLocal );
 
