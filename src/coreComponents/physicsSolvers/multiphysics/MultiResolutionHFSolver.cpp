@@ -254,34 +254,38 @@ void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
   //-verify how to get elemCenter - partially done
   //-verify dist function between R1Tensors - partially done
   //-verify MPI part - partially done
-  //-verify ind_of_max function - 
   //reference point must be prescribed in base coordinate system (usually injection source)
-  R1Tensor m_referencePoint = {0, 0, 0}; //add this as input file parameter
+  R1Tensor m_referencePoint = {0.0, 0.0, 0.0}; //add this as input file parameter
   real64 threshold = 0.95;
   //get mpi communicator
   MPI_Comm const & comm = MPI_COMM_GEOSX;
   ElementRegionManager const & patchElemManager = patch.getElemManager();
-  const localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints; //this is risky, not sure FE_TYPE will come from patch
-  string const & damageModelName = elementSubRegion.getReference< string >( PhaseFieldDamageFEM::viewKeyStruct::solidModelNamesString());
-  //this call may need to constitutive pass-thru loop to be generalized to multiple damage types
-  constitutive::Damage & damageUpdates = elementSubRegion.getConstitutiveModel< constitutive::Damage >( damageModelName );
+   //this is risky, not sure FE_TYPE will come from patch
   //each rank has these arrays
-  array1d< R1Tensor > crackedElemsCenters;
-  array1d< real64 > crackedElemsDists;
-  array1d< R1Tensor > globalCrackedElemsCenters;
-  array1d< real64 > globalCrackedElemsDists;
-  array2d< real64 > allElemCenters = CellElementSubRegion.getElementCenter(); 
+  real64 rankMaxDist = 1e20;
+  R1Tensor rankFarthestCenter = {0.0, 0.0, 0.0};
   //loop over all elements in patch and compute elemental average damage
   //observe that patch coordinates are relative, so, reference point should be added 
   //for elements in patch //nice loop to parallelize
   patchElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
-    forAll< serialPolicy >( elementSubRegion.size(), [] ( localIndex const k )
+    localIndex numQuadraturePointsPerElem = 0;
+    finiteElement::FiniteElementBase const & fe = cellElementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+    finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
+    {
+      using FE_TYPE = TYPEOFREF( finiteElement );
+      numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+    });
+    string const & damageModelName = cellElementSubRegion.getReference< string >( PhaseFieldDamageFEM::viewKeyStruct::solidModelNamesString());
+    //this call may need to constitutive pass-thru loop to be generalized to multiple damage types
+    constitutive::Damage & damageUpdates = cellElementSubRegion.getConstitutiveModel< constitutive::Damage >( damageModelName );
+    arrayView2d< const real64 > allElemCenters = cellElementSubRegion.getElementCenter(); 
+    forAll< serialPolicy >( cellElementSubRegion.size(), [&] ( localIndex const k )
     {
       //compute elemental averaged damage
       real64 average_d = 0;
       R1Tensor elemCenter = allElemCenters[k]; //this is trying to create a R1Tensor from a array2d< real64 >
-      for (localIndex q=0; q<numQuadraturePointsPerElem, q++)
+      for(localIndex q=0; q<numQuadraturePointsPerElem; q++)
       {
         //get damage at quadrature point i
         average_d = average_d + damageUpdates->m_damage( k, q )/numQuadraturePointsPerElem;
@@ -289,25 +293,24 @@ void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
       //if elemental damage > 0.95 (or another threshold)
       if (average_d > threshold)
       {
-        crackedElemsCenters.insert(elemCenter);
+        //check if this element is farther than current farthest
         R1Tensor elemVec = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_referencePoint );
         LvArray::tensorOps::subtract< 3 >( elemVec, elemCenter );
         real64 dist = LvArray::tensorOps::l2Norm< 3 >( elemVec );
-        crackedElemsDists.insert(dist); //dist between two R1Tensor probably doesnt exist
+        if (dist > rankMaxDist)
+        {
+          rankMaxDist = dist;
+          rankFarthestCenter = elemCenter;
+        }
       }
     });
-    //compute element center, get distance from referencePoint
-    //add (elemNumber, distance) to candidates set
   });
-  //this is done on each rank
-  //need to find a viable max function for array1d<real64> that can return the index of the maximum element.
-  localIndex indOfMaxOnThisRank = ind_of_max(crackedElemsDists);
-  //THIS PROBABLY DOESNT PRESERVE THE ORDER
-  MpiWrapper::allGather<R1Tensor>( crackedElemsCenters(indOfMaxOnThisRank), globalCrackedElemsCenters, comm );
-  MpiWrapper::allGather<real64>( crackedElemsDists(indOfMaxOnThisRank), globalCrackedElemsDists, comm );
-  //this is done by all ranks unnecessarily
-  localIndex indOfGlobalMax = ind_of_max(globalCrackedElemsDists);
-  tip = globalCrackElemsCenters(indOfGlobalMax);
+
+  real64 globalMax = MpiWrapper::max<real64>( rankMaxDist,comm );
+  if (std::abs(rankMaxDist-globalMax)<1e-12)
+  {
+    tip = rankFarthestCenter;
+  }
   
 }
 
