@@ -64,7 +64,13 @@ public:
 
   //virtual void updateNodeMaps( MeshLevel const & base, MeshLevel const & patch );
 
-  virtual void setInitialCrackDamageBCs( DofManager const & dofManager, CRSMatrixView< real64, globalIndex const > const & localMatrix, MeshLevel const & patch, MeshLevel const & base );
+  virtual void setInitialCrackDamageBCs( DofManager const & dofManager, 
+                                         CRSMatrixView< real64, globalIndex const > const & localMatrix, 
+                                         MeshLevel const & patch, 
+                                         MeshLevel const & base );
+
+  virtual void findPhaseFieldTip( R1Tensor & tip, 
+                                  MeshLevel const & patch );
 
   virtual void prepareSubProblemBCs( MeshLevel const & base,
                                      MeshLevel & patch );

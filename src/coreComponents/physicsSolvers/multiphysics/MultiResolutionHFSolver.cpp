@@ -244,9 +244,76 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX
   } );
 }
 
+// this function will read the patch solution and locate the crack tip to uptade the crack geometry in the base solver
+void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
+                                                 MeshLevel const & patch )
+{
+  //IMPORTANT PARTS MISSING
+  //-best way to get quadrature point damage to take average - partially done
+  //-verify constructor of array1ds - partially done
+  //-verify how to get elemCenter - partially done
+  //-verify dist function between R1Tensors - partially done
+  //-verify MPI part - partially done
+  //-verify ind_of_max function - 
+  //reference point must be prescribed in base coordinate system (usually injection source)
+  R1Tensor m_referencePoint = {0, 0, 0}; //add this as input file parameter
+  real64 threshold = 0.95;
+  //get mpi communicator
+  MPI_Comm const & comm = MPI_COMM_GEOSX;
+  ElementRegionManager const & patchElemManager = patch.getElemManager();
+  const localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints; //this is risky, not sure FE_TYPE will come from patch
+  string const & damageModelName = elementSubRegion.getReference< string >( PhaseFieldDamageFEM::viewKeyStruct::solidModelNamesString());
+  //this call may need to constitutive pass-thru loop to be generalized to multiple damage types
+  constitutive::Damage & damageUpdates = elementSubRegion.getConstitutiveModel< constitutive::Damage >( damageModelName );
+  //each rank has these arrays
+  array1d< R1Tensor > crackedElemsCenters;
+  array1d< real64 > crackedElemsDists;
+  array1d< R1Tensor > globalCrackedElemsCenters;
+  array1d< real64 > globalCrackedElemsDists;
+  array2d< real64 > allElemCenters = CellElementSubRegion.getElementCenter(); 
+  //loop over all elements in patch and compute elemental average damage
+  //observe that patch coordinates are relative, so, reference point should be added 
+  //for elements in patch //nice loop to parallelize
+  patchElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
+  {
+    forAll< serialPolicy >( elementSubRegion.size(), [] ( localIndex const k )
+    {
+      //compute elemental averaged damage
+      real64 average_d = 0;
+      R1Tensor elemCenter = allElemCenters[k]; //this is trying to create a R1Tensor from a array2d< real64 >
+      for (localIndex q=0; q<numQuadraturePointsPerElem, q++)
+      {
+        //get damage at quadrature point i
+        average_d = average_d + damageUpdates->m_damage( k, q )/numQuadraturePointsPerElem;
+      }
+      //if elemental damage > 0.95 (or another threshold)
+      if (average_d > threshold)
+      {
+        crackedElemsCenters.insert(elemCenter);
+        R1Tensor elemVec = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_referencePoint );
+        LvArray::tensorOps::subtract< 3 >( elemVec, elemCenter );
+        real64 dist = LvArray::tensorOps::l2Norm< 3 >( elemVec );
+        crackedElemsDists.insert(dist); //dist between two R1Tensor probably doesnt exist
+      }
+    });
+    //compute element center, get distance from referencePoint
+    //add (elemNumber, distance) to candidates set
+  });
+  //this is done on each rank
+  //need to find a viable max function for array1d<real64> that can return the index of the maximum element.
+  localIndex indOfMaxOnThisRank = ind_of_max(crackedElemsDists);
+  //THIS PROBABLY DOESNT PRESERVE THE ORDER
+  MpiWrapper::allGather<R1Tensor>( crackedElemsCenters(indOfMaxOnThisRank), globalCrackedElemsCenters, comm );
+  MpiWrapper::allGather<real64>( crackedElemsDists(indOfMaxOnThisRank), globalCrackedElemsDists, comm );
+  //this is done by all ranks unnecessarily
+  localIndex indOfGlobalMax = ind_of_max(globalCrackedElemsDists);
+  tip = globalCrackElemsCenters(indOfGlobalMax);
+  
+}
+
 //Andre - 03/15 - this function needs to access u_base (hopefully via node manager), the patch mesh (via node manager too),
 //a map that translate patch node numbers to base node numbers (could be a MultiResolutionHFSolver member) and also the
-//damage field in the patch domain (via node manager)
+//damage field in the patch domain (via node manage
 //The function will read all this data and prepare a list of dofs and u values that will be used by the patch solver to set
 //the boundary conditions
 void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
