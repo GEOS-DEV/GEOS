@@ -633,11 +633,6 @@ void ProblemManager::importFields()
   DomainPartition & domain = getDomainPartition();
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
   meshManager.importFields( domain );
-
-  meshManager.forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & generator )
-  {
-    generator.freeResources();
-  } );
 }
 
 void ProblemManager::applyNumericalMethods()

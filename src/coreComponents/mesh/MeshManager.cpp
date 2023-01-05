@@ -103,13 +103,13 @@ std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const
 void MeshManager::importFields( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getBaseDiscretization().getElemManager();
 
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & generator )
   {
     FieldIdentifiers fieldsToBeSync;
     std::map< string, string > fieldNamesMapping = generator.getFieldsMapping();
 
+    ElementRegionManager & elemManager = domain.getMeshBody( generator.getName() ).getBaseDiscretization().getElemManager();
     elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex,
                                                                            localIndex,
                                                                            ElementRegionBase const & region,
@@ -145,9 +145,10 @@ void MeshManager::importFields( DomainPartition & domain )
     } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                         domain.getMeshBody( this->getName() ).getBaseDiscretization(),
+                                                         domain.getMeshBody( generator.getName() ).getBaseDiscretization(),
                                                          domain.getNeighbors(),
                                                          false );
+    generator.freeResources();
   } );
 }
 
