@@ -98,10 +98,10 @@ public:
    */
   virtual void freeResources() {}
 
- /**
-  * @brief Get the name mapping between mesh field names and Internal GEOSX field names.
-  * @return The string to string mapping of field names.
-  */
+  /**
+   * @brief Get the name mapping between mesh field names and Internal GEOSX field names.
+   * @return The string to string mapping of field names.
+   */
   std::map< string, string > getFieldsMapping( ) { return m_fieldsMapping; }
 
 protected:

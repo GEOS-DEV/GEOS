@@ -63,7 +63,7 @@ void ExternalMeshGeneratorBase::postProcessInput()
                                     viewKeyStruct::fieldNamesInGEOSXString() ),
                          InputError );
 
-  for ( int i = 0; i < m_fieldsToImport.size(); i++)
+  for( int i = 0; i < m_fieldsToImport.size(); i++ )
   {
     GEOSX_THROW_IF( m_fieldsMapping.count( m_fieldsToImport[ i ] ) > 0,
                     GEOSX_FMT( "Mesh '{}': '{}' allready present in list of fields to import",

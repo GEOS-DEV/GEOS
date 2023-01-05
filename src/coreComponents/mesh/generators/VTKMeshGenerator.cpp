@@ -139,7 +139,8 @@ void VTKMeshGenerator::importFieldsOnArray( string const regionName, string cons
       {
         string const cellBlockName = vtk::buildCellBlockName( typeRegions.first, regionCells.first );
         // We don't know how the user mapped cell blocks to regions, so we must check all of them
-        if( regionName != cellBlockName ) continue;
+        if( regionName != cellBlockName )
+          continue;
 
         if( importMaterial )
         {
