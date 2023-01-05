@@ -145,7 +145,7 @@ public:
                + porosityThermalExpansion * temperature
                + biotCoefficient * meanStressIncrement / bulkModulus;
 
-    dPorosity_dPressure = biotSkeletonModulusInverse;
+    dPorosity_dPressure = biotSkeletonModulusInverse + biotCoefficient * biotCoefficient / bulkModulus;
     dPorosity_dTemperature = porosityThermalExpansion;
   }
 
@@ -184,13 +184,6 @@ public:
   GEOSX_HOST_DEVICE
   void updateThermalExpansionCoefficient( localIndex const k,
                                           real64 const thermalExpansionCoefficient ) const
-  {
-    m_thermalExpansionCoefficient[k] = thermalExpansionCoefficient;
-  }
-
-  GEOSX_HOST_DEVICE
-  void updateSolidBulkModulus( localIndex const k,
-                               real64 const thermalExpansionCoefficient ) const
   {
     m_thermalExpansionCoefficient[k] = thermalExpansionCoefficient;
   }
