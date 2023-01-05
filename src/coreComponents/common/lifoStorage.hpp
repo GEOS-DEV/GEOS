@@ -80,7 +80,7 @@ public:
       std::unique_lock< std::mutex > l1( m_emplaceMutex, std::defer_lock );
       {
         LIFO_MARK_SCOPE( waitingForMutex );
-        std::lock( m_emplaceMutex, m_frontMutex );
+        std::lock( l1, m_frontMutex );
       }
       std::lock_guard< std::mutex > l2( m_frontMutex, std::adopt_lock );
       {
@@ -110,7 +110,7 @@ public:
       std::unique_lock< std::mutex > l1( m_popMutex, std::defer_lock );
       {
         LIFO_MARK_SCOPE( waitingForMutex );
-        std::lock( m_popMutex, m_frontMutex );
+        std::lock( l1, m_frontMutex );
       }
       std::lock_guard< std::mutex > l2( m_frontMutex, std::adopt_lock );
       {
@@ -142,7 +142,7 @@ public:
     {
       std::unique_lock< std::mutex > lockQ1Emplace( m_emplaceMutex, std::defer_lock );
       std::unique_lock< std::mutex > lockQ2Pop( q2.m_popMutex, std::defer_lock );
-      std::lock( m_emplaceMutex, m_frontMutex, q2.m_popMutex, q2.m_backMutex );
+      std::lock( lockQ1Emplace, m_frontMutex, lockQ2Pop, q2.m_backMutex );
       std::lock_guard< std::mutex > lockQ1Front( m_frontMutex, std::adopt_lock );
       std::lock_guard< std::mutex > lockQ2Back( q2.m_backMutex, std::adopt_lock );
       {
@@ -172,7 +172,7 @@ public:
     {
       std::unique_lock< std::mutex > lockQ1Emplace( m_emplaceMutex, std::defer_lock );
       std::unique_lock< std::mutex > lockQ2Pop( q2.m_popMutex, std::defer_lock );
-      std::lock( q2.m_frontMutex, q2.m_popMutex, m_emplaceMutex, m_backMutex );
+      std::lock( q2.m_frontMutex, lockQ2Pop, lockQ1Emplace, m_backMutex );
       std::lock_guard< std::mutex > lockQ1Back( m_backMutex, std::adopt_lock );
       std::lock_guard< std::mutex > lockQ2Front( q2.m_frontMutex, std::adopt_lock );
       m_notFullCond.wait( lockQ1Emplace, [ this ]  { return !this->full(); } );
