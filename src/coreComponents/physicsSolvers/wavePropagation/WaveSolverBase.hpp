@@ -23,7 +23,10 @@
 
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#if !defined( GEOSX_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
+#endif
+
 
 #define SEM_FE_TYPES \
   finiteElement::Q1_Hexahedron_Lagrange_GaussLobatto, \
