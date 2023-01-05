@@ -167,32 +167,7 @@ localIndex ElasticFirstOrderWaveEquationSEM::getNumNodesPerElem()
 
 void ElasticFirstOrderWaveEquationSEM::initializePreSubGroups()
 {
-
   WaveSolverBase::initializePreSubGroups();
-
-  localIndex numNodesPerElem = getNumNodesPerElem();
-
-  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
-  m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
-
-  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
-  m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
-  m_receiverIsLocal.resize( numReceiversGlobal );
-
-  m_displacementxNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
-  m_displacementyNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
-  m_displacementzNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
-
-  m_sigmaxxNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
-  m_sigmayyNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
-  m_sigmazzNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
-  m_sigmaxyNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
-  m_sigmaxzNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
-  m_sigmayzNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
-
-
 }
 
 
@@ -297,7 +272,7 @@ void ElasticFirstOrderWaveEquationSEM::postProcessInput()
   }
   localIndex const nsamples = int(maxTime/dt) + 1;
 
-  localIndex const numNodesPerElem = 8;
+  localIndex const numNodesPerElem = getNumNodesPerElem();
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
