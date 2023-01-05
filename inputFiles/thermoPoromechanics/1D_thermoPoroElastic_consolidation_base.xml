@@ -8,10 +8,10 @@
       solidSolverName="SolidMechSolve"
       flowSolverName="FlowSolve"
       logLevel="1"
-      discretization="FE1"
-      subcycling="1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
+        couplingType="Sequential"
+        subcycling="1"
         newtonMaxIter="200"/>
       <LinearSolverParameters
         directParallel="0"/>
@@ -26,6 +26,7 @@
       >
       <NonlinearSolverParameters
         newtonMaxIter="50"
+        newtonMinIter="0"
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
         directParallel="0"/>
@@ -40,6 +41,7 @@
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonMaxIter="100"
+        newtonMinIter="0"
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
         directParallel="0"/>

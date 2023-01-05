@@ -26,7 +26,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/multiphysics/ThermalSinglePhasePoromechanicsFixedStressSolver.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
@@ -344,7 +344,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                    CellElementSubRegion >( mesh,
                                                                            regionNames,
                                                                            this->getDiscretizationName(),
-                                                                           ThermalSinglePhasePoromechanicsFixedStressSolver::viewKeyStruct::porousMaterialNamesString(),
+                                                                           FlowSolverBase::viewKeyStruct::solidNamesString(),
                                                                            kernelWrapper );
     }
     else
