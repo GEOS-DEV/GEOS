@@ -17,7 +17,7 @@
  */
 #include "CO2BrineFluid.hpp"
 
-#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
+#include "constitutive/fluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 
 namespace geosx
@@ -96,11 +96,11 @@ CO2BrineFluid( string const & name, Group * const parent ):
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
   {
-    getExtrinsicData< extrinsicMeshData::multifluid::phaseEnthalpy >().
+    getField< fields::multifluid::phaseEnthalpy >().
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRestartFlags( RestartFlags::WRITE_AND_READ );
 
-    getExtrinsicData< extrinsicMeshData::multifluid::phaseInternalEnergy >().
+    getField< fields::multifluid::phaseInternalEnergy >().
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRestartFlags( RestartFlags::WRITE_AND_READ );
   }
@@ -137,6 +137,15 @@ integer CO2BrineFluid< PHASE1, PHASE2, FLASH >::getWaterPhaseIndex() const
   return PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
 }
 
+template< typename PHASE1, typename PHASE2, typename FLASH >
+void CO2BrineFluid< PHASE1, PHASE2, FLASH >::initializePreSubGroups()
+{
+  GEOSX_THROW_IF( this->catalogName() == CO2BrineEzrokhiThermalFluid::catalogName(),
+                  GEOSX_FMT( "The `{}` model is disabled for now. Please use the other thermal CO2-brine model instead: `{}`",
+                             CO2BrineEzrokhiThermalFluid::catalogName(),
+                             CO2BrinePhillipsThermalFluid::catalogName() ),
+                  InputError );
+}
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()

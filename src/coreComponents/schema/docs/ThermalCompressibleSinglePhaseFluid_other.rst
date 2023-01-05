@@ -14,7 +14,6 @@ dViscosity_dTemperature      real64_array2d Derivative of viscosity with respect
 density                      real64_array2d Density                                                   
 density_n                    real64_array2d Density at the previous converged time step               
 enthalpy                     real64_array2d Enthalpy                                                  
-initialDensity               real64_array2d Initial density                                           
 internalEnergy               real64_array2d Internal energy                                           
 internalEnergy_n             real64_array2d Fluid internal energy at the previous converged step      
 viscosity                    real64_array2d Viscosity                                                 

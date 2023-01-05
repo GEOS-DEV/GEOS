@@ -21,18 +21,15 @@
 
 #include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 namespace geosx
 {
 
 using namespace constitutive;
 using namespace dataRepository;
-using namespace extrinsicMeshData;
+using namespace fields;
 
 HydrofractureSolver::HydrofractureSolver( const string & name,
                                           Group * const parent )
@@ -54,10 +51,6 @@ HydrofractureSolver::HydrofractureSolver( const string & name,
     setApplyDefaultValue( 10 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. " );
-
-  registerWrapper( viewKeyStruct::couplingTypeOptionStringString(), &m_couplingTypeOption ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Coupling method. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
 
   m_numResolves[0] = 0;
 
@@ -170,84 +163,77 @@ void HydrofractureSolver::postProcessInput()
   m_surfaceGenerator = &this->getParent().getGroup< SurfaceGenerator >( m_surfaceGeneratorName );
 }
 
-real64 HydrofractureSolver::solverStep( real64 const & time_n,
-                                        real64 const & dt,
-                                        int const cycleNumber,
-                                        DomainPartition & domain )
+real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
+                                                    real64 const & dt,
+                                                    int const cycleNumber,
+                                                    DomainPartition & domain )
 {
   real64 dtReturn = dt;
 
-  if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
-  {
-    dtReturn = splitOperatorStep( time_n, dt, cycleNumber, domain );
-  }
-  else if( m_couplingTypeOption == CouplingTypeOption::FIM )
-  {
-    implicitStepSetup( time_n, dt, domain );
+  implicitStepSetup( time_n, dt, domain );
 
-    int const maxIter = m_maxNumResolves + 1;
-    m_numResolves[1] = m_numResolves[0];
-    int solveIter;
-    for( solveIter=0; solveIter<maxIter; ++solveIter )
+  int const maxIter = m_maxNumResolves + 1;
+  m_numResolves[1] = m_numResolves[0];
+  int solveIter;
+  for( solveIter=0; solveIter<maxIter; ++solveIter )
+  {
+    int locallyFractured = 0;
+    int globallyFractured = 0;
+
+    setupSystem( domain,
+                 m_dofManager,
+                 m_localMatrix,
+                 m_rhs,
+                 m_solution );
+
+    // currently the only method is implicit time integration
+    dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+
+
+    if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
     {
-      int locallyFractured = 0;
-      int globallyFractured = 0;
+      locallyFractured = 1;
+    }
+    MpiWrapper::allReduce( &locallyFractured,
+                           &globallyFractured,
+                           1,
+                           MPI_MAX,
+                           MPI_COMM_GEOSX );
 
-      setupSystem( domain,
-                   m_dofManager,
-                   m_localMatrix,
-                   m_rhs,
-                   m_solution );
+    if( globallyFractured == 0 )
+    {
+      break;
+    }
+    else
+    {
+      FieldIdentifiers fieldsToBeSync;
 
-      // currently the only method is implicit time integration
-      dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+      fieldsToBeSync.addElementFields( { flow::pressure::key(),
+                                         flow::pressure_n::key(),
+                                         SurfaceElementSubRegion::viewKeyStruct::elementApertureString() },
+                                       { m_surfaceGenerator->getFractureRegionName() } );
 
+      fieldsToBeSync.addFields( FieldLocation::Node,
+                                { solidMechanics::incrementalDisplacement::key(),
+                                  solidMechanics::totalDisplacement::key() } );
 
-      if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
+      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                           domain.getMeshBody( 0 ).getBaseDiscretization(),
+                                                           domain.getNeighbors(),
+                                                           false );
+
+      this->updateState( domain );
+
+      if( getLogLevel() >= 1 )
       {
-        locallyFractured = 1;
-      }
-      MpiWrapper::allReduce( &locallyFractured,
-                             &globallyFractured,
-                             1,
-                             MPI_MAX,
-                             MPI_COMM_GEOSX );
-
-      if( globallyFractured == 0 )
-      {
-        break;
-      }
-      else
-      {
-        FieldIdentifiers fieldsToBeSync;
-
-        fieldsToBeSync.addElementFields( { flow::pressure::key(),
-                                           flow::pressure_n::key(),
-                                           SurfaceElementSubRegion::viewKeyStruct::elementApertureString() },
-                                         { m_surfaceGenerator->getFractureRegionName() } );
-
-        fieldsToBeSync.addFields( FieldLocation::Node,
-                                  { solidMechanics::incrementalDisplacement::key(),
-                                    solidMechanics::totalDisplacement::key() } );
-
-        CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                             domain.getMeshBody( 0 ).getBaseDiscretization(),
-                                                             domain.getNeighbors(),
-                                                             false );
-
-        this->updateState( domain );
-
-        if( getLogLevel() >= 1 )
-        {
-          GEOSX_LOG_RANK_0( "++ Fracture propagation. Re-entering Newton Solve." );
-        }
+        GEOSX_LOG_RANK_0( "++ Fracture propagation. Re-entering Newton Solve." );
       }
     }
-
-    // final step for completion of timestep. typically secondary variable updates and cleanup.
-    implicitStepComplete( time_n, dtReturn, domain );
-    m_numResolves[1] = solveIter;
   }
+
+  // final step for completion of timestep. typically secondary variable updates and cleanup.
+  implicitStepComplete( time_n, dtReturn, domain );
+  m_numResolves[1] = solveIter;
 
   return dtReturn;
 }
@@ -260,7 +246,7 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
   FaceManager & faceManager = meshLevel.getFaceManager();
 
   solidMechanics::arrayViewConst2dLayoutTotalDisplacement const u =
-    nodeManager.getExtrinsicData< solidMechanics::totalDisplacement >();
+    nodeManager.getField< solidMechanics::totalDisplacement >();
   arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
@@ -270,9 +256,9 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
     ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
-    arrayView1d< real64 > const hydraulicAperture = subRegion.getExtrinsicData< flow::hydraulicAperture >();
+    arrayView1d< real64 > const hydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-    arrayView1d< real64 > const deltaVolume = subRegion.getExtrinsicData< flow::deltaVolume >();
+    arrayView1d< real64 > const deltaVolume = subRegion.getField< flow::deltaVolume >();
     arrayView1d< real64 const > const area = subRegion.getElementArea();
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
 
@@ -323,27 +309,6 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
 //    hydraulicAperture.move( LvArray::MemorySpace::cuda );
 //#endif
   } );
-}
-
-real64 HydrofractureSolver::splitOperatorStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                               real64 const & dt,
-                                               integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                                               DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-{
-  GEOSX_ERROR( "Not implemented" );
-  return dt;
-}
-
-real64 HydrofractureSolver::explicitStep( real64 const & time_n,
-                                          real64 const & dt,
-                                          const int cycleNumber,
-                                          DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-  solidMechanicsSolver()->explicitStep( time_n, dt, cycleNumber, domain );
-  flowSolver()->solverStep( time_n, dt, cycleNumber, domain );
-
-  return dt;
 }
 
 void HydrofractureSolver::setupCoupling( DomainPartition const & domain,
@@ -626,7 +591,7 @@ HydrofractureSolver::
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
   arrayView2d< real64 > const &
-  fext = nodeManager.getExtrinsicData< solidMechanics::externalForce >();
+  fext = nodeManager.getField< solidMechanics::externalForce >();
   fext.zero();
 
   string const presDofKey = m_dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
@@ -641,9 +606,9 @@ HydrofractureSolver::
     arrayView1d< globalIndex const > const &
     pressureDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
 
-    if( subRegion.hasExtrinsicData< flow::pressure >() )
+    if( subRegion.hasField< flow::pressure >() )
     {
-      arrayView1d< real64 const > const & fluidPressure = subRegion.getExtrinsicData< flow::pressure >();
+      arrayView1d< real64 const > const & fluidPressure = subRegion.getField< flow::pressure >();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 

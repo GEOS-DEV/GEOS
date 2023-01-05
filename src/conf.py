@@ -57,7 +57,7 @@ if read_the_docs_build:
                   "coreComponents/mesh",
                   "coreComponents/managers",
                   "coreComponents/finiteElement/kernelInterface",
-                  "coreComponents/mesh/ExtrinsicMeshData.hpp",
+                  "coreComponents/mesh/MeshFields.hpp",
                   "coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp",
                   "coreComponents/physicsSolvers/solidMechanics",
                   "coreComponents/finiteVolume"]

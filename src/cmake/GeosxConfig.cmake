@@ -9,22 +9,22 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           HYPRE_CUDA
                           MATHPRESSO
                           METIS
+                          MKL
                           MPI
                           OPENMP
-                          CUDA
                           PARMETIS
                           PETSC
-                          SCOTCH
                           PVTPackage
                           PYGEOSX
                           RAJA 
-                          SUPERLU_DIST
+                          SCOTCH
+                          SEPARATION_COEFFICIENT
                           SUITESPARSE
+                          SUPERLU_DIST
                           TIMERS
                           TOTALVIEW_OUTPUT
                           TRILINOS
-                          MKL
-                          SEPARATION_COEFFICIENT
+                          VTK
                           ${externalComponentsList} )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES} )

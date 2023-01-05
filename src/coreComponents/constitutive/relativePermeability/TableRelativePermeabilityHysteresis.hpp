@@ -28,6 +28,7 @@
 
 namespace geosx
 {
+
 namespace constitutive
 {
 
@@ -68,10 +69,14 @@ public:
   };
 
 
-  TableRelativePermeabilityHysteresis( std::string const & name, dataRepository::Group * const parent );
+  TableRelativePermeabilityHysteresis( std::string const & name,
+                                       dataRepository::Group * const parent );
 
-  static std::string catalogName() { return "TableRelativePermeabilityHysteresis"; }
-  virtual string getCatalogName() const override { return catalogName(); }
+  static std::string catalogName()
+  { return "TableRelativePermeabilityHysteresis"; }
+
+  virtual string getCatalogName() const override
+  { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   // maybe problem to make inheritance virtual (to protect against possible diamond inheritance)
@@ -270,7 +275,9 @@ public:
     GEOSX_HOST_DEVICE
     virtual void update( localIndex const k,
                          localIndex const q,
-                         arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override;
+                         arraySlice1d< real64 const,
+                                       compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override;
+
 
 private:
 
@@ -333,7 +340,8 @@ private:
    */
   KernelWrapper createKernelWrapper();
 
-  virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const override;
+  virtual void
+  saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const override;
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
@@ -367,13 +375,17 @@ private:
 
   };
 
+  arrayView1d< real64 const > getPhaseMinVolumeFraction() const override
+  { return m_imbibitionPhaseMinVolFraction; };
+
 private:
 
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
 
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
+  virtual void resizeFields( localIndex const size,
+                             localIndex const numPts ) override;
 
   /**
    * @brief Create all the table kernel wrappers needed for the simulation (for all the phases present)
@@ -560,7 +572,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     real64 const Shy = ( phaseMinHistoricalVolFraction > Swc ) ? phaseMinHistoricalVolFraction : Swc;
     real64 const A = 1 + jerauldParam_a * ( Shy - Swc );
     real64 const numerator = Shy - Smxd;
-    real64 const denom = A + landParam * pow( ( Smxd - Shy ) / ( Smxd - Swc ), 1 + jerauldParam_b/landParam );
+    real64 const denom = A + landParam * pow( ( Smxd - Shy ) / ( Smxd - Swc ), 1 + jerauldParam_b / landParam );
     real64 const Scrt = Smxd + numerator / denom;
 
     // Step 1.c: find the new endpoint
@@ -573,14 +585,14 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     // Step 2: get the normalized value of saturation
     real64 const ratio = ( Smxi - Swc ) / ( Scrt - Shy );
     real64 const Snorm = Smxi - ( Scrt - S ) * ratio; // normalized saturation from equation 2.166
-    real64 const dSnorm_dS =  ratio;
+    real64 const dSnorm_dS = ratio;
     real64 dkri_dSnorm = 0.0;
     real64 const krwiAtSnorm = imbibitionRelPermKernelWrapper.compute( &Snorm, &dkri_dSnorm );
     real64 const dkriAtSnorm_dS = dkri_dSnorm * dSnorm_dS;
 
     // Step 3: Get the final value at evaluated saturation
     real64 const krdAtShy = drainageRelPermKernelWrapper.compute( &Shy );
-    real64 const imbibitionRelPermRatio = (krwieStar - krdAtShy) / krwei;
+    real64 const imbibitionRelPermRatio = ( krwieStar - krdAtShy ) / krwei;
 
     phaseRelPerm = krdAtShy + krwiAtSnorm * imbibitionRelPermRatio;
     dPhaseRelPerm_dPhaseVolFrac = dkriAtSnorm_dS * imbibitionRelPermRatio;
@@ -858,13 +870,13 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 
   // ---------- intermediate rel perm (ALWAYS DRAINAGE!)
   interRelPerm_nwi =
-    m_drainageRelPermKernelWrappers[TPT::INTERMEDIATE_NONWETTING].compute( &(phaseVolFraction)[ipInter],
+    m_drainageRelPermKernelWrappers[TPT::INTERMEDIATE_NONWETTING].compute( &( phaseVolFraction )[ipInter],
                                                                            &dInterRelPerm_nwi_dInterVolFrac );
 
   // 3) Compute the "three-phase" oil relperm
 
   // use saturation-weighted interpolation
-  real64 const shiftedWettingVolFrac = (phaseVolFraction[ipWetting] - m_drainagePhaseMinVolFraction[ipWetting]);
+  real64 const shiftedWettingVolFrac = ( phaseVolFraction[ipWetting] - m_drainagePhaseMinVolFraction[ipWetting] );
 
   relpermInterpolators::Baker::compute( shiftedWettingVolFrac,
                                         phaseVolFraction[ipNonWetting],
@@ -887,12 +899,13 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
            arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
            arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
-  LvArray::forValuesInSlice( dPhaseRelPerm_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
+  LvArray::forValuesInSlice( dPhaseRelPerm_dPhaseVolFrac, []( real64 & val )
+  { val = 0.0; } );
 
   using PT = RelativePermeabilityBase::PhaseType;
   integer const ipWater = m_phaseOrder[PT::WATER];
-  integer const ipOil   = m_phaseOrder[PT::OIL];
-  integer const ipGas   = m_phaseOrder[PT::GAS];
+  integer const ipOil = m_phaseOrder[PT::OIL];
+  integer const ipGas = m_phaseOrder[PT::GAS];
 
   if( ipWater >= 0 && ipOil >= 0 && ipGas >= 0 )
   {

@@ -84,7 +84,7 @@
       objectPath="ElementRegions/Domain"
       fieldName="rock_stress"
       component="0"
-      scale="-60.0e6"
+      scale="-28.499545e6"
     />
 
     <FieldSpecification 
@@ -94,7 +94,7 @@
       objectPath="ElementRegions/Domain"
       fieldName="rock_stress"
       component="1"
-      scale="-70.0e6"
+      scale="-38.499545e6"
     />
 
     <FieldSpecification 
@@ -104,7 +104,7 @@
       objectPath="ElementRegions/Domain"
       fieldName="rock_stress"
       component="2"
-      scale="-60.0e6"
+      scale="-28.499545e6"
     />
 
     <FieldSpecification

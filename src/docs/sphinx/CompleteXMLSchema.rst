@@ -218,6 +218,13 @@ Element: CompressibleSolidSlipDependentPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidSlipDependentPermeability.rst
 
 
+.. _XML_CompressibleSolidWillisRichardsPermeability:
+
+Element: CompressibleSolidWillisRichardsPermeability
+====================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability.rst
+
+
 .. _XML_ConstantPermeability:
 
 Element: ConstantPermeability
@@ -589,13 +596,6 @@ Element: Outputs
 .. include:: ../../coreComponents/schema/docs/Outputs.rst
 
 
-.. _XML_PAMELAMesh:
-
-Element: PAMELAMesh
-===================
-.. include:: ../../coreComponents/schema/docs/PAMELAMesh.rst
-
-
 .. _XML_PML:
 
 Element: PML
@@ -792,6 +792,13 @@ Element: ReactiveCompositionalMultiphaseOBL
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL.rst
 
 
+.. _XML_RelpermDriver:
+
+Element: RelpermDriver
+======================
+.. include:: ../../coreComponents/schema/docs/RelpermDriver.rst
+
+
 .. _XML_Restart:
 
 Element: Restart
@@ -839,6 +846,13 @@ Element: SinglePhaseHybridFVM
 Element: SinglePhasePoromechanics
 =================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics.rst
+
+
+.. _XML_SinglePhasePoromechanicsConformingFractures:
+
+Element: SinglePhasePoromechanicsConformingFractures
+====================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures.rst
 
 
 .. _XML_SinglePhasePoromechanicsEmbeddedFractures:
@@ -1093,6 +1107,13 @@ Element: WellElementRegion
 .. include:: ../../coreComponents/schema/docs/WellElementRegion.rst
 
 
+.. _XML_WillisRichardsPermeability:
+
+Element: WillisRichardsPermeability
+===================================
+.. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability.rst
+
+
 .. _XML_lassen:
 
 Element: lassen
@@ -1319,6 +1340,13 @@ Datastructure: CompressibleSolidParallelPlatesPermeability
 Datastructure: CompressibleSolidSlipDependentPermeability
 =========================================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidSlipDependentPermeability_other.rst
+
+
+.. _DATASTRUCTURE_CompressibleSolidWillisRichardsPermeability:
+
+Datastructure: CompressibleSolidWillisRichardsPermeability
+==========================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability_other.rst
 
 
 .. _DATASTRUCTURE_ConstantPermeability:
@@ -1713,13 +1741,6 @@ Datastructure: Outputs
 .. include:: ../../coreComponents/schema/docs/Outputs_other.rst
 
 
-.. _DATASTRUCTURE_PAMELAMesh:
-
-Datastructure: PAMELAMesh
-=========================
-.. include:: ../../coreComponents/schema/docs/PAMELAMesh_other.rst
-
-
 .. _DATASTRUCTURE_PML:
 
 Datastructure: PML
@@ -1916,6 +1937,13 @@ Datastructure: ReactiveCompositionalMultiphaseOBL
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL_other.rst
 
 
+.. _DATASTRUCTURE_RelpermDriver:
+
+Datastructure: RelpermDriver
+============================
+.. include:: ../../coreComponents/schema/docs/RelpermDriver_other.rst
+
+
 .. _DATASTRUCTURE_Restart:
 
 Datastructure: Restart
@@ -1963,6 +1991,13 @@ Datastructure: SinglePhaseHybridFVM
 Datastructure: SinglePhasePoromechanics
 =======================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsConformingFractures:
+
+Datastructure: SinglePhasePoromechanicsConformingFractures
+==========================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures:
@@ -2229,6 +2264,13 @@ Datastructure: WellElementRegion
 Datastructure: WellElementRegionUniqueSubRegion
 ===============================================
 .. include:: ../../coreComponents/schema/docs/WellElementRegionUniqueSubRegion_other.rst
+
+
+.. _DATASTRUCTURE_WillisRichardsPermeability:
+
+Datastructure: WillisRichardsPermeability
+=========================================
+.. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:

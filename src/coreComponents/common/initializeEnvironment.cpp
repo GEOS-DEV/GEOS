@@ -201,6 +201,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
 #endif
   adiak::value( "CUDA runtime version", cudaRuntimeVersion );
   adiak::value( "CUDA driver version", cudaDriverVersion );
+
 }
 #endif // defined( GEOSX_USE_CALIPER )
 
