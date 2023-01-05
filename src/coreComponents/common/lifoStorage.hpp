@@ -75,6 +75,7 @@ public:
   camp::resources::Event emplaceFront( arrayView1d< T > array )
   {
     LIFO_MARK_FUNCTION;
+    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     camp::resources::Event e;
     {
       std::unique_lock< std::mutex > l1( m_emplaceMutex, std::defer_lock );
@@ -93,6 +94,7 @@ public:
       }
     }
     m_notEmptyCond.notify_all();
+    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     return e;
   }
 
@@ -104,6 +106,7 @@ public:
    */
   camp::resources::Event popFront( arrayView1d< T > array )
   {
+    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     LIFO_MARK_FUNCTION;
     camp::resources::Event e;
     {
@@ -128,6 +131,7 @@ public:
       }
     }
     m_notFullCond.notify_all();
+    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     return e;
   }
 
@@ -139,6 +143,7 @@ public:
   void emplaceFrontFromBack( fixedSizeDequeAndMutexes< T > & q2 )
   {
     LIFO_MARK_FUNCTION;
+    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     {
       std::unique_lock< std::mutex > lockQ1Emplace( m_emplaceMutex, std::defer_lock );
       std::unique_lock< std::mutex > lockQ2Pop( q2.m_popMutex, std::defer_lock );
@@ -159,6 +164,7 @@ public:
     }
     q2.m_notFullCond.notify_all();
     m_notEmptyCond.notify_all();
+    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
   }
 
   /**
@@ -168,6 +174,7 @@ public:
    */
   void emplaceBackFromFront( fixedSizeDequeAndMutexes< T > & q2 )
   {
+    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     LIFO_MARK_FUNCTION;
     {
       std::unique_lock< std::mutex > lockQ1Emplace( m_emplaceMutex, std::defer_lock );
@@ -182,6 +189,7 @@ public:
     }
     m_notEmptyCond.notify_all();
     q2.m_notFullCond.notify_all();
+    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
   }
 };
 
@@ -321,7 +329,9 @@ public:
         // This buffer will go to host memory, and maybe on disk
         std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this, id ) );
         {
+          std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
           std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
+          std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
           m_task_queue[0].emplace_back( std::move( task ) );
         }
         m_task_queue_not_empty_cond[0].notify_all();
@@ -339,7 +349,9 @@ public:
           // This buffer will go to host memory, and maybe on disk
           std::packaged_task< void() > t2( std::bind( &lifoStorage< T >::hostToDisk, this, pushId ) );
           {
+            std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
             std::unique_lock< std::mutex > l2( m_task_queue_mutex[1] );
+            std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
             m_task_queue[1].emplace_back( std::move( t2 ) );
           }
           m_task_queue_not_empty_cond[1].notify_all();
@@ -347,7 +359,9 @@ public:
       }, id, array ) );
       m_pushToHostFutures[id] = task.get_future();
       {
+        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
+        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
         m_task_queue[0].emplace_back( std::move( task ) );
       }
       m_task_queue_not_empty_cond[0].notify_all();
@@ -413,7 +427,9 @@ public:
         // Trigger pull one buffer from host, and maybe from disk
         std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this, id - m_deviceDeque.capacity() ) );
         {
+          std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
           std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
+          std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
           m_task_queue[0].emplace_back( std::move( task ) );
         }
         m_task_queue_not_empty_cond[0].notify_all();
@@ -431,7 +447,9 @@ public:
           // Trigger pull one buffer from host, and maybe from disk
           std::packaged_task< void() > task2( std::bind( &lifoStorage< T >::diskToHost, this, popId  - m_hostDeque.capacity() ) );
           {
+            std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
             std::unique_lock< std::mutex > lock2( m_task_queue_mutex[1] );
+            std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
             m_task_queue[1].emplace_back( std::move( task2 ) );
           }
           m_task_queue_not_empty_cond[1].notify_all();
@@ -439,7 +457,9 @@ public:
       }, id, array ) );
       m_popFromHostFutures[id] = task.get_future();
       {
+        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
+        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
         m_task_queue[0].emplace_back( std::move( task ) );
       }
       m_task_queue_not_empty_cond[0].notify_all();
@@ -502,7 +522,9 @@ private:
       // This buffer will go to host then maybe to disk
       std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this, id ) );
       {
+        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
+        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
         m_task_queue[1].emplace_back( std::move( task ) );
       }
       m_task_queue_not_empty_cond[1].notify_all();
@@ -519,9 +541,11 @@ private:
   {
     LIFO_MARK_FUNCTION;
     {
+      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       std::lock( m_hostDeque.m_popMutex, m_hostDeque.m_backMutex );
-      std::unique_lock< std::mutex > l1( m_hostDeque.m_popMutex, std::adopt_lock );
-      std::unique_lock< std::mutex > l2( m_hostDeque.m_backMutex, std::adopt_lock );
+      std::lock_guard< std::mutex > l1( m_hostDeque.m_popMutex, std::adopt_lock );
+      std::lock_guard< std::mutex > l2( m_hostDeque.m_backMutex, std::adopt_lock );
+      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       writeOnDisk( m_hostDeque.back().dataIfContiguous(), id );
       m_hostDeque.pop_back();
     }
@@ -546,7 +570,9 @@ private:
       // This buffer will go to host then to disk
       std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this, id - m_hostDeque.capacity() ) );
       {
+        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
+        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
         m_task_queue[1].emplace_back( std::move( task ) );
       }
       m_task_queue_not_empty_cond[1].notify_all();
@@ -563,9 +589,11 @@ private:
   {
     LIFO_MARK_FUNCTION;
     {
-      std::lock( m_hostDeque.m_emplaceMutex, m_hostDeque.m_backMutex );
-      std::unique_lock< std::mutex > l1( m_hostDeque.m_emplaceMutex, std::adopt_lock );
-      std::unique_lock< std::mutex > l2( m_hostDeque.m_backMutex, std::adopt_lock );
+      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
+      std::unique_lock< std::mutex > l1( m_hostDeque.m_emplaceMutex, std::defer_lock );
+      std::lock( l1, m_hostDeque.m_backMutex );
+      std::lock_guard< std::mutex > l2( m_hostDeque.m_backMutex, std::adopt_lock );
+      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       m_hostDeque.m_notFullCond.wait( l1, [ this ]  { return !( m_hostDeque.full() ); } );
       readOnDisk( const_cast< T * >(m_hostDeque.next_back().dataIfContiguous()), id );
       m_hostDeque.inc_back();
@@ -637,7 +665,9 @@ private:
     LIFO_MARK_FUNCTION;
     while( m_continue )
     {
+      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       std::unique_lock< std::mutex > lock( m_task_queue_mutex[queueId] );
+      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       {
         LIFO_MARK_SCOPE( waitForTask );
         m_task_queue_not_empty_cond[queueId].wait( lock, [ this, &queueId ] { return !( m_task_queue[queueId].empty()  && m_continue ); } );
@@ -646,10 +676,12 @@ private:
       std::packaged_task< void() > task( std::move( m_task_queue[queueId].front() ) );
       m_task_queue[queueId].pop_front();
       lock.unlock();
+      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       {
         LIFO_MARK_SCOPE( runningTask );
         task();
       }
+      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     }
   }
 };
