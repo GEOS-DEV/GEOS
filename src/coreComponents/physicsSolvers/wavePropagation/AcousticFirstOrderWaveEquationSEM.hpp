@@ -139,7 +139,7 @@ public:
 
 
     static constexpr char const * sourceElemString() { return "sourceElem"; }
-    static constexpr char const * receiverElemString() { return "sourceRcv"; }
+    static constexpr char const * receiverElemString() { return "rcvElem"; }
 
   } waveEquationViewKeys;
 
@@ -223,7 +223,7 @@ private:
   array1d< localIndex > m_sourceElem;
 
   /// Array containing the elements which contain a receiver
-  array1d< localIndex > m_sourceRcv;
+  array1d< localIndex > m_rcvElem;
 
 };
 

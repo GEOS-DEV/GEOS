@@ -130,7 +130,7 @@ struct WaveSolverUtils
                                             real64 const dt,
                                             real64 const timeSeismo,
                                             localIndex iSeismo,
-                                            arrayView1d< localIndex const > const sourceRcv,
+                                            arrayView1d< localIndex const > const sourceElem,
                                             arrayView2d< real64 const > const receiverConstants,
                                             arrayView1d< localIndex const > const receiverIsLocal,
                                             localIndex const nsamplesSeismoTrace,
@@ -155,8 +155,8 @@ struct WaveSolverUtils
           real32 vtmp_n = 0.0;
           for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
           {
-            vtmp_np1 += var_np1[sourceRcv[ircv]][inode] * receiverConstants[ircv][inode];
-            vtmp_n += var_n[sourceRcv[ircv]][inode] * receiverConstants[ircv][inode];
+            vtmp_np1 += var_np1[sourceElem[ircv]][inode] * receiverConstants[ircv][inode];
+            vtmp_n += var_n[sourceElem[ircv]][inode] * receiverConstants[ircv][inode];
           }
           // linear interpolation between the pressure value at time_n and time_(n+1)
           varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;

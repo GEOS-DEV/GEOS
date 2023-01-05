@@ -94,7 +94,7 @@ AcousticFirstOrderWaveEquationSEM::AcousticFirstOrderWaveEquationSEM( const std:
     setSizedFromParent( 0 ).
     setDescription( "Element containing the sources" );
 
-  registerWrapper( viewKeyStruct::receiverElemString(), &m_sourceRcv ).
+  registerWrapper( viewKeyStruct::receiverElemString(), &m_rcvElem ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Element containing the receivers" );
@@ -151,24 +151,7 @@ localIndex AcousticFirstOrderWaveEquationSEM::getNumNodesPerElem()
 
 void AcousticFirstOrderWaveEquationSEM::initializePreSubGroups()
 {
-  WaveSolverBase::initializePreSubGroups();
-
-  localIndex numNodesPerElem = getNumNodesPerElem();
-
-  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
-  m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
-  //m_sourceIsLocal.resize( numSourcesGlobal );
-
-  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
-  m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
-  m_receiverIsLocal.resize( numReceiversGlobal );
-
-  m_pressureNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
-  m_uxNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
-  m_uyNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
-  m_uzNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
+   WaveSolverBase::initializePreSubGroups();
 }
 
 
@@ -256,7 +239,7 @@ void AcousticFirstOrderWaveEquationSEM::postProcessInput()
   }
   localIndex const nsamples = int(maxTime/dt) + 1;
 
-  localIndex const numNodesPerElem = 8;
+  localIndex const numNodesPerElem = getNumNodesPerElem();
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
@@ -268,7 +251,7 @@ void AcousticFirstOrderWaveEquationSEM::postProcessInput()
   m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverIsLocal.resize( numReceiversGlobal );
-  m_sourceRcv.resize( numReceiversGlobal );
+  m_rcvElem.resize( numReceiversGlobal );
 
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
   m_uxNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
@@ -301,7 +284,7 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
-  arrayView1d< localIndex > const sourceRcv = m_sourceRcv.toView();
+  arrayView1d< localIndex > const rcvElem = m_rcvElem.toView();
   receiverNodeIds.setValues< EXEC_POLICY >( -1 );
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
@@ -362,7 +345,7 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
         sourceConstants,
         receiverCoordinates,
         receiverIsLocal,
-        sourceRcv,
+        rcvElem,
         receiverNodeIds,
         receiverConstants,
         sourceValue,
@@ -395,70 +378,6 @@ void AcousticFirstOrderWaveEquationSEM::addSourceToRightHandSide( integer const 
     }
   } );
 }
-
-// void AcousticFirstOrderWaveEquationSEM::compute2dVariableSeismoTrace( real64 const time_n,
-//                                                             real64 const dt,
-//                                                             real64 const timeSeismo,
-//                                                             localIndex iSeismo,
-//                                                             arrayView2d< real32 const > const var_np1,
-//                                                             arrayView2d< real32 const > const var_n,
-//                                                             arrayView2d< real32 > varAtReceivers )
-// {
-//   real64 const time_np1 = time_n+dt;
-//   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
-//   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
-//   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
-//   arrayView1d< localIndex const > const sourceRcv = m_sourceRcv.toViewConst();
-
-
-//   real32 const a1 = (dt < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
-//   real32 const a2 = 1.0 - a1;
-
-//   if( m_nsamplesSeismoTrace > 0 )
-//   {
-//     forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
-//     {
-//       if( receiverIsLocal[ircv] == 1 )
-//       {
-//         varAtReceivers[iSeismo][ircv] = 0.0;
-//         real32 vtmp_np1 = 0.0;
-//         real32 vtmp_n = 0.0;
-//         for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
-//         {
-//           vtmp_np1 += var_np1[sourceRcv[ircv]][inode] * receiverConstants[ircv][inode];
-//           vtmp_n += var_n[sourceRcv[ircv]][inode] * receiverConstants[ircv][inode];
-//         }
-//         // linear interpolation between the pressure value at time_n and time_(n+1)
-//         varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;
-//       }
-//     } );
-//   }
-
-//   // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized.
-//   // Output will then only be done via the previous code.
-//   if( iSeismo == m_nsamplesSeismoTrace - 1 )
-//   {
-//     forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
-//     {
-//       if( this->m_outputSeismoTrace == 1 )
-//       {
-//         if( receiverIsLocal[ircv] == 1 )
-//         {
-//           // Note: this "manual" output to file is temporary
-//           //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-//           // TODO: remove saveSeismo and replace with TimeHistory
-//           std::ofstream f( GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
-//           for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
-//           {
-//             f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
-//           }
-//           f.close();
-//         }
-//       }
-//     } );
-//   }
-
-// }
 
 void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
@@ -798,7 +717,7 @@ void AcousticFirstOrderWaveEquationSEM::compute2dVariableAllSeismoTraces( real64
        (timeSeismo = m_dtSeismoTrace*indexSeismoTrace) <= (time_n + epsilonLoc) && indexSeismoTrace < m_nsamplesSeismoTrace;
        indexSeismoTrace++ )
   {
-    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dt, timeSeismo, indexSeismoTrace, m_sourceRcv, m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
+    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dt, timeSeismo, indexSeismoTrace, m_rcvElem, m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
                                                    m_outputSeismoTrace,
                                                    var_np1, var_n, varAtReceivers );
   }
