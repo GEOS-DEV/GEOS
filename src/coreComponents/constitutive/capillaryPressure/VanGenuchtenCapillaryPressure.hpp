@@ -69,7 +69,6 @@ public:
 private:
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
   evaluateVanGenuchtenFunction( real64 const scaledWettingVolFrac,
                                 real64 const dScaledWettingPhaseVolFrac_dVolFrac,

@@ -534,7 +534,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( int const qa,
 
 template< typename GL_BASIS >
 template< typename FUNC, typename ... PARAMS >
-GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
+GEOSX_HOST_DEVICE inline void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( real64 const (&coords)[3],
                                                               FUNC && func,
                                                               PARAMS &&... params )
@@ -616,7 +616,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
 //*************************************************************************************************
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( real64 const (&coords)[3],
                                                             real64 const (&X)[numNodes][3],
@@ -689,7 +689,7 @@ jacobianTransformation( int const qa,
 }
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 jacobianTransformation( real64 const (&coords)[3],
@@ -906,7 +906,7 @@ computeStiffnessTerm( int q,
 template< typename GL_BASIS >
 template< typename FUNC >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeFirstOrderStiffnessTerm( int q,
@@ -1095,7 +1095,7 @@ applyTransformationToParentGradients( int const qa,
 //*************************************************************************************************
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 applyTransformationToParentGradients( real64 const (&coords)[3],
