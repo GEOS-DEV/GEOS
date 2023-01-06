@@ -55,6 +55,24 @@ ThermalSinglePhasePoromechanicsFixedStressSolver::~ThermalSinglePhasePoromechani
   // TODO Auto-generated destructor stub
 }
 
+void ThermalSinglePhasePoromechanicsFixedStressSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType)
+{
+  GEOSX_MARK_FUNCTION;
+  if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            auto & subRegion )
+      {
+        flowSolver()->updatePorosityAndPermeability( subRegion );
+      } );
+    } );
+  } 
+}
+
 REGISTER_CATALOG_ENTRY( SolverBase, ThermalSinglePhasePoromechanicsFixedStressSolver, string const &, Group * const )
 
 } /* namespace geosx */

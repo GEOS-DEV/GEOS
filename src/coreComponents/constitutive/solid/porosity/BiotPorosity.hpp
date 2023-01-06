@@ -102,30 +102,6 @@ public:
     savePorosity( k, q, porosity, biotSkeletonModulusInverse );
   }
 
-
-  GEOSX_HOST_DEVICE
-  void updateFromPressureTemperatureAndMeanStress( localIndex const k,
-                                                   localIndex const q,
-                                                   real64 const & deltaPressure,
-                                                   real64 const & deltaTemperature,
-                                                   real64 const & totalMeanStressIncrement ) const
-  {
-    real64 const biotSkeletonModulusInverse = (m_biotCoefficient[k] - m_porosity_n[k][q]) / m_grainBulkModulus;
-    real64 const porosityThermalExpansion = 3 * m_thermalExpansionCoefficient[k] * m_biotCoefficient[k];
-
-    m_meanStressIncrement[k][q] = totalMeanStressIncrement;
-
-    real64 const porosity = m_porosity_n[k][q]
-                            + m_biotCoefficient[k] * totalMeanStressIncrement / m_bulkModulus[k]
-                            + biotSkeletonModulusInverse * deltaPressure + m_biotCoefficient[k] * m_biotCoefficient[k] / m_bulkModulus[k] * deltaPressure
-                            + porosityThermalExpansion * deltaTemperature;
-
-    real64 const dPoro_dPres = biotSkeletonModulusInverse + m_biotCoefficient[k] * m_biotCoefficient[k] / m_bulkModulus[k];
-    real64 const dPoro_dTemp = porosityThermalExpansion;
-
-    savePorosity( k, q, porosity, dPoro_dPres, dPoro_dTemp );
-  }
-
   GEOSX_HOST_DEVICE
   void computePorosity( real64 const & pressure,
                         real64 const & temperature,
@@ -186,6 +162,14 @@ public:
                                           real64 const thermalExpansionCoefficient ) const
   {
     m_thermalExpansionCoefficient[k] = thermalExpansionCoefficient;
+  }
+
+  GEOSX_HOST_DEVICE
+  void updateTotalMeanStressIncrement( localIndex const k,
+                                       localIndex const q,
+                                       real64 const & totalMeanStressIncrement ) const
+  {
+    m_meanStressIncrement[k][q] = totalMeanStressIncrement;
   }
 
 protected:

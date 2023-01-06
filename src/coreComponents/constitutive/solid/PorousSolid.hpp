@@ -150,13 +150,9 @@ public:
 
     real64 const totalMeanStressIncrement = effectiveMeanStressIncrement - biotCoefficient * deltaPressure - 3 * thermalExpansionCoefficient * bulkModulus * deltaTemperatureFromLastStep;
 
-    computePorosityFixedStress( k,
-                                q,
-                                deltaPressure,
-                                deltaTemperatureFromLastStep,
-                                totalMeanStressIncrement );
+    m_porosityUpdate.updateTotalMeanStressIncrement( k, q, totalMeanStressIncrement );
 
-    // The body force is calculated in the SolidMechancis kernel and the fluid contribution is neglected here
+    // The body force is calculated in the SolidMechanics kernel and the fluid contribution is neglected here
   }
 
   /**
@@ -229,20 +225,6 @@ private:
     porosity = m_porosityUpdate.getPorosity( k, q );
     porosity_n = m_porosityUpdate.getPorosity_n( k, q );
     porosityInit = m_porosityUpdate.getInitialPorosity( k, q );
-  }
-
-  GEOSX_HOST_DEVICE
-  void computePorosityFixedStress( localIndex const k,
-                                   localIndex const q,
-                                   real64 const & deltaFluidPressure,
-                                   real64 const & deltaTemperature,
-                                   real64 const & totalMeanStressIncrement ) const
-  {
-    m_porosityUpdate.updateFromPressureTemperatureAndMeanStress( k,
-                                                                 q,
-                                                                 deltaFluidPressure,
-                                                                 deltaTemperature,
-                                                                 totalMeanStressIncrement );
   }
 
   GEOSX_HOST_DEVICE

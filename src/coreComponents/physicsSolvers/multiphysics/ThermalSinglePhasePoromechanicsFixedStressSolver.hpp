@@ -81,6 +81,8 @@ public:
     return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
   }
 
+  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
+
 protected:
 
   virtual void initializePreSubGroups() override;
