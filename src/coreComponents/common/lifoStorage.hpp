@@ -33,6 +33,79 @@
 namespace geosx
 {
 
+
+class twoMutexLock
+{
+public:
+  twoMutexLock( std::mutex & mutex1, std::mutex & mutex2 ):
+    m_islocked( false ), m_mutex1( &mutex1 ), m_mutex2( &mutex2 )
+  {
+    lock();
+  }
+
+  ~twoMutexLock()
+  {
+    unlock();
+  }
+
+  void lock()
+  {
+    if( m_islocked ) return;
+    std::lock( *m_mutex1, *m_mutex2 );
+    m_islocked = true;
+  }
+
+  void unlock()
+  {
+    if( !m_islocked ) return;
+    m_mutex1->unlock();
+    m_mutex2->unlock();
+    m_islocked = false;
+  }
+private:
+  bool m_islocked;
+  std::mutex *m_mutex1;
+  std::mutex *m_mutex2;
+};
+
+class fourMutexLock
+{
+public:
+  fourMutexLock( std::mutex & mutex1, std::mutex & mutex2, std::mutex & mutex3, std::mutex & mutex4 ):
+    m_islocked( false ), m_mutex1( &mutex1 ), m_mutex2( &mutex2 ), m_mutex3( &mutex3 ), m_mutex4( &mutex4 )
+  {
+    lock();
+  }
+
+  ~fourMutexLock()
+  {
+    unlock();
+  }
+
+  void lock()
+  {
+    if( m_islocked ) return;
+    std::lock( *m_mutex1, *m_mutex2, *m_mutex3, *m_mutex4 );
+    m_islocked = true;
+  }
+
+  void unlock()
+  {
+    if( !m_islocked ) return;
+    m_mutex1->unlock();
+    m_mutex2->unlock();
+    m_mutex3->unlock();
+    m_mutex4->unlock();
+    m_islocked = false;
+  }
+private:
+  bool m_islocked;
+  std::mutex *m_mutex1;
+  std::mutex *m_mutex2;
+  std::mutex *m_mutex3;
+  std::mutex *m_mutex4;
+};
+
 /// Associate mutexes with the fixedSizeDeque
 template< typename T >
 class fixedSizeDequeAndMutexes : public fixedSizeDeque< T, int >
@@ -47,9 +120,9 @@ public:
   /// Mutex to prevent two simulteaneous emplace (can be an issue for last one)
   std::mutex m_emplaceMutex;
   /// Condition used to notify when queue is not full
-  std::condition_variable m_notFullCond;
+  std::condition_variable_any m_notFullCond;
   /// Condition used to notify when queue is not empty
-  std::condition_variable m_notEmptyCond;
+  std::condition_variable_any m_notEmptyCond;
 
   /**
    * Create a fixed size double ended queue with associated mutexes and condition variables.
@@ -78,16 +151,10 @@ public:
     std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     camp::resources::Event e;
     {
-      std::unique_lock< std::mutex > l1( m_emplaceMutex, std::defer_lock );
-      {
-        LIFO_MARK_SCOPE( waitingForMutex );
-        std::lock( l1, m_frontMutex );
-      }
-      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
-      std::lock_guard< std::mutex > l2( m_frontMutex, std::adopt_lock );
+      twoMutexLock lock( m_emplaceMutex, m_frontMutex );
       {
         LIFO_MARK_SCOPE( waitingForBuffer );
-        m_notFullCond.wait( l1, [ this ]  { return !this->full(); } );
+        m_notFullCond.wait( lock, [ this ]  { return !this->full(); } );
       }
       std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       {
@@ -112,16 +179,10 @@ public:
     LIFO_MARK_FUNCTION;
     camp::resources::Event e;
     {
-      std::unique_lock< std::mutex > l1( m_popMutex, std::defer_lock );
-      {
-        LIFO_MARK_SCOPE( waitingForMutex );
-        std::lock( l1, m_frontMutex );
-      }
-      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
-      std::lock_guard< std::mutex > l2( m_frontMutex, std::adopt_lock );
+      twoMutexLock lock( m_popMutex, m_frontMutex );
       {
         LIFO_MARK_SCOPE( waitingForBuffer );
-        m_notEmptyCond.wait( l1, [ this ]  { return !this->empty(); } );
+        m_notEmptyCond.wait( lock, [ this ]  { return !this->empty(); } );
       }
       std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       // deadlock can occur if frontMutex is taken after an
@@ -149,18 +210,17 @@ public:
     LIFO_MARK_FUNCTION;
     std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     {
-      std::unique_lock< std::mutex > lockQ1Emplace( m_emplaceMutex, std::defer_lock );
-      std::unique_lock< std::mutex > lockQ2Pop( q2.m_popMutex, std::defer_lock );
-      std::lock( lockQ1Emplace, m_frontMutex, lockQ2Pop, q2.m_backMutex );
-      std::lock_guard< std::mutex > lockQ1Front( m_frontMutex, std::adopt_lock );
-      std::lock_guard< std::mutex > lockQ2Back( q2.m_backMutex, std::adopt_lock );
+      fourMutexLock lock( m_emplaceMutex, q2.m_popMutex, m_frontMutex, q2.m_backMutex );
+      while( this->full() || q2.empty() )
       {
-        LIFO_MARK_SCOPE( WaitForBufferToEmplace );
-        m_notFullCond.wait( lockQ1Emplace, [ this ]  { return !this->full(); } );
-      }
-      {
-        LIFO_MARK_SCOPE( WaitForBufferToPop );
-        q2.m_notEmptyCond.wait( lockQ2Pop, [ &q2 ] { return !q2.empty(); } );
+        {
+          LIFO_MARK_SCOPE( WaitForBufferToEmplace );
+          m_notFullCond.wait( lock, [ this ]  { return !this->full(); } );
+        }
+        {
+          LIFO_MARK_SCOPE( WaitForBufferToPop );
+          q2.m_notEmptyCond.wait( lock, [ &q2 ] { return !q2.empty(); } );
+        }
       }
       LIFO_MARK_SCOPE( Transfert );
       this->emplace_front( q2.back() ).wait();
@@ -181,13 +241,12 @@ public:
     std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     LIFO_MARK_FUNCTION;
     {
-      std::unique_lock< std::mutex > lockQ1Emplace( m_emplaceMutex, std::defer_lock );
-      std::unique_lock< std::mutex > lockQ2Pop( q2.m_popMutex, std::defer_lock );
-      std::lock( q2.m_frontMutex, lockQ2Pop, lockQ1Emplace, m_backMutex );
-      std::lock_guard< std::mutex > lockQ1Back( m_backMutex, std::adopt_lock );
-      std::lock_guard< std::mutex > lockQ2Front( q2.m_frontMutex, std::adopt_lock );
-      m_notFullCond.wait( lockQ1Emplace, [ this ]  { return !this->full(); } );
-      q2.m_notEmptyCond.wait( lockQ2Pop, [ &q2 ] { return !q2.empty(); } );
+      fourMutexLock lock( m_emplaceMutex, q2.m_popMutex, m_backMutex, q2.m_frontMutex );
+      while( this->full() || q2.empty() )
+      {
+        m_notFullCond.wait( lock, [ this ]  { return !this->full(); } );
+        q2.m_notEmptyCond.wait( lock, [ &q2 ] { return !q2.empty(); } );
+      }
       this->emplace_back( q2.front() ).wait();
       q2.pop_front();
     }
@@ -451,9 +510,9 @@ public:
           // Trigger pull one buffer from host, and maybe from disk
           std::packaged_task< void() > task2( std::bind( &lifoStorage< T >::diskToHost, this, popId  - m_hostDeque.capacity() ) );
           {
-            std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
+            std::cerr << __FILE__ << ":" << __LINE__ << " " << popId << std::endl;
             std::unique_lock< std::mutex > lock2( m_task_queue_mutex[1] );
-            std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
+            std::cerr << __FILE__ << ":" << __LINE__ << " " << popId << std::endl;
             m_task_queue[1].emplace_back( std::move( task2 ) );
           }
           m_task_queue_not_empty_cond[1].notify_all();
@@ -461,9 +520,9 @@ public:
       }, id, array ) );
       m_popFromHostFutures[id] = task.get_future();
       {
-        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
+        std::cerr << __FILE__ << ":" << __LINE__ << " " << id << std::endl;
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
-        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
+        std::cerr << __FILE__ << ":" << __LINE__ << " " << id << std::endl;
         m_task_queue[0].emplace_back( std::move( task ) );
       }
       m_task_queue_not_empty_cond[0].notify_all();
@@ -546,9 +605,7 @@ private:
     LIFO_MARK_FUNCTION;
     {
       std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
-      std::lock( m_hostDeque.m_popMutex, m_hostDeque.m_backMutex );
-      std::lock_guard< std::mutex > l1( m_hostDeque.m_popMutex, std::adopt_lock );
-      std::lock_guard< std::mutex > l2( m_hostDeque.m_backMutex, std::adopt_lock );
+      twoMutexLock lock( m_hostDeque.m_popMutex, m_hostDeque.m_backMutex );
       std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       writeOnDisk( m_hostDeque.back().dataIfContiguous(), id );
       m_hostDeque.pop_back();
@@ -594,11 +651,9 @@ private:
     LIFO_MARK_FUNCTION;
     {
       std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
-      std::unique_lock< std::mutex > l1( m_hostDeque.m_emplaceMutex, std::defer_lock );
-      std::lock( l1, m_hostDeque.m_backMutex );
-      std::lock_guard< std::mutex > l2( m_hostDeque.m_backMutex, std::adopt_lock );
+      twoMutexLock lock( m_hostDeque.m_emplaceMutex, m_hostDeque.m_backMutex );
       std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
-      m_hostDeque.m_notFullCond.wait( l1, [ this ]  { return !( m_hostDeque.full() ); } );
+      m_hostDeque.m_notFullCond.wait( lock, [ this ]  { return !( m_hostDeque.full() ); } );
       std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       readOnDisk( const_cast< T * >(m_hostDeque.next_back().dataIfContiguous()), id );
       m_hostDeque.inc_back();
