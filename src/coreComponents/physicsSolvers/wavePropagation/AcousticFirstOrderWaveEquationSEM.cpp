@@ -151,7 +151,7 @@ localIndex AcousticFirstOrderWaveEquationSEM::getNumNodesPerElem()
 
 void AcousticFirstOrderWaveEquationSEM::initializePreSubGroups()
 {
-   WaveSolverBase::initializePreSubGroups();
+  WaveSolverBase::initializePreSubGroups();
 }
 
 
