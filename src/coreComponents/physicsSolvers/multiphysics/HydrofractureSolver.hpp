@@ -199,14 +199,14 @@ private:
                                          real64 const & dt,
                                          int const cycleNumber,
                                          DomainPartition & domain ) override final;
-  
+
   /**
    * @brief initializes the primary variables (e.g. p and disp) of newly
-   * created fracture elements. 
-   * 
+   * created fracture elements.
+   *
    * @param domain The Domain partition
    */
-  void initializeNewFractureElements( DomainPartition & domain );                                       
+  void initializeNewFractureElements( DomainPartition & domain );
 
   // name of the contact relation
   string m_contactRelationName;

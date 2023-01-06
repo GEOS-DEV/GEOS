@@ -247,8 +247,8 @@ public:
 
   /**
    * @brief Const accessor to the list of new face elements.
-   * 
-   * @return a non mutable view of the sorted array of new face elements. 
+   *
+   * @return a non mutable view of the sorted array of new face elements.
    */
   SortedArrayView< localIndex const > const newFaceElements() const {return m_newFaceElements.toViewConst(); }
 
