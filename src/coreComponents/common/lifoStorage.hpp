@@ -83,11 +83,13 @@ public:
         LIFO_MARK_SCOPE( waitingForMutex );
         std::lock( l1, m_frontMutex );
       }
+      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       std::lock_guard< std::mutex > l2( m_frontMutex, std::adopt_lock );
       {
         LIFO_MARK_SCOPE( waitingForBuffer );
         m_notFullCond.wait( l1, [ this ]  { return !this->full(); } );
       }
+      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       {
         LIFO_MARK_SCOPE( copy );
         e = fixedSizeDeque< T, int >::emplace_front( array.toSliceConst() );
@@ -115,11 +117,13 @@ public:
         LIFO_MARK_SCOPE( waitingForMutex );
         std::lock( l1, m_frontMutex );
       }
+      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       std::lock_guard< std::mutex > l2( m_frontMutex, std::adopt_lock );
       {
         LIFO_MARK_SCOPE( waitingForBuffer );
         m_notEmptyCond.wait( l1, [ this ]  { return !this->empty(); } );
       }
+      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       // deadlock can occur if frontMutex is taken after an
       // emplaceMutex (inside pushAsync) but this is prevented by the
       // pushWait() in popAsync.
