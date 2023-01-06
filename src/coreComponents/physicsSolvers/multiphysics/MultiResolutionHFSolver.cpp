@@ -262,7 +262,7 @@ void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
   ElementRegionManager const & patchElemManager = patch.getElemManager();
    //this is risky, not sure FE_TYPE will come from patch
   //each rank has these arrays
-  real64 rankMaxDist = 1e20;
+  real64 rankMaxDist = 1e-20;
   R1Tensor rankFarthestCenter = {0.0, 0.0, 0.0};
   //loop over all elements in patch and compute elemental average damage
   //observe that patch coordinates are relative, so, reference point should be added 
@@ -300,7 +300,7 @@ void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
         //check if this element is farther than current farthest
         R1Tensor elemVec = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_referencePoint );
         LvArray::tensorOps::subtract< 3 >( elemVec, elemCenter );
-        real64 dist = LvArray::tensorOps::l2Norm< 3 >( elemVec );
+        real64 dist = LvArray::tensorOps::l2Norm< 3 >( elemVec );      
         if (dist > rankMaxDist)
         {
           rankMaxDist = dist;
