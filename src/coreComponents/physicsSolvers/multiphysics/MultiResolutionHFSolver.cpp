@@ -255,7 +255,7 @@ void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
   //-verify dist function between R1Tensors - partially done
   //-verify MPI part - partially done
   //reference point must be prescribed in base coordinate system (usually injection source)
-  R1Tensor m_referencePoint = {0.0, 0.0, 0.0}; //add this as input file parameter
+  R1Tensor m_referencePoint = {-1.0,0.0,0.0}; //add this as input file parameter
   real64 threshold = 0.95;
   //get mpi communicator
   MPI_Comm const & comm = MPI_COMM_GEOSX;
@@ -385,6 +385,10 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
   GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
+  R1Tensor tip = {-1.0,-1.0,0.0}; //initial crack tip - bad guess
+  std::cout<<"tipX: "<<tip[0]<<std::endl; 
+  std::cout<<"tipY: "<<tip[1]<<std::endl; 
+  std::cout<<"tipZ: "<<tip[2]<<std::endl;   
 
   SolidMechanicsEmbeddedFractures &
   baseSolver = this->getParent().getGroup< SolidMechanicsEmbeddedFractures >( m_baseSolverName );
@@ -500,6 +504,10 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
                                                 dtReturn,
                                                 cycleNumber,
                                                 domain );
+    this->findPhaseFieldTip(tip, domain.getMeshBody( patchTarget.first ).getBaseDiscretization());      
+    std::cout<<"tipX: "<<tip[0]<<std::endl; 
+    std::cout<<"tipY: "<<tip[1]<<std::endl; 
+    std::cout<<"tipZ: "<<tip[2]<<std::endl;                                      
 
     if( dtReturnTemporary < dtReturn )
     {
