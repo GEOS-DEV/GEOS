@@ -595,8 +595,10 @@ private:
       std::lock_guard< std::mutex > l2( m_hostDeque.m_backMutex, std::adopt_lock );
       std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       m_hostDeque.m_notFullCond.wait( l1, [ this ]  { return !( m_hostDeque.full() ); } );
+      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       readOnDisk( const_cast< T * >(m_hostDeque.next_back().dataIfContiguous()), id );
       m_hostDeque.inc_back();
+      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     }
     m_hostDeque.m_notEmptyCond.notify_all();
   }
@@ -665,24 +667,26 @@ private:
     LIFO_MARK_FUNCTION;
     while( m_continue )
     {
-      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
+      std::cerr << __FILE__ << ":" << __LINE__ << " " << queueId << std::endl;
       std::unique_lock< std::mutex > lock( m_task_queue_mutex[queueId] );
-      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
+      std::cerr << __FILE__ << ":" << __LINE__ << " " << queueId << std::endl;
       {
         LIFO_MARK_SCOPE( waitForTask );
         m_task_queue_not_empty_cond[queueId].wait( lock, [ this, &queueId ] { return !( m_task_queue[queueId].empty()  && m_continue ); } );
+        std::cerr << __FILE__ << ":" << __LINE__ << " " << queueId << std::endl;
       }
       if( m_continue == false ) break;
       std::packaged_task< void() > task( std::move( m_task_queue[queueId].front() ) );
       m_task_queue[queueId].pop_front();
       lock.unlock();
-      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
+      std::cerr << __FILE__ << ":" << __LINE__ << " " << queueId << std::endl;
       {
         LIFO_MARK_SCOPE( runningTask );
         task();
       }
-      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
+      std::cerr << __FILE__ << ":" << __LINE__ << " " << queueId << std::endl;
     }
+    std::cerr << __FILE__ << ":" << __LINE__ << " " << queueId << std::endl;
   }
 };
 }
