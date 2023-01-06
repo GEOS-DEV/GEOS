@@ -401,8 +401,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
-    /// get table containing all the face normals
-    arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
+    /// get table containing face to nodes map
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
@@ -569,7 +568,6 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
 
     arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
 
-    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
     arrayView1d< real32 > const rhs = nodeManager.getField< fields::ForcingRHS >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -577,7 +575,6 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
       arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensity >();
-      arrayView1d< real32 const > const mediumVelocity = elementSubRegion.getField< fields::MediumVelocity >();
       arrayView2d< real32 > const velocity_x = elementSubRegion.getField< fields::Velocity_x >();
       arrayView2d< real32 > const velocity_y = elementSubRegion.getField< fields::Velocity_y >();
       arrayView2d< real32 > const velocity_z = elementSubRegion.getField< fields::Velocity_z >();
