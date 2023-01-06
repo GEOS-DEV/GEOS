@@ -278,17 +278,21 @@ void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
     });
     string const & damageModelName = cellElementSubRegion.getReference< string >( PhaseFieldDamageFEM::viewKeyStruct::solidModelNamesString());
     //this call may need to constitutive pass-thru loop to be generalized to multiple damage types
-    constitutive::Damage & damageUpdates = cellElementSubRegion.getConstitutiveModel< constitutive::Damage >( damageModelName );
+    const constitutive::Damage<ElasticIsotropic> & damageUpdates = cellElementSubRegion.getConstitutiveModel< Damage<ElasticIsotropic> >( damageModelName );
     arrayView2d< const real64 > allElemCenters = cellElementSubRegion.getElementCenter(); 
+    const arrayView2d< real64 const > qp_damage = damageUpdates.getDamage();
     forAll< serialPolicy >( cellElementSubRegion.size(), [&] ( localIndex const k )
     {
       //compute elemental averaged damage
       real64 average_d = 0;
-      R1Tensor elemCenter = allElemCenters[k]; //this is trying to create a R1Tensor from a array2d< real64 >
+      R1Tensor elemCenter;
+      elemCenter[0] = allElemCenters[k][0];
+      elemCenter[1] = allElemCenters[k][1];
+      elemCenter[2] = allElemCenters[k][2]; //this is trying to create a R1Tensor from a array2d< real64 >
       for(localIndex q=0; q<numQuadraturePointsPerElem; q++)
       {
         //get damage at quadrature point i
-        average_d = average_d + damageUpdates->m_damage( k, q )/numQuadraturePointsPerElem;
+        average_d = average_d + qp_damage( k,q )/numQuadraturePointsPerElem;
       }
       //if elemental damage > 0.95 (or another threshold)
       if (average_d > threshold)
