@@ -98,18 +98,6 @@ struct MobilityKernel
 
 /******************************** ElementBasedAssemblyKernel ********************************/
 
-/**
- * @brief Internal struct to provide no-op defaults used in the inclusion
- *   of lambda functions into kernel component functions.
- * @struct NoOpFunc
- */
-struct NoOpFunc
-{
-  template< typename ... Ts >
-  GEOSX_HOST_DEVICE
-  constexpr void
-  operator()( Ts && ... ) const {}
-};
 
 /**
  * @class ElementBasedAssemblyKernel

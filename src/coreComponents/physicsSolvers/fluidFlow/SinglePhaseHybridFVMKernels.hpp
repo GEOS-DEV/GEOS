@@ -39,44 +39,6 @@ namespace geosx
 namespace singlePhaseHybridFVMKernels
 {
 
-/******************************** Kernel switches ********************************/
-
-namespace internal
-{
-
-template< typename T, typename LAMBDA >
-void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
-{
-  static_assert( std::is_integral< T >::value, "KernelLaunchSelectorFaceSwitch: type should be integral" );
-
-  switch( value )
-  {
-    case 4:
-    { lambda( std::integral_constant< T, 4 >() ); return;}
-    case 5:
-    { lambda( std::integral_constant< T, 5 >() ); return;}
-    case 6:
-    { lambda( std::integral_constant< T, 6 >() ); return;}
-    case 7:
-    { lambda( std::integral_constant< T, 7 >() ); return;}
-    case 8:
-    { lambda( std::integral_constant< T, 8 >() ); return;}
-    case 9:
-    { lambda( std::integral_constant< T, 9 >() ); return;}
-    case 10:
-    { lambda( std::integral_constant< T, 10 >() ); return;}
-    case 11:
-    { lambda( std::integral_constant< T, 11 >() ); return;}
-    case 12:
-    { lambda( std::integral_constant< T, 12 >() ); return;}
-    case 13:
-    { lambda( std::integral_constant< T, 13 >() ); return;}
-    default: GEOSX_ERROR( "Unknown numFacesInElem value: " << value );
-  }
-}
-
-} // namespace internal
-
 /******************************** ElementBasedAssemblyKernel ********************************/
 
 /**
@@ -343,11 +305,11 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] kernelOp the function used to customize the kernel
    */
-  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void compute( localIndex const ei,
                 StackVariables & stack,
-                FUNC && kernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
+                FUNC && kernelOp = NoOpFunc{} ) const
   {
     GEOSX_UNUSED_VAR( ei, stack, kernelOp );
 
@@ -585,7 +547,7 @@ public:
     {
       using IP = TYPEOFREF( mimeticInnerProduct );
 
-      internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NUM_FACES )
+      hybridFVMKernels::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NUM_FACES )
       {
         ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
           elemManager.constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );

@@ -328,11 +328,11 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] NoOpFunc the function used to customize the computation of the flux
    */
-  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC && kernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
+                    FUNC && kernelOp = NoOpFunc{} ) const
   {
     // first, compute the transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,
@@ -502,11 +502,11 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
-                 FUNC && kernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
+                 FUNC && kernelOp = NoOpFunc{} ) const
   {
     // add contribution to residual and jacobian into:
     // - the mass balance equation
@@ -988,11 +988,11 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
-  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC && compFluxKernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
+                    FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
     using Order = BoundaryStencil::Order;
     localIndex constexpr numElems = BoundaryStencil::maxNumPointsInFlux;
@@ -1054,11 +1054,11 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
-                 FUNC && assemblyKernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
+                 FUNC && assemblyKernelOp = NoOpFunc{} ) const
   {
     using Order = BoundaryStencil::Order;
 
