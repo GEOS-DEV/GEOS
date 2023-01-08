@@ -682,7 +682,7 @@ private:
   void writeOnDisk( const T * d, int id )
   {
     LIFO_MARK_FUNCTION;
-
+    std::cerr << "writeOnDisk "<< id << std::endl;
     std::string fileName = GEOSX_FMT( "{}_{:08}.dat", m_name, id );
     int lastDirSeparator = fileName.find_last_of( "/\\" );
     std::string dirName = fileName.substr( 0, lastDirSeparator );
@@ -707,13 +707,20 @@ private:
   void readOnDisk( T * d, int id )
   {
     LIFO_MARK_FUNCTION;
+    std::cerr << "readOnDisk "<< id << std::endl;
     std::string fileName = GEOSX_FMT( "{}_{:08}.dat", m_name, id );
+    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     std::ifstream wf( fileName, std::ios::in | std::ios::binary );
+    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     GEOSX_ERROR_IF( !wf,
                     "Could not open file "<< fileName << " for reading" );
+    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     wf.read( (char *)d, m_bufferSize );
+    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     wf.close();
+    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     remove( fileName.c_str() );
+    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
   }
 
   /**
