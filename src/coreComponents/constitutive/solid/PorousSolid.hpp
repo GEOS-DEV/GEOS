@@ -124,10 +124,10 @@ public:
                                                   real64 const ( &strainIncrement )[6],
                                                   real64 ( & totalStress )[6],
                                                   DiscretizationOps & stiffness ) const
-  {    
+  {
     real64 dTotalStress_dPressure[6];
-    real64 dTotalStress_dTemperature[6]; 
-    
+    real64 dTotalStress_dTemperature[6];
+
     // Compute total stress increment and its derivative
     computeTotalStress( k,
                         q,

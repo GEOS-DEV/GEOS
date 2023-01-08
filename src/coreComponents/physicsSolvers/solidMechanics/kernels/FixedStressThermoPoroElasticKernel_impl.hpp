@@ -81,7 +81,7 @@ setup( localIndex const k,
     m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
   stack.numRows =  3 * numSupportPoints;
   stack.numCols = stack.numRows;
-    
+
   for( localIndex a = 0; a < numSupportPoints; ++a )
   {
     localIndex const localNodeIndex = m_elemsToNodes( k, a );
@@ -117,9 +117,9 @@ quadraturePointKernel( localIndex const k,
                        localIndex const q,
                        StackVariables & stack ) const
 {
-  real64 const deltaTemperatureFromInit = m_temperature[k] - m_initialTemperature[k]; 
-  real64 const deltaTemperatureFromLastStep = m_temperature[k] - m_temperature_n[k]; 
-  
+  real64 const deltaTemperatureFromInit = m_temperature[k] - m_initialTemperature[k];
+  real64 const deltaTemperatureFromLastStep = m_temperature[k] - m_temperature_n[k];
+
   real64 dNdX[ numNodesPerElem ][ 3 ];
   real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
                                                                            stack.feStack, dNdX );
@@ -136,8 +136,8 @@ quadraturePointKernel( localIndex const k,
                                                                   q,
                                                                   m_pressure_n[k],
                                                                   m_pressure[k],
-                                                                  deltaTemperatureFromInit, 
-                                                                  deltaTemperatureFromLastStep, 
+                                                                  deltaTemperatureFromInit,
+                                                                  deltaTemperatureFromLastStep,
                                                                   strainInc,
                                                                   totalStress,
                                                                   stiffness );
@@ -191,17 +191,18 @@ complete( localIndex const k,
     {
       localIndex const dof =
         LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
-      if( dof < 0 || dof >= m_matrix.numRows() ) continue;
+      if( dof < 0 || dof >= m_matrix.numRows() )
+        continue;
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.localRowDofIndex,
                                                                               stack.localJacobian[ numDofPerTestSupportPoint * localNode + dim ],
                                                                               stack.numRows );
 
-        RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] );
-        maxForce = fmax( maxForce, fabs( stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] ) );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] );
+      maxForce = fmax( maxForce, fabs( stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] ) );
     }
   }
-    return maxForce;
+  return maxForce;
 }
 
 template< typename SUBREGION_TYPE,

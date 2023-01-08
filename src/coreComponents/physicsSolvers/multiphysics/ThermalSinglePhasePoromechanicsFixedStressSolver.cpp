@@ -55,7 +55,7 @@ ThermalSinglePhasePoromechanicsFixedStressSolver::~ThermalSinglePhasePoromechani
   // TODO Auto-generated destructor stub
 }
 
-void ThermalSinglePhasePoromechanicsFixedStressSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType)
+void ThermalSinglePhasePoromechanicsFixedStressSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
   GEOSX_MARK_FUNCTION;
   if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
@@ -70,7 +70,7 @@ void ThermalSinglePhasePoromechanicsFixedStressSolver::mapSolutionBetweenSolvers
         flowSolver()->updatePorosityAndPermeability( subRegion );
       } );
     } );
-  } 
+  }
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, ThermalSinglePhasePoromechanicsFixedStressSolver, string const &, Group * const )
