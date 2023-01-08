@@ -109,6 +109,14 @@ MultiResolutionHFSolver::MultiResolutionHFSolver( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Value to indicate how many resolves may be executed to perform surface generation after the execution of base and patch scale solvers. " );
 
+  registerWrapper( viewKeyStruct::initialBaseTipString(), &m_baseTip ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Position of the initial crack tip in the EFEM mesh." );
+
+  registerWrapper( viewKeyStruct::initialTipElementIndexString(), &m_baseTipElementIndex ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Index of base element ahead of the crack tip." );
+
 }
 
 void MultiResolutionHFSolver::RegisterDataOnMesh( dataRepository::Group & MeshBodies )
@@ -248,12 +256,6 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX
 void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
                                                  MeshLevel const & patch )
 {
-  //IMPORTANT PARTS MISSING
-  //-best way to get quadrature point damage to take average - partially done
-  //-verify constructor of array1ds - partially done
-  //-verify how to get elemCenter - partially done
-  //-verify dist function between R1Tensors - partially done
-  //-verify MPI part - partially done
   //reference point must be prescribed in base coordinate system (usually injection source)
   R1Tensor m_referencePoint = {-1.0,0.0,0.0}; //add this as input file parameter
   real64 threshold = 0.95;
@@ -385,16 +387,16 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
   GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
-  R1Tensor tip = {-1.0,-1.0,0.0}; //initial crack tip - bad guess
-  std::cout<<"tipX: "<<tip[0]<<std::endl; 
-  std::cout<<"tipY: "<<tip[1]<<std::endl; 
-  std::cout<<"tipZ: "<<tip[2]<<std::endl;   
+  //R1Tensor tip = {-1.0,-1.0,0.0}; //initial crack tip - bad guess
 
   SolidMechanicsEmbeddedFractures &
   baseSolver = this->getParent().getGroup< SolidMechanicsEmbeddedFractures >( m_baseSolverName );
 
   PhaseFieldFractureSolver &
   patchSolver = this->getParent().getGroup< PhaseFieldFractureSolver >( m_patchSolverName );
+
+  EmbeddedSurfaceGenerator & 
+  efemGenerator = this->getParent().getGroup< EmbeddedSurfaceGenerator >( "SurfaceGenerator" ); //this is hard coded
 
   PhaseFieldDamageFEM &
   patchDamageSolver = patchSolver.getParent().getGroup< PhaseFieldDamageFEM >( patchSolver.getDamageSolverName() );
@@ -504,10 +506,11 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
                                                 dtReturn,
                                                 cycleNumber,
                                                 domain );
-    this->findPhaseFieldTip(tip, domain.getMeshBody( patchTarget.first ).getBaseDiscretization());      
-    std::cout<<"tipX: "<<tip[0]<<std::endl; 
-    std::cout<<"tipY: "<<tip[1]<<std::endl; 
-    std::cout<<"tipZ: "<<tip[2]<<std::endl;                                      
+    this->findPhaseFieldTip(m_patchTip, domain.getMeshBody( patchTarget.first ).getBaseDiscretization());      
+    std::cout<<"tipX: "<<m_patchTip[0]<<std::endl; 
+    std::cout<<"tipY: "<<m_patchTip[1]<<std::endl; 
+    std::cout<<"tipZ: "<<m_patchTip[2]<<std::endl;
+    efemGenerator.propagationStep(m_baseTip, m_patchTip, m_baseTipElementIndex);                                      
 
     if( dtReturnTemporary < dtReturn )
     {

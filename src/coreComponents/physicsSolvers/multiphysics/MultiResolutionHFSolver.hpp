@@ -96,6 +96,10 @@ public:
 
     constexpr static char const * maxNumResolvesString() { return "maxNumResolves"; }
 
+    constexpr static char const * initialBaseTipString() { return "initialBaseTip"; }
+
+    constexpr static char const * initialTipElementIndexString() { return "initialTipElementIndex"; }
+
   };
 
 protected:
@@ -126,6 +130,15 @@ private:
 
   // pointer to patch phase-field fracture solver
   PhaseFieldFractureSolver * m_patchSolver;
+
+  // discrete fracture tip
+  R1Tensor m_baseTip;
+
+  // phase-field fracture tip
+  R1Tensor m_patchTip;
+
+  // base element index ahead of crack tip
+  localIndex m_baseTipElementIndex;
 
   integer m_maxNumResolves;
   //integer m_numResolves[2];
