@@ -82,10 +82,11 @@ public:
    * @return no return, but all parameters are updated if propagation is succesful
    *
    */
-  void EmbeddedSurfaceGenerator::propagationStep( R1Tensor & currentTip,
-                                                  R1Tensor & targetTip,
-                                                  localIndex tipElementIndex,
-                                                  CellElementSubRegion & subRegion); 
+  void propagationStep( DomainPartition & domain, 
+                        R1Tensor & currentTip,
+                        R1Tensor & targetTip,
+                        localIndex tipElementIndex,
+                        CellElementSubRegion & subRegion); 
 
   /**
    * @brief xxx

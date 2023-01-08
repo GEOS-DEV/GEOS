@@ -38,6 +38,7 @@
 #include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
+#include "physicsSolvers/surfaceGeneration/EmbeddedSurfaceGenerator.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 
@@ -510,7 +511,8 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
     std::cout<<"tipX: "<<m_patchTip[0]<<std::endl; 
     std::cout<<"tipY: "<<m_patchTip[1]<<std::endl; 
     std::cout<<"tipZ: "<<m_patchTip[2]<<std::endl;
-    efemGenerator.propagationStep(m_baseTip, m_patchTip, m_baseTipElementIndex);                                      
+    //is there a way for the code to know which is the subRegion on the base mesh that contains m_baseTipElementIndex?
+    efemGenerator.propagationStep(m_baseTip, m_patchTip, m_baseTipElementIndex, subRegion);                                      
 
     if( dtReturnTemporary < dtReturn )
     {

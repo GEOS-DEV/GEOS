@@ -246,7 +246,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 {}
 
-void EmbeddedSurfaceGenerator::propagationStep( R1Tensor & currentTip,
+void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain, 
+                                                R1Tensor & currentTip,             
                                                 R1Tensor & targetTip,
                                                 localIndex tipElementIndex,
                                                 CellElementSubRegion & subRegion)
@@ -271,8 +272,8 @@ void EmbeddedSurfaceGenerator::propagationStep( R1Tensor & currentTip,
     localIndex localNumberOfSurfaceElems = embeddedSurfaceSubRegion.size(); //this should not be zero
     NewObjectLists newObjects; //this should probably not be re-initialized
     // begin geometric operations
-    real64 const planeCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( newFracturePlane.getCenter() );
-    real64 const normalVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( newFracturePlane.getNormal() );
+    real64 const planeCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( newFracturePlane->getCenter() );
+    real64 const normalVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( newFracturePlane->getNormal() );
     // Initialize variables
     globalIndex nodeIndex;
     integer isPositive, isNegative;
@@ -289,6 +290,7 @@ void EmbeddedSurfaceGenerator::propagationStep( R1Tensor & currentTip,
     localIndex embSurfNodesNumberOld = embSurfNodeManager.size();
     //this part probably needs explicit dynamic allocation
     array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosOld = embSurfNodeManager.referencePosition();
+    bool added;
 
     if( ghostRank[tipElementIndex] < 0 ) 
     {
@@ -312,20 +314,21 @@ void EmbeddedSurfaceGenerator::propagationStep( R1Tensor & currentTip,
       } // end loop over nodes
       if( isPositive * isNegative == 1 ) //if there are nodes on both sides of the fracture plane
       {
-        std::cout<<"plane name: "<<newFracturePlane.getName()<<std::endl;
-        bool added = embeddedSurfaceSubRegion.addNewEmbeddedSurface( tipElementIndex,
-                                                                     er,
-                                                                     esr,
-                                                                     nodeManager,
-                                                                     embSurfNodeManager,
-                                                                     edgeManager,
-                                                                     cellToEdges,
-                                                                     &newFracturePlane );
+        std::cout<<"plane name: "<<newFracturePlane->getName()<<std::endl;
+        localIndex er = 0; //should be the element region number
+        localIndex esr = 0; //should be the element subregion number
+        added = embeddedSurfaceSubRegion.addNewEmbeddedSurface( tipElementIndex,
+                                                                er,
+                                                                esr,
+                                                                nodeManager,
+                                                                embSurfNodeManager,
+                                                                edgeManager,
+                                                                cellToEdges,
+                                                                newFracturePlane );
 
         if( added )
         {
           GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << tipElementIndex << " is fractured" );
-
           // Add the information to the CellElementSubRegion
           subRegion.addFracturedElement( tipElementIndex, localNumberOfSurfaceElems );
           embeddedSurfaceSubRegion.computeConnectivityIndex( localNumberOfSurfaceElems, cellToNodes, nodesCoord );
@@ -342,14 +345,15 @@ void EmbeddedSurfaceGenerator::propagationStep( R1Tensor & currentTip,
     localIndex embSurfNodeNumberUpdated = embSurfNodeManager.size();
     array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosUpdated = embSurfNodeManager.referencePosition();
 
-    if (added)
+    if(added)
     {
       bool isNew;
-      localIndex nodeIndex;
+      localIndex nodalIndex;
       array1d< localIndex > elemNodes( embSurfNodeNumberUpdated );      
       for( localIndex ni = 0; ni < embSurfNodeNumberUpdated; ni++ )
       {
         //test if node is new
+        real64 distance[3];
         isNew = true;
         for( localIndex h=0; h < embSurfNodesNumberOld; h++ )
         {
@@ -358,7 +362,7 @@ void EmbeddedSurfaceGenerator::propagationStep( R1Tensor & currentTip,
           if( LvArray::tensorOps::l2Norm< 3 >( distance ) < 1e-9 )
           {
             isNew = false;
-            nodeIndex = h;
+            nodalIndex = h;
             break;
           }
         }
@@ -380,16 +384,16 @@ void EmbeddedSurfaceGenerator::propagationStep( R1Tensor & currentTip,
     auto faceToElementList = faceManager.elementList();
     //THIS IS PSEUDOCODE
     localIndex cutFace;
-    for(face:edgeToFaceList[newEdges[0]]) //newEdge is globalIndexed, we probably need a way to get the localIndex of newEdges[0] and newEdges[1]
+    for(auto && face:edgeToFaceList[newEdges[0]]) //newEdge is globalIndexed, we probably need a way to get the localIndex of newEdges[0] and newEdges[1]
     {
       if(edgeToFaceList[newEdges[1]].contains(face)) //there is a contains() function in ArrayOfSets, does it work here?
       {
         cutFace = face; //only one face is connected to both edges
       }
     }
-    for(element:faceToElementList[cutFace]) //does this iterator exist?
+    for(auto && element:faceToElementList[cutFace]) //does this iterator exist?
     {
-      if(~(element == tipElementIndex)) //can element be compared to a localIndex?
+      if(!(element == tipElementIndex)) //can element be compared to a localIndex?
       {
         tipElementIndex = element; 
       }
@@ -428,15 +432,13 @@ void EmbeddedSurfaceGenerator::propagationStep( R1Tensor & currentTip,
     // Node to edge map
     embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
     embSurfNodeManager.compressRelationMaps();
-  }
-  /*
-   * This should be the method that generates new fracture elements based on the propagation criterion of choice.
-   */
-  // Add the embedded elements to the fracture stencil.
-  addToFractureStencil( domain );
-
-
-}                                                
+    /*
+    * This should be the method that generates new fracture elements based on the propagation criterion of choice.
+    */
+    // Add the embedded elements to the fracture stencil.
+    addToFractureStencil( domain );
+}
+                                               
 
 real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
