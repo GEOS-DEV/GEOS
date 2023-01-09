@@ -52,7 +52,20 @@ public:
 
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  void importFieldsOnArray( string const GEOSX_UNUSED_PARAM( cellBlockName ), string const GEOSX_UNUSED_PARAM( meshFieldName ), dataRepository::WrapperBase & GEOSX_UNUSED_PARAM( wrapper ), bool GEOSX_UNUSED_PARAM( importMaterial ) ) const override {}
+  /**
+   * @brief import fields from the mesh  on the array accessible via the given wrapper.
+   * @param cellBlockName name of the cell block to copy data from.
+   * @param meshFieldName name of the field in the meshd
+   * @param wrapper Wrapper to access the array
+   * @param importMaterial Indicate if we want to import material or regular fields
+   */
+  void importFieldsOnArray( string const cellBlockName, string const meshFieldName, dataRepository::WrapperBase & wrapper, bool importMaterial ) const override
+  {
+    GEOSX_UNUSED_VAR( cellBlockName );
+    GEOSX_UNUSED_VAR( meshFieldName );
+    GEOSX_UNUSED_VAR( wrapper );
+    GEOSX_UNUSED_VAR( importMaterial );
+  }
 
   /**
    * @return Whether or not a Cartesian mesh is being generated.
