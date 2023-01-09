@@ -83,7 +83,7 @@ public:
   /// @returns the future first array in the queue after inc_front will be called
   ArraySlice1D next_front() const
   {
-    GEOSX_THROW_IF( empty(), "Can't get front from empty queue", std::runtime_error );
+    GEOSX_THROW_IF( full(), "Can't increase in a full queue", std::runtime_error );
     return m_storage[ POSITIVE_MODULO( m_begin-1, m_storage.size( 0 ) ) ];
   }
 
@@ -97,7 +97,7 @@ public:
   /// @returns the future last array of the queue when inc_back will be called
   ArraySlice1D next_back() const
   {
-    GEOSX_THROW_IF( empty(), "Can't get back from empty queue", std::runtime_error );
+    GEOSX_THROW_IF( full(), "Can't increase in a full queue", std::runtime_error );
     return m_storage[ POSITIVE_MODULO( m_end+1, m_storage.size( 0 ) ) ];
   }
 
