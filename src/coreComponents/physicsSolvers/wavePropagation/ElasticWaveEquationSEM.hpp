@@ -89,26 +89,6 @@ public:
 
   /**
    * TODO: move implementation into WaveSolverBase
-   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
-   * last two timesteps.
-   * @param time_n the time corresponding to the field values at iteration n
-   * @param dt the simulation timestep
-   * @param timeSeismo the time at which the seismogram is computed
-   * @param iSeismo the index of the seismogram time in the seismogram array
-   * @param var_np1 the field values at time_n + dt
-   * @param var_n the field values at time_n
-   * @param varAtreceivers the array holding the trace values, where the output is written
-   */
-  virtual void computeSeismoTrace( real64 const time_n,
-                                   real64 const dt,
-                                   real64 const timeSeismo,
-                                   localIndex const iSeismo,
-                                   arrayView1d< real32 const > const var_np1,
-                                   arrayView1d< real32 const > const var_n,
-                                   arrayView2d< real32 > varAtReceivers ) override;
-
-  /**
-   * TODO: move implementation into WaveSolverBase
    * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
    * @param time_n the time corresponding to the field values at iteration n
    * @param dt the simulation timestep
@@ -156,6 +136,9 @@ public:
     static constexpr char const * displacementXNp1AtReceiversString() { return "displacementXNp1AtReceivers"; }
     static constexpr char const * displacementYNp1AtReceiversString() { return "displacementYNp1AtReceivers"; }
     static constexpr char const * displacementZNp1AtReceiversString() { return "displacementZNp1AtReceivers"; }
+
+    static constexpr char const * sourceForceString() { return "sourceForce"; }
+    static constexpr char const * sourceMomentString() { return "sourceMoment"; }
 
   } waveEquationViewKeys;
 
@@ -207,9 +190,7 @@ private:
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
 
-
-  /// save the sismo trace in file
-  void saveSeismo( localIndex iseismo, real32 val, string const & filename ) override;
+  localIndex getNumNodesPerElem();
 
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
@@ -243,6 +224,13 @@ private:
 
   /// Displacement_np1 at the receiver location for each time step for each receiver (z-component)
   array2d< real32 > m_displacementZNp1AtReceivers;
+
+  /// Vector describing the force of the source
+  R1Tensor m_sourceForce;
+
+  /// Symmetric tensor describing the moment of the source
+  R2SymTensor m_sourceMoment;
+
 };
 
 

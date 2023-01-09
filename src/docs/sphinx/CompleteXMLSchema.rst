@@ -806,6 +806,13 @@ Element: ReactiveCompositionalMultiphaseOBL
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL.rst
 
 
+.. _XML_RelpermDriver:
+
+Element: RelpermDriver
+======================
+.. include:: ../../coreComponents/schema/docs/RelpermDriver.rst
+
+
 .. _XML_Restart:
 
 Element: Restart
@@ -853,6 +860,13 @@ Element: SinglePhaseHybridFVM
 Element: SinglePhasePoromechanics
 =================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics.rst
+
+
+.. _XML_SinglePhasePoromechanicsConformingFractures:
+
+Element: SinglePhasePoromechanicsConformingFractures
+====================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures.rst
 
 
 .. _XML_SinglePhasePoromechanicsEmbeddedFractures:
@@ -1951,6 +1965,13 @@ Datastructure: ReactiveCompositionalMultiphaseOBL
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL_other.rst
 
 
+.. _DATASTRUCTURE_RelpermDriver:
+
+Datastructure: RelpermDriver
+============================
+.. include:: ../../coreComponents/schema/docs/RelpermDriver_other.rst
+
+
 .. _DATASTRUCTURE_Restart:
 
 Datastructure: Restart
@@ -1998,6 +2019,13 @@ Datastructure: SinglePhaseHybridFVM
 Datastructure: SinglePhasePoromechanics
 =======================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsConformingFractures:
+
+Datastructure: SinglePhasePoromechanicsConformingFractures
+==========================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures:
