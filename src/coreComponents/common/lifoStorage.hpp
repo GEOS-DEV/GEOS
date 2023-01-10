@@ -148,7 +148,6 @@ public:
   camp::resources::Event emplaceFront( arrayView1d< T > array )
   {
     LIFO_MARK_FUNCTION;
-    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     camp::resources::Event e;
     {
       twoMutexLock lock( m_emplaceMutex, m_frontMutex );
@@ -156,14 +155,12 @@ public:
         LIFO_MARK_SCOPE( waitingForBuffer );
         m_notFullCond.wait( lock, [ this ]  { return !this->full(); } );
       }
-      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       {
         LIFO_MARK_SCOPE( copy );
         e = fixedSizeDeque< T, int >::emplace_front( array.toSliceConst() );
       }
     }
     m_notEmptyCond.notify_all();
-    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     return e;
   }
 
@@ -175,7 +172,6 @@ public:
    */
   camp::resources::Event popFront( arrayView1d< T > array )
   {
-    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     LIFO_MARK_FUNCTION;
     camp::resources::Event e;
     {
@@ -184,7 +180,6 @@ public:
         LIFO_MARK_SCOPE( waitingForBuffer );
         m_notEmptyCond.wait( lock, [ this ]  { return !this->empty(); } );
       }
-      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       // deadlock can occur if frontMutex is taken after an
       // emplaceMutex (inside pushAsync) but this is prevented by the
       // pushWait() in popAsync.
@@ -196,7 +191,6 @@ public:
       }
     }
     m_notFullCond.notify_all();
-    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     return e;
   }
 
@@ -208,7 +202,6 @@ public:
   void emplaceFrontFromBack( fixedSizeDequeAndMutexes< T > & q2 )
   {
     LIFO_MARK_FUNCTION;
-    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     {
       fourMutexLock lock( m_emplaceMutex, q2.m_popMutex, m_frontMutex, q2.m_backMutex );
       while( this->full() || q2.empty() )
@@ -228,7 +221,6 @@ public:
     }
     q2.m_notFullCond.notify_all();
     m_notEmptyCond.notify_all();
-    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
   }
 
   /**
@@ -238,7 +230,6 @@ public:
    */
   void emplaceBackFromFront( fixedSizeDequeAndMutexes< T > & q2 )
   {
-    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     LIFO_MARK_FUNCTION;
     {
       fourMutexLock lock( m_emplaceMutex, q2.m_popMutex, m_backMutex, q2.m_frontMutex );
@@ -252,7 +243,6 @@ public:
     }
     m_notEmptyCond.notify_all();
     q2.m_notFullCond.notify_all();
-    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
   }
 };
 
@@ -392,9 +382,7 @@ public:
         // This buffer will go to host memory, and maybe on disk
         std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this, id ) );
         {
-          std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
           std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
-          std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
           m_task_queue[0].emplace_back( std::move( task ) );
         }
         m_task_queue_not_empty_cond[0].notify_all();
@@ -412,9 +400,7 @@ public:
           // This buffer will go to host memory, and maybe on disk
           std::packaged_task< void() > t2( std::bind( &lifoStorage< T >::hostToDisk, this, pushId ) );
           {
-            std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
             std::unique_lock< std::mutex > l2( m_task_queue_mutex[1] );
-            std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
             m_task_queue[1].emplace_back( std::move( t2 ) );
           }
           m_task_queue_not_empty_cond[1].notify_all();
@@ -422,9 +408,7 @@ public:
       }, id, array ) );
       m_pushToHostFutures[id] = task.get_future();
       {
-        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
-        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
         m_task_queue[0].emplace_back( std::move( task ) );
       }
       m_task_queue_not_empty_cond[0].notify_all();
@@ -490,9 +474,7 @@ public:
         // Trigger pull one buffer from host, and maybe from disk
         std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this, id - m_deviceDeque.capacity() ) );
         {
-          std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
           std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
-          std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
           m_task_queue[0].emplace_back( std::move( task ) );
         }
         m_task_queue_not_empty_cond[0].notify_all();
@@ -510,9 +492,7 @@ public:
           // Trigger pull one buffer from host, and maybe from disk
           std::packaged_task< void() > task2( std::bind( &lifoStorage< T >::diskToHost, this, popId  - m_hostDeque.capacity() ) );
           {
-            std::cerr << __FILE__ << ":" << __LINE__ << " " << popId << std::endl;
             std::unique_lock< std::mutex > lock2( m_task_queue_mutex[1] );
-            std::cerr << __FILE__ << ":" << __LINE__ << " " << popId << std::endl;
             m_task_queue[1].emplace_back( std::move( task2 ) );
           }
           m_task_queue_not_empty_cond[1].notify_all();
@@ -520,9 +500,7 @@ public:
       }, id, array ) );
       m_popFromHostFutures[id] = task.get_future();
       {
-        std::cerr << __FILE__ << ":" << __LINE__ << " " << id << std::endl;
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
-        std::cerr << __FILE__ << ":" << __LINE__ << " " << id << std::endl;
         m_task_queue[0].emplace_back( std::move( task ) );
       }
       m_task_queue_not_empty_cond[0].notify_all();
@@ -585,9 +563,7 @@ private:
       // This buffer will go to host then maybe to disk
       std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this, id ) );
       {
-        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
-        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
         m_task_queue[1].emplace_back( std::move( task ) );
       }
       m_task_queue_not_empty_cond[1].notify_all();
@@ -604,9 +580,7 @@ private:
   {
     LIFO_MARK_FUNCTION;
     {
-      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       twoMutexLock lock( m_hostDeque.m_popMutex, m_hostDeque.m_backMutex );
-      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       writeOnDisk( m_hostDeque.back().dataIfContiguous(), id );
       m_hostDeque.pop_back();
     }
@@ -631,9 +605,7 @@ private:
       // This buffer will go to host then to disk
       std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this, id - m_hostDeque.capacity() ) );
       {
-        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
-        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
         m_task_queue[1].emplace_back( std::move( task ) );
       }
       m_task_queue_not_empty_cond[1].notify_all();
@@ -650,14 +622,10 @@ private:
   {
     LIFO_MARK_FUNCTION;
     {
-      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       twoMutexLock lock( m_hostDeque.m_emplaceMutex, m_hostDeque.m_backMutex );
-      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       m_hostDeque.m_notFullCond.wait( lock, [ this ]  { return !( m_hostDeque.full() ); } );
-      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
       readOnDisk( const_cast< T * >(m_hostDeque.next_back().dataIfContiguous()), id );
       m_hostDeque.inc_back();
-      std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     }
     m_hostDeque.m_notEmptyCond.notify_all();
   }
@@ -682,7 +650,6 @@ private:
   void writeOnDisk( const T * d, int id )
   {
     LIFO_MARK_FUNCTION;
-    std::cerr << "writeOnDisk "<< id << std::endl;
     std::string fileName = GEOSX_FMT( "{}_{:08}.dat", m_name, id );
     int lastDirSeparator = fileName.find_last_of( "/\\" );
     std::string dirName = fileName.substr( 0, lastDirSeparator );
@@ -707,20 +674,13 @@ private:
   void readOnDisk( T * d, int id )
   {
     LIFO_MARK_FUNCTION;
-    std::cerr << "readOnDisk "<< id << std::endl;
     std::string fileName = GEOSX_FMT( "{}_{:08}.dat", m_name, id );
-    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     GEOSX_ERROR_IF( !wf,
                     "Could not open file "<< fileName << " for reading" );
-    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     wf.read( (char *)d, m_bufferSize );
-    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     wf.close();
-    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
     remove( fileName.c_str() );
-    std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
   }
 
   /**
@@ -733,26 +693,20 @@ private:
     LIFO_MARK_FUNCTION;
     while( m_continue )
     {
-      std::cerr << __FILE__ << ":" << __LINE__ << " " << queueId << std::endl;
       std::unique_lock< std::mutex > lock( m_task_queue_mutex[queueId] );
-      std::cerr << __FILE__ << ":" << __LINE__ << " " << queueId << std::endl;
       {
         LIFO_MARK_SCOPE( waitForTask );
         m_task_queue_not_empty_cond[queueId].wait( lock, [ this, &queueId ] { return !( m_task_queue[queueId].empty()  && m_continue ); } );
-        std::cerr << __FILE__ << ":" << __LINE__ << " " << queueId << std::endl;
       }
       if( m_continue == false ) break;
       std::packaged_task< void() > task( std::move( m_task_queue[queueId].front() ) );
       m_task_queue[queueId].pop_front();
       lock.unlock();
-      std::cerr << __FILE__ << ":" << __LINE__ << " " << queueId << std::endl;
       {
         LIFO_MARK_SCOPE( runningTask );
         task();
       }
-      std::cerr << __FILE__ << ":" << __LINE__ << " " << queueId << std::endl;
     }
-    std::cerr << __FILE__ << ":" << __LINE__ << " " << queueId << std::endl;
   }
 };
 }
