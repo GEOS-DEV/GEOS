@@ -33,21 +33,34 @@
 namespace geosx
 {
 
-
+/**
+ * @brief Class to handle locks using 2 mutexes
+ */
 class twoMutexLock
 {
 public:
+  /**
+   * @brief Construct a dual mutex lock and lock the mutexes.
+   * @param mutex1 First mutex of the dual mutex
+   * @param mutex2 Second mutex of the dual mutex
+   */
   twoMutexLock( std::mutex & mutex1, std::mutex & mutex2 ):
     m_islocked( false ), m_mutex1( &mutex1 ), m_mutex2( &mutex2 )
   {
     lock();
   }
 
+  /**
+   * @brief Unlock the mutexes and destroy the locks.
+   */
   ~twoMutexLock()
   {
     unlock();
   }
 
+  /**
+   * @brief Lock the two mutexes using std::lock is not already owning lock
+   */
   void lock()
   {
     if( m_islocked ) return;
@@ -55,6 +68,9 @@ public:
     m_islocked = true;
   }
 
+  /**
+   * @brief Unlock the two mutexes is owning them.
+   */
   void unlock()
   {
     if( !m_islocked ) return;
@@ -63,25 +79,44 @@ public:
     m_islocked = false;
   }
 private:
+  /// Indicate if the mutexes are owned by the lock
   bool m_islocked;
+  /// Pointer to the first mutex
   std::mutex *m_mutex1;
+  /// Pointer to the second mutex
   std::mutex *m_mutex2;
 };
 
+/**
+ * @brief Class to handle locks using 4 mutexes
+ */
 class fourMutexLock
 {
 public:
+  /**
+   * @brief Construct a four mutex lock and lock the mutexes.
+   * @param mutex1 First mutex of the dual mutex
+   * @param mutex2 Second mutex of the dual mutex
+   * @param mutex3 Third mutex of the dual mutex
+   * @param mutex4 Fourth mutex of the dual mutex
+   */
   fourMutexLock( std::mutex & mutex1, std::mutex & mutex2, std::mutex & mutex3, std::mutex & mutex4 ):
     m_islocked( false ), m_mutex1( &mutex1 ), m_mutex2( &mutex2 ), m_mutex3( &mutex3 ), m_mutex4( &mutex4 )
   {
     lock();
   }
 
+  /**
+   * @brief Unlock the mutexes and destroy the locks.
+   */
   ~fourMutexLock()
   {
     unlock();
   }
 
+  /**
+   * @brief Lock the two mutexes using std::lock is not already owning lock
+   */
   void lock()
   {
     if( m_islocked ) return;
@@ -89,6 +124,9 @@ public:
     m_islocked = true;
   }
 
+  /**
+   * @brief Unlock the two mutexes is owning them.
+   */
   void unlock()
   {
     if( !m_islocked ) return;
@@ -99,10 +137,15 @@ public:
     m_islocked = false;
   }
 private:
+  /// Indicate if the mutexes are owned by the lock
   bool m_islocked;
+  /// Pointer to the first mutex
   std::mutex *m_mutex1;
+  /// Pointer to the second mutex
   std::mutex *m_mutex2;
+  /// Pointer to the third mutex
   std::mutex *m_mutex3;
+  /// Pointer to the fourth mutex
   std::mutex *m_mutex4;
 };
 
