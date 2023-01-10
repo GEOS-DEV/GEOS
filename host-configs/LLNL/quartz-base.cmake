@@ -25,8 +25,6 @@ set(PAPI_PREFIX /usr/tce/packages/papi/papi-5.4.3 CACHE PATH "")
 # OpenMP
 set(ENABLE_OPENMP ON CACHE BOOL "")
 
-set(HYPRE_LOCAL_DIR ~/geosx/hypre/src CACHE PATH "")
-
 # GEOSX specific options
 set(ENABLE_PVTPackage ON CACHE BOOL "")
 set(ENABLE_PETSC OFF CACHE BOOL "Enables PETSc." FORCE)

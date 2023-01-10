@@ -23,7 +23,6 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirFVM.hpp"
-#include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirFVMShut.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/Hydrofracture.hpp"
@@ -84,11 +83,6 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM:
     {
       setStrategy< CompositionalMultiphaseReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
-      break;
-    }
-    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVMShut:
-    {
-      setStrategy< CompositionalMultiphaseReservoirFVMShut >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM:
