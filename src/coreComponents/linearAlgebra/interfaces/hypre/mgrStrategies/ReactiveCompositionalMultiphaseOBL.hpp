@@ -43,10 +43,12 @@ namespace mgr
  *   - Eliminate the (NC-1) reservoir component fractions
  *   - The coarse grid (pressure system) is solved with BoomerAMG.
  *
- * Note: in the OBL formulation, we have the following primary variables
+ * Note: in the OBL isothermal formulation, we have the following primary variables
  *   - Cell-centered pressure
  *   - NC-1 cell-centered component fractions
  * so there is no need for the first elimination of CompositionalMultiphaseFVM
+ *
+ * TODO: the thermal formulation may require a specific treatment in which temperature is treated as an elliptic variable
  */
 class ReactiveCompositionalMultiphaseOBL : public MGRStrategyBase< 1 >
 {
@@ -68,7 +70,7 @@ public:
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::cprLikeBlockDiag;
 
-    // ILU smoothing for the system made of pressure and densities (except the last one)
+    // ILU smoothing for the system made of pressure and component fractions
     m_levelSmoothType[0]  = 16;
     m_levelSmoothIters[0] = 1;
   }
