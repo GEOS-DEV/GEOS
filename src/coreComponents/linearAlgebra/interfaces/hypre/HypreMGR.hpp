@@ -83,7 +83,7 @@ protected:
   HYPRE_Int * m_ptrLabels[numLevels]{ nullptr };       ///< Pointers to each level's labels, as consumed by MGR
 
   MGRFRelaxationMethod m_levelFRelaxMethod[numLevels];    ///< F-relaxation strategy for each level (single or multilevel)
-  MGRFRelaxationType m_levelFRelaxType[numLevels];    ///< F-relaxation type for each level
+  MGRFRelaxationType m_levelFRelaxType[numLevels];        ///< F-relaxation type for each level
   MGRInterpolationType m_levelInterpType[numLevels];      ///< Interpolation type for each level
   MGRRestrictionType m_levelRestrictType[numLevels];      ///< Restriction type for each level
   MGRCoarseGridMethod m_levelCoarseGridMethod[numLevels]; ///< Coarse grid method for each level
