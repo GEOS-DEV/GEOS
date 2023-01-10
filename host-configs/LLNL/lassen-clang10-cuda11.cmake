@@ -13,4 +13,18 @@ set(MPI_Fortran_COMPILER /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-rel
 
 include(${CMAKE_CURRENT_LIST_DIR}/lassen-base.cmake)
 
+# ESSL
+set(ENABLE_ESSL ON CACHE BOOL "")
+set(ESSL_INCLUDE_DIRS /usr/tcetmp/packages/essl/essl-6.3.0.1/include CACHE STRING "")
+set(ESSL_LIBRARIES /usr/tcetmp/packages/essl/essl-6.3.0.1/lib64/libesslsmpcuda.so
+                   /usr/tce/packages/xl/xl-beta-2019.06.20/alllibs/libxlsmp.so
+                   /usr/tce/packages/xl/xl-beta-2019.06.20/alllibs/libxlfmath.so
+                   /usr/tce/packages/xl/xl-beta-2019.06.20/alllibs/libxlf90_r.so
+                   ${CUDA_TOOLKIT_ROOT_DIR}/lib64/libcublas.so
+                   ${CUDA_TOOLKIT_ROOT_DIR}/lib64/libcudart.so
+                   /usr/tcetmp/packages/essl/essl-6.3.0.1/lib64/liblapackforessl.so
+                   /usr/tcetmp/packages/essl/essl-6.3.0.1/lib64/liblapackforessl_.so
+                   /usr/tce/packages/xl/xl-beta-2019.06.20/alllibs/libxl.a
+                   CACHE PATH "")
+
 set(ENABLE_CUDA_NVTOOLSEXT ON CACHE BOOL "")
