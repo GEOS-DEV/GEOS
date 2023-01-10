@@ -20,9 +20,9 @@
 #ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_
 
-#include "mesh/ExtrinsicMeshData.hpp"
-#include "physicsSolvers/SolverBase.hpp"
 #include "WaveSolverBase.hpp"
+#include "mesh/MeshFields.hpp"
+#include "physicsSolvers/SolverBase.hpp"
 
 namespace geosx
 {
@@ -33,12 +33,6 @@ public:
 
   using EXEC_POLICY = parallelDevicePolicy< 32 >;
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
-
-
-  /**
-   * @brief Safeguard for timeStep. Used to avoid memory issue due to too small value.
-   */
-  static constexpr real64 epsilonLoc = 1e-8;
 
   AcousticWaveEquationSEM( const std::string & name,
                            Group * const parent );
@@ -86,26 +80,6 @@ public:
    * @param rhs the right hand side vector to be computed
    */
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
-
-  /**
-   * TODO: move implementation into WaveSolverBase
-   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
-   * last two timesteps.
-   * @param time_n the time corresponding to the field values pressure_n
-   * @param dt the simulation timestep
-   * @param timeSeismo the time at which the seismogram is computed
-   * @param iSeismo the index of the seismogram time in the seismogram array
-   * @param var_at_np1 the field values at time_n + dt
-   * @param var_at_n the field values at time_n
-   * @param var_at_receivers the array holding the trace values, where the output is written
-   */
-  virtual void computeSeismoTrace( real64 const time_n,
-                                   real64 const dt,
-                                   real64 const timeSeismo,
-                                   localIndex const iSeismo,
-                                   arrayView1d< real32 const > const var_np1,
-                                   arrayView1d< real32 const > const var_n,
-                                   arrayView2d< real32 > varAtReceivers ) override;
 
   /**
    * TODO: move implementation into WaveSolverBase
@@ -191,14 +165,6 @@ private:
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
 
-  /**
-   * @brief Temporary debug function. Saves the sismo trace to a file.
-   * @param iSeismo index number of the seismo trace
-   * @param val value to be written in seismo
-   * @param filename name of the output file
-   */
-  void saveSeismo( localIndex const iSeismo, real32 const val, string const & filename ) override;
-
   localIndex getNumNodesPerElem();
 
   /// Indices of the nodes (in the right order) for each source point
@@ -225,138 +191,137 @@ private:
 };
 
 
-namespace extrinsicMeshData
+namespace fields
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( Pressure_nm1,
-                           "pressure_nm1",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Scalar pressure at time n-1." );
+DECLARE_FIELD( Pressure_nm1,
+               "pressure_nm1",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Scalar pressure at time n-1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Pressure_n,
-                           "pressure_n",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Scalar pressure at time n." );
+DECLARE_FIELD( Pressure_n,
+               "pressure_n",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Scalar pressure at time n." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Pressure_np1,
-                           "pressure_np1",
-                           array1d< real32 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Scalar pressure at time n+1." );
+DECLARE_FIELD( Pressure_np1,
+               "pressure_np1",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Scalar pressure at time n+1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS,
-                           "rhs",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "RHS" );
+DECLARE_FIELD( ForcingRHS,
+               "rhs",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "RHS" );
 
-EXTRINSIC_MESH_DATA_TRAIT( MassVector,
-                           "massVector",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Diagonal of the Mass Matrix." );
+DECLARE_FIELD( MassVector,
+               "massVector",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal of the Mass Matrix." );
 
-EXTRINSIC_MESH_DATA_TRAIT( DampingVector,
-                           "dampingVector",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Diagonal of the Damping Matrix." );
+DECLARE_FIELD( DampingVector,
+               "dampingVector",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal of the Damping Matrix." );
 
-EXTRINSIC_MESH_DATA_TRAIT( MediumVelocity,
-                           "mediumVelocity",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Medium velocity of the cell" );
+DECLARE_FIELD( MediumVelocity,
+               "mediumVelocity",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Medium velocity of the cell" );
 
-EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector,
-                           "stiffnessVector",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Stiffness vector contains R_h*Pressure_n." );
+DECLARE_FIELD( StiffnessVector,
+               "stiffnessVector",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Stiffness vector contains R_h*Pressure_n." );
 
-EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceFaceIndicator,
-                           "freeSurfaceFaceIndicator",
-                           array1d< localIndex >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
+DECLARE_FIELD( FreeSurfaceFaceIndicator,
+               "freeSurfaceFaceIndicator",
+               array1d< localIndex >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
 
-EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceNodeIndicator,
-                           "freeSurfaceNodeIndicator",
-                           array1d< localIndex >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
+DECLARE_FIELD( FreeSurfaceNodeIndicator,
+               "freeSurfaceNodeIndicator",
+               array1d< localIndex >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
 
-EXTRINSIC_MESH_DATA_TRAIT( PressureDoubleDerivative,
-                           "pressureDoubleDerivative",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Double derivative of the pressure for each node to compute the gradient" );
+DECLARE_FIELD( PressureDoubleDerivative,
+               "pressureDoubleDerivative",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Double derivative of the pressure for each node to compute the gradient" );
 
-EXTRINSIC_MESH_DATA_TRAIT( PartialGradient,
-                           "partialGradient",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Partiel gradient computed during backward propagation" );
+DECLARE_FIELD( PartialGradient,
+               "partialGradient",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Partiel gradient computed during backward propagation" );
 
-EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar1PML,
-                           "auxiliaryVar1PML",
-                           array2d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "PML vectorial auxiliary variable 1." );
+DECLARE_FIELD( AuxiliaryVar1PML,
+               "auxiliaryVar1PML",
+               array2d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "PML vectorial auxiliary variable 1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar2PML,
-                           "auxiliaryVar2PML",
-                           array2d< real32 >,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "PML vectorial auxiliary variable 2." );
+DECLARE_FIELD( AuxiliaryVar2PML,
+               "auxiliaryVar2PML",
+               array2d< real32 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "PML vectorial auxiliary variable 2." );
 
-EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar3PML,
-                           "auxiliaryVar3PML",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "PML scalar auxiliary variable 3." );
+DECLARE_FIELD( AuxiliaryVar3PML,
+               "auxiliaryVar3PML",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "PML scalar auxiliary variable 3." );
 
-EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar4PML,
-                           "auxiliaryVar4PML",
-                           array1d< real32 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "PML scalar auxiliary variable 4." );
+DECLARE_FIELD( AuxiliaryVar4PML,
+               "auxiliaryVar4PML",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "PML scalar auxiliary variable 4." );
 }
-
 
 } /* namespace geosx */
 

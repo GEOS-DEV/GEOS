@@ -18,13 +18,14 @@
 
 #include "VTKMeshGenerator.hpp"
 
+#include "mesh/generators/VTKFaceBlockUtilities.hpp"
+#include "mesh/generators/VTKMeshGeneratorTools.hpp"
+#include "mesh/generators/CellBlockManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mesh/MeshBody.hpp"
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/MpiWrapper.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "mesh/MeshBody.hpp"
-#include "mesh/generators/CellBlockManager.hpp"
-#include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 namespace geosx
@@ -44,6 +45,10 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
   registerWrapper( viewKeyStruct::nodesetNamesString(), &m_nodesetNames ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Names of the VTK nodesets to import" );
+
+  registerWrapper( viewKeyStruct::faceBlockNamesString(), &m_faceBlockNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of the VTK faces to import" );
 
   registerWrapper( viewKeyStruct::partitionRefinementString(), &m_partitionRefinement ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -98,17 +103,22 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   m_cellMap = vtk::buildCellMap( *m_vtkMesh, m_attributeName );
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  writing nodes..." );
-  real64 const globalLength = writeNodes( *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale );
+  real64 const globalLength = writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale );
   meshBody.setGlobalLengthScale( globalLength );
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  writing cells..." );
-  writeCells( *m_vtkMesh, m_cellMap, cellBlockManager );
+  writeCells( getLogLevel(), *m_vtkMesh, m_cellMap, cellBlockManager );
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  writing surfaces..." );
-  writeSurfaces( *m_vtkMesh, m_cellMap, cellBlockManager );
+  writeSurfaces( getLogLevel(), *m_vtkMesh, m_cellMap, cellBlockManager );
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  building connectivity maps..." );
   cellBlockManager.buildMaps();
+
+  for( string const & faceBlockName: m_faceBlockNames )
+  {
+    importFractureNetwork( faceBlockName, m_vtkMesh, cellBlockManager );
+  }
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  done!" );
   vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, comm );
@@ -133,7 +143,8 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
     {
       for( auto const & regionCells: typeRegions.second )
       {
-        importFieldOnCellElementSubRegion( regionCells.first,
+        importFieldOnCellElementSubRegion( getLogLevel(),
+                                           regionCells.first,
                                            typeRegions.first,
                                            regionCells.second,
                                            elemManager,

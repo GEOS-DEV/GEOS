@@ -36,12 +36,13 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace extrinsicMeshData::contact;
+using namespace fields::contact;
 
 ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
   SolverBase( name, parent ),
-  m_solidSolver( nullptr )
+  m_solidSolver( nullptr ),
+  m_setupSolidSolverDofs( true )
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -57,7 +58,6 @@ ContactSolverBase::ContactSolverBase( const string & name,
 
 }
 
-
 void ContactSolverBase::postProcessInput()
 {
   m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
@@ -66,7 +66,7 @@ void ContactSolverBase::postProcessInput()
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
-  using namespace extrinsicMeshData::contact;
+  using namespace fields::contact;
 
   forDiscretizationOnMeshTargets( meshBodies,
                                   [&]( string const,
@@ -80,21 +80,21 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
     {
       region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
       {
-        subRegion.registerExtrinsicData< dispJump >( getName() ).
+        subRegion.registerField< dispJump >( getName() ).
           reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerExtrinsicData< deltaDispJump >( getName() ).
+        subRegion.registerField< deltaDispJump >( getName() ).
           reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerExtrinsicData< oldDispJump >( getName() ).
+        subRegion.registerField< oldDispJump >( getName() ).
           reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerExtrinsicData< traction >( getName() ).
+        subRegion.registerField< traction >( getName() ).
           reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerExtrinsicData< fractureState >( getName() );
+        subRegion.registerField< fractureState >( getName() );
 
-        subRegion.registerExtrinsicData< oldFractureState >( getName() );
+        subRegion.registerField< oldFractureState >( getName() );
       } );
     } );
   } );
@@ -138,7 +138,7 @@ void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
   elemManager.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion const & subRegion )
   {
     arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-    arrayView1d< integer const > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
+    arrayView1d< integer const > const & fractureState = subRegion.getField< fields::contact::fractureState >();
 
     RAJA::ReduceSum< parallelHostReduce, localIndex > stickCount( 0 ), slipCount( 0 ), openCount( 0 );
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -215,12 +215,15 @@ void ContactSolverBase::applyBoundaryConditions( real64 const time,
 {
   GEOSX_MARK_FUNCTION;
 
-  m_solidSolver->applyBoundaryConditions( time,
-                                          dt,
-                                          domain,
-                                          dofManager,
-                                          localMatrix,
-                                          localRhs );
+  if( m_setupSolidSolverDofs )
+  {
+    m_solidSolver->applyBoundaryConditions( time,
+                                            dt,
+                                            domain,
+                                            dofManager,
+                                            localMatrix,
+                                            localRhs );
+  }
 }
 
 real64 ContactSolverBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
@@ -241,7 +244,7 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
   {
     FieldIdentifiers fieldsToBeSync;
 
-    fieldsToBeSync.addElementFields( { extrinsicMeshData::contact::fractureState::key() }, { getFractureRegionName() } );
+    fieldsToBeSync.addElementFields( { fields::contact::fractureState::key() }, { getFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

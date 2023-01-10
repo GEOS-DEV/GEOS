@@ -313,7 +313,7 @@ public:
    * or modify the face centers in this FaceManager
    * @return a reference to an arrayView containing all the face centers
    */
-  arrayView2d< real64 > faceCenter() { return m_faceCenter.toView(); }
+  array2d< real64 > & faceCenter() { return m_faceCenter; }
 
 
   /**
@@ -405,7 +405,7 @@ public:
    * @warning @p e, @p er or @p esr will equal -1 if undefined.
    * @see geosx::NodeManager::elementList that shares the same kind of pattern.
    */
-  array2d< localIndex > const & elementList() { return m_toElements.m_toElementIndex; }
+  array2d< localIndex > & elementList() { return m_toElements.m_toElementIndex; }
 
   /**
    * @brief Get an imutable accessor to the faces-to-element-index relation.

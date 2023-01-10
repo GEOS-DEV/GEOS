@@ -16,7 +16,7 @@
  * @file SurfaceElementRegion.cpp
  */
 
-#include "ExtrinsicMeshData.hpp"
+#include "MeshFields.hpp"
 #include "EdgeManager.hpp"
 #include "SurfaceElementRegion.hpp"
 
@@ -32,7 +32,7 @@ SurfaceElementRegion::SurfaceElementRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::subRegionTypeString(), &m_subRegionType ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_subRegionType ).
-    setDescription( "Type of surface element subregion. Valid options:\n* " + EnumStrings< SurfaceSubRegionType >::concat( "\n* " ) );
+    setDescription( "Type of surface element subregion. Valid options: {" + EnumStrings< SurfaceSubRegionType >::concat( ", " ) + "}." );
 
   registerWrapper( viewKeyStruct::faceBlockString(), &m_faceBlockName ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -98,7 +98,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   rval = subRegion.size() - 1;
 
 
-  arrayView1d< real64 > const ruptureTime = subRegion.getExtrinsicData< extrinsicMeshData::ruptureTime >();
+  arrayView1d< real64 > const ruptureTime = subRegion.getField< fields::ruptureTime >();
 
   arrayView1d< real64 > const creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
 

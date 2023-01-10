@@ -21,7 +21,7 @@
 #define GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
+#include "physicsSolvers/contact/ContactFields.hpp"
 
 namespace geosx
 {
@@ -62,6 +62,10 @@ public:
 
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 
+  SolidMechanicsLagrangianFEM * getSolidSolver() { return m_solidSolver; }
+
+  void setSolidSolverDofFlags( bool const flag ) { m_setupSolidSolverDofs = flag; }
+
 protected:
 
   virtual void postProcessInput() override;
@@ -77,8 +81,8 @@ protected:
                                      integer const state1 )
   {
     return state0 == state1
-           || ( state0 == extrinsicMeshData::contact::FractureState::NewSlip && state1 == extrinsicMeshData::contact::FractureState::Slip )
-           || ( state0 == extrinsicMeshData::contact::FractureState::Slip && state1 == extrinsicMeshData::contact::FractureState::NewSlip );
+           || ( state0 == fields::contact::FractureState::NewSlip && state1 == fields::contact::FractureState::Slip )
+           || ( state0 == fields::contact::FractureState::Slip && state1 == fields::contact::FractureState::NewSlip );
   }
 
   void synchronizeFractureState( DomainPartition & domain ) const;
@@ -94,6 +98,9 @@ protected:
 
   /// contact relation name string
   string m_contactRelationName;
+
+  ///
+  bool m_setupSolidSolverDofs;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {

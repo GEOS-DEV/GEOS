@@ -314,21 +314,26 @@ if(DEFINED ADIAK_DIR)
                  PATHS ${ADIAK_DIR}
                  NO_DEFAULT_PATH)
 
-    extract_version_from_header( name adiak 
-                                 HEADER "${ADIAK_DIR}/include/adiak.h"
-                                 MAJOR_VERSION_STRING "ADIAK_VERSION"
-                                 MINOR_VERSION_STRING "ADIAK_MINOR_VERSION"
-                                 SUBMINOR_VERSION_STRING "ADIAK_POINT_VERSION")
+    # Header file provides incorrect version 0.3.0
+    message( " ----> adiak_VERSION = 0.2.2")
 
-                 set_property(TARGET adiak
+    set(adiak_target "")
+    if(TARGET adiak::adiak)
+      set(adiak_target ${adiak_target} adiak::adiak)
+    endif()
+    if(TARGET adiak)
+      set(adiak_target ${adiak_target} adiak)
+    endif()
+
+    set_property(TARGET ${adiak_target}
                  APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
                  ${adiak_INCLUDE_DIR} )
-    set_property(TARGET adiak
+    set_property(TARGET ${adiak_target}
                  APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
                  ${adiak_INCLUDE_DIR} )
 
     set(ENABLE_ADIAK ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} adiak)
+    set(thirdPartyLibs ${thirdPartyLibs} ${adiak_target})
 else()
     if(ENABLE_ADIAK)
         message(WARNING "ENABLE_ADIAK is ON but ADIAK_DIR isn't defined.")
@@ -777,6 +782,27 @@ if(NOT ENABLE_${upper_LAI})
   message(FATAL_ERROR "${GEOSX_LA_INTERFACE} LA interface is selected, but ENABLE_${upper_LAI} is OFF")
 endif()
 option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON)
+
+################################
+# Fesapi
+################################
+if(DEFINED FESAPI_DIR)
+    message(STATUS "FESAPI_DIR = ${FESAPI_DIR}")
+
+    find_and_register(NAME FesapiCpp
+                 INCLUDE_DIRECTORIES ${FESAPI_DIR}/include
+                 LIBRARY_DIRECTORIES ${FESAPI_DIR}/lib    
+                 HEADER fesapi/nsDefinitions.h             
+                 LIBRARIES FesapiCpp
+                 DEPENDS hdf5)
+
+    set(FESAPI_DIR ON CACHE BOOL "")
+    set(thirdPartyLibs ${thirdPartyLibs} FesapiCpp)
+else()
+    message(STATUS "Not using Fesapi")
+endif()
+
+message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
 
 ###############################
 # NvToolExt
