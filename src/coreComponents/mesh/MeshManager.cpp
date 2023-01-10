@@ -18,10 +18,11 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "generators/MeshGeneratorBase.hpp"
+#include "generators/VTKMeshGenerator.hpp"
 #include "common/TimingMacros.hpp"
 
 #include <unordered_set>
-
+#include <typeinfo>
 namespace geosx
 {
 
@@ -103,9 +104,16 @@ std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const
 void MeshManager::importFields( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & generator )
   {
+    try
+    {
+      VTKMeshGenerator &g = dynamic_cast<VTKMeshGenerator&>( generator );
+    }
+    catch(const std::bad_cast& e)
+    {
+      return;
+    }
     FieldIdentifiers fieldsToBeSync;
     std::map< string, string > fieldNamesMapping = generator.getFieldsMapping();
 
