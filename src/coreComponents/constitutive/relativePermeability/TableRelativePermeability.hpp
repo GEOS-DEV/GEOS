@@ -60,6 +60,11 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  void setFlagToStoneII()
+  {
+      m_flagInterpolator = 1;
+  }
+
   /// Type of kernel wrapper for in-kernel update
   class KernelWrapper final : public RelativePermeabilityBaseUpdate
   {
@@ -67,6 +72,7 @@ public:
 
     KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & relPermKernelWrappers,
                    arrayView1d< real64 const > const & phaseMinVolumeFraction,
+                   real64 const & waterOilPhaseMaxVolumeFraction,
                    arrayView1d< integer const > const & phaseTypes,
                    arrayView1d< integer const > const & phaseOrder,
                    integer const & flagInterpolator,
@@ -119,7 +125,7 @@ private:
     /// Minimum volume fraction for each phase (deduced from the table)
     arrayView1d< real64 const > m_phaseMinVolumeFraction;
 
-    array1d< real64 > m_waterOilRelPermMaxValue;
+    real64 const  m_waterOilRelPermMaxValue;
 
     integer const m_flagInterpolator;
   };
@@ -177,7 +183,7 @@ private:
   /// Min phase volume fractions (deduced from the tables). With Baker, only the water phase entry is used
   array1d< real64 > m_phaseMinVolumeFraction;
 
-  array1d< real64 > m_waterOilMaxRelPerm;
+  real64 m_waterOilMaxRelPerm;
 
   integer m_flagInterpolator;
 
@@ -270,7 +276,7 @@ TableRelativePermeability::KernelWrapper::
       relpermInterpolators::Stone2::compute(shiftedWettingVolFrac,
                                             phaseVolFraction[ipNonWetting],
                                             m_phaseOrder,
-                                            m_waterOilRelPermMaxValue[ipNonWetting],
+                                            m_waterOilRelPermMaxValue,
                                             interRelPerm_wi,
                                             dInterRelPerm_wi_dInterVolFrac,
                                             interRelPerm_nwi,

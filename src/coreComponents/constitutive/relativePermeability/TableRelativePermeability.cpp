@@ -75,7 +75,8 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
 
   registerWrapper( viewKeyStruct::flagInterpolatorString(), &m_flagInterpolator).
     setInputFlag( InputFlags::OPTIONAL).
-    setDefaultValue(0);
+    setDefaultValue(0).
+          setDescription("Flag wheter choose Baker(0) or StoneII (else) interpolation (temp).");
 }
 
 void TableRelativePermeability::postProcessInput()
@@ -136,7 +137,6 @@ void TableRelativePermeability::initializePreSubGroups()
 
   integer const numPhases = m_phaseNames.size();
   m_phaseMinVolumeFraction.resize( MAX_NUM_PHASES );
-  m_waterOilMaxRelPerm.resize(MAX_NUM_PHASES );
 
 
   string const fullName = getFullName();
@@ -166,13 +166,11 @@ void TableRelativePermeability::initializePreSubGroups()
       {
         integer const ipWetting = ( m_phaseOrder[PhaseType::WATER] >= 0 ) ? m_phaseOrder[PhaseType::WATER] : m_phaseOrder[PhaseType::OIL];
         m_phaseMinVolumeFraction[ipWetting] = phaseMinVolFrac;
-//          m_waterOilMaxRelPerm[m_phaseOrder[PhaseType::OIL]] = phaseRelPermEndPoint;//todo correct
       }
       else if( ip == 1 ) // non-wetting phase is either oil (for two-phase oil-water systems), or gas
       {
         integer const ipNonWetting = ( m_phaseOrder[PhaseType::GAS] >= 0 ) ? m_phaseOrder[PhaseType::GAS] : m_phaseOrder[PhaseType::OIL];
         m_phaseMinVolumeFraction[ipNonWetting] = phaseMinVolFrac;
-//        m_gasOilRelPermMaxValue[ip] = phaseRelPermEndPoint;//todo correct
       }
     }
   }
@@ -200,7 +198,7 @@ void TableRelativePermeability::initializePreSubGroups()
       else if( ip == 1 ) // intermediate phase is oil
       {
         m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
-          m_waterOilMaxRelPerm[m_phaseOrder[PhaseType::OIL]] = phaseRelPermEndPoint;//todo correct
+          m_waterOilMaxRelPerm = phaseRelPermEndPoint;
       }
     }
     for( integer ip = 0; ip < m_nonWettingIntermediateRelPermTableNames.size(); ++ip )
@@ -225,7 +223,6 @@ void TableRelativePermeability::initializePreSubGroups()
       else if( ip == 1 ) // intermediate phase is oil
       {
         m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
-//          m_waterOilRelPermMaxValue[m_phaseOrder[PhaseType::OIL]] = phaseRelPermEndPoint;//todo correct
       }
     }
   }
@@ -266,8 +263,10 @@ void TableRelativePermeability::createAllTableKernelWrappers()
 TableRelativePermeability::KernelWrapper::
   KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & relPermKernelWrappers,
                  arrayView1d< real64 const > const & phaseMinVolumeFraction,
+                 real64 const & waterPhaseMaxVolumeFraction,
                  arrayView1d< integer const > const & phaseTypes,
                  arrayView1d< integer const > const & phaseOrder,
+                 integer const & flagInterpolator,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                  arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
@@ -275,10 +274,11 @@ TableRelativePermeability::KernelWrapper::
                                     phaseOrder,
                                     phaseRelPerm,
                                     dPhaseRelPerm_dPhaseVolFrac,
-                                    phaseTrappedVolFrac ),
-  m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
-  m_relPermKernelWrappers( relPermKernelWrappers )
-{}
+                                    phaseTrappedVolFrac),
+    m_relPermKernelWrappers(relPermKernelWrappers),
+    m_phaseMinVolumeFraction(phaseMinVolumeFraction),
+    m_waterOilRelPermMaxValue(waterPhaseMaxVolumeFraction),
+    m_flagInterpolator(flagInterpolator) {}
 
 TableRelativePermeability::KernelWrapper
 TableRelativePermeability::createKernelWrapper()
@@ -290,9 +290,10 @@ TableRelativePermeability::createKernelWrapper()
   // then we create the actual TableRelativePermeability::KernelWrapper
   return KernelWrapper( m_relPermKernelWrappers,
                         m_phaseMinVolumeFraction,
-                        m_flagInterpolator,
+                        m_waterOilMaxRelPerm,
                         m_phaseTypes,
                         m_phaseOrder,
+                        m_flagInterpolator,
                         m_phaseRelPerm,
                         m_dPhaseRelPerm_dPhaseVolFrac,
                         m_phaseTrappedVolFrac );
