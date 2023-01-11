@@ -207,25 +207,6 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
   }
 }
 
-real64 MultiphasePoromechanicsSolver::solverStep( real64 const & time_n,
-                                                  real64 const & dt,
-                                                  int const cycleNumber,
-                                                  DomainPartition & domain )
-{
-  real64 dt_return = dt;
-
-  // setup monolithic coupled system
-  SolverBase::setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-
-  implicitStepSetup( time_n, dt, domain );
-
-  dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-  implicitStepComplete( time_n, dt_return, domain );
-
-  return dt_return;
-}
-
 void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

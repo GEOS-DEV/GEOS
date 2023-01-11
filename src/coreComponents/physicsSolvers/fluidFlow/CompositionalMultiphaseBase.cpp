@@ -129,11 +129,11 @@ void CompositionalMultiphaseBase::postProcessInput()
   GEOSX_ERROR_IF_LE_MSG( m_maxCompFracChange, 0.0,
                          "The maximum absolute change in component fraction in a Newton iteration must be larger than 0.0" );
   GEOSX_ERROR_IF_GT_MSG( m_maxRelativePresChange, 1.0,
-                         "The maximum relative change in pressure in a Newton iteration must be smaller or equal to 1.0 (i.e., 100% change)" );
+                         "The maximum relative change in pressure in a Newton iteration must be smaller or equal to 1.0 (i.e., 100 percent change)" );
   GEOSX_ERROR_IF_LE_MSG( m_maxRelativePresChange, 0.0,
                          "The maximum relative change in pressure in a Newton iteration must be larger than 0.0" );
   GEOSX_ERROR_IF_GT_MSG( m_maxRelativeTempChange, 1.0,
-                         "The maximum relative change in temperature in a Newton iteration must be smaller or equal to 1.0 (i.e., 100% change)" );
+                         "The maximum relative change in temperature in a Newton iteration must be smaller or equal to 1.0 (i.e., 100 percent change)" );
   GEOSX_ERROR_IF_LE_MSG( m_maxRelativeTempChange, 0.0,
                          "The maximum relative change in temperature in a Newton iteration must be larger than 0.0" );
 
