@@ -69,7 +69,7 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 5;
 
-  ///
+  /// The number of sampling points per element.
   constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
   virtual ~H1_Pyramid_Lagrange1_Gauss5() override
@@ -117,6 +117,12 @@ public:
     return maxSupportPoints;
   }
 
+  /**
+   * @brief Get the Sampling Point Coord In the Parent Space
+   *
+   * @param linearIndex linear index of the sampling point
+   * @param samplingPointCoord coordinates of the sampling point
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void getSamplingPointCoordInParentSpace( int const & linearIndex,
@@ -128,7 +134,7 @@ public:
 
   /**
    * @brief Calculate shape functions values at a single point.
-   * @param[in] coords The parent coordinates at which to evaluate the shape function value
+   * @param[in] pointCoord The parent coordinates at which to evaluate the shape function value
    * @param[out] N The shape function values.
    */
   GEOSX_HOST_DEVICE

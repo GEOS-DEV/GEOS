@@ -31,10 +31,23 @@
 namespace geosx
 {
 
+/**
+ * @brief Kernel to compute EDFM connectivity index
+ *
+ * @tparam FE_TYPE finite element space (element type) on which CI are computed
+ */
 template< typename FE_TYPE >
 class CIcomputationKernel
 {
 public:
+  /**
+   * @brief Construct a new CIcomputationKernel object
+   *
+   * @param finiteElementSpace the finite element space
+   * @param nodeManager the nodeManager
+   * @param elementSubRegion the element subRegion
+   * @param embeddedSurfSubRegion the embeddedSurfaceSubRegion
+   */
   CIcomputationKernel( FE_TYPE const & finiteElementSpace,
                        NodeManager const & nodeManager,
                        CellElementSubRegion const & elementSubRegion,
@@ -51,10 +64,16 @@ public:
     m_connectivityIndex( embeddedSurfSubRegion.getConnectivityIndex() )
   {}
 
+  /// number of nodes per element
   static constexpr int numNodesPerElem = FE_TYPE::maxSupportPoints;
 
+  /// number of sampling points per element
   static constexpr int numSamplingPoints = FE_TYPE::numSamplingPoints;
 
+  /**
+   * @brief stack variables
+   *
+   */
   struct StackVariables
   {
 public:
@@ -69,10 +88,17 @@ public:
     /// C-array stack storage for element local the nodal positions.
     real64 xLocal[ numNodesPerElem ][ 3 ];
 
+    /// C-array stack storage for sampling points coordinates.
     real64 samplingPointCoord[3];
   };
 
-
+  /**
+   * @brief launch of CI calculation
+   *
+   * @tparam POLICY the exectution policy
+   * @tparam KERNEL_TYPE the type of kernel
+   * @param kernelComponent the kernel object
+   */
   template< typename POLICY,
             typename KERNEL_TYPE >
   static
@@ -99,11 +125,12 @@ public:
     } );
   }
 
-  /**
-   * @brief Copy global values from primary field to a local stack array.
-   * @copydoc
-   *
-   */
+/**
+ * @brief set up the kernel object by copying global values in the stack.
+ *
+ * @param k embedded surface index.
+ * @param stack stack variables
+ */
   GEOSX_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const
@@ -119,6 +146,13 @@ public:
     }
   }
 
+  /**
+   * @brief computes the distance between a point inside the element and the cut surface \p k.
+   *
+   * @param k the index of the embedded surface
+   * @param point the coordinates of a point inside the cell element
+   * @return the distance
+   */
   GEOSX_HOST_DEVICE
   real64 computeDistance( localIndex const k,
                           real64 const (&point)[3] ) const
@@ -130,6 +164,12 @@ public:
     return LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( pointToFracCenter, m_normalVector[embSurfIndex] ));
   }
 
+  /**
+   * @brief computes coordinates of the sampling point in the physical space.
+   *
+   * @param np sampling point linear index
+   * @param stack stack variables
+   */
   GEOSX_HOST_DEVICE
   void samplingPointCoord( integer const np,
                            StackVariables & stack ) const
@@ -154,6 +194,12 @@ public:
     }
   }
 
+  /**
+   * @brief Set the Connectivity Index
+   *
+   * @param k embedded surface element index
+   * @param averageDistance the average distance
+   */
   GEOSX_HOST_DEVICE
   void setConnectivityIndex( localIndex const k,
                              real64 const averageDistance ) const
@@ -164,25 +210,34 @@ public:
 
 private:
 
+  /// the finite element space
   FE_TYPE const & m_finiteElementSpace;
 
+  /// the element type
   ElementType const m_elementType;
 
+  /// the reference position of the nodes
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
 
   /// The element to nodes map.
   traits::ViewTypeConst< typename CellElementSubRegion::NodeMapType::base_type > const m_elemsToNodes;
 
+  /// set of fractured cell elements
   SortedArrayView< localIndex const > const m_fracturedElems;
 
+  /// cell to embedded surfaces map
   ArrayOfArraysView< localIndex const > const m_cellsToEmbeddedSurfaces;
 
+  /// normal vector of the embedded surface
   arrayView2d< real64 const > const m_normalVector;
 
+  /// center of the embedded surface
   arrayView2d< real64 const > const m_fracCenter;
 
+  /// area of the embedded surface
   arrayView1d< real64 const > const m_fractureSurfaceArea;
 
+  /// the connectivity index
   arrayView1d< real64 > const m_connectivityIndex;
 };
 

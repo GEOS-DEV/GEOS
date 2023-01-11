@@ -18,7 +18,7 @@
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
       logLevel="1"
-      discretization="singlePhaseTPFA"
+      discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       mpiCommOrder="1"/>
@@ -85,6 +85,11 @@
         name="singlePhaseTPFA"
         usePEDFM="1"/>
     </FiniteVolume>
+    <FiniteElements>
+    <FiniteElementSpace
+    name="FE1"
+    order="1"/>
+    </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>

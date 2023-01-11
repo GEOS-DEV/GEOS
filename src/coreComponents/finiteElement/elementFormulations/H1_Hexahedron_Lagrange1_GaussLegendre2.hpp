@@ -80,7 +80,8 @@ public:
 
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 8;
-  ///
+
+  /// The number of sampling points per element
   constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
   /** @cond Doxygen_Suppress */
@@ -132,16 +133,22 @@ public:
     return numNodes;
   }
 
+  /**
+   * @brief Get the Sampling Point Coord In the Parent Space
+   *
+   * @param linearIndex linear index of the sampling point
+   * @param samplingPointCoord coordinates of the sampling point
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void getSamplingPointCoordInParentSpace( int const & linearIndex,
+  static void getSamplingPointCoordInParentSpace( int const linearIndex,
                                                   real64 (& samplingPointCoord)[3] )
   {
-    int const i0 = linearIndex % numSamplingPointsPerDirection;
-    int const i1 = ( (linearIndex - i0)/numSamplingPointsPerDirection ) % numSamplingPointsPerDirection;
-    int const i2 = ( (linearIndex - i0)/numSamplingPointsPerDirection - i1 ) / numSamplingPointsPerDirection;
+    const int i0 = linearIndex % numSamplingPointsPerDirection;
+    const int i1 = ( (linearIndex - i0)/numSamplingPointsPerDirection ) % numSamplingPointsPerDirection;
+    const int i2 = ( (linearIndex - i0)/numSamplingPointsPerDirection - i1 ) / numSamplingPointsPerDirection;
 
-    real64 const step = 2 / ( numSamplingPointsPerDirection - 1 );
+    constexpr real64 step = 2 / ( numSamplingPointsPerDirection - 1 );
 
     samplingPointCoord[0] = -1 + i0 * step;
     samplingPointCoord[1] = -1 + i1 * step;
@@ -151,7 +158,7 @@ public:
   /**
    * @brief Calculate shape functions values for each support point at a
    *   given point in the parent space.
-   * @param coords coordinates of the given point.
+   * @param pointCoord coordinates of the given point.
    * @param N An array to pass back the shape function values for each support
    *   point.
    */

@@ -239,11 +239,6 @@ public:
    * @brief Get an array of the first tangent vector of the embedded surface elements.
    * @return an array of the first tangent vector of the embedded surface elements
    */
-  // array2d< real64 > & getTangentVector1() { return m_tangentVector1; }
-
-  /**
-   * @copydoc getTangentVector1()
-   */
   arrayView2d< real64 const > getTangentVector1() const { return m_tangentVector1; }
 
   /**

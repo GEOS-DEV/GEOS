@@ -161,7 +161,6 @@ struct FiniteElementDispatchHandler< FE_TYPE, FE_TYPES... >
 
 
 
-
 template< typename LAMBDA >
 void
 dispatchlowOrder3D( FiniteElementBase const & input,

@@ -49,7 +49,7 @@ public:
   FiniteElementBase() = default;
 
 
-  // Number of sampling points.
+  /// Number of sampling points.
   constexpr static int numSamplingPointsPerDirection = 10;
 
   /**

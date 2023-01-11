@@ -115,11 +115,10 @@ public:
   }
 
   /**
-   * @brief Get the Sampling Point Coord In Parent Space object
-   * 
-   * @param linearIndex 
-   * @param samplingPointCoord 
-   * @return GEOSX_HOST_DEVICE 
+   * @brief Get the Sampling Point Coord In the Parent Space
+   *
+   * @param linearIndex linear index of the sampling point
+   * @param samplingPointCoord coordinates of the sampling point
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE

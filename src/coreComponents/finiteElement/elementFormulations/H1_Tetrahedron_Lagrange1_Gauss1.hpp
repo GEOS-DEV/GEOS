@@ -110,8 +110,10 @@ public:
   }
 
   /**
-   * @brief 
-   * 
+   * @brief Get the Sampling Point Coord In the Parent Space
+   *
+   * @param linearIndex linear index of the sampling point
+   * @param samplingPointCoord coordinates of the sampling point
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -145,7 +147,7 @@ public:
   /**
    * @brief Calculate shape functions values for each support point at a
    *   given point in the parent space.
-   * @param coords coordinates of the given point.
+   * @param pointCoord coordinates of the given point.
    * @param N An array to pass back the shape function values for each support
    *   point.
    */

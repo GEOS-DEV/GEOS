@@ -3,7 +3,7 @@
 <Problem>
   <Included>
     <File
-      name="./WillisRichardsPermeability_edfm_base.xml"/>
+      name="./WillisRichardsPermeability_efem-edfm_base.xml"/>
   </Included>
 
   <Mesh>
