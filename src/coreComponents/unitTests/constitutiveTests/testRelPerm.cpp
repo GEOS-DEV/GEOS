@@ -748,6 +748,8 @@ RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Grou
 
   auto & relPerm = parent.registerGroup< TableRelativePermeability >( name );
 
+  relPerm.setFlagToStoneII();
+
   auto & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "water"; phaseNames[2] = "gas";
