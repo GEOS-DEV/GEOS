@@ -108,9 +108,10 @@ void MeshManager::importFields( DomainPartition & domain )
   {
     try
     {
-      VTKMeshGenerator &g = dynamic_cast<VTKMeshGenerator&>( generator );
+      VTKMeshGenerator & g = dynamic_cast< VTKMeshGenerator & >( generator );
+      GEOSX_UNUSED_VAR( g );
     }
-    catch(const std::bad_cast& e)
+    catch( const std::bad_cast & e )
     {
       return;
     }
