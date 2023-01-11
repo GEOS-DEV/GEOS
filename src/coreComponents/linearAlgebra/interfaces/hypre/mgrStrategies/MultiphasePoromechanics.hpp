@@ -132,7 +132,7 @@ public:
     mgrData.coarseSolver.destroy = HYPRE_BoomerAMGDestroy;
 
     // Configure the BoomerAMG solver used as F-relaxation for the first level
-    //setMechanicsFSolver( precond, mgrData );
+    setMechanicsFSolver( precond, mgrData );
   }
 };
 
