@@ -125,13 +125,13 @@ public:
     real64 dFluidMassIncrement_dTemperature{};
 
     /// Energy accumulation
-    real64 fluidEnergyIncrement{};
+    real64 energyIncrement{};
     /// Derivative of energy accumulation wrt volumetric strain increment
-    real64 dFluidEnergyIncrement_dVolStrainIncrement{};
+    real64 dEnergyIncrement_dVolStrainIncrement{};
     /// Derivative of energy accumulation wrt pressure
-    real64 dFluidEnergyIncrement_dPressure{};
+    real64 dEnergyIncrement_dPressure{};
     /// Derivative of energy accumulation wrt temperature
-    real64 dFluidEnergyIncrement_dTemperature{};
+    real64 dEnergyIncrement_dTemperature{};
 
     // Storage for mass/energy residual and degrees of freedom
 
@@ -288,6 +288,11 @@ protected:
   arrayView2d< real64 const > const m_fluidInternalEnergy;
   arrayView2d< real64 const > const m_dFluidInternalEnergy_dPressure;
   arrayView2d< real64 const > const m_dFluidInternalEnergy_dTemperature;
+
+  /// Views on rock internal energy
+  arrayView2d< real64 const > const m_rockInternalEnergy_n;
+  arrayView2d< real64 const > const m_rockInternalEnergy;
+  arrayView2d< real64 const > const m_dRockInternalEnergy_dTemperature;
 
   /// Views on temperature
   arrayView1d< real64 const > const m_temperature_n;

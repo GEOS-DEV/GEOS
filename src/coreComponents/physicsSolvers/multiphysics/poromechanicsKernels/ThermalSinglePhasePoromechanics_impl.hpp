@@ -67,6 +67,9 @@ ThermalSinglePhasePoromechanics( NodeManager const & nodeManager,
                                                                                                                        fluidModelKey ) ).dInternalEnergy_dPressure() ),
   m_dFluidInternalEnergy_dTemperature( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
                                                                                                                           fluidModelKey ) ).dInternalEnergy_dTemperature() ),
+  m_rockInternalEnergy_n( inputConstitutiveType.getInternalEnergy_n() ),
+  m_rockInternalEnergy( inputConstitutiveType.getInternalEnergy() ),
+  m_dRockInternalEnergy_dTemperature( inputConstitutiveType.getDinternalEnergy_dTemperature() ),
   m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() ),
   m_initialTemperature( elementSubRegion.template getField< fields::flow::initialTemperature >() ),
   m_temperature( elementSubRegion.template getField< fields::flow::temperature >() )
@@ -206,13 +209,22 @@ computeFluidIncrement( localIndex const k,
   real64 const fluidMass = porosity * m_fluidDensity( k, q );
   real64 const fluidEnergy = fluidMass * m_fluidInternalEnergy( k, q );
   real64 const fluidEnergy_n = porosity_n * m_fluidDensity_n( k, q ) * m_fluidInternalEnergy_n( k, q );
-  stack.fluidEnergyIncrement = fluidEnergy - fluidEnergy_n;
+  stack.energyIncrement = fluidEnergy - fluidEnergy_n;
 
-  stack.dFluidEnergyIncrement_dVolStrainIncrement = stack.dFluidMassIncrement_dVolStrainIncrement * m_fluidInternalEnergy( k, q );
-  stack.dFluidEnergyIncrement_dPressure = stack.dFluidMassIncrement_dPressure * m_fluidInternalEnergy( k, q )
-                                          + fluidMass * m_dFluidInternalEnergy_dPressure( k, q );
-  stack.dFluidEnergyIncrement_dTemperature = stack.dFluidMassIncrement_dTemperature * m_fluidInternalEnergy( k, q )
-                                             + fluidMass * m_dFluidInternalEnergy_dTemperature( k, q );
+  stack.dEnergyIncrement_dVolStrainIncrement = stack.dFluidMassIncrement_dVolStrainIncrement * m_fluidInternalEnergy( k, q );
+  stack.dEnergyIncrement_dPressure = stack.dFluidMassIncrement_dPressure * m_fluidInternalEnergy( k, q )
+                                     + fluidMass * m_dFluidInternalEnergy_dPressure( k, q );
+  stack.dEnergyIncrement_dTemperature = stack.dFluidMassIncrement_dTemperature * m_fluidInternalEnergy( k, q )
+                                        + fluidMass * m_dFluidInternalEnergy_dTemperature( k, q );
+
+
+  // Step 4: assemble the solid part of the accumulation term
+  real64 const oneMinusPoro = 1 - porosity;
+
+  stack.energyIncrement += oneMinusPoro * m_rockInternalEnergy( k, 0 ) - ( 1 - porosity_n ) * m_rockInternalEnergy_n( k, 0 );
+  stack.dEnergyIncrement_dVolStrainIncrement += -dPorosity_dVolStrain * m_rockInternalEnergy( k, 0 );
+  stack.dEnergyIncrement_dPressure += -dPorosity_dPressure * m_rockInternalEnergy( k, 0 );
+  stack.dEnergyIncrement_dTemperature += -dPorosity_dTemperature * m_rockInternalEnergy( k, 0 ) + oneMinusPoro * m_dRockInternalEnergy_dTemperature( k, 0 );
 }
 
 template< typename SUBREGION_TYPE,
@@ -301,7 +313,7 @@ assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
   (
     stack.localResidualEnergy,
     1.0,
-    stack.fluidEnergyIncrement,
+    stack.energyIncrement,
     detJxW );
 
   BilinearFormUtilities::compute< pressureTestSpace,
@@ -311,7 +323,7 @@ assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
   (
     stack.dLocalResidualEnergy_dDisplacement,
     1.0,
-    stack.dFluidEnergyIncrement_dVolStrainIncrement,
+    stack.dEnergyIncrement_dVolStrainIncrement,
     dNdX,
     detJxW );
 
@@ -322,7 +334,7 @@ assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
   (
     stack.dLocalResidualEnergy_dPressure,
     1.0,
-    stack.dFluidEnergyIncrement_dPressure,
+    stack.dEnergyIncrement_dPressure,
     1.0,
     detJxW );
 
@@ -333,7 +345,7 @@ assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
   (
     stack.dLocalResidualEnergy_dTemperature,
     1.0,
-    stack.dFluidEnergyIncrement_dTemperature,
+    stack.dEnergyIncrement_dTemperature,
     1.0,
     detJxW );
 }
