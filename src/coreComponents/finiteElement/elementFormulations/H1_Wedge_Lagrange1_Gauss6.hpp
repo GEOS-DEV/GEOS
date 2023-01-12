@@ -66,6 +66,9 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 6;
 
+  /// The number of sampling points per element.
+  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
+
   virtual ~H1_Wedge_Lagrange1_Gauss6() override
   {}
 
@@ -109,6 +112,41 @@ public:
   {
     GEOSX_UNUSED_VAR( stack );
     return numNodes;
+  }
+
+  /**
+   * @brief Get the Sampling Point Coord In the Parent Space
+   *
+   * @param linearIndex linear index of the sampling point
+   * @param samplingPointCoord coordinates of the sampling point
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void getSamplingPointCoordInParentSpace( int const & linearIndex,
+                                                  real64 (& samplingPointCoord)[3] )
+  {
+    int const i0 = linearIndex % numSamplingPointsPerDirection;
+    int const i1 = ( (linearIndex - i0)/numSamplingPointsPerDirection ) % numSamplingPointsPerDirection;
+    int const i2 = ( (linearIndex - i0)/numSamplingPointsPerDirection - i1 ) / numSamplingPointsPerDirection;
+
+    real64 const step = 1 / ( numSamplingPointsPerDirection - 1 );
+
+    real64 const r = i0 * step;
+    real64 const s = i1 * step;
+    real64 const t = i2 * 2 * step;
+    if( (r+s) <= 1 )
+    {
+      samplingPointCoord[0] = r;
+      samplingPointCoord[1] = s;
+      samplingPointCoord[2] = t;
+    }
+    else
+    {
+      // if outside of the triangle need to reproject it. Points will be doubled though.
+      samplingPointCoord[0] = 1 - r;
+      samplingPointCoord[1] = 1 - s;
+      samplingPointCoord[2] = t;
+    }
   }
 
   /**
@@ -450,16 +488,11 @@ H1_Wedge_Lagrange1_Gauss6::
   calcN( localIndex const q,
          real64 (& N)[numNodes] )
 {
-  real64 const r  = quadratureParentCoords0( q );
-  real64 const s  = quadratureParentCoords1( q );
-  real64 const xi = quadratureParentCoords2( q );
+  real64 const pointCoord[3] = {quadratureParentCoords0( q ),
+                                quadratureParentCoords1( q ),
+                                quadratureParentCoords2( q )};
 
-  N[0] = 0.5*( 1.0 - r - s ) * ( 1.0 - xi );
-  N[1] = 0.5*( 1.0 - r - s ) * ( 1.0 + xi );
-  N[2] = 0.5* r * ( 1.0 - xi );
-  N[3] = 0.5* r * ( 1.0 + xi );
-  N[4] = 0.5* s * ( 1.0 - xi );
-  N[5] = 0.5* s * ( 1.0 + xi );
+  calcN( pointCoord, N );
 }
 
 GEOSX_HOST_DEVICE
