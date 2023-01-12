@@ -60,6 +60,9 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 1;
 
+  /// The number of sampling points per element.
+  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
+
   virtual ~H1_Tetrahedron_Lagrange1_Gauss1() override
   {}
 
@@ -107,12 +110,50 @@ public:
   }
 
   /**
-   * @brief Calculate shape functions values at a single point.
-   * @param[in] coords The parent coordinates at which to evaluate the shape function value
-   * @param[out] N The shape function values.
+   * @brief Get the Sampling Point Coord In the Parent Space
+   *
+   * @param linearIndex linear index of the sampling point
+   * @param samplingPointCoord coordinates of the sampling point
    */
   GEOSX_HOST_DEVICE
-  static void calcN( real64 const (&coords)[3],
+  GEOSX_FORCE_INLINE
+  static void getSamplingPointCoordInParentSpace( int const & linearIndex,
+                                                  real64 (& samplingPointCoord)[3] )
+  {
+    int const i0 = linearIndex % numSamplingPointsPerDirection;
+    int const i1 = ( (linearIndex - i0)/numSamplingPointsPerDirection ) % numSamplingPointsPerDirection;
+    int const i2 = ( (linearIndex - i0)/numSamplingPointsPerDirection - i1 ) / numSamplingPointsPerDirection;
+
+    real64 const step = 1 / ( numSamplingPointsPerDirection - 1 );
+
+    real64 const r = i0 * step;
+    real64 const s = i1 * step;
+    real64 const t = i2 * step;
+    if( (r+s) <= t )
+    {
+      samplingPointCoord[0] = r;
+      samplingPointCoord[1] = s;
+      samplingPointCoord[2] = t;
+    }
+    else
+    {
+      // if outside of the triangle need to reproject it. Points will be doubled though.
+      samplingPointCoord[0] = 1 - t - r;
+      samplingPointCoord[1] = 1 - t - s;
+      samplingPointCoord[2] = t;
+    }
+  }
+
+  /**
+   * @brief Calculate shape functions values for each support point at a
+   *   given point in the parent space.
+   * @param pointCoord coordinates of the given point.
+   * @param N An array to pass back the shape function values for each support
+   *   point.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( real64 const (&pointCoord)[3],
                      real64 ( &N )[numNodes] );
 
   /**
@@ -261,10 +302,8 @@ H1_Tetrahedron_Lagrange1_Gauss1::
   GEOSX_UNUSED_VAR( q );
 
   // single quadrature point (centroid), i.e.  r = s = t = 1/4
-  N[0] = 0.25; // N0 = 1 - r - s - t
-  N[1] = 0.25; // N1 = r
-  N[2] = 0.25; // N2 = s
-  N[3] = 0.25; // N3 = t
+  real64 const pointCoord[3] = {0.25, 0.25, 0.25};
+  calcN( pointCoord, N );
 }
 
 GEOSX_HOST_DEVICE

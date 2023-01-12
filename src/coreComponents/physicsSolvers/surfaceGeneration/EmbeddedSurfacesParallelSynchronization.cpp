@@ -57,7 +57,7 @@ void packNewNodes( NeighborCommunicator * const neighbor,
   {
     if( nodeGhostRank[ni] == neighborRank )
     {
-      // a node is sent if it is a ghost neighborRank
+      // a node is sent if it is a ghost on neighborRank
       newNodesToSend.emplace_back( ni );
     }
     else
