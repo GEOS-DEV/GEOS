@@ -7,7 +7,7 @@
       name="SinglePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain, Fracture }">
+      targetRegions="{ RockMatrix, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
@@ -18,84 +18,33 @@
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
       logLevel="1"
-      discretization="singlePhaseTPFA"
-      targetRegions="{ Domain, Fracture }"
+      discretization="FE1"
+      targetRegions="{ RockMatrix, Fracture }"
       fractureRegion="Fracture"
       mpiCommOrder="1"/>
   </Solvers>
 
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 31 }"
-      ny="{ 31 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cb1 }"/>
-  </Mesh>
-
-  <Geometry>
-    <Box
-      name="source"
-      xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 1.1, 0.1, 1.01 }"/>
-
-    <Box
-      name="sink"
-      xMin="{ -0.01, 0.9, -0.01 }"
-      xMax="{ 1.01, 1.01, 1.01 }"/>
-
-    <BoundedPlane
-      name="FracturePlane"
-      normal="{0.0, 1.00, 0.0}"
-      origin="{ 0.5, 0.5, 0.5 }"
-      lengthVector="{ 1.00, 0.00, 0 }"
-      widthVector="{ 0, 0, 1 }"
-      dimensions="{ 0.5, 1 }"/>
-  </Geometry>
-
-  <Events
-    maxTime="1e3"
-    logLevel="3">
-    <SoloEvent
-      name="preFracture"
-      target="/Solvers/SurfaceGenerator"/>
-
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="1e3"
-      target="/Solvers/SinglePhaseFlow"/>
-
-    <PeriodicEvent
-      name="outputs"
-      target="/Outputs/vtkOutput"/>
-
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="1e3"
-      target="/Outputs/sidreRestart"/>
-  </Events>
-
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        usePEDFM="1"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
+    <FiniteElements>
+    <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>
     <CellElementRegion
-      name="Domain"
+      name="RockMatrix"
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
-      defaultAperture="1e-5"
+      defaultAperture="1e-3"
       materialList="{ water, fractureFilling }"
       subRegionType="embeddedElement"/>
   </ElementRegions>
@@ -132,7 +81,7 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-10, 1.0e-10, 1.0e-10 }"/>
+      permeabilityComponents="{ 2.0e-15, 2.0e-15, 2.0e-15 }"/>
 
     <PressurePorosity
       name="fracturePorosity"
@@ -140,7 +89,7 @@
       referencePressure="0.0"
       compressibility="0.0"/>
 
-     <ParallelPlatesPermeability
+    <ParallelPlatesPermeability
       name="fracturePerm"/>
   </Constitutive>
 
@@ -157,7 +106,7 @@
       name="Porosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
+      objectPath="ElementRegions/RockMatrix/cb1"
       fieldName="rockPorosity_referencePorosity"
       scale="0.1"/>
 
@@ -173,33 +122,22 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
+      objectPath="ElementRegions/RockMatrix/cb1"
       fieldName="pressure"
       scale="0.0"/>
 
     <FieldSpecification
       name="sourceTerm"
-      objectPath="ElementRegions/Domain/cb1"
+      objectPath="ElementRegions/RockMatrix/cb1"
       fieldName="pressure"
       scale="1e7"
       setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkTerm"
-      objectPath="ElementRegions/Domain/cb1"
+      objectPath="ElementRegions/RockMatrix/cb1"
       fieldName="pressure"
       scale="0.0"
       setNames="{ sink }"/>
   </FieldSpecifications>
-
-  <Outputs>
-    <VTK
-      name="vtkOutput"
-      plotFileRoot="impermFractureAndMatrixFlow"
-      plotLevel="2"
-      format="ascii"/>
-
-    <Restart
-      name="sidreRestart"/>
-  </Outputs>
 </Problem>
