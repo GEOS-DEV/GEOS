@@ -396,19 +396,16 @@ inline HYPRE_Int getAMGCoarseType( LinearSolverParameters::AMG::CoarseType const
  * @param type AMG coarsening type
  * @return hypre AMG coarsening type identifier code
  */
-inline HYPRE_Int getAMGCoarseningType( string const & type )
+inline HYPRE_Int getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType const & type )
 {
-  static map< string, HYPRE_Int > const typeMap =
+  static map< LinearSolverParameters::AMG::CoarseningType, HYPRE_Int > const typeMap =
   {
-    { "CLJP", 0 },
-    { "Ruge-Stueben", 3 },
-    { "Falgout", 6 },
-    { "CLJPDebug", 7 },
-    { "PMIS", 8 },
-    { "PMISDebug", 9 },
-    { "HMIS", 10 },
-    { "CGC", 21 },
-    { "CGC-E", 22 }
+    { LinearSolverParameters::AMG::CoarseningType::default_, -1 },
+    { LinearSolverParameters::AMG::CoarseningType::CLJP, 0 },
+    { LinearSolverParameters::AMG::CoarseningType::RugeStueben, 3 },
+    { LinearSolverParameters::AMG::CoarseningType::Falgout, 6 },
+    { LinearSolverParameters::AMG::CoarseningType::PMIS, 8 },
+    { LinearSolverParameters::AMG::CoarseningType::HMIS, 10 },
   };
   return findOption( typeMap, type, "multigrid coarsening", "HyprePreconditioner" );
 }

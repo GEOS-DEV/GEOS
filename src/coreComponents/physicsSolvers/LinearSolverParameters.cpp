@@ -136,10 +136,10 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
                     "``" + EnumStrings< LinearSolverParameters::AMG::CoarseType >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::amgCoarseningString(), &m_parameters.amg.coarseningType ).
-    setApplyDefaultValue( "HMIS" ).
+    setApplyDefaultValue( m_parameters.amg.coarseningType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG coarsening algorithm\n"
-                    "Available options are: TODO" );
+    setDescription( "AMG coarsening algorithm. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::AMG::CoarseningType >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::amgInterpolationString(), &m_parameters.amg.interpolationType ).
     setApplyDefaultValue( m_parameters.amg.interpolationType ).
@@ -148,25 +148,24 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
                     "``" + EnumStrings< LinearSolverParameters::AMG::InterpType >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::amgInterpMaxNonZerosString(), &m_parameters.amg.interpolationMaxNonZeros ).
-    setApplyDefaultValue( 4 ).
+    setApplyDefaultValue( m_parameters.amg.interpolationMaxNonZeros ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "AMG interpolation maximum number of nonzeros per row" );
 
   registerWrapper( viewKeyStruct::amgNumFunctionsString(), &m_parameters.amg.numFunctions ).
-    setApplyDefaultValue( 1 ).
+    setApplyDefaultValue( m_parameters.amg.numFunctions ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG number of functions\n"
-                    "Available options are: TODO" );
+    setDescription( "AMG number of functions" );
 
   registerWrapper( viewKeyStruct::amgAggressiveNumPathsString(), &m_parameters.amg.aggressiveNumPaths ).
     setApplyDefaultValue( m_parameters.amg.aggressiveNumPaths ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG number of paths for aggressive coarsening \n" );
+    setDescription( "AMG number of paths for aggressive coarsening" );
 
   registerWrapper( viewKeyStruct::amgAggressiveNumLevelsString(), &m_parameters.amg.aggressiveNumLevels ).
     setApplyDefaultValue( m_parameters.amg.aggressiveNumLevels ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG number of levels for aggressive coarsening \n" );
+    setDescription( "AMG number of levels for aggressive coarsening" );
 
   registerWrapper( viewKeyStruct::amgAggressiveInterpTypeString(), &m_parameters.amg.aggressiveInterpType ).
     setApplyDefaultValue( m_parameters.amg.aggressiveInterpType ).
