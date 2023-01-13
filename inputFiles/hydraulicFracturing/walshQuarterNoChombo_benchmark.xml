@@ -51,9 +51,9 @@
         amgNumSweeps="2"
         amgSmootherType="default"
         amgCoarseningType="HMIS"
-        amgInterpolationType="extI"
+        amgInterpolationType="extendedI"
         amgNumFunctions="3"
-        amgAggresiveCoarseningLevels="1"
+        amgAggressiveCoarseningLevels="1"
         /-->
     </Hydrofracture>
 
