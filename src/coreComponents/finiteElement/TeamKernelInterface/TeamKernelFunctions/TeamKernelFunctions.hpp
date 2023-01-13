@@ -28,9 +28,11 @@
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/writeAddField.hpp"
 
 
-/// Functions to interpolate a field at quadrature points.
+/// Functions to interpolate a field at all quadrature points.
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/interpolateAtQuadraturePoints/interpolateAtQuadraturePoints.hpp"
-/// Functions to interpolate gradient of a field at quadrature points.
+/// Functions to interpolate gradient of a field at a single quadrature point.
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/interpolateGradientAtQuadraturePoints/interpolateGradientAtQuadraturePoint.hpp"
+/// Functions to interpolate gradient of a field at all quadrature points.
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/interpolateGradientAtQuadraturePoints/interpolateGradientAtQuadraturePoints.hpp"
 /// Functions to apply test functions.
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/applyTestFunctions/applyTestFunctions.hpp"
