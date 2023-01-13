@@ -47,9 +47,9 @@ void interpolateGradientAtQuadraturePoint( StackVariables & stack,
                                            real64 const (& dofs)[num_dofs_1d][num_dofs_1d][num_dofs_1d],
                                            real64 (& q_value)[3] )
 {
-  q_value( 0 ) = 0.0;
-  q_value( 1 ) = 0.0;
-  q_value( 2 ) = 0.0;
+  q_value[ 0 ] = 0.0;
+  q_value[ 1 ] = 0.0;
+  q_value[ 2 ] = 0.0;
   #pragma unroll
   for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
   {

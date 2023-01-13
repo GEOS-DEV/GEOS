@@ -98,7 +98,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > localSrc2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localSrc.dataBuffer() );
     arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > localDst2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localDst.dataBuffer() );
 
-#if 0
+#if 1
     TeamSolidMechanicsFEMKernelFactory kernelFactory( localSrc2d, localDst2d );  
     finiteElement::
       regionBasedKernelApplication< team_launch_policy,

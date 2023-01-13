@@ -408,7 +408,7 @@ public:
               for (localIndex comp = 0; comp < 3; comp++)
               {
                 // Load quadrature point-local gradients and jacobians
-                real64 grad_ref_u[ dim ][ dim ] = { 0 };
+                real64 grad_ref_u[ dim ][ dim ] = { { 0 } };
                 grad_ref_u[comp][0] = basis.basis_gradient[ dof_x ][ quad_index.x ]
                                     * basis.basis[ dof_y ][ quad_index.y ]
                                     * basis.basis[ dof_z ][ quad_index.z ];
@@ -417,7 +417,7 @@ public:
                                     * basis.basis[ dof_z ][ quad_index.z ];
                 grad_ref_u[comp][2] = basis.basis[ dof_x ][ quad_index.x ]
                                     * basis.basis[ dof_y ][ quad_index.y ]
-                                    * basis.basi_gradient[ dof_z ][ quad_index.z ];
+                                    * basis.basis_gradient[ dof_z ][ quad_index.z ];
 
                 // Compute D_q u_q = - w_q * det(J_q) * J_q^-1 * sigma ( J_q^-1, grad( u_q ) )
                 real64 stress[ dim ][ dim ];
