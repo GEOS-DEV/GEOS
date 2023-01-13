@@ -367,6 +367,8 @@ HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix
 
 void HyprePreconditioner::setup( Matrix const & mat )
 {
+  GEOSX_MARK_FUNCTION;
+
   if( !m_precond )
   {
     m_precond = std::make_unique< HyprePrecWrapper >();
