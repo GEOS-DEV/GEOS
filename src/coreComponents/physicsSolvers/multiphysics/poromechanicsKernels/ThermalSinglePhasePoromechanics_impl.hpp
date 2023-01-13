@@ -71,7 +71,6 @@ ThermalSinglePhasePoromechanics( NodeManager const & nodeManager,
   m_rockInternalEnergy( inputConstitutiveType.getInternalEnergy() ),
   m_dRockInternalEnergy_dTemperature( inputConstitutiveType.getDinternalEnergy_dTemperature() ),
   m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() ),
-  m_initialTemperature( elementSubRegion.template getField< fields::flow::initialTemperature >() ),
   m_temperature( elementSubRegion.template getField< fields::flow::temperature >() )
 {}
 
@@ -86,7 +85,7 @@ setup( localIndex const k,
 {
   Base::setup( k, stack );
   stack.localTemperatureDofIndex = m_flowDofNumber[k]+1;
-  stack.deltaTemperatureFromInit = m_temperature[k] - m_initialTemperature[k];
+  stack.temperature = m_temperature[k];
   stack.deltaTemperatureFromLastStep = m_temperature[k] - m_temperature_n[k];
 }
 
@@ -112,7 +111,7 @@ smallStrainUpdate( localIndex const k,
   m_constitutiveUpdate.smallStrainUpdatePoromechanics( k, q,
                                                        m_pressure_n[k],
                                                        m_pressure[k],
-                                                       stack.deltaTemperatureFromInit,
+                                                       stack.temperature,
                                                        stack.deltaTemperatureFromLastStep,
                                                        strainIncrement,
                                                        stack.totalStress,

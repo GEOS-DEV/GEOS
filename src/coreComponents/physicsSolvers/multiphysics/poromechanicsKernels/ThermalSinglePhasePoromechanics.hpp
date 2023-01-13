@@ -296,7 +296,6 @@ protected:
 
   /// Views on temperature
   arrayView1d< real64 const > const m_temperature_n;
-  arrayView1d< real64 const > const m_initialTemperature;
   arrayView1d< real64 const > const m_temperature;
 
 };

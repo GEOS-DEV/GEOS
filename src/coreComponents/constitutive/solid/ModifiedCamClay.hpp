@@ -52,6 +52,7 @@ public:
    * @param[in] oldPreConsolidationPressure The ArrayView holding the old preconsolidation pressure data from the previous converged state
    * for each quadrature point.
    * @param[in] shearModulus                The ArrayView holding the shear modulus data for each element.
+   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newstress                   The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldstress                   The ArrayView holding the old stress data from the previous converged state for each quadrature
    * point.
@@ -65,10 +66,11 @@ public:
                           arrayView2d< real64 > const & newPreConsolidationPressure,
                           arrayView2d< real64 > const & oldPreConsolidationPressure,
                           arrayView1d< real64 const > const & shearModulus,
+			  arrayView1d< real64 const > const & thermalExpansionCoefficient,
                           arrayView3d< real64, solid::STRESS_USD > const & newStress,
                           arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                           bool const & disableInelasticity ):
-    ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol, recompressionIndex, shearModulus, newStress, oldStress, disableInelasticity ),
+    ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol, recompressionIndex, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity ),
     m_virginCompressionIndex( virginCompressionIndex ),
     m_cslSlope( cslSlope ),
     m_newPreConsolidationPressure( newPreConsolidationPressure ),
@@ -519,6 +521,7 @@ public:
                                    m_newPreConsolidationPressure,
                                    m_oldPreConsolidationPressure,
                                    m_shearModulus,
+				   m_thermalExpansionCoefficient,
                                    m_newStress,
                                    m_oldStress,
                                    m_disableInelasticity );
@@ -543,6 +546,7 @@ public:
                           m_newPreConsolidationPressure,
                           m_oldPreConsolidationPressure,
                           m_shearModulus,
+			  m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity );
