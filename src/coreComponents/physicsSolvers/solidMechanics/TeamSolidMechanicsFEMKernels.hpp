@@ -295,6 +295,170 @@ using TeamSolidMechanicsFEMKernelFactory = finiteElement::KernelFactory< TeamSol
                                                                          arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const,
                                                                          arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const >;
 
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+class TeamSolidMechanicsFEMDiagonalKernel :
+  public finiteElement::TeamKernelBase< SUBREGION_TYPE,
+                                        CONSTITUTIVE_TYPE,
+                                        FE_TYPE,
+                                        3,
+                                        3 >
+{
+public:
+  /// An alias for the base class.
+  using Base = finiteElement::TeamKernelBase< SUBREGION_TYPE,
+                                              CONSTITUTIVE_TYPE,
+                                              FE_TYPE,
+                                              3,
+                                              3 >;
+
+  /**
+   * @brief Constructor
+   * @copydoc geosx::finiteElement::TeamKernelBase::TeamKernelBase
+   * @param inputDiag The diagonal of the operator
+   */
+  TeamSolidMechanicsFEMDiagonalKernel( NodeManager const & nodeManager,
+                                       EdgeManager const & edgeManager,
+                                       FaceManager const & faceManager,
+                                       localIndex const targetRegionIndex,
+                                       SUBREGION_TYPE const & elementSubRegion,
+                                       FE_TYPE const & finiteElementSpace,
+                                       CONSTITUTIVE_TYPE & inputConstitutiveType, // end of default args
+                                       arrayView2d< real64 > const inputDiag ):
+    Base( elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType ),
+    m_X( nodeManager.referencePosition() ),
+    m_diag( inputDiag )
+  {
+    GEOSX_UNUSED_VAR( edgeManager );
+    GEOSX_UNUSED_VAR( faceManager );
+    GEOSX_UNUSED_VAR( targetRegionIndex );
+  }
+
+  template< typename POLICY, // ignored
+            typename KERNEL_TYPE >
+  static
+  real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & fields )
+  {
+    GEOSX_MARK_FUNCTION;
+
+    // FIXME: needs to be removed with "new" RAJA
+    fields.m_X.move( LvArray::MemorySpace::cuda, false );
+    fields.m_elemsToNodes.move( LvArray::MemorySpace::cuda, false );
+    fields.m_diag.move( LvArray::MemorySpace::cuda, true );
+
+    // FE Config
+    constexpr localIndex num_dofs_1d = 2;
+    constexpr localIndex num_dofs_mesh_1d = 2;
+    constexpr localIndex num_quads_1d = 2;
+
+    // Kernel Config
+    constexpr ThreadingModel threading_model = ThreadingModel::Serial;
+    constexpr localIndex num_threads_1d = num_quads_1d;
+    constexpr localIndex batch_size = 32;
+
+    using KernelConf = finiteElement::KernelConfiguration< threading_model, num_threads_1d, batch_size >;
+    using Stack = finiteElement::KernelContext< KernelConf >;
+
+    finiteElement::forallElements<KernelConf>( numElems, [=] GEOSX_HOST_DEVICE ( Stack & stack )
+    {
+      constexpr localIndex dim = 3;
+
+      typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, dim > nodes;
+      readField( stack, fields.m_elemsToNodes, fields.m_X, nodes );
+
+      typename Stack::template Basis< num_dofs_mesh_1d, num_quads_1d > basis( stack );
+
+      // FIXME: Should be in shared memory for distributed Tensors
+      typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, dim > diag;
+      for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
+      {
+        for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
+        {
+          for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
+          {
+            for (localIndex comp = 0; comp < dim; comp++)
+            {
+              diag( dof_x, dof_y, dof_z, comp ) = 0.0;
+            }
+          }
+        }
+      }
+
+      /// QFunction
+      forallQuadratureIndices( stack, [&]( auto const & quad_index )
+      {
+
+        real64 J[ dim ][ dim ];
+        interpolateGradientAtQuadraturePoint( stack, quad_index, basis, nodes, J );
+
+        real64 Jinv[ dim ][ dim ];
+        real64 const detJ = computeInverseAndDeterminant( J, Jinv );
+
+        for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
+        {
+          for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
+          {
+            for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
+            {
+              for (localIndex comp = 0; comp < 3; comp++)
+              {
+                // Load quadrature point-local gradients and jacobians
+                real64 grad_ref_u[ dim ][ dim ] = { 0 };
+                grad_ref_u[comp][0] = basis.basis_gradient[ dof_x ][ quad_index.x ]
+                                    * basis.basis[ dof_y ][ quad_index.y ]
+                                    * basis.basis[ dof_z ][ quad_index.z ];
+                grad_ref_u[comp][1] = basis.basis[ dof_x ][ quad_index.x ]
+                                    * basis.basis_gradient[ dof_y ][ quad_index.y ]
+                                    * basis.basis[ dof_z ][ quad_index.z ];
+                grad_ref_u[comp][2] = basis.basis[ dof_x ][ quad_index.x ]
+                                    * basis.basis[ dof_y ][ quad_index.y ]
+                                    * basis.basi_gradient[ dof_z ][ quad_index.z ];
+
+                // Compute D_q u_q = - w_q * det(J_q) * J_q^-1 * sigma ( J_q^-1, grad( u_q ) )
+                real64 stress[ dim ][ dim ];
+                computeStress( stack, fields.m_constitutiveUpdate, 0, Jinv, grad_ref_u, stress );
+
+                // Apply - w_q * det(J_q) * J_q^-1
+                real64 stress_ref[ dim ][ dim ];
+                computeReferenceGradient( Jinv, stress, stress_ref );
+
+                real64 const weight = 1.0; // TODO: stack.weights( quad_index );
+                applyQuadratureWeights( weight, detJ, stress_ref );
+
+                real64 res = 0.0;
+                for (localIndex i = 0; i < dim; i++)
+                {
+                  for (localIndex j = 0; j < dim; j++)
+                  {
+                    res += grad_ref_u[ i ][ j ] * stress_ref[ i ][ j ]; // FIXME: atomicAdd?
+                  }
+                }
+                diag( dof_x, dof_y, dof_z, comp ) += res;
+              }
+            }
+          }
+        }
+      } );
+
+      writeAddField( stack, fields.m_elemsToNodes, diag, fields.m_diag );
+    } );
+    return 0.0;
+  }
+
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
+  arrayView2d< real64 > const m_diag; // FIXME: what is the second template argument?
+};
+
+using TeamSolidMechanicsFEMDiagonalKernelFactory = finiteElement::KernelFactory< TeamSolidMechanicsFEMDiagonalKernel,
+                                                                                 arrayView2d< real64 > const >;
+
 } // namesapce geosx
 
 #endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_TEAMSOLIDMECHANICSFEMKERNELS_HPP_
