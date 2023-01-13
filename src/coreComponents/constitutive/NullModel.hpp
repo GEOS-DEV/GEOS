@@ -49,7 +49,23 @@ public:
   /**
    * Empty struct to serve as a KernelWrapper for the constitutive model.
    */
-  struct KernelWrapper {};
+  struct KernelWrapper
+  {
+
+    /**
+     * @brief Get shear modulus
+     * @param[in] k Element index.
+     * @return the shear modulus of element k
+     */
+    GEOSX_HOST_DEVICE
+    virtual real64 getShearModulus( localIndex const k ) const
+    {
+      GEOSX_UNUSED_VAR( k );
+      GEOSX_ERROR( "getShearModulus() not implemented for this model" );
+
+      return 0;
+    }
+  };
 
   /**
    * @brief Create a kernel wrapper for this constitutive relation.
