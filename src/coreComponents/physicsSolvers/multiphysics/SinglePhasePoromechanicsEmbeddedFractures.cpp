@@ -26,12 +26,15 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+
 
 namespace geosx
 {
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace fields;
 
 SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
                                                                                       Group * const parent ):
@@ -44,6 +47,11 @@ SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFract
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
+
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsEmbeddedFractures;
+  m_linearSolverParameters.get().mgr.separateComponents = false;
+  m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
+  m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
 SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFractures()
