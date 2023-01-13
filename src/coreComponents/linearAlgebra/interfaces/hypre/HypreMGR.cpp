@@ -29,8 +29,10 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanicsReservoirFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/ReactiveCompositionalMultiphaseOBL.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp"
@@ -90,6 +92,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
       setStrategy< CompositionalMultiphaseReservoirHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
+    case LinearSolverParameters::MGR::StrategyType::reactiveCompositionalMultiphaseOBL:
+    {
+      setStrategy< ReactiveCompositionalMultiphaseOBL >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
     case LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM:
     {
       setStrategy< ThermalCompositionalMultiphaseFVM >( params.mgr, numComponentsPerField, precond, mgrData );
@@ -128,6 +135,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics:
     {
       setStrategy< SinglePhasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsEmbeddedFractures:
+    {
+      setStrategy< SinglePhasePoromechanicsEmbeddedFractures >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM:
