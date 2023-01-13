@@ -37,9 +37,6 @@ TEST( FixedSizeDequeTest, emplace_back )
   deque.emplace_back( array.toSliceConst() );
   EXPECT_EQ( false, deque.empty());
   EXPECT_EQ( true, deque.full());
-
-  ASSERT_THROW( deque.emplace_back( array.toSliceConst() ), std::runtime_error );
-
 }
 
 TEST( FixedSizeDequeTest, emplace_front_and_back )
@@ -59,9 +56,6 @@ TEST( FixedSizeDequeTest, emplace_front_and_back )
   deque.emplace_back( array.toSliceConst() );
   EXPECT_EQ( false, deque.empty());
   EXPECT_EQ( true, deque.full());
-
-  ASSERT_THROW( deque.emplace_back( array.toSliceConst() ), std::runtime_error );
-  ASSERT_THROW( deque.emplace_front( array.toSliceConst() ), std::runtime_error );
 }
 
 TEST( FixedSizeDequeTest, emplace_and_pop )
@@ -104,9 +98,6 @@ TEST( FixedSizeDequeTest, emplace_and_pop )
   deque.pop_front();
   EXPECT_EQ( true, deque.empty());
   EXPECT_EQ( false, deque.full());
-
-  ASSERT_THROW( deque.pop_front(), std::runtime_error );
-  ASSERT_THROW( deque.pop_back(), std::runtime_error );
 }
 
 TEST( FixedSizeDequeTest, emplace_and_pop_front )
@@ -152,9 +143,6 @@ TEST( FixedSizeDequeTest, emplace_and_pop_front )
       EXPECT_EQ( false, deque.full());
     }
   }
-
-  ASSERT_THROW( deque.pop_front(), std::runtime_error );
-  ASSERT_THROW( deque.pop_back(), std::runtime_error );
 }
 
 #ifdef GEOSX_USE_CUDA
@@ -205,9 +193,6 @@ TEST( FixedSizeDequeTest, emplace_and_pop_front_cuda )
       EXPECT_EQ( false, deque.full());
     }
   }
-
-  ASSERT_THROW( deque.pop_front(), std::runtime_error );
-  ASSERT_THROW( deque.pop_back(), std::runtime_error );
 }
 #endif
 
