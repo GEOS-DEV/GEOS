@@ -18,6 +18,7 @@
 
 #include "HypreMatrix.hpp"
 
+#include "common/TimingMacros.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreKernels.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
