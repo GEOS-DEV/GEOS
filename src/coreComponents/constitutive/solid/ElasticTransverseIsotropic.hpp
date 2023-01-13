@@ -370,7 +370,7 @@ public:
 
     /// string/key for default thermal expansion coefficient
     static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultThermalExpansionCoefficient"; }
- 
+
     /// string/key for thermal expansion coefficient
     static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; }
 
@@ -569,7 +569,7 @@ public:
                                               m_c33,
                                               m_c44,
                                               m_c66,
-					      m_thermalExpansionCoefficient,
+                                              m_thermalExpansionCoefficient,
                                               m_newStress,
                                               m_oldStress,
                                               m_disableInelasticity );

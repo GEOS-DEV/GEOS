@@ -111,7 +111,7 @@ DECLARE_FIELD( initialTemperature,
                NOPLOT,
                WRITE_AND_READ,
                "Initial temperature" );
-  
+
 DECLARE_FIELD( netToGross,
                "netToGross",
                array1d< real64 >,
