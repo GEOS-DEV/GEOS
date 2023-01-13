@@ -56,35 +56,6 @@ __geosx_linux_build: &__geosx_linux_build
     ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG}
     ${TRAVIS_BUILD_DIR_MOUNT_POINT}/scripts/travis_build_and_test.sh ${BUILD_AND_TEST_ARGS};
 
-__geosx_osx_build: &__geosx_osx_build
-  os: osx
-  osx_image: xcode13.4
-  install:
-  - echo "running nproc"; nproc
-  - top -l 1 -s 0 | grep PhysMem
-  - TPL_METADATA_URL=https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${GEOSX_TPL_TAG}.tar
-  - TPL_BULK_URL=${TPL_METADATA_URL}?alt=media
-    # Extracting the GEOSX_TPL installation directory
-  - METADATA=$(curl -s "${TPL_METADATA_URL}")
-  - GEOSX_TPL_DIR=$(echo -n ${METADATA} | python3 -c "import sys, json; print(json.load(sys.stdin)['metadata']['GEOSX_TPL_DIR'], end='')")
-  - sudo mkdir -p -m a=rwx ${GEOSX_TPL_DIR}
-    # Then download the TPLs and uncompress where needed
-  - curl -s "${TPL_BULK_URL}" | tar --strip-component=1 --directory=${GEOSX_TPL_DIR} -xf -
-    # Now let's deal with Homebrew third parties
-  - BREW_OPENMPI_VERSION=$(echo -n ${METADATA} | python3 -c "import sys, json; print(json.load(sys.stdin)['metadata']['BREW_OPENMPI_VERSION'], end='')")
-  - BREW_OPENMPI_TAP=${USER}/local-open-mpi
-  - brew tap-new ${BREW_OPENMPI_TAP}
-  - brew extract --version=${BREW_OPENMPI_VERSION} open-mpi ${BREW_OPENMPI_TAP}
-  - HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_MAKE_JOBS=$(nproc) brew install ${BREW_OPENMPI_TAP}/open-mpi@${BREW_OPENMPI_VERSION}
-  <<: *__geosx_before_script
-  script:
-  - python3 ${TRAVIS_BUILD_DIR}/scripts/config-build.py
-    -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -bt Release
-    -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe" -DENABLE_VTK:BOOL=OFF
-  - cd build-darwin-clang-release
-  - make -j $(nproc)
-  - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
-
 __geosx_auto_deploy: &__geosx_auto_deploy
   <<: *__geosx_linux_build
   # We use the most recent ubuntu distribution available in travis-ci to ensure maximum support of google cloud's sdk.
@@ -253,9 +224,6 @@ jobs:
       - GCP_BUCKET=geosx/Sherlock-CPU
       - ENABLE_HYPRE=ON
       - ENABLE_TRILINOS=OFF
-  - stage: builds
-    name: Mac_OSX
-    <<: *__geosx_osx_build
   - stage: builds
     name: Ubuntu (20.04, gcc 9.3.0, open-mpi 4.0.3)
     <<: *__geosx_linux_build

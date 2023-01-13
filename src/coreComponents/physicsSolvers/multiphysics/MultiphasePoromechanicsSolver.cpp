@@ -13,7 +13,7 @@
  */
 
 /**
- * @file MultiphasePoroelasticSolver.cpp
+ * @file MultiphasePoromechanicsSolver.cpp
  */
 
 #define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
@@ -125,19 +125,18 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
 
     poromechanicsMaxForce =
       assemblyLaunch< constitutive::PorousSolidBase,
-                      poromechanicsKernels::MultiphaseKernelFactory >( mesh,
-                                                                       dofManager,
-                                                                       regionNames,
-                                                                       viewKeyStruct::porousMaterialNamesString(),
-                                                                       localMatrix,
-                                                                       localRhs,
-                                                                       flowDofKey,
-                                                                       flowSolver()->numFluidComponents(),
-                                                                       flowSolver()->numFluidPhases(),
-                                                                       FlowSolverBase::viewKeyStruct::fluidNamesString() );
+                      poromechanicsKernels::MultiphasePoromechanicsKernelFactory >( mesh,
+                                                                                    dofManager,
+                                                                                    regionNames,
+                                                                                    viewKeyStruct::porousMaterialNamesString(),
+                                                                                    localMatrix,
+                                                                                    localRhs,
+                                                                                    flowDofKey,
+                                                                                    flowSolver()->numFluidComponents(),
+                                                                                    flowSolver()->numFluidPhases(),
+                                                                                    FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
   } );
-
 
   // step 2: apply mechanics solver on its target regions not included in the poromechanics solver target regions
 
@@ -175,7 +174,6 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
 
   } );
 
-
   solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
 
 
@@ -199,25 +197,6 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
                                      localMatrix,
                                      localRhs );
   }
-}
-
-real64 MultiphasePoromechanicsSolver::solverStep( real64 const & time_n,
-                                                  real64 const & dt,
-                                                  int const cycleNumber,
-                                                  DomainPartition & domain )
-{
-  real64 dt_return = dt;
-
-  // setup monolithic coupled system
-  SolverBase::setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-
-  implicitStepSetup( time_n, dt, domain );
-
-  dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-  implicitStepComplete( time_n, dt_return, domain );
-
-  return dt_return;
 }
 
 void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )

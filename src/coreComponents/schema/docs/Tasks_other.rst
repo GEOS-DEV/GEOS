@@ -7,6 +7,7 @@ CompositionalMultiphaseStatistics node :ref:`DATASTRUCTURE_CompositionalMultipha
 PVTDriver                         node :ref:`DATASTRUCTURE_PVTDriver`                         
 PackCollection                    node :ref:`DATASTRUCTURE_PackCollection`                    
 ReactiveFluidDriver               node :ref:`DATASTRUCTURE_ReactiveFluidDriver`               
+RelpermDriver                     node :ref:`DATASTRUCTURE_RelpermDriver`                     
 SinglePhaseStatistics             node :ref:`DATASTRUCTURE_SinglePhaseStatistics`             
 SolidMechanicsStateReset          node :ref:`DATASTRUCTURE_SolidMechanicsStateReset`          
 SolidMechanicsStatistics          node :ref:`DATASTRUCTURE_SolidMechanicsStatistics`          
