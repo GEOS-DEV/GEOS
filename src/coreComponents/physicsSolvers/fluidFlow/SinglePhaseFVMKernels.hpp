@@ -854,14 +854,42 @@ struct FluxKernel
  * @tparam FLUIDWRAPPER the type of the fluid wrapper
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
-template< typename FLUIDWRAPPER >
-class DirichletFaceBasedAssemblyKernel : public FaceBasedAssemblyKernel< 1,
+template< integer NUM_DOF, typename FLUIDWRAPPER >
+class DirichletFaceBasedAssemblyKernel : public FaceBasedAssemblyKernel< NUM_DOF,
                                                                          BoundaryStencilWrapper >
 {
 public:
 
-  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< 1,
+  using AbstractBase = singlePhaseFVMKernels::FaceBasedAssemblyKernelBase;
+  using DofNumberAccessor = AbstractBase::DofNumberAccessor;
+  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
+  using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
+  using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
+
+  using AbstractBase::m_dt;
+  using AbstractBase::m_rankOffset;
+  using AbstractBase::m_dofNumber;
+  using AbstractBase::m_ghostRank;
+  using AbstractBase::m_gravCoef;
+  using AbstractBase::m_pres;
+  using AbstractBase::m_mob;
+  using AbstractBase::m_dMob_dPres;
+  using AbstractBase::m_dens;
+  using AbstractBase::m_dDens_dPres;
+  using AbstractBase::m_permeability;
+  using AbstractBase::m_dPerm_dPres;
+
+  using AbstractBase::m_localMatrix;
+  using AbstractBase::m_localRhs;
+
+  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF,
                                                                BoundaryStencilWrapper >;
+  using Base::numDof;
+  using Base::numEqn;
+  using Base::m_stencilWrapper;
+  using Base::m_seri;
+  using Base::m_sesri;
+  using Base::m_sei;
 
   /**
    * @brief Constructor for the kernel interface
@@ -902,7 +930,6 @@ public:
     m_fluidWrapper( fluidWrapper )
   {}
 
-
   /**
    * @struct StackVariables
    * @brief Kernel variables (dof numbers, jacobian and residual) located on the stack
@@ -921,11 +948,18 @@ public:
                     localIndex GEOSX_UNUSED_PARAM( numElems ) )
     {}
 
+    /// Transmissibility
+    real64 transmissibility = 0.0;
+
+    /// Indices of the matrix rows/columns corresponding to the dofs in this face
+    globalIndex dofColIndices[numDof]{};
+
     /// Storage for the face local residual
-    real64 localFlux;
+    real64 localFlux[numEqn]{};
 
     /// Storage for the face local Jacobian
-    real64 localFluxJacobian;
+    real64 localFluxJacobian[numEqn][numDof]{};
+
   };
 
 
@@ -938,7 +972,13 @@ public:
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR( iconn, stack );
+    globalIndex const offset =
+      m_dofNumber[m_seri( iconn, BoundaryStencil::Order::ELEM )][m_sesri( iconn, BoundaryStencil::Order::ELEM )][m_sei( iconn, BoundaryStencil::Order::ELEM )];
+
+    for( integer jdof = 0; jdof < numDof; ++jdof )
+    {
+      stack.dofColIndices[jdof] = offset + jdof;
+    }
   }
 
   /**
@@ -952,7 +992,7 @@ public:
   GEOSX_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC && GEOSX_UNUSED_PARAM( compFluxKernelOp ) = singlePhaseBaseKernels::NoOpFunc{} ) const
+                    FUNC && compFluxKernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
   {
     using Order = BoundaryStencil::Order;
     localIndex constexpr numElems = BoundaryStencil::maxNumPointsInFlux;
@@ -984,19 +1024,29 @@ public:
                           - densMean * (m_gravCoef[er][esr][ei] - m_faceGravCoef[kf]);
     real64 const dPotDif_dP = 1.0 - dDens_dP * m_gravCoef[er][esr][ei];
 
-    real64 trans;
     real64 dTrans_dPerm[3];
-    m_stencilWrapper.computeWeights( iconn, m_permeability, trans, dTrans_dPerm );
+    m_stencilWrapper.computeWeights( iconn, m_permeability, stack.transmissibility, dTrans_dPerm );
     real64 const dTrans_dPres = LvArray::tensorOps::AiBi< 3 >( dTrans_dPerm, m_dPerm_dPres[er][esr][ei][0] );
 
-    real64 const f = trans * potDif;
-    real64 const dF_dP = trans * dPotDif_dP + dTrans_dPres * potDif;
+    real64 const f = stack.transmissibility * potDif;
+    real64 const dF_dP = stack.transmissibility * dPotDif_dP + dTrans_dPres * potDif;
 
     // Upwind mobility
     localIndex const k_up = ( potDif >= 0 ) ? Order::ELEM : Order::FACE;
+    real64 const mobility_up = mobility[k_up];
+    real64 const dMobility_dP_up = dMobility_dP[k_up];
 
-    stack.localFlux = m_dt * mobility[k_up] * f;
-    stack.localFluxJacobian = m_dt * ( mobility[k_up] * dF_dP + dMobility_dP[k_up] * f );
+    // call the lambda in the phase loop to allow the reuse of the fluxes and their derivatives
+    // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
+
+    compFluxKernelOp( er, esr, ei, kf, f, dF_dP, mobility_up, dMobility_dP_up );
+
+    // *** end of upwinding
+
+    // Populate local flux vector and derivatives
+
+    stack.localFlux[0] = m_dt * mobility[k_up] * f;
+    stack.localFluxJacobian[0][0] = m_dt * ( mobility_up * dF_dP + dMobility_dP_up * f );
   }
 
   /**
@@ -1008,7 +1058,7 @@ public:
   GEOSX_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
-                 FUNC && GEOSX_UNUSED_PARAM( assemblyKernelOp ) = singlePhaseBaseKernels::NoOpFunc{} ) const
+                 FUNC && assemblyKernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
   {
     using Order = BoundaryStencil::Order;
 
@@ -1022,8 +1072,15 @@ public:
       globalIndex const dofIndex = m_dofNumber[er][esr][ei];
       localIndex const localRow = LvArray::integerConversion< localIndex >( dofIndex - m_rankOffset );
 
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow], stack.localFlux );
-      m_localMatrix.addToRow< parallelDeviceAtomic >( localRow, &dofIndex, &stack.localFluxJacobian, 1 );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow], stack.localFlux[0] );
+
+      AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
+        ( localRow,
+        stack.dofColIndices,
+        stack.localFluxJacobian[0],
+        numDof );
+
+      assemblyKernelOp( localRow );
     }
   }
 
@@ -1037,6 +1094,7 @@ protected:
 
   /// Reference to the fluid wrapper
   FLUIDWRAPPER const m_fluidWrapper;
+
 };
 
 
@@ -1079,7 +1137,8 @@ public:
       using FluidType = TYPEOFREF( fluid );
       typename FluidType::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
 
-      using kernelType = DirichletFaceBasedAssemblyKernel< typename FluidType::KernelWrapper >;
+      integer constexpr NUM_DOF = 1;
+      using kernelType = DirichletFaceBasedAssemblyKernel< NUM_DOF, typename FluidType::KernelWrapper >;
 
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );

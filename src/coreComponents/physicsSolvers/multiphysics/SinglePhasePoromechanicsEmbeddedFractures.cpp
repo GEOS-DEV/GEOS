@@ -26,12 +26,15 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+
 
 namespace geosx
 {
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace fields;
 
 SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
                                                                                       Group * const parent ):
@@ -44,6 +47,11 @@ SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFract
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
+
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsEmbeddedFractures;
+  m_linearSolverParameters.get().mgr.separateComponents = false;
+  m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
+  m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
 SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFractures()
@@ -510,40 +518,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::resetStateToBeginningOfStep( Dom
 {
   flowSolver()->resetStateToBeginningOfStep( domain );
   m_fracturesSolver->resetStateToBeginningOfStep( domain );
-}
-
-real64 SinglePhasePoromechanicsEmbeddedFractures::solverStep( real64 const & time_n,
-                                                              real64 const & dt,
-                                                              int const cycleNumber,
-                                                              DomainPartition & domain )
-{
-  real64 dtReturn = dt;
-
-  /// TODO
-  // for (integer outerIter = 0; outerIter < m_maxOuterIter; outerIter++)
-  {
-    setupSystem( domain,
-                 m_dofManager,
-                 m_localMatrix,
-                 m_rhs,
-                 m_solution );
-
-    implicitStepSetup( time_n, dt, domain );
-
-    // Given a fracture state we solve the system
-    dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-    implicitStepComplete( time_n, dtReturn, domain );
-
-    // check the fracture state
-//    bool fractureStateUnchaged = true; // TODO
-//    if ( fractureStateUnChanged )
-//    {
-//      break;
-//    }
-  }
-
-  return dtReturn;
 }
 
 real64 SinglePhasePoromechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition const & domain,
