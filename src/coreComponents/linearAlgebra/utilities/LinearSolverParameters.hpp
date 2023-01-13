@@ -136,102 +136,102 @@ struct LinearSolverParameters
     /// AMG cycle type
     enum class CycleType : integer
     {
-      V, ///< V-cycle
-      W, ///< W-cycle
+      V,                  ///< V-cycle
+      W,                  ///< W-cycle
     };
 
     /// AMG pre/post smoothing option
     enum class PreOrPost : integer
     {
-      pre,  ///< pre-smoothing only
-      post, ///< post-smoothing only
-      both  ///< pre- and post-smoothing
+      pre,                ///< pre-smoothing only
+      post,               ///< post-smoothing only
+      both                ///< pre- and post-smoothing
     };
 
     /// AMG smoother type
     enum class SmootherType : integer
     {
-      default_,  ///< Use LAI's default option
-      jacobi,    ///< Jacobi smoothing
-      l1jacobi,  ///< l1-Jacobi smoothing
-      fgs,       ///< Gauss-Seidel smoothing (forward sweep)
-      bgs,       ///< Gauss-Seidel smoothing (backward sweep)
-      sgs,       ///< Symmetric Gauss-Seidel smoothing
-      l1sgs,     ///< l1-Symmetric Gauss-Seidel smoothing
-      chebyshev, ///< Chebyshev polynomial smoothing
-      ilu0,      ///< ILU(0)
-      ilut,      ///< Incomplete LU with thresholding
-      ic0,       ///< Incomplete Cholesky
-      ict,       ///< Incomplete Cholesky with thresholding
-    };
-
-    /// AMG interpolation type
-    enum class InterpType : integer
-    {
-      default_,  ///< Use LAI's default option
-      modClass,  ///< Modified classical
-      direct,    ///< Direct (GPU support in hypre)
-      multipass, ///< Multipass (GPU support in hypre)
-      extI,      ///< Extended+i (GPU support in hypre)
-      std,       ///< Standard
-      ext,       ///< Extended classical (GPU support in hypre)
-      dirBAMG,   ///< Direct with separation of weights (GPU support in hypre)
-      modExt,    ///< Modularized extended classical (GPU support in hypre)
-      modExtI,   ///< Modularized extended+i (GPU support in hypre)
-      modExtE,   ///< Modularized extended+e (GPU support in hypre)
-    };
-
-    /// AMG interpolation type for aggressive coarsening levels (HYPRE only)
-    enum class AggInterpType : integer
-    {
-      default_,     ///< Use LAI's default option
-      extIStg2,     ///< Extended+i 2-stage (GPU support in hypre)
-      stdStg2,      ///< Standard 2-stage
-      extStg2,      ///< Extended 2-stage (GPU support in hypre)
-      multipass,    ///< Multipass (GPU support in hypre)
-      modExt,       ///< Modularized Extended (GPU support in hypre)
-      modExtI,      ///< Modularized Extended+i (GPU support in hypre)
-      modExtE,      ///< Modularized Extended+e (GPU support in hypre)
-      modMultipass, ///< Modularized Multipass (GPU support in hypre)
+      default_,           ///< Use LAI's default option
+      jacobi,             ///< Jacobi smoothing
+      l1jacobi,           ///< l1-Jacobi smoothing
+      fgs,                ///< Gauss-Seidel smoothing (forward sweep)
+      bgs,                ///< Gauss-Seidel smoothing (backward sweep)
+      sgs,                ///< Symmetric Gauss-Seidel smoothing
+      l1sgs,              ///< l1-Symmetric Gauss-Seidel smoothing
+      chebyshev,          ///< Chebyshev polynomial smoothing
+      ilu0,               ///< ILU(0)
+      ilut,               ///< Incomplete LU with thresholding
+      ic0,                ///< Incomplete Cholesky
+      ict,                ///< Incomplete Cholesky with thresholding
     };
 
     /// AMG coarse solver type
     enum class CoarseType : integer
     {
-      default_,  ///< Use LAI's default option
-      jacobi,    ///< Jacobi
-      l1jacobi,  ///< l1-Jacobi
-      fgs,       ///< Gauss-Seidel (forward sweep)
-      sgs,       ///< Symmetric Gauss-Seidel
-      l1sgs,     ///< l1-Symmetric Gauss-Seidel
-      chebyshev, ///< Chebyshev polynomial
-      direct,    ///< Direct solver as preconditioner
-      bgs,       ///< Gauss-Seidel smoothing (backward sweep)
+      default_,           ///< Use LAI's default option
+      jacobi,             ///< Jacobi
+      l1jacobi,           ///< l1-Jacobi
+      fgs,                ///< Gauss-Seidel (forward sweep)
+      sgs,                ///< Symmetric Gauss-Seidel
+      l1sgs,              ///< l1-Symmetric Gauss-Seidel
+      chebyshev,          ///< Chebyshev polynomial
+      direct,             ///< Direct solver as preconditioner
+      bgs,                ///< Gauss-Seidel smoothing (backward sweep)
+    };
+
+    /// AMG interpolation type
+    enum class InterpType : integer
+    {
+      default_,           ///< Use LAI's default option
+      modifiedClassical,  ///< Modified classical
+      direct,             ///< Direct (GPU support in hypre)
+      multipass,          ///< Multipass (GPU support in hypre)
+      extendedI,          ///< Extended+i (GPU support in hypre)
+      standard,           ///< Standard
+      extended,           ///< Extended classical (GPU support in hypre)
+      directBAMG,         ///< Direct with separation of weights (GPU support in hypre)
+      modifiedExtended,   ///< Modularized extended classical (GPU support in hypre)
+      modifiedExtendedI,  ///< Modularized extended+i (GPU support in hypre)
+      modifiedExtendedE,  ///< Modularized extended+e (GPU support in hypre)
+    };
+
+    /// AMG interpolation type for aggressive coarsening levels (HYPRE only)
+    enum class AggInterpType : integer
+    {
+      default_,           ///< Use LAI's default option
+      extendedIStage2,    ///< Extended+i 2-stage (GPU support in hypre)
+      standardStage2,     ///< Standard 2-stage
+      extendedStage2,     ///< Extended 2-stage (GPU support in hypre)
+      multipass,          ///< Multipass (GPU support in hypre)
+      modifiedExtended,   ///< Modularized Extended (GPU support in hypre)
+      modifiedExtendedI,  ///< Modularized Extended+i (GPU support in hypre)
+      modifiedExtendedE,  ///< Modularized Extended+e (GPU support in hypre)
+      modifiedMultipass,  ///< Modularized Multipass (GPU support in hypre)
     };
 
     /// Null space type
     enum class NullSpaceType : integer
     {
-      constantModes,  ///< Constant modes
-      rigidBodyModes, ///< Rigid body modes
+      constantModes,      ///< Constant modes
+      rigidBodyModes,     ///< Rigid body modes
     };
 
-    integer       maxLevels = 20;                         ///< Maximum number of coarsening levels
-    CycleType     cycleType = CycleType::V;               ///< AMG cycle type
-    SmootherType  smootherType = SmootherType::fgs;       ///< Smoother type
-    real64        relaxWeight = 1.0;                      ///< Relaxation weight for the smoother
-    CoarseType    coarseType = CoarseType::direct;        ///< Coarse-level solver/smoother
-    string        coarseningType = "HMIS";                ///< Coarsening algorithm
-    InterpType    interpolationType = InterpType::extI;   ///< Interpolation algorithm
-    integer       interpolationMaxNonZeros = 4;           ///< Interpolation - Max. nonzeros/row
-    integer       numSweeps = 2;                          ///< Number of smoother sweeps
-    integer       numFunctions = 1;                       ///< Number of amg functions
-    integer       aggressiveNumPaths = 1;                 ///< Number of paths for agg. coarsening.
-    integer       aggressiveNumLevels = 0;                ///< Number of lvls for agg. coarsening.
+    integer       maxLevels = 20;                            ///< Maximum no. of coarsening levels
+    CycleType     cycleType = CycleType::V;                  ///< AMG cycle type
+    SmootherType  smootherType = SmootherType::fgs;          ///< Smoother type
+    real64        relaxWeight = 1.0;                         ///< Relaxation weight for the smoother
+    CoarseType    coarseType = CoarseType::direct;           ///< Coarse-level solver/smoother
+    string        coarseningType = "HMIS";                   ///< Coarsening algorithm
+    InterpType    interpolationType = InterpType::extendedI; ///< Interpolation algorithm
+    integer       interpolationMaxNonZeros = 4;              ///< Interpolation - Max. nonzeros/row
+    integer       numSweeps = 1;                             ///< Number of smoother sweeps
+    integer       numFunctions = 1;                          ///< Number of amg functions
+    integer       aggressiveNumPaths = 1;                    ///< Number of paths agg. coarsening.
+    integer       aggressiveNumLevels = 0;                   ///< Number of lvls agg. coarsening.
     AggInterpType aggressiveInterpType = AggInterpType::multipass; ///< Interp. type for agg. coarsening.
-    PreOrPost     preOrPostSmoothing = PreOrPost::both;   ///< Pre and/or post smoothing
-    real64        threshold = 0.0;                        ///< Threshold for "strong connections" (for classical and smoothed-aggregation AMG)
-    integer       separateComponents = false;             ///< Apply a separate component filter before AMG construction
+    PreOrPost     preOrPostSmoothing = PreOrPost::both;      ///< Pre and/or post smoothing
+    real64        threshold = 0.0;                           ///< Threshold for "strong connections" (for classical and smoothed-aggregation AMG)
+    integer       separateComponents = false;                ///< Apply a separate component filter before AMG construction
     NullSpaceType nullSpaceType = NullSpaceType::constantModes; ///< Null space type [constantModes,rigidBodyModes]
   }
   amg;                                              ///< Algebraic Multigrid (AMG) parameters
@@ -380,28 +380,28 @@ ENUM_STRINGS( LinearSolverParameters::AMG::SmootherType,
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::InterpType,
               "default",
-              "modclass",
+              "modifiedClassical",
               "direct",
               "multipass",
-              "extI",
-              "std",
-              "ext",
-              "dirBAMG",
-              "modExt",
-              "modExtI",
-              "modExtE" );
+              "extendedI",
+              "standard",
+              "extended",
+              "directBAMG",
+              "modifiedExtended",
+              "modifiedExtendedI",
+              "modifiedExtendedE" );
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::AggInterpType,
               "default",
-              "extIStg2",
-              "stdStg2",
-              "extStg2",
+              "extendedIStage2",
+              "standardStage2",
+              "extendedStage2",
               "multipass",
-              "modExt",
-              "modExtI",
-              "modExtE",
-              "modMultipass" );
+              "modifiedExtended",
+              "modifiedExtendedI",
+              "modifiedExtendedE",
+              "modifiedMultipass" );
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::CoarseType,
