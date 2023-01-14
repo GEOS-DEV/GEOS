@@ -394,7 +394,7 @@ public:
       {
 
         real64 J[ dim ][ dim ];
-        interpolateGradientAtQuadraturePoint( stack, quad_index, basis, nodes, J );
+        interpolateGradientAtQuadraturePoint( stack, quad_index, basis.basis, basis.basis_gradient, nodes, J );
 
         real64 Jinv[ dim ][ dim ];
         real64 const detJ = computeInverseAndDeterminant( J, Jinv );
