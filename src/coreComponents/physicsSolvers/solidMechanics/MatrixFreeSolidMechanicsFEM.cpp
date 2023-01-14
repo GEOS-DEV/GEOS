@@ -98,7 +98,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > localSrc2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localSrc.dataBuffer() );
     arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > localDst2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localDst.dataBuffer() );
 
-#if 0
+#if 1
     TeamSolidMechanicsFEMKernelFactory kernelFactory( localSrc2d, localDst2d );  
     finiteElement::
       regionBasedKernelApplication< team_launch_policy,
@@ -136,7 +136,39 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
 
 void MatrixFreeSolidMechanicsFEMOperator::computeDiagonal( ParallelVector & diagonal ) const
 {
-  GEOSX_ERROR( "computeDiagonal: operation not yet implemented" );
+  GEOSX_MARK_FUNCTION;
+  diagonal.zero();
+  arrayView1d< real64 > const localDiag = diagonal.open();
+
+  for( auto const & target: m_meshTargets )
+  {
+    string const meshBodyName = target.first.first;
+    string const meshLevelName = target.first.second;
+    arrayView1d< string const > const & regionNames = target.second.toViewConst();
+    MeshBody & meshBody = m_meshBodies.getGroup< MeshBody >( meshBodyName );
+
+    MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
+    if( meshLevelPtr==nullptr )
+    {
+      meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
+    }
+    MeshLevel & mesh = *meshLevelPtr;
+      
+    auto const & totalDisplacement = mesh.getNodeManager().getField<fields::solidMechanics::totalDisplacement>();
+    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > localDiag2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localDiag.dataBuffer() );
+
+    TeamSolidMechanicsFEMDiagonalKernelFactory kernelFactory( localDiag2d );  
+    finiteElement::
+      regionBasedKernelApplication< team_launch_policy,
+                                    constitutive::SolidBase,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames,
+                                                            m_finiteElementName,
+                                                            "solidMaterialNames",
+                                                            kernelFactory );
+  }
+
+  diagonal.close();
 }
 
 globalIndex MatrixFreeSolidMechanicsFEMOperator::numGlobalRows() const
