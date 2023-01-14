@@ -394,7 +394,7 @@ public:
       {
 
         real64 J[ dim ][ dim ];
-        interpolateGradientAtQuadraturePoint( stack, quad_index, basis.basis, basis.basis_gradient, nodes, J );
+        interpolateGradientAtQuadraturePoint( stack, quad_index, basis, nodes, J );
 
         real64 Jinv[ dim ][ dim ];
         real64 const detJ = computeInverseAndDeterminant( J, Jinv );
@@ -453,7 +453,7 @@ public:
   /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
 
-  arrayView2d< real64 > const m_diag; // FIXME: what is the second template argument?
+  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const m_diag; // FIXME: what is the second template argument?
 };
 
 using TeamSolidMechanicsFEMDiagonalKernelFactory = finiteElement::KernelFactory< TeamSolidMechanicsFEMDiagonalKernel,
