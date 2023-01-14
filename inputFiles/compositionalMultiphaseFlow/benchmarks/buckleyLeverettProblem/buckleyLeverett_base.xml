@@ -150,19 +150,15 @@
   <Outputs>
     <VTK
       name="vtkOutput"/>
-
-    <TimeHistory
-      name="timeHistoryOutput"
-      sources="{/Tasks/phaseVolumeFractionCollection}"
-      filename="saturationHistory" />
-
-    <Restart
-      name="restartOutput"/> 
   </Outputs>
   <!-- SPHINX_OUTPUT_END -->
 
   <!-- SPHINX_TASKS --> 
   <Tasks>
+    <PressureSaturationOutput
+      name="pressureSaturationCollection"
+      flowSolverName="compflow"/>
+
     <PackCollection
       name="phaseVolumeFractionCollection"
       objectPath="ElementRegions/region/cellBlock"

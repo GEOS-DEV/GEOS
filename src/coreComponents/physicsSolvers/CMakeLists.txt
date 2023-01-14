@@ -16,6 +16,7 @@ set( physicsSolvers_headers
      contact/SolidMechanicsEFEMStaticCondensationKernels.hpp
      contact/SolidMechanicsEFEMKernelsHelper.hpp
      contact/SolidMechanicsEmbeddedFractures.hpp
+     fluidFlow/PressureSaturationOutput.hpp	     
      fluidFlow/CompositionalMultiphaseBase.hpp
      fluidFlow/CompositionalMultiphaseBaseFields.hpp
      fluidFlow/CompositionalMultiphaseStatistics.hpp
@@ -125,6 +126,7 @@ set( physicsSolvers_sources
      contact/ContactSolverBase.cpp
      contact/LagrangianContactSolver.cpp
      contact/SolidMechanicsEmbeddedFractures.cpp
+     fluidFlow/PressureSaturationOutput.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
      fluidFlow/CompositionalMultiphaseStatistics.cpp

@@ -866,6 +866,30 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
 
       arrayView1d< real64 const > const & perfGravCoef = perforationData.getField< fields::well::gravityCoefficient >();
 
+      ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > const cellType =
+        elemManager.constructViewAccessor< array1d< integer >, arrayView1d< integer > >( CellElementSubRegion::viewKeyStruct::cellTypeString() );
+
+      integer const myRank = MpiWrapper::commRank();
+
+      std::ofstream wellFile;
+      wellFile.open ( "wellCells_"+ std::to_string( myRank ) +".txt" );
+
+      forAll< serialPolicy >( perforationData.size(), [&] ( localIndex const iperf )
+      {
+        localIndex const er = resElementRegion[iperf];
+        localIndex const esr = resElementSubRegion[iperf];
+        localIndex const ei = resElementIndex[iperf];
+
+        cellType[er][esr][ei] = 1;
+
+        ElementRegionBase const & region = elemManager.getRegion( er );
+        CellElementSubRegion const & subRegionWell = region.getSubRegion< CellElementSubRegion, localIndex >( esr );
+
+        wellFile << subRegionWell.localToGlobalMap()[ei] << " 1" << std::endl;
+      } );
+
+      wellFile.close();
+
       // 1) Loop over all perforations to compute an average mixture density and component fraction
       // 2) Initialize the reference pressure
       // 3) Estimate the pressures in the well elements using the average density

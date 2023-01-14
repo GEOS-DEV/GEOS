@@ -42,16 +42,10 @@
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
-      name="timeHistoryOutput"
+      name="pressureSaturationHistoryCollection"
       timeFrequency="10"
       targetExactTimestep="1"
-      target="/Outputs/timeHistoryOutput" />
-
-    <PeriodicEvent
-      name="timeHistoryCollection"
-      timeFrequency="10"
-      targetExactTimestep="1"
-      target="/Tasks/phaseVolumeFractionCollection" />
+      target="/Tasks/pressureSaturationCollection"/>
 
     <PeriodicEvent
       name="solverApplications"
