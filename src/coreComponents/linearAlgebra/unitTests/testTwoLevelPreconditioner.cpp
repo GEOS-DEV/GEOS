@@ -17,7 +17,6 @@
  */
 
 #include "common/DataTypes.hpp"
-#include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
 #include "linearAlgebra/solvers/PreconditionerJacobi.hpp"
 #include "linearAlgebra/solvers/PreconditionerTwoLevel.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"

@@ -1111,6 +1111,11 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
   rhs.scale( -1.0 );
   solution.zero();
 
+  ///////////////////////
+  matrix.write( "A", LAIOutputFormat::NATIVE_ASCII );
+  //GEOSX_ERROR("Stop simulation");
+  ///////////////////////
+
   LinearSolverParameters const & params = m_linearSolverParameters.get();
   matrix.setDofManager( &dofManager );
 

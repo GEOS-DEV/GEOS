@@ -385,23 +385,22 @@ PreconditionerTwoLevel ( Matrix const & mat,
   LinearSolverParameters params; 
   params.isSymmetric = true;
 
-  // params.solverType = LinearSolverParameters::SolverType::direct;
-  // params.direct.parallel = 0;
 
-  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
-  params.amg.smootherType = LinearSolverParameters::AMG::SmootherType::l1jacobi;
-  // params.logLevel = 1;
-
-  //if( params.solverType == LinearSolverParameters::SolverType::direct )
-  //{
-  //  GEOSX_LOG_RANK("Direct coarse solver");
-  //  m_coarseSolver = LAI::createSolver( params );
-  //}
-  //else
-  //{
+  if( params.solverType == LinearSolverParameters::SolverType::direct )
+  {
+    GEOSX_LOG_RANK("Direct coarse solver");
+    params.solverType = LinearSolverParameters::SolverType::direct;
+    params.direct.parallel = 0;
+    m_coarseSolver = LAI::createSolver( params );
+  }
+  else
+  {
     GEOSX_LOG_RANK("AMG coarse solver");
+    params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+    params.amg.smootherType = LinearSolverParameters::AMG::SmootherType::l1jacobi;
+    // params.logLevel = 1;
     m_coarseSolver = LAI::createPreconditioner( params );
-  //}
+  }
 
   m_coarseSolver->setup( matCoarse );
   
