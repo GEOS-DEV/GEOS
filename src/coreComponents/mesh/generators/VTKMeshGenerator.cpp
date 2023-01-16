@@ -125,7 +125,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
 void VTKMeshGenerator::importFieldsOnArray( string const regionName, string const meshFieldName, bool isMaterialField, WrapperBase & wrapper ) const
 {
-  GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': importing field data from mesh dataset", catalogName(), getName() ) );
+  // GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': importing field data from mesh dataset", catalogName(), getName() ) );
   GEOSX_ASSERT_MSG( m_vtkMesh, "Must call generateMesh() before importFields()" );
 
   vtkDataArray * vtkArray = vtk::findArrayForImport( *m_vtkMesh, meshFieldName );
