@@ -102,7 +102,7 @@ public:
    * @brief Get the name mapping between mesh field names and Internal GEOSX field names.
    * @return The string to string mapping of field names.
    */
-  std::map< string, string > getFieldsMapping( ) { return m_fieldsMapping; }
+  std::map< string, string > getFieldsMapping() const { return m_fieldsMapping; }
 
 protected:
   /// Mesh to GEOSX field names mapping
