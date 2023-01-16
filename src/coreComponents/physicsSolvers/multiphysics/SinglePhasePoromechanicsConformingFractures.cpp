@@ -690,6 +690,11 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicAperture( Domai
   } );
 }
 
+void SinglePhasePoromechanicsConformingFractures::outputConfigurationStatistics( DomainPartition const & domain ) const
+{
+  contactSolver()->outputConfigurationStatistics( domain );
+}
+
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsConformingFractures, string const &, Group * const )
 
 } /* namespace geosx */

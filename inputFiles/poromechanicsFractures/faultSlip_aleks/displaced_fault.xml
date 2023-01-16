@@ -1,0 +1,400 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers gravityVector="{0.0, -9.81, 0.0}">
+    <SinglePhasePoromechanicsConformingFractures
+      name="poroFractureSolver"
+      targetRegions="{ Rock, Fracture }"
+      initialDt="1e-3"
+      LagrangianContactSolverName="fractureMechSolver"
+      poromechanicsSolverName="poroSolver"
+      logLevel="1">
+      <NonlinearSolverParameters
+        maxTimeStepCuts="1"
+        newtonTol="1e0"
+        maxAllowedResidualNorm="1e+15"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhasePoromechanicsConformingFractures>
+
+    <SinglePhasePoromechanics 
+      name="poroSolver" 
+      solidSolverName="mechanicsSolver"
+      flowSolverName="singlePhaseFlowSolver"
+      logLevel="1"
+      targetRegions="{ Rock, Fracture }">
+      <NonlinearSolverParameters
+        maxTimeStepCuts="1"
+        newtonTol="1e-6"
+        maxAllowedResidualNorm="1e+15"/>
+    </SinglePhasePoromechanics>
+
+    <LagrangianContact
+      name="fractureMechSolver"
+      solidSolverName="mechanicsSolver"
+      stabilizationName="singlePhaseTPFA_stab"
+      logLevel="1"
+      targetRegions="{ Rock, Fracture }"
+      fractureRegionName="Fracture"
+      discretization="FE1"
+      contactRelationName="fractureContact"/>  
+
+    <SolidMechanicsLagrangianSSLE 
+      name="mechanicsSolver" 
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Rock, Fracture }">
+      <!--NonlinearSolverParameters
+        newtonTol = "1.0e-5"
+        newtonMaxIter = "15"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-10"/--> 
+    </SolidMechanicsLagrangianSSLE>
+
+    <SinglePhaseFVM 
+      name="singlePhaseFlowSolver"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Rock, Fracture }"> 
+      <NonlinearSolverParameters
+        newtonTol="1.0e-2"
+        newtonMaxIter="8"
+        allowNonConverged="1"/>
+      <LinearSolverParameters
+        directParallel="0"/> 
+    </SinglePhaseFVM>
+
+    <SurfaceGenerator
+      logLevel="0"
+      name="SurfaceGen"
+      targetRegions="{ Rock }"
+      fractureRegion="Fracture"
+      rockToughness="1e6"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+  <Mesh>
+     <VTKMesh         
+      name="FaultModel"      
+      file="new_setup.vtu"
+      regionAttribute="CellEntityIds"/>
+  </Mesh> 
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Rock"
+      cellBlocks="{ 99991_wedges, 99992_wedges }"
+      materialList="{ water, porousRock }"/>  
+
+  <SurfaceElementRegion
+      name="Fracture"
+      faceBlock="FractureSubRegion"
+      materialList="{ water, fractureFilling, fractureContact, rock}"
+      defaultAperture="1e-3"/>
+  </ElementRegions> 
+
+  <Geometry>
+    <BoundedPlane
+      name="fracture"
+      normal="{-1.0, 0.0, 0.0}"
+      origin="{0.0, 0.0, 250.0}"
+      lengthVector="{0.0, 1.0, 0.0}"
+      widthVector="{0.0, 0.0, 1.0}"
+      dimensions="{ 0.0, 0.0 }"/>
+    
+    <BoundedPlane
+      name="core"
+      normal="{-1.0, 0.0, 0.0}"
+      origin="{0.0, 0.0, 250.0}"
+      lengthVector="{0.0, 1.0, 0.0}"
+      widthVector="{0.0, 0.0, 1.0}"
+      dimensions="{ 0.0, 0.0 }"/>
+  </Geometry>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA_stab"/>  
+    </FiniteVolume>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <Constitutive>
+    <!--porousRock-->
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+    />
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2650.0"
+      defaultYoungModulus="14.95e9"
+      defaultPoissonRatio="0.15"
+    />
+    <CompressibleSinglePhaseFluid 
+      name="water"
+      defaultDensity="1020"
+      defaultViscosity="0.001"
+      referencePressure="35e6"
+      referenceDensity="1020"
+      compressibility="1.e-20"
+      referenceViscosity="0.001"
+      viscosibility="0.0"
+    />
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="7.1190476190476195e10"
+      defaultReferencePorosity="0.15"
+    />
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{0.9869233e-21, 0.9869233e-21, 0.9869233e-21}"
+    />
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0e6"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
+
+    <Coulomb
+      name="fractureContact"
+      cohesion="0.0"
+      frictionCoefficient="0.0"
+      apertureTableName="apertureTable"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ core }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <FieldSpecification
+      name="fracPorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="fracturePorosity_porosity"
+      scale="1.00"/>
+    	     
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      functionName="pressure"
+      scale="1.0"/>
+
+    <!--FieldSpecification 
+      name="stressXX"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Domain"
+      fieldName="rock_stress"
+      component="0"
+      scale="-60.0e6"
+    />
+
+    <FieldSpecification 
+      name="stressYY"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Domain"
+      fieldName="rock_stress"
+      component="1"
+      scale="-70.0e6"
+    />
+
+    <FieldSpecification 
+      name="stressZZ"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Domain"
+      fieldName="rock_stress"
+      component="2"
+      scale="-60.0e6"
+    /-->
+
+    <!--FieldSpecification
+      name="xconstraint0"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ 991 }"/-->
+
+    <FieldSpecification
+      name="xconstraint0"
+      component="0"
+      setNames="{ 991 }"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      scale="1.0"
+      functionName="xm"/>
+
+    <FieldSpecification
+      name="xconstraint1"
+      component="0"
+      setNames="{ 992 }"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      scale="1.0"
+      functionName="xp"/>
+
+    <FieldSpecification
+      name="yconstraint0"
+      component="1"
+      setNames="{ 993 }"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      scale="1.0"
+      functionName="ym"/>
+
+    <FieldSpecification
+      name="yconstraint1"
+      component="1"
+      setNames="{ 994 }"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      scale="1.0"
+      functionName="yp"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ 995, 996 }"/>
+
+    <!--Traction
+      name="xconstraint1"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="0.0e6"      
+      setNames="{ 992 }"/-->  	  
+
+    <!--Traction
+      name="yconstraint1"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-18.25999875"      
+      setNames="{ 994 }"/--> 
+
+    <FieldSpecification
+      name="production"
+      initialCondition="0"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      functionName="pressure"
+      scale="1.0"/>
+
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-3, 1.0e-3 }"/>
+
+    <TableFunction
+      name="xm"
+      inputVarNames="{ ReferencePosition }"
+      coordinateFiles="{ tables/xm_x.geos, tables/x_ylin.geos, tables/zlin.geos }"
+      voxelFile="tables/xm.geos"
+      interpolation="linear"/>
+
+    <TableFunction
+      name="xp"
+      inputVarNames="{ ReferencePosition }"
+      coordinateFiles="{ tables/xp_x.geos, tables/x_ylin.geos, tables/zlin.geos }"
+      voxelFile="tables/xp.geos"
+      interpolation="linear"/>
+
+    <TableFunction
+      name="ym"
+      inputVarNames="{ ReferencePosition }"
+      coordinateFiles="{ tables/xlin.geos, tables/ym_y.geos, tables/zlin.geos }"
+      voxelFile="tables/ym.geos"
+      interpolation="linear"/>
+
+    <TableFunction
+      name="yp"
+      inputVarNames="{ ReferencePosition }"
+      coordinateFiles="{ tables/xlin.geos, tables/yp_y.geos, tables/zlin.geos }"
+      voxelFile="tables/yp.geos"
+      interpolation="linear"/>
+
+    <TableFunction
+      name="pressure"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ tables/xm_x.geos, tables/x_ylin.geos, tables/zlin.geos }"
+      voxelFile="tables/pressure.geos"
+      interpolation="linear"/>
+
+  </Functions>
+
+  <Outputs>
+    <VTK 
+      name="vtkOutput"
+      parallelThreads="1"
+      plotFileRoot="faultModel"/>
+
+    <Restart
+      name="restartOutput"
+    />  
+  </Outputs>
+
+  <Events maxTime="10.0">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="10.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="10"
+      target="/Solvers/poroSolver"/>	     
+  </Events>
+
+</Problem>

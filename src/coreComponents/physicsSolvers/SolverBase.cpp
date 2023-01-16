@@ -671,7 +671,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     // Configuration loop
     for( configurationLoopIter = 0; configurationLoopIter < maxConfigurationIter; ++configurationLoopIter )
     {
-
+      
       outputConfigurationStatistics( domain );
 
       bool const isNewtonConverged = solveNonlinearSystem( time_n,

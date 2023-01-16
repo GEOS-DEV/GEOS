@@ -119,6 +119,8 @@ public:
 
   void initializePostInitialConditionsPostSubGroups() override final;
 
+  void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
+
   /**@}*/
 
 private:
