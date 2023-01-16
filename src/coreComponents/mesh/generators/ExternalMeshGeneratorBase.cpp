@@ -51,7 +51,6 @@ ExternalMeshGeneratorBase::ExternalMeshGeneratorBase( string const & name,
   registerWrapper( viewKeyStruct::fieldNamesInGEOSXString(), &m_fieldNamesInGEOSX ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Names of fields in GEOSX to import into" );
-
 }
 
 void ExternalMeshGeneratorBase::postProcessInput()
