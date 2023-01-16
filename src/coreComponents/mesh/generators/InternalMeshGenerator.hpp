@@ -56,15 +56,15 @@ public:
    * @brief import fields from the mesh  on the array accessible via the given wrapper.
    * @param cellBlockName name of the cell block to copy data from.
    * @param meshFieldName name of the field in the meshd
+   * @param isMaterialField Indicate if we want to import material or regular fields
    * @param wrapper Wrapper to access the array
-   * @param importMaterial Indicate if we want to import material or regular fields
    */
-  void importFieldsOnArray( string const cellBlockName, string const meshFieldName, dataRepository::WrapperBase & wrapper, bool importMaterial ) const override
+  void importFieldsOnArray( string const cellBlockName, string const meshFieldName, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const override
   {
     GEOSX_UNUSED_VAR( cellBlockName );
     GEOSX_UNUSED_VAR( meshFieldName );
+    GEOSX_UNUSED_VAR( isMaterialField );
     GEOSX_UNUSED_VAR( wrapper );
-    GEOSX_UNUSED_VAR( importMaterial );
   }
 
   /**

@@ -83,10 +83,10 @@ public:
    * @brief import fields from the mesh  on the array accessible via the given wrapper.
    * @param cellBlockName name of the cell block to copy data from.
    * @param meshFieldName name of the field in the meshd
+   * @param isMaterialField Indicate if we want to import material or regular fields
    * @param wrapper Wrapper to access the array
-   * @param importMaterial Indicate if we want to import material or regular fields
    */
-  virtual void importFieldsOnArray( string const cellBlockName, string const meshFieldName, dataRepository::WrapperBase & wrapper, bool importMaterial ) const = 0;
+  virtual void importFieldsOnArray( string const cellBlockName, string const meshFieldName, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const = 0;
 
   /**
    * @brief Free internal resources associated with mesh/data import.
