@@ -345,6 +345,7 @@
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
+			<xsd:element name="RESQMLMesh" type="RESQMLMeshType" />
 			<xsd:element name="VTKMesh" type="VTKMeshType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -371,6 +372,11 @@
 		<xsd:attribute name="xCoords" type="real64_array" />
 		<!--yCoords => y-coordinates of each mesh block vertex-->
 		<xsd:attribute name="yCoords" type="real64_array" />
+	</xsd:complexType>
+	<xsd:complexType name="RESQMLMeshType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="meshLevels" type="meshLevelsType" />
+		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="VTKMeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2047,6 +2053,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
+			<xsd:element name="RESQMLMesh" type="RESQMLMeshType" />
 			<xsd:element name="VTKMesh" type="VTKMeshType" />
 		</xsd:choice>
 	</xsd:complexType>

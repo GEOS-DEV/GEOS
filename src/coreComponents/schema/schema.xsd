@@ -249,6 +249,10 @@
 					<xsd:selector xpath="InternalWellbore" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="MeshRESQMLMeshUniqueName">
+					<xsd:selector xpath="RESQMLMesh" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="MeshVTKMeshUniqueName">
 					<xsd:selector xpath="VTKMesh" />
 					<xsd:field xpath="@name" />
@@ -1246,6 +1250,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
+			<xsd:element name="RESQMLMesh" type="RESQMLMeshType" />
 			<xsd:element name="VTKMesh" type="VTKMeshType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -1356,6 +1361,45 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="RESQMLMeshType">
+		<!--UUID => UUID of the mesh-->
+		<xsd:attribute name="UUID" type="string" default="" />
+		<!--UUIDsRegionsToImport => UUIDs of the RESQML subrepresentations to use as region marker-->
+		<xsd:attribute name="UUIDsRegionsToImport" type="string_array" default="{}" />
+		<!--UUIDsSurfacesToImport => UUIDs of the RESQML subrepresentations to use as surfaces-->
+		<xsd:attribute name="UUIDsSurfacesToImport" type="string_array" default="{}" />
+		<!--UUIDsfieldsToImport => UUIDs of the RESQML properties to load as fields-->
+		<xsd:attribute name="UUIDsfieldsToImport" type="string_array" default="{}" />
+		<!--fieldNamesInGEOSX => Names of fields in GEOSX to import into-->
+		<xsd:attribute name="fieldNamesInGEOSX" type="string_array" default="{}" />
+		<!--fieldsToImport => Fields to be imported from the external mesh file-->
+		<xsd:attribute name="fieldsToImport" type="string_array" default="{}" />
+		<!--file => Path to the mesh file-->
+		<xsd:attribute name="file" type="path" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--partitionMethod => Method (library) used to partition the mesh-->
+		<xsd:attribute name="partitionMethod" type="geosx_vtk_PartitionMethod" default="parmetis" />
+		<!--partitionRefinement => Number of partitioning refinement iterations (defaults to 1, recommended value).A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns.-->
+		<xsd:attribute name="partitionRefinement" type="integer" default="1" />
+		<!--regionAttribute => Name of the VTK cell attribute to use as region marker-->
+		<xsd:attribute name="regionAttribute" type="string" default="attribute" />
+		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
+		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
+		<!--titleInFile => Title of the mesh in the EPC file-->
+		<xsd:attribute name="titleInFile" type="string" default="" />
+		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
+		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
+		<!--useGlobalIds => Controls the use of global IDs in the input file for cells and points. If set to 0 (default value), the GlobalId arrays in the input mesh are used if available, and generated otherwise. If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated. If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available-->
+		<xsd:attribute name="useGlobalIds" type="integer" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:simpleType name="geosx_vtk_PartitionMethod">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|parmetis|ptscotch" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="VTKMeshType">
 		<!--faceBlocks => Names of the VTK faces to import-->
 		<xsd:attribute name="faceBlocks" type="string_array" default="{}" />
@@ -1384,11 +1428,6 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_vtk_PartitionMethod">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|parmetis|ptscotch" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:complexType name="NumericalMethodsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="FiniteElements" type="FiniteElementsType" maxOccurs="1">

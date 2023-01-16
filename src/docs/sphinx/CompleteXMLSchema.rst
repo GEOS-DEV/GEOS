@@ -785,6 +785,13 @@ Element: Python
 .. include:: ../../coreComponents/schema/docs/Python.rst
 
 
+.. _XML_RESQMLMesh:
+
+Element: RESQMLMesh
+===================
+.. include:: ../../coreComponents/schema/docs/RESQMLMesh.rst
+
+
 .. _XML_ReactiveCompositionalMultiphaseOBL:
 
 Element: ReactiveCompositionalMultiphaseOBL
@@ -1928,6 +1935,13 @@ Datastructure: ProppantTransport
 Datastructure: Python
 =====================
 .. include:: ../../coreComponents/schema/docs/Python_other.rst
+
+
+.. _DATASTRUCTURE_RESQMLMesh:
+
+Datastructure: RESQMLMesh
+=========================
+.. include:: ../../coreComponents/schema/docs/RESQMLMesh_other.rst
 
 
 .. _DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL:
