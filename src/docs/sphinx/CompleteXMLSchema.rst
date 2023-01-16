@@ -785,12 +785,12 @@ Element: Python
 .. include:: ../../coreComponents/schema/docs/Python.rst
 
 
-
 .. _XML_RESQMLMesh:
 
 Element: RESQMLMesh
 ===================
 .. include:: ../../coreComponents/schema/docs/RESQMLMesh.rst
+
 
 .. _XML_ReactiveBrine:
 
@@ -804,7 +804,6 @@ Element: ReactiveBrine
 Element: ReactiveBrineThermal
 =============================
 .. include:: ../../coreComponents/schema/docs/ReactiveBrineThermal.rst
-
 
 
 .. _XML_ReactiveCompositionalMultiphaseOBL:
@@ -1959,12 +1958,12 @@ Datastructure: Python
 .. include:: ../../coreComponents/schema/docs/Python_other.rst
 
 
-
 .. _DATASTRUCTURE_RESQMLMesh:
 
 Datastructure: RESQMLMesh
 =========================
 .. include:: ../../coreComponents/schema/docs/RESQMLMesh_other.rst
+
 
 .. _DATASTRUCTURE_ReactiveBrine:
 
@@ -1978,7 +1977,6 @@ Datastructure: ReactiveBrine
 Datastructure: ReactiveBrineThermal
 ===================================
 .. include:: ../../coreComponents/schema/docs/ReactiveBrineThermal_other.rst
-
 
 
 .. _DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL:
