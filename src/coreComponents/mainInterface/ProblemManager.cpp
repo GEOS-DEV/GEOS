@@ -136,10 +136,6 @@ ProblemManager::ProblemManager( conduit::Node & root ):
     setApplyDefaultValue( 0 ).
     setRestartFlags( RestartFlags::WRITE ).
     setDescription( "Whether to disallow using pinned memory allocations for MPI communication buffers." );
-
-  registerWrapper( viewKeys.fieldNamesInGEOSX.key(), &m_fieldNamesInGEOSX ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Names of fields in GEOSX to import into" );
 }
 
 ProblemManager::~ProblemManager()

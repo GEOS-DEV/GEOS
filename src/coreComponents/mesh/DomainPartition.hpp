@@ -175,6 +175,19 @@ public:
   { return this->getGroup( groupKeys.meshBodies ); }
 
   /**
+   * @brief Check if a MeshBody is present given a name.
+   * @tparam KEY_TYPE The type of the key used to look up the MeshBody.
+   * @param key The key to the MeshBody.
+   * @return True is the MeshBody exists in the domain.
+   */
+  template< typename KEY_TYPE >
+// TODO uncomment these to disallow using a non string or char const * key
+//            std::enable_if_t< std::is_same< T, string >::value ||
+//                              std::is_same< T, const char * >::value, bool > = false >
+  bool hasMeshBody( KEY_TYPE const & key ) const
+  { return getMeshBodies().hasGroup< MeshBody >( key ); }
+
+  /**
    * @brief Get a MeshBody by name, const version.
    * @tparam KEY_TYPE The type of the key used to look up the MeshBody.
    * @param key The key to the MeshBody.

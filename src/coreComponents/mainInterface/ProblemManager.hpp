@@ -367,9 +367,6 @@ private:
 
   /// The FieldSpecificationManager
   FieldSpecificationManager * m_fieldSpecificationManager;
-
-  /// String array of the GEOSX user declared fields
-  array1d< string > m_fieldNamesInGEOSX;
 };
 
 } /* namespace geosx */
