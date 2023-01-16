@@ -5,6 +5,7 @@ set( functions_headers
      FunctionBase.hpp
      FunctionManager.hpp
      TableFunction.hpp
+     SymbolicFunction.hpp
    )
 
 #
@@ -14,15 +15,14 @@ set( functions_sources
      FunctionBase.cpp
      FunctionManager.cpp
      TableFunction.cpp
+     SymbolicFunction.cpp
      MultivariableTableFunction.cpp
    )
 
 if( ENABLE_MATHPRESSO )
   list( APPEND functions_headers
-        SymbolicFunction.hpp
         CompositeFunction.hpp )
   list( APPEND functions_sources
-        SymbolicFunction.cpp
         CompositeFunction.cpp )
 endif()
 
