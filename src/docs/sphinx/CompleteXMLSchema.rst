@@ -785,11 +785,26 @@ Element: Python
 .. include:: ../../coreComponents/schema/docs/Python.rst
 
 
+
 .. _XML_RESQMLMesh:
 
 Element: RESQMLMesh
 ===================
 .. include:: ../../coreComponents/schema/docs/RESQMLMesh.rst
+
+.. _XML_ReactiveBrine:
+
+Element: ReactiveBrine
+======================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrine.rst
+
+
+.. _XML_ReactiveBrineThermal:
+
+Element: ReactiveBrineThermal
+=============================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrineThermal.rst
+
 
 
 .. _XML_ReactiveCompositionalMultiphaseOBL:
@@ -797,6 +812,13 @@ Element: RESQMLMesh
 Element: ReactiveCompositionalMultiphaseOBL
 ===========================================
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL.rst
+
+
+.. _XML_ReactiveFluidDriver:
+
+Element: ReactiveFluidDriver
+============================
+.. include:: ../../coreComponents/schema/docs/ReactiveFluidDriver.rst
 
 
 .. _XML_RelpermDriver:
@@ -1937,11 +1959,26 @@ Datastructure: Python
 .. include:: ../../coreComponents/schema/docs/Python_other.rst
 
 
+
 .. _DATASTRUCTURE_RESQMLMesh:
 
 Datastructure: RESQMLMesh
 =========================
 .. include:: ../../coreComponents/schema/docs/RESQMLMesh_other.rst
+
+.. _DATASTRUCTURE_ReactiveBrine:
+
+Datastructure: ReactiveBrine
+============================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrine_other.rst
+
+
+.. _DATASTRUCTURE_ReactiveBrineThermal:
+
+Datastructure: ReactiveBrineThermal
+===================================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrineThermal_other.rst
+
 
 
 .. _DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL:
@@ -1949,6 +1986,13 @@ Datastructure: RESQMLMesh
 Datastructure: ReactiveCompositionalMultiphaseOBL
 =================================================
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL_other.rst
+
+
+.. _DATASTRUCTURE_ReactiveFluidDriver:
+
+Datastructure: ReactiveFluidDriver
+==================================
+.. include:: ../../coreComponents/schema/docs/ReactiveFluidDriver_other.rst
 
 
 .. _DATASTRUCTURE_RelpermDriver:
