@@ -19,8 +19,6 @@
 #ifndef GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP
 #define GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
-#include <string>
-
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -102,7 +100,7 @@ public:
    * @brief Get the name mapping between mesh field names and Internal GEOSX field names.
    * @return The string to string mapping of field names.
    */
-  std::map< string, string > getFieldsMapping( ) { return m_fieldsMapping; }
+  std::map< string, string > getFieldsMapping() const { return m_fieldsMapping; }
 
 protected:
   /// Mesh to GEOSX field names mapping

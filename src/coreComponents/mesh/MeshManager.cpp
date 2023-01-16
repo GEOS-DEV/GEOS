@@ -118,10 +118,10 @@ void MeshManager::importFields( DomainPartition & domain )
     {
       std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
       // Writing properties
-      for( const auto & pair : fieldNamesMapping )
+      for( auto const & pair : fieldNamesMapping )
       {
-        const string & meshFieldName = pair.first;
-        const string & geosxFieldName = pair.second;
+        string const & meshFieldName = pair.first;
+        string const & geosxFieldName = pair.second;
         // Find destination
         if( !subRegion.hasWrapper( geosxFieldName ) )
         {
