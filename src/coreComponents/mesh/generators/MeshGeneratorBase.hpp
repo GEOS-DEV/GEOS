@@ -19,8 +19,6 @@
 #ifndef GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP
 #define GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
-#include <string>
-
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
 #include "codingUtilities/Utilities.hpp"
