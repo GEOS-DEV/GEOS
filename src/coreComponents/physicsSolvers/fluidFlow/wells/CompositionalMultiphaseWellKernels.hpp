@@ -577,6 +577,7 @@ public:
 
       totalMassDensityKernelOp( ip, totalMassDens, dTotalMassDens_dPres, dTotalMassDens_dCompDens );
     }
+
   }
 
 protected:

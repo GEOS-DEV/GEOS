@@ -791,6 +791,10 @@ PerforationKernel::
            arraySlice2d< real64 > const & dCompPerfRate_dPres,
            arraySlice3d< real64 > const & dCompPerfRate_dComp )
 {
+#if defined ( GEOSX_CRUSHER_SUPPRESSION )
+  GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
+#else
+
   using Deriv = multifluid::DerivativeOffset;
 
   // local working variables and arrays
@@ -1073,6 +1077,7 @@ PerforationKernel::
       }
     }
   }
+#endif
 }
 
 template< integer NC, integer NP >
