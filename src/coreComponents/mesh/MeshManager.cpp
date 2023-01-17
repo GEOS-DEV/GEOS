@@ -105,7 +105,8 @@ void MeshManager::importFields( DomainPartition & domain )
   GEOSX_MARK_FUNCTION;
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & generator )
   {
-    if ( !domain.hasMeshBody( generator.getName() ) ) return;
+    if( !domain.hasMeshBody( generator.getName() ) )
+      return;
 
     FieldIdentifiers fieldsToBeSync;
     std::map< string, string > fieldNamesMapping = generator.getFieldsMapping();
