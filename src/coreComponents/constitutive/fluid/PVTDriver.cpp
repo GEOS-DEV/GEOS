@@ -56,6 +56,8 @@ PVTDriver::PVTDriver( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Function controlling temperature time history" );
 
+
+  //todo refactor in mother class
   registerWrapper( viewKeyStruct::numStepsString(), &m_numSteps ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Number of load steps to take" );
@@ -169,7 +171,7 @@ bool PVTDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   } );
 
   // move table back to host for output
-  m_table.move( LvArray::MemorySpace::host );
+  m_table.move( hostMemorySpace );
 
   if( m_outputFile != "none" )
   {

@@ -35,6 +35,8 @@ namespace compositionalMultiphaseHybridFVMKernels
 /******************************** UpwindingHelper ********************************/
 
 template< integer NC, integer NP >
+GEOSX_HOST_DEVICE
+inline
 void
 UpwindingHelper::
   upwindViscousCoefficient( localIndex const (&localIds)[ 3 ],
@@ -132,6 +134,7 @@ UpwindingHelper::
 
 template< integer NC, integer NP >
 GEOSX_HOST_DEVICE
+inline
 void
 UpwindingHelper::
   upwindBuoyancyCoefficient( localIndex const (&localIds)[ 3 ],
@@ -153,6 +156,13 @@ UpwindingHelper::
                              real64 ( & dUpwPhaseGravCoef_dPres )[ NP ][ NP-1 ][ NC ][ 2 ],
                              real64 ( & dUpwPhaseGravCoef_dCompDens )[ NP ][ NP-1 ][ NC ][ 2 ][ NC ] )
 {
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+  GEOSX_UNUSED_VAR( localIds, neighborIds, transGravCoef, phaseDens, dPhaseDens, phaseMassDens, dPhaseMassDens,
+                    phaseMob, dPhaseMob, dCompFrac_dCompDens, phaseCompFrac, dPhaseCompFrac, phaseGravTerm,
+                    dPhaseGravTerm_dPres, dPhaseGravTerm_dCompDens, upwPhaseGravCoef, dUpwPhaseGravCoef_dPres,
+                    dUpwPhaseGravCoef_dCompDens );
+  GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
+#else
   using Deriv = multifluid::DerivativeOffset;
 
   // 1) Compute the driving force: T ( \rho^{avg}_{\ell} - \rho^{avg}_m ) g \Delta z
@@ -264,10 +274,12 @@ UpwindingHelper::
       ++k;
     }
   }
+#endif
 }
 
 template< integer NC, integer NP >
 GEOSX_HOST_DEVICE
+inline
 void
 UpwindingHelper::
   computePhaseGravTerm( localIndex const (&localIds)[ 3 ],
@@ -354,6 +366,7 @@ UpwindingHelper::
 
 template< integer NC, integer NP >
 GEOSX_HOST_DEVICE
+inline
 void
 UpwindingHelper::
   computeUpwindedTotalMobility( localIndex const (&localIds)[ 3 ],
@@ -394,6 +407,7 @@ UpwindingHelper::
 }
 
 GEOSX_HOST_DEVICE
+inline
 void
 UpwindingHelper::
   setIndicesForMobilityRatioUpwinding( localIndex const (&localIds)[ 3 ],
@@ -428,6 +442,7 @@ UpwindingHelper::
 
 template< integer NP >
 GEOSX_HOST_DEVICE
+inline
 void
 UpwindingHelper::
   setIndicesForTotalMobilityUpwinding( localIndex const (&localIds)[ 3 ],
@@ -490,6 +505,7 @@ UpwindingHelper::
 
 #define INST_UpwindingHelperNCNP( NC, NP ) \
   template \
+  GEOSX_HOST_DEVICE \
   void \
   UpwindingHelper:: \
     upwindViscousCoefficient< NC, NP >( localIndex const (&localIds)[ 3 ], \
@@ -508,6 +524,7 @@ UpwindingHelper::
                                         real64 ( &dUpwPhaseViscCoef_dCompDens )[ NP ][ NC ][ NC ], \
                                         globalIndex & upwViscDofNumber ); \
   template \
+  GEOSX_HOST_DEVICE \
   void \
   UpwindingHelper:: \
     upwindBuoyancyCoefficient< NC, NP >( localIndex const (&localIds)[ 3 ], \
@@ -529,6 +546,7 @@ UpwindingHelper::
                                          real64 ( &dUpwPhaseGravCoef_dPres )[ NP ][ NP-1 ][ NC ][ 2 ], \
                                          real64 ( &dUpwPhaseGravCoef_dCompDens )[ NP ][ NP-1 ][ NC ][ 2 ][ NC ] ); \
   template \
+  GEOSX_HOST_DEVICE \
   void \
   UpwindingHelper:: \
     computePhaseGravTerm< NC, NP >( localIndex const (&localIds)[ 3 ], \
@@ -541,6 +559,7 @@ UpwindingHelper::
                                     real64 ( &dPhaseGravTerm_dPres )[ NP ][ NP-1 ][ 2 ], \
                                     real64 ( &dPhaseGravTerm_dCompDens )[ NP ][ NP-1 ][ 2 ][ NC ] ); \
   template \
+  GEOSX_HOST_DEVICE \
   void \
   UpwindingHelper:: \
     computeUpwindedTotalMobility< NC, NP >( localIndex const (&localIds)[ 3 ], \
@@ -568,6 +587,7 @@ INST_UpwindingHelperNCNP( 5, 3 );
 
 #define INST_UpwindingHelperNP( NP ) \
   template \
+  GEOSX_HOST_DEVICE \
   void \
   UpwindingHelper:: \
     setIndicesForTotalMobilityUpwinding< NP >( localIndex const (&localIds)[ 3 ], \
@@ -585,6 +605,7 @@ INST_UpwindingHelperNP( 3 );
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
+inline
 void
 AssemblerKernelHelper::
   applyGradient( arrayView1d< real64 const > const & facePres,
@@ -688,6 +709,7 @@ AssemblerKernelHelper::
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
+inline
 void
 AssemblerKernelHelper::
   assembleFluxDivergence( localIndex const (&localIds)[ 3 ],
@@ -719,6 +741,14 @@ AssemblerKernelHelper::
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs )
 {
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+  GEOSX_UNUSED_VAR( localIds, rankOffset, elemRegionList, elemSubRegionList, elemList, regionFilter,
+                    faceDofNumber, mimFaceGravCoef, elemToFaces, elemGravCoef, phaseDens, dPhaseDens, phaseMassDens,
+                    dPhaseMassDens, phaseMob, dPhaseMob, dCompFrac_dCompDens, phaseCompFrac, dPhaseCompFrac,
+                    elemDofNumber, transMatrixGrav, oneSidedVolFlux, dOneSidedVolFlux_dPres,
+                    dOneSidedVolFlux_dFacePres, dOneSidedVolFlux_dCompDens, dt, localMatrix, localRhs );
+  GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
+#else
   using namespace compositionalMultiphaseUtilities;
   integer constexpr NDOF = NC+1;
 
@@ -881,10 +911,12 @@ AssemblerKernelHelper::
                                                               &dDivMassFluxes_dFaceVars[0][0] + ic * NF,
                                                               NF );
   }
+#endif
 }
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
+inline
 void
 AssemblerKernelHelper::
   assembleViscousFlux( localIndex const ifaceLoc,
@@ -966,6 +998,7 @@ AssemblerKernelHelper::
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
+inline
 void
 AssemblerKernelHelper::
   assembleBuoyancyFlux( localIndex const ifaceLoc,
@@ -1027,6 +1060,7 @@ AssemblerKernelHelper::
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
+inline
 void
 AssemblerKernelHelper::
   assembleFaceConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
@@ -1103,6 +1137,7 @@ AssemblerKernelHelper::
 
 #define INST_AssemblerKernelHelper( NF, NC, NP ) \
   template \
+  GEOSX_HOST_DEVICE \
   void \
   AssemblerKernelHelper:: \
     applyGradient< NF, NC, NP >( arrayView1d< real64 const > const & facePres, \
@@ -1121,6 +1156,7 @@ AssemblerKernelHelper::
                                  real64 ( &dOneSidedVolFlux_dFacePres )[ NF ][ NF ], \
                                  real64 ( &dOneSidedVolFlux_dCompDens )[ NF ][ NC ] ); \
   template \
+  GEOSX_HOST_DEVICE \
   void \
   AssemblerKernelHelper:: \
     assembleFluxDivergence< NF, NC, NP >( localIndex const (&localIds)[ 3 ], \
@@ -1152,6 +1188,7 @@ AssemblerKernelHelper::
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                                           arrayView1d< real64 > const & localRhs ); \
   template \
+  GEOSX_HOST_DEVICE \
   void \
   AssemblerKernelHelper:: \
     assembleViscousFlux< NF, NC, NP >( localIndex const ifaceLoc, \
@@ -1173,6 +1210,7 @@ AssemblerKernelHelper::
                                        globalIndex ( &dofColIndicesElemVars )[ (NC+1)*(NF+1) ], \
                                        globalIndex ( &dofColIndicesFaceVars )[ NF ] ); \
   template \
+  GEOSX_HOST_DEVICE \
   void \
   AssemblerKernelHelper:: \
     assembleBuoyancyFlux< NF, NC, NP >( localIndex const ifaceLoc, \
@@ -1186,6 +1224,7 @@ AssemblerKernelHelper::
                                         real64 ( &divMassFluxes )[ NC ], \
                                         real64 ( &dDivMassFluxes_dElemVars )[ NC ][ (NC+1)*(NF+1) ] ); \
   template \
+  GEOSX_HOST_DEVICE \
   void \
   AssemblerKernelHelper:: \
     assembleFaceConstraints< NF, NC, NP >( arrayView1d< globalIndex const > const & faceDofNumber, \
@@ -1242,6 +1281,7 @@ INST_AssemblerKernelHelper( 6, 5, 3 );
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
+inline
 void
 AssemblerKernel::
   compute( localIndex const er, localIndex const esr, localIndex const ei,
@@ -1275,6 +1315,14 @@ AssemblerKernel::
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs )
 {
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+  GEOSX_UNUSED_VAR( er, esr, ei, regionFilter, elemRegionList, elemSubRegionList, elemList, faceDofNumber,
+                    faceGhostRank, facePres, faceGravCoef, mimFaceGravCoef, elemToFaces, elemPres,
+                    elemGravCoef, phaseDens, dPhaseDens, phaseMassDens, dPhaseMassDens, phaseMob,
+                    dPhaseMob, dCompFrac_dCompDens, phaseCompFrac, dPhaseCompFrac, elemDofNumber,
+                    elemGhostRank, rankOffset, dt, transMatrix, transMatrixGrav, localMatrix, localRhs );
+  GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
+#else
   // one sided flux
   real64 oneSidedVolFlux[ NF ]{};
   real64 dOneSidedVolFlux_dPres[ NF ]{};
@@ -1363,11 +1411,12 @@ AssemblerKernel::
                                                                 dOneSidedVolFlux_dCompDens,
                                                                 localMatrix,
                                                                 localRhs );
-
+#endif
 }
 
 #define INST_AssemblerKernel( NF, NC, NP ) \
   template \
+  GEOSX_HOST_DEVICE \
   void \
   AssemblerKernel:: \
     compute< NF, NC, NP >( localIndex const er, localIndex const esr, localIndex const ei, \
@@ -1506,7 +1555,15 @@ FluxKernel::
   // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const ei )
   {
-
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+    GEOSX_UNUSED_VAR( er, esr, regionFilter, nodePosition, elemRegionList, elemSubRegionList, elemList,
+                      faceToNodes, faceDofNumber, faceGhostRank, facePres, faceGravCoef, mimFaceGravCoef,
+                      transMultiplier, phaseMob, dPhaseMob, dCompFrac_dCompDens, phaseDens, dPhaseDens,
+                      phaseMassDens, dPhaseMassDens, phaseCompFrac, dPhaseCompFrac, elemDofNumber,
+                      rankOffset, lengthTolerance, dt, localMatrix, localRhs, elemCenter, elemVolume,
+                      elemPerm, elemGravCoef, elemPres, elemToFaces, elemVolume, elemGhostRank, ei );
+    GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
+#else
     // transmissibility matrix
     stackArray2d< real64, NF *NF > transMatrix( NF, NF );
     stackArray2d< real64, NF *NF > transMatrixGrav( NF, NF );
@@ -1569,6 +1626,7 @@ FluxKernel::
                                                                                      transMatrixGrav,
                                                                                      localMatrix,
                                                                                      localRhs );
+#endif
   } );
 }
 

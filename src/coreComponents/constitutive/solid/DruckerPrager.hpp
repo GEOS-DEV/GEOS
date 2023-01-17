@@ -107,7 +107,7 @@ public:
                                   DiscretizationOps & stiffness ) const final;
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
@@ -135,7 +135,7 @@ private:
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
                                               real64 const ( &strainIncrement )[6],
@@ -178,7 +178,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
   // iteration, but this is a template for more general models with either
   // nonlinear hardening or yield surfaces.
 
-  real64 solution[3], residual[3], delta[3];
+  real64 solution[3] = {}, residual[3] = {}, delta[3] = {};
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
 
   solution[0] = trialP; // initial guess for newP
@@ -292,7 +292,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
                                               real64 const ( &strainIncrement )[6],

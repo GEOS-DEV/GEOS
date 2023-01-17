@@ -19,6 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
+#include "codingUtilities/Utilities.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -96,10 +97,10 @@ public:
    * @param[in] ei the element index
    * @param[in] phaseMobilityKernelOp the function used to customize the kernel
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void compute( localIndex const ei,
-                FUNC && phaseMobilityKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                FUNC && phaseMobilityKernelOp = NoOpFunc{} ) const
   {
     using Deriv = multifluid::DerivativeOffset;
 
@@ -515,6 +516,7 @@ public:
    * @return the size of the stencil at this connection
    */
   GEOSX_HOST_DEVICE
+  inline
   localIndex stencilSize( localIndex const iconn ) const
   { return m_sei[iconn].size(); }
 
@@ -524,6 +526,7 @@ public:
    * @return the number of elements at this connection
    */
   GEOSX_HOST_DEVICE
+  inline
   localIndex numPointsInFlux( localIndex const iconn ) const
   { return m_stencilWrapper.numPointsInFlux( iconn ); }
 
@@ -534,6 +537,7 @@ public:
    * @param[in] stack the stack variables
    */
   GEOSX_HOST_DEVICE
+  inline
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
@@ -556,11 +560,12 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
+  inline
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC && compFluxKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                    FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
     using Deriv = multifluid::DerivativeOffset;
 
@@ -828,11 +833,12 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
+  inline
   void complete( localIndex const iconn,
                  StackVariables & stack,
-                 FUNC && assemblyKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                 FUNC && assemblyKernelOp = NoOpFunc{} ) const
   {
     using namespace compositionalMultiphaseUtilities;
 
@@ -884,9 +890,13 @@ public:
           KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
-
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+    GEOSX_UNUSED_VAR( numConnections, kernelComponent );
+    GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
+#else
     forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
+
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
                                                   kernelComponent.numPointsInFlux( iconn ) );
 
@@ -894,6 +904,7 @@ public:
       kernelComponent.computeFlux( iconn, stack );
       kernelComponent.complete( iconn, stack );
     } );
+#endif
   }
 
 protected:
@@ -1148,11 +1159,11 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC && compFluxKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                    FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
     using Deriv = multifluid::DerivativeOffset;
     using Order = BoundaryStencil::Order;
@@ -1350,11 +1361,11 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
-                 FUNC && assemblyKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                 FUNC && assemblyKernelOp = NoOpFunc{} ) const
   {
     using namespace compositionalMultiphaseUtilities;
     using Order = BoundaryStencil::Order;
@@ -1521,6 +1532,7 @@ struct CFLFluxKernel
 
   template< integer NC, localIndex NUM_ELEMS, localIndex maxStencilSize >
   GEOSX_HOST_DEVICE
+  inline
   static void
   compute( integer const numPhases,
            localIndex const stencilSize,
@@ -1572,6 +1584,7 @@ struct CFLKernel
 
   template< integer NP >
   GEOSX_HOST_DEVICE
+  inline
   static void
   computePhaseCFL( real64 const & poreVol,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
@@ -1583,6 +1596,7 @@ struct CFLKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  inline
   static void
   computeCompCFL( real64 const & poreVol,
                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > compDens,
@@ -1645,6 +1659,7 @@ struct AquiferBCKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  inline
   static void
     compute( integer const numPhases,
              integer const ipWater,

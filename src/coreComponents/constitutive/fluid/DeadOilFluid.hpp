@@ -46,6 +46,7 @@ public:
 public:
 
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -59,6 +60,7 @@ public:
                           real64 & totalDensity ) const override;
 
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -72,6 +74,7 @@ public:
                           FluidProp::SliceType const totalDensity ) const override;
 
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     virtual void update( localIndex const k,
                          localIndex const q,
                          real64 const pressure,
@@ -124,6 +127,7 @@ private:
      * @param[out] phaseMassDens the phase mass densities in the cell
      */
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     void computeDensities( real64 const pressure,
                            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDens ) const;
 
@@ -133,6 +137,7 @@ private:
      * @param[out] phaseMassDens the phase mass densities in the cell (+ derivatives)
      */
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     void computeDensities( real64 const pressure,
                            PhaseProp::SliceType const & phaseMassDens ) const;
 
@@ -142,6 +147,7 @@ private:
      * @param[out] phaseVisc the phase viscosities in the cell
      */
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     void computeViscosities( real64 const pressure,
                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseVisc ) const;
 
@@ -151,6 +157,7 @@ private:
      * @param[out] phaseVisc the phase viscosities in the cell (+ derivatives)
      */
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     void computeViscosities( real64 const pressure,
                              PhaseProp::SliceType const & phaseVisc ) const;
 
@@ -177,7 +184,8 @@ private:
 };
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 DeadOilFluid::KernelWrapper::
   computeDensities( real64 const pressure,
                     arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDens ) const
@@ -210,7 +218,8 @@ DeadOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 DeadOilFluid::KernelWrapper::
   computeDensities( real64 const pressure,
                     PhaseProp::SliceType const & phaseMassDens ) const
@@ -255,7 +264,8 @@ DeadOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 DeadOilFluid::KernelWrapper::
   computeViscosities( real64 const pressure,
                       arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseVisc ) const
@@ -284,7 +294,8 @@ DeadOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 DeadOilFluid::KernelWrapper::
   computeViscosities( real64 const pressure,
                       PhaseProp::SliceType const & phaseVisc ) const
@@ -320,7 +331,8 @@ DeadOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 DeadOilFluid::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
@@ -370,7 +382,8 @@ DeadOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 DeadOilFluid::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
@@ -431,11 +444,11 @@ DeadOilFluid::KernelWrapper::
   computeTotalDensity( phaseFraction,
                        phaseDensity,
                        totalDensity );
-
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 DeadOilFluid::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
@@ -443,6 +456,14 @@ DeadOilFluid::KernelWrapper::
           real64 const temperature,
           arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
+  // auto phaseFraction = m_phaseFraction( k, q );
+  // auto phaseDensity = m_phaseDensity( k, q );
+  // auto phaseMassDensity = m_phaseMassDensity( k, q );
+  // auto phaseViscosity = m_phaseViscosity( k, q );
+  // auto phaseEnthalpy = m_phaseEnthalpy( k, q );
+  // auto phaseInternalEnergy = m_phaseInternalEnergy( k, q );
+  // auto phaseCompFraction = m_phaseCompFraction( k, q );
+  // auto totalDensity = m_totalDensity( k, q );
   compute( pressure,
            temperature,
            composition,

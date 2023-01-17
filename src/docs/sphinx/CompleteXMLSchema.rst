@@ -596,13 +596,6 @@ Element: Outputs
 .. include:: ../../coreComponents/schema/docs/Outputs.rst
 
 
-.. _XML_PAMELAMesh:
-
-Element: PAMELAMesh
-===================
-.. include:: ../../coreComponents/schema/docs/PAMELAMesh.rst
-
-
 .. _XML_PML:
 
 Element: PML
@@ -799,6 +792,13 @@ Element: ReactiveCompositionalMultiphaseOBL
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL.rst
 
 
+.. _XML_RelpermDriver:
+
+Element: RelpermDriver
+======================
+.. include:: ../../coreComponents/schema/docs/RelpermDriver.rst
+
+
 .. _XML_Restart:
 
 Element: Restart
@@ -846,6 +846,13 @@ Element: SinglePhaseHybridFVM
 Element: SinglePhasePoromechanics
 =================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics.rst
+
+
+.. _XML_SinglePhasePoromechanicsConformingFractures:
+
+Element: SinglePhasePoromechanicsConformingFractures
+====================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures.rst
 
 
 .. _XML_SinglePhasePoromechanicsEmbeddedFractures:
@@ -1105,6 +1112,13 @@ Element: WellElementRegion
 Element: WillisRichardsPermeability
 ===================================
 .. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability.rst
+
+
+.. _XML_crusher:
+
+Element: crusher
+================
+.. include:: ../../coreComponents/schema/docs/crusher.rst
 
 
 .. _XML_lassen:
@@ -1734,13 +1748,6 @@ Datastructure: Outputs
 .. include:: ../../coreComponents/schema/docs/Outputs_other.rst
 
 
-.. _DATASTRUCTURE_PAMELAMesh:
-
-Datastructure: PAMELAMesh
-=========================
-.. include:: ../../coreComponents/schema/docs/PAMELAMesh_other.rst
-
-
 .. _DATASTRUCTURE_PML:
 
 Datastructure: PML
@@ -1937,6 +1944,13 @@ Datastructure: ReactiveCompositionalMultiphaseOBL
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL_other.rst
 
 
+.. _DATASTRUCTURE_RelpermDriver:
+
+Datastructure: RelpermDriver
+============================
+.. include:: ../../coreComponents/schema/docs/RelpermDriver_other.rst
+
+
 .. _DATASTRUCTURE_Restart:
 
 Datastructure: Restart
@@ -1984,6 +1998,13 @@ Datastructure: SinglePhaseHybridFVM
 Datastructure: SinglePhasePoromechanics
 =======================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsConformingFractures:
+
+Datastructure: SinglePhasePoromechanicsConformingFractures
+==========================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures:
@@ -2264,6 +2285,13 @@ Datastructure: WillisRichardsPermeability
 Datastructure: commandLine
 ==========================
 .. include:: ../../coreComponents/schema/docs/commandLine_other.rst
+
+
+.. _DATASTRUCTURE_crusher:
+
+Datastructure: crusher
+======================
+.. include:: ../../coreComponents/schema/docs/crusher_other.rst
 
 
 .. _DATASTRUCTURE_domain:

@@ -113,6 +113,7 @@ private:
    * @param[out] viscosity fluid viscosity
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & viscosity ) const = 0;
@@ -126,6 +127,7 @@ private:
    * @param[out] dViscosity_dPressure fluid viscosity derivative w.r.t. pressure
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & dDensity_dPressure,
@@ -172,6 +174,7 @@ private:
    * @param[in] pressure the target pressure value
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure ) const = 0;

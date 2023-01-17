@@ -128,7 +128,7 @@ protected:
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticIsotropicPressureDependentUpdates::getElasticStiffness( localIndex const k,
                                                                     localIndex const q,
                                                                     real64 ( & stiffness )[6][6] ) const
@@ -177,7 +177,7 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStiffness( localIndex c
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticIsotropicPressureDependentUpdates::getElasticStrain( localIndex const k,
                                                                  localIndex const q,
                                                                  real64 ( & elasticStrain)[6] ) const
@@ -215,7 +215,7 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStrain( localIndex cons
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex const k,
                                                                   localIndex const q,
                                                                   real64 const ( &strainIncrement )[6],
@@ -297,7 +297,7 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 
 //TODO: implement the discretizationOps version of smallStrainUpdate
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex const k,
                                                                   localIndex const q,
                                                                   real64 const ( &strainIncrement )[6],

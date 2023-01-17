@@ -53,7 +53,22 @@ struct DeformationUpdateKernel
 #endif
           )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
+    forAll< POLICY >( size, [elemsToFaces,
+                             faceToNodeMap,
+                             u,
+                             faceNormal,
+                             aperture,
+                             contactWrapper,
+                             hydraulicAperture,
+#ifdef GEOSX_USE_SEPERATION_COEFFICIENT
+                             apertureAtFailure,
+                             seperationCoeff0,
+                             seperationCoeff,
+                             dSeperationCoeff_dAper,
+#endif
+                             area,
+                             volume,
+                             deltaVolume] GEOSX_HOST_DEVICE ( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const kf1 = elemsToFaces[kfe][1];
@@ -69,8 +84,7 @@ struct DeformationUpdateKernel
       aperture[kfe] = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
 
       real64 dHydraulicAperture_dAperture = 0;
-      hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe],
-                                                                        dHydraulicAperture_dAperture );
+      hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dAperture );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
       real64 const s = aperture[kfe] / apertureAtFailure[kfe];
@@ -95,9 +109,9 @@ struct DeformationUpdateKernel
 
 struct FluidMassResidualDerivativeAssemblyKernel
 {
-
   template< typename CONTACT_WRAPPER >
   GEOSX_HOST_DEVICE
+  inline
   static void
   computeAccumulationDerivative( CONTACT_WRAPPER const & contactWrapper,
                                  localIndex const numNodesPerFace,
@@ -119,6 +133,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
         for( int i = 0; i < 3; ++i )
         {
           nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kf], a )] + i;
+
           real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
 
           real64 dHydraulicAperture_dAperture = 0;
@@ -134,6 +149,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
 
   template< typename CONTACT_WRAPPER >
   GEOSX_HOST_DEVICE
+  inline
   static void
   computeFluxDerivative( CONTACT_WRAPPER const & contactWrapper,
                          localIndex const kfe2,
@@ -200,7 +216,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
       globalIndex const rowNumber = presDofNumber[ei] - rankOffset;
       globalIndex nodeDOF[8 * 3];
       stackArray1d< real64, 24 > dRdU( 2 * numNodesPerFace * 3 );
-
+//
       computeAccumulationDerivative( contactWrapper,
                                      numNodesPerFace,
                                      elemsToFaces[ei],
@@ -220,7 +236,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                                                           dRdU.data(),
                                                                           2 * numNodesPerFace * 3 );
       }
-
+//
       localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( ei );
       arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( ei );
       arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( ei );

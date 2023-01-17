@@ -18,6 +18,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 // System includes
 #include <chrono>
@@ -71,4 +72,5 @@ int main( int argc, char *argv[] )
     LvArray::system::callErrorHandler();
     std::abort();
   }
+  return 0;
 }

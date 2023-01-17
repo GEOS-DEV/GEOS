@@ -243,7 +243,7 @@ public:
 private:
 
     GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    inline
     void skipOne()
     {
       m_mask >>= 1;

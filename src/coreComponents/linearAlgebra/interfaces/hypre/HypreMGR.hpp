@@ -23,7 +23,6 @@
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
-
 #include <_hypre_utilities.h>
 
 namespace geosx

@@ -43,7 +43,7 @@ struct DerivativeOffset
   static integer constexpr dC = 2;
 };
 
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOSX_USE_DEVICE )
 
 /// Constitutive model phase property array layout
 using LAYOUT_PHASE = RAJA::PERM_JKI;

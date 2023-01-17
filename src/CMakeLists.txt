@@ -1,9 +1,13 @@
+
 cmake_minimum_required( VERSION 3.9 )
 
 # At the moment we are manually passing the cuda arch flag.
-if(${CMAKE_VERSION} VERSION_GREATER "3.18.0")
-  cmake_policy(SET CMP0104 OLD)
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18.0")
+  cmake_policy(SET CMP0104 OLD) # when using nvcc populate CMAKE_CUDA_ARCHITECTURES, raise error if we can't
 endif()
+cmake_policy(SET CMP0074 NEW) # dont ignore <PackageName>_ROOT env vars when searching for packages via find_package()
+cmake_policy(SET CMP0066 NEW) # use CMAKE_<LANG>_FLAGS_<BUILD_TYPE> for try_compile() instead of only CMAKE_<LANG>_FLAGS
+cmake_policy(SET CMP0056 NEW) # use CMAKE_EXE_LINKER_FLAGS in try_compile() in addition to CMAKE_<LANG>_FLAGS
 
 ################################
 # GEOSX
@@ -21,6 +25,25 @@ set( CMAKE_ENABLE_EXPORTS ON )
 option( ENABLE_BENCHMARKS "Enables benchmarks" ON )
 include( cmake/blt/SetupBLT.cmake )
 set( BLT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cmake/blt/ )
+
+# use, i.e. don't skip the full RPATH for the build tree
+set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+
+# when building, don't use the install RPATH already
+# (but later on when installing)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# the RPATH to be used when installing, but only if it's not a system directory
+list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+if("${isSystemDir}" STREQUAL "-1")
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+endif()
 
 # Removes -pthread from BLT CUDA libraries lists
 if( ENABLE_CUDA )
@@ -99,6 +122,14 @@ if( ENABLE_CUDA )
   set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
 endif()
 
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( extraComponentsLinkList ${extraComponentsLinkList} CUDA::nvToolsExt )
+endif()
+
+if( ENABLE_HIP )
+  set( extraComponentsLinkList ${extraComponentsLinkList} blt::hip )
+endif()
+
 if ( GEOSX_BUILD_SHARED_LIBS )
   set( extraComponentsLinkList ${extraComponentsLinkList} geosx_core )
 else()
@@ -108,12 +139,10 @@ endif()
 blt_add_executable( NAME geosx
                     SOURCES main/main.cpp
                     DEPENDS_ON ${extraComponentsLinkList}
-                               ${externalComponentsLinkList} 
-                   )
-
+                               ${externalComponentsLinkList} )
 
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
-if( ENABLE_HYPRE_CUDA )
+if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA"  )
   set_target_properties( geosx PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
 endif()
 
@@ -129,7 +158,7 @@ set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
-if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT ENABLE_CUDA )
+if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
 
   set(SCHEMA_DIR ${CMAKE_SOURCE_DIR}/coreComponents/schema)
   set(SCRIPT_DIR ${CMAKE_SOURCE_DIR}/../scripts)

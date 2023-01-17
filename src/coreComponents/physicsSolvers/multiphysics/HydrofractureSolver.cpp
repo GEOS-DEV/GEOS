@@ -21,11 +21,8 @@
 
 #include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 
 namespace geosx
 {
@@ -54,10 +51,6 @@ HydrofractureSolver::HydrofractureSolver( const string & name,
     setApplyDefaultValue( 10 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. " );
-
-  registerWrapper( viewKeyStruct::couplingTypeOptionStringString(), &m_couplingTypeOption ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Coupling method. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
 
   m_numResolves[0] = 0;
 
@@ -170,84 +163,77 @@ void HydrofractureSolver::postProcessInput()
   m_surfaceGenerator = &this->getParent().getGroup< SurfaceGenerator >( m_surfaceGeneratorName );
 }
 
-real64 HydrofractureSolver::solverStep( real64 const & time_n,
-                                        real64 const & dt,
-                                        int const cycleNumber,
-                                        DomainPartition & domain )
+real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
+                                                    real64 const & dt,
+                                                    int const cycleNumber,
+                                                    DomainPartition & domain )
 {
   real64 dtReturn = dt;
 
-  if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
-  {
-    dtReturn = splitOperatorStep( time_n, dt, cycleNumber, domain );
-  }
-  else if( m_couplingTypeOption == CouplingTypeOption::FIM )
-  {
-    implicitStepSetup( time_n, dt, domain );
+  implicitStepSetup( time_n, dt, domain );
 
-    int const maxIter = m_maxNumResolves + 1;
-    m_numResolves[1] = m_numResolves[0];
-    int solveIter;
-    for( solveIter=0; solveIter<maxIter; ++solveIter )
+  int const maxIter = m_maxNumResolves + 1;
+  m_numResolves[1] = m_numResolves[0];
+  int solveIter;
+  for( solveIter=0; solveIter<maxIter; ++solveIter )
+  {
+    int locallyFractured = 0;
+    int globallyFractured = 0;
+
+    setupSystem( domain,
+                 m_dofManager,
+                 m_localMatrix,
+                 m_rhs,
+                 m_solution );
+
+    // currently the only method is implicit time integration
+    dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+
+
+    if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
     {
-      int locallyFractured = 0;
-      int globallyFractured = 0;
+      locallyFractured = 1;
+    }
+    MpiWrapper::allReduce( &locallyFractured,
+                           &globallyFractured,
+                           1,
+                           MPI_MAX,
+                           MPI_COMM_GEOSX );
 
-      setupSystem( domain,
-                   m_dofManager,
-                   m_localMatrix,
-                   m_rhs,
-                   m_solution );
+    if( globallyFractured == 0 )
+    {
+      break;
+    }
+    else
+    {
+      FieldIdentifiers fieldsToBeSync;
 
-      // currently the only method is implicit time integration
-      dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+      fieldsToBeSync.addElementFields( { flow::pressure::key(),
+                                         flow::pressure_n::key(),
+                                         SurfaceElementSubRegion::viewKeyStruct::elementApertureString() },
+                                       { m_surfaceGenerator->getFractureRegionName() } );
 
+      fieldsToBeSync.addFields( FieldLocation::Node,
+                                { solidMechanics::incrementalDisplacement::key(),
+                                  solidMechanics::totalDisplacement::key() } );
 
-      if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
+      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                           domain.getMeshBody( 0 ).getBaseDiscretization(),
+                                                           domain.getNeighbors(),
+                                                           false );
+
+      this->updateState( domain );
+
+      if( getLogLevel() >= 1 )
       {
-        locallyFractured = 1;
-      }
-      MpiWrapper::allReduce( &locallyFractured,
-                             &globallyFractured,
-                             1,
-                             MPI_MAX,
-                             MPI_COMM_GEOSX );
-
-      if( globallyFractured == 0 )
-      {
-        break;
-      }
-      else
-      {
-        FieldIdentifiers fieldsToBeSync;
-
-        fieldsToBeSync.addElementFields( { flow::pressure::key(),
-                                           flow::pressure_n::key(),
-                                           SurfaceElementSubRegion::viewKeyStruct::elementApertureString() },
-                                         { m_surfaceGenerator->getFractureRegionName() } );
-
-        fieldsToBeSync.addFields( FieldLocation::Node,
-                                  { solidMechanics::incrementalDisplacement::key(),
-                                    solidMechanics::totalDisplacement::key() } );
-
-        CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                             domain.getMeshBody( 0 ).getBaseDiscretization(),
-                                                             domain.getNeighbors(),
-                                                             false );
-
-        this->updateState( domain );
-
-        if( getLogLevel() >= 1 )
-        {
-          GEOSX_LOG_RANK_0( "++ Fracture propagation. Re-entering Newton Solve." );
-        }
+        GEOSX_LOG_RANK_0( "++ Fracture propagation. Re-entering Newton Solve." );
       }
     }
-
-    // final step for completion of timestep. typically secondary variable updates and cleanup.
-    implicitStepComplete( time_n, dtReturn, domain );
-    m_numResolves[1] = solveIter;
   }
+
+  // final step for completion of timestep. typically secondary variable updates and cleanup.
+  implicitStepComplete( time_n, dtReturn, domain );
+  m_numResolves[1] = solveIter;
 
   return dtReturn;
 }
@@ -318,32 +304,11 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
     } );
 
 //#if defined(USE_CUDA)
-//    deltaVolume.move( LvArray::MemorySpace::cuda );
-//    aperture.move( LvArray::MemorySpace::cuda );
-//    hydraulicAperture.move( LvArray::MemorySpace::cuda );
+//    deltaVolume.move( parallelDeviceMemorySpace );
+//    aperture.move( parallelDeviceMemorySpace );
+//    hydraulicAperture.move( parallelDeviceMemorySpace );
 //#endif
   } );
-}
-
-real64 HydrofractureSolver::splitOperatorStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                               real64 const & dt,
-                                               integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                                               DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-{
-  GEOSX_ERROR( "Not implemented" );
-  return dt;
-}
-
-real64 HydrofractureSolver::explicitStep( real64 const & time_n,
-                                          real64 const & dt,
-                                          const int cycleNumber,
-                                          DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-  solidMechanicsSolver()->explicitStep( time_n, dt, cycleNumber, domain );
-  flowSolver()->solverStep( time_n, dt, cycleNumber, domain );
-
-  return dt;
 }
 
 void HydrofractureSolver::setupCoupling( DomainPartition const & domain,
@@ -583,6 +548,8 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                           arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
+  // Add Adp
+  // Apd App
 
   solidMechanicsSolver()->assembleSystem( time,
                                           dt,
@@ -590,7 +557,7 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                           dofManager,
                                           localMatrix,
                                           localRhs );
-
+  // Add
   flowSolver()->assembleAccumulationTerms( domain,
                                            dofManager,
                                            localMatrix,
@@ -602,10 +569,11 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                             localMatrix,
                                             localRhs,
                                             getDerivativeFluxResidual_dAperture() );
-
+  // App
   assembleForceResidualDerivativeWrtPressure( domain, localMatrix, localRhs );
+  // Adp
   assembleFluidMassResidualDerivativeWrtDisplacement( domain, localMatrix );
-
+  // Apd
   this->getRefDerivativeFluxResidual_dAperture()->zero();
 }
 
@@ -647,7 +615,9 @@ HydrofractureSolver::
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
-      forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+      // if matching on lassen/crusher, move to device policy
+      using execPolicy = serialPolicy;
+      forAll< execPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
         constexpr int kfSign[2] = { -1, 1 };
 
@@ -674,7 +644,6 @@ HydrofractureSolver::
         {
           localIndex const faceIndex = elemsToFaces[kfe][kf];
 
-
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
 
@@ -682,7 +651,7 @@ HydrofractureSolver::
             {
               rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + i;
               nodeRHS[3*a+i] = nodalForce[i] * kfSign[kf];
-              fext[faceToNodeMap( faceIndex, a )][i] += nodalForce[i] * kfSign[kf];
+              RAJA::atomicAdd( AtomicPolicy< execPolicy >{}, &(fext[faceToNodeMap( faceIndex, a )][i]), nodalForce[i] * kfSign[kf] );
 
               dRdP( 3*a+i, 0 ) = Ja * Nbar[i] * kfSign[kf];
             }
@@ -696,11 +665,11 @@ HydrofractureSolver::
               for( int i=0; i<3; ++i )
               {
                 // TODO: use parallel atomic when loop is parallel
-                RAJA::atomicAdd( serialAtomic{}, &localRhs[localRow + i], nodeRHS[3*a+i] );
-                localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + i,
-                                                                                  &colDOF,
-                                                                                  &dRdP[3*a+i][0],
-                                                                                  1 );
+                RAJA::atomicAdd( AtomicPolicy< execPolicy >{}, &localRhs[localRow + i], nodeRHS[3*a+i] );
+                localMatrix.addToRowBinarySearchUnsorted< AtomicPolicy< execPolicy > >( localRow + i,
+                                                                                        &colDOF,
+                                                                                        &dRdP[3*a+i][0],
+                                                                                        1 );
               }
             }
           }

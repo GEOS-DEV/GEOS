@@ -156,7 +156,7 @@ public:
    * stack storage.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -178,13 +178,16 @@ public:
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
     }
+    m_finiteElementSpace.template
+    addGradGradStabilizationMatrix< FE_TYPE, numDofPerTrialSupportPoint >( stack.feStack,
+                                                                           stack.localJacobian );
   }
 
   /**
    * @copydoc geosx::finiteElement::ImplicitKernelBase::quadraturePointKernel
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
@@ -199,7 +202,6 @@ public:
         stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJ;
       }
     }
-    m_finiteElementSpace.template addGradGradStabilizationMatrix< FE_TYPE >( stack.feStack, stack.localJacobian );
   }
 
   /**
@@ -210,7 +212,7 @@ public:
    * global matrix/vector.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {

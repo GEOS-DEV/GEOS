@@ -93,7 +93,7 @@ protected:
    * @param[in] stress Stress to be save to m_newStress[k][q]
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void saveStress( localIndex const k,
                    localIndex const q,
                    real64 const ( &stress )[6] ) const
@@ -134,6 +134,20 @@ public:
   {
     GEOSX_UNUSED_VAR( k );
     GEOSX_ERROR( "getBulkModulus() not implemented for this model" );
+
+    return 0;
+  }
+
+  /**
+   * @brief Get shear modulus
+   * @param[in] k Element index.
+   * @return the shear modulus of element k
+   */
+  GEOSX_HOST_DEVICE
+  virtual real64 getShearModulus( localIndex const k ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_ERROR( "getShearModulus() not implemented for this model" );
 
     return 0;
   }
@@ -381,7 +395,7 @@ public:
    * @param[in] q Quadrature point index.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const
   {

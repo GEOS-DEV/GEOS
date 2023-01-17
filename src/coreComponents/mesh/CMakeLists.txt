@@ -115,22 +115,10 @@ set( mesh_sources
      utilities/ComputationalGeometry.cpp
      )
 
-set( dependencyList schema dataRepository constitutive finiteElement parmetis metis )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList ${parallelDeps} schema dataRepository constitutive finiteElement parmetis metis )
 
 if( ENABLE_CUDA_NVTOOLSEXT )
   set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
-
-if( ENABLE_PAMELA )
-    message( STATUS "Adding PAMELAMeshGenerator sources and headers" )
-    list( APPEND mesh_headers generators/PAMELAMeshGenerator.hpp )
-    list( APPEND mesh_sources generators/PAMELAMeshGenerator.cpp )
-    add_subdirectory( PAMELA )
-    list( APPEND dependencyList PAMELA )
 endif()
 
 if( ENABLE_VTK )
@@ -165,7 +153,7 @@ blt_add_library( NAME       mesh
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
-               
+
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 if( ENABLE_VTK )
@@ -175,5 +163,4 @@ endif()
 
 add_subdirectory( unitTests )
 
-geosx_add_code_checks( PREFIX mesh
-                       EXCLUDES PAMELA )
+geosx_add_code_checks( PREFIX mesh )

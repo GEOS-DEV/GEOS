@@ -24,6 +24,17 @@
 #ifndef GEOSX_COMMON_GEOSXMACROS_HPP_
 #define GEOSX_COMMON_GEOSXMACROS_HPP_
 
+
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+#define GEOSX_DEVICE_COMPILE
+#endif
+
+#if defined( GEOSX_DEVICE_COMPILE ) && defined( GEOSX_USE_HIP )
+#define GEOSX_CRUSHER_SUPPRESSION "Cannot compile this on device on Crusher with cce@:14.0.1 and rocm@:5.1.0"
+#endif
+
+
+
 /**
  * @name Host-device markers
  *
@@ -33,11 +44,11 @@
  */
 ///@{
 
-#if defined(__CUDACC__)
+#if defined(GEOSX_USE_DEVICE)
 #define GEOSX_HOST __host__
 #define GEOSX_DEVICE __device__
 #define GEOSX_HOST_DEVICE __host__ __device__
-#define GEOSX_FORCE_INLINE __forceinline__
+#define GEOSX_FORCE_INLINE inline
 #define PRAGMA_UNROLL _Pragma("unroll")
 #else
 /// Marks a host-only function.

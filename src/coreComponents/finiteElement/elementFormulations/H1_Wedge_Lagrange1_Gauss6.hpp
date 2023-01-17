@@ -112,40 +112,12 @@ public:
   }
 
   /**
-   * @brief Method to fill a MeshData object.
-   * @param nodeManager The node manager.
-   * @param edgeManager The edge manager.
-   * @param faceManager The face manager.
-   * @param cellSubRegion The cell sub-region for which the element has to be initialized.
-   * @param meshData MeshData struct to be filled.
-   */
-  template< typename SUBREGION_TYPE >
-  static void fillMeshData( NodeManager const & nodeManager,
-                            EdgeManager const & edgeManager,
-                            FaceManager const & faceManager,
-                            SUBREGION_TYPE const & cellSubRegion,
-                            MeshData< SUBREGION_TYPE > & meshData );
-
-  /**
-   * @brief Empty setup method.
-   * @param cellIndex The index of the cell with respect to the cell sub region.
-   * @param meshData MeshData struct filled by @ref fillMeshData.
-   * @param stack Object that holds stack variables.
-   */
-  template< typename SUBREGION_TYPE >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void setupStack( localIndex const & cellIndex,
-                          MeshData< SUBREGION_TYPE > const & meshData,
-                          StackVariables & stack );
-
-  /**
    * @brief Calculate shape functions values at a single point.
    * @param[in] coords The parent coordinates at which to evaluate the shape function value
    * @param[out] N The shape function values.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void calcN( real64 const (&coords)[3],
                      real64 ( &N )[numNodes] );
 
@@ -170,7 +142,7 @@ public:
    *   point.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( &N )[numNodes] );
@@ -200,7 +172,7 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
                            StackVariables const & stack,
@@ -216,19 +188,6 @@ public:
   GEOSX_HOST_DEVICE
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const (&X)[numNodes][3] );
-
-  /**
-   * @brief Empty method, here for compatibility with methods that require a stabilization of the
-   * grad-grad bilinear form.
-   * @tparam MATRIXTYPE The type of @p matrix.
-   * @param stack Stack variables as filled by @ref setupStack.
-   * @param matrix The matrix that needs to be stabilized.
-   */
-  template< typename MATRIXTYPE >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void addGradGradStabilization( StackVariables const & stack,
-                                        MATRIXTYPE & matrix );
 
   /**
    * @brief Calculates the isoparametric "Jacobian" transformation
@@ -273,7 +232,7 @@ private:
    */
   template< typename T >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   constexpr static T linearMap( T const indexT, T const indexL )
   {
     return 2 * indexT + indexL;
@@ -286,7 +245,7 @@ private:
    * @return parent coordinate in the r direction.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   constexpr static real64 parentCoords0( localIndex const a )
   {
     return 0.5 * ( a & 2 );
@@ -299,7 +258,7 @@ private:
    * @return parent coordinate in the s direction.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   constexpr static real64 parentCoords1( localIndex const a )
   {
     return 0.25 * ( a & 4 );
@@ -312,7 +271,7 @@ private:
    * @return parent coordinate in the xi direction.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   constexpr static real64 parentCoords2( localIndex const a )
   {
     return -1.0 + 2 * ( a & 1 );
@@ -325,7 +284,7 @@ private:
    * @return parent coordinate in the r direction.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   constexpr static real64 quadratureParentCoords0( localIndex const q )
   {
     return quadratureCrossSectionCoord + 0.5  * parentCoords0( q );
@@ -338,7 +297,7 @@ private:
    * @return parent coordinate in the r direction.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   constexpr static real64 quadratureParentCoords1( localIndex const q )
   {
     return quadratureCrossSectionCoord + 0.5  * parentCoords1( q );
@@ -351,7 +310,7 @@ private:
    * @return parent coordinate in the xi direction.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   constexpr static real64 quadratureParentCoords2( localIndex const q )
   {
     return parentCoords2( q ) * quadratureLongitudinalCoord;
@@ -387,35 +346,8 @@ private:
 
 /// @cond Doxygen_Suppress
 
-template< typename SUBREGION_TYPE >
-GEOSX_FORCE_INLINE
-void H1_Wedge_Lagrange1_Gauss6::
-  fillMeshData( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-                EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
-                FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
-                SUBREGION_TYPE const & GEOSX_UNUSED_PARAM( cellSubRegion ),
-                MeshData< SUBREGION_TYPE > & GEOSX_UNUSED_PARAM( meshData ) )
-{}
-
-template< typename SUBREGION_TYPE >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void H1_Wedge_Lagrange1_Gauss6::
-  setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
-              MeshData< SUBREGION_TYPE > const & GEOSX_UNUSED_PARAM( meshData ),
-              StackVariables & GEOSX_UNUSED_PARAM( stack ) )
-{}
-
-template< typename MATRIXTYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void H1_Wedge_Lagrange1_Gauss6::
-  addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-                            MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
-{}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 H1_Wedge_Lagrange1_Gauss6::
   jacobianTransformation( int const q,
@@ -453,7 +385,7 @@ H1_Wedge_Lagrange1_Gauss6::
 //*************************************************************************************************
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 H1_Wedge_Lagrange1_Gauss6::
   applyJacobianTransformationToShapeFunctionsDerivatives( int const q,
@@ -492,7 +424,7 @@ H1_Wedge_Lagrange1_Gauss6::
 //*************************************************************************************************
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 H1_Wedge_Lagrange1_Gauss6::calcN( real64 const (&coords)[3],
                                   real64 (& N)[numNodes] )
@@ -512,7 +444,7 @@ H1_Wedge_Lagrange1_Gauss6::calcN( real64 const (&coords)[3],
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 H1_Wedge_Lagrange1_Gauss6::
   calcN( localIndex const q,
@@ -531,7 +463,7 @@ H1_Wedge_Lagrange1_Gauss6::
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void H1_Wedge_Lagrange1_Gauss6::
   calcN( localIndex const q,
          StackVariables const & GEOSX_UNUSED_PARAM( stack ),
@@ -543,7 +475,7 @@ void H1_Wedge_Lagrange1_Gauss6::
 //*************************************************************************************************
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64
 H1_Wedge_Lagrange1_Gauss6::
   calcGradN( localIndex const q,
@@ -562,7 +494,7 @@ H1_Wedge_Lagrange1_Gauss6::
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64 H1_Wedge_Lagrange1_Gauss6::
   calcGradN( localIndex const q,
              real64 const (&X)[numNodes][3],
@@ -575,7 +507,7 @@ real64 H1_Wedge_Lagrange1_Gauss6::
 //*************************************************************************************************
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64
 H1_Wedge_Lagrange1_Gauss6::
   transformedQuadratureWeight( localIndex const q,

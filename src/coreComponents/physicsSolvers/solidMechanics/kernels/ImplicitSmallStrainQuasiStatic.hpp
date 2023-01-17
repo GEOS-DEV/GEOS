@@ -83,7 +83,7 @@ public:
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
-
+  using Base::m_meshData;
 
   /**
    * @brief Constructor
@@ -170,7 +170,7 @@ public:
      * @param a Node index for the row.
      * @param b Node index for the col.
      */
-    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
+    GEOSX_HOST_DEVICE inline constexpr
     void operator() ( localIndex const a, localIndex const b )
     {
       GEOSX_UNUSED_VAR( a );
@@ -182,7 +182,7 @@ public:
      *   integrating the divergence to produce nodal forces.
      * @param stress The stress array.
      */
-    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
+    GEOSX_HOST_DEVICE inline constexpr
     void operator() ( real64 (& stress)[6] )
     {
       GEOSX_UNUSED_VAR( stress );
@@ -210,6 +210,7 @@ public:
    * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
    */
   GEOSX_HOST_DEVICE
+  inline
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
@@ -238,6 +239,19 @@ protected:
   /// The rank global density
   arrayView2d< real64 const > const m_density;
 
+  /**
+   * @brief Get a parameter representative of the stiffness, used as physical scaling for the
+   * stabilization matrix.
+   * @param[in] k Element index.
+   * @return A parameter representative of the stiffness matrix dstress/dstrain
+   */
+  GEOSX_HOST_DEVICE
+  inline
+  real64 computeStabilizationScaling( localIndex const k ) const
+  {
+    // TODO: generalize this to other constitutive models (currently we assume linear elasticity).
+    return 2.0 * m_constitutiveUpdate.getShearModulus( k );
+  }
 };
 
 /// The factory used to construct a QuasiStatic kernel.

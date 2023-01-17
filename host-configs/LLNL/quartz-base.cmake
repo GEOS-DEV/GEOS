@@ -26,7 +26,6 @@ set(PAPI_PREFIX /usr/tce/packages/papi/papi-5.4.3 CACHE PATH "")
 set(ENABLE_OPENMP ON CACHE BOOL "")
 
 # GEOSX specific options
-set(ENABLE_PAMELA ON CACHE BOOL "")
 set(ENABLE_PVTPackage ON CACHE BOOL "")
 set(ENABLE_PETSC OFF CACHE BOOL "Enables PETSc." FORCE)
 
@@ -35,5 +34,7 @@ set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/linux-rhel7-x86_64-gc
 
 # Sphinx
 set(SPHINX_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/documentation/documentation/bin/sphinx-build CACHE PATH "" FORCE)
+
+set(ENABLE_HYPRE_DEVICE CPU CACHE STRING "" )
 
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)

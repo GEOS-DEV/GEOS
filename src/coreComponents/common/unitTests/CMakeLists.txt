@@ -14,10 +14,6 @@ endif()
 
 set( dependencyList common hdf5 gtest )
 
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
 #
 # Add gtest C++ based tests
 #

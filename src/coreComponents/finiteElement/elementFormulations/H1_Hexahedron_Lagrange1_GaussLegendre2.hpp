@@ -137,7 +137,7 @@ public:
    * @param[out] N The shape function values.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void calcN( real64 const (&coords)[3],
                      real64 (& N)[numNodes] )
   {
@@ -153,7 +153,7 @@ public:
    *   point.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void calcN( localIndex const q,
                      real64 (& N)[numNodes] )
   {
@@ -175,7 +175,7 @@ public:
    *   point.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( & N )[numNodes] )
@@ -217,7 +217,7 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
                            StackVariables const & stack,
@@ -399,7 +399,7 @@ private:
 
 };
 
-//GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE real64
+//GEOSX_HOST_DEVICE inline real64
 //psiProductFunc( int const n )
 //{
 //  // factor = 1./(2 + Sqrt[3]) = 0.267949192431122706
@@ -415,7 +415,7 @@ private:
 /// @cond Doxygen_Suppress
 
 template< typename FUNC, typename ... PARAMS >
-GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
+GEOSX_HOST_DEVICE inline void
 H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
                                                      int const qb,
                                                      int const qc,
@@ -516,7 +516,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
 
 //*************************************************************************************************
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64
 H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
                                                    real64 const (&X)[numNodes][3],
@@ -551,7 +551,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const qa,
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64 H1_Hexahedron_Lagrange1_GaussLegendre2::
   calcGradN( localIndex const q,
              real64 const (&X)[numNodes][3],
@@ -568,7 +568,7 @@ real64 H1_Hexahedron_Lagrange1_GaussLegendre2::
 #endif
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 H1_Hexahedron_Lagrange1_GaussLegendre2::
   jacobianTransformation( int const qa,
@@ -607,7 +607,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
 
 //*************************************************************************************************
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 H1_Hexahedron_Lagrange1_GaussLegendre2::
   applyTransformationToParentGradients( int const qa,
@@ -640,7 +640,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64
 H1_Hexahedron_Lagrange1_GaussLegendre2::
   transformedQuadratureWeight( localIndex const q,
@@ -659,7 +659,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
                                                                 real64 const (&invJ)[3][3],
                                                                 real64 const (&var)[numNodes][3],
@@ -694,7 +694,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const q,
                                                              real64 const (&invJ)[3][3],
                                                              real64 const (&var)[6],
@@ -729,7 +729,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const q,
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const q,
                                                        real64 const (&invJ)[3][3],
                                                        real64 const (&var)[numNodes][3],

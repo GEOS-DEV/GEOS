@@ -32,7 +32,7 @@
  * FE_TYPES apply.
  */
 #ifndef SELECTED_FE_TYPES
-#define SELECTED_FE_TYPES BASE_FE_TYPES
+#define SELECTED_FE_TYPES ALL_FE_TYPES
 #endif
 
 namespace geosx
@@ -149,7 +149,7 @@ public:
    * of global data into local stack storage.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -174,7 +174,7 @@ public:
    * package.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
@@ -199,7 +199,7 @@ public:
    * Jacobian and Residual into the global Jacobian and Residual.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {

@@ -86,6 +86,7 @@ public:
      */
     template< typename IN_ARRAY >
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     real64 compute( IN_ARRAY const & input ) const;
 
     /**
@@ -96,6 +97,7 @@ public:
      */
     template< typename IN_ARRAY, typename OUT_ARRAY >
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     real64 compute( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const;
 
     /**
@@ -137,6 +139,7 @@ private:
      */
     template< typename IN_ARRAY >
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     real64
     interpolateLinear( IN_ARRAY const & input ) const;
 
@@ -148,6 +151,7 @@ private:
      */
     template< typename IN_ARRAY, typename OUT_ARRAY >
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     real64
     interpolateLinear( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const;
 
@@ -158,6 +162,7 @@ private:
      */
     template< typename IN_ARRAY >
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     real64
     interpolateRound( IN_ARRAY const & input ) const;
 
@@ -169,6 +174,7 @@ private:
      */
     template< typename IN_ARRAY, typename OUT_ARRAY >
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     real64
     interpolateRound( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const;
 
@@ -335,6 +341,7 @@ private:
 
 template< typename IN_ARRAY >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::compute( IN_ARRAY const & input ) const
 {
@@ -350,6 +357,7 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input ) const
 
 template< typename IN_ARRAY >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
 {
@@ -422,6 +430,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
 
 template< typename IN_ARRAY >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input ) const
 {
@@ -483,6 +492,7 @@ TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input ) const
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
@@ -500,6 +510,7 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && deri
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
@@ -600,6 +611,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {

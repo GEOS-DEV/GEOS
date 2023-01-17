@@ -43,10 +43,10 @@ void scaleMatrixValues( hypre_CSRMatrix * const mat,
     return;
   }
   HYPRE_Real * const va = hypre_CSRMatrixData( mat );
-  forAll< execPolicy >( hypre_CSRMatrixNumNonzeros( mat ), [=] GEOSX_HYPRE_DEVICE ( HYPRE_Int const i )
-  {
-    va[i] *= factor;
-  } );
+  forAll< execPolicy >( hypre_CSRMatrixNumNonzeros( mat ), [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const i )
+      {
+        va[i] *= factor;
+      } );
 }
 
 void scaleMatrixRows( hypre_CSRMatrix * const mat,
@@ -61,17 +61,17 @@ void scaleMatrixRows( hypre_CSRMatrix * const mat,
   CSRData< false > const csr{ mat };
   HYPRE_Real const * const scalingFactors = hypre_VectorData( vec );
 
-  forAll< execPolicy >( csr.nrow, [=] GEOSX_HYPRE_DEVICE ( HYPRE_Int const localRow )
-  {
-    real64 const factor = scalingFactors[localRow];
-    if( !isEqual( factor, 1.0 ) )
-    {
-      for( HYPRE_Int j = csr.rowptr[localRow]; j < csr.rowptr[localRow + 1]; ++j )
+  forAll< execPolicy >( csr.nrow, [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const localRow )
       {
-        csr.values[j] *= factor;
-      }
-    }
-  } );
+        real64 const factor = scalingFactors[localRow];
+        if( !isEqual( factor, 1.0 ) )
+        {
+          for( HYPRE_Int j = csr.rowptr[localRow]; j < csr.rowptr[localRow + 1]; ++j )
+          {
+            csr.values[j] *= factor;
+          }
+        }
+      } );
 }
 
 void clampMatrixEntries( hypre_CSRMatrix * const mat,
@@ -86,14 +86,14 @@ void clampMatrixEntries( hypre_CSRMatrix * const mat,
   }
 
   CSRData< false > const csr{ mat };
-  forAll< execPolicy >( csr.nrow, [=] GEOSX_HYPRE_DEVICE ( HYPRE_Int const localRow )
-  {
-    // Hypre stores diagonal element at the beginning of each row, we assume it's always present
-    for( HYPRE_Int k = csr.rowptr[localRow] + skip_diag; k < csr.rowptr[localRow+1]; ++k )
-    {
-      csr.values[k] = LvArray::math::min( hi, LvArray::math::max( lo, csr.values[k] ) );
-    }
-  } );
+  forAll< execPolicy >( csr.nrow, [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const localRow )
+      {
+        // Hypre stores diagonal element at the beginning of each row, we assume it's always present
+        for( HYPRE_Int k = csr.rowptr[localRow] + skip_diag; k < csr.rowptr[localRow+1]; ++k )
+        {
+          csr.values[k] = LvArray::math::min( hi, LvArray::math::max( lo, csr.values[k] ) );
+        }
+      } );
 }
 
 real64 computeMaxNorm( hypre_CSRMatrix const * const mat )
@@ -106,10 +106,10 @@ real64 computeMaxNorm( hypre_CSRMatrix const * const mat )
 
   HYPRE_Real const * const va = hypre_CSRMatrixData( mat );
   RAJA::ReduceMax< ReducePolicy< execPolicy >, real64 > maxAbsElement( 0.0 );
-  forAll< execPolicy >( hypre_CSRMatrixNumNonzeros( mat ), [=] GEOSX_HYPRE_DEVICE ( HYPRE_Int const k )
-  {
-    maxAbsElement.max( LvArray::math::abs( va[k] ) );
-  } );
+  forAll< execPolicy >( hypre_CSRMatrixNumNonzeros( mat ), [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const k )
+      {
+        maxAbsElement.max( LvArray::math::abs( va[k] ) );
+      } );
   return maxAbsElement.get();
 }
 
@@ -128,15 +128,15 @@ real64 computeMaxNorm( hypre_CSRMatrix const * const mat,
   GEOSX_DEBUG_VAR( numRows );
 
   RAJA::ReduceMax< ReducePolicy< execPolicy >, real64 > maxAbsElement( 0.0 );
-  forAll< execPolicy >( rowIndices.size(), [=] GEOSX_HYPRE_DEVICE ( localIndex const i )
-  {
-    localIndex const localRow = rowIndices[i] - firstLocalRow;
-    GEOSX_ASSERT( 0 <= localRow && localRow < numRows );
-    for( HYPRE_Int j = csr.rowptr[localRow]; j < csr.rowptr[localRow + 1]; ++j )
-    {
-      maxAbsElement.max( LvArray::math::abs( csr.values[j] ) );
-    }
-  } );
+  forAll< execPolicy >( rowIndices.size(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
+      {
+        localIndex const localRow = rowIndices[i] - firstLocalRow;
+        GEOSX_ASSERT( 0 <= localRow && localRow < numRows );
+        for( HYPRE_Int j = csr.rowptr[localRow]; j < csr.rowptr[localRow + 1]; ++j )
+        {
+          maxAbsElement.max( LvArray::math::abs( csr.values[j] ) );
+        }
+      } );
   return maxAbsElement.get();
 }
 

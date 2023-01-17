@@ -31,6 +31,7 @@ namespace compositionalMultiphaseWellKernels
 /******************************** ControlEquationHelper ********************************/
 
 GEOSX_HOST_DEVICE
+inline
 void
 ControlEquationHelper::
   switchControl( bool const isProducer,
@@ -110,6 +111,7 @@ ControlEquationHelper::
 
 template< integer NC >
 GEOSX_HOST_DEVICE
+inline
 void
 ControlEquationHelper::
   compute( globalIndex const rankOffset,
@@ -290,7 +292,6 @@ FluxKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
-
   using namespace compositionalMultiphaseUtilities;
 
   bool const isProducer = wellControls.isProducer();
@@ -299,7 +300,11 @@ FluxKernel::
   // loop over the well elements to compute the fluxes between elements
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
-
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+    GEOSX_UNUSED_VAR( isProducer, iwelem, injection, rankOffset, wellElemDofNumber, nextWellElemIndex,
+                      connRate, wellElemCompFrac, dWellElemCompFrac_dCompDens, dt, localMatrix, localRhs );
+    GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
+#else
     // create local work arrays
     real64 compFracUp[NC]{};
     real64 dCompFrac_dCompDensUp[NC][NC]{};
@@ -501,6 +506,7 @@ FluxKernel::
         }
       }
     }
+#endif
   } );
 }
 

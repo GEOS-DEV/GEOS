@@ -35,21 +35,17 @@ set( dataRepository_sources
      xmlWrapper.cpp
    )
 
-set( dependencyList codingUtilities )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList ${parallelDeps} codingUtilities pugixml )
 
 if( ENABLE_PYGEOSX )
   list( APPEND dataRepository_headers
-	python/PyGroup.hpp 
-	python/PyGroupType.hpp 
+	python/PyGroup.hpp
+	python/PyGroupType.hpp
 	python/PyWrapper.hpp )
   list( APPEND dataRepository_sources
-	python/PyGroup.cpp 
-	python/PyWrapper.cpp ) 
-  list( APPEND dependencyList Python3::Python pylvarray )  
+	python/PyGroup.cpp
+	python/PyWrapper.cpp )
+  list( APPEND dependencyList Python3::Python pylvarray )
 endif()
 
 
@@ -64,4 +60,7 @@ target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreCompon
 
 geosx_add_code_checks(PREFIX dataRepository )
 
-add_subdirectory( unitTests )
+
+if( GEOSX_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif( )

@@ -115,7 +115,7 @@ public:
    * @param[out] N The shape function values.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void calcN( real64 const (&coords)[3],
                      real64 (& N)[numNodes] )
   {
@@ -131,7 +131,7 @@ public:
    *   point.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void calcN( localIndex const q,
                      real64 (& N)[numNodes] )
   {
@@ -153,7 +153,7 @@ public:
    *   point.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( & N )[numNodes] )
@@ -178,6 +178,20 @@ public:
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
+   *   coordinates at a single point.
+   * @param[in] coords The parent coordinates at which to evaluate the shape function value
+   * @param[in] X Array containing the coordinates of the support points.
+   * @param[out] gradN Array to contain the shape function derivatives for all
+   *   support points at the coordinates of the quadrature point @p q.
+   * @return The determinant of the parent/physical transformation matrix.
+   */
+  GEOSX_HOST_DEVICE
+  static real64 calcGradN( real64 const (&coords)[3],
+                           real64 const (&X)[numNodes][3],
+                           real64 ( &gradN )[numNodes][3] );
+
+  /**
+   * @brief Calculate the shape functions derivatives wrt the physical
    *   coordinates.
    * @param q Index of the quadrature point.
    * @param X Array containing the coordinates of the support points.
@@ -187,7 +201,7 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
                            StackVariables const & stack,
@@ -319,6 +333,18 @@ public:
                                       real64 ( &J )[3][3] );
 
   /**
+   * @brief Calculates the isoparametric "Jacobian" transformation
+   *   matrix/mapping from the parent space to the physical space at a single point.
+   * @param coords The parent coordinates at which to evaluate the shape function value
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to store the Jacobian transformation.
+   */
+  GEOSX_HOST_DEVICE
+  static void jacobianTransformation( real64 const (&coords)[3],
+                                      real64 const (&X)[numNodes][3],
+                                      real64 ( &J )[3][3] );
+
+  /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
    *   mass matrix M, i.e., the superposition matrix of the shape functions.
    * @param q The quadrature point index
@@ -378,6 +404,23 @@ public:
                         FUNC && func );
 
   /**
+   * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
+   *   stiffness matrix R for the elastic case, i.e., the superposition matrix of first derivatives
+   *   of the shape functions. This callback returns the two indices indices i and j of matrix R and the value
+   *   R[i][j] associated to those two indices.
+   * @param q The quadrature point index
+   * @param X Array containing the coordinates of the support points.
+   * @param stiffnessVal Callback function accepting three parameters: i, j and R_ij
+   */
+  template< typename FUNC >
+  GEOSX_HOST_DEVICE
+  static void
+  computeFirstOrderStiffnessTerm( int q,
+                                  real64 const (&X)[numNodes][3],
+                                  FUNC && stiffnessVal );
+
+
+  /**
    * @brief Apply a Jacobian transformation matrix from the parent space to the
    *   physical space on the parent shape function derivatives, producing the
    *   shape function derivatives in the physical space.
@@ -393,6 +436,21 @@ public:
     applyTransformationToParentGradients( int const qa,
                                           int const qb,
                                           int const qc,
+                                          real64 const ( &invJ )[3][3],
+                                          real64 ( &gradN )[numNodes][3] );
+
+  /**
+   * @brief Apply a Jacobian transformation matrix from the parent space to the
+   *   physical space on the parent shape function derivatives, producing the
+   *   shape function derivatives in the physical space at a single point.
+   * @param coords The parent coordinates at which to apply the transformation
+   * @param invJ The Jacobian transformation from parent->physical space.
+   * @param gradN Array to contain the shape function derivatives for all
+   *   support points at the coordinates of the quadrature point @p q.
+   */
+  GEOSX_HOST_DEVICE
+  static void
+    applyTransformationToParentGradients( real64 const (&coords)[3],
                                           real64 const ( &invJ )[3][3],
                                           real64 ( &gradN )[numNodes][3] );
 
@@ -422,6 +480,20 @@ private:
                            int const qc,
                            FUNC && func,
                            PARAMS &&... params );
+  /**
+   * @brief Applies a function inside a generic loop in over the tensor product
+   *   indices.
+   * @tparam FUNC The type of function to call within the support loop.
+   * @tparam PARAMS The parameter pack types to pass through to @p FUNC.
+   * @param coords The parent coordinates at which to evaluate the shape function value
+   * @param func The function to call within the support loop.
+   * @param params The parameters to pass to @p func.
+   */
+  template< typename FUNC, typename ... PARAMS >
+  GEOSX_HOST_DEVICE
+  static void supportLoop( real64 const (&coords)[3],
+                           FUNC && func,
+                           PARAMS &&... params );
 
   /**
    * @brief Applies a function inside a generic loop in over the tensor product
@@ -445,7 +517,7 @@ private:
 
 template< typename GL_BASIS >
 template< typename FUNC, typename ... PARAMS >
-GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
+GEOSX_HOST_DEVICE inline void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( int const qa,
                                                               int const qb,
                                                               int const qc,
@@ -456,22 +528,32 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( int const qa,
   real64 const qCoords[3] = { GL_BASIS::parentSupportCoord( qa ),
                               GL_BASIS::parentSupportCoord( qb ),
                               GL_BASIS::parentSupportCoord( qc ) };
+  supportLoop( qCoords, std::forward< FUNC >( func ), std::forward< PARAMS >( params )... );
+}
 
+
+template< typename GL_BASIS >
+template< typename FUNC, typename ... PARAMS >
+GEOSX_HOST_DEVICE inline void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( real64 const (&coords)[3],
+                                                              FUNC && func,
+                                                              PARAMS &&... params )
+{
   for( int c=0; c<num1dNodes; ++c )
   {
     for( int b=0; b<num1dNodes; ++b )
     {
       for( int a=0; a<num1dNodes; ++a )
       {
-        real64 const dNdXi[3] = { GL_BASIS::gradient( a, qCoords[0] )*
-                                  GL_BASIS::value( b, qCoords[1] )*
-                                  GL_BASIS::value( c, qCoords[2] ),
-                                  GL_BASIS::value( a, qCoords[0] )*
-                                  GL_BASIS::gradient( b, qCoords[1] )*
-                                  GL_BASIS::value( c, qCoords[2] ),
-                                  GL_BASIS::value( a, qCoords[0] )*
-                                  GL_BASIS::value( b, qCoords[1] )*
-                                  GL_BASIS::gradient( c, qCoords[2] )};
+        real64 const dNdXi[3] = { GL_BASIS::gradient( a, coords[0] )*
+                                  GL_BASIS::value( b, coords[1] )*
+                                  GL_BASIS::value( c, coords[2] ),
+                                  GL_BASIS::value( a, coords[0] )*
+                                  GL_BASIS::gradient( b, coords[1] )*
+                                  GL_BASIS::value( c, coords[2] ),
+                                  GL_BASIS::value( a, coords[0] )*
+                                  GL_BASIS::value( b, coords[1] )*
+                                  GL_BASIS::gradient( c, coords[2] )};
 
         localIndex const nodeIndex = GL_BASIS::TensorProduct3D::linearIndex( a, b, c );
 
@@ -483,7 +565,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( int const qa,
 
 template< typename GL_BASIS >
 template< typename FUNC, typename ... PARAMS >
-GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
+GEOSX_HOST_DEVICE inline void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop2d( int const qa,
                                                                 int const qb,
                                                                 FUNC && func,
@@ -511,7 +593,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop2d( int const qa,
 //*************************************************************************************************
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
                                                             real64 const (&X)[numNodes][3],
@@ -531,9 +613,28 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
   return detJ;
 }
 
+//*************************************************************************************************
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
+real64
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( real64 const (&coords)[3],
+                                                            real64 const (&X)[numNodes][3],
+                                                            real64 (& gradN)[numNodes][3] )
+{
+  real64 J[3][3] = {{0}};
+
+  jacobianTransformation( coords, X, J );
+
+  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
+
+  applyTransformationToParentGradients( coords, J, gradN );
+
+  return detJ;
+}
+template< typename GL_BASIS >
+GEOSX_HOST_DEVICE
+inline
 real64 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 calcGradN( localIndex const q,
            real64 const (&X)[numNodes][3],
@@ -551,7 +652,7 @@ calcGradN( localIndex const q,
 
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 jacobianTransformation( int const qa,
@@ -586,10 +687,34 @@ jacobianTransformation( int const qa,
 
   }, X, J );
 }
+template< typename GL_BASIS >
+GEOSX_HOST_DEVICE
+inline
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+jacobianTransformation( real64 const (&coords)[3],
+                        real64 const (&X)[numNodes][3],
+                        real64 ( & J )[3][3] )
+{
+  supportLoop( coords, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+                                              int const nodeIndex,
+                                              real64 const (&X)[numNodes][3],
+                                              real64 (& J)[3][3] )
+  {
+    real64 const * const GEOSX_RESTRICT Xnode = X[nodeIndex];
+    for( int i = 0; i < 3; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
+        J[i][j] = J[i][j] + dNdXi[ j ] * Xnode[i];
+      }
+    }
+  }, X, J );
+}
 
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 jacobianTransformation2d( int const qa,
@@ -615,7 +740,7 @@ jacobianTransformation2d( int const qa,
 
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeMassTerm( int q,
@@ -625,12 +750,12 @@ computeMassTerm( int q,
   int qa, qb, qc;
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
   jacobianTransformation( qa, qb, qc, X, J );
-  return std::abs( LvArray::tensorOps::determinant< 3 >( J ) )*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc );
+  return LvArray::math::abs( LvArray::tensorOps::determinant< 3 >( J ) )*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc );
 }
 
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeDampingTerm( int q,
@@ -645,7 +770,7 @@ computeDampingTerm( int q,
   B[0] = J[0][0]*J[0][0]+J[1][0]*J[1][0]+J[2][0]*J[2][0];
   B[1] = J[0][1]*J[0][1]+J[1][1]*J[1][1]+J[2][1]*J[2][1];
   B[2] = J[0][0]*J[0][1]+J[1][0]*J[1][1]+J[2][0]*J[2][1];
-  return sqrt( std::abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*GL_BASIS::weight( qa )*GL_BASIS::weight( qb );
+  return sqrt( LvArray::math::abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*GL_BASIS::weight( qa )*GL_BASIS::weight( qb );
 }
 
 /**
@@ -660,7 +785,7 @@ computeDampingTerm( int q,
  */
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeBMatrix( int const qa,
@@ -690,7 +815,7 @@ computeBMatrix( int const qa,
 template< typename GL_BASIS >
 template< typename FUNC >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeStiffnessTerm( int q,
@@ -778,11 +903,165 @@ computeStiffnessTerm( int q,
   }
 }
 
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOSX_HOST_DEVICE
+inline
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeFirstOrderStiffnessTerm( int q,
+                                real64 const (&X)[numNodes][3],
+                                FUNC && func )
+{
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
+  // diagonal terms
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( j, qb, qc ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qa ) ),
+            J,
+            0,
+            0 );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ),
+            J,
+            1,
+            1 );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qc ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ),
+            J,
+            2,
+            2 );
+    }
+  }
+  // off-diagonal terms
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ),
+            J,
+            1,
+            2 );
+    }
+  }
+
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ),
+            J,
+            2,
+            1 );
+    }
+  }
+
+
+
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ),
+            J,
+            0,
+            2 );
+
+    }
+  }
+
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
+            GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ),
+            J,
+            2,
+            0 );
+
+    }
+  }
+
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ),
+            J,
+            0,
+            1 );
+    }
+  }
+
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ),
+            J,
+            1,
+            0 );
+    }
+  }
+
+}
 
 //*************************************************************************************************
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 applyTransformationToParentGradients( int const qa,
@@ -813,10 +1092,30 @@ applyTransformationToParentGradients( int const qa,
   }, invJ, gradN );
 }
 
+//*************************************************************************************************
+template< typename GL_BASIS >
+GEOSX_HOST_DEVICE
+inline
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+applyTransformationToParentGradients( real64 const (&coords)[3],
+                                      real64 const ( &invJ )[3][3],
+                                      real64 (& gradN)[numNodes][3] )
+{
+  supportLoop( coords, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+                                              int const nodeIndex,
+                                              real64 const (&invJ)[3][3],
+                                              real64 (& gradN)[numNodes][3] )
+  {
+    gradN[nodeIndex][0] = dNdXi[0] * invJ[0][0] + dNdXi[1] * invJ[1][0] + dNdXi[2] * invJ[2][0];
+    gradN[nodeIndex][1] = dNdXi[0] * invJ[0][1] + dNdXi[1] * invJ[1][1] + dNdXi[2] * invJ[2][1];
+    gradN[nodeIndex][2] = dNdXi[0] * invJ[0][2] + dNdXi[1] * invJ[1][2] + dNdXi[2] * invJ[2][2];
+  }, invJ, gradN );
+}
 
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 transformedQuadratureWeight( localIndex const q,
@@ -836,7 +1135,7 @@ transformedQuadratureWeight( localIndex const q,
 
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 symmetricGradient( int const q,
                    real64 const (&invJ)[3][3],
@@ -873,7 +1172,7 @@ symmetricGradient( int const q,
 
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 plusGradNajAij( int const q,
                 real64 const (&invJ)[3][3],
@@ -910,7 +1209,7 @@ plusGradNajAij( int const q,
 
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 gradient( int const q,
           real64 const (&invJ)[3][3],

@@ -161,7 +161,6 @@ void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real
 {
   typename SOLID_TYPE::KernelWrapper updates = solid.createKernelUpdates();
   localIndex const numSteps = m_numSteps;
-
   forAll< parallelDevicePolicy<> >( 1, [=]  GEOSX_HOST_DEVICE ( integer const ei )
   {
     real64 stress[6] = {};
@@ -195,7 +194,6 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
   integer const maxIter = m_maxIter;
   integer const maxCuts = m_maxCuts;
   real64 const newtonTol = m_newtonTol;
-
   forAll< parallelDevicePolicy<> >( 1, [=]  GEOSX_HOST_DEVICE ( integer const ei )
   {
     real64 stress[6] = {};
@@ -276,7 +274,6 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
   integer const maxIter = m_maxIter;
   integer const maxCuts = m_maxCuts;
   real64 const newtonTol = m_newtonTol;
-
   forAll< parallelDevicePolicy<> >( 1, [=]  GEOSX_HOST_DEVICE ( integer const ei )
   {
     real64 stress[6] = {};
@@ -449,7 +446,7 @@ bool TriaxialDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   } );
 
   // move table back to host for output
-  m_table.move( LvArray::MemorySpace::host );
+  m_table.move( hostMemorySpace );
 
   validateResults();
 

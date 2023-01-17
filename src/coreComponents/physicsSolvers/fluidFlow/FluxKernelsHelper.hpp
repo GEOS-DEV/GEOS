@@ -35,7 +35,7 @@ template< typename VIEWTYPE >
 using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void computeSinglePhaseFlux( localIndex const ( &seri )[2],
                              localIndex const ( &sesri )[2],
                              localIndex const ( &sei )[2],

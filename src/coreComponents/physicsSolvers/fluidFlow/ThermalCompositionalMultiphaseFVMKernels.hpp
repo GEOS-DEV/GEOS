@@ -72,6 +72,7 @@ public:
    * @param[in] ei the element index
    */
   GEOSX_HOST_DEVICE
+  inline
   void compute( localIndex const ei ) const
   {
     using Deriv = multifluid::DerivativeOffset;
@@ -302,6 +303,7 @@ public:
    * @param[inout] stack the stack variables
    */
   GEOSX_HOST_DEVICE
+  inline
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -562,6 +564,7 @@ public:
    * @param[inout] stack the stack variables
    */
   GEOSX_HOST_DEVICE
+  inline
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {

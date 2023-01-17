@@ -63,7 +63,7 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
                                                                                StackVariables & stack ) const
 {
@@ -89,7 +89,7 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
                                                                                                localIndex const q,
                                                                                                StackVariables & stack ) const
@@ -160,7 +160,7 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 real64 ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
                                                                                     StackVariables const & stack ) const
 {

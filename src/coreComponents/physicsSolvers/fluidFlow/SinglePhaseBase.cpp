@@ -107,6 +107,11 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
     FaceManager & faceManager = mesh.getFaceManager();
     {
       faceManager.registerField< facePressure >( getName() );
+
+      if( m_isThermal )
+      {
+        faceManager.registerField< faceTemperature >( getName() );
+      }
     }
   } );
 }
@@ -568,7 +573,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
-    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll< parallelDevicePolicy< > >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];

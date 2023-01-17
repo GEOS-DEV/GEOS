@@ -16,9 +16,10 @@
  * @file FiniteElementSpace.cpp
  */
 
+// TODO make this not dependent on this header...need better key implementation
 #include "FiniteElementDiscretization.hpp"
 
-// TODO make this not dependent on this header...need better key implementation
+#include "common/GeosxMacros.hpp"
 
 namespace geosx
 {
@@ -69,6 +70,8 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     {
       case ElementType::Triangle:      return std::make_unique< H1_TriangleFace_Lagrange1_Gauss1 >();
       case ElementType::Quadrilateral: return std::make_unique< H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
+      // On polyhedra where FEM are available, we use VEM only if useVirtualElements is set to 1 in
+      // the input file.
       case ElementType::Tetrahedron:
       {
         if( m_useVem == 1 )
@@ -95,7 +98,12 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       {
         if( m_useVem == 1 )
         {
+#if !defined( GEOSX_USE_HIP )
           return std::make_unique< H1_Wedge_VEM_Gauss1 >();
+#else
+          GEOSX_ERROR( "Cannot compile this on Crusher." );
+          return nullptr;
+#endif
         }
         else
         {
@@ -106,59 +114,58 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       {
         if( m_useVem == 1 )
         {
+#if !defined( GEOSX_USE_HIP )
           return std::make_unique< H1_Hexahedron_VEM_Gauss1 >();
+#else
+          GEOSX_ERROR( "Cannot compile this on Crusher." );
+          return nullptr;
+#endif
         }
         else if( m_formulation == "SEM" )
         {
+#if !defined( GEOSX_USE_HIP )
           return std::make_unique< Q1_Hexahedron_Lagrange_GaussLobatto >();
+#else
+          GEOSX_ERROR( "Cannot compile this on Crusher." );
+          return nullptr;
+#endif
         }
         else
         {
           return std::make_unique< H1_Hexahedron_Lagrange1_GaussLegendre2 >();
         }
       }
+      // On more general polyhedra, we always use VEM
       case ElementType::Prism5:
       {
-        GEOSX_ERROR_IF( m_useVem != 1,
-                        "Element type Prism5 available only when using the Virtual Element Method" );
         return std::make_unique< H1_Prism5_VEM_Gauss1 >();
       }
       case ElementType::Prism6:
       {
-        GEOSX_ERROR_IF( m_useVem != 1,
-                        "Element type Prism6 available only when using the Virtual Element Method" );
         return std::make_unique< H1_Prism6_VEM_Gauss1 >();
       }
       case ElementType::Prism7:
       {
-        GEOSX_ERROR_IF( m_useVem != 1,
-                        "Element type Prism7 available only when using the Virtual Element Method" );
         return std::make_unique< H1_Prism7_VEM_Gauss1 >();
       }
       case ElementType::Prism8:
       {
-        GEOSX_ERROR_IF( m_useVem != 1,
-                        "Element type Prism8 available only when using the Virtual Element Method" );
         return std::make_unique< H1_Prism8_VEM_Gauss1 >();
       }
       case ElementType::Prism9:
       {
-        GEOSX_ERROR_IF( m_useVem != 1,
-                        "Element type Prism9 available only when using the Virtual Element Method" );
         return std::make_unique< H1_Prism9_VEM_Gauss1 >();
       }
       case ElementType::Prism10:
       {
-        GEOSX_ERROR_IF( m_useVem != 1,
-                        "Element type Prism10 available only when using the Virtual Element Method" );
         return std::make_unique< H1_Prism10_VEM_Gauss1 >();
       }
+#if !defined( GEOSX_USE_HIP )
       case ElementType::Prism11:
       {
-        GEOSX_ERROR_IF( m_useVem != 1,
-                        "Element type Prism11 available only when using the Virtual Element Method" );
         return std::make_unique< H1_Prism11_VEM_Gauss1 >();
       }
+#endif
       default:
       {
         GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
@@ -171,10 +178,14 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
   {
     switch( parentElementShape )
     {
+#if !defined( GEOSX_USE_HIP )
       case ElementType::Hexahedron:
         GEOSX_ERROR_IF( m_formulation != "SEM",
                         "Element type Hexahedron with order 2 available only when using the Spectral Element Method" );
         return std::make_unique< Q2_Hexahedron_Lagrange_GaussLobatto >();
+#else
+      GEOSX_ERROR( "Cannot compile this on Crusher." );
+#endif
       default:
       {
         GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
@@ -187,10 +198,14 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
   {
     switch( parentElementShape )
     {
+#if !defined( GEOSX_USE_HIP )
       case ElementType::Hexahedron:
         GEOSX_ERROR_IF( m_formulation != "SEM",
                         "Element type Hexahedron with order 3 available only when using the Spectral Element Method" );
         return std::make_unique< Q3_Hexahedron_Lagrange_GaussLobatto >();
+#else
+      GEOSX_ERROR( "Cannot compile this on Crusher." );
+#endif
       default:
       {
         GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
@@ -203,10 +218,14 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
   {
     switch( parentElementShape )
     {
+#if !defined( GEOSX_USE_HIP )
       case ElementType::Hexahedron:
         GEOSX_ERROR_IF( m_formulation != "SEM",
                         "Element type Hexahedron with order 4 available only when using the Spectral Element Method" );
         return std::make_unique< Q4_Hexahedron_Lagrange_GaussLobatto >();
+#else
+      GEOSX_ERROR( "Cannot compile this on Crusher." );
+#endif
       default:
       {
         GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
@@ -219,10 +238,14 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
   {
     switch( parentElementShape )
     {
+#if !defined( GEOSX_USE_HIP )
       case ElementType::Hexahedron:
         GEOSX_ERROR_IF( m_formulation != "SEM",
                         "Element type Hexahedron with order 5 available only when using the Spectral Element Method" );
         return std::make_unique< Q5_Hexahedron_Lagrange_GaussLobatto >();
+#else
+      GEOSX_ERROR( "Cannot compile this on Crusher." );
+#endif
       default:
       {
         GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );

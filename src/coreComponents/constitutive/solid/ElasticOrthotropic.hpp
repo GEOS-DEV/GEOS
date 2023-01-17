@@ -187,7 +187,7 @@ private:
 };
 
 
-GEOSX_FORCE_INLINE
+inline
 GEOSX_HOST_DEVICE
 void ElasticOrthotropicUpdates::getElasticStiffness( localIndex const k,
                                                      localIndex const q,
@@ -213,7 +213,7 @@ void ElasticOrthotropicUpdates::getElasticStiffness( localIndex const k,
   stiffness[5][5] = m_c66[k];
 }
 
-GEOSX_FORCE_INLINE
+inline
 GEOSX_HOST_DEVICE
 void ElasticOrthotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
                                                                      localIndex const q,
@@ -231,7 +231,7 @@ void ElasticOrthotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex 
 }
 
 
-GEOSX_FORCE_INLINE
+inline
 GEOSX_HOST_DEVICE
 void ElasticOrthotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                           localIndex const q,
@@ -245,7 +245,7 @@ void ElasticOrthotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticOrthotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                           localIndex const q,
                                                           real64 const ( &totalStrain )[6],
@@ -265,7 +265,7 @@ void ElasticOrthotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
 }
 
 
-GEOSX_FORCE_INLINE
+inline
 GEOSX_HOST_DEVICE
 void ElasticOrthotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                               localIndex const q,
@@ -278,7 +278,7 @@ void ElasticOrthotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k
 }
 
 
-GEOSX_FORCE_INLINE
+inline
 GEOSX_HOST_DEVICE
 void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
                                                    localIndex const q,
@@ -292,7 +292,7 @@ void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+inline
 void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
                                                    localIndex const q,
                                                    real64 const ( &strainIncrement )[6],
@@ -312,7 +312,7 @@ void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
 }
 
 
-GEOSX_FORCE_INLINE
+inline
 GEOSX_HOST_DEVICE
 void ElasticOrthotropicUpdates::hypoUpdate( localIndex const k,
                                             localIndex const q,

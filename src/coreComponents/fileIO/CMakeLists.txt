@@ -5,7 +5,7 @@ set( fileIO_headers
      Outputs/BlueprintOutput.hpp
      Outputs/OutputBase.hpp
      Outputs/OutputManager.hpp
-     Outputs/OutputUtilities.hpp     
+     Outputs/OutputUtilities.hpp
      Outputs/PythonOutput.hpp
      Outputs/RestartOutput.hpp
      Outputs/SiloOutput.hpp
@@ -38,19 +38,19 @@ set( fileIO_sources
      timeHistory/HDFHistoryIO.cpp
    )
 
-set( dependencyList mesh constitutive silo hdf5 )
+set( dependencyList ${parallelDeps} mesh constitutive silo hdf5 )
 if( ENABLE_PYGEOSX )
   list( APPEND fileIO_headers
-        python/PyHistoryCollectionType.hpp 
-        python/PyHistoryOutputType.hpp 
+        python/PyHistoryCollectionType.hpp
+        python/PyHistoryOutputType.hpp
         python/PyVTKOutputType.hpp
 	      )
-  list( APPEND fileIO_sources 
-        python/PyHistoryCollection.cpp 
-        python/PyHistoryOutput.cpp 
+  list( APPEND fileIO_sources
+        python/PyHistoryCollection.cpp
+        python/PyHistoryOutput.cpp
         python/PyVTKOutput.cpp
         )
-  list( APPEND dependencyList Python3::Python pylvarray ) 
+  list( APPEND dependencyList Python3::Python pylvarray )
 endif()
 
 
@@ -74,14 +74,7 @@ if( ENABLE_VTK )
         vtk/VTKPolyDataWriterInterface.cpp
         Outputs/VTKOutput.cpp
         )
-  list( APPEND dependencyList
-        VTK::IOLegacy
-        VTK::IOXML
-        )
-endif()
-
-if ( ENABLE_CUDA )
-  list( APPEND dependencyList  cuda )
+    list( APPEND dependencyList VTK::IOLegacy VTK::IOXML )
 endif()
 
 if( ENABLE_CUDA_NVTOOLSEXT )

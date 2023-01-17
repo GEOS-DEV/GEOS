@@ -206,7 +206,6 @@ public:
                 KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
-
     GEOSX_UNUSED_VAR( numElems );
 
     // Define a RAJA reduction variable to get the maximum residual contribution.
@@ -231,7 +230,7 @@ public:
   //END_kernelLauncher
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const

@@ -19,6 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
 
+#include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
@@ -82,7 +83,9 @@ struct ControlEquationHelper
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   GEOSX_HOST_DEVICE
-  static void
+  inline
+  static
+  void
   switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  integer const phasePhaseIndex,
@@ -96,6 +99,7 @@ struct ControlEquationHelper
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  inline
   static void
   compute( globalIndex const rankOffset,
            WellControls::Control const currentControl,
@@ -131,6 +135,7 @@ struct FluxKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  inline
   static void
     computeExit( real64 const & dt,
                  real64 const ( &compFlux )[NC],
@@ -143,6 +148,7 @@ struct FluxKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  inline
   static void
     compute( real64 const & dt,
              real64 const ( &compFlux )[NC],
@@ -180,6 +186,7 @@ struct PressureRelationKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  inline
   static void
     compute( real64 const & gravCoef,
              real64 const & gravCoefNext,
@@ -257,6 +264,7 @@ struct PerforationKernel
 
   template< integer NC, integer NP >
   GEOSX_HOST_DEVICE
+  inline
   static void
   compute( bool const & disableReservoirToWellFlow,
            real64 const & resPres,
@@ -331,6 +339,7 @@ struct AccumulationKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  inline
   static void
     compute( integer const numPhases,
              real64 const & volume,
@@ -380,6 +389,7 @@ struct VolumeBalanceKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  inline
   static void
     compute( integer const numPhases,
              real64 const & volume,
@@ -527,10 +537,11 @@ public:
    * @param[in] ei the element index
    * @param[in] totalMassDensityKernelOp the function used to customize the kernel
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
+  inline
   void compute( localIndex const ei,
-                FUNC && totalMassDensityKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                FUNC && totalMassDensityKernelOp = NoOpFunc{} ) const
   {
     using Deriv = multifluid::DerivativeOffset;
 

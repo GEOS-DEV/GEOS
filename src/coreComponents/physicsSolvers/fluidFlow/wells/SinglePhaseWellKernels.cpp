@@ -30,6 +30,7 @@ namespace singlePhaseWellKernels
 /******************************** ControlEquationHelper ********************************/
 
 GEOSX_HOST_DEVICE
+inline
 void
 ControlEquationHelper::
   switchControl( bool const isProducer,
@@ -83,6 +84,7 @@ ControlEquationHelper::
 }
 
 GEOSX_HOST_DEVICE
+inline
 void
 ControlEquationHelper::
   compute( globalIndex const rankOffset,
@@ -352,6 +354,7 @@ PressureRelationKernel::
 /******************************** PerforationKernel ********************************/
 
 GEOSX_HOST_DEVICE
+inline
 void
 PerforationKernel::
   compute( real64 const & resPressure,

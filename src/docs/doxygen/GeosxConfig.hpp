@@ -17,6 +17,9 @@
 /// Enables use of Caliper (CMake option ENABLE_CALIPER)
 #define GEOSX_USE_CALIPER
 
+/// Enables use of Caliper (CMake option ENABLE_ADIAK)
+/* #undef GEOSX_USE_ADIAK */
+
 /// Enables use of CHAI (CMake option ENABLE_CHAI)
 #define GEOSX_USE_CHAI
 
@@ -32,8 +35,12 @@
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #define GEOSX_USE_CUDA
 
+
 /// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
 #define GEOSX_USE_CUDA_NVTOOLSEXT
+
+/// Enables use of HIP (CMake option ENABLE_HIP)
+#define GEOSX_USE_HIP
 
 /// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
 #define GEOSX_USE_PVTPackage
@@ -59,8 +66,26 @@
 /// Enables use of Hypre library (CMake option ENABLE_HYPRE)
 #define GEOSX_USE_HYPRE
 
-/// Macro defined when using cuda in HYPRE  (CMake option ENABLE_HYPRE_CUDA)
-#define GEOSX_USE_HYPRE_CUDA
+#if defined( GEOSX_USE_HYPRE )
+  /// Parsed hypre version information
+  #define HYPRE_VERSION_MAJOR 2
+  /// Parsed hypre version information
+  #define HYPRE_VERSION_MINOR 24
+  /// Parsed hypre version information
+  #define HYPRE_VERSION_PATCH 0
+#endif
+
+/// Denotes HYPRE using CPU
+#define GEOSX_USE_HYPRE_CPU 0
+/// Denotes HYPRE using CUDA
+#define GEOSX_USE_HYPRE_CUDA 1
+/// Denotes HYPRE using HIP
+#define GEOSX_USE_HYPRE_HIP 2
+/// Macro determining what parellel interface hypre is using
+#define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_CPU
+
+/// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
+#define GEOSX_USE_SUPERLU_DIST
 
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #define GEOSX_USE_PETSC
@@ -125,7 +150,7 @@
 /// Version information for ParMetis
 #define PARAMETIS_VERSION 4.0.3
 
-/// Version information for scotch 
+/// Version information for scotch
 #define scotch_VERSION 6.0.9
 
 /// Version information for superlu_dist
@@ -146,6 +171,13 @@
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */
 
+#if defined(GEOSX_USE_CUDA) || defined(GEOSX_USE_HIP)
+// This needs to be placed into this header in order to appropriately replace
+//  the old usage of GEOSX_USE_CUDA, since we detect whether it is defined
+//  rather than a value, not having it in the *same* header can cauase nebulous
+//  compilation problems including the USD of arrays changing depending the scope
+#define GEOSX_USE_DEVICE
+#endif
 
 #endif  /* GEOSX_CONFIG_HPP */
 

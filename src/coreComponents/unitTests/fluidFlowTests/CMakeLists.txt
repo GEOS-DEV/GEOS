@@ -9,7 +9,7 @@ set( gtest_geosx_tests
      testThermalSinglePhaseFlow.cpp
    )
 
-set( dependencyList gtest )
+set( dependencyList ${parallelDeps} gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core )

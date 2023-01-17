@@ -22,8 +22,6 @@
 #include "FiniteElementBase.hpp"
 #include "codingUtilities/traits.hpp"
 
-#include "mesh/CellElementSubRegion.hpp"
-
 namespace geosx
 {
 namespace finiteElement
@@ -136,14 +134,14 @@ public:
   };
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   localIndex getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;
   }
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   virtual localIndex getMaxSupportPoints() const override
   {
     return maxSupportPoints;
@@ -155,7 +153,7 @@ public:
    * @return The number of support points.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static localIndex getNumSupportPoints( StackVariables const & stack )
   {
     return stack.numSupportPoints;
@@ -172,7 +170,7 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[maxSupportPoints][3],
                            StackVariables const & stack,
@@ -196,7 +194,7 @@ public:
    *   point.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( & N )[maxSupportPoints] )
@@ -210,20 +208,64 @@ public:
 
   /**
    * @brief Adds a grad-grad stabilization to @p matrix.
-   * @tparam MATRIXTYPE The type of @p matrix.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
+   * @tparam MAXSUPPORTPOINTS Maximum number of support points allowed for this element.
+   * @tparam UPPER If true only the upper triangular part of @p matrix is modified.
    * @param stack Stack variables as filled by @ref setupStack.
    * @param matrix The matrix that needs to be stabilized.
+   * @param scaleFactor Scaling of the stabilization matrix.
    */
-  template< typename MATRIXTYPE >
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS, bool UPPER >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void addGradGradStabilization( StackVariables const & stack, MATRIXTYPE & matrix )
+  inline
+  static void addGradGradStabilization( StackVariables const & stack,
+                                        real64 ( & matrix )
+                                        [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT]
+                                        [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT],
+                                        real64 const & scaleFactor )
   {
     for( localIndex i = 0; i < stack.numSupportPoints; ++i )
     {
-      for( localIndex j = 0; j < stack.numSupportPoints; ++j )
+      localIndex startCol = (UPPER) ? i : 0;
+      for( localIndex j = startCol; j < stack.numSupportPoints; ++j )
       {
-        matrix[i][j] += stack.stabilizationMatrix[i][j];
+        real64 const contribution = scaleFactor * stack.stabilizationMatrix[i][j];
+        for( localIndex d = 0; d < NUMDOFSPERTRIALSUPPORTPOINT; ++d )
+        {
+          matrix[i*NUMDOFSPERTRIALSUPPORTPOINT + d][j*NUMDOFSPERTRIALSUPPORTPOINT + d] += contribution;
+        }
+      }
+    }
+  }
+
+  /**
+   * @brief Adds a grad-grad stabilization evaluated at @p dofs to @p targetVector.
+   * @details This method is intended to be used with @p targetVector being the residual and @p dofs
+   * being the degrees of freedom of the previous solution.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @param dofs The degrees of freedom of the function where the stabilization operator has to be
+   * evaluated.
+   * @param targetVector The input vector to which values have to be added, seen in chunks of length
+   * @p NUMDOFSPERTRIALSUPPORTPOINT.
+   * @param scaleFactor Scaling of the stabilization matrix.
+   */
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS >
+  GEOSX_HOST_DEVICE
+  inline
+  static void addEvaluatedGradGradStabilization( StackVariables const & stack,
+                                                 real64 const ( &dofs )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
+                                                 real64 ( & targetVector )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
+                                                 real64 const scaleFactor )
+  {
+    for( localIndex d = 0; d < NUMDOFSPERTRIALSUPPORTPOINT; ++d )
+    {
+      for( localIndex i = 0; i < stack.numSupportPoints; ++i )
+      {
+        for( localIndex j = 0; j < stack.numSupportPoints; ++j )
+        {
+          targetVector[i][d] += scaleFactor * stack.stabilizationMatrix[i][j] * dofs[j][d];
+        }
       }
     }
   }
@@ -237,7 +279,7 @@ public:
    *   the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const ( &X )[maxSupportPoints][3],
                                              StackVariables const & stack )
@@ -255,7 +297,7 @@ public:
    * @param meshData MeshData struct to be filled.
    */
   template< typename SUBREGION_TYPE >
-  GEOSX_FORCE_INLINE
+  inline
   static void fillMeshData( NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
@@ -285,7 +327,7 @@ public:
    */
   template< typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void setupStack( localIndex const & cellIndex,
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack )
@@ -329,7 +371,7 @@ public:
    * @return Zero.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   localIndex getNumSupportPoints() const override
   {
     GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
@@ -343,12 +385,31 @@ public:
    * @param N Array to store the values of shape functions, that is actually set to zero.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void calcN( localIndex const q,
                      real64 ( & N )[maxSupportPoints] )
   {
     GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
     GEOSX_UNUSED_VAR( q );
+    for( localIndex i = 0; i < maxSupportPoints; ++i )
+    {
+      N[i] = 0.0;
+    }
+  }
+
+  /**
+   * @brief This function returns an error, since to get projection of gradients with VEM you have
+   * to use the StackVariables version of this function.
+   * @param[in] coords The parent coordinates at which to evaluate the shape function value
+   * @param[out] N The shape function values. It is set to zero.
+   */
+  GEOSX_HOST_DEVICE
+  inline
+  static void calcN( real64 const (&coords)[3],
+                     real64 (& N)[maxSupportPoints] )
+  {
+    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    GEOSX_UNUSED_VAR( coords );
     for( localIndex i = 0; i < maxSupportPoints; ++i )
     {
       N[i] = 0.0;
@@ -364,7 +425,7 @@ public:
    * @return A zero matrix.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static real64 invJacobianTransformation( int const q,
                                            real64 const ( &X )[numNodes][3],
                                            real64 ( & J )[3][3] )
@@ -386,11 +447,11 @@ public:
    * to use the StackVariables version of this function.
    * @param q The quadrature point index in 3d space.
    * @param X Array containing the coordinates of the support points.
-   * @param gradN Array to store the gradients of shape functions.
-   * @return A zero matrix.
+   * @param gradN Array to store the gradients of shape functions. It is set to zero.
+   * @return Zero.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static real64 calcGradN( localIndex const q,
                            real64 const ( &X )[maxSupportPoints][3],
                            real64 ( & gradN )[maxSupportPoints][3] )
@@ -453,6 +514,7 @@ private:
    */
   template< typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
+  inline
   static void
     computeProjectors( localIndex const & cellIndex,
                        InputNodeCoords const & nodesCoords,
@@ -475,6 +537,7 @@ private:
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
   GEOSX_HOST_DEVICE
+  inline
   static real64 computeDiameter( POINT_COORDS_TYPE points,
                                  localIndex const & numPoints )
   {
@@ -500,6 +563,7 @@ private:
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE, typename POINT_SELECTION_TYPE >
   GEOSX_HOST_DEVICE
+  inline
   static real64 computeDiameter( POINT_COORDS_TYPE points,
                                  POINT_SELECTION_TYPE selectedPoints,
                                  localIndex const & numSelectedPoints )
@@ -528,12 +592,16 @@ private:
 
 /// Convenience typedef for VEM on tetrahedra.
 using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 3 >;
+#if !defined( GEOSX_USE_HIP )
 /// Convenience typedef for VEM on hexahedra.
 using H1_Hexahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 8, 4 >;
+#endif
 /// Convenience typedef for VEM on pyramids.
 using H1_Pyramid_VEM_Gauss1 = ConformingVirtualElementOrder1< 5, 4 >;
+#if !defined( GEOSX_USE_HIP )
 /// Convenience typedef for VEM on wedges.
 using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 4 >;
+#endif
 /// Convenience typedef for VEM on prism5.
 using H1_Prism5_VEM_Gauss1 = ConformingVirtualElementOrder1< 10, 5 >;
 /// Convenience typedef for VEM on prism6.
@@ -547,7 +615,9 @@ using H1_Prism9_VEM_Gauss1 = ConformingVirtualElementOrder1< 18, 9 >;
 /// Convenience typedef for VEM on prism10.
 using H1_Prism10_VEM_Gauss1 = ConformingVirtualElementOrder1< 20, 10 >;
 /// Convenience typedef for VEM on prism11.
+#if !defined( GEOSX_USE_HIP )
 using H1_Prism11_VEM_Gauss1 = ConformingVirtualElementOrder1< 22, 11 >;
+#endif
 }
 }
 

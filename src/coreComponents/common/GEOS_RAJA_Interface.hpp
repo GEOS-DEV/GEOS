@@ -29,14 +29,18 @@
 namespace geosx
 {
 
+auto const hostMemorySpace = LvArray::MemorySpace::host;
+
 using serialPolicy = RAJA::loop_exec;
-using serialReduce = RAJA::seq_reduce;
 using serialAtomic = RAJA::seq_atomic;
+using serialReduce = RAJA::seq_reduce;
 
 using serialStream = RAJA::resources::Host;
 using serialEvent = RAJA::resources::HostEvent;
 
 #if defined(GEOSX_USE_OPENMP)
+
+auto const parallelHostMemorySpace = hostMemorySpace;
 
 using parallelHostPolicy = RAJA::omp_parallel_for_exec;
 using parallelHostReduce = RAJA::omp_reduce;
@@ -50,6 +54,8 @@ void RAJA_INLINE parallelHostSync() { RAJA::synchronize< RAJA::omp_synchronize >
 
 #else
 
+auto const parallelHostMemorySpace = hostMemorySpace;
+
 using parallelHostPolicy = serialPolicy;
 using parallelHostReduce = serialReduce;
 using parallelHostAtomic = serialAtomic;
@@ -61,6 +67,8 @@ void RAJA_INLINE parallelHostSync() { }
 #endif
 
 #if defined(GEOSX_USE_CUDA)
+
+auto const parallelDeviceMemorySpace = LvArray::MemorySpace::cuda;
 
 template< unsigned long BLOCK_SIZE = 256 >
 using parallelDevicePolicy = RAJA::cuda_exec< BLOCK_SIZE >;
@@ -84,7 +92,37 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && stream, const localIndex end
                                  std::forward< LAMBDA >( body ) );
 }
 
+#elif defined(GEOSX_USE_HIP)
+
+auto const parallelDeviceMemorySpace = LvArray::MemorySpace::hip;
+
+template< unsigned long BLOCK_SIZE = 64 >
+using parallelDevicePolicy = RAJA::hip_exec< BLOCK_SIZE >;
+
+// the async dispatch policy caused runtime issues as of rocm@4.5.2, hasn't been checked in rocm@5:
+// RAJA::hip_exec_async< BLOCK_SIZE >;
+template< unsigned long BLOCK_SIZE = 64 >
+using parallelDeviceAsyncPolicy = parallelDevicePolicy< BLOCK_SIZE >;
+
+
+using parallelDeviceStream = RAJA::resources::Hip;
+using parallelDeviceEvent = RAJA::resources::Event;
+
+using parallelDeviceReduce = RAJA::hip_reduce;
+using parallelDeviceAtomic = RAJA::hip_atomic;
+
+void RAJA_INLINE parallelDeviceSync() { RAJA::synchronize< RAJA::hip_synchronize >( ); }
+
+template< typename POLICY, typename RESOURCE, typename LAMBDA >
+RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOSX_UNUSED_PARAM( stream ), const localIndex end, LAMBDA && body )
+{
+  RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, end ), std::forward< LAMBDA >( body ) );
+  return parallelDeviceEvent();
+}
+
 #else
+
+auto const parallelDeviceMemorySpace = parallelHostMemorySpace;
 
 template< unsigned long BLOCK_SIZE = 0 >
 using parallelDevicePolicy = parallelHostPolicy;
@@ -140,6 +178,15 @@ struct PolicyMap< RAJA::cuda_exec< BLOCK_SIZE > >
   using reduce = RAJA::cuda_reduce;
 };
 #endif
+
+#if defined(GEOSX_USE_HIP)
+template< unsigned long BLOCK_SIZE >
+struct PolicyMap< RAJA::hip_exec< BLOCK_SIZE > >
+{
+  using atomic = RAJA::hip_atomic;
+  using reduce = RAJA::hip_reduce;
+};
+#endif
 }
 
 
@@ -166,6 +213,7 @@ RAJA_INLINE bool testAllDeviceEvents( parallelDeviceEvents & events )
 
 RAJA_INLINE void waitAllDeviceEvents( parallelDeviceEvents & events )
 {
+  GEOSX_UNUSED_VAR( events );
   // poll device events for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
   // 10 nsecs ~= 30 clock cycles @ 3Ghz
   GEOSX_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );

@@ -62,6 +62,7 @@ public:
 public:
 
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     virtual void compute( real64 pressure,
                           real64 temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -75,6 +76,7 @@ public:
                           real64 & totalDensity ) const override;
 
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -88,6 +90,7 @@ public:
                           FluidProp::SliceType const totalDensity ) const override;
 
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     virtual void update( localIndex k,
                          localIndex q,
                          real64 pressure,
@@ -147,6 +150,7 @@ private:
      * @param[out] phaseMolecularWeight phase molecular weights in the cell
      */
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     void computeDensitiesViscosities( real64 const pressure,
                                       real64 const composition[NC_BO],
                                       arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseFrac,
@@ -168,6 +172,7 @@ private:
      * @param[out] dPhaseMolecularWeight derivative of phase molecular weights wrt pressure, temperature and comp fractions
      */
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     void computeDensitiesViscosities( bool const needDerivs,
                                       real64 const pressure,
                                       real64 const composition[NC_BO],
@@ -186,6 +191,7 @@ private:
      * @param[out] phaseCompFraction phase component fractions in the cell
      */
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     void computeEquilibrium( real64 const pressure,
                              real64 const composition[NC_BO],
                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
@@ -200,6 +206,7 @@ private:
      * @param[out] phaseCompFraction phase component fractions (+ derivatives) in the cell
      */
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     void computeEquilibrium( bool const needDerivs,
                              real64 const pressure,
                              real64 const composition[NC_BO],
@@ -213,6 +220,7 @@ private:
      * @param[out] dRs_dPres derivative of the ratio of volume of gas to the volume of oil at standard conditions wrt pressure
      */
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     void computeRs( real64 const presBub,
                     real64 & Rs,
                     real64 & dRs_dPres ) const;
@@ -227,6 +235,7 @@ private:
      * @param[out] dVisc_dPres derivative of oil viscosity wrt pressure
      */
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     void computeSaturatedBoViscosity( real64 const Rs,
                                       real64 const dRs_dPres,
                                       real64 & Bo,
@@ -248,6 +257,7 @@ private:
      * @param[out] dVisc_dComp derivatives of oil viscosity wrt comp fractions
      */
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     void computeUndersaturatedBoViscosity( bool const needDerivs,
                                            real64 const pres,
                                            real64 const Rs,
@@ -267,6 +277,7 @@ private:
      * @param[out] visc oil viscosity
      */
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     void computeUndersaturatedBoViscosity( real64 const Rs,
                                            real64 const pres,
                                            real64 & Bo,
@@ -286,6 +297,7 @@ private:
      * @param[out] dDens_dC derivatives of oil density wrt pressure, temperature, and comp fractions
      */
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     void computeMassMoleDensity( bool const needDerivs,
                                  bool const useMass,
                                  real64 const Rs,
@@ -365,7 +377,8 @@ private:
 };
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 BlackOilFluid::KernelWrapper::
   compute( real64 pressure,
            real64 temperature,
@@ -434,7 +447,8 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 BlackOilFluid::KernelWrapper::
   compute( real64 pressure,
            real64 temperature,
@@ -516,7 +530,8 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 BlackOilFluid::KernelWrapper::
   computeEquilibrium( real64 const pressure,
                       real64 const composition[NC_BO],
@@ -543,7 +558,8 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 BlackOilFluid::KernelWrapper::
   computeEquilibrium( bool const needDerivs,
                       real64 const pressure,
@@ -691,7 +707,8 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 BlackOilFluid::KernelWrapper::
   computeDensitiesViscosities( real64 const pressure,
                                real64 const composition[NC_BO],
@@ -731,7 +748,8 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 BlackOilFluid::KernelWrapper::
   computeDensitiesViscosities( bool const needDerivs,
                                real64 const pressure,
@@ -913,7 +931,8 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 BlackOilFluid::KernelWrapper::
   computeRs( real64 const presBub,
              real64 & Rs,
@@ -931,7 +950,8 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 BlackOilFluid::KernelWrapper::
   computeSaturatedBoViscosity( real64 const Rs,
                                real64 const dRs_dPres,
@@ -963,7 +983,8 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 BlackOilFluid::KernelWrapper::
   computeUndersaturatedBoViscosity( bool const needDerivs,
                                     real64 const P,
@@ -1009,7 +1030,8 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 BlackOilFluid::KernelWrapper::
   computeUndersaturatedBoViscosity( real64 const Rs,
                                     real64 const pres,
@@ -1062,7 +1084,8 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 BlackOilFluid::KernelWrapper::
   computeMassMoleDensity( bool const needDerivs,
                           bool const useMass,
@@ -1098,7 +1121,8 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 BlackOilFluid::KernelWrapper::
   update( localIndex const k,
           localIndex const q,

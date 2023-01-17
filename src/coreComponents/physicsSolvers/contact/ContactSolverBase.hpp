@@ -62,6 +62,10 @@ public:
 
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 
+  SolidMechanicsLagrangianFEM * getSolidSolver() { return m_solidSolver; }
+
+  void setSolidSolverDofFlags( bool const flag ) { m_setupSolidSolverDofs = flag; }
+
 protected:
 
   virtual void postProcessInput() override;
@@ -72,7 +76,7 @@ protected:
                                        globalIndex & numOpen ) const;
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static bool compareFractureStates( integer const state0,
                                      integer const state1 )
   {
@@ -94,6 +98,9 @@ protected:
 
   /// contact relation name string
   string m_contactRelationName;
+
+  ///
+  bool m_setupSolidSolverDofs;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {

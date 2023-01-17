@@ -7,6 +7,8 @@
 #
 ###############################################################################
 
+set( GEOSX_BUILD_SHARED_LIBS ON CACHE BOOL "" )
+set( GEOSX_BUILD_OBJ_LIBS OFF CACHE BOOL "" )
 # Fortran
 set(ENABLE_FORTRAN OFF CACHE BOOL "")
 
@@ -45,17 +47,16 @@ set(ENABLE_PAPI OFF CACHE BOOL "")
 set(SILO_BUILD_TYPE powerpc64-unknown-linux-gnu CACHE STRING "")
 
 # GEOSX specific options
-set(ENABLE_PAMELA ON CACHE BOOL "")
 set(ENABLE_PVTPackage ON CACHE BOOL "")
 set(ENABLE_PETSC OFF CACHE BOOL "" FORCE )
 
 
-  
-set( ENABLE_HYPRE_CUDA ON CACHE BOOL "" FORCE )
-if( ENABLE_HYPRE_CUDA )
+
+set( ENABLE_HYPRE_DEVICE "CUDA" CACHE STRING "" FORCE )
+if( ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" OR ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
     set(ENABLE_TRILINOS OFF CACHE BOOL "" FORCE )
 else()
-    set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE )    
+    set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE )
     set(GEOSX_LA_INTERFACE "Trilinos" CACHE STRING "" FORCE )
 endif()
 

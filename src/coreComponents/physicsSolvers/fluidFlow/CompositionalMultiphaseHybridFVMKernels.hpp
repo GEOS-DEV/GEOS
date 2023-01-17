@@ -19,6 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP
 
+#include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidFields.hpp"
@@ -212,7 +213,9 @@ struct UpwindingHelper
    * @param[in] posd position (local or neighbor) of the downwind element
    */
   GEOSX_HOST_DEVICE
-  static void
+  inline
+  static
+  void
   setIndicesForMobilityRatioUpwinding( localIndex const (&localIds)[ 3 ],
                                        localIndex const (&neighborIds)[ 3 ],
                                        real64 const & gravTerm,
@@ -683,10 +686,10 @@ public:
    * @param[in] ei the element index
    * @param[in] phaseMobilityKernelOp the function used to customize the kernel
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void compute( localIndex const ei,
-                FUNC && phaseMobilityKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                FUNC && phaseMobilityKernelOp = NoOpFunc{} ) const
   {
     using Deriv = multifluid::DerivativeOffset;
 

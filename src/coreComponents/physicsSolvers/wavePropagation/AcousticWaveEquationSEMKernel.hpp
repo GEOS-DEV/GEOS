@@ -20,7 +20,10 @@
 #define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
+#include "WaveSolverUtils.hpp"
+#if !defined( GEOSX_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
+#endif
 
 namespace geosx
 {
@@ -31,163 +34,6 @@ namespace acousticWaveEquationSEMKernels
 
 struct PrecomputeSourceAndReceiverKernel
 {
-
-  /**
-   * @brief Check if the sourtc epoint is inside an element or not
-   */
-
-  GEOSX_HOST_DEVICE
-  static bool
-  locateSourceElement( real64 const numFacesPerElem,
-                       real64 const (&elemCenter)[3],
-                       arrayView2d< real64 const > const faceNormal,
-                       arrayView2d< real64 const > const faceCenter,
-                       arraySlice1d< localIndex const > const elemsToFaces,
-                       real64 const (&coords)[3] )
-  {
-    //Loop over the element faces
-    localIndex prevSign = 0;
-    real64 tmpVector[3]{};
-    for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
-    {
-
-      localIndex const iface = elemsToFaces[kfe];
-      real64 faceCenterOnFace[3] = {faceCenter[iface][0],
-                                    faceCenter[iface][1],
-                                    faceCenter[iface][2]};
-      real64 faceNormalOnFace[3] = {faceNormal[iface][0],
-                                    faceNormal[iface][1],
-                                    faceNormal[iface][2]};
-
-      //Test to make sure if the normal is outwardly directed
-      LvArray::tensorOps::copy< 3 >( tmpVector, faceCenterOnFace );
-      LvArray::tensorOps::subtract< 3 >( tmpVector, elemCenter );
-      if( LvArray::tensorOps::AiBi< 3 >( tmpVector, faceNormalOnFace ) < 0.0 )
-      {
-        LvArray::tensorOps::scale< 3 >( faceNormalOnFace, -1 );
-      }
-
-      // compute the vector face center to query point
-      LvArray::tensorOps::subtract< 3 >( faceCenterOnFace, coords );
-      localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >( faceNormalOnFace, faceCenterOnFace ));
-
-      // all dot products should be non-negative (we enforce outward normals)
-      if( prevSign * s < 0 )
-      {
-        return false;
-      }
-      prevSign = s;
-
-    }
-    return true;
-  }
-
-  /**
-   * @brief Convert a mesh element point coordinate into a coordinate on the reference element
-   * @tparam FE_TYPE finite element type
-   * @param[in] coords coordinate of the point
-   * @param[in] elemCenter coordinate of the cell center
-   * @param[in] elemsToNodes map to obtain global nodes from element index
-   * @param[in] elemsToFaces map to obtain global faces from element index
-   * @param[in] facesToNodes map to obtain global nodes from global faces
-   * @param[in] X array of mesh nodes coordinates
-   * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
-   * @return true if coords is inside the element
-   */
-  template< typename FE_TYPE >
-  GEOSX_HOST_DEVICE
-  static bool
-  computeCoordinatesOnReferenceElement( real64 numFacesPerElem,
-                                        real64 const (&coords)[3],
-                                        real64 const (&elemCenter)[3],
-                                        arrayView2d< real64 const > const faceNormal,
-                                        arrayView2d< real64 const > const faceCenter,
-                                        arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
-                                        arraySlice1d< localIndex const > const elemsToFaces,
-                                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
-                                        real64 (& coordsOnRefElem)[3] )
-  {
-    // bool const isInsidePolyhedron =
-    //   computationalGeometry::isPointInsidePolyhedron( X,
-    //                                                   elemsToFaces,
-    //                                                   facesToNodes,
-    //                                                   elemCenter,
-    //                                                   coords );
-
-    bool const SourceInELem =
-      locateSourceElement( numFacesPerElem,
-                           elemCenter,
-                           faceNormal,
-                           faceCenter,
-                           elemsToFaces,
-                           coords );
-    if( SourceInELem )
-    {
-
-      real64 xLocal[FE_TYPE::numNodes][3]{};
-      for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
-      {
-        LvArray::tensorOps::copy< 3 >( xLocal[a], X[ elemsToNodes[a] ] );
-      }
-
-      // coordsOnRefElem = invJ*(coords-coordsNode_0)
-      real64 invJ[3][3]{};
-      FE_TYPE::invJacobianTransformation( 0, xLocal, invJ );
-
-      for( localIndex i = 0; i < 3; ++i )
-      {
-        // init at (-1,-1,-1) as the origin of the referential elem
-        coordsOnRefElem[i] = -1.0;
-        for( localIndex j = 0; j < 3; ++j )
-        {
-          coordsOnRefElem[i] += invJ[i][j] * (coords[j] - xLocal[0][j]);
-        }
-      }
-      return true;
-    }
-    return false;
-  }
-
-
-  GEOSX_HOST_DEVICE
-  static real32
-  evaluateRicker( real64 const & time_n,
-                  real64 const & f0,
-                  localIndex const & order )
-  {
-    real32 const o_tpeak = 1.0/f0;
-    real32 pulse = 0.0;
-    if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
-    {
-      return pulse;
-    }
-
-    constexpr real32 pi = M_PI;
-    real32 const lam = (f0*pi)*(f0*pi);
-
-    switch( order )
-    {
-      case 2:
-      {
-        pulse = 2.0*lam*(2.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-      }
-      break;
-      case 1:
-      {
-        pulse = -2.0*lam*(time_n-o_tpeak)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-      }
-      break;
-      case 0:
-      {
-        pulse = -(time_n-o_tpeak)*exp( -2*lam*(time_n-o_tpeak)*(time_n-o_tpeak) );
-      }
-      break;
-      default:
-        GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
-    }
-
-    return pulse;
-  }
 
   /**
    * @brief Launches the precomputation of the source and receiver terms
@@ -252,19 +98,23 @@ struct PrecomputeSourceAndReceiverKernel
                                      sourceCoordinates[isrc][1],
                                      sourceCoordinates[isrc][2] };
 
-          real64 coordsOnRefElem[3]{};
           bool const sourceFound =
-            computeCoordinatesOnReferenceElement< FE_TYPE >( numFacesPerElem,
-                                                             coords,
-                                                             center,
-                                                             faceNormal,
-                                                             faceCenter,
-                                                             elemsToNodes[k],
-                                                             elemsToFaces[k],
-                                                             X,
-                                                             coordsOnRefElem );
+            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+                                                  center,
+                                                  faceNormal,
+                                                  faceCenter,
+                                                  elemsToFaces[k],
+                                                  coords );
           if( sourceFound )
           {
+            real64 coordsOnRefElem[3]{};
+
+
+            WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+                                                                              elemsToNodes[k],
+                                                                              X,
+                                                                              coordsOnRefElem );
+
             sourceIsAccessible[isrc] = 1;
             real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
@@ -278,7 +128,7 @@ struct PrecomputeSourceAndReceiverKernel
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
               real64 const time = cycle*dt;
-              sourceValue[cycle][isrc] = evaluateRicker( time, timeSourceFrequency, rickerOrder );
+              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
             }
           }
         }
@@ -298,18 +148,20 @@ struct PrecomputeSourceAndReceiverKernel
 
           real64 coordsOnRefElem[3]{};
           bool const receiverFound =
-            computeCoordinatesOnReferenceElement< FE_TYPE >( numFacesPerElem,
-                                                             coords,
-                                                             center,
-                                                             faceNormal,
-                                                             faceCenter,
-                                                             elemsToNodes[k],
-                                                             elemsToFaces[k],
-                                                             X,
-                                                             coordsOnRefElem );
+            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+                                                  center,
+                                                  faceNormal,
+                                                  faceCenter,
+                                                  elemsToFaces[k],
+                                                  coords );
 
           if( receiverFound && elemGhostRank[k] < 0 )
           {
+            WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+                                                                              elemsToNodes[k],
+                                                                              X,
+                                                                              coordsOnRefElem );
+
             receiverIsLocal[ircv] = 1;
 
             real64 Ntest[FE_TYPE::numNodes];
@@ -359,7 +211,6 @@ struct MassMatrixKernel
   {
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
@@ -471,7 +322,7 @@ struct PMLKernelHelper
    * @param sigma 3-components array to hold the damping profile in each direction
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   static void computeDampingProfilePML( real64 const (&xLocal)[3],
                                         real32 const (&xMin)[3],
                                         real32 const (&xMax)[3],
@@ -568,7 +419,9 @@ struct PMLKernel
           arrayView2d< real32 > const grad_n,
           arrayView1d< real32 > const divV_n )
   {
-
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+    GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
+#else
     /// Loop over elements in the subregion, 'l' is the element index within the target set
     forAll< EXEC_POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const l )
     {
@@ -666,6 +519,7 @@ struct PMLKernel
         RAJA::atomicAdd< ATOMIC_POLICY >( &divV_n[elemToNodesViewConst[k][i]], localIncrement/numNodesPerElem );
       }
     } );
+#endif
   }
 
   /// The finite element space/discretization object for the element type in the subRegion
@@ -920,7 +774,7 @@ public:
    * Copies the primary variable, and position into the local stack array.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -943,7 +797,7 @@ public:
    *
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  inline
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
