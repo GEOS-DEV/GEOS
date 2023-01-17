@@ -22,6 +22,7 @@
 #include "constitutive/fluid/DeadOilFluid.hpp"
 #include "constitutive/fluid/BlackOilFluid.hpp"
 #include "constitutive/fluid/CO2BrineFluid.hpp"
+#include "constitutive/fluid/ExampleFluidModel.hpp"
 
 #include "common/GeosxConfig.hpp"
 #ifdef GEOSX_USE_PVTPackage
@@ -40,6 +41,7 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
 {
   ConstitutivePassThruHandler< DeadOilFluid,
                                BlackOilFluid,
+                               ExampleFluidModel,
 #ifdef GEOSX_USE_PVTPackage
                                CompositionalMultiphaseFluid,
 #endif
@@ -57,6 +59,7 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
 {
   ConstitutivePassThruHandler< DeadOilFluid,
                                BlackOilFluid,
+                               ExampleFluidModel,
 #ifdef GEOSX_USE_PVTPackage
                                CompositionalMultiphaseFluid,
 #endif

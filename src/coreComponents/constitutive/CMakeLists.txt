@@ -29,6 +29,7 @@ set( constitutive_headers
      fluid/CompressibleSinglePhaseFluid.hpp
      fluid/CO2BrineFluid.hpp          
      fluid/DeadOilFluid.hpp
+     fluid/ExampleFluidModel.hpp
      fluid/MultiFluidBase.hpp
      fluid/MultiFluidUtils.hpp
      fluid/MultiFluidFields.hpp
@@ -159,6 +160,7 @@ set( constitutive_sources
      fluid/BlackOilFluidBase.cpp
      fluid/BlackOilFluid.cpp
      fluid/DeadOilFluid.cpp
+     fluid/ExampleFluidModel.cpp     
      fluid/MultiFluidBase.cpp
      fluid/PVTDriver.cpp
      fluid/PVTDriverRunTestDeadOilFluid.cpp
@@ -167,6 +169,7 @@ set( constitutive_sources
      fluid/PVTDriverRunTestCO2BrinePhillipsThermalFluid.cpp
      fluid/PVTDriverRunTestCO2BrineEzrokhiFluid.cpp
      fluid/PVTDriverRunTestCO2BrineEzrokhiThermalFluid.cpp
+     fluid/PVTDriverRunTestExampleFluidModel.cpp     
      fluid/PVTOData.cpp
      fluid/PVTFunctions/PhillipsBrineDensity.cpp
      fluid/PVTFunctions/PhillipsBrineViscosity.cpp
