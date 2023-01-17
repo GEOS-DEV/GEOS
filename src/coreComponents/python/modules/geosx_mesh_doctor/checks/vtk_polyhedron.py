@@ -142,13 +142,12 @@ def build_cell_graph(face_stream: FaceStream, add_compatibility=False) -> networ
         order_1 = 1 if face_nodes_1[face_nodes_1.index(node_0) + 1] == node_1 else -1
         # Same order of nodes means that the normals of the faces or not both (in|out)ward.
         if order_0 * order_1 == 1:
+            # logging.warning(f"Inconsistent order between faces {face_index_0} and {face_index_1}.")
             if add_compatibility:
                 graph.add_edge(face_index_0, face_index_1, compatible="-")
             pass
-            # logging.warning(f"Inconsistent order between faces {face_index_0} and {face_index_1}.")
         else:
             # logging.warning(f"Consistent order between faces {face_index_0} and {face_index_1}.")
-            # graph.add_edge(face_index_0, face_index_1)
             if add_compatibility:
                 graph.add_edge(face_index_0, face_index_1, compatible="+")
             else:
