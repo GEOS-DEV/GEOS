@@ -8,6 +8,7 @@ GENERATE_FRACTURES = "generate_fractures"
 GENERATE_GLOBAL_IDS = "generate_global_ids"
 NON_CONFORMAL = "non_conformal"
 SELF_INTERSECTING_ELEMENTS = "self_intersecting_elements"
+SUPPORTED_ELEMENTS = "supported_elements"
 
 
 @dataclass(frozen=True)

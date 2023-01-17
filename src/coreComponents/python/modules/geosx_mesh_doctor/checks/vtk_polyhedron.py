@@ -15,7 +15,6 @@ from vtkmodules.vtkCommonDataModel import (
     vtkTetra,
 )
 
-import vtk
 import networkx
 
 
@@ -112,7 +111,7 @@ class FaceStream:
         return ",\n".join(result)
 
 
-def __analyze_face_stream(face_stream: FaceStream):
+def build_cell_graph(face_stream: FaceStream, add_compatibility=False) -> networkx.Graph:
     edges_to_face_indices = defaultdict(list)
     for face_index, face_nodes in enumerate(face_stream.face_nodes):
         shifted_face_nodes = deque(face_nodes)
@@ -143,11 +142,22 @@ def __analyze_face_stream(face_stream: FaceStream):
         order_1 = 1 if face_nodes_1[face_nodes_1.index(node_0) + 1] == node_1 else -1
         # Same order of nodes means that the normals of the faces or not both (in|out)ward.
         if order_0 * order_1 == 1:
+            if add_compatibility:
+                graph.add_edge(face_index_0, face_index_1, compatible="-")
             pass
             # logging.warning(f"Inconsistent order between faces {face_index_0} and {face_index_1}.")
         else:
             # logging.warning(f"Consistent order between faces {face_index_0} and {face_index_1}.")
-            graph.add_edge(face_index_0, face_index_1)
+            # graph.add_edge(face_index_0, face_index_1)
+            if add_compatibility:
+                graph.add_edge(face_index_0, face_index_1, compatible="+")
+            else:
+                graph.add_edge(face_index_0, face_index_1)
+    return graph
+
+
+def __analyze_face_stream(face_stream: FaceStream):
+    graph = build_cell_graph(face_stream)
     # Consider adding the wrong and bad connections between the faces in the graph,
     # then return the graph and let the algo continue.
     return tuple(networkx.connected_components(graph))
@@ -192,7 +202,7 @@ def __check(mesh, options: Options) -> Result:
         c = mesh.GetCell(ic)
         if not c.GetCellType() == VTK_POLYHEDRON:
             continue
-        pt_ids = vtk.vtkIdList()
+        pt_ids = vtkIdList()
         mesh.GetFaceStream(ic, pt_ids)
         face_stream = FaceStream.build_from_vtk_id_list(pt_ids)
         connected_components = __analyze_face_stream(face_stream)

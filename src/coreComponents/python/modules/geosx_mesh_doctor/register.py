@@ -9,6 +9,7 @@ from parsing import (
     GENERATE_GLOBAL_IDS,
     NON_CONFORMAL,
     SELF_INTERSECTING_ELEMENTS,
+    SUPPORTED_ELEMENTS,
 )
 
 __HELPERS: Dict[str, Callable[[None], CheckHelper]] = dict()
@@ -109,6 +110,20 @@ def __get_self_intersecting_elements_check():
 
 __HELPERS[SELF_INTERSECTING_ELEMENTS] = __get_self_intersecting_elements_check_helper
 __CHECKS[SELF_INTERSECTING_ELEMENTS] = __get_self_intersecting_elements_check
+
+
+def __get_supported_elements_check_helper() -> CheckHelper:
+    import parsing.supported_elements_parsing
+    return __build_check_helper(parsing.supported_elements_parsing)
+
+
+def __get_supported_elements_check():
+    from checks import supported_elements
+    return supported_elements.check
+
+
+__HELPERS[SUPPORTED_ELEMENTS] = __get_supported_elements_check_helper
+__CHECKS[SUPPORTED_ELEMENTS] = __get_supported_elements_check
 
 
 # TODO use importlib
