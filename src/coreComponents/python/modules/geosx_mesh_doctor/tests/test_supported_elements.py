@@ -15,7 +15,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 from checks.supported_elements import Options, check, __check
-from checks.vtk_polyhedron import to_vtk_id_list
+from checks.vtk_polyhedron import parse_face_stream, to_vtk_id_list
 
 
 @pytest.mark.parametrize("base_name",
@@ -100,3 +100,23 @@ def test_dodecahedron() -> None:
     result = __check(mesh, Options(num_proc=1, chunk_size=1))
     assert set(result.unsupported_polyhedron_elements) == {0}
     assert not result.unsupported_std_elements_types
+
+
+def test_parse_face_stream() -> None:
+    _, faces = make_dodecahedron()
+    result = parse_face_stream(faces)
+    expected = (
+        (0, 1, 2, 3, 4),
+        (0, 5, 10, 6, 1),
+        (1, 6, 11, 7, 2),
+        (2, 7, 12, 8, 3),
+        (3, 8, 13, 9, 4),
+        (4, 9, 14, 5, 0),
+        (15, 10, 5, 14, 19),
+        (16, 11, 6, 10, 15),
+        (17, 12, 7, 11, 16),
+        (18, 13, 8, 12, 17),
+        (19, 14, 9, 13, 18),
+        (19, 18, 17, 16, 15)
+    )
+    assert result == expected
