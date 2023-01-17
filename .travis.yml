@@ -53,6 +53,7 @@ __geosx_linux_build: &__geosx_linux_build
     -e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF}
     -e ENABLE_HYPRE_CUDA=${ENABLE_HYPRE_CUDA:-OFF}
     -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON}
+    -e ENABLE_FESAPI=${ENABLE_FESAPI:-ON}
     ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG}
     ${TRAVIS_BUILD_DIR_MOUNT_POINT}/scripts/travis_build_and_test.sh ${BUILD_AND_TEST_ARGS};
 
