@@ -30,7 +30,7 @@
 #define GEOSX_USE_MPI
 
 /// Enables use of OpenMP (CMake option ENABLE_OPENMP)
-#define GEOSX_USE_OPENMP
+/* #undef GEOSX_USE_OPENMP */
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #define GEOSX_USE_CUDA
@@ -70,7 +70,7 @@
   /// Parsed hypre version information
   #define HYPRE_VERSION_MAJOR 2
   /// Parsed hypre version information
-  #define HYPRE_VERSION_MINOR 24
+  #define HYPRE_VERSION_MINOR 26
   /// Parsed hypre version information
   #define HYPRE_VERSION_PATCH 0
 #endif
@@ -82,7 +82,7 @@
 /// Denotes HYPRE using HIP
 #define GEOSX_USE_HYPRE_HIP 2
 /// Macro determining what parellel interface hypre is using
-#define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_CPU
+#define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_HIP
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
 #define GEOSX_USE_SUPERLU_DIST
@@ -127,7 +127,7 @@
 #define HDF5_VERSION 1.12.1
 
 /// Version information for Conduit
-#define Conduit_VERSION 0.8.2
+#define Conduit_VERSION 0.7.2
 
 /// Version information for RAJA
 #define RAJA_VERSION 2022.3.0
@@ -139,7 +139,7 @@
 /* #undef chai_VERSION */
 
 /// Version information for adiak
-#define adiak_VERSION ..
+/* #undef adiak_VERSION */
 
 /// Version information for caliper
 #define caliper_VERSION 2.8.0
@@ -151,16 +151,16 @@
 #define PARAMETIS_VERSION 4.0.3
 
 /// Version information for scotch
-#define scotch_VERSION 6.0.9
+/* #undef scotch_VERSION */
 
 /// Version information for superlu_dist
-#define superlu_dist_VERSION 6.3.0
+/* #undef superlu_dist_VERSION */
 
 /// Version information for suitesparse
 #define suitesparse_VERSION 5.7.9
 
 /// Version information for VTK
-#define VTK_VERSION 9.1.0
+/* #undef VTK_VERSION */
 
 /// Version information for fmt
 #define fmt_VERSION 8.0.1
