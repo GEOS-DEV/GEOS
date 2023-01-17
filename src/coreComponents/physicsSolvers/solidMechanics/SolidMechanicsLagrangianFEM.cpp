@@ -36,6 +36,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/FaceElementSubRegion.hpp"
+#include "mesh/CellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
 namespace geosx
@@ -204,14 +205,18 @@ void SolidMechanicsLagrangianFEM::setConstitutiveNamesCallSuper( ElementSubRegio
 {
   SolverBase::setConstitutiveNamesCallSuper( subRegion );
 
-  subRegion.registerWrapper< string >( viewKeyStruct::solidMaterialNamesString() ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setSizedFromParent( 0 );
+  if( dynamic_cast< CellElementSubRegion * >(&subRegion) != nullptr )
+  {
+    /// We only register the solid model on CellElementSubRegions (makes no sense for Fractures)
+    subRegion.registerWrapper< string >( viewKeyStruct::solidMaterialNamesString() ).
+      setPlotLevel( PlotLevel::NOPLOT ).
+      setRestartFlags( RestartFlags::NO_WRITE ).
+      setSizedFromParent( 0 );
 
-  string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-  solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
-  GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+    string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
+    GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+  }
 }
 
 void SolidMechanicsLagrangianFEM::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
