@@ -1,5 +1,6 @@
 from collections import deque, defaultdict
 from dataclasses import dataclass
+import functools
 import logging
 from typing import List, Tuple, Iterator, Sequence, Iterable
 
@@ -69,6 +70,8 @@ def parse_face_stream(ids: vtkIdList):  # TODO move to FaceStream.build_from_vtk
     except StopIteration:
         pass
     assert len(result) == num_faces
+    assert functools.reduce(lambda a, b: a + len(b), result, 0) + len(result) + 1 == ids.GetNumberOfIds()
+
     return tuple(result)
 
 
