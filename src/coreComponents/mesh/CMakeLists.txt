@@ -58,6 +58,7 @@ set( mesh_headers
      simpleGeometricObjects/GeometricObjectManager.hpp
      simpleGeometricObjects/SimpleGeometricObjectBase.hpp
      simpleGeometricObjects/ThickPlane.hpp
+     utilities/CIcomputationKernel.hpp
      utilities/ComputationalGeometry.hpp
      utilities/MeshMapUtilities.hpp
      utilities/StructuredGridUtilities.hpp
