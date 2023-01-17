@@ -44,6 +44,8 @@ option( ENABLE_SUITESPARSE "Enables SUITESPARSE" ON )
 
 option( ENABLE_HYPRE_CUDA "Enables cuda capabilities in Hypre" OFF )
 
+option( ENABLE_FESAPI "Enables RESQML (FESAPI)" ON )
+
 #if ( "${CMAKE_HOST_APPLE}" )
 #  option( ENABLE_PETSC "Enables PETSC" OFF )
 #else()
