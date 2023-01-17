@@ -146,7 +146,7 @@ if( ENABLE_VTK )
     endif()
 endif()
 
-if( ENABLE_VTK AND ENABLE_FESAPI AND ENABLE_MPI)
+if( ENABLE_FESAPI )
   message(STATUS "Adding RESQML (Readers / MeshGenerator) sources and headers")
   set( mesh_headers ${mesh_headers} 
        generators/RESQMLMeshGenerator.hpp
