@@ -133,16 +133,10 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
-  //m_sourceIsLocal.resize( numSourcesGlobal );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
   m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
-  m_receiverIsLocal.resize( numReceiversGlobal );
-
-  m_pressureNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
-
-
 
 }
 
@@ -234,17 +228,10 @@ void AcousticWaveEquationSEM::postProcessInput()
   }
   localIndex const nsamples = int(maxTime/dt) + 1;
 
-
-  localIndex numNodesPerElem = getNumNodesPerElem();
-
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
-  m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceIsAccessible.resize( numSourcesGlobal );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
-  m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverIsLocal.resize( numReceiversGlobal );
 
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
