@@ -40,19 +40,28 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
    * @param[in] numNodesPerElem number of nodes per element
+   * @param[in] numFacesPerElem number of faces per element
    * @param[in] X coordinates of the nodes
+   * @param[in] elemGhostRank rank of the ghost element
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
-   * @param[in] facesToNodes map from faces to nodes
    * @param[in] elemCenter coordinates of the element centers
+   * @param[in] faceNormal normal of each faces 
+   * @param[in] faceCenter coordinates of the center of a face
    * @param[in] sourceCoordinates coordinates of the source terms
    * @param[out] sourceIsAccessible flag indicating whether the source is accessible or not
+   * @param[out] sourceElem element where a source is located 
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
-   * @param[out] sourceNodeConstants constant part of the source terms
+   * @param[out] sourceConstants constant part of the source terms
    * @param[in] receiverCoordinates coordinates of the receiver terms
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
+   * @param[out] rcvElem element where a receiver is located
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
-   * @param[out] receiverNodeConstants constant part of the receiver term
+   * @param[out] receiverConstants constant part of the receiver term
+   * @param[out] sourceValue value of the temporal source (eg. Ricker)
+   * @param[in] dt time-step
+   * @param[in] timeSourceFrequency the central frequency of the source
+   * @param[in] rickerOrder order of the Ricker wavelet
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
@@ -192,11 +201,10 @@ struct MassMatrixKernel
   {}
 
   /**
-   * @brief Launches the precomputation of the mass matrices
+   * @brief Launches the precomputation of the mass matrix
    * @tparam EXEC_POLICY the execution policy
    * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
-   * @param[in] numFacesPerElem number of faces per element
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] velocity cell-wise velocity
@@ -323,9 +331,18 @@ struct VelocityComputation
   {}
 
   /**
-   * Add Comments
+   * @brief Launches the computation of the velocity for one iteration 
+   * @tparam EXEC_POLICY the execution policy
+   * @tparam ATOMIC_POLICY the atomic policy
+   * @param[in] size the number of cells in the subRegion
+   * @param[in] X coordinates of the nodes 
+   * @param[in] elemsToNodes map from element to nodes
+   * @param[in] p_np1 pressure array (only used here)
+   * @param[in] dt time-step
+   * @param[out] velocity_x velocity array in the x direction (updated here)
+   * @param[out] velocity_y velocity array in the y direction (updated here)
+   * @param[out] velocity_z velocity array in the z direction (updated here)
    */
-
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
@@ -422,7 +439,25 @@ struct PressureComputation
   {}
 
   /**
-   * Add doc
+   * @brief Launches the computation of the pressure for one iteration 
+   * @tparam EXEC_POLICY the execution policy
+   * @tparam ATOMIC_POLICY the atomic policy
+   * @param[in] size the number of cells in the subRegion
+   * @param[in] size_node the number of nodes in the subRegion
+   * @param[in] X coordinates of the nodes 
+   * @param[in] elemsToNodes map from element to nodes
+   * @param[out] velocity_x velocity array in the x direction (only used here)
+   * @param[out] velocity_y velocity array in the y direction (only used here)
+   * @param[out] velocity_z velocity array in the z direction (only used here)
+   * @param[in] mass the mass matrix
+   * @param[in] damping the damping matrix
+   * @param[in] sourceConstants constant part of the source terms
+   * @param[in] sourceValue value of the temporal source (eg. Ricker)
+   * @param[in] sourceIsAccessible flag indicating whether the source is accessible or not
+   * @param[in] sourceElem element where a source is located 
+   * @param[in] cycleNumber the number of cycle
+   * @param[in] dt time-step
+   * @param[out] p_np1 pressure array (updated here)
    */
 
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
@@ -472,6 +507,7 @@ struct PressureComputation
       real32 uelemx[numNodesPerElem] = {0.0};
 
 
+      // Volume integration
       for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
       {
 
