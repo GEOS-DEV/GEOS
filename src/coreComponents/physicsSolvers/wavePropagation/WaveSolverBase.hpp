@@ -222,6 +222,25 @@ protected:
   /// Flag to apply PML
   integer m_usePML;
 
+  /// Indices of the nodes (in the right order) for each source point
+  array2d< localIndex > m_sourceNodeIds;
+
+  /// Constant part of the source for the nodes listed in m_sourceNodeIds
+  array2d< real64 > m_sourceConstants;
+
+  /// Flag that indicates whether the source is local or not to the MPI rank
+  array1d< localIndex > m_sourceIsAccessible;
+
+  /// Indices of the element nodes (in the right order) for each receiver point
+  array2d< localIndex > m_receiverNodeIds;
+
+  /// Basis function evaluated at the receiver for the nodes listed in m_receiverNodeIds
+  array2d< real64 > m_receiverConstants;
+
+  /// Flag that indicates whether the receiver is local or not to the MPI rank
+  array1d< localIndex > m_receiverIsLocal;
+
+
   struct parametersPML
   {
     /// Mininum (x,y,z) coordinates of inner PML boundaries
