@@ -160,8 +160,6 @@ private:
   localIndex m_numQuadraturePoints;
 };
 
-
-
 }
 }
 #endif
