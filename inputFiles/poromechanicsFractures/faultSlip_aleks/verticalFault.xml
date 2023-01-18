@@ -111,12 +111,12 @@
   <Geometry>
     <Box
     name="fault"
-    xMin="{ -0.01,  -75.01,   -0.01 }"
-    xMax="{ 0.01,    75.01,   500.01 }"/>
+    xMin="{ -0.01,  -150.01,   -0.01 }"
+    xMax="{ 0.01,    150.01,   500.01 }"/>
     <Box
     name="faultReservoir"
-    xMin="{ -0.01,  -75.01,   -0.01 }"
-    xMax="{ 0.01,    75.01,   500.01 }"/>
+    xMin="{ -0.01,  -150.01,   -0.01 }"
+    xMax="{ 0.01,    150.01,   500.01 }"/>
   </Geometry>
 
   <NumericalMethods>
@@ -251,14 +251,21 @@
       scale="1.0"
       functionName="ym"/>
 
-    <FieldSpecification
+    <!--FieldSpecification
       name="yconstraint1"
       component="1"
       setNames="{ ypos }"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       scale="1.0"
-      functionName="yp"/>
+      functionName="yp"/-->
+
+    <Traction
+      name="yconstraint1"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-29497443.75"      
+      setNames="{ ypos }"/> 
 
     <FieldSpecification
       name="zconstraint"
@@ -267,6 +274,14 @@
       component="2"
       scale="0.0"
       setNames="{zneg}"/>
+
+    <!--FieldSpecification
+      name="zconstraint1"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{zpos}"/-->
 
     <FieldSpecification
       name="production"
