@@ -71,6 +71,25 @@ public:
     string meshLevelName;
     /// list of the region names
     std::vector< string > regionNames;
+
+    bool add( Regions const & input )
+    {
+      bool added = false;
+      if( meshBodyName  == input.meshBodyName && meshLevelName == input.meshLevelName )
+      {
+        for( auto const & inputRegionName : input.regionNames )
+        {
+          if( std::find( regionNames.begin(), regionNames.end(), inputRegionName ) == regionNames.end() )
+          {
+            regionNames.push_back( inputRegionName );
+            std::sort( regionNames.begin(), regionNames.end() );
+          }
+        }
+        added = true;
+      }
+
+      return added;
+    }
   };
 
   /**

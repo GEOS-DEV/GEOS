@@ -311,25 +311,42 @@ void DofManager::addField( string const & fieldName,
 {
   GEOSX_ASSERT_MSG( m_domain != nullptr, "Domain has not been set" );
   GEOSX_ERROR_IF( m_reordered, "Cannot add fields after reorderByRank() has been called." );
-  GEOSX_ERROR_IF( fieldExists( fieldName ), "Requested field name '" << fieldName << "' already exists." );
   GEOSX_ERROR_IF_GT_MSG( components, MAX_COMP, "Number of components limit exceeded" );
 
-  m_fields.emplace_back();
-  FieldDescription & field = m_fields.back();
+  std::vector< Regions > processedRegions = processFieldRegionList( *m_domain, regions );
 
-  // populate basic info
-  field.name = fieldName;
-  field.location = location;
-  field.numComponents = components;
-  field.key = m_name + '_' + fieldName + "_dofIndex";
-  field.docstring = fieldName + " DoF indices";
-
-  // advanced processing
-  field.support = processFieldRegionList( *m_domain, regions );
-  computeFieldDimensions( static_cast< localIndex >( m_fields.size() ) - 1 );
-
-  // allocate and fill index array
-  createIndexArray( field );
+  if( !fieldExists( fieldName ))
+  {
+    // populate basic info
+    m_fields.emplace_back();
+    FieldDescription & field = m_fields.back();
+    field.name = fieldName;
+    field.location = location;
+    field.numComponents = components;
+    field.key = m_name + '_' + fieldName + "_dofIndex";
+    field.docstring = fieldName + " DoF indices";
+    // advanced processing
+    field.support = processedRegions;
+  }
+  else
+  {
+    FieldDescription & field = m_fields[getFieldIndex( fieldName )];
+    for( auto const & newRegion : processedRegions )
+    {
+      auto it = field.support.begin();
+      auto end1 = field.support.end();
+      bool added = false;
+      while( it != end1 && !added )
+      {
+        added = it->add( newRegion );
+        it++;
+      }
+      if( !added )
+      {
+        field.support.push_back( newRegion );
+      }
+    }
+  }
 }
 
 void DofManager::addField( string const & fieldName,
@@ -436,6 +453,7 @@ processCouplingRegionList( std::vector< DofManager::Regions > inputList,
         auto const it = std::find_if( fieldRegions.begin(), fieldRegions.end(), comp );
         GEOSX_ERROR_IF( it == fieldRegions.end(),
                         GEOSX_FMT( "Mesh {}/{} not found in support of field {}", r.meshBodyName, r.meshLevelName, fieldName ) );
+
         GEOSX_ERROR_IF( !std::includes( it->regionNames.begin(), it->regionNames.end(), r.regionNames.begin(), r.regionNames.end() ),
                         GEOSX_FMT( "Coupling domain is not a subset of {}'s support:\nCoupling: {}\nField: {}",
                                    fieldName, stringutilities::join( r.regionNames ), stringutilities::join( it->regionNames ) ) );
@@ -456,31 +474,60 @@ void DofManager::addCoupling( string const & rowFieldName,
                               std::vector< Regions > const & regions,
                               bool const symmetric )
 {
-  GEOSX_ASSERT_MSG( m_domain != nullptr, "Mesh has not been set" );
+  GEOSX_ASSERT_MSG( m_domain != nullptr, "Domain has not been set" );
   localIndex const rowFieldIndex = getFieldIndex( rowFieldName );
   localIndex const colFieldIndex = getFieldIndex( colFieldName );
 
   // Check if already defined
-  GEOSX_ASSERT_MSG( m_coupling.count( {rowFieldIndex, colFieldIndex} ) == 0, "addCoupling: coupling already defined" );
+  std::vector< Regions > processedRegionList = processCouplingRegionList( regions,
+                                                                          m_fields[rowFieldIndex].support,
+                                                                          rowFieldName,
+                                                                          m_fields[colFieldIndex].support,
+                                                                          colFieldName );
 
-  CouplingDescription & coupling = m_coupling[ { rowFieldIndex, colFieldIndex } ];
-  coupling.connector = connectivity;
-  if( connectivity == Connector::None && rowFieldIndex == colFieldIndex )
+  if( m_coupling.count( {rowFieldIndex, colFieldIndex} ) == 0 )
   {
-    coupling.connector = static_cast< Connector >( m_fields[rowFieldIndex].location );
+    CouplingDescription & coupling = m_coupling[ { rowFieldIndex, colFieldIndex } ];
+    coupling.connector = connectivity;
+    if( connectivity == Connector::None && rowFieldIndex == colFieldIndex )
+    {
+      coupling.connector = static_cast< Connector >( m_fields[rowFieldIndex].location );
+    }
+
+    // Make a list of regions on which coupling is defined
+    coupling.support = processedRegionList;
+
+    // Set connectivity with active symmetry flag
+    if( symmetric && colFieldIndex != rowFieldIndex )
+    {
+      m_coupling.insert( { { colFieldIndex, rowFieldIndex }, coupling } );
+    }
   }
-
-  // Make a list of regions on which coupling is defined
-  coupling.support = processCouplingRegionList( regions,
-                                                m_fields[rowFieldIndex].support,
-                                                rowFieldName,
-                                                m_fields[colFieldIndex].support,
-                                                colFieldName );
-
-  // Set connectivity with active symmetry flag
-  if( symmetric && colFieldIndex != rowFieldIndex )
+  else
   {
-    m_coupling.insert( { { colFieldIndex, rowFieldIndex }, coupling } );
+    CouplingDescription & coupling = m_coupling[ { rowFieldIndex, colFieldIndex } ];
+
+    for( auto const & newRegion : processedRegionList )
+    {
+      auto it    = coupling.support.begin();
+      auto end1  = coupling.support.end();
+      bool added = false;
+      while( it != end1 && !added )
+      {
+        added = it->add( newRegion );
+        it++;
+      }
+      if( !added )
+      {
+        coupling.support.push_back( newRegion );
+      }
+    }
+
+    // Set connectivity with active symmetry flag
+    if( symmetric && colFieldIndex != rowFieldIndex )
+    {
+      m_coupling.insert( { { colFieldIndex, rowFieldIndex }, coupling } );
+    }
   }
 }
 
@@ -1273,6 +1320,9 @@ void DofManager::reorderByRank()
   globalIndex dofOffset = rankOffset();
   for( FieldDescription & field : m_fields )
   {
+    computeFieldDimensions( static_cast< localIndex >( getFieldIndex( field.name ) ) );
+    // allocate and fill index array
+    createIndexArray( field );
     field.globalOffset = dofOffset;
     dofOffset += field.numLocalDof;
   }

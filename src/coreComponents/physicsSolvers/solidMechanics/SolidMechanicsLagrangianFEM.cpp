@@ -205,18 +205,15 @@ void SolidMechanicsLagrangianFEM::setConstitutiveNamesCallSuper( ElementSubRegio
 {
   SolverBase::setConstitutiveNamesCallSuper( subRegion );
 
-  if( dynamic_cast< CellElementSubRegion * >(&subRegion) != nullptr )
-  {
-    /// We only register the solid model on CellElementSubRegions (makes no sense for Fractures)
-    subRegion.registerWrapper< string >( viewKeyStruct::solidMaterialNamesString() ).
-      setPlotLevel( PlotLevel::NOPLOT ).
-      setRestartFlags( RestartFlags::NO_WRITE ).
-      setSizedFromParent( 0 );
+  subRegion.registerWrapper< string >( viewKeyStruct::solidMaterialNamesString() ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
 
-    string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-    solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
-    GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
-  }
+  string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+  solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
+  GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+
 }
 
 void SolidMechanicsLagrangianFEM::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
