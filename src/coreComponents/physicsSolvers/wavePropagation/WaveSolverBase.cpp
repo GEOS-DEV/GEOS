@@ -194,7 +194,9 @@ void WaveSolverBase::postProcessInput()
     /// initialize DAS geometry
     initializeDAS();
 
-     GEOSX_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
+  }
+
+  GEOSX_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the sources",
                   InputError );
 
@@ -229,8 +231,6 @@ void WaveSolverBase::postProcessInput()
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceValue.resize( nsamples, numSourcesGlobal );
 
-
-  }
 }
 
 void WaveSolverBase::initializeDAS()
@@ -286,9 +286,9 @@ real64 WaveSolverBase::explicitStep( real64 const & time_n,
   }
 }
 
- localIndex WaveSolverBase::getNumNodesPerElem()
- {
-    DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+localIndex WaveSolverBase::getNumNodesPerElem()
+{
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
@@ -328,6 +328,6 @@ real64 WaveSolverBase::explicitStep( real64 const & time_n,
   } );
   return numNodesPerElem;
 
- }
+}
 
 } /* namespace geosx */

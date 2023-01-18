@@ -20,14 +20,14 @@
 #ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 #define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 
-#include"WaveSolverBase.hpp"
+#include "WaveSolverBase.hpp"
 
 namespace geosx
 {
 
 struct WaveSolverUtils
 {
-  
+
   GEOSX_HOST_DEVICE
   static real32 evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
   {

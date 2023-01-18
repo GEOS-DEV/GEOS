@@ -26,7 +26,6 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "WaveSolverUtils.hpp"
 
 namespace geosx
 {
@@ -153,7 +152,7 @@ void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 void AcousticFirstOrderWaveEquationSEM::postProcessInput()
 {
   WaveSolverBase::postProcessInput();
- 
+
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
   m_uxNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
