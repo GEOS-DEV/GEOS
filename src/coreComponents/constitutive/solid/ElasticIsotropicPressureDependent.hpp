@@ -47,6 +47,7 @@ public:
    * @param[in] refStrainVol        The value of the volumetric strain data for each element.
    * @param[in] recompressionIndex  The ArrayView holding the recompression index data for each element.
    * @param[in] shearModulus        The ArrayView holding the shear modulus data for each element.
+   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress           The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress           The ArrayView holding the old stress data from the previous converged step for each quadrature point.
    * @param[in] disableInelasticity Flag to disable plastic response for inelastic models
@@ -55,6 +56,7 @@ public:
                                             real64 const & refStrainVol,
                                             arrayView1d< real64 const > const & recompressionIndex,
                                             arrayView1d< real64 const > const & shearModulus,
+                                            arrayView1d< real64 const > const & thermalExpansionCoefficient,
                                             arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                             arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                                             bool const & disableInelasticity ):
@@ -62,7 +64,8 @@ public:
     m_refPressure( refPressure ),
     m_refStrainVol( refStrainVol ),
     m_recompressionIndex( recompressionIndex ),
-    m_shearModulus( shearModulus )
+    m_shearModulus( shearModulus ),
+    m_thermalExpansionCoefficient( thermalExpansionCoefficient )
   {}
 
   /// Deleted default constructor
@@ -124,6 +127,10 @@ protected:
 
   /// A reference to the ArrayView holding the shear modulus for each element.
   arrayView1d< real64 const > const m_shearModulus;
+
+  /// A reference to the ArrayView holding the thermal expansion coefficient for each element.
+  arrayView1d< real64 const > const m_thermalExpansionCoefficient;
+
 };
 
 
@@ -457,6 +464,12 @@ public:
 
     /// string/key for shear modulus
     static constexpr char const * shearModulusString() { return "shearModulus"; }
+
+    /// string/key for thermal expansion coefficient
+    static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; }
+
+    /// string/key for default thermal expansion coefficient
+    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultThermalExpansionCoefficient"; }
   };
 
   /**
@@ -501,6 +514,7 @@ public:
                                                        m_refStrainVol,
                                                        m_recompressionIndex,
                                                        m_shearModulus,
+                                                       m_thermalExpansionCoefficient,
                                                        m_newStress,
                                                        m_oldStress,
                                                        m_disableInelasticity );
@@ -511,6 +525,7 @@ public:
                                                        m_refStrainVol,
                                                        m_recompressionIndex,
                                                        m_shearModulus,
+                                                       m_thermalExpansionCoefficient,
                                                        arrayView3d< real64, solid::STRESS_USD >(),
                                                        arrayView3d< real64, solid::STRESS_USD >(),
                                                        m_disableInelasticity );
@@ -533,6 +548,7 @@ public:
                           m_refStrainVol,
                           m_recompressionIndex,
                           m_shearModulus,
+                          m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity );
@@ -567,6 +583,12 @@ protected:
 
   /// The shear modulus for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_shearModulus;
+
+  /// The thermal expansion coefficient for each upper level dimension (i.e. cell) of *this
+  array1d< real64 > m_thermalExpansionCoefficient;
+
+  /// The default value of the thermal expansion coefficient for any new allocations.
+  real64 m_defaultThermalExpansionCoefficient;
 
 };
 

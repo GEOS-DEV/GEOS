@@ -58,7 +58,7 @@ public:
                                        localIndex const q,
                                        real64 const & pressure_n,
                                        real64 const & pressure,
-                                       real64 const & deltaTemperatureFromInit,
+                                       real64 const & temperature,
                                        real64 const & deltaTemperatureFromLastStep,
                                        real64 const ( &strainIncrement )[6],
                                        real64 ( & totalStress )[6],
@@ -77,7 +77,7 @@ public:
     computeTotalStress( k,
                         q,
                         pressure,
-                        deltaTemperatureFromInit,
+                        temperature,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure,
@@ -171,7 +171,7 @@ private:
   void computeTotalStress( localIndex const k,
                            localIndex const q,
                            real64 const & pressure,
-                           real64 const & deltaTemperature,
+                           real64 const & temperature,
                            real64 const ( &strainIncrement )[6],
                            real64 ( & totalStress )[6],
                            real64 ( & dTotalStress_dPressure )[6],
@@ -193,7 +193,7 @@ private:
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
     real64 const thermalExpansionCoefficientTimesBulkModulus = thermalExpansionCoefficient * bulkModulus;
 
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * deltaTemperature );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * temperature );
 
     // Compute derivatives of total stress
     dTotalStress_dPressure[0] = -biotCoefficient;

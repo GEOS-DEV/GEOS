@@ -70,7 +70,6 @@ ThermalMultiphasePoromechanics( NodeManager const & nodeManager,
   m_rockInternalEnergy( inputConstitutiveType.getInternalEnergy() ),
   m_dRockInternalEnergy_dTemperature( inputConstitutiveType.getDinternalEnergy_dTemperature() ),
   m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() ),
-  m_initialTemperature( elementSubRegion.template getField< fields::flow::initialTemperature >() ),
   m_temperature( elementSubRegion.template getField< fields::flow::temperature >() )
 {
   // extract fluid constitutive data views
@@ -99,7 +98,7 @@ setup( localIndex const k,
   Base::setup( k, stack );
 
   stack.localTemperatureDofIndex = stack.localPressureDofIndex + m_numComponents + 1;
-  stack.deltaTemperatureFromInit = m_temperature[k] - m_initialTemperature[k];
+  stack.temperature = m_temperature[k];
   stack.deltaTemperatureFromLastStep = m_temperature[k] - m_temperature_n[k];
 }
 
@@ -125,7 +124,7 @@ smallStrainUpdate( localIndex const k,
   m_constitutiveUpdate.smallStrainUpdatePoromechanics( k, q,
                                                        m_pressure_n[k],
                                                        m_pressure[k],
-                                                       stack.deltaTemperatureFromInit,
+                                                       stack.temperature,
                                                        stack.deltaTemperatureFromLastStep,
                                                        strainIncrement,
                                                        stack.totalStress,
@@ -242,11 +241,11 @@ computeFluidIncrement( localIndex const k,
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
-  stack.fluidEnergyIncrement = 0.0;
-  stack.dFluidEnergyIncrement_dVolStrainIncrement = 0.0;
-  stack.dFluidEnergyIncrement_dPressure = 0.0;
-  stack.dFluidEnergyIncrement_dTemperature = 0.0;
-  LvArray::tensorOps::fill< maxNumComponents >( stack.dFluidEnergyIncrement_dComponents, 0.0 );
+  stack.energyIncrement = 0.0;
+  stack.dEnergyIncrement_dVolStrainIncrement = 0.0;
+  stack.dEnergyIncrement_dPressure = 0.0;
+  stack.dEnergyIncrement_dTemperature = 0.0;
+  LvArray::tensorOps::fill< maxNumComponents >( stack.dEnergyIncrement_dComponents, 0.0 );
   LvArray::tensorOps::fill< maxNumComponents >( stack.dCompMassIncrement_dTemperature, 0.0 );
 
   Base::computeFluidIncrement( k, q,
@@ -296,21 +295,21 @@ computeFluidIncrement( localIndex const k,
     // Step 2: assemble the phase-dependent part of the accumulation term of the energy equation
 
     // local accumulation
-    stack.fluidEnergyIncrement += phaseAmount * phaseInternalEnergy( ip ) - phaseAmount_n * phaseInternalEnergy_n( ip );
+    stack.energyIncrement += phaseAmount * phaseInternalEnergy( ip ) - phaseAmount_n * phaseInternalEnergy_n( ip );
 
     // derivatives w.r.t. vol strain increment, pressure and temperature
-    stack.dFluidEnergyIncrement_dVolStrainIncrement += dPhaseAmount_dVolStrain * phaseInternalEnergy( ip );
-    stack.dFluidEnergyIncrement_dPressure += dPhaseAmount_dP * phaseInternalEnergy( ip )
-                                             + phaseAmount * dPhaseInternalEnergy( ip, Deriv::dP );
-    stack.dFluidEnergyIncrement_dTemperature += dPhaseAmount_dT * phaseInternalEnergy( ip )
-                                                + phaseAmount * dPhaseInternalEnergy( ip, Deriv::dT );
+    stack.dEnergyIncrement_dVolStrainIncrement += dPhaseAmount_dVolStrain * phaseInternalEnergy( ip );
+    stack.dEnergyIncrement_dPressure += dPhaseAmount_dP * phaseInternalEnergy( ip )
+                                        + phaseAmount * dPhaseInternalEnergy( ip, Deriv::dP );
+    stack.dEnergyIncrement_dTemperature += dPhaseAmount_dT * phaseInternalEnergy( ip )
+                                           + phaseAmount * dPhaseInternalEnergy( ip, Deriv::dT );
 
     // derivatives w.r.t. component densities
     applyChainRule( m_numComponents, dGlobalCompFrac_dGlobalCompDensity, dPhaseInternalEnergy[ip], dPhaseInternalEnergy_dC, Deriv::dC );
     for( integer jc = 0; jc < m_numComponents; ++jc )
     {
-      stack.dFluidEnergyIncrement_dComponents[jc] += dPhaseAmount_dC[jc] * phaseInternalEnergy( ip )
-                                                     + phaseAmount * dPhaseInternalEnergy_dC[jc];
+      stack.dEnergyIncrement_dComponents[jc] += dPhaseAmount_dC[jc] * phaseInternalEnergy( ip )
+                                                + phaseAmount * dPhaseInternalEnergy_dC[jc];
     }
   } );
 
@@ -318,10 +317,10 @@ computeFluidIncrement( localIndex const k,
   real64 const oneMinusPoro = 1 - porosity;
 
   // local accumulation and derivatives w.r.t. pressure and temperature
-  stack.fluidEnergyIncrement += oneMinusPoro * m_rockInternalEnergy( k, 0 ) - ( 1 - porosity_n ) * m_rockInternalEnergy_n( k, 0 );
-  stack.dFluidEnergyIncrement_dVolStrainIncrement += -dPorosity_dVolStrain * m_rockInternalEnergy( k, 0 );
-  stack.dFluidEnergyIncrement_dPressure += -dPorosity_dPressure * m_rockInternalEnergy( k, 0 );
-  stack.dFluidEnergyIncrement_dTemperature += -dPorosity_dTemperature * m_rockInternalEnergy( k, 0 ) + oneMinusPoro * m_dRockInternalEnergy_dTemperature( k, 0 );
+  stack.energyIncrement += oneMinusPoro * m_rockInternalEnergy( k, 0 ) - ( 1 - porosity_n ) * m_rockInternalEnergy_n( k, 0 );
+  stack.dEnergyIncrement_dVolStrainIncrement += -dPorosity_dVolStrain * m_rockInternalEnergy( k, 0 );
+  stack.dEnergyIncrement_dPressure += -dPorosity_dPressure * m_rockInternalEnergy( k, 0 );
+  stack.dEnergyIncrement_dTemperature += -dPorosity_dTemperature * m_rockInternalEnergy( k, 0 ) + oneMinusPoro * m_dRockInternalEnergy_dTemperature( k, 0 );
 }
 
 template< typename SUBREGION_TYPE,
@@ -455,7 +454,7 @@ assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
   (
     stack.localResidualEnergy,
     1.0,
-    stack.fluidEnergyIncrement,
+    stack.energyIncrement,
     detJxW );
 
   BilinearFormUtilities::compute< pressureTestSpace,
@@ -465,7 +464,7 @@ assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
   (
     stack.dLocalResidualEnergy_dDisplacement,
     1.0,
-    stack.dFluidEnergyIncrement_dVolStrainIncrement,
+    stack.dEnergyIncrement_dVolStrainIncrement,
     dNdX,
     detJxW );
 
@@ -476,7 +475,7 @@ assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
   (
     stack.dLocalResidualEnergy_dPressure,
     1.0,
-    stack.dFluidEnergyIncrement_dPressure,
+    stack.dEnergyIncrement_dPressure,
     1.0,
     detJxW );
 
@@ -487,7 +486,7 @@ assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
   (
     stack.dLocalResidualEnergy_dTemperature,
     1.0,
-    stack.dFluidEnergyIncrement_dTemperature,
+    stack.dEnergyIncrement_dTemperature,
     1.0,
     detJxW );
 
@@ -498,7 +497,7 @@ assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
   (
     stack.dLocalResidualEnergy_dComponents,
     1.0,
-    stack.dFluidEnergyIncrement_dComponents,
+    stack.dEnergyIncrement_dComponents,
     1.0,
     detJxW );
 

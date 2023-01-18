@@ -137,15 +137,15 @@ public:
     real64 dBodyForce_dTemperature[3]{};
 
     /// Energy accumulation
-    real64 fluidEnergyIncrement{};
+    real64 energyIncrement{};
     /// Derivative of energy accumulation wrt volumetric strain increment
-    real64 dFluidEnergyIncrement_dVolStrainIncrement{};
+    real64 dEnergyIncrement_dVolStrainIncrement{};
     /// Derivative of energy accumulation wrt pressure
-    real64 dFluidEnergyIncrement_dPressure{};
+    real64 dEnergyIncrement_dPressure{};
     /// Derivative of energy accumulation wrt temperature
-    real64 dFluidEnergyIncrement_dTemperature{};
+    real64 dEnergyIncrement_dTemperature{};
     /// Derivative of energy accumulation wrt temperature
-    real64 dFluidEnergyIncrement_dComponents[maxNumComponents]{};
+    real64 dEnergyIncrement_dComponents[maxNumComponents]{};
 
     // Storage for mass/energy residual and degrees of freedom
 
@@ -334,7 +334,6 @@ protected:
 
   /// Views on temperature
   arrayView1d< real64 const > const m_temperature_n;
-  arrayView1d< real64 const > const m_initialTemperature;
   arrayView1d< real64 const > const m_temperature;
 
 };
