@@ -86,6 +86,7 @@ using IfThenElse = typename IfThenElse_t<Cond,TrueType,FalseType>::type;
 template <typename... Args> GEOSX_HOST_DEVICE
 void one_print(const char* msg, Args... vals)
 {
+  /*
 #ifdef GEOSX_DEVICE_COMPILE
    if (GEOSX_THREAD_ID(x)==0 && GEOSX_THREAD_ID(y)==0 && GEOSX_THREAD_ID(z)==0)
    {
@@ -94,6 +95,7 @@ void one_print(const char* msg, Args... vals)
 #else
    printf(msg,vals...);
 #endif
+  */
 }
 
 } // namespace tensor

@@ -387,8 +387,8 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 
               for( localIndex a=0; a< numSupportPoints; ++a )
               {
-//                mass[elemsToNodes[k][a]] += rho[k][q] * detJ[k][q] * N[a];
-                mass[elemsToNodes[k][a]] += rho[k][q] * detJ * N[a];
+                mass[elemsToNodes[k][a]] += rho[k][q] * detJ[k][q] * N[a];
+		// mass[elemsToNodes[k][a]] += rho[k][q] * detJ * N[a];
               }
             }
 

@@ -303,7 +303,7 @@ public:
 using TeamSolidMechanicsFEMKernelFactory = finiteElement::KernelFactory< TeamSolidMechanicsFEMKernel,
                                                                          arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const,
                                                                          arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const >;
-
+#if 0
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
@@ -475,7 +475,7 @@ public:
 
 using TeamSolidMechanicsFEMDiagonalKernelFactory = finiteElement::KernelFactory< TeamSolidMechanicsFEMDiagonalKernel,
                                                                                  arrayView2d< real64 > const >;
-
+#endif
 } // namesapce geosx
 
 #endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_TEAMSOLIDMECHANICSFEMKERNELS_HPP_
