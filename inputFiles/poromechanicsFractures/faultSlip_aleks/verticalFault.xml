@@ -80,10 +80,10 @@
     name="mesh1"
     elementTypes="{ C3D8 }"
     xCoords="{ -2250, 0, 2250 }"
-    yCoords="{ -2250, -75, -50, 50, 75, 2250 }"
+    yCoords="{ -2250, -150, -75, 75, 150, 2250 }"
     zCoords="{ 0, 500 }"
-    nx="{ 50, 50 }"
-    ny="{ 50, 2, 10, 2 ,50 }"
+    nx="{ 60, 60 }"
+    ny="{ 56, 2, 4, 2, 56 }"
     nz="{ 1 }"
     cellBlockNames="{ cb1, cb2, cb3, cb4, cb5, cb6, cb7, cb8, cb9, cb10 }"/>
   </Mesh> 
