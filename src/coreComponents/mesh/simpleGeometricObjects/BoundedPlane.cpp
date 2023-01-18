@@ -83,7 +83,7 @@ BoundedPlane::BoundedPlane( const real64 oldX, const real64 oldY,
   m_tolerance = 1e-5;
 
   m_points.resize( 4, 3 );
-  parent->registerGroup< BoundedPlane >( name, std::move( this ) );
+  //parent->registerGroup< BoundedPlane >( name, std::move( this ) );
   this->postProcessInput();
 }
 

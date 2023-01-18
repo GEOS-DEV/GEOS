@@ -388,8 +388,7 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
   GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
-  //R1Tensor tip = {-1.0,-1.0,0.0}; //initial crack tip - bad guess
-
+  
   SolidMechanicsEmbeddedFractures &
   baseSolver = this->getParent().getGroup< SolidMechanicsEmbeddedFractures >( m_baseSolverName );
 
@@ -497,8 +496,7 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
 
     //finally, pass the shared boundary information to the patch solver
     //patchSolver.
-    //patchSolver.addCustomBCDisp(m_nodeFixDisp, m_fixedDispList); //this function still doesnt exist
-
+   
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", PatchSolver: " );
 
     //probably, a nonlinearImplicitStep is not the right one for the Phase Field solver, maybe we should call its solverStep which calls
@@ -508,12 +506,27 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
                                                 cycleNumber,
                                                 domain );
     this->findPhaseFieldTip(m_patchTip, domain.getMeshBody( patchTarget.first ).getBaseDiscretization());      
-    std::cout<<"tipX: "<<m_patchTip[0]<<std::endl; 
-    std::cout<<"tipY: "<<m_patchTip[1]<<std::endl; 
-    std::cout<<"tipZ: "<<m_patchTip[2]<<std::endl;
-    //is there a way for the code to know which is the subRegion on the base mesh that contains m_baseTipElementIndex?
-    efemGenerator.propagationStep(m_baseTip, m_patchTip, m_baseTipElementIndex, subRegion);                                      
 
+    //is there a way for the code to know which is the subRegion on the base mesh that contains m_baseTipElementIndex?
+    if(time_n > 0)
+    {
+      efemGenerator.propagationStep(domain, m_baseTip, m_patchTip, m_baseTipElementIndex); 
+      baseSolver.setupSystem( domain,
+                              baseSolver.getDofManager(),
+                              baseSolver.getLocalMatrix(),
+                              baseSolver.getSystemRhs(),
+                              baseSolver.getSystemSolution(),
+                              true );    
+      baseSolver.implicitStepSetup( time_n, dt, domain );                                                          
+    }
+    GEOSX_LOG_LEVEL_RANK_0(2, "baseTipElement: "<<m_baseTipElementIndex);
+    GEOSX_LOG_LEVEL_RANK_0(2, "PFtipX: "<<m_patchTip[0]);
+    GEOSX_LOG_LEVEL_RANK_0(2, "PFtipY: "<<m_patchTip[1]);   
+    GEOSX_LOG_LEVEL_RANK_0(2, "PFtipZ: "<<m_patchTip[2]);
+    GEOSX_LOG_LEVEL_RANK_0(2, "EFtipX: "<<m_baseTip[0]); 
+    GEOSX_LOG_LEVEL_RANK_0(2, "EFtipY: "<<m_baseTip[1]); 
+    GEOSX_LOG_LEVEL_RANK_0(2, "EFtipZ: "<<m_baseTip[2]);   
+    
     if( dtReturnTemporary < dtReturn )
     {
       iter = 0;

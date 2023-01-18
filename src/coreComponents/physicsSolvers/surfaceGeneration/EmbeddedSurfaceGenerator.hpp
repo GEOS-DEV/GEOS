@@ -85,8 +85,7 @@ public:
   void propagationStep( DomainPartition & domain, 
                         R1Tensor & currentTip,
                         R1Tensor & targetTip,
-                        localIndex tipElementIndex,
-                        CellElementSubRegion & subRegion); 
+                        localIndex & tipElementIndex); 
 
   /**
    * @brief xxx

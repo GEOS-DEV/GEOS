@@ -249,194 +249,208 @@ void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain, 
                                                 R1Tensor & currentTip,             
                                                 R1Tensor & targetTip,
-                                                localIndex tipElementIndex,
-                                                CellElementSubRegion & subRegion)
+                                                localIndex & tipElementIndex)
 {
-    // Get geometric object manager
-    GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();  
-    // create BoundedPlane from currentTip to newTip 
-    BoundedPlane * newFracturePlane = new BoundedPlane( currentTip[0], currentTip[1], targetTip[0],
-                                                        targetTip[1], "newFracturePlane", &geometricObjManager );
-    // Get meshLevel
-    MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
-    // Get managers
-    ElementRegionManager & elemManager = meshLevel.getElemManager();
-    NodeManager & nodeManager = meshLevel.getNodeManager();
-    EmbeddedSurfaceNodeManager & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
-    EdgeManager & edgeManager = meshLevel.getEdgeManager();
-    FaceManager & faceManager = meshLevel.getFaceManager();
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
-    // Get EmbeddedSurfaceSubRegions
-    SurfaceElementRegion & embeddedSurfaceRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
-    EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion = embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
-    localIndex localNumberOfSurfaceElems = embeddedSurfaceSubRegion.size(); //this should not be zero
-    NewObjectLists newObjects; //this should probably not be re-initialized
-    // begin geometric operations
-    real64 const planeCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( newFracturePlane->getCenter() );
-    real64 const normalVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( newFracturePlane->getNormal() );
-    // Initialize variables
-    globalIndex nodeIndex;
-    integer isPositive, isNegative;
-    real64 distVec[ 3 ];    
+  GEOSX_MARK_FUNCTION;
+  // std::cout<<"propagation step"<<std::endl;
+  // std::cout<<"currentTip_x: "<<currentTip[0]<<std::endl;
+  // std::cout<<"currentTip_y: "<<currentTip[1]<<std::endl;
+  // std::cout<<"targetTip_x: "<<targetTip[0]<<std::endl;
+  // std::cout<<"targetTip_y: "<<targetTip[1]<<std::endl;
+  localIndex er = 0; //should be the element region number
+  localIndex esr = 0; //should be the element subregion number
+  // Get geometric object manager
+  GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();  
+  // create BoundedPlane from currentTip to newTip 
+  std::unique_ptr<BoundedPlane> newFracturePlane = std::make_unique<BoundedPlane>( currentTip[0], currentTip[1], targetTip[0],
+                                                                                    targetTip[1], "newFracturePlane", &geometricObjManager );
+  // BoundedPlane * newFracturePlane = new BoundedPlane( currentTip[0], currentTip[1], targetTip[0],
+  //                                                     targetTip[1], "newFracturePlane", &geometricObjManager );
+  // Get meshLevel
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
+  // Get managers
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
+  NodeManager & nodeManager = meshLevel.getNodeManager();
+  EmbeddedSurfaceNodeManager & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
+  EdgeManager & edgeManager = meshLevel.getEdgeManager();
+  FaceManager & faceManager = meshLevel.getFaceManager();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
+  // Get EmbeddedSurfaceSubRegions
+  SurfaceElementRegion & embeddedSurfaceRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
+  EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion = embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+  localIndex localNumberOfSurfaceElems = embeddedSurfaceSubRegion.size(); //this should not be zero
+  NewObjectLists newObjects; //this should probably not be re-initialized
+  // begin geometric operations
+  real64 const planeCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( newFracturePlane->getCenter() );
+  real64 const normalVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( newFracturePlane->getNormal() );
+  // Initialize variables
+  globalIndex nodeIndex;
+  integer isPositive, isNegative;
+  real64 distVec[ 3 ];    
 
-    //COPYING FROM EXISTING FUNCTION - NEEDS CLEANING
+  //COPYING FROM EXISTING FUNCTION - NEEDS CLEANING
 
-    // Get sub-region geometric properties
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes = subRegion.nodeList();
-    FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
-    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
-    auto fracturedElements = subRegion.fracturedElementsList();
-    //save old embNodesPositions to find new embNodes later
-    localIndex embSurfNodesNumberOld = embSurfNodeManager.size();
-    //this part probably needs explicit dynamic allocation
-    array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosOld = embSurfNodeManager.referencePosition();
-    bool added;
+  // Get sub-region geometric properties
+  ElementRegionBase & elementRegion = elemManager.getRegion( er );
+  CellElementSubRegion & subRegion = elementRegion.getSubRegion<CellElementSubRegion>( esr );
+  arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes = subRegion.nodeList();
+  FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
+  arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+  auto fracturedElements = subRegion.fracturedElementsList();
+  //save old embNodesPositions to find new embNodes later
+  localIndex embSurfNodesNumberOld = embSurfNodeManager.size();
+  //this part probably needs explicit dynamic allocation
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosOld = embSurfNodeManager.referencePosition();
+  bool added = false;
 
-    if( ghostRank[tipElementIndex] < 0 ) 
+  if( ghostRank[tipElementIndex] < 0 ) 
+  {
+    //this tests if the element tipElementIndex is cut by the plane connecting currentTip to targetTip
+    isPositive = 0;
+    isNegative = 0;
+    for( localIndex kn = 0; kn < subRegion.numNodesPerElement(); kn++ )
     {
-      //this tests if the element tipElementIndex is cut by the plane connecting currentTip to targetTip
-      isPositive = 0;
-      isNegative = 0;
-      for( localIndex kn = 0; kn < subRegion.numNodesPerElement(); kn++ )
+      nodeIndex = cellToNodes[tipElementIndex][kn];
+      LvArray::tensorOps::copy< 3 >( distVec, nodesCoord[nodeIndex] );
+      LvArray::tensorOps::subtract< 3 >( distVec, planeCenter );
+      // check if the dot product is zero
+      if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) > 0 )
       {
-        nodeIndex = cellToNodes[tipElementIndex][kn];
-        LvArray::tensorOps::copy< 3 >( distVec, nodesCoord[nodeIndex] );
-        LvArray::tensorOps::subtract< 3 >( distVec, planeCenter );
-        // check if the dot product is zero
-        if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) > 0 )
-        {
-          isPositive = 1;
-        }
-        else if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) < 0 )
-        {
-          isNegative = 1;
-        }
-      } // end loop over nodes
-      if( isPositive * isNegative == 1 ) //if there are nodes on both sides of the fracture plane
+        isPositive = 1;
+      }
+      else if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) < 0 )
       {
-        std::cout<<"plane name: "<<newFracturePlane->getName()<<std::endl;
-        localIndex er = 0; //should be the element region number
-        localIndex esr = 0; //should be the element subregion number
-        added = embeddedSurfaceSubRegion.addNewEmbeddedSurface( tipElementIndex,
-                                                                er,
-                                                                esr,
-                                                                nodeManager,
-                                                                embSurfNodeManager,
-                                                                edgeManager,
-                                                                cellToEdges,
-                                                                newFracturePlane );
+        isNegative = 1;
+      }
+    } // end loop over nodes
+    if( isPositive * isNegative == 1 ) //if there are nodes on both sides of the fracture plane
+    {
+      //std::cout<<"plane name: "<<newFracturePlane->getName()<<std::endl;
+      added = embeddedSurfaceSubRegion.addNewEmbeddedSurface( tipElementIndex,
+                                                              er,
+                                                              esr,
+                                                              nodeManager,
+                                                              embSurfNodeManager,
+                                                              edgeManager,
+                                                              cellToEdges,
+                                                              newFracturePlane.get() );
 
-        if( added )
-        {
-          GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << tipElementIndex << " is fractured" );
-          // Add the information to the CellElementSubRegion
-          subRegion.addFracturedElement( tipElementIndex, localNumberOfSurfaceElems );
-          embeddedSurfaceSubRegion.computeConnectivityIndex( localNumberOfSurfaceElems, cellToNodes, nodesCoord );
-          newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( localNumberOfSurfaceElems );
-          localNumberOfSurfaceElems++;
-        }
+      if( added )
+      {
+        GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << tipElementIndex << " is fractured" );
+        // Add the information to the CellElementSubRegion
+        subRegion.addFracturedElement( tipElementIndex, localNumberOfSurfaceElems );
+        embeddedSurfaceSubRegion.computeConnectivityIndex( localNumberOfSurfaceElems, cellToNodes, nodesCoord );
+        newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( localNumberOfSurfaceElems );
+        localNumberOfSurfaceElems++;
       }
     }
+  }
 
-    // add all new nodes to newObject list
-    // also, get index of edges that were just cut
-    array1d< globalIndex > newEdges;
-    array1d< globalIndex > & parentEdgeGlobalIndex = embSurfNodeManager.getParentEdgeGlobalIndex();
-    localIndex embSurfNodeNumberUpdated = embSurfNodeManager.size();
-    array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosUpdated = embSurfNodeManager.referencePosition();
+  // add all new nodes to newObject list
+  // also, get index of edges that were just cut
+  array1d< globalIndex > newEdges;
+  array1d< globalIndex > & parentEdgeGlobalIndex = embSurfNodeManager.getParentEdgeGlobalIndex();
+  localIndex embSurfNodeNumberUpdated = embSurfNodeManager.size();
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosUpdated = embSurfNodeManager.referencePosition();
 
-    if(added)
+  if(added)
+  {
+    bool isNew;
+    //array1d< localIndex > elemNodes( embSurfNodeNumberUpdated );      
+    for( localIndex ni = 0; ni < embSurfNodeNumberUpdated; ni++ )
     {
-      bool isNew;
-      localIndex nodalIndex;
-      array1d< localIndex > elemNodes( embSurfNodeNumberUpdated );      
-      for( localIndex ni = 0; ni < embSurfNodeNumberUpdated; ni++ )
+      //test if node is new
+      real64 distance[3];
+      isNew = true;
+      for( localIndex h=0; h < embSurfNodesNumberOld; h++ )
       {
-        //test if node is new
-        real64 distance[3];
-        isNew = true;
-        for( localIndex h=0; h < embSurfNodesNumberOld; h++ )
+        LvArray::tensorOps::copy< 3 >( distance, embSurfNodesPosUpdated[ ni ] );
+        LvArray::tensorOps::subtract< 3 >( distance, embSurfNodesPosOld[ h ] );
+        if( LvArray::tensorOps::l2Norm< 3 >( distance ) < 1e-4 )
         {
-          LvArray::tensorOps::copy< 3 >( distance, embSurfNodesPosUpdated[ ni ] );
-          LvArray::tensorOps::subtract< 3 >( distance, embSurfNodesPosOld[ h ] );
-          if( LvArray::tensorOps::l2Norm< 3 >( distance ) < 1e-9 )
-          {
-            isNew = false;
-            nodalIndex = h;
-            break;
-          }
+          isNew = false;
+          break;
         }
+      }
+      if( isNew )
+      {
         //update current crack tip
         currentTip[0] = embSurfNodesPosUpdated[ ni ][0];
         currentTip[1] = embSurfNodesPosUpdated[ ni ][1];
         //add parent edge index to array
         newEdges.resize(newEdges.size()+1);
-        newEdges[newEdges.size()] = parentEdgeGlobalIndex[ni];
+        newEdges[newEdges.size()-1] = parentEdgeGlobalIndex[ni];
         newObjects.newNodes.insert( ni );
-      }
+      }    
     }
+  }
 
+  if(added)
+  {
     //given the two edges that were just cut, we find the only face that was cut
     //this face is connected with two elements, one that was cut, and one that is intact
     //we want to update tipElementIndex to become the intact one (it was the one that we just cut)
     //newEdges is an array of globalIndices with the 2 edges that were cut in this step
     auto edgeToFaceList = edgeManager.faceList();
     auto faceToElementList = faceManager.elementList();
-    //THIS IS PSEUDOCODE
     localIndex cutFace;
     for(auto && face:edgeToFaceList[newEdges[0]]) //newEdge is globalIndexed, we probably need a way to get the localIndex of newEdges[0] and newEdges[1]
     {
-      if(edgeToFaceList[newEdges[1]].contains(face)) //there is a contains() function in ArrayOfSets, does it work here?
+      if(edgeToFaceList.contains(newEdges[1],face)) //there is a contains() function in ArrayOfSets, does it work here?
       {
         cutFace = face; //only one face is connected to both edges
       }
     }
-    for(auto && element:faceToElementList[cutFace]) //does this iterator exist?
+    for(auto && element:faceToElementList[cutFace]) //does this iterator exist? //what if the elements that share this face are in different subRegions
     {
       if(!(element == tipElementIndex)) //can element be compared to a localIndex?
       {
-        tipElementIndex = element; 
+        std::cout<<"modifying tip element, new tip element: "<<element<<std::endl;
+        tipElementIndex = element;
+        break; 
       }
     }
-    //END PSEUDOCODE
+  }
 
-    // Set the ghostRank form the parent cell
-    ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
-      elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+  // Set the ghostRank form the parent cell
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
+    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
-    embeddedSurfaceSubRegion.inheritGhostRank( cellElemGhostRank );
+  embeddedSurfaceSubRegion.inheritGhostRank( cellElemGhostRank );
 
-    setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
+  setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
-    embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
-                                                                 domain.getNeighbors(),
-                                                                 newObjects,
-                                                                 m_mpiCommOrder,
-                                                                 this->m_fractureRegionName );
+  embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
+                                                                domain.getNeighbors(),
+                                                                newObjects,
+                                                                m_mpiCommOrder,
+                                                                this->m_fractureRegionName );
 
-    addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
+  addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
 
-    EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
+  EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
 
-    // Populate EdgeManager for embedded surfaces.
-    EdgeManager & embSurfEdgeManager = meshLevel.getEmbSurfEdgeManager();
+  // Populate EdgeManager for embedded surfaces.
+  EdgeManager & embSurfEdgeManager = meshLevel.getEmbSurfEdgeManager();
 
-    EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion.edgeList();
+  EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion.edgeList();
 
-    localIndex numOfPoints = embSurfNodeManager.size();
+  localIndex numOfPoints = embSurfNodeManager.size();
 
-    // Create the edges
-    embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
-    // Node to cell map
-    embSurfNodeManager.setElementMaps( elemManager );
-    // Node to edge map
-    embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
-    embSurfNodeManager.compressRelationMaps();
-    /*
-    * This should be the method that generates new fracture elements based on the propagation criterion of choice.
-    */
-    // Add the embedded elements to the fracture stencil.
-    addToFractureStencil( domain );
+  // Create the edges
+  embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
+  // Node to cell map
+  embSurfNodeManager.setElementMaps( elemManager );
+  // Node to edge map
+  embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
+  embSurfNodeManager.compressRelationMaps();
+  /*
+  * This should be the method that generates new fracture elements based on the propagation criterion of choice.
+  */
+  // Add the embedded elements to the fracture stencil.
+  //delete newFracturePlane;
+  //addToFractureStencil( domain );
 }
                                                
 
