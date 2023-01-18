@@ -16,6 +16,7 @@
 #define GEOSX_RAJAINTERFACE_RAJAINTERFACE_HPP
 
 // Source includes
+#include "common/GeosxConfig.hpp"
 #include "common/DataTypes.hpp"
 
 // TPL includes
@@ -70,10 +71,10 @@ void RAJA_INLINE parallelHostSync() { }
 
 auto const parallelDeviceMemorySpace = LvArray::MemorySpace::cuda;
 
-template< unsigned long BLOCK_SIZE = 256 >
+template< unsigned long BLOCK_SIZE = GEOSX_BLOCK_SIZE >
 using parallelDevicePolicy = RAJA::cuda_exec< BLOCK_SIZE >;
 
-template< unsigned long BLOCK_SIZE = 256 >
+template< unsigned long BLOCK_SIZE = GEOSX_BLOCK_SIZE >
 using parallelDeviceAsyncPolicy = RAJA::cuda_exec_async< BLOCK_SIZE >;
 
 using parallelDeviceStream = RAJA::resources::Cuda;
@@ -96,12 +97,12 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && stream, const localIndex end
 
 auto const parallelDeviceMemorySpace = LvArray::MemorySpace::hip;
 
-template< unsigned long BLOCK_SIZE = 64 >
+template< unsigned long BLOCK_SIZE = GEOSX_BLOCK_SIZE >
 using parallelDevicePolicy = RAJA::hip_exec< BLOCK_SIZE >;
 
 // the async dispatch policy caused runtime issues as of rocm@4.5.2, hasn't been checked in rocm@5:
 // RAJA::hip_exec_async< BLOCK_SIZE >;
-template< unsigned long BLOCK_SIZE = 64 >
+template< unsigned long BLOCK_SIZE = GEOSX_BLOCK_SIZE >
 using parallelDeviceAsyncPolicy = parallelDevicePolicy< BLOCK_SIZE >;
 
 

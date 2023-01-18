@@ -162,7 +162,7 @@ void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
     string const dummyString = "dummy";
     finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+      regionBasedKernelApplication< parallelDevicePolicy< >,
                                     constitutive::NullModel,
                                     CellElementSubRegion >( mesh,
                                                             regionNames,

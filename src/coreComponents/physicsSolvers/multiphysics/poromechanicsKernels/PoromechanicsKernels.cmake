@@ -1,8 +1,8 @@
 set( kernelPath "coreComponents/physicsSolvers/multiphysics/poromechanicsKernels" )
 
-set( SinglePhasePoromechanicsPolicy "geosx::parallelDevicePolicy<32>" )
-set( SinglePhasePoromechanicsEFEMPolicy "geosx::parallelDevicePolicy<32>" )
-set( MultiphasePoromechanicsPolicy "geosx::parallelDevicePolicy<32>" )
+set( SinglePhasePoromechanicsPolicy "geosx::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
+set( SinglePhasePoromechanicsEFEMPolicy "geosx::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
+set( MultiphasePoromechanicsPolicy "geosx::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
 
 configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
                 ${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/policies.hpp )

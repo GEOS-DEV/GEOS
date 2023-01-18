@@ -123,6 +123,9 @@
 /// An integer flag representing the type that globalIndex will be aliased to.
 #define GEOSX_GLOBALINDEX_TYPE_FLAG @GEOSX_GLOBALINDEX_TYPE_FLAG@
 
+/// The default block size for GEOSX on this platform
+#cmakedefine GEOSX_BLOCK_SIZE @GEOSX_BLOCK_SIZE@ 
+
 /// Version information for HDF5
 #cmakedefine HDF5_VERSION @HDF5_VERSION@
 
