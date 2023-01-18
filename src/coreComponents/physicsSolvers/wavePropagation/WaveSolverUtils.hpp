@@ -20,6 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 #define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 
+static constexpr real64 epsilonLoc = 1e-8;
 namespace geosx
 {
 
@@ -63,6 +64,7 @@ struct WaveSolverUtils
     return pulse;
   }
 
+  template< typename EXEC_POLICY >
   static void computeSeismoTrace( real64 const time_n,
                                   real64 const dt,
                                   real64 const timeSeismo,
@@ -78,12 +80,12 @@ struct WaveSolverUtils
   {
     real64 const time_np1 = time_n + dt;
 
-    real32 const a1 = (LvArray::math::abs( dt ) < 1e-8) ? 1.0 : (time_np1 - timeSeismo)/dt;
+    real32 const a1 = (LvArray::math::abs( dt ) < epsilonLoc ) ? 1.0 : (time_np1 - timeSeismo)/dt;
     real32 const a2 = 1.0 - a1;
 
     if( nsamplesSeismoTrace > 0 )
     {
-      forAll< parallelDevicePolicy< 32 > >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
+      forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
       {
         if( receiverIsLocal[ircv] == 1 )
         {
@@ -126,6 +128,7 @@ struct WaveSolverUtils
     }
   }
 
+  template< typename EXEC_POLICY >
   static void compute2dVariableSeismoTrace( real64 const time_n,
                                             real64 const dt,
                                             real64 const timeSeismo,
@@ -146,7 +149,7 @@ struct WaveSolverUtils
 
     if( nsamplesSeismoTrace > 0 )
     {
-      forAll< parallelDevicePolicy< 32 > >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
+      forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
       {
         if( receiverIsLocal[ircv] == 1 )
         {

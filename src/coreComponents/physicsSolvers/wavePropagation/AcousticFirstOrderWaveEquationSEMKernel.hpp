@@ -537,6 +537,7 @@ struct PressureComputation
 
       }
 
+      //Time update + multiplication by inverse of the mass matrix
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
         real32 diag=(auxx[i]+auyy[i]+auzz[i]);
