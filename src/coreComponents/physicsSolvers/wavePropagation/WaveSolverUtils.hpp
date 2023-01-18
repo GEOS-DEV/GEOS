@@ -20,14 +20,14 @@
 #ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 #define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 
+#include"WaveSolverBase.hpp"
 
 namespace geosx
 {
 
 struct WaveSolverUtils
 {
-  //static constexpr real64 epsilonLoc = 1e-8;
-
+  
   GEOSX_HOST_DEVICE
   static real32 evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
   {
@@ -80,7 +80,7 @@ struct WaveSolverUtils
   {
     real64 const time_np1 = time_n + dt;
 
-    real32 const a1 = (LvArray::math::abs( dt ) < 1e-8 ) ? 1.0 : (time_np1 - timeSeismo)/dt;
+    real32 const a1 = (LvArray::math::abs( dt ) < WaveSolverBase::epsilonLoc ) ? 1.0 : (time_np1 - timeSeismo)/dt;
     real32 const a2 = 1.0 - a1;
 
     if( nsamplesSeismoTrace > 0 )

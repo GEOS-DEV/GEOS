@@ -41,6 +41,7 @@ class WaveSolverBase : public SolverBase
 {
 public:
 
+  using EXEC_POLICY = parallelDevicePolicy< 32 >;
 
   WaveSolverBase( const std::string & name,
                   Group * const parent );
@@ -176,6 +177,8 @@ protected:
                                        integer const cycleNumber,
                                        DomainPartition & domain,
                                        bool const computeGradient ) = 0;
+
+  localIndex getNumNodesPerElem();
 
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;

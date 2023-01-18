@@ -21,7 +21,7 @@
 #define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTORDERWAVEEQUATIONSEM_HPP_
 
 #include "mesh/MeshFields.hpp"
-#include "WaveSolverBase.hpp"
+#include "WaveSolverUtils.hpp"
 #include "WaveSolverBaseFields.hpp"
 
 namespace geosx
@@ -176,28 +176,6 @@ private:
    * @param domain the partition domain
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
-
-
-  localIndex getNumNodesPerElem();
-
-
-  /// Indices of the nodes (in the right order) for each source point
-  array2d< localIndex > m_sourceNodeIds;
-
-  /// Constant part of the source for the nodes listed in m_sourceNodeIds
-  array2d< real64 > m_sourceConstants;
-
-  /// Flag that indicates whether the source is local or not to the MPI rank
-  array1d< localIndex > m_sourceIsAccessible;
-
-  /// Indices of the element nodes (in the right order) for each receiver point
-  array2d< localIndex > m_receiverNodeIds;
-
-  /// Basis function evaluated at the receiver for the nodes listed in m_receiverNodeIds
-  array2d< real64 > m_receiverConstants;
-
-  /// Flag that indicates whether the receiver is local or not to the MPI rank
-  array1d< localIndex > m_receiverIsLocal;
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;

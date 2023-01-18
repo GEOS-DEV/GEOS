@@ -21,6 +21,7 @@
 
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
+
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -192,6 +193,43 @@ void WaveSolverBase::postProcessInput()
 
     /// initialize DAS geometry
     initializeDAS();
+
+     GEOSX_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
+                  "Invalid number of physical coordinates for the sources",
+                  InputError );
+
+  GEOSX_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
+                  "Invalid number of physical coordinates for the receivers",
+                  InputError );
+
+  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
+  real64 dt = 0;
+  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
+  {
+    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
+    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
+    {
+      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
+    }
+  }
+
+  GEOSX_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+
+  if( m_dtSeismoTrace > 0 )
+  {
+    m_nsamplesSeismoTrace = int( maxTime / m_dtSeismoTrace) + 1;
+  }
+  else
+  {
+    m_nsamplesSeismoTrace = 0;
+  }
+  localIndex const nsamples = int(maxTime/dt) + 1;
+
+  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
+  m_sourceValue.resize( nsamples, numSourcesGlobal );
+
+
   }
 }
 
@@ -247,4 +285,49 @@ real64 WaveSolverBase::explicitStep( real64 const & time_n,
     return explicitStepBackward( time_n, dt, cycleNumber, domain, m_saveFields );
   }
 }
+
+ localIndex WaveSolverBase::getNumNodesPerElem()
+ {
+    DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+
+  FiniteElementDiscretization const * const
+  feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
+  GEOSX_THROW_IF( feDiscretization == nullptr,
+                  getName() << ": FE discretization not found: " << m_discretizationName,
+                  InputError );
+
+  localIndex numNodesPerElem = 0;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                  [&]( string const &,
+                                       MeshLevel const & mesh,
+                                       arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    elemManager.forElementRegions( regionNames,
+                                   [&] ( localIndex const,
+                                         ElementRegionBase const & elemRegion )
+    {
+      elemRegion.forElementSubRegions( [&]( ElementSubRegionBase const & elementSubRegion )
+      {
+        finiteElement::FiniteElementBase const &
+        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+        localIndex const numSupportPoints = fe.getNumSupportPoints();
+        if( numSupportPoints > numNodesPerElem )
+        {
+          numNodesPerElem = numSupportPoints;
+        }
+      } );
+    } );
+
+
+  } );
+  return numNodesPerElem;
+
+ }
+
 } /* namespace geosx */
