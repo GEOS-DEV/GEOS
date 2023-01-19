@@ -136,6 +136,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
 
 void MatrixFreeSolidMechanicsFEMOperator::computeDiagonal( ParallelVector & diagonal ) const
 {
+#if 0
   GEOSX_MARK_FUNCTION;
   diagonal.zero();
   arrayView1d< real64 > const localDiag = diagonal.open();
@@ -169,6 +170,7 @@ void MatrixFreeSolidMechanicsFEMOperator::computeDiagonal( ParallelVector & diag
   }
 
   diagonal.close();
+#endif
 }
 
 globalIndex MatrixFreeSolidMechanicsFEMOperator::numGlobalRows() const

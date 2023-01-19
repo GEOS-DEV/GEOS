@@ -206,7 +206,7 @@ void LaplaceBaseH1::
                                          string const & GEOSX_UNUSED_PARAM( fieldName ) )
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                         parallelDevicePolicy< 32 > >( targetSet,
+                                         parallelDevicePolicy< > >( targetSet,
                                                                        time,
                                                                        targetGroup,
                                                                        m_fieldName,

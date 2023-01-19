@@ -126,6 +126,9 @@
 /// An integer flag representing the type that globalIndex will be aliased to.
 #define GEOSX_GLOBALINDEX_TYPE_FLAG 2
 
+/// The default block size for GEOSX on this platform
+#define GEOSX_BLOCK_SIZE 64 
+
 /// Version information for HDF5
 #define HDF5_VERSION 1.12.2
 

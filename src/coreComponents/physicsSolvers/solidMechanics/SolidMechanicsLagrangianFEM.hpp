@@ -331,7 +331,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                   std::forward< PARAMS >( params )... );
 
     m_maxForce = finiteElement::
-                   regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                   regionBasedKernelApplication< parallelDevicePolicy<  >,
                                                  CONSTITUTIVE_BASE,
                                                  CellElementSubRegion >( mesh,
                                                                          regionNames,

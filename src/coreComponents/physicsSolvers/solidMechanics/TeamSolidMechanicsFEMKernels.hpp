@@ -124,16 +124,10 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    // For cuda
-    // fields.m_X.move( LvArray::MemorySpace::cuda, false );
-    // fields.m_src.move( LvArray::MemorySpace::cuda, false );
-    // fields.m_dst.move( LvArray::MemorySpace::cuda, true );
-    // fields.m_elemsToNodes.move( LvArray::MemorySpace::cuda, false );
-    // For amd
-    fields.m_X.move( LvArray::MemorySpace::hip, false );
-    fields.m_src.move( LvArray::MemorySpace::hip, false );
-    fields.m_dst.move( LvArray::MemorySpace::hip, true );
-    fields.m_elemsToNodes.move( LvArray::MemorySpace::hip, false );
+    fields.m_X.move( parallelDeviceMemorySpace, false );
+    fields.m_src.move( parallelDeviceMemorySpace, false );
+    fields.m_dst.move( parallelDeviceMemorySpace, true );
+    fields.m_elemsToNodes.move( parallelDeviceMemorySpace, false );
 
     // FE Config
     constexpr localIndex num_dofs_1d = 2;
@@ -303,7 +297,7 @@ public:
 using TeamSolidMechanicsFEMKernelFactory = finiteElement::KernelFactory< TeamSolidMechanicsFEMKernel,
                                                                          arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const,
                                                                          arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const >;
-
+#if 0
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
@@ -357,9 +351,9 @@ public:
 
     // FIXME: needs to be removed with "new" RAJA
     // For cuda
-    // fields.m_X.move( LvArray::MemorySpace::cuda, false );
-    // fields.m_elemsToNodes.move( LvArray::MemorySpace::cuda, false );
-    // fields.m_diag.move( LvArray::MemorySpace::cuda, true );
+    // fields.m_X.move( parallelDeviceMemorySpace, false );
+    // fields.m_elemsToNodes.move( parallelDeviceMemorySpace, false );
+    // fields.m_diag.move( parallelDeviceMemorySpace, true );
     // For amd
     fields.m_X.move( LvArray::MemorySpace::hip, false );
     fields.m_elemsToNodes.move( LvArray::MemorySpace::hip, false );
@@ -475,7 +469,7 @@ public:
 
 using TeamSolidMechanicsFEMDiagonalKernelFactory = finiteElement::KernelFactory< TeamSolidMechanicsFEMDiagonalKernel,
                                                                                  arrayView2d< real64 > const >;
-
+#endif
 } // namesapce geosx
 
 #endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_TEAMSOLIDMECHANICSFEMKERNELS_HPP_
