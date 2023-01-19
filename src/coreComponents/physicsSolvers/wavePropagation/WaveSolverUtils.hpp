@@ -83,7 +83,7 @@ struct WaveSolverUtils
 
     if( nsamplesSeismoTrace > 0 )
     {
-      forAll< parallelDevicePolicy< 32 > >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
+      forAll< parallelDevicePolicy<  > >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
       {
         if( receiverIsLocal[ircv] == 1 )
         {

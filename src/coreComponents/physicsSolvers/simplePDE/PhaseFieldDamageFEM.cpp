@@ -591,7 +591,7 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                   string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                         parallelDevicePolicy< 32 > >( targetSet,
+                                         parallelDevicePolicy< > >( targetSet,
                                                                        time,
                                                                        targetGroup,
                                                                        m_fieldName,

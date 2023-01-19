@@ -168,7 +168,7 @@ real64 SinglePhasePoromechanicsSolver::assemblyLaunch( MeshLevel & mesh,
                                 std::forward< PARAMS >( params )... );
 
   return finiteElement::
-           regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+           regionBasedKernelApplication< parallelDevicePolicy< >,
                                          CONSTITUTIVE_BASE,
                                          CellElementSubRegion >( mesh,
                                                                  regionNames,

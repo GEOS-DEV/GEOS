@@ -108,7 +108,6 @@ message( STATUS "Configuring GEOSX version ${GEOSX_VERSION_FULL}" )
 ################################
 include( cmake/GeosxConfig.cmake )
 
-
 ################################
 # Add main
 ################################
