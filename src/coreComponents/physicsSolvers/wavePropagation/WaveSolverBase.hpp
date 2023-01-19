@@ -106,7 +106,6 @@ public:
    */
   static constexpr real64 epsilonLoc = 1e-8;
 
-
   /**
    * @brief Re-initialize source and receivers positions in the mesh, and resize the pressureNp1_at_receivers array
    */

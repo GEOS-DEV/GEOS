@@ -152,7 +152,7 @@ void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 void AcousticFirstOrderWaveEquationSEM::postProcessInput()
 {
   WaveSolverBase::postProcessInput();
-
+ 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
   m_uxNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
@@ -484,6 +484,8 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
+
+      
         acousticFirstOrderWaveEquationSEMKernels::
           VelocityComputation< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
