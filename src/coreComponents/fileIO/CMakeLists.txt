@@ -8,9 +8,7 @@ set( fileIO_headers
      Outputs/OutputUtilities.hpp
      Outputs/PythonOutput.hpp
      Outputs/RestartOutput.hpp
-     Outputs/SiloOutput.hpp
      Outputs/TimeHistoryOutput.hpp
-     silo/SiloFile.hpp
      timeHistory/HDFFile.hpp
      timeHistory/HistoryCollectionBase.hpp
      timeHistory/BufferedHistoryIO.hpp
@@ -29,16 +27,25 @@ set( fileIO_sources
      Outputs/OutputUtilities.cpp
      Outputs/PythonOutput.cpp
      Outputs/RestartOutput.cpp
-     Outputs/SiloOutput.cpp
      Outputs/TimeHistoryOutput.cpp
-     silo/SiloFile.cpp
      timeHistory/HDFFile.cpp
      timeHistory/HistoryCollectionBase.cpp
      timeHistory/PackCollection.cpp
      timeHistory/HDFHistoryIO.cpp
    )
 
-set( dependencyList ${parallelDeps} mesh constitutive silo hdf5 )
+set( dependencyList ${parallelDeps} mesh constitutive hdf5 )
+
+if( ENABLE_SILO )
+  list( APPEND fileIO_headers
+               Outputs/SiloOutput.hpp
+               silo/SiloFile.hpp )
+  list( APPEND fileIO_sources 
+               Outputs/SiloOutput.cpp
+               silo/SiloFile.cpp )
+  list( APPEND dependencyList silo )
+endif( )
+
 if( ENABLE_PYGEOSX )
   list( APPEND fileIO_headers
         python/PyHistoryCollectionType.hpp

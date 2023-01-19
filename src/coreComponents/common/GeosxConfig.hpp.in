@@ -17,6 +17,9 @@
 /// Enables use of Caliper (CMake option ENABLE_CALIPER)
 #cmakedefine GEOSX_USE_CALIPER
 
+/// Enables use of silo (CMake option ENABLE_SILO)
+#cmakedefine GEOSX_USE_SILO
+
 /// Enables use of Caliper (CMake option ENABLE_ADIAK)
 #cmakedefine GEOSX_USE_ADIAK
 

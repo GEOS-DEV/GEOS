@@ -349,7 +349,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-    finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
+    finiteElement::FiniteElementDispatchHandler< SELECTED_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
@@ -568,7 +568,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
-      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe,
+      finiteElement::FiniteElementDispatchHandler< SELECTED_FE_TYPES >::dispatch3D( fe,
                                                                                [&]
                                                                                  ( auto const finiteElement )
       {

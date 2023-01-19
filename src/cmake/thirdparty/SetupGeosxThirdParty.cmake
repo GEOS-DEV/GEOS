@@ -136,6 +136,37 @@ else()
 endif()
 
 ################################
+# HDF5
+################################
+if(DEFINED HDF5_DIR)
+    message(STATUS "HDF5_DIR = ${HDF5_DIR}")
+
+    set(HDF5_ROOT ${HDF5_DIR})
+    set(HDF5_USE_STATIC_LIBRARIES FALSE)
+    set(HDF5_NO_FIND_PACKAGE_CONFIG_FILE ON)
+    include(FindHDF5)
+
+    # On some platforms (Summit) HDF5 lists /usr/include in it's list of include directories.
+    # When this happens you can get really opaque include errors.
+    list(REMOVE_ITEM HDF5_INCLUDE_DIRS /usr/include)
+
+    blt_import_library(NAME hdf5
+                       INCLUDES ${HDF5_INCLUDE_DIRS}
+                       LIBRARIES ${HDF5_LIBRARIES}
+                       TREAT_INCLUDES_AS_SYSTEM ON)
+
+    file(READ "${HDF5_DIR}/include/H5public.h" header_file )
+    string(REGEX MATCH "version: *([0-9]+.[0-9]+.[0-9]+)" _ ${header_file})
+    set( HDF5_VERSION "${CMAKE_MATCH_1}" CACHE STRING "" FORCE )
+    message( " ----> HDF5 version ${HDF5_VERSION}")
+
+    set(ENABLE_HDF5 ON CACHE BOOL "")
+    set(thirdPartyLibs ${thirdPartyLibs} hdf5)
+else()
+    message(FATAL_ERROR "GEOSX requires hdf5, set HDF5_DIR to the hdf5 installation directory.")
+endif()
+
+################################
 # Conduit
 ################################
 if(DEFINED CONDUIT_DIR)
@@ -176,7 +207,7 @@ endif()
 ################################
 # HDF5
 ################################
-if(DEFINED HDF5_DIR)
+if(DEFINED HDF5_DIR AND NOT HDF5_FOUND )
     message(STATUS "HDF5_DIR = ${HDF5_DIR}")
 
     set(HDF5_ROOT ${HDF5_DIR})
@@ -200,7 +231,7 @@ if(DEFINED HDF5_DIR)
 
     set(ENABLE_HDF5 ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} hdf5)
-else()
+elseif( NOT HDF5_FOUND )
     message(FATAL_ERROR "GEOSX requires hdf5, set HDF5_DIR to the hdf5 installation directory.")
 endif()
 
@@ -217,11 +248,8 @@ if(DEFINED SILO_DIR)
                       LIBRARIES siloh5
                       DEPENDS hdf5)
 
-
     set(ENABLE_SILO ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} silo)
-else()
-    message(FATAL_ERROR "GEOSX requires Silo, set SILO_DIR to the Silo installation directory.")
 endif()
 
 ################################

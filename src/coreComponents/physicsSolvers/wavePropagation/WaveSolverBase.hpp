@@ -35,7 +35,11 @@
   finiteElement::Q4_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q5_Hexahedron_Lagrange_GaussLobatto
 
+#if ! defined( GEOSX_USE_HIP )
 #define SELECTED_FE_TYPES SEM_FE_TYPES
+#else
+#define SELECTED_FE_TYPES
+#endif
 
 namespace geosx
 {
