@@ -133,10 +133,10 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    fields.m_X.move( LvArray::MemorySpace::cuda, false );
-    fields.m_src.move( LvArray::MemorySpace::cuda, false );
-    fields.m_dst.move( LvArray::MemorySpace::cuda, true );
-    fields.m_elemsToNodes.move( LvArray::MemorySpace::cuda, false );
+    fields.m_X.move( parallelDeviceMemorySpace, false );
+    fields.m_src.move( parallelDeviceMemorySpace, false );
+    fields.m_dst.move( parallelDeviceMemorySpace, true );
+    fields.m_elemsToNodes.move( parallelDeviceMemorySpace, false );
 
     // FE Config
     constexpr localIndex num_dofs_1d = 2;
@@ -275,9 +275,9 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    fields.m_X.move( LvArray::MemorySpace::cuda, false );
-    fields.m_diag.move( LvArray::MemorySpace::cuda, true );
-    fields.m_elemsToNodes.move( LvArray::MemorySpace::cuda, false );
+    fields.m_X.move( parallelDeviceMemorySpace, false );
+    fields.m_diag.move( parallelDeviceMemorySpace, true );
+    fields.m_elemsToNodes.move( parallelDeviceMemorySpace, false );
 
     // FE Config
     constexpr localIndex num_dofs_1d = 2;
