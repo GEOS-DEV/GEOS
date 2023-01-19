@@ -446,6 +446,7 @@
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Blueprint" type="BlueprintType" />
+			<xsd:element name="Catalyst" type="CatalystType" />
 			<xsd:element name="ChomboIO" type="ChomboIOType" />
 			<xsd:element name="Python" type="PythonType" />
 			<xsd:element name="Restart" type="RestartType" />
@@ -455,6 +456,7 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BlueprintType" />
+	<xsd:complexType name="CatalystType" />
 	<xsd:complexType name="ChomboIOType" />
 	<xsd:complexType name="PythonType" />
 	<xsd:complexType name="RestartType" />
@@ -1184,6 +1186,8 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
+		<!--averageMeanEffectiveStressIncrement_k => Mean effective stress increment averaged over quadrature points at the previous sequential iteration-->
+		<xsd:attribute name="averageMeanEffectiveStressIncrement_k" type="real64_array" />
 		<!--biotCoefficient => Biot coefficient-->
 		<xsd:attribute name="biotCoefficient" type="real64_array" />
 		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
@@ -1192,8 +1196,8 @@
 		<xsd:attribute name="dPorosity_dTemperature" type="real64_array2d" />
 		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
-		<!--meanStressIncrement => Volumetric stress increment-->
-		<xsd:attribute name="meanStressIncrement" type="real64_array2d" />
+		<!--meanEffectiveStressIncrement_k => Mean effective stress increment at quadrature points at the previous sequential iteration-->
+		<xsd:attribute name="meanEffectiveStressIncrement_k" type="real64_array2d" />
 		<!--porosity => Rock porosity-->
 		<xsd:attribute name="porosity" type="real64_array2d" />
 		<!--porosity_n => Rock porosity at the previous converged time step-->
