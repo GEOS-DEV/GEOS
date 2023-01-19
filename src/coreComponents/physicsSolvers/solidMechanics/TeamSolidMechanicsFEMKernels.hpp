@@ -124,10 +124,16 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    fields.m_X.move( LvArray::MemorySpace::cuda, false );
-    fields.m_src.move( LvArray::MemorySpace::cuda, false );
-    fields.m_dst.move( LvArray::MemorySpace::cuda, true );
-    fields.m_elemsToNodes.move( LvArray::MemorySpace::cuda, false );
+    // For cuda
+    // fields.m_X.move( LvArray::MemorySpace::cuda, false );
+    // fields.m_src.move( LvArray::MemorySpace::cuda, false );
+    // fields.m_dst.move( LvArray::MemorySpace::cuda, true );
+    // fields.m_elemsToNodes.move( LvArray::MemorySpace::cuda, false );
+    // For amd
+    fields.m_X.move( LvArray::MemorySpace::hip, false );
+    fields.m_src.move( LvArray::MemorySpace::hip, false );
+    fields.m_dst.move( LvArray::MemorySpace::hip, true );
+    fields.m_elemsToNodes.move( LvArray::MemorySpace::hip, false );
 
     // FE Config
     constexpr localIndex num_dofs_1d = 2;
@@ -137,7 +143,10 @@ public:
     // Kernel Config
     constexpr ThreadingModel threading_model = ThreadingModel::Serial;
     constexpr localIndex num_threads_1d = num_quads_1d;
-    constexpr localIndex batch_size = 32;
+    // For cuda
+    // constexpr localIndex batch_size = 32;
+    // For amd
+    constexpr localIndex batch_size = 64;
     // constexpr ThreadingModel threading_model = ThreadingModel::Distributed2D;
     // constexpr localIndex num_threads_1d = num_quads_1d;
     // constexpr localIndex batch_size = 8;
@@ -347,9 +356,14 @@ public:
     GEOSX_MARK_FUNCTION;
 
     // FIXME: needs to be removed with "new" RAJA
-    fields.m_X.move( LvArray::MemorySpace::cuda, false );
-    fields.m_elemsToNodes.move( LvArray::MemorySpace::cuda, false );
-    fields.m_diag.move( LvArray::MemorySpace::cuda, true );
+    // For cuda
+    // fields.m_X.move( LvArray::MemorySpace::cuda, false );
+    // fields.m_elemsToNodes.move( LvArray::MemorySpace::cuda, false );
+    // fields.m_diag.move( LvArray::MemorySpace::cuda, true );
+    // For amd
+    fields.m_X.move( LvArray::MemorySpace::hip, false );
+    fields.m_elemsToNodes.move( LvArray::MemorySpace::hip, false );
+    fields.m_diag.move( LvArray::MemorySpace::hip, true );
 
     // FE Config
     constexpr localIndex num_dofs_1d = 2;
@@ -359,7 +373,10 @@ public:
     // Kernel Config
     constexpr ThreadingModel threading_model = ThreadingModel::Serial;
     constexpr localIndex num_threads_1d = num_quads_1d;
-    constexpr localIndex batch_size = 32;
+    // For cuda
+    // constexpr localIndex batch_size = 32;
+    // For amd
+    constexpr localIndex batch_size = 64;
 
     using KernelConf = finiteElement::KernelConfiguration< threading_model, num_threads_1d, batch_size >;
     using Stack = finiteElement::KernelContext< KernelConf >;
