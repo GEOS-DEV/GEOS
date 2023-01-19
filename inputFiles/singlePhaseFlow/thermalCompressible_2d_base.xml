@@ -11,7 +11,7 @@
       targetRegions="{ region }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
-        newtonMaxIter="100"/>
+        newtonMaxIter="10"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseFVM>
@@ -45,40 +45,47 @@
 
     <PressurePorosity
       name="rockPorosity"
-      defaultReferencePorosity="0.01"
+      defaultReferencePorosity="0.1"
       referencePressure="0.0"
       compressibility="3.0e-11"/>
 
+	<!-- SPHINX_SolidInternalEnergy -->
     <SolidInternalEnergy
       name="rockInternalEnergy"
-      volumetricHeatCapacity="1e5"
-      referenceTemperature="10.0"
-      referenceInternalEnergy="1e5"/>
+      volumetricHeatCapacity="4.56e6"
+      referenceTemperature="0"
+      referenceInternalEnergy="0"/>
+	<!-- SPHINX_SolidInternalEnergyEnd -->
 
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 1.0e-18, 1.0e-18, 1.0e-18 }"/>
 
+	<!-- SPHINX_ThermalCompressibleSinglePhaseFluid -->
     <ThermalCompressibleSinglePhaseFluid
       name="fluid"
       defaultDensity="1000"
-      defaultViscosity="1e-4"
+      defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceTemperature="10.0"
+      referenceTemperature="0"
       compressibility="5e-10"
       thermalExpansionCoeff="3e-4"
       viscosibility="0.0"
-      volumetricHeatCapacity="1e5"
-      referenceInternalEnergy="1e5"/>
+      volumetricHeatCapacity="1"
+      referenceInternalEnergy="0.99"/>
+	<!-- SPHINX_ThermalCompressibleSinglePhaseFluidEnd -->
 
+	<!-- SPHINX_SinglePhaseConstantThermalConductivity -->
     <SinglePhaseConstantThermalConductivity
       name="thermalCond"
-      thermalConductivityComponents="{ 3.5e1, 3.5e1, 3.5e1 }"/>
-    
+      thermalConductivityComponents="{ 1.66, 1.66, 1.66 }"/>
+	<!-- SPHINX_SinglePhaseConstantThermalConductivityEnd -->    
+	
   </Constitutive>
 
   <FieldSpecifications>
 
+	<!-- SPHINX_FieldSpecificationImposedPressure -->
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -86,14 +93,6 @@
       objectPath="ElementRegions/region/cb"
       fieldName="pressure"
       scale="0e6"/>
-
-    <FieldSpecification
-      name="initialTemperature"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/region/cb"
-      fieldName="temperature"
-      scale="0"/>
 
     <FieldSpecification
       name="sinkPressure"
@@ -108,6 +107,16 @@
       objectPath="faceManager"
       fieldName="pressure"
       scale="0e6"/>
+	<!-- SPHINX_FieldSpecificationImposedPressureEnd -->
+
+	<!-- SPHINX_FieldSpecificationImposedTemperature -->
+	<FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/region/cb"
+      fieldName="temperature"
+      scale="0"/>
 
     <FieldSpecification
       name="sinkTemperature"
@@ -122,6 +131,7 @@
       objectPath="faceManager"
       fieldName="temperature"
       scale="100.0"/>
+	<!-- SPHINX_FieldSpecificationImposedTemperatureEnd -->
 
   </FieldSpecifications>
 
