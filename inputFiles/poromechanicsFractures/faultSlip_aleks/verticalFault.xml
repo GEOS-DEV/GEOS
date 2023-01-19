@@ -330,8 +330,8 @@
     <TableFunction
       name="pressure"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ tables/xm_x.geos, tables/x_ylin.geos, tables/zlin.geos }"
-      voxelFile="tables/pressure.geos"
+      coordinateFiles="{ tables/x_pres2d.geos, tables/y_pres2d.geos, tables/zlin.geos }"
+      voxelFile="tables/pressure_vertical_25.geos"
       interpolation="linear"/>
 
   </Functions>
