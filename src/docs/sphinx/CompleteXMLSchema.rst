@@ -8,6 +8,13 @@ Input Schema Definitions
 :download:`XML Schema <../../coreComponents/schema/docs/../schema.xsd>`
 
 
+.. _XML_AcousticFirstOrderSEM:
+
+Element: AcousticFirstOrderSEM
+==============================
+.. include:: ../../coreComponents/schema/docs/AcousticFirstOrderSEM.rst
+
+
 .. _XML_AcousticSEM:
 
 Element: AcousticSEM
@@ -1151,6 +1158,13 @@ Element: quartz
 ********************************
 Datastructure Definitions
 ********************************
+
+
+.. _DATASTRUCTURE_AcousticFirstOrderSEM:
+
+Datastructure: AcousticFirstOrderSEM
+====================================
+.. include:: ../../coreComponents/schema/docs/AcousticFirstOrderSEM_other.rst
 
 
 .. _DATASTRUCTURE_AcousticSEM:
