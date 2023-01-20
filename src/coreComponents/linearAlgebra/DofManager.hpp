@@ -63,16 +63,17 @@ public:
   /**
    * @brief Describes field support on a single mesh body/level
    */
-  struct Regions
+  struct FieldSupport
   {
+public:
     /// name of the mesh body
     string meshBodyName;
     /// name of the mesh level
     string meshLevelName;
     /// list of the region names
-    std::vector< string > regionNames;
+    std::set< string > regionNames;
 
-    bool add( Regions const & input )
+    bool add( FieldSupport const & input )
     {
       bool added = false;
       if( meshBodyName  == input.meshBodyName && meshLevelName == input.meshLevelName )
@@ -81,8 +82,7 @@ public:
         {
           if( std::find( regionNames.begin(), regionNames.end(), inputRegionName ) == regionNames.end() )
           {
-            regionNames.push_back( inputRegionName );
-            std::sort( regionNames.begin(), regionNames.end() );
+            regionNames.insert( inputRegionName );
           }
         }
         added = true;
@@ -162,12 +162,12 @@ public:
   void addField( string const & fieldName,
                  FieldLocation location,
                  integer components,
-                 std::vector< Regions > const & regions = {} );
+                 std::vector< FieldSupport > const & regions = {} );
 
   /**
-   * @copydoc addField(string const &, FieldLocation, integer, std::vector< Regions > const &)
+   * @copydoc addField(string const &, FieldLocation, integer, std::vector< FieldSupport > const &)
    *
-   * Overload for  map< string, array1d< string > > bodyRegions used by physics solvers.
+   * Overload for  map< string, array1d< string > > bodyFieldSupport used by physics solvers.
    */
   void addField( string const & fieldName,
                  FieldLocation location,
@@ -200,10 +200,10 @@ public:
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
                     Connector connectivity,
-                    std::vector< Regions > const & regions = {},
+                    std::vector< FieldSupport > const & regions = {},
                     bool symmetric = true );
   /**
-   * @copydoc addCoupling( string const & ,string const & ,Connector , std::vector< Regions > const & , bool  );
+   * @copydoc addCoupling( string const & ,string const & ,Connector , std::vector< FieldSupport > const & , bool  );
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
@@ -464,7 +464,7 @@ private:
     string name;                   ///< field name
     string key;                    ///< string key for index array
     string docstring;              ///< documentation string
-    std::vector< Regions > support;///< list of mesh body/level/region supports
+    std::vector< FieldSupport > support;///< list of mesh body/level/region supports
     FieldLocation location;             ///< support location
     integer numComponents = 1;     ///< number of vector components
     localIndex numLocalDof = 0;    ///< number of local rows
@@ -480,7 +480,7 @@ private:
   struct CouplingDescription
   {
     Connector connector = Connector::None;  //!< geometric object defining dof connections
-    std::vector< Regions > support; //!< list of region names
+    std::vector< FieldSupport > support; //!< list of region names
     FluxApproximationBase const * stencils = nullptr; //!< pointer to flux stencils for stencil based connections
   };
 

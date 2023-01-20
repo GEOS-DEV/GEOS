@@ -263,7 +263,7 @@ struct MeshVisitor< LOC, LOC, VISIT_GHOSTS >
 {
   template< typename POLICY, typename ... SUBREGIONTYPES, typename LAMBDA >
   static void visit( MeshLevel const & meshLevel,
-                     std::vector< string > const & regions,
+                     std::set< string > const & regions,
                      LAMBDA && lambda )
   {
     // derive some useful type aliases
@@ -343,7 +343,7 @@ struct MeshVisitor
 {
   template< typename POLICY, typename ... SUBREGIONTYPES, typename LAMBDA >
   static void visit( MeshLevel const & meshLevel,
-                     std::vector< string > const & regions,
+                     std::set< string > const & regions,
                      LAMBDA && lambda )
   {
     // derive some useful type aliases
@@ -386,7 +386,7 @@ struct MeshVisitor< LOC, FieldLocation::Elem, VISIT_GHOSTS >
 {
   template< typename POLICY, typename ... SUBREGIONTYPES, typename LAMBDA >
   static void visit( MeshLevel const & meshLevel,
-                     std::vector< string > const & regions,
+                     std::set< string > const & regions,
                      LAMBDA && lambda )
   {
     // derive some useful type aliases
@@ -443,7 +443,7 @@ struct MeshVisitor< FieldLocation::Elem, CONN_LOC, VISIT_GHOSTS >
 {
   template< typename POLICY, typename ... SUBREGIONTYPES, typename LAMBDA >
   static void visit( MeshLevel const & meshLevel,
-                     std::vector< string > const & regions,
+                     std::set< string > const & regions,
                      LAMBDA && lambda )
   {
     meshLevel.getElemManager().
@@ -488,7 +488,7 @@ struct MeshVisitor< FieldLocation::Elem, FieldLocation::Elem, VISIT_GHOSTS >
 {
   template< typename POLICY, typename ... SUBREGIONTYPES, typename LAMBDA >
   static void visit( MeshLevel const & meshLevel,
-                     std::vector< string > const & regions,
+                     std::set< string > const & regions,
                      LAMBDA && lambda )
   {
     meshLevel.getElemManager().
@@ -537,7 +537,7 @@ struct MeshVisitor< FieldLocation::Elem, FieldLocation::Elem, VISIT_GHOSTS >
 template< FieldLocation LOC, FieldLocation CONN_LOC, bool VISIT_GHOSTS,
           typename POLICY, typename ... SUBREGIONTYPES, typename LAMBDA >
 void forMeshLocation( MeshLevel const & mesh,
-                      std::vector< string > const & regions,
+                      std::set< string > const & regions,
                       LAMBDA && lambda )
 {
   MeshVisitor< LOC, CONN_LOC, VISIT_GHOSTS >::
@@ -552,7 +552,7 @@ void forMeshLocation( MeshLevel const & mesh,
 template< FieldLocation LOC, bool VISIT_GHOSTS,
           typename POLICY, typename ... SUBREGIONTYPES, typename LAMBDA >
 void forMeshLocation( MeshLevel const & mesh,
-                      std::vector< string > const & regions,
+                      std::set< string > const & regions,
                       LAMBDA && lambda )
 {
   forMeshLocation< LOC, LOC, VISIT_GHOSTS, POLICY, SUBREGIONTYPES... >( mesh,
@@ -574,7 +574,7 @@ void forMeshLocation( MeshLevel const & mesh,
  */
 template< FieldLocation LOC, bool VISIT_GHOSTS, typename ... SUBREGIONTYPES >
 localIndex countMeshObjects( MeshLevel const & mesh,
-                             std::vector< string > const & regions )
+                             std::set< string > const & regions )
 {
   using countPolicy = parallelHostPolicy;
   RAJA::ReduceSum< ReducePolicy< countPolicy >, localIndex > count( 0 );
@@ -597,7 +597,7 @@ localIndex countMeshObjects( MeshLevel const & mesh,
 template< bool VISIT_GHOSTS, typename ... SUBREGIONTYPES >
 localIndex countMeshObjects( FieldLocation const location,
                              MeshLevel const & mesh,
-                             std::vector< string > const & regions )
+                             std::set< string > const & regions )
 {
   localIndex count = 0;
   bool const success = LocationSwitch( location, [&]( auto const loc )
@@ -627,7 +627,7 @@ struct ArrayHelper
   create( MeshLevel & mesh,
           string const & key,
           string const & description,
-          std::vector< string > const & GEOSX_UNUSED_PARAM( regions ) )
+          std::set< string > const & GEOSX_UNUSED_PARAM( regions ) )
   {
     ObjectManagerBase & baseManager = getObjectManager< LOC >( mesh );
     baseManager.registerWrapper< ArrayType >( key ).
@@ -656,7 +656,7 @@ struct ArrayHelper
   static void
   remove( MeshLevel & mesh,
           string const & key,
-          std::vector< string > const & GEOSX_UNUSED_PARAM( regions ) )
+          std::set< string > const & GEOSX_UNUSED_PARAM( regions ) )
   {
     getObjectManager< LOC >( mesh ).deregisterWrapper( key );
   }
@@ -678,7 +678,7 @@ struct ArrayHelper< T, FieldLocation::Elem >
   create( MeshLevel & mesh,
           string const & key,
           string const & description,
-          std::vector< string > const & regions )
+          std::set< string > const & regions )
   {
     mesh.getElemManager().template forElementSubRegions< SUBREGIONTYPES... >( regions,
                                                                               [&]( localIndex const, ElementSubRegionBase & subRegion )
@@ -716,7 +716,7 @@ struct ArrayHelper< T, FieldLocation::Elem >
   static void
   remove( MeshLevel & mesh,
           string const & key,
-          std::vector< string > const & regions )
+          std::set< string > const & regions )
   {
     mesh.getElemManager().template forElementSubRegions< SUBREGIONTYPES... >( regions,
                                                                               [&]( localIndex const, ElementSubRegionBase & subRegion )

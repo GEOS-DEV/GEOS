@@ -1735,7 +1735,7 @@ void importFieldOnCellElementSubRegion( integer const logLevel,
 
       // Now that we know that the subRegion has this wrapper, we can add the wrapperName to the list of fields to
       // synchronize
-      fieldsToBeSync.addElementFields( {wrapperName}, {region.getName()} );
+      fieldsToBeSync.addElementFields( {wrapperName}, std::vector< string >( {region.getName()} ) );
 
       WrapperBase & wrapper = subRegion.getWrapperBase( wrapperName );
 

@@ -211,7 +211,7 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
       fieldsToBeSync.addElementFields( { flow::pressure::key(),
                                          flow::pressure_n::key(),
                                          SurfaceElementSubRegion::viewKeyStruct::elementApertureString() },
-                                       { m_surfaceGenerator->getFractureRegionName() } );
+                                       std::vector< string >( { m_surfaceGenerator->getFractureRegionName() } ) );
 
       fieldsToBeSync.addFields( FieldLocation::Node,
                                 { solidMechanics::incrementalDisplacement::key(),

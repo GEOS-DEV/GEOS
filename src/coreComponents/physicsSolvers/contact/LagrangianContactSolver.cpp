@@ -248,7 +248,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
     // Need a synchronization of deltaTraction as will be used in AssembleStabilization
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( { contact::deltaTraction::key() },
-                                     { getFractureRegionName() } );
+                                     std::vector< string >( { getFractureRegionName() } ) );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
@@ -1707,7 +1707,7 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
     fieldsToBeSync.addElementFields( { contact::traction::key(),
                                        contact::deltaTraction::key(),
                                        contact::dispJump::key() },
-                                     { getFractureRegionName() } );
+                                     std::vector< string >( { getFractureRegionName() } ) );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
