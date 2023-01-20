@@ -23,7 +23,6 @@
 #include "mesh/generators/VTKUtilities.hpp"
 
 #include <vtkDataSet.h>
-#include <string>
 
 namespace geosx
 {
@@ -88,7 +87,7 @@ public:
    */
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  virtual void importFieldsOnArray( string const regionName, string const meshFieldNam, bool isMaterialField, WrapperBase & wrapper ) const override;
+  void importFieldsOnArray( string const & regionName, string const & meshFieldNam, bool isMaterialField, WrapperBase & wrapper ) const override;
 
   virtual void freeResources() override;
 

@@ -21,7 +21,7 @@
 #include "common/TimingMacros.hpp"
 
 #include <unordered_set>
-#include <typeinfo>
+
 namespace geosx
 {
 
@@ -111,7 +111,8 @@ void MeshManager::importFields( DomainPartition & domain )
     FieldIdentifiers fieldsToBeSync;
     std::map< string, string > fieldNamesMapping = generator.getFieldsMapping();
 
-    ElementRegionManager & elemManager = domain.getMeshBody( generator.getName() ).getBaseDiscretization().getElemManager();
+    MeshLevel & meshLevel = domain.getMeshBody( generator.getName() ).getBaseDiscretization();
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
     elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex,
                                                                            localIndex,
                                                                            ElementRegionBase const & region,
@@ -146,10 +147,7 @@ void MeshManager::importFields( DomainPartition & domain )
       }
     } );
 
-    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                         domain.getMeshBody( generator.getName() ).getBaseDiscretization(),
-                                                         domain.getNeighbors(),
-                                                         false );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, meshLevel, domain.getNeighbors(), false );
     generator.freeResources();
   } );
 }

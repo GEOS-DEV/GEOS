@@ -181,9 +181,6 @@ public:
    * @return True is the MeshBody exists in the domain.
    */
   template< typename KEY_TYPE >
-// TODO uncomment these to disallow using a non string or char const * key
-//            std::enable_if_t< std::is_same< T, string >::value ||
-//                              std::is_same< T, const char * >::value, bool > = false >
   bool hasMeshBody( KEY_TYPE const & key ) const
   { return getMeshBodies().hasGroup< MeshBody >( key ); }
 
