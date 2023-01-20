@@ -26,6 +26,8 @@
 #include "fesapi/resqml2/AbstractValuesProperty.h"
 #include "fesapi/resqml2/SubRepresentation.h"
 
+#include <vtkUnstructuredGridWriter.h>
+
 namespace geosx
 {
 
@@ -284,6 +286,12 @@ RESQMLMeshGenerator::loadMesh()
     loadedMesh = loadSurfaces( loadedMesh );
 
     GEOSX_LOG_LEVEL_RANK_0( 2, "  ... end" );
+
+    GEOSX_LOG_LEVEL_RANK_0( 2, "  temporary write" );
+    vtkNew<vtkUnstructuredGridWriter> writer;
+    writer->SetFileName("tmp_output.vtu");
+    writer->SetInputData(loadedMesh);
+    writer->Write();
 
     return loadedMesh;
   }
