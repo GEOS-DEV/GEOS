@@ -1,8 +1,7 @@
 from collections import deque, defaultdict
 from dataclasses import dataclass
-import functools
 import logging
-from typing import List, Tuple, Iterator, Sequence, Iterable
+from typing import List, Tuple, Iterator, Sequence, Iterable, FrozenSet
 
 import numpy
 
@@ -19,7 +18,8 @@ from vtkmodules.vtkCommonDataModel import (
 import networkx
 
 
-from . import vtk_utils
+# from . import vtk_utils
+import vtk_utils
 
 
 @dataclass(frozen=True)
@@ -70,7 +70,7 @@ def parse_face_stream(ids: vtkIdList):  # TODO move to FaceStream.build_from_vtk
     except StopIteration:
         pass
     assert len(result) == num_faces
-    assert functools.reduce(lambda a, b: a + len(b), result, 0) + len(result) + 1 == ids.GetNumberOfIds()
+    assert sum(map(len, result)) + len(result) + 1 == ids.GetNumberOfIds()
 
     return tuple(result)
 
@@ -90,6 +90,21 @@ class FaceStream:
     def face_nodes(self) -> Iterable[Sequence[int]]:
         return iter(self.__data)
 
+    @property
+    def num_faces(self) -> int:
+        return len(list(self.face_nodes)) # TODO dirty
+
+    @property
+    def support_point_ids(self) -> Iterable[int]:
+        tmp = []
+        for nodes in self.face_nodes:
+            tmp += nodes
+        return frozenset(tmp)
+
+    @property
+    def num_support_points(self) -> int:
+        return len(self.support_point_ids)
+
     def __getitem__(self, face_index):
         return self.__data[face_index]
 
@@ -100,6 +115,11 @@ class FaceStream:
         return FaceStream(tuple(result))
 
     def dump(self) -> Sequence[int]:
+        """
+        Returns the face stream awaited by vtk, but in a python container.
+        The content can be used, once converted to a vtkIdList, to define another polyhedron in vtk.
+        :return: The face stream in a python container.
+        """
         result = [len(self.__data)]
         for face_nodes in self.__data:
             result.append(len(face_nodes))
@@ -126,7 +146,7 @@ def build_cell_graph(face_stream: FaceStream, add_compatibility=False) -> networ
     # TODO check that there is only one link (edge) between two faces.
     # Computing the graph degree for validation
     degrees = defaultdict(int)
-    for face_indices in edges_to_face_indices.values():
+    for face_indices in edges_to_face_indices.values():  # TODO extract as a dedicated check?
         for face_index in face_indices:
             degrees[face_index] += 1
     for face_index, degree in degrees.items():

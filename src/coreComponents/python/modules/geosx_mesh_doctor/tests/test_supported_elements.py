@@ -15,7 +15,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 from checks.supported_elements import Options, check, __check
-from checks.vtk_polyhedron import parse_face_stream, to_vtk_id_list
+from checks.vtk_polyhedron import parse_face_stream, to_vtk_id_list, build_cell_graph, FaceStream
 
 
 @pytest.mark.parametrize("base_name",
@@ -120,3 +120,6 @@ def test_parse_face_stream() -> None:
         (19, 18, 17, 16, 15)
     )
     assert result == expected
+    face_stream = FaceStream.build_from_vtk_id_list(faces)
+    assert face_stream.num_faces == 12
+    assert face_stream.num_support_points == 20
