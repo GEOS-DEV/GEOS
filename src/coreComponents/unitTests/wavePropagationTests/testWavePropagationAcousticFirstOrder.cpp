@@ -172,7 +172,7 @@ protected:
   }
 
   static real64 constexpr time = 0.0;
-  static real64 constexpr dt = 1e-1;
+  static real64 constexpr dt = 5e-2;
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
@@ -189,14 +189,14 @@ TEST_F( AcousticFirstOrderWaveEquationSEMTest, SeismoTrace )
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
   propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticFirstOrderWaveEquationSEM >( "acousticFirstOrderSolver" );
   real64 time_n = time;
-  // run for 1s (10 steps)
-  for( int i=0; i<10; i++ )
+  // run for 1s (20 steps)
+  for( int i=0; i<20; i++ )
   {
     propagator->solverStep( time_n, dt, i, domain );
     time_n += dt;
   }
   // cleanup (triggers calculation of the remaining seismograms data points)
-  propagator->cleanup( 1.0, 10, 0, 0, domain );
+  propagator->cleanup( 1.0, 20, 0, 0, domain );
 
   // retrieve seismo
   arrayView2d< real32 > const pReceivers = propagator->getReference< array2d< real32 > >( AcousticFirstOrderWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
@@ -225,7 +225,7 @@ TEST_F( AcousticFirstOrderWaveEquationSEMTest, SeismoTrace )
   // check seismo content. The pressure and velocity values cannot be directly checked as the problem is too small.
   // Since the basis is linear, check that the seismograms are nonzero (for t>0) and the seismogram at the center is equal
   // to the average of the others.
-  for( int i=0; i<11; i++ )
+  for( int i=0; i<21; i++ )
   {
     if( i > 0 )
     {
