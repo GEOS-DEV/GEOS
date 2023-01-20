@@ -710,7 +710,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
          << std::endl;
   }
 
-  // Set particle masses based on their volume and density. Set deformation gradient to identity;
+  // Initialize particle fields that weren't intialized by reading the particle input file
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     // Getters
@@ -740,7 +740,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       }
     }
 
-    // Pull density from constitutive model, set particle masses and small mass threshold
+    // Pull initial density from constitutive model, set particle masses and small mass threshold
     real64 localMinMass = 0.0;
     real64 globalMinMass;
     for(int p=0; p<subRegion.size(); p++)
@@ -788,17 +788,12 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
-    int subregionMaxGroupNumber = 0;
     for(int p=0; p<subRegion.size(); p++)
     {
-      if(particleGroup[p] > subregionMaxGroupNumber)
+      if(particleGroup[p] > maxLocalGroupNumber)
       {
-        subregionMaxGroupNumber = particleGroup[p];
+        maxLocalGroupNumber = particleGroup[p];
       }
-    }
-    if( subregionMaxGroupNumber > maxLocalGroupNumber)
-    {
-      maxLocalGroupNumber = subregionMaxGroupNumber;
     }
   } );
   MPI_Allreduce( &maxLocalGroupNumber,
@@ -830,7 +825,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   gridContactForce.resize( numNodes, m_numVelocityFields, 3 );
   gridSurfaceNormal.resize( numNodes, m_numVelocityFields, 3 );
   gridMaterialPosition.resize( numNodes, m_numVelocityFields, 3 );
-
 }
 
 real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
@@ -1198,8 +1192,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
         // smooth-step interpolation with cosine, zero endpoint velocity
         if( m_fTableInterpType == 1 )
         {
-          Fii_new = m_fTable[fInterval][i + 1] - 0.5 * ( m_fTable[fInterval + 1][i + 1] - m_fTable[fInterval][i + 1] ) * ( cos(
-              3.141592653589793 * timePast / timeInterval ) - 1.0 );
+          Fii_new = m_fTable[fInterval][i + 1] - 0.5 * ( m_fTable[fInterval + 1][i + 1] - m_fTable[fInterval][i + 1] ) * ( cos( 3.141592653589793 * timePast / timeInterval ) - 1.0 );
         }
         // smooth-step interpolation with 5th order polynomial, zero endpoint velocity and acceleration
         else if( m_fTableInterpType == 2 )
@@ -1304,7 +1297,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                weights,       // output
                                gradWeights ); // output
 
-      // Particle-to-grid map
+      // Grid-to-particle map
       for(int g=0; g<numNodesMappedTo; g++)
       {
         int mappedNode = nodeIDs[g];
