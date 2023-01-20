@@ -52,13 +52,6 @@ public:
 
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  /**
-   * @brief import fields from the mesh  on the array accessible via the given wrapper.
-   * @param cellBlockName name of the cell block to copy data from.
-   * @param meshFieldName name of the field in the meshd
-   * @param isMaterialField Indicate if we want to import material or regular fields
-   * @param wrapper Wrapper to access the array
-   */
   void importFieldsOnArray( string const cellBlockName, string const meshFieldName, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const override
   {
     GEOSX_UNUSED_VAR( cellBlockName );
