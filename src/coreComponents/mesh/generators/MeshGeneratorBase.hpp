@@ -85,7 +85,7 @@ public:
    * @param isMaterialField Indicate if we want to import material or regular fields
    * @param wrapper Wrapper to access the array
    */
-  virtual void importFieldsOnArray( string const cellBlockName, string const meshFieldName, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const = 0;
+  virtual void importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const = 0;
 
   /**
    * @brief Free internal resources associated with mesh/data import.
