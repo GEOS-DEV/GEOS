@@ -27,7 +27,7 @@ namespace geosx
 
 struct WaveSolverUtils
 {
-  
+
   GEOSX_HOST_DEVICE
   static real32 evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
   {
