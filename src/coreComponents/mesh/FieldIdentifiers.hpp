@@ -70,17 +70,7 @@ public:
       addFields( fieldNames, generateKey( regionName ) );
     }
   }
-/**
- * @brief
- *
- * @param fieldNames array1d of names of the element-based fields to be added to the map.
- * @param regionNames vector of the regions on which these fields exist.
- */
-  void addElementFields( std::vector< string > const & fieldNames, arrayView1d< string const > const & regionNames )
-  {
-    std::vector< string > regions( regionNames.begin(), regionNames.end());
-    addElementFields( fieldNames, regions );
-  }
+
 /**
  * @brief Get the Fields object which is the map containing the fields existing for each location.
  *
