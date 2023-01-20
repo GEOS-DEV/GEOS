@@ -25,6 +25,7 @@ set( CMAKE_ENABLE_EXPORTS ON )
 option( ENABLE_BENCHMARKS "Enables benchmarks" ON )
 include( cmake/blt/SetupBLT.cmake )
 set( BLT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cmake/blt/ )
+# set( CMAKE_HIP_ARCHITECTURES "gfx90a" CACHE STRING "" FORCE )
 
 # use, i.e. don't skip the full RPATH for the build tree
 set(CMAKE_SKIP_BUILD_RPATH  FALSE)
