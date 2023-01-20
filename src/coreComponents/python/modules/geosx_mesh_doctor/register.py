@@ -5,6 +5,7 @@ from parsing import (
     CheckHelper,
     COLLOCATES_NODES,
     ELEMENT_VOLUMES,
+    FIX_ELEMENTS_ORDERINGS,
     GENERATE_FRACTURES,
     GENERATE_GLOBAL_IDS,
     NON_CONFORMAL,
@@ -124,6 +125,20 @@ def __get_supported_elements_check():
 
 __HELPERS[SUPPORTED_ELEMENTS] = __get_supported_elements_check_helper
 __CHECKS[SUPPORTED_ELEMENTS] = __get_supported_elements_check
+
+
+def __get_fix_elements_orderings_helper() -> CheckHelper:
+    import parsing.fix_elements_orderings_parsing
+    return __build_check_helper(parsing.fix_elements_orderings_parsing)
+
+
+def __get_fix_elements_orderings_check():
+    from checks import fix_elements_orderings
+    return fix_elements_orderings.check
+
+
+__HELPERS[FIX_ELEMENTS_ORDERINGS] = __get_fix_elements_orderings_helper
+__CHECKS[FIX_ELEMENTS_ORDERINGS] = __get_fix_elements_orderings_check
 
 
 # TODO use importlib

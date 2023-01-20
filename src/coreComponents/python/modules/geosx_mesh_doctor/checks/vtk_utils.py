@@ -33,7 +33,7 @@ def read_mesh(vtk_input_file: str) -> vtkUnstructuredGrid:
     sys.exit(1)
 
 
-def write_mesh(mesh: vtkUnstructuredGrid, output: str) -> None:
+def write_mesh(mesh: vtkUnstructuredGrid, output: str) -> int:
     """
     Writes the mesh to disk.
     Nothing will be done if the file already exists.
@@ -43,9 +43,9 @@ def write_mesh(mesh: vtkUnstructuredGrid, output: str) -> None:
     """
     if os.path.exists(output):
         logging.error(f"File \"{output}\" already exists, nothing done.")
-        return
+        return 1
     writer = vtkUnstructuredGridWriter()
     writer.SetFileName(output)
     writer.SetInputData(mesh)
-    logging.info(f"Writing mesh into file {output}")
-    writer.Write()
+    logging.info(f"Writing mesh into file \"{output}\"")
+    return 0 if writer.Write() else 2  # the Write member function return 1 in case of success, 0 otherwise.

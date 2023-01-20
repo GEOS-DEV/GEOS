@@ -1,0 +1,81 @@
+import logging
+import textwrap
+from typing import Dict
+
+from vtkmodules.vtkCommonDataModel import (
+    VTK_HEXAGONAL_PRISM,
+    VTK_HEXAHEDRON,
+    VTK_PENTAGONAL_PRISM,
+    VTK_PYRAMID,
+    VTK_TETRA,
+    VTK_VOXEL,
+    VTK_WEDGE,
+)
+
+from checks.fix_elements_orderings import Options, Result
+
+from . import cli_parsing, FIX_ELEMENTS_ORDERINGS
+
+__OUTPUT_FILE = "output"
+
+__CELL_TYPE_MAPPING = {  # TODO deduplicate w.r.t. supported_elements
+    "Hexahedron": VTK_HEXAHEDRON,
+    "Prism5": VTK_PENTAGONAL_PRISM,
+    "Prism6": VTK_HEXAGONAL_PRISM,
+    "Pyramid": VTK_PYRAMID,
+    "Tetrahedron": VTK_TETRA,
+    "Voxel": VTK_VOXEL,
+    "Wedge": VTK_WEDGE,
+}
+
+__ALL_KEYWORDS = {
+    __OUTPUT_FILE, *__CELL_TYPE_MAPPING.keys()
+}
+
+
+def get_help():
+    msg = f"""\
+    Reorders the support nodes for the given cell types.
+    Supported cell types are '{", ".join(__CELL_TYPE_MAPPING.keys())}'.
+        {__OUTPUT_FILE} [string]: The vtk output destination.
+    """
+    return textwrap.dedent(msg)
+
+
+def parse_cli_options(options_str: str) -> Options:
+    """
+    From the parsed cli options, return the converted options for self intersecting elements check.
+    :param options_str: Parsed cli options.
+    :return: Options instance.
+    """
+    cell_type_support_size = {
+        VTK_HEXAHEDRON: 8,
+        VTK_PENTAGONAL_PRISM: 10,
+        VTK_HEXAGONAL_PRISM: 12,
+        VTK_PYRAMID: 5,
+        VTK_TETRA: 4,
+        VTK_VOXEL: 8,
+        VTK_WEDGE: 6,
+    }
+    options: Dict[str, str] = cli_parsing.parse_cli_option(options_str)
+    cli_parsing.validate_cli_options(FIX_ELEMENTS_ORDERINGS, __ALL_KEYWORDS, options)
+    cell_type_to_ordering = {}
+    for key, vtk_key in __CELL_TYPE_MAPPING.items():
+        raw_mapping = options.get(key)
+        if raw_mapping:
+            tmp = tuple(map(int, raw_mapping.split(",")))
+            assert set(tmp) == set(range(cell_type_support_size[vtk_key]))
+            cell_type_to_ordering[vtk_key] = tmp
+    return Options(output=options[__OUTPUT_FILE],
+                   cell_type_to_ordering=cell_type_to_ordering)
+
+
+def display_results(options: Options, result: Result):
+    if result.output:
+        logging.info(f"New mesh was written in file '{result.output}'")
+        if result.unchanged_cell_types:
+            logging.info(f"Those vtk types were not reordered: [{', '.join(map(str, result.unchanged_cell_types))}].")
+        else:
+            logging.info("All the cells of the mesh were reordered.")
+    else:
+        logging.info("No output file was written.")
