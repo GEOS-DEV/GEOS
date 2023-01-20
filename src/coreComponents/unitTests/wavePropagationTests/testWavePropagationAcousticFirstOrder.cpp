@@ -44,7 +44,7 @@ char const * xmlInput =
   "      cflFactor=\"0.25\"\n"
   "      discretization=\"FE1\"\n"
   "      targetRegions=\"{ Region }\"\n"
-  "      sourceCoordinates=\"{ { 50, 50, 50 } }\"\n"
+  "      sourceCoordinates=\"{ { 30, 30, 30 } }\"\n"
   "      timeSourceFrequency=\"2\"\n"
   "      receiverCoordinates=\"{ { 0.1, 0.1, 0.1 }, { 0.1, 0.1, 99.9 }, { 0.1, 99.9, 0.1 }, { 0.1, 99.9, 99.9 },\n"
   "                              { 99.9, 0.1, 0.1 }, { 99.9, 0.1, 99.9 }, { 99.9, 99.9, 0.1 }, { 99.9, 99.9, 99.9 },\n"
