@@ -144,7 +144,7 @@ char const * xmlInput =
   "      name=\"waveFieldUxCollection\"\n"
   "      objectPath=\"mesh/FE1/ElementRegions/Region/cb\"\n"
   "      fieldName=\"velocity_x\"/>\n"
-   "    <PackCollection\n"
+  "    <PackCollection\n"
   "      name=\"waveFieldUyCollection\"\n"
   "      objectPath=\"mesh/FE1/ElementRegions/Region/cb\"\n"
   "      fieldName=\"velocity_y\"/>\n"
