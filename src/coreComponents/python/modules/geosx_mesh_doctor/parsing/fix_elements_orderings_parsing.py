@@ -72,7 +72,7 @@ def parse_cli_options(options_str: str) -> Options:
 
 def display_results(options: Options, result: Result):
     if result.output:
-        logging.info(f"New mesh was written in file '{result.output}'")
+        logging.info(f"New mesh was written to file '{result.output}'")
         if result.unchanged_cell_types:
             logging.info(f"Those vtk types were not reordered: [{', '.join(map(str, result.unchanged_cell_types))}].")
         else:
