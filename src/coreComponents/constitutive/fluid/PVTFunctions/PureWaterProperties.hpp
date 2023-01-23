@@ -66,6 +66,8 @@ struct PureWaterProperties
   TableFunction const * makeSaturationPressureTable( string const & functionName,
                                                      FunctionManager & functionManager );
 
+  /// Water molecular weight in kg/mol
+  static constexpr real64 MOLECULAR_WEIGHT = 18e-3;
 };
 
 } // end namespace PVTProps
