@@ -149,7 +149,7 @@ private:
     constexpr static char const * titleInFileString() { return "titleInFile"; }
     constexpr static char const * uuidsRegionsToImportString() { return "UUIDsRegionsToImport"; }
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
-    constexpr static char const * uuidsFieldsToImportString() { return "UUIDsfieldsToImport"; }
+    constexpr static char const * uuidsFieldsToImportString() { return "UUIDsFieldsToImport"; }
     constexpr static char const * uuidsSurfacesToImportString() { return "UUIDsSurfacesToImport"; }
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }

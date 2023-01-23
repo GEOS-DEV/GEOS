@@ -288,9 +288,9 @@ RESQMLMeshGenerator::loadMesh()
     GEOSX_LOG_LEVEL_RANK_0( 2, "  ... end" );
 
     GEOSX_LOG_LEVEL_RANK_0( 2, "  temporary write" );
-    vtkNew<vtkUnstructuredGridWriter> writer;
-    writer->SetFileName("tmp_output.vtu");
-    writer->SetInputData(loadedMesh);
+    vtkNew< vtkUnstructuredGridWriter > writer;
+    writer->SetFileName( "tmp_output.vtu" );
+    writer->SetInputData( loadedMesh );
     writer->Write();
 
     return loadedMesh;
