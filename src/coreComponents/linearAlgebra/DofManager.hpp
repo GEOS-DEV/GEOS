@@ -72,11 +72,11 @@ public:
     string meshLevelName;
     /// list of the region names
     std::set< string > regionNames;
-    
+
     /**
      * @brief add the regionNames contained in \p input if the meshBodyName and the meshLevelName of input match the
      * ones of this obj
-     * 
+     *
      * @param input a FieldSupport descriptor
      * @return true regionNames were added
      * @return false regionNames were not added
