@@ -127,13 +127,6 @@ char const * xmlInput =
   "      fieldName=\"mediumDensity\"\n"
   "      scale=\"1\"\n"
   "      setNames=\"{ all }\"/>\n"
-
-  "    <FieldSpecification\n"
-  "      name=\"zposFreeSurface\"\n"
-  "      objectPath=\"mesh/FE1/faceManager\"\n"
-  "      fieldName=\"FreeSurface\"\n"
-  "      scale=\"0.0\"\n"
-  "      setNames=\"{ zpos }\"/>\n"
   "  </FieldSpecifications>\n"
   "  <Tasks>\n"
   "    <PackCollection\n"
