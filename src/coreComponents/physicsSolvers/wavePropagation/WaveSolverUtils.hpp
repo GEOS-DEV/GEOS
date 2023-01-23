@@ -78,7 +78,7 @@ struct WaveSolverUtils
   {
     real64 const time_np1 = time_n + dt;
 
-    real32 const a1 = (std::abs( dt ) < 1e-8) ? 1.0 : (time_np1 - timeSeismo)/dt;
+    real32 const a1 = (LvArray::math::abs( dt ) < 1e-8) ? 1.0 : (time_np1 - timeSeismo)/dt;
     real32 const a2 = 1.0 - a1;
 
     if( nsamplesSeismoTrace > 0 )

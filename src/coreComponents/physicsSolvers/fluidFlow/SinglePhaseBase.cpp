@@ -108,6 +108,11 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
     FaceManager & faceManager = mesh.getFaceManager();
     {
       faceManager.registerField< facePressure >( getName() );
+
+      if( m_isThermal )
+      {
+        faceManager.registerField< faceTemperature >( getName() );
+      }
     }
   } );
 }

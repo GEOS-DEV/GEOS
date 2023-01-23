@@ -61,7 +61,6 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 4;
 
-
   virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override
   {}
 

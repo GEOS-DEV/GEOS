@@ -123,7 +123,6 @@ void SolidMechanicsLagrangianFEM::postProcessInput()
   linParams.isSymmetric = true;
   linParams.dofsPerNode = 3;
   linParams.amg.separateComponents = true;
-
 }
 
 SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
