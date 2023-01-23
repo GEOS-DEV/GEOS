@@ -244,7 +244,7 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
   {
     FieldIdentifiers fieldsToBeSync;
 
-    fieldsToBeSync.addElementFields( { fields::contact::fractureState::key() }, std::vector< string >( { getFractureRegionName() } ) );
+    fieldsToBeSync.addElementFields( { fields::contact::fractureState::key() }, { getFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

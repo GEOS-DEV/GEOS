@@ -673,7 +673,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
 
     fieldsToBeSync.addElementFields( { contact::dispJump::key(),
                                        contact::deltaDispJump::key() },
-                                     std::vector< string >( { getFractureRegionName() } ) );
+                                      { getFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
