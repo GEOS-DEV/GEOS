@@ -81,7 +81,7 @@ public:
         regionNames.insert( input.regionNames.begin(), input.regionNames.end() );
         added = true;
       }
-      
+
       return added;
     }
   };
