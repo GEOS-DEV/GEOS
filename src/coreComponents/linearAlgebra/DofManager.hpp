@@ -78,13 +78,7 @@ public:
       bool added = false;
       if( meshBodyName  == input.meshBodyName && meshLevelName == input.meshLevelName )
       {
-        for( auto const & inputRegionName : input.regionNames )
-        {
-          if( std::find( regionNames.begin(), regionNames.end(), inputRegionName ) == regionNames.end() )
-          {
-            regionNames.insert( inputRegionName );
-          }
-        }
+        regionNames.insert( input.regionNames.begin(), input.regionNames.end() );
         added = true;
       }
 

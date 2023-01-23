@@ -62,7 +62,7 @@ public:
  * @param fieldNames vector of names of the  element-based fields to be added to the map.
  * @param regionNames vector of the regions on which these fields exist.
  */
-  template< typename T >
+  template< typename T = std::vector< string > >
   void addElementFields( std::vector< string > const & fieldNames, T const & regionNames )
   {
     for( auto const & regionName : regionNames )
