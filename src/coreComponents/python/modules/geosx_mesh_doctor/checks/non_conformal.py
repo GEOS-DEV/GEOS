@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import itertools
 import logging
 import math
-from typing import List, Tuple, Dict, FrozenSet
+from typing import List, Tuple, Dict, FrozenSet, Iterator
 import numpy
 import scipy.optimize
 
@@ -61,7 +61,7 @@ class Result:
     non_conformal_cells: List[Tuple[int, int]]
 
 
-def get_cell_field_by_name(mesh, field_name):
+def get_cell_field_by_name(mesh, field_name):  # TODO move to utilities
     cd = mesh.GetCellData()
     for i in range(cd.GetNumberOfArrays()):
         if cd.GetArrayName(i) == field_name:
@@ -87,7 +87,7 @@ def distance_between_cells(x: Tuple[float, float, float, float], i: int, j: int,
     return numpy.linalg.norm(pj - pi)
 
 
-def __build_boundary_mesh(mesh, options: Options) -> Result:
+def build_boundary_mesh(mesh, consistency=True, flip_normals=True) -> Result:  # TODO Move to the BoundaryMesh class # TODO check the flip normals...
     ORIGINAL_POINTS = "ORIGINAL_POINTS"
     ORIGINAL_CELLS = "ORIGINAL_CELLS"
 
@@ -113,8 +113,8 @@ def __build_boundary_mesh(mesh, options: Options) -> Result:
         cell_centers.append(numpy.array(cell_centers_mesh.GetPoint(cell_centers_mesh.GetCell(ic).GetPointId(0))))
 
     n = vtkPolyDataNormals()
-    n.ConsistencyOff()  # TODO review the options!
-    n.FlipNormalsOn()
+    n.SetConsistency(consistency)  # TODO review the options!
+    n.SetFlipNormals(flip_normals)  # TODO review the options!
     n.AutoOrientNormalsOff()
     n.ComputeCellNormalsOn()
     n.SetInputData(boundary_mesh)
@@ -128,18 +128,149 @@ def __build_boundary_mesh(mesh, options: Options) -> Result:
     return boundary_mesh, normals, cell_centers
 
 
+class BoundaryMesh:
+    def __init__(self, mesh):
+        self.mesh = mesh
+        self.boundary_mesh, self.__normals, self.cell_centers = build_boundary_mesh(mesh)
+        self.original_cells = get_cell_field_by_name(self.boundary_mesh, "ORIGINAL_CELLS")
+        assert self.original_cells
+        cells_to_reorient = map(self.original_cells.GetValue, range(self.original_cells.GetNumberOfValues()))
+        reoriented_mesh = reorient_mesh(mesh, cells_to_reorient)
+        # reoriented_mesh = reorient_mesh(mesh, range(mesh.GetNumberOfCells()))  # TODO only some cells...
+        self.re_boundary_mesh, self.re_normals, self.re_cell_centers = build_boundary_mesh(reoriented_mesh, consistency=False)
+    def GetNumberOfCells(self):
+        return self.boundary_mesh.GetNumberOfCells()
+    def bounds(self, i):
+        return self.boundary_mesh.GetCell(i).GetBounds()
+    def __underlying_original_cell_type(self, i):
+        return self.mesh.GetCell(self.original_cells.GetValue(i)).GetCellType()
+    def normals(self, i):
+        if self.__underlying_original_cell_type(i) == VTK_POLYHEDRON:
+            return self.re_normals.GetTuple3(i)
+        else:
+            return self.__normals.GetTuple3(i)
+    def GetCell(self, i):
+        if self.__underlying_original_cell_type(i) == VTK_POLYHEDRON:
+            return self.re_boundary_mesh.GetCell(i)
+        else:
+            return self.boundary_mesh.GetCell(i)
+    def GetPoint(self, i):
+        return self.boundary_mesh.GetPoint(i)
+
+
+def build_poly_data_for_extrusion(i, boundary_mesh):
+    cell_i = boundary_mesh.GetCell(i)
+    cp_i = cell_i.NewInstance()
+    cp_i.DeepCopy(cell_i)
+    points_ids_mapping_i = []
+    for ii in range(cell_i.GetNumberOfPoints()):
+        cp_i.GetPointIds().SetId(ii, ii)
+        points_ids_mapping_i.append(cell_i.GetPointId(ii))
+    polygons_i = vtkCellArray()
+    polygons_i.InsertNextCell(cp_i)
+    points_i = vtkPoints()
+    points_i.SetNumberOfPoints(len(points_ids_mapping_i))
+    for ii, v in enumerate(points_ids_mapping_i):
+        points_i.SetPoint(ii, boundary_mesh.GetPoint(v))
+    polygon_poly_data_i = vtkPolyData()
+    polygon_poly_data_i.SetPoints(points_i)
+    polygon_poly_data_i.SetPolys(polygons_i)
+    return polygon_poly_data_i
+
+
+def test(i, j, normal_i, normal_j, boundary_mesh, face_tolerance):
+    polygon_poly_data_i = build_poly_data_for_extrusion(i, boundary_mesh)
+    polygon_poly_data_j = build_poly_data_for_extrusion(j, boundary_mesh)
+
+    # polygons_i = vtkCellArray()
+    # polygons_i.InsertNextCell(boundary_mesh.GetCell(i))
+    # polygons_j = vtkCellArray()
+    # polygons_j.InsertNextCell(boundary_mesh.GetCell(j))
+    # polygon_poly_data_i = vtkPolyData()
+    # polygon_poly_data_i.SetPoints(boundary_mesh.GetPoints())  # TODO Is this properly working? Is the number of points OK?
+    # polygon_poly_data_i.SetPolys(polygons_i)
+    # polygon_poly_data_j = vtkPolyData()
+    # polygon_poly_data_j.SetPoints(boundary_mesh.GetPoints())  # TODO Is this properly working? Is the number of points OK?
+    # polygon_poly_data_j.SetPolys(polygons_j)
+    extruder_i = vtk.vtkLinearExtrusionFilter()
+    # extruder_i.SetExtrusionTypeToNormalExtrusion()
+    extruder_i.SetExtrusionTypeToVectorExtrusion()
+    extruder_i.SetVector(normal_i)
+    extruder_i.SetScaleFactor(face_tolerance)
+    # extruder_i.SetScaleFactor(100)
+    extruder_i.SetInputData(polygon_poly_data_i)
+    extruder_i.Update()
+    # e_i = extruder_i.GetOutput()
+    # print(boundary_mesh.GetCell(i).GetNumberOfPoints())
+    # print(boundary_mesh.GetCell(i).GetCellType())
+    # print(e_i.GetNumberOfCells())
+    extruder_j = vtk.vtkLinearExtrusionFilter()
+    # extruder_j.SetExtrusionTypeToNormalExtrusion()
+    extruder_j.SetExtrusionTypeToVectorExtrusion()
+    extruder_i.SetVector(normal_j)
+    extruder_j.SetScaleFactor(face_tolerance)
+    # extruder_j.SetScaleFactor(100)
+    extruder_j.SetInputData(polygon_poly_data_j)
+    extruder_j.Update()
+
+    # b = vtk.vtkLoopBooleanPolyDataFilter()
+    coll = vtk.vtkCollisionDetectionFilter()
+    coll.SetCollisionModeToFirstContact()
+    coll.SetInputData(0, extruder_i.GetOutput())
+    coll.SetInputData(1, extruder_j.GetOutput())
+    # m_i = vtk.vtkMatrix4x4()
+    # m_j = vtk.vtkMatrix4x4()
+    # coll.SetMatrix(0, m_i)
+    # coll.SetMatrix(1, m_j)
+    m_i = vtk.vtkTransform()
+    m_j = vtk.vtkTransform()
+    coll.SetTransform(0, m_i)
+    coll.SetTransform(1, m_j)
+    coll.Update()
+
+    # coll2 = vtk.vtkCollisionDetectionFilter()
+    # coll2.SetCollisionModeToAllContacts()
+    # coll2.SetInputData(0, extruder_i.GetOutput())
+    # coll2.SetInputData(1, extruder_j.GetOutput())
+    # # m_i = vtk.vtkMatrix4x4()
+    # # m_j = vtk.vtkMatrix4x4()
+    # # coll.SetMatrix(0, m_i)
+    # # coll.SetMatrix(1, m_j)
+    # m_i = vtk.vtkTransform()
+    # m_j = vtk.vtkTransform()
+    # coll2.SetTransform(0, m_i)
+    # coll2.SetTransform(1, m_j)
+    # coll2.Update()
+
+    print(coll.GetNumberOfContacts())
+    # TODO add a vtkPointLocator and its FindClosestInsertedPoint methods to check that all points have their peer...
+    return coll.GetNumberOfContacts()
+
+    # # e_j = extruder_j.GetOutput()
+    # intersection = vtk.vtkIntersectionPolyDataFilter()
+    # intersection.SetInputConnection(0, extruder_i.GetOutputPort())
+    # intersection.SetInputConnection(1, extruder_j.GetOutputPort())
+    # intersection.ComputeIntersectionPointArrayOn()
+    # intersection.Update()
+    # oo = intersection.GetOutput()
+    # print(oo.GetNumberOfCells(), i, j, normal_i, normal_j)
+
+
 def __check(mesh, options: Options) -> Result:
-    boundary_mesh, normals, cell_centers = __build_boundary_mesh(mesh, options)
+    # boundary_mesh, normals, cell_centers = build_boundary_mesh(mesh)
+    bm = BoundaryMesh(mesh)
     cos_theta = abs(math.cos(numpy.deg2rad(options.angle_tolerance)))
 
     non_conformal_cells = []
 
-    num_cells = boundary_mesh.GetNumberOfCells()
+    # num_cells = boundary_mesh.GetNumberOfCells()
+    num_cells = bm.GetNumberOfCells()
 
     # Precomputing the bounding boxes of all the boundary cells.
     bounding_boxes = []
     for i in range(num_cells):
-        bb = vtkBoundingBox(boundary_mesh.GetCell(i).GetBounds())
+        # bb = vtkBoundingBox(boundary_mesh.GetCell(i).GetBounds())
+        bb = vtkBoundingBox(bm.bounds(i))
         bb.Inflate(options.face_tolerance)
         bounding_boxes.append(bb)
 
@@ -151,7 +282,8 @@ def __check(mesh, options: Options) -> Result:
         if not bounding_boxes[i].Intersects(bounding_boxes[j]):
             continue
         # Discarding pairs that are not facing each others (with a threshold).
-        normal_i, normal_j = normals.GetTuple3(i), normals.GetTuple3(j)
+        # normal_i, normal_j = normals.GetTuple3(i), normals.GetTuple3(j)
+        normal_i, normal_j = bm.normals(i), bm.normals(j)
         if numpy.dot(normal_i, normal_j) > -cos_theta:  # opposite directions only (can be facing or not)
             continue
         # cci, ccj = cell_centers[i], cell_centers[j]
@@ -160,22 +292,25 @@ def __check(mesh, options: Options) -> Result:
         # # print(f"{i}, {j}, {scalar_product}, {direction_i}, {direction_j}")
         # if direction_i < 0 or direction_j < 0:  # checking direction now.
         #     continue
-        logging.debug(f"Computing the distance for faces {i} and {j}.")
-        result = scipy.optimize.minimize(lambda x: distance_between_cells(x, i, j, boundary_mesh),  # TODO that somehow sucks
-                                         (0.5, 0.5, 0.5, 0.5),  # TODO do a better screening!
-                                         method="Nelder-Mead",
-                                         bounds=((0, 1), (0, 1), (0, 1), (0, 1))
-                                         )
-        # TODO deal with error code.
-        logging.debug(f"Result between {i} and {j} is {result.fun}")
-        if abs(result.fun) < options.face_tolerance:
+        # if test(i, j, normal_i, normal_j, boundary_mesh, options.face_tolerance):
+        if test(i, j, normal_i, normal_j, bm, options.face_tolerance):
             non_conformal_cells.append((i, j))
+        # logging.debug(f"Computing the distance for faces {i} and {j}.")
+        # result = scipy.optimize.minimize(lambda x: distance_between_cells(x, i, j, boundary_mesh),  # TODO that somehow sucks
+        #                                  (0.5, 0.5, 0.5, 0.5),  # TODO do a better screening!
+        #                                  method="Nelder-Mead",
+        #                                  bounds=((0, 1), (0, 1), (0, 1), (0, 1))
+        #                                  )
+        # # TODO deal with error code.
+        # logging.debug(f"Result between {i} and {j} is {result.fun}")
+        # if abs(result.fun) < options.face_tolerance:
+        #     non_conformal_cells.append((i, j))
 
-    original_cells = get_cell_field_by_name(boundary_mesh, "ORIGINAL_CELLS")  # TODO name is copied
-    assert original_cells
+    # original_cells = get_cell_field_by_name(bm.boundary_mesh, "ORIGINAL_CELLS")  # TODO name is copied
+    # assert original_cells
     tmp = []
     for i, j in non_conformal_cells:
-        tmp.append((original_cells.GetValue(i), original_cells.GetValue(j)))
+        tmp.append((bm.original_cells.GetValue(i), bm.original_cells.GetValue(j)))
 
     return Result(non_conformal_cells=tmp)
 
@@ -257,34 +392,50 @@ def __reorient_element(mesh_points: vtkPoints, face_stream_ids: vtkIdList) -> vt
     return to_vtk_id_list(flipped_face_stream.dump())
 
 
-def __reorient_mesh(mesh, cell_indices) -> vtkUnstructuredGrid:  # TODO do it only on boundary cells?
-    output = vtkUnstructuredGrid()
-    output.SetPoints(mesh.GetPoints())
+def reorient_mesh(mesh, cell_indices: Iterator[int]) -> vtkUnstructuredGrid:
+    num_cells = mesh.GetNumberOfCells()
+    # Building an indicator/predicate from the list
+    needs_to_be_reoriented = numpy.zeros(num_cells, dtype=bool)
+    for ic in cell_indices:
+        needs_to_be_reoriented[ic] = True
+
+    output_mesh = vtkUnstructuredGrid()
+    output_mesh.SetPoints(mesh.GetPoints())
     # output.AllocateExact(mesh.GetNumberOfCells())  # TODO what's the size here?
     logging.info("Reorienting the polyhedron cells to enforce normals directed outward.")
-    for ic in tqdm(cell_indices, desc="Reorienting polyhedra"):
+    # for ic in tqdm(cell_indices, desc="Reorienting polyhedra"):
+    for ic in tqdm(range(num_cells), desc="Reorienting polyhedra"):
         cell = mesh.GetCell(ic)
         cell_type = cell.GetCellType()
-        if cell_type != VTK_POLYHEDRON:
-            output.InsertNextCell(cell_type, cell.GetPointIds())
-        else:
+        if cell_type == VTK_POLYHEDRON:
             face_stream_ids = vtkIdList()
             mesh.GetFaceStream(ic, face_stream_ids)
-            reoriented_faces = __reorient_element(mesh.GetPoints(), face_stream_ids)
-            output.InsertNextCell(VTK_POLYHEDRON, reoriented_faces)
-    assert output.GetNumberOfCells() == mesh.GetNumberOfCells()
-    return output
+            new_face_stream_ids = __reorient_element(mesh.GetPoints(), face_stream_ids) if needs_to_be_reoriented[ic] else face_stream_ids
+            output_mesh.InsertNextCell(VTK_POLYHEDRON, new_face_stream_ids)
+        else:
+            output_mesh.InsertNextCell(cell_type, cell.GetPointIds())
+    assert output_mesh.GetNumberOfCells() == mesh.GetNumberOfCells()
+    return output_mesh
 
 
 def check(vtk_input_file: str, options: Options) -> Result:
     mesh = vtk_utils.read_mesh(vtk_input_file)
     return __check(mesh, options)
+    # tmp_mesh = reorient_mesh(mesh, range(mesh.GetNumberOfCells()))
+    # return __check(tmp_mesh, options)
 
-# mesh = vtk_utils.read_mesh('/docker-exchange/torn_wedges.vtu')
-# # mesh = vtk_utils.read_mesh('/docker-exchange/torn_pebi.vtu')
-# output = __reorient_mesh(mesh, range(mesh.GetNumberOfCells()))
+mesh = vtk_utils.read_mesh('/docker-exchange/torn_wedges.vtu')
+# mesh = vtk_utils.read_mesh('/docker-exchange/torn_pebi.vtu')
+# mesh = vtk_utils.read_mesh('/docker-exchange/torn_pebi_anticline.vtu')
+# output = reorient_mesh(mesh, range(mesh.GetNumberOfCells()))
 # vtk_utils.write_mesh(output, "/docker-exchange/outward.vtk")
 # result = __check(output, Options(angle_tolerance=10, point_tolerance=0.1, face_tolerance=1.))
+result = __check(mesh, Options(angle_tolerance=10, point_tolerance=0.1, face_tolerance=1.))
+
+t = []
+for pair in result.non_conformal_cells:
+    t += pair
+t = set(t)
 
 # face_stream = FS
 # points = PTS

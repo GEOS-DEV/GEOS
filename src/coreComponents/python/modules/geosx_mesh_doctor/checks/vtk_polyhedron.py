@@ -17,7 +17,6 @@ from vtkmodules.vtkCommonDataModel import (
 
 import networkx
 
-
 # from . import vtk_utils
 import vtk_utils
 
