@@ -1295,13 +1295,17 @@ void DofManager::reorderByRank()
 {
   GEOSX_LAI_ASSERT( !m_reordered );
 
-  // update field offsets to account for renumbering
-  globalIndex dofOffset = rankOffset();
   for( FieldDescription & field : m_fields )
   {
     computeFieldDimensions( static_cast< localIndex >( getFieldIndex( field.name ) ) );
     // allocate and fill index array
     createIndexArray( field );
+  }
+
+  // update field offsets to account for renumbering
+  globalIndex dofOffset = rankOffset();
+  for( FieldDescription & field : m_fields )
+  {
     field.globalOffset = dofOffset;
     dofOffset += field.numLocalDof;
   }
