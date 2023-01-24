@@ -7,7 +7,7 @@ from checks.supported_elements import Options, Result
 from . import cli_parsing, SUPPORTED_ELEMENTS
 
 __CHUNK_SIZE = "chunck_size"
-__NUM_PROC = "num_proc"
+__NUM_PROC = "nproc"
 
 
 __ALL_KEYWORDS = {__CHUNK_SIZE, __NUM_PROC}
@@ -21,7 +21,7 @@ def get_help():
     Check that all the elements of the mesh are supported by GEOSX.
     
     {__CHUNK_SIZE} [int]: Defaults chunk size for parallel processing to {__CHUNK_SIZE_DEFAULT}.
-    {__NUM_PROC} [int]: Number of threads used for parallel processinf. Defaults to {__NUM_PROC_DEFAULT}/
+    {__NUM_PROC} [int]: Number of threads used for parallel processing. Defaults to {__NUM_PROC_DEFAULT}.
     """
     return textwrap.dedent(msg)
 
@@ -42,6 +42,6 @@ def parse_cli_options(options_str: str) -> Options:
 def display_results(options: Options, result: Result):
     if result.unsupported_polyhedron_elements:
         logging.error(f"There is/are {len(result.unsupported_polyhedron_elements)} polyhedra that may not be converted to supported elements.")
-        logging.error(f"The list unsupported polyhedra is {tuple(sorted(result.unsupported_polyhedron_elements))}.")
+        logging.error(f"The list of the unsupported polyhedra is\n{tuple(sorted(result.unsupported_polyhedron_elements))}.")
     if result.unsupported_std_elements_types:
         logging.error(f"The list of the unsupported types is {tuple(sorted(result.unsupported_std_elements_types))}.")
