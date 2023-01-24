@@ -13,22 +13,47 @@ from vtkmodules.vtkIOXML import (
     vtkXMLUnstructuredGridReader,
 )
 
-
-def read_mesh(vtk_input_file: str) -> vtkUnstructuredGrid:
-    # Testing legacy file format.
+def __read_vtk(vtk_input_file: str) -> vtkUnstructuredGrid|None:
     reader = vtkUnstructuredGridReader()
+    logging.info(f"Testing file format \"{vtk_input_file}\" using legacy format reader...")
     reader.SetFileName(vtk_input_file)
     if reader.IsFileUnstructuredGrid():
-        logging.debug(f"Reading file \"{vtk_input_file}\" using legacy format reader.")
+        logging.info(f"Reader matches. Reading file \"{vtk_input_file}\" using legacy format reader.")
         reader.Update()
         return reader.GetOutput()
-    # Now it's xml time!
+    else:
+        logging.info("Reader did not match the input file format.")
+        return None
+
+
+def __read_vtu(vtk_input_file: str) -> vtkUnstructuredGrid|None:
     reader = vtkXMLUnstructuredGridReader()
+    logging.info(f"Testing file format \"{vtk_input_file}\" using XML format reader...")
     if reader.CanReadFile(vtk_input_file):
-        logging.debug(f"Reading file \"{vtk_input_file}\" using XML format reader.")
         reader.SetFileName(vtk_input_file)
+        logging.info(f"Reader matches. Reading file \"{vtk_input_file}\" using XML format reader.")
         reader.Update()
         return reader.GetOutput()
+    else:
+        logging.info("Reader did not match the input file format.")
+        return None
+
+
+def read_mesh(vtk_input_file: str) -> vtkUnstructuredGrid:
+    file_extension = os.path.splitext(vtk_input_file)[-1]
+    extension_to_reader = {".vtk": __read_vtk,
+                           ".vtu": __read_vtu}
+    # Testing first the reader that should match
+    if file_extension in extension_to_reader:
+        output_mesh = extension_to_reader.pop(file_extension)(vtk_input_file)
+        if output_mesh:
+            return output_mesh
+    # If it does not match, then test all the others.
+    for reader in extension_to_reader.values():
+        output_mesh = reader(vtk_input_file)
+        if output_mesh:
+            return output_mesh
+    # No reader did work. Dying.
     logging.critical(f"Could not find the appropriate VTK reader for file \"{vtk_input_file}\". Dying...")
     sys.exit(1)
 
