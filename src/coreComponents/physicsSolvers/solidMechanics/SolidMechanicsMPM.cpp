@@ -2731,7 +2731,7 @@ void SolidMechanicsMPM::constitutiveCallAndFUpdate( real64 dt,
   {
     // Get constitutive model reference
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-    ConstitutiveBase & solid = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+    SolidBase & solid = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
 
     // Get particle kinematic fields that are fed into constitutive model
     arrayView3d< real64 > const & particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
