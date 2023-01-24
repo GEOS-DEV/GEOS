@@ -17,20 +17,30 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldPoromechanicsSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldPoromechanicsSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDPOROMECHANICSSOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDPOROMECHANICSSOLVER_HPP_
 
-#include "codingUtilities/EnumStrings.hpp"
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
+#include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
 
 namespace geosx
 {
 
-class PhaseFieldPoromechanicsSolver : public SolverBase
+class PhaseFieldPoromechanicsSolver : public CoupledSolver< SinglePhasePoromechanicsSolver, PhaseFieldDamageFEM >
 {
 public:
+
+  using Base = CoupledSolver< SinglePhasePoromechanicsSolver, PhaseFieldDamageFEM >;
+  using Base::m_solvers;
+  using Base::m_dofManager;
+  using Base::m_localMatrix;
+  using Base::m_rhs;
+  using Base::m_solution;
+
   PhaseFieldPoromechanicsSolver( const string & name,
                                  Group * const parent );
+
   ~PhaseFieldPoromechanicsSolver() override;
 
   /**
@@ -42,71 +52,109 @@ public:
     return "PhaseFieldPoromechanics";
   }
 
-  virtual void registerDataOnMesh( Group & MeshBodies ) override final;
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "PhaseFieldPoromechanics"; }
 
-  virtual void
-  implicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition & domain ) override final;
+  enum class SolverType : integer
+  {
+    Poromechanics = 0,
+    Damage = 1
+  };
 
-  virtual void
-  implicitStepComplete( real64 const & time_n,
-                        real64 const & dt,
-                        DomainPartition & domain ) override final;
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
 
-  virtual void
-  resetStateToBeginningOfStep( DomainPartition & domain ) override;
+  virtual void postProcessInput() override final;
 
-  virtual real64
-  solverStep( real64 const & time_n,
-              real64 const & dt,
-              int const cycleNumber,
-              DomainPartition & domain ) override;
+  /**
+   * @brief accessor for the pointer to the poromechanics solver
+   * @return a pointer to the poromechanics solver
+   */
+  SinglePhasePoromechanicsSolver * poromechancisSolver() const
+  {
+    return std::get< toUnderlying( SolverType::Poromechanics ) >( m_solvers );
+  }
 
-  real64 splitOperatorStep( real64 const & time_n,
-                            real64 const & dt,
-                            integer const cycleNumber,
-                            DomainPartition & domain );
+  /**
+   * @brief accessor for the pointer to the flow solver
+   * @return a pointer to the flow solver
+   */
+  PhaseFieldDamageFEM * damageSolver() const
+  {
+    return std::get< toUnderlying( SolverType::Damage ) >( m_solvers );
+  }
+
+  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
 
   void mapDamageAndGradientToQuadrature( DomainPartition & domain );
 
-  void applyDamageOnTractionBC( DomainPartition & domain ); 
-
-  enum class CouplingTypeOption : integer
-  {
-    FixedStress,
-    TightlyCoupled
-  };
-
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    constexpr static char const * couplingTypeOptionString() { return "couplingTypeOption"; }
-
-    constexpr static char const * totalMeanStressString() { return "totalMeanStress"; }
-    constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }
-
-    constexpr static char const * poromechanicsSolverNameString() { return "poromechanicsSolverName"; }
-    constexpr static char const * damageSolverNameString() { return "damageSolverName"; }
-    constexpr static char const * subcyclingOptionString() { return "subcycling"; }
-  };
+  void applyDamageOnTractionBC( DomainPartition & domain );
 
 protected:
-  virtual void postProcessInput() override final;
 
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
-
-private:
-
-  string m_poromechanicsSolverName;
-  string m_damageSolverName;
-  CouplingTypeOption m_couplingTypeOption;
-  integer m_subcyclingOption;
+  virtual void initializePostInitialConditionsPreSubGroups() override final {}
 
 };
 
-ENUM_STRINGS( PhaseFieldPoromechanicsSolver::CouplingTypeOption,
-              "FixedStress",
-              "TightlyCoupled" );
+template< typename FE_TYPE >
+struct DamageAndDamageGradientInterpolationKernel
+{
+  DamageAndDamageGradientInterpolationKernel( CellElementSubRegion const & subRegion ):
+    m_numElems( subRegion.size() )
+  {}
+
+  void interpolateDamageAndGradient( arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodes,
+                                     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const xNodes,
+                                     arrayView1d< real64 const > const nodalDamage,
+                                     arrayView2d< real64 > damageFieldOnMaterial,
+                                     arrayView3d< real64 > damageGradOnMaterial )
+  {
+    forAll< parallelDevicePolicy<> >( m_numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+      constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
+
+      real64 xLocal[ numNodesPerElement ][ 3 ];
+      real64 nodalDamageLocal[ numNodesPerElement ];
+
+      for( localIndex a = 0; a < numNodesPerElement; ++a )
+      {
+        localIndex const localNodeIndex = elemToNodes( k, a );
+
+        for( int dim=0; dim < 3; ++dim )
+        {
+          xLocal[a][dim] = xNodes[ localNodeIndex ][dim];
+        }
+
+        nodalDamageLocal[ a ] = nodalDamage[ localNodeIndex ];
+      }
+
+      for( localIndex q = 0; q < n_q_points; ++q )
+      {
+        real64 N[ numNodesPerElement ];
+        FE_TYPE::calcN( q, N );
+
+        real64 dNdX[ numNodesPerElement ][ 3 ];
+        real64 const detJ = FE_TYPE::calcGradN( q, xLocal, dNdX );
+
+        GEOSX_UNUSED_VAR( detJ );
+
+        real64 qDamage = 0.0;
+        real64 qDamageGrad[3] = {0, 0, 0};
+        FE_TYPE::valueAndGradient( N, dNdX, nodalDamageLocal, qDamage, qDamageGrad );
+
+        damageFieldOnMaterial( k, q ) = qDamage;
+
+        for( int dim=0; dim < 3; ++dim )
+        {
+          damageGradOnMaterial[k][q][dim] = qDamageGrad[dim];
+        }
+      }
+
+    } );
+  }
+
+  localIndex m_numElems;
+};
 
 } /* namespace geosx */
 

@@ -7,10 +7,7 @@
       name="phasefieldPoroSolve"
       poromechanicsSolverName="poroSolve"
       damageSolverName="damageSolve"
-      couplingTypeOption="FixedStress"
       logLevel="1"
-      subcycling="0"
-      discretization="FE1"
       targetRegions="{ Region1 }">
     </PhaseFieldPoromechanics>
 
@@ -37,7 +34,7 @@
       fieldName="Damage"
       localDissipation="Linear"
       irreversibilityFlag="1"
-      damageUpperBound="1.0"
+      damageUpperBound="0.95"
       fracturePressureTermFlag="1"
       logLevel="1"
       targetRegions="{ Region1 }">
