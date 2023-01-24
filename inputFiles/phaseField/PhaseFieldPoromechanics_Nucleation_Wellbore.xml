@@ -70,7 +70,7 @@
 
 
   <Events
-    maxTime="1018.0">
+    maxTime="1016.0">
  
     <PeriodicEvent
       name="solverApplication0"
@@ -88,7 +88,7 @@
     <PeriodicEvent
       name="solverApplication2"
       beginTime="1012.0"
-      endTime="1018.0"
+      endTime="1016.0"
       forceDt="0.04"
       target="/Solvers/phasefieldPoroSolve"/>
 
@@ -108,7 +108,7 @@
     <PeriodicEvent
       name="vtkOutput2"
       beginTime="1012.0"
-      endTime="1018.0"
+      endTime="1016.0"
       forceDt="0.04"
       target="/Outputs/VTKOutput"/>
 

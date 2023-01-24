@@ -7,10 +7,7 @@
       name="phasefieldPoroSolve"
       poromechanicsSolverName="poroSolve"
       damageSolverName="damageSolve"
-      couplingTypeOption="FixedStress"
       logLevel="1"
-      subcycling="0"
-      discretization="FE1"
       targetRegions="{ Region1 }">
     </PhaseFieldPoromechanics>
 
