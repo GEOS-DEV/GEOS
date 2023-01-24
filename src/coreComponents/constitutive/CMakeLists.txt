@@ -8,12 +8,14 @@ set( constitutive_headers
      ConstitutivePassThruHandler.hpp
      ExponentialRelation.hpp
      NullModel.hpp
+     KilloughHysteresis.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/CapillaryPressureFields.hpp
      capillaryPressure/JFunctionCapillaryPressure.hpp          
      capillaryPressure/TableCapillaryPressure.hpp
-     capillaryPressure/TableCapillaryPressureHelpers.hpp          
+     capillaryPressure/TableCapillaryPressureHysteresis.hpp
+     capillaryPressure/TableCapillaryPressureHelpers.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      capillaryPressure/capillaryPressureSelector.hpp
      capillaryPressure/layouts.hpp
@@ -68,7 +70,9 @@ set( constitutive_headers
      permeability/PermeabilityFields.hpp
      permeability/ProppantPermeability.hpp     
      permeability/SlipDependentPermeability.hpp
-     permeability/WillisRichardsPermeability.hpp  
+#     relativePermeability/KilloughHysteresisRelativePermeability.hpp
+     permeability/SlipDependentPermeability.hpp
+     permeability/WillisRichardsPermeability.hpp
      relativePermeability/RelpermDriver.hpp
      relativePermeability/RelpermDriverRunTest.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
@@ -133,11 +137,14 @@ set( constitutive_sources
      ConstitutiveBase.cpp
      ConstitutiveManager.cpp
      NullModel.cpp
+     KilloughHysteresis.cpp
+#     capillaryPressure/KilloughHysteresisCapillaryPressure.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/CapillaryPressureBase.cpp
      capillaryPressure/JFunctionCapillaryPressure.cpp               
      capillaryPressure/TableCapillaryPressure.cpp
-     capillaryPressure/TableCapillaryPressureHelpers.cpp     
+     capillaryPressure/TableCapillaryPressureHysteresis.cpp
+     capillaryPressure/TableCapillaryPressureHelpers.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      contact/ContactBase.cpp
      contact/CoulombContact.cpp
@@ -181,6 +188,7 @@ set( constitutive_sources
      permeability/ProppantPermeability.cpp     
      permeability/SlipDependentPermeability.cpp
      permeability/WillisRichardsPermeability.cpp
+#     relativePermeability/KilloughHysteresisRelativePermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/RelativePermeabilityBase.cpp

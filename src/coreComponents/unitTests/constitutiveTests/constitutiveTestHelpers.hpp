@@ -31,7 +31,24 @@ namespace geosx
 {
 namespace testing
 {
+void fill_array( array1d< real64_array > & arr, std::initializer_list< real64 > const & input_list )
+{
+  arr.resize( 1 );
+  arr[0].resize( input_list.size());
+  int j = 0;
+  for( auto const & elt : input_list )
+    arr[0][j++] = elt;
 
+}
+
+void fill_array( real64_array & arr, std::initializer_list< real64 > const & input_list )
+{
+  arr.resize( input_list.size());
+  int j = 0;
+  for( auto const & elt : input_list )
+    arr[j++] = elt;
+
+}
 void initializeTable( string const & tableName,
                       array1d< array1d< real64 > > const & coordinates,
                       array1d< real64 > const & values )
@@ -128,7 +145,7 @@ public:
     m_parent.resize( 1 );
   }
 
-  void initialize( BASE & model )
+  void initialize( BASE * model )
   {
     m_model = &model;
     m_parent.initialize();
