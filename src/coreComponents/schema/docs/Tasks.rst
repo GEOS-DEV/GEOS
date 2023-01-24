@@ -7,6 +7,7 @@ CompositionalMultiphaseStatistics      node         :ref:`XML_CompositionalMulti
 MultiphasePoromechanicsInitialization  node         :ref:`XML_MultiphasePoromechanicsInitialization`  
 PVTDriver                              node         :ref:`XML_PVTDriver`                              
 PackCollection                         node         :ref:`XML_PackCollection`                         
+ReactiveFluidDriver                    node         :ref:`XML_ReactiveFluidDriver`                    
 RelpermDriver                          node         :ref:`XML_RelpermDriver`                          
 SinglePhasePoromechanicsInitialization node         :ref:`XML_SinglePhasePoromechanicsInitialization` 
 SinglePhaseStatistics                  node         :ref:`XML_SinglePhaseStatistics`                  
