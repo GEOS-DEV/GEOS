@@ -283,6 +283,8 @@ assembleCouplingTerms( real64 const time_n,
                                                                                MeshLevel const & mesh,
                                                                                arrayView1d< string const > const & regionNames )
   {
+    integer areWellsShut = 1;
+
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     integer constexpr MAX_NUM_COMP = MultiFluidBase::MAX_NUM_COMPONENTS;
@@ -313,6 +315,8 @@ assembleCouplingTerms( real64 const time_n,
       {
         return;
       }
+
+      areWellsShut = 0;
 
       PerforationData const * const perforationData = subRegion.getPerforationData();
 
@@ -433,6 +437,11 @@ assembleCouplingTerms( real64 const time_n,
         }
       }
     } );
+
+    // update dynamically the MGR recipe to optimize the linear solve if all wells are shut
+    areWellsShut = MpiWrapper::min( areWellsShut );
+    m_linearSolverParameters.get().mgr.areWellsShut = areWellsShut;
+
   } );
 }
 
