@@ -231,6 +231,56 @@ public:
     saveStress( k, q, stress );
   }
 
+    /**
+   * @brief Hypo update 2 (large strain, large rotation).
+   * 
+   * Taken from http://www.sci.utah.edu/publications/Kam2011a/Kamojjala_ECTC2011.pdf
+   *
+   * The base class rotates the beginning-of-step stress and rate-of-deformation back
+   * to the reference configuration using the beginning-of-step rotation (found via
+   * polar decomposition of the beginning-of-step deformation gradient). It then calls
+   * the small strain update to incrementally update the stress, followed by a rotation
+   * of stress back to the end-of-step configuration (found using polar decomposition
+   * of the end-of-step deformation gradient). This should be valid for most constitutive
+   * models being explicitly integrated since the time steps are small enough that any given
+   * step can be assumed to behave like a small-strain deformation with pre-stress.
+   *
+   * Note that if the derived class has tensorial state variables (beyond the
+   * stress itself) care must be taken to rotate these as well.
+   * 
+   * This method should work as-is for anisotropic properties and yield functions.
+   *
+   * @param[in] k The element index.
+   * @param[in] q The quadrature point index.
+   * @param[in] Ddt The incremental deformation tensor (rate of deformation tensor * dt)
+   * @param[in] RotBeginning The incremental rotation tensor
+   * @param[in] RotEnd The incremental rotation tensor
+   * @param[out] stress New stress value (Cauchy stress)
+   */
+  GEOSX_HOST_DEVICE
+  virtual void hypoUpdate2_StressOnly( localIndex const k,
+                                       localIndex const q,
+                                       real64 const ( &Ddt )[6],
+                                       real64 const ( &RotBeginning )[3][3],
+                                       real64 const ( &RotEnd )[3][3],
+                                       real64 ( & stress )[6] ) const
+  {
+    // Rotate from beginning-of-step configuration to reference configuration
+    real64 temp[6] = { 0 };
+    real64 RotBeginningTranpose[3][3] = { {0} };
+    LvArray::tensorOps::transpose< 3, 3 >( RotBeginningTranpose, RotBeginning ); // We require the transpose since we're un-rotating
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, RotBeginningTranpose, m_oldStress[ k ][ q ] );
+    LvArray::tensorOps::copy< 6 >( stress, temp );
+
+    // Stress increment
+    smallStrainUpdate_StressOnly( k, q, Ddt, stress );
+
+    // Rotate final stress to end-of-step (current) configuration
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, RotEnd, m_newStress[ k ][ q ] );
+    LvArray::tensorOps::copy< 6 >( stress, temp );
+    saveStress( k, q, stress );
+  }
+
   /**
    * @brief Hyper update (large deformation).
    *

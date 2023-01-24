@@ -22,11 +22,13 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
 #include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
+#include "kernels/ExplicitMPM.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "MPMSolverFields.hpp"
 
 namespace geosx
 {
@@ -372,6 +374,9 @@ private:
 
   void projectDamageFieldGradientToGrid( ParticleManager & particleManager,
                                          NodeManager & nodeManager );
+
+  void constitutiveCallAndFUpdate( real64 dt,
+                                   ParticleManager & particleManager );
 };
 
 ENUM_STRINGS( SolidMechanicsMPM::TimeIntegrationOption,

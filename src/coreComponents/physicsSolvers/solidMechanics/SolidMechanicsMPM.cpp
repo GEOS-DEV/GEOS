@@ -43,7 +43,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "MPMSolverBaseFields.hpp"
+#include "constitutive/ConstitutivePassThruHandler.hpp"
 
 
 namespace geosx
@@ -326,6 +326,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         // Triple-indexed fields (vectors of vectors, non-symmetric tensors)
         subRegion.registerField< particleInitialRVectors >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
         subRegion.registerField< particleDeformationGradient >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
+        subRegion.registerField< particleVelocityGradient >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
       } );
     }
     else // Background grid field registration
@@ -723,6 +724,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
     arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
     arrayView1d< real64 > const particleInitialVolume = subRegion.getField< fields::mpm::particleInitialVolume >();
     arrayView3d< real64 > const particleInitialRVectors = subRegion.getField< fields::mpm::particleInitialRVectors >();
     arrayView1d< int > const particleSurfaceFlag = subRegion.getField< fields::mpm::particleSurfaceFlag >();
@@ -761,11 +763,13 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
                    MPI_COMM_GEOSX );
     m_smallMass = fmin( globalMinMass * 1.0e-12, m_smallMass );
 
-    // Initialize deformation gradient
+    // Initialize deformation gradient and velocity gradient
+    particleDeformationGradient.zero();
     for(int p=0; p<subRegion.size(); p++)
     {
       tOps::addIdentity< 3 >( particleDeformationGradient[p], 1.0 );
     }
+    particleVelocityGradient.zero();
 
     // Set surface flags
     for(int p=0; p<subRegion.size(); p++)
@@ -1257,6 +1261,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
     arrayView1d< real64 > const particleInitialVolume = subRegion.getField< fields::mpm::particleInitialVolume >();
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
     arrayView3d< real64 > const particleInitialRVectors = subRegion.getField< fields::mpm::particleInitialRVectors >();
     arrayView1d< real64 > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
     arrayView2d< real64 > const particleStress = subRegion.getField< fields::mpm::particleStress >();    
@@ -1271,7 +1276,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     // Particle loop - we might be able to get rid of this someday and have everything happen via MPMParticleSubRegion methods
     for( localIndex & p: subRegion.nonGhostIndices() )
     {
-      real64 p_L[3][3] = { {0} }; // Velocity gradient
+      real64 temp[3][3] = { {0} }; // Temp tensor for intermediate calculations
       real64 p_D[3][3] = { {0} }; // Rate of deformation
       real64 p_Diso[3][3] = { {0} }; // Rate of deformation
       real64 p_Ddev[3][3] = { {0} }; // Rate of deformation
@@ -1309,7 +1314,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
           particleVelocity[p][i] += gridAcceleration[mappedNode][fieldIndex][i] * dt * weights[g]; // FLIP
           for(int j=0; j<m_numDims; j++)
           {
-            p_L[i][j] += gridVelocity[mappedNode][fieldIndex][i] * gradWeights[g][j]; // Technically wrong, the best kind of wrong (end-of-step velocity with beginning-of-step gradient)
+            particleVelocityGradient[p][i][j] += gridVelocity[mappedNode][fieldIndex][i] * gradWeights[g][j]; // Technically wrong, the best kind of wrong (end-of-step velocity with beginning-of-step gradient)
           }
         }
       }
@@ -1319,7 +1324,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       {
         for(int j=0; j<3; j++)
         {
-          p_D[i][j] = 0.5 * ( p_L[i][j] + p_L[j][i] );
+          p_D[i][j] = 0.5 * ( particleVelocityGradient[p][i][j] + particleVelocityGradient[p][j][i] );
         }
       }
 
@@ -1348,9 +1353,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
         for(int j=0; j<3; j++)
         {
           if(i==j)
-            p_L[i][j] = p_L[i][j]*dt + 1.0;
+            temp[i][j] = particleVelocityGradient[p][i][j] * dt + 1.0;
           else
-            p_L[i][j] *= dt;
+            temp[i][j] = particleVelocityGradient[p][i][j] * dt;
         }
       }
 
@@ -1359,7 +1364,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       {
         for(int j=0; j<3; j++)
         {
-          particleDeformationGradient[p][i][j] = p_L[i][0]*p_FOld[0][j] + p_L[i][1]*p_FOld[1][j] + p_L[i][2]*p_FOld[2][j]; // matrix multiply
+          particleDeformationGradient[p][i][j] = temp[i][0]*p_FOld[0][j] + temp[i][1]*p_FOld[1][j] + temp[i][2]*p_FOld[2][j]; // matrix multiply
         }
       }
 
@@ -1405,6 +1410,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
     } // particle loop
   } ); // subregion loop
+
+
+  // //#######################################################################################
+  // solverProfiling( "Call constitutive model" );
+  // //#######################################################################################
+  // constitutiveCall( particleManager );
 
 
   //#######################################################################################
@@ -2710,6 +2721,36 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( ParticleManager & part
         }
       }
     }
+  } );
+}
+
+void SolidMechanicsMPM::constitutiveCallAndFUpdate( real64 dt,
+                                                    ParticleManager & particleManager )
+{
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    // Get constitutive model reference
+    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    ConstitutiveBase & solid = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+
+    // Get particle kinematic fields that are fed into constitutive model
+    arrayView3d< real64 > const & particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 const > const & particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
+    arrayView2d< real64 > const & particleStress = subRegion.getField< fields::mpm::particleStress >();
+
+    // Apply constitutive model
+    ConstitutivePassThru< SolidBase >::execute( solid, [&] ( auto & castedSolid )
+    {
+      using SolidType = TYPEOFREF( castedSolid );
+      typename SolidType::KernelWrapper constitutiveModelWrapper = castedSolid.createKernelUpdates();
+
+      solidMechanicsMPMKernels::StateUpdateKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                                                     constitutiveModelWrapper,
+                                                                                     dt,
+                                                                                     particleDeformationGradient,
+                                                                                     particleVelocityGradient,
+                                                                                     particleStress );
+    } );
   } );
 }
 
