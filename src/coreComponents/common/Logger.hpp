@@ -478,9 +478,6 @@ struct InputError : public std::runtime_error
   {}
 };
 
-/**
- * @brief Exception class used to report errors in logic flow.
- */
 
 /**
  * @brief Exception class used for special control flow.
