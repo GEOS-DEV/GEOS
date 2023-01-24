@@ -497,19 +497,19 @@ TableCapillaryPressureHysteresis::KernelWrapper::computeImbibitionWettingCapilla
   real64 const Smxd = wettingCurve.drainageExtrema;
   real64 const Smin = wettingCurve.oppositeBound;
 
-  if( S <= Smin )
-  {
-    //below accessible range
-    phaseCapPressure = CAP_INF;
-    dPhaseCapPressure_dPhaseVolFrac = -CAP_INF_DERIV;
-  }
-  else if( S >= Smxd )
-  {
-    //above accessible range
-    phaseCapPressure = -CAP_INF;
-    dPhaseCapPressure_dPhaseVolFrac = -CAP_INF_DERIV;
-  }
-  else
+//  if( S <= Smin )
+//  {
+//    //below accessible range
+//    phaseCapPressure = CAP_INF;
+//    dPhaseCapPressure_dPhaseVolFrac = -CAP_INF_DERIV;
+//  }
+//  else if( S >= Smxd )
+//  {
+//    //above accessible range
+//    phaseCapPressure = -CAP_INF;
+//    dPhaseCapPressure_dPhaseVolFrac = -CAP_INF_DERIV;
+//  }
+//  else
   {
     //drainage to imbibition
     real64 dpci_dS, dpcd_dS;
@@ -535,14 +535,9 @@ TableCapillaryPressureHysteresis::KernelWrapper::computeImbibitionWettingCapilla
         F = LvArray::math::max(F, 0.0);
         F = LvArray::math::min(F, 1.0);
 
-
-        //Step 3. compute dF_dS
-        real64 dF_dS = (-1. / (S * S)) / (1. / (Swma - Shy + E) - 1. / E);
-
-        //Step 4. Eventually assemble everything following (EQ. 34.14)
+        //Step 3. Eventually assemble everything following (EQ. 34.14)
         phaseCapPressure = pcd + F * (pci - pcd);
-        dPhaseCapPressure_dPhaseVolFrac = dpci_dS + F * (dpci_dS - dpcd_dS);
-        dPhaseCapPressure_dPhaseVolFrac += dF_dS * (pci - pcd);
+        dPhaseCapPressure_dPhaseVolFrac = dpcd_dS + F * (dpci_dS - dpcd_dS);
     }
     //imbibition to drainage
     else if (mode == ModeIndexType::IMBIBITION_TO_DRAINAGE) {
@@ -555,15 +550,9 @@ TableCapillaryPressureHysteresis::KernelWrapper::computeImbibitionWettingCapilla
         F = LvArray::math::max(F, 0.0);
         F = LvArray::math::min(F, 1.0);
 
-
-        //Step 3. compute dF_dS
-        real64 dF_dS = (1. / (S * S)) / (1. / (Shy - Scrt + E) - 1. / E);
-
-
-        //Step 4. Eventually assemble everything following (EQ. 34.14)
+        //Step 3. Eventually assemble everything following (EQ. 34.14)
         phaseCapPressure = pci + F * (pcd - pci);
-        dPhaseCapPressure_dPhaseVolFrac = dpcd_dS + F * (dpcd_dS - dpci_dS);
-        dPhaseCapPressure_dPhaseVolFrac += dF_dS * (pcd - pci);
+        dPhaseCapPressure_dPhaseVolFrac = dpci_dS + F * (dpcd_dS - dpci_dS);
 
 
 
@@ -1011,19 +1000,19 @@ TableCapillaryPressureHysteresis::KernelWrapper::computeImbibitionNonWettingCapi
   real64 const Smid = nonWettingCurve.drainageExtrema;
   real64 const Smax = nonWettingCurve.oppositeBound;
 
-  if( S >= Smax )
-  {
-    //above accessible range
-    phaseCapPressure = CAP_INF;
-    dPhaseCapPressure_dPhaseVolFrac = CAP_INF_DERIV;
-  }
-  else if( S <= Smid )
-  {
-    //below accessible range
-    phaseCapPressure = -CAP_INF;
-    dPhaseCapPressure_dPhaseVolFrac = CAP_INF_DERIV;
-  }
-  else
+//  if( S >= Smax )
+//  {
+//    //above accessible range
+//    phaseCapPressure = CAP_INF;
+//    dPhaseCapPressure_dPhaseVolFrac = CAP_INF_DERIV;
+//  }
+//  else if( S <= Smid )
+//  {
+//    //below accessible range
+//    phaseCapPressure = -CAP_INF;
+//    dPhaseCapPressure_dPhaseVolFrac = CAP_INF_DERIV;
+//  }
+//  else
   {
     //drainage to imbibition
     real64 dpci_dS, dpcd_dS;

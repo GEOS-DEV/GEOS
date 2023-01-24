@@ -33,11 +33,11 @@ namespace constitutive
 
 class TableCapillaryPressureHysteresis : public CapillaryPressureBase
 {
-  /// useful constant
-  static constexpr real64 CAP_INF = 1e9;
-//          std::numeric_limits< real64 >::max();
-  static constexpr real64 CAP_INF_DERIV = 1e9;
-//          std::numeric_limits< real64 >::max();
+//  /// useful constant
+//  static constexpr real64 CAP_INF = 1e9;
+////          std::numeric_limits< real64 >::max();
+//  static constexpr real64 CAP_INF_DERIV = 1e9;
+////          std::numeric_limits< real64 >::max();
 
   typedef extrinsicMeshData::cappres::ModeIndexType ModeIndexType;
 
