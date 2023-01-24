@@ -99,10 +99,10 @@ class IsPolyhedronConvertible:
         face_stream = FaceStream.build_from_vtk_id_list(pt_ids)
         converted_type_name = self.__is_polyhedron_supported(face_stream)
         if converted_type_name:
-            logging.warning(f"Polyhedron cell {ic} can be converted into \"{converted_type_name}\"")
+            logging.debug(f"Polyhedron cell {ic} can be converted into \"{converted_type_name}\"")
             return -1
         else:
-            logging.warning(f"Polyhedron cell {ic} cannot be converted into any supported element.")
+            logging.debug(f"Polyhedron cell {ic} cannot be converted into any supported element.")
             return ic
 
 

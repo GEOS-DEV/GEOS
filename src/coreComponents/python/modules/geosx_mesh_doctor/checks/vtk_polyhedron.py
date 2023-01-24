@@ -17,8 +17,7 @@ from vtkmodules.vtkCommonDataModel import (
 
 import networkx
 
-# from . import vtk_utils
-import vtk_utils
+from . import vtk_utils
 
 
 @dataclass(frozen=True)
