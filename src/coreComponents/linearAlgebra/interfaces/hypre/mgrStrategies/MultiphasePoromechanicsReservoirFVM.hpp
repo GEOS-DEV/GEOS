@@ -13,7 +13,7 @@
  */
 
 /**
- * @file MultiphasePoromechanics.hpp
+ * @file MultiphasePoromechanicsReservoirFVM.hpp
  */
 
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRMULTIPHASEPOROMECHANICSRESERVOIRFVM_HPP_
@@ -84,24 +84,28 @@ public:
 
     // Level 0
     m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::amgVCycle;
+    m_levelFRelaxType[0]       = MGRFRelaxationType::jacobi;
     m_levelInterpType[0]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::nonGalerkin;
 
     // Level 1
     m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel;
+    m_levelFRelaxType[1]       = MGRFRelaxationType::gsElimWInverse; // gaussian elimination for the well block
     m_levelInterpType[1]       = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
 
     // Level 2
     m_levelFRelaxMethod[2]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
+    m_levelFRelaxType[2]       = MGRFRelaxationType::jacobi;
     m_levelInterpType[2]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[2]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[2] = MGRCoarseGridMethod::galerkin;
 
     // Level 3
     m_levelFRelaxMethod[3]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
+    m_levelFRelaxType[3]       = MGRFRelaxationType::jacobi;
     m_levelInterpType[3]       = MGRInterpolationType::injection;
     m_levelRestrictType[3]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[3] = MGRCoarseGridMethod::cprLikeBlockDiag;
@@ -116,10 +120,11 @@ public:
 
   /**
    * @brief Setup the MGR strategy.
+   * @param mgrParams parameters for the configuration of the MGR recipe
    * @param precond preconditioner wrapper
    * @param mgrData auxiliary MGR data
    */
-  void setup( LinearSolverParameters::MGR const &,
+  void setup( LinearSolverParameters::MGR const & mgrParams,
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
@@ -138,6 +143,16 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothType( precond.ptr, m_levelSmoothType ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothIters( precond.ptr, m_levelSmoothIters ) );
 
+    // if the wells are shut, using Gaussian elimination as F-relaxation for the well block is an overkill
+    // in that case, we just use Jacobi
+    if( mgrParams.areWellsShut )
+    {
+      m_levelFRelaxType[1] = MGRFRelaxationType::jacobi;
+    }
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxType( precond.ptr, toUnderlyingPtr( m_levelFRelaxType ) ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
+
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
@@ -147,6 +162,9 @@ public:
     mgrData.coarseSolver.setup = HYPRE_BoomerAMGSetup;
     mgrData.coarseSolver.solve = HYPRE_BoomerAMGSolve;
     mgrData.coarseSolver.destroy = HYPRE_BoomerAMGDestroy;
+
+    // Configure the BoomerAMG solver used as F-relaxation for the first level
+    setMechanicsFSolver( precond, mgrData );
   }
 };
 
