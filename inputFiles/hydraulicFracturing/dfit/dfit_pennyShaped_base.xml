@@ -9,7 +9,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      defaultAperture="0.02e-3"
+      defaultAperture="0.2e-2"
       materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
 
@@ -173,7 +173,7 @@
     <TableFunction
       name="apertureTable"
       coordinates="{ -1.0e-3, 0.0 }"
-      values="{ 0.002e-3, 0.02e-3 }"/>
+      values="{ 0.12e-2, 0.2e-2 }"/>
 
   <!-- Pumping Schedule -->
     <TableFunction

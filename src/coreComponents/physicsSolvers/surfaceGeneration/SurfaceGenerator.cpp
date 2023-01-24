@@ -461,8 +461,6 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                              time_n + dt );
   } );
 
-  std::cout << "value of rval: " << rval << std::endl;
-
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();

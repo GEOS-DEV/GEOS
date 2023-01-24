@@ -19,7 +19,7 @@
       maxNumResolves="1"
       initialDt="0.1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-4"
+        newtonTol="1.0e-3"
         newtonMaxIter="25"
         maxTimeStepCuts="5"/>
       <LinearSolverParameters

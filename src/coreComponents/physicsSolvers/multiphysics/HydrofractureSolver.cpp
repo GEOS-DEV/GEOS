@@ -875,7 +875,7 @@ void HydrofractureSolver::initializeNewFractureElements( DomainPartition & domai
       arrayView2d< localIndex const > const subRegionIndex      = surfaceElementsToCells.m_toElementRegion.toViewConst();
       arrayView2d< localIndex const > const elementIndex        = surfaceElementsToCells.m_toElementRegion.toViewConst();
 
-      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Initializing {} new fracture elements.", MpiWrapper::sum( newFractureElements.size() ) ) );
+      // GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Initializing {} new fracture elements.", MpiWrapper::sum( newFractureElements.size() ) ) );
 
       // 1. We initialize:
       //    - the pressure of a new fracture element to the average of the 2 cell elements adjacent to it.

@@ -56,9 +56,9 @@ def main():
 
     # Load and process GEOSX results
     # File path
-    hdf5File1Path = "dfit_kgd_output.hdf5"
-    xmlFile1Path = "dfit_kgd_base.xml"
-    xmlFile2Path = "dfit_kgd_benchmark.xml"
+    hdf5File1Path = "/usr/workspace/cusini1/geosx/geosx_dev/GEOSX/Output/dfit_kgd_output.hdf5"
+    xmlFile1Path = "/usr/workspace/cusini1/geosx/geosx_dev/GEOSX/inputFiles/hydraulicFracturing/dfit/dfit_kgd_base.xml"
+    xmlFile2Path = "/usr/workspace/cusini1/geosx/geosx_dev/GEOSX/inputFiles/hydraulicFracturing/dfit/dfit_kgd_benchmark.xml"
 
     # Read simulation parameters from XML file
     xMin, xMax, yMin, yMax, zMin, zMax, nx, ny, nz = getMeshSettings(xmlFile2Path)
@@ -93,7 +93,7 @@ def main():
 
     # Find shut-in time
     for i in range(0,len(tl)):
-        if abs(tl[i]/t_shutDown - 1.0) < 0.01:
+        if abs(tl[i]/t_shutDown - 1.0) < 0.001:
            t_ind = i
 
     # Compute frac length
@@ -131,7 +131,7 @@ def main():
     mslop = 0
     for i in range(1,len(slope)):
         slope[i] = (GdPdG[i]-GdPdG[0])/(G_tD[i] - G_tD[0])
-        if G_tD[i]<5.0 and G_tD[i]>0.0 and slope[i]>mslop:
+        if G_tD[i]<4.5 and G_tD[i]>0.0 and slope[i]>mslop:
            mslop = slope[i]
            tangent_ind = i
 
@@ -190,7 +190,7 @@ def main():
 
     ax[1,1].plot(G_tD, P_tD/1.0e6, lw=lw, color='deepskyblue', alpha=0.8)
     ax[1,1].plot(G_tD[tangent_ind], P_tD[tangent_ind]/1.0e6, linestyle='None', marker='o', alpha=0.5, markerfacecolor='g', fillstyle='full', markersize=msize*1.5)
-    ax[1,1].set_xlim([0, 5])
+    ax[1,1].set_xlim([0, 4.5])
     ax[1,1].set_ylim([55, 58])
     ax[1,1].set_xlabel(r'G (Time)', size=fsize, weight="bold")
     ax[1,1].set_ylabel(r'Pressure (MPa)', size=fsize, weight="bold", color='deepskyblue')

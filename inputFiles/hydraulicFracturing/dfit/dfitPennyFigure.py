@@ -56,7 +56,7 @@ def main():
 
     # Load and process GEOSX results
     # File path
-    hdf5File1Path = "/usr/workspace/cusini1/geosx/geosx_dev/GEOSX/build-quartz-clang@10.0.0-release/Output/dfit_penny_output.hdf5"
+    hdf5File1Path = "/usr/workspace/cusini1/geosx/geosx_dev/GEOSX/dfit_penny_output.hdf5"
     xmlFile1Path = "/usr/workspace/cusini1/geosx/geosx_dev/GEOSX/inputFiles/hydraulicFracturing/dfit/dfit_pennyShaped_base.xml"
     xmlFile2Path = "/usr/workspace/cusini1/geosx/geosx_dev/GEOSX/inputFiles/hydraulicFracturing/dfit/dfit_pennyShaped_benchmark.xml"
 
