@@ -51,6 +51,8 @@ public:
     return "PhaseFieldDamageFEM";
   }
 
+  static string coupledSolverAttributePrefix() { return "damage"; }
+
   virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
   /**

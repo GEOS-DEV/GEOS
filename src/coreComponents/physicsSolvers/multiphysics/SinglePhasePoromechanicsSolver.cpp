@@ -139,27 +139,6 @@ void SinglePhasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups
   }
 }
 
-real64 SinglePhasePoromechanicsSolver::solverStep( real64 const & time_n,
-                                                   real64 const & dt,
-                                                   int const cycleNumber,
-                                                   DomainPartition & domain )
-{
-  real64 dt_return = dt;
-
-  setupSystem( domain,
-               m_dofManager,
-               m_localMatrix,
-               m_rhs,
-               m_solution );
-
-  implicitStepSetup( time_n, dt, domain );
-
-  dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-  implicitStepComplete( time_n, dt_return, domain );
-
-  return dt_return;
-}
 
 void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                      real64 const dt,
