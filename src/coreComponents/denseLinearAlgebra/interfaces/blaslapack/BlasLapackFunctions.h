@@ -163,7 +163,7 @@ void GEOSX_dgels( char const * TRANS,
                   double * WORK,
                   int const * LWORK,
                   int * INFO );
-                  
+
 #define GEOSX_dgetrs FORTRAN_MANGLE( dgetrs )
 void GEOSX_dgetrs( char const * TRANS,
                    int const * N,

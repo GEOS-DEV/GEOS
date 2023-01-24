@@ -192,9 +192,9 @@ public:
     /// Derivative of mass balance residual wrt pressure
     real64 dLocalResidualMass_dPressure[1][1]{};
 
-    /// Fracture flow term 
+    /// Fracture flow term
     real64 fractureFlowTerm[3]{};
-    /// Derivative of the fracture flow term wrt pressure 
+    /// Derivative of the fracture flow term wrt pressure
     real64 dFractureFlowTerm_dPressure[3]{};
 
     /// C-array storage for the element local row degrees of freedom.
@@ -331,7 +331,7 @@ public:
                 KERNEL_TYPE const & kernelComponent );
 
 protected:
-  
+
   /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
 
@@ -364,11 +364,11 @@ protected:
   /// Derivative of fluid density wrt pressure
   arrayView2d< real64 const > const m_dFluidDensity_dPressure;
 
-  arrayView2d< real64 const > const m_fluidPressureGradient; 
+  arrayView2d< real64 const > const m_fluidPressureGradient;
 
 };
 
-using SinglePhasePoromechanicsDamageKernelFactory = 
+using SinglePhasePoromechanicsDamageKernelFactory =
   finiteElement::KernelFactory< SinglePhasePoromechanicsDamage,
                                 arrayView1d< globalIndex const > const,
                                 globalIndex const,

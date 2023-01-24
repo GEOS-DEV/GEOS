@@ -956,22 +956,22 @@ void BlasLapackLA::matrixLeastSquaresSolutionSolve( arraySlice2d< real64 const, 
     }
   }
 
-  matrixLeastSquaresSolutionSolve( AT.toSliceConst(), B, X ); 
+  matrixLeastSquaresSolutionSolve( AT.toSliceConst(), B, X );
 }
 
 void BlasLapackLA::matrixLeastSquaresSolutionSolve( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
                                                     arraySlice1d< real64 const > const & B,
                                                     arraySlice1d< real64 > const & X )
 {
-  // make a copy of A, since dgels modifies the components in A 
+  // make a copy of A, since dgels modifies the components in A
   array2d< real64, MatrixLayout::COL_MAJOR_PERM > ACOPY( A.size( 0 ), A.size( 1 ) );
   BlasLapackLA::matrixCopy( A, ACOPY );
 
-  // make a copy of B, since dgels modifies the components in B 
+  // make a copy of B, since dgels modifies the components in B
   array1d< real64 > BCOPY( B.size() );
   BlasLapackLA::vectorCopy( B, BCOPY );
 
-  detail::matrixLeastSquaresSolutionSolve( ACOPY.toSlice(), BCOPY.toSlice(), X ); 
+  detail::matrixLeastSquaresSolutionSolve( ACOPY.toSlice(), BCOPY.toSlice(), X );
 }
 
 } // end geosx namespace

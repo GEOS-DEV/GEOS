@@ -119,7 +119,7 @@ public:
     m_quadDamage( inputConstitutiveType.getNewDamage() ),
     m_quadExtDrivingForce( inputConstitutiveType.getExtDrivingForce() ),
     m_localDissipationOption( localDissipationOption ),
-    m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( "pressure" ) ), 
+    m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( "pressure" ) ),
     m_fluidPressureGradient( elementSubRegion.template getReference< array2d< real64 > >( "pressureGradient" ) )
   {}
 
@@ -204,7 +204,7 @@ public:
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold( k, q );
     real64 const volStrain = m_constitutiveUpdate.getVolStrain( k, q );
-    real64 const biotCoeff = m_constitutiveUpdate.getBiotCoefficient( k ); 
+    real64 const biotCoeff = m_constitutiveUpdate.getBiotCoefficient( k );
 
     //Interpolate d and grad_d
     real64 N[ numNodesPerElem ];
@@ -215,7 +215,7 @@ public:
     real64 qp_damage = 0.0;
     real64 qp_grad_damage[3] = {0, 0, 0};
     FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
-    
+
     real64 qp_disp[3] = {0, 0, 0};
 
     FE_TYPE::value( N, stack.u_local, qp_disp );
@@ -250,9 +250,9 @@ public:
 
       }
 
-      /// Add pressure effects 
+      /// Add pressure effects
       stack.localResidual[ a ] -= detJ * 0.5 * ell/Gc * ( ( 1.0 - biotCoeff ) * volStrain * m_fluidPressure( k ) * m_constitutiveUpdate.pressureDamageFunctionDerivative( qp_damage ) * N[a]
-                                                          + LvArray::tensorOps::AiBi< 3 >( qp_disp, elemPresGradient ) * m_constitutiveUpdate.pressureDamageFunctionDerivative( qp_damage ) * N[a] ); 
+                                                          + LvArray::tensorOps::AiBi< 3 >( qp_disp, elemPresGradient ) * m_constitutiveUpdate.pressureDamageFunctionDerivative( qp_damage ) * N[a] );
 
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
@@ -268,7 +268,7 @@ public:
                                                     + N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * ell * strainEnergyDensity/Gc ) );
         }
 
-        stack.localJacobian[ a ][ b ] -= detJ * 0.5 * ell/Gc * 
+        stack.localJacobian[ a ][ b ] -= detJ * 0.5 * ell/Gc *
                                          ( ( 1.0 - biotCoeff ) * volStrain * m_fluidPressure( k ) * m_constitutiveUpdate.pressureDamageFunctionSecondDerivative( qp_damage ) * N[a] * N[b]
                                            + LvArray::tensorOps::AiBi< 3 >( qp_disp, elemPresGradient ) * m_constitutiveUpdate.pressureDamageFunctionSecondDerivative( qp_damage ) * N[a] * N[b] );
       }
@@ -328,7 +328,7 @@ protected:
 
   arrayView1d< real64 const > const m_fluidPressure;
 
-  arrayView2d< real64 const > const m_fluidPressureGradient; 
+  arrayView2d< real64 const > const m_fluidPressureGradient;
 
 };
 

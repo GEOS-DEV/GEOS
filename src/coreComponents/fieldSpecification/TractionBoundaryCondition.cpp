@@ -249,7 +249,7 @@ void TractionBoundaryCondition::reinitScaleSet( FaceManager const & faceManager,
     localIndex const kf = targetSet[ i ];
     localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
 
-    real64 faceScale = 0.0; 
+    real64 faceScale = 0.0;
 
     for( localIndex a=0; a<numNodes; ++a )
     {

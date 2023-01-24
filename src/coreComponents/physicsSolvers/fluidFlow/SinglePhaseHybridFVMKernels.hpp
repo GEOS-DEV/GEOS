@@ -56,39 +56,39 @@ struct PressureGradientKernel
            real64 const pres,
            arrayView2d< real64 > const & presGradient )
   {
-    array2d< real64 > coordinates( numFacesInElem+1, 4 ); 
-    array1d< real64 > pressures( numFacesInElem + 1 ); 
-    array1d< real64 > presGradientLocal( 4 ); 
+    array2d< real64 > coordinates( numFacesInElem+1, 4 );
+    array1d< real64 > pressures( numFacesInElem + 1 );
+    array1d< real64 > presGradientLocal( 4 );
 
     for( integer dim=0; dim<3; ++dim )
     {
       coordinates( 0, dim ) = elemCenter[dim];
     }
-    coordinates( 0, 3 ) = 1.0; 
-    pressures( 0 ) = pres; 
-    
+    coordinates( 0, 3 ) = 1.0;
+    pressures( 0 ) = pres;
+
     for( integer fi=0; fi<numFacesInElem; ++fi )
     {
       localIndex const localFaceIndex = elemToFaces[fi];
 
       real64 const facePresLocal = facePressure[localFaceIndex];
 
-      pressures( fi+1 ) = facePresLocal; 
-      
+      pressures( fi+1 ) = facePresLocal;
+
       for( integer dim=0; dim<3; ++dim )
       {
         real64 const faceCenterXiLocal = faceCenter[localFaceIndex][dim];
 
-        coordinates( fi+1, dim ) = faceCenterXiLocal; 
+        coordinates( fi+1, dim ) = faceCenterXiLocal;
       }
-      coordinates( fi+1, 3 ) = 1.0; 
+      coordinates( fi+1, 3 ) = 1.0;
     }
 
-    BlasLapackLA::matrixLeastSquaresSolutionSolve( coordinates, pressures, presGradientLocal ); 
+    BlasLapackLA::matrixLeastSquaresSolutionSolve( coordinates, pressures, presGradientLocal );
 
     for( integer dim=0; dim<3; ++dim )
     {
-      presGradient( elemIndex, dim ) = presGradientLocal( dim ); 
+      presGradient( elemIndex, dim ) = presGradientLocal( dim );
     }
   }
 

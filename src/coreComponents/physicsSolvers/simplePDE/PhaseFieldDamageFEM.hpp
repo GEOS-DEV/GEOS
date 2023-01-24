@@ -169,7 +169,7 @@ private:
   string m_localDissipationOption;
   integer m_irreversibilityFlag;
   real64 m_damageUpperBound;
-  integer m_fracturePressureTermFlag; 
+  integer m_fracturePressureTermFlag;
 
   array1d< real64 > m_coeff;
 

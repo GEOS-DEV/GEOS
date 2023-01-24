@@ -124,7 +124,7 @@ protected:
 
   virtual void initializePreSubGroups() override;
 
-  integer m_damageFlag; 
+  integer m_damageFlag;
 
 private:
 

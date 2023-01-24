@@ -56,7 +56,7 @@ using namespace constitutive;
 PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
-  m_fieldName( "primaryField" ), 
+  m_fieldName( "primaryField" ),
   m_fracturePressureTermFlag( 0 )
 {
 
@@ -83,9 +83,9 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
     setDescription( "The upper bound of the damage" );
 
   registerWrapper( viewKeyStruct::fracturePressureTermFlagString(), &m_fracturePressureTermFlag ).
-     setApplyDefaultValue( 0 ). 
-     setInputFlag( InputFlags::OPTIONAL ).
-     setDescription( "The flag to indicate whether to add the fracture pressure contribution" );
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag to indicate whether to add the fracture pressure contribution" );
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()

@@ -73,7 +73,7 @@ public:
                                        real64 & dPorosity_dTemperature,
                                        real64 & dSolidDensity_dPressure,
                                        real64 ( & fractureFlowTerm )[3],
-                                       real64 ( & dFractureFlowTerm_dPressure )[3]) const
+                                       real64 ( & dFractureFlowTerm_dPressure )[3] ) const
   {
     // Compute total stress increment and its derivative
     computeTotalStress( k,
@@ -158,16 +158,16 @@ private:
   GEOSX_HOST_DEVICE
   void updateMatrixPermeability( localIndex const k ) const
   {
-    integer const quadSize = m_solidUpdate.m_newDamage[k].size(); 
+    integer const quadSize = m_solidUpdate.m_newDamage[k].size();
 
-    real64 damageAvg = 0.0; 
+    real64 damageAvg = 0.0;
 
     for( localIndex i=0; i<quadSize; ++i )
     {
-      damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 ); 
+      damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 );
     }
 
-    damageAvg = damageAvg/quadSize; 
+    damageAvg = damageAvg/quadSize;
 
     m_permUpdate.updateDamagePermeability( k, damageAvg );
   }
@@ -187,7 +187,7 @@ private:
   {
     real64 const thermalExpansionCoefficient = 0.0;
     //   m_solidUpdate.getThermalExpansionCoefficient( k );
-    
+
     m_porosityUpdate.updateFromPressureTemperatureAndStrain( k,
                                                              q,
                                                              deltaPressure,
@@ -264,9 +264,9 @@ private:
                                 real64 ( & dFractureFlowTerm_dPressure )[3] ) const
   {
     GEOSX_UNUSED_VAR( pressure );
-    
+
     // Compute fracture flow term and its derivative w.r.t pressure
-    real64 const pressureDamage = m_solidUpdate.pressureDamageFunction( k, q ); 
+    real64 const pressureDamage = m_solidUpdate.pressureDamageFunction( k, q );
 
     LvArray::tensorOps::scaledCopy< 3 >( fractureFlowTerm, fluidPressureGradient, -pressureDamage );
 

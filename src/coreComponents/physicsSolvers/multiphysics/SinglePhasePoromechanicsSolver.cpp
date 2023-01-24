@@ -40,8 +40,8 @@ using namespace dataRepository;
 using namespace fields;
 
 SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & name,
-                                                                Group * const parent ): 
-  Base( name, parent ), 
+                                                                Group * const parent ):
+  Base( name, parent ),
   m_damageFlag()
 {
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
@@ -49,10 +49,10 @@ SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & n
   m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
   m_linearSolverParameters.get().dofsPerNode = 3;
 
-  registerWrapper( viewKeyStruct::damageFlagString(), &m_damageFlag ). 
-     setApplyDefaultValue( 0 ).
-     setInputFlag( InputFlags::OPTIONAL ).
-     setDescription( "The flag to indicate whether a damage solid model is used" );
+  registerWrapper( viewKeyStruct::damageFlagString(), &m_damageFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag to indicate whether a damage solid model is used" );
 }
 
 void SinglePhasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )

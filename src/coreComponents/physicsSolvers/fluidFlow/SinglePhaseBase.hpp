@@ -302,7 +302,7 @@ public:
   /**
    * @brief Update the cell-wise pressure gradient
    */
-  virtual void updatePressureGradient( DomainPartition & domain ) 
+  virtual void updatePressureGradient( DomainPartition & domain )
   {
     GEOSX_UNUSED_VAR( domain );
   }

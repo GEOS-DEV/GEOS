@@ -82,7 +82,7 @@ public:
 
   void reinitScaleSet( FaceManager const & faceManager,
                        SortedArrayView< localIndex const > const & targetSet,
-                       arrayView1d< real64 const > const nodalScaleSet ); 
+                       arrayView1d< real64 const > const nodalScaleSet );
 
   /**
    * @brief View keys

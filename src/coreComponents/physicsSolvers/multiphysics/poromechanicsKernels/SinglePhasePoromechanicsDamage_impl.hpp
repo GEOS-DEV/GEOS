@@ -95,7 +95,7 @@ smallStrainUpdate( localIndex const k,
   real64 dPorosity_dTemperature = 0.0;
   real64 dSolidDensity_dPressure = 0.0;
 
-  real64 fluidPressureGradient[3]{}; 
+  real64 fluidPressureGradient[3]{};
 
   for( integer i=0; i<3; ++i )
   {

@@ -166,10 +166,10 @@ void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time,
                                                  real64 const & dt,
                                                  DomainPartition & domain )
 {
-  SinglePhaseBase::implicitStepComplete( time, dt, domain ); 
+  SinglePhaseBase::implicitStepComplete( time, dt, domain );
 
-  updatePressureGradient( domain ); 
-}                                             
+  updatePressureGradient( domain );
+}
 
 void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                                       DofManager & dofManager ) const
