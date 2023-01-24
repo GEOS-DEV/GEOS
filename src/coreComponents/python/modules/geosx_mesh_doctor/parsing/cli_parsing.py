@@ -81,10 +81,12 @@ def parse(all_checks_helpers: Dict[str, CheckHelper], cli_args: List[str]) -> Ar
     """
     vtk_input_file_key = "vtk_input_file"
 
-    epilog_msg = """\
+    verbosity_flag = "v"
+
+    epilog_msg = f"""\
     Note that checks are dynamically loaded.
     An option may be missing because of an unloaded module.
-    Increase verbosity to get full information.
+    Increase verbosity (-{verbosity_flag}, -{verbosity_flag * 2}) to get full information.
     """
 
     parser = argparse.ArgumentParser(description='Inspects meshes for GEOSX.',
@@ -94,14 +96,12 @@ def parse(all_checks_helpers: Dict[str, CheckHelper], cli_args: List[str]) -> Ar
     # Nothing will be done with this verbosity/quiet input.
     # It's only here for the `--help` message.
     # `parse_verbosity` does the real parsing instead.
-    misc_grp.add_argument('-v',
-                          '--verbose',
+    misc_grp.add_argument('-' + verbosity_flag,
                           action='count',
                           default=2,
                           dest=__VERBOSE_KEY,
                           help="Use -v 'INFO', -vv for 'DEBUG'. Defaults to 'WARNING'.")
     misc_grp.add_argument('-q',
-                          '--quiet',
                           action='count',
                           default=0,
                           dest=__QUIET_KEY,
