@@ -18,6 +18,9 @@ from vtkmodules.vtkCommonDataModel import (
 import networkx
 
 from . import vtk_utils
+from .vtk_utils import (
+    to_vtk_id_list,
+)
 
 
 @dataclass(frozen=True)
@@ -38,14 +41,6 @@ def _iter(id_list: vtkIdList) -> Iterator[int]:  # TODO duplicated
     """
     for i in range(id_list.GetNumberOfIds()):
         yield id_list.GetId(i)
-
-
-def to_vtk_id_list(data):  # TODO move to utility
-    result = vtkIdList()
-    result.Allocate(len(data))
-    for d in data:
-        result.InsertNextId(d)
-    return result
 
 
 def parse_face_stream(ids: vtkIdList):  # TODO move to FaceStream.build_from_vtk_id_list

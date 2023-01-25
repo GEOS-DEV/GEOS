@@ -5,19 +5,11 @@ from typing import List, Dict, Set
 from vtkmodules.vtkCommonCore import (
     vtkIdList,
 )
-from vtkmodules.vtkCommonDataModel import (
-    vtkCellArray,
-)
-
 
 from . import vtk_utils
-
-def to_vtk_id_list(data):  # TODO move to utility (and deduplicate)
-    result = vtkIdList()
-    result.Allocate(len(data))
-    for d in data:
-        result.InsertNextId(d)
-    return result
+from .vtk_utils import (
+    to_vtk_id_list,
+)
 
 
 @dataclass(frozen=True)

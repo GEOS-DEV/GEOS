@@ -2,6 +2,9 @@ import os.path
 import logging
 import sys
 
+from vtkmodules.vtkCommonCore import (
+    vtkIdList,
+)
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
@@ -12,6 +15,21 @@ from vtkmodules.vtkIOLegacy import (
 from vtkmodules.vtkIOXML import (
     vtkXMLUnstructuredGridReader,
 )
+
+def to_vtk_id_list(data):
+    result = vtkIdList()
+    result.Allocate(len(data))
+    for d in data:
+        result.InsertNextId(d)
+    return result
+
+
+def get_cell_field_by_name(mesh, field_name):
+    cd = mesh.GetCellData()
+    for i in range(cd.GetNumberOfArrays()):
+        if cd.GetArrayName(i) == field_name:
+            return cd.GetArray(i)
+
 
 def __read_vtk(vtk_input_file: str) -> vtkUnstructuredGrid|None:
     reader = vtkUnstructuredGridReader()

@@ -43,11 +43,14 @@ from vtkmodules.vtkFiltersModeling import (
 from vtk import reference as vtk_reference
 
 from . import vtk_utils
+from .vtk_utils import (
+    get_cell_field_by_name,
+    to_vtk_id_list,
+)
 
 from .vtk_polyhedron import (
     FaceStream,
     build_cell_graph,
-    to_vtk_id_list,
     _iter,
 )
 
@@ -62,13 +65,6 @@ class Options:
 @dataclass(frozen=True)
 class Result:
     non_conformal_cells: List[Tuple[int, int]]
-
-
-def get_cell_field_by_name(mesh, field_name):  # TODO move to utilities
-    cd = mesh.GetCellData()
-    for i in range(cd.GetNumberOfArrays()):
-        if cd.GetArrayName(i) == field_name:
-            return cd.GetArray(i)
 
 
 class BoundaryMesh:
@@ -161,20 +157,17 @@ def test(i, j, normal_i, normal_j, boundary_mesh, face_tolerance, point_toleranc
     polygon_poly_data_i, cp_i = build_poly_data_for_extrusion(i, boundary_mesh)
     polygon_poly_data_j, cp_j = build_poly_data_for_extrusion(j, boundary_mesh)
 
-    # TODO deduplicate
-    extruder_i = vtkLinearExtrusionFilter()
-    extruder_i.SetExtrusionTypeToVectorExtrusion()
-    extruder_i.SetVector(normal_i)
-    extruder_i.SetScaleFactor(face_tolerance)
-    extruder_i.SetInputData(polygon_poly_data_i)
-    extruder_i.Update()
+    def build_extruder(polygon_poly_data, normal):
+        extruder = vtkLinearExtrusionFilter()
+        extruder.SetExtrusionTypeToVectorExtrusion()
+        extruder.SetVector(normal)
+        extruder.SetScaleFactor(face_tolerance / 2.)
+        extruder.SetInputData(polygon_poly_data)
+        extruder.Update()
+        return extruder
 
-    extruder_j = vtkLinearExtrusionFilter()
-    extruder_j.SetExtrusionTypeToVectorExtrusion()
-    extruder_i.SetVector(normal_j)
-    extruder_j.SetScaleFactor(face_tolerance)
-    extruder_j.SetInputData(polygon_poly_data_j)
-    extruder_j.Update()
+    extruder_i = build_extruder(polygon_poly_data_i, normal_i)
+    extruder_j = build_extruder(polygon_poly_data_j, normal_j)
 
     collision = vtkCollisionDetectionFilter()
     collision.SetCollisionModeToFirstContact()
@@ -252,7 +245,7 @@ def __check(mesh, options: Options) -> Result:
                 continue
             # cci, ccj = cell_centers[i], cell_centers[j]
             # direction_i = numpy.dot(ccj - cci, normal_i)  # TODO use closest point to polygon instead (for ccj)
-            # direction_j = numpy.dot(cci - ccj, normal_j)  # TODO use
+            # direction_j = numpy.dot(cci - ccj, normal_j)
             # # print(f"{i}, {j}, {scalar_product}, {direction_i}, {direction_j}")
             # if direction_i < 0 or direction_j < 0:  # checking direction now.
             #     continue
@@ -268,10 +261,11 @@ def __check(mesh, options: Options) -> Result:
 
 def __compute_volume(points: vtkPoints, face_stream: FaceStream) -> float:
     """
-    Computes the volume of a polyhedron element, based on its face_stream
+    Computes the volume of a polyhedron element (defined by its face_stream).
     :param face_stream:
     :return: The volume of the element.
     """
+    # Triangulating the envelope of the polyhedron for further volume computation.
     polygons = vtkCellArray()
     for face_nodes in face_stream.face_nodes:
         polygon = vtkPolygon()
@@ -286,17 +280,22 @@ def __compute_volume(points: vtkPoints, face_stream: FaceStream) -> float:
     f.SetInputData(polygon_poly_data)
     f.Update()
     triangles = f.GetOutput()
-    # Compute the barycenter TODO extract as a function?
+    # Computing the barycenter that will be used as the tip of all the tetra which mesh the polyhedron.
+    # (The basis of all the tetra being the triangles of the envelope).
+    # We could take any point, not only the barycenter.
+    # But in order to work with figure of the same magnitude, let's compute the barycenter.
     tmp_barycenter = numpy.empty((face_stream.num_support_points, 3), dtype=float)
     for i, point_id in enumerate(face_stream.support_point_ids):
         tmp_barycenter[i, :] = points.GetPoint(point_id)
-    barycenter = tmp_barycenter[:, 0].mean(), tmp_barycenter[:, 1].mean(), tmp_barycenter[:, 2].mean()  # TODO dirty
+    barycenter = tmp_barycenter[:, 0].mean(), tmp_barycenter[:, 1].mean(), tmp_barycenter[:, 2].mean()
+    # Looping on all the triangles of the envelope of the polyhedron, creating the matching tetra.
+    # Then the volume of all the tetra are added to get the final polyhedron volume.
     cell_volume = 0.
     for i in range(triangles.GetNumberOfCells()):
         triangle = triangles.GetCell(i)
         assert triangle.GetCellType() == VTK_TRIANGLE
         p = triangle.GetPoints()
-        cell_volume += vtkTetra.ComputeVolume(p.GetPoint(0), p.GetPoint(1), p.GetPoint(2), barycenter)  # TODO invert the order to reach positive volume (more natural)
+        cell_volume += vtkTetra.ComputeVolume(barycenter, p.GetPoint(0), p.GetPoint(1), p.GetPoint(2))
     return cell_volume
 
 
@@ -315,11 +314,11 @@ def __select_flip(mesh_points: vtkPoints,
     color_to_nodes: Dict[int, List[int]] = {0: [], 1: []}
     for connected_components_indices, color in colors.items():
         color_to_nodes[color] += connected_components_indices
-    # TODO this should work even if there's only one unique color.
+    # This implementation works even if there is one unique color.
+    # Admittedly, there will be one face stream that won't be flipped.
     fs = face_stream.flip_faces(color_to_nodes[0]), face_stream.flip_faces(color_to_nodes[1])
     volumes: Tuple[float, float] = __compute_volume(mesh_points, fs[0]), __compute_volume(mesh_points, fs[1])
-    # print(volumes)
-    return fs[numpy.argmin(volumes)]  # TODO we take the min because the barycenter is supposed to be "in the center" while the normals are outward.
+    return fs[numpy.argmax(volumes)]
 
 
 def __reorient_element(mesh_points: vtkPoints, face_stream_ids: vtkIdList) -> vtkIdList:
@@ -349,7 +348,9 @@ def reorient_mesh(mesh, cell_indices: Iterator[int]) -> vtkUnstructuredGrid:
     for ic in cell_indices:
         needs_to_be_reoriented[ic] = True
 
-    output_mesh = vtkUnstructuredGrid()  # TODO use CopyStructure here.
+    output_mesh = mesh.NewInstance()
+    # I did not manage to call `output_mesh.CopyStructure(mesh)` because I could not modify the polyhedron in place.
+    # Therefore, I insert the cells one by one...
     output_mesh.SetPoints(mesh.GetPoints())
     logging.info("Reorienting the polyhedron cells to enforce normals directed outward.")
     with tqdm(total=needs_to_be_reoriented.sum(), desc="Reorienting polyhedra") as progress_bar:  # For smoother progress, we only update on reoriented elements.
@@ -374,6 +375,12 @@ def reorient_mesh(mesh, cell_indices: Iterator[int]) -> vtkUnstructuredGrid:
 
 
 def check(vtk_input_file: str, options: Options) -> Result:
+    # err_out = vtk.vtkStringOutputWindow() TODO
+    # err_out.SetInstance(err_out)
+    # err_out.SetInstance(err_out)
+    # err_out.SetFileName("/dev/null")  # vtkCellValidator outputs loads for each cell...
+    # vtk_std_err_out = vtk.vtkOutputWindow()
+    # vtk_std_err_out.SetInstance(err_out)
     mesh = vtk_utils.read_mesh(vtk_input_file)
     return __check(mesh, options)
 
