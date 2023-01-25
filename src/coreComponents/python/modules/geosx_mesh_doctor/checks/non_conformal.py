@@ -17,23 +17,30 @@ from vtkmodules.vtkCommonDataModel import (
     VTK_TRIANGLE,
     vtkBoundingBox,
     vtkCellArray,
+    vtkPointSet,
     vtkPolyData,
     vtkPolygon,
     vtkPolyhedron,
+    vtkStaticCellLocator,
+    vtkStaticPointLocator,
     vtkUnstructuredGrid,
     vtkTetra,
 )
+from vtkmodules.vtkCommonTransforms import (
+    vtkTransform,
+)
 from vtkmodules.vtkFiltersCore import (
-    vtkCellCenters,
     vtkPolyDataNormals,
+    vtkTriangleFilter,
 )
 from vtkmodules.vtkFiltersGeometry import (
-    vtkMarkBoundaryFilter,
     vtkDataSetSurfaceFilter,
 )
-# from vtk.util.numpy_support import (
-#     vtk_to_numpy, )
-import vtk  # TODO Fix for reference
+from vtkmodules.vtkFiltersModeling import (
+    vtkCollisionDetectionFilter,
+    vtkLinearExtrusionFilter,
+)
+from vtk import reference as vtk_reference
 
 from . import vtk_utils
 
@@ -155,21 +162,21 @@ def test(i, j, normal_i, normal_j, boundary_mesh, face_tolerance, point_toleranc
     polygon_poly_data_j, cp_j = build_poly_data_for_extrusion(j, boundary_mesh)
 
     # TODO deduplicate
-    extruder_i = vtk.vtkLinearExtrusionFilter()
+    extruder_i = vtkLinearExtrusionFilter()
     extruder_i.SetExtrusionTypeToVectorExtrusion()
     extruder_i.SetVector(normal_i)
     extruder_i.SetScaleFactor(face_tolerance)
     extruder_i.SetInputData(polygon_poly_data_i)
     extruder_i.Update()
 
-    extruder_j = vtk.vtkLinearExtrusionFilter()
+    extruder_j = vtkLinearExtrusionFilter()
     extruder_j.SetExtrusionTypeToVectorExtrusion()
     extruder_i.SetVector(normal_j)
     extruder_j.SetScaleFactor(face_tolerance)
     extruder_j.SetInputData(polygon_poly_data_j)
     extruder_j.Update()
 
-    collision = vtk.vtkCollisionDetectionFilter()
+    collision = vtkCollisionDetectionFilter()
     collision.SetCollisionModeToFirstContact()
     collision.SetInputData(0, extruder_i.GetOutput())
     collision.SetInputData(1, extruder_j.GetOutput())
@@ -177,8 +184,8 @@ def test(i, j, normal_i, normal_j, boundary_mesh, face_tolerance, point_toleranc
     # m_j = vtk.vtkMatrix4x4()
     # collision.SetMatrix(0, m_i)
     # collision.SetMatrix(1, m_j)
-    m_i = vtk.vtkTransform()
-    m_j = vtk.vtkTransform()
+    m_i = vtkTransform()
+    m_j = vtkTransform()
     collision.SetTransform(0, m_i)
     collision.SetTransform(1, m_j)
     collision.Update()
@@ -190,15 +197,15 @@ def test(i, j, normal_i, normal_j, boundary_mesh, face_tolerance, point_toleranc
     if cp_i.GetNumberOfPoints() != cp_j.GetNumberOfPoints():
         return True
 
-    point_locator = vtk.vtkStaticPointLocator()
-    points = vtk.vtkPointSet()
+    point_locator = vtkStaticPointLocator()
+    points = vtkPointSet()
     points.SetPoints(cp_i.GetPoints())
     point_locator.SetDataSet(points)
     point_locator.BuildLocator()
     found_points = set()
     for ip in range(cp_j.GetNumberOfPoints()):
         p = cp_j.GetPoints().GetPoint(ip)
-        squared_dist = vtk.reference(0.)
+        squared_dist = vtk_reference(0.)
         found_point = point_locator.FindClosestPointWithinRadius(point_tolerance, p, squared_dist)
         found_points.add(found_point)
     return found_points != set(range(cp_i.GetNumberOfPoints()))
@@ -217,7 +224,7 @@ def __check(mesh, options: Options) -> Result:
         for point_id in _iter(point_ids):
             num_cells_per_node[point_id] += 1
 
-    cell_locator = vtk.vtkStaticCellLocator()
+    cell_locator = vtkStaticCellLocator()
     cell_locator.Initialize()
     cell_locator.SetNumberOfCellsPerNode(num_cells_per_node.max())
     cell_locator.SetDataSet(boundary_mesh.re_boundary_mesh)
@@ -275,7 +282,7 @@ def __compute_volume(points: vtkPoints, face_stream: FaceStream) -> float:
     polygon_poly_data = vtkPolyData()
     polygon_poly_data.SetPoints(points)  # TODO Is this properly working? Is the number of points OK?
     polygon_poly_data.SetPolys(polygons)
-    f = vtk.vtkTriangleFilter()
+    f = vtkTriangleFilter()
     f.SetInputData(polygon_poly_data)
     f.Update()
     triangles = f.GetOutput()
