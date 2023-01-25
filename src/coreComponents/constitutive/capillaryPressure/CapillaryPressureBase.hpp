@@ -59,16 +59,19 @@ protected:
 
   CapillaryPressureBaseUpdate( arrayView1d< integer const > const & phaseTypes,
                                arrayView1d< integer const > const & phaseOrder,
+                               arrayView3d< real64, cappres::USD_CAPPRES > const & phaseTrapped,
                                arrayView3d< real64, cappres::USD_CAPPRES > const & phaseCapPressure,
                                arrayView4d< real64, cappres::USD_CAPPRES_DS > const & dPhaseCapPressure_dPhaseVolFrac )
     : m_phaseTypes( phaseTypes ),
     m_phaseOrder( phaseOrder ),
+    m_phaseTrappedVolFrac( phaseTrapped ),
     m_phaseCapPressure( phaseCapPressure ),
     m_dPhaseCapPressure_dPhaseVolFrac( dPhaseCapPressure_dPhaseVolFrac )
   {}
 
   arrayView1d< integer const > m_phaseTypes;
   arrayView1d< integer const > m_phaseOrder;
+  arrayView3d< real64, cappres::USD_CAPPRES > m_phaseTrappedVolFrac;
 
   arrayView3d< real64, cappres::USD_CAPPRES > m_phaseCapPressure;
   arrayView4d< real64, cappres::USD_CAPPRES_DS > m_dPhaseCapPressure_dPhaseVolFrac;
@@ -129,6 +132,14 @@ public:
                                        arrayView3d< real64 const > const & convergedPermeability ) const
   { GEOSX_UNUSED_VAR( convergedPorosity, convergedPermeability ); }
 
+
+  /**
+   * @brief Save converged phase volume fraction at the end of a time step (needed for hysteresis)
+   * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
+   */
+  virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
+  { GEOSX_UNUSED_VAR( phaseVolFraction ); }
+
   /*
    * @brief Getter for the number of fluid phases
    * @return the number of fluid phases
@@ -163,18 +174,17 @@ public:
 private:
 
   /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  void resizeFields( localIndex const size, localIndex const numPts );
-
-  /**
    * @brief Called internally to set array dim labels.
    */
   void setLabels();
 
 protected:
+/**
+ * @brief Function called internally to resize member arrays
+ * @param size primary dimension (e.g. number of cells)
+ * @param numPts secondary dimension (e.g. number of gauss points per cell)
+ */
+  virtual void resizeFields( localIndex const size, localIndex const numPts );
 
   virtual void postProcessInput() override;
 
@@ -189,6 +199,8 @@ protected:
   array3d< real64, cappres::LAYOUT_CAPPRES >  m_phaseCapPressure;
   array4d< real64, cappres::LAYOUT_CAPPRES_DS >  m_dPhaseCapPressure_dPhaseVolFrac;
 
+  // trapped fraction
+  array3d< real64, cappres::LAYOUT_CAPPRES > m_phaseTrappedVolFrac;
 };
 
 } // namespace constitutive
