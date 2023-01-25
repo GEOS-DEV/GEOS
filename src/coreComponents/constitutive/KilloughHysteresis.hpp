@@ -45,9 +45,9 @@ class KilloughHysteresis
 {
 public:
 
-    static constexpr real64 minScriMinusScrd = 1e-12;
-    /// To avoid frequent changes from drainage to imbibition and vice versa, we use this buffer
-    static constexpr real64 flowReversalBuffer = 1e-12;
+  static constexpr real64 minScriMinusScrd = 1e-12;
+  /// To avoid frequent changes from drainage to imbibition and vice versa, we use this buffer
+  static constexpr real64 flowReversalBuffer = 1e-12;
 
   struct PhaseWettability
   {
@@ -93,13 +93,13 @@ public:
 
     void setPoints( std::pair< real64, real64 > const & opp, std::pair< real64, real64 > const & imbE, std::pair< real64, real64 > const & drainE )
     {
-        oppositeBoundPhaseVolFraction = opp.first;
-        imbibitionExtremaPhaseVolFraction = imbE.first;
-        drainageExtremaPhaseVolFraction = drainE.first;
+      oppositeBoundPhaseVolFraction = opp.first;
+      imbibitionExtremaPhaseVolFraction = imbE.first;
+      drainageExtremaPhaseVolFraction = drainE.first;
 
-        oppositeBoundSCALValue = opp.second;
-        imbibitionExtremaSCALValue = imbE.second;
-        drainageExtremaSCALValue = drainE.second;
+      oppositeBoundSCALValue = opp.second;
+      imbibitionExtremaSCALValue = imbE.second;
+      drainageExtremaSCALValue = drainE.second;
     }
 
     bool isWetting() const
@@ -117,27 +117,27 @@ public:
 
   static std::string catalogName() { return "KilloughHysteresis"; }
 
-  static void postProcessInput(real64 const &jerauldParam_a, real64 const &jerauldParam_b,
-                               real64 const &killoughCurvatureParamRelPerm);
+  static void postProcessInput( real64 const & jerauldParam_a, real64 const & jerauldParam_b,
+                                real64 const & killoughCurvatureParamRelPerm );
 
   GEOSX_HOST_DEVICE
   static void computeLandCoefficient( HysteresisCurve const & hcruve, real64 & landParam );
-    /**
-     * @brief Function computing the trapped critical phase volume fraction
-     * @param[in] hcurve the hysteresis curve to be used and dispatched on
-     * @param[in] Shy the max historical phase volume fraction
-     * @param[in] landParam Land trapping parameter
-     * @param[in] jerauldParam_a jerauld expononent
-     * @param[in] jerauldParam_b jerauld expononent
-     * @param[out] Scrt the trapped critical phase volume fraction
-     */
-    GEOSX_HOST_DEVICE
-    static void computeTrappedCriticalPhaseVolFraction(HysteresisCurve const &hcurve,
-                                                       real64 const &Shy,
-                                                       real64 const &landParam,
-                                                       real64 const &jerauldParam_a,
-                                                       real64 const &jerauldParam_b,
-                                                       real64 &Scrt);
+  /**
+   * @brief Function computing the trapped critical phase volume fraction
+   * @param[in] hcurve the hysteresis curve to be used and dispatched on
+   * @param[in] Shy the max historical phase volume fraction
+   * @param[in] landParam Land trapping parameter
+   * @param[in] jerauldParam_a jerauld expononent
+   * @param[in] jerauldParam_b jerauld expononent
+   * @param[out] Scrt the trapped critical phase volume fraction
+   */
+  GEOSX_HOST_DEVICE
+  static void computeTrappedCriticalPhaseVolFraction( HysteresisCurve const & hcurve,
+                                                      real64 const & Shy,
+                                                      real64 const & landParam,
+                                                      real64 const & jerauldParam_a,
+                                                      real64 const & jerauldParam_b,
+                                                      real64 & Scrt );
 
   struct viewKeyStruct
   {

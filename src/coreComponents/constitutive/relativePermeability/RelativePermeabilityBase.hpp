@@ -146,11 +146,11 @@ public:
   static std::tuple< integer, integer > phaseIndex( arrayView1d< integer const > const & phaseOrder );
   arrayView1d< integer const > getPhaseOrder() const { return m_phaseOrder; }
 
-    virtual real64 getWettingPhaseMinVolumeFraction() const = 0;
+  virtual real64 getWettingPhaseMinVolumeFraction() const = 0;
 
-    virtual real64 getNonWettingMinVolumeFraction() const = 0;
+  virtual real64 getNonWettingMinVolumeFraction() const = 0;
 
-    std::tuple< integer, integer > wettingAndNonWettingPhaseIndices() const;
+  std::tuple< integer, integer > wettingAndNonWettingPhaseIndices() const;
   /**
    * @brief Save converged phase volume fraction at the end of a time step (needed for hysteresis)
    * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step

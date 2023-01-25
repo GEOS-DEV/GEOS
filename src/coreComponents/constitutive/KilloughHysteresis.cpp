@@ -28,8 +28,8 @@ namespace constitutive
 {
 
 
-void KilloughHysteresis::postProcessInput(real64 const &jerauldParam_a, real64 const &jerauldParam_b,
-                                          real64 const &killoughCurvatureParamRelPerm)
+void KilloughHysteresis::postProcessInput( real64 const & jerauldParam_a, real64 const & jerauldParam_b,
+                                           real64 const & killoughCurvatureParamRelPerm )
 {
   GEOSX_THROW_IF( jerauldParam_a < 0,
                   GEOSX_FMT( "{}: the parameter {} must be positive",
@@ -50,7 +50,6 @@ void KilloughHysteresis::postProcessInput(real64 const &jerauldParam_a, real64 c
                   InputError );
 
 }
-
 
 
 
@@ -97,38 +96,42 @@ void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisC
   }
 }
 
-        GEOSX_HOST_DEVICE
-        void
-        KilloughHysteresis::
-        computeTrappedCriticalPhaseVolFraction(HysteresisCurve const &hcurve,
-                                               real64 const &Shy,
-                                               real64 const &landParam,
-                                               real64 const &jerauldParam_a,
-                                               real64 const &jerauldParam_b,
-                                               real64 &Scrt) {
+GEOSX_HOST_DEVICE
+void
+KilloughHysteresis::
+  computeTrappedCriticalPhaseVolFraction( HysteresisCurve const & hcurve,
+                                          real64 const & Shy,
+                                          real64 const & landParam,
+                                          real64 const & jerauldParam_a,
+                                          real64 const & jerauldParam_b,
+                                          real64 & Scrt )
+{
 
-            if (hcurve.isWetting()) {
-                //unpack values
-                real64 const Smxd = hcurve.drainageExtremaPhaseVolFraction;
-                real64 const Swc = hcurve.oppositeBoundPhaseVolFraction;
+  if( hcurve.isWetting())
+  {
+    //unpack values
+    real64 const Smxd = hcurve.drainageExtremaPhaseVolFraction;
+    real64 const Swc = hcurve.oppositeBoundPhaseVolFraction;
 
-                real64 const A = 1 + jerauldParam_a * (Shy - Swc);
-                real64 const numerator = Shy - Smxd;
-                real64 const denom = A + landParam * pow((Smxd - Shy) / (Smxd - Swc), 1 + jerauldParam_b / landParam);
-                Scrt = Smxd + numerator / denom;
-            } else {
-                //unpack values
-                real64 const Scrd = hcurve.drainageExtremaPhaseVolFraction;
-                real64 const Smx = hcurve.oppositeBoundPhaseVolFraction;
+    real64 const A = 1 + jerauldParam_a * (Shy - Swc);
+    real64 const numerator = Shy - Smxd;
+    real64 const denom = A + landParam * pow((Smxd - Shy) / (Smxd - Swc), 1 + jerauldParam_b / landParam );
+    Scrt = Smxd + numerator / denom;
+  }
+  else
+  {
+    //unpack values
+    real64 const Scrd = hcurve.drainageExtremaPhaseVolFraction;
+    real64 const Smx = hcurve.oppositeBoundPhaseVolFraction;
 
-                real64 const A = 1 + jerauldParam_a * (Smx - Shy);
-                real64 const numerator = Shy - Scrd;
-                real64 const denom = A + landParam * pow((Shy - Scrd) / (Smx - Scrd), 1 + jerauldParam_b / landParam);
-                Scrt = LvArray::math::max(0.0,
-                                          Scrd + numerator / denom); // trapped critical saturation from equation 2.162
-            }
+    real64 const A = 1 + jerauldParam_a * (Smx - Shy);
+    real64 const numerator = Shy - Scrd;
+    real64 const denom = A + landParam * pow((Shy - Scrd) / (Smx - Scrd), 1 + jerauldParam_b / landParam );
+    Scrt = LvArray::math::max( 0.0,
+                               Scrd + numerator / denom );           // trapped critical saturation from equation 2.162
+  }
 
-        }
+}
 
 }//end namespace
 }//end namespace

@@ -137,17 +137,19 @@ public:
     static constexpr char const * volFracScaleString() { return "volFracScale"; }
   };
 
-    real64 getWettingPhaseMinVolumeFraction() const override {
-        integer ipWetting;
-        std::tie(ipWetting, std::ignore) = phaseIndex(getPhaseOrder());
-        return m_phaseMinVolumeFraction[ipWetting];
-    }
+  real64 getWettingPhaseMinVolumeFraction() const override
+  {
+    integer ipWetting;
+    std::tie( ipWetting, std::ignore ) = phaseIndex( getPhaseOrder());
+    return m_phaseMinVolumeFraction[ipWetting];
+  }
 
-    real64 getNonWettingMinVolumeFraction() const override {
-        integer ipNonWetting;
-        std::tie(std::ignore, ipNonWetting) = phaseIndex(getPhaseOrder());
-        return m_phaseMinVolumeFraction[ipNonWetting];
-    };
+  real64 getNonWettingMinVolumeFraction() const override
+  {
+    integer ipNonWetting;
+    std::tie( std::ignore, ipNonWetting ) = phaseIndex( getPhaseOrder());
+    return m_phaseMinVolumeFraction[ipNonWetting];
+  };
 
 
 protected:

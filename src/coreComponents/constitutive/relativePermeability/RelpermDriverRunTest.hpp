@@ -96,10 +96,10 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
   arrayView2d< real64, compflow::USD_PHASE >  phaseMinHistoricalVolFraction = relperm.template getField< fields::relperm::phaseMinHistoricalVolFraction >().reference();
 
   KilloughHysteresis::HysteresisCurve const wettingCurve = relperm.template getReference< KilloughHysteresis::HysteresisCurve >(
-         TableRelativePermeabilityHysteresis::viewKeyStruct::wettingCurveString());
+    TableRelativePermeabilityHysteresis::viewKeyStruct::wettingCurveString());
 
-        KilloughHysteresis::HysteresisCurve const nonWettingCurve = relperm.template getReference< KilloughHysteresis::HysteresisCurve >(
-                TableRelativePermeabilityHysteresis::viewKeyStruct::nonWettingCurveString());
+  KilloughHysteresis::HysteresisCurve const nonWettingCurve = relperm.template getReference< KilloughHysteresis::HysteresisCurve >(
+    TableRelativePermeabilityHysteresis::viewKeyStruct::nonWettingCurveString());
 
   //setting for drainage
   {

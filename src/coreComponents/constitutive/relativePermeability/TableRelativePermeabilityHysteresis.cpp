@@ -235,7 +235,7 @@ void TableRelativePermeabilityHysteresis::postProcessInput()
                   InputError );
 
   //Killough section
-    KilloughHysteresis::postProcessInput(m_jerauldParam_a, m_jerauldParam_b, m_killoughCurvatureParamRelPerm);
+  KilloughHysteresis::postProcessInput( m_jerauldParam_a, m_jerauldParam_b, m_killoughCurvatureParamRelPerm );
 }
 
 void TableRelativePermeabilityHysteresis::initializePreSubGroups()
