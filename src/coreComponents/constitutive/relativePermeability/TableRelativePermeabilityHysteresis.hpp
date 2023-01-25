@@ -307,9 +307,6 @@ private:
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
-    ///Killough Kernel
-//    static constexpr char const * KilloughModelString() { return "KilloughModel"; }
-//    static constexpr char const * KilloughModelWrapperString() { return "KilloughWrappers"; }
     ///Land Coeff
     static constexpr char const * landParameterString() { return "landParameter"; }
 
@@ -333,8 +330,16 @@ private:
 
   };
 
-  arrayView1d< real64 const > getPhaseMinVolumeFraction() const override
-  { return  ; };
+  real64  getWettingPhaseMinVolumeFraction() const override
+  {
+      return m_wettingCurve.oppositeBoundPhaseVolFraction;
+  }
+
+  real64 getNonWettingMinVolumeFraction() const override
+  {
+      return m_nonWettingCurve.drainageExtremaPhaseVolFraction;
+  }
+
 
 private:
 
