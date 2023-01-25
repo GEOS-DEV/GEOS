@@ -45,6 +45,10 @@ class KilloughHysteresis
 {
 public:
 
+    static constexpr real64 minScriMinusScrd = 1e-12;
+    /// To avoid frequent changes from drainage to imbibition and vice versa, we use this buffer
+    static constexpr real64 flowReversalBuffer = 1e-12;
+
   struct PhaseWettability
   {
     enum : integer
@@ -54,15 +58,31 @@ public:
     };
   };
 
+  /**
+   * @brief  struct to represent hysteresis curves (relperm or capillary pressure)
+   * whether they are wetting or non wetting, storing key point as pairs of
+   * saturations and value, being either the relperm value (S,kr) or capillary pressure value (S,pc).
+   * this way we can tell wetting curve from non wetting by the ordering of drainage/imbibition key values.
+   * Indeed if imbibition comes at lower saturation than drainage then it is wetting curve, on the opposite
+   * if drainage comes before imbibition this is a non-wetting hysteresis. This is completed by an opposite
+   * point that is either the connate wetting saturation Swc or the maximum non wetting saturation Sgmax.
+   * @param  oppositeBoundPhaseVolFraction represents either Swc or Sgmax depending if a wetting curve or nonwetting is described
+   * @param imbibitionExtremaPhaseVolFraction represents in wetting case the imibibition max and in non-wetting the imbibition residual
+   * @param drainageExtremaPhaseVolFraction represents in wetting case the drainage max and in non-wetting the drainage residual
+   * @param oppositeBoundSCALValue represents the associate relperm or capillary pressure value
+   * @param imbibitionExtremaSCALValue represents the associate relperm or capillary pressure value
+   * @param drainageExtremaSCALValue represents the associate relperm or capillary pressure value
+   */
+
   struct HysteresisCurve
   {
-    real64 oppositeBoundSat = -1.;
-    real64 imbibitionExtremaSat = -1.;
-    real64 drainageExtremaSat = -1.;
+    real64 oppositeBoundPhaseVolFraction = -1.;
+    real64 imbibitionExtremaPhaseVolFraction = -1.;
+    real64 drainageExtremaPhaseVolFraction = -1.;
 
-    real64 oppositeBoundValue = -1.;
-    real64 imbibitionExtremaValue = -1.;
-    real64 drainageExtremaValue = -1.;
+    real64 oppositeBoundSCALValue = -1.;
+    real64 imbibitionExtremaSCALValue = -1.;
+    real64 drainageExtremaSCALValue = -1.;
 
     HysteresisCurve() = default;
 
@@ -73,109 +93,51 @@ public:
 
     void setPoints( std::pair< real64, real64 > const & opp, std::pair< real64, real64 > const & imbE, std::pair< real64, real64 > const & drainE )
     {
-      oppositeBoundSat = opp.first; imbibitionExtremaSat = imbE.first; drainageExtremaSat = drainE.first;
-      oppositeBoundValue = opp.second; imbibitionExtremaValue = imbE.second; drainageExtremaValue = drainE.second;
+        oppositeBoundPhaseVolFraction = opp.first;
+        imbibitionExtremaPhaseVolFraction = imbE.first;
+        drainageExtremaPhaseVolFraction = drainE.first;
+
+        oppositeBoundSCALValue = opp.second;
+        imbibitionExtremaSCALValue = imbE.second;
+        drainageExtremaSCALValue = drainE.second;
     }
 
     bool isWetting() const
     {
-      return ((drainageExtremaSat > oppositeBoundSat) ? PhaseWettability::WETTING : PhaseWettability::NONWETTING) == PhaseWettability::WETTING;
+      return ((drainageExtremaPhaseVolFraction > oppositeBoundPhaseVolFraction) ? PhaseWettability::WETTING : PhaseWettability::NONWETTING) == PhaseWettability::WETTING;
     }
     bool isZero() const
     {
-      return (oppositeBoundSat<=0.0) && (imbibitionExtremaSat <= 0.0) && (drainageExtremaSat <= 0.0);
+      return (oppositeBoundPhaseVolFraction <= 0.0) && (imbibitionExtremaPhaseVolFraction <= 0.0) && (drainageExtremaPhaseVolFraction <= 0.0);
     }
 
   };
 
-  void setRelPermParameters( real64 const & jerauldA, real64 const & jerauldB, real64 const & relpermCurv );
+//  void setRelPermParameters( real64 const & jerauldA, real64 const & jerauldB, real64 const & relpermCurv );
 
   static std::string catalogName() { return "KilloughHysteresis"; }
 
-  string getCatalogName() const { return catalogName(); }
-
-  void postProcessInput();
+  static void postProcessInput(real64 const &jerauldParam_a, real64 const &jerauldParam_b,
+                               real64 const &killoughCurvatureParamRelPerm);
 
   GEOSX_HOST_DEVICE
-  void computeLandCoefficient( HysteresisCurve const & hcruve, real64 & landParam );
-
-
-  class KernelKilloughHysteresisBase
-  {
-
-public:
-    /// To avoid division by zero, this is the min Scrd-Scri used in the computation of the Land constant
-    static constexpr real64 minScriMinusScrd = 1e-12;
-    /// To avoid frequent changes from drainage to imbibition and vice versa, we use this buffer
-    static constexpr real64 flowReversalBuffer = 1e-12;
-
-
-    /**
-     * @brief Constructor for the kernel wrapper updating Killough model parameters from relperm
-     * @param[in] jerauldParam_a first (modification) parameter proposed by Jerauld
-     * @param[in] jerauldParam_b second (exponent) parameter proposed by Jerauld
-     * @param[in] landParam Land trapping parameter
-     * @param[in] drainageMinPhaseVolFraction drainage minimum volume fraction for each phase
-     * @param[in] imbibitionMinPhaseVolFraction imbibition minimum volume fraction for the wetting and non-wetting phase
-     * @param[in] drainageRelPermEndPoint drainage end-point relperm for each phase
-     * @param[in] imbibitionRelPermEndPoint imbibition end-point relperm for the wetting and non-wetting phase
-     * @param[in] drainageMaxPhaseVolFraction drainage maximum volume fraction for each phase
-     * @param[in] imbibitionMaxPhaseVolFraction imbibition maximum volume fraction for the wetting and non-wetting phase
-     * @param[out] phaseTrappedVolFrac trapped saturation for each phase
-     */
-
-
-    KernelKilloughHysteresisBase( arrayView1d< real64 const > const & landParam,
-                                  real64 const & jerauldParamA,
-                                  real64 const & jerauldParamB,
-                                  real64 const & killoughCurvatureParam,
-                                  arrayView3d< real64, cappres::USD_CAPPRES > const & phaseTrappedVolFrac );
-
-
-    /// @cond DO_NOT_DOCUMENT
-    /// We need these SMFs to enable array1d< KernelWrapper > and avoid
-    /// host-device errors with CUDA. Otherwise rule of 0 would be fine.
-
-    KernelKilloughHysteresisBase() = default;
-    KernelKilloughHysteresisBase( KernelKilloughHysteresisBase const & ) = default;
-    KernelKilloughHysteresisBase( KernelKilloughHysteresisBase && ) = default;
-    KernelKilloughHysteresisBase & operator=( KernelKilloughHysteresisBase const & ) = default;
-
+  static void computeLandCoefficient( HysteresisCurve const & hcruve, real64 & landParam );
     /**
      * @brief Function computing the trapped critical phase volume fraction
      * @param[in] hcurve the hysteresis curve to be used and dispatched on
      * @param[in] Shy the max historical phase volume fraction
      * @param[in] landParam Land trapping parameter
+     * @param[in] jerauldParam_a jerauld expononent
+     * @param[in] jerauldParam_b jerauld expononent
      * @param[out] Scrt the trapped critical phase volume fraction
      */
     GEOSX_HOST_DEVICE
-    void computeTrappedCriticalPhaseVolFraction( HysteresisCurve const & hcurve,
-                                                 real64 const & Shy,
-                                                 real64 const & landParam,
-                                                 real64 & Scrt ) const;
-
-    ///parameter getters (may be unneeded in the end)
-    real64 getJerauldParamA() const;
-    real64 getJerauldParamB() const;
-    real64 getCurvatureParam() const;
-
-private:
-//from overnested
-    /// Parameter a introduced by Jerauld in the Land model
-    real64 m_jerauldParam_a;
-    /// Parameter b introduced by Jerauld in the Land model
-    real64 m_jerauldParam_b;
-    /// Parameter curvature for wetting hysteresis endpoint interpolation
-    real64 m_killoughCurvatureParamRelPerm;
-
-    /// Trapping parameter from the Land model (typically called C)
-    arrayView1d< real64 const > m_landParam;
-
-  };
-
-  KernelKilloughHysteresisBase createKernelWrapper( arrayView1d< real64 const > const & landParam,
-                                                    arrayView3d< real64, cappres::USD_CAPPRES > const & phaseTrappedVolFrac ) const;
-
+    static void computeTrappedCriticalPhaseVolFraction(HysteresisCurve const &hcurve,
+                                                       real64 const &Shy,
+                                                       real64 const &landParam,
+                                                       real64 const &jerauldParam_a,
+                                                       real64 const &jerauldParam_b,
+                                                       real64 &Scrt);
 
   struct viewKeyStruct
   {
@@ -185,55 +147,7 @@ private:
     static constexpr char const * killoughCurvatureParameterString() { return "killoughCurvatureParameter"; }
   };
 
-private:
-
-  /// Parameter a introduced by Jerauld in the Land model
-  real64 m_jerauldParam_a;
-
-  /// Parameter b introduced by Jerauld in the Land model
-  real64 m_jerauldParam_b;
-
-  /// Curvature parameter introduced for wetting phase hysteresis in Killough
-  real64 m_killoughCurvatureParamRelPerm;
-
 };
-
-//inlines
-
-GEOSX_HOST_DEVICE
-inline void
-KilloughHysteresis::KernelKilloughHysteresisBase::
-  computeTrappedCriticalPhaseVolFraction( HysteresisCurve const & hcurve,
-                                          real64 const & Shy,
-                                          real64 const & landParam,
-                                          real64 & Scrt ) const
-{
-
-  if( hcurve.isWetting())
-  {
-    //unpack values
-    real64 const Smxd = hcurve.drainageExtremaSat;
-    real64 const Swc = hcurve.oppositeBoundSat;
-
-    real64 const A = 1 + m_jerauldParam_a * ( Shy - Swc );
-    real64 const numerator = Shy - Smxd;
-    real64 const denom = A + landParam * pow( ( Smxd - Shy ) / ( Smxd - Swc ), 1 + m_jerauldParam_b/landParam );
-    Scrt = Smxd + numerator / denom;
-  }
-  else
-  {
-    //unpack values
-    real64 const Scrd = hcurve.drainageExtremaSat;
-    real64 const Smx = hcurve.oppositeBoundSat;
-
-    real64 const A = 1 + m_jerauldParam_a * ( Smx - Shy );
-    real64 const numerator = Shy - Scrd;
-    real64 const denom = A + landParam * pow( ( Shy - Scrd ) / ( Smx - Scrd ), 1 + m_jerauldParam_b / landParam );
-    Scrt = LvArray::math::max( 0.0, Scrd + numerator / denom ); // trapped critical saturation from equation 2.162
-  }
-
-}
-
 
 }
 

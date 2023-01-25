@@ -102,16 +102,6 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
                  &m_phaseMinHistoricalVolFraction );
 
   /// Killough data
-  registerWrapper( viewKeyStruct::KilloughModelString(), &m_KilloughModel )
-    .setSizedFromParent( 0 ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-
-
-  registerWrapper( viewKeyStruct::KilloughModelWrapperString(), &m_KilloughKernel )
-    .setSizedFromParent( 0 ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-
-
   registerWrapper( viewKeyStruct::drainageRelPermKernelWrappersString(),
                    &m_drainageRelPermKernelWrappers ).
     setSizedFromParent( 0 ).
@@ -244,8 +234,7 @@ void TableRelativePermeabilityHysteresis::postProcessInput()
                   InputError );
 
   //Killough section
-  m_KilloughModel.setRelPermParameters( m_jerauldParam_a, m_jerauldParam_b, m_killoughCurvatureParamRelPerm );
-  m_KilloughModel.postProcessInput();
+    KilloughHysteresis::postProcessInput(m_jerauldParam_a, m_jerauldParam_b, m_killoughCurvatureParamRelPerm);
 }
 
 void TableRelativePermeabilityHysteresis::initializePreSubGroups()
@@ -472,8 +461,8 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
 
   // Note: for simplicity, the notations are taken from IX documentation (although this breaks our phaseVolFrac naming convention)
   using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
-  m_KilloughModel.computeLandCoefficient( m_wettingCurve, m_landParam[IPT::WETTING] );
-  m_KilloughModel.computeLandCoefficient( m_nonWettingCurve, m_landParam[IPT::NONWETTING] );
+  KilloughHysteresis::computeLandCoefficient( m_wettingCurve, m_landParam[IPT::WETTING] );
+  KilloughHysteresis::computeLandCoefficient( m_nonWettingCurve, m_landParam[IPT::NONWETTING] );
 }
 
 void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
@@ -533,14 +522,14 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
   }
 
 }
-
-void TableRelativePermeabilityHysteresis::createKilloughKernelWrapper()
-{
-
-  m_KilloughKernel = m_KilloughModel.createKernelWrapper( m_landParam,
-                                                          m_phaseTrappedVolFrac );
-
-}
+//
+//void TableRelativePermeabilityHysteresis::createKilloughKernelWrapper()
+//{
+//
+//  m_KilloughKernel = m_KilloughModel.createKernelWrapper( m_landParam,
+//                                                          m_phaseTrappedVolFrac );
+//
+//}
 
 TableRelativePermeabilityHysteresis::KernelWrapper
 TableRelativePermeabilityHysteresis::createKernelWrapper()
@@ -549,14 +538,16 @@ TableRelativePermeabilityHysteresis::createKernelWrapper()
   // we want to make sure that the wrappers are always up-to-date, so we recreate them everytime
   createAllTableKernelWrappers();
 
-  createKilloughKernelWrapper();
+//  createKilloughKernelWrapper();
 
   // then we create the actual TableRelativePermeabilityHysteresis::KernelWrapper
   return KernelWrapper( m_drainageRelPermKernelWrappers,
                         m_imbibitionRelPermKernelWrappers,
-                        m_KilloughKernel,
                         m_phaseHasHysteresis,
                         m_landParam,
+                        m_jerauldParam_a,
+                        m_jerauldParam_b,
+                        m_killoughCurvatureParamRelPerm,
                         m_wettingCurve,
                         m_nonWettingCurve,
                         m_phaseTypes,
@@ -603,9 +594,11 @@ void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( ar
 
 TableRelativePermeabilityHysteresis::KernelWrapper::KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & drainageRelPermKernelWrappers,
                                                                    arrayView1d< TableFunction::KernelWrapper const > const & imbibitionRelPermKernelWrappers,
-                                                                   KilloughHysteresis::KernelKilloughHysteresisBase const & killoughHystWrappers,
                                                                    arrayView1d< integer const > const & phaseHasHysteresis,
                                                                    arrayView1d< real64 const > const & landParam,
+                                                                   real64 const & jerauldParam_a,
+                                                                   real64 const & jerauldParam_b,
+                                                                   real64 const & killoughCurvatureParamRelPerm,
                                                                    KilloughHysteresis::HysteresisCurve const & wettingCurve,
                                                                    KilloughHysteresis::HysteresisCurve const & nonWettingCurve,
                                                                    arrayView1d< integer const > const & phaseTypes,
@@ -621,11 +614,13 @@ TableRelativePermeabilityHysteresis::KernelWrapper::KernelWrapper( arrayView1d< 
                                   phaseRelPerm,
                                   dPhaseRelPerm_dPhaseVolFrac,
                                   phaseTrappedVolFrac ),
-  m_KilloughKernel( killoughHystWrappers ),
   m_drainageRelPermKernelWrappers( drainageRelPermKernelWrappers ),
   m_imbibitionRelPermKernelWrappers( imbibitionRelPermKernelWrappers ),
   m_phaseHasHysteresis( phaseHasHysteresis ),
   m_landParam( landParam ),
+  m_jerauldParam_a( jerauldParam_a ),
+  m_jerauldParam_b( jerauldParam_b ),
+  m_killoughCurvatureParamRelPerm( killoughCurvatureParamRelPerm ),
   m_wettingCurve( wettingCurve ),
   m_nonWettingCurve( nonWettingCurve ),
   m_phaseMinHistoricalVolFraction( phaseMinHistoricalVolFraction ),

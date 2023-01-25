@@ -27,77 +27,32 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-KilloughHysteresis::KernelKilloughHysteresisBase::KernelKilloughHysteresisBase( const arrayView1d< const geosx::real64 > & landParam,
-                                                                                real64 const & jerauldParamA,
-                                                                                real64 const & jerauldParamB,
-                                                                                real64 const & killoughCurvatureParam,
-                                                                                const arrayView3d< geosx::real64, cappres::USD_CAPPRES > & phaseTrappedVolFrac ):
-  m_jerauldParam_a( jerauldParamA ),
-  m_jerauldParam_b( jerauldParamB ),
-  m_killoughCurvatureParamRelPerm( killoughCurvatureParam ),
-  m_landParam( landParam )
-{}
 
-
-
-real64 KilloughHysteresis::KernelKilloughHysteresisBase::getJerauldParamA() const
+void KilloughHysteresis::postProcessInput(real64 const &jerauldParam_a, real64 const &jerauldParam_b,
+                                          real64 const &killoughCurvatureParamRelPerm)
 {
-  return m_jerauldParam_a;
-}
-
-real64 KilloughHysteresis::KernelKilloughHysteresisBase::getJerauldParamB() const
-{
-  return m_jerauldParam_b;
-}
-
-real64 KilloughHysteresis::KernelKilloughHysteresisBase::getCurvatureParam() const
-{
-  return m_killoughCurvatureParamRelPerm;
-}
-
-
-void KilloughHysteresis::setRelPermParameters( const geosx::real64 & jerauldA,
-                                               const geosx::real64 & jerauldB,
-                                               const geosx::real64 & relpermCurv )
-{
-  m_jerauldParam_a = jerauldA;
-  m_jerauldParam_b = jerauldB;
-  m_killoughCurvatureParamRelPerm = relpermCurv;
-}
-
-
-void KilloughHysteresis::postProcessInput()
-{
-  GEOSX_THROW_IF( m_jerauldParam_a < 0,
+  GEOSX_THROW_IF( jerauldParam_a < 0,
                   GEOSX_FMT( "{}: the parameter {} must be positive",
-                             getCatalogName(),
+                             catalogName(),
                              viewKeyStruct::jerauldParameterAString() ),
                   InputError );
 
-  GEOSX_THROW_IF( m_jerauldParam_b < 0,
+  GEOSX_THROW_IF( jerauldParam_b < 0,
                   GEOSX_FMT( "{}: the paramater {} must be postitive",
-                             getCatalogName(),
+                             catalogName(),
                              viewKeyStruct::jerauldParameterBString() ),
                   InputError );
 
-  GEOSX_THROW_IF( m_killoughCurvatureParamRelPerm < 0,
+  GEOSX_THROW_IF( killoughCurvatureParamRelPerm < 0,
                   GEOSX_FMT( "{}: the paramater {} must be postitive",
-                             getCatalogName(),
+                             catalogName(),
                              viewKeyStruct::killoughCurvatureParameterString() ),
                   InputError );
 
 }
 
-KilloughHysteresis::KernelKilloughHysteresisBase
-KilloughHysteresis::createKernelWrapper( const arrayView1d< const geosx::real64 > & landParam,
-                                         const arrayView3d< geosx::real64, relperm::USD_RELPERM > & phaseTrappedVolFrac ) const
-{
-  return KilloughHysteresis::KernelKilloughHysteresisBase( landParam,
-                                                           m_jerauldParam_a,
-                                                           m_jerauldParam_b,
-                                                           m_killoughCurvatureParamRelPerm,
-                                                           phaseTrappedVolFrac );
-}
+
+
 
 //TODO
 void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisCurve const & hcurve,
@@ -109,40 +64,71 @@ void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisC
   // Step 1: Land parameter for the wetting phase
   if( hcurve.isWetting() )
   {
-    real64 const Scrd = hcurve.oppositeBoundSat;
-    real64 const Smxd = hcurve.drainageExtremaSat;
-    real64 const Smxi = hcurve.imbibitionExtremaSat;
+    real64 const Scrd = hcurve.oppositeBoundPhaseVolFraction;
+    real64 const Smxd = hcurve.drainageExtremaPhaseVolFraction;
+    real64 const Smxi = hcurve.imbibitionExtremaPhaseVolFraction;
     real64 const Swc = Scrd;
     GEOSX_THROW_IF(  (Smxi - Smxd) > 0,
                      GEOSX_FMT( "{}: For wetting phase hysteresis, imbibition end-point saturation Smxi( {} ) must be smaller than the drainage saturation end-point Smxd( {} ).\n"
                                 "Crossing relative permeability curves.\n",
-                                getCatalogName(),
+                                catalogName(),
                                 Smxi,
                                 Smxd ),
                      InputError );
 
-    landParam = ( Smxd - Swc ) / LvArray::math::max( KilloughHysteresis::KernelKilloughHysteresisBase::minScriMinusScrd, ( Smxd - Smxi ) ) - 1.0;
+    landParam = ( Smxd - Swc ) / LvArray::math::max( KilloughHysteresis::minScriMinusScrd, ( Smxd - Smxi ) ) - 1.0;
   }
   else
   // Step 2: Land parameter for the non-wetting phase
 
   {
-    real64 const Smx =  hcurve.oppositeBoundSat;
-    real64 const Scrd = hcurve.drainageExtremaSat;
-    real64 const Scri = hcurve.imbibitionExtremaSat;
+    real64 const Smx =  hcurve.oppositeBoundPhaseVolFraction;
+    real64 const Scrd = hcurve.drainageExtremaPhaseVolFraction;
+    real64 const Scri = hcurve.imbibitionExtremaPhaseVolFraction;
     GEOSX_THROW_IF( (Scrd - Scri) > 0,
                     GEOSX_FMT( "{}: For non-wetting phase hysteresis, drainage trapped saturation Scrd( {} ) must be smaller than the imbibition saturation Scri( {} ).\n"
                                "Crossing relative permeability curves.\n",
-                               getCatalogName(),
+                               catalogName(),
                                Scrd,
                                Scri ),
                     InputError );
 
-    landParam = ( Smx - Scrd ) / LvArray::math::max( KilloughHysteresis::KernelKilloughHysteresisBase::minScriMinusScrd, ( Scri - Scrd ) ) - 1.0;
+    landParam = ( Smx - Scrd ) / LvArray::math::max( KilloughHysteresis::minScriMinusScrd, ( Scri - Scrd ) ) - 1.0;
   }
 }
 
+        GEOSX_HOST_DEVICE
+        void
+        KilloughHysteresis::
+        computeTrappedCriticalPhaseVolFraction(HysteresisCurve const &hcurve,
+                                               real64 const &Shy,
+                                               real64 const &landParam,
+                                               real64 const &jerauldParam_a,
+                                               real64 const &jerauldParam_b,
+                                               real64 &Scrt) {
 
+            if (hcurve.isWetting()) {
+                //unpack values
+                real64 const Smxd = hcurve.drainageExtremaPhaseVolFraction;
+                real64 const Swc = hcurve.oppositeBoundPhaseVolFraction;
+
+                real64 const A = 1 + jerauldParam_a * (Shy - Swc);
+                real64 const numerator = Shy - Smxd;
+                real64 const denom = A + landParam * pow((Smxd - Shy) / (Smxd - Swc), 1 + jerauldParam_b / landParam);
+                Scrt = Smxd + numerator / denom;
+            } else {
+                //unpack values
+                real64 const Scrd = hcurve.drainageExtremaPhaseVolFraction;
+                real64 const Smx = hcurve.oppositeBoundPhaseVolFraction;
+
+                real64 const A = 1 + jerauldParam_a * (Smx - Shy);
+                real64 const numerator = Shy - Scrd;
+                real64 const denom = A + landParam * pow((Shy - Scrd) / (Smx - Scrd), 1 + jerauldParam_b / landParam);
+                Scrt = LvArray::math::max(0.0,
+                                          Scrd + numerator / denom); // trapped critical saturation from equation 2.162
+            }
+
+        }
 
 }//end namespace
 }//end namespace
