@@ -117,6 +117,7 @@ WaveSolverBase::~WaveSolverBase()
 
 void WaveSolverBase::reinit()
 {
+  initializePreSubGroups();
   postProcessInput();
   initializePostInitialConditionsPreSubGroups();
 }
