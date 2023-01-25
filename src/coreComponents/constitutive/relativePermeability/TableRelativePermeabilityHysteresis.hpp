@@ -27,6 +27,7 @@
 
 namespace geosx
 {
+
 namespace constitutive
 {
 
@@ -70,10 +71,10 @@ public:
   TableRelativePermeabilityHysteresis( std::string const & name, dataRepository::Group * const parent );
 
   static std::string catalogName() { return "TableRelativePermeabilityHysteresis"; }
+
   virtual string getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
-  // maybe problem to make inheritance virtual (to protect against possible diamond inheritance)
   class KernelWrapper final : public RelativePermeabilityBaseUpdate
   {
 public:
@@ -332,6 +333,9 @@ private:
 
   };
 
+  arrayView1d< real64 const > getPhaseMinVolumeFraction() const override
+  { return  ; };
+
 private:
 
   virtual void postProcessInput() override;
@@ -344,8 +348,6 @@ private:
    * @brief Create all the table kernel wrappers needed for the simulation (for all the phases present)
    */
   void createAllTableKernelWrappers();
-
-//  void createKilloughKernelWrapper();
 
   /**
    * @brief Check whether the wetting tables exist and validate all of them
@@ -416,6 +418,8 @@ private:
   ///  0- wetting-phase
   ///  1- non-wetting-phase
   array1d< TableFunction::KernelWrapper > m_imbibitionRelPermKernelWrappers;
+
+  // Hysteresis parameters
 
   /// Parameter a introduced by Jerauld in the Land model
   real64 m_jerauldParam_a;
