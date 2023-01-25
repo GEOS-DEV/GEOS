@@ -375,7 +375,7 @@ private:
   void projectDamageFieldGradientToGrid( ParticleManager & particleManager,
                                          NodeManager & nodeManager );
 
-  void constitutiveCallAndFUpdate( real64 dt,
+  void fUpdateAndConstitutiveCall( real64 dt,
                                    ParticleManager & particleManager );
 };
 
