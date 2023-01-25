@@ -252,7 +252,7 @@ public:
    *
    * @param[in] k The element index.
    * @param[in] q The quadrature point index.
-   * @param[in] Ddt The incremental deformation tensor (rate of deformation tensor * dt)
+   * @param[in] Ddt The incremental deformation tensor (rate of deformation tensor * dt) WITHOUT factors of 2 on the shear terms
    * @param[in] RotBeginning The incremental rotation tensor
    * @param[in] RotEnd The incremental rotation tensor
    * @param[out] stress New stress value (Cauchy stress)
@@ -260,17 +260,26 @@ public:
   GEOSX_HOST_DEVICE
   virtual void hypoUpdate2_StressOnly( localIndex const k,
                                        localIndex const q,
-                                       real64 const ( &Ddt )[6],
+                                       real64 ( &Ddt )[6],
                                        real64 const ( &RotBeginning )[3][3],
                                        real64 const ( &RotEnd )[3][3],
                                        real64 ( & stress )[6] ) const
   {
-    // Rotate from beginning-of-step configuration to reference configuration
+    // Rotate m_oldStress and Ddt from beginning-of-step configuration to reference configuration.
+    // Note that Ddt should not contain the factors of 2 on shear terms typically associated with Voigt
+    // notation. Including them at this stage would corrupt the rotation.
     real64 temp[6] = { 0 };
-    real64 RotBeginningTranpose[3][3] = { {0} };
+    real64 RotBeginningTranpose[3][3] = { {0} };    
     LvArray::tensorOps::transpose< 3, 3 >( RotBeginningTranpose, RotBeginning ); // We require the transpose since we're un-rotating
-    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, RotBeginningTranpose, m_oldStress[ k ][ q ] );
-    LvArray::tensorOps::copy< 6 >( stress, temp );
+    LvArray::tensorOps::copy< 6 >( temp, m_oldStress[ k ][ q ]  );
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( m_oldStress[ k ][ q ], RotBeginningTranpose, temp );
+    LvArray::tensorOps::copy< 6 >( temp, Ddt  );
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( Ddt, RotBeginningTranpose, temp );
+    
+    // Convert strain increment to Voigt notation by re-introducing factors of 2 on shear terms
+    Ddt[3] *= 2;
+    Ddt[4] *= 2;
+    Ddt[5] *= 2;
 
     // Stress increment
     smallStrainUpdate_StressOnly( k, q, Ddt, stress );

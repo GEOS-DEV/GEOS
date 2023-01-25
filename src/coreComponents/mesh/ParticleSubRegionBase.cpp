@@ -140,7 +140,7 @@ void ParticleSubRegionBase::setNonGhostIndices()
   {
     if( m_particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) )
     {
-      m_nonGhostIndices.push_back( p );
+      m_nonGhostIndices.insert( p );
     }
   }
 }

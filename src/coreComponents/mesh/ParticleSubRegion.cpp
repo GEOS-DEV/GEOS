@@ -132,7 +132,7 @@ void ParticleSubRegion::flagOutOfRangeParticles( std::array< real64, 3 > const &
     globalMax[i] = xGlobalMax[i] + hEl[i];
   }
 
-  for( int p : this->nonGhostIndices() )
+  for( localIndex const p : this->nonGhostIndices() )
   {
     arraySlice1d< real64 > const & p_x = m_particleCenter[p];
 

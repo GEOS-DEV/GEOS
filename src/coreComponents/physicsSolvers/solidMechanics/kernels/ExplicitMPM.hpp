@@ -45,48 +45,55 @@ struct StateUpdateKernel
    * @param[out] particleStress the new particle stress, returned for plotting convenience
    */
   template< typename POLICY, typename CONSTITUTIVE_WRAPPER >
-  static void launch( localIndex const size,
+  static void launch( SortedArrayView< localIndex const > const indices,
                       CONSTITUTIVE_WRAPPER const & constitutiveWrapper,
                       real64 dt,
                       arrayView3d< real64 > const & deformationGradient,
                       arrayView3d< real64 const > const & velocityGradient,
                       arrayView2d< real64 > const & particleStress )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( indices.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-      // Determine the strain increment (Voigt notation)
+      // Particle index
+      localIndex const p = indices[k];
+      
+      // Determine the strain increment (NOT Voigt notation)
       real64 strainIncrement[6];
-      strainIncrement[0] = velocityGradient[k][0][0] * dt;
-      strainIncrement[1] = velocityGradient[k][1][1] * dt;
-      strainIncrement[2] = velocityGradient[k][2][2] * dt;
-      strainIncrement[3] = (velocityGradient[k][1][2] + velocityGradient[k][2][1]) * dt;
-      strainIncrement[4] = (velocityGradient[k][0][2] + velocityGradient[k][2][0]) * dt;
-      strainIncrement[5] = (velocityGradient[k][0][1] + velocityGradient[k][1][0]) * dt;
+      strainIncrement[0] = velocityGradient[p][0][0] * dt;
+      strainIncrement[1] = velocityGradient[p][1][1] * dt;
+      strainIncrement[2] = velocityGradient[p][2][2] * dt;
+      strainIncrement[3] = 0.5 * (velocityGradient[p][1][2] + velocityGradient[p][2][1]) * dt;
+      strainIncrement[4] = 0.5 * (velocityGradient[p][0][2] + velocityGradient[p][2][0]) * dt;
+      strainIncrement[5] = 0.5 * (velocityGradient[p][0][1] + velocityGradient[p][1][0]) * dt;
 
       // Perform F update
       real64 FOld[3][3] = { {0} };
       real64 dF[3][3] = { {0} };
-      LvArray::tensorOps::copy< 3, 3 >( FOld, deformationGradient[k] );
-      LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( dF, velocityGradient[k], FOld );
+      LvArray::tensorOps::copy< 3, 3 >( FOld, deformationGradient[p] );
+      LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( dF, velocityGradient[p], FOld );
       LvArray::tensorOps::scale< 3, 3 >( dF, dt );
-      LvArray::tensorOps::add< 3, 3 >( deformationGradient[k], dF );
+      LvArray::tensorOps::add< 3, 3 >( deformationGradient[p], dF );
 
       // Polar decompositions
       real64 rotBeginning[3][3] = { {0} };
       real64 rotEnd[3][3] = { {0} };
+      LvArray::tensorOps::polarDecomposition< 3 >( rotBeginning, FOld );
+      LvArray::tensorOps::polarDecomposition< 3 >( rotEnd, deformationGradient[p] );
       
       // Call stress update
       real64 stress[6] = { 0 };
-      constitutiveWrapper.hypoUpdate2_StressOnly( k,                        // particle local index
+      constitutiveWrapper.hypoUpdate2_StressOnly( p,                        // particle local index
                                                   0,                        // particles have 1 quadrature point
                                                   strainIncrement,          // particle strain increment
                                                   rotBeginning,             // beginning-of-step rotation matrix
                                                   rotEnd,                   // end-of-step rotation matrix
                                                   stress );                 // final updated stress
-      LvArray::tensorOps::copy< 6 >( particleStress[k], stress );
+      
+      // Copy the updated stress into particleStress
+      LvArray::tensorOps::copy< 6 >( particleStress[p], stress );
 
       // Copy m_newStress into m_oldStress
-      constitutiveWrapper.saveConvergedState( k, 0 );
+      constitutiveWrapper.saveConvergedState( p, 0 );
     } );
   }
 
