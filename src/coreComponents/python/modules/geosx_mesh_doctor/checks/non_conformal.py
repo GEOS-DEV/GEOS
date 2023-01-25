@@ -63,58 +63,15 @@ def get_cell_field_by_name(mesh, field_name):  # TODO move to utilities
         if cd.GetArrayName(i) == field_name:
             return cd.GetArray(i)
 
-
-def build_boundary_mesh(mesh, consistency=True, flip_normals=True) -> Result:  # TODO Move to the BoundaryMesh class # TODO check the flip normals...
-    ORIGINAL_POINTS = "ORIGINAL_POINTS"
-    ORIGINAL_CELLS = "ORIGINAL_CELLS"
-
-    f = vtkDataSetSurfaceFilter()
-    f.PassThroughCellIdsOn()
-    f.PassThroughPointIdsOn()
-    f.FastModeOff()
-
-    f.SetOriginalCellIdsName(ORIGINAL_CELLS)
-    f.SetOriginalPointIdsName(ORIGINAL_POINTS)
-
-    boundary_mesh = vtkPolyData()
-    f.UnstructuredGridExecute(mesh, boundary_mesh)
-
-    cc = vtkCellCenters()
-    cc.VertexCellsOn()
-    cc.CopyArraysOff()
-    cc.SetInputData(boundary_mesh)
-    cc.Update()
-    cell_centers_mesh = cc.GetOutput()  # TODO remove
-    cell_centers: List[Tuple[float, float, float]] = []
-    for ic in range(cell_centers_mesh.GetNumberOfCells()):
-        cell_centers.append(numpy.array(cell_centers_mesh.GetPoint(cell_centers_mesh.GetCell(ic).GetPointId(0))))
-
-    n = vtkPolyDataNormals()
-    n.SetConsistency(consistency)  # TODO review the options!
-    n.SetFlipNormals(flip_normals)  # TODO review the options!
-    n.AutoOrientNormalsOff()
-    n.ComputeCellNormalsOn()
-    n.SetInputData(boundary_mesh)
-    n.Update()
-    normals = get_cell_field_by_name(n.GetOutput(), "Normals")
-    assert normals
-    assert normals.GetName() == "Normals"
-    assert normals.GetNumberOfComponents() == 3
-    assert normals.GetNumberOfTuples() == boundary_mesh.GetNumberOfCells()
-
-    # return boundary_mesh, normals, cell_centers
-    return boundary_mesh, normals
-
-
 class BoundaryMesh:
     def __init__(self, mesh):
-        boundary_mesh, __normals = build_boundary_mesh(mesh)
+        boundary_mesh, __normals = BoundaryMesh.__build_boundary_mesh(mesh)
         self.__original_cells = get_cell_field_by_name(boundary_mesh, "ORIGINAL_CELLS")
         assert self.__original_cells
         cells_to_reorient = filter(lambda c: mesh.GetCell(c).GetCellType() == VTK_POLYHEDRON,
                                    map(self.__original_cells.GetValue, range(self.__original_cells.GetNumberOfValues())))
         reoriented_mesh = reorient_mesh(mesh, cells_to_reorient)
-        self.re_boundary_mesh, re_normals = build_boundary_mesh(reoriented_mesh, consistency=False)
+        self.re_boundary_mesh, re_normals = BoundaryMesh.__build_boundary_mesh(reoriented_mesh, consistency=False)
         num_cells = boundary_mesh.GetNumberOfCells()
         # precomputing the underlying cell type
         self.__is_underlying_cell_type_a_polyhedron = numpy.zeros(num_cells, dtype=bool)
@@ -127,6 +84,34 @@ class BoundaryMesh:
                 self.__normals[ic, :] = re_normals.GetTuple3(ic)
             else:
                 self.__normals[ic, :] = __normals.GetTuple3(ic)
+    @staticmethod
+    def __build_boundary_mesh(mesh, consistency=True):
+        ORIGINAL_CELLS = "ORIGINAL_CELLS"
+
+        f = vtkDataSetSurfaceFilter()
+        f.PassThroughCellIdsOn()
+        f.PassThroughPointIdsOff()
+        f.FastModeOff()
+
+        f.SetOriginalCellIdsName(ORIGINAL_CELLS)
+
+        boundary_mesh = vtkPolyData()
+        f.UnstructuredGridExecute(mesh, boundary_mesh)
+
+        n = vtkPolyDataNormals()
+        n.SetConsistency(consistency)
+        n.FlipNormalsOn()
+        n.AutoOrientNormalsOff()
+        n.ComputeCellNormalsOn()
+        n.SetInputData(boundary_mesh)
+        n.Update()
+        normals = get_cell_field_by_name(n.GetOutput(), "Normals")
+        assert normals
+        assert normals.GetName() == "Normals"
+        assert normals.GetNumberOfComponents() == 3
+        assert normals.GetNumberOfTuples() == boundary_mesh.GetNumberOfCells()
+
+        return boundary_mesh, normals
     def GetNumberOfCells(self):
         return self.re_boundary_mesh.GetNumberOfCells()
     def GetNumberOfPoints(self):
