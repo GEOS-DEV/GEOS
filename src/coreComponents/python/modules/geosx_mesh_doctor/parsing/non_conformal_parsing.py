@@ -46,5 +46,4 @@ def display_results(options: Options, result: Result):
     for i, j in result.non_conformal_cells:
         non_conformal_cells += i, j
     non_conformal_cells = set(non_conformal_cells)
-    logging.error(f"You have {len(non_conformal_cells)} non conformal cells.")
-    logging.info(non_conformal_cells)
+    logging.error(f"You have {len(non_conformal_cells)} non conformal cells.\n{', '.join(map(str, sorted(non_conformal_cells)))}")
