@@ -1040,7 +1040,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     array1d< real64 > weights(numNodesMappedTo); // shape function value for each node
     array2d< real64 > gradWeights(numNodesMappedTo, 3); // shape function gradient value for each node; 1st index = direction, 2nd index = node
 
-    for( localIndex & p: subRegion.nonGhostIndices() )
+    for( localIndex const p: subRegion.nonGhostIndices() )
     {
       // Get interpolation kernel
       subRegion.getAllWeights( p,
@@ -1274,7 +1274,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     array2d< real64 > gradWeights(numNodesMappedTo, 3); // shape function gradient value for each node; 1st index = direction, 2nd index = node
 
     // Particle loop - we might be able to get rid of this someday and have everything happen via MPMParticleSubRegion methods
-    for( localIndex & p: subRegion.nonGhostIndices() )
+    for( localIndex const p: subRegion.nonGhostIndices() )
     {
       real64 temp[3][3] = { {0} }; // Temp tensor for intermediate calculations
       real64 p_D[3][3] = { {0} }; // Rate of deformation
@@ -1319,103 +1319,103 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
         }
       }
 
-      // Get D
-      for(int i=0; i<3; i++)
-      {
-        for(int j=0; j<3; j++)
-        {
-          p_D[i][j] = 0.5 * ( particleVelocityGradient[p][i][j] + particleVelocityGradient[p][j][i] );
-        }
-      }
+      // // Get D
+      // for(int i=0; i<3; i++)
+      // {
+      //   for(int j=0; j<3; j++)
+      //   {
+      //     p_D[i][j] = 0.5 * ( particleVelocityGradient[p][i][j] + particleVelocityGradient[p][j][i] );
+      //   }
+      // }
 
-      // Get Diso
-      for(int i=0; i<3; i++)
-      {
-        for(int j=0; j<3; j++)
-        {
-          p_Diso[i][j] = i == j ? ( p_D[0][0] + p_D[1][1] + p_D[2][2] ) / 3.0 : 0.0;
-        }
-      }
+      // // Get Diso
+      // for(int i=0; i<3; i++)
+      // {
+      //   for(int j=0; j<3; j++)
+      //   {
+      //     p_Diso[i][j] = i == j ? ( p_D[0][0] + p_D[1][1] + p_D[2][2] ) / 3.0 : 0.0;
+      //   }
+      // }
 
-      // Get Ddev
-      for(int i=0; i<3; i++)
-      {
-        for(int j=0; j<3; j++)
-        {
-          p_Ddev[i][j] = p_D[i][j] - p_Diso[i][j];
-        }
-      }
+      // // Get Ddev
+      // for(int i=0; i<3; i++)
+      // {
+      //   for(int j=0; j<3; j++)
+      //   {
+      //     p_Ddev[i][j] = p_D[i][j] - p_Diso[i][j];
+      //   }
+      // }
 
-      // Particle kinematic update - TODO: surely there's a nicer way to do this with LvArray
-      // Add identity tensor to velocity gradient and multiply by dt
-      for(int i=0; i<3; i++)
-      {
-        for(int j=0; j<3; j++)
-        {
-          if(i==j)
-            temp[i][j] = particleVelocityGradient[p][i][j] * dt + 1.0;
-          else
-            temp[i][j] = particleVelocityGradient[p][i][j] * dt;
-        }
-      }
+      // // Particle kinematic update - TODO: surely there's a nicer way to do this with LvArray
+      // // Add identity tensor to velocity gradient and multiply by dt
+      // for(int i=0; i<3; i++)
+      // {
+      //   for(int j=0; j<3; j++)
+      //   {
+      //     if(i==j)
+      //       temp[i][j] = particleVelocityGradient[p][i][j] * dt + 1.0;
+      //     else
+      //       temp[i][j] = particleVelocityGradient[p][i][j] * dt;
+      //   }
+      // }
 
-      // Get new F
-      for(int i=0; i<3; i++)
-      {
-        for(int j=0; j<3; j++)
-        {
-          particleDeformationGradient[p][i][j] = temp[i][0]*p_FOld[0][j] + temp[i][1]*p_FOld[1][j] + temp[i][2]*p_FOld[2][j]; // matrix multiply
-        }
-      }
+      // // Get new F
+      // for(int i=0; i<3; i++)
+      // {
+      //   for(int j=0; j<3; j++)
+      //   {
+      //     particleDeformationGradient[p][i][j] = temp[i][0]*p_FOld[0][j] + temp[i][1]*p_FOld[1][j] + temp[i][2]*p_FOld[2][j]; // matrix multiply
+      //   }
+      // }
 
-      // Get det(F), update volume and r-vectors
-      detF = tOps::determinant< 3 >(particleDeformationGradient[p]);
-      if( detF <= 0.1 || detF >= 10.0 )
-      {
-        isBad[p] = 1;
-        GEOSX_LOG_RANK( "Flagging particle with unreasonable Jacobian (<0.1 or >10) for deletion! Global particle ID: " << particleID[p] );
-        continue; // move on to the next particle since log(detF) will throw an error
-      }
-      particleVolume[p] = particleInitialVolume[p] * detF;
-      particleDensity[p] = particleMass[p] / particleVolume[p];
-      subRegion.computeRVectors( p, particleDeformationGradient[p], particleInitialRVectors[p] );
+      // // Get det(F), update volume and r-vectors
+      // detF = tOps::determinant< 3 >(particleDeformationGradient[p]);
+      // if( detF <= 0.1 || detF >= 10.0 )
+      // {
+      //   isBad[p] = 1;
+      //   GEOSX_LOG_RANK( "Flagging particle with unreasonable Jacobian (<0.1 or >10) for deletion! Global particle ID: " << particleID[p] );
+      //   continue; // move on to the next particle since log(detF) will throw an error
+      // }
+      // particleVolume[p] = particleInitialVolume[p] * detF;
+      // particleDensity[p] = particleMass[p] / particleVolume[p];
+      // subRegion.computeRVectors( p, particleDeformationGradient[p], particleInitialRVectors[p] );
 
-      // Particle constitutive update - hyperelastic model from vortex MMS paper
-      real64 lambda = bulkModulus[p] - 2.0 * shearModulus[p] / 3.0;
-      real64 stressFull[3][3] = { { 0.0 } };
+      // // Particle constitutive update - hyperelastic model from vortex MMS paper
+      // real64 lambda = bulkModulus[p] - 2.0 * shearModulus[p] / 3.0;
+      // real64 stressFull[3][3] = { { 0.0 } };
 
-      // Populate full stress tensor
-      for( int i = 0 ; i < 3 ; i++ )
-      {
-        for( int j = 0 ; j < 3 ; j++ )
-        {
-          stressFull[i][j] = i == j ? ( lambda * log( detF ) / detF - ( shearModulus[p] / detF ) ) : 0.0;
+      // // Populate full stress tensor
+      // for( int i = 0 ; i < 3 ; i++ )
+      // {
+      //   for( int j = 0 ; j < 3 ; j++ )
+      //   {
+      //     stressFull[i][j] = i == j ? ( lambda * log( detF ) / detF - ( shearModulus[p] / detF ) ) : 0.0;
 
-          for( int k = 0 ; k < 3 ; k++ )
-          {
-            stressFull[i][j] += ( shearModulus[p] / detF ) * particleDeformationGradient[p][i][k] * particleDeformationGradient[p][j][k];
-          }
-        }
-      }
+      //     for( int k = 0 ; k < 3 ; k++ )
+      //     {
+      //       stressFull[i][j] += ( shearModulus[p] / detF ) * particleDeformationGradient[p][i][k] * particleDeformationGradient[p][j][k];
+      //     }
+      //   }
+      // }
 
-      // Assign full stress tensor to the symmetric version
-      for(int i=0; i<3; i++)
-      {
-        for(int j=i; j<3; j++)
-        {
-          int voigt = m_voigtMap[i][j];
-          particleStress[p][voigt] = stressFull[i][j];
-        }
-      }
+      // // Assign full stress tensor to the symmetric version
+      // for(int i=0; i<3; i++)
+      // {
+      //   for(int j=i; j<3; j++)
+      //   {
+      //     int voigt = m_voigtMap[i][j];
+      //     particleStress[p][voigt] = stressFull[i][j];
+      //   }
+      // }
 
     } // particle loop
   } ); // subregion loop
 
 
-  // //#######################################################################################
-  // solverProfiling( "Call constitutive model" );
-  // //#######################################################################################
-  // constitutiveCall( particleManager );
+  //#######################################################################################
+  solverProfiling( "Update F and call constitutive model" );
+  //#######################################################################################
+  fUpdateAndConstitutiveCall( dt, particleManager );
 
 
   //#######################################################################################
@@ -1432,7 +1432,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     arrayView1d< real64 > const rho = subRegion.getField< fields::mpm::particleDensity >();
     arrayView1d< real64 > const g = constitutiveRelation.shearModulus();
     arrayView1d< real64 > const k = constitutiveRelation.bulkModulus();
-    for( localIndex & p: subRegion.nonGhostIndices() )
+    for( localIndex const p: subRegion.nonGhostIndices() )
     {
       wavespeed = std::max( wavespeed, sqrt( ( k[p] + (4.0/3.0) * g[p] ) / rho[p] ) + tOps::l2Norm< 3 >( particleVelocity[p] ) );
     }
@@ -1809,7 +1809,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
     array1d< real64 > weights(numNodesMappedTo); // shape function value for each node
     array2d< real64 > gradWeights(numNodesMappedTo, 3); // shape function gradient value for each node; 1st index = direction, 2nd index = node
 
-    for( localIndex & p: subRegion.nonGhostIndices() )
+    for( localIndex const p: subRegion.nonGhostIndices() )
     {
       // Get interpolation kernel
       subRegion.getAllWeights( p,
@@ -2321,7 +2321,7 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
     arrayView2d< real64 > const xA = subRegionA.getParticleCenter();
 
     // Find neighbors of 'this' particle
-    for( localIndex & a: subRegionA.nonGhostIndices() )
+    for( localIndex const a: subRegionA.nonGhostIndices() )
     {
       // Bin ijk indices bounding a sphere of radius m_neighborRadius centered at 'this' particle
       int imin, imax, jmin, jmax, kmin, kmax;
@@ -2618,7 +2618,7 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
     array1d< real64 > neighborDamages;
 
     // Loop over neighbors
-    for( localIndex & p: subRegion.nonGhostIndices() )
+    for( localIndex const p: subRegion.nonGhostIndices() )
     {
       // Get number of neighbors and accessor indices
       localIndex numNeighbors = numNeighborsAll[p];
@@ -2668,7 +2668,7 @@ void SolidMechanicsMPM::updateSurfaceFlagOverload( ParticleManager & particleMan
   {
     arrayView1d< int > const particleSurfaceFlag = subRegion.getField< fields::mpm::particleSurfaceFlag >();
     arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();
-    for( localIndex & p: subRegion.nonGhostIndices() )
+    for( localIndex const p: subRegion.nonGhostIndices() )
     {
       if( particleSurfaceFlag[p] != 2 )
       {
@@ -2701,7 +2701,7 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( ParticleManager & part
     int numNodesMappedTo = subRegion.numNodesMappedTo();
     array1d< localIndex> nodeIDs(numNodesMappedTo); // nodes that the particle maps to
 
-    for( localIndex & p: subRegion.nonGhostIndices() )
+    for( localIndex const p: subRegion.nonGhostIndices() )
     {
       subRegion.getMappedNodes( p,
                                 m_xLocalMin,
@@ -2724,7 +2724,7 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( ParticleManager & part
   } );
 }
 
-void SolidMechanicsMPM::constitutiveCallAndFUpdate( real64 dt,
+void SolidMechanicsMPM::fUpdateAndConstitutiveCall( real64 dt,
                                                     ParticleManager & particleManager )
 {
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -2744,7 +2744,7 @@ void SolidMechanicsMPM::constitutiveCallAndFUpdate( real64 dt,
       using SolidType = TYPEOFREF( castedSolid );
       typename SolidType::KernelWrapper constitutiveModelWrapper = castedSolid.createKernelUpdates();
 
-      solidMechanicsMPMKernels::StateUpdateKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
+      solidMechanicsMPMKernels::StateUpdateKernel::launch< parallelDevicePolicy<> >( subRegion.nonGhostIndices(),
                                                                                      constitutiveModelWrapper,
                                                                                      dt,
                                                                                      particleDeformationGradient,

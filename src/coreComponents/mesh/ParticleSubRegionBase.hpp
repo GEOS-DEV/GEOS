@@ -307,9 +307,9 @@ public:
 
   void setNonGhostIndices();
 
-  std::vector< localIndex > & nonGhostIndices()
+  SortedArrayView< localIndex const > const nonGhostIndices()
   {
-    return m_nonGhostIndices;
+    return m_nonGhostIndices.toView();
   }
 
 private:
@@ -348,7 +348,7 @@ protected:
   array3d< real64 > m_particleRVectors;
 
   /// Indices of particles that are not ghosts
-  std::vector< localIndex > m_nonGhostIndices;
+  SortedArray< localIndex > m_nonGhostIndices;
 
   /// Neighbor list
   OrderedVariableToManyParticleRelation m_neighborList;
