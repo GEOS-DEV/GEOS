@@ -20,6 +20,7 @@ import networkx
 from . import vtk_utils
 from .vtk_utils import (
     to_vtk_id_list,
+    vtk_iter,
 )
 
 
@@ -33,16 +34,6 @@ class Result:
     dummy: float
 
 
-def _iter(id_list: vtkIdList) -> Iterator[int]:  # TODO duplicated
-    """
-    Utility function transforming a vtkIdList into an iterable to be used for building built-ins python containers.
-    :param id_list: the vtkIdList.
-    :return: The iterator.
-    """
-    for i in range(id_list.GetNumberOfIds()):
-        yield id_list.GetId(i)
-
-
 def parse_face_stream(ids: vtkIdList):  # TODO move to FaceStream.build_from_vtk_id_list
     """
     Parses the face stream raw information and converts it into a tuple of tuple of integers,
@@ -51,7 +42,7 @@ def parse_face_stream(ids: vtkIdList):  # TODO move to FaceStream.build_from_vtk
     :return:
     """
     result = []
-    it = _iter(ids)
+    it = vtk_iter(ids)
     num_faces = next(it)
     try:
         while True:

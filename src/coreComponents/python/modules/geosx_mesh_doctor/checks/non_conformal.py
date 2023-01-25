@@ -51,7 +51,7 @@ from .vtk_utils import (
 from .vtk_polyhedron import (
     FaceStream,
     build_cell_graph,
-    _iter,
+    vtk_iter,
 )
 
 
@@ -214,7 +214,7 @@ def __check(mesh, options: Options) -> Result:
     for ic in range(boundary_mesh.GetNumberOfCells()):
         c = boundary_mesh.GetCell(ic)
         point_ids = c.GetPointIds()
-        for point_id in _iter(point_ids):
+        for point_id in vtk_iter(point_ids):
             num_cells_per_node[point_id] += 1
 
     cell_locator = vtkStaticCellLocator()
@@ -236,7 +236,7 @@ def __check(mesh, options: Options) -> Result:
     # Looping on all the pairs of boundary cells. We'll hopefully discard most of the pairs.
     for i in tqdm(range(num_cells), desc="Non conformal elements"):
         cell_locator.FindCellsWithinBounds(bounding_boxes[i], close_cells)
-        for j in _iter(close_cells):
+        for j in vtk_iter(close_cells):
             if j < i:
                 continue
             # Discarding pairs that are not facing each others (with a threshold).

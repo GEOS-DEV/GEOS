@@ -7,7 +7,6 @@ from typing import (
     Dict,
     FrozenSet,
     Set,
-    Iterator,
     Sequence,
     Collection,
 )
@@ -24,13 +23,18 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 from vtkmodules.vtkFiltersGeometry import (
-    vtkMarkBoundaryFilter, )
+    vtkMarkBoundaryFilter,
+)
 from vtk.util.numpy_support import (
-    vtk_to_numpy, )
+    vtk_to_numpy,
+)
 
 import networkx
 
 from . import vtk_utils
+from .vtk_utils import (
+   vtk_iter,
+)
 
 
 @dataclass(frozen=True)
@@ -64,7 +68,7 @@ class FractureCellsInfo:
             cell = mesh.GetCell(cell_id)
             for face_id in faces_id:
                 face = cell.GetFace(face_id)
-                face_point_ids = frozenset(_iter(face.GetPointIds()))
+                face_point_ids = frozenset(vtk_iter(face.GetPointIds()))
                 tmp[face_point_ids] += cell_id, face_id
         # This field is really dedicated to the writing into the vtk field data.
         self.field_data: Collection[Tuple[int, int, int, int]] = tuple(tmp.values())
@@ -80,16 +84,6 @@ class DuplicatedNodesInfo:
     # For each original node that has been duplicated (or more) as the key,
     # gets all the new numberings of the nodes.
     duplicated_nodes: Dict[int, Collection[int]]
-
-
-def _iter(id_list: vtkIdList) -> Iterator[int]:
-    """
-    Utility function transforming a vtkIdList into an iterable to be used for building built-ins python containers.
-    :param id_list: the vtkIdList.
-    :return: The iterator.
-    """
-    for i in range(id_list.GetNumberOfIds()):
-        yield id_list.GetId(i)
 
 
 def __duplicate_fracture_nodes(mesh: vtkUnstructuredGrid, connected_components: Iterable[Iterable[int]],
@@ -320,7 +314,7 @@ def __color_fracture_sides(mesh: vtkUnstructuredGrid, cell_frac_info: FractureCe
         cell = mesh.GetCell(c)
         for f in [i for i in range(cell.GetNumberOfFaces()) if i not in local_frac_f]:
             face = cell.GetFace(f)
-            face_point_ids = frozenset(_iter(face.GetPointIds()))
+            face_point_ids = frozenset(vtk_iter(face.GetPointIds()))
             if not does_face_contain_boundary_node(face_point_ids):
                 face_node_set_to_cell[face_point_ids].append(c)
 
