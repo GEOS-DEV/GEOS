@@ -74,11 +74,11 @@ class BoundaryMesh:
         reoriented_mesh = reorient_mesh(mesh, cells_to_reorient)
         self.re_boundary_mesh, re_normals, _ = BoundaryMesh.__build_boundary_mesh(reoriented_mesh, consistency=False)
         num_cells = boundary_mesh.GetNumberOfCells()
-        # precomputing the underlying cell type
+        # Precomputing the underlying cell type
         self.__is_underlying_cell_type_a_polyhedron = numpy.zeros(num_cells, dtype=bool)
         for ic in range(num_cells):
             self.__is_underlying_cell_type_a_polyhedron[ic] = mesh.GetCell(self.__original_cells.GetValue(ic)).GetCellType() == VTK_POLYHEDRON
-        # precomputing the normals
+        # Precomputing the normals
         self.__normals = numpy.empty((num_cells, 3), dtype=numpy.double, order='C')  # Do not modify the storage layout
         for ic in range(num_cells):
             if self.__is_underlying_cell_type_a_polyhedron[ic]:
@@ -101,8 +101,8 @@ class BoundaryMesh:
 
         n = vtkPolyDataNormals()
         n.SetConsistency(consistency)
-        n.FlipNormalsOn()
-        n.AutoOrientNormalsOff()
+        n.SetAutoOrientNormals(consistency)
+        n.FlipNormalsOff()
         n.ComputeCellNormalsOn()
         n.SetInputData(boundary_mesh)
         n.Update()
@@ -147,12 +147,12 @@ def build_poly_data_for_extrusion(i, boundary_mesh):
     polygon_poly_data_i = vtkPolyData()
     polygon_poly_data_i.SetPoints(points_i)
     polygon_poly_data_i.SetPolys(polygons_i)
-    return polygon_poly_data_i
+    return polygon_poly_data_i, cp_i
 
 
-def test(i, j, normal_i, normal_j, boundary_mesh, face_tolerance):
-    polygon_poly_data_i = build_poly_data_for_extrusion(i, boundary_mesh)
-    polygon_poly_data_j = build_poly_data_for_extrusion(j, boundary_mesh)
+def test(i, j, normal_i, normal_j, boundary_mesh, face_tolerance, point_tolerance):
+    polygon_poly_data_i, cp_i = build_poly_data_for_extrusion(i, boundary_mesh)
+    polygon_poly_data_j, cp_j = build_poly_data_for_extrusion(j, boundary_mesh)
 
     # TODO deduplicate
     extruder_i = vtk.vtkLinearExtrusionFilter()
@@ -183,9 +183,25 @@ def test(i, j, normal_i, normal_j, boundary_mesh, face_tolerance):
     collision.SetTransform(1, m_j)
     collision.Update()
 
-    # print(collision.GetNumberOfContacts())
-    # TODO add a vtkPointLocator and its FindClosestInsertedPoint methods to check that all points have their peer...
-    return collision.GetNumberOfContacts()
+    if collision.GetNumberOfContacts() == 0:
+        return False
+
+    # In this last step, we check that the nodes are (or not) matching each other.
+    if cp_i.GetNumberOfPoints() != cp_j.GetNumberOfPoints():
+        return True
+
+    point_locator = vtk.vtkStaticPointLocator()
+    points = vtk.vtkPointSet()
+    points.SetPoints(cp_i.GetPoints())
+    point_locator.SetDataSet(points)
+    point_locator.BuildLocator()
+    found_points = set()
+    for ip in range(cp_j.GetNumberOfPoints()):
+        p = cp_j.GetPoints().GetPoint(ip)
+        squared_dist = vtk.reference(0.)
+        found_point = point_locator.FindClosestPointWithinRadius(point_tolerance, p, squared_dist)
+        found_points.add(found_point)
+    return found_points != set(range(cp_i.GetNumberOfPoints()))
 
 
 def __check(mesh, options: Options) -> Result:
@@ -233,7 +249,7 @@ def __check(mesh, options: Options) -> Result:
             # # print(f"{i}, {j}, {scalar_product}, {direction_i}, {direction_j}")
             # if direction_i < 0 or direction_j < 0:  # checking direction now.
             #     continue
-            if test(i, j, normal_i, normal_j, boundary_mesh, options.face_tolerance):
+            if test(i, j, normal_i, normal_j, boundary_mesh, options.face_tolerance, options.point_tolerance):
                 non_conformal_cells.append((i, j))
 
     tmp = []

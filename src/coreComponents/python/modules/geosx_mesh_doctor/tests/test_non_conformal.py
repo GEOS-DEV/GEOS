@@ -75,11 +75,14 @@ def test_first():
     xyz1 = XYZ(tmp + 1 + 1.e-6, tmp, tmp)
     mesh = __build_mesh((xyz0, xyz1))
 
-    options = Options(angle_tolerance=5., point_tolerance=1.e-6, face_tolerance=1.e-4)
-
+    options = Options(angle_tolerance=1., point_tolerance=1.e-7, face_tolerance=1.e-5)
     results = __check(mesh, options)
     assert len(results.non_conformal_cells) == 1
     assert set(results.non_conformal_cells[0]) == {0, 1}
+
+    options = Options(angle_tolerance=1., point_tolerance=1.e-5, face_tolerance=1.e-5)
+    results = __check(mesh, options)
+    assert len(results.non_conformal_cells) == 0
 
 
 def test_second():
@@ -88,7 +91,7 @@ def test_second():
     xyz1 = XYZ(tmp + 2, tmp, tmp)
     mesh = __build_mesh((xyz0, xyz1))
 
-    options = Options(angle_tolerance=5., point_tolerance=1.e-6, face_tolerance=1.e-4)
+    options = Options(angle_tolerance=1., point_tolerance=0.4, face_tolerance=0.4)
 
     results = __check(mesh, options)
     assert len(results.non_conformal_cells) == 0
@@ -105,4 +108,3 @@ def test_third():
     results = __check(mesh, options)
     assert len(results.non_conformal_cells) == 1
     assert set(results.non_conformal_cells[0]) == {0, 1}
-

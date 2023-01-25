@@ -22,6 +22,9 @@ from vtkmodules.vtkCommonDataModel import (
     VTK_VOXEL,
     VTK_WEDGE,
 )
+from vtk.util.numpy_support import (
+    vtk_to_numpy,
+)
 
 from . import vtk_utils
 from .vtk_polyhedron import build_cell_graph, FaceStream
@@ -36,18 +39,6 @@ class Options:
 class Result:
     unsupported_std_elements_types: Set[int]  # list of unsupported types
     unsupported_polyhedron_elements: Sequence[int]  # list of polyhedron elements that could not be converted to supported std elements
-
-
-# def _convert(cell_types) -> FrozenSet[int]:  # TODO move to utilities
-#     tmp = []
-#     for i in range(cell_types.GetNumberOfValues()):
-#         tmp.append(cell_types.GetValue(i))
-#     return frozenset(tmp)
-def _convert(cell_types) -> FrozenSet[int]:  # TODO move to utilities
-    tmp = []
-    for i in range(cell_types.GetNumberOfTypes()):
-        tmp.append(cell_types.GetCellType(i))
-    return frozenset(tmp)
 
 
 MESH = None  # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
@@ -107,12 +98,7 @@ class IsPolyhedronConvertible:
 
 
 def __check(mesh, options: Options) -> Result:
-    # Dealing with std elements (i.e. non polyhedron)
-    cell_types = vtkCellTypes()
-    mesh.GetCellTypes(cell_types)
-    cell_types = _convert(cell_types)
-    # TODO use cell_types = mesh.GetDistinctCellTypesArray()
-    # cell_types = _convert(mesh.GetDistinctCellTypesArray())
+    cell_types = set(vtk_to_numpy(mesh.GetDistinctCellTypesArray()))
     supported_cell_types = {
         VTK_HEXAGONAL_PRISM,
         VTK_HEXAHEDRON,
