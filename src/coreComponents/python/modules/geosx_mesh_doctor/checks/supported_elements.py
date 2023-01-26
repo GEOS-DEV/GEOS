@@ -27,6 +27,7 @@ from vtk.util.numpy_support import (
 )
 
 from . import vtk_utils
+from .vtk_utils import vtk_iter
 from .vtk_polyhedron import build_cell_graph, FaceStream
 
 @dataclass(frozen=True)
@@ -98,7 +99,12 @@ class IsPolyhedronConvertible:
 
 
 def __check(mesh, options: Options) -> Result:
-    cell_types = set(vtk_to_numpy(mesh.GetDistinctCellTypesArray()))
+    if hasattr(mesh, "GetDistinctCellTypesArray"):
+        cell_types = set(vtk_to_numpy(mesh.GetDistinctCellTypesArray()))
+    else:
+        cell_types = vtkCellTypes()
+        mesh.GetCellTypes(cell_types)
+        cell_types = set(vtk_iter(cell_types))
     supported_cell_types = {
         VTK_HEXAGONAL_PRISM,
         VTK_HEXAHEDRON,

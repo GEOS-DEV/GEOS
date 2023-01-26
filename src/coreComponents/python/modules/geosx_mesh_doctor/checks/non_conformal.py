@@ -243,15 +243,10 @@ def __check(mesh, options: Options) -> Result:
             normal_i, normal_j = boundary_mesh.normals(i), boundary_mesh.normals(j)
             if numpy.dot(normal_i, normal_j) > -cos_theta:  # opposite directions only (can be facing or not)
                 continue
-            # cci, ccj = cell_centers[i], cell_centers[j]
-            # direction_i = numpy.dot(ccj - cci, normal_i)  # TODO use closest point to polygon instead (for ccj)
-            # direction_j = numpy.dot(cci - ccj, normal_j)
-            # # print(f"{i}, {j}, {scalar_product}, {direction_i}, {direction_j}")
-            # if direction_i < 0 or direction_j < 0:  # checking direction now.
-            #     continue
+            # At this point, back-to-back and face-to-face pairs of elements are considered.
             if test(i, j, normal_i, normal_j, boundary_mesh, options.face_tolerance, options.point_tolerance):
                 non_conformal_cells.append((i, j))
-
+    # Extracting the original 3d element index (and not the index of the boundary mesh).
     tmp = []
     for i, j in non_conformal_cells:
         tmp.append((boundary_mesh.original_cells.GetValue(i), boundary_mesh.original_cells.GetValue(j)))
@@ -270,12 +265,17 @@ def __compute_volume(points: vtkPoints, face_stream: FaceStream) -> float:
     for face_nodes in face_stream.face_nodes:
         polygon = vtkPolygon()
         polygon.GetPointIds().SetNumberOfIds(len(face_nodes))
+        # We use the same global points numbering for the polygons than for the input mesh.
+        # There will be a lot of points in the poly data that won't be used as a support for the polygons.
+        # But the algorithm deals with it, and it's actually faster (and easier) to do this
+        # than to renumber and allocate a new fit-for-purpose set of points just for the polygons.
         for i, point_id in enumerate(face_nodes):
             polygon.GetPointIds().SetId(i, point_id)
         polygons.InsertNextCell(polygon)
     polygon_poly_data = vtkPolyData()
-    polygon_poly_data.SetPoints(points)  # TODO Is this properly working? Is the number of points OK?
+    polygon_poly_data.SetPoints(points)
     polygon_poly_data.SetPolys(polygons)
+
     f = vtkTriangleFilter()
     f.SetInputData(polygon_poly_data)
     f.Update()
@@ -375,28 +375,5 @@ def reorient_mesh(mesh, cell_indices: Iterator[int]) -> vtkUnstructuredGrid:
 
 
 def check(vtk_input_file: str, options: Options) -> Result:
-    # err_out = vtk.vtkStringOutputWindow() TODO
-    # err_out.SetInstance(err_out)
-    # err_out.SetInstance(err_out)
-    # err_out.SetFileName("/dev/null")  # vtkCellValidator outputs loads for each cell...
-    # vtk_std_err_out = vtk.vtkOutputWindow()
-    # vtk_std_err_out.SetInstance(err_out)
     mesh = vtk_utils.read_mesh(vtk_input_file)
     return __check(mesh, options)
-
-
-# mesh = vtk_utils.read_mesh('/docker-exchange/torn_wedges.vtu')
-# # mesh = vtk_utils.read_mesh('/docker-exchange/torn_pebi.vtu')
-# # mesh = vtk_utils.read_mesh('/docker-exchange/torn_pebi_anticline.vtu')
-# # output = reorient_mesh(mesh, range(mesh.GetNumberOfCells()))
-# # vtk_utils.write_mesh(output, "/docker-exchange/outward.vtk")
-# # result = __check(output, Options(angle_tolerance=10, point_tolerance=0.1, face_tolerance=1.))
-# result = __check(mesh, Options(angle_tolerance=10, point_tolerance=0.1, face_tolerance=1.))
-#
-# t = []
-# for pair in result.non_conformal_cells:
-#     t += pair
-# t = set(t)
-
-# face_stream = FS
-# points = PTS

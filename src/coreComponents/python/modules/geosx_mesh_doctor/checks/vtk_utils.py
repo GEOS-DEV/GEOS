@@ -1,7 +1,7 @@
 import os.path
 import logging
 import sys
-from typing import Iterator
+from typing import Iterator, Any
 
 from vtkmodules.vtkCommonCore import (
     vtkIdList,
@@ -25,14 +25,18 @@ def to_vtk_id_list(data):
     return result
 
 
-def vtk_iter(id_list: vtkIdList) -> Iterator[int]:
+def vtk_iter(l) -> Iterator[Any]:
     """
-    Utility function transforming a vtkIdList into an iterable to be used for building built-ins python containers.
-    :param id_list: the vtkIdList.
+    Utility function transforming a vtk "container" (e.g. vtkIdList) into an iterable to be used for building built-ins python containers.
+    :param l: A vtk container.
     :return: The iterator.
     """
-    for i in range(id_list.GetNumberOfIds()):
-        yield id_list.GetId(i)
+    if hasattr(l, "GetNumberOfIds"):
+        for i in range(l.GetNumberOfIds()):
+            yield l.GetId(i)
+    elif hasattr(l, "GetNumberOfTypes"):
+        for i in range(l.GetNumberOfTypes()):
+            yield l.GetCellType(i)
 
 
 def get_cell_field_by_name(mesh, field_name):
