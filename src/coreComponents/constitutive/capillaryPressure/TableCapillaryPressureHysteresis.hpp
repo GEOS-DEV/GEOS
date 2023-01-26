@@ -20,7 +20,7 @@
 #include "functions/TableFunction.hpp"
 
 #include "constitutive/KilloughHysteresis.hpp"
-#include "CapillaryPressureExtrinsicData.hpp"
+#include "CapillaryPressureFields.hpp"
 
 namespace geosx
 {
@@ -39,7 +39,7 @@ class TableCapillaryPressureHysteresis : public CapillaryPressureBase
 //  static constexpr real64 CAP_INF_DERIV = 1e9;
 ////          std::numeric_limits< real64 >::max();
 
-  typedef extrinsicMeshData::cappres::ModeIndexType ModeIndexType;
+  typedef fields::cappres::ModeIndexType ModeIndexType;
 
 public:
 
@@ -71,12 +71,11 @@ public:
       arrayView1d< TableFunction::KernelWrapper const > const & wettingNonWettingCapillaryPressureKernelWrappers,
       arrayView1d< TableFunction::KernelWrapper const > const & wettingIntermediateCapillaryPressureKernelWrappers,
       arrayView1d< TableFunction::KernelWrapper const > const & nonWettingIntermediateCapillaryPressureKernelWrappers,
-      KilloughHysteresis::KernelKilloughHysteresisBase const & KilloughKernel,
       arrayView1d< integer const > const & phaseHasHysteresis,
       arrayView1d< real64 const > const & landParam,
       real64 const & phaseIntermediateMinVolFraction,
-      KilloughHysteresis::HysteresisCurve_t const & wettingCurve,
-      KilloughHysteresis::HysteresisCurve_t const & nonWettingCurve,
+      KilloughHysteresis::HysteresisCurve const & wettingCurve,
+      KilloughHysteresis::HysteresisCurve const & nonWettingCurve,
       arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
       arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
       arrayView1d< integer const > const & phaseTypes,
@@ -96,8 +95,8 @@ public:
     GEOSX_HOST_DEVICE
     void
     computeImbibitionWettingCapillaryPressure( const arrayView1d< const TableFunction::KernelWrapper > & wettingKernelWapper,
-                                               const KilloughHysteresis::HysteresisCurve_t & wettingCurve,
-                                               const KilloughHysteresis::HysteresisCurve_t & nonWettingCurve,
+                                               const KilloughHysteresis::HysteresisCurve & wettingCurve,
+                                               const KilloughHysteresis::HysteresisCurve & nonWettingCurve,
                                                const geosx::real64 & landParam,
                                                const geosx::real64 & phaseVolFraction,
                                                const geosx::real64 & phaseMinHistoricalVolFraction,
@@ -111,8 +110,8 @@ public:
     void
     computeImbibitionNonWettingCapillaryPressure(
             const arrayView1d<const TableFunction::KernelWrapper> &nonWettingKernelWrapper,
-            const KilloughHysteresis::HysteresisCurve_t &nonWettingCurve,
-            const KilloughHysteresis::HysteresisCurve_t &wettingCurve, const geosx::real64 &landParam,
+            const KilloughHysteresis::HysteresisCurve &nonWettingCurve,
+            const KilloughHysteresis::HysteresisCurve &wettingCurve, const geosx::real64 &landParam,
             const geosx::real64 &phaseVolFraction, const geosx::real64 &phaseMaxHistoricalVolFraction,
             geosx::real64 &phaseTrappedVolFrac, geosx::real64 &phaseCapPressure,
             geosx::real64 &dPhaseCapPressure_dPhaseVolFrac,
@@ -174,7 +173,7 @@ public:
 private:
 
 
-    static constexpr real64 flowReversalBuffer = KilloughHysteresis::KernelKilloughHysteresisBase::flowReversalBuffer;
+    static constexpr real64 flowReversalBuffer = KilloughHysteresis::flowReversalBuffer;
 //    ModeIndexType& m_mode;
 
     //2p
@@ -183,18 +182,24 @@ private:
     arrayView1d< TableFunction::KernelWrapper const > const m_wettingIntermediateCapillaryPressureKernelWrappers;
     arrayView1d< TableFunction::KernelWrapper const > const m_nonWettingIntermediateCapillaryPressureKernelWrappers;
 
-    KilloughHysteresis::KernelKilloughHysteresisBase const & m_KilloughKernel;
-
     ///Land Coeff
     arrayView1d< integer const > m_phaseHasHysteresis;
     arrayView1d< real64 const > m_landParam;
 
+      /// Parameter a introduced by Jerauld in the Land model
+      real64 m_jerauldParam_a;
+
+      /// Parameter b introduced by Jerauld in the Land model
+      real64 m_jerauldParam_b;
+
+      /// Curvature parameter in Killough wetting phase hysteresis (enpoints curvatures)
+      real64 m_killoughCurvatureParamCapPres;
 
     /// needed in 3p-wetting hysteresis as we need to get the max accessible pore space
     real64 const m_phaseIntermediateMinVolFraction;
 
-    KilloughHysteresis::HysteresisCurve_t const m_wettingCurve;
-    KilloughHysteresis::HysteresisCurve_t const m_nonWettingCurve;
+    KilloughHysteresis::HysteresisCurve const m_wettingCurve;
+    KilloughHysteresis::HysteresisCurve const m_nonWettingCurve;
 
     /// Minimum historical phase volume fraction for each phase
     arrayView2d< real64 const, compflow::USD_PHASE > m_phaseMinHistoricalVolFraction;
@@ -220,15 +225,8 @@ private:
   struct viewKeyStruct : CapillaryPressureBase::viewKeyStruct
   {
 
-    ///Killough Kernel
-    static constexpr char const * KilloughModelNameString()
-    { return "KilloughModelName"; }
-
-    static constexpr char const * KilloughModelWrapperString()
-    { return "KilloughWrappers"; }
-
     // defaulted to 0.1
-//    static constexpr char const * killoughCurvatureParameterString() { return "killoughCurvatureParameter"; }
+//    static constexpr char const * killoughCurvatureParameterRelPermString() { return "killoughCurvatureParameter"; }
     //used to compute different re-traversal path going drainage-imbibition-drainage
 //    static constexpr char const * tCurveOptionString() { return "tCurveOption";};
     ///Land Coeff
@@ -252,6 +250,11 @@ private:
     ///flag
     static constexpr char const * phaseHasHysteresisString()
     { return "phaseHasHysteresis"; }
+
+      ///and packed curves data struct
+      static constexpr char const * wettingCurveString() { return "wettingCurve"; };
+      static constexpr char const * nonWettingCurveString() { return "nonWettingCurve"; };
+
 
     ///tables and assoc. wrappers
     //2phase
@@ -279,9 +282,6 @@ private:
     static constexpr char const * phaseIntermediateMinVolFractionString()
     { return "phaseIntermediateMinVolFraction";}
     //to decide wheter drainage/drainage to imbibition or imbibition/imbibition to drainage
-    static constexpr char const * modeTypeString()
-    { return "modeType";}
-
   };
 
 
@@ -299,10 +299,6 @@ private:
    */
   void createAllTableKernelWrappers();
 
-  KilloughHysteresis::KernelKilloughHysteresisBase
-  createKilloughKernelWrapper( const KilloughHysteresis::HysteresisCurve_t & wettingCurve,
-                               const KilloughHysteresis::HysteresisCurve_t & nonWettingCurve );
-
   /**
    * @brief Compute the Land coefficient for the wetting and non-wetting phases
    */
@@ -310,23 +306,21 @@ private:
 
   ///data members
 
-  // Hysteresis parameters
-  KilloughHysteresis::KernelKilloughHysteresisBase m_KilloughKernel;
-  string m_KilloughModelName;
-
-  array1d< integer > m_mode;
 
   //TODO impl
 //  array1d< integer >  m_tCurveOption;
 
-  //might be further packed in CapillaryCurve_t
-  real64 m_wettingPhaseMinVolumeFraction;
-  real64 m_drainageWettingPhaseMaxVolumeFraction;
-  real64 m_imbibitionWettingPhaseMaxVolumeFraction;
+KilloughHysteresis::HysteresisCurve m_wettingCurve;
+        KilloughHysteresis::HysteresisCurve m_nonWettingCurve;
 
-  real64 m_nonWettingPhaseMaxVolumeFraction;
-  real64 m_drainageNonWettingPhaseMinVolumeFraction;
-  real64 m_imbibitionNonWettingPhaseMinVolumeFraction;
+  //might be further packed in CapillaryCurve_t
+//  real64 m_wettingPhaseMinVolumeFraction;
+//  real64 m_drainageWettingPhaseMaxVolumeFraction;
+//  real64 m_imbibitionWettingPhaseMaxVolumeFraction;
+//
+//  real64 m_nonWettingPhaseMaxVolumeFraction;
+//  real64 m_drainageNonWettingPhaseMinVolumeFraction;
+//  real64 m_imbibitionNonWettingPhaseMinVolumeFraction;
 
   ///tables
   //2p
@@ -353,6 +347,18 @@ private:
 
   /// Trapping parameter from the Land model (typically called C)
   array1d< real64 > m_landParam;
+
+        /// Parameter a introduced by Jerauld in the Land model
+        real64 m_jerauldParam_a;
+
+        /// Parameter b introduced by Jerauld in the Land model
+        real64 m_jerauldParam_b;
+
+        /// Curvature parameter in Killough wetting phase hysteresis (Scanning curves curvatures)
+        real64 m_killoughCurvatureParamCapPres;
+
+        /// Cell-wise status imbibition, imbibitioon_to_drainage, ... etc
+        array1d<integer> m_mode;
 
   // Max historical saturations
   /// Minimum historical phase volume fraction for each phase

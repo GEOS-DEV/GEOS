@@ -18,7 +18,7 @@
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
-#include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureSelector.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
@@ -145,7 +145,7 @@ public:
     m_parent.resize( 1 );
   }
 
-  void initialize( BASE * model )
+  void initialize( BASE & model )
   {
     m_model = &model;
     m_parent.initialize();

@@ -7,8 +7,7 @@ set( gtest_geosx_tests
      testRelPerm.cpp
      testRelPermHysteresis.cpp
      testCapillaryPressure.cpp
-     testCapillaryPressureHysteresis.cpp
-   )
+        )
 
 set( gtest_triaxial_xmls
      testTriaxial_druckerPragerExtended.xml
@@ -26,6 +25,9 @@ set( gtest_triaxial_xmls
 set( gtest_pvt_xmls
      testPVT.xml
    )
+
+set( gtest_reactivefluid_xmls
+     testReactiveFluid.xml )   
 
 set( dependencyList gtest )
 
@@ -103,5 +105,23 @@ foreach(test ${gtest_pvt_xmls})
     get_filename_component( test_name ${test} NAME_WE )
     blt_add_test( NAME ${test_name}
                   COMMAND testPVT -i ${CMAKE_CURRENT_LIST_DIR}/${test}
+                  )
+endforeach()
+
+
+#
+# Add reactivefluiddriver xml based tests
+#
+
+blt_add_executable( NAME testReactiveFluid
+                    SOURCES testReactiveFluid.cpp
+                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                    DEPENDS_ON ${dependencyList} "-lz"
+                  )
+
+foreach(test ${gtest_reactivefluid_xmls})
+    get_filename_component( test_name ${test} NAME_WE )
+    blt_add_test( NAME ${test_name}
+                  COMMAND testReactiveFluid -i ${CMAKE_CURRENT_LIST_DIR}/${test}
                   )
 endforeach()

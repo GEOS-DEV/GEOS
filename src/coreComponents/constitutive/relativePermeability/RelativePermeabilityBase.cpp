@@ -158,6 +158,7 @@ std::tuple< integer, integer > RelativePermeabilityBase::wettingAndNonWettingPha
   return std::make_tuple( ipWetting, ipNonWetting );
 }
 
+
 } // namespace constitutive
 
 } // namespace geosx

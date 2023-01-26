@@ -47,7 +47,9 @@ struct TableCapillaryPressureHelpers
                                        string const & fullConstitutiveName,
                                        bool const capPresMustBeIncreasing,
                                        real64 & phaseMax,
-                                       real64 & phaseMin );
+                                       real64 & phaseMin,
+                                       real64 & phaseCapPresMinEndPoint,
+                                       real64 & phaseCapPresMaxEndPoint );
 
 };
 

@@ -91,10 +91,10 @@ class ComponentMask
 private:
 
   /// Number of bits in mask storage
-  static constexpr int NUM_BITS = internal::roundToNextPowerOfTwo( MAX_COMP );
+  static constexpr int NUM_BITS = geosx::internal::roundToNextPowerOfTwo( MAX_COMP );
 
   /// Type used to represent the bit mask
-  using mask_t = typename internal::ComponentMaskType< NUM_BITS >::type;
+  using mask_t = typename geosx::internal::ComponentMaskType< NUM_BITS >::type;
 
 public:
 

@@ -76,21 +76,38 @@ void
 TableCapillaryPressureHelpers::validateCapillaryPressureTable( const geosx::TableFunction & capPresTable,
                                                                const geosx::string & fullConstitutiveName,
                                                                const bool capPresMustBeIncreasing,
-                                                               geosx::real64 & phaseMax, geosx::real64 & phaseMin )
+                                                               geosx::real64 & phaseMax,
+                                                               geosx::real64 & phaseMin,
+                                                               geosx::real64 & phaseCapPresMinEndPoint,
+                                                               geosx::real64 & phaseCapPresMaxEndPoint )
 {
 
   TableCapillaryPressureHelpers::validateCapillaryPressureTable( capPresTable, fullConstitutiveName, capPresMustBeIncreasing );
   ArrayOfArraysView< real64 const > coords = capPresTable.getCoordinates();
   arraySlice1d< real64 const > phaseVolFrac = coords[0];
+    arrayView1d< real64 const > const capPres = capPresTable.getValues();
+
   phaseMin = phaseVolFrac[0];
+  phaseCapPresMinEndPoint = capPres[0];
   phaseMax = phaseVolFrac[phaseVolFrac.size()-1];
-  arrayView1d< real64 const > const capPres = capPresTable.getValues();
+  phaseCapPresMaxEndPoint = capPres[phaseVolFrac.size()-1];
+
   for( localIndex i = 1; i < coords.sizeOfArray( 0 ); ++i )
   {
-    if( isZero( capPres[i-1] ) && !isZero( capPres[i] ) )
-    {
-      phaseMin = phaseVolFrac[i-1];
-    }
+      if(capPresMustBeIncreasing) {
+          if (isZero(capPres[i - 1]) && !isZero(capPres[i])) {
+              phaseMin = phaseVolFrac[i - 1];
+              phaseCapPresMinEndPoint = capPres[i-1];
+          }
+      }
+      else
+      {
+              if (!isZero(capPres[i - 1]) && isZero(capPres[i])) {
+                  phaseMin = phaseVolFrac[i ];
+                  phaseCapPresMinEndPoint = capPres[i];
+              }
+
+      }
   }
 }
 

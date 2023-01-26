@@ -22,7 +22,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
-#include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureSelector.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
@@ -710,7 +710,8 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
 
     // 4.3 Initialize/update the relative permeability model using the initial phase volume fraction
     //     This is needed to handle relative permeability hysteresis
-    //     Also, initialize the fluid model
+    //     Also, initialize the fluid model (to compute the initial total mass density, needed to compute the body force increment in
+    // coupled simulations)
     //
     // Note:
     // - This must be called after updatePhaseVolumeFraction
@@ -751,7 +752,6 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       CapillaryPressureBase const & capPressureMaterial =
         getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
       capPressureMaterial.initializeRockState( porosity, permeability ); // this needs to happen before calling updateCapPressureModel
-      capPressureMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac );
       updateCapPressureModel( subRegion );
     }
 
@@ -1971,7 +1971,6 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
         CapillaryPressureBase const & capPressureMaterial =
           getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressName );
         capPressureMaterial.saveConvergedRockState( porosity, permeability );
-        capPressureMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac );
       }
 
       // Step 6: if the thermal option is on, send the converged porosity and phase volume fraction to the thermal conductivity model

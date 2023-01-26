@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREFIELDS_HPP_
 #define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREFIELDS_HPP_
 
-#include "constitutive/capillaryPressure/layouts.hpp"
+#include "constitutive/capillaryPressure/Layouts.hpp"
 #include "mesh/MeshFields.hpp"
 
 namespace geosx
@@ -33,6 +33,15 @@ namespace cappres
 
 using array3dLayoutCapPressure = array3d< real64, constitutive::cappres::LAYOUT_CAPPRES >;
 using array4dLayoutCapPressure_dS = array4d< real64, constitutive::cappres::LAYOUT_CAPPRES_DS >;
+
+    enum ModeIndexType : integer
+    {
+        DRAINAGE = 0,//to be used in array of Kernels
+        IMBIBITION = 1,
+        DRAINAGE_TO_IMBIBITION = 2,
+        IMBIBITION_TO_DRAINAGE = 3
+    };
+
 
 DECLARE_FIELD( phaseCapPressure,
                "phaseCapPressure",
@@ -57,6 +66,22 @@ DECLARE_FIELD( jFuncMultiplier,
                NOPLOT,
                WRITE_AND_READ,
                "Multiplier for the Leverett J-function" );
+
+    DECLARE_FIELD( phaseTrappedVolFraction,
+                   "phaseTrappedVolumeFraction",
+                   array3dLayoutCapPressure,
+                   0,
+                   LEVEL_0,
+                   WRITE_AND_READ,
+                   "Phase Trapped Volume Fraction" );
+
+    DECLARE_FIELD( mode,
+                   "Hysteresis Mode",
+                   array1d< integer >,
+                   0,
+                   LEVEL_0,
+                   WRITE_AND_READ,
+                   "Hysteresis mode" );
 
 }
 
