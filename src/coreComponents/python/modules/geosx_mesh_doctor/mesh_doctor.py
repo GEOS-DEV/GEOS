@@ -1,5 +1,13 @@
-import logging
 import sys
+
+try:
+    min_python_version = (3, 7)
+    assert sys.version_info >= min_python_version
+except AssertionError as e:
+    print(f"Please update python to at least version {'.'.join(map(str, min_python_version))}.")
+    sys.exit(1)
+
+import logging
 
 from parsing import CheckHelper
 from parsing.cli_parsing import parse, parse_and_set_verbosity

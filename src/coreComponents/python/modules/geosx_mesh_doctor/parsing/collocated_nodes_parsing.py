@@ -45,7 +45,7 @@ def display_results(options: Options, result: Result):
         logging.error(f"You have no collocated node (tolerance = {options.tolerance}).")
 
     if result.wrong_support_elements:
-        tmp = "(" + ", ".join(result.wrong_support_elements) + ")"
+        tmp = ", ".join(map(str, result.wrong_support_elements))
         logging.error(f"You have {len(result.wrong_support_elements)} elements with duplicated support nodes.\n" + tmp)
     else:
         logging.error("You have no element with duplicated support nodes.")

@@ -1,7 +1,7 @@
 import os.path
 import logging
 import sys
-from typing import Iterator, Any
+from typing import Iterator, Any, Union
 
 from vtkmodules.vtkCommonCore import (
     vtkIdList,
@@ -46,7 +46,7 @@ def get_cell_field_by_name(mesh, field_name):
             return cd.GetArray(i)
 
 
-def __read_vtk(vtk_input_file: str) -> vtkUnstructuredGrid|None:
+def __read_vtk(vtk_input_file: str) -> Union[vtkUnstructuredGrid, None]:
     reader = vtkUnstructuredGridReader()
     logging.info(f"Testing file format \"{vtk_input_file}\" using legacy format reader...")
     reader.SetFileName(vtk_input_file)
@@ -59,7 +59,7 @@ def __read_vtk(vtk_input_file: str) -> vtkUnstructuredGrid|None:
         return None
 
 
-def __read_vtu(vtk_input_file: str) -> vtkUnstructuredGrid|None:
+def __read_vtu(vtk_input_file: str) -> Union[vtkUnstructuredGrid, None]:
     reader = vtkXMLUnstructuredGridReader()
     logging.info(f"Testing file format \"{vtk_input_file}\" using XML format reader...")
     if reader.CanReadFile(vtk_input_file):
