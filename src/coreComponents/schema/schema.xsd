@@ -1828,6 +1828,13 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
+		<!--lifoSize => The number of buffer to be stored into the LIFO -->
+		<xsd:attribute name="lifoSize" type="integer" default="0" />
+		<!--lifoOnDevice => The number of buffer to be stored on device by the LIFO -->
+		<xsd:attribute name="lifoOnDevice" type="integer" default="0" />
+		<!--lifoOnHost => The number of buffer to be stored on host by the LIFO -->
+		<xsd:attribute name="lifoOnHost" type="integer" default="0" />
+
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

@@ -20,7 +20,9 @@ set( common_headers
      TypeDispatch.hpp
      initializeEnvironment.hpp
    )
-
+if ( ENABLE_CUDA )
+  list( APPEND common_headers lifoStorage.hpp )
+endif()
 #
 # Specify all sources
 #
