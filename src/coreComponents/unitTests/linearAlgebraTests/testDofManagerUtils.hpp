@@ -77,10 +77,10 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
  *
  * Mainly used to allow empty region lists to mean all regions.
  */
-std::vector< DofManager::Regions > getRegions( DomainPartition const & domain, std::vector< DofManager::Regions > const & input )
+std::vector< DofManager::FieldSupport > getRegions( DomainPartition const & domain, std::vector< DofManager::FieldSupport > const & input )
 {
-  std::vector< DofManager::Regions > regions( input.begin(), input.end() );
-  for( DofManager::Regions & support : regions )
+  std::vector< DofManager::FieldSupport > regions( input.begin(), input.end() );
+  for( DofManager::FieldSupport & support : regions )
   {
     if( support.regionNames.empty() )
     {
@@ -88,7 +88,7 @@ std::vector< DofManager::Regions > getRegions( DomainPartition const & domain, s
       MeshLevel const & meshLevel = meshBody.getMeshLevel( support.meshLevelName );
       meshLevel.getElemManager().forElementRegions( [&]( ElementRegionBase const & region )
       {
-        support.regionNames.emplace_back( region.getName() );
+        support.regionNames.insert( region.getName() );
       } );
     }
   }
@@ -145,9 +145,9 @@ localIndex size1( ArrayOfArraysView< localIndex const > const & map, localIndex 
 template< FieldLocation LOC >
 struct forLocalObjectsImpl
 {
-  template< typename LAMBDA >
+  template< typename LAMBDA, typename REGIONS_CONTAINER >
   static void f( MeshLevel const & mesh,
-                 std::vector< string > const & regions,
+                 REGIONS_CONTAINER const & regions,
                  LAMBDA lambda )
   {
     using helper = testMeshHelper< LOC >;
@@ -182,9 +182,9 @@ struct forLocalObjectsImpl
 template<>
 struct forLocalObjectsImpl< FieldLocation::Elem >
 {
-  template< typename LAMBDA >
+  template< typename LAMBDA, typename REGIONS_CONTAINER >
   static void f( MeshLevel const & mesh,
-                 std::vector< string > const & regions,
+                 REGIONS_CONTAINER const & regions,
                  LAMBDA lambda )
   {
     // make a list of regions
@@ -220,9 +220,9 @@ struct forLocalObjectsImpl< FieldLocation::Elem >
  * @param regions list of input region names to loop over
  * @param lambda  the lambda to apply
  */
-template< FieldLocation LOC, typename LAMBDA >
+template< FieldLocation LOC, typename REGIONS_CONTAINER, typename LAMBDA >
 void forLocalObjects( MeshLevel const & mesh,
-                      std::vector< string > const & regions,
+                      REGIONS_CONTAINER const & regions,
                       LAMBDA && lambda )
 {
   internal::forLocalObjectsImpl< LOC >::template f( mesh, regions, std::forward< LAMBDA >( lambda ) );
@@ -236,10 +236,10 @@ void forLocalObjects( MeshLevel const & mesh,
  * @return the number of locally owned objects (e.g. nodes)
  */
 template< FieldLocation LOC >
-localIndex countLocalObjects( DomainPartition const & domain, std::vector< DofManager::Regions > const & support )
+localIndex countLocalObjects( DomainPartition const & domain, std::vector< DofManager::FieldSupport > const & support )
 {
   localIndex numLocal = 0;
-  for( DofManager::Regions const & regions : support )
+  for( DofManager::FieldSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & meshLevel = meshBody.getMeshLevel( regions.meshLevelName );
@@ -259,12 +259,12 @@ localIndex countLocalObjects( DomainPartition const & domain, std::vector< DofMa
  */
 void makeSparsityTPFA( DomainPartition const & domain,
                        string const & dofIndexKey,
-                       std::vector< DofManager::Regions > const & support,
+                       std::vector< DofManager::FieldSupport > const & support,
                        globalIndex const rankOffset,
                        localIndex const numComp,
                        CRSMatrix< real64 > & sparsity )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofManager::FieldSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & mesh = meshBody.getMeshLevel( regions.meshLevelName );
@@ -340,12 +340,12 @@ void makeSparsityTPFA( DomainPartition const & domain,
  */
 void makeSparsityFEM( DomainPartition const & domain,
                       string const & dofIndexKey,
-                      std::vector< DofManager::Regions > const & support,
+                      std::vector< DofManager::FieldSupport > const & support,
                       globalIndex const rankOffset,
                       localIndex const numComp,
                       CRSMatrix< real64 > & sparsity )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofManager::FieldSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & mesh = meshBody.getMeshLevel( regions.meshLevelName );
@@ -405,13 +405,13 @@ void makeSparsityFEM( DomainPartition const & domain,
 void makeSparsityFEM_FVM( DomainPartition const & domain,
                           string const & dofIndexKeyNode,
                           string const & dofIndexKeyElem,
-                          std::vector< DofManager::Regions > const & support,
+                          std::vector< DofManager::FieldSupport > const & support,
                           globalIndex const rankOffset,
                           localIndex const numCompNode,
                           localIndex const numCompElem,
                           CRSMatrix< real64 > & sparsity )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofManager::FieldSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & mesh = meshBody.getMeshLevel( regions.meshLevelName );
@@ -495,13 +495,13 @@ void makeSparsityFEM_FVM( DomainPartition const & domain,
  */
 void makeSparsityMass( DomainPartition const & domain,
                        string const & dofIndexKey,
-                       std::vector< DofManager::Regions > const & support,
+                       std::vector< DofManager::FieldSupport > const & support,
                        globalIndex const rankOffset,
                        localIndex const numComp,
                        CRSMatrix< real64 > & sparsity )
 {
 
-  for( DofManager::Regions const & regions : support )
+  for( DofManager::FieldSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & mesh = meshBody.getMeshLevel( regions.meshLevelName );
@@ -548,12 +548,12 @@ void makeSparsityMass( DomainPartition const & domain,
  */
 void makeSparsityFlux( DomainPartition const & domain,
                        string const & dofIndexKey,
-                       std::vector< DofManager::Regions > const & support,
+                       std::vector< DofManager::FieldSupport > const & support,
                        globalIndex const rankOffset,
                        localIndex const numComp,
                        CRSMatrix< real64 > & sparsity )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofManager::FieldSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & mesh = meshBody.getMeshLevel( regions.meshLevelName );
