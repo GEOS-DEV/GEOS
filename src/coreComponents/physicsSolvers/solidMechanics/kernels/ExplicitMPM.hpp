@@ -68,11 +68,10 @@ struct StateUpdateKernel
 
       // Perform F update
       real64 FOld[3][3] = { {0} };
-      real64 dF[3][3] = { {0} };
+      real64 FDot[3][3] = { {0} };
       LvArray::tensorOps::copy< 3, 3 >( FOld, deformationGradient[p] );
-      LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( dF, velocityGradient[p], FOld );
-      LvArray::tensorOps::scale< 3, 3 >( dF, dt );
-      LvArray::tensorOps::add< 3, 3 >( deformationGradient[p], dF );
+      LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( FDot, velocityGradient[p], FOld );
+      LvArray::tensorOps::scaledAdd< 3, 3 >( deformationGradient[p], FDot, dt );
 
       // Polar decompositions
       real64 rotBeginning[3][3] = { {0} };

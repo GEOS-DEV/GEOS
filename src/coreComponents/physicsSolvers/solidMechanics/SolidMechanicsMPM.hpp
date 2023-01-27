@@ -377,6 +377,8 @@ private:
 
   void fUpdateAndConstitutiveCall( real64 dt,
                                    ParticleManager & particleManager );
+
+  void particleKinematicUpdate( ParticleManager & particleManager );
 };
 
 ENUM_STRINGS( SolidMechanicsMPM::TimeIntegrationOption,
