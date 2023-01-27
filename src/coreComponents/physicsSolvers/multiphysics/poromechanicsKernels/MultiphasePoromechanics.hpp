@@ -185,13 +185,11 @@ public:
    * This function also computes the derivatives of these three quantities wrt primary variables
    * @param[in] k the element index
    * @param[in] q the quadrature point index
-   * @param[in] strainIncrement the strain increment used in total stress and porosity computation
    * @param[inout] stack the stack variables
    */
   GEOSX_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
                           localIndex const q,
-                          real64 const ( &strainIncrement )[6],
                           StackVariables & stack ) const;
 
   /**

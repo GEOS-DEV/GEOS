@@ -164,6 +164,9 @@ public:
 
     // Storage for helper variables used in the quadrature point kernel
 
+    /// Strain increment
+    real64 strainIncrement[6]{};
+
     /// Total stress
     real64 totalStress[6]{};
     /// Derivative of total stress wrt displacement
