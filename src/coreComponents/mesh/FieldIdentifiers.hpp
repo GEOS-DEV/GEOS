@@ -62,24 +62,15 @@ public:
  * @param fieldNames vector of names of the  element-based fields to be added to the map.
  * @param regionNames vector of the regions on which these fields exist.
  */
-  void addElementFields( std::vector< string > const & fieldNames, std::vector< string > const & regionNames )
+  template< typename T = std::vector< string > >
+  void addElementFields( std::vector< string > const & fieldNames, T const & regionNames )
   {
-    for( string const & regionName : regionNames )
+    for( auto const & regionName : regionNames )
     {
       addFields( fieldNames, generateKey( regionName ) );
     }
   }
-/**
- * @brief
- *
- * @param fieldNames array1d of names of the element-based fields to be added to the map.
- * @param regionNames vector of the regions on which these fields exist.
- */
-  void addElementFields( std::vector< string > const & fieldNames, arrayView1d< string const > const & regionNames )
-  {
-    std::vector< string > regions( regionNames.begin(), regionNames.end());
-    addElementFields( fieldNames, regions );
-  }
+
 /**
  * @brief Get the Fields object which is the map containing the fields existing for each location.
  *
