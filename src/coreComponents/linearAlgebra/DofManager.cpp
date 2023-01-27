@@ -148,11 +148,11 @@ namespace
 {
 
 template< typename FUNC >
-void forMeshSupport( std::vector< DofManager::Regions > const & support,
+void forMeshSupport( std::vector< DofManager::FieldSupport > const & support,
                      DomainPartition & domain,
                      FUNC && func )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofManager::FieldSupport const & regions : support )
   {
     MeshBody & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel & meshLevel = meshBody.getMeshLevel( regions.meshLevelName );
@@ -161,11 +161,11 @@ void forMeshSupport( std::vector< DofManager::Regions > const & support,
 }
 
 template< typename FUNC >
-void forMeshSupport( std::vector< DofManager::Regions > const & support,
+void forMeshSupport( std::vector< DofManager::FieldSupport > const & support,
                      DomainPartition const & domain,
                      FUNC && func )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofManager::FieldSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & meshLevel = meshBody.getMeshLevel( regions.meshLevelName );
@@ -253,18 +253,18 @@ void DofManager::computeFieldDimensions( localIndex const fieldIndex )
 namespace
 {
 
-std::vector< string >
+std::set< string >
 processFieldRegionList( MeshLevel const & mesh,
-                        std::vector< string > inputList )
+                        std::set< string > inputList )
 {
-  std::vector< string > regions( std::move( inputList ) );
+  std::set< string > regions( std::move( inputList ) );
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   if( regions.empty() )
   {
     elemManager.forElementRegions( [&]( ElementRegionBase const & region )
     {
-      regions.push_back( region.getName() );
+      regions.insert( region.getName() );
     } );
   }
   else
@@ -276,20 +276,16 @@ processFieldRegionList( MeshLevel const & mesh,
     }
   }
 
-  // sort region names and remove duplicates
-  std::sort( regions.begin(), regions.end() );
-  regions.erase( std::unique( regions.begin(), regions.end() ), regions.end() );
-
   return regions;
 }
 
-std::vector< DofManager::Regions >
-processFieldRegionList( DomainPartition const & domain,
-                        std::vector< DofManager::Regions > const & inputList )
+std::vector< DofManager::FieldSupport >
+processFieldSupportList( DomainPartition const & domain,
+                         std::vector< DofManager::FieldSupport > const & inputList )
 {
-  std::vector< DofManager::Regions > result;
+  std::vector< DofManager::FieldSupport > result;
   std::set< std::pair< string, string > > processedMeshLevels;
-  for( DofManager::Regions const & r : inputList )
+  for( DofManager::FieldSupport const & r : inputList )
   {
     GEOSX_ERROR_IF( processedMeshLevels.count( { r.meshBodyName, r.meshLevelName } ) > 0,
                     GEOSX_FMT( "Duplicate mesh: {}/{}", r.meshBodyName, r.meshLevelName ) );
@@ -302,34 +298,55 @@ processFieldRegionList( DomainPartition const & domain,
   return result;
 }
 
+void addNewSupports( std::vector< DofManager::FieldSupport > const & inputSupport,
+                     std::vector< DofManager::FieldSupport > & fieldSupport )
+{
+  for( auto const & newRegion : inputSupport )
+  {
+    bool added = false;
+    for( auto & support : fieldSupport )
+    {
+      added = support.add( newRegion );
+      if( added )
+        break;
+    }
+    if( !added )
+    {
+      fieldSupport.push_back( newRegion );
+    }
+  }
+}
+
 } // namespace
 
 void DofManager::addField( string const & fieldName,
                            FieldLocation const location,
                            integer const components,
-                           std::vector< Regions > const & regions )
+                           std::vector< FieldSupport > const & regions )
 {
   GEOSX_ASSERT_MSG( m_domain != nullptr, "Domain has not been set" );
   GEOSX_ERROR_IF( m_reordered, "Cannot add fields after reorderByRank() has been called." );
-  GEOSX_ERROR_IF( fieldExists( fieldName ), "Requested field name '" << fieldName << "' already exists." );
   GEOSX_ERROR_IF_GT_MSG( components, MAX_COMP, "Number of components limit exceeded" );
 
-  m_fields.emplace_back();
-  FieldDescription & field = m_fields.back();
+  std::vector< FieldSupport > processedSupports = processFieldSupportList( *m_domain, regions );
 
-  // populate basic info
-  field.name = fieldName;
-  field.location = location;
-  field.numComponents = components;
-  field.key = m_name + '_' + fieldName + "_dofIndex";
-  field.docstring = fieldName + " DoF indices";
-
-  // advanced processing
-  field.support = processFieldRegionList( *m_domain, regions );
-  computeFieldDimensions( static_cast< localIndex >( m_fields.size() ) - 1 );
-
-  // allocate and fill index array
-  createIndexArray( field );
+  if( !fieldExists( fieldName ))
+  {
+    // populate basic info
+    m_fields.emplace_back();
+    FieldDescription & field = m_fields.back();
+    field.name = fieldName;
+    field.location = location;
+    field.numComponents = components;
+    field.key = m_name + '_' + fieldName + "_dofIndex";
+    field.docstring = fieldName + " DoF indices";
+    // advanced processing
+    field.support = processedSupports;
+  }
+  else
+  {
+    addNewSupports( processedSupports, m_fields[getFieldIndex( fieldName )].support );
+  }
 }
 
 void DofManager::addField( string const & fieldName,
@@ -338,12 +355,12 @@ void DofManager::addField( string const & fieldName,
                            map< std::pair< string, string >, array1d< string > > const & regions )
 {
   // Convert input into internal format
-  std::vector< Regions > support;
+  std::vector< FieldSupport > support;
   for( auto const & p : regions )
   {
     MeshBody const & meshBody = m_domain->getMeshBody( p.first.first );
     MeshLevel const & mesh = meshBody.getMeshLevel( p.first.second ).getShallowParent();
-    std::vector< string > regionNames( p.second.begin(), p.second.end() );
+    std::set< string > regionNames( p.second.begin(), p.second.end() );
     support.push_back( { meshBody.getName(), mesh.getName(), std::move( regionNames ) } );
   }
   addField( fieldName, location, components, support );
@@ -352,31 +369,25 @@ void DofManager::addField( string const & fieldName,
 namespace
 {
 
-std::vector< string >
-processCouplingRegionList( std::vector< string > inputList,
-                           std::vector< string > const & rowFieldRegions,
+std::set< string >
+processCouplingRegionList( std::set< string > inputList,
+                           std::set< string > const & rowFieldRegions,
                            string const & rowFieldName,
-                           std::vector< string > const & colFieldRegions,
+                           std::set< string > const & colFieldRegions,
                            string const & colFieldName )
 {
-  std::vector< string > regions( std::move( inputList ) );
+  std::set< string > regions( std::move( inputList ) );
   if( regions.empty() )
   {
     // Populate with regions common between two fields
-    regions.resize( std::min( rowFieldRegions.size(), colFieldRegions.size() ) );
-    auto const it = std::set_intersection( rowFieldRegions.begin(), rowFieldRegions.end(),
-                                           colFieldRegions.begin(), colFieldRegions.end(),
-                                           regions.begin() );
-    regions.resize( std::distance( regions.begin(), it ) );
+    std::set_intersection( rowFieldRegions.begin(), rowFieldRegions.end(),
+                           colFieldRegions.begin(), colFieldRegions.end(),
+                           std::inserter( regions, regions.begin() ) );
   }
   else
   {
-    // Sort alphabetically and remove possible duplicates in user input
-    std::sort( regions.begin(), regions.end() );
-    regions.erase( std::unique( regions.begin(), regions.end() ), regions.end() );
-
     // Check that both fields exist on all regions in the list
-    auto const checkSupport = [&regions]( std::vector< string > const & fieldRegions, string const & fieldName )
+    auto const checkSupport = [&regions]( std::set< string > const & fieldRegions, string const & fieldName )
     {
       // Both regions lists are sorted at this point
       GEOSX_ERROR_IF( !std::includes( fieldRegions.begin(), fieldRegions.end(), regions.begin(), regions.end() ),
@@ -394,20 +405,20 @@ processCouplingRegionList( std::vector< string > inputList,
 template< typename OP >
 struct RegionComp
 {
-  bool operator()( DofManager::Regions const & l, DofManager::Regions const & r ) const
+  bool operator()( DofManager::FieldSupport const & l, DofManager::FieldSupport const & r ) const
   {
     return OP{} ( std::tie( l.meshBodyName, l.meshLevelName ), std::tie( r.meshBodyName, r.meshLevelName ) );
   }
 };
 
-std::vector< DofManager::Regions >
-processCouplingRegionList( std::vector< DofManager::Regions > inputList,
-                           std::vector< DofManager::Regions > const & rowFieldRegions,
+std::vector< DofManager::FieldSupport >
+processCouplingRegionList( std::vector< DofManager::FieldSupport > inputList,
+                           std::vector< DofManager::FieldSupport > const & rowFieldRegions,
                            string const & rowFieldName,
-                           std::vector< DofManager::Regions > const & colFieldRegions,
+                           std::vector< DofManager::FieldSupport > const & colFieldRegions,
                            string const & colFieldName )
 {
-  std::vector< DofManager::Regions > regions( std::move( inputList ) );
+  std::vector< DofManager::FieldSupport > regions( std::move( inputList ) );
 
   if( regions.empty() )
   {
@@ -416,11 +427,11 @@ processCouplingRegionList( std::vector< DofManager::Regions > inputList,
                            colFieldRegions.begin(), colFieldRegions.end(),
                            std::back_inserter( regions ), RegionComp< std::less<> >{} );
     // Now, compute intersections of region lists
-    for( DofManager::Regions & r : regions )
+    for( DofManager::FieldSupport & r : regions )
     {
       // Find the body/level pair in the column field list (unsorted range)
       auto const comp = [&r]( auto const & c ){ return RegionComp< std::equal_to<> >{} ( r, c ); };
-      DofManager::Regions const & colRegions = *std::find_if( colFieldRegions.begin(), colFieldRegions.end(), comp );
+      DofManager::FieldSupport const & colRegions = *std::find_if( colFieldRegions.begin(), colFieldRegions.end(), comp );
       // Intersect row field regions (already copied into result) with col field regions (found above)
       r.regionNames = processCouplingRegionList( {}, r.regionNames, rowFieldName, colRegions.regionNames, colFieldName );
     }
@@ -428,14 +439,15 @@ processCouplingRegionList( std::vector< DofManager::Regions > inputList,
   else
   {
     // Check that each input entry is included in both row and col field supports
-    auto const checkSupport = [&regions]( std::vector< DofManager::Regions > const & fieldRegions, string const & fieldName )
+    auto const checkSupport = [&regions]( std::vector< DofManager::FieldSupport > const & fieldRegions, string const & fieldName )
     {
-      for( DofManager::Regions const & r : regions )
+      for( DofManager::FieldSupport const & r : regions )
       {
         auto const comp = [&r]( auto const & f ){ return RegionComp< std::equal_to<> >{} ( r, f ); };
         auto const it = std::find_if( fieldRegions.begin(), fieldRegions.end(), comp );
         GEOSX_ERROR_IF( it == fieldRegions.end(),
                         GEOSX_FMT( "Mesh {}/{} not found in support of field {}", r.meshBodyName, r.meshLevelName, fieldName ) );
+
         GEOSX_ERROR_IF( !std::includes( it->regionNames.begin(), it->regionNames.end(), r.regionNames.begin(), r.regionNames.end() ),
                         GEOSX_FMT( "Coupling domain is not a subset of {}'s support:\nCoupling: {}\nField: {}",
                                    fieldName, stringutilities::join( r.regionNames ), stringutilities::join( it->regionNames ) ) );
@@ -453,34 +465,48 @@ processCouplingRegionList( std::vector< DofManager::Regions > inputList,
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               Connector const connectivity,
-                              std::vector< Regions > const & regions,
+                              std::vector< FieldSupport > const & supports,
                               bool const symmetric )
 {
-  GEOSX_ASSERT_MSG( m_domain != nullptr, "Mesh has not been set" );
+  GEOSX_ASSERT_MSG( m_domain != nullptr, "Domain has not been set" );
   localIndex const rowFieldIndex = getFieldIndex( rowFieldName );
   localIndex const colFieldIndex = getFieldIndex( colFieldName );
 
   // Check if already defined
-  GEOSX_ASSERT_MSG( m_coupling.count( {rowFieldIndex, colFieldIndex} ) == 0, "addCoupling: coupling already defined" );
+  std::vector< FieldSupport > processSupportList = processCouplingRegionList( supports,
+                                                                              m_fields[rowFieldIndex].support,
+                                                                              rowFieldName,
+                                                                              m_fields[colFieldIndex].support,
+                                                                              colFieldName );
 
-  CouplingDescription & coupling = m_coupling[ { rowFieldIndex, colFieldIndex } ];
-  coupling.connector = connectivity;
-  if( connectivity == Connector::None && rowFieldIndex == colFieldIndex )
+  if( m_coupling.count( {rowFieldIndex, colFieldIndex} ) == 0 )
   {
-    coupling.connector = static_cast< Connector >( m_fields[rowFieldIndex].location );
+    CouplingDescription & coupling = m_coupling[ { rowFieldIndex, colFieldIndex } ];
+    coupling.connector = connectivity;
+    if( connectivity == Connector::None && rowFieldIndex == colFieldIndex )
+    {
+      coupling.connector = static_cast< Connector >( m_fields[rowFieldIndex].location );
+    }
+
+    // Make a list of supports on which coupling is defined
+    coupling.support = processSupportList;
+
+    // Set connectivity with active symmetry flag
+    if( symmetric && colFieldIndex != rowFieldIndex )
+    {
+      m_coupling.insert( { { colFieldIndex, rowFieldIndex }, coupling } );
+    }
   }
-
-  // Make a list of regions on which coupling is defined
-  coupling.support = processCouplingRegionList( regions,
-                                                m_fields[rowFieldIndex].support,
-                                                rowFieldName,
-                                                m_fields[colFieldIndex].support,
-                                                colFieldName );
-
-  // Set connectivity with active symmetry flag
-  if( symmetric && colFieldIndex != rowFieldIndex )
+  else
   {
-    m_coupling.insert( { { colFieldIndex, rowFieldIndex }, coupling } );
+    CouplingDescription & coupling = m_coupling[ { rowFieldIndex, colFieldIndex } ];
+    addNewSupports( processSupportList, m_coupling[ { rowFieldIndex, colFieldIndex } ].support );
+
+    // Set connectivity with active symmetry flag
+    if( symmetric && colFieldIndex != rowFieldIndex )
+    {
+      m_coupling.insert( { { colFieldIndex, rowFieldIndex }, coupling } );
+    }
   }
 }
 
@@ -501,16 +527,16 @@ void DofManager::addCoupling( string const & fieldName,
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               DofManager::Connector connectivity,
-                              map< std::pair< string, string >, array1d< string > > const & regions,
+                              map< std::pair< string, string >, array1d< string > > const & supports,
                               bool symmetric )
 {
   // Convert input into internal format
-  std::vector< Regions > support;
-  for( auto const & p : regions )
+  std::vector< FieldSupport > support;
+  for( auto const & p : supports )
   {
     MeshBody const & meshBody = m_domain->getMeshBody( p.first.first );
     MeshLevel const & mesh = meshBody.getMeshLevel( p.first.second ).getShallowParent();
-    std::vector< string > regionNames( p.second.begin(), p.second.end() );
+    std::set< string > regionNames( p.second.begin(), p.second.end() );
     support.push_back( { meshBody.getName(), mesh.getName(), std::move( regionNames ) } );
   }
   addCoupling( rowFieldName, colFieldName, connectivity, support, symmetric );
@@ -540,7 +566,7 @@ struct ConnLocPatternBuilder
   static void build( MeshLevel const & mesh,
                      string const & key,
                      localIndex const numComp,
-                     std::vector< string > const & regions,
+                     std::set< string > const & regions,
                      localIndex const rowOffset,
                      SparsityPattern< globalIndex > & connLocPattern )
   {
@@ -588,7 +614,7 @@ struct ConnLocPatternBuilder< FieldLocation::Elem, FieldLocation::Edge, SUBREGIO
   static void build( MeshLevel const & mesh,
                      string const & key,
                      localIndex const numComp,
-                     std::vector< string > const & regions,
+                     std::set< string > const & regions,
                      localIndex const rowOffset,
                      SparsityPattern< globalIndex > & connLocPattern )
   {
@@ -632,7 +658,7 @@ void makeConnLocPattern( MeshLevel const & mesh,
                          string const & key,
                          localIndex const numComp,
                          globalIndex const numGlobalDof,
-                         std::vector< string > const & regions,
+                         std::set< string > const & regions,
                          SparsityPattern< globalIndex > & connLocPattern )
 {
   using Loc = FieldLocation;
@@ -1268,6 +1294,13 @@ void DofManager::addFieldToVector( arrayView1d< real64 > const & localVector,
 void DofManager::reorderByRank()
 {
   GEOSX_LAI_ASSERT( !m_reordered );
+
+  for( FieldDescription & field : m_fields )
+  {
+    computeFieldDimensions( static_cast< localIndex >( getFieldIndex( field.name ) ) );
+    // allocate and fill index array
+    createIndexArray( field );
+  }
 
   // update field offsets to account for renumbering
   globalIndex dofOffset = rankOffset();
