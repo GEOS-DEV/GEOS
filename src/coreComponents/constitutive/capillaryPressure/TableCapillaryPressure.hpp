@@ -183,6 +183,9 @@ TableCapillaryPressure::KernelWrapper::
   compute( phaseVolFraction,
            m_phaseCapPressure[k][q],
            m_dPhaseCapPressure_dPhaseVolFrac[k][q] );
+
+  std::cerr << "cell :" << k << "\n phaseCap " << m_phaseCapPressure[k][q] << std::endl;
+  std::cerr << "dPhaseCap_dS" << m_phaseCapPressure[k][q] << std::endl;
 }
 
 } // namespace constitutive

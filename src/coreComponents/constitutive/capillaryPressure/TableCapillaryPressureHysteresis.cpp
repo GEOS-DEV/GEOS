@@ -140,6 +140,12 @@ namespace geosx {
 
             registerField(fields::cappres::mode{}, &m_mode);
 
+
+            registerField( fields::cappres::phaseMaxHistoricalVolFraction{},
+                           &m_phaseMaxHistoricalVolFraction );
+            registerField( fields::cappres::phaseMinHistoricalVolFraction{},
+                           &m_phaseMinHistoricalVolFraction );
+
         }
 
 /// usual utils
@@ -736,7 +742,7 @@ namespace geosx {
                 phaseVolFraction[ipWetting] <= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer)
                 mode = ModeIndexType::DRAINAGE;
             if (mode == ModeIndexType::IMBIBITION_TO_DRAINAGE &&
-                phaseVolFraction[ipWetting] >= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer)
+                phaseVolFraction[ipWetting] >= phaseMaxHistoricalVolFraction[ipWetting] + flowReversalBuffer)
                 mode = ModeIndexType::IMBIBITION;
 
             //--- wetting  cap pressure -- W/O or W/G two phase flow
@@ -843,10 +849,10 @@ namespace geosx {
             //update state
             // TODO check if we can get rid of  DRAINAGE_TO_IMBIBITION && IMBIBITION_TO_DRAINAGE
             if (mode == ModeIndexType::DRAINAGE_TO_IMBIBITION &&
-                phaseVolFraction[ipNonWetting] >= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer)
+                phaseVolFraction[ipNonWetting] >= phaseMaxHistoricalVolFraction[ipNonWetting] + flowReversalBuffer)
                 mode = ModeIndexType::DRAINAGE;
             if (mode == ModeIndexType::IMBIBITION_TO_DRAINAGE &&
-                phaseVolFraction[ipWetting] <= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer)
+                phaseVolFraction[ipWetting] <= phaseMinHistoricalVolFraction[ipNonWetting] + flowReversalBuffer)
                 mode = ModeIndexType::IMBIBITION;
 
             if (!m_phaseHasHysteresis[TTP::INTERMEDIATE_NONWETTING] ||
@@ -1011,6 +1017,7 @@ namespace geosx {
 
                 mode = (mode == ModeIndexType::DRAINAGE) ? ModeIndexType::DRAINAGE_TO_IMBIBITION
                                                          : ModeIndexType::IMBIBITION_TO_DRAINAGE;
+
                 computeImbibitionNonWettingCapillaryPressure(m_nonWettingIntermediateCapillaryPressureKernelWrappers,
                                                              m_nonWettingCurve,
                                                              m_wettingCurve,
