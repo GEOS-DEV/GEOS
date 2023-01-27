@@ -92,24 +92,27 @@ TableCapillaryPressureHelpers::validateCapillaryPressureTable( const geosx::Tabl
   phaseMax = phaseVolFrac[phaseVolFrac.size()-1];
   phaseCapPresMaxEndPoint = capPres[phaseVolFrac.size()-1];
 
-  for( localIndex i = 1; i < coords.sizeOfArray( 0 ); ++i )
-  {
+
       if(capPresMustBeIncreasing) {
-          if (isZero(capPres[i - 1]) && !isZero(capPres[i])) {
-              phaseMin = phaseVolFrac[i - 1];
-              phaseCapPresMinEndPoint = capPres[i-1];
+
+          for( localIndex i = 1; i < coords.sizeOfArray( 0 ); ++i ) {
+              if (isZero(capPres[i - 1]) && !isZero(capPres[i])) {
+                  phaseMin = phaseVolFrac[i - 1];
+                  phaseCapPresMinEndPoint = capPres[i - 1];
+              }
           }
       }
       else
       {
-              if (!isZero(capPres[i - 1]) && isZero(capPres[i])) {
-                  phaseMin = phaseVolFrac[i ];
-                  phaseCapPresMinEndPoint = capPres[i];
+          for( localIndex i = coords.sizeOfArray( 0 )-2; i>0; --i ) {
+              if (isZero(capPres[i + 1]) && !isZero(capPres[i])) {
+                  phaseMax = phaseVolFrac[i + 1];
+                  phaseCapPresMaxEndPoint = capPres[i + 1];
               }
+          }
 
       }
   }
-}
 
 
 } // namespace constitutive
