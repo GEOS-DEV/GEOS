@@ -317,13 +317,6 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const = 0;
 
-
-  /**
-   * @brief Sets all the negative component densities (if any) to zero.
-   * @param domain the physical domain object
-   */
-  void chopNegativeDensities( DomainPartition & domain );
-
   /**
    * @brief Utility function to keep the flow variables during a time step (used in poromechanics simulations)
    * @param[in] keepFlowVariablesConstantDuringStep flag to tell the solver to freeze its primary variables during a time step
@@ -349,6 +342,13 @@ public:
                                             DomainPartition & domain,
                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                             arrayView1d< real64 > const & localRhs ) const;
+
+
+  /**
+   * @brief Sets all the negative component densities (if any) to zero.
+   * @param domain the physical domain object
+   */
+  void chopNegativeDensities( DomainPartition & domain );
 
   virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
                                               DomainPartition & domain ) override;

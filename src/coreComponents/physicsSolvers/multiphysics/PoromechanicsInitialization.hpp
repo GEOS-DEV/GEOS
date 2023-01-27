@@ -24,9 +24,6 @@
 namespace geosx
 {
 
-class MultiPhasePoromechanicsSolver;
-class SinglePhasePoromechanicsSolver;
-
 /**
  * @class PoromechanicsInitialization
  *

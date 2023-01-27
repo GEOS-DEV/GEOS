@@ -111,15 +111,16 @@ execute( real64 const time_n,
   {
     GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Task `{}`: at time {}s, physics solver `{}` is set to perform stress initialization during the next time step(s)",
                                           getName(), time_n, m_poromechanicsSolverName ) );
-    m_poromechanicsSolver->performStressInitialization( true );
+    m_poromechanicsSolver->setStressInitialization( true );
   }
   else
   {
     GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Task `{}`: at time {}s, physics solver `{}` has completed stress initialization",
                                           getName(), time_n, m_poromechanicsSolverName ) );
-    m_poromechanicsSolver->performStressInitialization( false );
+    m_poromechanicsSolver->setStressInitialization( false );
   }
 
+  // always returns false because we don't want early return (see EventManager.cpp)
   return false;
 }
 
