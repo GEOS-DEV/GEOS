@@ -16,7 +16,7 @@ Analytical results of the temperature profile along the radial direction is give
 .. math::
    T(r) = T_{in}\sqrt{\frac{R_{in}}{r}}erfc(\frac{r-R_{in}}{2\sqrt{c_{T}t}})
 
-where :math:`r` is the radial coordinate, :math:`T_{in}` the temperature applied on the surface of the wellbore at :math:`r = R_{in}`, :math:`c_{T}` the thermal diffusion coefficient of rock that is the ratio between the thermal conductivity and ther volumetric heat capacity of rock.
+where :math:`r` is the radial coordinate, :math:`T_{in}` is the temperature applied on the surface of the wellbore at :math:`r = R_{in}`, :math:`c_{T}` is the thermal diffusion coefficient of rock, which is defined as the ratio between the thermal conductivity and the volumetric heat capacity of rock.
 
 
 **Input file**
