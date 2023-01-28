@@ -60,7 +60,7 @@ The thermal conductivity of the medium around the wellbore is defined in the ``S
   :start-after: <!-- SPHINX_SinglePhaseConstantThermalConductivity -->
   :end-before: <!-- SPHINX_SinglePhaseConstantThermalConductivityEnd -->
 
-The volumetric heat capacity of fluid is set to a negligible value to minimize thermal convection effec. It is defined in the ``ThermalCompressibleSinglePhaseFluid`` XML block as  
+The volumetric heat capacity of fluid is set to a negligible value to exclude thermal convection effect. It is defined in the ``ThermalCompressibleSinglePhaseFluid`` XML block as  
 
 .. literalinclude:: ../../../../../../../inputFiles/singlePhaseFlow/thermalCompressible_2d_base.xml
   :language: xml
