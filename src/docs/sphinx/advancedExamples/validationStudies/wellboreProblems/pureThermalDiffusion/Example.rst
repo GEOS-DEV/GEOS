@@ -21,7 +21,7 @@ where :math:`r` is the radial coordinate, :math:`T_{in}` is the temperature appl
 
 **Input file**
 
-This benchmark example uses no external input files and everything required is
+This benchmark example uses no external input file and everything required is
 contained within two GEOSX xml files that are located at:
 
 .. code-block:: console
