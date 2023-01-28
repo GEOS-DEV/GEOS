@@ -9,7 +9,7 @@ Pure thermal diffusion around a wellbore
 Problem description
 ------------------------------------------------------------------
 
-This example uses the thermal flow solver to a pure thermal diffusion problem around a wellbore. Thermal convection and fluid flow are removed by settting fluid pressure and fluid heat capacity to zero to mimic a pure thermal diffusion problem, .
+This example uses the thermal flow solver to model a pure thermal diffusion problem around a wellbore. To mimic this specific problem, thermal convection and fluid flow are removed by setting fluid pressure and fluid heat capacity to zero. 
 
 Analytical results of the temperature profile along the radial directionis `(Wang and Papamichos, 1994) <https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94WR01774>`__ :
 
