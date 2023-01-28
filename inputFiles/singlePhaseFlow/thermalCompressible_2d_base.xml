@@ -110,7 +110,7 @@
 	<!-- SPHINX_FieldSpecificationImposedPressureEnd -->
 
 	<!-- SPHINX_FieldSpecificationImposedTemperature -->
-	<FieldSpecification
+    <FieldSpecification
       name="initialTemperature"
       initialCondition="1"
       setNames="{ all }"
