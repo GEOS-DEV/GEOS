@@ -78,7 +78,7 @@ The initial temperature, the imposed temperature at the curved wellbore surface 
   :start-after: <!-- SPHINX_FieldSpecificationImposedTemperature -->
   :end-before: <!-- SPHINX_FieldSpecificationImposedTemperatureEnd -->
 
-Although a pure thermal diffusion problem is considered, it is required to define also specifications for fluid pressure because thermal transfer problem is always coupled with fluid flow problem in GEOSX. In this example, fluid pressure is set to zero everywhere to mimic a pure thermal diffusion problem as
+Although a pure thermal diffusion problem is considered, it is also required to define specifications for fluid pressure, as thermal transfer is always coupled with fluid flow in GEOSX. In this example, fluid pressure is set to zero everywhere to mimic a pure thermal diffusion problem as
 
 .. literalinclude:: ../../../../../../../inputFiles/singlePhaseFlow/thermalCompressible_2d_base.xml
   :language: xml
