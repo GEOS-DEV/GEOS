@@ -88,10 +88,10 @@ def parse(all_checks_helpers: Dict[str, CheckHelper], cli_args: List[str]) -> Ar
     An option may be missing because of an unloaded module.
     Increase verbosity (-{verbosity_flag}, -{verbosity_flag * 2}) to get full information.
     """
-
+    formatter = lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=8)
     parser = argparse.ArgumentParser(description='Inspects meshes for GEOSX.',
                                      epilog=textwrap.dedent(epilog_msg),
-                                     formatter_class=argparse.RawTextHelpFormatter)
+                                     formatter_class=formatter)
     misc_grp = parser.add_argument_group('main')
     # Nothing will be done with this verbosity/quiet input.
     # It's only here for the `--help` message.
