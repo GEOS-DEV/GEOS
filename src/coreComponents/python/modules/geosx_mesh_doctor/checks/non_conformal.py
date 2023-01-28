@@ -1,12 +1,9 @@
 from dataclasses import dataclass
-import logging
 import math
-from typing import List, Tuple, Dict, FrozenSet, Iterator
+from typing import List, Tuple, Any
 import numpy
 
 from tqdm import tqdm
-
-import networkx
 
 from vtkmodules.vtkCommonCore import (
     vtkIdList,
@@ -14,24 +11,20 @@ from vtkmodules.vtkCommonCore import (
 )
 from vtkmodules.vtkCommonDataModel import (
     VTK_POLYHEDRON,
-    VTK_TRIANGLE,
     vtkBoundingBox,
+    vtkCell,
     vtkCellArray,
     vtkPointSet,
     vtkPolyData,
-    vtkPolygon,
-    vtkPolyhedron,
     vtkStaticCellLocator,
     vtkStaticPointLocator,
     vtkUnstructuredGrid,
-    vtkTetra,
 )
 from vtkmodules.vtkCommonTransforms import (
     vtkTransform,
 )
 from vtkmodules.vtkFiltersCore import (
     vtkPolyDataNormals,
-    vtkTriangleFilter,
 )
 from vtkmodules.vtkFiltersGeometry import (
     vtkDataSetSurfaceFilter,
@@ -42,17 +35,18 @@ from vtkmodules.vtkFiltersModeling import (
 )
 from vtk import reference as vtk_reference
 
+from .reorient_mesh import reorient_mesh
+
 from . import vtk_utils
 from .vtk_utils import (
     get_cell_field_by_name,
-    to_vtk_id_list,
 )
 
 from .vtk_polyhedron import (
-    FaceStream,
-    build_cell_graph,
     vtk_iter,
 )
+
+from . import triangle_distance
 
 
 @dataclass(frozen=True)
@@ -68,7 +62,19 @@ class Result:
 
 
 class BoundaryMesh:
-    def __init__(self, mesh):
+    """
+    A BoundaryMesh is the envelope of the 3d mesh on which we want to perform the simulations.
+    It is computed by vtk. But we want to be sure that the normals of the envelope are directed outwards.
+    The `vtkDataSetSurfaceFilter` does not have the same behavior for standard vtk cells (like tets or hexs),
+    and for polyhedron meshes, for which the result is a bit brittle.
+    Therefore, we reorient the polyhedron cells ourselves, so we're sure that point outwards.
+    And then we compute the boundary mesh for both meshes, given that the computing options are not identical.
+    """
+    def __init__(self, mesh: vtkUnstructuredGrid):
+        """
+        Builds a boundary mesh.
+        :param mesh: The 3d mesh.
+        """
         # Building the boundary meshes
         boundary_mesh, __normals, self.__original_cells = BoundaryMesh.__build_boundary_mesh(mesh)
         cells_to_reorient = filter(lambda c: mesh.GetCell(c).GetCellType() == VTK_POLYHEDRON,
@@ -89,8 +95,15 @@ class BoundaryMesh:
             else:
                 self.__normals[ic, :] = __normals.GetTuple3(ic)
     @staticmethod
-    def __build_boundary_mesh(mesh, consistency=True):
-        original_cells_key = "ORIGINAL_CELLS"
+    def __build_boundary_mesh(mesh: vtkUnstructuredGrid, consistency=True) -> Tuple[vtkUnstructuredGrid, Any, Any]:
+        """
+        From a 3d mesh, build the envelope meshes, considering standard and polyhedron elements' specificities.
+        :param mesh: The input 3d mesh.
+        :param consistency: The vtk option passed to the `vtkDataSetSurfaceFilter`
+        :return: A tuple containing the boundary mesh, the normal vectors array,
+                 an array that maps the id of the boundary element to the id of the 3d cell it touches.
+        """
+        original_cells_key = "ORIGINAL_CELLS"  # Note that we do not need the original points, but we could keep it if needed
 
         f = vtkDataSetSurfaceFilter()
         f.PassThroughCellIdsOn()
@@ -116,67 +129,175 @@ class BoundaryMesh:
         original_cells = get_cell_field_by_name(boundary_mesh, original_cells_key)
         assert original_cells
         return boundary_mesh, normals, original_cells
-    def GetNumberOfCells(self):
+
+    def GetNumberOfCells(self) -> int:
+        """
+        The number of cells, in a vtk format.
+        :return: An integer.
+        """
         return self.re_boundary_mesh.GetNumberOfCells()
-    def GetNumberOfPoints(self):
+
+    def GetNumberOfPoints(self) -> int:
+        """
+        The number of points, in a vtk format.
+        :return: An integer.
+        """
         return self.re_boundary_mesh.GetNumberOfPoints()
-    def bounds(self, i):
+
+    def bounds(self, i) -> vtkBoundingBox:
+        """
+        The boundrary box of cell `i`.
+        :param i: The boundary cell index.
+        :return: The vtk bounding box.
+        """
         return self.re_boundary_mesh.GetCell(i).GetBounds()
-    def normals(self, i):
+
+    def normals(self, i) -> numpy.array:
+        """
+        The normal of cell `i`.
+        :param i: The boundary cell index.
+        :return: The normal as a length-3 numpy array.
+        """
         return self.__normals[i]
-    def GetCell(self, i):
+
+    def GetCell(self, i) -> vtkCell:
+        """
+        Cell i of the boundary mesh. This cell will have its normal directed outwards.
+        :param i: The boundary cell index.
+        :return: The cell instance.
+        :warning: This member function relies on the vtkUnstructuredGrid.GetCell member function which is not thread safe.
+        """
         return self.re_boundary_mesh.GetCell(i)
-    def GetPoint(self, i):
+
+    def GetPoint(self, i) -> Tuple[float, float, float]:
+        """
+        Point i of the boundary mesh.
+        :param i: The boundary point index.
+        :return: A length-3 tuple containing the coordinates of the point.
+        :warning: This member function relies on the vtkUnstructuredGrid.GetPoint member function which is not thread safe.
+        """
         return self.re_boundary_mesh.GetPoint(i)
+
     @property
     def original_cells(self):
+        """
+        Returns the 2d boundary cell to the 3d cell index of the original mesh.
+        :return: A 1d array.
+        """
         return self.__original_cells
 
 
-def build_poly_data_for_extrusion(i, boundary_mesh):
-    cell_i = boundary_mesh.GetCell(i)
-    cp_i = cell_i.NewInstance()
-    cp_i.DeepCopy(cell_i)
+def build_poly_data_for_extrusion(i: int, boundary_mesh: BoundaryMesh) -> vtkPolyData:
+    """
+    Creates a vtkPolyData containing the unique cell `i` of the boundary mesh.
+    This operation is needed to use the vtk extrusion filter.
+    It could surely be possible to do it by hand if using a vtk algorithm for such a little task is overkill and too slow,
+    but we also have to deal with polyhedron, which is not straightforward.
+    :param i: The boundary cell index that will eventually be extruded.
+    :param boundary_mesh:
+    :return: The created vtkPolyData.
+    """
+    cell = boundary_mesh.GetCell(i)
+    copied_cell = cell.NewInstance()
+    copied_cell.DeepCopy(cell)
     points_ids_mapping_i = []
-    for ii in range(cell_i.GetNumberOfPoints()):
-        cp_i.GetPointIds().SetId(ii, ii)
-        points_ids_mapping_i.append(cell_i.GetPointId(ii))
-    polygons_i = vtkCellArray()
-    polygons_i.InsertNextCell(cp_i)
-    points_i = vtkPoints()
-    points_i.SetNumberOfPoints(len(points_ids_mapping_i))
-    for ii, v in enumerate(points_ids_mapping_i):
-        points_i.SetPoint(ii, boundary_mesh.GetPoint(v))
-    polygon_poly_data_i = vtkPolyData()
-    polygon_poly_data_i.SetPoints(points_i)
-    polygon_poly_data_i.SetPolys(polygons_i)
-    return polygon_poly_data_i, cp_i
+    for i in range(copied_cell.GetNumberOfPoints()):
+        copied_cell.GetPointIds().SetId(i, i)
+        points_ids_mapping_i.append(cell.GetPointId(i))
+    polygons = vtkCellArray()
+    polygons.InsertNextCell(copied_cell)
+    points = vtkPoints()
+    points.SetNumberOfPoints(len(points_ids_mapping_i))
+    for i, v in enumerate(points_ids_mapping_i):
+        points.SetPoint(i, boundary_mesh.GetPoint(v))
+    polygon_poly_data = vtkPolyData()
+    polygon_poly_data.SetPoints(points)
+    polygon_poly_data.SetPolys(polygons)
+    return polygon_poly_data
 
 
-def test(i, j, normal_i, normal_j, boundary_mesh, face_tolerance, point_tolerance):
-    polygon_poly_data_i, cp_i = build_poly_data_for_extrusion(i, boundary_mesh)
-    polygon_poly_data_j, cp_j = build_poly_data_for_extrusion(j, boundary_mesh)
+def are_points_conformal(point_tolerance: float, cell_i: vtkCell, cell_j: vtkCell) -> bool:
+    """
+    Checks if points of cell `i` matches, one by one, the points of cell `j`.
+    :param point_tolerance: The point tolerance to consider that two points match.
+    :param cell_i: The first cell.
+    :param cell_j: The second cell.
+    :return: A boolean.
+    """
+    # In this last step, we check that the nodes are (or not) matching each other.
+    if cell_i.GetNumberOfPoints() != cell_j.GetNumberOfPoints():
+        return True
 
-    def build_extruder(polygon_poly_data, normal):
+    point_locator = vtkStaticPointLocator()
+    points = vtkPointSet()
+    points.SetPoints(cell_i.GetPoints())
+    point_locator.SetDataSet(points)
+    point_locator.BuildLocator()
+    found_points = set()
+    for ip in range(cell_j.GetNumberOfPoints()):
+        p = cell_j.GetPoints().GetPoint(ip)
+        squared_dist = vtk_reference(0.)  # unused
+        found_point = point_locator.FindClosestPointWithinRadius(point_tolerance, p, squared_dist)
+        found_points.add(found_point)
+    return found_points == set(range(cell_i.GetNumberOfPoints()))
+
+
+class Extruder:
+    """
+    Computes and stores all the extrusions of the boundary faces.
+    """
+    def __init__(self, boundary_mesh: BoundaryMesh, face_tolerance: float):
+        self.__extrusions: List[vtkPolyData] = [None, ] * boundary_mesh.GetNumberOfCells()
+        self.__boundary_mesh = boundary_mesh
+        self.__face_tolerance = face_tolerance
+
+    def __extrude(self, polygon_poly_data, normal) -> vtkPolyData:
+        """
+        Extrude the polygon data to create a volume that will be used for intersection.
+        :param polygon_poly_data: The data to extrude
+        :param normal: The (uniform) direction of the extrusion.
+        :return: The extrusion.
+        """
         extruder = vtkLinearExtrusionFilter()
         extruder.SetExtrusionTypeToVectorExtrusion()
         extruder.SetVector(normal)
-        extruder.SetScaleFactor(face_tolerance / 2.)
+        extruder.SetScaleFactor(self.__face_tolerance / 2.)
         extruder.SetInputData(polygon_poly_data)
         extruder.Update()
-        return extruder
+        return extruder.GetOutput()
 
-    extruder_i = build_extruder(polygon_poly_data_i, normal_i)
-    extruder_j = build_extruder(polygon_poly_data_j, normal_j)
+    def __getitem__(self, i) -> vtkPolyData:
+        """
+        Returns the vtk extrusion for boundary element i.
+        :param i: The cell index.
+        :return: The vtk instance.
+        """
+        extrusion = self.__extrusions[i]
+        if extrusion:
+            return extrusion
+        extrusion = self.__extrude(build_poly_data_for_extrusion(i, self.__boundary_mesh),
+                                   self.__boundary_mesh.normals(i))
+        self.__extrusions[i] = extrusion
+        return extrusion
 
+
+def are_faces_conformal_using_extrusions(extrusions: Extruder,
+                                         i: int, j: int,
+                                         boundary_mesh: vtkUnstructuredGrid,
+                                         point_tolerance: float) -> bool:
+    """
+    Tests if two boundary faces are conformal, checking for intersection between their normal extruded volumes.
+    :param extrusions: The extrusions cache.
+    :param i: The cell index of the first cell.
+    :param j: The cell index of the second cell.
+    :param boundary_mesh: The boundary mesh.
+    :param point_tolerance: The point tolerance to consider that two points match.
+    :return: A boolean.
+    """
     collision = vtkCollisionDetectionFilter()
     collision.SetCollisionModeToFirstContact()
-    collision.SetInputData(0, extruder_i.GetOutput())
-    collision.SetInputData(1, extruder_j.GetOutput())
-    # m_i = vtk.vtkMatrix4x4()
-    # m_j = vtk.vtkMatrix4x4()
-    # collision.SetMatrix(0, m_i)
-    # collision.SetMatrix(1, m_j)
+    collision.SetInputData(0, extrusions[i])
+    collision.SetInputData(1, extrusions[j])
     m_i = vtkTransform()
     m_j = vtkTransform()
     collision.SetTransform(0, m_i)
@@ -184,27 +305,81 @@ def test(i, j, normal_i, normal_j, boundary_mesh, face_tolerance, point_toleranc
     collision.Update()
 
     if collision.GetNumberOfContacts() == 0:
-        return False
-
-    # In this last step, we check that the nodes are (or not) matching each other.
-    if cp_i.GetNumberOfPoints() != cp_j.GetNumberOfPoints():
         return True
 
-    point_locator = vtkStaticPointLocator()
-    points = vtkPointSet()
-    points.SetPoints(cp_i.GetPoints())
-    point_locator.SetDataSet(points)
-    point_locator.BuildLocator()
-    found_points = set()
-    for ip in range(cp_j.GetNumberOfPoints()):
-        p = cp_j.GetPoints().GetPoint(ip)
-        squared_dist = vtk_reference(0.)
-        found_point = point_locator.FindClosestPointWithinRadius(point_tolerance, p, squared_dist)
-        found_points.add(found_point)
-    return found_points != set(range(cp_i.GetNumberOfPoints()))
+    # Duplicating data not to risk anything w.r.t. thread safety of the GetCell function.
+    cell_i = boundary_mesh.GetCell(i)
+    copied_cell_i = cell_i.NewInstance()
+    copied_cell_i.DeepCopy(cell_i)
+
+    return are_points_conformal(point_tolerance, copied_cell_i, boundary_mesh.GetCell(j))
 
 
-def __check(mesh, options: Options) -> Result:
+def are_faces_conformal_using_distances(i: int, j: int,
+                                        boundary_mesh: vtkUnstructuredGrid,
+                                        face_tolerance: float, point_tolerance: float) -> bool:
+    """
+    Tests if two boundary faces are conformal, checking the minimal distance between triangulated surfaces.
+    :param i: The cell index of the first cell.
+    :param j: The cell index of the second cell.
+    :param boundary_mesh: The boundary mesh.
+    :param face_tolerance: The tolerance under which we should consider the two faces "touching" each other.
+    :param point_tolerance: The point tolerance to consider that two points match.
+    :return: A boolean.
+    """
+    cp_i = boundary_mesh.GetCell(i).NewInstance()
+    cp_i.DeepCopy(boundary_mesh.GetCell(i))
+    cp_j = boundary_mesh.GetCell(j).NewInstance()
+    cp_j.DeepCopy(boundary_mesh.GetCell(j))
+
+    def triangulate(cell):
+        # Let's triangulate this.
+        __points_ids = vtkIdList()
+        __points = vtkPoints()
+        cell.Triangulate(0, __points_ids, __points)
+        __points_ids = tuple(vtk_iter(__points_ids))
+        assert len(__points_ids) % 3 == 0
+        assert __points.GetNumberOfPoints() % 3 == 0
+        return __points_ids, __points
+
+    points_ids_i, points_i = triangulate(cp_i)
+    points_ids_j, points_j = triangulate(cp_j)
+
+    def build_numpy_triangles(points_ids):
+        __triangles = []
+        for __i in range(0, len(points_ids), 3):
+            __t = []
+            for __pi in points_ids[__i: __i + 3]:
+                __t.append(boundary_mesh.GetPoint(__pi))
+            __triangles.append(numpy.array(__t, dtype=float))
+        return __triangles
+
+    triangles_i = build_numpy_triangles(points_ids_i)
+    triangles_j = build_numpy_triangles(points_ids_j)
+
+    min_dist = numpy.inf
+    for ti , tj in [(ti, tj) for ti in triangles_i for tj in triangles_j]:
+        # Note that here, we compute the exact distance to compare with the threshold.
+        # We could improve by exiting the iterative distance computation as soon as
+        # we're sure we're smaller than the threshold. No need of the exact solution.
+        dist, _, _ = triangle_distance.distance_between_two_triangles(ti, tj)
+        if dist < min_dist:
+            min_dist = dist
+        if min_dist < face_tolerance:
+            break
+    if min_dist > face_tolerance:
+        return True
+
+    return are_points_conformal(point_tolerance, cp_i, cp_j)
+
+
+def __check(mesh: vtkUnstructuredGrid, options: Options) -> Result:
+    """
+    Checks if the mesh is "conformal" (i.e. if some of its boundary faces may not be too close to each other without matching nodes).
+    :param mesh: The vtk mesh
+    :param options: The check options.
+    :return: The Result instance.
+    """
     boundary_mesh = BoundaryMesh(mesh)
     cos_theta = abs(math.cos(numpy.deg2rad(options.angle_tolerance)))
     num_cells = boundary_mesh.GetNumberOfCells()
@@ -232,6 +407,7 @@ def __check(mesh, options: Options) -> Result:
         bb.GetBounds(bounding_boxes[i, :])
 
     non_conformal_cells = []
+    extrusions = Extruder(boundary_mesh, options.face_tolerance)  # Precomputing all the extrusions.
     close_cells = vtkIdList()
     # Looping on all the pairs of boundary cells. We'll hopefully discard most of the pairs.
     for i in tqdm(range(num_cells), desc="Non conformal elements"):
@@ -244,7 +420,7 @@ def __check(mesh, options: Options) -> Result:
             if numpy.dot(normal_i, normal_j) > -cos_theta:  # opposite directions only (can be facing or not)
                 continue
             # At this point, back-to-back and face-to-face pairs of elements are considered.
-            if test(i, j, normal_i, normal_j, boundary_mesh, options.face_tolerance, options.point_tolerance):
+            if not are_faces_conformal_using_extrusions(extrusions, i, j, boundary_mesh, options.point_tolerance):
                 non_conformal_cells.append((i, j))
     # Extracting the original 3d element index (and not the index of the boundary mesh).
     tmp = []
@@ -252,126 +428,6 @@ def __check(mesh, options: Options) -> Result:
         tmp.append((boundary_mesh.original_cells.GetValue(i), boundary_mesh.original_cells.GetValue(j)))
 
     return Result(non_conformal_cells=tmp)
-
-
-def __compute_volume(points: vtkPoints, face_stream: FaceStream) -> float:
-    """
-    Computes the volume of a polyhedron element (defined by its face_stream).
-    :param face_stream:
-    :return: The volume of the element.
-    """
-    # Triangulating the envelope of the polyhedron for further volume computation.
-    polygons = vtkCellArray()
-    for face_nodes in face_stream.face_nodes:
-        polygon = vtkPolygon()
-        polygon.GetPointIds().SetNumberOfIds(len(face_nodes))
-        # We use the same global points numbering for the polygons than for the input mesh.
-        # There will be a lot of points in the poly data that won't be used as a support for the polygons.
-        # But the algorithm deals with it, and it's actually faster (and easier) to do this
-        # than to renumber and allocate a new fit-for-purpose set of points just for the polygons.
-        for i, point_id in enumerate(face_nodes):
-            polygon.GetPointIds().SetId(i, point_id)
-        polygons.InsertNextCell(polygon)
-    polygon_poly_data = vtkPolyData()
-    polygon_poly_data.SetPoints(points)
-    polygon_poly_data.SetPolys(polygons)
-
-    f = vtkTriangleFilter()
-    f.SetInputData(polygon_poly_data)
-    f.Update()
-    triangles = f.GetOutput()
-    # Computing the barycenter that will be used as the tip of all the tetra which mesh the polyhedron.
-    # (The basis of all the tetra being the triangles of the envelope).
-    # We could take any point, not only the barycenter.
-    # But in order to work with figure of the same magnitude, let's compute the barycenter.
-    tmp_barycenter = numpy.empty((face_stream.num_support_points, 3), dtype=float)
-    for i, point_id in enumerate(face_stream.support_point_ids):
-        tmp_barycenter[i, :] = points.GetPoint(point_id)
-    barycenter = tmp_barycenter[:, 0].mean(), tmp_barycenter[:, 1].mean(), tmp_barycenter[:, 2].mean()
-    # Looping on all the triangles of the envelope of the polyhedron, creating the matching tetra.
-    # Then the volume of all the tetra are added to get the final polyhedron volume.
-    cell_volume = 0.
-    for i in range(triangles.GetNumberOfCells()):
-        triangle = triangles.GetCell(i)
-        assert triangle.GetCellType() == VTK_TRIANGLE
-        p = triangle.GetPoints()
-        cell_volume += vtkTetra.ComputeVolume(barycenter, p.GetPoint(0), p.GetPoint(1), p.GetPoint(2))
-    return cell_volume
-
-
-def __select_flip(mesh_points: vtkPoints,
-                  colors: Dict[FrozenSet[int], int],
-                  face_stream: FaceStream) -> FaceStream:
-    """
-
-    :param points:
-    :param connected_components: List of connected faces.
-    :param colors: Maps  the connected component index to its color.
-    :param face_stream: the face.
-    :return:
-    """
-    # Flipping either color 0 or 1.
-    color_to_nodes: Dict[int, List[int]] = {0: [], 1: []}
-    for connected_components_indices, color in colors.items():
-        color_to_nodes[color] += connected_components_indices
-    # This implementation works even if there is one unique color.
-    # Admittedly, there will be one face stream that won't be flipped.
-    fs = face_stream.flip_faces(color_to_nodes[0]), face_stream.flip_faces(color_to_nodes[1])
-    volumes: Tuple[float, float] = __compute_volume(mesh_points, fs[0]), __compute_volume(mesh_points, fs[1])
-    return fs[numpy.argmax(volumes)]
-
-
-def __reorient_element(mesh_points: vtkPoints, face_stream_ids: vtkIdList) -> vtkIdList:
-    face_stream = FaceStream.build_from_vtk_id_list(face_stream_ids)
-    face_graph = build_cell_graph(face_stream, add_compatibility=True)
-    # Removing the non-compatible connections to build the non-connected components.
-    g = networkx.Graph()
-    g.add_nodes_from(face_graph.nodes)
-    g.add_edges_from(filter(lambda uvd: uvd[2]["compatible"] == "+", face_graph.edges(data=True)))
-    connected_components = tuple(networkx.connected_components(g))
-    # Squashing all the connected nodes that need to receive the normal direction flip (or not) together.
-    quotient_graph = networkx.algorithms.quotient_graph(face_graph, connected_components)
-    # Coloring the new graph lets us know how which cluster of faces need to eventually receive the same flip.
-    # W.r.t. the nature of our problem (a normal can be directed inwards or outwards),
-    # two colors should be enough to color the face graph.
-    colors: Dict[FrozenSet[int], int] = networkx.algorithms.greedy_color(quotient_graph)
-    assert len(colors) in (1, 2)
-    # We now compute the face stream which generates outwards normal vectors.
-    flipped_face_stream = __select_flip(mesh_points, colors, face_stream)
-    return to_vtk_id_list(flipped_face_stream.dump())
-
-
-def reorient_mesh(mesh, cell_indices: Iterator[int]) -> vtkUnstructuredGrid:
-    num_cells = mesh.GetNumberOfCells()
-    # Building an indicator/predicate from the list
-    needs_to_be_reoriented = numpy.zeros(num_cells, dtype=bool)
-    for ic in cell_indices:
-        needs_to_be_reoriented[ic] = True
-
-    output_mesh = mesh.NewInstance()
-    # I did not manage to call `output_mesh.CopyStructure(mesh)` because I could not modify the polyhedron in place.
-    # Therefore, I insert the cells one by one...
-    output_mesh.SetPoints(mesh.GetPoints())
-    logging.info("Reorienting the polyhedron cells to enforce normals directed outward.")
-    with tqdm(total=needs_to_be_reoriented.sum(), desc="Reorienting polyhedra") as progress_bar:  # For smoother progress, we only update on reoriented elements.
-        for ic in range(num_cells):
-            cell = mesh.GetCell(ic)
-            cell_type = cell.GetCellType()
-            if cell_type == VTK_POLYHEDRON:
-                face_stream_ids = vtkIdList()
-                mesh.GetFaceStream(ic, face_stream_ids)
-                if needs_to_be_reoriented[ic]:
-                    new_face_stream_ids = __reorient_element(mesh.GetPoints(), face_stream_ids)
-                    progress_bar.update(1)
-                else:
-                    new_face_stream_ids = face_stream_ids
-                output_mesh.InsertNextCell(VTK_POLYHEDRON, new_face_stream_ids)
-            else:
-                output_mesh.InsertNextCell(cell_type, cell.GetPointIds())
-                if needs_to_be_reoriented[ic]:
-                    progress_bar.update(1)
-    assert output_mesh.GetNumberOfCells() == mesh.GetNumberOfCells()
-    return output_mesh
 
 
 def check(vtk_input_file: str, options: Options) -> Result:

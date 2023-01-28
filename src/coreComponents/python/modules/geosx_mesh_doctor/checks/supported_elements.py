@@ -46,7 +46,7 @@ MESH = None  # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's
 
 class IsPolyhedronConvertible:
     def __init__(self):
-        def build_prism_graph(n, name):
+        def build_prism_graph(n: int, name: str):
             tmp = networkx.cycle_graph(n)
             for node in range(n):
                 tmp.add_edge(node, n)

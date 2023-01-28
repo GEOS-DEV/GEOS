@@ -26,7 +26,7 @@ def test_generate_fracture():
     options = Options(policy="field",
                       field="attribute",
                       field_values={0, 1, 2},
-                      output="",
+                      vtk_output=None,
                       split_on_domain_boundary=True)
     cell_frac_info, node_frac_info = __find_involved_cells(mesh, options)
     assert set(cell_frac_info.cell_to_faces.keys()) == {0, 1, 2, 3, 4, 5, 7, 8}
