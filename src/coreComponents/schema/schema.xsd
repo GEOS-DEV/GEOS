@@ -420,6 +420,10 @@
 					<xsd:selector xpath="PackCollection" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="TasksReactiveFluidDriverUniqueName">
+					<xsd:selector xpath="ReactiveFluidDriver" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksRelpermDriverUniqueName">
 					<xsd:selector xpath="RelpermDriver" />
 					<xsd:field xpath="@name" />
@@ -644,6 +648,14 @@
 				</xsd:unique>
 				<xsd:unique name="ConstitutiveProppantSolidProppantPermeabilityUniqueName">
 					<xsd:selector xpath="ProppantSolidProppantPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="ConstitutiveReactiveBrineUniqueName">
+					<xsd:selector xpath="ReactiveBrine" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="ConstitutiveReactiveBrineThermalUniqueName">
+					<xsd:selector xpath="ReactiveBrineThermal" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="ConstitutiveSinglePhaseConstantThermalConductivityUniqueName">
@@ -1816,6 +1828,13 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
+		<!--lifoSize => The number of buffer to be stored into the LIFO -->
+		<xsd:attribute name="lifoSize" type="integer" default="0" />
+		<!--lifoOnDevice => The number of buffer to be stored on device by the LIFO -->
+		<xsd:attribute name="lifoOnDevice" type="integer" default="0" />
+		<!--lifoOnHost => The number of buffer to be stored on host by the LIFO -->
+		<xsd:attribute name="lifoOnHost" type="integer" default="0" />
+
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2684,6 +2703,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
+			<xsd:element name="ReactiveFluidDriver" type="ReactiveFluidDriverType" />
 			<xsd:element name="RelpermDriver" type="RelpermDriverType" />
 			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
@@ -2732,6 +2752,26 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="onlyOnSetChange" type="integer" default="0" />
 		<!--setNames => The set(s) for which to retrieve data.-->
 		<xsd:attribute name="setNames" type="string_array" default="{}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ReactiveFluidDriverType">
+		<!--baseline => Baseline file-->
+		<xsd:attribute name="baseline" type="path" default="none" />
+		<!--feedComposition => Feed composition array: total concentration of the primary species -->
+		<xsd:attribute name="feedComposition" type="real64_array" use="required" />
+		<!--fluid => Fluid to test-->
+		<xsd:attribute name="fluid" type="string" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--output => Output file-->
+		<xsd:attribute name="output" type="string" default="none" />
+		<!--pressureControl => Function controlling pressure time history-->
+		<xsd:attribute name="pressureControl" type="string" use="required" />
+		<!--steps => Number of load steps to take-->
+		<xsd:attribute name="steps" type="integer" use="required" />
+		<!--temperatureControl => Function controlling temperature time history-->
+		<xsd:attribute name="temperatureControl" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2852,6 +2892,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="ProppantPorosity" type="ProppantPorosityType" />
 			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="ProppantSolidProppantPermeability" type="ProppantSolidProppantPermeabilityType" />
+			<xsd:element name="ReactiveBrine" type="ReactiveBrineType" />
+			<xsd:element name="ReactiveBrineThermal" type="ReactiveBrineThermalType" />
 			<xsd:element name="SinglePhaseConstantThermalConductivity" type="SinglePhaseConstantThermalConductivityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
 			<xsd:element name="SolidInternalEnergy" type="SolidInternalEnergyType" />
@@ -3730,6 +3772,30 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ReactiveBrineType">
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
+		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
+		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ReactiveBrineThermalType">
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
+		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
+		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
