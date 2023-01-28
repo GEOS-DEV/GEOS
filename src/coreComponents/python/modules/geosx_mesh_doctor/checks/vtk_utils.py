@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import os.path
 import logging
 import sys
@@ -15,7 +16,14 @@ from vtkmodules.vtkIOLegacy import (
 )
 from vtkmodules.vtkIOXML import (
     vtkXMLUnstructuredGridReader,
+    vtkXMLUnstructuredGridWriter,
 )
+
+@dataclass(frozen=True)
+class VtkOutput:
+    output: str
+    is_data_mode_binary: bool
+
 
 def to_vtk_id_list(data):
     result = vtkIdList()
@@ -91,19 +99,41 @@ def read_mesh(vtk_input_file: str) -> vtkUnstructuredGrid:
     sys.exit(1)
 
 
-def write_mesh(mesh: vtkUnstructuredGrid, output: str) -> int:
+def __write_vtk(mesh: vtkUnstructuredGrid, output: str) -> int:
+    logging.info(f"Writing mesh into file \"{output}\" using legacy format.")
+    writer = vtkUnstructuredGridWriter()
+    writer.SetFileName(output)
+    writer.SetInputData(mesh)
+    return writer.Write()
+
+
+def __write_vtu(mesh: vtkUnstructuredGrid, output: str, is_data_mode_binary: bool) -> int:
+    logging.info(f"Writing mesh into file \"{output}\" using XML format.")
+    writer = vtkXMLUnstructuredGridWriter()
+    writer.SetFileName(output)
+    writer.SetInputData(mesh)
+    writer.SetDataModeToBinary() if is_data_mode_binary else writer.SetDataModeToAscii()
+    return writer.Write()
+
+
+def write_mesh(mesh: vtkUnstructuredGrid, vtk_output: VtkOutput) -> int:
     """
     Writes the mesh to disk.
     Nothing will be done if the file already exists.
     :param mesh:
-    :param output:
+    :param vtk_output:
     :return: None
     """
-    if os.path.exists(output):
-        logging.error(f"File \"{output}\" already exists, nothing done.")
+    if os.path.exists(vtk_output.output):
+        logging.error(f"File \"{vtk_output.output}\" already exists, nothing done.")
         return 1
-    writer = vtkUnstructuredGridWriter()
-    writer.SetFileName(output)
-    writer.SetInputData(mesh)
-    logging.info(f"Writing mesh into file \"{output}\"")
-    return 0 if writer.Write() else 2  # the Write member function return 1 in case of success, 0 otherwise.
+    file_extension = os.path.splitext(vtk_output.output)[-1]
+    if file_extension == ".vtk":
+        success_code = __write_vtk(mesh, vtk_output.output)
+    elif file_extension == ".vtu":
+        success_code = __write_vtu(mesh, vtk_output.output, vtk_output.is_data_mode_binary)
+    else:
+        # No writer found did work. Dying.
+        logging.critical(f"Could not find the appropriate VTK writer for extension \"{file_extension}\". Dying...")
+        sys.exit(1)
+    return 0 if success_code else 2  # the Write member function return 1 in case of success, 0 otherwise.

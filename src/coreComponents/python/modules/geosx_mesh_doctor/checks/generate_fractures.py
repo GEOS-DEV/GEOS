@@ -34,6 +34,7 @@ import networkx
 from . import vtk_utils
 from .vtk_utils import (
    vtk_iter,
+   VtkOutput,
 )
 
 
@@ -43,7 +44,7 @@ class Options:
     field: str
     field_values: FrozenSet[int]
     split_on_domain_boundary: bool
-    output: str
+    vtk_output: VtkOutput
 
 
 @dataclass(frozen=True)
@@ -473,8 +474,7 @@ def __split_mesh_on_fracture(mesh, options: Options) -> vtkUnstructuredGrid:
 
 def __check(mesh, options: Options) -> Result:
     output_mesh = __split_mesh_on_fracture(mesh, options)
-    if options.output:
-        vtk_utils.write_mesh(output_mesh, options.output)
+    vtk_utils.write_mesh(output_mesh, options.vtk_output)
     # TODO provide statistics about what was actually performed (size of the fracture, number of split nodes...).
     return Result(info="OK")
 

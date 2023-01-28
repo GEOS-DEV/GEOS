@@ -9,12 +9,13 @@ from vtkmodules.vtkCommonCore import (
 from . import vtk_utils
 from .vtk_utils import (
     to_vtk_id_list,
+    VtkOutput,
 )
 
 
 @dataclass(frozen=True)
 class Options:
-    output: str
+    vtk_output: VtkOutput
     cell_type_to_ordering: Dict[int, List[int]]
 
 
@@ -45,8 +46,8 @@ def __check(mesh, options: Options):
             cells.ReplaceCellAtId(cell_idx, new_support_point_ids)
         else:
             unchanged_cell_types.insert(cell_type)
-    is_written_error = vtk_utils.write_mesh(output_mesh, options.output)
-    return Result(output=options.output if not is_written_error else "",
+    is_written_error = vtk_utils.write_mesh(output_mesh, options.vtk_output)
+    return Result(output=options.vtk_output.output if not is_written_error else "",
                   unchanged_cell_types=set(unchanged_cell_types))
 
 

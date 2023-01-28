@@ -1,3 +1,4 @@
+import os.path
 import logging
 import textwrap
 from typing import Dict
@@ -14,9 +15,8 @@ from vtkmodules.vtkCommonDataModel import (
 
 from checks.fix_elements_orderings import Options, Result
 
-from . import cli_parsing, FIX_ELEMENTS_ORDERINGS
+from . import cli_parsing, vtk_output_parsing, FIX_ELEMENTS_ORDERINGS
 
-__OUTPUT_FILE = "output"
 
 __CELL_TYPE_MAPPING = {  # TODO deduplicate w.r.t. supported_elements
     "Hexahedron": VTK_HEXAHEDRON,
@@ -29,15 +29,17 @@ __CELL_TYPE_MAPPING = {  # TODO deduplicate w.r.t. supported_elements
 }
 
 __ALL_KEYWORDS = {
-    __OUTPUT_FILE, *__CELL_TYPE_MAPPING.keys()
+    *vtk_output_parsing.get_vtk_output_keywords(),
+    *__CELL_TYPE_MAPPING.keys()
 }
 
 
 def get_help():
     msg = f"""\
     Reorders the support nodes for the given cell types.
+    
     Supported cell types are '{", ".join(__CELL_TYPE_MAPPING.keys())}'.
-        {__OUTPUT_FILE} [string]: The vtk output destination.
+    {vtk_output_parsing.get_vtk_output_help()}
     """
     return textwrap.dedent(msg)
 
@@ -66,7 +68,8 @@ def parse_cli_options(options_str: str) -> Options:
             tmp = tuple(map(int, raw_mapping.split(",")))
             assert set(tmp) == set(range(cell_type_support_size[vtk_key]))
             cell_type_to_ordering[vtk_key] = tmp
-    return Options(output=options[__OUTPUT_FILE],
+    vtk_output = vtk_output_parsing.parse_cli_options(options)
+    return Options(vtk_output=vtk_output,
                    cell_type_to_ordering=cell_type_to_ordering)
 
 

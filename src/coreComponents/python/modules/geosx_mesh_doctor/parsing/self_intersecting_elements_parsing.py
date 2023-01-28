@@ -15,7 +15,8 @@ __TOLERANCE_DEFAULT = numpy.finfo(float).eps
 def get_help():
     msg = f"""\
     Checks if the faces of the elements are self intersecting.
-        {__TOLERANCE} [float]: The tolerance in the computation. Defaults to machine precision {__TOLERANCE_DEFAULT}.
+    
+    {__TOLERANCE} [float]: The tolerance in the computation. Defaults to machine precision {__TOLERANCE_DEFAULT}.
     """
     return textwrap.dedent(msg)
 

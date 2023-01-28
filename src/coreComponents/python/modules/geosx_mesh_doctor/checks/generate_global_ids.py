@@ -5,11 +5,14 @@ from vtkmodules.vtkCommonCore import (
     vtkIdTypeArray, )
 
 from . import vtk_utils
+from .vtk_utils import (
+    VtkOutput,
+)
 
 
 @dataclass(frozen=True)
 class Options:
-    output: str
+    vtk_output: VtkOutput
 
 
 @dataclass(frozen=True)
@@ -48,8 +51,8 @@ def __build_global_ids(mesh) -> None:
 
 def __check(mesh, options: Options) -> Result:
     __build_global_ids(mesh)
-    vtk_utils.write_mesh(mesh, options.output)
-    return Result(info=f"Mesh was written to {options.output}")
+    vtk_utils.write_mesh(mesh, options.vtk_output)
+    return Result(info=f"Mesh was written to {options.vtk_output.output}")
 
 
 def check(vtk_input_file: str, options: Options) -> Result:
@@ -58,4 +61,4 @@ def check(vtk_input_file: str, options: Options) -> Result:
         return __check(mesh, options)
     except BaseException as e:
         logging.error(e)
-        return Result(info="Something went wrong")
+        return Result(info="Something went wrong.")

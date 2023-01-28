@@ -11,7 +11,8 @@ __TOLERANCE = "tolerance"
 def get_help():
     msg = f"""\
     Checks if nodes are collocated.
-        {__TOLERANCE} [float]: The absolute distance between two nodes for them to be considered collocated.
+    
+    {__TOLERANCE} [float]: The absolute distance between two nodes for them to be considered collocated.
     """
     return textwrap.dedent(msg)
 

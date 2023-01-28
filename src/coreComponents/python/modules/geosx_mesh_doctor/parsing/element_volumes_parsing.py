@@ -13,7 +13,8 @@ __MIN_VOLUME_DEFAULT = 0.
 def get_help():
     msg = f"""\
     Checks if the volumes of the elements are greater than {__MIN_VOLUME}.
-        {__MIN_VOLUME} [float]: The minimum acceptable volume. Defaults to {__MIN_VOLUME_DEFAULT}.
+    
+    {__MIN_VOLUME} [float]: The minimum acceptable volume. Defaults to {__MIN_VOLUME_DEFAULT}.
     """
     return textwrap.dedent(msg)
 
