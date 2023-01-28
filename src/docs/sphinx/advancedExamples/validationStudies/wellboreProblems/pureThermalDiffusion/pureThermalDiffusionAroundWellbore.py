@@ -1,7 +1,6 @@
 import os
 import sys
 
-import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -122,7 +121,8 @@ def main():
 		plt.title('t = '+str(diffusionTime)+'(s)')
 		plt.tight_layout()
 
-	plt.show()
+	plt.savefig('diffusion.png')
+	os.system('xdg-open diffusion.png')
 
 if __name__ == "__main__":
 	main()
