@@ -11,7 +11,7 @@ Problem description
 
 This example uses the thermal flow solver to model a pure thermal diffusion problem around a wellbore. To mimic this specific problem, thermal convection and fluid flow are removed by setting fluid pressure and fluid heat capacity to zero. 
 
-Analytical results of the temperature profile along the radial directionis `(Wang and Papamichos, 1994) <https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94WR01774>`__ :
+Analytical results of the temperature profile along the radial direction is given by `(Wang and Papamichos, 1994) <https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94WR01774>`__ :
 
 .. math::
    T(r) = T_{in}\sqrt{\frac{R_{in}}{r}}erfc(\frac{r-R_{in}}{2\sqrt{c_{T}t}})
