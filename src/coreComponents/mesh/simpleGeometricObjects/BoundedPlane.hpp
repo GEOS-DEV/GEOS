@@ -51,7 +51,7 @@ public:
    * @param parent pointer to the parent group in the data hierarchy.
    */
   BoundedPlane( const real64 oldX, const real64 oldY, const real64 newX,
-                const real64 newY, const string & name, Group * const parent );                        
+                const real64 newY, const string & name, Group * const parent );
 
   /**
    * @brief Default destructor.

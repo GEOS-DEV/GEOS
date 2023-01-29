@@ -258,17 +258,17 @@ void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
                                                  MeshLevel const & patch )
 {
   //reference point must be prescribed in base coordinate system (usually injection source)
-  R1Tensor m_referencePoint = {-1.0,0.0,0.0}; //add this as input file parameter
+  R1Tensor m_referencePoint = {-1.0, 0.0, 0.0}; //add this as input file parameter
   real64 threshold = 0.95;
   //get mpi communicator
   MPI_Comm const & comm = MPI_COMM_GEOSX;
   ElementRegionManager const & patchElemManager = patch.getElemManager();
-   //this is risky, not sure FE_TYPE will come from patch
+  //this is risky, not sure FE_TYPE will come from patch
   //each rank has these arrays
   real64 rankMaxDist = 1e-20;
   R1Tensor rankFarthestCenter = {0.0, 0.0, 0.0};
   //loop over all elements in patch and compute elemental average damage
-  //observe that patch coordinates are relative, so, reference point should be added 
+  //observe that patch coordinates are relative, so, reference point should be added
   //for elements in patch //nice loop to parallelize
   patchElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
@@ -278,11 +278,11 @@ void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
       numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-    });
+    } );
     string const & damageModelName = cellElementSubRegion.getReference< string >( PhaseFieldDamageFEM::viewKeyStruct::solidModelNamesString());
     //this call may need to constitutive pass-thru loop to be generalized to multiple damage types
-    const constitutive::Damage<ElasticIsotropic> & damageUpdates = cellElementSubRegion.getConstitutiveModel< Damage<ElasticIsotropic> >( damageModelName );
-    arrayView2d< const real64 > allElemCenters = cellElementSubRegion.getElementCenter(); 
+    const constitutive::Damage< ElasticIsotropic > & damageUpdates = cellElementSubRegion.getConstitutiveModel< Damage< ElasticIsotropic > >( damageModelName );
+    arrayView2d< const real64 > allElemCenters = cellElementSubRegion.getElementCenter();
     const arrayView2d< real64 const > qp_damage = damageUpdates.getDamage();
     forAll< serialPolicy >( cellElementSubRegion.size(), [&] ( localIndex const k )
     {
@@ -292,33 +292,33 @@ void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
       elemCenter[0] = allElemCenters[k][0];
       elemCenter[1] = allElemCenters[k][1];
       elemCenter[2] = allElemCenters[k][2]; //this is trying to create a R1Tensor from a array2d< real64 >
-      for(localIndex q=0; q<numQuadraturePointsPerElem; q++)
+      for( localIndex q=0; q<numQuadraturePointsPerElem; q++ )
       {
         //get damage at quadrature point i
-        average_d = average_d + qp_damage( k,q )/numQuadraturePointsPerElem;
+        average_d = average_d + qp_damage( k, q )/numQuadraturePointsPerElem;
       }
       //if elemental damage > 0.95 (or another threshold)
-      if (average_d > threshold)
+      if( average_d > threshold )
       {
         //check if this element is farther than current farthest
         R1Tensor elemVec = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_referencePoint );
         LvArray::tensorOps::subtract< 3 >( elemVec, elemCenter );
-        real64 dist = LvArray::tensorOps::l2Norm< 3 >( elemVec );      
-        if (dist > rankMaxDist)
+        real64 dist = LvArray::tensorOps::l2Norm< 3 >( elemVec );
+        if( dist > rankMaxDist )
         {
           rankMaxDist = dist;
           rankFarthestCenter = elemCenter;
         }
       }
-    });
-  });
+    } );
+  } );
 
-  real64 globalMax = MpiWrapper::max<real64>( rankMaxDist,comm );
-  if (std::abs(rankMaxDist-globalMax)<1e-12)
+  real64 globalMax = MpiWrapper::max< real64 >( rankMaxDist, comm );
+  if( std::abs( rankMaxDist-globalMax )<1e-12 )
   {
     tip = rankFarthestCenter;
   }
-  
+
 }
 
 //Andre - 03/15 - this function needs to access u_base (hopefully via node manager), the patch mesh (via node manager too),
@@ -388,14 +388,14 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
   GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
-  
+
   SolidMechanicsEmbeddedFractures &
   baseSolver = this->getParent().getGroup< SolidMechanicsEmbeddedFractures >( m_baseSolverName );
 
   PhaseFieldFractureSolver &
   patchSolver = this->getParent().getGroup< PhaseFieldFractureSolver >( m_patchSolverName );
 
-  EmbeddedSurfaceGenerator & 
+  EmbeddedSurfaceGenerator &
   efemGenerator = this->getParent().getGroup< EmbeddedSurfaceGenerator >( "SurfaceGenerator" ); //this is hard coded
 
   PhaseFieldDamageFEM &
@@ -499,7 +499,7 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
 
     //finally, pass the shared boundary information to the patch solver
     //patchSolver.
-   
+
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", PatchSolver: " );
 
     //probably, a nonlinearImplicitStep is not the right one for the Phase Field solver, maybe we should call its solverStep which calls
@@ -508,28 +508,28 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
                                                 dtReturn,
                                                 cycleNumber,
                                                 domain );
-    this->findPhaseFieldTip(m_patchTip, domain.getMeshBody( patchTarget.first ).getBaseDiscretization());      
+    this->findPhaseFieldTip( m_patchTip, domain.getMeshBody( patchTarget.first ).getBaseDiscretization());
 
     //is there a way for the code to know which is the subRegion on the base mesh that contains m_baseTipElementIndex?
-    if(time_n > 0)
+    if( time_n > 0 )
     {
-      efemGenerator.propagationStep(domain, m_baseTip, m_patchTip, m_baseTipElementIndex); 
+      efemGenerator.propagationStep( domain, m_baseTip, m_patchTip, m_baseTipElementIndex );
       baseSolver.setupSystem( domain,
                               baseSolver.getDofManager(),
                               baseSolver.getLocalMatrix(),
                               baseSolver.getSystemRhs(),
                               baseSolver.getSystemSolution(),
-                              true );    
-      baseSolver.implicitStepSetup( time_n, dt, domain );                                                          
+                              true );
+      baseSolver.implicitStepSetup( time_n, dt, domain );
     }
-    GEOSX_LOG_LEVEL_RANK_0(2, "baseTipElement: "<<m_baseTipElementIndex);
-    GEOSX_LOG_LEVEL_RANK_0(2, "PFtipX: "<<m_patchTip[0]);
-    GEOSX_LOG_LEVEL_RANK_0(2, "PFtipY: "<<m_patchTip[1]);   
-    GEOSX_LOG_LEVEL_RANK_0(2, "PFtipZ: "<<m_patchTip[2]);
-    GEOSX_LOG_LEVEL_RANK_0(2, "EFtipX: "<<m_baseTip[0]); 
-    GEOSX_LOG_LEVEL_RANK_0(2, "EFtipY: "<<m_baseTip[1]); 
-    GEOSX_LOG_LEVEL_RANK_0(2, "EFtipZ: "<<m_baseTip[2]);   
-    
+    GEOSX_LOG_LEVEL_RANK_0( 2, "baseTipElement: "<<m_baseTipElementIndex );
+    GEOSX_LOG_LEVEL_RANK_0( 2, "PFtipX: "<<m_patchTip[0] );
+    GEOSX_LOG_LEVEL_RANK_0( 2, "PFtipY: "<<m_patchTip[1] );
+    GEOSX_LOG_LEVEL_RANK_0( 2, "PFtipZ: "<<m_patchTip[2] );
+    GEOSX_LOG_LEVEL_RANK_0( 2, "EFtipX: "<<m_baseTip[0] );
+    GEOSX_LOG_LEVEL_RANK_0( 2, "EFtipY: "<<m_baseTip[1] );
+    GEOSX_LOG_LEVEL_RANK_0( 2, "EFtipZ: "<<m_baseTip[2] );
+
     if( dtReturnTemporary < dtReturn )
     {
       iter = 0;

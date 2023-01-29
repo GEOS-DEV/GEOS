@@ -62,8 +62,8 @@ BoundedPlane::BoundedPlane( const string & name, Group * const parent ):
 }
 
 //constructor given two points, used for 2.5D problems
-BoundedPlane::BoundedPlane( const real64 oldX, const real64 oldY, 
-                            const real64 newX, const real64 newY, 
+BoundedPlane::BoundedPlane( const real64 oldX, const real64 oldY,
+                            const real64 newX, const real64 newY,
                             const string & name, Group * const parent ):
   SimpleGeometricObjectBase( name, parent ),
   m_origin{ 0.0, 0.0, 0.0 },
@@ -76,8 +76,8 @@ BoundedPlane::BoundedPlane( const real64 oldX, const real64 oldY,
   m_normal = { -(newY-oldY), newX-oldX, 0.0 };
   m_lengthVector = { newX-oldX, newY-oldY, 0.0 };
   m_widthVector = { 0.0, 0.0, 1.0 };
-  real64 norm = std::sqrt(pow(newX-oldX,2)+pow(newY-oldY,2));
-  m_dimensions.resize(2);
+  real64 norm = std::sqrt( pow( newX-oldX, 2 )+pow( newY-oldY, 2 ));
+  m_dimensions.resize( 2 );
   m_dimensions[0] = norm+1e-4;
   m_dimensions[1] = 5;
   m_tolerance = 1e-5;

@@ -270,10 +270,10 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 {}
 
-void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain, 
-                                                R1Tensor & currentTip,             
+void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
+                                                R1Tensor & currentTip,
                                                 R1Tensor & targetTip,
-                                                localIndex & tipElementIndex)
+                                                localIndex & tipElementIndex )
 {
   GEOSX_MARK_FUNCTION;
   // std::cout<<"propagation step"<<std::endl;
@@ -284,10 +284,10 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
   localIndex er = 0; //should be the element region number
   localIndex esr = 0; //should be the element subregion number
   // Get geometric object manager
-  GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();  
-  // create BoundedPlane from currentTip to newTip 
-  std::unique_ptr<BoundedPlane> newFracturePlane = std::make_unique<BoundedPlane>( currentTip[0], currentTip[1], targetTip[0],
-                                                                                    targetTip[1], "newFracturePlane", &geometricObjManager );
+  GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();
+  // create BoundedPlane from currentTip to newTip
+  std::unique_ptr< BoundedPlane > newFracturePlane = std::make_unique< BoundedPlane >( currentTip[0], currentTip[1], targetTip[0],
+                                                                                       targetTip[1], "newFracturePlane", &geometricObjManager );
   // BoundedPlane * newFracturePlane = new BoundedPlane( currentTip[0], currentTip[1], targetTip[0],
   //                                                     targetTip[1], "newFracturePlane", &geometricObjManager );
   // Get meshLevel
@@ -310,13 +310,13 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
   // Initialize variables
   globalIndex nodeIndex;
   integer isPositive, isNegative;
-  real64 distVec[ 3 ];    
+  real64 distVec[ 3 ];
 
   //COPYING FROM EXISTING FUNCTION - NEEDS CLEANING
 
   // Get sub-region geometric properties
   ElementRegionBase & elementRegion = elemManager.getRegion( er );
-  CellElementSubRegion & subRegion = elementRegion.getSubRegion<CellElementSubRegion>( esr );
+  CellElementSubRegion & subRegion = elementRegion.getSubRegion< CellElementSubRegion >( esr );
   arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes = subRegion.nodeList();
   FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
   arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
@@ -327,7 +327,7 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
   array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosOld = embSurfNodeManager.referencePosition();
   bool added = false;
 
-  if( ghostRank[tipElementIndex] < 0 ) 
+  if( ghostRank[tipElementIndex] < 0 )
   {
     //this tests if the element tipElementIndex is cut by the plane connecting currentTip to targetTip
     isPositive = 0;
@@ -398,10 +398,10 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
   localIndex embSurfNodeNumberUpdated = embSurfNodeManager.size();
   array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosUpdated = embSurfNodeManager.referencePosition();
 
-  if(added)
+  if( added )
   {
     bool isNew;
-    //array1d< localIndex > elemNodes( embSurfNodeNumberUpdated );      
+    //array1d< localIndex > elemNodes( embSurfNodeNumberUpdated );
     for( localIndex ni = 0; ni < embSurfNodeNumberUpdated; ni++ )
     {
       //test if node is new
@@ -423,14 +423,14 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
         currentTip[0] = embSurfNodesPosUpdated[ ni ][0];
         currentTip[1] = embSurfNodesPosUpdated[ ni ][1];
         //add parent edge index to array
-        newEdges.resize(newEdges.size()+1);
+        newEdges.resize( newEdges.size()+1 );
         newEdges[newEdges.size()-1] = parentEdgeGlobalIndex[ni];
         newObjects.newNodes.insert( ni );
-      }    
+      }
     }
   }
 
-  if(added)
+  if( added )
   {
     //given the two edges that were just cut, we find the only face that was cut
     //this face is connected with two elements, one that was cut, and one that is intact
@@ -439,20 +439,22 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
     auto edgeToFaceList = edgeManager.faceList();
     auto faceToElementList = faceManager.elementList();
     localIndex cutFace;
-    for(auto && face:edgeToFaceList[newEdges[0]]) //newEdge is globalIndexed, we probably need a way to get the localIndex of newEdges[0] and newEdges[1]
+    for( auto && face:edgeToFaceList[newEdges[0]] ) //newEdge is globalIndexed, we probably need a way to get the localIndex of newEdges[0]
+                                                    // and newEdges[1]
     {
-      if(edgeToFaceList.contains(newEdges[1],face)) //there is a contains() function in ArrayOfSets, does it work here?
+      if( edgeToFaceList.contains( newEdges[1], face )) //there is a contains() function in ArrayOfSets, does it work here?
       {
         cutFace = face; //only one face is connected to both edges
       }
     }
-    for(auto && element:faceToElementList[cutFace]) //does this iterator exist? //what if the elements that share this face are in different subRegions
+    for( auto && element:faceToElementList[cutFace] ) //does this iterator exist? //what if the elements that share this face are in
+                                                      // different subRegions
     {
-      if(!(element == tipElementIndex)) //can element be compared to a localIndex?
+      if( !(element == tipElementIndex)) //can element be compared to a localIndex?
       {
         std::cout<<"modifying tip element, new tip element: "<<element<<std::endl;
         tipElementIndex = element;
-        break; 
+        break;
       }
     }
   }
@@ -466,10 +468,10 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
   setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
   embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
-                                                                domain.getNeighbors(),
-                                                                newObjects,
-                                                                m_mpiCommOrder,
-                                                                this->m_fractureRegionName );
+                                                               domain.getNeighbors(),
+                                                               newObjects,
+                                                               m_mpiCommOrder,
+                                                               this->m_fractureRegionName );
 
   addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
 
@@ -490,13 +492,13 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
   embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
   embSurfNodeManager.compressRelationMaps();
   /*
-  * This should be the method that generates new fracture elements based on the propagation criterion of choice.
-  */
+   * This should be the method that generates new fracture elements based on the propagation criterion of choice.
+   */
   // Add the embedded elements to the fracture stencil.
   //delete newFracturePlane;
   //addToFractureStencil( domain );
 }
-                                               
+
 
 real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
