@@ -1,0 +1,74 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <RelpermDriver
+      name="testCO2"
+      relperm="relperm"
+      steps="100" 
+      output="out_alt.txt"
+      logLevel="1" />  
+  </Tasks>
+
+  <Events
+    maxTime="1">
+    <SoloEvent name="eventC" target="/Tasks/testCO2"/>
+  </Events>
+
+  <Constitutive>
+
+    <TableRelativePermeabilityHysteresis
+      name="relperm"
+      phaseNames="{ water, gas }"
+      drainageWettingNonWettingRelPermTableNames="{ drainageWaterRelativePermeabilityTable,
+                                                    drainageGasRelativePermeabilityTable }"
+      imbibitionNonWettingRelPermTableName="imbibitionGasRelativePermeabilityTable"      
+      imbibitionWettingRelPermTableName="imbibitionWaterRelativePermeabilityTable"/>
+
+
+  </Constitutive>
+
+
+  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cellBlock01 }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+            name="dummy"
+            cellBlocks="{ cellBlock01 }"
+            materialList="{ dummy }"/>
+  </ElementRegions>
+
+  <Functions>
+    <TableFunction
+      name="drainageWaterRelativePermeabilityTable"
+      coordinateFiles="{ drainagePhaseVolFraction_water.txt }"
+      voxelFile="drainageRelPerm_water.txt"/>
+    <TableFunction
+      name="drainageGasRelativePermeabilityTable"
+      coordinateFiles="{ drainagePhaseVolFraction_gas.txt }"
+      voxelFile="drainageRelPerm_gas.txt"/>
+    <TableFunction
+      name="imbibitionWaterRelativePermeabilityTable"
+      coordinateFiles="{ imbibitionPhaseVolFraction_water.txt }"
+      voxelFile="imbibitionRelPerm_water.txt"/>
+    <TableFunction
+      name="imbibitionGasRelativePermeabilityTable"
+      coordinateFiles="{ imbibitionPhaseVolFraction_gas.txt }"
+      voxelFile="imbibitionRelPerm_gas.txt"/>
+  </Functions>
+
+
+
+</Problem>

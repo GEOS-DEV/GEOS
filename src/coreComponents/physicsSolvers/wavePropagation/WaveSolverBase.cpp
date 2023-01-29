@@ -87,11 +87,26 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Set to 1 to save fields during forward and restore them during backward" );
 
-
   registerWrapper( viewKeyStruct::shotIndexString(), &m_shotIndex ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Set the current shot for temporary files" );
+
+  registerWrapper( viewKeyStruct::lifoSizeString(), &m_lifoSize ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Set the capacity of the lifo storage" );
+
+  registerWrapper( viewKeyStruct::lifoOnDeviceString(), &m_lifoOnDevice ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Set the capacity of the lifo device storage" );
+
+  registerWrapper( viewKeyStruct::lifoOnHostString(), &m_lifoOnHost ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Set the capacity of the lifo host storage" );
+
 
   registerWrapper( viewKeyStruct::usePMLString(), &m_usePML ).
     setInputFlag( InputFlags::FALSE ).
@@ -192,43 +207,6 @@ void WaveSolverBase::initializeDAS()
     receiverCoordinates[ircv][2] = receiverCoordinates[ircv][2]
                                    - sin( linearDASGeometry[ircv][0] ) * linearDASGeometry[ircv][2] / 2.0;
   }
-}
-
-
-real32 WaveSolverBase::evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
-{
-  real32 const o_tpeak = 1.0/f0;
-  real32 pulse = 0.0;
-  if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
-  {
-    return pulse;
-  }
-
-  constexpr real32 pi = M_PI;
-  real32 const lam = (f0*pi)*(f0*pi);
-
-  switch( order )
-  {
-    case 2:
-    {
-      pulse = 2.0*lam*(2.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-    }
-    break;
-    case 1:
-    {
-      pulse = -2.0*lam*(time_n-o_tpeak)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-    }
-    break;
-    case 0:
-    {
-      pulse = -(time_n-o_tpeak)*exp( -2*lam*(time_n-o_tpeak)*(time_n-o_tpeak) );
-    }
-    break;
-    default:
-      GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
-  }
-
-  return pulse;
 }
 
 real64 WaveSolverBase::solverStep( real64 const & time_n,
