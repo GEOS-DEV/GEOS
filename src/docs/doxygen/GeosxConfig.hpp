@@ -144,7 +144,7 @@
 /* #undef Python3_VERSION */
 
 /// Version information for CUDAToolkit
-#define CUDAToolkit_VERSION 11.0.221
+/* #undef CUDAToolkit_VERSION */
 
 
 #endif  /* GEOSX_CONFIG_HPP */

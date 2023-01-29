@@ -399,10 +399,13 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
   efemGenerator = this->getParent().getGroup< EmbeddedSurfaceGenerator >( "SurfaceGenerator" ); //this is hard coded
 
   PhaseFieldDamageFEM &
-  patchDamageSolver = patchSolver.getParent().getGroup< PhaseFieldDamageFEM >( patchSolver.getDamageSolverName() );
+  //patchDamageSolver = patchSolver.getParent().getGroup< PhaseFieldDamageFEM >( patchSolver.getDamageSolverName() );
+  patchDamageSolver = *patchSolver.damageSolver();
 
   SolidMechanicsLagrangianFEM &
-  patchSolidSolver = patchSolver.getParent().getGroup< SolidMechanicsLagrangianFEM >( patchSolver.getSolidSolverName() );
+  //patchSolidSolver = patchSolver.getParent().getGroup< SolidMechanicsLagrangianFEM >( patchSolver.getSolidSolverName() );
+  patchSolidSolver = *patchSolver.solidMechanicsSolver();
+
 
   baseSolver.setupSystem( domain,
                           baseSolver.getDofManager(),
@@ -411,17 +414,17 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
                           baseSolver.getSystemSolution(),
                           true );
 
-  patchSolver.setupSystem( domain,
-                           patchSolver.getDofManager(),
-                           patchSolver.getLocalMatrix(),
-                           patchSolver.getSystemRhs(),
-                           patchSolver.getSystemSolution(),
-                           true );
+  // patchSolver.setupSystem( domain,
+  //                          patchSolver.getDofManager(),
+  //                          patchSolver.getLocalMatrix(),
+  //                          patchSolver.getSystemRhs(),
+  //                          patchSolver.getSystemSolution(),
+  //                          true );
   //Do we need to modify anything here??
 
   baseSolver.implicitStepSetup( time_n, dt, domain );
 
-  patchSolver.implicitStepSetup( time_n, dt, domain );
+  // patchSolver.implicitStepSetup( time_n, dt, domain );
 
   this->implicitStepSetup( time_n, dt, domain );
 
