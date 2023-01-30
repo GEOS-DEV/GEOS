@@ -682,7 +682,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   }
 
   arrayView1d< localIndex > const globalInfo = cellBlockManager.getCellBlock( m_regionNames[0]).getGlobalInformation();
-  for( int i = 0; i < m_dim * 3 ; ++i )
+  for( int i = 0; i < m_dim ; ++i )
   {
     globalInfo[i]=firstElemIndexInPartition[i];
     globalInfo[i+3]=lastElemIndexInPartition[i];

@@ -256,10 +256,12 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
 void NodeManager::fixUpDownMaps( bool const clearIfUnmapped )
 {
+  /*
   ObjectManagerBase::fixUpDownMaps( m_toEdgesRelation,
                                     m_toEdgesRelation.relatedObjectGlobalToLocal(),
                                     m_unmappedGlobalIndicesInToEdges,
                                     clearIfUnmapped );
+  */
 
   ObjectManagerBase::fixUpDownMaps( m_toFacesRelation,
                                     m_toFacesRelation.relatedObjectGlobalToLocal(),

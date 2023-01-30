@@ -273,9 +273,11 @@ localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
 void EdgeManager::fixUpDownMaps( bool const clearIfUnmapped )
 {
+  /*
   ObjectManagerBase::fixUpDownMaps( m_toNodesRelation,
                                     m_unmappedGlobalIndicesInToNodes,
                                     clearIfUnmapped );
+  */
 
   ObjectManagerBase::fixUpDownMaps( m_toFacesRelation.base(),
                                     m_toFacesRelation.relatedObjectGlobalToLocal(),
