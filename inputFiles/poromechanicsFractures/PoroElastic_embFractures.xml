@@ -28,8 +28,7 @@
       name="matrixMechSolver"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Domain }"
-      />
+      targetRegions="{ Domain }"/>
 
     <SinglePhaseFVM
       name="flowSolver"
@@ -111,6 +110,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
+      faceBlock="embeddedSurfaceSubRegion"
       subRegionType="embeddedElement"
       materialList="{ water, fractureFilling, fractureContact }"
       defaultAperture="1e-3"/>
@@ -173,7 +173,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-
     <FieldSpecification
       name="fracPorosity"
       initialCondition="1"
@@ -199,7 +198,7 @@
     <FieldSpecification
       name="xnegconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xneg, xpos }"/>
@@ -207,7 +206,7 @@
     <FieldSpecification
       name="yposconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ ypos, yneg }"/>
@@ -215,7 +214,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>
@@ -247,7 +246,7 @@
       name="vtkOutput"
       plotFileRoot="PoroElastic_embedded"
       plotLevel="2"
-      format="ascii"/>
+      format="binary"/>
 
     <Restart
       name="restartOutput"/>

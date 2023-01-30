@@ -172,7 +172,7 @@ Time history function
 
 In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time history information from fields. 
 Either the entire field or specified named sets of indices in the field can be collected. 
-In this example, ``pressureCollection`` and ``displacementCollection`` tasks are specified to output the time history of pore pressure ``fieldName="pressure"`` and displacement field ``fieldName="TotalDisplacement"`` across the computational domain.
+In this example, ``pressureCollection`` and ``displacementCollection`` tasks are specified to output the time history of pore pressure ``fieldName="pressure"`` and displacement field ``fieldName="totalDisplacement"`` across the computational domain.
 
 .. literalinclude:: ../../../../../../../inputFiles/poromechanics/PoroElastic_Mandel_base.xml
     :language: xml
@@ -191,7 +191,7 @@ Initial and boundary conditions
 
 Next, we specify two fields:
 
-  - The initial value (the displacements and pore pressure have to be initialized, corresponding to the undrained response),
+  - The initial value (the displacements, effective stress, and pore pressure have to be initialized, corresponding to the undrained response),
   - The boundary conditions (the vertical displacement applied at the loaded boundary and the constraints of the outer boundaries have to be set).
 
 In this example, the analytical z-displacement is applied at the top surface (``zpos``) of computational domain to enforce the rigid plate condition.

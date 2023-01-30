@@ -21,7 +21,7 @@
 #include "common/GeosxMacros.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/ElementRegionManager.hpp"
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 
@@ -50,14 +50,14 @@ void packNewNodes( NeighborCommunicator * const neighbor,
   localIndex_array newNodesToSend;
 
   arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( neighbor->neighborRank() ).ghostsToSend();
-  arrayView1d< localIndex > const & parentIndex = nodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
+  arrayView1d< localIndex > const & parentIndex = nodeManager.getField< fields::parentEdgeIndex >();
   arrayView1d< integer const > const & nodeGhostRank = nodeManager.ghostRank();
 
   for( auto const ni : newObjects.newNodes )
   {
     if( nodeGhostRank[ni] == neighborRank )
     {
-      // a node is sent if it is a ghost neighborRank
+      // a node is sent if it is a ghost on neighborRank
       newNodesToSend.emplace_back( ni );
     }
     else
@@ -126,7 +126,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
   array1d< array1d< localIndex_array > > newElemsToSendData;
 
   arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( neighbor->neighborRank() ).ghostsToSend();
-  arrayView1d< localIndex > const & parentIndex = nodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
+  arrayView1d< localIndex > const & parentIndex = nodeManager.getField< fields::parentEdgeIndex >();
 
   for( auto const ni : newObjects.newNodes )
   {
