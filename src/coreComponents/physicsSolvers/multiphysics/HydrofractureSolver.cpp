@@ -181,11 +181,16 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
     int globallyFractured = 0;
 
     // recompute the sparsity pattern at every time step
-    setupSystem( domain,
-                 m_dofManager,
-                 m_localMatrix,
-                 m_rhs,
-                 m_solution );
+    if( !systemSetupDone() )
+    {
+      setupSystem( domain,
+                   m_dofManager,
+                   m_localMatrix,
+                   m_rhs,
+                   m_solution );
+        
+      setSystemSetupDoneFlag( true );
+    }
 
     // currently the only method is implicit time integration
     dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
@@ -207,6 +212,9 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
     }
     else
     {
+      
+      setSystemSetupDoneFlag( false );
+
       FieldIdentifiers fieldsToBeSync;
 
       fieldsToBeSync.addElementFields( { flow::pressure::key(),
