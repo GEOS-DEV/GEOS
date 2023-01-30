@@ -82,7 +82,7 @@ public:
    * @brief Imports field data from RESQML data
    * @param[in] domain in the DomainPartition to be written
    */
-  virtual void importFields( DomainPartition & domain ) const override;
+  void importFieldsOnArray( string const & regionName, string const & meshFieldNam, bool isMaterialField, WrapperBase & wrapper ) const override;
 
   /**
    * @brief Free the memory of the temporary objects used to load the file.

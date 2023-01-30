@@ -9,7 +9,6 @@
 #include "common/DataLayouts.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/TypeDispatch.hpp"
-#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
@@ -349,17 +348,12 @@ void RESQMLMeshGenerator::generateMesh( DomainPartition & domain )
   vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, comm );
 }
 
-void RESQMLMeshGenerator::importFields( DomainPartition & domain ) const
+void RESQMLMeshGenerator::importFieldsOnArray( string const & regionName, string const & meshFieldName, bool isMaterialField, WrapperBase & wrapper ) const
 {
-  GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': importing field data from mesh dataset", catalogName(), getName() ) );
+  // GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': importing field data from mesh dataset", catalogName(), getName() ) );
   GEOSX_ASSERT_MSG( m_vtkMesh, "Must call generateMesh() before importFields()" );
 
-  // TODO Having CellElementSubRegion and ConstitutiveBase... here in a pure geometric module is problematic.
-  ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getBaseDiscretization().getElemManager();
-
-  std::vector< vtkDataArray * > const srcArrays = vtk::findArraysForImport( *m_vtkMesh, m_fieldNamesInGEOSX );
-
-  FieldIdentifiers fieldsToBeSync;
+  vtkDataArray * vtkArray = vtk::findArrayForImport( *m_vtkMesh, meshFieldName );
 
   for( auto const & typeRegions : m_cellMap )
   {
@@ -368,22 +362,22 @@ void RESQMLMeshGenerator::importFields( DomainPartition & domain ) const
     {
       for( auto const & regionCells: typeRegions.second )
       {
-        importFieldOnCellElementSubRegion( getLogLevel(),
-                                           regionCells.first,
-                                           typeRegions.first,
-                                           regionCells.second,
-                                           elemManager,
-                                           m_fieldNamesInGEOSX,
-                                           srcArrays,
-                                           fieldsToBeSync );
+        string const cellBlockName = vtk::buildCellBlockName( typeRegions.first, regionCells.first );
+        // We don't know how the user mapped cell blocks to regions, so we must check all of them
+        if( regionName != cellBlockName )
+          continue;
+
+        if( isMaterialField )
+        {
+          vtk::importMaterialField( regionCells.second, vtkArray, wrapper );
+        }
+        else
+        {
+          vtk::importRegularField( regionCells.second, vtkArray, wrapper );
+        }
       }
     }
   }
-
-  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                       domain.getMeshBody( this->getName() ).getBaseDiscretization(),
-                                                       domain.getNeighbors(),
-                                                       false );
 }
 
 void RESQMLMeshGenerator::freeResources()
