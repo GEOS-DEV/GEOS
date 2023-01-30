@@ -68,7 +68,7 @@ public:
    * @brief Deserializes the RESQML epc file into a Data Repository.
    * This repository is then used to populate the vtk data structures.
    */
-  virtual void postProcessInput() override;
+  void postProcessInput() override;
 
   /**
    * @brief Generate the mesh using fesapi library for reading RESQML data
@@ -76,18 +76,15 @@ public:
    * @details This method leverages the fesapi library to load meshes into
    * vtk data structures.
    */
-  virtual void generateMesh( DomainPartition & domain ) override;
+  void generateMesh( DomainPartition & domain ) override;
 
-  /**
-   * @brief Imports field data from RESQML data
-   * @param[in] domain in the DomainPartition to be written
-   */
+  /// @copydoc MeshGeneratorBase::importFieldsOnArray
   void importFieldsOnArray( string const & regionName, string const & meshFieldNam, bool isMaterialField, WrapperBase & wrapper ) const override;
 
   /**
    * @brief Free the memory of the temporary objects used to load the file.
    */
-  virtual void freeResources() override;
+  void freeResources() override;
 
   /**
    * @brief Get the Parent Representation object
