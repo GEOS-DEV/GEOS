@@ -84,7 +84,7 @@ public:
 
     // Level 0
     m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::amgVCycle;
-    m_levelFRelaxType[0]       = MGRFRelaxationType::jacobi;
+    m_levelFRelaxType[0]       = MGRFRelaxationType::amgVCycle;
     m_levelInterpType[0]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::nonGalerkin;
