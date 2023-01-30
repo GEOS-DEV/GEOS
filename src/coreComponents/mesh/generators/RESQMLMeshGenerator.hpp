@@ -79,7 +79,7 @@ public:
   void generateMesh( DomainPartition & domain ) override;
 
   /// @copydoc MeshGeneratorBase::importFieldsOnArray
-  void importFieldsOnArray( string const & regionName, string const & meshFieldNam, bool isMaterialField, WrapperBase & wrapper ) const override;
+  void importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, WrapperBase & wrapper ) const override;
 
   /**
    * @brief Free the memory of the temporary objects used to load the file.
