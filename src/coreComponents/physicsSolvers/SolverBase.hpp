@@ -590,6 +590,11 @@ public:
     static constexpr char const * solverStatisticsString() { return "SolverStatistics"; }
   };
 
+  /**
+   * @brief getter for the flag to know whether the system setup has already been done
+   * @return true if the setup has already been done, false otherwise
+   */
+  bool systemSetupDone() const { return m_systemSetupDone; }
 
   /**
    * @brief return the value of the gravity vector specified in PhysicsSolverManager
@@ -778,6 +783,9 @@ protected:
 
   /// Solver statistics
   SolverStatistics m_solverStatistics;
+
+  /// Flag to know whether the sparsity pattern has already been built
+  bool m_systemSetupDone;
 
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 

@@ -334,7 +334,11 @@ protected:
     real64 dtReturn = dt;
 
     // setup the coupled linear system
-    setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+    if( !m_systemSetupDone )
+    {
+      setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+      m_systemSetupDone = true;
+    }
 
     // setup reservoir and well systems
     implicitStepSetup( time_n, dt, domain );
@@ -370,11 +374,15 @@ protected:
 
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->setupSystem( domain,
-                           solver->getDofManager(),
-                           solver->getLocalMatrix(),
-                           solver->getSystemRhs(),
-                           solver->getSystemSolution() );
+      if( !solver->systemSetupDone() )
+      {
+        solver->setupSystem( domain,
+                             solver->getDofManager(),
+                             solver->getLocalMatrix(),
+                             solver->getSystemRhs(),
+                             solver->getSystemSolution() );
+        m_systemSetupDone = true;
+      }
 
       solver->implicitStepSetup( time_n, dt, domain );
 

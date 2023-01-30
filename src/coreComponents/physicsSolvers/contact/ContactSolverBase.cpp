@@ -111,11 +111,15 @@ real64 ContactSolverBase::solverStep( real64 const & time_n,
                      dt,
                      domain );
 
-  setupSystem( domain,
-               m_dofManager,
-               m_localMatrix,
-               m_rhs,
-               m_solution );
+  if( !m_systemSetupDone )
+  {
+    setupSystem( domain,
+                 m_dofManager,
+                 m_localMatrix,
+                 m_rhs,
+                 m_solution );
+    m_systemSetupDone = true;
+  }
 
   // currently the only method is implicit time integration
   dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );

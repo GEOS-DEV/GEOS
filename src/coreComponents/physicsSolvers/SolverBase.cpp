@@ -40,7 +40,8 @@ SolverBase::SolverBase( string const & name,
   m_dofManager( name ),
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
-  m_solverStatistics( groupKeyStruct::solverStatisticsString(), this )
+  m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
+  m_systemSetupDone( false )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 

@@ -180,6 +180,7 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
     int locallyFractured = 0;
     int globallyFractured = 0;
 
+    // recompute the sparsity pattern at every time step
     setupSystem( domain,
                  m_dofManager,
                  m_localMatrix,

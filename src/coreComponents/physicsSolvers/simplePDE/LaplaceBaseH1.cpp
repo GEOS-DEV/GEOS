@@ -111,7 +111,11 @@ void LaplaceBaseH1::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n
                                        DomainPartition & domain )
 {
   // Computation of the sparsity pattern
-  setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+  if( !m_systemSetupDone )
+  {
+    setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+    m_systemSetupDone = true;
+  }
 }
 
 void LaplaceBaseH1::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
