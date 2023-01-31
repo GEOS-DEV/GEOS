@@ -595,10 +595,10 @@ public:
    * @return true if the setup has already been done, false otherwise
    */
   bool systemSetupDone() const { return m_systemSetupDone; }
-  
+
   /**
    * @brief Set the System Setup Done Flag object
-   * 
+   *
    * @param input a bool value the falg should be set to.
    */
   void setSystemSetupDoneFlag( bool const input ) { m_systemSetupDone = input; }

@@ -188,7 +188,7 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
                    m_localMatrix,
                    m_rhs,
                    m_solution );
-        
+
       setSystemSetupDoneFlag( true );
     }
 
@@ -212,7 +212,7 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
     }
     else
     {
-      
+
       setSystemSetupDoneFlag( false );
 
       FieldIdentifiers fieldsToBeSync;

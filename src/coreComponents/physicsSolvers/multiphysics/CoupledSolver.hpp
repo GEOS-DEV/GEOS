@@ -329,28 +329,9 @@ protected:
                                          int const cycleNumber,
                                          DomainPartition & domain )
   {
-    GEOSX_MARK_FUNCTION;
-
-    real64 dtReturn = dt;
-
-    // setup the coupled linear system
-    if( !m_systemSetupDone )
-    {
-      setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-      m_systemSetupDone = true;
-    }
-
-    // setup reservoir and well systems
-    implicitStepSetup( time_n, dt, domain );
-
-    // currently the only method is implicit time integration
-    dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-    // complete time step
-    implicitStepComplete( time_n, dtReturn, domain );
-
-    return dtReturn;
+    return SolverBase::solverStep( time_n, dt, cycleNumber, domain );
   }
+
   /**
    * @brief Sequentially coupled solver step. It solves a nonlinear system of
    * equations using a sequential approach.

@@ -63,11 +63,6 @@ public:
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             integer const cycleNumber,
-                             DomainPartition & domain ) override;
-
   localIndex numDofPerCell() const { return m_numDofPerCell; }
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
