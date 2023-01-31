@@ -207,7 +207,7 @@ endif()
 ################################
 # SILO
 ################################
-if(DEFINED SILO_DIR)
+if(DEFINED SILO_DIR AND ENABLE_SILO)
     message(STATUS "SILO_DIR = ${SILO_DIR}")
 
     find_and_register(NAME silo
@@ -221,7 +221,7 @@ if(DEFINED SILO_DIR)
     set(ENABLE_SILO ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} silo)
 else()
-    message(FATAL_ERROR "GEOSX requires Silo, set SILO_DIR to the Silo installation directory.")
+    message(STATUS "Not using SILO.")
 endif()
 
 ################################

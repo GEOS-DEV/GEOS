@@ -70,27 +70,27 @@
     </SurfaceGenerator>
   </Solvers>
 
-  <Events maxTime="10.0">
+  <Events maxTime="0.001">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
-
+<!-- 
     <SoloEvent
       name="postFracOuput"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/siloOutput"/> -->
 
     <PeriodicEvent
       name="solverApplications1"
       beginTime="0.0"
-      endTime="1.0"
+      endTime="0.001"
       forceDt="1.0e-4"
       target="/Solvers/hydrofracture" />
 
-    <PeriodicEvent name="outputs2"
+    <!-- <PeriodicEvent name="outputs2"
                    beginTime="0.0"
                    timeFrequency="0.0001"
                    targetExactTimestep="0"
-                   target="/Outputs/siloOutput" />
+                   target="/Outputs/siloOutput" /> -->
 
     <!-- <PeriodicEvent name="chomboCoupling"
                    cycleFrequency="1"

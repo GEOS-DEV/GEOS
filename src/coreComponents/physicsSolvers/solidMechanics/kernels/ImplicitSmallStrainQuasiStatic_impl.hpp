@@ -149,7 +149,7 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
                                                                          stack.uhat_local,
                                                                          reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
                                                                          -stabilizationScaling );
-#if !defined( GEOSX_USE_HIP )
+#if ! defined( GEOSX_USE_HIP )
   stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
 # else
   stiffness.template BTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian ); // need to use full BTDB compute for hip
@@ -169,7 +169,7 @@ real64 ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYP
   real64 maxForce = 0;
 
   // TODO: Does this work if BTDB is non-symmetric?
-#if !defined( GEOSX_USE_HIP )
+#if ! defined( GEOSX_USE_HIP )
   CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 #endif
   localIndex const numSupportPoints =

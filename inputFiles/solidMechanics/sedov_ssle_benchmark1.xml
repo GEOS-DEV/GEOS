@@ -56,7 +56,7 @@
         nodes="1"
         tasksPerNode="1"
         scaling="weak"
-        meshSizes="{ 4000000 }"
+        meshSizes="{ 4000 }"
         scaleList="{ 1, 2, 4, 8, 16, 32, 64 }"/>
     </crusher>
   </Benchmarks>
@@ -68,9 +68,9 @@
       xCoords="{ 0, 10 }"
       yCoords="{ 0, 10 }"
       zCoords="{ 0, 10 }"
-      nx="{ 190 }"
-      ny="{ 190 }"
-      nz="{ 190 }"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 

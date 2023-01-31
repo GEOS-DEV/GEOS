@@ -127,10 +127,10 @@
 #define GEOSX_BLOCK_SIZE 64 
 
 /// Version information for HDF5
-#define HDF5_VERSION 1.12.1
+#define HDF5_VERSION 1.12.2
 
 /// Version information for Conduit
-#define Conduit_VERSION 0.7.2
+#define Conduit_VERSION 0.8.6
 
 /// Version information for RAJA
 #define RAJA_VERSION 2022.3.0

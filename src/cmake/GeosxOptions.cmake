@@ -33,6 +33,7 @@ option( ENABLE_METIS "Enables METIS" ON )
 option( ENABLE_PARMETIS "Enables PARMETIS" ON )
 option( ENABLE_SCOTCH "Enables SCOTCH" ON )
 
+option( ENABLE_SILO "Enables SILO output" ON )
 option( ENABLE_VTK "Enables VTK" ON )
 
 option( ENABLE_TOTALVIEW_OUTPUT "Enables Totalview custom view" OFF )

@@ -646,6 +646,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                 &wellControlsName,
                                 &massUnit] ( localIndex const )
     {
+      GEOSX_UNUSED_VAR(massUnit);
       using Deriv = multifluid::DerivativeOffset;
 
       stackArray1d< real64, maxNumComp > work( numComp );

@@ -113,6 +113,7 @@ struct FiniteElementDispatchHandler<>
               LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
   {
     GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
+    GEOSX_UNUSED_VAR( input );
   }
 
   template< typename LAMBDA >
@@ -121,6 +122,7 @@ struct FiniteElementDispatchHandler<>
               LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
   {
     GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
+    GEOSX_UNUSED_VAR( input );
   }
 
   template< typename LAMBDA >
@@ -129,6 +131,7 @@ struct FiniteElementDispatchHandler<>
               LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
   {
     GEOSX_ERROR( "finiteElement::dispatch2D() is not implemented for input of: "<<LvArray::system::demangleType( &input ) );
+    GEOSX_UNUSED_VAR( input );
   }
 };
 

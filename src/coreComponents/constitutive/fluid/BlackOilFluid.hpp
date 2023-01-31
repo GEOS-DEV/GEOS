@@ -302,10 +302,10 @@ private:
                                  bool const useMass,
                                  real64 const Rs,
                                  real64 const dRs_dPres,
-                                 real64 const dRs_dComp[],
+                                 real64 const dRs_dComp[HNC_BO],
                                  real64 const Bo,
                                  real64 const dBo_dPres,
-                                 real64 const dBo_dComp[],
+                                 real64 const dBo_dComp[HNC_BO],
                                  real64 & dens,
                                  arraySlice1d< real64, multifluid::USD_PHASE_DC - 3 > const & dDens ) const;
 
