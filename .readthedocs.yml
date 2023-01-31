@@ -8,7 +8,6 @@ build:
   apt_packages:
   - npm
   - plantuml
-  - tree
   tools:
     nodejs: "16"
     python: "3.7"
@@ -16,8 +15,6 @@ build:
     post_install:
     - npm install -g npm
     - npm install -g @mermaid-js/mermaid-cli
-    post_build:
-    - tree -J
 
 # Set requirements to build the docs
 python:
