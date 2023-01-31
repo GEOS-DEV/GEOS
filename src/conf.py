@@ -53,7 +53,6 @@ if read_the_docs_build:
                   "coreComponents/dataRepository",
                   "coreComponents/fileIO",
                   "coreComponents/linearAlgebra",
-                  "coreComponents/LvArray/src",
                   "coreComponents/mesh",
                   "coreComponents/managers",
                   "coreComponents/finiteElement/kernelInterface",
