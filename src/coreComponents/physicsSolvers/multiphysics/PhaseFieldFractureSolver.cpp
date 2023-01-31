@@ -64,6 +64,25 @@ void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
           setDescription( "fracture pressure field for testing purposes only" );
       }
     } );
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const matrixPressure =
+      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "hardCodedPMatrixName" );
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > fracturePressure =
+      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "hardCodedPFractureName" );
+
+    if( m_pressureEffects == 1 ) {
+    //***** loop over all elements and write manufactured pressure fields *****
+      forAllElemsInMesh( meshLevel, [ &]( localIndex const er,
+                                    localIndex const esr,
+                                    localIndex const k )
+      {
+        //make a non-trivial field to test
+        matrixPressure[er][esr][k] = k*1.0e-2;
+        fracturePressure[er][esr][k] = k*1.0e0;
+      } );
+    }
+
   } );
 }
 
@@ -83,7 +102,7 @@ void PhaseFieldFractureSolver::postProcessInput()
   {
     this->solidMechanicsSolver()->setPressureEffects();
     this->damageSolver()->setPressureEffects();
-    imposeFakeBackgroundPressures( domain ); //NEED TO GET DOMAIN!!
+    //imposeFakeBackgroundPressures( domain ); //DOMAIN IS COMING OUT EMPTY
   }
 
   GEOSX_WARNING_IF( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::FullyImplicit,
@@ -91,31 +110,31 @@ void PhaseFieldFractureSolver::postProcessInput()
   getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
 }
 
-void PhaseFieldFractureSolver::imposeFakeBackgroundPressures( DomainPartition & domain )
-{
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
-  {
-    ElementRegionManager & elemManager = mesh.getElemManager();
+// void PhaseFieldFractureSolver::imposeFakeBackgroundPressures( DomainPartition & domain )
+// {
+//   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+//                                                                 MeshLevel & mesh,
+//                                                                 arrayView1d< string const > const & )
+//   {
+//     ElementRegionManager & elemManager = mesh.getElemManager();
+//     std::cout<<"entering meshBody loop\n";
+//     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const matrixPressure =
+//       elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "hardCodedPMatrixName" );
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const matrixPressure =
-      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "hardCodedPMatrixName" );
+//     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > fracturePressure =
+//       elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "hardCodedPFractureName" );
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > fracturePressure =
-      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "hardCodedPFractureName" );
-
-    //***** loop over all elements and write manufactured pressure fields *****
-    forAllElemsInMesh( mesh, [ &]( localIndex const er,
-                                   localIndex const esr,
-                                   localIndex const k )
-    {
-      //make a non-trivial field to test
-      matrixPressure[er][esr][k] = k*1.0e-2;
-      fracturePressure[er][esr][k] = k*1.0e0;
-    } );
-  } );
-}
+//     //***** loop over all elements and write manufactured pressure fields *****
+//     forAllElemsInMesh( mesh, [ &]( localIndex const er,
+//                                    localIndex const esr,
+//                                    localIndex const k )
+//     {
+//       //make a non-trivial field to test
+//       matrixPressure[er][esr][k] = k*1.0e-2;
+//       fracturePressure[er][esr][k] = k*1.0e0;
+//     } );
+//   } );
+// }
 
 // real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
 //                                                     real64 const & dt,
