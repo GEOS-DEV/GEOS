@@ -11,6 +11,10 @@ set(OpenMP_Fortran_LIB_NAMES "" CACHE STRING "")
 set(MPI_HOME /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-clang-10.0.1-gcc-8.3.1 CACHE PATH "")
 set(MPI_Fortran_COMPILER /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-xl-2022.08.19-cuda-11.2.0/bin/mpifort CACHE PATH "")
 
+# PYGEOSX
+set(ENABLE_PYGEOSX ON CACHE BOOL "")
+set(Python3_ROOT_DIR /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python CACHE PATH "")
+
 include(${CMAKE_CURRENT_LIST_DIR}/lassen-base.cmake)
 
 set(ENABLE_CUDA_NVTOOLSEXT ON CACHE BOOL "")
