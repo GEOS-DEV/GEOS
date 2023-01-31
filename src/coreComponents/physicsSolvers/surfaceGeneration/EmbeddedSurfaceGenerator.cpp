@@ -370,26 +370,23 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
     }
   }
 
-  // Launch kernel to compute connectivity index of each fractured element.
-  elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
-    [&]( localIndex const, localIndex const, ElementRegionBase &, CellElementSubRegion & subRegion )
+  
+  finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
+  finiteElement::dispatchlowOrder3D( subRegionFE, [&] ( auto const finiteElement )
   {
-    finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+    using FE_TYPE = decltype( finiteElement );
 
-    finiteElement::dispatchlowOrder3D( subRegionFE, [&] ( auto const finiteElement )
-    {
-      using FE_TYPE = decltype( finiteElement );
+    auto kernel = CIcomputationKernel< FE_TYPE >( finiteElement,
+                                                  nodeManager,
+                                                  subRegion,
+                                                  embeddedSurfaceSubRegion );
 
-      auto kernel = CIcomputationKernel< FE_TYPE >( finiteElement,
-                                                    nodeManager,
-                                                    subRegion,
-                                                    embeddedSurfaceSubRegion );
+    using KERNEL_TYPE = decltype( kernel );
 
-      using KERNEL_TYPE = decltype( kernel );
-
-      KERNEL_TYPE::template launchCIComputationKernel< parallelDevicePolicy< 32 >, KERNEL_TYPE >( kernel );
-    } );
+    KERNEL_TYPE::template launchCIComputationKernel< parallelDevicePolicy< 32 >, KERNEL_TYPE >( kernel );
   } );
+ 
 
   // add all new nodes to newObject list
   // also, get index of edges that were just cut
@@ -438,7 +435,7 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
     //newEdges is an array of globalIndices with the 2 edges that were cut in this step
     auto edgeToFaceList = edgeManager.faceList();
     auto faceToElementList = faceManager.elementList();
-    localIndex cutFace;
+    localIndex cutFace = -1;
     for( auto && face:edgeToFaceList[newEdges[0]] ) //newEdge is globalIndexed, we probably need a way to get the localIndex of newEdges[0]
                                                     // and newEdges[1]
     {
@@ -447,6 +444,9 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
         cutFace = face; //only one face is connected to both edges
       }
     }
+
+    GEOSX_ERROR_IF(cutFace==-1,"Even though an element was cut, no cutFace was identified. This is an error. Exiting.");
+
     for( auto && element:faceToElementList[cutFace] ) //does this iterator exist? //what if the elements that share this face are in
                                                       // different subRegions
     {
