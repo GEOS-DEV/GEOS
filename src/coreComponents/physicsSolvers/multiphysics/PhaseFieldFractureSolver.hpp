@@ -55,7 +55,7 @@ public:
   /// String used to form the solverName used to register solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "PhaseFieldFracture"; }
 
-  virtual void registerDataOnMesh( Group & meshBodies ) override; 
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   void imposeFakeBackgroundPressures( DomainPartition & domain );
 
@@ -88,9 +88,9 @@ public:
   }
 
   virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
-  
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
-  {  
+  {
     constexpr static char const * subcyclingOptionString() { return "subcycling"; }
     constexpr static char const * pressureEffectsString() { return "pressureEffects"; }
   };
@@ -118,49 +118,49 @@ struct DamageInterpolationKernel
                           arrayView2d< real64 > damageFieldOnMaterial,
                           arrayView3d< real64 > damageGradOnMaterial )
   {
-          forAll< serialPolicy >( m_numElems, [=] ( localIndex const k )
-          {
-            constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
-            constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
+    forAll< serialPolicy >( m_numElems, [=] ( localIndex const k )
+    {
+      constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+      constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
 
-            real64 xLocal[ numNodesPerElement ][ 3 ];
-            real64 nodalDamageLocal[ numNodesPerElement ];
+      real64 xLocal[ numNodesPerElement ][ 3 ];
+      real64 nodalDamageLocal[ numNodesPerElement ];
 
-            for( localIndex a = 0; a < numNodesPerElement; ++a )
-            {
-              localIndex const localNodeIndex = elemToNodes( k, a );
+      for( localIndex a = 0; a < numNodesPerElement; ++a )
+      {
+        localIndex const localNodeIndex = elemToNodes( k, a );
 
-              for( int dim=0; dim < 3; ++dim )
-              {
-                xLocal[a][dim] = xNodes[ localNodeIndex ][dim];
-              }
+        for( int dim=0; dim < 3; ++dim )
+        {
+          xLocal[a][dim] = xNodes[ localNodeIndex ][dim];
+        }
 
-              nodalDamageLocal[ a ] = nodalDamage[ localNodeIndex ];
-            }
+        nodalDamageLocal[ a ] = nodalDamage[ localNodeIndex ];
+      }
 
-            for( localIndex q = 0; q < n_q_points; ++q )
-            {
-              real64 N[ numNodesPerElement ];
-              FE_TYPE::calcN( q, N );
+      for( localIndex q = 0; q < n_q_points; ++q )
+      {
+        real64 N[ numNodesPerElement ];
+        FE_TYPE::calcN( q, N );
 
-              real64 dNdX[ numNodesPerElement ][ 3 ];
+        real64 dNdX[ numNodesPerElement ][ 3 ];
 
-              real64 const detJ = FE_TYPE::calcGradN( q, xLocal, dNdX );
+        real64 const detJ = FE_TYPE::calcGradN( q, xLocal, dNdX );
 
-              GEOSX_UNUSED_VAR( detJ );
+        GEOSX_UNUSED_VAR( detJ );
 
-              real64 qDamage = 0.0;
-              real64 qDamageGrad[3] = {0, 0, 0};
-              FE_TYPE::valueAndGradient( N, dNdX, nodalDamageLocal, qDamage, qDamageGrad );
+        real64 qDamage = 0.0;
+        real64 qDamageGrad[3] = {0, 0, 0};
+        FE_TYPE::valueAndGradient( N, dNdX, nodalDamageLocal, qDamage, qDamageGrad );
 
-              damageFieldOnMaterial( k, q ) = qDamage;
+        damageFieldOnMaterial( k, q ) = qDamage;
 
-              for( int dim=0; dim < 3; ++dim )
-              {
-                damageGradOnMaterial[k][q][dim] = qDamageGrad[dim];
-              }
-            }
-          } );
+        for( int dim=0; dim < 3; ++dim )
+        {
+          damageGradOnMaterial[k][q][dim] = qDamageGrad[dim];
+        }
+      }
+    } );
   }
 
   localIndex m_numElems;

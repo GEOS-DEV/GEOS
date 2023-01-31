@@ -36,7 +36,7 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
                                                     Group * const parent ):
   Base( name, parent )
 {
-    registerWrapper( viewKeyStruct::pressureEffectsString(), &m_pressureEffects ).
+  registerWrapper( viewKeyStruct::pressureEffectsString(), &m_pressureEffects ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
     setDescription( "consider background pressure effects (matrix and fracture pressures)" );
@@ -71,11 +71,12 @@ void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > fracturePressure =
       elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "hardCodedPFractureName" );
 
-    if( m_pressureEffects == 1 ) {
-    //***** loop over all elements and write manufactured pressure fields *****
+    if( m_pressureEffects == 1 )
+    {
+      //***** loop over all elements and write manufactured pressure fields *****
       forAllElemsInMesh( meshLevel, [ &]( localIndex const er,
-                                    localIndex const esr,
-                                    localIndex const k )
+                                          localIndex const esr,
+                                          localIndex const k )
       {
         //make a non-trivial field to test
         matrixPressure[er][esr][k] = k*1.0e-2;
@@ -288,11 +289,13 @@ void PhaseFieldFractureSolver::postProcessInput()
 //                                                                   ( localIndex const,
 //                                                                   CellElementSubRegion & elementSubRegion )
 //       {
-//         string const & solidModelName = elementSubRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
+//         string const & solidModelName = elementSubRegion.getReference< string >(
+// SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
 //         constitutive::SolidBase &
 //         solidModel = elementSubRegion.getConstitutiveModel< constitutive::SolidBase >( solidModelName );
 
-//         ConstitutivePassThru< DamageBase >::execute( solidModel, [&elementSubRegion, discretizationName, nodalDamage]( auto & damageModel )
+//         ConstitutivePassThru< DamageBase >::execute( solidModel, [&elementSubRegion, discretizationName, nodalDamage]( auto & damageModel
+// )
 //         {
 //           using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
 //           typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
@@ -351,7 +354,8 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
         string const & solidModelName = elementSubRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
         constitutive::SolidBase &
         solidModel = elementSubRegion.getConstitutiveModel< constitutive::SolidBase >( solidModelName );
-//         ConstitutivePassThru< DamageBase >::execute( solidModel, [&elementSubRegion, discretizationName, nodalDamage]( auto & damageModel )
+//         ConstitutivePassThru< DamageBase >::execute( solidModel, [&elementSubRegion, discretizationName, nodalDamage]( auto & damageModel
+// )
 
         ConstitutivePassThru< DamageBase >::execute( solidModel, [&elementSubRegion, xNodes, discretizationName, nodalDamage]( auto & damageModel )
         {
@@ -367,7 +371,11 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
           finiteElement::FiniteElementBase const &
           fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( discretizationName );
           finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [=, &elementSubRegion] ( auto & finiteElement )
-          //finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [xNodes, nodalDamage, &elementSubRegion, damageFieldOnMaterial, damageGradOnMaterial, elemNodes, elemsToNodes]( auto & finiteElement )
+                                                                                   //finiteElement::FiniteElementDispatchHandler<
+                                                                                   // ALL_FE_TYPES >::dispatch3D( fe, [xNodes, nodalDamage,
+                                                                                   // &elementSubRegion, damageFieldOnMaterial,
+                                                                                   // damageGradOnMaterial, elemNodes, elemsToNodes]( auto &
+                                                                                   // finiteElement )
           {
             using FE_TYPE = TYPEOFREF( finiteElement );
 
@@ -375,7 +383,8 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
 
             interpolationKernel.interpolateDamage( elemsToNodes, xNodes, nodalDamage, damageFieldOnMaterial, damageGradOnMaterial );
 
-            // forAll< serialPolicy >( elementSubRegion.size(), [xNodes, nodalDamage, damageFieldOnMaterial, damageGradOnMaterial, elemNodes, elemsToNodes] ( localIndex const k )
+            // forAll< serialPolicy >( elementSubRegion.size(), [xNodes, nodalDamage, damageFieldOnMaterial, damageGradOnMaterial,
+            // elemNodes, elemsToNodes] ( localIndex const k )
             // {
             //   using FE_TYPE = TYPEOFREF( finiteElement );
             //   constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
