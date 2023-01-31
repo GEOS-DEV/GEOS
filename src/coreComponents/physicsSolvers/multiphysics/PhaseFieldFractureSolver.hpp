@@ -55,7 +55,7 @@ public:
   /// String used to form the solverName used to register solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "PhaseFieldFracture"; }
 
-  void registerDataOnMesh( Group & meshBodies ); 
+  virtual void registerDataOnMesh( Group & meshBodies ) override; 
 
   void imposeFakeBackgroundPressures( DomainPartition & domain );
 
@@ -97,14 +97,13 @@ public:
 
 protected:
 
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
+  virtual void initializePostInitialConditionsPreSubGroups() override final {}
 
 private:
 
   integer m_pressureEffects; //only use case is the MultiResolution solver
 
 };
-
 
 template< typename FE_TYPE >
 struct DamageInterpolationKernel
@@ -114,34 +113,95 @@ struct DamageInterpolationKernel
   {}
 
   void interpolateDamage( arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodes,
+                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const xNodes,
                           arrayView1d< real64 const > const nodalDamage,
-                          arrayView2d< real64 > damageFieldOnMaterial )
+                          arrayView2d< real64 > damageFieldOnMaterial,
+                          arrayView3d< real64 > damageGradOnMaterial )
   {
-    forAll< parallelDevicePolicy<> >( m_numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
-      constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
+          forAll< serialPolicy >( m_numElems, [=] ( localIndex const k )
+          {
+            constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+            constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
 
-      for( localIndex q = 0; q < n_q_points; ++q )
-      {
-        real64 N[ numNodesPerElement ];
-        FE_TYPE::calcN( q, N );
+            real64 xLocal[ numNodesPerElement ][ 3 ];
+            real64 nodalDamageLocal[ numNodesPerElement ];
 
-        damageFieldOnMaterial( k, q ) = 0;
-        for( localIndex a = 0; a < numNodesPerElement; ++a )
-        {
-          damageFieldOnMaterial( k, q ) += N[a] * nodalDamage[elemToNodes( k, a )];
-          //solution is probably not going to work because the solution of the coupled solver
-          //has both damage and displacements. Using the damageResult field from the Damage solver
-          //is probably better
-        }
-      }
+            for( localIndex a = 0; a < numNodesPerElement; ++a )
+            {
+              localIndex const localNodeIndex = elemToNodes( k, a );
 
-    } );
+              for( int dim=0; dim < 3; ++dim )
+              {
+                xLocal[a][dim] = xNodes[ localNodeIndex ][dim];
+              }
+
+              nodalDamageLocal[ a ] = nodalDamage[ localNodeIndex ];
+            }
+
+            for( localIndex q = 0; q < n_q_points; ++q )
+            {
+              real64 N[ numNodesPerElement ];
+              FE_TYPE::calcN( q, N );
+
+              real64 dNdX[ numNodesPerElement ][ 3 ];
+
+              real64 const detJ = FE_TYPE::calcGradN( q, xLocal, dNdX );
+
+              GEOSX_UNUSED_VAR( detJ );
+
+              real64 qDamage = 0.0;
+              real64 qDamageGrad[3] = {0, 0, 0};
+              FE_TYPE::valueAndGradient( N, dNdX, nodalDamageLocal, qDamage, qDamageGrad );
+
+              damageFieldOnMaterial( k, q ) = qDamage;
+
+              for( int dim=0; dim < 3; ++dim )
+              {
+                damageGradOnMaterial[k][q][dim] = qDamageGrad[dim];
+              }
+            }
+          } );
   }
 
   localIndex m_numElems;
 };
+
+// template< typename FE_TYPE >
+// struct DamageInterpolationKernel
+// {
+//   DamageInterpolationKernel( CellElementSubRegion const & subRegion ):
+//     m_numElems( subRegion.size() )
+//   {}
+
+//   void interpolateDamage( arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodes,
+//                           arrayView1d< real64 const > const nodalDamage,
+//                           arrayView2d< real64 > damageFieldOnMaterial )
+//   {
+//     forAll< parallelDevicePolicy<> >( m_numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+//     {
+//       constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+//       constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
+
+//       for( localIndex q = 0; q < n_q_points; ++q )
+//       {
+//         real64 N[ numNodesPerElement ];
+//         FE_TYPE::calcN( q, N );
+
+//         damageFieldOnMaterial( k, q ) = 0;
+//         for( localIndex a = 0; a < numNodesPerElement; ++a )
+//         {
+//           damageFieldOnMaterial( k, q ) += N[a] * nodalDamage[elemToNodes( k, a )];
+//           //solution is probably not going to work because the solution of the coupled solver
+//           //has both damage and displacements. Using the damageResult field from the Damage solver
+//           //is probably better
+//         }
+//       }
+
+//     } );
+//   }
+
+//   localIndex m_numElems;
+// };
 
 } /* namespace geosx */
 

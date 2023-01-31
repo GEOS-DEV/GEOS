@@ -22,6 +22,7 @@
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 namespace geosx
 {
@@ -118,8 +119,8 @@ public:
           inputMatrix,
           inputRhs ),
     m_X( nodeManager.referencePosition()),
-    m_disp( nodeManager.totalDisplacement()),
-    m_uhat( nodeManager.incrementalDisplacement()),
+    m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >()),
+    m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >()),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),

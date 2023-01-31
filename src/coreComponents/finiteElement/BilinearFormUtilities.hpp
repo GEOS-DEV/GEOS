@@ -20,6 +20,7 @@
 #define GEOSX_FINITEELEMENT_BILINEARFORMUTILITIES_HPP_
 
 #include "finiteElement/PDEUtilities.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
@@ -316,6 +317,7 @@ struct Helper< PDEUtilities::FunctionSpace::H1,
                        real64 const (&dNudX)[numTrialDOF][3],
                        real64 const weight )
   {
+    //real[numTestDOF][3] dummy = LVARRAY_TENSOROPS_INIT_LOCAL_3(dNudX);
     for( int a = 0; a < numTestDOF; ++a )
     {
       for( int b = 0; b < numTrialDOF; ++b )

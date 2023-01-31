@@ -22,6 +22,7 @@
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 namespace geosx
 {
@@ -115,7 +116,7 @@ public:
           inputMatrix,
           inputRhs ),
     m_X( nodeManager.referencePosition()),
-    m_disp( nodeManager.totalDisplacement()),
+    m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( damageName )),
     m_localDissipationOption( localDissipationOption ),
     //m_pressureMatrix( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::matrixPressure >() ),
@@ -414,7 +415,6 @@ protected:
   /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
-
 
   /// The global primary field array.
   arrayView1d< real64 const > const m_nodalDamage;
