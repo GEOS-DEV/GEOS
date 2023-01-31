@@ -52,6 +52,11 @@ VTKOutput::VTKOutput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Level detail plot. Only fields with lower of equal plot level will be output." );
 
+  registerWrapper( viewKeysStruct::writeGhostCells, &m_writeGhostCells ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Should the vtk files contain the ghost cells or not." );
+
   registerWrapper( viewKeysStruct::onlyPlotSpecifiedFieldNames, &m_onlyPlotSpecifiedFieldNames ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -120,6 +125,7 @@ bool VTKOutput::execute( real64 const time_n,
                          real64 const GEOSX_UNUSED_PARAM ( eventProgress ),
                          DomainPartition & domain )
 {
+  m_writer.setWriteGhostCells( m_writeGhostCells );
   m_writer.setOutputMode( m_writeBinaryData );
   m_writer.setOutputRegionType( m_outputRegionType );
   m_writer.setPlotLevel( m_plotLevel );
