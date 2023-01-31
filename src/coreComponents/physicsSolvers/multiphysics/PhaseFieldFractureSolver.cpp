@@ -96,8 +96,6 @@ void PhaseFieldFractureSolver::postProcessInput()
 {
   Base::postProcessInput();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
   if( m_pressureEffects == 1 ) //this will add background pressure effects to solid and damage solvers - must be done before assemble
                                // routine
   {
