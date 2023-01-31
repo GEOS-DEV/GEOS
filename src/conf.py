@@ -33,7 +33,7 @@ if read_the_docs_build:
     # Make sure directory exists
     cwd = os.getcwd()
 
-    build_path = os.path.join(cwd, "_build")
+    build_path = os.path.join(cwd, "../_readthedocs")
     if not os.path.isdir(build_path):
         os.mkdir(build_path)
 
