@@ -41,7 +41,7 @@ SolverBase::SolverBase( string const & name,
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
   m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
-  m_systemSetupDone( false )
+  m_systemSetupTimestamp( 0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -206,12 +206,13 @@ real64 SolverBase::solverStep( real64 const & time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  // Only build the sparsity pattern once
-  // TODO: this should be triggered by a topology change indicator
-  if( !systemSetupDone() )
+  // Only build the sparsity pattern if the mesh has changed
+  Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
+  if( meshModificationTimestamp > getSystemSetupTimestamp() )
   {
     setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-    setSystemSetupDoneFlag( true );
+    setSystemSetupTimestamp( meshModificationTimestamp );
   }
 
   implicitStepSetup( time_n, dt, domain );
@@ -804,8 +805,6 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                       m_localMatrix.toViewConstSizes(),
                       localRhs );
 
-      //  LvArray::print<serialPolicy>( m_localMatrix.toViewConst() );
-
       // apply boundary conditions to system
       applyBoundaryConditions( time_n,
                                stepDt,
@@ -815,9 +814,6 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                                localRhs );
 
       m_rhs.close();
-
-//      m_rhs.print( std::cout );
-//      LvArray::print<serialPolicy>( m_localMatrix.toViewConst() );
 
     }
     if( m_assemblyCallback )
@@ -1226,6 +1222,21 @@ void SolverBase::cleanup( real64 const GEOSX_UNUSED_PARAM( time_n ),
                           DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   m_solverStatistics.outputStatistics();
+}
+
+Timestamp SolverBase::getMeshModificationTimestamp( DomainPartition & domain ) const
+{
+  Timestamp meshModificationTimestamp = 0;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & )
+  {
+    if( meshModificationTimestamp < mesh.getModificationTimestamp() )
+    {
+      meshModificationTimestamp = mesh.getModificationTimestamp();
+    }
+  } );
+  return meshModificationTimestamp;
 }
 
 R1Tensor const SolverBase::gravityVector() const

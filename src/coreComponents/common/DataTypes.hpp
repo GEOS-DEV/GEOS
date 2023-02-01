@@ -154,6 +154,15 @@ using buffer_type = std::vector< buffer_unit_type >;
 
 ///@}
 
+/**
+ * @name Alias for timestamp in GEOSX.
+ */
+///@{
+
+using Timestamp = unsigned long long int;
+
+///@}
+
 //START_SPHINX_INCLUDE_00
 
 /**

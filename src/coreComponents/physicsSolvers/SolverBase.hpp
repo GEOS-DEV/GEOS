@@ -591,17 +591,23 @@ public:
   };
 
   /**
-   * @brief getter for the flag to know whether the system setup has already been done
-   * @return true if the setup has already been done, false otherwise
+   * @brief getter for the timestamp of the system setup
+   * @return the timestamp of the last time systemSetup was called
    */
-  bool systemSetupDone() const { return m_systemSetupDone; }
+  Timestamp getSystemSetupTimestamp() const { return m_systemSetupTimestamp; }
 
   /**
-   * @brief Set the System Setup Done Flag object
-   *
-   * @param input a bool value the falg should be set to.
+   * @brief getter for the timestamp of the mesh modification on the mesh levels
+   * @param[in] domain the domain partition (cannot be const because we use forDiscretizationsInMeshTargets inside the function)
+   * @return the timestamp of the last time at which one of the mesh levels was modified
    */
-  void setSystemSetupDoneFlag( bool const input ) { m_systemSetupDone = input; }
+  Timestamp getMeshModificationTimestamp( DomainPartition & domain ) const;
+
+  /**
+   * @brief set the timestamp of the system setup
+   * @param[in] timestamp the new timestamp of system setup
+   */
+  void setSystemSetupTimestamp( Timestamp timestamp ) { m_systemSetupTimestamp = timestamp; }
 
   /**
    * @brief return the value of the gravity vector specified in PhysicsSolverManager
@@ -791,8 +797,8 @@ protected:
   /// Solver statistics
   SolverStatistics m_solverStatistics;
 
-  /// Flag to know whether the sparsity pattern has already been built
-  bool m_systemSetupDone;
+  /// Timestamp of the last call to setup system
+  Timestamp m_systemSetupTimestamp;
 
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 

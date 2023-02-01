@@ -353,16 +353,20 @@ protected:
 
     real64 dtReturnTemporary;
 
+    Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      if( !solver->systemSetupDone() )
+
+      // Only build the sparsity pattern if the mesh has changed
+      if( meshModificationTimestamp > solver->getSystemSetupTimestamp() )
       {
         solver->setupSystem( domain,
                              solver->getDofManager(),
                              solver->getLocalMatrix(),
                              solver->getSystemRhs(),
                              solver->getSystemSolution() );
-        m_systemSetupDone = true;
+        solver->setSystemSetupTimestamp( meshModificationTimestamp );
       }
 
       solver->implicitStepSetup( time_n, dt, domain );

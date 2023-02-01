@@ -180,16 +180,17 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
     int locallyFractured = 0;
     int globallyFractured = 0;
 
-    // recompute the sparsity pattern at every time step
-    if( !systemSetupDone() )
+    Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
+    // Only build the sparsity pattern if the mesh has changed
+    if( meshModificationTimestamp > getSystemSetupTimestamp() )
     {
       setupSystem( domain,
                    m_dofManager,
                    m_localMatrix,
                    m_rhs,
                    m_solution );
-
-      setSystemSetupDoneFlag( true );
+      setSystemSetupTimestamp( meshModificationTimestamp );
     }
 
     // currently the only method is implicit time integration
@@ -212,9 +213,6 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
     }
     else
     {
-
-      setSystemSetupDoneFlag( false );
-
       FieldIdentifiers fieldsToBeSync;
 
       fieldsToBeSync.addElementFields( { flow::pressure::key(),

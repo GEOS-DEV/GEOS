@@ -110,11 +110,13 @@ void LaplaceBaseH1::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n
                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
                                        DomainPartition & domain )
 {
-  // Computation of the sparsity pattern
-  if( !m_systemSetupDone )
+  Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
+  // Only build the sparsity pattern if the mesh has changed
+  if( meshModificationTimestamp > getSystemSetupTimestamp() )
   {
     setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-    m_systemSetupDone = true;
+    setSystemSetupTimestamp( meshModificationTimestamp );
   }
 }
 

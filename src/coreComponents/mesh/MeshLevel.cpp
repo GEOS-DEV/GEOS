@@ -36,6 +36,7 @@ MeshLevel::MeshLevel( string const & name,
   m_elementManager( new ElementRegionManager( groupStructKeys::elemManagerString(), this ) ),
   m_embSurfNodeManager( new EmbeddedSurfaceNodeManager( groupStructKeys::embSurfNodeManagerString, this ) ),
   m_embSurfEdgeManager( new EdgeManager( groupStructKeys::embSurfEdgeManagerString, this ) ),
+  m_modificationTimestamp( 0 ),
   m_isShallowCopy( false ),
   m_shallowParent( nullptr )
 {
@@ -56,6 +57,11 @@ MeshLevel::MeshLevel( string const & name,
   registerGroup< EmbeddedSurfaceNodeManager >( groupStructKeys::embSurfNodeManagerString, m_embSurfNodeManager );
 
   registerWrapper< integer >( viewKeys.meshLevel );
+
+  // increment the modification timestamp at mesh level creation
+  // this is to make sure that the actions that depend on this timestamp (such as system setup) are performed at the beginning of the
+  // simulations
+  modified();
 }
 
 
@@ -91,7 +97,10 @@ MeshLevel::MeshLevel( string const & name,
 
   registerWrapper< integer >( viewKeys.meshLevel );
 
-
+  // increment the modification timestamp at mesh level creation
+  // this is to make sure that the actions that depend on this timestamp (such as system setup) are performed at the beginning of the
+  // simulations
+  modified();
 }
 
 
