@@ -3,7 +3,7 @@
 <Problem>
   <Included>
     <File
-      name="./PoroElastic_conformingFracture_2d_base.xml"/>
+      name="./PoroElastic_conformingFracture_2d_openingFrac_base.xml"/>
   </Included> 
 
   <Mesh>
