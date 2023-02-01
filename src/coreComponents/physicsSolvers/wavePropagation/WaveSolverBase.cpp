@@ -172,6 +172,22 @@ void WaveSolverBase::reinit()
 void WaveSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
+
+  localIndex const numNodesPerElem = WaveSolverBase::getNumNodesPerElem();
+
+  std::cout << numNodesPerElem << std::endl;
+
+  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
+  std::cout << numSourcesGlobal << std::endl;
+  m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
+  m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
+  m_sourceIsAccessible.resize( numSourcesGlobal );
+
+  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
+  m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
+  m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
+  m_receiverIsLocal.resize( numReceiversGlobal );
+
 }
 
 void WaveSolverBase::postProcessInput()
