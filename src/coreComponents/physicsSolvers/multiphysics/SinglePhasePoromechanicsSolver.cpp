@@ -215,7 +215,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
 
   // tell the flow solver that this is a stress initialization step
-  flowSolver()->keepFlowVariablesConstantDuringStep( m_performStressInitialization );
+  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
 
   // step 3: compute the fluxes (face-based contributions)
 

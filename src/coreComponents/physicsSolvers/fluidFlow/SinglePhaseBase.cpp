@@ -52,7 +52,8 @@ using namespace singlePhaseBaseKernels;
 
 SinglePhaseBase::SinglePhaseBase( const string & name,
                                   Group * const parent ):
-  FlowSolverBase( name, parent )
+  FlowSolverBase( name, parent ),
+  m_keepFlowVariablesConstantDuringInitStep( 0 )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
     setApplyDefaultValue( 0.0 ).
@@ -855,13 +856,13 @@ void SinglePhaseBase::applyBoundaryConditions( real64 time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  if( m_keepFlowVariablesConstantDuringStep )
+  if( m_keepFlowVariablesConstantDuringInitStep )
   {
     // this function is going to force the current flow state to be constant during the time step
     // this is used when the poromechanics solver is performing the stress initialization
     // TODO: in the future, a dedicated poromechanics kernel should eliminate the flow vars to construct a reduced system
     //       which will remove the need for this brittle passing aroung of flag
-    keepFlowVariablesConstantDuringStep( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+    keepFlowVariablesConstantDuringInitStep( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
   }
   else
   {
@@ -1105,12 +1106,12 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
   } );
 }
 
-void SinglePhaseBase::keepFlowVariablesConstantDuringStep( real64 const time,
-                                                           real64 const dt,
-                                                           DofManager const & dofManager,
-                                                           DomainPartition & domain,
-                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                           arrayView1d< real64 > const & localRhs ) const
+void SinglePhaseBase::keepFlowVariablesConstantDuringInitStep( real64 const time,
+                                                               real64 const dt,
+                                                               DofManager const & dofManager,
+                                                               DomainPartition & domain,
+                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                               arrayView1d< real64 > const & localRhs ) const
 {
   GEOSX_MARK_FUNCTION;
 
