@@ -159,6 +159,7 @@ using buffer_type = std::vector< buffer_unit_type >;
  */
 ///@{
 
+/// Timestamp type (used to perform actions such a sparsity pattern computation after mesh modifications)
 using Timestamp = unsigned long long int;
 
 ///@}
