@@ -1851,6 +1851,12 @@ the relative residual norm satisfies:
 		<xsd:attribute name="forward" type="integer" default="1" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--lifoOnDevice => Set the capacity of the lifo device storage-->
+		<xsd:attribute name="lifoOnDevice" type="integer" default="0" />
+		<!--lifoOnHost => Set the capacity of the lifo host storage-->
+		<xsd:attribute name="lifoOnHost" type="integer" default="0" />
+		<!--lifoSize => Set the capacity of the lifo storage-->
+		<xsd:attribute name="lifoSize" type="integer" default="0" />
 		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
 		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
@@ -1871,13 +1877,6 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
-		<!--lifoSize => The number of buffer to be stored into the LIFO -->
-		<xsd:attribute name="lifoSize" type="integer" default="0" />
-		<!--lifoOnDevice => The number of buffer to be stored on device by the LIFO -->
-		<xsd:attribute name="lifoOnDevice" type="integer" default="0" />
-		<!--lifoOnHost => The number of buffer to be stored on host by the LIFO -->
-		<xsd:attribute name="lifoOnHost" type="integer" default="0" />
-
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2089,6 +2088,12 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="forward" type="integer" default="1" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--lifoOnDevice => Set the capacity of the lifo device storage-->
+		<xsd:attribute name="lifoOnDevice" type="integer" default="0" />
+		<!--lifoOnHost => Set the capacity of the lifo host storage-->
+		<xsd:attribute name="lifoOnHost" type="integer" default="0" />
+		<!--lifoSize => Set the capacity of the lifo storage-->
+		<xsd:attribute name="lifoSize" type="integer" default="0" />
 		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
 		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
@@ -2763,6 +2768,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--relpermThreshold => Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2-->
+		<xsd:attribute name="relpermThreshold" type="real64" default="1e-06" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
