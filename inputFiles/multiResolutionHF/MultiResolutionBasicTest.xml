@@ -9,6 +9,8 @@
       patchSolverName="PhaseFieldSolve"
       logLevel="1"
       discretization="FE1"
+      initialBaseTip = "{-0.1429,0,0}"
+      initialTipElementIndex="24"
       targetRegions="{base/base_cer,patch/patch_cer}">
       <NonlinearSolverParameters
         newtonMaxIter="10"/>
@@ -50,20 +52,19 @@
       discretization="FE1"
       targetRegions="{base/base_cer,base/Fracture_cer}"
       fractureRegion="Fracture_cer"
-      logLevel="1"
+      logLevel="2"
       mpiCommOrder="1"/>
     
     <PhaseFieldFracture
       name="PhaseFieldSolve"
       solidSolverName="PFSolidMechSolve"
       damageSolverName="DamageSolve"
-      couplingTypeOption="FixedStress"
       logLevel="1"
-      subcycling="0"
-      discretization="FE1"
       targetRegions="{patch/patch_cer}">
       <NonlinearSolverParameters
-        newtonMaxIter="2"/>
+        newtonMaxIter="2"
+        subcycling="0"
+        couplingType="Sequential"/>
       <LinearSolverParameters
         logLevel="2"/>
     </PhaseFieldFracture>
@@ -86,7 +87,7 @@
       name="DamageSolve"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
-      localDissipation="Linear"
+      localDissipation="Quadratic"
       logLevel="1"
       targetRegions="{patch/patch_cer}">
       <NonlinearSolverParameters
@@ -104,8 +105,8 @@
       xCoords="{ -1, 1 }"
       yCoords="{ -1, 1 }"
       zCoords="{ -1, 1 }"
-      nx="{ 15 }"
-      ny="{ 15 }"
+      nx="{ 7 }"
+      ny="{ 7 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
     <InternalMesh
@@ -114,8 +115,8 @@
       xCoords="{ -1, 1 }"
       yCoords="{ -1, 1 }"
       zCoords="{ -1, 1 }"
-      nx="{ 15 }"
-      ny="{ 15 }"
+      nx="{ 7 }"
+      ny="{ 7 }"
       nz="{ 1 }"
       cellBlockNames="{ cb2 }"/>
   </Mesh>
@@ -124,14 +125,14 @@
     <BoundedPlane
       name="FracturePlane"
       normal="{0.0,1.0,0.0}"
-      origin="{-0.6, 0.0, 0.0 }"
+      origin="{-0.5, 0.0, 0.0 }"
       lengthVector="{1.0, 0.0, 0.0}"
       widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{0.99, 2}"/>
+      dimensions="{1.01, 2}"/>
   </Geometry>
   
   <Events
-      maxTime="2.0">
+      maxTime="12.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>
@@ -146,7 +147,7 @@
       timeFrequency="1.0"
       target="/Outputs/MRBasicTest_VTKOutput"/>
 
-    <PeriodicEvent
+    <!-- <PeriodicEvent
       name="siloOutputs"
       timeFrequency="1.0"
       target="/Outputs/MRBasicTest_SiloOutput"/>
@@ -155,7 +156,7 @@
       name="restarts"
       timeFrequency="1.0"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"/> -->
   </Events>
 
   <NumericalMethods>
@@ -186,14 +187,15 @@
   </ElementRegions>
 
   <Constitutive>
-    <DamageElasticIsotropic
+    <DamageVolDevElasticIsotropic
       name="shale"
       defaultDensity="2700"
-      defaultBulkModulus="5.5556e9"
-      defaultShearModulus="8.3333e9"
+      defaultBulkModulus="2.00e5"
+      defaultShearModulus="3.00e5"
       lengthScale="0.2"
+      degradationLowerLimit="1e-6"
       criticalFractureEnergy="2.7"
-      criticalStrainEnergy="1.0"/>
+      criticalStrainEnergy="16.875"/>
 
     <FrictionlessContact
       name="fractureContact"
@@ -203,29 +205,38 @@
 
   <FieldSpecifications>
     <FieldSpecification
+      name="xpos"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="5.0e-3"
+      functionName="f_b"
+      setNames="{ ypos }"/>
+
+    <!-- <FieldSpecification
       name="ypos"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       component="1"
-      scale="1.0e-7"
+      scale="0.0"
       functionName="f_b"
-      setNames="{ ypos }"/>
+      setNames="{ ypos }"/>   -->
 
     <FieldSpecification
       name="yneg"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
-      component="1"
-      scale="-1.0e-7"
+      component="0"
+      scale="0.0"
       functionName="f_b"
       setNames="{ yneg }"/>
 
     <FieldSpecification
-      name="xconstraint"
+      name="yconstraint"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
-      component="0"
-      setNames="{ xpos }"/>
+      component="1"
+      setNames="{ yneg }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -256,15 +267,15 @@
     </Tasks> -->
 
   <Outputs>
-    <Silo
-	    name="MRBasicTest_SiloOutput"/>
+    <!-- <Silo
+	    name="MRBasicTest_SiloOutput"/> -->
 
     <VTK
       name="MRBasicTest_VTKOutput"
-      plotFileRoot="plot_files"/>
+      plotFileRoot="plot_files_int"/>
 
-    <Restart
-      name="restartOutput"/>
+    <!-- <Restart
+      name="restartOutput"/> -->
   </Outputs>
 
 </Problem>

@@ -370,7 +370,7 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
     }
   }
 
-  
+
   finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
   finiteElement::dispatchlowOrder3D( subRegionFE, [&] ( auto const finiteElement )
@@ -386,7 +386,7 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
 
     KERNEL_TYPE::template launchCIComputationKernel< parallelDevicePolicy< 32 >, KERNEL_TYPE >( kernel );
   } );
- 
+
 
   // add all new nodes to newObject list
   // also, get index of edges that were just cut
@@ -445,7 +445,7 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
       }
     }
 
-    GEOSX_ERROR_IF(cutFace==-1,"Even though an element was cut, no cutFace was identified. This is an error. Exiting.");
+    GEOSX_ERROR_IF( cutFace==-1, "Even though an element was cut, no cutFace was identified. This is an error. Exiting." );
 
     for( auto && element:faceToElementList[cutFace] ) //does this iterator exist? //what if the elements that share this face are in
                                                       // different subRegions
