@@ -9,7 +9,15 @@ Pure thermal diffusion around a wellbore
 Problem description
 ------------------------------------------------------------------
 
-This example uses the thermal flow solver to model a pure thermal diffusion problem around a wellbore. To mimic this specific problem, thermal convection and fluid flow are removed by setting fluid pressure and fluid heat capacity to zero. 
+This example uses the thermal flow solver to model a pure thermal diffusion problem around a wellbore. To mimic this specific problem, thermal convection and fluid flow are removed by setting fluid pressure and fluid heat capacity to zero. With a uniform temperature applied on the inner surface of the wellbore, temperature field would radially diffuse as shown in the figure below:
+  
+.. _problemSketchRadialThermalDiffusionWellboreFig:
+.. figure:: radialThermalDiffusionSketch.png
+   :align: center
+   :width: 500
+   :figclass: align-center
+
+   Sketch of the radial thermal diffusion around a wellbore 
 
 Analytical results of the temperature profile along the radial direction is given by `(Wang and Papamichos, 1994) <https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94WR01774>`__ :
 
@@ -94,6 +102,13 @@ A good agreement between the GEOSX results and analytical results is shown in th
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/pureThermalDiffusion/pureThermalDiffusionAroundWellbore.py
 
+.. _resultsThermalDiffusionWellboreFig:
+.. figure:: radialThermalDiffusionResults.png
+   :align: center
+   :width: 500
+   :figclass: align-center
+
+   Radial thermal diffusion around a wellbore: a validation against analytical results 
 
 ------------------------------------------------------------------
 To go further

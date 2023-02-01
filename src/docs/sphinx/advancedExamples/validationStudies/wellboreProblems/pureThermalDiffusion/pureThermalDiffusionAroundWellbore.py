@@ -121,8 +121,7 @@ def main():
 		plt.title('t = '+str(diffusionTime)+'(s)')
 		plt.tight_layout()
 
-	plt.savefig('diffusion.png')
-	os.system('xdg-open diffusion.png')
+	plt.show()
 
 if __name__ == "__main__":
 	main()
