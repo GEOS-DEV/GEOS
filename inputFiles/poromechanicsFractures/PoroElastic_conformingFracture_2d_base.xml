@@ -9,7 +9,7 @@
       initialDt="1e-3"
       LagrangianContactSolverName="fractureMechSolver"
       poromechanicsSolverName="singlePhasePoromechanicsSolver"
-      logLevel="1">
+      logLevel="3">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
@@ -112,7 +112,7 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
+      permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>
 
     <CompressibleSinglePhaseFluid
       name="water"
@@ -183,7 +183,17 @@
       setNames="{ all }"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      scale="1.0e5"/>
+      scale="1.0e5"
+      functionName="injectionSchedule"/>
+
+    <FieldSpecification
+      name="initialStress"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain"
+      fieldName="rock_stress"
+      component="0"
+      scale="-1.0e5"/>  
 
     <FieldSpecification
       name="xconstraint"
@@ -229,6 +239,13 @@
       name="apertureTable"
       coordinates="{ -1.0e-3, 0.0 }"
       values="{ 1.0e-6, 1.0e-3 }"/>
+    
+    <TableFunction
+      name="injectionSchedule"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 10.0 }"
+      values="{ 0.0, 1.0 }"/>
+
   </Functions>
 
   <Outputs>

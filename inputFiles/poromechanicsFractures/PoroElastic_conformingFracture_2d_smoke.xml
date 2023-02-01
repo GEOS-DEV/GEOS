@@ -27,11 +27,12 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="10"
+      forceDt="1"
       target="/Solvers/poroSolver"/>
 
     <PeriodicEvent
       name="outputs"
+      cycleFrequency="1"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent

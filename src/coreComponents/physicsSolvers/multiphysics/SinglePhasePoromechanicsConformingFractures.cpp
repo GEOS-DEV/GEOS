@@ -146,6 +146,39 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
 
   synchronizeNonLinearParameters();
 
+  assembleCellBasedContributions( time_n,
+                                  dt,
+                                  domain,
+                                  dofManager,
+                                  localMatrix,
+                                  localRhs );
+
+  // Assemble fluxes 3D/2D and get dFluidResidualDAperture
+  poromechanicsSolver()->flowSolver()->assembleHydrofracFluxTerms( time_n,
+                                                                   dt,
+                                                                   domain,
+                                                                   dofManager,
+                                                                   localMatrix,
+                                                                   localRhs,
+                                                                   getDerivativeFluxResidual_dAperture() );
+
+  // These 2 steps need to occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
+  assembleCouplingTerms( time_n,
+                         dt,
+                         domain,
+                         dofManager,
+                         localMatrix,
+                         localRhs );
+}
+
+void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions( real64 const time_n,
+                                                                                  real64 const dt,
+                                                                                  DomainPartition & domain,
+                                                                                  DofManager const & dofManager,
+                                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                  arrayView1d< real64 > const & localRhs )
+{
+  /// 3. assemble Force Residual w.r.t. pressure and Fluix mass residual w.r.t. displacement
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -183,20 +216,26 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
     contactSolver()->assembleTractionResidualDerivativeWrtDisplacementAndTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
     /// 2.c assemble stabilization
     contactSolver()->assembleStabilization( mesh, domain.getNumericalMethodManager(), dofManager, localMatrix, localRhs );
+  } );
+}
 
-    /// 3. assemble
+void SinglePhasePoromechanicsConformingFractures::assembleCouplingTerms( real64 const time_n,
+                                                                         real64 const dt,
+                                                                         DomainPartition const & domain,
+                                                                         DofManager const & dofManager,
+                                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                         arrayView1d< real64 > const & localRhs )
+{
+  GEOSX_UNUSED_PARAM( time_n, dt );
+  // These 2 steps need to occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    /// 3. assemble Force Residual w.r.t. pressure and Fluix mass residual w.r.t. displacement
     assembleForceResidualDerivativeWrtPressure( mesh, regionNames, dofManager, localMatrix, localRhs );
     assembleFluidMassResidualDerivativeWrtDisplacement( mesh, regionNames, dofManager, localMatrix, localRhs );
   } );
-
-  // Transmissibility 3D/2D
-  poromechanicsSolver()->flowSolver()->assembleHydrofracFluxTerms( time_n,
-                                                                   dt,
-                                                                   domain,
-                                                                   dofManager,
-                                                                   localMatrix,
-                                                                   localRhs,
-                                                                   getDerivativeFluxResidual_dAperture() );
 }
 
 void SinglePhasePoromechanicsConformingFractures::
@@ -646,12 +685,13 @@ void SinglePhasePoromechanicsConformingFractures::
 
 void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition & domain )
 {
+
   Base::updateState( domain );
 
-  updateHydraulicAperture( domain );
+  updateHydraulicApertureAndFracturePermeability( domain );
 }
 
-void SinglePhasePoromechanicsConformingFractures::updateHydraulicAperture( DomainPartition & domain )
+void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFracturePermeability( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -663,28 +703,43 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicAperture( Domai
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion & subRegion )
     {
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView2d< real64 const > const & dispJump = subRegion.getReference< array2d< real64 > >( contact::dispJump::key() );
-      arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
-      arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-      arrayView1d< real64 > const & aperture = subRegion.getReference< array1d< real64 > >( flow::hydraulicAperture::key() );
-      arrayView1d< real64 > const & deltaVolume = subRegion.getReference< array1d< real64 > >( flow::deltaVolume::key() );
+      arrayView2d< real64 const > const & dispJump         = subRegion.getField< contact::dispJump >();
+      arrayView1d< real64 const > const & area             = subRegion.getElementArea().toViewConst();
+      arrayView1d< real64 const > const & volume           = subRegion.getElementVolume();
+      arrayView2d< real64 const > const & fractureTraction = subRegion.template getField< fields::contact::traction >();
 
-      forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
+
+      arrayView1d< real64 > const aperture            = subRegion.getElementAperture();
+      arrayView1d< real64 > const & hydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
+      arrayView1d< real64 > const & deltaVolume       = subRegion.getField< flow::deltaVolume >();
+
+      string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
+      CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
+
+      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
       {
-        if( ghostRank[kfe] < 0 )
+        
+        typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
+
+        real64 const minimumHydraulicAperture = 1.e-4;  //hardcoded for now 
+
+        forAll< ParallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
         {
-          if( contactSolver()->isElementInOpenState( subRegion, kfe ) )
           {
             aperture[kfe] = dispJump[kfe][0];
-            deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
+
+            hydraulicAperture[kfe] = minimumHydraulicAperture + aperture[kfe];
+
+            deltaVolume[kfe] = hydraulicAperture[kfe] * area[kfe] - volume[kfe];
+
+            real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[kfe] );
+            real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fractureTraction[kfe] );
+
+            porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( kfe, 0, pressure[kfe],
+                                                                                  oldHydraulicAperture[kfe], hydraulicAperture[kfe],
+                                                                                  jump, traction );
           }
-          else
-          {
-            aperture[kfe] = 0.0;
-            deltaVolume[kfe] = 0.0;
-          }
-        }
+        } );
       } );
     } );
   } );
