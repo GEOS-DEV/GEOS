@@ -86,9 +86,11 @@ set( physicsSolvers_headers
      simplePDE/LaplaceFEMKernels.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
+     simplePDE/PhaseFieldDamagePressureFEMKernels.hpp
      solidMechanics/SolidMechanicsFields.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
+     solidMechanics/SolidMechanicsSmallStrainQuasiStaticPressureKernel.hpp
      solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/kernels/ExplicitFiniteStrain.hpp
      solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp

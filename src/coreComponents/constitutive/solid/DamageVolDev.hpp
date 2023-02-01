@@ -35,7 +35,9 @@ class DamageVolDevUpdates : public DamageUpdates< UPDATE_BASE >
 public:
   template< typename ... PARAMS >
   DamageVolDevUpdates( arrayView2d< real64 > const & inputDamage,
+                       arrayView3d< real64 > const & inputDamageGrad,
                        arrayView2d< real64 > const & inputStrainEnergyDensity,
+                       arrayView2d< real64 > const & inputVolumetricStrain,
                        arrayView2d< real64 > const & inputExtDrivingForce,
                        real64 const & inputLengthScale,
                        real64 const & inputCriticalFractureEnergy,
@@ -45,10 +47,11 @@ public:
                        real64 const & inputTensileStrength,
                        real64 const & inputCompressStrength,
                        real64 const & inputDeltaCoefficient,
+                       arrayView1d< real64 > const & inputBiotCoefficient,
                        PARAMS && ... baseParams ):
-    DamageUpdates< UPDATE_BASE >( inputDamage, inputStrainEnergyDensity, inputExtDrivingForce, inputLengthScale,
+    DamageUpdates< UPDATE_BASE >( inputDamage, inputDamageGrad, inputStrainEnergyDensity, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,
                                   inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputExtDrivingForceFlag,
-                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient,
+                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient, inputBiotCoefficient,
                                   std::forward< PARAMS >( baseParams )... )
   {}
 
@@ -67,7 +70,8 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_extDrivingForce;
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
-  using DamageUpdates< UPDATE_BASE >::m_damage;
+  using DamageUpdates< UPDATE_BASE >::m_biotCoefficient;
+  using DamageUpdates< UPDATE_BASE >::m_newDamage;
   using DamageUpdates< UPDATE_BASE >::m_extDrivingForceFlag;
   using DamageUpdates< UPDATE_BASE >::m_tensileStrength;
   using DamageUpdates< UPDATE_BASE >::m_compressStrength;
@@ -161,8 +165,10 @@ public:
 
   using KernelWrapper = DamageVolDevUpdates< typename BASE::KernelWrapper >;
 
-  using Damage< BASE >::m_damage;
+  using Damage< BASE >::m_newDamage;
+  using Damage< BASE >::m_damageGrad;
   using Damage< BASE >::m_strainEnergyDensity;
+  using Damage< BASE >::m_volStrain;
   using Damage< BASE >::m_extDrivingForce;
   using Damage< BASE >::m_criticalFractureEnergy;
   using Damage< BASE >::m_lengthScale;
@@ -172,6 +178,7 @@ public:
   using Damage< BASE >::m_tensileStrength;
   using Damage< BASE >::m_compressStrength;
   using Damage< BASE >::m_deltaCoefficient;
+  using Damage< BASE >::m_biotCoefficient;
 
   DamageVolDev( string const & name, dataRepository::Group * const parent );
   virtual ~DamageVolDev() override;
@@ -183,9 +190,11 @@ public:
 
   KernelWrapper createKernelUpdates() const
   {
-    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
+    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
+                                                                       m_damageGrad.toView(),
                                                                        m_strainEnergyDensity.toView(),
                                                                        m_extDrivingForce.toView(),
+                                                                       m_volStrain.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
                                                                        m_criticalStrainEnergy,
@@ -193,7 +202,8 @@ public:
                                                                        m_extDrivingForceFlag,
                                                                        m_tensileStrength,
                                                                        m_compressStrength,
-                                                                       m_deltaCoefficient );
+                                                                       m_deltaCoefficient,
+                                                                       m_biotCoefficient.toView() );
   }
 
 };

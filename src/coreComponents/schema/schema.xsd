@@ -2266,8 +2266,6 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="damageUpperBound" type="real64" default="1.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
-		<!--fieldName => name of field variable-->
-		<xsd:attribute name="fieldName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--irreversibilityFlag => The flag to indicate whether to apply the irreversibility constraint-->
@@ -2296,6 +2294,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--pressureEffects => consider background pressure effects (matrix and fracture pressures)-->
+		<xsd:attribute name="pressureEffects" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -3201,6 +3201,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageElasticIsotropicType">
+		<!--biotCoefficient => Biot coefficient-->
+		<xsd:attribute name="biotCoefficient" type="real64_array" default="{0}" />
 		<!--compressiveStrength => Compressive strength from the uniaxial compression test-->
 		<xsd:attribute name="compressiveStrength" type="real64" default="0" />
 		<!--criticalFractureEnergy => Critical fracture energy-->
@@ -3231,6 +3233,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageSpectralElasticIsotropicType">
+		<!--biotCoefficient => Biot coefficient-->
+		<xsd:attribute name="biotCoefficient" type="real64_array" default="{0}" />
 		<!--compressiveStrength => Compressive strength from the uniaxial compression test-->
 		<xsd:attribute name="compressiveStrength" type="real64" default="0" />
 		<!--criticalFractureEnergy => Critical fracture energy-->
@@ -3261,6 +3265,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageVolDevElasticIsotropicType">
+		<!--biotCoefficient => Biot coefficient-->
+		<xsd:attribute name="biotCoefficient" type="real64_array" default="{0}" />
 		<!--compressiveStrength => Compressive strength from the uniaxial compression test-->
 		<xsd:attribute name="compressiveStrength" type="real64" default="0" />
 		<!--criticalFractureEnergy => Critical fracture energy-->

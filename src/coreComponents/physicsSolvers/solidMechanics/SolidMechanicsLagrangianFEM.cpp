@@ -19,6 +19,7 @@
 #define GEOSX_DISPATCH_VEM
 
 #include "SolidMechanicsLagrangianFEM.hpp"
+#include "SolidMechanicsSmallStrainQuasiStaticPressureKernel.hpp"
 #include "kernels/ImplicitSmallStrainNewmark.hpp"
 #include "kernels/ImplicitSmallStrainQuasiStatic.hpp"
 #include "kernels/ExplicitSmallStrain.hpp"
@@ -57,6 +58,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_maxForce( 0.0 ),
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
+  m_pressureEffectsFlag( 0 ),
   m_iComm( CommunicationTools::getInstance().getCommID() )
 {
 
@@ -959,11 +961,22 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
   {
     GEOSX_UNUSED_VAR( dt );
-    assemblyLaunch< constitutive::SolidBase,
-                    solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
-                                                                              dofManager,
-                                                                              localMatrix,
-                                                                              localRhs );
+    if( m_pressureEffectsFlag == 1 ) //add background pressure effects
+    {
+      assemblyLaunch< constitutive::DamageBase,
+                      solidMechanicsLagrangianFEMKernels::QuasiStaticPressureFactory >( domain,
+                                                                                        dofManager,
+                                                                                        localMatrix,
+                                                                                        localRhs );
+    }
+    else
+    { // standard quasi-static run
+      assemblyLaunch< constitutive::SolidBase,
+                      solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
+                                                                                dofManager,
+                                                                                localMatrix,
+                                                                                localRhs );
+    }
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
