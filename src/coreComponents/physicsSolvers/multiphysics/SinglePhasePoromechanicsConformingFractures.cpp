@@ -226,10 +226,10 @@ void SinglePhasePoromechanicsConformingFractures::assembleCouplingTerms( real64 
                                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                          arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_UNUSED_PARAM( time_n, dt );
+  GEOSX_UNUSED_VAR( time_n, dt );
   // These 2 steps need to occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
+                                                                MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
     /// 3. assemble Force Residual w.r.t. pressure and Fluix mass residual w.r.t. displacement
@@ -703,10 +703,12 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion & subRegion )
     {
-      arrayView2d< real64 const > const & dispJump         = subRegion.getField< contact::dispJump >();
-      arrayView1d< real64 const > const & area             = subRegion.getElementArea().toViewConst();
-      arrayView1d< real64 const > const & volume           = subRegion.getElementVolume();
-      arrayView2d< real64 const > const & fractureTraction = subRegion.template getField< fields::contact::traction >();
+      arrayView2d< real64 const > const & dispJump           = subRegion.getField< contact::dispJump >();
+      arrayView1d< real64 const > const & area               = subRegion.getElementArea().toViewConst();
+      arrayView1d< real64 const > const & volume             = subRegion.getElementVolume();
+      arrayView2d< real64 const > const & fractureTraction   = subRegion.getField< fields::contact::traction >();
+      arrayView1d< real64 const > const & pressure           = subRegion.getField< fields::flow::pressure >();
+      arrayView1d< real64 const > const oldHydraulicAperture = subRegion.template getField< fields::flow::aperture0 >();
 
 
       arrayView1d< real64 > const aperture            = subRegion.getElementAperture();
@@ -723,7 +725,7 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
 
         real64 const minimumHydraulicAperture = 1.e-4;  //hardcoded for now 
 
-        forAll< ParallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
         {
           {
             aperture[kfe] = dispJump[kfe][0];

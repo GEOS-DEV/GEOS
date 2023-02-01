@@ -190,7 +190,7 @@ private:
    *
    * @param domain
    */
-  void updateHydraulicAperture( DomainPartition & domain );
+  void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
 
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
