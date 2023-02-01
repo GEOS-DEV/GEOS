@@ -155,46 +155,46 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 
   forMeshBodies( [&]( MeshBody & meshBody )
   {
-  /*
-    MeshLevel & meshLevel = meshBody.getBaseDiscretization();
+    /*
+       MeshLevel & meshLevel = meshBody.getBaseDiscretization();
 
-    for( NeighborCommunicator const & neighbor : m_neighbors )
-    {
-      neighbor.addNeighborGroupToMesh( meshLevel );
-    }
+       for( NeighborCommunicator const & neighbor : m_neighbors )
+       {
+        neighbor.addNeighborGroupToMesh( meshLevel );
+       }
 
-    NodeManager & nodeManager = meshLevel.getNodeManager();
-    FaceManager & faceManager = meshLevel.getFaceManager();
-    EdgeManager & edgeManager = meshLevel.getEdgeManager();
+       NodeManager & nodeManager = meshLevel.getNodeManager();
+       FaceManager & faceManager = meshLevel.getFaceManager();
+       EdgeManager & edgeManager = meshLevel.getEdgeManager();
 
-    nodeManager.setMaxGlobalIndex();
+       nodeManager.setMaxGlobalIndex();
 
-    CommunicationTools::getInstance().assignGlobalIndices( faceManager,
-                                                           nodeManager,
-                                                           m_neighbors );
+       CommunicationTools::getInstance().assignGlobalIndices( faceManager,
+                                                             nodeManager,
+                                                             m_neighbors );
 
-    CommunicationTools::getInstance().assignGlobalIndices( edgeManager,
-                                                           nodeManager,
-                                                           m_neighbors );
+       CommunicationTools::getInstance().assignGlobalIndices( edgeManager,
+                                                             nodeManager,
+                                                             m_neighbors );
 
-    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
-                                                                           m_neighbors );
+       CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
+                                                                             m_neighbors );
 
-    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
-                                                                           m_neighbors );
+       CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
+                                                                             m_neighbors );
 
-    CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+       CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
 
-    faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
-    faceManager.computeGeometry( nodeManager );
-   */
+       faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
+       faceManager.computeGeometry( nodeManager );
+     */
 
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
 
-      if ( !meshLevel.isShallowCopyOf(meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
+      if( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
       {
-        for ( NeighborCommunicator const & neighbor : m_neighbors )
+        for( NeighborCommunicator const & neighbor : m_neighbors )
         {
           neighbor.addNeighborGroupToMesh( meshLevel );
         }
@@ -223,7 +223,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
         CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
 
 
-        if ( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+        if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
         {
           faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
           faceManager.computeGeometry( nodeManager );

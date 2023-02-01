@@ -203,7 +203,7 @@ MeshLevel::MeshLevel( string const & name,
   arrayView1d< globalIndex > nodelocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
 
   CellBlock & currentcellblock = cellBlockManager.getCellBlocks().getGroup< CellBlock >( 0 );
- 
+
   array1d< localIndex > partitionInfo = currentcellblock.getPartitionInformation();
 
   //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel partitionInfo="<<partitionInfo);
@@ -216,7 +216,7 @@ MeshLevel::MeshLevel( string const & name,
 
   localIndex localNodeIndex= 0;
   // the partitionInfo are passing from InternalMeshGenerator.cpp:
-  // partitionInfo[0-2] are firstElemIndexInPartition 
+  // partitionInfo[0-2] are firstElemIndexInPartition
   // partitionInfo[3-5] are lastElemIndexInPartition
   for( localIndex i = 0; i < m_dim; ++i )
   {
@@ -226,17 +226,17 @@ MeshLevel::MeshLevel( string const & name,
 
   // numNodesInDir[0] is the number of nodes on the x direction of the current partition
   for( localIndex i = 0; i < numNodesInDir[0]; ++i )
-  { 
+  {
     // numNodesInDir[0] is the number of nodes on the y direction of the current partition
     for( localIndex j = 0; j < numNodesInDir[1]; ++j )
-    { 
+    {
       // numNodesInDir[0] is the number of nodes on the z direction of the current partition
       for( localIndex k = 0; k < numNodesInDir[2]; ++k )
-      { 
+      {
         // globalnodeIJK is initilized as the global node index of the current partition
         // plus the global information of the partition which is firstElemIndexInPartition
         localIndex globalnodeIJK[3] = { i + partitionInfo[0] * 3, j + partitionInfo[1] * 3, k + partitionInfo[2] *3 };
-        
+
         //               15__________________ 63
         //               /|                  /|
         //              / |                 / |
@@ -252,11 +252,11 @@ MeshLevel::MeshLevel( string const & name,
         //            | /                 | /           |  /
         //            |/__________________|/            | /
         //            0      16     32    48            |/____ x
-        
+
         // assigning the localNodeIndex and globalnodeIJK for nodes
         nodelocalToGlobal[localNodeIndex] = globalnodeIJK[0]*(partitionInfo[7]*3+1)*(partitionInfo[8]*3+1)
-                                          + globalnodeIJK[1]*(partitionInfo[8]*3+1)
-                                          + globalnodeIJK[2];
+                                            + globalnodeIJK[1]*(partitionInfo[8]*3+1)
+                                            + globalnodeIJK[2];
 
         // local node index is simply incremental
         ++localNodeIndex;
@@ -284,9 +284,9 @@ MeshLevel::MeshLevel( string const & name,
       localIndex const numNodesPerElem = pow( order+1, 3 );
 
       CellElementSubRegion & newSubRegion = region.getSubRegions().registerGroup< CellElementSubRegion >( sourceSubRegion.getName() );
-     
+
       // assigning the element to nodes map through cell block
-      arrayView2d< localIndex, cells::NODE_MAP_USD> elemsToNodes = currentcellblock.getElemToNode();
+      arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = currentcellblock.getElemToNode();
 
       localIndex localElemIndex= 0;
 
@@ -456,16 +456,16 @@ MeshLevel::MeshLevel( string const & name,
       }
 
       //Initialisation of elemToNodes
-      /* 
-      for( localIndex e = 0; e < elemsToNodesNew.size( 0 ); ++e )
-      {
-        for( localIndex i = 0; i < numNodesPerElem; i++ )
-        {
+      /*
+         for( localIndex e = 0; e < elemsToNodesNew.size( 0 ); ++e )
+         {
+         for( localIndex i = 0; i < numNodesPerElem; i++ )
+         {
           elemsToNodesNew[e][i] =-1;
-        }
+         }
 
-      }
-      */ 
+         }
+       */
 
       //localIndex count=0;
 
@@ -526,12 +526,12 @@ MeshLevel::MeshLevel( string const & name,
                 face++;
               }
               /*
-              if( face > 5 && foundFace < 1 )
-              {
-                elemsToNodesNew[elem][nodeindex] = count;
-                count++;
-              }
-              */
+                 if( face > 5 && foundFace < 1 )
+                 {
+                 elemsToNodesNew[elem][nodeindex] = count;
+                 count++;
+                 }
+               */
             }
           }
         }

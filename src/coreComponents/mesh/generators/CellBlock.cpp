@@ -145,14 +145,14 @@ localIndex CellBlock::getFaceNodes( localIndex const cellIndex,
 
 arrayView1d< localIndex > CellBlock::getGlobalInformation()
 {
-  m_globalInfo.resize(9);
+  m_globalInfo.resize( 9 );
   return m_globalInfo.toView();
 }
 
-array1d< localIndex > CellBlock::getPartitionInformation() 
+array1d< localIndex > CellBlock::getPartitionInformation()
 {
   m_numNodesPerElement = 64;
-  m_elementsToNodes.resize( this->numElements(), m_numNodesPerElement); 
+  m_elementsToNodes.resize( this->numElements(), m_numNodesPerElement );
   return m_globalInfo;
 }
 

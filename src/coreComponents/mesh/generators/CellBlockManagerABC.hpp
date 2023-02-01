@@ -186,7 +186,7 @@ public:
    */
   virtual array1d< globalIndex > getNodeLocalToGlobal() const = 0;
 
-  virtual arrayView1d< globalIndex > getNodeLocalToGlobal()  = 0; 
+  virtual arrayView1d< globalIndex > getNodeLocalToGlobal()  = 0;
 
   /**
    * @brief Returns the node sets. Key of the map is the name of the set.

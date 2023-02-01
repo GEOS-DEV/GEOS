@@ -195,7 +195,7 @@ public:
    * @param numElements The new number of elements.
    */
   void resize( dataRepository::indexType const numElements ) override final;
-  
+
   arrayView1d< localIndex > getGlobalInformation();
 
   array1d< localIndex > getPartitionInformation();

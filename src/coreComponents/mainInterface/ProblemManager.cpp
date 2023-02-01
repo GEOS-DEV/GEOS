@@ -767,7 +767,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     faceManager.setDomainBoundaryObjects();
     nodeManager.setDomainBoundaryObjects( faceManager );
     edgeManager.setDomainBoundaryObjects( faceManager );
-  
+
     meshLevel.generateSets();
 
     elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
@@ -778,24 +778,23 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     } );
     elemManager.setMaxGlobalIndex();
   }
-
-  else if (!meshLevel.isShallowCopyOf(
-    getDomainPartition().getMeshBodies().getGroup< MeshBody >(0).getMeshLevels().getGroup< MeshLevel >( 0 )))
+  else if( !meshLevel.isShallowCopyOf(
+             getDomainPartition().getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevels().getGroup< MeshLevel >( 0 )))
   {
     elemManager.generateMesh( cellBlockManager );
     ToCellRelation< ArrayOfArrays< localIndex > > const toCellBlock = cellBlockManager.getNodeToElements();
     array2d< localIndex > const blockToSubRegion = elemManager.getCellBlockToSubRegionMap( cellBlockManager );
     meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( blockToSubRegion.toViewConst(),
-                                                                         toCellBlock,
-                                                                         nodeManager.toElementRelation()); 
+                                                                           toCellBlock,
+                                                                           nodeManager.toElementRelation());
 
     edgeManager.setGeometricalRelations( cellBlockManager );
 
     ToCellRelation< array2d< localIndex > > const faceToCellBlock = cellBlockManager.getFaceToElements();
     array2d< localIndex > const faceBlockToSubRegion = elemManager.getCellBlockToSubRegionMap( cellBlockManager );
     meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( faceBlockToSubRegion.toViewConst(),
-                                                                         faceToCellBlock,
-                                                                         faceManager.toElementRelation());
+                                                                           faceToCellBlock,
+                                                                           faceManager.toElementRelation());
 
     nodeManager.constructGlobalToLocalMap( cellBlockManager );
 
