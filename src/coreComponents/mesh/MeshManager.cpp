@@ -143,7 +143,7 @@ void MeshManager::importFields( DomainPartition & domain )
                                               region.getName(), subRegion.getName() ) );
 
         bool const isMaterialField = materialWrapperNames.count( geosxFieldName ) > 0 && wrapper.numArrayDims() > 1;
-        generator.importFieldsOnArray( region.getName(), meshFieldName, isMaterialField, wrapper );
+        generator.importFieldsOnArray( subRegion.getName(), meshFieldName, isMaterialField, wrapper );
       }
     } );
 
