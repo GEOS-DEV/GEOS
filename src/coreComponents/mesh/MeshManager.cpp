@@ -111,43 +111,46 @@ void MeshManager::importFields( DomainPartition & domain )
     FieldIdentifiers fieldsToBeSync;
     std::map< string, string > fieldNamesMapping = generator.getFieldsMapping();
 
-    MeshLevel & meshLevel = domain.getMeshBody( generator.getName() ).getBaseDiscretization();
-    ElementRegionManager & elemManager = meshLevel.getElemManager();
-    elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex,
-                                                                           localIndex,
-                                                                           ElementRegionBase const & region,
-                                                                           CellElementSubRegion & subRegion )
+    dataRepository::Group & meshLevels = domain.getMeshBody( generator.getName() ).getMeshLevels();
+    meshLevels.forSubGroups< MeshLevel >( [&]( MeshLevel & meshLevel )
     {
-      std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
-      // Writing properties
-      for( auto const & pair : fieldNamesMapping )
+      ElementRegionManager & elemManager = meshLevel.getElemManager();
+      elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex,
+                                                                             localIndex,
+                                                                             ElementRegionBase const & region,
+                                                                             CellElementSubRegion & subRegion )
       {
-        string const & meshFieldName = pair.first;
-        string const & geosxFieldName = pair.second;
-        // Find destination
-        if( !subRegion.hasWrapper( geosxFieldName ) )
+        std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
+        // Writing properties
+        for( auto const & pair : fieldNamesMapping )
         {
-          // Skip - the user may have not enabled a particular physics model/solver on this dstRegion.
-          GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Skipping import of {} -> {} on {}/{} (field not found)",
-                                                meshFieldName, geosxFieldName, region.getName(), subRegion.getName() ) );
+          string const & meshFieldName = pair.first;
+          string const & geosxFieldName = pair.second;
+          // Find destination
+          if( !subRegion.hasWrapper( geosxFieldName ) )
+          {
+            // Skip - the user may have not enabled a particular physics model/solver on this dstRegion.
+            GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Skipping import of {} -> {} on {}/{} (field not found)",
+                                                  meshFieldName, geosxFieldName, region.getName(), subRegion.getName() ) );
 
-          continue;
+            continue;
+          }
+
+          // Now that we know that the subRegion has this wrapper, we can add the geosxFieldName to the list of fields to
+          // synchronize
+          fieldsToBeSync.addElementFields( {geosxFieldName}, {region.getName()} );
+          WrapperBase & wrapper = subRegion.getWrapperBase( geosxFieldName );
+          GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Importing field {} -> {} on {}/{}",
+                                                meshFieldName, geosxFieldName,
+                                                region.getName(), subRegion.getName() ) );
+
+          bool const isMaterialField = materialWrapperNames.count( geosxFieldName ) > 0 && wrapper.numArrayDims() > 1;
+          generator.importFieldsOnArray( subRegion.getName(), meshFieldName, isMaterialField, wrapper );
         }
+      } );
 
-        // Now that we know that the subRegion has this wrapper, we can add the geosxFieldName to the list of fields to
-        // synchronize
-        fieldsToBeSync.addElementFields( {geosxFieldName}, {region.getName()} );
-        WrapperBase & wrapper = subRegion.getWrapperBase( geosxFieldName );
-        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Importing field {} -> {} on {}/{}",
-                                              meshFieldName, geosxFieldName,
-                                              region.getName(), subRegion.getName() ) );
-
-        bool const isMaterialField = materialWrapperNames.count( geosxFieldName ) > 0 && wrapper.numArrayDims() > 1;
-        generator.importFieldsOnArray( region.getName(), meshFieldName, isMaterialField, wrapper );
-      }
+      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, meshLevel, domain.getNeighbors(), false );
     } );
-
-    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, meshLevel, domain.getNeighbors(), false );
     generator.freeResources();
   } );
 }
