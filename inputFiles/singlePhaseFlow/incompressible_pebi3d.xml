@@ -19,7 +19,11 @@
   <Mesh>
     <VTKMesh
       name="mesh"
-      file="pebi3d.vtu"/>
+      partitionRefinement="3"
+      fieldsToImport="{ PERM, PORO, NTG }"
+      fieldNamesInGEOSX="{ rockPerm_permeability, rockPorosity_referencePorosity, netToGross }"
+	
+      file="pebi3d_with_properties.vtu"/>
   </Mesh>
 
   <Geometry>
@@ -96,13 +100,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="Porosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain"
-      fieldName="rockPorosity_referencePorosity"
-      scale="0.05"/>
 
     <FieldSpecification
       name="initialPressure"
