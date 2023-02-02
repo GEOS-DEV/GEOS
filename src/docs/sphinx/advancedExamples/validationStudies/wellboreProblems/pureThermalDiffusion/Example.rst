@@ -79,7 +79,7 @@ The volumetric heat capacity of fluid is set to a negligible value to exclude th
 FieldSpecifications
 --------------------------------------------------------------------
 
-The initial temperature, the imposed temperature at the curved wellbore surface as well as the far-field temperature are defined using ``faceManager`` as
+The initial temperature, the imposed temperature at the curved wellbore surface as well as the far-field temperature are defined as Dirichlet face boundary conditions using ``faceManager`` as
 
 .. literalinclude:: ../../../../../../../inputFiles/singlePhaseFlow/thermalCompressible_2d_base.xml
   :language: xml
