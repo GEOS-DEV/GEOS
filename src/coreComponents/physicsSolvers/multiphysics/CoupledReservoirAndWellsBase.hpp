@@ -34,13 +34,6 @@ namespace geosx
 
 namespace coupledReservoirAndWellsInternal
 {
-
-/**
- * @brief Utility function for the implementation details of initializePostInitialConditionsPreSubGroups
- */
-void
-initializePostInitialConditionsPreSubGroups( SolverBase * const solver );
-
 /**
  * @brief Utility function for the implementation details of addCouplingNumZeros
  * @param solver the coupled solver
@@ -61,6 +54,17 @@ addCouplingNumNonzeros( SolverBase const * const solver,
                         integer const wellNumDof,
                         string const & resElemDofName,
                         string const & wellElemDofName );
+
+/**
+ * @brief Validate the well perforations ensuring that each perforation is located in a reservoir region that is also
+ * targetted by the solver
+ * @param solver the coupled solver
+ * @param wellSolver the well solver
+ * @param domain the physical domain object
+ */
+bool validateWellPerforations( SolverBase const * const solver,
+                               WellSolverBase const * const wellSolver,
+                               DomainPartition const & domain );
 
 }
 
@@ -187,7 +191,11 @@ public:
 
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+    // Validate well perforations: Ensure that each perforation is in a region targetted by the solver
+    if( !validateWellPerforations( domain ))
+      return;
+
+    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                                  MeshLevel & meshLevel,
                                                                                  arrayView1d< string const > const & regionNames )
     {
@@ -274,6 +282,17 @@ protected:
   addCouplingSparsityPattern( DomainPartition const & domain,
                               DofManager const & dofManager,
                               SparsityPatternView< globalIndex > const & pattern ) const = 0;
+
+private:
+  /**
+   * @brief Validate the well perforations ensuring that each perforation is located in a reservoir region that is also
+   * targetted by the solver
+   * @param domain the physical domain object
+   */
+  bool validateWellPerforations( DomainPartition const & domain ) const
+  {
+    return coupledReservoirAndWellsInternal::validateWellPerforations( this, wellSolver(), domain );
+  }
 
 };
 

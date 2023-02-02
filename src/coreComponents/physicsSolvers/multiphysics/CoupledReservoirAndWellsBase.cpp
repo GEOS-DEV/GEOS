@@ -110,6 +110,45 @@ addCouplingNumNonzeros( SolverBase const * const solver,
   } );
 }
 
+bool validateWellPerforations( SolverBase const * const solver,
+                               WellSolverBase const * const wellSolver,
+                               DomainPartition const & domain )
+{
+  std::pair< string, string > badPerforation;
+  solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                        MeshLevel const & meshLevel,
+                                                                        arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager const & elemManager = meshLevel.getElemManager();
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const, WellElementSubRegion const & subRegion )
+    {
+      PerforationData const * const perforationData = subRegion.getPerforationData();
+      WellControls const & wellControls = wellSolver->getWellControls( subRegion );
+
+      arrayView1d< localIndex const > const & resElementRegion =
+        perforationData->getField< fields::perforation::reservoirElementRegion >();
+
+      // Loop over perforations and check the reservoir region to which each perforation is connected to
+      // If the name of the region is not in the list of targetted regions, then we have a "bad" connection.
+      for( localIndex iperf = 0; iperf < perforationData->size(); ++iperf )
+      {
+        localIndex const er = resElementRegion[iperf];
+        string const regionName = elemManager.getRegion( er ).getName();
+        if( std::find( regionNames.begin(), regionNames.end(), regionName ) == regionNames.end())
+        {
+          badPerforation = {wellControls.getName(), regionName};
+          break;
+        }
+      }
+    } );
+  } );
+  GEOSX_THROW_IF( !badPerforation.first.empty(),
+                  GEOSX_FMT( "The well {} has a connection to the region {} which is not targeted by the solver", badPerforation.first, badPerforation.second ),
+                  std::runtime_error );
+  localIndex const badPerforationCount = MpiWrapper::max( badPerforation.first.empty() ? 0 : 1 );
+  return badPerforationCount == 0;
+}
+
 }
 
 } /* namespace geosx */
