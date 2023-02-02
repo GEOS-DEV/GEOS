@@ -53,15 +53,20 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Regions where stabilization is applied." );
 
-  registerWrapper ( viewKeyStruct::stabilizationMultiplierString(), &m_stabilizationMultiplier ).
+  registerWrapper( viewKeyStruct::stabilizationMultiplierString(), &m_stabilizationMultiplier ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Constant multiplier of stabilization strength." );
 
-  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+  registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
+
+  registerWrapper( viewKeyStruct::performStressInitializationString(), &m_performStressInitialization ).
+    setApplyDefaultValue( false ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -198,8 +203,11 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
 
   } );
 
+
   solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
 
+  // tell the flow solver that this is a stress initialization step
+  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
 
   // step 3: compute the fluxes (face-based contributions)
 
