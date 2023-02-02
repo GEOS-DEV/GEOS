@@ -112,7 +112,7 @@ void MeshManager::importFields( DomainPartition & domain )
     std::map< string, string > fieldNamesMapping = generator.getFieldsMapping();
 
     dataRepository::Group & meshLevels = domain.getMeshBody( generator.getName() ).getMeshLevels();
-    meshLevels.forSubGroups< MeshLevel >( [&] ( MeshLevel & meshLevel ) 
+    meshLevels.forSubGroups< MeshLevel >( [&]( MeshLevel & meshLevel )
     {
       ElementRegionManager & elemManager = meshLevel.getElemManager();
       elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex,

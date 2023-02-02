@@ -152,7 +152,7 @@ void VTKMeshGenerator::importFieldsOnArray( string const & cellBlockName, string
     }
   }
 
-  GEOSX_ERROR("Could not import field \"" << meshFieldName << "\" from cell block \"" << cellBlockName << "\".");
+  GEOSX_ERROR( "Could not import field \"" << meshFieldName << "\" from cell block \"" << cellBlockName << "\"." );
 }
 
 void VTKMeshGenerator::freeResources()
