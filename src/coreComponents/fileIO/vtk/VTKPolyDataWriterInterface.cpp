@@ -986,7 +986,7 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
 
       if( m_outputRegionType == VTKRegionTypes::WELL || m_outputRegionType == VTKRegionTypes::ALL )
       {
-        elemManager.forElementRegions< WellElementRegion >( addRegion );
+        //elemManager.forElementRegions< WellElementRegion >( addRegion );
       }
 
       if( m_outputRegionType == VTKRegionTypes::SURFACE || m_outputRegionType == VTKRegionTypes::ALL )
@@ -1103,7 +1103,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
       }
       if( m_outputRegionType == VTKRegionTypes::WELL || m_outputRegionType == VTKRegionTypes::ALL )
       {
-        writeWellElementRegions( time, elemManager, nodeManager, meshDir );
+        //writeWellElementRegions( time, elemManager, nodeManager, meshDir );
       }
       if( m_outputRegionType == VTKRegionTypes::SURFACE || m_outputRegionType == VTKRegionTypes::ALL )
       {
