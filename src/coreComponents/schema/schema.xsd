@@ -412,6 +412,10 @@
 					<xsd:selector xpath="CompositionalMultiphaseStatistics" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="TasksMultiphasePoromechanicsInitializationUniqueName">
+					<xsd:selector xpath="MultiphasePoromechanicsInitialization" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksPVTDriverUniqueName">
 					<xsd:selector xpath="PVTDriver" />
 					<xsd:field xpath="@name" />
@@ -426,6 +430,10 @@
 				</xsd:unique>
 				<xsd:unique name="TasksRelpermDriverUniqueName">
 					<xsd:selector xpath="RelpermDriver" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="TasksSinglePhasePoromechanicsInitializationUniqueName">
+					<xsd:selector xpath="SinglePhasePoromechanicsInitialization" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="TasksSinglePhaseStatisticsUniqueName">
@@ -1734,6 +1742,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="plotLevel" type="integer" default="1" />
 		<!--writeFEMFaces => (no description available)-->
 		<xsd:attribute name="writeFEMFaces" type="integer" default="0" />
+		<!--writeGhostCells => Should the vtk files contain the ghost cells or not.-->
+		<xsd:attribute name="writeGhostCells" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2706,10 +2716,12 @@ Local - Add stabilization only to interiors of macro elements.-->
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
+			<xsd:element name="MultiphasePoromechanicsInitialization" type="MultiphasePoromechanicsInitializationType" />
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
 			<xsd:element name="ReactiveFluidDriver" type="ReactiveFluidDriverType" />
 			<xsd:element name="RelpermDriver" type="RelpermDriverType" />
+			<xsd:element name="SinglePhasePoromechanicsInitialization" type="SinglePhasePoromechanicsInitializationType" />
 			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="SolidMechanicsStatistics" type="SolidMechanicsStatisticsType" />
@@ -2727,6 +2739,16 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--relpermThreshold => Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2-->
 		<xsd:attribute name="relpermThreshold" type="real64" default="1e-06" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="MultiphasePoromechanicsInitializationType">
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
+		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
+		<!--poromechanicsSolverName => Name of the poromechanics solver-->
+		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2793,6 +2815,16 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="relperm" type="string" use="required" />
 		<!--steps => Number of saturation steps to take-->
 		<xsd:attribute name="steps" type="integer" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SinglePhasePoromechanicsInitializationType">
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
+		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
+		<!--poromechanicsSolverName => Name of the poromechanics solver-->
+		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

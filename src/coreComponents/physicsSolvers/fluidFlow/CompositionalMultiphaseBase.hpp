@@ -317,6 +317,32 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const = 0;
 
+  /**
+   * @brief Utility function to keep the flow variables during a time step (used in poromechanics simulations)
+   * @param[in] keepFlowVariablesConstantDuringInitStep flag to tell the solver to freeze its primary variables during a time step
+   * @detail This function is meant to be called by a specific task before/after the initialization step
+   */
+  void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
+  { m_keepFlowVariablesConstantDuringInitStep = keepFlowVariablesConstantDuringInitStep; }
+
+  /**
+   * @brief Function to fix the initial state during the initialization step in coupled problems
+   * @param[in] time current time
+   * @param[in] dt time step
+   * @param[in] dofManager degree-of-freedom manager associated with the linear system
+   * @param[in] domain the domain
+   * @param[in] localMatrix local system matrix
+   * @param[in] localRhs local system right-hand side vector
+   * @detail This function is meant to be called when the flag m_keepFlowVariablesConstantDuringInitStep is on
+   *         The main use case is the initialization step in coupled problems during which we solve an elastic problem for a fixed pressure
+   */
+  void keepFlowVariablesConstantDuringInitStep( real64 const time,
+                                                real64 const dt,
+                                                DofManager const & dofManager,
+                                                DomainPartition & domain,
+                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                arrayView1d< real64 > const & localRhs ) const;
+
 
   /**
    * @brief Sets all the negative component densities (if any) to zero.
@@ -383,6 +409,9 @@ protected:
 
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
+
+  /// flag to freeze the initial state during initialization in coupled problems
+  integer m_keepFlowVariablesConstantDuringInitStep;
 
   /// maximum (absolute) change in a component fraction in a Newton iteration
   real64 m_maxCompFracChange;
