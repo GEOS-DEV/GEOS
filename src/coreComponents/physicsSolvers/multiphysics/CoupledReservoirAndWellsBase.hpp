@@ -195,7 +195,7 @@ public:
     if( !validateWellPerforations( domain ))
       return;
 
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
+    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel & meshLevel,
                                                                                  arrayView1d< string const > const & regionNames )
     {
