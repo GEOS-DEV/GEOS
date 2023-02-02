@@ -110,11 +110,22 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
+  /*
+   * @brief Utility function to set the stress initialization flag
+   * @param[in] performStressInitialization true if the solver has to initialize stress, false otherwise
+   */
+  void setStressInitialization( integer const performStressInitialization )
+  { m_performStressInitialization = performStressInitialization; }
+
   /**@}*/
 
   struct viewKeyStruct : Base::viewKeyStruct
   {
+    /// Names of the porous materials
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
+
+    /// Flag to indicate that the solver is going to perform stress initialization
+    constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
   };
 
 protected:
@@ -137,6 +148,9 @@ private:
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
                          PARAMS && ... params );
+
+  /// Flag to indicate that the solver is going to perform stress initialization
+  integer m_performStressInitialization;
 
 };
 
