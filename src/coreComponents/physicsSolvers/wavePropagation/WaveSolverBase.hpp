@@ -23,6 +23,7 @@
 
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include "common/lifoStorage.hpp"
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 
 #define SEM_FE_TYPES \
@@ -83,6 +84,9 @@ public:
     static constexpr char const * forwardString() { return "forward"; }
     static constexpr char const * saveFieldsString() { return "saveFields"; }
     static constexpr char const * shotIndexString() { return "shotIndex"; }
+    static constexpr char const * lifoSizeString() { return "lifoSize"; }
+    static constexpr char const * lifoOnDeviceString() { return "lifoOnDevice"; }
+    static constexpr char const * lifoOnHostString() { return "lifoOnHost"; }
 
     static constexpr char const * useDASString() { return "useDAS"; }
     static constexpr char const * linearDASGeometryString() { return "linearDASGeometry"; }
@@ -91,6 +95,12 @@ public:
     static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
   };
+
+  /**
+   * @brief Safeguard for timeStep. Used to avoid memory issue due to too small value.
+   */
+  static constexpr real64 epsilonLoc = 1e-8;
+
 
   /**
    * @brief Re-initialize source and receivers positions in the mesh, and resize the pressureNp1_at_receivers array
@@ -126,14 +136,6 @@ protected:
   virtual void applyPML( real64 const time, DomainPartition & domain ) = 0;
 
 
-  /**
-   * @brief Compute the value of a Ricker (a Gaussian function)
-   * @param time_n time to evaluate the Ricker
-   * @param f0 central frequency of the Ricker
-   * @param order order of the ricker
-   * @return the value of a Ricker evaluated a time_n with f0
-   */
-  virtual real32 evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order );
 
   /**
    * @brief Locate sources and receivers positions in the mesh elements, evaluate the basis functions at each point and save them to the
@@ -141,35 +143,6 @@ protected:
    * @param mesh mesh of the computational domain
    */
   virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) = 0;
-
-  /**
-   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
-   * last two timesteps.
-   * @param time_n the time corresponding to the field values pressure_n
-   * @param dt the simulation timestep
-   * @param timeSeismo the time at which the seismogram is computed
-   * @param iSeismo the index of the seismogram time in the seismogram array
-   * @param var_at_np1 the field values at time_n + dt
-   * @param var_at_n the field values at time_n
-   * @param var_at_receivers the array holding the trace values, where the output is written
-   */
-  virtual void computeSeismoTrace( real64 const time_n,
-                                   real64 const dt,
-                                   real64 const timeSeismo,
-                                   localIndex iSeismo,
-                                   arrayView1d< real32 const > const var_np1,
-                                   arrayView1d< real32 const > const var_n,
-                                   arrayView2d< real32 > varAtReceivers ) = 0;
-
-  /**
-   * @brief Temporary debug function. Saves the sismo trace to a file.
-   * @param iSeismo index number of the seismo trace
-   * @param val value to be written in seismo
-   * @param filename name of the output file
-   */
-  virtual void saveSeismo( localIndex const iSeismo, real32 val, string const & filename ) = 0;
-
-
 
   /**
    * @brief Perform forward explicit step
@@ -244,6 +217,18 @@ protected:
 
   /// Flag to apply PML
   integer m_usePML;
+
+  /// lifo size
+  localIndex m_lifoSize;
+
+  /// Number of buffers to store on device by LIFO
+  localIndex m_lifoOnDevice;
+
+  /// Number of buffers to store on host by LIFO
+  localIndex m_lifoOnHost;
+
+  /// LIFO to store p_dt2
+  std::unique_ptr< lifoStorage< real32 > > m_lifo;
 
   struct parametersPML
   {

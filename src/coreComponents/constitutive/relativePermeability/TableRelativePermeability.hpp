@@ -145,6 +145,8 @@ private:
     static constexpr char const * flagInterpolatorString() { return "flagInterpolator"; }
   };
 
+  arrayView1d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
+
 private:
 
   virtual void postProcessInput() override;

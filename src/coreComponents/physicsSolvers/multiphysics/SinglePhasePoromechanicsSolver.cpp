@@ -16,6 +16,8 @@
  * @file SinglePhasePoromechanicsSolver.cpp
  */
 
+#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
+
 #include "SinglePhasePoromechanicsSolver.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
@@ -39,6 +41,11 @@ SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & n
                                                                 Group * const parent )
   : Base( name, parent )
 {
+  registerWrapper( viewKeyStruct::performStressInitializationString(), &m_performStressInitialization ).
+    setApplyDefaultValue( false ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
+
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
   m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
@@ -93,7 +100,9 @@ void SinglePhasePoromechanicsSolver::initializePreSubGroups()
     {
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      GEOSX_ERROR_IF( porousName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+      GEOSX_THROW_IF( porousName.empty(),
+                      GEOSX_FMT( "{} {} : Solid model not found on subregion {}", catalogName(), getName(), subRegion.getName() ),
+                      InputError );
     } );
   } );
 }
@@ -127,28 +136,6 @@ void SinglePhasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups
   }
 }
 
-real64 SinglePhasePoromechanicsSolver::solverStep( real64 const & time_n,
-                                                   real64 const & dt,
-                                                   int const cycleNumber,
-                                                   DomainPartition & domain )
-{
-  real64 dt_return = dt;
-
-  setupSystem( domain,
-               m_dofManager,
-               m_localMatrix,
-               m_rhs,
-               m_solution );
-
-  implicitStepSetup( time_n, dt, domain );
-
-  dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-  implicitStepComplete( time_n, dt_return, domain );
-
-  return dt_return;
-}
-
 void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                      real64 const dt,
                                                      DomainPartition & domain,
@@ -161,7 +148,6 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
   real64 poromechanicsMaxForce = 0.0;
   real64 mechanicsMaxForce = 0.0;
-
 
   // step 1: apply the full poromechanics coupling on the target regions on the poromechanics solver
 
@@ -177,19 +163,18 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
     poromechanicsMaxForce =
       assemblyLaunch< constitutive::PorousSolidBase,
-                      poromechanicsKernels::SinglePhaseKernelFactory >( mesh,
-                                                                        dofManager,
-                                                                        regionNames,
-                                                                        viewKeyStruct::porousMaterialNamesString(),
-                                                                        localMatrix,
-                                                                        localRhs,
-                                                                        flowDofKey,
-                                                                        FlowSolverBase::viewKeyStruct::fluidNamesString() );
+                      poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
+                                                                                     dofManager,
+                                                                                     regionNames,
+                                                                                     viewKeyStruct::porousMaterialNamesString(),
+                                                                                     localMatrix,
+                                                                                     localRhs,
+                                                                                     flowDofKey,
+                                                                                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
 
 
   } );
-
 
   // step 2: apply mechanics solver on its target regions not included in the poromechanics solver target regions
 
@@ -229,6 +214,9 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
   solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
 
 
+  // tell the flow solver that this is a stress initialization step
+  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
+
   // step 3: compute the fluxes (face-based contributions)
 
   flowSolver()->assemblePoroelasticFluxTerms( time_n, dt,
@@ -237,6 +225,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                               localMatrix,
                                               localRhs,
                                               " " );
+
 }
 
 void SinglePhasePoromechanicsSolver::createPreconditioner()

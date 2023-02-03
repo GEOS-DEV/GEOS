@@ -21,6 +21,7 @@
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "constitutive/relativePermeability/TableRelativePermeabilityHelpers.hpp"
 #include "functions/FunctionManager.hpp"
+#include "constitutive/relativePermeability/RelpermDriver.hpp"
 
 namespace geosx
 {
@@ -672,6 +673,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::KernelWrapper( arrayView1d< 
   m_phaseMaxHistoricalVolFraction( phaseMaxHistoricalVolFraction ),
   m_flagInterpolator( flagInterpolator )
 {}
+
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, TableRelativePermeabilityHysteresis, std::string const &, Group * const )

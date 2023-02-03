@@ -13,7 +13,7 @@
  */
 
 /**
- * @file MultiphasePoroelasticSolver.hpp
+ * @file MultiphasePoromechanicsSolver.hpp
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_
@@ -103,15 +103,20 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
-
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             int const cycleNumber,
-                             DomainPartition & domain ) override;
-
   virtual void updateState( DomainPartition & domain ) override;
 
+  /*
+   * @brief Utility function to update the stabilization parameters at each time step
+   * @param[in] domain the domain partition
+   */
   void updateStabilizationParameters( DomainPartition & domain ) const;
+
+  /*
+   * @brief Utility function to set the stress initialization flag
+   * @param[in] performStressInitialization true if the solver has to initialize stress, false otherwise
+   */
+  void setStressInitialization( integer const performStressInitialization )
+  { m_performStressInitialization = performStressInitialization; }
 
   /**@}*/
 
@@ -124,7 +129,7 @@ public:
 
 protected:
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : Base::viewKeyStruct
   {
     /// Names of the porous materials
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
@@ -137,6 +142,10 @@ protected:
 
     /// Multiplier on stabilization
     constexpr static char const * stabilizationMultiplierString() { return "stabilizationMultiplier"; }
+
+    /// Flag to indicate that the solver is going to perform stress initialization
+    constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
+
   };
 
   virtual void initializePreSubGroups() override;
@@ -154,7 +163,6 @@ private:
                          arrayView1d< real64 > const & localRhs,
                          PARAMS && ... params );
 
-
   /// Type of stabilization used in the simulation
   StabilizationType m_stabilizationType;
 
@@ -163,6 +171,9 @@ private:
 
   /// Multiplier on stabilization constant
   real64 m_stabilizationMultiplier;
+
+  /// Flag to indicate that the solver is going to perform stress initialization
+  integer m_performStressInitialization;
 
 };
 

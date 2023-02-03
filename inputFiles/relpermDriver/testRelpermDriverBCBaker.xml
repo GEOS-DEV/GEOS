@@ -1,0 +1,54 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <RelpermDriver
+      name="testCO2"
+      relperm="relperm"
+      steps="100" 
+      output="out_alt.txt"
+      logLevel="1" />  
+  </Tasks>
+
+  <Events
+    maxTime="1">
+    <SoloEvent name="eventC" target="/Tasks/testCO2"/>
+  </Events>
+
+  <Constitutive>
+
+    <BrooksCoreyBakerRelativePermeability
+      name="relperm"
+      phaseNames="{ oil, gas, water }"
+      phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
+      waterOilRelPermExponent="{ 2, 2. }"
+      waterOilRelPermMaxValue="{ 1, 1. }"
+      gasOilRelPermExponent="{ 1, 1 }"
+      gasOilRelPermMaxValue="{ 1, 1 }"/>
+
+
+  </Constitutive>
+
+
+  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cellBlock01 }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+            name="dummy"
+            cellBlocks="{ cellBlock01 }"
+            materialList="{ dummy }"/>
+  </ElementRegions>
+
+</Problem>
