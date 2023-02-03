@@ -77,6 +77,15 @@ public:
   explicit VTKPolyDataWriterInterface( string outputName );
 
   /**
+   * @brief Defines if the vtk outputs should contain the ghost cells.
+   * @param writeGhostCells The boolean flag.
+   */
+  void setWriteGhostCells( bool writeGhostCells )
+  {
+    m_writeGhostCells = writeGhostCells;
+  }
+
+  /**
    * @brief Sets the plot level
    * @details All fields have an associated plot level. If it is <= to \p plotLevel,
    * the field will be output.
@@ -282,6 +291,9 @@ private:
   /// A writter specialized for PVD files. There is one PVD file per simulation. It is the root
   /// file containing all the paths to the VTM files.
   VTKPVDWriter m_pvd;
+
+  /// Should the vtk files contain the ghost cells or not.
+  bool m_writeGhostCells;
 
   /// Maximum plot level to be written.
   dataRepository::PlotLevel m_plotLevel;

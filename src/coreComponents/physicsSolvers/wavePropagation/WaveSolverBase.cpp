@@ -87,11 +87,26 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Set to 1 to save fields during forward and restore them during backward" );
 
-
   registerWrapper( viewKeyStruct::shotIndexString(), &m_shotIndex ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Set the current shot for temporary files" );
+
+  registerWrapper( viewKeyStruct::lifoSizeString(), &m_lifoSize ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Set the capacity of the lifo storage" );
+
+  registerWrapper( viewKeyStruct::lifoOnDeviceString(), &m_lifoOnDevice ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Set the capacity of the lifo device storage" );
+
+  registerWrapper( viewKeyStruct::lifoOnHostString(), &m_lifoOnHost ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Set the capacity of the lifo host storage" );
+
 
   registerWrapper( viewKeyStruct::usePMLString(), &m_usePML ).
     setInputFlag( InputFlags::FALSE ).
@@ -117,6 +132,7 @@ WaveSolverBase::~WaveSolverBase()
 
 void WaveSolverBase::reinit()
 {
+  initializePreSubGroups();
   postProcessInput();
   initializePostInitialConditionsPreSubGroups();
 }
