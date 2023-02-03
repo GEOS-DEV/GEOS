@@ -110,14 +110,18 @@ addCouplingNumNonzeros( SolverBase const * const solver,
   } );
 }
 
-bool validateWellPerforations( SolverBase const * const solver,
+bool validateWellPerforations( SolverBase const * const reservoirSolver,
                                WellSolverBase const * const wellSolver,
                                DomainPartition const & domain )
 {
   std::pair< string, string > badPerforation;
-  solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                        MeshLevel const & meshLevel,
-                                                                        arrayView1d< string const > const & regionNames )
+
+  arrayView1d< string const > const flowTargetRegionNames =
+    reservoirSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+
+  wellSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                            MeshLevel const & meshLevel,
+                                                                            arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager const & elemManager = meshLevel.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const, WellElementSubRegion const & subRegion )
@@ -134,7 +138,7 @@ bool validateWellPerforations( SolverBase const * const solver,
       {
         localIndex const er = resElementRegion[iperf];
         string const regionName = elemManager.getRegion( er ).getName();
-        if( std::find( regionNames.begin(), regionNames.end(), regionName ) == regionNames.end())
+        if( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), regionName ) == flowTargetRegionNames.end())
         {
           badPerforation = {wellControls.getName(), regionName};
           break;

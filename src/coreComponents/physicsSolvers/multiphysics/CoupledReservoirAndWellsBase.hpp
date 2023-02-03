@@ -58,11 +58,11 @@ addCouplingNumNonzeros( SolverBase const * const solver,
 /**
  * @brief Validate the well perforations ensuring that each perforation is located in a reservoir region that is also
  * targetted by the solver
- * @param solver the coupled solver
+ * @param reservoirSolver the reservoir solver
  * @param wellSolver the well solver
  * @param domain the physical domain object
  */
-bool validateWellPerforations( SolverBase const * const solver,
+bool validateWellPerforations( SolverBase const * const reservoirSolver,
                                WellSolverBase const * const wellSolver,
                                DomainPartition const & domain );
 
@@ -193,7 +193,9 @@ public:
 
     // Validate well perforations: Ensure that each perforation is in a region targetted by the solver
     if( !validateWellPerforations( domain ))
+    {
       return;
+    }
 
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel & meshLevel,
@@ -291,7 +293,7 @@ private:
    */
   bool validateWellPerforations( DomainPartition const & domain ) const
   {
-    return coupledReservoirAndWellsInternal::validateWellPerforations( this, wellSolver(), domain );
+    return coupledReservoirAndWellsInternal::validateWellPerforations( reservoirSolver(), wellSolver(), domain );
   }
 
 };
