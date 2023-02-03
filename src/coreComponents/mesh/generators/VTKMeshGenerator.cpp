@@ -123,12 +123,9 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, comm );
 }
 
-void VTKMeshGenerator::importFieldsOnArray( string const & regionName, string const & meshFieldName, bool isMaterialField, WrapperBase & wrapper ) const
+void VTKMeshGenerator::importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, WrapperBase & wrapper ) const
 {
-  // GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': importing field data from mesh dataset", catalogName(), getName() ) );
   GEOSX_ASSERT_MSG( m_vtkMesh, "Must call generateMesh() before importFields()" );
-
-  vtkDataArray * vtkArray = vtk::findArrayForImport( *m_vtkMesh, meshFieldName );
 
   for( auto const & typeRegions : m_cellMap )
   {
@@ -137,22 +134,25 @@ void VTKMeshGenerator::importFieldsOnArray( string const & regionName, string co
     {
       for( auto const & regionCells: typeRegions.second )
       {
-        string const cellBlockName = vtk::buildCellBlockName( typeRegions.first, regionCells.first );
+        string const currentCellBlockName = vtk::buildCellBlockName( typeRegions.first, regionCells.first );
         // We don't know how the user mapped cell blocks to regions, so we must check all of them
-        if( regionName != cellBlockName )
+        if( cellBlockName != currentCellBlockName )
           continue;
 
+        vtkDataArray * vtkArray = vtk::findArrayForImport( *m_vtkMesh, meshFieldName );
         if( isMaterialField )
         {
-          vtk::importMaterialField( regionCells.second, vtkArray, wrapper );
+          return vtk::importMaterialField( regionCells.second, vtkArray, wrapper );
         }
         else
         {
-          vtk::importRegularField( regionCells.second, vtkArray, wrapper );
+          return vtk::importRegularField( regionCells.second, vtkArray, wrapper );
         }
       }
     }
   }
+
+  GEOSX_ERROR( "Could not import field \"" << meshFieldName << "\" from cell block \"" << cellBlockName << "\"." );
 }
 
 void VTKMeshGenerator::freeResources()
