@@ -30,7 +30,7 @@ namespace geosx
  *
  * This class processes the data of a single well from the XML and generates the well geometry
  */
-class InternalWellGenerator : public MeshGeneratorBase
+class InternalWellGenerator : public dataRepository::Group
 {
 public:
 
@@ -59,7 +59,7 @@ public:
   /**
    * @brief Default destructor.
    */
-  virtual ~InternalWellGenerator() override;
+  virtual ~InternalWellGenerator();
 
   ///@}
 
@@ -81,6 +81,10 @@ public:
    */
   ///@{
 
+
+  /// using alias for templated Catalog meshGenerator type
+  using CatalogInterface = dataRepository::CatalogInterface< InternalWellGenerator, string const &, Group * const >;
+
   /**
    * @brief Creates a new sub-Group using the ObjectCatalog functionality.
    * @param[in] childKey The name of the new object type's key in the
@@ -99,18 +103,16 @@ public:
 
   /**
    * @brief Main function of the class that generates the well geometry
+   */
+  virtual void generateWellGeometry( );
+
+
+  /**
+   * @brief Main function of the class that generates the well geometry
    * @param[in] domain the domain object
    */
-  virtual void generateMesh( DomainPartition & domain ) override;
+  //virtual void generateMesh( DomainPartition & domain ) override;
 
-
-  void importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const override
-  {
-    GEOSX_UNUSED_VAR( cellBlockName );
-    GEOSX_UNUSED_VAR( meshFieldName );
-    GEOSX_UNUSED_VAR( isMaterialField );
-    GEOSX_UNUSED_VAR( wrapper );
-  }
 
   ///@}
 
@@ -221,8 +223,12 @@ public:
     constexpr static char const * meshNameString() { return "meshName"; }
     constexpr static char const * perforationString() { return "Perforation"; }
   };
-  /// @endcond
 
+  const string getWellRegionName() const { return m_wellRegionName; }
+  const string getWellControlsName() const { return m_wellControlsName; }
+  /// @endcond
+  
+  
 protected:
 
   /**

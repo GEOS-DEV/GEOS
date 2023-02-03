@@ -32,7 +32,7 @@ namespace geosx
 using namespace dataRepository;
 
 InternalWellGenerator::InternalWellGenerator( string const & name, Group * const parent ):
-  MeshGeneratorBase( name, parent ),
+  Group( name, parent ),
   m_numElemsPerSegment( 0 ),
   m_minSegmentLength( 1e-2 ),
   m_minElemLength( 1e-3 ),
@@ -160,7 +160,7 @@ void InternalWellGenerator::expandObjectCatalogs()
   createChild( viewKeyStruct::perforationString(), viewKeyStruct::perforationString() );
 }
 
-void InternalWellGenerator::generateMesh( DomainPartition & domain )
+void InternalWellGenerator::generateWellGeometry( )
 {
   // count the number of well elements to create
   m_numElems = m_numElemsPerSegment * m_segmentToPolyNodeMap.size( 0 );
@@ -202,17 +202,23 @@ void InternalWellGenerator::generateMesh( DomainPartition & domain )
     debugWellGeometry();
   }
 
-  // get the element (sub) region to populate and save the well generator and constraints names
-  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
-
-  ElementRegionManager & elemManager = meshLevel.getElemManager();
-  WellElementRegion &
-  wellRegion = elemManager.getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() ).
-                 getGroup< WellElementRegion >( this->m_wellRegionName );
-
-  wellRegion.setWellGeneratorName( this->getName() );
-  wellRegion.setWellControlsName( m_wellControlsName );
 }
+
+// void InternalWellGenerator::generateMesh( DomainPartition & domain )
+// {
+//   generateWellGeometry( );
+
+//   // get the element (sub) region to populate and save the well generator and constraints names
+//   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
+
+//   ElementRegionManager & elemManager = meshLevel.getElemManager();
+//   WellElementRegion &
+//   wellRegion = elemManager.getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() ).
+//                  getGroup< WellElementRegion >( this->m_wellRegionName );
+
+//   wellRegion.setWellGeneratorName( this->getName() );
+//   wellRegion.setWellControlsName( m_wellControlsName );
+// }
 
 void InternalWellGenerator::constructPolylineNodeToSegmentMap()
 {
@@ -629,5 +635,5 @@ void InternalWellGenerator::debugWellGeometry() const
 
 }
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellGenerator, string const &, Group * const )
+  REGISTER_CATALOG_ENTRY( InternalWellGenerator, InternalWellGenerator, string const &, Group * const )
 }

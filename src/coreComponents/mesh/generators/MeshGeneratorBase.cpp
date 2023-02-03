@@ -13,6 +13,8 @@
  */
 
 #include "MeshGeneratorBase.hpp"
+#include "InternalWellGenerator.hpp"
+#include "mesh/MeshBody.hpp"
 
 namespace geosx
 {
@@ -26,9 +28,9 @@ MeshGeneratorBase::MeshGeneratorBase( string const & name, Group * const parent 
 
 Group * MeshGeneratorBase::createChild( string const & childKey, string const & childName )
 {
-  // Mesh generators generally don't have child XML nodes, must override this method to enable
-  GEOSX_THROW( GEOSX_FMT( "Mesh '{}': invalid child XML node '{}' of type {}", getName(), childName, childKey ),
-               InputError );
+  GEOSX_LOG_RANK_0( "Adding Mesh attribute: " << childKey << ", " << childName );
+  std::unique_ptr< InternalWellGenerator > wellGen = InternalWellGenerator::CatalogInterface::factory( childKey, childName, this );
+  return &this->registerGroup< InternalWellGenerator >( childName, std::move( wellGen ) );
 }
 
 MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog()
@@ -37,4 +39,27 @@ MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog
   return catalog;
 }
 
+MeshGeneratorHelper MeshGeneratorBase::generateMesh( MeshBody & meshBody ) {
+  meshBody.createMeshLevel( 0 );
+  MeshLevel & meshLevel = meshBody.getBaseDiscretization();
+  CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
+
+  MeshGeneratorHelper meshGeneratorHelper = generateCellBlockManager( cellBlockManager );
+
+  this->generateWells( meshLevel ); // Accroche les informations des puits à l'instance du CellBlockManager crée à la ligne du dessus.
+  meshBody.setGlobalLengthScale( meshGeneratorHelper.getGlobalLength() );
+  return meshGeneratorHelper;
+}
+
+void MeshGeneratorBase::generateWells( MeshLevel & meshLevel ) {
+  forSubGroups<InternalWellGenerator>( [&]( InternalWellGenerator & wellGen ) {
+      wellGen.generateWellGeometry();
+      ElementRegionManager & elemManager = meshLevel.getElemManager();
+      WellElementRegion &
+        wellRegion = elemManager.getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() ).
+        getGroup< WellElementRegion >( wellGen.getWellRegionName() );
+      wellRegion.setWellGeneratorName( wellGen.getName() );
+      wellRegion.setWellControlsName( wellGen.getWellControlsName() );
+    } );
+}
 }

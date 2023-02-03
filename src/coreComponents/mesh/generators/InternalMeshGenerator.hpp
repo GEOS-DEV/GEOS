@@ -21,7 +21,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "mesh/generators/MeshGeneratorBase.hpp"
-
+#include "mesh/generators/CellBlockManager.hpp"
 namespace geosx
 {
 
@@ -50,7 +50,7 @@ public:
    */
   static string catalogName() { return "InternalMesh"; }
 
-  virtual void generateMesh( DomainPartition & domain ) override;
+  virtual MeshGeneratorHelper generateCellBlockManager( CellBlockManager & cellBlockManager ) override;
 
   void importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const override
   {

@@ -19,10 +19,14 @@
 #ifndef GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP
 #define GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
+//#include "mesh/MeshBody.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
+
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/generators/CellBlockManager.hpp"
 
 namespace geosx
 {
@@ -30,7 +34,26 @@ namespace geosx
 namespace dataRepository
 {}
 
+class MeshBody;
+
 class DomainPartition;
+
+class MeshGeneratorHelper
+{
+public:
+  bool hasMetisNeighborList() const { return m_hasMetisNeighborList; }
+  void setHasMetisNeighborList( bool value ) { m_hasMetisNeighborList = value; }
+  std::set<int> & getMetisNeighborList() {return m_metisNeighborList; }
+  bool hasSpatialParition() const { return !m_hasMetisNeighborList; }
+  void setHasSpatialPartition( bool value ) { m_hasMetisNeighborList = !value; }
+  SpatialPartition & getSpatialPartition() { return m_spatialPartition; }
+  real64 & getGlobalLength() { return m_globalLength; }
+private:
+  bool m_hasMetisNeighborList;
+  std::set<int> m_metisNeighborList;
+  SpatialPartition m_spatialPartition;
+  real64 m_globalLength;
+};
 
 /**
  *  @class MeshGeneratorBase
@@ -74,10 +97,12 @@ public:
 
   /**
    * @brief Generate the mesh object the input mesh object.
-   * @param[in] domain the domain partition from which to construct the mesh object
+   * @param[in] cellBlockManager to fill with the mesh informations
+   * @return The global length scale
    */
-  virtual void generateMesh( DomainPartition & domain ) = 0;
+  virtual MeshGeneratorHelper generateCellBlockManager( CellBlockManager & cellBlockManager ) = 0;;
 
+  MeshGeneratorHelper generateMesh( MeshBody & meshBody );
   /**
    * @brief import fields from the mesh  on the array accessible via the given wrapper.
    * @param cellBlockName name of the cell block to copy data from.
@@ -100,6 +125,8 @@ public:
    * @return The string to string mapping of field names.
    */
   std::map< string, string > getFieldsMapping() const { return m_fieldsMapping; }
+private:
+  void generateWells( MeshLevel & meshLevel );
 
 protected:
   /// Mesh to GEOSX field names mapping

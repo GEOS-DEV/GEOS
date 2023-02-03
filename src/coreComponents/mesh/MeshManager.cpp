@@ -18,6 +18,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "generators/MeshGeneratorBase.hpp"
+#include "generators/CellBlockManager.hpp"
 #include "common/TimingMacros.hpp"
 
 #include <unordered_set>
@@ -59,7 +60,22 @@ void MeshManager::generateMeshes( DomainPartition & domain )
 {
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
-    meshGen.generateMesh( domain );
+    MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
+    meshGen.generateMesh(meshBody); meshBody.createMeshLevel( 0 );
+    CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
+
+
+    MeshGeneratorHelper meshGeneratorHelper = meshGen.generateMesh( meshBody );
+    if ( meshGeneratorHelper.hasMetisNeighborList() )
+    {
+      domain.getMetisNeighborList() = meshGeneratorHelper.getMetisNeighborList();
+    }
+    else
+    {
+      SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+      partition = meshGeneratorHelper.getSpatialPartition();
+    }
+    meshBody.setGlobalLengthScale( meshGeneratorHelper.getGlobalLength() );
   } );
 }
 
