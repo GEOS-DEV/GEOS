@@ -48,6 +48,12 @@ def vtk_iter(l) -> Iterator[Any]:
 
 
 def get_cell_field_by_name(mesh, field_name):
+    """
+    Extracts a cell field by its name.
+    :param mesh: The input mesh.
+    :param field_name: The field name we're looking for.
+    :return: The field or None if not found.
+    """
     cd = mesh.GetCellData()
     for i in range(cd.GetNumberOfArrays()):
         if cd.GetArrayName(i) == field_name:
@@ -81,6 +87,12 @@ def __read_vtu(vtk_input_file: str) -> Union[vtkUnstructuredGrid, None]:
 
 
 def read_mesh(vtk_input_file: str) -> vtkUnstructuredGrid:
+    """
+    Read the vtk file and builds an unstructured grid from it.
+    :param vtk_input_file: The file name. The extension will be used to guess the file format.
+        If first guess does not work, eventually all the others reader available will be tested.
+    :return: A unstructured grid.
+    """
     file_extension = os.path.splitext(vtk_input_file)[-1]
     extension_to_reader = {".vtk": __read_vtk,
                            ".vtu": __read_vtu}
@@ -120,9 +132,9 @@ def write_mesh(mesh: vtkUnstructuredGrid, vtk_output: VtkOutput) -> int:
     """
     Writes the mesh to disk.
     Nothing will be done if the file already exists.
-    :param mesh:
-    :param vtk_output:
-    :return: None
+    :param mesh: The unstructured grid to write.
+    :param vtk_output: Where to write. The file extension will be used to select the VTK file format.
+    :return: 0 in case of success.
     """
     if os.path.exists(vtk_output.output):
         logging.error(f"File \"{vtk_output.output}\" already exists, nothing done.")

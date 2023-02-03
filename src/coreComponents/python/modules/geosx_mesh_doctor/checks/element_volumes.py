@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import logging
 from typing import List, Tuple
 import uuid
 
@@ -38,11 +37,9 @@ def __check(mesh, options: Options) -> Result:
     f.SetInputData(mesh)
     f.Update()
     output = f.GetOutput()
-    cd = output.GetCellData()
-    for i in range(cd.GetNumberOfArrays()):
-        if cd.GetArrayName(i) == volume_array_name:
-            volume = vtk_to_numpy(cd.GetArray(i))
+    volume = vtk_utils.get_cell_field_by_name(output, volume_array_name)
     assert volume is not None
+    volume = vtk_to_numpy(volume)
     small_volumes: List[Tuple[int, float]] = []
     for i, v in enumerate(volume):
         if v < options.min_volume:

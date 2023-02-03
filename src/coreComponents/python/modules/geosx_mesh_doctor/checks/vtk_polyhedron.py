@@ -23,12 +23,12 @@ class Result:
     dummy: float
 
 
-def parse_face_stream(ids: vtkIdList):
+def parse_face_stream(ids: vtkIdList) -> Tuple[Tuple[int, ...], ...]:
     """
     Parses the face stream raw information and converts it into a tuple of tuple of integers,
     each tuple of integer being the nodes of a face.
-    :param ids:
-    :return:
+    :param ids: The raw vtk face stream.
+    :return: The tuple of tuple of integers.
     """
     result = []
     it = vtk_iter(ids)
@@ -52,7 +52,7 @@ class FaceStream:
     """
     Helper class to manipulate the vtk face streams.
     """
-    def __init__(self, data):
+    def __init__(self, data: Tuple[Tuple[int, ...], ...]):
         # self.__data contains the list of faces nodes, like it appears in vtk face streams.
         # Except that the additional size information is removed
         # in favor of the __len__ of the containers.
@@ -60,18 +60,35 @@ class FaceStream:
 
     @staticmethod
     def build_from_vtk_id_list(ids: vtkIdList):
+        """
+        Builds a FaceStream from the raw vtk face stream.
+        :param ids: The vtk face stream.
+        :return: A new FaceStream instance.
+        """
         return FaceStream(parse_face_stream(ids))
 
     @property
     def face_nodes(self) -> Iterable[Sequence[int]]:
+        """
+        Iterate on the nodes of all the faces.
+        :return: An iterator.
+        """
         return iter(self.__data)
 
     @property
     def num_faces(self) -> int:
+        """
+        Number of faces in the face stream
+        :return: An integer
+        """
         return len(self.__data)
 
     @property
     def support_point_ids(self) -> Iterable[int]:
+        """
+        The list of all (unique) support points of the face stream, in no specific order.
+        :return: The set of all the point ids.
+        """
         tmp = []
         for nodes in self.face_nodes:
             tmp += nodes
@@ -79,6 +96,10 @@ class FaceStream:
 
     @property
     def num_support_points(self) -> int:
+        """
+        The number of unique support nodes of the polyhedron.
+        :return: An integer.
+        """
         return len(self.support_point_ids)
 
     def __getitem__(self, face_index) -> Tuple[int, ...]:
@@ -90,6 +111,11 @@ class FaceStream:
         return self.__data[face_index]
 
     def flip_faces(self, face_indices):
+        """
+        Returns a new FaceStream instance with the face indices defined in face_indices flipped.,
+        :param face_indices: The faces (local) indices to flip.
+        :return: A newly created instance.
+        """
         result = []
         for face_index, face_nodes in enumerate(self.__data):
             result.append(tuple(reversed(face_nodes)) if face_index in face_indices else face_nodes)
@@ -116,6 +142,17 @@ class FaceStream:
 
 
 def build_cell_graph(face_stream: FaceStream, add_compatibility=False) -> networkx.Graph:
+    """
+    Given a face stream/polyhedron, builds the connections between the faces.
+    Those connections happen when two faces share an edge.
+    :param face_stream: The face stream description of the polyhedron.
+    :param add_compatibility: Two faces are considered compatible if their normals point in the same direction (inwards or outwards).
+        If `add_compatibility=True`, we add a `compatible={"-", "+"}` flag on the edges
+        to indicate that the two connected faces are compatible or not.
+        If `add_compatibility=False`, non-compatible faces are simply not connected by any edge.
+    :return: A graph which nodes are actually the faces of the polyhedron.
+        Two nodes of the graph are connected if they share an edge.
+    """
     edges_to_face_indices = defaultdict(list)
     for face_index, face_nodes in enumerate(face_stream.face_nodes):
         # Each edge is defined by two nodes. We do a small trick to loop on consecutive points.
@@ -157,7 +194,6 @@ def build_cell_graph(face_stream: FaceStream, add_compatibility=False) -> networ
         if order_0 * order_1 == 1:
             if add_compatibility:
                 graph.add_edge(face_index_0, face_index_1, compatible="-")
-            pass
         else:
             if add_compatibility:
                 graph.add_edge(face_index_0, face_index_1, compatible="+")

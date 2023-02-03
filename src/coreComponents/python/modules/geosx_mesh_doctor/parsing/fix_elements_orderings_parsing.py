@@ -18,7 +18,7 @@ from checks.fix_elements_orderings import Options, Result
 from . import cli_parsing, vtk_output_parsing, FIX_ELEMENTS_ORDERINGS
 
 
-__CELL_TYPE_MAPPING = {  # TODO deduplicate w.r.t. supported_elements
+__CELL_TYPE_MAPPING = {
     "Hexahedron": VTK_HEXAHEDRON,
     "Prism5": VTK_PENTAGONAL_PRISM,
     "Prism6": VTK_HEXAGONAL_PRISM,

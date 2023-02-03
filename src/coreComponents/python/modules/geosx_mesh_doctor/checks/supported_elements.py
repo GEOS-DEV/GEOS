@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import logging
 import multiprocessing
-from typing import Dict, Sequence, FrozenSet, Set
+from typing import Sequence, Set
 
 from tqdm import tqdm
 
@@ -72,6 +72,12 @@ class IsPolyhedronConvertible:
         }
 
     def __is_polyhedron_supported(self, face_stream) -> str:
+        """
+        Checks if a polyhedron can be converted into a supported cell.
+        If so, returns the name of the type. If not, the returned name will be empty.
+        :param face_stream: The polyhedron.
+        :return: The name of the supported type or an empty string.
+        """
         cell_graph = build_cell_graph(face_stream, add_compatibility=True)
         for reference_graph in self.__reference_graphs[cell_graph.order()]:
             if networkx.is_isomorphic(reference_graph, cell_graph):
@@ -81,8 +87,8 @@ class IsPolyhedronConvertible:
     def __call__(self, ic) -> int:
         """
         Checks if a vtk polyhedron cell can be converted into a supported GEOSX element.
-        :param ic: The index of the vtk element.
-        :return: -1 if the polyhedron vtk element can be converted into a supported element type. -1 otherwise.
+        :param ic: The index element.
+        :return: -1 if the polyhedron vtk element can be converted into a supported element type. The index otherwise.
         """
         if MESH.GetCellType(ic) != VTK_POLYHEDRON:
             return -1
@@ -99,7 +105,7 @@ class IsPolyhedronConvertible:
 
 
 def __check(mesh, options: Options) -> Result:
-    if hasattr(mesh, "GetDistinctCellTypesArray"):
+    if hasattr(mesh, "GetDistinctCellTypesArray"):  # For more recent versions of vtk.
         cell_types = set(vtk_to_numpy(mesh.GetDistinctCellTypesArray()))
     else:
         cell_types = vtkCellTypes()

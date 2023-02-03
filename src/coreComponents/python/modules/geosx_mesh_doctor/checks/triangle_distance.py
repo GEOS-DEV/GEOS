@@ -8,8 +8,8 @@ from numpy.linalg import norm
 
 def __div_clamp(num: float, den :float) -> float:
     """
-    Computes the division num / den. and clamps the result between 0 and 1.
-    If den is zero, the result of the division is set to 0.
+    Computes the division `num / den`. and clamps the result between 0 and 1.
+    If `den` is zero, the result of the division is set to 0.
     :param num: The numerator.
     :param den: The denominator.
     :return: The result between 0 and 1.

@@ -59,11 +59,9 @@ def __check(mesh, options: Options) -> Result:
     f.Update()
     output = f.GetOutput()
 
-    cd = output.GetCellData()
-    for i in range(cd.GetNumberOfArrays()):
-        if cd.GetArrayName(i) == "ValidityState":  # Could not change name using the vtk interface.
-            validity = vtk_to_numpy(cd.GetArray(i))
+    validity = vtk_utils.get_cell_field_by_name(output, "ValidityState")  # Could not change name using the vtk interface.
     assert validity is not None
+    validity = vtk_to_numpy(validity)
     for i, v in enumerate(validity):
         if not v & valid:
             if v & wrong_number_of_points:

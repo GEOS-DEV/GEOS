@@ -38,6 +38,10 @@ def __compute_volume(mesh_points: vtkPoints, face_stream: FaceStream) -> float:
     :param mesh_points: The mesh points, needed to compute the volume.
     :param face_stream: The vtk face stream.
     :return: The volume of the element.
+    :note: The faces of the polyhedron are triangulated and the volumes of the tetrahedra
+    from the barycenter to the triangular bases are summed.
+    The normal of each face plays critical role,
+    since the volume of each tetrahedron can be positive or negative.
     """
     # Triangulating the envelope of the polyhedron for further volume computation.
     polygons = vtkCellArray()
@@ -85,8 +89,8 @@ def __select_flip(mesh_points: vtkPoints,
     Given a polyhedra, given that we were able to paint the faces in two colors,
     we now need to select which faces/color to flip such that the volume of the element is positive.
     :param mesh_points: The mesh points, needed to compute the volume.
-    :param colors: Maps the nodes of each connected component (defined is a frozenset) to its color.
-    :param face_stream: the face.
+    :param colors: Maps the nodes of each connected component (defined as a frozenset) to its color.
+    :param face_stream: the polyhedron.
     :return: The face stream that leads to a positive volume.
     """
     # Flipping either color 0 or 1.
@@ -96,7 +100,7 @@ def __select_flip(mesh_points: vtkPoints,
     # This implementation works even if there is one unique color.
     # Admittedly, there will be one face stream that won't be flipped.
     fs = face_stream.flip_faces(color_to_nodes[0]), face_stream.flip_faces(color_to_nodes[1])
-    volumes: Tuple[float, float] = __compute_volume(mesh_points, fs[0]), __compute_volume(mesh_points, fs[1])
+    volumes = __compute_volume(mesh_points, fs[0]), __compute_volume(mesh_points, fs[1])
     # We keep the flipped element for which the volume is largest
     # (i.e. positive, since they should be the opposite of each other).
     return fs[numpy.argmax(volumes)]
@@ -133,7 +137,7 @@ def reorient_mesh(mesh, cell_indices: Iterator[int]) -> vtkUnstructuredGrid:
     """
     Reorient the polyhedron elements such that they all have their normals directed outwards.
     :param mesh: The input vtk mesh.
-    :param cell_indices: We may need to only flip a limited number of polyhedron cells (on the boundary for example).
+    :param cell_indices: We may need to only flip a limited number of polyhedron cells (only on the boundary for example).
     :return: The vtk mesh with the desired polyhedron cells directed outwards.
     """
     num_cells = mesh.GetNumberOfCells()

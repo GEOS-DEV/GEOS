@@ -25,7 +25,12 @@ class XYZ:
     z: numpy.array
 
 
-def build_rectilinear_blocks_mesh(xyzs: Iterable[XYZ]):
+def build_rectilinear_blocks_mesh(xyzs: Iterable[XYZ]) -> vtkUnstructuredGrid:
+    """
+    Builds an unstructured vtk grid from the `xyzs` blocks. Kind of InternalMeshGenerator.
+    :param xyzs: The blocks.
+    :return: The unstructured mesh, even if it's topologically structured.
+    """
     rgs = []
     for xyz in xyzs:
         rg = vtkRectilinearGrid()

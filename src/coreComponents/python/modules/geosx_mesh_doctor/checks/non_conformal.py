@@ -67,8 +67,8 @@ class BoundaryMesh:
     It is computed by vtk. But we want to be sure that the normals of the envelope are directed outwards.
     The `vtkDataSetSurfaceFilter` does not have the same behavior for standard vtk cells (like tets or hexs),
     and for polyhedron meshes, for which the result is a bit brittle.
-    Therefore, we reorient the polyhedron cells ourselves, so we're sure that point outwards.
-    And then we compute the boundary mesh for both meshes, given that the computing options are not identical.
+    Therefore, we reorient the polyhedron cells ourselves, so we're sure that they point outwards.
+    And then we compute the boundary meshes for both meshes, given that the computing options are not identical.
     """
     def __init__(self, mesh: vtkUnstructuredGrid):
         """
@@ -97,19 +97,19 @@ class BoundaryMesh:
     @staticmethod
     def __build_boundary_mesh(mesh: vtkUnstructuredGrid, consistency=True) -> Tuple[vtkUnstructuredGrid, Any, Any]:
         """
-        From a 3d mesh, build the envelope meshes, considering standard and polyhedron elements' specificities.
+        From a 3d mesh, build the envelope meshes.
         :param mesh: The input 3d mesh.
-        :param consistency: The vtk option passed to the `vtkDataSetSurfaceFilter`
+        :param consistency: The vtk option passed to the `vtkDataSetSurfaceFilter`.
         :return: A tuple containing the boundary mesh, the normal vectors array,
                  an array that maps the id of the boundary element to the id of the 3d cell it touches.
         """
-        original_cells_key = "ORIGINAL_CELLS"  # Note that we do not need the original points, but we could keep it if needed
-
         f = vtkDataSetSurfaceFilter()
         f.PassThroughCellIdsOn()
         f.PassThroughPointIdsOff()
         f.FastModeOff()
 
+        # Note that we do not need the original points, but we could keep them as well if needed
+        original_cells_key = "ORIGINAL_CELLS"
         f.SetOriginalCellIdsName(original_cells_key)
 
         boundary_mesh = vtkPolyData()
@@ -132,14 +132,14 @@ class BoundaryMesh:
 
     def GetNumberOfCells(self) -> int:
         """
-        The number of cells, in a vtk format.
+        The number of cells.
         :return: An integer.
         """
         return self.re_boundary_mesh.GetNumberOfCells()
 
     def GetNumberOfPoints(self) -> int:
         """
-        The number of points, in a vtk format.
+        The number of points.
         :return: An integer.
         """
         return self.re_boundary_mesh.GetNumberOfPoints()
@@ -154,7 +154,7 @@ class BoundaryMesh:
 
     def normals(self, i) -> numpy.array:
         """
-        The normal of cell `i`.
+        The normal of cell `i`. This normal will be directed outwards
         :param i: The boundary cell index.
         :return: The normal as a length-3 numpy array.
         """
@@ -191,8 +191,6 @@ def build_poly_data_for_extrusion(i: int, boundary_mesh: BoundaryMesh) -> vtkPol
     """
     Creates a vtkPolyData containing the unique cell `i` of the boundary mesh.
     This operation is needed to use the vtk extrusion filter.
-    It could surely be possible to do it by hand if using a vtk algorithm for such a little task is overkill and too slow,
-    but we also have to deal with polyhedron, which is not straightforward.
     :param i: The boundary cell index that will eventually be extruded.
     :param boundary_mesh:
     :return: The created vtkPolyData.
@@ -200,15 +198,15 @@ def build_poly_data_for_extrusion(i: int, boundary_mesh: BoundaryMesh) -> vtkPol
     cell = boundary_mesh.GetCell(i)
     copied_cell = cell.NewInstance()
     copied_cell.DeepCopy(cell)
-    points_ids_mapping_i = []
+    points_ids_mapping = []
     for i in range(copied_cell.GetNumberOfPoints()):
         copied_cell.GetPointIds().SetId(i, i)
-        points_ids_mapping_i.append(cell.GetPointId(i))
+        points_ids_mapping.append(cell.GetPointId(i))
     polygons = vtkCellArray()
     polygons.InsertNextCell(copied_cell)
     points = vtkPoints()
-    points.SetNumberOfPoints(len(points_ids_mapping_i))
-    for i, v in enumerate(points_ids_mapping_i):
+    points.SetNumberOfPoints(len(points_ids_mapping))
+    for i, v in enumerate(points_ids_mapping):
         points.SetPoint(i, boundary_mesh.GetPoint(v))
     polygon_poly_data = vtkPolyData()
     polygon_poly_data.SetPoints(points)
@@ -245,6 +243,7 @@ def are_points_conformal(point_tolerance: float, cell_i: vtkCell, cell_j: vtkCel
 class Extruder:
     """
     Computes and stores all the extrusions of the boundary faces.
+    The main reason for this class is to be lazy and cache the extrusions.
     """
     def __init__(self, boundary_mesh: BoundaryMesh, face_tolerance: float):
         self.__extrusions: List[vtkPolyData] = [None, ] * boundary_mesh.GetNumberOfCells()
@@ -333,7 +332,7 @@ def are_faces_conformal_using_distances(i: int, j: int,
     cp_j.DeepCopy(boundary_mesh.GetCell(j))
 
     def triangulate(cell):
-        # Let's triangulate this.
+        assert cell.GetCellDimension() == 2
         __points_ids = vtkIdList()
         __points = vtkPoints()
         cell.Triangulate(0, __points_ids, __points)
@@ -358,7 +357,7 @@ def are_faces_conformal_using_distances(i: int, j: int,
     triangles_j = build_numpy_triangles(points_ids_j)
 
     min_dist = numpy.inf
-    for ti , tj in [(ti, tj) for ti in triangles_i for tj in triangles_j]:
+    for ti, tj in [(ti, tj) for ti in triangles_i for tj in triangles_j]:
         # Note that here, we compute the exact distance to compare with the threshold.
         # We could improve by exiting the iterative distance computation as soon as
         # we're sure we're smaller than the threshold. No need of the exact solution.
@@ -399,6 +398,7 @@ def __check(mesh: vtkUnstructuredGrid, options: Options) -> Result:
     cell_locator.BuildLocator()
 
     # Precomputing the bounding boxes.
+    # The options are important to directly interact with memory in C++.
     bounding_boxes = numpy.empty((boundary_mesh.GetNumberOfCells(), 6), dtype=numpy.double, order="C")
     for i in range(boundary_mesh.GetNumberOfCells()):
         bb = vtkBoundingBox(boundary_mesh.bounds(i))
@@ -407,7 +407,7 @@ def __check(mesh: vtkUnstructuredGrid, options: Options) -> Result:
         bb.GetBounds(bounding_boxes[i, :])
 
     non_conformal_cells = []
-    extrusions = Extruder(boundary_mesh, options.face_tolerance)  # Precomputing all the extrusions.
+    extrusions = Extruder(boundary_mesh, options.face_tolerance)
     close_cells = vtkIdList()
     # Looping on all the pairs of boundary cells. We'll hopefully discard most of the pairs.
     for i in tqdm(range(num_cells), desc="Non conformal elements"):

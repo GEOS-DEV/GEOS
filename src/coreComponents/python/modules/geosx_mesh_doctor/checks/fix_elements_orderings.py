@@ -32,18 +32,19 @@ def __check(mesh, options: Options):
     output_mesh.CopyStructure(mesh)
     output_mesh.CopyAttributes(mesh)
 
+    # `output_mesh` now contains a full copy of the input mesh.
+    # We'll now modify the support nodes orderings in place if needed.
     cells = output_mesh.GetCells()
     for cell_idx in range(output_mesh.GetNumberOfCells()):
-        support_point_ids = vtkIdList()
-        cells.GetCellAtId(cell_idx, support_point_ids)
         cell_type = output_mesh.GetCell(cell_idx).GetCellType()
         new_ordering = cell_type_to_ordering.get(cell_type)
         if new_ordering:
-            tmp = []
+            support_point_ids = vtkIdList()
+            cells.GetCellAtId(cell_idx, support_point_ids)
+            new_support_point_ids = []
             for i, v in enumerate(new_ordering):
-                tmp.append(support_point_ids.GetId(new_ordering[i]))
-            new_support_point_ids = to_vtk_id_list(tmp)
-            cells.ReplaceCellAtId(cell_idx, new_support_point_ids)
+                new_support_point_ids.append(support_point_ids.GetId(new_ordering[i]))
+            cells.ReplaceCellAtId(cell_idx, to_vtk_id_list(new_support_point_ids))
         else:
             unchanged_cell_types.insert(cell_type)
     is_written_error = vtk_utils.write_mesh(output_mesh, options.vtk_output)
