@@ -75,6 +75,7 @@ MeshLevel::MeshLevel( string const & name,
   m_elementManager( source.m_elementManager ),
   m_embSurfNodeManager( source.m_embSurfNodeManager ),
   m_embSurfEdgeManager( source.m_embSurfEdgeManager ),
+  m_modificationTimestamp( 0 ),
   m_isShallowCopy( true ),
   m_shallowParent( &source )
 {
