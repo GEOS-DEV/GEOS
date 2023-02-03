@@ -41,6 +41,11 @@ SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & n
                                                                 Group * const parent )
   : Base( name, parent )
 {
+  registerWrapper( viewKeyStruct::performStressInitializationString(), &m_performStressInitialization ).
+    setApplyDefaultValue( false ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
+
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
   m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
@@ -131,7 +136,6 @@ void SinglePhasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups
   }
 }
 
-
 void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                      real64 const dt,
                                                      DomainPartition & domain,
@@ -172,7 +176,6 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
   } );
 
-
   // step 2: apply mechanics solver on its target regions not included in the poromechanics solver target regions
 
   solidMechanicsSolver()->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -210,6 +213,9 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
   solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
 
+
+  // tell the flow solver that this is a stress initialization step
+  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
 
   // step 3: compute the fluxes (face-based contributions)
 

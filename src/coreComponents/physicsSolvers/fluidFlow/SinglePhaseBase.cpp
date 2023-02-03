@@ -52,7 +52,8 @@ using namespace singlePhaseBaseKernels;
 
 SinglePhaseBase::SinglePhaseBase( const string & name,
                                   Group * const parent ):
-  FlowSolverBase( name, parent )
+  FlowSolverBase( name, parent ),
+  m_keepFlowVariablesConstantDuringInitStep( 0 )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
     setApplyDefaultValue( 0.0 ).
@@ -588,47 +589,6 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
   } );
 }
 
-
-real64 SinglePhaseBase::solverStep( real64 const & time_n,
-                                    real64 const & dt,
-                                    const int cycleNumber,
-                                    DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-
-  real64 dt_return;
-
-  // setup dof numbers and linear system
-  setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-
-  implicitStepSetup( time_n, dt, domain );
-
-  // currently the only method is implicit time integration
-  dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
-  implicitStepComplete( time_n, dt_return, domain );
-
-  return dt_return;
-}
-
-void SinglePhaseBase::setupSystem( DomainPartition & domain,
-                                   DofManager & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix,
-                                   ParallelVector & rhs,
-                                   ParallelVector & solution,
-                                   bool const setSparsity )
-{
-  GEOSX_MARK_FUNCTION;
-
-  SolverBase::setupSystem( domain,
-                           dofManager,
-                           localMatrix,
-                           rhs,
-                           solution,
-                           setSparsity );
-}
-
 void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
                                          DomainPartition & domain )
@@ -855,9 +815,20 @@ void SinglePhaseBase::applyBoundaryConditions( real64 time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  applySourceFluxBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  applyDirichletBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  applyAquiferBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  if( m_keepFlowVariablesConstantDuringInitStep )
+  {
+    // this function is going to force the current flow state to be constant during the time step
+    // this is used when the poromechanics solver is performing the stress initialization
+    // TODO: in the future, a dedicated poromechanics kernel should eliminate the flow vars to construct a reduced system
+    //       which will remove the need for this brittle passing aroung of flag
+    keepFlowVariablesConstantDuringInitStep( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+  }
+  else
+  {
+    applySourceFluxBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    applyDirichletBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    applyAquiferBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  }
 }
 
 namespace
@@ -1093,6 +1064,72 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
     } );
   } );
 }
+
+void SinglePhaseBase::keepFlowVariablesConstantDuringInitStep( real64 const time,
+                                                               real64 const dt,
+                                                               DofManager const & dofManager,
+                                                               DomainPartition & domain,
+                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                               arrayView1d< real64 > const & localRhs ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( time, dt );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel const & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase const & subRegion )
+    {
+      globalIndex const rankOffset = dofManager.rankOffset();
+      string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+
+      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+      arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
+
+      integer const isThermal = m_isThermal;
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] >= 0 )
+        {
+          return;
+        }
+
+        globalIndex const dofIndex = dofNumber[ei];
+        localIndex const localRow = dofIndex - rankOffset;
+        real64 rhsValue;
+
+        // 4.1. Apply pressure value to the matrix/rhs
+        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
+                                                    rankOffset,
+                                                    localMatrix,
+                                                    rhsValue,
+                                                    pres[ei], // freeze the current pressure value
+                                                    pres[ei] );
+        localRhs[localRow] = rhsValue;
+
+        // 4.2. Apply temperature value to the matrix/rhs
+        if( isThermal )
+        {
+          FieldSpecificationEqual::SpecifyFieldValue( dofIndex + 1,
+                                                      rankOffset,
+                                                      localMatrix,
+                                                      rhsValue,
+                                                      temp[ei], // freeze the current temperature value
+                                                      temp[ei] );
+          localRhs[localRow + 1] = rhsValue;
+        }
+      } );
+    } );
+  } );
+}
+
 
 void SinglePhaseBase::updateState( DomainPartition & domain )
 {

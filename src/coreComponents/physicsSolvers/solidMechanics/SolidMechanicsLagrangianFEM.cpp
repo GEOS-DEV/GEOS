@@ -436,8 +436,6 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
   } );
 }
 
-
-
 real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
                                                 real64 const & dt,
                                                 const int cycleNumber,
@@ -466,7 +464,15 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
     implicitStepSetup( time_n, dt, domain );
     for( int solveIter=0; solveIter<maxNumResolves; ++solveIter )
     {
-      setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+
+      Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
+      // Only build the sparsity pattern if the mesh has changed
+      if( meshModificationTimestamp > getSystemSetupTimestamp() || globallyFractured )
+      {
+        setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+        setSystemSetupTimestamp( meshModificationTimestamp );
+      }
 
       dtReturn = nonlinearImplicitStep( time_n,
                                         dt,
