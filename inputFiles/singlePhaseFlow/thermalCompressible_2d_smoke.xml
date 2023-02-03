@@ -24,20 +24,20 @@
   </Mesh>
 
   <Events
-    maxTime="1.5e7">
+    maxTime="1e5">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="2.5e6"
+      timeFrequency="1e4"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="2.5e6"
+      maxEventDt="1e4"
       target="/Solvers/singleFlow"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="7.5e6"
+      timeFrequency="1e5"
       target="/Outputs/restartOutput"/>
   </Events>
 
