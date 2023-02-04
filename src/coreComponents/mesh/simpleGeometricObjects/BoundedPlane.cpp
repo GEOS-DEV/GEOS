@@ -70,7 +70,7 @@ BoundedPlane::BoundedPlane( const real64 oldX, const real64 oldY,
   m_normal{ 0.0, 0.0, 1.0 },
   m_lengthVector{ 0.0, 0.0, 0.0 },
   m_widthVector{ 0.0, 0.0, 0.0 },
-  m_tolerance()
+  m_tolerance( 1e-5 )
 {
   m_origin = { (oldX + newX)/2.0, (oldY + newY)/2.0, 0.0};
   m_normal = { -(newY-oldY), newX-oldX, 0.0 };
@@ -78,9 +78,8 @@ BoundedPlane::BoundedPlane( const real64 oldX, const real64 oldY,
   m_widthVector = { 0.0, 0.0, 1.0 };
   real64 norm = std::sqrt( pow( newX-oldX, 2 )+pow( newY-oldY, 2 ));
   m_dimensions.resize( 2 );
-  m_dimensions[0] = norm+1e-4;
-  m_dimensions[1] = 5;
-  m_tolerance = 1e-5;
+  m_dimensions[0] = norm+1e-4; //small tolerance to ensure that both ends are contained in the plane - TODO: try to use m_tolerance
+  m_dimensions[1] = 5; //TODO: this is arbitrary, it only needs to be larger than the z thickness in the 2.5D model
 
   m_points.resize( 4, 3 );
   //parent->registerGroup< BoundedPlane >( name, std::move( this ) );

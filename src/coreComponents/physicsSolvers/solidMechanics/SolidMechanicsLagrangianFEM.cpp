@@ -1339,8 +1339,8 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
   return 1.0;
 }
 
-void SolidMechanicsLagrangianFEM::setInternalBoundaryConditions( array1d< localIndex > const & fixedNodes,
-                                                                 array2d< real64 > const & fixedValues )
+void SolidMechanicsLagrangianFEM::setInternalBoundaryConditions( arrayView1d< localIndex > const & fixedNodes,
+                                                                 arrayView2d< real64 > const & fixedValues )
 {
   localIndex count = 0;
   m_fixedDisplacementNodes.resize( fixedNodes.size() );
@@ -1383,6 +1383,7 @@ void SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit( real64 co
   {
     //const NodeManager & nodeManager = mesh.getNodeManager();
     //THIS CALL TO GET NODE MANAGER IS NOT ROBUST
+    //TO DO: find a robust way to get the correct meshBody
     NodeManager const & nodeManager = domain.getMeshBody( 1 ).getBaseDiscretization().getNodeManager();
     arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofKey );
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const nodalDisplacements = nodeManager.getField< fields::solidMechanics::totalDisplacement >();
@@ -1393,20 +1394,11 @@ void SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit( real64 co
       for( localIndex i = 0; i < 3; i++ )
       {
         localIndex const dof = dofIndex[fixed_node]+i;
-        if( getLogLevel() == 2 )
-        {
-          std::cout<<"constrained dof: "<<dof<<std::endl;
-        }
         real64 const dispToBeApplied = m_fixedDisplacementValues( count, i );
-        if( getLogLevel() == 2 )
-        {
-          std::cout<<"constrained disp: "<<dispToBeApplied<<std::endl;
-        }
         real64 const dispCurrentDof = nodalDisplacements( fixed_node, i );
-        if( getLogLevel() == 2 )
-        {
-          std::cout<<"current disp: "<<dispCurrentDof<<std::endl;
-        }
+        GEOSX_LOG_LEVEL_RANK_0( 2, "constrained dof: "<<dof );
+        GEOSX_LOG_LEVEL_RANK_0( 2, "constrained disp: "<<dispToBeApplied );
+        GEOSX_LOG_LEVEL_RANK_0( 2, "current disp: "<<dispCurrentDof );
         real64 rhsContribution;
         FieldSpecificationEqual::SpecifyFieldValue( dof,
                                                     dofManager.rankOffset(),

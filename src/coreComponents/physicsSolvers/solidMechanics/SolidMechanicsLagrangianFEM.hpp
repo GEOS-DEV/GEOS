@@ -265,13 +265,26 @@ public:
     return m_rigidBodyModes;
   }
 
+  /**
+   * Applies displacement boundary conditions that are passed between solvers - applicable in some multi-level cases
+   * @param time The time to use for any lookups associated with this BC
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param domain The DomainPartition.
+   * @param matrix the system matrix
+   * @param localRhs the system right-hand side vector
+   */  
   void applyInternalDisplacementBCImplicit( real64 const time,
                                             DofManager const & dofManager,
                                             DomainPartition & domain,
                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                             arrayView1d< real64 > const & localRhs );
 
-  void setInternalBoundaryConditions( array1d< localIndex > const & fixedNodes, array2d< real64 > const & fixedValues );
+  /**
+   * Given a set of nodes and a list of values, prepare internal boundary conditions to have u_fixedNodes = fixedValues
+   * @param fixedNodes The nodes which will have the displacement prescribed as a BC
+   * @param fixedValues The values of displacement to be prescribe at these nodes
+   */
+  void setInternalBoundaryConditions( arrayView1d< localIndex > const & fixedNodes, arrayView2d< real64 > const & fixedValues );
 
 
 protected:

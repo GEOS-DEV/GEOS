@@ -276,11 +276,6 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
                                                 localIndex & tipElementIndex )
 {
   GEOSX_MARK_FUNCTION;
-  // std::cout<<"propagation step"<<std::endl;
-  // std::cout<<"currentTip_x: "<<currentTip[0]<<std::endl;
-  // std::cout<<"currentTip_y: "<<currentTip[1]<<std::endl;
-  // std::cout<<"targetTip_x: "<<targetTip[0]<<std::endl;
-  // std::cout<<"targetTip_y: "<<targetTip[1]<<std::endl;
   localIndex er = 0; //should be the element region number
   localIndex esr = 0; //should be the element subregion number
   // Get geometric object manager
@@ -288,8 +283,6 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
   // create BoundedPlane from currentTip to newTip
   std::unique_ptr< BoundedPlane > newFracturePlane = std::make_unique< BoundedPlane >( currentTip[0], currentTip[1], targetTip[0],
                                                                                        targetTip[1], "newFracturePlane", &geometricObjManager );
-  // BoundedPlane * newFracturePlane = new BoundedPlane( currentTip[0], currentTip[1], targetTip[0],
-  //                                                     targetTip[1], "newFracturePlane", &geometricObjManager );
   // Get meshLevel
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
   // Get managers
@@ -302,8 +295,8 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
   // Get EmbeddedSurfaceSubRegions
   SurfaceElementRegion & embeddedSurfaceRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
   EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion = embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
-  localIndex localNumberOfSurfaceElems = embeddedSurfaceSubRegion.size(); //this should not be zero
-  NewObjectLists newObjects; //this should probably not be re-initialized
+  localIndex localNumberOfSurfaceElems = embeddedSurfaceSubRegion.size(); 
+  NewObjectLists newObjects; 
   // begin geometric operations
   real64 const planeCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( newFracturePlane->getCenter() );
   real64 const normalVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( newFracturePlane->getNormal() );
@@ -311,8 +304,6 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
   globalIndex nodeIndex;
   integer isPositive, isNegative;
   real64 distVec[ 3 ];
-
-  //COPYING FROM EXISTING FUNCTION - NEEDS CLEANING
 
   // Get sub-region geometric properties
   ElementRegionBase & elementRegion = elemManager.getRegion( er );
@@ -349,7 +340,6 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
     } // end loop over nodes
     if( isPositive * isNegative == 1 ) //if there are nodes on both sides of the fracture plane
     {
-      //std::cout<<"plane name: "<<newFracturePlane->getName()<<std::endl;
       added = embeddedSurfaceSubRegion.addNewEmbeddedSurface( tipElementIndex,
                                                               er,
                                                               esr,
@@ -369,7 +359,6 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
       }
     }
   }
-
 
   finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -391,14 +380,13 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
   // add all new nodes to newObject list
   // also, get index of edges that were just cut
   array1d< globalIndex > newEdges;
-  array1d< globalIndex > & parentEdgeGlobalIndex = embSurfNodeManager.getParentEdgeGlobalIndex();
+  arrayView1d< globalIndex > & parentEdgeGlobalIndex = embSurfNodeManager.getParentEdgeGlobalIndex();
   localIndex embSurfNodeNumberUpdated = embSurfNodeManager.size();
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosUpdated = embSurfNodeManager.referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > embSurfNodesPosUpdated = embSurfNodeManager.referencePosition();
 
   if( added )
   {
     bool isNew;
-    //array1d< localIndex > elemNodes( embSurfNodeNumberUpdated );
     for( localIndex ni = 0; ni < embSurfNodeNumberUpdated; ni++ )
     {
       //test if node is new

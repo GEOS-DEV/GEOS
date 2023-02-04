@@ -46,42 +46,6 @@
 namespace geosx
 {
 
-namespace
-{
-//this function is not part of any class yet - just tries to find the number of a node given its coordinates
-// localIndex getNodeNumberFromCoordinate( MeshLevel const & mesh, real64 const & x, real64 const & y, real64 const & z)
-// {
-//   real64 tolerance = 1e-10;
-//   NodeManager const & meshNodeManager = mesh.getNodeManager();
-//   arrayView2d<real64 const> const nodalPositions = meshNodeManager.referencePosition();
-//   for (localIndex a=0; a < meshNodeManager.size(); a++)
-//     {
-//  real64 dist_sq = (nodalPositions( a,0 ) - x)*(nodalPositions( a,0 ) - x) + (nodalPositions( a,1 ) - y)*(nodalPositions( a,1 ) - y) +
-// (nodalPositions( a,2 ) - z)*(nodalPositions( a,2 ) - z);
-//  real64 dist = sqrt(dist_sq);
-//  if (dist < tolerance)
-//    {
-//      return a;
-//    }
-//     }
-//   return -1;
-// }
-
-//this function checks if an index is already in an array
-bool isMember( localIndex const & ind, array1d< localIndex > const & arr )
-{
-  for( localIndex iter : arr )
-  {
-    if( iter == ind )
-    {
-      return true;
-    }
-  }
-  return false;
-}
-
-}
-
 using namespace dataRepository;
 using namespace constitutive;
 
@@ -122,33 +86,6 @@ MultiResolutionHFSolver::MultiResolutionHFSolver( const string & name,
 
 void MultiResolutionHFSolver::RegisterDataOnMesh( dataRepository::Group & MeshBodies )
 {
-
-  // forMeshTarget(MeshBodies,[&](string const &, MeshLevel & mesh, ArrayView1d<string const> const & regionNames){
-
-  //     //register fix displacement nodes
-  //     NodeManager & nodes = mesh.getNodeManager();
-  //     nodes.registerWrapper< array1d<localIndex> >(SolidMechanicsLagrangianFEM::viewKeyStruct::nameChosenString() )
-  //  .setApplyDefaultValue(0.0)
-  //  .setPlotLevel( PlotLevel::NOPLOT )
-  //  .setDescription("").;
-
-  //     //register fix displacement values
-  //     NodeManager & nodes = mesh.getNodeManager();
-  //     nodes.registerWrapper< array1d<localIndex> >(SolidMechanicsLagrangianFEM::viewKeyStruct::nameChosenString() )
-  //  .setApplyDefaultValue(0.0)
-  //  .setPlotLevel( PlotLevel::NOPLOT )
-  //  .setDescription("").;
-
-  //     //register fix damage nodes
-  //     NodeManager & nodes = mesh.getNodeManager();
-  //     nodes.registerWrapper< array1d<localIndex> >(PhaseFieldDamageFEM::viewKeyStruct::nameChosenString() )
-  //  .setApplyDefaultValue(0.0)
-  //  .setPlotLevel( PlotLevel::NOPLOT )
-  //  .setDescription("").;
-
-
-  // });
-  // Andre - 03/14 - keep this function empty for later
   GEOSX_UNUSED_VAR( MeshBodies );
 }
 
@@ -161,7 +98,6 @@ void MultiResolutionHFSolver::implicitStepSetup( real64 const & time_n,
                                                  real64 const & dt,
                                                  DomainPartition & domain )
 {
-  //Andre - 14/03/22 - can we just call these functions without doing the boundary condition operations first?
   m_baseSolver->implicitStepSetup( time_n, dt, domain );
   m_patchSolver->implicitStepSetup( time_n, dt, domain );
 }
@@ -192,43 +128,18 @@ real64 MultiResolutionHFSolver::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
-//in the initial step and whenever the subproblem mesh moves, we must update the node map
-// void MultiResolutionHFSolver::updateNodeMaps( MeshLevel const & base,
-//            MeshLevel const & patch )
-// {
-//   // get list of nodes on the boundary of the patch
-//   NodeManager const & patchNodeManager = patch.getNodeManager();
-//   NodeManager const & baseNodeManager = base.getNodeManager();
-//   SortedArrayView< localIndex const > const patchExternalSet = patchNodeManager.externalSet();
-//   arrayView2d<real64 const> const patchPosition = patchNodeManager.referencePosition();
-//   for (localIndex a : patchExternalSet )
-//     {
-//       localIndex A = getNodeNumberFromCoordinate(base, patchPosition(a,0), patchPosition(a,1), patchPosition(a,2));
-//       m_nodeMapIndices( a ) = A;
-//       //since the boundary points lie on element edges, these will have dimension 2. weights can be computed by taking the ratio between
-// distances to 2 closes points from base mesh.
-//       m_nodeMapWeights( a,1 ) = 1; //for now, we dont need this, so we just use 1.
-//     }
-// }
-
-//Andre - 03/15 - this function will loop over all subdomain nodes and check their distance to the prescribed discrete crack. If the
+// this function will loop over all subdomain nodes and check their distance to the prescribed discrete crack. If the
 // distance is smaller than 1 element size (subdomain), we set the damage in this node to be fixed at 1.
 void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
                                                         CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
                                                         MeshLevel const & GEOSX_UNUSED_PARAM( patch ),
                                                         MeshLevel const & base )
 {
-  // get list of nodes on the boundary of the patch
-  //NodeManager const & patchNodeManager = patch.getNodeManager();
-  //arrayView1d< globalIndex const > const & dofIndex = patchNodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( "Damage"
-  // ) );
-  //need dofManager from PhaseFieldDamage, not PhaseFieldFracture
-  //arrayView1d< real64 const > const nodalDamage = patchNodeManager.getReference< array1d< real64 > >( "Damage" );
+
   ElementRegionManager const & baseElemManager = base.getElemManager();
   baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
-    //USE 1D ARRAY REGISTERED ON THE NODE MANAGER INSTEAD OF m_nodeFixDamage
     m_nodeFixDamage.resize( cellElementSubRegion.numNodesPerElement()*fracturedElements.size() );
     localIndex count = 0;
     for( localIndex a : fracturedElements )
@@ -236,19 +147,17 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX
       //get all nodes of fracturedElements(a)
       for( localIndex b=0; b < cellElementSubRegion.numNodesPerElement(); b++ )
       {
-        //if meshes arent identical, this should be nodeList(elem_mapped_to_patch(a),b) or check (2)
+        //TODO: if meshes arent identical, this should be nodeList(elem_mapped_to_patch(a),b) or check (2)
         localIndex c = cellElementSubRegion.nodeList( a, b );
         //append c = node b of element a
-        if( !isMember( c, m_nodeFixDamage )) //avoid repetition
+        if( std::find(m_nodeFixDamage.begin(), m_nodeFixDamage.end(), c) == m_nodeFixDamage.end() ) //avoid repetition
         {
-          //USE REGISTERED ARRAY HERE
-          //(2) alternatively, we could use node_mapped_to_patch(cellElementSubRegion.nodeList(a,b))
+          //TODO: use node_mapped_to_patch(cellElementSubRegion.nodeList(a,b))
           m_nodeFixDamage( count ) = cellElementSubRegion.nodeList( a, b );
           ++count;
         }
       }
     }
-    //USE REGISTERED ARRAY HERE
     m_nodeFixDamage.resize( count );
   } );
 }
@@ -269,7 +178,7 @@ void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
   R1Tensor rankFarthestCenter = {0.0, 0.0, 0.0};
   //loop over all elements in patch and compute elemental average damage
   //observe that patch coordinates are relative, so, reference point should be added
-  //for elements in patch //nice loop to parallelize
+  //for elements in patch 
   patchElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
     localIndex numQuadraturePointsPerElem = 0;
@@ -321,11 +230,7 @@ void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
 
 }
 
-//Andre - 03/15 - this function needs to access u_base (hopefully via node manager), the patch mesh (via node manager too),
-//a map that translate patch node numbers to base node numbers (could be a MultiResolutionHFSolver member) and also the
-//damage field in the patch domain (via node manage
-//The function will read all this data and prepare a list of dofs and u values that will be used by the patch solver to set
-//the boundary conditions
+//The function prepares a list of dofs and u values that will be used by the patch solver to set the boundary conditions
 void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
                                                     MeshLevel & patch )
 {
@@ -335,19 +240,10 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
   NodeManager & patchNodeManager = patch.getNodeManager();
   patchNodeManager.setIsExternal( patchFaceManager );
   SortedArray< localIndex > patchExternalSet = patchNodeManager.externalSet();
-  //arrayView1d< integer const > const patchExternalSet = patchNodeManager.isExternal(); //option 2 remove if not needed
-  //arrayView1d< globalIndex const > const patchLocalToGlobalMap = patchNodeManager.localToGlobalMap();
   arrayView1d< real64 const > const patchDamage = patchNodeManager.getReference< array1d< real64 > >( "Damage" );
   NodeManager const & baseNodeManager = base.getNodeManager();
-  //arrayView2d< real64 const > const baseDisp = baseNodeManager.totalDisplacement();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const baseDisp = baseNodeManager.getField< fields::solidMechanics::totalDisplacement >();
-  //unordered_map< globalIndex, localIndex > const & patchGlobalToLocalMap = baseNodeManager.globalToLocalMap();
-
-  //we need to zero the lists to erase data from previous step
-  //this->eraseLists(); //maybe this can go inside resetToBeginningOfStep - already there()
   real64 damage_threshold = 0.3;
-
-  //USE REGISTERED ARRAYS INSTEAD OF m_nodeFixDisp and m_fixedDispList
   m_nodeFixDisp.resize( patchExternalSet.size() );
   m_fixedDispList.resize( patchExternalSet.size(), 3 );
   localIndex count=0;
@@ -360,11 +256,11 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
       //append node a
       //USE REGISTERED ARRAY HERE
       m_nodeFixDisp( count ) = a;
-      localIndex const numBaseNodes = 1;  //this wont be 1 in other cases //m_nodeMapIndices.sizeOfArray( a );
+      localIndex const numBaseNodes = 1;  //TODO: this wont be 1 in other cases, m_nodeMapIndices.sizeOfArray( a );
       for( localIndex b=0; b<numBaseNodes; ++b )
       {
         //write displacements from the base domain to become a boundary condition in the patch domain
-        // a should be replaced by mapped(a) if meshes arent identical
+        //TODO: a should be replaced by mapped(a) if meshes arent identical
         // mapped(a) is the node in base that has the same physical coordinates of a in patch
         m_fixedDispList( count, 0 ) = baseDisp( a, 0 );
         m_fixedDispList( count, 1 ) = baseDisp( a, 1 );
@@ -399,11 +295,9 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
   efemGenerator = this->getParent().getGroup< EmbeddedSurfaceGenerator >( "SurfaceGenerator" ); //this is hard coded
 
   PhaseFieldDamageFEM &
-  //patchDamageSolver = patchSolver.getParent().getGroup< PhaseFieldDamageFEM >( patchSolver.getDamageSolverName() );
   patchDamageSolver = *patchSolver.damageSolver();
 
   SolidMechanicsLagrangianFEM &
-  //patchSolidSolver = patchSolver.getParent().getGroup< SolidMechanicsLagrangianFEM >( patchSolver.getSolidSolverName() );
   patchSolidSolver = *patchSolver.solidMechanicsSolver();
 
 
@@ -414,17 +308,7 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
                           baseSolver.getSystemSolution(),
                           true );
 
-  // patchSolver.setupSystem( domain,
-  //                          patchSolver.getDofManager(),
-  //                          patchSolver.getLocalMatrix(),
-  //                          patchSolver.getSystemRhs(),
-  //                          patchSolver.getSystemSolution(),
-  //                          true );
-  //Do we need to modify anything here??
-
   baseSolver.implicitStepSetup( time_n, dt, domain );
-
-  // patchSolver.implicitStepSetup( time_n, dt, domain );
 
   this->implicitStepSetup( time_n, dt, domain );
 
@@ -438,7 +322,7 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
     if( iter == 0 )
     {
       // reset the states of all slave solvers if any of them has been reset
-      //this is potentially a code duplication since resetStateToBeginningOfStep(domain) already calls the slaves
+      //TODO: this is potentially a code duplication since resetStateToBeginningOfStep(domain) already calls the slaves
       patchSolver.resetStateToBeginningOfStep( domain );
       baseSolver.resetStateToBeginningOfStep( domain );
       resetStateToBeginningOfStep( domain );
@@ -458,13 +342,11 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
     this->setInitialCrackDamageBCs( patchDamageSolver.getDofManager(), patchDamageLocalMatrix.toViewConstSizes(), domain.getMeshBody( patchTarget.first ).getBaseDiscretization(),
                                     domain.getMeshBody( baseTarget.first ).getBaseDiscretization() );
     patchDamageSolver.setInitialCrackNodes( m_nodeFixDamage );
-    //patchSolver.addCustomBCDamage(m_nodeFixDamage); //this function still doesnt exist
-    //must prescribe the damage boundary conditions based on the location of the base crack relative to the subdomain mesh
 
     //now perform the subproblem run with no BCs on displacements, just to set the damage inital condition;
     if( iter == 0 )
     {
-      //this->updateNodeMaps(); //this has to be done at every prop. step
+      //TODO: eventually, we will need to update the patch domain
       real64 dtUseless = patchSolver.solverStep( time_n,
                                                  dtReturn,
                                                  cycleNumber,
@@ -502,15 +384,12 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", PatchSolver: " );
 
-    //probably, a nonlinearImplicitStep is not the right one for the Phase Field solver, maybe we should call its solverStep which calls
-    // splitOperatorStep
     dtReturnTemporary = patchSolver.solverStep( time_n,
                                                 dtReturn,
                                                 cycleNumber,
                                                 domain );
     this->findPhaseFieldTip( m_patchTip, domain.getMeshBody( patchTarget.first ).getBaseDiscretization());
 
-    //is there a way for the code to know which is the subRegion on the base mesh that contains m_baseTipElementIndex?
     if( time_n > 0 )
     {
       efemGenerator.propagationStep( domain, m_baseTip, m_patchTip, m_baseTipElementIndex );
@@ -544,24 +423,9 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
 
   baseSolver.implicitStepComplete( time_n, dt, domain );
   patchSolver.implicitStepComplete( time_n, dt, domain );
-  //this->implicitStepComplete( time_n, dt, domain );
 
   return dtReturn;
 }
-
-// Andre - 14/03/22 - This can probably be made trivial in the MR case
-
-// void MultiResolutionHFSolver::setNextDt( real64 const & currentDt,
-//                                          real64 & nextDt )
-// {
-
-//   if( m_numResolves[0] == 0 && m_numResolves[1] == 0 )
-//   {
-//     this->setNextDtBasedOnNewtonIter( currentDt, nextDt );
-//   }
-
-//   GEOSX_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );
-// }
 
 REGISTER_CATALOG_ENTRY( SolverBase, MultiResolutionHFSolver, string const &, Group * const )
 } /* namespace geosx */

@@ -114,33 +114,37 @@ void NodeManager::setIsExternal( FaceManager const & faceManager )
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
 
   // get the "isExternal" field from for *this, and set it to zero
-  m_isExternal.zero();
+  arrayView1d< integer > isExternalView = isExternal();
+  isExternalView.zero();
+  //m_isExternal.zero();
 
   // get externalSet reference to insert external faces
   SortedArray< localIndex > & externalSet = this->externalSet();
 
   //get normals to all faces
-  const arrayView2d< real64 const > normalOfAllFaces = faceManager.faceNormal();
+  arrayView2d< real64 const > const normalOfAllFaces = faceManager.faceNormal();
 
   // loop through all faces
-  for( localIndex kf=0; kf<faceManager.size(); ++kf )
+  //forAll< parallelHostPolicy >( faceManager.size(), [=]( localIndex const faceIndex )
+  //{
+  for( localIndex faceIndex=0; faceIndex<faceManager.size(); ++faceIndex )
   {
     // check to see if the face is on a domain boundary
-    if( isExternalFace[kf] == 1 )
+    if( isExternalFace[faceIndex] == 1 )
     {
       // loop over all nodes connected to face, and set isNodeDomainBoundary
-      localIndex const numNodes = faceToNodes.sizeOfArray( kf );
+      localIndex const numNodes = faceToNodes.sizeOfArray( faceIndex );
       for( localIndex a = 0; a < numNodes; ++a )
       {
-        m_isExternal[ faceToNodes( kf, a ) ] = 1;
-        if( normalOfAllFaces( kf, 2 )*normalOfAllFaces( kf, 2 ) < 1e-10 )  //avoid comparison with == sign
+        isExternalView[ faceToNodes( faceIndex, a ) ] = 1; 
+        if( normalOfAllFaces( faceIndex, 2 )*normalOfAllFaces( faceIndex, 2 ) < 1e-10 )  
         {
-          externalSet.insert( faceToNodes( kf, a ) );
+          externalSet.insert( faceToNodes( faceIndex, a ) ); //not available on DEVICE
         }
       }
     }
   }
-
+  //} );
 }
 
 void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
