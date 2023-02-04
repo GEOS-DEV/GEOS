@@ -35,6 +35,7 @@ ObjectManagerBase::ObjectManagerBase( string const & name,
   m_globalToLocalMap(),
   m_isExternal(),
   m_domainBoundaryIndicator(),
+  m_domain2DBoundaryIndicator(),
   m_ghostRank(),
   m_neighborData()
 {
@@ -54,6 +55,8 @@ ObjectManagerBase::ObjectManagerBase( string const & name,
     setPlotLevel( PlotLevel::LEVEL_0 );
 
   registerWrapper< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString(), &m_domainBoundaryIndicator );
+
+  registerWrapper< array1d< integer > >( viewKeyStruct::domain2DBoundaryIndicatorString(), &m_domain2DBoundaryIndicator );
 
   m_sets.registerWrapper< SortedArray< localIndex > >( this->m_ObjectManagerBaseViewKeys.externalSet );
 

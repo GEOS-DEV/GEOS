@@ -238,41 +238,51 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
   // get list of nodes on the boundary of the patch
   FaceManager const & patchFaceManager = patch.getFaceManager();
   NodeManager & patchNodeManager = patch.getNodeManager();
-  patchNodeManager.setIsExternal( patchFaceManager );
-  SortedArray< localIndex > patchExternalSet = patchNodeManager.externalSet();
+  //patchNodeManager.setIsExternal( patchFaceManager );
+  patchNodeManager.setDomain2DBoundaryObjects( patchFaceManager );
+  //SortedArray< localIndex > patchExternalSet = patchNodeManager.externalSet();
+  arrayView1d< integer const > patch2DBoundaryIndicator = patchNodeManager.getDomain2DBoundaryIndicator();
   arrayView1d< real64 const > const patchDamage = patchNodeManager.getReference< array1d< real64 > >( "Damage" );
   NodeManager const & baseNodeManager = base.getNodeManager();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const baseDisp = baseNodeManager.getField< fields::solidMechanics::totalDisplacement >();
   real64 damage_threshold = 0.3;
-  m_nodeFixDisp.resize( patchExternalSet.size() );
-  m_fixedDispList.resize( patchExternalSet.size(), 3 );
+  //m_nodeFixDisp.resize( patchExternalSet.size() );
+  //m_fixedDispList.resize( patchExternalSet.size(), 3 );
   localIndex count=0;
-  for( localIndex a : patchExternalSet )
+  for( localIndex nodeIndex=0; nodeIndex<patchNodeManager.size(); ++nodeIndex )
   {
-    if( patchDamage[a] < damage_threshold )
+    if( patch2DBoundaryIndicator[nodeIndex]==1 )
     {
-      // NOTE: there needs to be a translation between patch and base mesh for the indices and values/weights.
-
-      //append node a
-      //USE REGISTERED ARRAY HERE
-      m_nodeFixDisp( count ) = a;
-      localIndex const numBaseNodes = 1;  //TODO: this wont be 1 in other cases, m_nodeMapIndices.sizeOfArray( a );
-      for( localIndex b=0; b<numBaseNodes; ++b )
+      // for( localIndex a : patchExternalSet )
+      // {
+      if( patchDamage[nodeIndex] < damage_threshold )
       {
-        //write displacements from the base domain to become a boundary condition in the patch domain
-        //TODO: a should be replaced by mapped(a) if meshes arent identical
-        // mapped(a) is the node in base that has the same physical coordinates of a in patch
-        m_fixedDispList( count, 0 ) = baseDisp( a, 0 );
-        m_fixedDispList( count, 1 ) = baseDisp( a, 1 );
-        m_fixedDispList( count, 2 ) = baseDisp( a, 2 );
-      }
+        // NOTE: there needs to be a translation between patch and base mesh for the indices and values/weights.
 
-      ++count;
+        //append node nodeIndex
+        //USE REGISTERED ARRAY HERE
+        m_nodeFixDisp.resize( count+1 );
+        m_fixedDispList.resize( count+1, 3 );
+        m_nodeFixDisp( count ) = nodeIndex;
+        localIndex const numBaseNodes = 1;  //TODO: this wont be 1 in other cases, m_nodeMapIndices.sizeOfArray( a );
+        for( localIndex b=0; b<numBaseNodes; ++b )
+        {
+          //write displacements from the base domain to become a boundary condition in the patch domain
+          //TODO: a should be replaced by mapped(a) if meshes arent identical
+          // mapped(a) is the node in base that has the same physical coordinates of a in patch
+          m_fixedDispList( count, 0 ) = baseDisp( nodeIndex, 0 );
+          m_fixedDispList( count, 1 ) = baseDisp( nodeIndex, 1 );
+          m_fixedDispList( count, 2 ) = baseDisp( nodeIndex, 2 );
+        }
+
+        ++count;
+      }
+      //}
     }
   }
   //USE REGISTERED ARRAY HERE
-  m_nodeFixDisp.resize( count );
-  m_fixedDispList.resize( count, 3 );
+  //m_nodeFixDisp.resize( count );
+  //m_fixedDispList.resize( count, 3 );
 
 }
 
