@@ -136,8 +136,8 @@ void NodeManager::setIsExternal( FaceManager const & faceManager )
       localIndex const numNodes = faceToNodes.sizeOfArray( faceIndex );
       for( localIndex a = 0; a < numNodes; ++a )
       {
-        isExternalView[ faceToNodes( faceIndex, a ) ] = 1; 
-        if( normalOfAllFaces( faceIndex, 2 )*normalOfAllFaces( faceIndex, 2 ) < 1e-10 )  
+        isExternalView[ faceToNodes( faceIndex, a ) ] = 1;
+        if( normalOfAllFaces( faceIndex, 2 )*normalOfAllFaces( faceIndex, 2 ) < 1e-10 )
         {
           externalSet.insert( faceToNodes( faceIndex, a ) ); //not available on DEVICE
         }

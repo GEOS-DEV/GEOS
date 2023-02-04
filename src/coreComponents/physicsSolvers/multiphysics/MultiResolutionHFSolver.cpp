@@ -150,7 +150,7 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX
         //TODO: if meshes arent identical, this should be nodeList(elem_mapped_to_patch(a),b) or check (2)
         localIndex c = cellElementSubRegion.nodeList( a, b );
         //append c = node b of element a
-        if( std::find(m_nodeFixDamage.begin(), m_nodeFixDamage.end(), c) == m_nodeFixDamage.end() ) //avoid repetition
+        if( std::find( m_nodeFixDamage.begin(), m_nodeFixDamage.end(), c ) == m_nodeFixDamage.end() ) //avoid repetition
         {
           //TODO: use node_mapped_to_patch(cellElementSubRegion.nodeList(a,b))
           m_nodeFixDamage( count ) = cellElementSubRegion.nodeList( a, b );
@@ -178,7 +178,7 @@ void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
   R1Tensor rankFarthestCenter = {0.0, 0.0, 0.0};
   //loop over all elements in patch and compute elemental average damage
   //observe that patch coordinates are relative, so, reference point should be added
-  //for elements in patch 
+  //for elements in patch
   patchElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
     localIndex numQuadraturePointsPerElem = 0;

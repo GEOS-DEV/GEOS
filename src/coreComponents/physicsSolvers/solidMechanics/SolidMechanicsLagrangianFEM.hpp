@@ -272,7 +272,7 @@ public:
    * @param domain The DomainPartition.
    * @param matrix the system matrix
    * @param localRhs the system right-hand side vector
-   */  
+   */
   void applyInternalDisplacementBCImplicit( real64 const time,
                                             DofManager const & dofManager,
                                             DomainPartition & domain,

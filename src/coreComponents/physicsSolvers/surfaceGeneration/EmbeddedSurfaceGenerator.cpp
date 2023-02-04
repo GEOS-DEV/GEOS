@@ -295,8 +295,8 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
   // Get EmbeddedSurfaceSubRegions
   SurfaceElementRegion & embeddedSurfaceRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
   EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion = embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
-  localIndex localNumberOfSurfaceElems = embeddedSurfaceSubRegion.size(); 
-  NewObjectLists newObjects; 
+  localIndex localNumberOfSurfaceElems = embeddedSurfaceSubRegion.size();
+  NewObjectLists newObjects;
   // begin geometric operations
   real64 const planeCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( newFracturePlane->getCenter() );
   real64 const normalVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( newFracturePlane->getNormal() );
