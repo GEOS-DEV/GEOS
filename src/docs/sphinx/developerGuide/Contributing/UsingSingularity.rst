@@ -46,3 +46,41 @@ then secure copying results back locally in order to process them.
 
 .. note::
     It might be required to `export OMPI_MCA_opal_cuda_support=false` in order to disable cuda support loading of the ompi version.
+
+Now let us use that to launch `sbatch` computation. In a *run.sh* file,
+
+.. code::
+    :caption: sh-file
+    #!/bin/bash
+
+    export OMPI_MCA_opal_cuda_support=false
+    export INPUT=/opt/GEOSX/inputFiles/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+    ### parallel executable
+    singularity exec geosx_u22-g11-omp41_latest.sif /opt/GEOSX/GEOSX-version/bin/geosx -i ${INPUT} -x 2 -y 1 -z 1
+    #singularity run geosx_u22-g11-omp41_latest.sif -i ${INPUT} -x 2 -y 1 -z 1
+
+and let's wrap it in a sbatch formatted file
+
+.. code::
+    :caption: sh-file
+
+    #!/bin/sh
+    #SBATCH --job-name=singularity_test
+    #SBATCH --partition=normal
+    #SBATCH --time=00:10:00
+    #SBATCH -n 2
+
+    module restore geosx-cpu-2
+
+    #export OMPI_MCA_opal_cuda_support=false
+    #export OMPI_ALLOW_RUN_AS_ROOT=1
+    #export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+
+    # ##parallel executable
+    srun --mpi=pmix ./run.sh
+
+    echo 'Done'
+
+
+//might also work
+singularity run [run options...] <container>
