@@ -17,5 +17,6 @@ Fault Mechanics
 
    faultVerification/Example
 
+   thermalConsolidation/Example
 
 
