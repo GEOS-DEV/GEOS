@@ -8,7 +8,7 @@ Thermoporoelastic Consolidation
 **Context**
 
 Thermo-poroelastic consolidation is a typical fully coupled problem which involves solid deformation, fluid flow and heat transfer in saturated porous media.
-In this example, we use the coupled solvers in GEOSX to solve a one-dimensional thermo-poroelastic consolidation problem with a non-isothermal boundary conditions, and we verify the accuracy of the results using the analytical solution provided in `(Bai, 2005) http://gclx.xml-journal.net/en/article/id/3369`__ 
+In this example, we use the GEOSX coupled solvers to solve a one-dimensional thermo-poroelastic consolidation problem with a non-isothermal boundary conditions, and we verify the accuracy of the results using the analytical solution provided in `(Bai, 2005) <http://gclx.xml-journal.net/en/article/id/3369>`__ 
 
 **InputFile**
 
@@ -29,21 +29,23 @@ Description of the case
 We simulate the consolidation of 1D thermoporoelastic column subjected to a surface traction of 1 Newton applied on the top surface, with a surface temperature of 50 degrees Celsius and a pore pressure of 0 Pa.
 The initial temperature of the saturated soil is 0 degrees Celsius.
 The soil column is insulated and sealed everywhere, except at the top surface.
+The problem setup is illustrated below.
 
 .. _problemSketchFig:
 .. figure:: sketch.png
    :align: center
-   :width: 500
+   :width: 350
    :figclass: align-center
 
-   Sketch of the problem (taken from `(Gao and Ghassemi, 2019) https://www.proquest.com/docview/2387146352?pq-origsite=gscholar&fromopenview=true`__).
+   Sketch of the problem (taken from `(Gao and Ghassemi, 2019) <https://www.proquest.com/docview/2387146352>`__).
 
+The coupled dynamics experienced by the system are described in `(Gao and Ghassemi, 2019) <https://www.proquest.com/docview/2387146352>`__ and summarized below.
 The model first experiences continuous settlement (contraction).
-Initially, the settlement caused by drainage of fluid (effective stress increase) and compression of the solid matrix is larger than the expansion due to increase of temperature in the region close to the surface on which a higher temperature is applied.
+Initially, the settlement caused by the drainage of the fluid (effective stress increase) and the compression of the solid matrix is larger than the expansion due to the increase of temperature in the region close to the surface on which a higher temperature is applied.
 As the temperature diffuses further into the domain, it gradually rebounds (expansion) and reaches a final status.
 
 For this example, we focus on the ``Solvers``,
-the ``Constitutive``, and the ``FieldSpecifications`` tags.
+the ``Constitutive``, and the ``FieldSpecifications`` tags of the GEOSX input file.
 
 ------------------------------------------------------------------
 Solvers
@@ -85,7 +87,7 @@ Constitutive laws
 ------------------------------
 
 A homogeneous and isotropic domain with one solid material is assumed, and its mechanical properties and associated fluid rheology are specified in the **Constitutive** section. 
-We use the constitutive parameters specified in `(Bai, 2005) http://gclx.xml-journal.net/en/article/id/3369`__. 
+We use the constitutive parameters specified in `(Bai, 2005) <http://gclx.xml-journal.net/en/article/id/3369>`__ listed in the following table. 
 
 +------------------+-------------------------+------------------+--------------------+
 | Symbol           | Parameter               | Unit             | Value              |
@@ -102,7 +104,7 @@ We use the constitutive parameters specified in `(Bai, 2005) http://gclx.xml-jou
 +------------------+-------------------------+------------------+--------------------+
 | :math:`\rho C`   | Heat capacity           | [J/(m^3.K)]      | 167.2x10\ :sup:`3` |
 +------------------+-------------------------+------------------+--------------------+
-| :math:`\mu`      | Fluid viscosity         | [Pa s]           | 1\ :sup:`-3`       |
+| :math:`\mu`      | Fluid viscosity         | [Pa.s]           | 1\ :sup:`-3`       |
 +------------------+-------------------------+------------------+--------------------+
 | :math:`k^T`      | Thermal conductivity    | [J/(m.s.K)]      | 836                |
 +------------------+-------------------------+------------------+--------------------+
@@ -111,6 +113,7 @@ We use the constitutive parameters specified in `(Bai, 2005) http://gclx.xml-jou
 
 The bulk modulus, Young's modulus, and thermal expansion coefficient are specified in the ``ElasticIsotropic`` solid model.
 Note that for now the solid density is constant and does not depend on temperature.
+Given that the gravity vector has been set to 0 in the XML file, the value of the solid density is not used in this simulation.
 
 .. literalinclude:: ../../../../../../../inputFiles/poromechanics/ThermoPoroElastic_consolidation_base.xml
   :language: xml
@@ -126,6 +129,7 @@ In this model, the porosity is updated as a function of the strain increment, th
   :end-before: <!-- SPHINX_POROSITY_END -->
 
 The heat capacity is provided in the ``SolidInternalEnergy`` model.
+In the computation of the internal energy, the ``referenceTemperature`` is set to the initial temperature.
 
 .. literalinclude:: ../../../../../../../inputFiles/poromechanics/ThermoPoroElastic_consolidation_base.xml
   :language: xml
@@ -140,13 +144,18 @@ Here, they are assumed to be constant and do not depend on pressure and temperat
   :start-after: <!-- SPHINX_FLUID -->
   :end-before: <!-- SPHINX_FLUID_END -->
 
-Finally, the permeability and thermal conductivity are specified in the `ConstantPermeability` and `SinglePhaseConstantThermalConductivity`, respectively.
+Finally, the permeability and thermal conductivity are specified in the ``ConstantPermeability`` and ``SinglePhaseConstantThermalConductivity``, respectively.
+
+.. literalinclude:: ../../../../../../../inputFiles/poromechanics/ThermoPoroElastic_consolidation_base.xml
+  :language: xml
+  :start-after: <!-- SPHINX_PERMEABILITY_CONDUCTIVITY -->
+  :end-before: <!-- SPHINX_PERMEABILITY_CONDUCTIVITY_END -->
 
 -----------------------------------------------------------
-Boundary conditions
+Initial and boundary conditions
 -----------------------------------------------------------
 
-Next, we specify two fields:
+To complete the specification of the problem, we specify two types of fields:
 
   - The initial values (the displacements, effective stress, and pore pressure have to be initialized),
   - The boundary conditions at the top surface (traction, pressure, and temperature) and at the other boundaries (zero-displacement).
@@ -167,7 +176,7 @@ Note that here, we have considered a slab in the y-direction, which is why a dis
   :start-after: <!-- SPHINX_ZERO_DISPLACEMENT_BC -->
   :end-before: <!-- SPHINX_ZERO_DISPLACEMENT_BC_END -->
 
-On the top surface, we impose the traction boundary condition and the non-isothermal boundary condition. We also fix the pore pressure to 0 Pa. 
+On the top surface, we impose the traction boundary condition and the non-isothermal boundary condition specified in `(Bai, 2005) <http://gclx.xml-journal.net/en/article/id/3369>`__. We also fix the pore pressure to 0 Pa. 
 	       
 .. literalinclude:: ../../../../../../../inputFiles/poromechanics/ThermoPoroElastic_consolidation_base.xml
   :language: xml
@@ -179,13 +188,17 @@ Inspecting results
 ---------------------------------
 
 We request an output of the displacements, pressure, and temperature using the **TimeHistory** feature of GEOSX. 
-The figure below compares the results from GEOSX (dashed line) and the corresponding analytical solution (solid line) as a function of time at different location of the slab.
-We obtain a very good match, confirming that GEOSX can accurately capture the thermo-poromechanical coupling on this example.  
+The figures below compare the results from GEOSX (dashed line) and the corresponding analytical solution (solid line) as a function of time at different locations of the slab.
+We obtain a very good match, confirming that GEOSX can accurately capture the thermo-poromechanical coupling on this example. The first figure illustrates this good agreement for the pressure evolution. 
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/faultMechanics/thermalConsolidation/thermalConsolidationPressureFigure.py
 
+The second figure confirms the good match with the analytical solution for the temperature.
+	  
 .. plot:: docs/sphinx/advancedExamples/validationStudies/faultMechanics/thermalConsolidation/thermalConsolidationTemperatureFigure.py
 
+The third figure shows that GEOSX is also able to match the vertical displacement (settlement) analytical solution.  
+	  
 .. plot:: docs/sphinx/advancedExamples/validationStudies/faultMechanics/thermalConsolidation/thermalConsolidationDisplacementFigure.py
 
 ------------------------------------------------------------------
