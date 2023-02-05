@@ -139,6 +139,8 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX
   ElementRegionManager const & baseElemManager = base.getElemManager();
   baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
+    //TODO: we should probably zero m_nodeFixDamage at every call to this function
+    m_nodeFixDamage.zero();
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
     m_nodeFixDamage.resize( cellElementSubRegion.numNodesPerElement()*fracturedElements.size() );
     localIndex count = 0;
@@ -236,6 +238,8 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
                                                     MeshLevel & patch )
 {
   GEOSX_MARK_FUNCTION;
+  m_nodeFixDisp.zero();
+  m_fixedDispList.zero();
   // get list of nodes on the boundary of the patch
   FaceManager const & patchFaceManager = patch.getFaceManager();
   NodeManager & patchNodeManager = patch.getNodeManager();
@@ -379,6 +383,8 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
     this->prepareSubProblemBCs( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), domain.getMeshBody( patchTarget.first ).getBaseDiscretization());
 
     //write disp BCs to local disp solver
+    //TODO: m_nodeFixDisp and m_fixedDispList dont need to be members, they can be initialized at every time step, this is actually safer
+    //since the size of the boundary can change
     patchSolidSolver.setInternalBoundaryConditions( m_nodeFixDisp, m_fixedDispList );
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", PatchSolver: " );
