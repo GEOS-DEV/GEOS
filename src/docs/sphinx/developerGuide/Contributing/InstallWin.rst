@@ -81,13 +81,13 @@ There are two things you may have noticed reading through the ``Dockerfile`` :
 
 .. code:: shell
 
-    PS> $env:VERSION='164-677'
-    PS> $env:IMG='ubuntu18.04-gcc8'
+    PS> $env:VERSION='212-910'
+    PS> $env:IMG='ubuntu20.04-gcc9'
     PS> $env:REMOTE_DEV_IMG="remote-dev-${env:IMG}"
 
 
 Please note the preposition of ``env:`` in the windows formalisme. The ``${ORG}`` variable will be hard-coded as ``geosx``. The last variable will be use
-as the image name. ``164-677`` refers to a specific version of the TPLs which may not be up to date. Please refer to :ref:`Continuous_Integration_process` for further info.
+as the image name. ``212-910`` refers to a specific version of the TPLs which may not be up to date. Please refer to :ref:`Continuous_Integration_process` for further info.
 
 - You'll need to generate a ssh-key to be able to access the container without the need for defining a password. This can be done from the *PowerShell*,
 
@@ -145,7 +145,7 @@ Coming back to our ``PowerShell`` terminal, we can check that our container is r
 
     PS > docker ps -a
     CONTAINER ID   IMAGE                                 COMMAND               CREATED                  STATUS          PORTS                                     NAMES
-    1efffac66c4c   remote-dev-ubuntu18.04-gcc8:156-642   "/usr/sbin/sshd -D"   Less than a second ago   Up 18 seconds   0.0.0.0:64000->22/tcp, :::64000->22/tcp   remote-dev-ubuntu18.04-gcc8-156-642
+    1efffac66c4c   remote-dev-ubuntu20.04-gcc9:212-910   "/usr/sbin/sshd -D"   Less than a second ago   Up 18 seconds   0.0.0.0:64000->22/tcp, :::64000->22/tcp   remote-dev-ubuntu20.04-gcc9-212-910
 
     PS > ssh root@localhost -p 64000
     Enter passphrase for key 'C:\***********/.ssh/id_rsa':

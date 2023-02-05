@@ -31,12 +31,12 @@ You'll have to add extra tools.
 The following `example` is for our ``ubuntu`` flavors.
 You'll notice the arguments ``IMG``, ``VERSION``, ``ORG``.
 While surely overkill for most cases, if you develop in GEOSX on a regular basis you'll appreciate being able to switch containers easily.
-For example, simply create the image ``remote-dev-ubuntu18.04-gcc8:156-642`` by running
+For example, simply create the image ``remote-dev-ubuntu20.04-gcc9:212-910`` by running
 
 .. code-block:: console
 
-    export VERSION=156-642
-    export IMG=ubuntu18.04-gcc8
+    export VERSION=212-910
+    export IMG=ubuntu20.04-gcc9
     export REMOTE_DEV_IMG=remote-dev-${IMG}
     docker build --build-arg ORG=geosx --build-arg IMG=${IMG} --build-arg VERSION=${VERSION} -t ${REMOTE_DEV_IMG}:${VERSION} -f /path/to/Dockerfile .
 
@@ -52,7 +52,7 @@ I like to do
 
     docker run --cap-add=SYS_PTRACE -d --name ${REMOTE_DEV_IMG}-${VERSION} -p 64000:22 -p 64010-64020:64010-64020 ${REMOTE_DEV_IMG}:${VERSION}
 
-that creates the container ``remote-dev-ubuntu18.04-gcc8-156-642``, running instance of ``remote-dev-ubuntu18.04-gcc8:156-642``.
+that creates the container ``remote-dev-ubuntu20.04-gcc9-212-910``, running instance of ``remote-dev-ubuntu20.04-gcc9:212-910``.
 
 - Note that you'll have to access your remote development instance though port ``64000`` (forwarded to standard port ``22`` by docker).
 - Additional ports from ``64010`` to ``64020`` will be open if you need them (multiple instances of ``gdbserver``, remote ``paraview`` connection, ...). 
