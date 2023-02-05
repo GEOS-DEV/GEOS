@@ -105,48 +105,6 @@ void NodeManager::buildSets( CellBlockManagerABC const & cellBlockManager,
   } );
 }
 
-void NodeManager::setIsExternal( FaceManager const & faceManager )
-{
-  // get the "isExternal" field from the faceManager...This should have been
-  // set already!
-  arrayView1d< integer const > const & isExternalFace = faceManager.isExternal();
-
-  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
-
-  // get the "isExternal" field from for *this, and set it to zero
-  arrayView1d< integer > isExternalView = isExternal();
-  isExternalView.zero();
-  //m_isExternal.zero();
-
-  // get externalSet reference to insert external faces
-  SortedArray< localIndex > & externalSet = this->externalSet();
-
-  //get normals to all faces
-  arrayView2d< real64 const > const normalOfAllFaces = faceManager.faceNormal();
-
-  // loop through all faces
-  //forAll< parallelHostPolicy >( faceManager.size(), [=]( localIndex const faceIndex )
-  //{
-  for( localIndex faceIndex=0; faceIndex<faceManager.size(); ++faceIndex )
-  {
-    // check to see if the face is on a domain boundary
-    if( isExternalFace[faceIndex] == 1 )
-    {
-      // loop over all nodes connected to face, and set isNodeDomainBoundary
-      localIndex const numNodes = faceToNodes.sizeOfArray( faceIndex );
-      for( localIndex a = 0; a < numNodes; ++a )
-      {
-        isExternalView[ faceToNodes( faceIndex, a ) ] = 1;
-        if( normalOfAllFaces( faceIndex, 2 )*normalOfAllFaces( faceIndex, 2 ) < 1e-10 )
-        {
-          externalSet.insert( faceToNodes( faceIndex, a ) ); //not available on DEVICE
-        }
-      }
-    }
-  }
-  //} );
-}
-
 //TODO: implement a similar function to set the boundary faces in the 2D case and reduce the size of the loop that is done here
 void NodeManager::setDomain2DBoundaryObjects( FaceManager const & faceManager )
 {

@@ -135,7 +135,7 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX
                                                         MeshLevel const & GEOSX_UNUSED_PARAM( patch ),
                                                         MeshLevel const & base )
 {
-
+  GEOSX_MARK_FUNCTION;
   ElementRegionManager const & baseElemManager = base.getElemManager();
   baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
@@ -166,6 +166,7 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX
 void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
                                                  MeshLevel const & patch )
 {
+  GEOSX_MARK_FUNCTION;
   //reference point must be prescribed in base coordinate system (usually injection source)
   R1Tensor m_referencePoint = {-1.0, 0.0, 0.0}; //add this as input file parameter
   real64 threshold = 0.95;
@@ -189,7 +190,7 @@ void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
       numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
     } );
     string const & damageModelName = cellElementSubRegion.getReference< string >( PhaseFieldDamageFEM::viewKeyStruct::solidModelNamesString());
-    //this call may need to constitutive pass-thru loop to be generalized to multiple damage types
+    //TODO: this call may need to constitutive pass-thru loop to be generalized to multiple damage types
     const constitutive::Damage< ElasticIsotropic > & damageUpdates = cellElementSubRegion.getConstitutiveModel< Damage< ElasticIsotropic > >( damageModelName );
     arrayView2d< const real64 > allElemCenters = cellElementSubRegion.getElementCenter();
     const arrayView2d< real64 const > qp_damage = damageUpdates.getDamage();
@@ -234,27 +235,22 @@ void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
 void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
                                                     MeshLevel & patch )
 {
-
+  GEOSX_MARK_FUNCTION;
   // get list of nodes on the boundary of the patch
   FaceManager const & patchFaceManager = patch.getFaceManager();
   NodeManager & patchNodeManager = patch.getNodeManager();
-  //patchNodeManager.setIsExternal( patchFaceManager );
+  //this function finds the nodes in the boundary assuming that the domain is 2D extruded in the z direction
   patchNodeManager.setDomain2DBoundaryObjects( patchFaceManager );
-  //SortedArray< localIndex > patchExternalSet = patchNodeManager.externalSet();
   arrayView1d< integer const > patch2DBoundaryIndicator = patchNodeManager.getDomain2DBoundaryIndicator();
   arrayView1d< real64 const > const patchDamage = patchNodeManager.getReference< array1d< real64 > >( "Damage" );
   NodeManager const & baseNodeManager = base.getNodeManager();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const baseDisp = baseNodeManager.getField< fields::solidMechanics::totalDisplacement >();
   real64 damage_threshold = 0.3;
-  //m_nodeFixDisp.resize( patchExternalSet.size() );
-  //m_fixedDispList.resize( patchExternalSet.size(), 3 );
   localIndex count=0;
   for( localIndex nodeIndex=0; nodeIndex<patchNodeManager.size(); ++nodeIndex )
   {
     if( patch2DBoundaryIndicator[nodeIndex]==1 )
     {
-      // for( localIndex a : patchExternalSet )
-      // {
       if( patchDamage[nodeIndex] < damage_threshold )
       {
         // NOTE: there needs to be a translation between patch and base mesh for the indices and values/weights.
@@ -277,12 +273,8 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
 
         ++count;
       }
-      //}
     }
   }
-  //USE REGISTERED ARRAY HERE
-  //m_nodeFixDisp.resize( count );
-  //m_fixedDispList.resize( count, 3 );
 
 }
 
@@ -388,9 +380,6 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
 
     //write disp BCs to local disp solver
     patchSolidSolver.setInternalBoundaryConditions( m_nodeFixDisp, m_fixedDispList );
-
-    //finally, pass the shared boundary information to the patch solver
-    //patchSolver.
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", PatchSolver: " );
 
