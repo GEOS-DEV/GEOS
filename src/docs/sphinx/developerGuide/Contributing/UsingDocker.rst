@@ -3,7 +3,7 @@
 [Unsupported] Developing inside Docker with precompiled TPL binaries
 ====================================================================
 
-For development purposes, you may want to use the publicly available docker images or the OSX tarball instead of compiling them yourself.
+For development purposes, you may want to use the publicly available docker images instead of compiling them yourself.
 While this is possible and this page will help you in through this journey, please note that *this is not officially supported by the GEOSX team that reserves the right to modify its workflow or delete elements on which you may have build your own workflow*.
 
 There are multiple options to use the exposed docker images.
@@ -50,11 +50,12 @@ I like to do
 
 .. code-block:: console
 
-    docker run --cap-add=SYS_PTRACE -d --name ${REMOTE_DEV_IMG}-${VERSION} -p 64000:22 ${REMOTE_DEV_IMG}:${VERSION}
+    docker run --cap-add=SYS_PTRACE -d --name ${REMOTE_DEV_IMG}-${VERSION} -p 64000:22 -p 64010-64020:64010-64020 ${REMOTE_DEV_IMG}:${VERSION}
 
 that creates the container ``remote-dev-ubuntu18.04-gcc8-156-642``, running instance of ``remote-dev-ubuntu18.04-gcc8:156-642``.
 
 - Note that you'll have to access your remote development instance though port ``64000`` (forwarded to standard port ``22`` by docker).
+- Additional ports from ``64010`` to ``64020`` will be open if you need them (multiple instances of ``gdbserver``, remote ``paraview`` connection, ...). 
 - Please be aware of how to retrieve your code back: you may want to bind mount volumes and store you code there (``-v``/``--volume=`` options of `docker run <https://docs.docker.com/engine/reference/run/>`_).
 - Change ``docker`` to ``nvidia-docker`` and add the ``--gpus=...`` option for GPUs.
 
