@@ -130,8 +130,8 @@ Now that we have the image build, let us run a container from,
 
     PS > docker run --cap-add=SYS_PTRACE  -d --name ${env:REMOTE_DEV_IMG}-${env:VERSION} -p 64000:22 --mount 'type=bind,source=D:/install_geosx_docker/,target=/app' ${env:REMOTE_DEV_IMG}:${env:VERSION}
 
-Note that in addition to the detached flag (*-d*) and the name tage (*--name*), we provide ``Docker`` with the port the container should be associated to
-communicate with ssh port 22, as well as a binding between a host mount point (*D:/install_geosx_docker/*) and a container mount point (*/app*) to have a peristent storage
+Note that in addition to the detached flag (``-d``) and the name tage (``--name``), we provide ``Docker`` with the port the container should be associated to
+communicate with ssh port 22, as well as a binding between a host mount point (``D:/install_geosx_docker/``) and a container mount point (``/app``) to have a peristent storage
 for our development/geosx builds. More details on the `--mount options <https://docs.docker.com/storage/bind-mounts/>`_
 
 A similar step can be achieved using the *Docker Desktop* GUI in the image tabs, clicking on the *run* button and filling the same information in the interface,
@@ -193,7 +193,7 @@ Once the code is configured and compiled, let us check the status of the build,
 
     root@b105f9ead860:~# cd [path-to-build]/ && ./bin/geosx --help
 
-Trying to launch a case using *mpirun*, you might get the following warning
+Trying to launch a case using ``mpirun``, you might get the following warning
 
 .. code:: console
 
