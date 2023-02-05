@@ -28,7 +28,7 @@ RUN apt-get autoremove -y
 
 # The default user is root. If you plan your docker instance to be a disposable environment,
 # with no sensitive information that a "root/normal user split" could protect,
-# then this is a choice which can make sense. Feel free to adapt.
+# then this is a choice which can make sense. Make your own decision.
 RUN echo "PermitRootLogin prohibit-password" >> /etc/ssh/sshd_config
 RUN echo "PermitUserEnvironment yes" >> /etc/ssh/sshd_config
 RUN mkdir -p -m 700 /root/.ssh
