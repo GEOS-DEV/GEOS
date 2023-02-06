@@ -207,29 +207,37 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   LvArray::tensorOps::fill< 3 >( normal, 0 );
 
   GEOSX_ERROR_IF_LT( pointsIndices.size(), 2 );
-  for( localIndex a=0; a<(pointsIndices.size()-2); ++a )
+  real64 current[ 3 ], next[ 3 ];
+  for( localIndex a=0; a<(pointsIndices.size()-1); ++a )
   {
-    real64 v1[ 3 ], v2[ 3 ], vc[ 3 ];
+    LvArray::tensorOps::copy< 3 >( current, points[ pointsIndices[ a ] ] );
+    LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ a + 1 ] ] );
 
-    LvArray::tensorOps::copy< 3 >( v1, points[ pointsIndices[ a + 1 ] ] );
-    LvArray::tensorOps::copy< 3 >( v2, points[ pointsIndices[ a + 2 ] ] );
+    real64 vc[3];
+    vc[0] = (current[1] - next[1]) * (current[2] + next[2]);
+    vc[1] = (current[2] - next[2]) * (current[0] + next[0]);
+    vc[2] = (current[0] - next[0]) * (current[1] + next[1]);
 
-    LvArray::tensorOps::copy< 3 >( vc, points[ pointsIndices[ 0 ] ] );
-    LvArray::tensorOps::add< 3 >( vc, v1 );
-    LvArray::tensorOps::add< 3 >( vc, v2 );
+    LvArray::tensorOps::add< 3 >( normal, vc );
 
-    LvArray::tensorOps::subtract< 3 >( v1, points[ pointsIndices[ 0 ] ] );
-    LvArray::tensorOps::subtract< 3 >( v2, points[ pointsIndices[ 0 ] ] );
-
-    real64 triangleNormal[ 3 ];
-    LvArray::tensorOps::crossProduct( triangleNormal, v1, v2 );
-    real64 const triangleArea = LvArray::tensorOps::l2Norm< 3 >( triangleNormal );
-
-    LvArray::tensorOps::add< 3 >( normal, triangleNormal );
-
-    area += triangleArea;
-    LvArray::tensorOps::scaledAdd< 3 >( center, vc, triangleArea );
+    LvArray::tensorOps::add< 3 >( center, current );
   }
+
+  // close the cycle
+  LvArray::tensorOps::copy< 3 >( current, next );
+  LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ 0 ] ] );
+
+  real64 vc[3];
+  vc[0] = (current[1] - next[1]) * (current[2] + next[2]);
+  vc[1] = (current[2] - next[2]) * (current[0] + next[0]);
+  vc[2] = (current[0] - next[0]) * (current[1] + next[1]);
+
+  LvArray::tensorOps::add< 3 >( normal, vc );
+  LvArray::tensorOps::add< 3 >( center, current );
+
+  area = LvArray::tensorOps::l2Norm< 3 >( normal );
+  LvArray::tensorOps::scale< 3 >( center, 1.0 / real64( pointsIndices.size()) );
+
   if( area > areaTolerance )
   {
     LvArray::tensorOps::scale< 3 >( center, 1.0 / ( area * 3.0 ) );
