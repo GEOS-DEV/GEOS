@@ -1,5 +1,6 @@
 cmake_minimum_required( VERSION 3.9 )
 
+include(GNUInstallDirs)
 # At the moment we are manually passing the cuda arch flag.
 if(${CMAKE_VERSION} VERSION_GREATER "3.18.0")
   cmake_policy(SET CMP0104 OLD)
@@ -169,8 +170,10 @@ endif()
 
 
 install( DIRECTORY ../examples/
-         DESTINATION examples )
+         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/examples )
 
 install( DIRECTORY ../scripts/
-         DESTINATION scripts )
+         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/scripts )
 
+install( FILES ${SCHEMA_DIR}/schema.xsd
+         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/schema )
