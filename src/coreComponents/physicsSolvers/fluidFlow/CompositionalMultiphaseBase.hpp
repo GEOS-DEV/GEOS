@@ -78,12 +78,6 @@ public:
    */
   /**@{*/
 
-  virtual real64
-  solverStep( real64 const & time_n,
-              real64 const & dt,
-              integer const cycleNumber,
-              DomainPartition & domain ) override;
-
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
@@ -391,9 +385,6 @@ protected:
                         char const logMessage[],
                         string const fieldKey,
                         string const boundaryFieldKey ) const;
-
-  /// flag to specify whether the sparsity pattern needs to be rebuilt
-  bool m_systemSetupDone;
 
   /// the max number of fluid phases
   integer m_numPhases;
