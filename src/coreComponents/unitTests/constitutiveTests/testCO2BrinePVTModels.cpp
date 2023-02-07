@@ -505,7 +505,7 @@ TEST_F( EzrokhiBrineViscosityTest, brineViscosityValuesAndDeriv )
 
   EzrokhiBrineViscosity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  integer counter = 0;
+  // integer counter = 0;
   for( integer iComp = 0; iComp < 3; ++iComp )
   {
     for( integer iPres = 0; iPres < 3; ++iPres )
@@ -513,7 +513,7 @@ TEST_F( EzrokhiBrineViscosityTest, brineViscosityValuesAndDeriv )
       for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
-        counter++;
+        // counter++;
       }
     }
     comp[0] += deltaComp;
@@ -653,7 +653,7 @@ TEST_F( PhillipsBrineDensityTest, brineCO2DensityMolarValuesAndDeriv )
 
   PhillipsBrineDensity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  integer counter = 0;
+  // integer counter = 0;
   for( integer iComp = 0; iComp < 3; ++iComp )
   {
     for( integer iPres = 0; iPres < 3; ++iPres )
@@ -661,7 +661,7 @@ TEST_F( PhillipsBrineDensityTest, brineCO2DensityMolarValuesAndDeriv )
       for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
-        counter++;
+        // counter++;
       }
     }
     comp[0] += deltaComp;
@@ -704,7 +704,7 @@ TEST_F( EzrokhiBrineDensityTest, brineCO2DensityMassValuesAndDeriv )
 
   EzrokhiBrineDensity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  integer counter = 0;
+  // integer counter = 0;
   for( integer iComp = 0; iComp < 3; ++iComp )
   {
     for( integer iPres = 0; iPres < 3; ++iPres )
@@ -712,7 +712,7 @@ TEST_F( EzrokhiBrineDensityTest, brineCO2DensityMassValuesAndDeriv )
       for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
-        counter++;
+        // counter++;
       }
     }
     comp[0] += deltaComp;
@@ -735,7 +735,7 @@ TEST_F( EzrokhiBrineDensityTest, brineCO2DensityMolarValuesAndDeriv )
 
   EzrokhiBrineDensity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  integer counter = 0;
+  // integer counter = 0;
   for( integer iComp = 0; iComp < 3; ++iComp )
   {
     for( integer iPres = 0; iPres < 3; ++iPres )
@@ -743,7 +743,7 @@ TEST_F( EzrokhiBrineDensityTest, brineCO2DensityMolarValuesAndDeriv )
       for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
-        counter++;
+        // counter++;
       }
     }
     comp[0] += deltaComp;
