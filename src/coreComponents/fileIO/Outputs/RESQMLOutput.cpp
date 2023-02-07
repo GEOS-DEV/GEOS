@@ -19,7 +19,7 @@
 #include "RESQMLOutput.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshManager.hpp"
-// #include "mesh/generators/RESQMLMeshGenerator.hpp"
+#include "mesh/generators/RESQMLMeshGenerator.hpp"
 
 
 
@@ -29,19 +29,19 @@ namespace geosx
 using namespace dataRepository;
 
 RESQMLOutput::RESQMLOutput( string const & name,
-                      Group * const parent ):
-  OutputBase( name, parent )  
-  , m_plotFileRoot( name )
-  , m_plotLevel()  
-  , m_onlyPlotSpecifiedFieldNames()  
+                            Group * const parent ):
+  OutputBase( name, parent )
+  , m_plotFileName( name )
+  , m_plotLevel()
+  , m_onlyPlotSpecifiedFieldNames()
   , m_fieldNames( )
   , m_objectName( )
-  , m_writer( getOutputDirectory() + '/' + name )
-{  
-  registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
-    setDefaultValue( m_plotFileRoot ).
+  , m_writer( getOutputDirectory() )
+{
+  registerWrapper( viewKeysStruct::plotFileName, &m_plotFileName ).
+    setDefaultValue( m_plotFileName ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of the root file for this output." );
+    setDescription( "Name of the file for this output." );
 
   registerWrapper( viewKeysStruct::plotLevel, &m_plotLevel ).
     setApplyDefaultValue( 1 ).
@@ -67,25 +67,20 @@ RESQMLOutput::~RESQMLOutput()
 {}
 
 void RESQMLOutput::postProcessInput()
-{ 
-  // MeshManager & meshManager = this->getGroupByPath< MeshManager >( "/Problem/Mesh" );
-  // RESQMLMeshGenerator* resqmlMeshGenerator = meshManager.getGroupPointer< RESQMLMeshGenerator >( m_objectName );
+{
+  MeshManager & meshManager = this->getGroupByPath< MeshManager >( "/Problem/Mesh" );
+  RESQMLMeshGenerator * resqmlMeshGenerator = meshManager.getGroupPointer< RESQMLMeshGenerator >( m_objectName );
 
-  // GEOSX_THROW_IF( resqmlMeshGenerator == nullptr,
-  //                 getName() << ": RESQMLMesh not found: " << m_objectName,
-  //                 InputError );
-                  
-  m_writer.setOutputLocation( getOutputDirectory(), m_plotFileRoot );
+  GEOSX_THROW_IF( resqmlMeshGenerator == nullptr,
+                  getName() << ": RESQMLMesh not found: " << m_objectName,
+                  InputError );
+
+  m_writer.setOutputLocation( getOutputDirectory(), m_plotFileName );
   m_writer.setFieldNames( m_fieldNames.toViewConst() );
   m_writer.setOnlyPlotSpecifiedFieldNamesFlag( m_onlyPlotSpecifiedFieldNames );
-  // m_writer.setParentRepresentation(resqmlMeshGenerator->getParentRepresentation());  
+  m_writer.setParentRepresentation( resqmlMeshGenerator->getParentRepresentation());
+  m_writer.initializeOutput();
 }
-
-void RESQMLOutput::setPlotFileRoot( string const & root )
-{
-  m_plotFileRoot = root;
-}
-
 
 void RESQMLOutput::reinit()
 {
@@ -93,25 +88,33 @@ void RESQMLOutput::reinit()
 }
 
 bool RESQMLOutput::execute( real64 const time_n,
-                         real64 const GEOSX_UNUSED_PARAM( dt ),
-                         integer const cycleNumber,
-                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                         real64 const GEOSX_UNUSED_PARAM ( eventProgress ),
-                         DomainPartition & domain )
+                            real64 const GEOSX_UNUSED_PARAM( dt ),
+                            integer const cycleNumber,
+                            integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                            real64 const GEOSX_UNUSED_PARAM ( eventProgress ),
+                            DomainPartition & domain )
 {
-  m_writer.write( time_n, cycleNumber, domain ); 
+  if( cycleNumber == 0 )
+  {
+    m_writer.generateSubRepresentations( domain );
+  }
+
+  if( cycleNumber == 0 )
+  {
+    m_writer.write( time_n, cycleNumber, domain );
+  }
 
   return false;
 }
 
 void RESQMLOutput::cleanup( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                        integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                        DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+                            integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                            integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                            real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                            DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   if( MpiWrapper::commRank( ) == 0 )
-  {    
+  {
     m_writer.generateOutput();
   }
 }

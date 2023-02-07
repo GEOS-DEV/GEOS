@@ -48,13 +48,6 @@ public:
   virtual void postProcessInput() override;
 
   /**
-   * @brief Set the plotFileRoot name for the output
-   *
-   * @param root The string name
-   */
-  void setPlotFileRoot( string const & root );
-
-  /**
    * @brief Writes out a set of properties.
    * @copydoc EventBase::execute()
    */
@@ -82,8 +75,8 @@ public:
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct : OutputBase::viewKeysStruct
-  { 
-    static constexpr auto plotFileRoot = "plotFileRoot";
+  {
+    static constexpr auto plotFileName = "plotFileName";
     static constexpr auto plotLevel = "plotLevel";
     static constexpr auto objectName = "objectName";
     static constexpr auto onlyPlotSpecifiedFieldNames = "onlyPlotSpecifiedFieldNames";
@@ -92,9 +85,9 @@ public:
   /// @endcond
 
 private:
-  
+
   /// Name of the file for this output
-  string m_plotFileRoot;
+  string m_plotFileName;
 
   /// level of detail plot
   integer m_plotLevel;
@@ -107,7 +100,7 @@ private:
 
   /// Name of the Mesh input node
   string m_objectName;
-  
+
   RESQMLWriterInterface m_writer;
 };
 

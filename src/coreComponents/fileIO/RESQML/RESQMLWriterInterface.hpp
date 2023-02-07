@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FILEIO_VTK_RESQMLWRITERINTERFACE_HPP_
-#define GEOSX_FILEIO_VTK_RESQMLWRITERINTERFACE_HPP_
+#ifndef GEOSX_FILEIO_RESQML_RESQMLWRITERINTERFACE_HPP_
+#define GEOSX_FILEIO_RESQML_RESQMLWRITERINTERFACE_HPP_
 
 #include "fileIO/vtk/VTKPolyDataWriterInterface.hpp"
 #include "dataRepository/Group.hpp"
@@ -23,9 +23,12 @@
 
 #include "fesapi/resqml2_0_1/ContinuousProperty.h"
 #include "fesapi/resqml2_0_1/UnstructuredGridRepresentation.h"
+#include "fesapi/resqml2/SubRepresentation.h"
+
+#include <vtkDataArray.h>
 
 #include <map>
-
+#include <unordered_set>
 namespace geosx
 {
 
@@ -61,7 +64,6 @@ public:
   {
     m_outputDir = std::move( outputDir );
     m_outputName = std::move( outputName );
-    //m_pvd.setFileName( joinPath( m_outputDir, m_outputName ) + ".epc" );
   }
 
   /**
@@ -82,48 +84,74 @@ public:
     this->m_fieldNames.insert( fieldNames.begin(), fieldNames.end() );
   }
 
-  void setParentRepresentation(const std::tuple<string,string>& parent)
+  /**
+   * @brief Set the parameters to create the Parent Representation object
+   * @param[in] parent A tuple of strings (UUID, Name)
+   */
+  void setParentRepresentation( const std::tuple< string, string > & parent )
   {
-    std::cout << "set parent: " << std::get<0>(parent) << " " << std::get<1>(parent) << std::endl;
-    m_parent = m_outputRepository->createPartial<RESQML2_0_1_NS::UnstructuredGridRepresentation>(std::get<0>(parent), std::get<1>(parent));
+    m_parent = m_outputRepository->createPartial< RESQML2_0_1_NS::UnstructuredGridRepresentation >( std::get< 0 >( parent ), std::get< 1 >( parent ));
   }
 
   /**
+   * @brief Main method of this class. Write all the files for one time step.
    * @param[in] time the time step to be written
    * @param[in] cycle the current cycle of event
    * @param[in] domain the computation domain of this rank
    */
   void write( real64 time, integer cycle, DomainPartition const & domain );
 
-  void generateOutput();
+  /**
+   * @brief Generates the output .epc and .hdf5 files from the data in the output repository
+   */
+  void generateOutput() const;
 
+  /**
+   * @brief Initialize HDFProxy to write numerical data
+   */
+  void initializeOutput();
 
-  private:
-  
+  /**
+   * @brief Generate a subrepresentation to map a property to the initial grid
+   * @param[in] domain the computation domain of this rank
+   */
+  void generateSubRepresentations( DomainPartition const & domain );
 
-  void writeCellElementRegions( real64 const time,
-                                ElementRegionManager const & elemManager,
-                                NodeManager const & nodeManager,
-                                time_t timestamp ) ;
+private:
 
-  void writeElementFields( ElementRegionBase const & region, real64 const time, time_t timestamp ) ;
+  /**
+   * @brief Generate a subRepresentation for a field
+   * @param[in] elemManager ElementRegion being written
+   * @param[in] field field associated to the elements
+   */
+  void generateSubRepresentation( ElementRegionManager const & elemManager,
+                                  string const & field );
 
-  void writeElementField( dataRepository::Group const & subRegions,
-                   string const & field,
-                   COMMON_NS::DataObjectRepository* outputRepository,
-                   RESQML2_0_1_NS::UnstructuredGridRepresentation* parent,
-                   EML2_NS::TimeSeries * timeSeries,
-                   time_t timestamp) ;
+private:
 
-  COMMON_NS::DataObjectRepository* m_outputRepository;
+  /// Output repository of RESQML data objects
+  COMMON_NS::DataObjectRepository * m_outputRepository;
 
-  RESQML2_0_1_NS::PropertyKind* m_propertyKind;
+  /// Property kind of output properties
+  RESQML2_0_1_NS::PropertyKind * m_propertyKind;
 
+  /// Time Series object to link to the output properties
   EML2_NS::TimeSeries * m_timeSeries;
 
-  RESQML2_0_1_NS::UnstructuredGridRepresentation* m_parent;
+  /// Parent representation of output properties
+  RESQML2_0_1_NS::UnstructuredGridRepresentation * m_parent;
 
-  std::map<string, RESQML2_0_1_NS::ContinuousProperty*> m_property_uuid;
+  /// Index the properties to reuse them accross the multiple regions subgroups
+  std::map< string, RESQML2_0_1_NS::ContinuousProperty * > m_property_uuid;
+
+  /// Permutation vector for each field
+  std::map< string, array1d< int > > m_countPerProp;
+
+  /// Regular fields to output
+  std::unordered_set< string > m_regularFields;
+
+  /// Keep track of subrepresentation throw the time: field name -> Subrep
+  std::map< string, RESQML2_NS::SubRepresentation * > m_subrepresentations;
 
 };
 
