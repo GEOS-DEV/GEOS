@@ -385,11 +385,13 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
             {
               FE_TYPE::calcN( q, feStack, N );
 
+#if ! defined( GEOSX_USE_DEVICE )
               for( localIndex a=0; a< numSupportPoints; ++a )
-              {
+              {                
                 mass[elemsToNodes[k][a]] += rho[k][q] * detJ[k][q] * N[a];
-		// mass[elemsToNodes[k][a]] += rho[k][q] * detJ * N[a];
+		            // mass[elemsToNodes[k][a]] += rho[k][q] * detJ * N[a];
               }
+#endif
             }
 
             bool isAttachedToGhostNode = false;
