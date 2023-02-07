@@ -11,23 +11,27 @@
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ -1, 1 }"
-      yCoords="{  -1, 1 }"
+      yCoords="{ -1, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
+      nx="{ 2 }"
+      ny="{ 4 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Events
-    maxTime="10">
+    maxTime="1.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
+    <SoloEvent
+      name="preFractureplot"
+      target="/Outputs/vtkOutput"/>
+
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1"
+      forceDt="1.0"
       target="/Solvers/poroSolver"/>
 
     <PeriodicEvent
@@ -35,9 +39,9 @@
       cycleFrequency="1"
       target="/Outputs/vtkOutput"/>
 
-    <PeriodicEvent
+    <!-- <PeriodicEvent
       name="restart"
-      target="/Outputs/restarts"/>  
+      target="/Outputs/restarts"/>   -->
   </Events>
 
 </Problem>

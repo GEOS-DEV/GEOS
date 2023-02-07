@@ -84,6 +84,11 @@ void SinglePhasePoromechanicsConformingFractures::setupSystem( DomainPartition &
   dofManager.setDomain( domain );
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();
+  
+  if( getLogLevel() > 2 )
+  {
+    dofManager.printFieldInfo();
+  }
 
   /// 2. Add coupling terms not added by the DofManager.
   localIndex const numLocalRows = dofManager.numLocalDofs();
@@ -162,7 +167,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
                                                                    localRhs,
                                                                    getDerivativeFluxResidual_dAperture() );
 
-  // These 2 steps need to occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
+  // This step must occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
   assembleCouplingTerms( time_n,
                          dt,
                          domain,
@@ -178,6 +183,8 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
                                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                                   arrayView1d< real64 > const & localRhs )
 {
+  GEOSX_UNUSED_VAR(time_n, dt);
+
   /// 3. assemble Force Residual w.r.t. pressure and Fluix mass residual w.r.t. displacement
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -486,7 +493,7 @@ void SinglePhasePoromechanicsConformingFractures::
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
 
-      array1d< real64 > Nbar( 3 );
+      real64 Nbar[3];
       Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
       Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
       Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
@@ -591,7 +598,7 @@ void SinglePhasePoromechanicsConformingFractures::
       globalIndex elemDOF[1];
       elemDOF[0] = presDofNumber[kfe];
 
-      array1d< real64 > Nbar( 3 );
+      real64 Nbar[3];
       Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
       Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
       Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
@@ -725,7 +732,7 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
 
         real64 const minimumHydraulicAperture = 1.e-4;  //hardcoded for now 
 
-        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
+        forAll< serialPolicy >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
         {
           {
             aperture[kfe] = dispJump[kfe][0];
