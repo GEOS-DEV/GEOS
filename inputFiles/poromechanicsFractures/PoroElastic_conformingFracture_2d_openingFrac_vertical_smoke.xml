@@ -13,12 +13,19 @@
       xCoords="{ -1, 1 }"
       yCoords="{ -1, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
+      nx="{ 2 }"
+      ny="{ 4 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
+  <Geometry>
+    <Box
+      name="fracture"
+      xMin="{ -0.01, -0.8, -0.01 }"
+      xMax="{ 0.01,  0.8,  1.01 }"/>
+  </Geometry>
+  
   <Events
     maxTime="1.0">
     <SoloEvent
@@ -116,7 +123,15 @@
       fieldName="pressure"
       scale="0.0"
       setNames="{ yneg, ypos }"/>
-
   </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="poroElastic_openingFrac_vertical"/>
+
+    <Restart
+    name="restarts"/>  
+  </Outputs>
 
 </Problem>

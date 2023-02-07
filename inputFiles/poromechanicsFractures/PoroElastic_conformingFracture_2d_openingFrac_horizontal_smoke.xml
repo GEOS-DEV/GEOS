@@ -13,11 +13,18 @@
       xCoords="{ -1, 1 }"
       yCoords="{ -1, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
+      nx="{ 4 }"
+      ny="{ 2 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
+
+  <Geometry>
+    <Box
+      name="fracture"
+      xMin="{ -0.8,-0.01, -0.01 }"
+      xMax="{  0.8, 0.01,  1.01 }"/>
+  </Geometry>
 
   <Events
     maxTime="1.0">
@@ -115,8 +122,16 @@
       objectPath="faceManager"
       fieldName="pressure"
       scale="0.0"
-      setNames="{ xneg, xpos }"/>
-
+      setNames="{ yneg, ypos }"/>
   </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="poroElastic_openingFrac_horizontal"/>
+
+    <Restart
+    name="restarts"/>  
+  </Outputs>
 
 </Problem>

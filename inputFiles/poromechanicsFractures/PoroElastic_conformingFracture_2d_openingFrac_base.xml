@@ -65,12 +65,6 @@
       mpiCommOrder="1"/>
   </Solvers>
 
-  <Geometry>
-    <Box
-      name="fracture"
-      xMin="{ -0.01, -0.8, -0.01 }"
-      xMax="{ 0.01,  0.8,  1.01 }"/>
-  </Geometry>
 
   <NumericalMethods>
     <FiniteVolume>
@@ -168,13 +162,4 @@
       values="{ 0.0, 1.5 }"/>
 
   </Functions>
-
-  <Outputs>
-    <VTK
-      name="vtkOutput"
-      plotFileRoot="poroElastic_openingFrac"/>
-
-    <Restart
-    name="restarts"/>  
-  </Outputs>
 </Problem>
