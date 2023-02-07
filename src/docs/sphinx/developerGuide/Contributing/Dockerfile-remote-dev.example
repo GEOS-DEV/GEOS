@@ -55,7 +55,7 @@ RUN touch /root/.ssh/environment &&\
 
 # Default ssh port 22 is exposed. For _development_ purposes,
 # it can be useful to expose other ports for remote tools.
-EXPOSE 22 64010-64020
+EXPOSE 22 11111 64010-64020
 # sshd's option -D prevents it from detaching and becoming a daemon.
 # Otherwise, sshd would not block the process and `docker run` would quit.
 RUN mkdir -p /run/sshd

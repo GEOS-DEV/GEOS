@@ -50,12 +50,12 @@ I like to do
 
 .. code-block:: console
 
-    docker run --cap-add=SYS_PTRACE -d --name ${REMOTE_DEV_IMG}-${VERSION} -p 64000:22 -p 64010-64020:64010-64020 ${REMOTE_DEV_IMG}:${VERSION}
+    docker run --cap-add=SYS_PTRACE -d --name ${REMOTE_DEV_IMG}-${VERSION} -p 64000:22 -p 11111:11111 -p 64010-64020:64010-64020 ${REMOTE_DEV_IMG}:${VERSION}
 
 that creates the container ``remote-dev-ubuntu20.04-gcc9-212-910``, running instance of ``remote-dev-ubuntu20.04-gcc9:212-910``.
 
 - Note that you'll have to access your remote development instance though port ``64000`` (forwarded to standard port ``22`` by docker).
-- Additional ports from ``64010`` to ``64020`` will be open if you need them (multiple instances of ``gdbserver``, remote ``paraview`` connection, ...). 
+- Additional port ``11111`` and ports from ``64010`` to ``64020`` will be open if you need them (remote `paraview connection <https://docs.paraview.org/en/latest/ReferenceManual/parallelDataVisualization.html>`_ , multiple instances of `gdbserver <https://sourceware.org/gdb/current/onlinedocs/gdb.html/Server.html>`_, ...).
 - Please be aware of how to retrieve your code back: you may want to bind mount volumes and store you code there (``-v``/``--volume=`` options of `docker run <https://docs.docker.com/engine/reference/run/>`_).
 - Change ``docker`` to ``nvidia-docker`` and add the ``--gpus=...`` option for GPUs.
 
