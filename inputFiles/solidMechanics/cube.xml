@@ -41,9 +41,9 @@
       xCoords="{ 0, 1 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 100 }"
-      ny="{ 100 }"
-      nz="{ 100 }"
+      nx="{ 200 }"
+      ny="{ 200 }"
+      nz="{ 200 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 

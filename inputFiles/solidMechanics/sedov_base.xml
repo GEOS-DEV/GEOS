@@ -89,7 +89,7 @@
       setNames="{ zneg }"/>
   </FieldSpecifications>
 
-  <Outputs>
+  <!-- <Outputs>
     <Blueprint
       name="blueprint"
       plotLevel="3"/>
@@ -105,15 +105,15 @@
       name="timeHistoryOutput"
       sources="{ /Tasks/velocityCollection }"
       filename="veloc_history"/>
-  </Outputs>
+  </Outputs> -->
 
-  <Tasks>
+  <!-- <Tasks>
     <PackCollection
       name="velocityCollection"
       objectPath="nodeManager"
       setNames="{ source }"
       fieldName="velocity"/>
-  </Tasks>
+  </Tasks> -->
 
   <Geometry>
     <Box

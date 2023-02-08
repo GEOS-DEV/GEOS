@@ -115,7 +115,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
                                                                                          "" );
 
     finiteElement::
-             regionBasedKernelApplication< parallelDevicePolicy<>,
+             regionBasedKernelApplication< parallelDevicePolicy< >,
                                            constitutive::SolidBase,
                                            CellElementSubRegion >( mesh,
                                                                    regionNames,

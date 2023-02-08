@@ -48,7 +48,7 @@
 #define GEOSX_HOST __host__
 #define GEOSX_DEVICE __device__
 #define GEOSX_HOST_DEVICE __host__ __device__
-#define GEOSX_FORCE_INLINE inline
+#define GEOSX_FORCE_INLINE __forceinline__
 #define PRAGMA_UNROLL _Pragma("unroll")
 #else
 /// Marks a host-only function.

@@ -126,6 +126,7 @@ FiniteElementDiscretization::
 
   constexpr localIndex numNodesPerElem = FE_TYPE::maxSupportPoints;
   constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
   dNdX.resizeWithoutInitializationOrDestruction( elementSubRegion->size(), numQuadraturePointsPerElem, numNodesPerElem, 3 );
   detJ.resize( elementSubRegion->size(), numQuadraturePointsPerElem );
 
@@ -146,8 +147,6 @@ FiniteElementDiscretization::
         xLocal[ a ][ i ] = X[ nodeIndex ][ i ];
       }
     }
-
-
 
     for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
     {

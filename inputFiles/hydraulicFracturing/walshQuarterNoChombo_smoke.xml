@@ -76,9 +76,9 @@
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
-    <SoloEvent
+    <!-- <SoloEvent
       name="postFracOuput"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/siloOutput"/> -->
 
     <PeriodicEvent
       name="solverApplications1"
@@ -86,7 +86,7 @@
       endTime="1.0"
       forceDt="1.0e-4"
       target="/Solvers/hydrofracture" />
-
+<!-- 
     <PeriodicEvent name="outputs2"
                    beginTime="0.0"
                    timeFrequency="0.0001"
@@ -96,7 +96,7 @@
     <PeriodicEvent name="restarts"
                    timeFrequency="0.0005"
                    targetExactTimestep="1"
-                   target="/Outputs/sidreRestart" />
+                   target="/Outputs/sidreRestart" /> -->
   </Events>
 
 </Problem>
