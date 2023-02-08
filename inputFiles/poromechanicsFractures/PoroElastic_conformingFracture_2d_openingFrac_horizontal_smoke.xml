@@ -27,7 +27,7 @@
   </Geometry>
 
   <Events
-    maxTime="1.0">
+    maxTime="10.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
@@ -46,9 +46,10 @@
       cycleFrequency="1"
       target="/Outputs/vtkOutput"/>
 
-    <!-- <PeriodicEvent
+    <PeriodicEvent
       name="restart"
-      target="/Outputs/restarts"/>   -->
+      cycleFrequency="5"
+      target="/Outputs/restarts"/>
   </Events>
 
   <FieldSpecifications>
@@ -90,8 +91,8 @@
       setNames="{ all }"
       objectPath="ElementRegions/Domain"
       fieldName="rock_stress"
-      component="0"
-      scale="-0.0e5"/>  
+      component="1"
+      scale="-1.0e5"/>  
 
     <FieldSpecification
       name="xconstraint"

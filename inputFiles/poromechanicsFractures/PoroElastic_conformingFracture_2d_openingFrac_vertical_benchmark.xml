@@ -5,16 +5,16 @@
     <File
       name="./PoroElastic_conformingFracture_2d_openingFrac_base.xml"/>
   </Included> 
-
+  
   <Mesh>
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ -1, 1 }"
-      yCoords="{ -1, 1 }"
+      yCoords="{  -1, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 2 }"
-      ny="{ 4 }"
+      nx="{ 100 }"
+      ny="{ 100 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -25,31 +25,21 @@
       xMin="{ -0.01, -0.8, -0.01 }"
       xMax="{ 0.01,  0.8,  1.01 }"/>
   </Geometry>
-  
+
   <Events
-    maxTime="10.0">
+    maxTime="10">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
-    <SoloEvent
-      name="preFractureplot"
-      target="/Outputs/vtkOutput"/>
-
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1.0"
+      forceDt="2"
       target="/Solvers/poroSolver"/>
 
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"
       target="/Outputs/vtkOutput"/>
-
-    <PeriodicEvent
-      name="restart"
-      cycleFrequency="5"
-      target="/Outputs/restarts"/>  
   </Events>
 
   <FieldSpecifications>
@@ -130,9 +120,6 @@
     <VTK
       name="vtkOutput"
       plotFileRoot="poroElastic_openingFrac_vertical"/>
-
-    <Restart
-    name="restarts"/>  
   </Outputs>
 
 </Problem>

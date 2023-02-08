@@ -9,7 +9,7 @@
       initialDt="1e-3"
       LagrangianContactSolverName="fractureMechSolver"
       poromechanicsSolverName="singlePhasePoromechanicsSolver"
-      logLevel="3">
+      logLevel="1">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"
         newtonMaxIter="10"
