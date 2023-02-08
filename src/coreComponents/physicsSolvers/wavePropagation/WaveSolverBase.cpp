@@ -175,10 +175,7 @@ void WaveSolverBase::initializePreSubGroups()
 
   localIndex const numNodesPerElem = WaveSolverBase::getNumNodesPerElem();
 
-  std::cout << numNodesPerElem << std::endl;
-
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  std::cout << numSourcesGlobal << std::endl;
   m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceIsAccessible.resize( numSourcesGlobal );
