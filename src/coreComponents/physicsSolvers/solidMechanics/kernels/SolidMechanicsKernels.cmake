@@ -16,13 +16,14 @@ configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
 
 set( kernelNames SolidMechanicsKernels )
 set( subregionList CellElementSubRegion )
-set( solidBaseDispatch DamageSpectral<ElasticIsotropic>
-                       DamageVolDev<ElasticIsotropic>
-                       Damage<ElasticIsotropic>
-                       DruckerPragerExtended
-                       ModifiedCamClay
-                       DelftEgg
-                       DruckerPrager
+set( solidBaseDispatch 
+                      #  DamageSpectral<ElasticIsotropic>
+                      #  DamageVolDev<ElasticIsotropic>
+                      #  Damage<ElasticIsotropic>
+                      #  DruckerPragerExtended
+                      #  ModifiedCamClay
+                      #  DelftEgg
+                      #  DruckerPrager
                        ElasticIsotropic
                        ElasticTransverseIsotropic
                        ElasticIsotropicPressureDependent
