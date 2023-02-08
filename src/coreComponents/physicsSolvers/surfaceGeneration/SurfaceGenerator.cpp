@@ -460,6 +460,13 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                              partition.numColor(),
                              0,
                              time_n + dt );
+
+    // if the mesh has been modified, this mesh level should increment its timestamp
+    if( MpiWrapper::max( rval ) > 0 )
+    {
+      meshLevel.modified();
+    }
+
   } );
 
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
