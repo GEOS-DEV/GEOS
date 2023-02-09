@@ -403,27 +403,6 @@ public:
                         real64 const (&X)[numNodes][3],
                         FUNC && func );
 
-  template< typename FUNC >
-  GEOSX_HOST_DEVICE
-  static void
-  computeFirstOrderStiffnessTermX( int q,
-                                   real64 const (&X)[numNodes][3],
-                                   FUNC && func );
-
-  template< typename FUNC >
-  GEOSX_HOST_DEVICE
-  static void
-  computeFirstOrderStiffnessTermY( int q,
-                                   real64 const (&X)[numNodes][3],
-                                   FUNC && func );
-
-  template< typename FUNC >
-  GEOSX_HOST_DEVICE
-  static void
-  computeFirstOrderStiffnessTermZ( int q,
-                                   real64 const (&X)[numNodes][3],
-                                   FUNC && func );
-
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
    *   x-part of the first order stiffness matrix R, i.e., the matrix composed of the
