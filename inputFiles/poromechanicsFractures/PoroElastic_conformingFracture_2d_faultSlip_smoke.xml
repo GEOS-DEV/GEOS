@@ -10,17 +10,17 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -1, 1 }"
-      yCoords="{ -1, 1 }"
+      xCoords="{ -100, -20, 20, 100 }"
+      yCoords="{ -100, -5, 5, 100 }"
       zCoords="{ 0, 1 }"
-      nx="{ 4 }"
-      ny="{ 2 }"
+      nx="{ 20, 40, 20 }"
+      ny="{ 10, 10, 10 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Events
-    maxTime="1.0">
+    maxTime="1000.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
@@ -31,7 +31,7 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1.0"
+      forceDt="100.0"
       target="/Solvers/poroSolver"/>
 
     <PeriodicEvent
