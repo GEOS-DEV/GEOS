@@ -4,6 +4,7 @@
 
 set( gtest_geosx_tests
 	testWavePropagation.cpp
+        testWavePropagationAcousticFirstOrder.cpp
    )
 
 set( dependencyList gtest )
