@@ -24,6 +24,7 @@
 #include "EdgeManager.hpp"
 #include "ElementRegionManager.hpp"
 #include "FaceManager.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
 
 namespace geosx
 {
@@ -71,6 +72,13 @@ public:
              Group * const parent,
              MeshLevel const & source,
              int const order );
+
+  MeshLevel( string const & name,
+             Group * const parent,
+             MeshLevel const & source,
+             CellBlockManagerABC & cellBlockManager,
+             int const order,
+             bool const test);
 
   virtual ~MeshLevel() override;
 

@@ -54,6 +54,12 @@ void EdgeManager::resize( localIndex const newSize )
   ObjectManagerBase::resize( newSize );
 }
 
+void EdgeManager::resize( localIndex const newSize, localIndex const numNodesPerEdge)
+{
+  m_toFacesRelation.resize( newSize, 2 * faceMapOverallocation() );
+  ObjectManagerBase::resize( newSize );
+  m_toNodesRelation.resize( newSize, numNodesPerEdge );
+}
 void EdgeManager::buildSets( NodeManager const & nodeManager )
 {
   GEOSX_MARK_FUNCTION;

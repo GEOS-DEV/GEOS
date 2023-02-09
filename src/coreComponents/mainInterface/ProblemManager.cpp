@@ -546,6 +546,10 @@ void ProblemManager::generateMesh()
     elemManager.generateWells( meshManager, baseMesh );
 
   } );
+  
+  Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
+  integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
+  domain.setupCommunications( useNonblockingMPI, false);
 
   // setup the MeshLevel assocaited with the discretizations
   for( auto const & discretizationPair: discretizations )
@@ -570,8 +574,8 @@ void ProblemManager::generateMesh()
         if( order > 1 )
         {
           MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
-                                                       discretizationName,
-                                                       order );
+                                                       discretizationName, cellBlockManager,
+                                                       order, true);
 
           this->generateMeshLevel( mesh,
                                    cellBlockManager,
@@ -601,9 +605,9 @@ void ProblemManager::generateMesh()
 
 
 
-  Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
-  integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
-  domain.setupCommunications( useNonblockingMPI );
+  //Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
+  //integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
+  domain.setupCommunications( useNonblockingMPI, true );
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
@@ -732,8 +736,8 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
 //  nodeManager.constructGlobalToLocalMap();
 
 
-  if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
-  {
+  //if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+  //{
     elemManager.generateMesh( cellBlockManager );
     nodeManager.setGeometricalRelations( cellBlockManager, elemManager );
     edgeManager.setGeometricalRelations( cellBlockManager );
@@ -757,20 +761,21 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     faceManager.setDomainBoundaryObjects();
     nodeManager.setDomainBoundaryObjects( faceManager );
     edgeManager.setDomainBoundaryObjects( faceManager );
-  }
+  //}
   meshLevel.generateSets();
 
 
-  if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
-  {
+  //if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+  //{
     elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
     {
       subRegion.setupRelatedObjectsInRelations( meshLevel );
-      subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+      if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+        subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
       subRegion.setMaxGlobalIndex();
     } );
     elemManager.setMaxGlobalIndex();
-  }
+  //}
 }
 
 

@@ -68,13 +68,19 @@ public:
 
   array2d< localIndex > getEdgeToNodes() const override;
 
+  arrayView2d< localIndex > getEdgeToNodes();
+
   ArrayOfArrays< localIndex > getEdgeToFaces() const override;
 
   ArrayOfArrays< localIndex > getFaceToNodes() const override;
+  
+  ArrayOfArrays< localIndex > & getFaceToNodes() override;
 
   ArrayOfArrays< localIndex > getFaceToEdges() const override;
 
   ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
+
+  arrayView2d< localIndex, cells::NODE_MAP_USD > getElemToNodes( string const & name ) override;
 
   array1d< globalIndex > getNodeLocalToGlobal() const override;
 
@@ -105,6 +111,8 @@ public:
    * The nodes coordinates and nodes local to global mappings get resized to @p numNodes.
    */
   void setNumNodes( localIndex numNodes ); // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
+
+  void setNumNodes( localIndex numNodes,  localIndex const order) override; // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
 
   localIndex numNodes() const override;
 

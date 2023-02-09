@@ -101,6 +101,8 @@ public:
    */
   virtual void resize( localIndex const newSize ) override;
 
+  void resize( localIndex const newSize, localIndex const numNodesPerEdge);
+
   /**
    * @brief Set the node of the domain boundary object.
    * @param[in] faceIndex The reference of the face manager.

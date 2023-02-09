@@ -68,6 +68,11 @@ public:
                                string const & newLevelName,
                                int const order );
 
+  MeshLevel & createMeshLevel( string const & sourceLevelName,
+                               string const & newLevelName,
+                               CellBlockManagerABC & cellBlockManager,
+                               int const order, bool test );
+
   /**
    * @brief Creates a mesh level in which the member pointers are set to the
    *        allocations from another MeshLevel.

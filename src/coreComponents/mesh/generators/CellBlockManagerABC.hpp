@@ -166,6 +166,8 @@ public:
    */
   virtual ArrayOfArrays< localIndex > getFaceToNodes() const = 0;
 
+  virtual ArrayOfArrays< localIndex > & getFaceToNodes() = 0;
+
   /**
    * @brief Returns the face to edges mapping.
    * @return A one to many relationship.
@@ -179,12 +181,18 @@ public:
    * In case the face only belongs to one single element, the second value of the table is -1.
    */
   virtual ToCellRelation< array2d< localIndex > > getFaceToElements() const = 0;
+ 
+  virtual arrayView2d<localIndex, cells::NODE_MAP_USD> getElemToNodes( string const & name ) = 0;
 
   /**
    * @brief The node to global mapping for nodes.
    * @return The mapping as an array of size numNodes.
    */
   virtual array1d< globalIndex > getNodeLocalToGlobal() const = 0;
+
+  virtual arrayView1d< globalIndex > getNodeLocalToGlobal()  = 0;
+
+  virtual void setNumNodes( localIndex numNodes,  localIndex const order) = 0;
 
   /**
    * @brief Returns the node sets. Key of the map is the name of the set.
