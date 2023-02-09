@@ -1883,30 +1883,6 @@ real64 LagrangianContactSolver::setNextDt( real64 const & currentDt,
   return currentDt;
 }
 
-bool LagrangianContactSolver::isElementInOpenState( FaceElementSubRegion const & subRegion,
-                                                    localIndex const kfe ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  using namespace fields::contact;
-
-  // It can be used only thanks to the global synchronization in AssembleSystem (SynchronizeFractureState)
-  bool res = false;
-  if( subRegion.hasWrapper( contact::traction::key() ) )
-  {
-    arrayView1d< integer const > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
-    if( kfe >= 0 && kfe < subRegion.size() )
-    {
-      res = ( fractureState[kfe] == FractureState::Open );
-    }
-    else
-    {
-      GEOSX_ERROR( "isElementInOpenState called with index out of range: " << kfe << " not in [0," << subRegion.size() << "]" );
-    }
-  }
-  return res;
-}
-
 REGISTER_CATALOG_ENTRY( SolverBase, LagrangianContactSolver, string const &, Group * const )
 
 } /* namespace geosx */

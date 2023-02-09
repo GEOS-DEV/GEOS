@@ -140,10 +140,7 @@ public:
   real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
   string getStabilizationName() const { return m_stabilizationName; }
-
-  bool isElementInOpenState( FaceElementSubRegion const & subRegion,
-                             localIndex const kfe ) const;
-
+  
 protected:
   virtual void postProcessInput() override final;
 

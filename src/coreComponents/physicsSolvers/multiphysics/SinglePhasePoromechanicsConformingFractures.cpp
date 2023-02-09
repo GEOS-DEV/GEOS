@@ -586,10 +586,12 @@ void SinglePhasePoromechanicsConformingFractures::
     SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
     arrayView2d< real64 const > const & density = fluid.density();
 
-    arrayView1d< globalIndex const > const &
-    presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
+    arrayView1d< globalIndex const > const & presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
+    
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
-    arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
+    arrayView1d< real64 const > const &             area = subRegion.getElementArea().toViewConst();
+
+    arrayView1d< integer const > const & fractureState = subRegion.getField< fields::contact::fractureState >();
 
     forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
     {
@@ -606,14 +608,22 @@ void SinglePhasePoromechanicsConformingFractures::
 
       stackArray1d< real64, 2*3*4 > dRdU( 2*3*numNodesPerFace );
 
+      bool const isFractureOpen = ( fractureState[kfe] == fields::contact::FractureState::Open );
+
       // Accumulation derivative
-      if( contactSolver()->isElementInOpenState( subRegion, kfe ) )
+      if( isFractureOpen )
       {
         for( localIndex kf=0; kf<2; ++kf )
         {
+          
+
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
           contactSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+
+          /// TODO: move to something like this plus a static method.
+          // localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][kf] );
+          // stackArray1d<real64, 4> nodalArea( numNodesPerFace );
 
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
@@ -646,14 +656,15 @@ void SinglePhasePoromechanicsConformingFractures::
       arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( kfe );
       arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( kfe );
 
-      skipAssembly &= !( contactSolver()->isElementInOpenState( subRegion, kfe ) );
+      skipAssembly &= !isFractureOpen;
 
       for( localIndex kfe1=0; kfe1<numColumns; ++kfe1 )
       {
         real64 const dR_dAper = values[kfe1];
         localIndex const kfe2 = columns[kfe1];
-
-        skipAssembly &= !( contactSolver()->isElementInOpenState( subRegion, kfe2 ) );
+        
+        bool const isOpen = ( fractureState[kfe2] == fields::contact::FractureState::Open ); 
+        skipAssembly &= !isOpen;
 
         for( localIndex kf=0; kf<2; ++kf )
         {
