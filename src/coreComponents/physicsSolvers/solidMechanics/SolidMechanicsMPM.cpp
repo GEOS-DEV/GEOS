@@ -716,7 +716,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   {
     // Getters
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName ); // For the time being we restrict our attention to elastic isotropic solids. TODO: Have all constitutive models automatically calculate a wave speed.
+    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
     arrayView2d< real64 > const constitutiveDensity = constitutiveRelation.getDensity();
     arrayView1d< real64 > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
@@ -2478,6 +2478,25 @@ void SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< real64 > const
 
 void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleManager )
 {
+  // Get particle damage values from constitutive model
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    // Get MPM solver's particle damage field
+    arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();
+    
+    // Get constitutive model reference
+    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+    if( solidModel.hasWrapper( "damage" ) ) // Fragile code because someone could change the damage key without our knowledge. TODO: Make an integrated test that checks this
+    {
+      arrayView2d< real64 const > const constitutiveDamage = solidModel.getReference< array2d< real64 > >( "damage" );
+      for( localIndex const p: subRegion.nonGhostIndices() )
+      {
+        particleDamage[p] = constitutiveDamage[p][0]; // TODO: Load any pre-damage into the constitutive model. Or, switch to using VTK input such that we can initialize any field we want.
+      }
+    }
+  } );
+  
   // Get accessors for volume, position, damage, surface flag
   ParticleManager::ParticleViewAccessor< arrayView1d< real64 const > > particleVolumeAccessor = particleManager.constructArrayViewAccessor< real64, 1 >( "particleVolume" );
   ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particlePositionAccessor = particleManager.constructArrayViewAccessor< real64, 2 >( "particleCenter" );
