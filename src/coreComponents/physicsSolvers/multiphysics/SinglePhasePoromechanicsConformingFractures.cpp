@@ -654,7 +654,7 @@ void SinglePhasePoromechanicsConformingFractures::
       bool skipAssembly = true;
       localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( kfe );
       arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( kfe );
-      arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( kfe );
+      arraySlice1d< real64 const > const      & values = dFluxResidual_dAperture.getEntries( kfe );
 
       skipAssembly &= !isFractureOpen;
 
