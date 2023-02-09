@@ -315,7 +315,7 @@ MeshLevel::MeshLevel( string const & name,
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
       //array2d< localIndex, cells::NODE_MAP_PERMUTATION > & elemsToNodesNew = newSubRegion.nodeList();
       arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew = cellBlockManager.getElemToNodes(newSubRegion.getName());
-      GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew.size(1));
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew.size(1));
 
       arrayView1d< globalIndex const > const elementLocalToGlobal = sourceSubRegion.localToGlobalMap();
 
@@ -576,13 +576,13 @@ MeshLevel::MeshLevel( string const & name,
         }
       }
 
-      GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
-      GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobal = "<< nodeLocalToGlobal );
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobal = "<< nodeLocalToGlobal );
       //GEOSX_LOG_RANK ("!!!! INFO !!!! sourceNodeLocalToGlobal = "<< sourceNodeLocalToGlobal);
 
-      GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
-      GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapNew = "<< edgeToNodeMapNew);
-      GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapNew = "<< edgeToNodeMapNew);
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
       //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesSource = "<< elemsToNodesSource);
 
 
