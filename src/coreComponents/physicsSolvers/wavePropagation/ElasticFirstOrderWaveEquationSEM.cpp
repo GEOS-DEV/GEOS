@@ -84,6 +84,16 @@ ElasticFirstOrderWaveEquationSEM::ElasticFirstOrderWaveEquationSEM( const std::s
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
+  registerWrapper( viewKeyStruct::sourceElemString(), &m_sourceElem ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Element containing the sources" );
+
+  registerWrapper( viewKeyStruct::receiverElemString(), &m_rcvElem ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Element containing the receivers" );
+
 }
 
 ElasticFirstOrderWaveEquationSEM::~ElasticFirstOrderWaveEquationSEM()

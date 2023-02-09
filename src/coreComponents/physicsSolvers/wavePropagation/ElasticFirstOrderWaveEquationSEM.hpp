@@ -132,6 +132,8 @@ public:
     static constexpr char const * sigmaxzNp1AtReceiversString() { return "sigmaxzNp1AtReceivers"; }
     static constexpr char const * sigmayzNp1AtReceiversString() { return "sigmayzNp1AtReceivers"; }
 
+    static constexpr char const * sourceElemString() { return "sourceElem"; }
+    static constexpr char const * receiverElemString() { return "rcvElem"; }
 
   } waveEquationViewKeys;
 
