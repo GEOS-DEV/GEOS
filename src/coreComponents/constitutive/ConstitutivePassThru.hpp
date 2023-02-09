@@ -36,6 +36,7 @@
 #include "solid/PorousSolid.hpp"
 #include "solid/CompressibleSolid.hpp"
 #include "solid/ProppantSolid.hpp"
+#include "solid/CeramicDamage.hpp"
 #include "solid/porosity/PressurePorosity.hpp"
 #include "solid/porosity/ProppantPorosity.hpp"
 #include "permeability/ConstantPermeability.hpp"
@@ -88,6 +89,7 @@ struct ConstitutivePassThru< SolidBase >
                                  DelftEgg,
                                  DruckerPrager,
                                  PerfectlyPlastic,
+                                 CeramicDamage,
                                  ElasticIsotropic,
                                  ElasticTransverseIsotropic,
                                  ElasticIsotropicPressureDependent,
@@ -150,7 +152,6 @@ struct ConstitutivePassThru< PorousSolidBase >
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,
                                  PorousSolid< DruckerPrager >,
-                                 PorousSolid< PerfectlyPlastic >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
                                  PorousSolid< ElasticIsotropicPressureDependent >,
@@ -235,7 +236,6 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,
                                  PorousSolid< DruckerPrager >,
-                                 PorousSolid< PerfectlyPlastic >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
                                  PorousSolid< ElasticIsotropicPressureDependent >,
@@ -258,7 +258,6 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,
                                  PorousSolid< DruckerPrager >,
-                                 PorousSolid< PerfectlyPlastic >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
                                  PorousSolid< ElasticIsotropicPressureDependent >,
