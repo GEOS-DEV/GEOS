@@ -551,7 +551,7 @@ MeshLevel::MeshLevel( string const & name,
         {
           for (localIndex iter_internalnode = 0; iter_internalnode < numNonEdgeNodesPerFace;  ++iter_internalnode)
             elemsToNodesNew[iter_elem][ elemToNodeCounter + iter_face * numNonEdgeNodesPerFace + iter_internalnode ]
-              = faceToNodeMapNew[elemsToFaces[iter_elem][iter_face]][numOfNodesPerFaceForBase + iter_internalnode];
+              = faceToNodeMapNew[elemsToFaces[iter_elem][iter_face]][numOfNodesPerFaceForBase + numOfEdgesPerFace * numNonVertexNodesPerEdge + iter_internalnode];
         }
 
         elemToNodeCounter += numOfFacesPerElement * numNonEdgeNodesPerFace;
@@ -580,10 +580,10 @@ MeshLevel::MeshLevel( string const & name,
       //GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobal = "<< nodeLocalToGlobal );
       //GEOSX_LOG_RANK ("!!!! INFO !!!! sourceNodeLocalToGlobal = "<< sourceNodeLocalToGlobal);
 
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapNew = "<< edgeToNodeMapNew);
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesSource = "<< elemsToNodesSource);
+      GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
+      GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapNew = "<< edgeToNodeMapNew);
+      GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
+      GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesSource = "<< elemsToNodesSource);
 
 
     } );
