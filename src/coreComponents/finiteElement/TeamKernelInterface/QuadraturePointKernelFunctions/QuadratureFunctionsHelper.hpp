@@ -116,9 +116,11 @@ void computePhysicalGradient( real64 const (& Jinv)[ref_dim][phys_dim],
                               real64 const (& grad_ref)[ref_dim],
                               real64 (& grad_phys)[phys_dim] )
 {
+  #pragma unroll
   for (localIndex i = 0; i < phys_dim; i++)
   {
     real64 val = 0.0;
+    #pragma unroll
     for (localIndex j = 0; j < ref_dim; j++)
     {
       val = val + Jinv[ j ][ i ] * grad_ref[ j ];
@@ -147,11 +149,14 @@ void computePhysicalGradient( real64 const (& Jinv)[ref_dim][phys_dim],
                               real64 const (& grad_ref)[num_comp][ref_dim],
                               real64 (& grad_phys)[num_comp][phys_dim] )
 {
+  #pragma unroll
   for (localIndex c = 0; c < num_comp; c++)
   {
+    #pragma unroll
     for (localIndex i = 0; i < phys_dim; i++)
     {
       real64 val = 0.0;
+      #pragma unroll
       for (localIndex j = 0; j < ref_dim; j++)
       {
         val = val + Jinv[ j ][ i ] * grad_ref[ c ][ j ];
@@ -183,9 +188,11 @@ void computePhysicalGradient( real64 const detJinv,
                               real64 const (& grad_ref)[ref_dim],
                               real64 (& grad_phys)[phys_dim] )
 {
+  #pragma unroll
   for (localIndex i = 0; i < phys_dim; i++)
   {
     real64 val = 0.0;
+    #pragma unroll
     for (localIndex j = 0; j < ref_dim; j++)
     {
       val = val + AdjJ[ j ][ i ] * grad_ref[ j ];
@@ -218,11 +225,14 @@ void computePhysicalGradient( real64 const detJinv,
                               real64 const (& grad_ref)[num_comp][ref_dim],
                               real64 (& grad_phys)[num_comp][phys_dim] )
 {
+  #pragma unroll
   for (localIndex c = 0; c < num_comp; c++)
   {
+    #pragma unroll
     for (localIndex i = 0; i < phys_dim; i++)
     {
       real64 val = 0.0;
+      #pragma unroll
       for (localIndex j = 0; j < ref_dim; j++)
       {
         val = val + AdjJ[ j ][ i ] * grad_ref[ c ][ j ];
@@ -250,9 +260,11 @@ void computeReferenceGradient( real64 const (& Jinv)[ref_dim][phys_dim],
                                real64 const (& grad_phys)[phys_dim],
                                real64 (& grad_ref)[ref_dim] )
 {
+  #pragma unroll
   for (localIndex i = 0; i < ref_dim; i++)
   {
     real64 val = 0.0;
+    #pragma unroll
     for (localIndex j = 0; j < phys_dim; j++)
     {
       val = val + Jinv[ i ][ j ] * grad_phys[ j ];
@@ -281,11 +293,14 @@ void computeReferenceGradient( real64 const (& Jinv)[ref_dim][phys_dim],
                                real64 const (& grad_phys)[num_comp][phys_dim],
                                real64 (& grad_ref)[num_comp][ref_dim] )
 {
+  #pragma unroll
   for (localIndex c = 0; c < num_comp; c++)
   {
+    #pragma unroll
     for (localIndex i = 0; i < ref_dim; i++)
     {
       real64 val = 0.0;
+      #pragma unroll
       for (localIndex j = 0; j < phys_dim; j++)
       {
         val = val + Jinv[ i ][ j ] * grad_phys[ c ][ j ];
@@ -317,9 +332,11 @@ void computeReferenceGradient( real64 const detJinv,
                                real64 const (& grad_phys)[phys_dim],
                                real64 (& grad_ref)[ref_dim] )
 {
+  #pragma unroll
   for (localIndex i = 0; i < ref_dim; i++)
   {
     real64 val = 0.0;
+    #pragma unroll
     for (localIndex j = 0; j < phys_dim; j++)
     {
       val = val + AdjJ[ i ][ j ] * grad_phys[ j ];
@@ -352,11 +369,14 @@ void computeReferenceGradient( real64 const detJinv,
                                real64 const (& grad_phys)[num_comp][phys_dim],
                                real64 (& grad_ref)[num_comp][ref_dim] )
 {
+  #pragma unroll
   for (localIndex c = 0; c < num_comp; c++)
   {
+    #pragma unroll
     for (localIndex i = 0; i < ref_dim; i++)
     {
       real64 val = 0.0;
+      #pragma unroll
       for (localIndex j = 0; j < phys_dim; j++)
       {
         val = val + AdjJ[ i ][ j ] * grad_phys[ c ][ j ];
@@ -380,6 +400,7 @@ GEOSX_FORCE_INLINE
 void applyQuadratureWeights( real64 const weight, real64 const detJ, real64 (& field)[dim] )
 {
   const real64 w = - weight * detJ;
+  #pragma unroll
   for (localIndex i = 0; i < dim; i++)
   {
     field[i] = w * field[i];
@@ -401,8 +422,10 @@ GEOSX_FORCE_INLINE
 void applyQuadratureWeights( real64 const weight, real64 const detJ, real64 (& field)[num_comp][dim] )
 {
   const real64 w = - weight * detJ;
+  #pragma unroll
   for (localIndex j = 0; j < dim; j++)
   {
+    #pragma unroll
     for (localIndex i = 0; i < num_comp; i++)
     {
       field[i][j] = w * field[i][j];

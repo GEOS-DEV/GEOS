@@ -153,6 +153,7 @@ void loop3D( StackVariables & stack,
   localIndex ind_2 = stack.tidy;
   if ( ( ind_2 < loop_bound_2 ) && ( ind_1 < loop_bound_1 ) )
   {
+    #pragma unroll
     for (localIndex ind_3 = 0; ind_3 < loop_bound_3; ind_3++)
     {
       lambda( ind_1, ind_2, ind_3 );

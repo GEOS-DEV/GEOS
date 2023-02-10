@@ -56,8 +56,10 @@ struct StackBasis
   {
     // basis: computation of the shape functions at quadrature points
     real64 const w = 0.57735026919; // 1.0/sqrt( 3 )
+    #pragma unroll
     for ( int dof = 0; dof < num_dofs_1d; dof++ )
     {
+      #pragma unroll
       for ( int quad = 0; quad < num_quads_1d; quad++ )
       {
         basis[ dof ][ quad ] =
@@ -67,8 +69,10 @@ struct StackBasis
     }
 
     // basis gradient: gradient of the shape functions at quadrature points
+    #pragma unroll
     for ( int dof = 0; dof < num_dofs_1d; dof++ )
     {
+      #pragma unroll
       for ( int quad = 0; quad < num_quads_1d; quad++ )
       {
         basis_gradient[ dof ][ quad ] =

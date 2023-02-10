@@ -135,6 +135,7 @@ void writeField( StackVariables & stack,
           [&]( localIndex ind_x, localIndex ind_y, localIndex ind_z){
     localIndex const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
     localIndex const global_node_index = m_elemsToNodes( stack.element_index, local_node_index );
+    #pragma unroll
     for (localIndex d = 0; d < dim; d++)
     {
       field( global_node_index, d ) = local_field( ind_x, ind_y, ind_z, d );

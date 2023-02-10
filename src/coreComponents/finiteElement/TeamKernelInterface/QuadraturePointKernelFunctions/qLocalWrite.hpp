@@ -69,6 +69,7 @@ void qLocalWrite( TensorIndex const & quad_index,
                   real64 const (& q_value)[num_comp],
                   Tensor & q_field )
 {
+  #pragma unroll
   for (localIndex c = 0; c < num_comp; c++)
   {
     q_field( quad_index.x, quad_index.y, quad_index.z, c ) = q_value[c];
@@ -97,8 +98,10 @@ void qLocalWrite( TensorIndex const & quad_index,
                   real64 const (& q_value)[num_comp_x][num_comp_y],
                   Tensor & q_field )
 {
+  #pragma unroll
   for (localIndex c_x = 0; c_x < num_comp_x; c_x++)
   {
+    #pragma unroll
     for (localIndex c_y = 0; c_y < num_comp_y; c_y++)
     {
       q_field( quad_index.x, quad_index.y, quad_index.z, c_x, c_y ) = q_value[c_x][c_y];

@@ -68,18 +68,22 @@ void applyTestFunctions( StackVariables & stack,
     loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
     {
       real64 res[num_quads_1d];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         res[quad_z] = 0.0;
       }
+      #pragma unroll
       for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
       {
         real64 const b = basis[dof_x][quad_x];
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           res[quad_z] += b * q_values[quad_x][quad_y][quad_z]; // assumes quads in shared
         }
       }
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         Bu( dof_x, quad_y, quad_z ) = res[quad_z];
@@ -97,18 +101,22 @@ void applyTestFunctions( StackVariables & stack,
     loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
     {
       real64 res[num_quads_1d];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         res[quad_z] = 0.0;
       }
+      #pragma unroll
       for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
       {
         real64 const b = basis[dof_y][quad_y];
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           res[quad_z] += b * Bu( dof_x, quad_y, quad_z );
         }
       }
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         BBu( dof_x, dof_y, quad_z ) = res[quad_z];
@@ -125,13 +133,16 @@ void applyTestFunctions( StackVariables & stack,
     {
       // Cache values in registers to read them only once from shared
       real64 val[num_quads_1d];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         val[quad_z] = BBu( dof_x, dof_y, quad_z );
       }
+      #pragma unroll
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
         real64 res = 0.0;
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           res += basis[dof_z][quad_z] * val[quad_z];
@@ -175,26 +186,33 @@ void applyTestFunctions( StackVariables & stack,
     loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
     {
       real64 res[num_quads_1d][num_comp];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
+        #pragma unroll
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
           res[quad_z][comp] = 0.0;
         }
       }
+      #pragma unroll
       for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
       {
         real64 const b = basis[dof_x][quad_x];
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
+          #pragma unroll
           for (localIndex comp = 0; comp < num_comp; comp++)
           {
             res[quad_z][comp] += b * q_values[quad_x][quad_y][quad_z][comp];
           }
         }
       }
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
+        #pragma unroll
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
           Bu( dof_x, quad_y, quad_z, comp ) = res[quad_z][comp];
@@ -213,26 +231,33 @@ void applyTestFunctions( StackVariables & stack,
     loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
     {
       real64 res[num_quads_1d][num_comp];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
+        #pragma unroll
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
           res[quad_z][comp] = 0.0;
         }
       }
+      #pragma unroll
       for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
       {
         real64 const b = basis[dof_y][quad_y];
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
+          #pragma unroll
           for (localIndex comp = 0; comp < num_comp; comp++)
           {
             res[quad_z][comp] += b * Bu( dof_x, quad_y, quad_z, comp );
           }
         }
       }
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
+        #pragma unroll
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
           BBu( dof_x, dof_y, quad_z, comp ) = res[quad_z][comp];
@@ -250,28 +275,35 @@ void applyTestFunctions( StackVariables & stack,
     {
       // Cache values in registers to read them only once from shared
       real64 val[num_quads_1d][num_comp];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
+        #pragma unroll
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
           val[quad_z][comp] = BBu( dof_x, dof_y, quad_z, comp );
         }
       }
+      #pragma unroll
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
         real64 res[num_comp];
+        #pragma unroll
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
           res[comp] = 0.0;
         }
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           real64 const b = basis[dof_z][quad_z]; 
+          #pragma unroll
           for (localIndex comp = 0; comp < num_comp; comp++)
           {
             res[comp] += b * val[quad_z][comp];
           }
         }
+        #pragma unroll
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
           dofs[dof_x][dof_y][dof_z][comp] = res[comp];
@@ -309,23 +341,29 @@ void applyTestFunctions( StackVariables & stack,
 
   // Contraction on the first dimension
   tensor::StaticDTensor< num_dofs_1d, num_quads_1d, num_quads_1d > Bu;
+  #pragma unroll
   for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
   {
+    #pragma unroll
     for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
     {
       real64 res[num_quads_1d];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         res[quad_z] = 0.0;
       }
+      #pragma unroll
       for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
       {
         real64 const b = basis[dof_x][quad_x];
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           res[quad_z] += b * q_values( quad_x, quad_y, quad_z ); // assumes quads in shared
         }
       }
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         Bu( dof_x, quad_y, quad_z ) = res[quad_z];
@@ -335,23 +373,29 @@ void applyTestFunctions( StackVariables & stack,
 
   // Contraction on the second dimension
   tensor::StaticDTensor< num_dofs_1d, num_dofs_1d, num_quads_1d > BBu;
+  #pragma unroll
   for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
   {
+    #pragma unroll
     for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
     {
       real64 res[num_quads_1d];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         res[quad_z] = 0.0;
       }
+      #pragma unroll
       for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
       {
         real64 const b = basis[dof_y][quad_y];
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           res[quad_z] += b * Bu( dof_x, quad_y, quad_z );
         }
       }
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         BBu( dof_x, dof_y, quad_z ) = res[quad_z];
@@ -360,19 +404,24 @@ void applyTestFunctions( StackVariables & stack,
   }
 
   // Contraction on the third dimension
+  #pragma unroll
   for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
   {
+    #pragma unroll
     for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
     {
       // Cache values in registers to read them only once from shared
       real64 val[num_quads_1d];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         val[quad_z] = BBu( dof_x, dof_y, quad_z );
       }
+      #pragma unroll
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
         real64 res = 0.0;
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           res += basis[dof_z][quad_z] * val[quad_z];
@@ -406,27 +455,34 @@ void applyTestFunctions( StackVariables & stack,
   using RAJA::RangeSegment;
   LaunchContext & ctx = stack.ctx;
 
+  #pragma unroll
   for (localIndex comp = 0; comp < num_comp; comp++)
   {
     // Contraction on the first dimension
     tensor::StaticDTensor< num_dofs_1d, num_quads_1d, num_quads_1d > Bu;
+    #pragma unroll
     for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
     {
+      #pragma unroll
       for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
       {
         real64 res[num_quads_1d];
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           res[quad_z] = 0.0;
         }
+        #pragma unroll
         for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
         {
           real64 const b = basis[dof_x][quad_x];
+          #pragma unroll
           for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
           {
             res[quad_z] += b * q_values( quad_x, quad_y, quad_z, comp );
           }
         }
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           Bu( dof_x, quad_y, quad_z ) = res[quad_z];
@@ -436,23 +492,29 @@ void applyTestFunctions( StackVariables & stack,
 
     // Contraction on the second dimension
     tensor::StaticDTensor< num_dofs_1d, num_dofs_1d, num_quads_1d > BBu;
+    #pragma unroll
     for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
     {
+      #pragma unroll
       for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
       {
         real64 res[num_quads_1d];
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           res[quad_z] = 0.0;
         }
+        #pragma unroll
         for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
         {
           real64 const b = basis[dof_y][quad_y];
+          #pragma unroll
           for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
           {
             res[quad_z] += b * Bu( dof_x, quad_y, quad_z );
           }
         }
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           BBu( dof_x, dof_y, quad_z ) = res[quad_z];
@@ -461,19 +523,24 @@ void applyTestFunctions( StackVariables & stack,
     }
 
     // Contraction on the third dimension
+    #pragma unroll
     for (localIndex dof_y = 0; dof_y < num_dofs_1d; dof_y++)
     {
+      #pragma unroll
       for (localIndex dof_x = 0; dof_x < num_dofs_1d; dof_x++)
       {
         // Cache values in registers to read them only once from shared
         real64 val[num_quads_1d];
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
             val[quad_z] = BBu( dof_x, dof_y, quad_z );
         }
+        #pragma unroll
         for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
         {
           real64 res = 0.0;
+          #pragma unroll
           for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
           {
             real64 const b = basis[dof_z][quad_z];
@@ -511,6 +578,7 @@ void applyTestFunctions( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
   
   SharedTensor< num_quads_1d, num_quads_1d, num_quads_1d > Du( stack.shared_mem[3] );
+  #pragma unroll
   for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
   {
     loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
@@ -532,18 +600,22 @@ void applyTestFunctions( StackVariables & stack,
     loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
     {
       real64 res[num_quads_1d];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         res[quad_z] = 0.0;
       }
+      #pragma unroll
       for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
       {
         real64 const b = basis[dof_x][quad_x];
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           res[quad_z] += b * Du( quad_x, quad_y, quad_z ); // assumes quads in shared
         }
       }
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         Bu( dof_x, quad_y, quad_z ) = res[quad_z];
@@ -561,18 +633,22 @@ void applyTestFunctions( StackVariables & stack,
     loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
     {
       real64 res[num_quads_1d];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         res[quad_z] = 0.0;
       }
+      #pragma unroll
       for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
       {
         real64 const b = basis[dof_y][quad_y];
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           res[quad_z] += b * Bu( dof_x, quad_y, quad_z );
         }
       }
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         BBu( dof_x, dof_y, quad_z ) = res[quad_z];
@@ -589,13 +665,16 @@ void applyTestFunctions( StackVariables & stack,
     {
       // Cache values in registers to read them only once from shared
       real64 val[num_quads_1d];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
         val[quad_z] = BBu( dof_x, dof_y, quad_z );
       }
+      #pragma unroll
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
         real64 res = 0.0;
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           res += basis[dof_z][quad_z] * val[quad_z];
@@ -632,8 +711,10 @@ void applyTestFunctions( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
   
   SharedTensor< num_quads_1d, num_quads_1d, num_quads_1d, 3 > Du( stack.shared_mem[3] );
+  #pragma unroll
   for (localIndex c = 0; c < 3; c++)
   {
+    #pragma unroll
     for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
     {
       loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
@@ -656,26 +737,33 @@ void applyTestFunctions( StackVariables & stack,
     loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
     {
       real64 res[num_quads_1d][num_comp];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
+        #pragma unroll
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
           res[quad_z][comp] = 0.0;
         }
       }
+      #pragma unroll
       for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
       {
         real64 const b = basis[dof_x][quad_x];
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
+          #pragma unroll
           for (localIndex comp = 0; comp < num_comp; comp++)
           {
             res[quad_z][comp] += b * Du( quad_x, quad_y, quad_z, comp );
           }
         }
       }
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
+        #pragma unroll
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
           Bu( dof_x, quad_y, quad_z, comp ) = res[quad_z][comp];
@@ -694,26 +782,33 @@ void applyTestFunctions( StackVariables & stack,
     loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
     {
       real64 res[num_quads_1d][num_comp];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
+        #pragma unroll
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
           res[quad_z][comp] = 0.0;
         }
       }
+      #pragma unroll
       for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
       {
         real64 const b = basis[dof_y][quad_y];
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
+          #pragma unroll
           for (localIndex comp = 0; comp < num_comp; comp++)
           {
             res[quad_z][comp] += b * Bu( dof_x, quad_y, quad_z, comp );
           }
         }
       }
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
+        #pragma unroll
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
           BBu( dof_x, dof_y, quad_z, comp ) = res[quad_z][comp];
@@ -731,28 +826,35 @@ void applyTestFunctions( StackVariables & stack,
     {
       // Cache values in registers to read them only once from shared
       real64 val[num_quads_1d][num_comp];
+      #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
+        #pragma unroll
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
           val[quad_z][comp] = BBu( dof_x, dof_y, quad_z, comp );
         }
       }
+      #pragma unroll
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
         real64 res[num_comp];
+        #pragma unroll
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
           res[comp] = 0.0;
         }
+        #pragma unroll
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
           real64 const b = basis[dof_z][quad_z]; 
+          #pragma unroll
           for (localIndex comp = 0; comp < num_comp; comp++)
           {
             res[comp] += b * val[quad_z][comp];
           }
         }
+        #pragma unroll
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
           dofs( dof_x, dof_y, dof_z, comp ) = res[comp];
@@ -799,6 +901,7 @@ void applyTestFunctions( StackVariables & stack,
   localIndex dof_x = stack.tidx;
   if ( dof_x < num_dofs_1d )
   {
+    #pragma unroll
     for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
     {
       Bx[quad_x] = basis[dof_x][quad_x];
@@ -807,6 +910,7 @@ void applyTestFunctions( StackVariables & stack,
   localIndex dof_y = stack.tidy;
   if ( dof_y < num_dofs_1d )
   {
+    #pragma unroll
     for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
     {
       By[quad_y] = basis[dof_y][quad_y];
@@ -815,6 +919,7 @@ void applyTestFunctions( StackVariables & stack,
   localIndex dof_z = stack.tidz;
   if ( dof_z < num_dofs_1d )
   {
+    #pragma unroll
     for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
     {
       Bz[quad_z] = basis[dof_z][quad_z];
@@ -826,12 +931,15 @@ void applyTestFunctions( StackVariables & stack,
   loop3D( stack, num_dofs_1d, num_dofs_1d, num_dofs_1d,
           [&]( localIndex dof_x, localIndex dof_y, localIndex dof_z){
     real64 bbbu = 0.0;
+    #pragma unroll
     for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
     {
       real64 const bz = Bz[ quad_z ];
+      #pragma unroll
       for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
       {
         real64 const by = By[ quad_y ];
+        #pragma unroll
         for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
         {
           real64 const bx = Bx[ quad_x ];
@@ -873,6 +981,7 @@ void applyTestFunctions(
   localIndex dof_x = stack.tidx;
   if ( dof_x < num_dofs_1d )
   {
+    #pragma unroll
     for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
     {
       Bx[quad_x] = basis[dof_x][quad_x];
@@ -881,6 +990,7 @@ void applyTestFunctions(
   localIndex dof_y = stack.tidy;
   if ( dof_y < num_dofs_1d )
   {
+    #pragma unroll
     for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
     {
       By[quad_y] = basis[dof_y][quad_y];
@@ -889,6 +999,7 @@ void applyTestFunctions(
   localIndex dof_z = stack.tidz;
   if ( dof_z < num_dofs_1d )
   {
+    #pragma unroll
     for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
     {
       Bz[quad_z] = basis[dof_z][quad_z];
@@ -898,6 +1009,7 @@ void applyTestFunctions(
   SharedTensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp > Du( stack.shared_mem[0] );
   loop3D( stack, num_quads_1d, num_quads_1d, num_quads_1d,
           [&]( localIndex quad_x, localIndex quad_y, localIndex quad_z ){
+    #pragma unroll
     for (size_t comp = 0; comp < num_comp; comp++)
     {
       Du( quad_x, quad_y, quad_z, comp ) = q_values( quad_x, quad_y, quad_z, comp );
@@ -909,20 +1021,25 @@ void applyTestFunctions(
   loop3D( stack, num_dofs_1d, num_dofs_1d, num_dofs_1d,
           [&]( localIndex dof_x, localIndex dof_y, localIndex dof_z ){
     real64 bbbu[ num_comp ];
+    #pragma unroll
     for (localIndex comp = 0; comp < num_comp; comp++)
     {
       bbbu[ comp ] = 0.0;
     }
+    #pragma unroll
     for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
     {
       real64 const bz = Bz[quad_z];
+      #pragma unroll
       for (localIndex quad_y = 0; quad_y < num_quads_1d; quad_y++)
       {
         real64 const by = By[quad_y];
+        #pragma unroll
         for (localIndex quad_x = 0; quad_x < num_quads_1d; quad_x++)
         {
           real64 const bx = Bx[quad_x];
           real64 const b = bx * by * bz;
+          #pragma unroll
           for (localIndex comp = 0; comp < num_comp; comp++)
           {
             real64 const val = Du( quad_x, quad_y, quad_z, comp );
@@ -931,6 +1048,7 @@ void applyTestFunctions(
         }
       }
     }
+    #pragma unroll
     for (localIndex comp = 0; comp < num_comp; comp++)
     {
       dofs( dof_x, dof_y, dof_z, comp ) = bbbu[ comp ];
