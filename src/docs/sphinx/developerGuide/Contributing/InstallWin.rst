@@ -81,13 +81,13 @@ There are two things you may have noticed reading through the ``Dockerfile`` :
 
 .. code:: shell
 
-    PS> $env:VERSION='164-677'
-    PS> $env:IMG='ubuntu18.04-gcc8'
+    PS> $env:VERSION='212-910'
+    PS> $env:IMG='ubuntu20.04-gcc9'
     PS> $env:REMOTE_DEV_IMG="remote-dev-${env:IMG}"
 
 
 Please note the preposition of ``env:`` in the windows formalisme. The ``${ORG}`` variable will be hard-coded as ``geosx``. The last variable will be use
-as the image name. ``164-677`` refers to a specific version of the TPLs which may not be up to date. Please refer to :ref:`Continuous_Integration_process` for further info.
+as the image name. ``212-910`` refers to a specific version of the TPLs which may not be up to date. Please refer to :ref:`Continuous_Integration_process` for further info.
 
 - You'll need to generate a ssh-key to be able to access the container without the need for defining a password. This can be done from the *PowerShell*,
 
@@ -130,8 +130,8 @@ Now that we have the image build, let us run a container from,
 
     PS > docker run --cap-add=SYS_PTRACE  -d --name ${env:REMOTE_DEV_IMG}-${env:VERSION} -p 64000:22 --mount 'type=bind,source=D:/install_geosx_docker/,target=/app' ${env:REMOTE_DEV_IMG}:${env:VERSION}
 
-Note that in addition to the detached flag (*-d*) and the name tage (*--name*), we provide ``Docker`` with the port the container should be associated to
-communicate with ssh port 22, as well as a binding between a host mount point (*D:/install_geosx_docker/*) and a container mount point (*/app*) to have a peristent storage
+Note that in addition to the detached flag (``-d``) and the name tage (``--name``), we provide ``Docker`` with the port the container should be associated to
+communicate with ssh port 22, as well as a binding between a host mount point (``D:/install_geosx_docker/``) and a container mount point (``/app``) to have a peristent storage
 for our development/geosx builds. More details on the `--mount options <https://docs.docker.com/storage/bind-mounts/>`_
 
 A similar step can be achieved using the *Docker Desktop* GUI in the image tabs, clicking on the *run* button and filling the same information in the interface,
@@ -145,7 +145,7 @@ Coming back to our ``PowerShell`` terminal, we can check that our container is r
 
     PS > docker ps -a
     CONTAINER ID   IMAGE                                 COMMAND               CREATED                  STATUS          PORTS                                     NAMES
-    1efffac66c4c   remote-dev-ubuntu18.04-gcc8:156-642   "/usr/sbin/sshd -D"   Less than a second ago   Up 18 seconds   0.0.0.0:64000->22/tcp, :::64000->22/tcp   remote-dev-ubuntu18.04-gcc8-156-642
+    1efffac66c4c   remote-dev-ubuntu20.04-gcc9:212-910   "/usr/sbin/sshd -D"   Less than a second ago   Up 18 seconds   0.0.0.0:64000->22/tcp, :::64000->22/tcp   remote-dev-ubuntu20.04-gcc9-212-910
 
     PS > ssh root@localhost -p 64000
     Enter passphrase for key 'C:\***********/.ssh/id_rsa':
@@ -193,7 +193,7 @@ Once the code is configured and compiled, let us check the status of the build,
 
     root@b105f9ead860:~# cd [path-to-build]/ && ./bin/geosx --help
 
-Trying to launch a case using *mpirun*, you might get the following warning
+Trying to launch a case using ``mpirun``, you might get the following warning
 
 .. code:: console
 

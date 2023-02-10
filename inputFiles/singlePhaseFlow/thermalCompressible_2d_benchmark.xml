@@ -9,36 +9,36 @@
     <InternalWellbore
       name="mesh1"
       elementTypes="{ C3D8 }"
-      radius="{ 0.1, 0.106, 0.133, 0.17 }"
+      radius="{ 0.1, 0.106, 0.133, 1.0 }"
       theta="{ 0, 90 }"
       zCoords="{ 0, 0.1 }"
-      nr="{ 3, 5, 5 }"
-      nt="{ 40 }"
+      nr="{ 3, 10, 50 }"
+      nt="{ 80 }"
       nz="{ 1 }"
       trajectory="{ { 0.0, 0.0, 0.0 },
                     { 0.0, 0.0, 0.1 } }"
-      autoSpaceRadialElems="{ 0, 0, 0 }"
+      autoSpaceRadialElems="{ 0, 0, 1 }"
       useCartesianOuterBoundary="3"
       cellBlockNames="{ cb }"
       />
   </Mesh>
 
   <Events
-    maxTime="1.5e7">
+    maxTime="1e5">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="2.5e6"
+      timeFrequency="1e4"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="2.5e6"
+      maxEventDt="1e3"
       target="/Solvers/singleFlow"/>
 
-    <PeriodicEvent
+    <!--PeriodicEvent
       name="restarts"
-      timeFrequency="7.5e6"
-      target="/Outputs/restartOutput"/>
+      timeFrequency="1e5"
+      target="/Outputs/restartOutput"/-->
   </Events>
 
 </Problem>

@@ -37,11 +37,6 @@ public:
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override;
 
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             int const cycleNumber,
-                             DomainPartition & domain ) override;
-
   virtual real64
   explicitStep( real64 const & time_n,
                 real64 const & dt,
