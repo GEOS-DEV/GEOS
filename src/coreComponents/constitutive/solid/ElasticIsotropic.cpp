@@ -29,9 +29,7 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
   m_defaultBulkModulus(),
   m_defaultShearModulus(),
   m_bulkModulus(),
-  m_shearModulus(),
-  m_thermalExpansionCoefficient(),
-  m_defaultThermalExpansionCoefficient()
+  m_shearModulus()
 {
   registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
     setApplyDefaultValue( -1 ).
@@ -53,11 +51,6 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Poisson's Ratio" );
 
-  registerWrapper( viewKeyStruct::defaultThermalExpansionCoefficientString(), &m_defaultThermalExpansionCoefficient ).
-    setApplyDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Default Thermal Expansion Coefficient" );
-
   registerWrapper( viewKeyStruct::bulkModulusString(), &m_bulkModulus ).
     setApplyDefaultValue( -1 ).
     setDescription( "Elastic Bulk Modulus Field" );
@@ -65,10 +58,6 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::shearModulusString(), &m_shearModulus ).
     setApplyDefaultValue( -1 ).
     setDescription( "Elastic Shear Modulus Field" );
-
-  registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Thermal Expansion Coefficient Field" );
 }
 
 ElasticIsotropic::~ElasticIsotropic()
@@ -157,9 +146,6 @@ void ElasticIsotropic::postProcessInput()
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString() ).
     setApplyDefaultValue( m_defaultShearModulus );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::thermalExpansionCoefficientString() ).
-    setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticIsotropic, string const &, Group * const )

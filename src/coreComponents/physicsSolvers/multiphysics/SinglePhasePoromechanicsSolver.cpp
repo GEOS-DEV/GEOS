@@ -137,11 +137,11 @@ void SinglePhasePoromechanicsSolver::setupSystem( DomainPartition & domain,
 
 void SinglePhasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups()
 {
-  integer const isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
-  GEOSX_THROW_IF( m_isThermal && !isFlowThermal,
-                  GEOSX_FMT( "{} {}: The flow solver named {} must be thermal if the poromechanics solver is thermal",
-                             catalogName(), getName(), flowSolver()->getName() ),
-                  InputError );
+  integer & isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
+  GEOSX_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
+                       GEOSX_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
+                                  catalogName(), getName(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
+  isFlowThermal = m_isThermal;
 
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM )
   {
