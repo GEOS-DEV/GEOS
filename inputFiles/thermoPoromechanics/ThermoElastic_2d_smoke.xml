@@ -37,7 +37,7 @@
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="7.5e6"
+      timeFrequency="5e4"
       target="/Outputs/restartOutput"/>
   </Events>
 
