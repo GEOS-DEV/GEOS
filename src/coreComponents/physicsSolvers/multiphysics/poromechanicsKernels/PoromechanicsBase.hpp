@@ -164,6 +164,9 @@ public:
 
     // Storage for helper variables used in the quadrature point kernel
 
+    /// Strain increment
+    real64 strainIncrement[6]{};
+
     /// Total stress
     real64 totalStress[6]{};
     /// Derivative of total stress wrt displacement
@@ -180,8 +183,8 @@ public:
     /// Derivative of body force wrt pressure
     real64 dBodyForce_dPressure[3]{};
 
-    /// Delta temperature since the beginning of the simulation
-    real64 deltaTemperatureFromInit{}; // for stress computation
+    /// Temperature
+    real64 temperature{}; // for stress computation
     /// Delta temperature since last time step
     real64 deltaTemperatureFromLastStep{}; // for porosity update
 

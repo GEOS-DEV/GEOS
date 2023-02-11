@@ -53,14 +53,6 @@ DECLARE_FIELD( bcGlobalCompFraction,
                WRITE_AND_READ,
                "Boundary condition global component fraction" );
 
-DECLARE_FIELD( initialTemperature,
-               "initialTemperature",
-               array1d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Initial temperature" );
-
 DECLARE_FIELD( referencePorosity,
                "referencePorosity",
                array1d< real64 >,

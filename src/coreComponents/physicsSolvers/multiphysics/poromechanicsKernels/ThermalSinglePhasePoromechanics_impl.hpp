@@ -13,43 +13,38 @@
  */
 
 /**
- * @file SinglePhasePoromechanics_impl.hpp
+ * @file ThermalSinglePhasePoromechanics_impl.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICS_IMPL_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICS_IMPL_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICS_IMPL_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICS_IMPL_HPP_
 
-#include "constitutive/fluid/SingleFluidBase.hpp"
-#include "finiteElement/BilinearFormUtilities.hpp"
-#include "finiteElement/LinearFormUtilities.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
 
 namespace geosx
 {
 
-namespace poromechanicsKernels
+namespace thermalPoromechanicsKernels
 {
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
-SinglePhasePoromechanics( NodeManager const & nodeManager,
-                          EdgeManager const & edgeManager,
-                          FaceManager const & faceManager,
-                          localIndex const targetRegionIndex,
-                          SUBREGION_TYPE const & elementSubRegion,
-                          FE_TYPE const & finiteElementSpace,
-                          CONSTITUTIVE_TYPE & inputConstitutiveType,
-                          arrayView1d< globalIndex const > const inputDispDofNumber,
-                          globalIndex const rankOffset,
-                          CRSMatrixView< real64, globalIndex const > const inputMatrix,
-                          arrayView1d< real64 > const inputRhs,
-                          real64 const (&gravityVector)[3],
-                          string const inputFlowDofKey,
-                          string const fluidModelKey ):
+ThermalSinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+ThermalSinglePhasePoromechanics( NodeManager const & nodeManager,
+                                 EdgeManager const & edgeManager,
+                                 FaceManager const & faceManager,
+                                 localIndex const targetRegionIndex,
+                                 SUBREGION_TYPE const & elementSubRegion,
+                                 FE_TYPE const & finiteElementSpace,
+                                 CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                 arrayView1d< globalIndex const > const inputDispDofNumber,
+                                 globalIndex const rankOffset,
+                                 CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                 arrayView1d< real64 > const inputRhs,
+                                 real64 const (&gravityVector)[3],
+                                 string const inputFlowDofKey,
+                                 string const fluidModelKey ):
   Base( nodeManager,
         edgeManager,
         faceManager,
@@ -64,9 +59,19 @@ SinglePhasePoromechanics( NodeManager const & nodeManager,
         gravityVector,
         inputFlowDofKey,
         fluidModelKey ),
-  m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density() ),
-  m_fluidDensity_n( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density_n() ),
-  m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).dDensity_dPressure() )
+  m_dFluidDensity_dTemperature( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
+                                                                                                                   fluidModelKey ) ).dDensity_dTemperature() ),
+  m_fluidInternalEnergy_n( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).internalEnergy_n() ),
+  m_fluidInternalEnergy( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).internalEnergy() ),
+  m_dFluidInternalEnergy_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
+                                                                                                                       fluidModelKey ) ).dInternalEnergy_dPressure() ),
+  m_dFluidInternalEnergy_dTemperature( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
+                                                                                                                          fluidModelKey ) ).dInternalEnergy_dTemperature() ),
+  m_rockInternalEnergy_n( inputConstitutiveType.getInternalEnergy_n() ),
+  m_rockInternalEnergy( inputConstitutiveType.getInternalEnergy() ),
+  m_dRockInternalEnergy_dTemperature( inputConstitutiveType.getDinternalEnergy_dTemperature() ),
+  m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() ),
+  m_temperature( elementSubRegion.template getField< fields::flow::temperature >() )
 {}
 
 template< typename SUBREGION_TYPE,
@@ -74,7 +79,22 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void ThermalSinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+setup( localIndex const k,
+       StackVariables & stack ) const
+{
+  Base::setup( k, stack );
+  stack.localTemperatureDofIndex = m_flowDofNumber[k]+1;
+  stack.temperature = m_temperature[k];
+  stack.deltaTemperatureFromLastStep = m_temperature[k] - m_temperature_n[k];
+}
+
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void ThermalSinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 smallStrainUpdate( localIndex const k,
                    localIndex const q,
                    StackVariables & stack ) const
@@ -131,7 +151,7 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void ThermalSinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 computeBodyForce( localIndex const k,
                   localIndex const q,
                   real64 const & porosity,
@@ -141,17 +161,19 @@ computeBodyForce( localIndex const k,
                   real64 const & dSolidDensity_dPressure,
                   StackVariables & stack ) const
 {
-  GEOSX_UNUSED_VAR( dPorosity_dTemperature );
+  Base::computeBodyForce( k, q,
+                          porosity,
+                          dPorosity_dVolStrain,
+                          dPorosity_dPressure,
+                          dPorosity_dTemperature,
+                          dSolidDensity_dPressure,
+                          stack );
 
-  real64 const mixtureDensity = ( 1.0 - porosity ) * m_solidDensity( k, q ) + porosity * m_fluidDensity( k, q );
-  real64 const dMixtureDens_dVolStrainIncrement = dPorosity_dVolStrain * ( -m_solidDensity( k, q ) + m_fluidDensity( k, q ) );
-  real64 const dMixtureDens_dPressure = dPorosity_dPressure * ( -m_solidDensity( k, q ) + m_fluidDensity( k, q ) )
-                                        + ( 1.0 - porosity ) * dSolidDensity_dPressure
-                                        + porosity * m_dFluidDensity_dPressure( k, q );
+  real64 const dMixtureDens_dTemperature =
+    dPorosity_dTemperature * ( -m_solidDensity( k, q ) + m_fluidDensity( k, q ) )
+    + porosity * m_dFluidDensity_dTemperature( k, q );
 
-  LvArray::tensorOps::scaledCopy< 3 >( stack.bodyForce, m_gravityVector, mixtureDensity );
-  LvArray::tensorOps::scaledCopy< 3 >( stack.dBodyForce_dVolStrainIncrement, m_gravityVector, dMixtureDens_dVolStrainIncrement );
-  LvArray::tensorOps::scaledCopy< 3 >( stack.dBodyForce_dPressure, m_gravityVector, dMixtureDens_dPressure );
+  LvArray::tensorOps::scaledCopy< 3 >( stack.dBodyForce_dTemperature, m_gravityVector, dMixtureDens_dTemperature );
 }
 
 template< typename SUBREGION_TYPE,
@@ -159,7 +181,7 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void ThermalSinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 computeFluidIncrement( localIndex const k,
                        localIndex const q,
                        real64 const & porosity,
@@ -169,11 +191,38 @@ computeFluidIncrement( localIndex const k,
                        real64 const & dPorosity_dTemperature,
                        StackVariables & stack ) const
 {
-  GEOSX_UNUSED_VAR( dPorosity_dTemperature );
+  // Step 1: compute fluid mass increment and its derivatives wrt vol strain and pressure
+  Base::computeFluidIncrement( k, q,
+                               porosity,
+                               porosity_n,
+                               dPorosity_dVolStrain,
+                               dPorosity_dPressure,
+                               dPorosity_dTemperature,
+                               stack );
 
-  stack.fluidMassIncrement = porosity * m_fluidDensity( k, q ) - porosity_n * m_fluidDensity_n( k, q );
-  stack.dFluidMassIncrement_dVolStrainIncrement = dPorosity_dVolStrain * m_fluidDensity( k, q );
-  stack.dFluidMassIncrement_dPressure = dPorosity_dPressure * m_fluidDensity( k, q ) + porosity * m_dFluidDensity_dPressure( k, q );
+  // Step 2: compute derivative of fluid mass increment wrt temperature
+  stack.dFluidMassIncrement_dTemperature = dPorosity_dTemperature * m_fluidDensity( k, q ) + porosity * m_dFluidDensity_dTemperature( k, q );
+
+  // Step 3: compute fluid energy increment and its derivatives wrt vol strain, pressure, and temperature
+  real64 const fluidMass = porosity * m_fluidDensity( k, q );
+  real64 const fluidEnergy = fluidMass * m_fluidInternalEnergy( k, q );
+  real64 const fluidEnergy_n = porosity_n * m_fluidDensity_n( k, q ) * m_fluidInternalEnergy_n( k, q );
+  stack.energyIncrement = fluidEnergy - fluidEnergy_n;
+
+  stack.dEnergyIncrement_dVolStrainIncrement = stack.dFluidMassIncrement_dVolStrainIncrement * m_fluidInternalEnergy( k, q );
+  stack.dEnergyIncrement_dPressure = stack.dFluidMassIncrement_dPressure * m_fluidInternalEnergy( k, q )
+                                     + fluidMass * m_dFluidInternalEnergy_dPressure( k, q );
+  stack.dEnergyIncrement_dTemperature = stack.dFluidMassIncrement_dTemperature * m_fluidInternalEnergy( k, q )
+                                        + fluidMass * m_dFluidInternalEnergy_dTemperature( k, q );
+
+
+  // Step 4: assemble the solid part of the accumulation term
+  real64 const oneMinusPoro = 1 - porosity;
+
+  stack.energyIncrement += oneMinusPoro * m_rockInternalEnergy( k, 0 ) - ( 1 - porosity_n ) * m_rockInternalEnergy_n( k, 0 );
+  stack.dEnergyIncrement_dVolStrainIncrement += -dPorosity_dVolStrain * m_rockInternalEnergy( k, 0 );
+  stack.dEnergyIncrement_dPressure += -dPorosity_dPressure * m_rockInternalEnergy( k, 0 );
+  stack.dEnergyIncrement_dTemperature += -dPorosity_dTemperature * m_rockInternalEnergy( k, 0 ) + oneMinusPoro * m_dRockInternalEnergy_dTemperature( k, 0 );
 }
 
 template< typename SUBREGION_TYPE,
@@ -181,7 +230,7 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void ThermalSinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
                               real64 const ( &dNdX )[numNodesPerElem][3],
                               real64 const & detJxW,
@@ -189,65 +238,22 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
 {
   using namespace PDEUtilities;
 
+  Base::assembleMomentumBalanceTerms( N, dNdX, detJxW, stack );
+
   constexpr FunctionSpace displacementTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
   constexpr FunctionSpace displacementTestSpace = displacementTrialSpace;
   constexpr FunctionSpace pressureTrialSpace = FunctionSpace::P0;
 
-  // Step 1: compute local linear momentum balance residual
-  LinearFormUtilities::compute< displacementTestSpace,
-                                DifferentialOperator::SymmetricGradient >
-  (
-    stack.localResidualMomentum,
-    dNdX,
-    stack.totalStress,
-    -detJxW );
+  // compute local linear momentum balance residual derivatives with respect to temperature
 
-  if( m_gravityAcceleration > 0.0 )
-  {
-    LinearFormUtilities::compute< displacementTestSpace,
-                                  DifferentialOperator::Identity >
-    (
-      stack.localResidualMomentum,
-      N,
-      stack.bodyForce,
-      detJxW );
-  }
-
-  // Step 2: compute local linear momentum balance residual derivatives with respect to displacement
-  BilinearFormUtilities::compute< displacementTestSpace,
-                                  displacementTrialSpace,
-                                  DifferentialOperator::SymmetricGradient,
-                                  DifferentialOperator::SymmetricGradient >
-  (
-    stack.dLocalResidualMomentum_dDisplacement,
-    dNdX,
-    stack.stiffness, // fourth-order tensor handled via DiscretizationOps
-    dNdX,
-    -detJxW );
-
-  if( m_gravityAcceleration > 0.0 )
-  {
-    BilinearFormUtilities::compute< displacementTestSpace,
-                                    displacementTrialSpace,
-                                    DifferentialOperator::Identity,
-                                    DifferentialOperator::Divergence >
-    (
-      stack.dLocalResidualMomentum_dDisplacement,
-      N,
-      stack.dBodyForce_dVolStrainIncrement,
-      dNdX,
-      detJxW );
-  }
-
-  // Step 3: compute local linear momentum balance residual derivatives with respect to pressure
   BilinearFormUtilities::compute< displacementTestSpace,
                                   pressureTrialSpace,
                                   DifferentialOperator::SymmetricGradient,
                                   DifferentialOperator::Identity >
   (
-    stack.dLocalResidualMomentum_dPressure,
+    stack.dLocalResidualMomentum_dTemperature,
     dNdX,
-    stack.dTotalStress_dPressure,
+    stack.dTotalStress_dTemperature,
     1.0,
     -detJxW );
 
@@ -258,9 +264,9 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
                                     DifferentialOperator::Identity,
                                     DifferentialOperator::Identity >
     (
-      stack.dLocalResidualMomentum_dPressure,
+      stack.dLocalResidualMomentum_dTemperature,
       N,
-      stack.dBodyForce_dPressure,
+      stack.dBodyForce_dTemperature,
       1.0,
       detJxW );
   }
@@ -271,47 +277,73 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void ThermalSinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
                                real64 const & detJxW,
                                StackVariables & stack ) const
 {
+
   using namespace PDEUtilities;
+
+  Base::assembleElementBasedFlowTerms( dNdX, detJxW, stack );
 
   constexpr FunctionSpace displacementTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
   constexpr FunctionSpace pressureTrialSpace = FunctionSpace::P0;
   constexpr FunctionSpace pressureTestSpace = pressureTrialSpace;
 
-  // Step 1: compute local mass balance residual
-  LinearFormUtilities::compute< pressureTestSpace,
-                                DifferentialOperator::Identity >
-  (
-    stack.localResidualMass,
-    1.0,
-    stack.fluidMassIncrement,
-    detJxW );
+  // Step 1: compute local mass balance residual derivatives with respect to temperature
 
-  // Step 2: compute local mass balance residual derivatives with respect to displacement
-  BilinearFormUtilities::compute< pressureTestSpace,
-                                  displacementTrialSpace,
-                                  DifferentialOperator::Identity,
-                                  DifferentialOperator::Divergence >
-  (
-    stack.dLocalResidualMass_dDisplacement,
-    1.0,
-    stack.dFluidMassIncrement_dVolStrainIncrement,
-    dNdX,
-    detJxW );
-
-  // Step 3: compute local mass balance residual derivatives with respect to pressure
   BilinearFormUtilities::compute< pressureTestSpace,
                                   pressureTrialSpace,
                                   DifferentialOperator::Identity,
                                   DifferentialOperator::Identity >
   (
-    stack.dLocalResidualMass_dPressure,
+    stack.dLocalResidualMass_dTemperature,
     1.0,
-    stack.dFluidMassIncrement_dPressure,
+    stack.dFluidMassIncrement_dTemperature,
+    1.0,
+    detJxW );
+
+  // Step 2: compute local energy balance residual and its derivatives
+
+  LinearFormUtilities::compute< pressureTestSpace,
+                                DifferentialOperator::Identity >
+  (
+    stack.localResidualEnergy,
+    1.0,
+    stack.energyIncrement,
+    detJxW );
+
+  BilinearFormUtilities::compute< pressureTestSpace,
+                                  displacementTrialSpace,
+                                  DifferentialOperator::Identity,
+                                  DifferentialOperator::Divergence >
+  (
+    stack.dLocalResidualEnergy_dDisplacement,
+    1.0,
+    stack.dEnergyIncrement_dVolStrainIncrement,
+    dNdX,
+    detJxW );
+
+  BilinearFormUtilities::compute< pressureTestSpace,
+                                  pressureTrialSpace,
+                                  DifferentialOperator::Identity,
+                                  DifferentialOperator::Identity >
+  (
+    stack.dLocalResidualEnergy_dPressure,
+    1.0,
+    stack.dEnergyIncrement_dPressure,
+    1.0,
+    detJxW );
+
+  BilinearFormUtilities::compute< pressureTestSpace,
+                                  pressureTrialSpace,
+                                  DifferentialOperator::Identity,
+                                  DifferentialOperator::Identity >
+  (
+    stack.dLocalResidualEnergy_dTemperature,
+    1.0,
+    stack.dEnergyIncrement_dTemperature,
     1.0,
     detJxW );
 }
@@ -321,52 +353,11 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void ThermalSinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 quadraturePointKernel( localIndex const k,
                        localIndex const q,
                        StackVariables & stack ) const
 {
-  // Governing equations (strong form)
-  // ---------------------------------
-  //
-  //   divergence( totalStress ) + bodyForce = 0                (quasi-static linear momentum balance)
-  //   dFluidMass_dTime + divergence( fluidMassFlux ) = source  (fluid phase mass balance)
-  //
-  // with currently the following dependencies on the strainIncrement tensor and pressure
-  //
-  //   totalStress      = totalStress( strainIncrement, pressure)
-  //   bodyForce        = bodyForce( strainIncrement, pressure)
-  //   fluidMass        = fluidMass( strainIncrement, pressure)
-  //   fluidMassFlux    = fludiMassFlux( pressure)
-  //
-  // Note that the fluidMassFlux will depend on the strainIncrement if a stress-dependent constitutive
-  // model is assumed. A dependency on pressure can also occur in the source term of the mass
-  // balance equation, e.g. if a Peaceman well model is used.
-  //
-  // In this kernel cell-based contributions to Jacobian matrix and residual
-  // vector are computed. The face-based contributions, namely associated with the fluid
-  // mass flux term are computed in a different kernel. The source term in the mass balance
-  // equation is also treated elsewhere.
-  //
-  // Integration in time is performed using a backward Euler scheme (in the mass balance
-  // equation LHS and RHS are multiplied by the timestep).
-  //
-  // Using a weak formulation of the governing equation the following terms are assembled in this kernel
-  //
-  //   Rmom = - \int symmetricGradient( \eta ) : totalStress + \int \eta \cdot bodyForce = 0
-  //   Rmas = \int \chi ( fluidMass - fluidMass_n) = 0
-  //
-  //   dRmom_dVolStrain = - \int_Omega symmetricGradient( \eta ) : dTotalStress_dVolStrain
-  //                      + \int \eta \cdot dBodyForce_dVolStrain
-  //   dRmom_dPressure  = - \int_Omega symmetricGradient( \eta ) : dTotalStress_dPressure
-  //                      + \int \eta \cdot dBodyForce_dPressure
-  //   dRmas_dVolStrain = \int \chi dFluidMass_dVolStrain
-  //   dRmas_dPressure  = \int \chi dFluidMass_dPressure
-  //
-  // with \eta and \chi test basis functions for the displacement and pressure field, respectively.
-  // A continuous interpolation is used for the displacement, with \eta continuous finite element
-  // basis functions. A piecewise-constant approximation is used for the pressure.
-
   // Step 1: compute displacement finite element basis functions (N), basis function derivatives (dNdX), and
   // determinant of the Jacobian transformation matrix times the quadrature weight (detJxW)
   real64 N[numNodesPerElem]{};
@@ -397,21 +388,22 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+real64 ThermalSinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 complete( localIndex const k,
           StackVariables & stack ) const
 {
-  GEOSX_UNUSED_VAR( k );
-  real64 maxForce = 0;
+  real64 const maxForce = Base::complete( k, stack );
+
   localIndex const numSupportPoints =
     m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
   integer numDisplacementDofs = numSupportPoints * numDofPerTestSupportPoint;
 
+  // Step 1: assemble the derivatives of linear momentum balance wrt temperature into the global matrix
+
   for( int localNode = 0; localNode < numSupportPoints; ++localNode )
   {
-    for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
+    for( integer dim = 0; dim < numDofPerTestSupportPoint; ++dim )
     {
-
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[numDofPerTestSupportPoint*localNode + dim] - m_dofRankOffset );
 
       // we need this check to filter out ghost nodes in the assembly
@@ -419,35 +411,50 @@ complete( localIndex const k,
       {
         continue;
       }
-      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                              stack.localRowDofIndex,
-                                                                              stack.dLocalResidualMomentum_dDisplacement[numDofPerTestSupportPoint * localNode + dim],
-                                                                              numDisplacementDofs );
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localResidualMomentum[numDofPerTestSupportPoint * localNode + dim] );
-      maxForce = fmax( maxForce, fabs( stack.localResidualMomentum[numDofPerTestSupportPoint * localNode + dim] ) );
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                              &stack.localPressureDofIndex,
-                                                                              stack.dLocalResidualMomentum_dPressure[numDofPerTestSupportPoint * localNode + dim],
+                                                                              &stack.localTemperatureDofIndex,
+                                                                              stack.dLocalResidualMomentum_dTemperature[numDofPerTestSupportPoint * localNode + dim],
                                                                               1 );
     }
   }
 
-  localIndex const dof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex - m_dofRankOffset );
+  // Step 2: assemble the derivatives of mass balance residual wrt temperature into the global matrix
+
+  localIndex const massDof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex - m_dofRankOffset );
 
   // we need this check to filter out ghost cells in the assembly
-  if( 0 <= dof && dof < m_matrix.numRows() )
+  if( 0 <= massDof && massDof < m_matrix.numRows() )
   {
-    m_matrix.template addToRowBinarySearchUnsorted< serialAtomic >( dof,
-                                                                    stack.localRowDofIndex,
-                                                                    stack.dLocalResidualMass_dDisplacement[0],
-                                                                    numDisplacementDofs );
-    m_matrix.template addToRow< serialAtomic >( dof,
-                                                &stack.localPressureDofIndex,
-                                                stack.dLocalResidualMass_dPressure[0],
+    m_matrix.template addToRow< serialAtomic >( massDof,
+                                                &stack.localTemperatureDofIndex,
+                                                stack.dLocalResidualMass_dTemperature[0],
                                                 1 );
-    RAJA::atomicAdd< serialAtomic >( &m_rhs[dof], stack.localResidualMass[0] );
   }
+
+  // Step 3: assemble the energy balance and its derivatives into the global matrix
+
+  localIndex const energyDof = LvArray::integerConversion< localIndex >( stack.localTemperatureDofIndex - m_dofRankOffset );
+
+  // we need this check to filter out ghost cells in the assembly
+  if( 0 <= energyDof && energyDof < m_matrix.numRows() )
+  {
+    m_matrix.template addToRowBinarySearchUnsorted< serialAtomic >( energyDof,
+                                                                    stack.localRowDofIndex,
+                                                                    stack.dLocalResidualEnergy_dDisplacement[0],
+                                                                    numDisplacementDofs );
+    m_matrix.template addToRow< serialAtomic >( energyDof,
+                                                &stack.localPressureDofIndex,
+                                                stack.dLocalResidualEnergy_dPressure[0],
+                                                1 );
+    m_matrix.template addToRow< serialAtomic >( energyDof,
+                                                &stack.localTemperatureDofIndex,
+                                                stack.dLocalResidualEnergy_dTemperature[0],
+                                                1 );
+
+    RAJA::atomicAdd< serialAtomic >( &m_rhs[energyDof], stack.localResidualEnergy[0] );
+  }
+
   return maxForce;
 }
 
@@ -456,8 +463,7 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 template< typename POLICY,
           typename KERNEL_TYPE >
-real64
-SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+real64 ThermalSinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 kernelLaunch( localIndex const numElems,
               KERNEL_TYPE const & kernelComponent )
 {
@@ -482,8 +488,8 @@ kernelLaunch( localIndex const numElems,
 }
 
 
-} // namespace poromechanicsKernels
+} // namespace thermalPoromechanicsKernels
 
 } // namespace geosx
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICS_IMPL_HPP_
+#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICS_HPP_
