@@ -736,14 +736,18 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
 //  nodeManager.constructGlobalToLocalMap();
 
 
+   bool baseLevelMesh = false;
+   if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+     baseLevelMesh = true;
+     
   //if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
   //{
     elemManager.generateMesh( cellBlockManager );
-    nodeManager.setGeometricalRelations( cellBlockManager, elemManager );
-    edgeManager.setGeometricalRelations( cellBlockManager );
+    nodeManager.setGeometricalRelations( cellBlockManager, elemManager, baseLevelMesh );
+    edgeManager.setGeometricalRelations( cellBlockManager, baseLevelMesh );
     faceManager.setGeometricalRelations( cellBlockManager,
                                          elemManager,
-                                         nodeManager );
+                                         nodeManager, baseLevelMesh );
     nodeManager.constructGlobalToLocalMap( cellBlockManager );
     // Edge, face and element region managers rely on the sets provided by the node manager.
     // This is why `nodeManager.buildSets` is called first.
@@ -770,12 +774,26 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
     {
       subRegion.setupRelatedObjectsInRelations( meshLevel );
-      if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+      if( baseLevelMesh )
         subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
       subRegion.setMaxGlobalIndex();
     } );
     elemManager.setMaxGlobalIndex();
   //}
+
+  elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
+  {
+    sourceRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
+    {  
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! ProgramManger sourceRegion.getName = "<<sourceRegion.getName()<<"; sourceSubRegion.getName()="<< sourceSubRegion.getName() );
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! ProgramManger sourceSubRegionToNodeMapNew = " << sourceSubRegion.nodeList() );
+     } );
+   } );
+
+  //GEOSX_LOG_RANK ("!!!! INFO !!!! ProgramManger faceToNodeMapNew = " << faceManager.nodeList() );
+  //GEOSX_LOG_RANK ("!!!! INFO !!!! ProgramManger edgeToNodeMapNew = " << edgeManager.nodeList() );
+  //GEOSX_LOG_RANK ("!!!! INFO !!!! ProgramManger nodeManager.referencePosition() = " << nodeManager.referencePosition() );
+
 }
 
 

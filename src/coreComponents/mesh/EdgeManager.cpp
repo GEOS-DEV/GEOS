@@ -54,12 +54,6 @@ void EdgeManager::resize( localIndex const newSize )
   ObjectManagerBase::resize( newSize );
 }
 
-void EdgeManager::resize( localIndex const newSize, localIndex const numNodesPerEdge)
-{
-  m_toFacesRelation.resize( newSize, 2 * faceMapOverallocation() );
-  ObjectManagerBase::resize( newSize );
-  m_toNodesRelation.resize( newSize, numNodesPerEdge );
-}
 void EdgeManager::buildSets( NodeManager const & nodeManager )
 {
   GEOSX_MARK_FUNCTION;
@@ -99,11 +93,12 @@ void EdgeManager::buildEdges( localIndex const numNodes,
   resize( numEdges );
 }
 
-void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager )
+void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager, bool baseLevelMesh )
 {
   GEOSX_MARK_FUNCTION;
 
-  resize( cellBlockManager.numEdges() );
+  if ( baseLevelMesh )
+    resize( cellBlockManager.numEdges() );
 
   m_toNodesRelation.base() = cellBlockManager.getEdgeToNodes();
   m_toFacesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getEdgeToFaces(),

@@ -101,8 +101,6 @@ public:
    */
   virtual void resize( localIndex const newSize ) override;
 
-  void resize( localIndex const newSize, localIndex const numNodesPerEdge);
-
   /**
    * @brief Set the node of the domain boundary object.
    * @param[in] faceIndex The reference of the face manager.
@@ -126,7 +124,7 @@ public:
    * @brief Copies the edges to (nodes|faces) mappings from @p cellBlockManager.
    * @param[in] cellBlockManager Provides the mappings.
    */
-  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager );
+  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager, bool baseLevelMesh );
 
   /**
    * @brief Link the current manager to other managers.

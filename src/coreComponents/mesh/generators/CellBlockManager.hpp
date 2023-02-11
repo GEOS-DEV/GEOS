@@ -58,7 +58,7 @@ public:
    *
    * @note This is meant to be used as a values setter.
    */
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > getNodePositions();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > getNodePositions() override;
 
   ArrayOfArrays< localIndex > getNodeToEdges() const override;
 
@@ -68,7 +68,7 @@ public:
 
   array2d< localIndex > getEdgeToNodes() const override;
 
-  arrayView2d< localIndex > getEdgeToNodes();
+  arrayView2d< localIndex > getEdgeToNodes() override;
 
   ArrayOfArrays< localIndex > getEdgeToFaces() const override;
 

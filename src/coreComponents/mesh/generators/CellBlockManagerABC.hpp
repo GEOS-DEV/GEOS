@@ -131,6 +131,7 @@ public:
    */
   virtual array2d< real64, nodes::REFERENCE_POSITION_PERM > getNodePositions() const = 0;
 
+  virtual arrayView2d< real64, nodes::REFERENCE_POSITION_USD > getNodePositions() = 0;
   /**
    * @brief Returns the node to edges mapping.
    * @return The one to many relationship.
@@ -153,6 +154,8 @@ public:
    * @return A 1 to 2 relationship. The result is meant to have size (numEdges, 2).
    */
   virtual array2d< localIndex > getEdgeToNodes() const = 0;
+
+  virtual arrayView2d< localIndex > getEdgeToNodes() = 0;
 
   /**
    * @brief Returns the edge to faces mapping.

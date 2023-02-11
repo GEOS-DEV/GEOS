@@ -180,7 +180,7 @@ MeshLevel::MeshLevel( string const & name,
   //////////////////////////
 
   // the total number of nodes: to add the number of non-vertex edge nodes
-  m_edgeManager->resize( source.m_edgeManager->size(), numNodesPerEdge);
+  m_edgeManager->resize( source.m_edgeManager->size() );
   m_edgeManager->getDomainBoundaryIndicator() = source.m_edgeManager->getDomainBoundaryIndicator();
 
   arrayView1d< globalIndex const > const edgeLocalToGlobal = m_edgeManager->localToGlobalMap();
@@ -198,7 +198,9 @@ MeshLevel::MeshLevel( string const & name,
 
   // get information from the source (base mesh-level) edge-to-node map
   arrayView2d< localIndex const > const & edgeToNodeMapSource = source.m_edgeManager->nodeList();
-  array2d< localIndex > & edgeToNodeMapNew = m_edgeManager->nodeList();
+  //array2d< localIndex > & edgeToNodeMapNew = m_edgeManager->nodeList();
+  arrayView2d< localIndex > edgeToNodeMapNew = cellBlockManager.getEdgeToNodes();
+  m_edgeManager->nodeList().resize( source.m_edgeManager->size(), numNodesPerEdge );
 
 
   /////////////////////////
@@ -225,7 +227,8 @@ MeshLevel::MeshLevel( string const & name,
   //GEOSX_LOG_RANK ("!!!! INFO !!!! faceLocalToGlobal = "<< faceLocalToGlobal <<"; numInternalFaceNodes="<<numInternalFaceNodes);
 
   ArrayOfArraysView< localIndex const > const & faceToNodeMapSource = source.m_faceManager->nodeList().toViewConst();
-  ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceManager->nodeList();
+  ArrayOfArrays< localIndex > & faceToNodesRelation = m_faceManager->nodeList();
+  ArrayOfArrays< localIndex > & faceToNodeMapNew = cellBlockManager.getFaceToNodes();
 
   // number of elements in each row of the map as capacity
   array1d< localIndex > counts( faceToNodeMapNew.size());
@@ -233,6 +236,7 @@ MeshLevel::MeshLevel( string const & name,
 
   //  reconstructs the faceToNodeMap with the provided capacity in counts
   faceToNodeMapNew.resizeFromCapacities< parallelHostPolicy >( faceToNodeMapNew.size(), counts.data() );
+  faceToNodesRelation.resizeFromCapacities< parallelHostPolicy >( faceToNodesRelation.size(), counts.data() );
 
   // setup initial values of the faceToNodeMap using emplaceBack
   forAll< parallelHostPolicy >( faceToNodeMapNew.size(),
@@ -244,8 +248,10 @@ MeshLevel::MeshLevel( string const & name,
       faceToNodeMapNew.emplaceBack( faceIndex, -1 );
     }
   } );
+  
   //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapSource = "<< faceToNodeMapSource ); 
   //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew ); 
+  //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodesRelation = "<< faceToNodesRelation ); 
 
 
   //////////////////////////
@@ -264,7 +270,8 @@ MeshLevel::MeshLevel( string const & name,
   }
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const refPosSource = source.m_nodeManager->referencePosition();
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const refPosNew = m_nodeManager->referencePosition().toView();
+  //arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const refPosNew = m_nodeManager->referencePosition().toView();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > refPosNew = cellBlockManager.getNodePositions();
 
 
   /////////////////////////
@@ -580,10 +587,11 @@ MeshLevel::MeshLevel( string const & name,
       //GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobal = "<< nodeLocalToGlobal );
       //GEOSX_LOG_RANK ("!!!! INFO !!!! sourceNodeLocalToGlobal = "<< sourceNodeLocalToGlobal);
 
-      GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
-      GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapNew = "<< edgeToNodeMapNew);
-      GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
-      GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesSource = "<< elemsToNodesSource);
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapNew = "<< edgeToNodeMapNew);
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesSource = "<< elemsToNodesSource);
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
 
 
     } );
