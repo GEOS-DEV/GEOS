@@ -12,6 +12,7 @@ defaultDensity                     real64 required Default Material Density
 defaultPoissonRatioAxialTransverse real64 -1       Default Axial-Transverse Poisson's Ratio    
 defaultPoissonRatioTransverse      real64 -1       Default Transverse Poisson's Ratio          
 defaultShearModulusAxialTransverse real64 -1       Default Axial-Transverse Shear Modulus      
+defaultThermalExpansionCoefficient real64 0        Default Thermal Expansion Coefficient       
 defaultYoungModulusAxial           real64 -1       Default Axial Young's Modulus               
 defaultYoungModulusTransverse      real64 -1       Default Transverse Young's Modulus          
 name                               string required A name is required for any non-unique nodes 

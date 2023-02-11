@@ -108,6 +108,8 @@ void MeshManager::importFields( DomainPartition & domain )
     if( !domain.hasMeshBody( generator.getName() ) )
       return;
 
+    GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: importing field data from mesh dataset", generator.getName() ) );
+
     FieldIdentifiers fieldsToBeSync;
     std::map< string, string > fieldNamesMapping = generator.getFieldsMapping();
 
@@ -130,8 +132,11 @@ void MeshManager::importFields( DomainPartition & domain )
           if( !subRegion.hasWrapper( geosxFieldName ) )
           {
             // Skip - the user may have not enabled a particular physics model/solver on this dstRegion.
-            GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Skipping import of {} -> {} on {}/{} (field not found)",
-                                                  meshFieldName, geosxFieldName, region.getName(), subRegion.getName() ) );
+            if( generator.getLogLevel() >= 1 )
+            {
+              GEOSX_LOG_RANK_0( GEOSX_FMT( "Skipping import of {} -> {} on {}/{} (field not found)",
+                                           meshFieldName, geosxFieldName, region.getName(), subRegion.getName() ) );
+            }
 
             continue;
           }
@@ -140,9 +145,12 @@ void MeshManager::importFields( DomainPartition & domain )
           // synchronize
           fieldsToBeSync.addElementFields( {geosxFieldName}, {region.getName()} );
           WrapperBase & wrapper = subRegion.getWrapperBase( geosxFieldName );
-          GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Importing field {} -> {} on {}/{}",
-                                                meshFieldName, geosxFieldName,
-                                                region.getName(), subRegion.getName() ) );
+          if( generator.getLogLevel() >= 1 )
+          {
+            GEOSX_LOG_RANK_0( GEOSX_FMT( "Importing field {} -> {} on {}/{}",
+                                         meshFieldName, geosxFieldName,
+                                         region.getName(), subRegion.getName() ) );
+          }
 
           bool const isMaterialField = materialWrapperNames.count( geosxFieldName ) > 0 && wrapper.numArrayDims() > 1;
           generator.importFieldsOnArray( subRegion.getName(), meshFieldName, isMaterialField, wrapper );

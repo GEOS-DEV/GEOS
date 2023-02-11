@@ -19,6 +19,7 @@
   <Mesh>
     <VTKMesh
       name="mesh"
+      logLevel="5"	
       partitionRefinement="3"
       fieldsToImport="{ PERM, PORO, NTG }"
       fieldNamesInGEOSX="{ rockPerm_permeability, rockPorosity_referencePorosity, netToGross }"
