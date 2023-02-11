@@ -781,14 +781,14 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     elemManager.setMaxGlobalIndex();
   //}
 
-  elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
-  {
-    sourceRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
-    {  
+  //elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
+  //{
+    //sourceRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
+    //{  
       //GEOSX_LOG_RANK ("!!!! INFO !!!! ProgramManger sourceRegion.getName = "<<sourceRegion.getName()<<"; sourceSubRegion.getName()="<< sourceSubRegion.getName() );
       //GEOSX_LOG_RANK ("!!!! INFO !!!! ProgramManger sourceSubRegionToNodeMapNew = " << sourceSubRegion.nodeList() );
-     } );
-   } );
+     //} );
+   //} );
 
   //GEOSX_LOG_RANK ("!!!! INFO !!!! ProgramManger faceToNodeMapNew = " << faceManager.nodeList() );
   //GEOSX_LOG_RANK ("!!!! INFO !!!! ProgramManger edgeToNodeMapNew = " << edgeManager.nodeList() );
