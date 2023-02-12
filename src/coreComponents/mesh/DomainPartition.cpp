@@ -190,14 +190,14 @@ void DomainPartition::setupCommunications( bool use_nonblocking , bool setUpGhos
       CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
                                                                              m_neighbors );
   
-      GEOSX_LOG_RANK( "INFO: use_nonblocking="<<use_nonblocking);
+      //GEOSX_LOG_RANK( "INFO: use_nonblocking="<<use_nonblocking);
     }
     else if (setUpGhostFlag == 1)
     {
 
       meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
       {
-        GEOSX_LOG_RANK( "INFO: meshLevel="<<meshLevel.getName() );
+        //GEOSX_LOG_RANK( "INFO: meshLevel="<<meshLevel.getName() );
 
 	if ( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() ) 
 	{

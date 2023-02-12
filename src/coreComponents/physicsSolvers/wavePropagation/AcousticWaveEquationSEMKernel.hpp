@@ -213,16 +213,25 @@ struct MassMatrixKernel
     {
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+      //GEOSX_LOG_RANK_0 ( "!!! INFO !!! numNodesPerElem = "<< numNodesPerElem);
+      //GEOSX_LOG_RANK_0 ( "!!! INFO !!! X = "<< X);
+
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+      //GEOSX_LOG_RANK_0 ( "!!! INFO !!! numQuadraturePointsPerElem = "<< numQuadraturePointsPerElem);
 
       real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
+      //GEOSX_LOG_RANK_0 ( "!!! INFO !!! velocity["<<k<<"] = "<< velocity[k]<<"; invC2="<<invC2);
+
       real64 xLocal[ numNodesPerElem ][ 3 ];
+
+
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
         for( localIndex i = 0; i < 3; ++i )
         {
           xLocal[a][i] = X( elemsToNodes( k, a ), i );
         }
+          //GEOSX_LOG_RANK_0 ( "!!! INFO !!! xLocal["<<a<<"] = ("<< xLocal[a][0]<<", "<< xLocal[a][1]<<", "<< xLocal[a][2]<<")");
       }
 
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
@@ -276,6 +285,9 @@ struct DampingMatrixKernel
       if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
       {
         localIndex k = facesToElems( f, 0 );
+        //GEOSX_LOG_RANK_0 ( "!!! INFO !!! facesToElems("<<f<<",0) = "<< k);
+        //GEOSX_LOG_RANK_0 ( "!!! INFO !!! facesToElems("<<f<<",1) = "<< facesToElems( f, 1 ));
+
         if( k < 0 )
         {
           k = facesToElems( f, 1 );
@@ -290,7 +302,7 @@ struct DampingMatrixKernel
         {
           for( localIndex i = 0; i < 3; ++i )
           {
-            xLocal[a][i] = X( facesToNodes( k, a ), i );
+            xLocal[a][i] = X( facesToNodes( f, a ), i );
           }
         }
 

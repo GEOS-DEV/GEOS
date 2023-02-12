@@ -190,7 +190,7 @@ MeshLevel::MeshLevel( string const & name,
   }
   m_edgeManager->constructGlobalToLocalMap();
   //GEOSX_LOG_RANK ("!!!! INFO !!!! edgeLocalToGlobal = "<< edgeLocalToGlobal <<"; numInternalEdgeNodes="<<numInternalEdgeNodes);
-  GEOSX_LOG_RANK ("!!!! INFO !!!! test="<<test);
+  GEOSX_LOG_RANK_0 ("!!!! INFO !!!! test="<<test);
 
   //
   // ---- initialize edge-to-node map ----
