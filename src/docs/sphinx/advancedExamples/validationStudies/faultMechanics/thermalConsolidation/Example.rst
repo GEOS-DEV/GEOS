@@ -7,8 +7,8 @@ Thermoporoelastic Consolidation
 
 **Context**
 
-Thermo-poroelastic consolidation is a typical fully coupled problem which involves solid deformation, fluid flow and heat transfer in saturated porous media.
-In this example, we use the GEOSX coupled solvers to solve a one-dimensional thermo-poroelastic consolidation problem with a non-isothermal boundary conditions, and we verify the accuracy of the results using the analytical solution provided in `(Bai, 2005) <http://gclx.xml-journal.net/en/article/id/3369>`__ 
+Thermoporoelastic consolidation is a typical fully coupled problem which involves solid deformation, fluid flow and heat transfer in saturated porous media.
+In this example, we use the GEOSX coupled solvers to solve a one-dimensional thermoporoelastic consolidation problem with a non-isothermal boundary condition, and we verify the accuracy of the results using the analytical solution provided in `(Bai, 2005) <http://gclx.xml-journal.net/en/article/id/3369>`__ 
 
 **InputFile**
 
@@ -16,17 +16,17 @@ This example uses no external input files and everything required is contained w
 
 .. code-block:: console
 
-  inputFiles/poromechanics/ThermoPoroElastic_consolidation_base.xml
+  inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_base.xml
 
 .. code-block:: console
 
-  inputFiles/poromechanics/ThermoPoroElastic_consolidation_benchmark.xml
+  inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_benchmark.xml
 
 ---------------------------------------------------
 Description of the case
 ---------------------------------------------------
 
-We simulate the consolidation of 1D thermoporoelastic column subjected to a surface traction of 1 Newton applied on the top surface, with a surface temperature of 50 degrees Celsius and a pore pressure of 0 Pa.
+We simulate the consolidation of 1D thermoporoelastic column subjected to a surface traction stress of 1 Pa applied on the top surface, with a surface temperature of 50 degrees Celsius and a pore pressure of 0 Pa.
 The initial temperature of the saturated soil is 0 degrees Celsius.
 The soil column is insulated and sealed everywhere, except at the top surface.
 The problem setup is illustrated below.
@@ -55,7 +55,7 @@ As demonstrated in this example, to setup a thermoporomechanical coupling, we ne
 
 - the mechanics solver, a solver of type ``SolidMechanicsLagrangianSSLE`` called here ``solidMechSolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`),
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanics/PoroElastic_Mandel_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/PoroElastic_Mandel_base.xml
   :language: xml
   :start-after: <!-- SPHINX_MECHANICALSOLVER -->
   :end-before: <!-- SPHINX_MECHANICALSOLVER_END -->
@@ -63,7 +63,7 @@ As demonstrated in this example, to setup a thermoporomechanical coupling, we ne
 
 - the single-phase flow solver, a solver of type ``SinglePhaseFVM`` called here ``flowSolver`` (more information on these solvers at :ref:`SinglePhaseFlow`),
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanics/ThermoPoroElastic_consolidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_base.xml
   :language: xml
   :start-after: <!-- SPHINX_SINGLEPHASEFVM -->
   :end-before: <!-- SPHINX_SINGLEPHASEFVM_END -->
@@ -71,7 +71,7 @@ As demonstrated in this example, to setup a thermoporomechanical coupling, we ne
 
 - the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics solvers above, which is named as ``thermoPoroSolver`` (more information at :ref:`PoroelasticSolver`).
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanics/ThermoPoroElastic_consolidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_base.xml
   :language: xml
   :start-after: <!-- SPHINX_POROMECHANICSSOLVER -->
   :end-before: <!-- SPHINX_POROMECHANICSSOLVER_END -->
@@ -100,7 +100,7 @@ We use the constitutive parameters specified in `(Bai, 2005) <http://gclx.xml-jo
 +------------------+-------------------------+------------------+--------------------+
 | :math:`\phi`     | Porosity                | [-]              | 0.20               |
 +------------------+-------------------------+------------------+--------------------+
-| :math:`b`        | Biot coefficient        | [-]              | 1.0                |
+| :math:`b`        | Biot's coefficient      | [-]              | 1.0                |
 +------------------+-------------------------+------------------+--------------------+
 | :math:`\rho C`   | Heat capacity           | [J/(m^3.K)]      | 167.2x10\ :sup:`3` |
 +------------------+-------------------------+------------------+--------------------+
@@ -111,19 +111,19 @@ We use the constitutive parameters specified in `(Bai, 2005) <http://gclx.xml-jo
 | :math:`k`        | Permeability            | [m^2]            | 4.0x10\ :sup:`-9`  |
 +------------------+-------------------------+------------------+--------------------+
 
-The bulk modulus, Young's modulus, and thermal expansion coefficient are specified in the ``ElasticIsotropic`` solid model.
+The bulk modulus, the Young's modulus, and the thermal expansion coefficient are specified in the ``ElasticIsotropic`` solid model.
 Note that for now the solid density is constant and does not depend on temperature.
 Given that the gravity vector has been set to 0 in the XML file, the value of the solid density is not used in this simulation.
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanics/ThermoPoroElastic_consolidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_base.xml
   :language: xml
   :start-after: <!-- SPHINX_SOLID -->
   :end-before: <!-- SPHINX_SOLID_END -->
 
-The porosity and Biot coefficient (computed from the ``grainBulkModulus``) appear in the ``BiotPorosity`` model.
+The porosity and Biot's coefficient (computed from the ``grainBulkModulus``) appear in the ``BiotPorosity`` model.
 In this model, the porosity is updated as a function of the strain increment, the change in pore pressure, and the change in temperature.
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanics/ThermoPoroElastic_consolidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_base.xml
   :language: xml
   :start-after: <!-- SPHINX_POROSITY -->
   :end-before: <!-- SPHINX_POROSITY_END -->
@@ -131,7 +131,7 @@ In this model, the porosity is updated as a function of the strain increment, th
 The heat capacity is provided in the ``SolidInternalEnergy`` model.
 In the computation of the internal energy, the ``referenceTemperature`` is set to the initial temperature.
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanics/ThermoPoroElastic_consolidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_base.xml
   :language: xml
   :start-after: <!-- SPHINX_INTERNAL_ENERGY -->
   :end-before: <!-- SPHINX_INTERNAL_ENERGY_END -->
@@ -139,14 +139,14 @@ In the computation of the internal energy, the ``referenceTemperature`` is set t
 The fluid density and viscosity are given in the ``ThermalCompressibleSinglePhaseFluid``.
 Here, they are assumed to be constant and do not depend on pressure and temperature.
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanics/ThermoPoroElastic_consolidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FLUID -->
   :end-before: <!-- SPHINX_FLUID_END -->
 
 Finally, the permeability and thermal conductivity are specified in the ``ConstantPermeability`` and ``SinglePhaseConstantThermalConductivity``, respectively.
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanics/ThermoPoroElastic_consolidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_base.xml
   :language: xml
   :start-after: <!-- SPHINX_PERMEABILITY_CONDUCTIVITY -->
   :end-before: <!-- SPHINX_PERMEABILITY_CONDUCTIVITY_END -->
@@ -163,7 +163,7 @@ To complete the specification of the problem, we specify two types of fields:
 This is done in the **FieldSpecifications** part of the XML file.    
 The attribute ``initialCondition`` is set to 1 for the blocks specifying the initial pressure, temperature, and effective stress.
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanics/ThermoPoroElastic_consolidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_base.xml
   :language: xml
   :start-after: <!-- SPHINX_IC -->
   :end-before: <!-- SPHINX_IC_END -->
@@ -171,14 +171,14 @@ The attribute ``initialCondition`` is set to 1 for the blocks specifying the ini
 For the zero-displacement boundary conditions, we use the pre-defined set names `xneg` and `xpos`, `yneg`, `zneg` and `zpos` to select the boundary nodes.
 Note that here, we have considered a slab in the y-direction, which is why a displacement boundary condition is applied on `zpos` and not applied on `ypos`.
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanics/ThermoPoroElastic_consolidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_base.xml
   :language: xml
   :start-after: <!-- SPHINX_ZERO_DISPLACEMENT_BC -->
   :end-before: <!-- SPHINX_ZERO_DISPLACEMENT_BC_END -->
 
 On the top surface, we impose the traction boundary condition and the non-isothermal boundary condition specified in `(Bai, 2005) <http://gclx.xml-journal.net/en/article/id/3369>`__. We also fix the pore pressure to 0 Pa. 
 	       
-.. literalinclude:: ../../../../../../../inputFiles/poromechanics/ThermoPoroElastic_consolidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TOP_SURFACE_BC -->
   :end-before: <!-- SPHINX_TOP_SURFACE_BC_END -->
