@@ -991,7 +991,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
   {
     fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                              mesh,
-                                             FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
+                                             SourceFluxBoundaryCondition::catalogName(),
                                              [&]( FieldSpecificationBase const & fs,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const & targetSet,

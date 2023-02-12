@@ -25,6 +25,7 @@
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -379,7 +380,7 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
   {
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
-                                             FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
+                                             SourceFluxBoundaryCondition::catalogName(),
                                              [&]( FieldSpecificationBase const & fs,
                                                   string const &,
                                                   SortedArrayView< localIndex const > const & targetSet,

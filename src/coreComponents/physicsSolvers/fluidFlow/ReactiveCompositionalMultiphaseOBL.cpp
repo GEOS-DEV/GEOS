@@ -813,7 +813,7 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
   {
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
-                                             FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
+                                             SourceFluxBoundaryCondition::catalogName(),
                                              [&]( FieldSpecificationBase const & fs,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const & targetSet,

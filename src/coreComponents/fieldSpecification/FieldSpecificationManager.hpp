@@ -179,6 +179,12 @@ public:
    */
   void applyInitialConditions( MeshLevel & mesh ) const;
 
+  /**
+   * @brief function to validate the application of boundary conditions
+   * @param mesh the MeshLevel object
+   */
+  void validateBoundaryConditions( MeshLevel & mesh ) const;
+
 
   /**
    * @brief This function is the main driver for the field applications

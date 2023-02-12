@@ -64,6 +64,142 @@ void FieldSpecificationManager::expandObjectCatalogs()
   }
 }
 
+void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
+{
+  // loop over all the FieldSpecification of the XML file
+  this->forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs )
+  {
+    localIndex isFieldNameFound = 0;
+    // map from set name to a flag (1 if targetSet not empty, 0 otherwise)
+    map< string, localIndex > isTargetSetNonEmpty;
+    // map from set name to a flag (1 if targetSet has been created, 0 otherwise)
+    map< string, localIndex > isTargetSetCreated;
+
+    // Step 1: collect all the set names in a map (this is made necessary by the "apply" loop pattern
+
+    array1d< string > const & setNames = fs.getSetNames();
+    for( localIndex i = 0; i < setNames.size(); ++i )
+    {
+      isTargetSetNonEmpty[setNames[i]] = 0;
+      isTargetSetCreated[setNames[i]] = 0;
+    }
+
+    // Step 2: apply the boundary condition
+
+    fs.apply< dataRepository::Group >( mesh,
+                                       [&]( FieldSpecificationBase const &,
+                                            string const & setName,
+                                            SortedArrayView< localIndex const > const & targetSet,
+                                            Group & targetGroup,
+                                            string const fieldName )
+    {
+      dataRepository::InputFlags const flag = fs.getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).getInputFlag();
+
+      // 2.a) If we enter this loop, we know that the set has been created
+      //      Fracture/fault sets are created later and the "apply" call silently ignores them
+      isTargetSetCreated.at( setName ) = 1;
+
+      // 2.b) If the fieldName is registered on this target, we record it
+      //      Unfortunately, we need two exceptions:
+      //       - FieldSpecification that do not target a field, like Aquifer, Traction, Equilibrium, etc. For these, the check is not
+      // necessary (the user cannot mess up)
+      //       - Face boundary conditions that target cell-based quantities, like the face BC of the flow solvers
+      if( targetGroup.hasWrapper( fieldName ) ||
+          flag == InputFlags::FALSE || // no need to check input if the input flag is false (Aquifer, Traction, Equilibrium do not target a
+                                       // field)
+          targetGroup.getName() == MeshLevel::groupStructKeys::faceManagerString() ) // the field names of the face BCs are not always
+                                                                                     // registered on
+                                                                                     // the faceManager...
+      {
+        isFieldNameFound = 1;
+      }
+
+      // 2.c) If the target set is not empty, we record it
+      //      Fracture/fault sets are sometimes at initialization and the "apply" call silently ignores them
+      if( targetSet.size() > 0 )
+      {
+        isTargetSetNonEmpty.at( setName ) = 1;
+      }
+    } );
+
+    // Step 3: MPI synchronization
+
+    isFieldNameFound = MpiWrapper::max( isFieldNameFound );
+
+    bool areAllSetsEmpty = true;
+    for( std::pair< string const, localIndex > & mapEntry : isTargetSetNonEmpty )
+    {
+      mapEntry.second = MpiWrapper::max( mapEntry.second );
+      if( mapEntry.second == 1 )
+      {
+        areAllSetsEmpty = false;
+      }
+    }
+    bool areAllSetsMissing = true;
+    for( std::pair< string const, localIndex > & mapEntry : isTargetSetCreated )
+    {
+      mapEntry.second = MpiWrapper::max( mapEntry.second );
+      if( mapEntry.second == 1 )
+      {
+        areAllSetsMissing = false;
+      }
+    }
+
+    // Step 4: issue an error or a warning if the field was not found
+
+    char const fieldNameNotFoundMessage[] =
+      "{}: there is no {} named `{}` under this {}."
+      "\n`{}` cannot be used to set up a FieldSpecification, check the XML input";
+    char const targetSetNotCreatedMessage[] =
+      "\nWarning!"
+      "\n{}: there is no set named `{}` under this {} at the end of initialization."
+      "\nIf the simulation does not involve the SurfaceGenerator, this is should be fixed otherwise the FieldSpecification will be ignored\n";
+    char const emptyTargetSetLogMessage[] =
+      "\nWarning!"
+      "\n{}: this FieldSpecification targets (an) empty set(s)"
+      "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`."
+      "\n  -If `{}` is in ElementRegions, the set(s) must contain at least an element"
+      "\n  -If `{}` is faceManager, the set(s) must contain at least a face"
+      "\n  -If `{}` is nodeManager, the set(s) must contain at least a node"
+      "\nIf the set of elements/faces is created using a Box in <Geometry>, make sure the nodes of the elements/faces are fully inside the Box\n";
+
+    // if all sets are missing, we issue a warning.
+    // ideally we would just stop the simulation, but the SurfaceGenerator relies on this behavior
+    if( areAllSetsMissing )
+    {
+      for( auto const & mapEntry : isTargetSetCreated )
+      {
+        GEOSX_LOG_RANK_0_IF( mapEntry.second == 0,
+                             GEOSX_FMT( targetSetNotCreatedMessage,
+                                        fs.getName(), mapEntry.first, fs.getObjectPath() ) );
+      }
+      // there is no point in continuing with this FieldSpecification
+      return;
+    }
+
+    // if a target set is empty, we issue a warning
+    // ideally we would just stop the simulation, but the SurfaceGenerator relies on this behavior
+    for( auto const & mapEntry : isTargetSetNonEmpty )
+    {
+      GEOSX_LOG_RANK_0_IF( mapEntry.second == 0,
+                           GEOSX_FMT( emptyTargetSetLogMessage,
+                                      fs.getName(), mapEntry.first,
+                                      fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath() ) );
+    }
+
+    // if the field name was not found and the sets are empty, we issue a warning
+    GEOSX_LOG_RANK_0_IF( isFieldNameFound == 0 && areAllSetsEmpty,
+                         GEOSX_FMT( fieldNameNotFoundMessage,
+                                    fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(),
+                                    fs.getFieldName(), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getFieldName() ) );
+    // if the field name was not found and some sets are not empty, the user misspelled the field name
+    GEOSX_THROW_IF( isFieldNameFound == 0 && !areAllSetsEmpty,
+                    GEOSX_FMT( fieldNameNotFoundMessage,
+                               fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(),
+                               fs.getFieldName(), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getFieldName() ),
+                    InputError );
+  } );
+}
 
 void FieldSpecificationManager::applyInitialConditions( MeshLevel & mesh ) const
 {
