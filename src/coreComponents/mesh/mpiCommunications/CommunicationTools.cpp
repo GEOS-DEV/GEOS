@@ -605,8 +605,8 @@ void removeUnusedNeighbors( NodeManager & nodeManager,
  * @param phases list of phases.
  * @param unorderedComms if true complete the communications of each phase in the order they are received.
  */
-void waitOrderedOrWaitAll( int const n, 
-                           std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< void ( int ) > > > const & phases, 
+void waitOrderedOrWaitAll( int const n,
+                           std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< void ( int ) > > > const & phases,
                            bool const unorderedComms )
 {
   if( unorderedComms )
@@ -656,10 +656,10 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
     return MPI_REQUEST_NULL;
   };
 
-  waitOrderedOrWaitAll( neighbors.size(), 
-                        { { static_cast<MPI_Request *>(nullptr), static_cast<MPI_Status *>(nullptr), sendGhosts}, 
-                          { commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv}, 
-                          { commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), unpackGhosts} }, 
+  waitOrderedOrWaitAll( neighbors.size(),
+                        { { static_cast< MPI_Request * >(nullptr), static_cast< MPI_Status * >(nullptr), sendGhosts},
+                          { commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv},
+                          { commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), unpackGhosts} },
                         unorderedComms );
 
   // There are cases where the multiple waitOrderedOrWaitAll methods here will clash with
@@ -694,10 +694,10 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
     return MPI_REQUEST_NULL;
   };
 
-  waitOrderedOrWaitAll( neighbors.size(), 
-                        { { static_cast<MPI_Request *>(nullptr), static_cast<MPI_Status *>(nullptr), sendSyncLists }, 
-                          { commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv }, 
-                          { commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), rebuildSyncLists} }, 
+  waitOrderedOrWaitAll( neighbors.size(),
+                        { { static_cast< MPI_Request * >(nullptr), static_cast< MPI_Status * >(nullptr), sendSyncLists },
+                          { commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv },
+                          { commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), rebuildSyncLists} },
                         unorderedComms );
 
   // See above comments for the reason behind these waitAll commands
@@ -709,10 +709,10 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
   fixReceiveLists( edgeManager, neighbors );
   fixReceiveLists( faceManager, neighbors );
 
-  waitOrderedOrWaitAll( neighbors.size(), 
-                        { { static_cast<MPI_Request *>(nullptr), static_cast<MPI_Status *>(nullptr), sendSyncLists }, 
-                          { commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv }, 
-                          { commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), rebuildSyncLists} }, 
+  waitOrderedOrWaitAll( neighbors.size(),
+                        { { static_cast< MPI_Request * >(nullptr), static_cast< MPI_Status * >(nullptr), sendSyncLists },
+                          { commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv },
+                          { commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), rebuildSyncLists} },
                         unorderedComms );
 
   // See above comments for the reason behind these waitAll commands

@@ -326,9 +326,9 @@ int MpiWrapper::activeWaitAny( const int count, MPI_Request array_of_requests[],
   return MPI_SUCCESS;
 }
 
-int MpiWrapper::activeWaitSome( const int count, 
-                                MPI_Request array_of_requests[], 
-                                MPI_Status array_of_statuses[], 
+int MpiWrapper::activeWaitSome( const int count,
+                                MPI_Request array_of_requests[],
+                                MPI_Status array_of_statuses[],
                                 std::function< void ( int ) > func )
 {
   int cmp = 0;
@@ -362,21 +362,21 @@ int MpiWrapper::activeWaitSomeCompletePhase( const int participants,
   int err = 0;
   for( int phase = 0; phase < num_phases; ++phase )
   {
-    MPI_Request * const requests = std::get<0>(phases[phase]);
-    MPI_Status * const statuses = std::get<1>(phases[phase]);
-    std::function< void ( int ) > func = std::get<2>(phases[phase]);
+    MPI_Request * const requests = std::get< 0 >( phases[phase] );
+    MPI_Status * const statuses = std::get< 1 >( phases[phase] );
+    std::function< void ( int ) > func = std::get< 2 >( phases[phase] );
     if( requests!=nullptr )
     {
-      err = activeWaitSome( participants, 
+      err = activeWaitSome( participants,
                             requests,
-                            statuses, 
+                            statuses,
                             func );
     }
     else
     {
       for( int idx = 0; idx < participants; ++idx )
       {
-        func(idx);
+        func( idx );
       }
     }
     if( err != MPI_SUCCESS )
@@ -391,9 +391,9 @@ int MpiWrapper::activeWaitOrderedCompletePhase( const int participants,
   const int num_phases = phases.size();
   for( int phase = 0; phase < num_phases; ++phase )
   {
-    MPI_Request * const requests = std::get<0>(phases[phase]);
-    MPI_Status * const statuses = std::get<1>(phases[phase]);
-    std::function< void ( int ) > func = std::get<2>(phases[phase]);
+    MPI_Request * const requests = std::get< 0 >( phases[phase] );
+    MPI_Status * const statuses = std::get< 1 >( phases[phase] );
+    std::function< void ( int ) > func = std::get< 2 >( phases[phase] );
 
     for( int idx = 0; idx < participants; ++idx )
     {

@@ -226,9 +226,9 @@ public:
    *              which has completed.
    * @return MPI_SUCCESS or an MPI_ERROR returned by internal calls to MPI_WaitAny.
    */
-  static int activeWaitAny( const int count, 
-                            MPI_Request array_of_requests[], 
-                            MPI_Status array_of_statuses[], 
+  static int activeWaitAny( const int count,
+                            MPI_Request array_of_requests[],
+                            MPI_Status array_of_statuses[],
                             std::function< void ( int ) > func );
 
   /**
@@ -240,9 +240,9 @@ public:
    *              which has completed.
    * @return MPI_SUCCESS or an MPI_ERROR returned by internal calls to MPI_WaitSome.
    */
-  static int activeWaitSome( const int count, 
-                             MPI_Request array_of_requests[], 
-                             MPI_Status array_of_statuses[], 
+  static int activeWaitSome( const int count,
+                             MPI_Request array_of_requests[],
+                             MPI_Status array_of_statuses[],
                              std::function< void ( int ) > func );
 
   /**
@@ -854,8 +854,8 @@ int MpiWrapper::iRecv( T * const buf,
                        MPI_Request * MPI_PARAM( request ) )
 {
 #ifdef GEOSX_USE_MPI
-  GEOSX_ERROR_IF( (*request)!=MPI_REQUEST_NULL && (*request)!=0, 
-                  "Attempting to use an MPI_Request that is still in use.");
+  GEOSX_ERROR_IF( (*request)!=MPI_REQUEST_NULL && (*request)!=0,
+                  "Attempting to use an MPI_Request that is still in use." );
   return MPI_Irecv( buf, count, internal::getMpiType< T >(), source, tag, comm, request );
 #else
   std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
@@ -913,8 +913,8 @@ int MpiWrapper::iSend( arrayView1d< T const > const & buf,
                        MPI_Request * MPI_PARAM( request ) )
 {
 #ifdef GEOSX_USE_MPI
-  GEOSX_ERROR_IF( (*request)!=MPI_REQUEST_NULL && (*request)!=0, 
-                  "Attempting to use an MPI_Request that is still in use.");
+  GEOSX_ERROR_IF( (*request)!=MPI_REQUEST_NULL && (*request)!=0,
+                  "Attempting to use an MPI_Request that is still in use." );
   return MPI_Isend( reinterpret_cast< char const * >( buf.data() ),
                     buf.size() * sizeof( T ),
                     MPI_CHAR,
@@ -937,8 +937,8 @@ int MpiWrapper::iSend( T const * const buf,
                        MPI_Request * MPI_PARAM( request ) )
 {
 #ifdef GEOSX_USE_MPI
-  GEOSX_ERROR_IF( (*request)!=MPI_REQUEST_NULL && (*request)!=0, 
-                  "Attempting to use an MPI_Request that is still in use.");
+  GEOSX_ERROR_IF( (*request)!=MPI_REQUEST_NULL && (*request)!=0,
+                  "Attempting to use an MPI_Request that is still in use." );
   return MPI_Isend( buf, count, internal::getMpiType< T >(), dest, tag, comm, request );
 #else
   std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
