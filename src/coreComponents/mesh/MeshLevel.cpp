@@ -428,7 +428,7 @@ MeshLevel::MeshLevel( string const & name,
 
       // then loop through all the faces and assign the globalID according to the globalID of the Face 
       // and insert the new local to global ID ( for the internal nodes of faces ) into the nodeLocalToGlobal
-      globalIndex const firstGlobalNodeIDforFaces = firstGlobalNodeIDforEdges + 2 * ( source.m_edgeManager->maxGlobalIndex() + 1 );
+      globalIndex const firstGlobalNodeIDforFaces = firstGlobalNodeIDforEdges + numInternalEdgeNodes * ( source.m_edgeManager->maxGlobalIndex() + 1 );
       localIndex const numOfNodesPerFaceForBase = 4;
       localIndex const numOfEdgesPerFace = 4;
 
@@ -508,11 +508,11 @@ MeshLevel::MeshLevel( string const & name,
 
       // then loop through all the elements and assign the globalID according to the globalID of the Element 
       // and insert the new local to global ID ( for the internal nodes of elements ) into the nodeLocalToGlobal
-      globalIndex const firstGlobalNodeIDforElems = firstGlobalNodeIDforFaces + 4 * ( source.m_faceManager->maxGlobalIndex() + 1 );
+      globalIndex const firstGlobalNodeIDforElems = firstGlobalNodeIDforFaces + numInternalFaceNodes * ( source.m_faceManager->maxGlobalIndex() + 1 );
       localIndex const numOfNodesPerElementForBase = 8;
       localIndex const numOfEdgesPerElement = 12;
       localIndex const numOfFacesPerElement = 6;
-      localIndex const numInternalNodesPerElement = ( order - 1 ) * ( order - 1 );
+      localIndex const numInternalNodesPerElement = ( order - 1 ) * ( order - 1 ) * ( order - 1 );
 
 
       for( localIndex iter_elem = 0; iter_elem < elemsToNodesSource.size( 0 ); ++iter_elem )
