@@ -745,7 +745,7 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
 
         typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
-        forAll< parallelDevice >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
         {
 
           real64 constexpr minimumHydraulicAperture = 1.e-4;    //hardcoded for now
