@@ -30,6 +30,19 @@ MPI_iCommData::MPI_iCommData( int const inputCommID ):
   m_mpiRecvBufferSizeStatus()
 {}
 
+
+MPI_iCommData::~MPI_iCommData()
+{
+  for( int neighbor=0; neighbor<m_size; ++neighbor )
+  {
+    GEOSX_ERROR_IF( m_mpiSendBufferRequest[neighbor] != MPI_REQUEST_NULL, "" );
+    GEOSX_ERROR_IF( m_mpiRecvBufferRequest[neighbor] != MPI_REQUEST_NULL, "" );
+    GEOSX_ERROR_IF( m_mpiSendBufferSizeRequest[neighbor] != MPI_REQUEST_NULL, "" );
+    GEOSX_ERROR_IF( m_mpiRecvBufferSizeRequest[neighbor] != MPI_REQUEST_NULL, "" );
+  }
+}
+
+
 void MPI_iCommData::resize( localIndex numMessages )
 {
   m_mpiSendBufferRequest.resize( numMessages );
