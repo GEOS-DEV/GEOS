@@ -61,7 +61,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
     MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
-    meshGen.generateMesh(meshBody); meshBody.createMeshLevel( 0 );
+   meshBody.createMeshLevel( 0 );
     CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
 
 
