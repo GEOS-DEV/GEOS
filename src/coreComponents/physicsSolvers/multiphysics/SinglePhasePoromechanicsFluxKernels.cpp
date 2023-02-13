@@ -505,7 +505,7 @@ void FaceElementFluxKernel::
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
-  forAll< serialPolicy >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
     localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
     localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
