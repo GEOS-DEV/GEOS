@@ -512,7 +512,7 @@ MeshLevel::MeshLevel( string const & name,
       localIndex const numOfNodesPerElementForBase = 8;
       localIndex const numOfEdgesPerElement = 12;
       localIndex const numOfFacesPerElement = 6;
-      localIndex const numInternalNodesPerElement = 8;
+      localIndex const numInternalNodesPerElement = ( order - 1 ) * ( order - 1 );
 
 
       for( localIndex iter_elem = 0; iter_elem < elemsToNodesSource.size( 0 ); ++iter_elem )
