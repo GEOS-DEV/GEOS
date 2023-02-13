@@ -108,13 +108,13 @@ computeUniqueValueOffsets( ArrayOfArraysView< T const > const & sortedLists )
 
   // Perform a prefix-sum to get the unique edge offset.
   // (RAJA's Inclusive scan produces garbage values with CUDA 11.2.2)
-  array1d< localIndex > myUniques( numNodes + 1 );
-  myUniques[0] = uniqueValueOffsets[0];
+  array1d< localIndex > offsets( numNodes + 1 );
+  offsets[0] = uniqueValueOffsets[0];
   for( int i = 1; i < uniqueValueOffsets.size(); i++ )
   {
-    myUniques[i] = uniqueValueOffsets[i] + myUniques[i - 1];
+    offsets[i] = uniqueValueOffsets[i] + offsets[i - 1];
   }
-  return myUniques;
+  return offsets;
 }
 
 }
