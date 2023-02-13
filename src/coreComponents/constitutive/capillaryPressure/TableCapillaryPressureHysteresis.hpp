@@ -269,25 +269,6 @@ namespace geosx {
                 ///Land Coeff
                 static constexpr char const *landParameterString() { return "landParameter"; }
 
-///pivot points
-                static constexpr char const *
-                wettingPhaseMinVolumeFractionString() { return "wettingPhaseMinVolumeFraction"; }
-
-                static constexpr char const *
-                drainageWettingPhaseMaxVolumeFractionString() { return "drainageWettingPhaseMaxVolumeFraction"; }
-
-                static constexpr char const *
-                imbibitionWettingPhaseMaxVolumeFractionString() { return "imbibitionWettingPhaseMaxVolumeFraction"; }
-
-                static constexpr char const *
-                nonWettingPhaseMaxVolumeFractionString() { return "nonWettingPhaseMaxVolumeFraction"; }
-
-                static constexpr char const *
-                drainageNonWettingPhaseMinVolumeFractionString() { return "drainageNonWettingPhaseMinVolumeFraction"; }
-
-                static constexpr char const *
-                imbibitionNonWettingPhaseMinVolumeFractionString() { return "imbibitionNonWettingPhaseMinVolumeFraction"; }
-
                 ///flag
                 static constexpr char const *phaseHasHysteresisString() { return "phaseHasHysteresis"; }
 

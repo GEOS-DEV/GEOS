@@ -102,6 +102,27 @@ public:
       drainageExtremaSCALValue = drainE.second;
     }
 
+    //tODO (jacques) check if relevant to invert relation with same SCAL value // might be misleading for kr
+    HysteresisCurve toWetting() const
+    {
+        if(!isWetting())
+            return HysteresisCurve({1.-oppositeBoundPhaseVolFraction,oppositeBoundSCALValue},
+                                   {1.- imbibitionExtremaPhaseVolFraction,imbibitionExtremaSCALValue},
+                                   {1.-drainageExtremaPhaseVolFraction,drainageExtremaSCALValue});
+        else
+            return *this;
+    }
+
+      HysteresisCurve toNonWetting() const
+      {
+          if(isWetting())
+              return HysteresisCurve({1.-oppositeBoundPhaseVolFraction,oppositeBoundSCALValue},
+                                     {1.-imbibitionExtremaPhaseVolFraction,imbibitionExtremaSCALValue},
+                                     {1.-drainageExtremaPhaseVolFraction,drainageExtremaSCALValue});
+          else
+              return *this;
+      }
+
     bool isWetting() const
     {
       return ((drainageExtremaPhaseVolFraction > oppositeBoundPhaseVolFraction) ? PhaseWettability::WETTING : PhaseWettability::NONWETTING) == PhaseWettability::WETTING;

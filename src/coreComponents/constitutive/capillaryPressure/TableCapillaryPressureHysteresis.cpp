@@ -768,6 +768,7 @@ namespace geosx {
                 else if (mode == ModeIndexType::IMBIBITION)
                     mode = ModeIndexType::IMBIBITION_TO_DRAINAGE;
 
+
                 computeImbibitionWettingCapillaryPressure(m_wettingNonWettingCapillaryPressureKernelWrappers,
                                                           m_wettingCurve,
                                                           m_landParam[ipWetting],
@@ -795,7 +796,18 @@ namespace geosx {
                                                                                m_jerauldParam_a,
                                                                                m_jerauldParam_b,
                                                                                Scrt);
-                    phaseTrappedVolFrac[ipWetting] = LvArray::math::min(Scrt, phaseVolFraction[ipWetting]);
+                phaseTrappedVolFrac[ipWetting] = LvArray::math::min(Scrt, phaseVolFraction[ipWetting]);
+
+
+                //keep the same Land coeff as two phase only
+                KilloughHysteresis::computeTrappedCriticalPhaseVolFraction(m_wettingCurve.toNonWetting(), Shy,
+                                                                           m_landParam[ipWetting],
+                                                                           m_jerauldParam_a,
+                                                                           m_jerauldParam_b,
+                                                                           Scrt);
+                phaseTrappedVolFrac[ipWetting] = LvArray::math::min(Scrt, phaseVolFraction[ipWetting]);
+
+
 
 
             }
@@ -806,6 +818,7 @@ namespace geosx {
                                        ? phaseMaxHistoricalVolFraction[ipWetting]
                                        : Smax;
                     real64 Scrt = 0.0;
+                    //TODO (jacques) check if still accurate
                     KilloughHysteresis::computeTrappedCriticalPhaseVolFraction(m_wettingCurve,
                                                                                Shy,
                                                                                m_landParam[ipWetting],
@@ -814,6 +827,14 @@ namespace geosx {
                                                                                Scrt);
 
                     phaseTrappedVolFrac[ipWetting] = LvArray::math::min(Scrt, phaseVolFraction[ipWetting]);
+
+                //keep the same Land coeff as two phase only
+                    KilloughHysteresis::computeTrappedCriticalPhaseVolFraction(m_wettingCurve.toNonWetting(), Shy,
+                                                                           m_landParam[ipWetting],
+                                                                           m_jerauldParam_a,
+                                                                           m_jerauldParam_b,
+                                                                           Scrt);
+                phaseTrappedVolFrac[ipWetting] = LvArray::math::min(Scrt, phaseVolFraction[ipWetting]);
 
             }
 
@@ -911,6 +932,13 @@ namespace geosx {
                                                                                m_jerauldParam_a, m_jerauldParam_b,
                                                                                Scrt);
                     phaseTrappedVolFrac[ipNonWetting] = LvArray::math::min(Scrt, phaseVolFraction[ipNonWetting]);
+
+                    //keep the same Land coeff as two phase only
+                    KilloughHysteresis::computeTrappedCriticalPhaseVolFraction(m_nonWettingCurve.toWetting(), Shy,
+                                                                               m_landParam[ipNonWetting],
+                                                                               m_jerauldParam_a, m_jerauldParam_b,
+                                                                               Scrt);
+                    phaseTrappedVolFrac[ipNonWetting] = LvArray::math::min(Scrt, phaseVolFraction[ipNonWetting]);
                 }
             } else if (mode == ModeIndexType::IMBIBITION || mode == ModeIndexType::IMBIBITION_TO_DRAINAGE) {
 
@@ -921,6 +949,13 @@ namespace geosx {
                                        : Smin;
                     real64 Scrt = 0.0;
                     KilloughHysteresis::computeTrappedCriticalPhaseVolFraction(m_nonWettingCurve, Shy,
+                                                                               m_landParam[ipNonWetting],
+                                                                               m_jerauldParam_a, m_jerauldParam_b,
+                                                                               Scrt);
+                    phaseTrappedVolFrac[ipNonWetting] = LvArray::math::min(Scrt, phaseVolFraction[ipNonWetting]);
+
+                    //keep the same Land coeff as two phase only
+                    KilloughHysteresis::computeTrappedCriticalPhaseVolFraction(m_nonWettingCurve.toWetting(), Shy,
                                                                                m_landParam[ipNonWetting],
                                                                                m_jerauldParam_a, m_jerauldParam_b,
                                                                                Scrt);
