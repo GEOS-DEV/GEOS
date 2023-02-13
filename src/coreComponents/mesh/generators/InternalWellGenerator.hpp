@@ -102,6 +102,16 @@ public:
    * @param[in] domain the domain object
    */
   virtual void generateMesh( DomainPartition & domain ) override;
+
+
+  void importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const override
+  {
+    GEOSX_UNUSED_VAR( cellBlockName );
+    GEOSX_UNUSED_VAR( meshFieldName );
+    GEOSX_UNUSED_VAR( isMaterialField );
+    GEOSX_UNUSED_VAR( wrapper );
+  }
+
   ///@}
 
   /**
