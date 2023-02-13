@@ -84,7 +84,7 @@ void SinglePhasePoromechanicsConformingFractures::setupSystem( DomainPartition &
   dofManager.setDomain( domain );
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();
-  
+
   if( getLogLevel() > 2 )
   {
     dofManager.printFieldInfo();
@@ -183,7 +183,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
                                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                                   arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_UNUSED_VAR(time_n, dt);
+  GEOSX_UNUSED_VAR( time_n, dt );
 
   /// 3. assemble Force Residual w.r.t. pressure and Fluix mass residual w.r.t. displacement
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -425,24 +425,28 @@ void SinglePhasePoromechanicsConformingFractures::
             // Set row DOF index
             globalIndex const rowIndex = presDofNumber[sei[iconn][1-kf]];
 
-            // Get fracture, face and region/subregion/element indices (for elements on both sides)
-            localIndex fractureIndex = sei[iconn][kf];
-
-            // Get the number of nodes
-            localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[fractureIndex][0] );
-
-            // Loop over the two sides of each fracture element
-            for( localIndex kf1 = 0; kf1 < 2; ++kf1 )
+            if( rowIndex > 0 && rowIndex < pattern.numRows() )
             {
-              localIndex faceIndex = faceMap[fractureIndex][kf1];
 
-              // Save the list of DOF associated with nodes
-              for( localIndex a=0; a<numNodesPerFace; ++a )
+              // Get fracture, face and region/subregion/element indices (for elements on both sides)
+              localIndex fractureIndex = sei[iconn][kf];
+
+              // Get the number of nodes
+              localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[fractureIndex][0] );
+
+              // Loop over the two sides of each fracture element
+              for( localIndex kf1 = 0; kf1 < 2; ++kf1 )
               {
-                for( localIndex i = 0; i < 3; ++i )
+                localIndex faceIndex = faceMap[fractureIndex][kf1];
+
+                // Save the list of DOF associated with nodes
+                for( localIndex a=0; a<numNodesPerFace; ++a )
                 {
-                  globalIndex const colIndex = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
-                  pattern.insertNonZero( rowIndex, colIndex );
+                  for( localIndex i = 0; i < 3; ++i )
+                  {
+                    globalIndex const colIndex = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
+                    pattern.insertNonZero( rowIndex, colIndex );
+                  }
                 }
               }
             }
@@ -587,9 +591,9 @@ void SinglePhasePoromechanicsConformingFractures::
     arrayView2d< real64 const > const & density = fluid.density();
 
     arrayView1d< globalIndex const > const & presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
-    
+
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
-    arrayView1d< real64 const > const &             area = subRegion.getElementArea().toViewConst();
+    arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
 
     arrayView1d< integer const > const & fractureState = subRegion.getField< fields::contact::fractureState >();
 
@@ -615,7 +619,7 @@ void SinglePhasePoromechanicsConformingFractures::
       {
         for( localIndex kf=0; kf<2; ++kf )
         {
-          
+
 
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
@@ -654,7 +658,7 @@ void SinglePhasePoromechanicsConformingFractures::
       bool skipAssembly = true;
       localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( kfe );
       arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( kfe );
-      arraySlice1d< real64 const > const      & values = dFluxResidual_dAperture.getEntries( kfe );
+      arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( kfe );
 
       skipAssembly &= !isFractureOpen;
 
@@ -662,8 +666,8 @@ void SinglePhasePoromechanicsConformingFractures::
       {
         real64 const dR_dAper = values[kfe1];
         localIndex const kfe2 = columns[kfe1];
-        
-        bool const isOpen = ( fractureState[kfe2] == fields::contact::FractureState::Open ); 
+
+        bool const isOpen = ( fractureState[kfe2] == fields::contact::FractureState::Open );
         skipAssembly &= !isOpen;
 
         for( localIndex kf=0; kf<2; ++kf )
@@ -738,27 +742,26 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
 
       constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
       {
-        
+
         typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
-        real64 const minimumHydraulicAperture = 1.e-4;  //hardcoded for now 
-
-        forAll< serialPolicy >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
+        forAll< parallelDevice >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
         {
-          {
-            aperture[kfe] = dispJump[kfe][0];
 
-            hydraulicAperture[kfe] = minimumHydraulicAperture + aperture[kfe];
+          real64 constexpr minimumHydraulicAperture = 1.e-4;    //hardcoded for now
 
-            deltaVolume[kfe] = hydraulicAperture[kfe] * area[kfe] - volume[kfe];
+          aperture[kfe] = dispJump[kfe][0];
 
-            real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[kfe] );
-            real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fractureTraction[kfe] );
+          hydraulicAperture[kfe] = minimumHydraulicAperture + aperture[kfe];
 
-            porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( kfe, 0, pressure[kfe],
-                                                                                  oldHydraulicAperture[kfe], hydraulicAperture[kfe],
-                                                                                  jump, traction );
-          }
+          deltaVolume[kfe] = hydraulicAperture[kfe] * area[kfe] - volume[kfe];
+
+          real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[kfe] );
+          real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fractureTraction[kfe] );
+
+          porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( kfe, 0, pressure[kfe],
+                                                                                oldHydraulicAperture[kfe], hydraulicAperture[kfe],
+                                                                                jump, traction );
         } );
       } );
     } );
