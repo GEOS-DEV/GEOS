@@ -4,6 +4,7 @@ set( SinglePhasePoromechanicsPolicy "geosx::parallelDevicePolicy<32>" )
 set( SinglePhasePoromechanicsEFEMPolicy "geosx::parallelDevicePolicy<32>" )
 set( MultiphasePoromechanicsPolicy "geosx::parallelDevicePolicy<32>" )
 set( ThermalMultiphasePoromechanicsPolicy "geosx::parallelDevicePolicy<32>" )
+set( ThermalSinglePhasePoromechanicsPolicy "geosx::parallelDevicePolicy<32>" )
 
 configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
                 ${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/policies.hpp )

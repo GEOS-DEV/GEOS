@@ -61,7 +61,7 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
   registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating whether the problem is thermal or not." );
+    setDescription( "Flag indicating whether the problem is thermal or not. Set isThermal=\"1\" to enable the thermal coupling" );
 
   registerWrapper( viewKeyStruct::performStressInitializationString(), &m_performStressInitialization ).
     setApplyDefaultValue( false ).
@@ -255,11 +255,11 @@ void MultiphasePoromechanicsSolver::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  integer const isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
-  GEOSX_THROW_IF( m_isThermal && !isFlowThermal,
-                  GEOSX_FMT( "{} {}: The flow solver named {} must be thermal if the poromechanics solver is thermal",
-                             catalogName(), getName(), flowSolver()->getName() ),
-                  InputError );
+  integer & isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
+  GEOSX_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
+                       GEOSX_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
+                                  catalogName(), getName(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
+  isFlowThermal = m_isThermal;
 
   GEOSX_THROW_IF( m_stabilizationType == StabilizationType::Local,
                   catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",

@@ -30,10 +30,6 @@ namespace thermalPoromechanicsKernels
 /**
  * @brief Implements kernels for solving quasi-static thermal multiphase poromechanics.
  * @copydoc geosx::finiteElement::ImplicitKernelBase
- * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
- *                            @p SUBREGION_TYPE.
- * @tparam UNUSED An unused parameter since we are assuming that the test and
- *                trial space have the same number of support points.
  *
  * ### ThermalMultiphasePoromechanics Description
  * Implements the KernelBase interface functions required for solving the
@@ -52,16 +48,17 @@ class ThermalMultiphasePoromechanics :
 {
 public:
 
-  /// Alias for the base class;
+  /// Alias for the base class
   using Base = poromechanicsKernels::MultiphasePoromechanics< SUBREGION_TYPE,
                                                               CONSTITUTIVE_TYPE,
                                                               FE_TYPE >;
 
 
-  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// Number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
   /// will be the actual number of nodes per element.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
+  /// Maximum number of fluid components 
   static constexpr int maxNumComponents = 3;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
@@ -111,13 +108,12 @@ public:
                                   localIndex const numPhases,
                                   string const fluidModelKey );
 
-  //*****************************************************************************
   /**
    * @class StackVariables
    * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
    *
-   * Adds a stack array for the displacement, incremental displacement, and the
-   * constitutive stiffness.
+   * Adds a stack array for the displacement, incremental displacement, the
+   * constitutive stiffness, etc.
    */
   struct StackVariables : public Base::StackVariables
   {
@@ -129,22 +125,22 @@ public:
       Base::StackVariables()
     {}
 
-    /// Derivative of mass accumulation wrt temperature
+    /// Derivative of mass increment wrt temperature
     real64 dCompMassIncrement_dTemperature[maxNumComponents]{};
     /// Derivative of pore volume constraint wrt temperature
     real64 dPoreVolConstraint_dTemperature;
     /// Derivative of body force wrt temperature
     real64 dBodyForce_dTemperature[3]{};
 
-    /// Energy accumulation
+    /// Energy increment
     real64 energyIncrement{};
-    /// Derivative of energy accumulation wrt volumetric strain increment
+    /// Derivative of energy increment wrt volumetric strain increment
     real64 dEnergyIncrement_dVolStrainIncrement{};
-    /// Derivative of energy accumulation wrt pressure
+    /// Derivative of energy increment wrt pressure
     real64 dEnergyIncrement_dPressure{};
-    /// Derivative of energy accumulation wrt temperature
+    /// Derivative of energy increment wrt temperature
     real64 dEnergyIncrement_dTemperature{};
-    /// Derivative of energy accumulation wrt temperature
+    /// Derivative of energy increment wrt global comp fraction
     real64 dEnergyIncrement_dComponents[maxNumComponents]{};
 
     // Storage for mass/energy residual and degrees of freedom
@@ -164,14 +160,13 @@ public:
     real64 dLocalResidualEnergy_dPressure[1][1]{};
     /// Derivative of energy balance residual wrt temperature
     real64 dLocalResidualEnergy_dTemperature[1][1]{};
-    /// Derivative of energy balance residual wrt components
+    /// Derivative of energy balance residual wrt global comp fraction
     real64 dLocalResidualEnergy_dComponents[1][maxNumComponents]{};
 
-    /// C-array storage for the element local row degrees of freedom.
+    /// Local degrees of freedom index of temperature
     globalIndex localTemperatureDofIndex{};
 
   };
-  //*****************************************************************************
 
   /**
    * @brief Copy global values from primary field to a local stack array.
@@ -191,13 +186,11 @@ public:
    * This function also computes the derivatives of these three quantities wrt primary variables
    * @param[in] k the element index
    * @param[in] q the quadrature point index
-   * @param[in] strainIncrement the strain increment used in total stress and porosity computation
    * @param[inout] stack the stack variables
    */
   GEOSX_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
                           localIndex const q,
-                          real64 const ( &strainIncrement )[6],
                           StackVariables & stack ) const;
 
   /**

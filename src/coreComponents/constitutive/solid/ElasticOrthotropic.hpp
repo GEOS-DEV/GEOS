@@ -68,7 +68,7 @@ public:
                              arrayView3d< real64, solid::STRESS_USD > const & newStress,
                              arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                              bool const & disableInelasticity ):
-    SolidBaseUpdates( newStress, oldStress, disableInelasticity ),
+    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity ),
     m_c11( c11 ),
     m_c12( c12 ),
     m_c13( c13 ),
@@ -77,8 +77,7 @@ public:
     m_c33( c33 ),
     m_c44( c44 ),
     m_c55( c55 ),
-    m_c66( c66 ),
-    m_thermalExpansionCoefficient( thermalExpansionCoefficient )
+    m_c66( c66 )
   {}
 
   /// Deleted default constructor
@@ -159,12 +158,6 @@ public:
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( &stiffness )[6][6] ) const override final;
 
-  GEOSX_HOST_DEVICE
-  virtual real64 getThermalExpansionCoefficient( localIndex const k ) const override final
-  {
-    return m_thermalExpansionCoefficient[k];
-  }
-
 
 private:
   /// A reference to the ArrayView holding c11 for each element.
@@ -194,8 +187,6 @@ private:
   /// A reference to the ArrayView holding c66 for each element.
   arrayView1d< real64 const > const m_c66;
 
-  /// A reference to the ArrayView holding the thermal expansion coefficient for each element.
-  arrayView1d< real64 const > const m_thermalExpansionCoefficient;
 };
 
 
@@ -468,13 +459,6 @@ public:
 
     /// string/key for c66 component of Voigt stiffness tensor
     static constexpr char const * c66String() { return "c66"; };
-
-    /// string/key for thermal expansion coefficient
-    static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; }
-
-    /// string/key for default thermal expansion coefficient
-    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultThermalExpansionCoefficient"; }
-
   };
 
   /**
@@ -823,12 +807,6 @@ protected:
 
   /// The 66 component of the Voigt stiffness tensor.
   array1d< real64 > m_c66;
-
-  /// The thermal expansion coefficient for each upper level dimension (i.e. cell) of *this
-  array1d< real64 > m_thermalExpansionCoefficient;
-
-  /// The default value of the thermal expansion coefficient for any new allocations.
-  real64 m_defaultThermalExpansionCoefficient;
 
 };
 

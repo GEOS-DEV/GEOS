@@ -3,6 +3,7 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp"
 #include "policies.hpp"
 
 
@@ -26,6 +27,7 @@ namespace poromechanicsKernels
 namespace thermalPoromechanicsKernels
 {
   INSTANTIATION( ThermalMultiphasePoromechanics )	
+  INSTANTIATION( ThermalSinglePhasePoromechanics )
 }
 namespace poromechanicsEFEMKernels
 {
