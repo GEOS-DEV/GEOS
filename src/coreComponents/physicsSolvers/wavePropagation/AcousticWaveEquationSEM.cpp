@@ -347,7 +347,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
-  
+
   GEOSX_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
   {
@@ -421,7 +421,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-	acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
+        acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
         kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                                X,
@@ -881,7 +881,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
 
-    if( computeGradient && cycleNumber >= 0)
+    if( computeGradient && cycleNumber >= 0 )
     {
 
       arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
@@ -939,9 +939,9 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 
     EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
     real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
-    int const maxCycle = int(round(maxTime/dt));
+    int const maxCycle = int(round( maxTime/dt ));
 
-    if( computeGradient && cycleNumber < maxCycle)
+    if( computeGradient && cycleNumber < maxCycle )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -966,19 +966,19 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
         constexpr localIndex numNodesPerElem = 8;
-	arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
+        arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
         GEOSX_MARK_SCOPE ( updatePartialGradient );
         forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const eltIdx )
         {
-	  if(elemGhostRank[eltIdx]<0)
-	  {
-	    for( localIndex i = 0; i < numNodesPerElem; ++i )
-	    {
-	      localIndex nodeIdx = elemsToNodes[eltIdx][i];
-	      grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
-	    }
-	  }
-	} );
+          if( elemGhostRank[eltIdx]<0 )
+          {
+            for( localIndex i = 0; i < numNodesPerElem; ++i )
+            {
+              localIndex nodeIdx = elemsToNodes[eltIdx][i];
+              grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
+            }
+          }
+        } );
       } );
     }
 
@@ -1034,7 +1034,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
     real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
-    integer const cycleForSource = int(round( -minTime/dt + cycleNumber));
+    integer const cycleForSource = int(round( -minTime/dt + cycleNumber ));
     //std::cout<<"cycle GEOSX = "<<cycleForSource<<std::endl;
     addSourceToRightHandSide( cycleForSource, rhs );
 
@@ -1137,7 +1137,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     /// compute the seismic traces since last step.
     arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
-    if(time_n >= 0)
+    if( time_n >= 0 )
     {
       computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
     }
