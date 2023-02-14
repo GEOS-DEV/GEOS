@@ -64,10 +64,12 @@ void SurfaceElementRegion::generateMesh( Group & faceBlocks )
       FaceBlockABC const & source = faceBlocks.getGroup< FaceBlockABC >( m_faceBlockName );
       subRegion.copyFromCellBlock( source );
     }
+#if 0
     else
     {
       GEOSX_INFO( "No face block \"" << m_faceBlockName << "\" was found in the mesh. Empty surface region was created." );
     }
+#endif
   }
 }
 
