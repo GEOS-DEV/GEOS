@@ -165,14 +165,8 @@ else()
     set( GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE STRING "" )
 endif()
 
-# if( ENABLE_HYPRE AND ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
-    set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
-    set( GEOSX_GLOBALINDEX_TYPE "int" CACHE STRING "" )
-# else()
-#     set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
-  #  set( GEOSX_GLOBALINDEX_TYPE "long long int" CACHE STRING "" )
-# endif()
-
+set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
+set( GEOSX_GLOBALINDEX_TYPE "long long int" CACHE STRING "" )
 
 if( GEOSX_LOCALINDEX_TYPE STREQUAL "int" )
     set( GEOSX_LOCALINDEX_TYPE_FLAG "0" CACHE STRING "" FORCE )
