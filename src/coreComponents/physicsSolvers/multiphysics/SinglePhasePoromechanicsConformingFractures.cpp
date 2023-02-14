@@ -149,6 +149,8 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
 
   GEOSX_MARK_FUNCTION;
 
+  contactSolver()->synchronizeFractureState( domain );
+
   synchronizeNonLinearParameters();
 
   assembleCellBasedContributions( time_n,

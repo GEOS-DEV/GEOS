@@ -14,7 +14,8 @@
         maxTimeStepCuts="1"
         newtonMaxIter="10"
         maxNumConfigurationAttempts="10"
-        lineSearchInterpolationType="Parabolic"/>
+        lineSearchInterpolationType="Parabolic"
+        maxAllowedResidualNorm="1.0e15"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhasePoromechanicsConformingFractures>

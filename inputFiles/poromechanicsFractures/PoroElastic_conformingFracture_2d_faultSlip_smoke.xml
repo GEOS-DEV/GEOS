@@ -13,8 +13,8 @@
       xCoords="{ -100, -20, 20, 100 }"
       yCoords="{ -100, -5, 5, 100 }"
       zCoords="{ 0, 1 }"
-      nx="{ 2, 4, 2 }"
-      ny="{ 1, 1, 1 }"
+      nx="{ 1, 2, 1 }"
+      ny="{ 1, 2, 1 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -31,13 +31,17 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="100.0"
+      forceDt="1000.0"
       target="/Solvers/poroSolver"/>
 
     <PeriodicEvent
       name="outputs"
+      cycleFrequency="1"/>
+      
+    <PeriodicEvent
+      name="restarts"
       cycleFrequency="1"
-      target="/Outputs/vtkOutput"/>
+      target="/Outputs/restarts"/>  
   </Events>
 
 </Problem>
