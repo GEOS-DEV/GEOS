@@ -904,6 +904,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     // Compose parallel LA matrix/rhs out of local LA matrix/rhs
+    //
     m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
     // Output the linear system matrix/rhs for debugging purposes

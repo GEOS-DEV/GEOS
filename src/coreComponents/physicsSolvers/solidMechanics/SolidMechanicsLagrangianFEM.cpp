@@ -381,6 +381,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
             localIndex const numSupportPoints =
               finiteElement.template numSupportPoints< FE_TYPE >( feStack );
 
+//#if ! defined( CALC_FEM_SHAPE_IN_KERNEL ) // we don't calculate detJ in this case
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
               FE_TYPE::calcN( q, feStack, N );
@@ -390,6 +391,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
                 mass[elemsToNodes[k][a]] += rho[k][q] * detJ[k][q] * N[a];
               }
             }
+//#endif
 
             bool isAttachedToGhostNode = false;
             for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
@@ -979,6 +981,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
                                                                                   m_stiffnessDamping,
                                                                                   dt );
   }
+  // std::cout << MpiWrapper::commRank( MPI_COMM_GEOSX ) << " : " << m_maxForce << std::endl;
 }
 
 void

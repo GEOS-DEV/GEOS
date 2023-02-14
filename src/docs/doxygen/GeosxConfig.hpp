@@ -70,7 +70,7 @@
   /// Parsed hypre version information
   #define HYPRE_VERSION_MAJOR 2
   /// Parsed hypre version information
-  #define HYPRE_VERSION_MINOR 26
+  #define HYPRE_VERSION_MINOR 27
   /// Parsed hypre version information
   #define HYPRE_VERSION_PATCH 0
 #endif
@@ -82,7 +82,7 @@
 /// Denotes HYPRE using HIP
 #define GEOSX_USE_HYPRE_HIP 2
 /// Macro determining what parellel interface hypre is using
-#define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_HIP
+#define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_CPU
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
 #define GEOSX_USE_SUPERLU_DIST

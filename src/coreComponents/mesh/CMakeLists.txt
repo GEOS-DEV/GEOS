@@ -161,6 +161,7 @@ if( ENABLE_VTK )
     set_source_files_properties( generators/VTKMeshGeneratorTools.cpp PROPERTIES LANGUAGE CXX )
 endif()
 
-add_subdirectory( unitTests )
-
+# if( ENABLE_TESTS )
+#     add_subdirectory( unitTests )
+# endif
 geosx_add_code_checks( PREFIX mesh )

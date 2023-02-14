@@ -892,17 +892,12 @@ public:
     GEOSX_MARK_FUNCTION;
     forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
-#ifdef GEOSX_CRUSHER_SUPPRESSION
-      GEOSX_UNUSED_VAR( numConnections, kernelComponent );
-      GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
-#else
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
                                                   kernelComponent.numPointsInFlux( iconn ) );
 
       kernelComponent.setup( iconn, stack );
       kernelComponent.computeFlux( iconn, stack );
       kernelComponent.complete( iconn, stack );
-#endif
     } );
   }
 

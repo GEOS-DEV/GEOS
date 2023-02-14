@@ -217,7 +217,7 @@ RAJA_INLINE void waitAllDeviceEvents( parallelDeviceEvents & events )
   GEOSX_UNUSED_VAR( events );
   // poll device events for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
   // 10 nsecs ~= 30 clock cycles @ 3Ghz
-  GEOSX_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
+  // GEOSX_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
 }
 
 template< typename POLICY, typename INDEX, typename LAMBDA >

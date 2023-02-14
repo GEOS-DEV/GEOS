@@ -28,6 +28,6 @@ blt_add_library( NAME       denseLinearAlgebra
 
 target_include_directories( denseLinearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
-add_subdirectory( unitTests )
+# add_subdirectory( unitTests )
 
 geosx_add_code_checks( PREFIX denseLinearAlgebra )

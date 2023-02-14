@@ -300,11 +300,6 @@ FluxKernel::
   // loop over the well elements to compute the fluxes between elements
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
-#ifdef GEOSX_CRUSHER_SUPPRESSION
-    GEOSX_UNUSED_VAR( isProducer, iwelem, injection, rankOffset, wellElemDofNumber, nextWellElemIndex,
-                      connRate, wellElemCompFrac, dWellElemCompFrac_dCompDens, dt, localMatrix, localRhs );
-    GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
-#else
     // create local work arrays
     real64 compFracUp[NC]{};
     real64 dCompFrac_dCompDensUp[NC][NC]{};
@@ -506,7 +501,6 @@ FluxKernel::
         }
       }
     }
-#endif
   } );
 }
 
@@ -791,10 +785,6 @@ PerforationKernel::
            arraySlice2d< real64 > const & dCompPerfRate_dPres,
            arraySlice3d< real64 > const & dCompPerfRate_dComp )
 {
-#if defined ( GEOSX_CRUSHER_SUPPRESSION )
-  GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
-#else
-
   using Deriv = multifluid::DerivativeOffset;
 
   // local working variables and arrays
@@ -1077,7 +1067,6 @@ PerforationKernel::
       }
     }
   }
-#endif
 }
 
 template< integer NC, integer NP >
