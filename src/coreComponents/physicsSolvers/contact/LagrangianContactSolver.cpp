@@ -1140,7 +1140,8 @@ void LagrangianContactSolver::
                 }
 
                 real64 dLimitTau_dNormalTraction = 0;
-                real64 const limitTau = contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
+                real64 const limitTau = contactWrapper.computeLimitTangentialTractionNorm( kfe,
+                                                                                           traction[kfe][0],
                                                                                            dLimitTau_dNormalTraction );
 
                 real64 sliding[ 2 ] = { dispJump[kfe][1] - previousDispJump[kfe][1], dispJump[kfe][2] - previousDispJump[kfe][2] };
@@ -1814,7 +1815,8 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
 
               real64 dLimitTangentialTractionNorm_dTraction = 0.0;
               real64 const limitTau =
-                contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
+                contactWrapper.computeLimitTangentialTractionNorm( kfe, 
+                                                                   traction[kfe][0],
                                                                    dLimitTangentialTractionNorm_dTraction );
 
               if( originalFractureState == contact::FractureState::Stick && currentTau >= limitTau )

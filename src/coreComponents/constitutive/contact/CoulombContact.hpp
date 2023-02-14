@@ -40,8 +40,8 @@ public:
                          real64 const & shearStiffness,
                          real64 const & displacementJumpThreshold,
                          TableFunction const & apertureTable,
-                         real64 const & cohesion,
-                         real64 const & frictionCoefficient,
+                         arrayView1d< real64 > const & cohesion,
+                         arrayView1d< real64 > const & frictionCoefficient,
                          arrayView2d< real64 > const & elasticSlip )
     : ContactBaseUpdates( penaltyStiffness, shearStiffness, displacementJumpThreshold, apertureTable ),
     m_cohesion( cohesion ),
@@ -66,13 +66,15 @@ public:
 
   /**
    * @brief Evaluate the limit tangential traction norm and return the derivative wrt normal traction
+   * @param[in] k element index
    * @param[in] normalTraction the normal traction
    * @param[out] dLimitTangentialTractionNorm_dTraction the derivative of the limit tangential traction norm wrt normal traction
    * @return the limit tangential traction norm
    */
   GEOSX_HOST_DEVICE
   inline
-  virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
+  virtual real64 computeLimitTangentialTractionNorm( localIndex const k,
+                                                     real64 const & normalTraction,
                                                      real64 & dLimitTangentialTractionNorm_dTraction ) const override final;
 
   GEOSX_HOST_DEVICE
@@ -94,10 +96,10 @@ public:
 private:
 
   /// The cohesion for each upper level dimension (i.e. cell) of *this
-  real64 m_cohesion;
+  arrayView1d< real64 > m_cohesion;
 
   /// The friction coefficient for each upper level dimension (i.e. cell) of *this
-  real64 m_frictionCoefficient;
+  arrayView1d< real64 > m_frictionCoefficient;
 
   arrayView2d< real64 > m_elasticSlip;
 };
@@ -146,14 +148,14 @@ public:
    * @return A const reference to arrayView1d<real64 const> containing the
    *         cohesions (at every element).
    */
-  real64 const & cohesion() const { return m_cohesion; }
+  arrayView1d< real64 const > const cohesion() const { return m_cohesion; }
 
   /**
    * @brief Const accessor for friction angle
    * @return A const reference to arrayView1d<real64 const> containing the
    *         friction coefficient (at every element).
    */
-  real64 const & frictionCoefficient() const { return m_frictionCoefficient; }
+  arrayView1d< real64 const > const frictionCoefficient() const { return m_frictionCoefficient; }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = CoulombContactUpdates;
@@ -171,10 +173,10 @@ protected:
 private:
 
   /// The cohesion for each upper level dimension (i.e. cell) of *this
-  real64 m_cohesion;
+  array1d< real64 > m_cohesion;
 
   /// The friction coefficient for each upper level dimension (i.e. cell) of *this
-  real64 m_frictionCoefficient;
+  array1d< real64 > m_frictionCoefficient;
 
   /// Elastic slip
   array2d< real64 > m_elasticSlip;
@@ -198,11 +200,12 @@ private:
 
 
 GEOSX_HOST_DEVICE
-real64 CoulombContactUpdates::computeLimitTangentialTractionNorm( real64 const & normalTraction,
+real64 CoulombContactUpdates::computeLimitTangentialTractionNorm( localIndex const k,
+                                                                  real64 const & normalTraction,
                                                                   real64 & dLimitTangentialTractionNorm_dTraction ) const
 {
-  dLimitTangentialTractionNorm_dTraction = m_frictionCoefficient;
-  return ( m_cohesion - normalTraction * m_frictionCoefficient );
+  dLimitTangentialTractionNorm_dTraction = m_frictionCoefficient[k];
+  return ( m_cohesion[k] - normalTraction * m_frictionCoefficient[k] );
 }
 
 
@@ -259,7 +262,8 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
       {
         // Plastic slip case
         real64 dLimitTau_dNormalTraction;
-        real64 const limitTau = computeLimitTangentialTractionNorm( tractionVector[0],
+        real64 const limitTau = computeLimitTangentialTractionNorm( k,
+                                                                    tractionVector[0],
                                                                     dLimitTau_dNormalTraction );
 
         real64 const slipNorm = LvArray::tensorOps::l2Norm< 2 >( slip );
@@ -310,7 +314,8 @@ inline void CoulombContactUpdates::updateFractureState( localIndex const k,
     real64 const tauNorm = LvArray::tensorOps::l2Norm< 2 >( tau );
 
     real64 dLimitTau_dNormalTraction;
-    real64 const limitTau = computeLimitTangentialTractionNorm( tractionVector[0],
+    real64 const limitTau = computeLimitTangentialTractionNorm( k,
+                                                                tractionVector[0],
                                                                 dLimitTau_dNormalTraction );
 
     // Yield function (not necessary but makes it clearer)
