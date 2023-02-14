@@ -111,9 +111,10 @@ def main():
     P_tD = []
     for i in range(t_ind,len(tl)):
         tD = (tl[i] - tl[t_ind])/tl[t_ind]
-        dtD.append(tD)
-        G_tD.append(Gfunction(tD))
-        P_tD.append(fpre[i,well_ind])
+        if tD > 0.0:
+            dtD.append(tD)
+            G_tD.append(Gfunction(tD))
+            P_tD.append(fpre[i,well_ind])
 
     dtD = np.array(dtD)
     G_tD = np.array(G_tD)
