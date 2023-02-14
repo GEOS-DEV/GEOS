@@ -202,17 +202,17 @@
 
     <FieldSpecification
       name="boundaryPressure"
-      objectPath="ElementRegions/Domain/cb1"
+      objectPath="faceManager"
       fieldName="pressure"
       scale="0.0"
-      setNames="{ top }"/>
+      setNames="{ ypos }"/>
 
     <FieldSpecification
       name="boundaryTemperature"
-      objectPath="ElementRegions/Domain/cb1"
+      objectPath="faceManager"
       fieldName="temperature"
       scale="323.0"
-      setNames="{ top }"/>
+      setNames="{ ypos }"/>
     <!-- SPHINX_TOP_SURFACE_BC_END -->
     
   </FieldSpecifications>
