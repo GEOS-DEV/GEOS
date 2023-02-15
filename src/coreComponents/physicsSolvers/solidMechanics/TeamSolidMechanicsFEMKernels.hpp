@@ -23,17 +23,7 @@
 #define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "finiteElement/TeamKernelInterface/TeamKernelBase.hpp"
-#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/TeamKernelFunctions.hpp"
-#include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/QuadratureFunctionsHelper.hpp"
-#include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/qLocalLoad.hpp"
-#include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/qLocalWrite.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/MeshStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/VectorElementStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/BasisStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/QuadratureWeightsStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/SharedStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/SharedMemStackVariables.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelInterface.hpp"
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -125,39 +115,6 @@ public:
     GEOSX_UNUSED_VAR( targetRegionIndex );
   }
 
-  //***************************************************************************
-  /**
-   * @class StackVariables
-   * @copydoc geosx::finiteElement::TeamKernelBase::StackVariables
-   *
-   * Adds a stack array for the primary field.
-   */
-  template < typename KernelConfig >
-  struct StackVariables : public Base::template StackVariables< KernelConfig >
-  {
-    static constexpr localIndex dim = 3;
-    static constexpr localIndex num_dofs_mesh_1d = 2; // TODO
-    static constexpr localIndex num_dofs_1d = 2; // TODO
-    static constexpr localIndex num_quads_1d = 2; // TODO
-
-    using Basis = stackVariables::StackBasis<num_dofs_1d,num_quads_1d>;
-
-    /**
-     * @brief Constructor
-     */
-    GEOSX_HOST_DEVICE
-    StackVariables( LaunchContext & ctx ):
-      Base::template StackVariables<KernelConfig>( ctx )
-    {}
-
-    /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
-    // static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d;
-    // static constexpr localIndex num_buffers = 2 * dim;
-    // static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
-    // static constexpr localIndex num_buffers = 1;
-    // stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
-  };
-
   template< typename POLICY, // ignored
             typename KERNEL_TYPE >
   static
@@ -181,21 +138,28 @@ public:
     constexpr ThreadingModel threading_model = ThreadingModel::Serial;
     constexpr localIndex num_threads_1d = num_quads_1d;
     constexpr localIndex batch_size = 32;
+    // constexpr ThreadingModel threading_model = ThreadingModel::Distributed2D;
+    // constexpr localIndex num_threads_1d = num_quads_1d;
+    // constexpr localIndex batch_size = 8;
+    // constexpr ThreadingModel threading_model = ThreadingModel::Distributed3D;
+    // constexpr localIndex num_threads_1d = num_quads_1d;
+    // constexpr localIndex batch_size = 4;
 
     using KernelConf = finiteElement::KernelConfiguration< threading_model, num_threads_1d, batch_size >;
-    using Stack = StackVariables< KernelConf >;
+    using Stack = finiteElement::KernelContext< KernelConf >;
 
-    finiteElement::forallElements< KernelConf >( numElems, fields, [=] GEOSX_HOST_DEVICE ( Stack & stack )
+    finiteElement::forallElements< KernelConf >( numElems, [=] GEOSX_HOST_DEVICE ( Stack & stack )
     {
+      /// Read element mesh nodes and residual input degrees of freedom
+      typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3 > mesh_nodes;
       typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > dofs_in;
-      typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3 > nodes;
-      readField( stack, fields.m_elemsToNodes, fields.m_X, nodes );
+      readField( stack, fields.m_elemsToNodes, fields.m_X, mesh_nodes );
       readField( stack, fields.m_elemsToNodes, fields.m_src, dofs_in );
 
-      typename Stack::Basis basis( stack );
+      typename Stack::template Basis< num_dofs_1d, num_quads_1d > basis( stack );
       /// Computation of the Jacobians
-      typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3, 3 > Jac;
-      interpolateGradientAtQuadraturePoints( stack, basis, nodes, Jac );
+      typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3, 3 > mesh_jacobians;
+      interpolateGradientAtQuadraturePoints( stack, basis, mesh_nodes, mesh_jacobians );
 
       /// Computation of the Gradient of the solution field
       typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3, 3 > Gu;
@@ -205,13 +169,11 @@ public:
       forallQuadratureIndices( stack, [&]( auto const & quad_index )
       {
         constexpr localIndex dim = 3;
-        // Load q-local gradients
+        // Load quadrature point-local gradients and jacobians
         real64 grad_ref_u[ dim ][ dim ];
         qLocalLoad( quad_index, Gu, grad_ref_u );
-
-        // load q-local jacobian
         real64 J[ dim ][ dim ];
-        qLocalLoad( quad_index, Jac, J );
+        qLocalLoad( quad_index, mesh_jacobians, J );
 
         // Compute D_q u_q = - w_q * det(J_q) * J_q^-1 * sigma ( J_q^-1, grad( u_q ) )
         real64 Jinv[ dim ][ dim ];
@@ -221,13 +183,13 @@ public:
         computeStress( stack, fields.m_constitutiveUpdate, 0, Jinv, grad_ref_u, stress );
 
         // Apply - w_q * det(J_q) * J_q^-1
-        real64 D[ dim ][ dim ];
-        computeReferenceGradient( Jinv, stress, D );
+        real64 stress_ref[ dim ][ dim ];
+        computeReferenceGradient( Jinv, stress, stress_ref );
 
         real64 const weight = 1.0; //stack.weights( quad_index );
-        applyQuadratureWeights( weight, detJ, D );
+        applyQuadratureWeights( weight, detJ, stress_ref );
 
-        qLocalWrite( quad_index, D, Gu );
+        qLocalWrite( quad_index, stress_ref, Gu );
       } );
 
       /// Application of the test functions
@@ -235,7 +197,6 @@ public:
       applyGradientTestFunctions( stack, basis, Gu, dofs_out );
 
       writeAddField( stack, fields.m_elemsToNodes, dofs_out, fields.m_dst );
-
     } );
     return 0.0;
   }

@@ -22,16 +22,7 @@
 
 #define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
-#include "finiteElement/TeamKernelInterface/TeamKernelBase.hpp"
-#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/TeamKernelFunctions.hpp"
-#include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/QuadratureFunctionsHelper.hpp"
-#include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/qLocalLoad.hpp"
-#include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/qLocalWrite.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/MeshStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/ElementStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/QuadratureWeightsStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/SharedStackVariables.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/SharedMemStackVariables.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelInterface.hpp"
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -132,37 +123,6 @@ public:
     GEOSX_UNUSED_VAR( faceManager );
     GEOSX_UNUSED_VAR( targetRegionIndex );
   }
-  
-  //***************************************************************************
-  /**
-   * @class StackVariables
-   * @copydoc geosx::finiteElement::TeamKernelBase::StackVariables
-   *
-   * Adds a stack array for the primary field.
-   */
-  template < typename KernelConfig >
-  struct StackVariables : public Base::template StackVariables< KernelConfig >
-  {
-    static constexpr localIndex dim = 3;
-    static constexpr localIndex num_dofs_mesh_1d = 2; // TODO
-    static constexpr localIndex num_dofs_1d = 2; // TODO
-    static constexpr localIndex num_quads_1d = 2; // TODO
-
-    using Basis = stackVariables::StackBasis<num_dofs_1d,num_quads_1d>;
-
-    /**
-     * @brief Constructor
-     */
-    GEOSX_HOST_DEVICE
-    StackVariables( LaunchContext & ctx ):
-      Base::template StackVariables<KernelConfig>( ctx )
-    {}
-
-    /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
-    // static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim;
-    // static constexpr localIndex num_buffers = 2 * dim;
-    // stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
-  };
 
   template< typename POLICY, // ignored
             typename KERNEL_TYPE >
@@ -189,16 +149,16 @@ public:
     constexpr localIndex batch_size = 32;
 
     using KernelConf = finiteElement::KernelConfiguration< threading_model, num_threads_1d, batch_size >;
-    using Stack = StackVariables<KernelConf>;
+    using Stack = finiteElement::KernelContext< KernelConf >;
 
-    finiteElement::forallElements<KernelConf>( numElems, fields, [=] GEOSX_HOST_DEVICE ( Stack & stack )
+    finiteElement::forallElements<KernelConf>( numElems, [=] GEOSX_HOST_DEVICE ( Stack & stack )
     {
       typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > nodes;
       typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d > dofs_in;
       readField( stack, fields.m_elemsToNodes, fields.m_X, nodes );
       readField( stack, fields.m_elemsToNodes, fields.m_src, dofs_in );
 
-      typename Stack::Basis basis( stack );
+      typename Stack::template Basis< num_dofs_1d, num_quads_1d > basis( stack );
       /// Computation of the Jacobians
       typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3, 3 > Jac;
       interpolateGradientAtQuadraturePoints( stack, basis, nodes, Jac );
@@ -214,8 +174,8 @@ public:
         constexpr int dim = Stack::dim;
 
         // Load q-local gradients
-        real64 grad_u[ dim ];
-        qLocalLoad( quad_index, Gu, grad_u );
+        real64 grad_ref_u[ dim ];
+        qLocalLoad( quad_index, Gu, grad_ref_u );
 
         // load q-local jacobian
         real64 J[ dim ][ dim ];
@@ -224,31 +184,17 @@ public:
         // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
         real64 const weight = 1.0; // stack.weights( quad_index ); // FIXME
 
-        real64 const detJ = determinant( J );
-        real64 const detJinv = 1.0 / detJ;
+        real64 Jinv[ dim ][ dim ];
+        real64 const detJ = computeInverseAndDeterminant( J, Jinv );
 
-        real64 AdjJ[ dim ][ dim ];
-        adjugate( J, AdjJ );
+        real64 grad_phys_u[ dim ];
+        computePhysicalGradient( Jinv, grad_ref_u, grad_phys_u );
 
-        real64 D[ dim ][ dim ];
-        D[0][0] = weight * detJinv * (AdjJ[0][0]*AdjJ[0][0] + AdjJ[0][1]*AdjJ[0][1] + AdjJ[0][2]*AdjJ[0][2]);
-        D[1][0] = weight * detJinv * (AdjJ[0][0]*AdjJ[1][0] + AdjJ[0][1]*AdjJ[1][1] + AdjJ[0][2]*AdjJ[1][2]);
-        D[2][0] = weight * detJinv * (AdjJ[0][0]*AdjJ[2][0] + AdjJ[0][1]*AdjJ[2][1] + AdjJ[0][2]*AdjJ[2][2]);
-        D[0][1] = D[1][0];
-        D[1][1] = weight * detJinv * (AdjJ[1][0]*AdjJ[1][0] + AdjJ[1][1]*AdjJ[1][1] + AdjJ[1][2]*AdjJ[1][2]);
-        D[2][1] = weight * detJinv * (AdjJ[1][0]*AdjJ[2][0] + AdjJ[1][1]*AdjJ[2][1] + AdjJ[1][2]*AdjJ[2][2]);
-        D[0][2] = D[2][0];
-        D[1][2] = D[2][1];
-        D[2][2] = weight * detJinv * (AdjJ[2][0]*AdjJ[2][0] + AdjJ[2][1]*AdjJ[2][1] + AdjJ[2][2]*AdjJ[2][2]);
-
-        // Compute D_q * grad_u_q
         real64 Du[ dim ];
-        for (localIndex d = 0; d < dim; d++)
-        {
-          Du[d] = D[d][0] * grad_u[0]
-                + D[d][1] * grad_u[1]
-                + D[d][2] * grad_u[2];
-        }
+        computeReferenceGradient( Jinv, grad_phys_u, Du );
+
+        applyQuadratureWeights( weight, detJ, Du );
+
         qLocalWrite( quad_index, Du, Gu );
       } );
 
@@ -320,47 +266,6 @@ public:
     GEOSX_UNUSED_VAR( targetRegionIndex );
   }
 
-  //***************************************************************************
-  /**
-   * @class StackVariables
-   * @copydoc geosx::finiteElement::TeamKernelBase::StackVariables
-   *
-   * Adds a stack array for the primary field.
-   */
-  template < typename KernelConfig >
-  struct StackVariables : public Base::template StackVariables< KernelConfig >
-  {
-    static constexpr localIndex dim = 3;
-    static constexpr localIndex num_dofs_mesh_1d = 2; // TODO
-    static constexpr localIndex num_dofs_1d = 2; // TODO
-    static constexpr localIndex num_quads_1d = 2; // TODO
-
-    using Basis = stackVariables::StackBasis<num_dofs_1d,num_quads_1d>;
-
-    /**
-     * @brief Constructor
-     */
-    GEOSX_HOST_DEVICE
-    StackVariables( LaunchContext & ctx )
-    : Base::template StackVariables< KernelConfig >( ctx ) //,
-      // diag( ctx )//,
-      // weights( ctx ),
-      // shared_mem( ctx )
-    {}
-
-    // TODO alias shared buffers / Generalize for non-tensor elements
-    // stackVariables::SharedMesh< num_dofs_mesh_1d, num_quads_1d, dim, batch_size > mesh;
-    // stackVariables::SharedBasis< num_dofs_1d, num_quads_1d > element_basis;
-    // stackVariables::Shared2DMem< num_quads_1d, dim, batch_size > quad_values;
-    // stackVariables::SharedMem< num_dofs_1d, batch_size > diag;
-    // stackVariables::SharedQuadratureWeights< num_quads_1d > weights;
-
-    /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
-    // static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
-    // static constexpr localIndex num_buffers = 2;
-    // stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
-  };
-
   template< typename POLICY, // ignored
             typename KERNEL_TYPE >
   static
@@ -385,16 +290,16 @@ public:
     constexpr localIndex batch_size = 32;
 
     using KernelConf = finiteElement::KernelConfiguration< threading_model, num_threads_1d, batch_size >;
-    using Stack = StackVariables<KernelConf>;
+    using Stack = finiteElement::KernelContext< KernelConf >;
 
-    finiteElement::forallElements<KernelConf>( numElems, fields, [=] GEOSX_HOST_DEVICE ( Stack & stack )
+    finiteElement::forallElements<KernelConf>( numElems, [=] GEOSX_HOST_DEVICE ( Stack & stack )
     {
-      typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > nodes;
+      typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3 > nodes;
       readField( stack, fields.m_elemsToNodes, fields.m_X, nodes );
 
-      typename Stack::Basis basis( stack );
+      typename Stack::template Basis< num_dofs_mesh_1d, num_quads_1d > basis( stack );
       /// Computation of the Jacobians
-      typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3, 3 > Jac;
+      typename Stack::template Tensor< real64, num_quads_1d, num_quads_1d, num_quads_1d, 3, 3 > Jac;
       interpolateGradientAtQuadraturePoints( stack, basis, nodes, Jac );
 
       /// QFunction

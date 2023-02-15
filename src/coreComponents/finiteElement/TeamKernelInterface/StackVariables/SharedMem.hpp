@@ -14,14 +14,14 @@
 
 
 /**
- * @file SharedStackVariables.hpp
+ * @file SharedMem.hpp
  */
 
 #ifndef GEOSX_FINITEELEMENT_TEAMKERNELBASE_STACKVARIABLES_SHARED_HPP_
 #define GEOSX_FINITEELEMENT_TEAMKERNELBASE_STACKVARIABLES_SHARED_HPP_
 
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "finiteElement/TeamKernelInterface/StackVariables/BasisStackVariables.hpp"
+#include "finiteElement/TeamKernelInterface/StackVariables/Basis.hpp"
 
 namespace geosx
 {
@@ -29,8 +29,6 @@ namespace geosx
 namespace stackVariables
 {
 
-// TODO: Use this in other Stack Variables?
-// TODO: Rename in ShareMemStackVariables ?
 template < localIndex size_1d, localIndex batch_size >
 struct SharedMem
 {

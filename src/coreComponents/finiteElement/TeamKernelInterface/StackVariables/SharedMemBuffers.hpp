@@ -14,7 +14,7 @@
 
 
 /**
- * @file SharedMemStackVariables.hpp
+ * @file SharedMemBuffers.hpp
  */
 
 #ifndef GEOSX_FINITEELEMENT_TEAMKERNELBASE_STACKVARIABLES_SHARED_MEM_HPP_
@@ -29,7 +29,6 @@ namespace geosx
 namespace stackVariables
 {
 
-// TODO: Rename in ShareMemBuffersStackVariables ?
 template < localIndex buffer_size, localIndex num_buffers, localIndex batch_size >
 struct SharedMemBuffers
 {

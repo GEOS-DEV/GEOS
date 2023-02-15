@@ -22,12 +22,20 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
-#include "finiteElement/TeamKernelInterface/common.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/common.hpp"
 #include "tensor/tensor_types.hpp"
 
 namespace geosx
 {
 
+/**
+ * @brief Load a scalar field value local to the quadrature point.
+ * 
+ * @tparam Tensor The type of tensor.
+ * @param quad_index The index of the quadrature point.
+ * @param q_field The field at all quadrature points.
+ * @param q_value The field local to the quadrature point.
+ */
 template < typename Tensor,
            std::enable_if_t<
              tensor::get_tensor_rank< Tensor > == 3,
@@ -41,6 +49,14 @@ void qLocalLoad( TensorIndex const & quad_index,
   q_value = q_field( quad_index.x, quad_index.y, quad_index.z );
 }
 
+/**
+ * @brief Load vectorial field values local to the quadrature point.
+ * 
+ * @tparam Tensor The type of tensor.
+ * @param quad_index The index of the quadrature point.
+ * @param q_field The field at all quadrature points.
+ * @param q_value The field local to the quadrature point.
+ */
 template < typename Tensor,
            localIndex num_comp,
            std::enable_if_t<
@@ -59,6 +75,14 @@ void qLocalLoad( TensorIndex const & quad_index,
   }
 }
 
+/**
+ * @brief Load rank 2 field values local to the quadrature point.
+ * 
+ * @tparam Tensor The type of tensor.
+ * @param quad_index The index of the quadrature point.
+ * @param q_field The field at all quadrature points.
+ * @param q_value The field local to the quadrature point.
+ */
 template < typename Tensor,
            localIndex num_comp_x,
            localIndex num_comp_y,

@@ -14,7 +14,7 @@
 
 
 /**
- * @file BasisStackVariables.hpp
+ * @file Basis.hpp
  */
 
 #ifndef GEOSX_FINITEELEMENT_TEAMKERNELBASE_STACKVARIABLES_BASIS_HPP_
@@ -23,7 +23,6 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "tensor/tensor_types.hpp"
-#include "common.hpp"
 
 namespace geosx
 {
@@ -37,7 +36,12 @@ class LagrangeBasis;
 template <>
 class LagrangeBasis<1> : public finiteElement::LagrangeBasis1 { };
 
-
+/**
+ * @brief A StackBasis stores the values of the shape functions and gradient of the shape functions at quadrature points.
+ * 
+ * @tparam num_dofs_1d The number of degrees of freedom.
+ * @tparam num_quads_1d The number of quadrature points.
+ */
 template < localIndex num_dofs_1d, localIndex num_quads_1d >
 struct StackBasis
 {
@@ -103,6 +107,12 @@ struct StackBasis
   }
 };
 
+/**
+ * @brief A SharedBasis stores the values of the shape functions and gradient of the shape functions at quadrature points in shared memory.
+ * 
+ * @tparam num_dofs_1d The number of degrees of freedom.
+ * @tparam num_quads_1d The number of quadrature points.
+ */
 template < localIndex num_dofs_1d, localIndex num_quads_1d >
 struct SharedBasis
 {
@@ -165,24 +175,24 @@ struct SharedBasis
 };
 
 // Generic type alias
-template < Location location, localIndex num_dofs_1d, localIndex num_quads_1d >
-struct Basis_t;
+// template < Location location, localIndex num_dofs_1d, localIndex num_quads_1d >
+// struct Basis_t;
 
-template < localIndex num_dofs_1d, localIndex num_quads_1d >
-struct Basis_t< Location::Stack, num_dofs_1d, num_quads_1d >
-{
-  using type = StackBasis< num_dofs_1d, num_quads_1d >;
-};
+// template < localIndex num_dofs_1d, localIndex num_quads_1d >
+// struct Basis_t< Location::Stack, num_dofs_1d, num_quads_1d >
+// {
+//   using type = StackBasis< num_dofs_1d, num_quads_1d >;
+// };
 
-template < localIndex num_dofs_1d, localIndex num_quads_1d >
-struct Basis_t< Location::Shared, num_dofs_1d, num_quads_1d >
-{
-  using type = SharedBasis< num_dofs_1d, num_quads_1d >;
-};
+// template < localIndex num_dofs_1d, localIndex num_quads_1d >
+// struct Basis_t< Location::Shared, num_dofs_1d, num_quads_1d >
+// {
+//   using type = SharedBasis< num_dofs_1d, num_quads_1d >;
+// };
 
 
-template < Location location, localIndex num_dofs_1d, localIndex num_quads_1d >
-using Basis = typename Basis_t< location, num_dofs_1d, num_quads_1d >::type;
+// template < Location location, localIndex num_dofs_1d, localIndex num_quads_1d >
+// using Basis = typename Basis_t< location, num_dofs_1d, num_quads_1d >::type;
 
 } // namespace stackVariables
 

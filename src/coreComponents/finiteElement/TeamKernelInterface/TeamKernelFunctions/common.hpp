@@ -26,18 +26,40 @@
 namespace geosx
 {
 
+/**
+ * @brief A simple 3D tensor index structure.
+ * 
+ */
 struct TensorIndex
 {
   localIndex x, y, z;
 };
 
+/**
+ * @brief The threading model used to compute on each element.
+ * Specify how the computation is distributed over thread blocks.
+ * 
+ */
 enum class ThreadingModel {
-  Serial,
-  Distributed1D,
-  Distributed2D,
-  Distributed3D
+  Serial, //< Each thread treat one element ( or more when batch_size > 1 ).
+  Distributed1D, //< Each element is treated by num_thread_1d threads.
+  Distributed2D, //< Each element is treated by num_thread_1d^2 threads.
+  Distributed3D //< Each element is treated by num_thread_1d^3 threads.
 };
 
+/**
+ * @brief 3D iterator over the "thread local" indices.
+ * 
+ * @tparam StackVariables The type of the stack variables.
+ * @tparam Lambda3D The type of the body stored in a lambda function.
+ * @param stack The stack variables.
+ * @param loop_bound_1 The loop bound of the first index.
+ * @param loop_bound_2 The loop bound of the second index.
+ * @param loop_bound_3 The loop bound of the third index.
+ * @param lambda Thw body of the triple "for" loop.
+ * 
+ * @note Implementation for serial threading model.
+ */
 template < typename StackVariables,
            typename Lambda3D,
            std::enable_if_t< StackVariables::threading_model == ThreadingModel::Serial, bool > = true >
@@ -64,6 +86,19 @@ void loop3D( StackVariables & stack,
   }
 }
 
+/**
+ * @brief 3D iterator over the "thread local" indices.
+ * 
+ * @tparam StackVariables The type of the stack variables.
+ * @tparam Lambda3D The type of the body stored in a lambda function.
+ * @param stack The stack variables.
+ * @param loop_bound_1 The loop bound of the first index.
+ * @param loop_bound_2 The loop bound of the second index.
+ * @param loop_bound_3 The loop bound of the third index.
+ * @param lambda Thw body of the triple "for" loop.
+ * 
+ * @note Implementation for 1D distributed threading model.
+ */
 template < typename StackVariables,
            typename Lambda3D,
            std::enable_if_t< StackVariables::threading_model == ThreadingModel::Distributed1D, bool > = true >
@@ -90,6 +125,19 @@ void loop3D( StackVariables & stack,
   }
 }
 
+/**
+ * @brief 3D iterator over the "thread local" indices.
+ * 
+ * @tparam StackVariables The type of the stack variables.
+ * @tparam Lambda3D The type of the body stored in a lambda function.
+ * @param stack The stack variables.
+ * @param loop_bound_1 The loop bound of the first index.
+ * @param loop_bound_2 The loop bound of the second index.
+ * @param loop_bound_3 The loop bound of the third index.
+ * @param lambda Thw body of the triple "for" loop.
+ * 
+ * @note Implementation for 2D distributed threading model.
+ */
 template < typename StackVariables,
            typename Lambda3D,
            std::enable_if_t< StackVariables::threading_model == ThreadingModel::Distributed2D, bool > = true >
@@ -112,6 +160,19 @@ void loop3D( StackVariables & stack,
   }
 }
 
+/**
+ * @brief 3D iterator over the "thread local" indices.
+ * 
+ * @tparam StackVariables The type of the stack variables.
+ * @tparam Lambda3D The type of the body stored in a lambda function.
+ * @param stack The stack variables.
+ * @param loop_bound_1 The loop bound of the first index.
+ * @param loop_bound_2 The loop bound of the second index.
+ * @param loop_bound_3 The loop bound of the third index.
+ * @param lambda Thw body of the triple "for" loop.
+ * 
+ * @note Implementation for 3D distributed threading model.
+ */
 template < typename StackVariables,
            typename Lambda3D,
            std::enable_if_t< StackVariables::threading_model == ThreadingModel::Distributed3D, bool > = true >
