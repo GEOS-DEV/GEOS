@@ -1,4 +1,3 @@
-import os.path
 import logging
 import textwrap
 from typing import Dict

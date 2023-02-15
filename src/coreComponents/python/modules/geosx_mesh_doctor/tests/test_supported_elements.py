@@ -9,7 +9,6 @@ from vtkmodules.vtkCommonCore import (
 )
 from vtkmodules.vtkCommonDataModel import (
     VTK_POLYHEDRON,
-    vtkPolyhedron,
     vtkUnstructuredGrid,
 )
 

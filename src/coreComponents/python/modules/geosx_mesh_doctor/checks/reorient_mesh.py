@@ -82,9 +82,9 @@ def __compute_volume(mesh_points: vtkPoints, face_stream: FaceStream) -> float:
     return cell_volume
 
 
-def __select_flip(mesh_points: vtkPoints,
-                  colors: Dict[FrozenSet[int], int],
-                  face_stream: FaceStream) -> FaceStream:
+def __select_and_flip_faces(mesh_points: vtkPoints,
+                            colors: Dict[FrozenSet[int], int],
+                            face_stream: FaceStream) -> FaceStream:
     """
     Given a polyhedra, given that we were able to paint the faces in two colors,
     we now need to select which faces/color to flip such that the volume of the element is positive.
@@ -129,7 +129,7 @@ def __reorient_element(mesh_points: vtkPoints, face_stream_ids: vtkIdList) -> vt
     colors: Dict[FrozenSet[int], int] = networkx.algorithms.greedy_color(quotient_graph)
     assert len(colors) in (1, 2)
     # We now compute the face stream which generates outwards normal vectors.
-    flipped_face_stream = __select_flip(mesh_points, colors, face_stream)
+    flipped_face_stream = __select_and_flip_faces(mesh_points, colors, face_stream)
     return to_vtk_id_list(flipped_face_stream.dump())
 
 
