@@ -156,13 +156,6 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
 # else
   stiffness.template BTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian ); // need to use full BTDB compute for hip
 #endif
-  // for( int ii = 0; ii < stack.maxNumRows; ++ii )
-  // {
-  //   for( int jj = 0; jj < stack.maxNumCols; ++jj )
-  //   {
-  //     stack.localJacobian[ii][jj] = 1.0;
-  //   }
-  // }
 }
 
 

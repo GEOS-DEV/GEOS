@@ -15,8 +15,11 @@ set( SUITESPARSE_DIR "${GEOSX_TPL_DIR}/suite-sparse" CACHE PATH "" )
 
 # HYPRE options
 set( ENABLE_HYPRE_DEVICE "CPU" CACHE STRING "" )
+set( ENABLE_HYPRE_MIXINT FALSE CACHE STRING "" )
 set( HYPRE_DIR "/gpfs/alpine/geo127/world-shared/hypre/hypre_v2.27.0-18-ga592bbd12_cce-15.0.0_rel" CACHE PATH "" ) # CPU SERIAL (WORKS)
-# set( HYPRE_DIR "/gpfs/alpine/geo127/world-shared/hypre/hypre_v2.27.0-200-ge907ce401_cce-15.0.0_mixint_rel/" CACHE PATH "" ) # CPU SERIAL MIXED INT
+
+# set( ENABLE_HYPRE_MIXINT TRUE CACHE STRING "" )
+# set( HYPRE_DIR "/gpfs/alpine/geo127/world-shared/hypre/hypre_v2.27.0-200-ge907ce401_cce-15.0.0_mixint_rel/" CACHE PATH "" ) # CPU SERIAL MIXED INT (doesn't work on our side)
 
 # set( HYPRE_DIR "/gpfs/alpine/geo127/world-shared/hypre/hypre_v2.27.0-18-ga592bbd12_cce-15.0.0_omp_rel" CACHE PATH "" ) # CPU OPENMP (had openmp runtime issue)
 
