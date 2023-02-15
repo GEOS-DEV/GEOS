@@ -1,5 +1,4 @@
 import os
-# import pathlib
 from typing import Tuple
 
 import pytest
@@ -28,9 +27,8 @@ def test_supported_elements(base_name) -> None:
     Testing that the supported elements are properly detected as supported!
     :param base_name: Supported elements are provided as standard elements or polyhedron elements.
     """
-    # p = pathlib.Path(".")
-    # supported_elements_file_name = os.path.join(p.absolute(), "../../../../unitTests/meshTests", base_name)
-    supported_elements_file_name = os.path.join("/docker-exchange", base_name)
+    directory = os.path.dirname(os.path.realpath(__file__))
+    supported_elements_file_name = os.path.join(directory, "../../../../unitTests/meshTests", base_name)
     options = Options(chunk_size=1, num_proc=4)
     result = check(supported_elements_file_name, options)
     assert not result.unsupported_std_elements_types
