@@ -17,8 +17,16 @@
  * @brief Simple damage model for modeling material failure in brittle materials.
  * 
  * This damage model is intended for use with damage-field partitioning (DFG) within the
- * MPM solver. We don't use the damage to modify the stress. Rather, it flags the
- * creation of fracture surfaces which can ceramically separate due to DFG.
+ * MPM solver, but can also be used without DFG by any solver. It is only appropriate for
+ * schemes implementing explicit time integration. The model is really a hybrid plasticity/
+ * damage model in the sense that we assume damaged material behaves like granular material
+ * and hence follows a modified Mohr-Coulomb law. The modifications are that at low pressures,
+ * the shape of the yield surface is modified to resemble a maximum principal stress criterion,
+ * and at high pressures the shape converges on the von Mises yield surface. The damage
+ * parameter results in softening of the deviatoric response i.e. causes the yield surface to
+ * contract. Furthermore, damage is used to scale back tensile pressure: p = (1 - d) * pTrial.
+ * pTrial is calculatd as pTrial = -k * log(J), where the Jacobian J of the material motion is
+ * integrated and tracked by this model.
  */
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_KINEMATICDAMAGE_HPP
@@ -49,21 +57,37 @@ public:
   /**
    * @brief Constructor
    * @param[in] damage The ArrayView holding the damage for each quardrature point.
+   * @param[in] jacobian The ArrayView holding the jacobian for each quardrature point.
+   * @param[in] lengthScale The ArrayView holding the length scale for each element.
+   * @param[in] tensileStrength The unconfined tensile strength.
+   * @param[in] compressiveStrength The unconfined compressive strength.
+   * @param[in] maximumStrength The theoretical maximum strength.
+   * @param[in] crackSpeed The crack speed.
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
    */
   CeramicDamageUpdates( arrayView2d< real64 > const & damage,
-                          real64 const & defaultFailureStress,
-                          arrayView1d< real64 const > const & bulkModulus,
-                          arrayView1d< real64 const > const & shearModulus,
-                          arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                          arrayView3d< real64, solid::STRESS_USD > const & oldStress,
-                          bool const & disableInelasticity ):
+                        arrayView2d< real64 > const & jacobian,
+                        arrayView1d< real64 > const & lengthScale,
+                        real64 const & tensileStrength,
+                        real64 const & compressiveStrength,
+                        real64 const & maximumStrength,
+                        real64 const & crackSpeed,
+                        arrayView1d< real64 const > const & bulkModulus,
+                        arrayView1d< real64 const > const & shearModulus,
+                        arrayView3d< real64, solid::STRESS_USD > const & newStress,
+                        arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                        bool const & disableInelasticity ):
     ElasticIsotropicUpdates( bulkModulus, shearModulus, newStress, oldStress, disableInelasticity ),
     m_damage( damage ),
-    m_defaultFailureStress( defaultFailureStress )
+    m_jacobian( jacobian ),
+    m_lengthScale( lengthScale ),
+    m_tensileStrength( tensileStrength ),
+    m_compressiveStrength( compressiveStrength ),
+    m_maximumStrength( maximumStrength ),
+    m_crackSpeed( crackSpeed )
   {}
 
   /// Default copy constructor
@@ -86,6 +110,7 @@ public:
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
+  using ElasticIsotropicUpdates::smallStrainUpdate2;
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -99,13 +124,50 @@ public:
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
-                                  DiscretizationOps & stiffness ) const final;
+                                  DiscretizationOps & stiffness ) const;
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override final;
+
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate2( localIndex const k,
+                                   localIndex const q,
+                                   real64 const dt,
+                                   real64 const ( &strainIncrement )[6],
+                                   real64 ( &stress )[6],
+                                   real64 ( &stiffness )[6][6] ) const override final;
+
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate2( localIndex const k,
+                                   localIndex const q,
+                                   real64 const dt,
+                                   real64 const ( &strainIncrement )[6],
+                                   real64 ( &stress )[6],
+                                   DiscretizationOps & stiffness ) const final;
+
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate2_StressOnly( localIndex const k,
+                                              localIndex const q,
+                                              real64 const dt,
+                                              real64 const ( &strainIncrement )[6],
+                                              real64 ( &stress )[6] ) const override final;
+
+  GEOSX_HOST_DEVICE
+  void smallStrainUpdateHelper( localIndex const k,
+                                localIndex const q,
+                                real64 const dt,
+                                real64 ( &stress )[6] ) const;
+
+  GEOSX_HOST_DEVICE
+  real64 getStrength( const real64 damage,      // damage
+                      const real64 pressure,    // pressure
+                      const real64 J2,          // J2 invariant of stress
+                      const real64 J3,          // J3 invariant of stress
+                      const real64 mu,          // friction slope
+                      const real64 Yt0 ) const; // strength parameter
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -119,38 +181,87 @@ private:
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView2d< real64 > const m_damage;
 
-  /// The failure stress
-  real64 const m_defaultFailureStress;
+  /// A reference to the ArrayView holding the jacobian for each quadrature point.
+  arrayView2d< real64 > const m_jacobian;
+
+  /// A reference to the ArrayView holding the length scale for each element/particle.
+  arrayView1d< real64 > const m_lengthScale;
+
+  /// The tensile strength
+  real64 const m_tensileStrength;
+
+  /// The compressive strength
+  real64 const m_compressiveStrength;
+
+  /// The maximum theoretical strength
+  real64 const m_maximumStrength;
+
+  // The crack speed
+  real64 const m_crackSpeed;
 };
 
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
-                                                localIndex const q,
-                                                real64 const ( &strainIncrement )[6],
-                                                real64 ( & stress )[6],
-                                                real64 ( & stiffness )[6][6] ) const
+                                              localIndex const q,
+                                              real64 const ( &strainIncrement )[6],
+                                              real64 ( & stress )[6],
+                                              real64 ( & stiffness )[6][6] ) const
+{
+  GEOSX_UNUSED_VAR( k );
+  GEOSX_UNUSED_VAR( q );
+  GEOSX_UNUSED_VAR( strainIncrement );
+  GEOSX_UNUSED_VAR( stress );
+  GEOSX_UNUSED_VAR( stiffness );
+  GEOSX_ERROR( "smallStrainUpdate() not implemented for this model, please use smallStrainUpdate2" );
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
+                                              localIndex const q,
+                                              real64 const ( &strainIncrement )[6],
+                                              real64 ( & stress )[6],
+                                              DiscretizationOps & stiffness ) const
+{
+  smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
+                                                         localIndex const q,
+                                                         real64 const ( &strainIncrement )[6],
+                                                         real64 ( & stress )[6] ) const
+{
+  GEOSX_UNUSED_VAR( k );
+  GEOSX_UNUSED_VAR( q );
+  GEOSX_UNUSED_VAR( strainIncrement );
+  GEOSX_UNUSED_VAR( stress );
+  GEOSX_ERROR( "smallStrainUpdate_StressOnly() not implemented for this model, please use smallStrainUpdate2_StressOnly()" );
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void CeramicDamageUpdates::smallStrainUpdate2( localIndex const k,
+                                               localIndex const q,
+                                               real64 const dt,
+                                               real64 const ( &strainIncrement )[6],
+                                               real64 ( & stress )[6],
+                                               real64 ( & stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
   ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+  m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
   if( m_disableInelasticity )
   {
     return;
   }
 
-  // get principal stresses
-  real64 eigenValues[3] = {};
-  real64 eigenVectors[3][3] = {};
-  LvArray::tensorOps::symEigenvectors< 3 >( eigenValues, eigenVectors, stress );
-
-  // check for damage
-  real64 maxPrincipalStress = fmax( eigenValues[0], fmax( eigenValues[1], eigenValues[2] ) ); // TODO: Check if eigenvalues are returned in order
-  if( maxPrincipalStress > m_defaultFailureStress )
-  {
-    m_damage[k][q] = 1.0;
-  }
+  // call the constitutive model
+  CeramicDamageUpdates::smallStrainUpdateHelper( k, q, dt, stress );
 
   // It doesn't make sense to modify stiffness with this model
 
@@ -162,49 +273,186 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
-                                                localIndex const q,
-                                                real64 const ( &strainIncrement )[6],
-                                                real64 ( & stress )[6],
-                                                DiscretizationOps & stiffness ) const
+void CeramicDamageUpdates::smallStrainUpdate2( localIndex const k,
+                                               localIndex const q,
+                                               real64 const dt,
+                                               real64 const ( &strainIncrement )[6],
+                                               real64 ( & stress )[6],
+                                               DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
+  smallStrainUpdate2( k, q, dt, strainIncrement, stress, stiffness.m_c );
 }
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE // TODO: Is there a way to not have to re-write the constitutive model twice for regular and StressOnly?
-void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
-                                                           localIndex const q,
-                                                           real64 const ( &strainIncrement )[6],
-                                                           real64 ( & stress )[6] ) const
+GEOSX_FORCE_INLINE
+void CeramicDamageUpdates::smallStrainUpdate2_StressOnly( localIndex const k,
+                                                          localIndex const q,
+                                                          real64 const dt,
+                                                          real64 const ( &strainIncrement )[6],
+                                                          real64 ( & stress )[6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
   ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
   if( m_disableInelasticity )
   {
     return;
   }
 
-  // get principal stresses
-  real64 eigenValues[3] = {};
-  real64 eigenVectors[3][3] = {};
-  LvArray::tensorOps::symEigenvectors< 3 >( eigenValues, eigenVectors, stress );
-
-  // check for damage
-  real64 maxPrincipalStress = fmax( eigenValues[0], fmax( eigenValues[1], eigenValues[2] ) ); // TODO: Check if eigenvalues are returned in order
-  if( maxPrincipalStress > m_defaultFailureStress )
-  {
-    m_damage[k][q] = 1.0;
-  }
-
-  // TODO: construct consistent tangent stiffness? Not possible for spectral damage.
-  // We don't modify the stiffness for now...
+  // call the constitutive model
+  CeramicDamageUpdates::smallStrainUpdateHelper( k, q, dt, stress );
 
   // save new stress and return
   saveStress( k, q, stress );
   return;
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
+                                                    localIndex const q,
+                                                    real64 const dt,
+                                                    real64 ( & stress )[6] ) const
+{
+  // get failure time
+  real64 tFail = m_lengthScale[k] / m_crackSpeed;
+  
+  // get trial pressure
+  real64 trialPressure = -m_bulkModulus[k] * std::log( m_jacobian[k][q] );
+  real64 pressure = trialPressure;
+
+  // cohesion slope
+  real64 mu = 0.5773502691896258;
+
+  // Intermediate strength parameter
+  // real64 Yt0 = std::max( 0.5 * m_tensileStrength, std::min( 2.0 * m_tensileStrength, (3.0 * m_compressiveStrength * m_tensileStrength) / (2.0 * m_compressiveStrength + m_tensileStrength) ) );
+  real64 Yt0 = m_tensileStrength;
+  Yt0 = std::min( Yt0, ( 3.0 * m_compressiveStrength - m_compressiveStrength * mu ) / ( 3 + mu ) );
+
+
+  // Compute the vertex pressure (should be pmin0 < 0) for the undamaged yield surface.
+  real64 pmin0 = -( 2.0 * m_compressiveStrength * Yt0 ) / ( 3.0 * ( m_compressiveStrength - Yt0 ) );
+  pmin0 = std::min( pmin0, -1.0e-12 );
+  real64 pmin = ( 1.0 - m_damage[k][q] ) * pmin0;
+
+  // Enforce vertex solution
+  if( trialPressure < 0 )
+  {
+    pressure = trialPressure * ( 1.0 - m_damage[k][q] ); // Tensile cutoff pressure (negative value in tension), scaled by damage. Goes to 0 as damage -> 1.
+  }
+  if( pressure < pmin ) // TODO: pressure or trial pressure?
+  {
+    // Increment damage
+    m_damage[k][q] = std::min( m_damage[k][q] + dt / tFail, 1.0 );
+
+    // Pressure is on the vertex
+    pressure = ( 1.0 - m_damage[k][q] ) * pmin0;
+
+    // updated stress is isotropic, at the vertex:
+    stress[0] = -pressure;
+    stress[1] = -pressure;
+    stress[2] = -pressure;
+    stress[3] = 0.0;
+    stress[4] = 0.0;
+    stress[5] = 0.0;
+  }
+  else // Enforce strength solution
+  {
+    real64 meanStress;    // negative of pressure
+    real64 vonMises;      // von Mises stress
+    real64 deviator[6];   // direction of stress deviator
+    twoInvariant::stressDecomposition( stress,
+                                       meanStress,
+                                       vonMises,
+                                       deviator );
+    
+    real64 brittleDuctileTransitionPressure = m_maximumStrength / mu;
+    real64 J2 = vonMises * vonMises / 3.0;
+    real64 J3 = deviator[0] * deviator[1] * deviator[2] + 
+                2.0 * deviator[3] * deviator[4] * deviator[5] - 
+                deviator[0] * deviator[3] * deviator[3] -
+                deviator[1] * deviator[4] * deviator[4] -
+                deviator[2] * deviator[5] * deviator[5];
+
+    // Find the strength
+    real64 strength = CeramicDamageUpdates::getStrength( m_damage[k][q], pressure, J2, J3, mu, Yt0 );
+
+    // Increment damage and get new associated yield surface
+    real64 newDeviatorMagnitude = vonMises;
+    if( vonMises > strength && pressure <= brittleDuctileTransitionPressure )
+    {
+      m_damage[k][q] = std::min( m_damage[k][q] + dt / tFail, 1.0 );
+      newDeviatorMagnitude = CeramicDamageUpdates::getStrength( m_damage[k][q], pressure, J2, J3, mu, Yt0 );
+    }
+
+    // Radial return
+    twoInvariant::stressRecomposition( -pressure,
+                                       newDeviatorMagnitude,
+                                       deviator,
+                                       stress );
+  }
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
+                                          const real64 pressure,   // pressure
+                                          const real64 J2,         // J2 invariant of stress
+                                          const real64 J3,         // J3 invariant of stress
+                                          const real64 mu,         // friction slope
+                                          const real64 Yt0 ) const // strength parameter
+{
+  real64 f, dfdp;
+
+  auto ceramicY10 = [&]( const real64 p,   // pressure
+                         const real64 d,   // damage,
+                         const real64 mu,  // friction slope
+                         const real64 Yt0, // strength parameter
+                         real64 & f,       // OUTPUT: Yield surface
+                         real64 & dfdp )   // OUTPUT: Yield surface slope
+  { 
+    f = (((3.0 + d * (-3.0 + mu)) * m_compressiveStrength + (-3.0 + d * (3.0 + mu)) * Yt0) * (p - (2.0 * (d - 1.0) * m_compressiveStrength * Yt0) / (3.0 * (m_compressiveStrength - Yt0)))) / (m_compressiveStrength + Yt0);
+    dfdp = ((3.0 + d * (-3.0 + mu)) * m_compressiveStrength + (-3.0 + d * (3.0 + mu)) * Yt0) / (m_compressiveStrength + Yt0);
+  };
+
+  if( pressure < m_compressiveStrength / 3.0 )
+  {
+    ceramicY10( pressure, damage, mu, Yt0, f, dfdp );
+  }
+  else if( pressure < m_maximumStrength / mu )
+  {
+    real64 y1, m1;
+    real64 p1 = m_compressiveStrength / 3.0;
+    real64 p2 = m_maximumStrength / mu ;
+    real64 y2 = m_maximumStrength;
+    ceramicY10( p1, damage, mu, Yt0, y1, m1 );
+    real64 beta = (m1 * p1 - m1 * p2 - y1 + y2) / (y1 - y2);
+    f = -(((m1 * (p1 - p2) + m1 * std::pow((pressure - p2) / (p1 - p2), beta) * (-pressure + p2) + (m1 * (-p1 + p2) * y1) / (y1 - y2)) * (y1 - y2)) / (m1 * (p1 - p2)));
+    real64 xi = (pressure - p1) / (p2 - p1);
+    dfdp = m1 * ( 1.0 - 3.0 * xi * xi + 2.0 * xi * xi * xi );
+  }
+  else
+  {
+    f = m_maximumStrength;
+    dfdp = 0.0;
+  }
+  real64 oneOverGamma = 1.0;
+  real64 psi = std::min(2.0, std::max(0.5, 1.0 / (1.0 + dfdp / 3.0)));
+  if( J2 > 1.0e-12 )
+  {
+    real64 theta = (1.0 / 3.0) * asin(std::min(1.0, std::max(-1.0, -0.5 * J3 * std::pow(3.0 / J2, 1.5))));
+    real64 cosPi6plusTheta = cos(0.5235987755982989 + theta);
+    real64 num = 2.0 * (1.0 - psi * psi) * cosPi6plusTheta + (2.0 * psi - 1.0) * sqrt(std::max(0.0, -4.0 * psi + 5.0 * psi * psi + 4.0 * (1.0 - psi * psi) * cosPi6plusTheta * cosPi6plusTheta));
+    real64 denom = (2.0 * psi - 1.0) * (2.0 * psi - 1.0) + 4.0 * (1.0 - psi * psi) * cosPi6plusTheta * cosPi6plusTheta;
+    if( denom > 1.0e-12 )
+    {
+      oneOverGamma = num / denom;
+    }
+  }
+  oneOverGamma = 1.0; // DELETE ME!!
+  return oneOverGamma * f;
 }
 
 
@@ -239,8 +487,6 @@ public:
 
   virtual void saveConvergedState() const override;
 
-  arrayView2d< real64 const > getDamage() const { return m_damage; }
-
   /**
    * @name Static Factory Catalog members and functions
    */
@@ -263,11 +509,26 @@ public:
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
-    /// string/key for failure stress
-    static constexpr char const * defaultFailureStressString() { return "defaultFailureStress"; }
-
     /// string/key for quadrature point damage value
     static constexpr char const * damageString() { return "damage"; }
+
+    /// string/key for quadrature point jacobian value
+    static constexpr char const * jacobianString() { return "jacobian"; }
+
+    /// string/key for element/particle length scale
+    static constexpr char const * lengthScaleString() { return "lengthScale"; }
+    
+    /// string/key for tensile strength
+    static constexpr char const * tensileStrengthString() { return "tensileStrength"; }
+
+    /// string/key for compressive strength
+    static constexpr char const * compressiveStrengthString() { return "compressiveStrength"; }
+
+    /// string/key for maximum strength
+    static constexpr char const * maximumStrengthString() { return "maximumStrength"; }
+
+    /// string/key for crack speed
+    static constexpr char const * crackSpeedString() { return "crackSpeed"; }
   };
 
   /**
@@ -277,12 +538,17 @@ public:
   CeramicDamageUpdates createKernelUpdates() const
   {
     return CeramicDamageUpdates( m_damage,
-                                   m_defaultFailureStress,
-                                   m_bulkModulus,
-                                   m_shearModulus,
-                                   m_newStress,
-                                   m_oldStress,
-                                   m_disableInelasticity );
+                                 m_jacobian,
+                                 m_lengthScale,
+                                 m_tensileStrength,
+                                 m_compressiveStrength,
+                                 m_maximumStrength,
+                                 m_crackSpeed,
+                                 m_bulkModulus,
+                                 m_shearModulus,
+                                 m_newStress,
+                                 m_oldStress,
+                                 m_disableInelasticity );
   }
 
   /**
@@ -297,7 +563,12 @@ public:
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
                           m_damage,
-                          m_defaultFailureStress,
+                          m_jacobian,
+                          m_lengthScale,
+                          m_tensileStrength,
+                          m_compressiveStrength,
+                          m_maximumStrength,
+                          m_crackSpeed,
                           m_bulkModulus,
                           m_shearModulus,
                           m_newStress,
@@ -312,8 +583,23 @@ protected:
   /// State variable: The damage values for each quadrature point
   array2d< real64 > m_damage;
 
-  /// Material parameter: The default value of failure stress
-  real64 m_defaultFailureStress;
+  /// State variable: The jacobian of the deformation
+  array2d< real64 > m_jacobian;
+
+  /// Discretization-sized variable: The length scale for each element/particle
+  array1d< real64 > m_lengthScale;
+
+  /// Material parameter: The value of unconfined tensile strength
+  real64 m_tensileStrength;
+
+  /// Material parameter: The value of unconfined compressive strength
+  real64 m_compressiveStrength;
+
+  /// Material parameter: The value of maximum theoretical strength
+  real64 m_maximumStrength;
+
+  /// Material parameter: The value of crack speed
+  real64 m_crackSpeed;
 };
 
 } /* namespace constitutive */
