@@ -105,7 +105,18 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
+  /*
+   * @brief Utility function to update the stabilization parameters at each time step
+   * @param[in] domain the domain partition
+   */
   void updateStabilizationParameters( DomainPartition & domain ) const;
+
+  /*
+   * @brief Utility function to set the stress initialization flag
+   * @param[in] performStressInitialization true if the solver has to initialize stress, false otherwise
+   */
+  void setStressInitialization( integer const performStressInitialization )
+  { m_performStressInitialization = performStressInitialization; }
 
   /**@}*/
 
@@ -134,6 +145,10 @@ protected:
 
     /// Flag to determine whether or not this is aa thermal simulation
     constexpr static char const * isThermalString() { return "isThermal"; }
+
+    /// Flag to indicate that the solver is going to perform stress initialization
+    constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
+
   };
 
   virtual void initializePreSubGroups() override;
@@ -165,6 +180,8 @@ private:
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
 
+  /// Flag to indicate that the solver is going to perform stress initialization
+  integer m_performStressInitialization;
 };
 
 ENUM_STRINGS( MultiphasePoromechanicsSolver::StabilizationType,

@@ -110,12 +110,25 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
+  /*
+   * @brief Utility function to set the stress initialization flag
+   * @param[in] performStressInitialization true if the solver has to initialize stress, false otherwise
+   */
+  void setStressInitialization( integer const performStressInitialization )
+  { m_performStressInitialization = performStressInitialization; }
+
   /**@}*/
 
   struct viewKeyStruct : Base::viewKeyStruct
   {
+    /// Names of the porous materials
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
+
+    /// Flag to indicate that the simulation is thermal
     constexpr static char const * isThermalString() { return "isThermal"; }
+
+    /// Flag to indicate that the solver is going to perform stress initialization
+    constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
   };
 
 protected:
@@ -142,6 +155,8 @@ private:
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
 
+  /// Flag to indicate that the solver is going to perform stress initialization
+  integer m_performStressInitialization;
 };
 
 template< typename CONSTITUTIVE_BASE,
