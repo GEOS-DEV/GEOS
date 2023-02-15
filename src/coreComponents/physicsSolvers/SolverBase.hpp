@@ -594,6 +594,24 @@ public:
     static constexpr char const * solverStatisticsString() { return "SolverStatistics"; }
   };
 
+  /**
+   * @brief getter for the timestamp of the system setup
+   * @return the timestamp of the last time systemSetup was called
+   */
+  Timestamp getSystemSetupTimestamp() const { return m_systemSetupTimestamp; }
+
+  /**
+   * @brief getter for the timestamp of the mesh modification on the mesh levels
+   * @param[in] domain the domain partition (cannot be const because we use forDiscretizationsInMeshTargets inside the function)
+   * @return the timestamp of the last time at which one of the mesh levels was modified
+   */
+  Timestamp getMeshModificationTimestamp( DomainPartition & domain ) const;
+
+  /**
+   * @brief set the timestamp of the system setup
+   * @param[in] timestamp the new timestamp of system setup
+   */
+  void setSystemSetupTimestamp( Timestamp timestamp ) { m_systemSetupTimestamp = timestamp; }
 
   /**
    * @brief return the value of the gravity vector specified in PhysicsSolverManager
@@ -781,6 +799,9 @@ protected:
 
   /// Solver statistics
   SolverStatistics m_solverStatistics;
+
+  /// Timestamp of the last call to setup system
+  Timestamp m_systemSetupTimestamp;
 
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 

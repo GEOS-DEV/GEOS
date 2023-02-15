@@ -67,8 +67,7 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
   m_numComponents( 0 ),
   m_maxCompFracChange( 1.0 ),
   m_minScalingFactor( 0.01 ),
-  m_allowOBLChopping( 1 ),
-  m_systemSetupDone( false )
+  m_allowOBLChopping( 1 )
 {
   this->registerWrapper( viewKeyStruct::numComponentsString(), &m_numComponents ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -589,34 +588,6 @@ void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGr
     } );
   } );
 }
-
-
-real64 ReactiveCompositionalMultiphaseOBL::solverStep( real64 const & time_n,
-                                                       real64 const & dt,
-                                                       integer const cycleNumber,
-                                                       DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-
-  // Only build the sparsity pattern once
-  // TODO: this should be triggered by a topology change indicator
-  if( !m_systemSetupDone )
-  {
-    setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-    m_systemSetupDone = true;
-  }
-
-  implicitStepSetup( time_n, dt, domain );
-
-  // currently the only method is implicit time integration
-  real64 const dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
-  implicitStepComplete( time_n, dt_return, domain );
-
-  return dt_return;
-}
-
 
 void
 ReactiveCompositionalMultiphaseOBL::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),

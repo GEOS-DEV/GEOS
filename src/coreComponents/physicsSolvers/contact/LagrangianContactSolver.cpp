@@ -539,14 +539,26 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
     meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
   } );
 
+  dofManager.addField( solidMechanics::totalDisplacement::key(),
+                       FieldLocation::Node,
+                       3,
+                       meshTargets );
+
+  dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
+                          solidMechanics::totalDisplacement::key(),
+                          DofManager::Connector::Elem,
+                          meshTargets );
+
   dofManager.addField( contact::traction::key(),
                        FieldLocation::Elem,
                        3,
                        meshTargets );
+
   dofManager.addCoupling( contact::traction::key(),
                           contact::traction::key(),
                           DofManager::Connector::Face,
                           meshTargets );
+
   dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
                           contact::traction::key(),
                           DofManager::Connector::Elem,

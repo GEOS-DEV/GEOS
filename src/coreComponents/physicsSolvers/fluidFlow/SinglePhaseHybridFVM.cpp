@@ -308,7 +308,10 @@ void SinglePhaseHybridFVM::applyBoundaryConditions( real64 const time_n,
   GEOSX_MARK_FUNCTION;
 
   SinglePhaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
+  if( !m_keepFlowVariablesConstantDuringInitStep )
+  {
+    applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
+  }
 }
 
 namespace

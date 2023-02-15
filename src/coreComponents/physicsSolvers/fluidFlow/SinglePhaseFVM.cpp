@@ -537,7 +537,10 @@ SinglePhaseFVM< BASE >::applyBoundaryConditions( real64 const time_n,
   GEOSX_MARK_FUNCTION;
 
   BASE::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
+  if( !BASE::m_keepFlowVariablesConstantDuringInitStep )
+  {
+    applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
+  }
 }
 
 namespace
