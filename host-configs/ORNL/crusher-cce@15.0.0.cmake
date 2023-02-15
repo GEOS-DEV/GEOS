@@ -16,7 +16,7 @@ set( SUITESPARSE_DIR "${GEOSX_TPL_DIR}/suite-sparse" CACHE PATH "" )
 # HYPRE options
 set( ENABLE_HYPRE_DEVICE "HIP" CACHE STRING "" )
 if( ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
-  set( HYPRE_DIR "/ccs/home/victorapm/projects/hypre-master/install-gpu" CACHE PATH "" ) # victor's build
+  set( HYPRE_DIR "/gpfs/alpine/geo127/world-shared/hypre/hypre_v2.27.0-201-g6ad0909ec_cce-15.0.0_rocm-5.4.0_mixint_umpire-2022.3.0_caliper_rel" CACHE PATH "" )
 else()
   set( HYPRE_DIR "${GEOSX_TPL_DIR}/hypre" CACHE PATH "" )
 endif()

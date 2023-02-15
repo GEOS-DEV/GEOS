@@ -54,6 +54,7 @@ void ChomboCoupler::write( double dt )
 
   localIndex const n_faces = face_connectivity.size();
 
+  GEOSX_LOG_RANK_0( "Gathering face connectivity." );
   /* Copy the face connectivity into a contiguous array. */
   std::int64_t * connectivity_array = new std::int64_t[4 * n_faces];
   for( localIndex i = 0; i < n_faces; ++i )
@@ -78,6 +79,7 @@ void ChomboCoupler::write( double dt )
     }
   } );
 
+  GEOSX_LOG_RANK_0( "Constructing face mask." );
   bool * faceMask = new bool[n_faces];
   for( localIndex i = 0; i < n_faces; ++i )
   {
@@ -93,6 +95,7 @@ void ChomboCoupler::write( double dt )
   real64 const * pressure_ptr = faces.getReference< real64_array >( "ChomboPressure" ).data();
   face_fields["Pressure"] = std::make_tuple( H5T_NATIVE_DOUBLE, 1, pressure_ptr );
 
+  GEOSX_LOG_RANK_0( "Copying nodal data." );
   /* Build the node FieldMap. */
   copyNodalData();
 
@@ -101,10 +104,12 @@ void ChomboCoupler::write( double dt )
   node_fields["displacement"] = std::make_tuple( H5T_NATIVE_DOUBLE, 3, m_displacementCopy.data() );
   node_fields["velocity"] = std::make_tuple( H5T_NATIVE_DOUBLE, 3, m_velocityCopy.data() );
 
+  GEOSX_LOG_RANK_0( "Writing file: " << m_outputPath );
   writeBoundaryFile( m_comm, m_outputPath.data(), dt, faceMask,
                      m_face_offset, m_n_faces_written, n_faces, connectivity_array, face_fields,
                      m_node_offset, m_n_nodes_written, m_referencePositionCopy.size( 0 ), node_fields );
 
+  GEOSX_LOG_RANK_0( "File writing complete." );
   delete[] connectivity_array;
   delete[] faceMask;
 }
