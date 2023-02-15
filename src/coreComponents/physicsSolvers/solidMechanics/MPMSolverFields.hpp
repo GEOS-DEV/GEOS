@@ -72,6 +72,14 @@ DECLARE_FIELD( particleDeformationGradient,
                WRITE_AND_READ,
                "ParticleDeformationGradient" );
 
+DECLARE_FIELD( particleFDot,
+               "particleFDot",
+               array3d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "Material time derivative of the particle deformation gradient." );    
+
 DECLARE_FIELD( particleVelocityGradient,
                "particleVelocityGradient",
                array3d< real64 >,
@@ -111,7 +119,7 @@ DECLARE_FIELD( particleDamageGradient,
                0,
                LEVEL_1,
                WRITE_AND_READ,
-               "An array that holds particle damage gradients as calculated with an SPH kernel." );           
+               "An array that holds particle damage gradients as calculated with an SPH kernel." );    
 
 DECLARE_FIELD( particleSurfaceFlag,
                "particleSurfaceFlag",

@@ -33,7 +33,6 @@ namespace solidMechanicsMPMKernels
  */
 struct StateUpdateKernel
 {
-
   /**
    * @brief Launch the kernel function doing fracture traction updates
    * @tparam POLICY the type of policy used in the kernel launch
@@ -49,6 +48,7 @@ struct StateUpdateKernel
                       CONSTITUTIVE_WRAPPER const & constitutiveWrapper,
                       real64 dt,
                       arrayView3d< real64 > const & deformationGradient,
+                      arrayView3d< real64 > const & fDot,
                       arrayView3d< real64 const > const & velocityGradient,
                       arrayView2d< real64 > const & particleStress )
   {
@@ -66,23 +66,22 @@ struct StateUpdateKernel
       strainIncrement[4] = 0.5 * (velocityGradient[p][0][2] + velocityGradient[p][2][0]) * dt;
       strainIncrement[5] = 0.5 * (velocityGradient[p][0][1] + velocityGradient[p][1][0]) * dt;
 
-      // Perform F update
-      real64 FOld[3][3] = { {0} };
-      real64 FDot[3][3] = { {0} };
-      LvArray::tensorOps::copy< 3, 3 >( FOld, deformationGradient[p] );
-      LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( FDot, velocityGradient[p], FOld );
-      LvArray::tensorOps::scaledAdd< 3, 3 >( deformationGradient[p], FDot, dt );
+      // Get old F by incrementing backwards
+      real64 fOld[3][3] = { {0} };
+      LvArray::tensorOps::copy< 3, 3 >( fOld, deformationGradient[p] );
+      LvArray::tensorOps::scaledAdd< 3, 3 >( fOld, fDot[p], -dt );
 
       // Polar decompositions
       real64 rotBeginning[3][3] = { {0} };
       real64 rotEnd[3][3] = { {0} };
-      LvArray::tensorOps::polarDecomposition< 3 >( rotBeginning, FOld );
+      LvArray::tensorOps::polarDecomposition< 3 >( rotBeginning, fOld );
       LvArray::tensorOps::polarDecomposition< 3 >( rotEnd, deformationGradient[p] );
       
       // Call stress update
       real64 stress[6] = { 0 };
       constitutiveWrapper.hypoUpdate2_StressOnly( p,                        // particle local index
                                                   0,                        // particles have 1 quadrature point
+                                                  dt,                       // time step size
                                                   strainIncrement,          // particle strain increment
                                                   rotBeginning,             // beginning-of-step rotation matrix
                                                   rotEnd,                   // end-of-step rotation matrix
