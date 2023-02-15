@@ -40,8 +40,11 @@
     <VTKMesh
       name="mesh"
       logLevel="5"
+      partitionMethod="ptscotch"
       scale="{ 50, 50, 50 }"
-      file="../singlePhaseFlow/pebi3d.vtu"/>
+      fieldsToImport="{ PORO, NTG, DENSITY, BULKMOD }"
+      fieldNamesInGEOSX="{ rockPorosity_referencePorosity, netToGross, skeleton_density, skeleton_bulkModulus }"
+      file="../singlePhaseFlow/pebi3d_with_properties.vtu"/>
 
   </Mesh>
 
@@ -278,7 +281,8 @@
 
   <Outputs>
     <VTK
-      name="vtkOutput"/>
+      name="vtkOutput"
+      fieldNames="{ skeleton_density, skeleton_bulkModulus }"/>
     <Restart
       name="restartOutput"/>
   </Outputs>

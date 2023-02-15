@@ -133,7 +133,6 @@ GEOSX_FORCE_INLINE
 void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 smallStrainUpdate( localIndex const k,
                    localIndex const q,
-                   real64 const ( &strainIncrement )[6],
                    StackVariables & stack ) const
 {
   real64 porosity = 0.0;
@@ -147,9 +146,9 @@ smallStrainUpdate( localIndex const k,
   m_constitutiveUpdate.smallStrainUpdatePoromechanics( k, q,
                                                        m_pressure_n[k],
                                                        m_pressure[k],
-                                                       stack.deltaTemperatureFromInit,
+                                                       stack.temperature,
                                                        stack.deltaTemperatureFromLastStep,
-                                                       strainIncrement,
+                                                       stack.strainIncrement,
                                                        stack.totalStress,
                                                        stack.dTotalStress_dPressure,
                                                        stack.dTotalStress_dTemperature,
@@ -624,13 +623,12 @@ quadraturePointKernel( localIndex const k,
                                                                            stack.feStack, dNdX );
 
   // Step 2: compute strain increment
-  real64 strainIncrement[6]{};
-  FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
+  FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, stack.strainIncrement );
 
   // Step 3: compute 1) the total stress, 2) the body force terms, and 3) the fluidMassIncrement
   // using quantities returned by the PorousSolid constitutive model.
   // This function also computes the derivatives of these three quantities wrt primary variables
-  smallStrainUpdate( k, q, strainIncrement, stack );
+  smallStrainUpdate( k, q, stack );
 
   // Step 4: use the total stress and the body force to increment the local momentum balance residual
   // This function also fills the local Jacobian rows corresponding to the momentum balance.
@@ -675,6 +673,8 @@ complete( localIndex const k,
     for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[numDofPerTestSupportPoint * localNode + dim] - m_dofRankOffset );
+
+      // we need this check to filter out ghost nodes in the assembly
       if( dof < 0 || dof >= m_matrix.numRows() )
       {
         continue;
@@ -700,6 +700,8 @@ complete( localIndex const k,
   }
 
   localIndex const dof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex - m_dofRankOffset );
+
+  // we need this check to filter out ghost cells in the assembly
   if( 0 <= dof && dof < m_matrix.numRows() )
   {
     for( localIndex i = 0; i < m_numComponents; ++i )
