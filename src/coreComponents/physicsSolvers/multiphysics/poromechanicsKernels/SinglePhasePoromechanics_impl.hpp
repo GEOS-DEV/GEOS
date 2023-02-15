@@ -376,6 +376,7 @@ quadraturePointKernel( localIndex const k,
                                                                            stack.feStack, dNdX );
 
   // Step 2: compute strain increment
+  LvArray::tensorOps::fill< 6 >( stack.strainIncrement, 0.0 );
   FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, stack.strainIncrement );
 
   // Step 3: compute 1) the total stress, 2) the body force terms, and 3) the fluidMassIncrement
