@@ -21,7 +21,6 @@
 #include "mesh/generators/VTKFaceBlockUtilities.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
-#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
@@ -124,17 +123,9 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, comm );
 }
 
-void VTKMeshGenerator::importFields( DomainPartition & domain ) const
+void VTKMeshGenerator::importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, WrapperBase & wrapper ) const
 {
-  // GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': importing field data from mesh dataset", catalogName(), getName() ) );
   GEOSX_ASSERT_MSG( m_vtkMesh, "Must call generateMesh() before importFields()" );
-
-  // TODO Having CellElementSubRegion and ConstitutiveBase... here in a pure geometric module is problematic.
-  ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getBaseDiscretization().getElemManager();
-
-  std::vector< vtkDataArray * > const srcArrays = vtk::findArraysForImport( *m_vtkMesh, m_fieldsToImport );
-
-  FieldIdentifiers fieldsToBeSync;
 
   for( auto const & typeRegions : m_cellMap )
   {
@@ -143,22 +134,25 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
     {
       for( auto const & regionCells: typeRegions.second )
       {
-        importFieldOnCellElementSubRegion( getLogLevel(),
-                                           regionCells.first,
-                                           typeRegions.first,
-                                           regionCells.second,
-                                           elemManager,
-                                           m_fieldNamesInGEOSX,
-                                           srcArrays,
-                                           fieldsToBeSync );
+        string const currentCellBlockName = vtk::buildCellBlockName( typeRegions.first, regionCells.first );
+        // We don't know how the user mapped cell blocks to regions, so we must check all of them
+        if( cellBlockName != currentCellBlockName )
+          continue;
+
+        vtkDataArray * vtkArray = vtk::findArrayForImport( *m_vtkMesh, meshFieldName );
+        if( isMaterialField )
+        {
+          return vtk::importMaterialField( regionCells.second, vtkArray, wrapper );
+        }
+        else
+        {
+          return vtk::importRegularField( regionCells.second, vtkArray, wrapper );
+        }
       }
     }
   }
 
-  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                       domain.getMeshBody( this->getName() ).getBaseDiscretization(),
-                                                       domain.getNeighbors(),
-                                                       false );
+  GEOSX_ERROR( "Could not import field \"" << meshFieldName << "\" from cell block \"" << cellBlockName << "\"." );
 }
 
 void VTKMeshGenerator::freeResources()

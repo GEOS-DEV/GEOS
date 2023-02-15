@@ -37,11 +37,6 @@ public:
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override;
 
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             int const cycleNumber,
-                             DomainPartition & domain ) override;
-
   virtual real64
   explicitStep( real64 const & time_n,
                 real64 const & dt,
@@ -66,6 +61,8 @@ public:
 
   void setSolidSolverDofFlags( bool const flag ) { m_setupSolidSolverDofs = flag; }
 
+  void synchronizeFractureState( DomainPartition & domain ) const;
+
 protected:
 
   virtual void postProcessInput() override;
@@ -84,8 +81,6 @@ protected:
            || ( state0 == fields::contact::FractureState::NewSlip && state1 == fields::contact::FractureState::Slip )
            || ( state0 == fields::contact::FractureState::Slip && state1 == fields::contact::FractureState::NewSlip );
   }
-
-  void synchronizeFractureState( DomainPartition & domain ) const;
 
   /// Solid mechanics solver name
   string m_solidSolverName;

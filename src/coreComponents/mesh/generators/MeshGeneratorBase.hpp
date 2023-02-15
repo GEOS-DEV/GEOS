@@ -20,6 +20,7 @@
 #define GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
 #include "dataRepository/Group.hpp"
+#include "dataRepository/WrapperBase.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 
@@ -78,13 +79,13 @@ public:
   virtual void generateMesh( DomainPartition & domain ) = 0;
 
   /**
-   * @brief Import data from external sources (e.g. dataset that comes with a mesh).
-   * @param[in] domain the domain partition
+   * @brief import fields from the mesh  on the array accessible via the given wrapper.
+   * @param cellBlockName name of the cell block to copy data from.
+   * @param meshFieldName name of the field in the meshd
+   * @param isMaterialField Indicate if we want to import material or regular fields
+   * @param wrapper Wrapper to access the array
    */
-  virtual void importFields( DomainPartition & domain ) const
-  {
-    GEOSX_UNUSED_VAR( domain );
-  }
+  virtual void importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const = 0;
 
   /**
    * @brief Free internal resources associated with mesh/data import.
@@ -93,8 +94,17 @@ public:
    * Once this method is called, they can release any memory allocated.
    */
   virtual void freeResources() {}
-};
 
+  /**
+   * @brief Get the name mapping between mesh field names and Internal GEOSX field names.
+   * @return The string to string mapping of field names.
+   */
+  std::map< string, string > getFieldsMapping() const { return m_fieldsMapping; }
+
+protected:
+  /// Mesh to GEOSX field names mapping
+  std::map< string, string > m_fieldsMapping;
+};
 }
 
 #endif /* GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP */
