@@ -54,7 +54,7 @@ with :math:`\alpha_{n}` denoting the positive roots of the following equation:
 .. math::
    \text{tan} \alpha_{n} = \frac{1- \nu}{\nu_{u}-\nu} \alpha_{n}
 
-Upon sudden application of the verical load, the instantaneous overpressure (:math:`p_0(x,z)`) and settlement (:math:`u_{z,0}(x,z)` and :math:`u_{x,0}(x,z)`) across the sample are derived from the Skempton effect:
+Upon sudden application of the vertical load, the instantaneous overpressure (:math:`p_0(x,z)`) and settlement (:math:`u_{z,0}(x,z)` and :math:`u_{x,0}(x,z)`) across the sample are derived from the Skempton effect:
             
 .. math::
    p_0(x,z) = \frac{1}{3a} B \left( 1 + \nu_{u} \right) F
@@ -142,7 +142,7 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
 
 
 The two single-physics solvers are parameterized as explained
-in their corresponding documentataion pages. 
+in their corresponding documentation pages. 
 We focus on the coupling solver in this example.
 The solver ``poroSolve`` uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
 For instance, we must point this solver to the designated fluid solver (here: ``SinglePhaseFlow``) and solid solver (here: ``lagsolve``).
