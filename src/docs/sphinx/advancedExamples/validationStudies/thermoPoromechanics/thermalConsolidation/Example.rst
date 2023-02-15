@@ -55,7 +55,7 @@ As demonstrated in this example, to setup a thermoporomechanical coupling, we ne
 
 - the mechanics solver, a solver of type ``SolidMechanicsLagrangianSSLE`` called here ``solidMechSolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`),
 
-.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/PoroElastic_Mandel_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_base.xml
   :language: xml
   :start-after: <!-- SPHINX_MECHANICALSOLVER -->
   :end-before: <!-- SPHINX_MECHANICALSOLVER_END -->
@@ -191,15 +191,15 @@ We request an output of the displacements, pressure, and temperature using the *
 The figures below compare the results from GEOSX (dashed line) and the corresponding analytical solution (solid line) as a function of time at different locations of the slab.
 We obtain a very good match, confirming that GEOSX can accurately capture the thermo-poromechanical coupling on this example. The first figure illustrates this good agreement for the pressure evolution. 
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/faultMechanics/thermalConsolidation/thermalConsolidationPressureFigure.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/thermalConsolidation/thermalConsolidationPressureFigure.py
 
 The second figure confirms the good match with the analytical solution for the temperature.
 	  
-.. plot:: docs/sphinx/advancedExamples/validationStudies/faultMechanics/thermalConsolidation/thermalConsolidationTemperatureFigure.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/thermalConsolidation/thermalConsolidationTemperatureFigure.py
 
 The third figure shows that GEOSX is also able to match the vertical displacement (settlement) analytical solution.  
 	  
-.. plot:: docs/sphinx/advancedExamples/validationStudies/faultMechanics/thermalConsolidation/thermalConsolidationDisplacementFigure.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/thermalConsolidation/thermalConsolidationDisplacementFigure.py
 
 ------------------------------------------------------------------
 To go further

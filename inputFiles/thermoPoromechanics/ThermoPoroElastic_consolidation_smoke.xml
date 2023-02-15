@@ -103,6 +103,11 @@
       forceDt="1000"
       target="/Solvers/thermoPoroSolver"/>
 
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="5e4"
+      target="/Outputs/restartOutput"/>
+    
   </Events>
 
 </Problem>
