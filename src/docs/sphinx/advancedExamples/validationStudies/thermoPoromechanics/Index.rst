@@ -1,7 +1,7 @@
 .. _ValidationStudiesThermoPoromechanics:
 
 
-Thermo-poromechanics
+Thermoporomechanics
 ===================================
 
 .. toctree::
