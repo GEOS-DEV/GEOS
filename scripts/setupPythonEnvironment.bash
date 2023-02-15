@@ -80,6 +80,24 @@ then
 fi
 
 
+# Check to make sure that the python target exists
+echo "Checking the python target..."
+if [ ! -f "$PYTHON_TARGET" ]
+then
+    echo "The target python executable ($PYTHON_TARGET) cannot be found"
+
+    if [[ "$PYTHON_TARGET" == *"PYGEOSX"* ]]
+    then
+        echo "If GEOSX is configured to use pygeosx, you may need to run \"make pygeosx\""
+        echo "before setting up the geosx_python_tools!"
+    else
+        echo "Note: if you use the \"-m\" argument, this script will try to build a version of miniconda"
+        echo "that can support the target tools"
+    fi
+    exit 1
+fi
+
+
 # If a virtual environment is not explicitly requested,
 # try installing packages directly
 if ! $INSTALL_VIRTUAL
@@ -156,8 +174,6 @@ then
         if [ -f "$MOD_PATH/$p" ]
         then
             pp="$MOD_PATH/$p"
-        else
-            pp="$(which $p)"
         fi
 
         if [ -z "$pp" ]
@@ -169,8 +185,13 @@ then
         fi
     done
 
-    ln -s $SCRIPT_DIR/automatic_xml_preprocess.sh $BIN_DIR/geosx_preprocessed
-    ln -s $SCRIPT_DIR/pygeosx_preprocess.py $BIN_DIR/pygeosx_preprocess.py
+    # Link additional tools from the scripts directory
+    echo "Linking additional scripts to the bin directory..."
+    if [ ! -f "$BIN_DIR/geosx_preprocessed" ]
+    then
+        ln -s $SCRIPT_DIR/automatic_xml_preprocess.sh $BIN_DIR/geosx_preprocessed
+        ln -s $SCRIPT_DIR/pygeosx_preprocess.py $BIN_DIR/pygeosx_preprocess.py
+    fi
 fi
 
 echo "Done!"
