@@ -28,7 +28,7 @@ from vtk.util.numpy_support import (
 
 from . import vtk_utils
 from .vtk_utils import vtk_iter
-from .vtk_polyhedron import build_cell_graph, FaceStream
+from .vtk_polyhedron import build_face_to_face_connectivity_through_edges, FaceStream
 
 @dataclass(frozen=True)
 class Options:
@@ -46,18 +46,24 @@ MESH = None  # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's
 
 class IsPolyhedronConvertible:
     def __init__(self):
-        def build_prism_graph(n: int, name: str):
+        def build_prism_graph(n: int, name: str) -> networkx.Graph:
+            """
+            Builds the face to face connectivities (through edges) for prism graphs.
+            :param n: The number of nodes of the basis (i.e. the pentagonal prims gets n = 5)
+            :param name: A human-readable name for logging purpose.
+            :return: A graph instance.
+            """
             tmp = networkx.cycle_graph(n)
             for node in range(n):
                 tmp.add_edge(node, n)
                 tmp.add_edge(node, n + 1)
             tmp.name = name
             return tmp
-        # building the reference graphs
+        # Building the reference graphs
         tet_graph = networkx.complete_graph(4)
         tet_graph.name = "Tetrahedron"
         pyr_graph = build_prism_graph(4, "Pyramid")
-        pyr_graph.remove_node(5)  # also removes the associated edges.
+        pyr_graph.remove_node(5)  # Removing a node also removes its associated edges.
         self.__reference_graphs = {
             4: (tet_graph,),
             5: (pyr_graph, build_prism_graph(3, "Wedge")),
@@ -78,13 +84,13 @@ class IsPolyhedronConvertible:
         :param face_stream: The polyhedron.
         :return: The name of the supported type or an empty string.
         """
-        cell_graph = build_cell_graph(face_stream, add_compatibility=True)
+        cell_graph = build_face_to_face_connectivity_through_edges(face_stream, add_compatibility=True)
         for reference_graph in self.__reference_graphs[cell_graph.order()]:
             if networkx.is_isomorphic(reference_graph, cell_graph):
                 return str(reference_graph.name)
         return ""
 
-    def __call__(self, ic) -> int:
+    def __call__(self, ic: int) -> int:
         """
         Checks if a vtk polyhedron cell can be converted into a supported GEOSX element.
         :param ic: The index element.
@@ -128,10 +134,9 @@ def __check(mesh, options: Options) -> Result:
     MESH = mesh
     num_cells = mesh.GetNumberOfCells()
     result = numpy.ones(num_cells, dtype=int) * -1
-    f = IsPolyhedronConvertible()
     with multiprocessing.Pool(processes=options.num_proc) as pool:
-        generator = pool.imap_unordered(f, range(num_cells), chunksize=options.chunk_size)
-        for i, val in enumerate(tqdm(generator, total=num_cells)):
+        generator = pool.imap_unordered(IsPolyhedronConvertible(), range(num_cells), chunksize=options.chunk_size)
+        for i, val in enumerate(tqdm(generator, total=num_cells, desc="Testing support for elements")):
             result[i] = val
     unsupported_polyhedron_elements = [i for i in result if i > -1]
     return Result(unsupported_std_elements_types=unsupported_std_elements_types,

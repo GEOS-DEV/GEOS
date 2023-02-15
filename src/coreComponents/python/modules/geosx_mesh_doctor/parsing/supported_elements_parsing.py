@@ -43,5 +43,9 @@ def display_results(options: Options, result: Result):
     if result.unsupported_polyhedron_elements:
         logging.error(f"There is/are {len(result.unsupported_polyhedron_elements)} polyhedra that may not be converted to supported elements.")
         logging.error(f"The list of the unsupported polyhedra is\n{tuple(sorted(result.unsupported_polyhedron_elements))}.")
+    else:
+        logging.info("All the polyhedra (if any) can be converted to supported elements.")
     if result.unsupported_std_elements_types:
-        logging.error(f"The list of the unsupported types is {tuple(sorted(result.unsupported_std_elements_types))}.")
+        logging.error(f"There are unsupported vtk standard element types. The list of those vtk types is {tuple(sorted(result.unsupported_std_elements_types))}.")
+    else:
+        logging.info("All the standard vtk element types (if any) are supported.")

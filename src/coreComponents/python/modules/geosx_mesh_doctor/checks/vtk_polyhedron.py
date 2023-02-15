@@ -141,7 +141,7 @@ class FaceStream:
         return ",\n".join(result)
 
 
-def build_cell_graph(face_stream: FaceStream, add_compatibility=False) -> networkx.Graph:
+def build_face_to_face_connectivity_through_edges(face_stream: FaceStream, add_compatibility=False) -> networkx.Graph:
     """
     Given a face stream/polyhedron, builds the connections between the faces.
     Those connections happen when two faces share an edge.
@@ -190,7 +190,7 @@ def build_cell_graph(face_stream: FaceStream, add_compatibility=False) -> networ
         node_0, node_1 = edge
         order_0 = 1 if face_nodes_0[face_nodes_0.index(node_0) + 1] == node_1 else -1
         order_1 = 1 if face_nodes_1[face_nodes_1.index(node_0) + 1] == node_1 else -1
-        # Same order of nodes means that the normals of the faces or not both (in|out)ward.
+        # Same order of nodes means that the normals of the faces are not both in the same "direction" (inward or outward).
         if order_0 * order_1 == 1:
             if add_compatibility:
                 graph.add_edge(face_index_0, face_index_1, compatible="-")

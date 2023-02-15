@@ -28,7 +28,7 @@ from .vtk_utils import (
 
 from .vtk_polyhedron import (
     FaceStream,
-    build_cell_graph,
+    build_face_to_face_connectivity_through_edges,
 )
 
 
@@ -114,7 +114,7 @@ def __reorient_element(mesh_points: vtkPoints, face_stream_ids: vtkIdList) -> vt
     :return: The raw vtk face stream with faces properly flipped.
     """
     face_stream = FaceStream.build_from_vtk_id_list(face_stream_ids)
-    face_graph = build_cell_graph(face_stream, add_compatibility=True)
+    face_graph = build_face_to_face_connectivity_through_edges(face_stream, add_compatibility=True)
     # Removing the non-compatible connections to build the non-connected components.
     g = networkx.Graph()
     g.add_nodes_from(face_graph.nodes)

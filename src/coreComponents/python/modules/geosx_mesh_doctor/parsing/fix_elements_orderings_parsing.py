@@ -18,12 +18,14 @@ from checks.fix_elements_orderings import Options, Result
 from . import cli_parsing, vtk_output_parsing, FIX_ELEMENTS_ORDERINGS
 
 
+__TETRAHEDRON_NAME = "Tetrahedron"
+
 __CELL_TYPE_MAPPING = {
     "Hexahedron": VTK_HEXAHEDRON,
     "Prism5": VTK_PENTAGONAL_PRISM,
     "Prism6": VTK_HEXAGONAL_PRISM,
     "Pyramid": VTK_PYRAMID,
-    "Tetrahedron": VTK_TETRA,
+    __TETRAHEDRON_NAME: VTK_TETRA,
     "Voxel": VTK_VOXEL,
     "Wedge": VTK_WEDGE,
 }
@@ -39,6 +41,7 @@ def get_help():
     Reorders the support nodes for the given cell types.
     
     Supported cell types are '{", ".join(__CELL_TYPE_MAPPING.keys())}'.
+    For example, use the '{__TETRAHEDRON_NAME}=1,2,3,0' option to change the orders of all the tetrahedra of the input mesh.
     {vtk_output_parsing.get_vtk_output_help()}
     """
     return textwrap.dedent(msg)
@@ -66,7 +69,10 @@ def parse_cli_options(options_str: str) -> Options:
         raw_mapping = options.get(key)
         if raw_mapping:
             tmp = tuple(map(int, raw_mapping.split(",")))
-            assert set(tmp) == set(range(cell_type_support_size[vtk_key]))
+            if not set(tmp) == set(range(cell_type_support_size[vtk_key])):
+                err_msg = f"Permutation {raw_mapping} for type {key} is not valid."
+                logging.error(err_msg)
+                raise ValueError(err_msg)
             cell_type_to_ordering[vtk_key] = tmp
     vtk_output = vtk_output_parsing.parse_cli_options(options)
     return Options(vtk_output=vtk_output,

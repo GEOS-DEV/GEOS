@@ -67,7 +67,7 @@ def distance_between_two_segments(x0: numpy.array, d0: numpy.array,
     return sol_0, sol_1
 
 
-def __check_node_to_face(tri_0, edges_0, tri_1) -> Tuple[Union[float, None], Union[numpy.array, None], Union[numpy.array, None], bool]:
+def __compute_nodes_to_triangle_distance(tri_0, edges_0, tri_1) -> Tuple[Union[float, None], Union[numpy.array, None], Union[numpy.array, None], bool]:
     """
     Computes the distance from nodes of `tri_1` points onto `tri_0`.
     :param tri_0: First triangle.
@@ -168,12 +168,12 @@ def distance_between_two_triangles(tri_0: numpy.array,
                 are_disjoint = True
     # No edge pair contained the closest points.
     # Checking the node/face situation.
-    distance, sol_0, sol_1, are_disjoint_tmp = __check_node_to_face(tri_0, edges_0, tri_1)
+    distance, sol_0, sol_1, are_disjoint_tmp = __compute_nodes_to_triangle_distance(tri_0, edges_0, tri_1)
     if distance:
         return distance, sol_0, sol_1
     are_disjoint = are_disjoint or are_disjoint_tmp
 
-    distance, sol_0, sol_1, are_disjoint_tmp = __check_node_to_face(tri_1, edges_1, tri_0)
+    distance, sol_0, sol_1, are_disjoint_tmp = __compute_nodes_to_triangle_distance(tri_1, edges_1, tri_0)
     if distance:
         return distance, sol_0, sol_1
     are_disjoint = are_disjoint or are_disjoint_tmp
