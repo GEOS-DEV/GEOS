@@ -87,26 +87,27 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
                                                                                                localIndex const q,
                                                                                                StackVariables & stack ) const
 {
-//#define USE_JACOBIAN
+#define USE_JACOBIAN
 #if !defined( USE_JACOBIAN )
   real64 dNdX[ numNodesPerElem ][ 3 ];
   real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal, dNdX );
 
-  /// Macro to substitute in the shape function derivatives.
   real64 strain[6] = {0};
   FE_TYPE::symmetricGradient( dNdX, stack.varLocal, strain );
 
   real64 stressLocal[ 6 ] = {0};
   m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
+
   #pragma unroll
   for( localIndex c = 0; c < 6; ++c )
   {
     stressLocal[ c ] *= -detJ;
   }
+
   FE_TYPE::plusGradNajAij( dNdX, stressLocal, stack.fLocal );
   
 #else //defined( USE_JACOBIAN )
-  real64 invJ[3][3];
+  real64 invJ[3][3] = {{0}};
   real64 const detJ = FE_TYPE::invJacobianTransformation( q, stack.xLocal, invJ );
 
   real64 strain[6] = {0};
@@ -114,13 +115,16 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 
   real64 stressLocal[ 6 ] = {0};
   m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
+
   for( localIndex c = 0; c < 6; ++c )
   {
-    stressLocal[ c ] *= detJ;
+    stressLocal[ c ] *= -detJ;
   }
+
   FE_TYPE::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
 #endif // !defined( USE_JACOBIAN )
 }
+#undef USE_JACOBIAN
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
@@ -191,6 +195,8 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
                                                                                                real64 const (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                                                                                                real64 (&fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
 {
+#define USE_JACOBIAN 2
+#if !defined(USE_JACOBIAN)
   real64 dNdX[ numNodesPerElem ][ 3 ];
   real64 const detJ = FE_TYPE::calcGradN( qa, qb, qc, xLocal, dNdX );
 
@@ -206,9 +212,129 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
     stressLocal[ c ] *= -detJ;
   }
   FE_TYPE::plusGradNajAij( dNdX, stressLocal, fLocal );
+#elif USE_JACOBIAN==1
+  real64 invJ[3][3] = {{0}};
+  real64 const detJ = FE_TYPE::invJacobianTransformation( qa, qb, qc, xLocal, invJ );
 
+  real64 strain[6] = {0};
+  FE_TYPE::symmetricGradient( qa, qb, qc, invJ, varLocal, strain );
+
+  real64 stressLocal[ 6 ] = {0};
+  m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, qa+2*qb+4*qc, strain, stressLocal );
+
+  for( localIndex c = 0; c < 6; ++c )
+  {
+    stressLocal[ c ] *= -detJ;
+  }
+
+  FE_TYPE::plusGradNajAij( qa, qb, qc, invJ, stressLocal, fLocal );
+#else
+
+  real64 invJ[3][3] = {{0}};
+  real64 parentGradVar[3][3] = {{0}};
+
+  FE_TYPE::parentGradient2( qa, qb, qc, xLocal, varLocal, invJ, parentGradVar);
+  real64 const detJ = LvArray::tensorOps::invert< 3 >( invJ );
+
+  real64 gradVar[3][3] = {{0}};
+
+  #pragma unroll
+  for( int i = 0; i < 3; ++i )
+  {
+    #pragma unroll
+    for( int j = 0; j < 3; ++j )
+    {
+      #pragma unroll
+      for( int kk = 0; kk < 3; ++kk )
+      {
+        gradVar[i][j] = gradVar[i][j] + parentGradVar[i][kk] * invJ[kk][j];
+      }
+    }
+  }
+  real64 strain[6] = {0};
+  strain[0] = gradVar[0][0];
+  strain[1] = gradVar[1][1];
+  strain[2] = gradVar[2][2];
+  strain[3] = gradVar[2][1] + gradVar[1][2];
+  strain[4] = gradVar[2][0] + gradVar[0][2];
+  strain[5] = gradVar[1][0] + gradVar[0][1];
+
+
+  real64 stressLocal[ 6 ] = {0};
+  m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, qa+2*qb+4*qc, strain, stressLocal );
+
+  for( localIndex c = 0; c < 6; ++c )
+  {
+    stressLocal[ c ] *= -detJ;
+  }
+
+  FE_TYPE::plusGradNajAij( qa, qb, qc, invJ, stressLocal, fLocal );
+#endif
+#undef USE_JACOBIAN
 
 }
+
+
+
+
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+template< int qa, int qb, int qc >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
+                                                                                               real64 const (&xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
+                                                                                               real64 const (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
+                                                                                               real64 (&fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
+{
+  real64 invJ[3][3] = {{0}};
+  real64 parentGradVar[3][3] = {{0}};
+
+  FE_TYPE::template parentGradient2< qa, qb, qc >( xLocal, varLocal, invJ, parentGradVar);
+
+//  FE_TYPE::template parentGradient< qa, qb, qc >( xLocal, invJ);
+  real64 const detJ = LvArray::tensorOps::invert< 3 >( invJ );
+
+//  FE_TYPE::template parentGradient< qa, qb, qc >( varLocal, parentGradVar);
+  real64 gradVar[3][3] = {{0}};
+
+  #pragma unroll
+  for( int i = 0; i < 3; ++i )
+  {
+    #pragma unroll
+    for( int j = 0; j < 3; ++j )
+    {
+      #pragma unroll
+      for( int kk = 0; kk < 3; ++kk )
+      {
+        gradVar[i][j] = gradVar[i][j] + parentGradVar[i][kk] * invJ[kk][j];
+      }
+    }
+  }
+  real64 strain[6] = {0};
+  strain[0] = gradVar[0][0];
+  strain[1] = gradVar[1][1];
+  strain[2] = gradVar[2][2];
+  strain[3] = gradVar[2][1] + gradVar[1][2];
+  strain[4] = gradVar[2][0] + gradVar[0][2];
+  strain[5] = gradVar[1][0] + gradVar[0][1];
+
+
+  real64 stressLocal[ 6 ] = {0};
+  m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, qa+2*qb+4*qc, strain, stressLocal );
+
+  for( localIndex c = 0; c < 6; ++c )
+  {
+    stressLocal[ c ] *= -detJ;
+  }
+
+  FE_TYPE::template plusGradNajAij< qa, qb, qc >( invJ, stressLocal, fLocal );
+
+}
+
+
+
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
@@ -249,29 +375,31 @@ kernelLaunch( localIndex const numElems,
 {
   GEOSX_MARK_FUNCTION;
 
-//  printf( "numElems = %d\n", numElems );
-
-
-#define KERNEL_OPTION 2
+#define KERNEL_OPTION 3
 #if KERNEL_OPTION == 1
   forAll< POLICY >( numElems,
                     [=] GEOSX_DEVICE ( localIndex const k )
   {
-//    printf( "k = %d\n", k );
     typename KERNEL_TYPE::StackVariables stack;
 
     kernelComponent.setup( k, stack );
-    //for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
-      for( integer qa=0; qc<2; ++qa )
-      for( integer qb=0; qb<2; ++qb )
-      for( integer qc=0; qa<2; ++qc )
+//    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
+  #pragma unroll
+    for( integer qa=0; qa<2; ++qa )
+  #pragma unroll
+    for( integer qb=0; qb<2; ++qb )
+  #pragma unroll
+    for( integer qc=0; qc<2; ++qc )
     {
+      //  int qa, qb, qc;
+      //FE_TYPE::LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+
       int const q = qa + 2 * qb + 4*qc;
       kernelComponent.quadraturePointKernel( k, q, stack );
     }
     kernelComponent.complete( k, stack );
   } );
-#elif KERNEL_OPTION == 2
+#elif KERNEL_OPTION == 2 // no stack
 
     forAll< POLICY >( numElems,
                       [=] GEOSX_DEVICE ( localIndex const k )
@@ -291,6 +419,25 @@ kernelLaunch( localIndex const numElems,
 
     } );
 #else
+    forAll< POLICY >( numElems,
+                      [=] GEOSX_DEVICE ( localIndex const k )
+    {
+      real64 fLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ] = {{0}};
+      real64 varLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+      real64 xLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+
+      kernelComponent.setup( k, xLocal, varLocal );
+      kernelComponent.template quadraturePointKernel<0, 0, 0>( k, xLocal, varLocal, fLocal );
+      kernelComponent.template quadraturePointKernel<0, 0, 1>( k, xLocal, varLocal, fLocal );
+      kernelComponent.template quadraturePointKernel<0, 1, 0>( k, xLocal, varLocal, fLocal );
+      kernelComponent.template quadraturePointKernel<0, 1, 1>( k, xLocal, varLocal, fLocal );
+      kernelComponent.template quadraturePointKernel<1, 0, 0>( k, xLocal, varLocal, fLocal );
+      kernelComponent.template quadraturePointKernel<1, 0, 1>( k, xLocal, varLocal, fLocal );
+      kernelComponent.template quadraturePointKernel<1, 1, 0>( k, xLocal, varLocal, fLocal );
+      kernelComponent.template quadraturePointKernel<1, 1, 1>( k, xLocal, varLocal, fLocal );
+      kernelComponent.complete( k, fLocal );
+
+    } );
 
 #endif
   return 0;

@@ -202,6 +202,14 @@ public:
                               real64 const (&varLocal)[ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                               real64 (&fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const;
 
+
+  template< int qa, int qb, int qc >
+  GEOSX_HOST_DEVICE
+  void quadraturePointKernel( localIndex const k,
+                              real64 const (&xLocal)[ numNodesPerElem ][ numDofPerTrialSupportPoint ],
+                              real64 const (&varLocal)[ numNodesPerElem ][ numDofPerTrialSupportPoint ],
+                              real64 (&fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const;
+
   /**
    * @copydoc geosx::finiteElement::KernelBase::complete
    *
