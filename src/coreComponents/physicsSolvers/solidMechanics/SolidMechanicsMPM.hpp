@@ -375,10 +375,19 @@ private:
   void projectDamageFieldGradientToGrid( ParticleManager & particleManager,
                                          NodeManager & nodeManager );
 
-  void fUpdateAndConstitutiveCall( real64 dt,
-                                   ParticleManager & particleManager );
+  void updateDeformationGradient( real64 dt,
+                                  ParticleManager & particleManager );
+
+  void updateConstitutiveModelDependencies( ParticleManager & particleManager );
+
+  void updateStress( real64 dt,
+                     ParticleManager & particleManager );
 
   void particleKinematicUpdate( ParticleManager & particleManager );
+
+  void computeAndWriteBoxAverage( const real64 dt,
+                                  const real64 time_n,
+                                  ParticleManager & particleManager );
 };
 
 ENUM_STRINGS( SolidMechanicsMPM::TimeIntegrationOption,

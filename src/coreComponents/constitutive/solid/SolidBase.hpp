@@ -163,6 +163,27 @@ public:
   }
 
   /**
+   * @brief Small strain update. Modified to accept time step size.
+   *
+   * @param[in] k Element index.
+   * @param[in] q Quadrature point index.
+   * @param[in] strainIncrement Strain increment in Voight notation (linearized strain)
+   * @param[out] stress New stress value (Cauchy stress)
+   * @param[out] stiffness New tangent stiffness value
+   */
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate2( localIndex const k,
+                                   localIndex const q,
+                                   real64 const dt,
+                                   real64 const ( &strainIncrement )[6],
+                                   real64 ( & stress )[6],
+                                   real64 ( & stiffness )[6][6] ) const
+  {
+    GEOSX_UNUSED_VAR( dt );
+    smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+  }
+
+  /**
    * @brief Small strain, stateless update.
    *
    * @param[in] k Element index.
@@ -261,6 +282,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual void hypoUpdate2( localIndex const k,
                             localIndex const q,
+                            real64 const dt,
                             real64 ( &Ddt )[6],
                             real64 const ( &RotBeginning )[3][3],
                             real64 const ( &RotEnd )[3][3],
@@ -284,7 +306,7 @@ public:
     Ddt[5] *= 2;
 
     // Stress increment
-    smallStrainUpdate( k, q, Ddt, stress, stiffness );
+    smallStrainUpdate2( k, q, dt, Ddt, stress, stiffness );
 
     // Rotate final stress to end-of-step (current) configuration
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, RotEnd, m_newStress[ k ][ q ] );
@@ -366,6 +388,26 @@ public:
     GEOSX_ERROR( "smallStrainUpdate_StressOnly() not implemented for this model" );
   }
 
+    /**
+   * @brief Small strain update, returning only stress. Modified to use time step size.
+   *
+   * @param[in] k Element index.
+   * @param[in] q Quadrature point index.
+   * @param[in] dt Time step size
+   * @param[in] strainIncrement Strain increment in Voight notation (linearized strain)
+   * @param[out] stress New stress value (Cauchy stress)
+   */
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate2_StressOnly( localIndex const k,
+                                              localIndex const q,
+                                              real64 const dt,
+                                              real64 const ( &strainIncrement )[6],
+                                              real64 ( & stress )[6] ) const
+  {
+    GEOSX_UNUSED_VAR( dt );
+    smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  }
+
 
   /**
    * @brief Small strain, stateless update, returning only stress.
@@ -425,6 +467,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual void hypoUpdate2_StressOnly( localIndex const k,
                                        localIndex const q,
+                                       real64 const dt,
                                        real64 ( &Ddt )[6],
                                        real64 const ( &RotBeginning )[3][3],
                                        real64 const ( &RotEnd )[3][3],
@@ -447,7 +490,7 @@ public:
     Ddt[5] *= 2;
 
     // Stress increment
-    smallStrainUpdate_StressOnly( k, q, Ddt, stress );
+    smallStrainUpdate2_StressOnly( k, q, dt, Ddt, stress );
 
     // Rotate final stress to end-of-step (current) configuration
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, RotEnd, m_newStress[ k ][ q ] );

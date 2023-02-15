@@ -51,7 +51,6 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-namespace tOps = LvArray::tensorOps;
 
 SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
                                       Group * const parent ):
@@ -81,7 +80,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_numDims( 3 ),
   m_hEl{ DBL_MAX, DBL_MAX, DBL_MAX },
   m_xLocalMin{ DBL_MAX, DBL_MAX, DBL_MAX },
-  m_xLocalMax{ DBL_MIN, DBL_MIN, DBL_MIN },
+  m_xLocalMax{ -DBL_MAX, -DBL_MAX, -DBL_MAX },
   m_xLocalMinNoGhost{ 0.0, 0.0, 0.0 },
   m_xLocalMaxNoGhost{ 0.0, 0.0, 0.0 },
   m_xGlobalMin{ 0.0, 0.0, 0.0 },
@@ -255,7 +254,7 @@ void SolidMechanicsMPM::postProcessInput()
   if( m_boundaryConditionTypes.size() == 0 )
   {
     m_boundaryConditionTypes.resize(6);
-    tOps::fill< 6 >( m_boundaryConditionTypes, 0 );
+    LvArray::tensorOps::fill< 6 >( m_boundaryConditionTypes, 0 );
   }
 }
 
@@ -326,6 +325,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         // Triple-indexed fields (vectors of vectors, non-symmetric tensors)
         subRegion.registerField< particleInitialRVectors >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
         subRegion.registerField< particleDeformationGradient >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
+        subRegion.registerField< particleFDot >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
         subRegion.registerField< particleVelocityGradient >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
       } );
     }
@@ -724,6 +724,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
     arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
     arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
     arrayView1d< real64 > const particleInitialVolume = subRegion.getField< fields::mpm::particleInitialVolume >();
     arrayView3d< real64 > const particleInitialRVectors = subRegion.getField< fields::mpm::particleInitialRVectors >();
@@ -767,8 +768,9 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     particleDeformationGradient.zero();
     for(int p=0; p<subRegion.size(); p++)
     {
-      tOps::addIdentity< 3 >( particleDeformationGradient[p], 1.0 );
+      LvArray::tensorOps::addIdentity< 3 >( particleDeformationGradient[p], 1.0 );
     }
+    particleFDot.zero();
     particleVelocityGradient.zero();
 
     // Set surface flags
@@ -783,12 +785,26 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     }
   } );
 
+  // Initialize box average history file and write its header
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    subRegion.setNonGhostIndices(); // Needed for computeAndWriteBoxAverage().
+  } );
+  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+  {
+    std::ofstream file;
+    file.open( "boxAverageHistory.csv", std::ios::out | std::ios::app );
+    if( file.fail() )
+      throw std::ios_base::failure( std::strerror( errno ) );
+    //make sure write fails with exception if something is wrong
+    file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
+    file << "Time, Sxx, Syy, Szz, Sxy, Syz, Sxz, Density, Damage" << std::endl;
+    computeAndWriteBoxAverage( 0.0, 0.0, particleManager );
+  }
 
   // Resize grid arrays according to number of velocity fields
-
   int maxLocalGroupNumber = 0; // Maximum contact group number on this partition.
   int maxGlobalGroupNumber; // Maximum contact group number on global domain.
-
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
@@ -1056,7 +1072,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       for(int g=0; g<numNodesMappedTo; g++)
       {
         int mappedNode = nodeIDs[g];
-        int nodeFlag = ( m_damageFieldPartitioning && ( tOps::AiBi< 3 >( gridDamageGradient[mappedNode], particleDamageGradient[p] ) < 0.0 ) ) ? 1 : 0; // 0 undamaged or "A" field, 1 for "B" field
+        int nodeFlag = ( m_damageFieldPartitioning && ( LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNode], particleDamageGradient[p] ) < 0.0 ) ) ? 1 : 0; // 0 undamaged or "A" field, 1 for "B" field
         int fieldIndex = nodeFlag * m_numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
         gridMass[mappedNode][fieldIndex] += particleMass[p] * weights[g];
         for(int i=0; i<m_numDims; i++)
@@ -1276,7 +1292,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       for(int g=0; g<numNodesMappedTo; g++)
       {
         int mappedNode = nodeIDs[g];
-        int nodeFlag = ( m_damageFieldPartitioning && ( tOps::AiBi< 3 >( gridDamageGradient[mappedNode], particleDamageGradient[p] ) < 0.0 ) ) ? 1 : 0; // 0 undamaged or "A" field, 1 for "B" field
+        int nodeFlag = ( m_damageFieldPartitioning && ( LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNode], particleDamageGradient[p] ) < 0.0 ) ) ? 1 : 0; // 0 undamaged or "A" field, 1 for "B" field
         int fieldIndex = nodeFlag * m_numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
         for(int i=0; i<m_numDims; i++)
         {
@@ -1293,15 +1309,56 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   //#######################################################################################
-  solverProfiling( "Update F and call constitutive model" );
+  solverProfiling( "Update deformation gradient" );
   //#######################################################################################
-  fUpdateAndConstitutiveCall( dt, particleManager );
+  updateDeformationGradient( dt, particleManager );
 
 
   //#######################################################################################
   solverProfiling( "Update particle geometry (e.g. volume, r-vectors) and density" );
   //#######################################################################################
   particleKinematicUpdate( particleManager );
+
+
+  //#######################################################################################
+  solverProfiling( "Update constitutive model dependencies" );
+  //#######################################################################################
+  updateConstitutiveModelDependencies( particleManager );
+
+
+  //#######################################################################################
+  solverProfiling( "Update stress" );
+  //#######################################################################################
+  updateStress( dt, particleManager );
+
+
+  //#######################################################################################
+  solverProfiling( "Update solver dependencies" );
+  //#######################################################################################
+  // Get particle damage values from constitutive model
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    // Get constitutive model reference
+    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+    if( solidModel.hasWrapper( "damage" ) ) // Fragile code because someone could change the damage key without our knowledge. TODO: Make an integrated test that checks this
+    {
+      arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();      
+      arrayView2d< real64 const > const constitutiveDamage = solidModel.getReference< array2d< real64 > >( "damage" );
+      for( localIndex const p: subRegion.nonGhostIndices() )
+      {
+        if( constitutiveDamage[p][0] > particleDamage[p] ) // Damage can only increase - This will also preserve user-specified damage at initialization
+        {
+          particleDamage[p] = constitutiveDamage[p][0]; // TODO: Load any pre-damage into the constitutive model at initialization. Or, switch to using VTK input such that we can initialize any field we want without explicitly post-processing the input file.
+        }
+      }
+    }
+  } );
+
+  //#######################################################################################
+  solverProfiling( "Compute and write box averages" );
+  //#######################################################################################
+  computeAndWriteBoxAverage( time_n, dt, particleManager );
 
 
   //#######################################################################################
@@ -1320,7 +1377,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     arrayView1d< real64 > const k = constitutiveRelation.bulkModulus();
     for( localIndex const p: subRegion.nonGhostIndices() )
     {
-      wavespeed = std::max( wavespeed, sqrt( ( k[p] + (4.0/3.0) * g[p] ) / rho[p] ) + tOps::l2Norm< 3 >( particleVelocity[p] ) );
+      wavespeed = std::max( wavespeed, sqrt( ( k[p] + (4.0/3.0) * g[p] ) / rho[p] ) + LvArray::tensorOps::l2Norm< 3 >( particleVelocity[p] ) );
     }
   } );
 
@@ -1711,7 +1768,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
       for( int g=0; g<numNodesMappedTo; g++ )
       {
         int mappedNode = nodeIDs[g];
-        int nodeFlag = ( m_damageFieldPartitioning && ( tOps::AiBi< 3 >( gridDamageGradient[mappedNode], particleDamageGradient[p] ) < 0.0 ) ) ? 1 : 0; // 0 undamaged or "A" field, 1 for "B" field
+        int nodeFlag = ( m_damageFieldPartitioning && ( LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNode], particleDamageGradient[p] ) < 0.0 ) ) ? 1 : 0; // 0 undamaged or "A" field, 1 for "B" field
         int fieldIndex = nodeFlag * m_numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
         for(int i=0; i<m_numDims; i++)
         {
@@ -1733,10 +1790,10 @@ void SolidMechanicsMPM::normalizeGridSurfaceNormals( array2d< real64 > & gridMas
       if( gridMass[g][fieldIndex] > m_smallMass ) // small mass threshold
       {
         arraySlice1d< real64 > const surfaceNormal = gridSurfaceNormal[g][fieldIndex];
-        real64 norm = m_planeStrain == 1 ? sqrt( surfaceNormal[0] * surfaceNormal[0] + surfaceNormal[1] * surfaceNormal[1] ) : tOps::l2Norm< 3 >( surfaceNormal );
+        real64 norm = m_planeStrain == 1 ? sqrt( surfaceNormal[0] * surfaceNormal[0] + surfaceNormal[1] * surfaceNormal[1] ) : LvArray::tensorOps::l2Norm< 3 >( surfaceNormal );
         if( norm > 0.0 ) // TODO: Set a finite threshold?
         {
-          tOps::scale< 3 >( surfaceNormal, 1.0/norm );
+          LvArray::tensorOps::scale< 3 >( surfaceNormal, 1.0/norm );
         }
         else
         {
@@ -1780,9 +1837,9 @@ void SolidMechanicsMPM::computeContactForces( const real64 dt,
       for( localIndex B = A + 1 ; B < m_numVelocityFields ; B++ )
       {
         // Make sure both fields in the pair are active
-        bool active = ( gridMass[g][A] > m_smallMass ) && ( tOps::l2NormSquared< 3 >( gridSurfaceNormal[g][A] ) > 1.0e-12 )
+        bool active = ( gridMass[g][A] > m_smallMass ) && ( LvArray::tensorOps::l2NormSquared< 3 >( gridSurfaceNormal[g][A] ) > 1.0e-12 )
                       and
-                      ( gridMass[g][B] > m_smallMass ) && ( tOps::l2NormSquared< 3 >( gridSurfaceNormal[g][B] ) > 1.0e-12 );
+                      ( gridMass[g][B] > m_smallMass ) && ( LvArray::tensorOps::l2NormSquared< 3 >( gridSurfaceNormal[g][B] ) > 1.0e-12 );
 
         if( active )
         {
@@ -2477,26 +2534,7 @@ void SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< real64 > const
 }
 
 void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleManager )
-{
-  // Get particle damage values from constitutive model
-  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-  {
-    // Get MPM solver's particle damage field
-    arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();
-    
-    // Get constitutive model reference
-    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-    SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
-    if( solidModel.hasWrapper( "damage" ) ) // Fragile code because someone could change the damage key without our knowledge. TODO: Make an integrated test that checks this
-    {
-      arrayView2d< real64 const > const constitutiveDamage = solidModel.getReference< array2d< real64 > >( "damage" );
-      for( localIndex const p: subRegion.nonGhostIndices() )
-      {
-        particleDamage[p] = constitutiveDamage[p][0]; // TODO: Load any pre-damage into the constitutive model. Or, switch to using VTK input such that we can initialize any field we want.
-      }
-    }
-  } );
-  
+{ 
   // Get accessors for volume, position, damage, surface flag
   ParticleManager::ParticleViewAccessor< arrayView1d< real64 const > > particleVolumeAccessor = particleManager.constructArrayViewAccessor< real64, 1 >( "particleVolume" );
   ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particlePositionAccessor = particleManager.constructArrayViewAccessor< real64, 2 >( "particleCenter" );
@@ -2617,7 +2655,7 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( ParticleManager & part
       // Map to grid
       for(localIndex & g: nodeIDs)
       {
-        if( tOps::l2NormSquared< 3 >( particleDamageGradient[p] ) > tOps::l2NormSquared< 3 >( gridDamageGradient[g] ) )
+        if( LvArray::tensorOps::l2NormSquared< 3 >( particleDamageGradient[p] ) > LvArray::tensorOps::l2NormSquared< 3 >( gridDamageGradient[g] ) )
         {
           for(int i=0; i<m_numDims; i++)
           {
@@ -2629,8 +2667,50 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( ParticleManager & part
   } );
 }
 
-void SolidMechanicsMPM::fUpdateAndConstitutiveCall( real64 dt,
-                                                    ParticleManager & particleManager )
+void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
+                                                   ParticleManager & particleManager )
+{
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    // Get fields
+    arrayView3d< real64 > const & particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 > const & particleFDot = subRegion.getField< fields::mpm::particleFDot >();
+    arrayView3d< real64 const > const & particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
+
+    // Update F
+    for( localIndex const p: subRegion.nonGhostIndices() )
+    {
+      LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( particleFDot[p], particleVelocityGradient[p], particleDeformationGradient[p] ); // Fdot = L.F
+      LvArray::tensorOps::scaledAdd< 3, 3 >( particleDeformationGradient[p], particleFDot[p], dt ); // Fnew = Fold + Fdot*dt
+    }
+  } );
+}
+
+void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & particleManager )
+{
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    // Get needed particle fields
+    arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+
+    // Get constitutive model reference
+    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+
+    // Pass whatever data the constitutive models may need
+    if( solidModel.hasWrapper( "lengthScale" ) ) // Fragile code because someone could change this key without our knowledge. TODO: Make an integrated test that checks this
+    {
+      arrayView1d< real64 > const lengthScale = solidModel.getReference< array1d< real64 > >( "lengthScale" );
+      for( localIndex const p: subRegion.nonGhostIndices() )
+      {
+        lengthScale[p] = std::pow( particleVolume[p], 1.0 / 3.0 );
+      }
+    }
+  } );
+}
+
+void SolidMechanicsMPM::updateStress( real64 dt,
+                                      ParticleManager & particleManager )
 {
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -2640,6 +2720,7 @@ void SolidMechanicsMPM::fUpdateAndConstitutiveCall( real64 dt,
 
     // Get particle kinematic fields that are fed into constitutive model
     arrayView3d< real64 > const & particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 > const & particleFDot = subRegion.getField< fields::mpm::particleFDot >();
     arrayView3d< real64 const > const & particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
     arrayView2d< real64 > const & particleStress = subRegion.getField< fields::mpm::particleStress >();
 
@@ -2653,6 +2734,7 @@ void SolidMechanicsMPM::fUpdateAndConstitutiveCall( real64 dt,
                                                                                      constitutiveModelWrapper,
                                                                                      dt,
                                                                                      particleDeformationGradient,
+                                                                                     particleFDot,
                                                                                      particleVelocityGradient,
                                                                                      particleStress );
     } );
@@ -2676,7 +2758,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
     // Update volume and r-vectors
     for( localIndex const p: subRegion.nonGhostIndices() )
     {
-      real64 detF = tOps::determinant< 3 >(particleDeformationGradient[p]);
+      real64 detF = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
       if( detF <= 0.1 || detF >= 10.0 )
       {
         isBad[p] = 1;
@@ -2688,6 +2770,106 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
       subRegion.computeRVectors( p, particleDeformationGradient[p], particleInitialRVectors[p] );
     }
   } );
+}
+
+void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
+                                                   const real64 time_n,
+                                                   ParticleManager & particleManager )
+{
+  real64 boxStress[6] = { 0.0 }; // we sum stress * volume in particles, additive sync, then divide by box volume.
+  real64 boxMass = 0.0; // we sum particle mass, additive sync, then divide by box volume
+  real64 boxParticleInitialVolume = 0.0;
+  real64 boxDamage = 0.0; // we sum damage * initial volume, additive sync, then divide by total initial volume in box
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    // Get fields
+    arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+    arrayView1d< real64 > const particleInitialVolume = subRegion.getField< fields::mpm::particleInitialVolume >();
+    arrayView2d< real64 > const particleStress = subRegion.getField< fields::mpm::particleStress >();
+    arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();
+
+    // Accumulate values
+    for( localIndex const p: subRegion.nonGhostIndices() )
+    {
+      if( m_prescribedBoundaryFTable == 1 )
+      {
+        boxMass += particleMass[p];
+        boxParticleInitialVolume += particleInitialVolume[p];
+        for( int i=0; i<6; i++ )
+        {
+          boxStress[i] += particleStress[p][i] * particleVolume[p]; // volume weighted average, will normalize later.
+        }
+        boxDamage += particleDamage[p] * particleInitialVolume[p]; // mass weighted average, will normalize later.
+      }
+    }
+  } );
+
+  // Additive sync: sxx, syy, szz, sxy, syz, sxz, mass, particle volume, damage
+  real64 boxSums[9];
+  boxSums[0] = boxStress[0];       // sig_xx * volume
+  boxSums[1] = boxStress[1];       // sig_yy * volume
+  boxSums[2] = boxStress[2];       // sig_zz * volume
+  boxSums[3] = boxStress[3];       // sig_xy * volume
+  boxSums[4] = boxStress[4];       // sig_yz * volume
+  boxSums[5] = boxStress[5];       // sig_xz * volume
+  boxSums[6] = boxMass;            // total mass in box
+  boxSums[7] = boxParticleInitialVolume;  // total particle initial volume in box
+  boxSums[8] = boxDamage;          // damage * volume
+
+  // Do an MPI sync to total these values and write from proc0 to a file.  Also compute global F
+  // so file is directly plottable in excel as CSV or something.
+  for( localIndex i = 0 ; i < 9 ; i++ )
+  {
+    real64 localSum = boxSums[i];
+    real64 globalSum;
+    MPI_Allreduce( &localSum,
+                   &globalSum,
+                   1,
+                   MPI_DOUBLE,
+                   MPI_SUM,
+                   MPI_COMM_GEOSX );
+    boxSums[i] = globalSum;
+  }
+
+  int rank;
+  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+  if( rank == 0 )
+  {
+    // Calculate the box volume
+    real64 boxVolume = m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2];
+
+    // Write to file
+    std::ofstream file;
+    file.open( "boxAverageHistory.csv", std::ios::out | std::ios::app );
+    if( file.fail() )
+    {
+      throw std::ios_base::failure( std::strerror( errno ) );
+    }
+    //make sure write fails with exception if something is wrong
+    file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
+    // time | sig_xx | sig_yy | sig_zz | sig_xy | sig_yz | sig_zx | density | damage / total particle volume
+    file << time_n + dt
+         << ","
+         << boxSums[0] / boxVolume
+         << ","
+         << boxSums[1] / boxVolume
+         << ","
+         << boxSums[2] / boxVolume
+         << ","
+         << boxSums[3] / boxVolume
+         << ","
+         << boxSums[4] / boxVolume
+         << ","
+         << boxSums[5] / boxVolume
+         << ","
+         << boxSums[6] / boxVolume
+         << ","
+         << boxSums[8] / boxSums[7] // We normalize by total particle initial volume because this should equal one if all the material is damaged
+         << std::endl;
+    file.close();
+  }
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsMPM, string const &, dataRepository::Group * const )
