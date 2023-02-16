@@ -63,7 +63,6 @@ void MeshManager::generateMeshes( DomainPartition & domain )
   {
     MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
     meshBody.createMeshLevel( 0 );
-
     MeshLevel & meshLevel = meshBody.getBaseDiscretization();
     CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
 
