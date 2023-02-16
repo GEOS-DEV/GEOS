@@ -24,9 +24,6 @@
       flowSolverName="singlePhaseFlowSolver"
       logLevel="1"
       targetRegions="{ Reservoir, Overburden, Underburden, Fault}" >
-      <NonlinearSolverParameters
-        maxTimeStepCuts="1"
-        newtonTol="1e-6"/>
     </SinglePhasePoromechanics>
 
     <LagrangianContact
@@ -44,13 +41,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Reservoir, Overburden, Underburden, Fault }" >
-      <!--NonlinearSolverParameters
-        newtonTol = "1.0e-5"
-        newtonMaxIter = "15"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-10"/--> 
+      targetRegions="{ Reservoir, Overburden, Underburden }" >
     </SolidMechanicsLagrangianSSLE>
 
     <SinglePhaseFVM 
@@ -104,7 +95,7 @@
 
   <SurfaceElementRegion
       name="Fault"
-      materialList="{ water, faultFilling, fractureContact, rock }"
+      materialList="{ water, faultFilling, fractureContact }"
       defaultAperture="1e-3"/>
   </ElementRegions> 
 
@@ -120,12 +111,12 @@
 
     <Box
     name="zposFace"
-    xMin="{ -0.01,  -0.01,     499.99 }"
+    xMin="{ -2250.01,  -2250.01,     499.99 }"
     xMax="{ 2250.01,   2250.01,   500.01 }"/>
 
     <Box
     name="znegFace"
-    xMin="{ -0.01,  -0.01,   -0.01 }"
+    xMin="{ -2250.01,     -2250.01,   -0.01 }"
     xMax="{ 2250.01,   2250.01,   0.01 }"/>
   </Geometry>
 
@@ -285,14 +276,6 @@
       scale="0.0"
       setNames="{zposFace, znegFace}"/>
 
-    <!--FieldSpecification
-      name="zconstraint1"
-      objectPath="nodeManager"
-      fieldName="totalDisplacement"
-      component="2"
-      scale="0.0"
-      setNames="{zpos}"/-->
-
     <FieldSpecification
       name="production"
       initialCondition="0"
@@ -301,6 +284,14 @@
       fieldName="pressure"
       functionName="pressure"
       scale="1.e6"/>
+
+    <FieldSpecification
+      name="productionFault"
+      initialCondition="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fault"
+      fieldName="pressure"
+      scale="8.499070100061999256e6"/>  
   </FieldSpecifications>
 
   <Functions>
@@ -368,7 +359,7 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="10"
+      forceDt="100"
       target="/Solvers/poroFractureSolver"/>	     
   </Events>
 
