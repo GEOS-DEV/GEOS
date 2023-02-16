@@ -575,7 +575,7 @@ void ProblemManager::generateMesh()
         {
           MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                                        discretizationName, cellBlockManager,
-                                                       order, true);
+                                                       order, 2);
 
           this->generateMeshLevel( mesh,
                                    cellBlockManager,

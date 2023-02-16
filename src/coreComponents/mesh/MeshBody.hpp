@@ -71,7 +71,7 @@ public:
   MeshLevel & createMeshLevel( string const & sourceLevelName,
                                string const & newLevelName,
                                CellBlockManagerABC & cellBlockManager,
-                               int const order, bool test );
+                               int const order, int const strategy);
 
   /**
    * @brief Creates a mesh level in which the member pointers are set to the

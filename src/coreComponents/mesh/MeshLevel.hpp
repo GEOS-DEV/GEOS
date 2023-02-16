@@ -78,7 +78,7 @@ public:
              MeshLevel const & source,
              CellBlockManagerABC & cellBlockManager,
              int const order,
-             bool const test);
+             int const strategy);
 
   virtual ~MeshLevel() override;
 
