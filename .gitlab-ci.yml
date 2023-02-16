@@ -76,11 +76,10 @@ stages:
     - exit_val=$(( 0 | $config_code | $build_code | $unit_code | $integrated_code ))
     - exit $exit_val
     - echo "~~~~~~~~~~ END - cleanup ~~~~~~~~~~~~~"
-  # Job only triggers for scheduled pipelines and through web interface
-  only:
-    refs:
-      - schedules
-      - web
+  # Job triggers for scheduled pipelines or through web interface
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
   # Output a folder of logs files; these are automatically inherited by nightly-job
   artifacts:
     when: always
@@ -139,12 +138,11 @@ nightly-job:
     - cd nightlyTests
     - ./update.sh
     - echo "~~~~~~~~~~ END - write to nightlyTests Repo ~~~~~~~~~~~~~"
-  only:
-    refs:
-      - schedules
-      - web
-    variables:
-      - $NIGHTLY_TEST_ENABLED
+  # Job triggers for scheduled pipelines or through web interface,
+  # and with NIGHTLY_TEST_ENABLED variable set
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY_TEST_ENABLED
+    - if: $CI_PIPELINE_SOURCE == "web" && $NIGHTLY_TEST_ENABLED
   tags:
    - shell
    - quartz
