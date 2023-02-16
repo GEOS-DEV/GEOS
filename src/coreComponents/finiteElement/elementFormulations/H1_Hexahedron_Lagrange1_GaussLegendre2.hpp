@@ -81,6 +81,9 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 8;
 
+  /// The number of sampling points per element
+  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
+
   /** @cond Doxygen_Suppress */
   USING_FINITEELEMENTBASE
   /** @endcond Doxygen_Suppress */
@@ -130,20 +133,42 @@ public:
     return numNodes;
   }
 
-
   /**
-   * @brief Calculate shape functions values at a single point.
-   * @param[in] coords The parent coordinates at which to evaluate the shape function value
-   * @param[out] N The shape function values.
+   * @brief Get the Sampling Point Coord In the Parent Space
+   *
+   * @param linearIndex linear index of the sampling point
+   * @param samplingPointCoord coordinates of the sampling point
    */
   GEOSX_HOST_DEVICE
-  inline
-  static void calcN( real64 const (&coords)[3],
-                     real64 (& N)[numNodes] )
+  GEOSX_FORCE_INLINE
+  static void getSamplingPointCoordInParentSpace( int const linearIndex,
+                                                  real64 (& samplingPointCoord)[3] )
   {
-    LagrangeBasis1::TensorProduct3D::value( coords, N );
+    const int i0 = linearIndex % numSamplingPointsPerDirection;
+    const int i1 = ( (linearIndex - i0)/numSamplingPointsPerDirection ) % numSamplingPointsPerDirection;
+    const int i2 = ( (linearIndex - i0)/numSamplingPointsPerDirection - i1 ) / numSamplingPointsPerDirection;
+
+    constexpr real64 step = 2 / ( numSamplingPointsPerDirection - 1 );
+
+    samplingPointCoord[0] = -1 + i0 * step;
+    samplingPointCoord[1] = -1 + i1 * step;
+    samplingPointCoord[2] = -1 + i2 * step;
   }
 
+  /**
+   * @brief Calculate shape functions values for each support point at a
+   *   given point in the parent space.
+   * @param pointCoord coordinates of the given point.
+   * @param N An array to pass back the shape function values for each support
+   *   point.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( real64 const (&pointCoord)[3],
+                     real64 (& N)[numNodes] )
+  {
+    LagrangeBasis1::TensorProduct3D::value( pointCoord, N );
+  }
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -163,7 +188,7 @@ public:
                                 quadratureFactor * LagrangeBasis1::parentSupportCoord( qb ),
                                 quadratureFactor * LagrangeBasis1::parentSupportCoord( qc ) };
 
-    LagrangeBasis1::TensorProduct3D::value( qCoords, N );
+    calcN( qCoords, N );
   }
 
   /**

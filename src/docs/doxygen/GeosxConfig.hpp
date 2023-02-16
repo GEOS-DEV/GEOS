@@ -169,10 +169,10 @@
 #define fmt_VERSION 8.0.1
 
 /// Version information for python
-/* #undef Python3_VERSION */
+#define Python3_VERSION 3.8.5
 
 /// Version information for CUDAToolkit
-/* #undef CUDAToolkit_VERSION */
+#define CUDAToolkit_VERSION 11.0.221
 
 #if defined(GEOSX_USE_CUDA) || defined(GEOSX_USE_HIP)
 // This needs to be placed into this header in order to appropriately replace
