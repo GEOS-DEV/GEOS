@@ -39,27 +39,17 @@ MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog
   return catalog;
 }
 
-MeshGeneratorHelper MeshGeneratorBase::generateMesh( MeshBody & meshBody ) {
-  meshBody.createMeshLevel( 0 );
-  MeshLevel & meshLevel = meshBody.getBaseDiscretization();
-  CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
+void MeshGeneratorBase::generateMesh( CellBlockManager & cellBlockManager ) {
 
-  MeshGeneratorHelper meshGeneratorHelper = generateCellBlockManager( cellBlockManager );
+  generateCellBlockManager( cellBlockManager ); 
 
-  this->generateWells( meshLevel ); // Accroche les informations des puits à l'instance du CellBlockManager crée à la ligne du dessus.
-  meshBody.setGlobalLengthScale( meshGeneratorHelper.getGlobalLength() );
-  return meshGeneratorHelper;
+  this->generateWells( cellBlockManager ); // Accroche les informations des puits à l'instance du CellBlockManager crée à la ligne du dessus.
 }
 
-void MeshGeneratorBase::generateWells( MeshLevel & meshLevel ) {
-  forSubGroups<InternalWellGenerator>( [&]( InternalWellGenerator & wellGen ) {
+void MeshGeneratorBase::generateWells( CellBlockManager & cellBlockManager ) {
+  forSubGroups<InternalWellGenerator>( [&]( InternalWellGenerator & wellGen ) { 
       wellGen.generateWellGeometry();
-      ElementRegionManager & elemManager = meshLevel.getElemManager();
-      WellElementRegion &
-        wellRegion = elemManager.getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() ).
-        getGroup< WellElementRegion >( wellGen.getWellRegionName() );
-      wellRegion.setWellGeneratorName( wellGen.getName() );
-      wellRegion.setWellControlsName( wellGen.getWellControlsName() );
+      cellBlockManager.registerWellBlock( wellGen.getName(), wellGen.getWellRegionName(), wellGen.getWellControlsName() );
     } );
 }
 }

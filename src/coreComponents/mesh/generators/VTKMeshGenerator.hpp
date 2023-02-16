@@ -85,7 +85,7 @@ public:
    * surfaces of interest, with triangles and/or quads holding an attribute value
    * of 1, 2 or 3, three node sets named "1", "2" and "3" will be instantiated by this method
    */
-  virtual MeshGeneratorHelper generateCellBlockManager( CellBlockManager & cellBlockManager ) override;
+  virtual void generateCellBlockManager( CellBlockManager & cellBlockManager ) override;
 
   void setNeighborList( std::set<int> neighborList );
 

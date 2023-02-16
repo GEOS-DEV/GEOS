@@ -69,12 +69,12 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                     " If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available" );
 }
 
-MeshGeneratorHelper VTKMeshGenerator::generateCellBlockManager( CellBlockManager & cellBlockManager )
+void VTKMeshGenerator::generateCellBlockManager( CellBlockManager & cellBlockManager )
 {
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
   GEOSX_MARK_FUNCTION;
-  MeshGeneratorHelper meshGeneratorHelper;
-  meshGeneratorHelper.setHasMetisNeighborList( true );
+  PartitionDescriptor & partitionDescriptor = cellBlockManager.getPartitionDescriptor();
+  partitionDescriptor.setHasMetisNeighborList( true );
   MPI_Comm const comm = MPI_COMM_GEOSX;
   vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();
   vtkMultiProcessController::SetGlobalController( controller );
@@ -88,7 +88,7 @@ MeshGeneratorHelper VTKMeshGenerator::generateCellBlockManager( CellBlockManager
     GEOSX_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
     std::vector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
     std::vector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
-    meshGeneratorHelper.getMetisNeighborList().insert( neighbors.begin(), neighbors.end() );
+    partitionDescriptor.getMetisNeighborList().insert( neighbors.begin(), neighbors.end() );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  done!" );
   }
 
@@ -98,7 +98,7 @@ MeshGeneratorHelper VTKMeshGenerator::generateCellBlockManager( CellBlockManager
   m_cellMap = vtk::buildCellMap( *m_vtkMesh, m_attributeName );
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  writing nodes..." );
-  meshGeneratorHelper.getGlobalLength() = writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale );
+  cellBlockManager.setGlobalLength( writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale ) );
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  writing cells..." );
   writeCells( getLogLevel(), *m_vtkMesh, m_cellMap, cellBlockManager );
@@ -116,8 +116,6 @@ MeshGeneratorHelper VTKMeshGenerator::generateCellBlockManager( CellBlockManager
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  done!" );
   vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, comm );
-
-  return meshGeneratorHelper;
 }
 
 void VTKMeshGenerator::importFieldsOnArray( string const & regionName, string const & meshFieldName, bool isMaterialField, WrapperBase & wrapper ) const

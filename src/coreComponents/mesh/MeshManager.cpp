@@ -14,6 +14,7 @@
 
 
 #include "MeshManager.hpp"
+#include "MeshBody.hpp"
 
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
@@ -61,21 +62,33 @@ void MeshManager::generateMeshes( DomainPartition & domain )
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
     MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
-    meshGen.generateMesh(meshBody); meshBody.createMeshLevel( 0 );
+    meshBody.createMeshLevel( 0 );
+
+    MeshLevel & meshLevel = meshBody.getBaseDiscretization();
     CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
 
+    meshGen.generateMesh( cellBlockManager );
+    meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
+    for ( WellBlock wellBlock : cellBlockManager.getWellBlocks() ) {
+      WellElementRegion &
+        wellRegion = elemManager.getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() ).
+        getGroup< WellElementRegion >( wellBlock.getWellRegionName() );
+      wellRegion.setWellGeneratorName( wellBlock.getName() );
+      wellRegion.setWellControlsName( wellBlock.getWellControlsName() );
+    }
 
-    MeshGeneratorHelper meshGeneratorHelper = meshGen.generateMesh( meshBody );
-    if ( meshGeneratorHelper.hasMetisNeighborList() )
+    PartitionDescriptor & partitionDescriptor = cellBlockManager.getPartitionDescriptor();
+    if ( partitionDescriptor.hasMetisNeighborList() )
     {
-      domain.getMetisNeighborList() = meshGeneratorHelper.getMetisNeighborList();
+      domain.getMetisNeighborList() = partitionDescriptor.getMetisNeighborList();
     }
     else
     {
       SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
-      partition = meshGeneratorHelper.getSpatialPartition();
+      partition = partitionDescriptor.getSpatialPartition();
     }
-    meshBody.setGlobalLengthScale( meshGeneratorHelper.getGlobalLength() );
+    domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() ).setGlobalLengthScale( cellBlockManager.getGlobalLength() );
   } );
 }
 

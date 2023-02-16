@@ -50,7 +50,7 @@ public:
    */
   static string catalogName() { return "InternalMesh"; }
 
-  virtual MeshGeneratorHelper generateCellBlockManager( CellBlockManager & cellBlockManager ) override;
+  virtual void generateCellBlockManager( CellBlockManager & cellBlockManager ) override;
 
   void importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const override
   {

@@ -543,12 +543,12 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
  * @param partition
  * @param domain
  */
-MeshGeneratorHelper InternalMeshGenerator::generateCellBlockManager( CellBlockManager & cellBlockManager )
+void InternalMeshGenerator::generateCellBlockManager( CellBlockManager & cellBlockManager )
 {
   GEOSX_MARK_FUNCTION;
-  MeshGeneratorHelper meshGeneratorHelper;
-  meshGeneratorHelper.setHasMetisNeighborList( false );
-  SpatialPartition partition = meshGeneratorHelper.getSpatialPartition();
+  PartitionDescriptor &partitionDescriptor = cellBlockManager.getPartitionDescriptor();
+  partitionDescriptor.setHasMetisNeighborList( false );
+  SpatialPartition partition = partitionDescriptor.getSpatialPartition();
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
   {
@@ -562,13 +562,13 @@ MeshGeneratorHelper InternalMeshGenerator::generateCellBlockManager( CellBlockMa
 
     partition.setSizes( m_min, m_max );
   }
-
+  
   // Make sure that the node manager fields are initialized
   auto & nodeSets = cellBlockManager.getNodeSets();
 
   real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
   LvArray::tensorOps::subtract< 3 >( size, m_min );
-  meshGeneratorHelper.getGlobalLength() = LvArray::tensorOps::l2Norm< 3 >( size );
+  cellBlockManager.setGlobalLength( LvArray::tensorOps::l2Norm< 3 >( size ) );
 
 //  bool isRadialWithOneThetaPartition = false;
 
@@ -970,7 +970,6 @@ MeshGeneratorHelper InternalMeshGenerator::generateCellBlockManager( CellBlockMa
                                ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: total number of elems = {}", getName(),
                                m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] ) );
-  return meshGeneratorHelper;
 }
 
 void
