@@ -23,6 +23,7 @@
 
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include "common/lifoStorage.hpp"
 #if ! defined( GEOSX_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
@@ -48,6 +49,7 @@ class WaveSolverBase : public SolverBase
 {
 public:
 
+  using EXEC_POLICY = parallelDevicePolicy< 32 >;
 
   WaveSolverBase( const std::string & name,
                   Group * const parent );
@@ -83,6 +85,14 @@ public:
 
     static constexpr char const * receiverCoordinatesString() { return "receiverCoordinates"; }
 
+    static constexpr char const * sourceNodeIdsString() { return "sourceNodeIds"; }
+    static constexpr char const * sourceConstantsString() { return "sourceConstants"; }
+    static constexpr char const * sourceIsAccessibleString() { return "sourceIsAccessible"; }
+
+    static constexpr char const * receiverNodeIdsString() { return "receiverNodeIds"; }
+    static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
+    static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
+
     static constexpr char const * rickerOrderString() { return "rickerOrder"; }
     static constexpr char const * outputSeismoTraceString() { return "outputSeismoTrace"; }
     static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
@@ -90,6 +100,9 @@ public:
     static constexpr char const * forwardString() { return "forward"; }
     static constexpr char const * saveFieldsString() { return "saveFields"; }
     static constexpr char const * shotIndexString() { return "shotIndex"; }
+    static constexpr char const * lifoSizeString() { return "lifoSize"; }
+    static constexpr char const * lifoOnDeviceString() { return "lifoOnDevice"; }
+    static constexpr char const * lifoOnHostString() { return "lifoOnHost"; }
 
     static constexpr char const * useDASString() { return "useDAS"; }
     static constexpr char const * linearDASGeometryString() { return "linearDASGeometry"; }
@@ -103,7 +116,6 @@ public:
    * @brief Safeguard for timeStep. Used to avoid memory issue due to too small value.
    */
   static constexpr real64 epsilonLoc = 1e-8;
-
 
   /**
    * @brief Re-initialize source and receivers positions in the mesh, and resize the pressureNp1_at_receivers array
@@ -176,6 +188,8 @@ protected:
                                        DomainPartition & domain,
                                        bool const computeGradient ) = 0;
 
+  localIndex getNumNodesPerElem();
+
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;
 
@@ -220,6 +234,36 @@ protected:
 
   /// Flag to apply PML
   integer m_usePML;
+
+  /// Indices of the nodes (in the right order) for each source point
+  array2d< localIndex > m_sourceNodeIds;
+
+  /// Constant part of the source for the nodes listed in m_sourceNodeIds
+  array2d< real64 > m_sourceConstants;
+
+  /// Flag that indicates whether the source is local or not to the MPI rank
+  array1d< localIndex > m_sourceIsAccessible;
+
+  /// Indices of the element nodes (in the right order) for each receiver point
+  array2d< localIndex > m_receiverNodeIds;
+
+  /// Basis function evaluated at the receiver for the nodes listed in m_receiverNodeIds
+  array2d< real64 > m_receiverConstants;
+
+  /// Flag that indicates whether the receiver is local or not to the MPI rank
+  array1d< localIndex > m_receiverIsLocal;
+
+  /// lifo size
+  localIndex m_lifoSize;
+
+  /// Number of buffers to store on device by LIFO
+  localIndex m_lifoOnDevice;
+
+  /// Number of buffers to store on host by LIFO
+  localIndex m_lifoOnHost;
+
+  /// LIFO to store p_dt2
+  std::unique_ptr< lifoStorage< real32 > > m_lifo;
 
   struct parametersPML
   {

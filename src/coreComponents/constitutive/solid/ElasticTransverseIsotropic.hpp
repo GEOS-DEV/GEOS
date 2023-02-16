@@ -48,6 +48,7 @@ public:
    * @param[in] c33 The 33 component of the Voigt stiffness tensor.
    * @param[in] c44 The 44 component of the Voigt stiffness tensor.
    * @param[in] c66 The 66 component of the Voigt stiffness tensor.
+   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each point.
    * @param[in] oldStress The ArrayView holding the old stress data for each point.
    * @param[in] disableInelasticity Flag to disable plastic response for inelastic models.
@@ -57,10 +58,11 @@ public:
                                      arrayView1d< real64 const > const & c33,
                                      arrayView1d< real64 const > const & c44,
                                      arrayView1d< real64 const > const & c66,
+                                     arrayView1d< real64 const > const & thermalExpansionCoefficient,
                                      arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                      arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                                      bool const & disableInelasticity ):
-    SolidBaseUpdates( newStress, oldStress, disableInelasticity ),
+    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity ),
     m_c11( c11 ),
     m_c13( c13 ),
     m_c33( c33 ),
@@ -164,6 +166,7 @@ private:
 
   /// A reference to the ArrayView holding c66 for each element.
   arrayView1d< real64 const > const m_c66;
+
 };
 
 inline
@@ -551,6 +554,7 @@ public:
                                               m_c33,
                                               m_c44,
                                               m_c66,
+                                              m_thermalExpansionCoefficient,
                                               m_newStress,
                                               m_oldStress,
                                               m_disableInelasticity );
@@ -573,6 +577,7 @@ public:
                           m_c33,
                           m_c44,
                           m_c66,
+                          m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity );
@@ -615,7 +620,6 @@ protected:
 
   /// The 66 component of the Voigt stiffness tensor.
   array1d< real64 > m_c66;
-
 };
 
 } /* namespace constitutive */

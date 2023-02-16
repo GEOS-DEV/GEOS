@@ -378,6 +378,22 @@ public:
     return 0;
   }
 
+
+  /**
+   * @brief Get the Sampling Point Coord In the Parent Space
+   *
+   * @param linearIndex linear index of the sampling point
+   * @param samplingPointCoord coordinates of the sampling point
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void getSamplingPointCoordInParentSpace( int const & linearIndex,
+                                                  real64 (& samplingPointCoord)[3] )
+  {
+    GEOSX_UNUSED_VAR( linearIndex, samplingPointCoord );
+    GEOSX_ERROR( "Element type not supported." );
+  }
+
   /**
    * @brief This function returns an error, since to get projection of basis functions with VEM you
    * have to use the StackVariables version of this function.

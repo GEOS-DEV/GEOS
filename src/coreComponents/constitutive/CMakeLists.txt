@@ -23,6 +23,9 @@ set( constitutive_headers
      contact/FrictionlessContact.hpp
      fluid/BlackOilFluidBase.hpp
      fluid/BlackOilFluid.hpp
+     fluid/chemicalReactions/EquilibriumReactions.hpp
+     fluid/chemicalReactions/KineticReactions.hpp
+     fluid/chemicalReactions/ReactionsBase.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
      fluid/CO2BrineFluid.hpp
      fluid/DeadOilFluid.hpp
@@ -48,9 +51,15 @@ set( constitutive_headers
      fluid/PVTFunctions/CO2Enthalpy.hpp
      fluid/PVTFunctions/CO2EOSSolver.hpp
      fluid/PVTFunctions/PureWaterProperties.hpp
+     fluid/PVTFunctions/WaterDensity.hpp
      fluid/ParticleFluid.hpp
      fluid/ParticleFluidBase.hpp
      fluid/ProppantSlurryFluid.hpp
+     fluid/ReactiveBrineFluid.hpp
+     fluid/ReactiveMultiFluid.hpp
+     fluid/ReactiveMultiFluidFields.hpp
+     fluid/ReactiveFluidDriver.hpp
+     fluid/reactiveFluidSelector.hpp
      fluid/SingleFluidBase.hpp
      fluid/SingleFluidFields.hpp
      fluid/SlurryFluidBase.hpp
@@ -142,6 +151,9 @@ set( constitutive_sources
      contact/ContactBase.cpp
      contact/CoulombContact.cpp
      contact/FrictionlessContact.cpp
+     fluid/chemicalReactions/EquilibriumReactions.cpp
+     fluid/chemicalReactions/KineticReactions.cpp
+     fluid/chemicalReactions/ReactionsBase.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
      fluid/CO2BrineFluid.cpp
      fluid/BlackOilFluidBase.cpp
@@ -168,9 +180,13 @@ set( constitutive_sources
      fluid/PVTFunctions/CO2Enthalpy.cpp
      fluid/PVTFunctions/CO2EOSSolver.cpp
      fluid/PVTFunctions/PureWaterProperties.cpp
+     fluid/PVTFunctions/WaterDensity.cpp
      fluid/ParticleFluid.cpp
      fluid/ParticleFluidBase.cpp
      fluid/ProppantSlurryFluid.cpp
+     fluid/ReactiveBrineFluid.cpp
+     fluid/ReactiveMultiFluid.cpp
+     fluid/ReactiveFluidDriver.cpp
      fluid/SingleFluidBase.cpp
      fluid/SlurryFluidBase.cpp
      fluid/ThermalCompressibleSinglePhaseFluid.cpp
@@ -223,7 +239,7 @@ set( constitutive_sources
      thermalConductivity/SinglePhaseThermalConductivityBase.cpp
    )
 
-set( dependencyList ${parallelDeps} events dataRepository functions )
+set( dependencyList ${parallelDeps} events dataRepository functions denseLinearAlgebra )
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers

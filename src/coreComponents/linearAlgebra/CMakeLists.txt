@@ -106,12 +106,12 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/Hydrofracture.hpp
           interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp
           interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp
-          interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp
-          interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp
+          interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp
+          interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp
+          interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp
         )
-
     list( APPEND linearAlgebra_sources
           interfaces/hypre/HypreExport.cpp
           interfaces/hypre/HypreInterface.cpp

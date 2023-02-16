@@ -112,6 +112,7 @@ public:
    * @param[out] N The shape function values.
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void calcN( real64 const (&coords)[2],
                      real64 ( &N )[numNodes] );
 
@@ -210,7 +211,6 @@ H1_TriangleFace_Lagrange1_Gauss1::
   N[1] = r;
   N[2] = s;
 }
-
 
 GEOSX_HOST_DEVICE
 inline
