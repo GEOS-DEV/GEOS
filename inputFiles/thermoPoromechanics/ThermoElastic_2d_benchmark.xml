@@ -27,6 +27,37 @@
     maxTime="1e5">
 
     <PeriodicEvent
+      name="stressHistoryCollection_casing"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/stressCollection_casing"/>
+    <PeriodicEvent
+      name="stressHistoryCollection_cement"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/stressCollection_cement"/>
+    <PeriodicEvent
+      name="stressHistoryCollection_rock"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/stressCollection_rock"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput_casing"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/stressHistoryOutput_casing"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput_cement"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/stressHistoryOutput_cement"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput_rock"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/stressHistoryOutput_rock"/>
+
+    <PeriodicEvent
       name="temperatureHistoryCollection_casing"
       endTime="1e5"
       forceDt="1e4"
