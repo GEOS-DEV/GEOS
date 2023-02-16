@@ -92,7 +92,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerField< temperature >( getName() );
       subRegion.registerField< temperature_n >( getName() );
-
+      subRegion.registerField< initialTemperature >( getName() );
       subRegion.registerField< bcTemperature >( getName() ); // needed for the application of boundary conditions
 
       subRegion.registerField< mobility >( getName() );
@@ -408,8 +408,11 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
                                                                   ElementSubRegionBase & subRegion )
     {
       arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 > const presInit   = subRegion.getField< fields::flow::initialPressure >();
-      presInit.setValues< parallelDevicePolicy<> >( pres );
+      arrayView1d< real64 > const initPres = subRegion.getField< fields::flow::initialPressure >();
+      arrayView1d< real64 const > const & temp = subRegion.template getField< fields::flow::temperature >();
+      arrayView1d< real64 > const initTemp = subRegion.template getField< fields::flow::initialTemperature >();
+      initPres.setValues< parallelDevicePolicy<> >( pres );
+      initTemp.setValues< parallelDevicePolicy<> >( temp );
     } );
   } );
 }
@@ -589,47 +592,6 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
   } );
 }
 
-
-real64 SinglePhaseBase::solverStep( real64 const & time_n,
-                                    real64 const & dt,
-                                    const int cycleNumber,
-                                    DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-
-  real64 dt_return;
-
-  // setup dof numbers and linear system
-  setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-
-  implicitStepSetup( time_n, dt, domain );
-
-  // currently the only method is implicit time integration
-  dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
-  implicitStepComplete( time_n, dt_return, domain );
-
-  return dt_return;
-}
-
-void SinglePhaseBase::setupSystem( DomainPartition & domain,
-                                   DofManager & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix,
-                                   ParallelVector & rhs,
-                                   ParallelVector & solution,
-                                   bool const setSparsity )
-{
-  GEOSX_MARK_FUNCTION;
-
-  SolverBase::setupSystem( domain,
-                           dofManager,
-                           localMatrix,
-                           rhs,
-                           solution,
-                           setSparsity );
-}
-
 void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
                                          DomainPartition & domain )
@@ -645,6 +607,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
       arrayView1d< real64 const > const & initPres = subRegion.template getField< fields::flow::initialPressure >();
       arrayView1d< real64 > const & deltaPres = subRegion.template getField< fields::flow::deltaPressure >();
       arrayView1d< real64 > const & pres_n = subRegion.template getField< fields::flow::pressure_n >();
+
       pres_n.setValues< parallelDevicePolicy<> >( pres );
       singlePhaseBaseKernels::StatisticsKernel::
         saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
