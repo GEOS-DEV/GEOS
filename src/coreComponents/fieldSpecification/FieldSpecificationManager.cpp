@@ -147,34 +147,16 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
     // Step 4: issue an error or a warning if the field was not found
 
-    char const fieldNameNotFoundMessage[] =
-      "{}: there is no {} named `{}` under this {}."
-      "\n`{}` cannot be used to set up a FieldSpecification, check the XML input";
-    char const targetSetNotCreatedMessage[] =
-      "\nWarning!"
-      "\n{}: there is no set named `{}` under this {} at the end of initialization."
-      "\nIf the simulation does not involve the SurfaceGenerator, this is should be fixed otherwise the FieldSpecification will be ignored\n";
-    char const emptyTargetSetLogMessage[] =
-      "\nWarning!"
-      "\n{}: this FieldSpecification targets (an) empty set(s)"
-      "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`."
-      "\n  -If `{}` is in ElementRegions, the set(s) must contain at least an element"
-      "\n  -If `{}` is faceManager, the set(s) must contain at least a face"
-      "\n  -If `{}` is nodeManager, the set(s) must contain at least a node"
-      "\nIf the set of elements/faces is created using a Box in <Geometry>, make sure the nodes of the elements/faces are fully inside the Box\n";
-
-    // if all sets are missing, we issue a warning.
-    // ideally we would just stop the simulation, but the SurfaceGenerator relies on this behavior
+    // if all sets are missing, we stop the simulation.
     if( areAllSetsMissing )
     {
+      // still loop over the map to get the set name
       for( auto const & mapEntry : isTargetSetCreated )
       {
-        GEOSX_LOG_RANK_0_IF( mapEntry.second == 0,
-                             GEOSX_FMT( targetSetNotCreatedMessage,
-                                        fs.getName(), mapEntry.first, fs.getObjectPath() ) );
+        GEOSX_THROW( GEOSX_FMT( "\n{}: there is no set named `{}` under the {} `{}`, check the XML input\n",
+                                fs.getName(), mapEntry.first, FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() ),
+                     InputError );
       }
-      // there is no point in continuing with this FieldSpecification
-      return;
     }
 
     // if a target set is empty, we issue a warning
@@ -182,21 +164,30 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     for( auto const & mapEntry : isTargetSetNonEmpty )
     {
       GEOSX_LOG_RANK_0_IF( mapEntry.second == 0,
-                           GEOSX_FMT( emptyTargetSetLogMessage,
+                           GEOSX_FMT( "\nWarning!"
+                                      "\n{}: this FieldSpecification targets (an) empty set(s)"
+                                      "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`."
+                                      "\n  -If `{}` is in ElementRegions, the set(s) must contain at least an element"
+                                      "\n  -If `{}` is faceManager, the set(s) must contain at least a face"
+                                      "\n  -If `{}` is nodeManager, the set(s) must contain at least a node"
+                                      "\nIf the set of elements/faces is created using a Box in <Geometry>, make sure the nodes of the elements/faces are fully inside the Box\n",
                                       fs.getName(), mapEntry.first,
                                       fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath() ) );
     }
 
-    // if the field name was not found and the sets are empty, we issue a warning
+    char const fieldNameNotFoundMessage[] =
+      "\n{}: there is no {} named `{}` under the {} `{}`, check the XML input\n";
+
+    // if the field name was not found and the sets are empty, we issue a warning (may be on a fracture region)
     GEOSX_LOG_RANK_0_IF( isFieldNameFound == 0 && areAllSetsEmpty,
                          GEOSX_FMT( fieldNameNotFoundMessage,
                                     fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(),
-                                    fs.getFieldName(), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getFieldName() ) );
+                                    fs.getFieldName(), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath(), fs.getFieldName() ) );
     // if the field name was not found and some sets are not empty, the user misspelled the field name
     GEOSX_THROW_IF( isFieldNameFound == 0 && !areAllSetsEmpty,
                     GEOSX_FMT( fieldNameNotFoundMessage,
                                fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(),
-                               fs.getFieldName(), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getFieldName() ),
+                               fs.getFieldName(), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath(), fs.getFieldName() ),
                     InputError );
   } );
 }

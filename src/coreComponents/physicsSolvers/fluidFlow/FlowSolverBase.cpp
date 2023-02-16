@@ -378,14 +378,15 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & )
   {
-    fsManager.apply< ElementSubRegionBase >( time + dt,
-                                             mesh,
-                                             SourceFluxBoundaryCondition::catalogName(),
-                                             [&]( FieldSpecificationBase const & fs,
-                                                  string const &,
-                                                  SortedArrayView< localIndex const > const & targetSet,
-                                                  ElementSubRegionBase & subRegion,
-                                                  string const & )
+    fsManager.apply< ElementSubRegionBase,
+                     SourceFluxBoundaryCondition >( time + dt,
+                                                    mesh,
+                                                    SourceFluxBoundaryCondition::catalogName(),
+                                                    [&]( SourceFluxBoundaryCondition const & fs,
+                                                         string const &,
+                                                         SortedArrayView< localIndex const > const & targetSet,
+                                                         ElementSubRegionBase & subRegion,
+                                                         string const & )
     {
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
