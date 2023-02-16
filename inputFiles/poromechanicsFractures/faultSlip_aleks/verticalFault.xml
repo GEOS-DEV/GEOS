@@ -117,6 +117,16 @@
     name="faultReservoir"
     xMin="{ -0.01,  -150.01,   -0.01 }"
     xMax="{ 0.01,    150.01,   500.01 }"/>
+
+    <Box
+    name="zposFace"
+    xMin="{ -0.01,  -0.01,     499.99 }"
+    xMax="{ 2250.01,   2250.01,   500.01 }"/>
+
+    <Box
+    name="znegFace"
+    xMin="{ -0.01,  -0.01,   -0.01 }"
+    xMax="{ 2250.01,   2250.01,   0.01 }"/>
   </Geometry>
 
   <NumericalMethods>
@@ -273,7 +283,7 @@
       fieldName="totalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{zneg}"/>
+      setNames="{zposFace, znegFace}"/>
 
     <!--FieldSpecification
       name="zconstraint1"
@@ -346,14 +356,14 @@
       name="restartOutput"/>  
   </Outputs>
 
-  <Events maxTime="10.0">
+  <Events maxTime="100.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="10.0"
+      timeFrequency="100.0"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent

@@ -139,6 +139,8 @@ public:
   void buildSets( CellBlockManagerABC const & cellBlockManager,
                   GeometricObjectManager const & geometries );
 
+  void buildGeometricSets( GeometricObjectManager const & geometries );                
+
   /**
    * @brief Builds the node-on-domain-boundary indicator.
    * @param[in] faceIndex The computation is based on the face-on-domain-boundary indicator.

@@ -85,8 +85,13 @@ void NodeManager::buildSets( CellBlockManagerABC const & cellBlockManager,
     auto & array = m_sets.registerWrapper< SortedArray< localIndex > >( nameArray.first ).reference();
     array = nameArray.second;
   }
-
+  
   // Now let's copy them from the geometric objects.
+  buildGeometricSets( geometries );
+}
+
+void NodeManager::buildGeometricSets( GeometricObjectManager const & geometries )
+{
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = this->referencePosition();
   localIndex const numNodes = this->size();
 
