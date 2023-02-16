@@ -18,6 +18,7 @@
 
 #include "HypreMatrix.hpp"
 
+#include "common/TimingMacros.hpp"
 #include "common/GeosxConfig.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreKernels.hpp"
@@ -149,6 +150,8 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
                           localIndex const numLocalColumns,
                           MPI_Comm const & comm )
 {
+  GEOSX_MARK_FUNCTION;
+
   RAJA::ReduceMax< ReducePolicy< hypre::execPolicy >, localIndex > maxRowEntries( 0 );
   forAll< hypre::execPolicy >( localMatrix.numRows(),
                                [localMatrix, maxRowEntries] GEOSX_HYPRE_DEVICE ( localIndex const row )
@@ -259,6 +262,8 @@ void HypreMatrix::open()
 
 void HypreMatrix::close()
 {
+  GEOSX_MARK_FUNCTION;
+
   GEOSX_LAI_ASSERT( !closed() );
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAssemble( m_ij_mat ) );
@@ -320,6 +325,8 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
                           globalIndex const colIndex0,
                           real64 const value0 )
 {
+  GEOSX_MARK_FUNCTION;
+
   GEOSX_LAI_ASSERT( insertable() );
 
 #if GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_CUDA || GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_HIP
