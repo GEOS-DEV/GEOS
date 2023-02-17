@@ -312,7 +312,7 @@ MeshLevel::MeshLevel( string const & name,
 
       // initialize the elements-to-nodes map 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
-      arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew = cellBlockManager.getElemToNodes(newSubRegion.getName());
+      arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew = cellBlockManager.getElemToNodes(newSubRegion.getName(), numNodesPerElem);
 
       arrayView1d< globalIndex const > const elementLocalToGlobal = sourceSubRegion.localToGlobalMap();
       for (localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < sourceSubRegion.localToGlobalMap().size(); iter_localToGlobalsize++)
@@ -524,11 +524,11 @@ MeshLevel::MeshLevel( string const & name,
                                 refPosSource[faceToNodeMapSource[iter_face][2]][2] );
 
 
-        for (localIndex iter_faceNodeA = 0; iter_faceNodeA < numEdgesPerFace;  ++iter_faceNodeA)
+        for (localIndex iter_faceNodeA = 0; iter_faceNodeA < numNodesPerEdge;  ++iter_faceNodeA)
         {
-          for (localIndex iter_faceNodeB = 0; iter_faceNodeB < numEdgesPerFace;  ++iter_faceNodeB)
+          for (localIndex iter_faceNodeB = 0; iter_faceNodeB < numNodesPerEdge;  ++iter_faceNodeB)
           {
-            localIndex iter_faceNode = iter_faceNodeA + iter_faceNodeB * numEdgesPerFace;
+            localIndex iter_faceNode = iter_faceNodeA + iter_faceNodeB * numNodesPerEdge;
 
             if ( std::fabs ( refPosXmax - refPosSource[faceToNodeMapSource[iter_face][0]][0] ) < 1e-5 )
             {
