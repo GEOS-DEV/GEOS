@@ -127,23 +127,6 @@ localIndex AcousticWaveEquationSEM::getNumNodesPerElem()
 void AcousticWaveEquationSEM::initializePreSubGroups()
 {
   WaveSolverBase::initializePreSubGroups();
-
-  localIndex numNodesPerElem = getNumNodesPerElem();
-
-  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
-  m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
-  //m_sourceIsLocal.resize( numSourcesGlobal );
-
-  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
-  m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
-  m_receiverIsLocal.resize( numReceiversGlobal );
-
-  m_pressureNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
-
-
-
 }
 
 
@@ -384,7 +367,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
-    FaceManager & faceManager0 = this->getGroupByPath< FaceManager >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/faceManager" );
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
