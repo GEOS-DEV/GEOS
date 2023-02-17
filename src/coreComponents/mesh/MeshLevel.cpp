@@ -324,7 +324,7 @@ if ( strategy == 1 )
       // initialize the elements-to-nodes map 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
       //array2d< localIndex, cells::NODE_MAP_PERMUTATION > & elemsToNodesNew = newSubRegion.nodeList();
-      arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew = cellBlockManager.getElemToNodes(newSubRegion.getName());
+      arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew = cellBlockManager.getElemToNodes(newSubRegion.getName(), numNodesPerElem);
       //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew.size(1));
 
       arrayView1d< globalIndex const > const elementLocalToGlobal = sourceSubRegion.localToGlobalMap();
@@ -813,7 +813,7 @@ if ( strategy == 2 )
 
       // initialize the elements-to-nodes map 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
-      arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew = cellBlockManager.getElemToNodes(newSubRegion.getName());
+      arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew = cellBlockManager.getElemToNodes(newSubRegion.getName(), numNodesPerElem);
       //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesSource="<<elemsToNodesSource); 
 
       arrayView1d< globalIndex const > const elementLocalToGlobal = sourceSubRegion.localToGlobalMap();
@@ -1054,11 +1054,11 @@ if ( strategy == 2 )
 
         //GEOSX_LOG_RANK ("!!!! INFO !!!! iter_face = "<< iter_face<<"; refPosXmax="<<refPosXmax<<"; refPosYmax="<<refPosYmax<<"; refPosZmax="<<refPosZmax );
 
-        for (localIndex iter_faceNodeA = 0; iter_faceNodeA < numEdgesPerFace;  ++iter_faceNodeA)
+        for (localIndex iter_faceNodeA = 0; iter_faceNodeA < numNodesPerEdge;  ++iter_faceNodeA)
         {
-          for (localIndex iter_faceNodeB = 0; iter_faceNodeB < numEdgesPerFace;  ++iter_faceNodeB)
+          for (localIndex iter_faceNodeB = 0; iter_faceNodeB < numNodesPerEdge;  ++iter_faceNodeB)
           {
-            localIndex iter_faceNode = iter_faceNodeA + iter_faceNodeB * numEdgesPerFace;
+            localIndex iter_faceNode = iter_faceNodeA + iter_faceNodeB * numNodesPerEdge;
 
             if ( std::fabs ( refPosXmax - refPosSource[faceToNodeMapSource[iter_face][0]][0] ) < 1e-5 )
             {
@@ -1119,6 +1119,7 @@ if ( strategy == 2 )
           }
         }
       }
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
 
       for( localIndex iter_elem = 0; iter_elem < numOfElements; ++iter_elem )
       {
@@ -1136,6 +1137,7 @@ if ( strategy == 2 )
           }
         }
       }
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalNew = "<< nodeLocalToGlobalNew );
 
 
       // GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
@@ -1150,8 +1152,8 @@ if ( strategy == 2 )
       // GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesSource = "<< elemsToNodesSource);
       // GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
 
-      GEOSX_LOG_RANK_0 ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
-      GEOSX_LOG_RANK_0 ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
+      //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
+      //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
     } );
   } );
 }

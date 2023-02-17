@@ -185,7 +185,7 @@ public:
    */
   virtual ToCellRelation< array2d< localIndex > > getFaceToElements() const = 0;
  
-  virtual arrayView2d<localIndex, cells::NODE_MAP_USD> getElemToNodes( string const & name ) = 0;
+  virtual arrayView2d<localIndex, cells::NODE_MAP_USD> getElemToNodes( string const & name, localIndex const numNodesPartition ) = 0;
 
   /**
    * @brief The node to global mapping for nodes.

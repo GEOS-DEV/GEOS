@@ -1,0 +1,94 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <!-- define the solver -->
+    <!-- define the source coordinates -->
+    <!-- define the time source frequency -->
+    <!-- define the receiver coordinates -->
+    <AcousticSEM
+      name="acousticSolver"
+      cflFactor="0.25"
+      discretization="FE2"
+      targetRegions="{ Region }"
+      sourceCoordinates="{ { 55, 55, 55 } }"
+      timeSourceFrequency="5.0"
+      receiverCoordinates="{ { 5, 50, 11 } }"
+      dtSeismoTrace="0.001"
+      outputSeismoTrace="1"/>
+  </Solvers>
+
+  <!-- hexahedral mesh generated internally by GEOSX -->
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 101 }"
+      yCoords="{ 0, 101 }"
+      zCoords="{ 0, 101 }"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
+      cellBlockNames="{ cb }"/>
+  </Mesh>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE2"
+        order="3"
+        formulation="SEM"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region"
+      cellBlocks="{ cb }"
+      materialList="{ nullModel }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <NullModel
+      name="nullModel"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <!-- 1) The initial pressure field -->
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="mesh/FE2/nodeManager"
+      fieldName="pressure_n"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialPressure_nm1"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="mesh/FE2/nodeManager"
+      fieldName="pressure_nm1"
+      scale="0.0"/>
+
+    <!-- 2) The velocity in the domain -->
+    <FieldSpecification
+      name="cellVelocity"
+      initialCondition="1"
+      objectPath="mesh/FE2/ElementRegions/Region/cb"
+      fieldName="mediumVelocity"
+      scale="1500"
+      setNames="{ all }"/>
+  </FieldSpecifications>
+
+  <Events
+    maxTime="0.1">
+    <!-- trigger the application of the solver -->
+    <!-- control the timestepping here with forceDt -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="0.001"
+      target="/Solvers/acousticSolver"/>
+  </Events>
+
+</Problem>
