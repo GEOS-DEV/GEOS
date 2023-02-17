@@ -70,8 +70,8 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
   this->forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs )
   {
     localIndex isFieldNameFound = 0;
-    // map from set name to a flag (1 if targetSet not empty, 0 otherwise)
-    map< string, localIndex > isTargetSetNonEmpty;
+    // map from set name to a flag (1 if targetSet empty, 0 otherwise)
+    map< string, localIndex > isTargetSetEmpty;
     // map from set name to a flag (1 if targetSet has been created, 0 otherwise)
     map< string, localIndex > isTargetSetCreated;
 
@@ -80,7 +80,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     array1d< string > const & setNames = fs.getSetNames();
     for( localIndex i = 0; i < setNames.size(); ++i )
     {
-      isTargetSetNonEmpty[setNames[i]] = 0;
+      isTargetSetEmpty[setNames[i]] = 1;
       isTargetSetCreated[setNames[i]] = 0;
     }
 
@@ -118,7 +118,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       //      Fracture/fault sets are sometimes at initialization and the "apply" call silently ignores them
       if( targetSet.size() > 0 )
       {
-        isTargetSetNonEmpty.at( setName ) = 1;
+        isTargetSetEmpty.at( setName ) = 0;
       }
     } );
 
@@ -126,20 +126,27 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
     isFieldNameFound = MpiWrapper::max( isFieldNameFound );
 
-    bool areAllSetsEmpty = true;
-    for( std::pair< string const, localIndex > & mapEntry : isTargetSetNonEmpty )
+    for( std::pair< string const, localIndex > & mapEntry : isTargetSetEmpty )
     {
-      mapEntry.second = MpiWrapper::max( mapEntry.second );
-      if( mapEntry.second == 1 )
+      mapEntry.second = MpiWrapper::min( mapEntry.second );
+    }
+    bool areAllSetsEmpty = true;
+    for( std::pair< string const, localIndex > & mapEntry : isTargetSetEmpty )
+    {
+      if( mapEntry.second == 0 ) // target set is not empty
       {
         areAllSetsEmpty = false;
       }
     }
-    bool areAllSetsMissing = true;
+
     for( std::pair< string const, localIndex > & mapEntry : isTargetSetCreated )
     {
       mapEntry.second = MpiWrapper::max( mapEntry.second );
-      if( mapEntry.second == 1 )
+    }
+    bool areAllSetsMissing = true;
+    for( std::pair< string const, localIndex > & mapEntry : isTargetSetCreated )
+    {
+      if( mapEntry.second == 1 ) // target set has been created
       {
         areAllSetsMissing = false;
       }
@@ -161,9 +168,9 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
     // if a target set is empty, we issue a warning
     // ideally we would just stop the simulation, but the SurfaceGenerator relies on this behavior
-    for( auto const & mapEntry : isTargetSetNonEmpty )
+    for( auto const & mapEntry : isTargetSetEmpty )
     {
-      GEOSX_LOG_RANK_0_IF( mapEntry.second == 0,
+      GEOSX_LOG_RANK_0_IF( mapEntry.second == 1, // target set is empty
                            GEOSX_FMT( "\nWarning!"
                                       "\n{}: this FieldSpecification targets (an) empty set(s)"
                                       "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`."
@@ -175,20 +182,23 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                       fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath() ) );
     }
 
-    char const fieldNameNotFoundMessage[] =
-      "\n{}: there is no {} named `{}` under the {} `{}`, check the XML input\n";
-
-    // if the field name was not found and the sets are empty, we issue a warning (may be on a fracture region)
-    GEOSX_LOG_RANK_0_IF( isFieldNameFound == 0 && areAllSetsEmpty,
-                         GEOSX_FMT( fieldNameNotFoundMessage,
-                                    fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(),
-                                    fs.getFieldName(), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath(), fs.getFieldName() ) );
-    // if the field name was not found and some sets are not empty, the user misspelled the field name
-    GEOSX_THROW_IF( isFieldNameFound == 0 && !areAllSetsEmpty,
-                    GEOSX_FMT( fieldNameNotFoundMessage,
-                               fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(),
-                               fs.getFieldName(), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath(), fs.getFieldName() ),
-                    InputError );
+    if( isFieldNameFound == 0 )
+    {
+      char const fieldNameNotFoundMessage[] =
+        "\n{}: there is no {} named `{}` under the {} `{}`, check the XML input\n";
+      string const errorMsg =
+        GEOSX_FMT( fieldNameNotFoundMessage,
+                   fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(), fs.getFieldName(),
+                   FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath(), fs.getFieldName() );
+      if( areAllSetsEmpty )
+      {
+        GEOSX_LOG_RANK_0( errorMsg );
+      }
+      else
+      {
+        GEOSX_THROW( errorMsg, InputError );
+      }
+    }
   } );
 }
 
