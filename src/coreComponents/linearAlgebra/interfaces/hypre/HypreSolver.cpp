@@ -189,6 +189,8 @@ void createHypreKrylovSolver( LinearSolverParameters const & params,
 
 void HypreSolver::setup( HypreMatrix const & mat )
 {
+  GEOSX_MARK_FUNCTION;
+
   clear();
   Base::setup( mat );
   Stopwatch timer( m_result.setupTime );
