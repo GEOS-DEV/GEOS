@@ -46,7 +46,6 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "schema/schemaUtilities.hpp"
-#include "mesh/utilities/MeshMapUtilities.hpp"
 
 // System includes
 #include <vector>
@@ -164,7 +163,6 @@ void ProblemManager::problemSetup()
   initialize();
 
   importFields();
-
 }
 
 
@@ -548,6 +546,10 @@ void ProblemManager::generateMesh()
     elemManager.generateWells( meshManager, baseMesh );
 
   } );
+  
+  Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
+  integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
+  domain.setupCommunications( useNonblockingMPI, false);
 
   // setup the MeshLevel assocaited with the discretizations
   for( auto const & discretizationPair: discretizations )
@@ -572,8 +574,7 @@ void ProblemManager::generateMesh()
         if( order > 1 )
         {
           MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
-                                                       discretizationName,
-                                                       cellBlockManager,
+                                                       discretizationName, cellBlockManager,
                                                        order );
 
           this->generateMeshLevel( mesh,
@@ -603,10 +604,10 @@ void ProblemManager::generateMesh()
   }
 
 
-  Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
-  integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
-  domain.setupCommunications( useNonblockingMPI );
 
+  //Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
+  //integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
+  domain.setupCommunications( useNonblockingMPI, true );
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
@@ -735,17 +736,19 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
 //  nodeManager.constructGlobalToLocalMap();
 
 
-  if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
-  {
+   bool baseLevelMesh = false;
+   if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+     baseLevelMesh = true;
+     
+  //if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+  //{
     elemManager.generateMesh( cellBlockManager );
-    nodeManager.setGeometricalRelations( cellBlockManager, elemManager );
-    edgeManager.setGeometricalRelations( cellBlockManager );
+    nodeManager.setGeometricalRelations( cellBlockManager, elemManager, baseLevelMesh );
+    edgeManager.setGeometricalRelations( cellBlockManager, baseLevelMesh );
     faceManager.setGeometricalRelations( cellBlockManager,
                                          elemManager,
-                                         nodeManager );
-
+                                         nodeManager, baseLevelMesh );
     nodeManager.constructGlobalToLocalMap( cellBlockManager );
-
     // Edge, face and element region managers rely on the sets provided by the node manager.
     // This is why `nodeManager.buildSets` is called first.
     nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
@@ -762,55 +765,34 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     faceManager.setDomainBoundaryObjects();
     nodeManager.setDomainBoundaryObjects( faceManager );
     edgeManager.setDomainBoundaryObjects( faceManager );
+  //}
+  meshLevel.generateSets();
 
-    meshLevel.generateSets();
 
+  //if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+  //{
     elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
     {
       subRegion.setupRelatedObjectsInRelations( meshLevel );
-      subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+      if( baseLevelMesh )
+        subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
       subRegion.setMaxGlobalIndex();
     } );
     elemManager.setMaxGlobalIndex();
-  }
-  else if( !meshLevel.isShallowCopyOf(
-             getDomainPartition().getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevels().getGroup< MeshLevel >( 0 )))
-  {
-    elemManager.generateMesh( cellBlockManager );
-    ToCellRelation< ArrayOfArrays< localIndex > > const toCellBlock = cellBlockManager.getNodeToElements();
-    array2d< localIndex > const blockToSubRegion = elemManager.getCellBlockToSubRegionMap( cellBlockManager );
-    meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( blockToSubRegion.toViewConst(),
-                                                                           toCellBlock,
-                                                                           nodeManager.toElementRelation());
+  //}
 
-    edgeManager.setGeometricalRelations( cellBlockManager );
+  //elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
+  //{
+    //sourceRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
+    //{  
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! ProgramManger sourceRegion.getName = "<<sourceRegion.getName()<<"; sourceSubRegion.getName()="<< sourceSubRegion.getName() );
+      //GEOSX_LOG_RANK ("!!!! INFO !!!! ProgramManger sourceSubRegionToNodeMapNew = " << sourceSubRegion.nodeList() );
+     //} );
+   //} );
 
-    ToCellRelation< array2d< localIndex > > const faceToCellBlock = cellBlockManager.getFaceToElements();
-    array2d< localIndex > const faceBlockToSubRegion = elemManager.getCellBlockToSubRegionMap( cellBlockManager );
-    meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( faceBlockToSubRegion.toViewConst(),
-                                                                           faceToCellBlock,
-                                                                           faceManager.toElementRelation());
-
-    nodeManager.constructGlobalToLocalMap( cellBlockManager );
-
-    nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemManager );
-    edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
-    faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemManager );
-
-    faceManager.setDomainBoundaryObjects();
-    nodeManager.setDomainBoundaryObjects( faceManager );
-    edgeManager.setDomainBoundaryObjects( faceManager );
-
-    meshLevel.generateSets();
-
-
-    elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
-    {
-      subRegion.setupRelatedObjectsInRelations( meshLevel );
-      subRegion.setMaxGlobalIndex();
-    } );
-    elemManager.setMaxGlobalIndex();
-  }
+  //GEOSX_LOG_RANK ("!!!! INFO !!!! ProgramManger faceToNodeMapNew = " << faceManager.nodeList() );
+  //GEOSX_LOG_RANK ("!!!! INFO !!!! ProgramManger edgeToNodeMapNew = " << edgeManager.nodeList() );
+  //GEOSX_LOG_RANK ("!!!! INFO !!!! ProgramManger nodeManager.referencePosition() = " << nodeManager.referencePosition() );
 
 }
 

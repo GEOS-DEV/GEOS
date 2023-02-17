@@ -112,29 +112,121 @@ MeshLevel::MeshLevel( string const & name,
                       int const order ):
   MeshLevel( name, parent )
 {
-
   GEOSX_MARK_FUNCTION;
+
+  ////////////////////////////////
+  // Get the new number of nodes 
+  ////////////////////////////////
+
+  // the total number of nodes: to add the number of non-vertex edge nodes
+  localIndex const numEdgesPartition = source.m_edgeManager->size();
   localIndex const numBasisSupportPoints = order+1;
-
-
-  // Edges
   localIndex const numNodesPerEdge = numBasisSupportPoints;
-  localIndex const numNonVertexNodesPerEdge = numNodesPerEdge - 2;
+  localIndex const numNonVertexNodesPerEdge = numNodesPerEdge - 2; 
+  localIndex const numInternalEdgeNodes = numEdgesPartition * numNonVertexNodesPerEdge;
 
-  m_edgeManager->resize( source.m_edgeManager->size() );
-  localIndex const numInternalEdgeNodes = m_edgeManager->size() * numNonVertexNodesPerEdge;
+  // the total number of nodes: to add the number of non-edge face nodes
+  localIndex const numFacesPartition = source.m_faceManager->size();
+  localIndex const numNodesPerFace = pow( order+1, 2 ); 
+  localIndex const numNonEdgeNodesPerFace = pow( order-1, 2 ); 
+  localIndex numInternalFaceNodes = 0; 
+  localIndex numEdgesPerFace;
 
-  m_faceManager->resize( source.m_faceManager->size() );
-  m_faceManager->edgeList() = source.m_faceManager->edgeList();
+  ArrayOfArraysView< localIndex const > const & facesToEdges = source.m_faceManager->edgeList().toViewConst();
+  for( localIndex kf=0; kf<numFacesPartition; ++kf )
+  {
+    numEdgesPerFace = facesToEdges.sizeOfArray( kf );
+    if( numEdgesPerFace==4 )
+      numInternalFaceNodes += numNonEdgeNodesPerFace;
+    else 
+    {    
+      GEOSX_ERROR( "need more support for face geometry" );
+    }    
+  }
+
+  // the total number of nodes: to add the number of non-face element nodes
+  localIndex const numInternalNodesPerElement = ( order - 1 ) * ( order - 1 ) * ( order - 1 ); 
+  localIndex numInternalElementNodes = 0; 
+
+  source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
+  {
+    sourceRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
+    {    
+      if( sourceSubRegion.getElementType() == ElementType::Hexahedron )
+      {    
+        numInternalElementNodes += sourceSubRegion.size() * numInternalNodesPerElement;
+      }    
+    } ); 
+  } ); 
+
+  // calculate the total number of nodes for the current partition
+  localIndex const numNodesPartitionSource = source.m_nodeManager->size();
+  localIndex const numNodesPartitionNew = numNodesPartitionSource
+                              + numInternalEdgeNodes
+                              + numInternalFaceNodes
+                              + numInternalElementNodes;
+
+
+  //
+  // ---- to initialize the node local to global map ----
+  //   
+
+  cellBlockManager.setNumNodes( numNodesPartitionNew, order );
+
+  arrayView1d< globalIndex const > const nodeLocalToGlobalSource = source.m_nodeManager->localToGlobalMap();
+  arrayView1d< globalIndex > nodeLocalToGlobalNew = cellBlockManager.getNodeLocalToGlobal();
+
+
+
+  //////////////////////////
+  // Edges
+  //////////////////////////
+
+  // the total number of nodes: to add the number of non-vertex edge nodes
+  m_edgeManager->resize( numEdgesPartition );
+  m_edgeManager->getDomainBoundaryIndicator() = source.m_edgeManager->getDomainBoundaryIndicator();
+
+  arrayView1d< globalIndex const > const edgeLocalToGlobal = m_edgeManager->localToGlobalMap();
+  for (localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < numEdgesPartition; iter_localToGlobalsize++)
+  {
+    m_edgeManager->localToGlobalMap()[iter_localToGlobalsize] = source.m_edgeManager->localToGlobalMap()[iter_localToGlobalsize];
+  }
+  m_edgeManager->constructGlobalToLocalMap();
+
+  //
+  // ---- initialize edge-to-node map ----
+  //
+
+  // get information from the source (base mesh-level) edge-to-node map
+  arrayView2d< localIndex const > const & edgeToNodeMapSource = source.m_edgeManager->nodeList();
+  arrayView2d< localIndex > edgeToNodeMapNew = cellBlockManager.getEdgeToNodes();
+  m_edgeManager->nodeList().resize( numEdgesPartition, numNodesPerEdge );
+
+
+  /////////////////////////
+  // Faces
+  //////////////////////////
+
+  m_faceManager->resize( numFacesPartition );
   m_faceManager->faceCenter() = source.m_faceManager->faceCenter();
   m_faceManager->faceNormal() = source.m_faceManager->faceNormal();
-  m_faceManager->getDomainBoundaryIndicator() = source.m_faceManager->getDomainBoundaryIndicator();
-  m_faceManager->elementList() = source.m_faceManager->elementList();
 
-  // Faces
-  ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceManager->nodeList();
-  ArrayOfArraysView< localIndex const > const & facesToEdges = m_faceManager->edgeList().toViewConst();
-  localIndex const numNodesPerFace = pow( order+1, 2 );
+  // copy the faces-to-edgs map from source
+  m_faceManager->edgeList() = source.m_faceManager->edgeList();
+  // copy the faces-to-elements map from source
+  m_faceManager->elementList() = source.m_faceManager->elementList();
+  // copy the faces-boundaryIndicator from source
+  m_faceManager->getDomainBoundaryIndicator() = source.m_faceManager->getDomainBoundaryIndicator();
+
+  arrayView1d< globalIndex const > const faceLocalToGlobal = m_faceManager->localToGlobalMap();
+  for (localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < numFacesPartition; iter_localToGlobalsize++)
+  {
+    m_faceManager->localToGlobalMap()[iter_localToGlobalsize] = source.m_faceManager->localToGlobalMap()[iter_localToGlobalsize];
+  }
+  m_faceManager->constructGlobalToLocalMap();
+
+  ArrayOfArraysView< localIndex const > const & faceToNodeMapSource = source.m_faceManager->nodeList().toViewConst();
+  ArrayOfArrays< localIndex > & faceToNodeMapNew = cellBlockManager.getFaceToNodes();
 
   // number of elements in each row of the map as capacity
   array1d< localIndex > counts( faceToNodeMapNew.size());
@@ -154,398 +246,80 @@ MeshLevel::MeshLevel( string const & name,
     }
   } );
 
-  // add the number of non-edge face nodes
-  localIndex numInternalFaceNodes = 0;
-  localIndex const numNonEdgeNodesPerFace = pow( order-1, 2 );
-  for( localIndex kf=0; kf<m_faceManager->size(); ++kf )
+
+  //////////////////////////
+  // Nodes
+  //////////////////////////
+
+  // the number of nodes per elements depends on the order number
+  localIndex const numNodesPerElem = pow( order+1, 3 );
+  m_nodeManager->resize( numNodesPartitionNew );
+
+  Group & nodeSets = m_nodeManager->sets();
+  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
+  allNodes.reserve( numNodesPartitionNew );
+
+  for( localIndex iter_nodes=0; iter_nodes< numNodesPartitionNew; ++iter_nodes )
   {
-    localIndex const numEdgesPerFace = facesToEdges.sizeOfArray( kf );
-    if( numEdgesPerFace==4 )
-      numInternalFaceNodes += numNonEdgeNodesPerFace;
-    else
-    {
-      GEOSX_ERROR( "need more support for face geometry" );
-    }
+    allNodes.insert( iter_nodes );
   }
-
-  // add the number of non-face element nodes
-  localIndex numInternalElementNodes = 0;
-  source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
-  {
-    sourceRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
-    {
-      if( sourceSubRegion.getElementType() == ElementType::Hexahedron )
-      {
-        numInternalElementNodes += sourceSubRegion.size() * pow( order-1, 3 );
-      }
-
-    } );
-  } );
-
-
-
-  localIndex const numNodes = source.m_nodeManager->size()
-                              + numInternalEdgeNodes
-                              + numInternalFaceNodes
-                              + numInternalElementNodes;
-
-  m_nodeManager->resize( numNodes );
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const refPosSource = source.m_nodeManager->referencePosition();
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const refPosNew = m_nodeManager->referencePosition().toView();
-
-  {
-    Group & nodeSets = m_nodeManager->sets();
-    SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
-    allNodes.reserve( m_nodeManager->size() );
-
-    for( localIndex a=0; a<m_nodeManager->size(); ++a )
-    {
-      allNodes.insert( a );
-    }
-
-  }
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > refPosNew = cellBlockManager.getNodePositions();
+  refPosNew.setValues< parallelHostPolicy >( -1.0 );
 
 
-  // ---- to calculate the node local to global map ----
-  cellBlockManager.setNumNodes( numNodes );
-
-  arrayView1d< globalIndex > nodelocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
-
-  CellBlock & currentcellblock = cellBlockManager.getCellBlocks().getGroup< CellBlock >( 0 );
-
-  array1d< localIndex > partitionInfo = currentcellblock.getPartitionInformation();
-
-  //GEOSX_LOG_RANK("!!!! INFO !!!! MeshLevel::MeshLevel partitionInfo="<<partitionInfo);
-
-  // the number of dimensions for the current elements
-  localIndex m_dim = 3;
-  // the number of nodes in each direction for the current partition
-  array1d< localIndex > numNodesInDir{3}; //= { 1, 1, 1 };
-  array1d< localIndex > numElemsInDir{3}; // = { 1, 1, 1 };
-
-  localIndex localNodeIndex= 0;
-  // the partitionInfo are passing from InternalMeshGenerator.cpp:
-  // partitionInfo[0-2] are firstElemIndexInPartition
-  // partitionInfo[3-5] are lastElemIndexInPartition
-  for( localIndex i = 0; i < m_dim; ++i )
-  {
-    numNodesInDir[i] = (partitionInfo[i+3] - partitionInfo[i]) * 3 + 4;
-    numElemsInDir[i] = (partitionInfo[i+3] - partitionInfo[i]) + 1;
-  }
-
-  // numNodesInDir[0] is the number of nodes on the x direction of the current partition
-  for( localIndex i = 0; i < numNodesInDir[0]; ++i )
-  {
-    // numNodesInDir[0] is the number of nodes on the y direction of the current partition
-    for( localIndex j = 0; j < numNodesInDir[1]; ++j )
-    {
-      // numNodesInDir[0] is the number of nodes on the z direction of the current partition
-      for( localIndex k = 0; k < numNodesInDir[2]; ++k )
-      {
-        // globalnodeIJK is initilized as the global node index of the current partition
-        // plus the global information of the partition which is firstElemIndexInPartition
-        localIndex globalnodeIJK[3] = { i + partitionInfo[0] * 3, j + partitionInfo[1] * 3, k + partitionInfo[2] *3 };
-
-        //               15__________________ 63
-        //               /|                  /|
-        //              / |                 / |
-        //             /  |                /  |
-        //           3/___|_______________/51 |
-        //            |   |               |   |
-        //            |   |               |   |
-        //            |   |               |   |
-        //            2   |               |   |
-        //            |   |               |   |
-        //            |   12-----28-----44|---/16       z
-        //            1  /                |  /          |   y
-        //            | /                 | /           |  /
-        //            |/__________________|/            | /
-        //            0      16     32    48            |/____ x
-
-        // assigning the localNodeIndex and globalnodeIJK for nodes
-        nodelocalToGlobal[localNodeIndex] = globalnodeIJK[0]*(partitionInfo[7]*3+1)*(partitionInfo[8]*3+1)
-                                            + globalnodeIJK[1]*(partitionInfo[8]*3+1)
-                                            + globalnodeIJK[2];
-
-        // local node index is simply incremental
-        ++localNodeIndex;
-      }
-    }
-  }
-
-
-  ArrayOfArraysView< localIndex const > const & faceToNodeMapSource = source.m_faceManager->nodeList().toViewConst();
-
-  FaceManager::ElemMapType const & faceToElem = source.m_faceManager->toElementRelation();
-
-  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
-
+  /////////////////////////
+  // Elements 
+  //////////////////////////
 
   source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
   {
+    // create element region with the same name as source element region "Region"
     CellElementRegion & region = *(dynamic_cast< CellElementRegion * >( m_elementManager->createChild( sourceRegion.getCatalogName(),
                                                                                                        sourceRegion.getName() ) ) );
+    // add cell block to the new element region with the same name as cell block name from source element region
     region.addCellBlockNames( sourceRegion.getCellBlockNames() );
 
     sourceRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
     {
-
-      localIndex const numNodesPerElem = pow( order+1, 3 );
-
+      // create element sub region with the same name as source element sub region "cb"
       CellElementSubRegion & newSubRegion = region.getSubRegions().registerGroup< CellElementSubRegion >( sourceSubRegion.getName() );
-
-      // assigning the element to nodes map through cell block
-      arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = currentcellblock.getElemToNode();
-
-      localIndex localElemIndex= 0;
-
-      // numElemsInDir[0] is the number of elements on the x direction of the current partition
-      for( localIndex i = 0; i < numElemsInDir [0]; ++i )
-      {
-        // numElemsInDir[1] is the number of elements on the y direction of the current partition
-        for( localIndex j = 0; j < numElemsInDir[1]; ++j )
-        {
-          // numElemsInDir[2] is the number of elements on the z direction of the current partition
-          for( localIndex k = 0; k < numElemsInDir[2]; ++k )
-          {
-            // get the first node index in the current partition
-            localIndex firstNodeIndex = i * numNodesInDir[2] * numNodesInDir[1] * 3 + j * numNodesInDir[2] * 3 + k * 3;
-            //GEOSX_LOG_RANK("!!!! INFO !!!! CellBlockManager::setO3Information firstNodeIndex=" << firstNodeIndex);
-
-            // assign the element to node index with in the current partition
-            for( localIndex zNodeIndex = 0; zNodeIndex < 4; ++zNodeIndex )
-            {
-              for( localIndex yNodeIndex = 0; yNodeIndex < 4; ++yNodeIndex )
-              {
-                for( localIndex xNodeIndex = 0; xNodeIndex < 4; ++xNodeIndex )
-                {
-
-                  //               60__________________ 63
-                  //               /                   /|
-                  //              /                   / |
-                  //             /                   /  |
-                  //          48/__________________ /51 |
-                  //            |                   |   |
-                  //            |                   |   |
-                  //            |                   |   |
-                  //            |                   |   |
-                  //            |                   |   |
-                  //            |                   |   /15       z
-                  //            |                   |  /          |   y
-                  //            |                   | /           |  /
-                  //            |___________________|/            | /
-                  //            0     1      2      3             |/____ x
-
-                  elemsToNodes[localElemIndex][xNodeIndex + yNodeIndex * 4 + zNodeIndex * 16 ] =
-                    // note that the indexing of elemsToNodes are in the x-y-z ordering
-                    // and it needs to consider the postion of each element in the current partition
-                    numNodesInDir[1] * numNodesInDir[2] * xNodeIndex + numNodesInDir[2] * yNodeIndex + zNodeIndex + firstNodeIndex;
-                }
-              }
-            }
-
-            // local node index is simply incremental
-            ++localElemIndex;
-          }
-        }
-      }
-
       newSubRegion.setElementType( sourceSubRegion.getElementType() );
 
+      // resize per elements value for the new sub region with the new number of nodes per element
       newSubRegion.resizePerElementValues( numNodesPerElem,
                                            sourceSubRegion.numEdgesPerElement(),
                                            sourceSubRegion.numFacesPerElement() );
 
       newSubRegion.resize( sourceSubRegion.size() );
 
-      arrayView2d< localIndex const > const & elemToFaces = sourceSubRegion.faceList();
-
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
-      array2d< localIndex, cells::NODE_MAP_PERMUTATION > & elemsToNodesNew = newSubRegion.nodeList();
-      elemsToNodesNew =  elemsToNodes;
-
-      array2d< localIndex > & elemToFacesNew = newSubRegion.faceList();
-      elemToFacesNew = elemToFaces;
-
-      // Copy a new elemCenter map from the old one
+      // copy new elemCenter map from source
       array2d< real64 > & elemCenterNew = newSubRegion.getElementCenter();
       arrayView2d< real64 const > const elemCenterOld = sourceSubRegion.getElementCenter();
       elemCenterNew = elemCenterOld;
-      for( localIndex elem = 0; elem < elemsToNodesNew.size( 0 ); ++elem )
+
+      // copy the elements-to-faces map from source
+      arrayView2d< localIndex const > const & elemsToFacesSource = sourceSubRegion.faceList();
+      array2d< localIndex > & elemsToFacesNew = newSubRegion.faceList();
+      elemsToFacesNew = elemsToFacesSource;
+
+      // copy the elements-to-edgs map from source
+      arrayView2d< localIndex const > const & elemsToEdgesSource = sourceSubRegion.edgeList();
+      array2d< localIndex > & elemsToEdgesNew = newSubRegion.edgeList();
+      elemsToEdgesNew = elemsToEdgesSource;
+
+
+      // initialize the elements-to-nodes map 
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
+      arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew = cellBlockManager.getElemToNodes(newSubRegion.getName());
+
+      arrayView1d< globalIndex const > const elementLocalToGlobal = sourceSubRegion.localToGlobalMap();
+      for (localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < sourceSubRegion.localToGlobalMap().size(); iter_localToGlobalsize++)
       {
-        for( localIndex a = 0; a < 3; ++a )
-        {
-          elemCenterNew[elem][a] = elemCenterOld[elem][a];
-        }
+        newSubRegion.localToGlobalMap()[iter_localToGlobalsize] = sourceSubRegion.localToGlobalMap()[iter_localToGlobalsize];
       }
-
-      // Fill a temporary table which knowing the global number of a degree of freedom and a face, gives you the local number of this degree
-      // of freedom on the considering face
-      array2d< localIndex > localElemToLocalFace( 6, numNodesPerElem );
-
-      //Init arrays
-      for( localIndex i = 0; i < 6; ++i )
-      {
-        for( localIndex j = 0; j < numNodesPerElem; ++j )
-        {
-          localElemToLocalFace[i][j]=-1;
-        }
-
-      }
-
-
-
-      for( localIndex i = 0; i < faceToNodeMapSource.size(); ++i )
-      {
-        for( localIndex j = 0; j < numNodesPerFace; ++j )
-        {
-          faceToNodeMapNew[i][j] = -1;
-        }
-
-      }
-
-      //Face 0
-      for( localIndex i = 0; i < order+1; i++ )
-      {
-        for( localIndex j = 0; j <order+1; j++ )
-        {
-          localElemToLocalFace[0][i + numNodesPerFace * j] = i + (order+1)*j;
-        }
-
-      }
-
-      //Face 1
-      for( localIndex i = 0; i < order+1; i++ )
-      {
-        for( localIndex k = 0; k < order+1; k++ )
-        {
-          localElemToLocalFace[1][k+(order+1)*i] = k + (order+1)*i;
-        }
-
-      }
-
-      //Face 2
-      for( localIndex k = 0; k < order+1; k++ )
-      {
-        for( localIndex j = 0; j < order+1; j++ )
-        {
-          localElemToLocalFace[2][k * numNodesPerFace +j*(order+1)] = j + (order+1)*k;
-        }
-
-      }
-
-      //Face 3
-      for( localIndex j = 0; j < order+1; j++ )
-      {
-        for( localIndex k = 0; k < order+1; k++ )
-        {
-          localElemToLocalFace[3][order +k*(order+1)+j * numNodesPerFace] = k + (order+1)*j;
-        }
-
-      }
-
-      //Face 4
-      for( localIndex j = 0; j < order+1; j++ )
-      {
-        for( localIndex i = 0; i < order+1; i++ )
-        {
-          localElemToLocalFace[4][order*(order+1)+i+j * numNodesPerFace] = i + (order+1)*j;
-        }
-
-      }
-
-      //Face 5
-      for( localIndex k = 0; k < order+1; k++ )
-      {
-        for( localIndex i = 0; i < order+1; i++ )
-        {
-          localElemToLocalFace[5][order * numNodesPerFace +i+k*(order+1)] = i + (order+1)*k;
-        }
-
-      }
-
-      //Initialisation of elemToNodes
-      /*
-         for( localIndex e = 0; e < elemsToNodesNew.size( 0 ); ++e )
-         {
-         for( localIndex i = 0; i < numNodesPerElem; i++ )
-         {
-          elemsToNodesNew[e][i] =-1;
-         }
-
-         }
-       */
-
-      //localIndex count=0;
-
-      for( localIndex elem = 0; elem < elemsToNodesNew.size( 0 ); ++elem )
-      {
-        for( localIndex k = 0; k < order+1; ++k )
-        {
-          for( localIndex j = 0; j< order+1; ++j )
-          {
-            for( localIndex i = 0; i <order+1; ++i )
-            {
-
-              localIndex face = 0;
-              localIndex foundFace = 0;
-              localIndex nodeindex = i + (order+1)*j + (order+1)*(order+1)*k;
-
-              while( face<6 && foundFace<1 )
-              {
-                localIndex m = localElemToLocalFace[face][nodeindex];
-
-                if( m != -1 )
-                {
-                  if( faceToNodeMapNew[elemToFaces[elem][face]][m] != -1 )
-                  {
-                    foundFace = 1;
-                    for( localIndex l = 0; l < 2; ++l )
-                    {
-                      localIndex elemNeighbour = faceToElemIndex[elemToFaces[elem][face]][l];
-                      if( elemNeighbour != elem && elemNeighbour != -1 )
-                      {
-                        for( localIndex node = 0; node < numNodesPerElem; ++node )
-                        {
-                          if( elemsToNodesNew[elemNeighbour][node] == faceToNodeMapNew[elemToFaces[elem][face]][m] )
-                          {
-                            elemsToNodesNew[elem][nodeindex] = elemsToNodesNew[elemNeighbour][node];
-                            break;
-                          }
-                        }
-                        break;
-                      }
-                    }
-                    for( localIndex face2 = 0; face2 < 6; ++face2 )
-                    {
-                      localIndex m2 = localElemToLocalFace[face2][nodeindex];
-
-                      if( m2 != -1 && face2!=face )
-                      {
-                        faceToNodeMapNew[elemToFaces[elem][face2]][m2] = faceToNodeMapNew[elemToFaces[elem][face]][m];
-                      }
-                    }
-                  }
-                  else
-                  {
-                    faceToNodeMapNew[elemToFaces[elem][face]][m] = elemsToNodesNew[elem][nodeindex];
-                    //faceToNodeMapNew[elemToFaces[elem][face]][m] = count;
-                  }
-                }
-                face++;
-              }
-              /*
-                 if( face > 5 && foundFace < 1 )
-                 {
-                 elemsToNodesNew[elem][nodeindex] = count;
-                 count++;
-                 }
-               */
-            }
-          }
-        }
-      }
+      newSubRegion.constructGlobalToLocalMap();
 
       //Fill a temporary array which contains the Gauss-Lobatto points depending on the order
       array1d< real64 > GaussLobattoPts( order+1 );
@@ -589,50 +363,249 @@ MeshLevel::MeshLevel( string const & name,
           break;
       }
 
-      //Three 1D arrays to contains the GL points in the new coordinates knowing the mesh nodes
-      array1d< real64 > x( order+1 );
-      array1d< real64 > y( order+1 );
-      array1d< real64 > z( order+1 );
+      array1d< localIndex > foundNodeLocalToGlobal ( numNodesPartitionNew );
+      foundNodeLocalToGlobal.setValues< parallelHostPolicy > ( -1 );
 
-      for( localIndex e = 0; e < elemsToNodesNew.size( 0 ); e++ )
+      globalIndex const firstGlobalNodeIDforEdges = source.m_nodeManager->maxGlobalIndex() + 1;
+      globalIndex const firstGlobalNodeIDforFaces = firstGlobalNodeIDforEdges + numNonVertexNodesPerEdge * ( source.m_edgeManager->maxGlobalIndex() + 1 );
+      globalIndex const firstGlobalNodeIDforElems = firstGlobalNodeIDforFaces + numNonEdgeNodesPerFace * ( source.m_faceManager->maxGlobalIndex() + 1 );
+
+      localIndex const numOfElements = elemsToNodesSource.size( 0 );
+      localIndex const numOfNodesPerElementForBase = elemsToNodesSource.size(1);
+      localIndex const numOfEdgesPerElement = elemsToEdgesSource.size(1);
+      localIndex const numOfFacesPerElement = elemsToFacesSource.size(1);
+
+      //Three 1D arrays to contains the GL points in the new coordinates knowing the mesh nodes
+      array1d< real64 > corrdX( numBasisSupportPoints );
+      array1d< real64 > corrdY( numBasisSupportPoints );
+      array1d< real64 > corrdZ( numBasisSupportPoints );
+
+      real64 tempPositionX;
+      real64 tempPositionY;
+      real64 tempPositionZ;
+
+      localIndex localElemNodeID = 0;
+      localIndex iter_sourcenodes = 0;
+      localIndex iter_nodes = 0;
+
+      for( localIndex iter_elem = 0; iter_elem < numOfElements; ++iter_elem )
       {
         //Fill the three 1D array
-        for( localIndex i = 0; i < order+1; i++ )
+        for( localIndex iter_nodeDim = 0; iter_nodeDim < numBasisSupportPoints; iter_nodeDim++ )
         {
-          x[i] = refPosSource[elemsToNodesSource[e][0]][0] + ((refPosSource[elemsToNodesSource[e][1]][0]-refPosSource[elemsToNodesSource[e][0]][0])/2.)*GaussLobattoPts[i]
-                 + (refPosSource[elemsToNodesSource[e][1]][0]-refPosSource[elemsToNodesSource[e][0]][0])/2;
-          y[i] = refPosSource[elemsToNodesSource[e][0]][1] + ((refPosSource[elemsToNodesSource[e][2]][1]-refPosSource[elemsToNodesSource[e][0]][1])/2.)*GaussLobattoPts[i]
-                 + (refPosSource[elemsToNodesSource[e][2]][1]-refPosSource[elemsToNodesSource[e][0]][1])/2;
-          z[i] = refPosSource[elemsToNodesSource[e][0]][2] + ((refPosSource[elemsToNodesSource[e][4]][2]-refPosSource[elemsToNodesSource[e][0]][2])/2.)*GaussLobattoPts[i]
-                 + (refPosSource[elemsToNodesSource[e][4]][2]-refPosSource[elemsToNodesSource[e][0]][2])/2;
+          corrdX[iter_nodeDim] = refPosSource[elemsToNodesSource[iter_elem][0]][0] +
+                 ((refPosSource[elemsToNodesSource[iter_elem][1]][0]-refPosSource[elemsToNodesSource[iter_elem][0]][0])/2.)*GaussLobattoPts[iter_nodeDim]
+                 + (refPosSource[elemsToNodesSource[iter_elem][1]][0]-refPosSource[elemsToNodesSource[iter_elem][0]][0])/2;
+
+          corrdY[iter_nodeDim] = refPosSource[elemsToNodesSource[iter_elem][0]][1] +
+                 ((refPosSource[elemsToNodesSource[iter_elem][2]][1]-refPosSource[elemsToNodesSource[iter_elem][0]][1])/2.)*GaussLobattoPts[iter_nodeDim]
+                 + (refPosSource[elemsToNodesSource[iter_elem][2]][1]-refPosSource[elemsToNodesSource[iter_elem][0]][1])/2;
+
+          corrdZ[iter_nodeDim] = refPosSource[elemsToNodesSource[iter_elem][0]][2] +
+                 ((refPosSource[elemsToNodesSource[iter_elem][4]][2]-refPosSource[elemsToNodesSource[iter_elem][0]][2])/2.)*GaussLobattoPts[iter_nodeDim]
+                 + (refPosSource[elemsToNodesSource[iter_elem][4]][2]-refPosSource[elemsToNodesSource[iter_elem][0]][2])/2;
         }
 
-
-        //Fill new refPos array
-        for( localIndex k = 0; k< order+1; k++ )
+        for ( localIndex iter_elemNodeZ = 0; iter_elemNodeZ < numBasisSupportPoints;  ++iter_elemNodeZ )
         {
-          for( localIndex j = 0; j < order+1; j++ )
+          for ( localIndex iter_elemNodeY = 0; iter_elemNodeY < numBasisSupportPoints;  ++iter_elemNodeY )
           {
-            for( localIndex i = 0; i < order+1; i++ )
+            for ( localIndex iter_elemNodeX = 0; iter_elemNodeX < numBasisSupportPoints;  ++iter_elemNodeX )
             {
-              localIndex const nodeIndex = elemsToNodesNew( e, i+j*(order+1)+k* numNodesPerFace );
+              localIndex iter_elemNode = iter_elemNodeX + iter_elemNodeY * numBasisSupportPoints
+                                       + iter_elemNodeZ * numBasisSupportPoints * numBasisSupportPoints;
 
-              refPosNew( nodeIndex, 0 ) = x[i];
-              refPosNew( nodeIndex, 1 ) = y[j];
-              refPosNew( nodeIndex, 2 ) = z[k];
+              tempPositionX = corrdX[iter_elemNodeX];
+              tempPositionY = corrdY[iter_elemNodeY];
+              tempPositionZ = corrdZ[iter_elemNodeZ];
+              iter_nodes = 0;
+              while (  iter_nodes < numNodesPartitionNew )
+              {
+                if ( (  std::fabs ( refPosNew[iter_nodes][0] - tempPositionX ) > 1e-5 ) ||
+                     (  std::fabs ( refPosNew[iter_nodes][1] - tempPositionY ) > 1e-5 ) ||
+                     (  std::fabs ( refPosNew[iter_nodes][2] - tempPositionZ ) > 1e-5 ) )
+                {
+                  iter_nodes++;
+                }
+                else
+                {
+                  elemsToNodesNew[ iter_elem ][ iter_elemNode ] = iter_nodes;
+                  break;
+                }
+              }
+              if ( iter_nodes == numNodesPartitionNew )
+              {
+                elemsToNodesNew[ iter_elem ][ iter_elemNode ] = localElemNodeID;
+                refPosNew[localElemNodeID][0] = tempPositionX;
+                refPosNew[localElemNodeID][1] = tempPositionY;
+                refPosNew[localElemNodeID][2] = tempPositionZ;
 
+                iter_sourcenodes = 0;
+                while ( (  iter_sourcenodes < numNodesPartitionSource ) && ( foundNodeLocalToGlobal[ localElemNodeID ] < 0 ) )
+                {
+                  if ( (  std::fabs ( refPosSource[iter_sourcenodes][0] - tempPositionX ) < 1e-5 ) &&
+                       (  std::fabs ( refPosSource[iter_sourcenodes][1] - tempPositionY ) < 1e-5 ) &&
+                       (  std::fabs ( refPosSource[iter_sourcenodes][2] - tempPositionZ ) < 1e-5 ) )
+                  {
+                    nodeLocalToGlobalNew[ localElemNodeID ] = nodeLocalToGlobalSource[ iter_sourcenodes ];
+                    foundNodeLocalToGlobal[ localElemNodeID ] = 1;
+                    break;
+                  }
+                  else
+                    iter_sourcenodes++;
+                }
+                localElemNodeID++;
+              }
+            }
+          }
+        }
+      }
+
+      for( localIndex iter_edge = 0; iter_edge < numEdgesPartition; ++iter_edge )
+      {
+        globalIndex edgeGlobalID = edgeLocalToGlobal[iter_edge];
+        localIndex counterEdgeGlobalID = 0;
+
+        for (localIndex iter_edgeNode = 0; iter_edgeNode < numBasisSupportPoints;  ++iter_edgeNode)
+        {
+          tempPositionX = refPosSource[ edgeToNodeMapSource[iter_edge][0]][0]
+                                  + ((refPosSource[ edgeToNodeMapSource[iter_edge][1]][0]-refPosSource[ edgeToNodeMapSource[iter_edge][0]][0])/2.)
+                                    * GaussLobattoPts[iter_edgeNode]
+                                  + (refPosSource[ edgeToNodeMapSource[iter_edge][1]][0]-refPosSource[ edgeToNodeMapSource[iter_edge][0]][0])/2;
+
+          tempPositionY = refPosSource[ edgeToNodeMapSource[iter_edge][0]][1]
+                                  + ((refPosSource[ edgeToNodeMapSource[iter_edge][1]][1]-refPosSource[ edgeToNodeMapSource[iter_edge][0]][1])/2.)
+                                    * GaussLobattoPts[iter_edgeNode]
+                                  + (refPosSource[ edgeToNodeMapSource[iter_edge][1]][1]-refPosSource[ edgeToNodeMapSource[iter_edge][0]][1])/2;
+
+          tempPositionZ = refPosSource[ edgeToNodeMapSource[iter_edge][0]][2]
+                                  + ((refPosSource[ edgeToNodeMapSource[iter_edge][1]][2]-refPosSource[ edgeToNodeMapSource[iter_edge][0]][2])/2.)
+                                    * GaussLobattoPts[iter_edgeNode]
+                                  + (refPosSource[ edgeToNodeMapSource[iter_edge][1]][2]-refPosSource[ edgeToNodeMapSource[iter_edge][0]][2])/2;
+
+          iter_nodes = 0;
+          while (  iter_nodes < numNodesPartitionNew )
+          {
+            if ( (  std::fabs ( refPosNew[iter_nodes][0] - tempPositionX ) > 1e-5 ) ||
+                 (  std::fabs ( refPosNew[iter_nodes][1] - tempPositionY ) > 1e-5 ) ||
+                 (  std::fabs ( refPosNew[iter_nodes][2] - tempPositionZ ) > 1e-5 ) )
+             {
+               iter_nodes++;
+             }
+             else break;
+          }
+          if ( iter_nodes == numNodesPartitionNew )
+          {
+            GEOSX_LOG_RANK ("!!!! ERROR !!!! CREATE edgeToNodeMapNew: CANNOT FIND NODES");
+          }
+          else
+          {
+            edgeToNodeMapNew[iter_edge][ iter_edgeNode ] = iter_nodes;
+            if ( foundNodeLocalToGlobal[ iter_nodes ] < 0 )
+            {
+               nodeLocalToGlobalNew[ iter_nodes ] = firstGlobalNodeIDforEdges + edgeGlobalID * numNonVertexNodesPerEdge +  counterEdgeGlobalID;
+               foundNodeLocalToGlobal[ iter_nodes ] = 1;
+               counterEdgeGlobalID++;
+            }
+          }
+        }
+      }
+
+      for( localIndex iter_face = 0; iter_face < numFacesPartition; ++iter_face )
+      {
+        globalIndex faceGlobalID = faceLocalToGlobal[iter_face];
+        localIndex counterFaceGlobalID = 0;
+
+        real64 refPosXmax = std::max( std::max( refPosSource[faceToNodeMapSource[iter_face][0]][0], refPosSource[faceToNodeMapSource[iter_face][1]][0] ),
+                                refPosSource[faceToNodeMapSource[iter_face][2]][0] );
+        real64 refPosYmax = std::max( std::max( refPosSource[faceToNodeMapSource[iter_face][0]][1], refPosSource[faceToNodeMapSource[iter_face][1]][1] ),
+                                refPosSource[faceToNodeMapSource[iter_face][2]][1] );
+        real64 refPosZmax = std::max( std::max( refPosSource[faceToNodeMapSource[iter_face][0]][2], refPosSource[faceToNodeMapSource[iter_face][1]][2] ),
+                                refPosSource[faceToNodeMapSource[iter_face][2]][2] );
+
+
+        for (localIndex iter_faceNodeA = 0; iter_faceNodeA < numEdgesPerFace;  ++iter_faceNodeA)
+        {
+          for (localIndex iter_faceNodeB = 0; iter_faceNodeB < numEdgesPerFace;  ++iter_faceNodeB)
+          {
+            localIndex iter_faceNode = iter_faceNodeA + iter_faceNodeB * numEdgesPerFace;
+
+            if ( std::fabs ( refPosXmax - refPosSource[faceToNodeMapSource[iter_face][0]][0] ) < 1e-5 )
+            {
+              tempPositionX = refPosSource[faceToNodeMapSource[iter_face][0]][0];
+              tempPositionY = refPosSource[faceToNodeMapSource[iter_face][0]][1]
+                              + ((refPosYmax-refPosSource[faceToNodeMapSource[iter_face][0]][1])/2.)*GaussLobattoPts[ iter_faceNodeA ]
+                              + (refPosYmax-refPosSource[faceToNodeMapSource[iter_face][0]][1])/2;
+              tempPositionZ = refPosSource[faceToNodeMapSource[iter_face][0]][2]
+                              + ((refPosZmax-refPosSource[faceToNodeMapSource[iter_face][0]][2])/2.)*GaussLobattoPts[ iter_faceNodeB ]
+                              + (refPosZmax-refPosSource[faceToNodeMapSource[iter_face][0]][2])/2;
             }
 
+            else if ( std::fabs ( refPosYmax - refPosSource[faceToNodeMapSource[iter_face][0]][1] ) < 1e-5 )
+            {
+              tempPositionX = refPosSource[faceToNodeMapSource[iter_face][0]][0]
+                              + ((refPosXmax-refPosSource[faceToNodeMapSource[iter_face][0]][0])/2.)*GaussLobattoPts[ iter_faceNodeA ]
+                              + (refPosXmax-refPosSource[faceToNodeMapSource[iter_face][0]][0])/2;
+              tempPositionY = refPosSource[faceToNodeMapSource[iter_face][0]][1];
+              tempPositionZ = refPosSource[faceToNodeMapSource[iter_face][0]][2]
+                              + ((refPosZmax-refPosSource[faceToNodeMapSource[iter_face][0]][2])/2.)*GaussLobattoPts[ iter_faceNodeB ]
+                              + (refPosZmax-refPosSource[faceToNodeMapSource[iter_face][0]][2])/2;
+            }
+            else
+          {
+              tempPositionX = refPosSource[faceToNodeMapSource[iter_face][0]][0]
+                              + ((refPosXmax-refPosSource[faceToNodeMapSource[iter_face][0]][0])/2.)*GaussLobattoPts[ iter_faceNodeA ]
+                              + (refPosXmax-refPosSource[faceToNodeMapSource[iter_face][0]][0])/2;
+              tempPositionY = refPosSource[faceToNodeMapSource[iter_face][0]][1]
+                              + ((refPosYmax-refPosSource[faceToNodeMapSource[iter_face][0]][1])/2.)*GaussLobattoPts[ iter_faceNodeB ]
+                              + (refPosYmax-refPosSource[faceToNodeMapSource[iter_face][0]][1])/2;
+              tempPositionZ = refPosSource[faceToNodeMapSource[iter_face][0]][2];
+            }
+
+            iter_nodes = 0;
+            while (  iter_nodes < numNodesPartitionNew )
+            {
+              if ( (  std::fabs ( refPosNew[iter_nodes][0] - tempPositionX ) > 1e-5 ) ||
+                   (  std::fabs ( refPosNew[iter_nodes][1] - tempPositionY ) > 1e-5 ) ||
+                   (  std::fabs ( refPosNew[iter_nodes][2] - tempPositionZ ) > 1e-5 ) )
+                 iter_nodes++;
+               else break;
+            }
+            if ( iter_nodes == numNodesPartitionNew )
+            {
+              GEOSX_LOG_RANK ("!!!! ERROR !!!! CREATE faceToNodeMapNew: CANNOT FIND NODES");
+            }
+            else
+            {
+              faceToNodeMapNew[iter_face][ iter_faceNode ] = iter_nodes;
+              if ( foundNodeLocalToGlobal[ iter_nodes ] < 0 )
+              {
+                nodeLocalToGlobalNew[ iter_nodes ] = firstGlobalNodeIDforFaces + faceGlobalID * numNonEdgeNodesPerFace +  counterFaceGlobalID;
+                foundNodeLocalToGlobal[ iter_nodes ] = 1;
+                counterFaceGlobalID++;
+              }
+            }
           }
-
         }
+      }
+      for( localIndex iter_elem = 0; iter_elem < numOfElements; ++iter_elem )
+      {
+        globalIndex elemGlobalID = elementLocalToGlobal[iter_elem];
+        localIndex counterElemGlobalID = 0;
 
+        for( iter_nodes = 0; iter_nodes < numNodesPartitionNew; ++iter_nodes )
+        {
+          if ( foundNodeLocalToGlobal[ iter_nodes ] < 0 )
+          {
+            nodeLocalToGlobalNew[ iter_nodes ] = firstGlobalNodeIDforElems + elemGlobalID * numInternalNodesPerElement + counterElemGlobalID;
+            foundNodeLocalToGlobal[ iter_nodes ] = 1;
+            counterElemGlobalID++;
+          }
+        }
       }
     } );
   } );
 }
-
-
 
 MeshLevel::~MeshLevel()
 {

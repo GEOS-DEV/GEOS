@@ -597,6 +597,11 @@ ArrayOfArrays< localIndex > CellBlockManager::getFaceToNodes() const
   return m_faceToNodes;
 }
 
+ArrayOfArrays< localIndex > & CellBlockManager::getFaceToNodes() 
+{
+  return m_faceToNodes;
+}
+
 ArrayOfArrays< localIndex > CellBlockManager::getNodeToFaces() const
 {
   return meshMapUtilities::transposeIndexMap< parallelHostPolicy >( m_faceToNodes.toViewConst(),
@@ -607,6 +612,12 @@ ArrayOfArrays< localIndex > CellBlockManager::getNodeToFaces() const
 ToCellRelation< array2d< localIndex > > CellBlockManager::getFaceToElements() const
 {
   return m_faceToCells;
+}
+
+arrayView2d< localIndex, cells::NODE_MAP_USD> CellBlockManager::getElemToNodes( string const & name ) 
+{
+  this->getCellBlock( name ).resizeNumNodes(64);
+  return this->getCellBlock( name ).getElemToNode();
 }
 
 const Group & CellBlockManager::getCellBlocks() const
@@ -654,6 +665,11 @@ array2d< localIndex > CellBlockManager::getEdgeToNodes() const
   return m_edgeToNodes;
 }
 
+arrayView2d< localIndex > CellBlockManager::getEdgeToNodes()
+{
+  return m_edgeToNodes.toView();
+}
+
 ArrayOfArrays< localIndex > CellBlockManager::getFaceToEdges() const
 {
   return m_faceToEdges;
@@ -698,6 +714,16 @@ void CellBlockManager::setNumNodes( localIndex numNodes )
   m_nodeLocalToGlobal.resize( m_numNodes );
   m_nodeLocalToGlobal.setValues< serialPolicy >( -1 );
 }
+
+void CellBlockManager::setNumNodes( localIndex numNodes, localIndex const order)
+{
+   m_numNodes = numNodes;
+   m_nodesPositions.resize( m_numNodes );
+   m_nodeLocalToGlobal.resize( m_numNodes );
+   m_nodeLocalToGlobal.setValues< serialPolicy >( -1 );
+   m_edgeToNodes.resize( m_numEdges, order+1 );
+}
+
 
 array1d< globalIndex > CellBlockManager::getNodeLocalToGlobal() const
 {

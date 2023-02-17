@@ -120,7 +120,7 @@ public:
    */
   void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                 ElementRegionManager const & elemRegionManager,
-                                NodeManager const & nodeManager );
+                                NodeManager const & nodeManager, bool baseLevelMesh );
 
   /**
    * @brief Link the current manager to other managers.

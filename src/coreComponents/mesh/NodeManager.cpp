@@ -126,11 +126,12 @@ void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
 }
 
 void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
-                                           ElementRegionManager const & elemRegionManager )
+                                           ElementRegionManager const & elemRegionManager, bool baseLevelMesh )
 {
   GEOSX_MARK_FUNCTION;
 
-  resize( cellBlockManager.numNodes() );
+  if ( baseLevelMesh )
+    resize( cellBlockManager.numNodes() );
 
   m_referencePosition = cellBlockManager.getNodePositions();
 
@@ -256,12 +257,10 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
 void NodeManager::fixUpDownMaps( bool const clearIfUnmapped )
 {
-  /*
-     ObjectManagerBase::fixUpDownMaps( m_toEdgesRelation,
+  ObjectManagerBase::fixUpDownMaps( m_toEdgesRelation,
                                     m_toEdgesRelation.relatedObjectGlobalToLocal(),
                                     m_unmappedGlobalIndicesInToEdges,
                                     clearIfUnmapped );
-   */
 
   ObjectManagerBase::fixUpDownMaps( m_toFacesRelation,
                                     m_toFacesRelation.relatedObjectGlobalToLocal(),

@@ -120,6 +120,11 @@ void CellBlock::setElementType( ElementType elementType )
   m_elementsToFaces.resize( this->numElements(), m_numFacesPerElement );
 }
 
+void CellBlock::resizeNumNodes ( dataRepository::indexType const numNodes)
+{
+  m_elementsToNodes.resize( this->numElements(), numNodes );
+}
+
 void CellBlock::resize( dataRepository::indexType const numElements )
 {
   Group::resize( numElements );
@@ -142,19 +147,5 @@ localIndex CellBlock::getFaceNodes( localIndex const cellIndex,
                               m_elementsToNodes,
                               nodesInFaces );
 }
-
-arrayView1d< localIndex > CellBlock::getGlobalInformation()
-{
-  m_globalInfo.resize( 9 );
-  return m_globalInfo.toView();
-}
-
-array1d< localIndex > CellBlock::getPartitionInformation()
-{
-  m_numNodesPerElement = 64;
-  m_elementsToNodes.resize( this->numElements(), m_numNodesPerElement );
-  return m_globalInfo;
-}
-
 
 }
