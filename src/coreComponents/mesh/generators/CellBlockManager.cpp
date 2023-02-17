@@ -614,9 +614,9 @@ ToCellRelation< array2d< localIndex > > CellBlockManager::getFaceToElements() co
   return m_faceToCells;
 }
 
-arrayView2d< localIndex, cells::NODE_MAP_USD> CellBlockManager::getElemToNodes( string const & name ) 
+arrayView2d< localIndex, cells::NODE_MAP_USD> CellBlockManager::getElemToNodes( string const & name, localIndex const numNodesPartition ) 
 {
-  this->getCellBlock( name ).resizeNumNodes(64);
+  this->getCellBlock( name ).resizeNumNodes(numNodesPartition);
   return this->getCellBlock( name ).getElemToNode();
 }
 

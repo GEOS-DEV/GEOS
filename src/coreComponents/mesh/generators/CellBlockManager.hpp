@@ -80,7 +80,7 @@ public:
 
   ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
 
-  arrayView2d< localIndex, cells::NODE_MAP_USD > getElemToNodes( string const & name ) override;
+  arrayView2d< localIndex, cells::NODE_MAP_USD > getElemToNodes( string const & name, localIndex const numNodesPartition ) override;
 
   array1d< globalIndex > getNodeLocalToGlobal() const override;
 
