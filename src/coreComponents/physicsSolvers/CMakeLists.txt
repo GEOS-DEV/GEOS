@@ -180,8 +180,8 @@ set( physicsSolvers_sources
 
    )
 
-#  include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
-#  include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)
+  include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
+  include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)
 
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )
