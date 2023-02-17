@@ -141,10 +141,10 @@
 #define fmt_VERSION 8.0.1
 
 /// Version information for python
-#define Python3_VERSION 3.8.5
+/* #undef Python3_VERSION */
 
 /// Version information for CUDAToolkit
-#define CUDAToolkit_VERSION 11.0.221
+/* #undef CUDAToolkit_VERSION */
 
 
 #endif  /* GEOSX_CONFIG_HPP */

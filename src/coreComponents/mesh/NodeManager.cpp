@@ -126,11 +126,12 @@ void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
 }
 
 void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
-                                           ElementRegionManager const & elemRegionManager )
+                                           ElementRegionManager const & elemRegionManager, bool baseLevelMesh )
 {
   GEOSX_MARK_FUNCTION;
 
-  resize( cellBlockManager.numNodes() );
+  if ( baseLevelMesh )
+    resize( cellBlockManager.numNodes() );
 
   m_referencePosition = cellBlockManager.getNodePositions();
 

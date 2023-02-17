@@ -114,11 +114,12 @@ void FaceManager::setDomainBoundaryObjects()
 
 void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                            ElementRegionManager const & elemRegionManager,
-                                           NodeManager const & nodeManager )
+                                           NodeManager const & nodeManager, bool baseLevelMesh )
 {
   GEOSX_MARK_FUNCTION;
 
-  resize( cellBlockManager.numFaces() );
+  if ( baseLevelMesh )
+    resize( cellBlockManager.numFaces() );
 
   m_toNodesRelation.base() = cellBlockManager.getFaceToNodes();
   m_toEdgesRelation.base() = cellBlockManager.getFaceToEdges();
@@ -128,8 +129,8 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( blockToSubRegion.toViewConst(),
                                                                          toCellBlock,
                                                                          m_toElements );
-
-  computeGeometry( nodeManager );
+  if ( baseLevelMesh )
+    computeGeometry( nodeManager );
 }
 
 void FaceManager::setupRelatedObjectsInRelations( NodeManager const & nodeManager,

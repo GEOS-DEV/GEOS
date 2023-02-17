@@ -152,7 +152,7 @@ public:
    * @param[in] elemRegionManager element region manager, needed to map blocks to subregion
    */
   void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
-                                ElementRegionManager const & elemRegionManager );
+                                ElementRegionManager const & elemRegionManager, bool baseLevelMesh );
 
   /**
    * @brief Link the current manager to other managers.

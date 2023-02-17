@@ -93,11 +93,12 @@ void EdgeManager::buildEdges( localIndex const numNodes,
   resize( numEdges );
 }
 
-void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager )
+void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager, bool baseLevelMesh )
 {
   GEOSX_MARK_FUNCTION;
 
-  resize( cellBlockManager.numEdges() );
+  if ( baseLevelMesh )
+    resize( cellBlockManager.numEdges() );
 
   m_toNodesRelation.base() = cellBlockManager.getEdgeToNodes();
   m_toFacesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getEdgeToFaces(),
