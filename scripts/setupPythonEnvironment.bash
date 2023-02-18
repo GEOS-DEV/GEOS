@@ -105,13 +105,18 @@ then
     echo "Attempting to install packages directly in target python environment..."
     for p in "${TARGET_PACKAGES[@]}"
     do
-        echo "  $p"
-        RES=$($PYTHON_TARGET -m pip install $p 2>&1)
-        if [[ $RES =~ "Error" ]]
+        if [ -d "$p" ]
         then
-            echo "  (cannot install target packes directly)"
-            INSTALL_VIRTUAL=true
-            break
+            echo "  $p"
+            RES=$($PYTHON_TARGET -m pip install $p 2>&1)
+            if [[ $RES =~ "Error" ]]
+            then
+                echo "  (cannot install target packes directly)"
+                INSTALL_VIRTUAL=true
+                break
+            fi
+        else
+            echo "Could not find target package: $p"
         fi
     done
 fi
@@ -146,8 +151,13 @@ then
     PYTHON_TARGET=$VIRTUAL_PATH/$VIRTUAL_NAME/bin/python
     for p in "${TARGET_PACKAGES[@]}"
     do
-        echo "  $p"
-        $PYTHON_TARGET -m pip install $p
+        if [ -d "$p" ]
+        then
+            echo "  $p"
+            $PYTHON_TARGET -m pip install $p
+        else
+            echo "Could not find target package: $p"
+        fi
     done
 
     # Print user-info
@@ -170,12 +180,20 @@ then
     do
         echo "  $p"
 
+        # Check to see if the tool exists
         pp=
         if [ -f "$MOD_PATH/$p" ]
         then
             pp="$MOD_PATH/$p"
         fi
 
+        # Remove any old links if necessary
+        if [ -f "$BIN_DIR/$p" ]
+        then
+            rm $BIN_DIR/$p
+        fi
+
+        # Create links
         if [ -z "$pp" ]
         then
             echo "  (could not find where $p is installed)"      
