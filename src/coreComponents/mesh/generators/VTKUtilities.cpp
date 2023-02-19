@@ -478,22 +478,22 @@ redistributeByCellGraph( vtkDataSet & mesh,
 {
   GEOSX_MARK_FUNCTION;
 
-  int64_t const numElems = mesh.GetNumberOfCells();
-  int64_t const numProcs = MpiWrapper::commSize( comm );
+  idx_t const numElems = mesh.GetNumberOfCells();
+  idx_t const numProcs = MpiWrapper::commSize( comm );
 
   // Compute `elemdist` parameter (element range owned by each rank)
-  array1d< int64_t > const elemDist( numProcs + 1 );
+  array1d< idx_t > const elemDist( numProcs + 1 );
   {
-    array1d< int64_t > elemCounts;
+    array1d< idx_t > elemCounts;
     MpiWrapper::allGather( numElems, elemCounts, comm );
     std::partial_sum( elemCounts.begin(), elemCounts.end(), elemDist.begin() + 1 );
   }
 
-  // Use int64_t here to match ParMETIS' idx_t
-  ArrayOfArrays< int64_t, int64_t > const elemToNodes = buildElemToNodes< int64_t >( mesh );
-  ArrayOfArrays< int64_t, int64_t > const graph = parmetis::meshToDual( elemToNodes.toViewConst(), elemDist, comm, 3 );
+  // Use idx_t here to match ParMETIS' idx_t
+  ArrayOfArrays< idx_t, idx_t > const elemToNodes = buildElemToNodes< idx_t >( mesh );
+  ArrayOfArrays< idx_t, idx_t > const graph = parmetis::meshToDual( elemToNodes.toViewConst(), elemDist, comm, 3 );
 
-  array1d< int64_t > const newParts = [&]()
+  array1d< idx_t > const newParts = [&]()
   {
     switch( method )
     {
