@@ -1130,20 +1130,30 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
   LinearSolverParameters const & params = m_linearSolverParameters.get();
   matrix.setDofManager( &dofManager );
 
+  GEOSX_LOG_RANK_0("Solving assembled linear system.");
   if( params.solverType == LinearSolverParameters::SolverType::direct || !m_precond )
   {
+    GEOSX_LOG_RANK_0("Create solver.");
     std::unique_ptr< LinearSolverBase< LAInterface > > solver = LAInterface::createSolver( params );
+    GEOSX_LOG_RANK_0("Setup solver.");
     solver->setup( matrix );
+    GEOSX_LOG_RANK_0("Solve.");
     solver->solve( rhs, solution );
+    GEOSX_LOG_RANK_0("Retrieve result..");
     m_linearSolverResult = solver->result();
   }
   else
   {
+    GEOSX_LOG_RANK_0("Setup preconditioner.");
     m_precond->setup( matrix );
+    GEOSX_LOG_RANK_0("Create solver.");
     std::unique_ptr< KrylovSolver< ParallelVector > > solver = KrylovSolver< ParallelVector >::create( params, matrix, *m_precond );
+    GEOSX_LOG_RANK_0("Solve.");
     solver->solve( rhs, solution );
+    GEOSX_LOG_RANK_0("Retrieve result.");
     m_linearSolverResult = solver->result();
   }
+  GEOSX_LOG_RANK_0("Solved.");
 
   if( params.stopIfError )
   {
