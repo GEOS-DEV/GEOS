@@ -95,15 +95,23 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && stream, const localIndex end
 
 #elif defined(GEOSX_USE_HIP)
 
+// auto const parallelDeviceMemorySpace = hostMemorySpace;
+
+// template< unsigned long BLOCK_SIZE = GEOSX_BLOCK_SIZE >
+// using parallelDevicePolicy = parallelHostPolicy;
+
+// using parallelDeviceStream = parallelHostStream;
+// using parallelDeviceEvent = parallelHostEvent;
+
+// using parallelDeviceReduce = parallelHostReduce;
+// using parallelDeviceAtomic = parallelHostAtomic;
+
+// void RAJA_INLINE parallelDeviceSync() {  }
+
 auto const parallelDeviceMemorySpace = LvArray::MemorySpace::hip;
 
 template< unsigned long BLOCK_SIZE = GEOSX_BLOCK_SIZE >
 using parallelDevicePolicy = RAJA::hip_exec< BLOCK_SIZE >;
-
-// the async dispatch policy caused runtime issues as of rocm@4.5.2, hasn't been checked in rocm@5:
-// RAJA::hip_exec_async< BLOCK_SIZE >;
-template< unsigned long BLOCK_SIZE = GEOSX_BLOCK_SIZE >
-using parallelDeviceAsyncPolicy = parallelDevicePolicy< BLOCK_SIZE >;
 
 
 using parallelDeviceStream = RAJA::resources::Hip;
@@ -114,13 +122,16 @@ using parallelDeviceAtomic = RAJA::hip_atomic;
 
 void RAJA_INLINE parallelDeviceSync() { RAJA::synchronize< RAJA::hip_synchronize >( ); }
 
+// the async dispatch policy caused runtime issues as of rocm@4.5.2, hasn't been checked in rocm@5:
+template< unsigned long BLOCK_SIZE = GEOSX_BLOCK_SIZE >
+using parallelDeviceAsyncPolicy = parallelDevicePolicy< BLOCK_SIZE >;// RAJA::hip_exec_async< BLOCK_SIZE >;
+
 template< typename POLICY, typename RESOURCE, typename LAMBDA >
 RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOSX_UNUSED_PARAM( stream ), const localIndex end, LAMBDA && body )
 {
   RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, end ), std::forward< LAMBDA >( body ) );
   return parallelDeviceEvent();
 }
-
 #else
 
 auto const parallelDeviceMemorySpace = parallelHostMemorySpace;
