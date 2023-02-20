@@ -32,7 +32,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{ Region, Fracture }">
+      targetRegions="{ Region }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="5"/>
@@ -74,7 +74,7 @@
       name="Fracture"
       faceBlock="faceElementSubRegion"
       defaultAperture="0.0"
-      materialList="{ fractureMaterial, rock }"/>
+      materialList="{ fractureMaterial }"/>
   </ElementRegions>
 
 <!-- SPHINX_MATERIAL -->

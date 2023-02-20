@@ -154,6 +154,16 @@ using buffer_type = std::vector< buffer_unit_type >;
 
 ///@}
 
+/**
+ * @name Alias for timestamp in GEOSX.
+ */
+///@{
+
+/// Timestamp type (used to perform actions such a sparsity pattern computation after mesh modifications)
+using Timestamp = unsigned long long int;
+
+///@}
+
 //START_SPHINX_INCLUDE_00
 
 /**

@@ -75,6 +75,11 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
 {
   SinglePhaseBase::initializePreSubGroups();
 
+  GEOSX_THROW_IF( m_isThermal,
+                  GEOSX_FMT( "{} {}: The thermal option is not supported by SinglePhaseHybridFVM",
+                             catalogName(), getName() ),
+                  InputError );
+
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -303,7 +308,10 @@ void SinglePhaseHybridFVM::applyBoundaryConditions( real64 const time_n,
   GEOSX_MARK_FUNCTION;
 
   SinglePhaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
+  if( !m_keepFlowVariablesConstantDuringInitStep )
+  {
+    applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
+  }
 }
 
 namespace
