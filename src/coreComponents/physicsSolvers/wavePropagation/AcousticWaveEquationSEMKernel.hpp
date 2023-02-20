@@ -217,6 +217,7 @@ struct MassMatrixKernel
 
       real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
       real64 xLocal[ numNodesPerElem ][ 3 ];
+      // FE_TYPE::computeLocalCoords( 
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
         for( localIndex i = 0; i < 3; ++i )

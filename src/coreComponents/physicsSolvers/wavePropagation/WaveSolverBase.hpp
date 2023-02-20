@@ -70,6 +70,8 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
+    static constexpr char const * spaceOrder() { return "spaceOrder"; }
+
     static constexpr char const * sourceCoordinatesString() { return "sourceCoordinates"; }
     static constexpr char const * sourceValueString() { return "sourceValue"; }
 
@@ -173,6 +175,9 @@ protected:
                                        DomainPartition & domain,
                                        bool const computeGradient ) = 0;
 
+  /// Order in space of the numerical scheme
+  localIndex m_spaceOrder;
+
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;
 
@@ -251,6 +256,84 @@ protected:
   };
 
 };
+
+#define DECLARE_WAVE_FIELD( NAME, KEY, TYPE, DESC ) \
+struct NAME \
+{ \
+  DECLARE_FIELD( NAME##_node, "NAME##_node", array1d< TYPE >, 0, NOPLOT, WRITE_AND_READ, DESC ); \
+  DECLARE_FIELD( NAME##_edge, "NAME##_edge", array2d< TYPE >, 0, NOPLOT, WRITE_AND_READ, DESC ); \
+  DECLARE_FIELD( NAME##_face, "NAME##_face", array2d< TYPE >, 0, NOPLOT, WRITE_AND_READ, DESC ); \
+  DECLARE_FIELD( NAME##_elem, "NAME##_elem", array2d< TYPE >, 0, NOPLOT, WRITE_AND_READ, DESC ); \
+  static registeriField( NodeManager const & nodeManager,\
+                   EdgeManager const & edgeManager,\
+                   FaceManager const & faceManager,\
+                   ElementRegionManger const & elemManager,\
+                   string & const name )\
+  { \
+    nodeManager.registerField< NAME##_node >( name );\
+    edgeManager.registerField< NAME##_edge >( name );\
+    faceManager.registerField< NAME##_face >( name );\
+    elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )\
+    {\
+      subRegion.registerField< NAME##_elem >( name );\
+    } );\
+  } \
+  static WaveField getField( NodeManager const & nodeManager,\
+                             EdgeManager const & edgeManager,\
+                             FaceManager const & faceManager,\
+                             ElementRegionMangerstring & const name )\
+                  int order )\
+  { \
+    nodeManager.getField< NAME##_node >().reizeDImension< 1 >( order + 1 ); \
+    edgeManager.getField< NAME##_edge >()\
+    faceManager.getField< NAME##_face >()\
+    elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )\
+    {\
+      subRegion.registerField< NAME##_elem >( name );\
+    } );\
+  } \
+}
+/**
+ * @brief class holding the wave field solution defined on multiple element types: nodes, edges, faces and elements 
+ */
+typename< typename T >
+class WaveField< T >
+{
+private:
+  array1dView< T > nodeVals;
+  array2dView< T > edgeVals;
+  array2dView< T > faceVals;
+  array2dView< T > elemVals;
+  NodeManager const & nodeManager;
+  EdgeManager const & edgeManager;
+  FaceManager const & faceManager;
+  ElementRegionManager const & elemManager;
+  
+  int const order;
+
+public:
+   
+  /**
+   * Initialize wave field solution on the given mesh managers
+   */                                                         
+  WaveField( NodeManager const & nodeManager,
+             EdgeManager const & edgeManager,
+             FaceManager const & faceManager,
+             ElementRegionManager const & elemManager,
+             int order ); 
+
+  /**
+   * Register all the fields
+   */ 
+  void registerFields();
+
+  /**
+   * Intialize all fields to zero
+   */ 
+  void initialize();
+
+ 
+};  
 
 } /* namespace geosx */
 

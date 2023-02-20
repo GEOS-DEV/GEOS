@@ -37,6 +37,11 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
               parent )
 {
 
+  registerWrapper( viewKeyStruct::sourceCoordinatesString(), &m_spaceOrder ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "Spatial order of the method" );
+
   registerWrapper( viewKeyStruct::sourceCoordinatesString(), &m_sourceCoordinates ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
@@ -232,4 +237,26 @@ real64 WaveSolverBase::explicitStep( real64 const & time_n,
     return explicitStepBackward( time_n, dt, cycleNumber, domain, m_saveFields );
   }
 }
+
+template< typename T >
+WaveField< T >::WaveField( NodeManager const & nodeManager,
+                           EdgeManager const & edgeManager,
+                           FaceManager const & faceManager,
+                           ElementRegionManager const & elemManager,
+                           int const order )
+ : nodeManager( nodeManager ), edgeManager( edgeManager ), faceManager( faceManager ), elemManager( elemManager ), order( order )
+{
+}
+
+template< typename T >
+WaveField< T >::declareFields(){
+                           NodeManager const & nodeManager,
+                           EdgeManager const & edgeManager,
+                           FaceManager const & faceManager,
+                           ElementRegionManager const & elemManager,
+                           int const order )
+ : nodeManager( nodeManager ), edgeManager( edgeManager ), faceManager( faceManager ), elemManager( elemManager ), order( order )
+{
+}
+
 } /* namespace geosx */

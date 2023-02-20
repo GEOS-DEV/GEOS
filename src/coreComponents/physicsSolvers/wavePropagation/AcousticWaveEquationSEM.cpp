@@ -149,16 +149,29 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                                     arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
+    EdgeManager & edgeManager = mesh.getEdgeManager();
+    FaceManager & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getFaceManager();
 
-    nodeManager.registerField< fields::Pressure_nm1,
-                               fields::Pressure_n,
-                               fields::Pressure_np1,
-                               fields::PressureDoubleDerivative,
-                               fields::ForcingRHS,
-                               fields::MassVector,
-                               fields::DampingVector,
-                               fields::StiffnessVector,
-                               fields::FreeSurfaceNodeIndicator >( this->getName() );
+    Pressure_nm1.registerField( this->getName() );
+    Pressure_n.registerField( this->getName() );
+    Pressure_np1.registerField( this->getName() );
+    PressureDoubleDerivative.registerField( this->getName() );
+    ForcingRHS.registerField( this->getName() );
+    MassVector.registerField( this->getName() );
+    DampingVector.registerField( this->getName() );
+    StiffnessVector.registerField( this->getName() );
+    FreeSurfaceNodeIndicator.registerField( this->getName() );
+ 
+    Pressure_nm1.registerField( this->getName() );
+    Pressure_n.registerField( this->getName() );
+    Pressure_np1.registerField( this->getName() );
+    PressureDoubleDerivative.registerField( this->getName() );
+    ForcingRHS.registerField( this->getName() );
+    MassVector.registerField( this->getName() );
+    DampingVector.registerField( this->getName() );
+    StiffnessVector.registerField( this->getName() );
+    FreeSurfaceNodeIndicator.registerField( this->getName() );
 
     /// register  PML auxiliary variables only when a PML is specified in the xml
     if( m_usePML )
@@ -172,10 +185,8 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       nodeManager.getField< fields::AuxiliaryVar2PML >().resizeDimension< 1 >( 3 );
     }
 
-    FaceManager & faceManager = mesh.getFaceManager();
     faceManager.registerField< fields::FreeSurfaceFaceIndicator >( this->getName() );
 
-    ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
@@ -183,7 +194,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< fields::PartialGradient >( this->getName() );
     } );
 
-    arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
+    arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative::PressureDouble_node >();
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
     std::string lifoPrefix = GEOSX_FMT( "lifo/rank_{:05}/pdt2_shot{:06}", rank, m_shotIndex );
     m_lifo = std::unique_ptr< lifoStorage< real32 > >( new lifoStorage< real32 >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize ) );

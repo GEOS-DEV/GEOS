@@ -191,57 +191,27 @@ private:
 };
 
 
+
+
 namespace fields
 {
 
-DECLARE_FIELD( Pressure_nm1,
-               "pressure_nm1",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Scalar pressure at time n-1." );
+DECLARE_ALL_FIELDS( Pressure_nm1, "pressure_nm1", real32, "Scalar pressure at time n-1." );
 
-DECLARE_FIELD( Pressure_n,
-               "pressure_n",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Scalar pressure at time n." );
+DECLARE_ALL_FIELDS( Pressure_n, "pressure_n", real32, "Scalar pressure at time n." );
 
-DECLARE_FIELD( Pressure_np1,
-               "pressure_np1",
-               array1d< real32 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Scalar pressure at time n+1." );
+DECLARE_ALL_FIELDS( Pressure_np1, "pressure_np1", real32, "Scalar pressure at time n+1." );
 
-DECLARE_FIELD( ForcingRHS,
-               "rhs",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "RHS" );
+DECLARE_ALL_FIELDS( ForcingRHS, "rhs", real32, "RHS" );
 
-DECLARE_FIELD( MassVector,
-               "massVector",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal of the Mass Matrix." );
+DECLARE_ALL_FIELDS( MassVector, "massVector", real32, "Diagonal of the Mass Matrix." );
 
-DECLARE_FIELD( DampingVector,
-               "dampingVector",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal of the Damping Matrix." );
+DECLARE_ALL_FIELDS( DampingVector, "dampingVector", real32, "Diagonal of the Damping Matrix." );
 
+DECLARE_ALL_FIELDS( StiffnessVector, "stiffnessVector", real32, "Stiffness vector contains R_h*Pressure_n." );
+
+DECLARE_ALL_FIELDS( FreeSurfaceNodeIndicator, "freeSurfaceNodeIndicator", localIndex, "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
+ 
 DECLARE_FIELD( MediumVelocity,
                "mediumVelocity",
                array1d< real32 >,
@@ -249,14 +219,6 @@ DECLARE_FIELD( MediumVelocity,
                NOPLOT,
                WRITE_AND_READ,
                "Medium velocity of the cell" );
-
-DECLARE_FIELD( StiffnessVector,
-               "stiffnessVector",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Stiffness vector contains R_h*Pressure_n." );
 
 DECLARE_FIELD( FreeSurfaceFaceIndicator,
                "freeSurfaceFaceIndicator",
@@ -266,29 +228,16 @@ DECLARE_FIELD( FreeSurfaceFaceIndicator,
                WRITE_AND_READ,
                "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
 
-DECLARE_FIELD( FreeSurfaceNodeIndicator,
-               "freeSurfaceNodeIndicator",
-               array1d< localIndex >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
 
-DECLARE_FIELD( PressureDoubleDerivative,
-               "pressureDoubleDerivative",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Double derivative of the pressure for each node to compute the gradient" );
+DECLARE_ALL_FIELDS( PressureDoubleDerivative, "pressureDoubleDerivative", real32, "Double derivative of the pressure for each node to compute the gradient" );
 
 DECLARE_FIELD( PartialGradient,
-               "partialGradient",
-               array1d< real32 >,
+               "partialGradient", 
+               array1d< real32 >, 
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Partiel gradient computed during backward propagation" );
+               "Partial gradient computed during backward propagation" );
 
 DECLARE_FIELD( AuxiliaryVar1PML,
                "auxiliaryVar1PML",
