@@ -317,8 +317,10 @@ private:
 
   /// counter of buffer stored in LIFO
   int m_bufferCount;
-  /// counter of buffer stored on disk
-  int m_bufferOnDiskCount;
+  /// counter of buffer pushed to host
+  int m_bufferToHostCount;
+  /// counter of buffer pushed to disk
+  int m_bufferToDiskCount;
 
 #ifdef GEOSX_USE_CUDA
   // Events associated to ith  copies to device buffer
@@ -342,7 +344,7 @@ private:
   /// thread to execute tasks.
   std::thread m_worker[2];
   /// boolean to keep m_worker alive.
-  bool m_continue = true;
+  bool m_continue;
 
 public:
 
@@ -365,16 +367,17 @@ public:
     m_deviceDeque( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda ),
 #endif
     m_hostDeque( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host ),
-    m_bufferCount( 0 ), m_bufferOnDiskCount( 0 ),
+    m_bufferCount( 0 ), m_bufferToHostCount( 0 ), m_bufferToDiskCount( 0 ),
 #ifdef GEOSX_USE_CUDA
     m_pushToDeviceEvents( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 ),
     m_pushToHostFutures( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers ),
     m_popFromDeviceEvents( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 ),
-    m_popFromHostFutures( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers )
+    m_popFromHostFutures( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers ),
 #else
     m_pushToHostFutures( maxNumberOfBuffers ),
-    m_popFromHostFutures( maxNumberOfBuffers )
+    m_popFromHostFutures( maxNumberOfBuffers ),
 #endif
+    m_continue( true )
   {
 #ifndef GEOSX_USE_CUDA
     GEOSX_UNUSED_VAR( numberOfBuffersToStoreOnDevice );
@@ -427,7 +430,7 @@ public:
       {
         LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
         // This buffer will go to host memory, and maybe on disk
-        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this, id ) );
+        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this, m_bufferToHostCount++ ) );
         {
           std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
           m_task_queue[0].emplace_back( std::move( task ) );
@@ -445,7 +448,7 @@ public:
         {
           LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
           // This buffer will go to host memory, and maybe on disk
-          std::packaged_task< void() > t2( std::bind( &lifoStorage< T >::hostToDisk, this, pushId ) );
+          std::packaged_task< void() > t2( std::bind( &lifoStorage< T >::hostToDisk, this, m_bufferToDiskCount++ ) );
           {
             std::unique_lock< std::mutex > l2( m_task_queue_mutex[1] );
             m_task_queue[1].emplace_back( std::move( t2 ) );
@@ -515,11 +518,11 @@ public:
     {
       m_popFromDeviceEvents[id] = m_deviceDeque.popFront( array );
 
-      if( id >= (int)m_deviceDeque.capacity() )
+      if( m_bufferToHostCount > 0 )
       {
         LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
         // Trigger pull one buffer from host, and maybe from disk
-        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this, id - m_deviceDeque.capacity() ) );
+        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this, --m_bufferToHostCount, id ) );
         {
           std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
           m_task_queue[0].emplace_back( std::move( task ) );
@@ -533,11 +536,11 @@ public:
       std::packaged_task< void() > task( std::bind ( [ this ] ( int popId, arrayView1d< T > poppedArray ) {
         m_hostDeque.popFront( poppedArray );
 
-        if( popId >= (int)m_hostDeque.capacity() )
+        if( m_bufferToDiskCount > 0 )
         {
           LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
           // Trigger pull one buffer from host, and maybe from disk
-          std::packaged_task< void() > task2( std::bind( &lifoStorage< T >::diskToHost, this, popId  - m_hostDeque.capacity() ) );
+          std::packaged_task< void() > task2( std::bind( &lifoStorage< T >::diskToHost, this, --m_bufferToDiskCount ) );
           {
             std::unique_lock< std::mutex > lock2( m_task_queue_mutex[1] );
             m_task_queue[1].emplace_back( std::move( task2 ) );
@@ -565,9 +568,8 @@ public:
 #ifdef GEOSX_USE_CUDA
       if( m_deviceDeque.capacity() > 0 )
       {
-#ifdef GEOSX_USE_CUDA
-        cudaEventSynchronize( m_popFromDeviceEvents[m_bufferCount].get< camp::resources::CudaEvent >().getCudaEvent_t() );
-#endif
+        auto *cuda_event = m_popFromDeviceEvents[m_bufferCount].try_get< camp::resources::CudaEvent >();
+        if ( cuda_event ) cudaEventSynchronize( cuda_event->getCudaEvent_t() );
       }
       else
 #endif
@@ -614,7 +616,7 @@ private:
     if( m_maxNumberOfBuffers - id > (int)(m_deviceDeque.capacity() + m_hostDeque.capacity()) )
     {
       // This buffer will go to host then maybe to disk
-      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this, id ) );
+      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this, m_bufferToDiskCount++ ) );
       {
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
         m_task_queue[1].emplace_back( std::move( task ) );
@@ -644,19 +646,20 @@ private:
    * Copy data from host memory to device memory
    *
    * @param id ID of the buffer to load from host memory.
+   * @param id_pop ID of the last popped buffer from device
    */
 #ifdef GEOSX_USE_CUDA
-  void hostToDevice( int id )
+  void hostToDevice( int id, int id_pop )
   {
     LIFO_MARK_FUNCTION;
-    m_hostDeque.getStream().wait_for( const_cast< camp::resources::Event * >( &m_popFromDeviceEvents[ id + m_deviceDeque.capacity() ] ) );
+    m_hostDeque.getStream().wait_for( const_cast< camp::resources::Event * >( &m_popFromDeviceEvents[ id_pop ] ) );
     m_deviceDeque.emplaceBackFromFront( m_hostDeque );
 
     // enqueue diskToHost on worker #2 if needed
-    if( id >= (int)m_hostDeque.capacity() )
+    if( m_bufferToDiskCount > 0 )
     {
       // This buffer will go to host then to disk
-      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this, id - m_hostDeque.capacity() ) );
+      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this, --m_bufferToDiskCount ) );
       {
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
         m_task_queue[1].emplace_back( std::move( task ) );
