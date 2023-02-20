@@ -190,22 +190,28 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
     dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
 
-    if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
-    {
-      locallyFractured = 1;
-    }
-    MpiWrapper::allReduce( &locallyFractured,
-                           &globallyFractured,
-                           1,
-                           MPI_MAX,
-                           MPI_COMM_GEOSX );
+    // GEOSX_LOG_LEVEL_RANK_0( 0, "Entering surface generator solver step.");
+    // if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
+    // {
+    //   locallyFractured = 1;
+    // }
+
+    // GEOSX_LOG_LEVEL_RANK_0( 0, "Detecting global fracture.");
+    // MpiWrapper::allReduce( &locallyFractured,
+    //                        &globallyFractured,
+    //                        1,
+    //                        MPI_MAX,
+    //                        MPI_COMM_GEOSX );
 
     if( globallyFractured == 0 )
     {
+      GEOSX_LOG_LEVEL_RANK_0( 0, "No fracture.");
       break;
     }
     else
     {
+
+      GEOSX_LOG_LEVEL_RANK_0( 0, "Fracture detected, updating and synching fields.");
       FieldIdentifiers fieldsToBeSync;
 
       fieldsToBeSync.addElementFields( { flow::pressure::key(),
@@ -222,6 +228,8 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
                                                            domain.getNeighbors(),
                                                            false );
 
+
+      GEOSX_LOG_LEVEL_RANK_0( 0, "Fields sync'd updating local state.");
       this->updateState( domain );
 
       if( getLogLevel() >= 1 )
@@ -231,10 +239,14 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
     }
   }
 
+  GEOSX_LOG_LEVEL_RANK_0( 0, "About to complete solve step.");
+
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   implicitStepComplete( time_n, dtReturn, domain );
   m_numResolves[1] = solveIter;
 
+
+  GEOSX_LOG_LEVEL_RANK_0( 0, "Fully coupled solver step complete, return dt.");
   return dtReturn;
 }
 

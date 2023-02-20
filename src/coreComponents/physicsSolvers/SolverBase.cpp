@@ -229,6 +229,8 @@ bool SolverBase::execute( real64 const time_n,
                                           cycleNumber,
                                           domain );
 
+    GEOSX_LOG_LEVEL_RANK_0( 0, "Solver step completed, saving time step statistics." );
+
     // increment the cumulative number of nonlinear and linear iterations
     m_solverStatistics.saveTimeStepStatistics();
 
@@ -247,7 +249,7 @@ bool SolverBase::execute( real64 const time_n,
 
     if( getLogLevel() >= 1 && dtRemaining > 0.0 )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: sub-step = {}, accepted dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, dtRemaining ) );
+      GEOSX_LOG_LEVEL_RANK_0( 0, GEOSX_FMT( "{}: sub-step = {}, accepted dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, dtRemaining ) );
     }
   }
 
@@ -678,7 +680,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
                                                            stepDt,
                                                            cycleNumber,
                                                            domain );
-
+      GEOSX_LOG_LEVEL_RANK_0( 0, "Out of solveNonlinearSystem.");
       if( isNewtonConverged )
       {
         isConfigurationLoopConverged = updateConfiguration( domain );
@@ -723,7 +725,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     {
       // cut timestep, go back to beginning of step and restart the Newton loop
       stepDt *= dtCutFactor;
-      GEOSX_LOG_LEVEL_RANK_0 ( 1, GEOSX_FMT( "New dt = {}", stepDt ) );
+      GEOSX_LOG_LEVEL_RANK_0 ( 0, GEOSX_FMT( "New dt = {}", stepDt ) );
 
       // notify the solver statistics counter that this is a time step cut
       m_solverStatistics.logTimeStepCut();
@@ -744,6 +746,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     }
   }
 
+  // GEOSX_LOG_RANK_0( "Leaving nonLinearImplicitStep.");
   // return the achieved timestep
   return stepDt;
 }
@@ -797,8 +800,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
       m_rhs.close();
 
-//      m_rhs.print( std::cout );
-//      LvArray::print<serialPolicy>( m_localMatrix.toViewConst() );
+    // m_rhs.print( std::cout );
+    // LvArray::print<serialPolicy>( m_localMatrix.toViewConst() );
 
     }
     if( m_assemblyCallback )
@@ -813,18 +816,18 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     real64 residualNorm = calculateResidualNorm( domain, m_dofManager, m_rhs.values() );
 
 
-    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
+    GEOSX_LOG_LEVEL_RANK_0( 0, GEOSX_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
     if( newtonIter > 0 )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Last LinSolve(iter,res) = ( {:3}, {:4.2e} ) ; ",
+      GEOSX_LOG_LEVEL_RANK_0( 0, GEOSX_FMT( "    Last LinSolve(iter,res) = ( {:3}, {:4.2e} ) ; ",
                                             m_linearSolverResult.numIterations,
                                             m_linearSolverResult.residualReduction ) );
     }
-
     // if the residual norm is less than the Newton tolerance we denote that we have
     // converged and break from the Newton loop immediately.
     if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
     {
+      GEOSX_LOG_LEVEL_RANK_0( 0, "Newton iteration converged.");
       isNewtonConverged = true;
       break;
     }
@@ -834,13 +837,14 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     if( residualNorm > m_nonlinearSolverParameters.m_maxAllowedResidualNorm )
     {
       string const maxAllowedResidualNormString = NonlinearSolverParameters::viewKeysStruct::maxAllowedResidualNormString;
-      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
+      GEOSX_LOG_LEVEL_RANK_0( 0, GEOSX_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
                                             maxAllowedResidualNormString,
                                             m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
       isNewtonConverged = false;
       break;
     }
 
+    GEOSX_LOG_LEVEL_RANK_0( 0, "Line search if active.");
     // do line search in case residual has increased
     if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
         && residualNorm > lastResidual )
@@ -879,17 +883,19 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       {
         if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Attempt )
         {
-          GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Accepting iteration." );
+          GEOSX_LOG_LEVEL_RANK_0( 0, "        Line search failed to produce reduced residual. Accepting iteration." );
         }
         else if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Require )
         {
           // if line search failed, then break out of the main Newton loop. Timestep will be cut.
-          GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Exiting Newton Loop." );
+          GEOSX_LOG_LEVEL_RANK_0( 0, "        Line search failed to produce reduced residual. Exiting Newton Loop." );
           break;
         }
       }
     }
 
+
+    GEOSX_LOG_LEVEL_RANK_0( 0, "eisenstatWalker if active.");
     // if using adaptive Krylov tolerance scheme, update tolerance.
     LinearSolverParameters::Krylov & krylovParams = m_linearSolverParameters.get().krylov;
     if( krylovParams.useAdaptiveTol )
@@ -900,6 +906,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
     if( m_precond )
     {
+      GEOSX_LOG_LEVEL_RANK_0( 0, "clearing preconditioner.");
       m_precond->clear();
     }
 
@@ -930,9 +937,11 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     // apply the system solution to the fields/variables
+    GEOSX_LOG_LEVEL_RANK_0( 0, "Applying system solution.");
     applySystemSolution( m_dofManager, m_solution.values(), scaleFactor, domain );
 
     // update non-primary variables (constitutive models)
+    GEOSX_LOG_LEVEL_RANK_0( 0, "update state in solveNonlinearSystem.");
     updateState( domain );
 
     lastResidual = residualNorm;

@@ -444,6 +444,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
 {
   int rval = 0;
 
+  GEOSX_LOG_LEVEL_RANK_0( 0, "SurfaceGenerator: running separtion driver.");
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
                                                                 arrayView1d< string const > const & )
@@ -463,6 +464,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
+  GEOSX_LOG_LEVEL_RANK_0( 0, "SurfaceGenerator: building fracture stencil.");
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
                                                                 arrayView1d< string const > const & )
@@ -491,13 +493,14 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
     SortedArray< localIndex > & targetSet =
       setGroup.getWrapper< SortedArray< localIndex > >( "all" ).reference();
 
+    GEOSX_LOG_LEVEL_RANK_0( 0, "SurfaceGenerator: building target set.");
     forAll< serialPolicy >( fractureSubRegion.size(), [&] ( localIndex const ei )
-
     {
       targetSet.insert( ei );
     } );
   } );
 
+  GEOSX_LOG_LEVEL_RANK_0( 0, "SurfaceGenerator: solver step complete.");
   return rval;
 }
 
@@ -524,14 +527,17 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   FieldIdentifiers fieldsToBeSync;
 
+  GEOSX_LOG_LEVEL_RANK_0( 0 , "SurfaceGenerator::separationDriver building fieldsToBeSync list.");
   fieldsToBeSync.addFields( FieldLocation::Face, { surfaceGeneration::ruptureState::key() } );
   if( nodeManager.hasField< fields::solidMechanics::externalForce >() )
   {
     fieldsToBeSync.addFields( FieldLocation::Node, { fields::solidMechanics::externalForce::key() } );
   }
 
+  GEOSX_LOG_LEVEL_RANK_0( 0 , "SurfaceGenerator::separationDriver synching fields.");
   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 
+  GEOSX_LOG_LEVEL_RANK_0( 0 , "SurfaceGenerator::separationDriver moving data to host memory space.");
   elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
   {
     elemSubRegion.moveSets( hostMemorySpace );
@@ -544,7 +550,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   {
     if( m_failCriterion >0 )  // Stress intensity factor based criterion and mixed criterion.
     {
-
+      GEOSX_LOG_LEVEL_RANK_0( 0 , "SurfaceGenerator::separationDriver identifying ruptured faces.");
       identifyRupturedFaces( domain,
                              nodeManager,
                              edgeManager,
@@ -558,10 +564,12 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   if( prefrac )
   {
+    GEOSX_LOG_LEVEL_RANK_0( 0 , "SurfaceGenerator::separationDriver calculating kink angles.");
     ModifiedObjectLists modifiedObjects;
     calculateKinkAngles( faceManager, edgeManager, nodeManager, modifiedObjects, prefrac );
   }
 
+  GEOSX_LOG_LEVEL_RANK_0( 0 , "SurfaceGenerator::separationDriver post update rupture states.");
   // We do this here to get the nodesToRupturedFaces etc.
   // The fail stress check inside has been disabled
   postUpdateRuptureStates( nodeManager,
@@ -576,6 +584,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   array1d< integer > const & isNodeGhost = nodeManager.ghostRank();
 
+  GEOSX_LOG_LEVEL_RANK_0( 0 , "SurfaceGenerator::separationDriver processing nodes to detect splits.");
   for( int color=0; color<numTileColors; ++color )
   {
     ModifiedObjectLists modifiedObjects;
@@ -610,6 +619,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
     modifiedObjects.clearNewFromModified();
 
+    GEOSX_LOG_LEVEL_RANK_0( 0 , "SurfaceGenerator::separationDriver assigning new global indices to modified objects.");
     // 1) Assign new global indices to the new objects
     CommunicationTools::assignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
     CommunicationTools::assignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
@@ -618,14 +628,15 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
     ModifiedObjectLists receivedObjects;
 
-    /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly
-    /// communicated
+    GEOSX_LOG_LEVEL_RANK_0( 0 , "SurfaceGenerator::separationDriver synchronizing topology change.");
+    /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly communicated
     parallelTopologyChange::synchronizeTopologyChange( &mesh,
                                                        neighbors,
                                                        modifiedObjects,
                                                        receivedObjects,
                                                        m_mpiCommOrder );
 
+    GEOSX_LOG_LEVEL_RANK_0( 0 , "SurfaceGenerator::separationDriver synchronizing tip sets.");
     synchronizeTipSets( faceManager,
                         edgeManager,
                         nodeManager,
@@ -643,6 +654,8 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
     ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
+    GEOSX_LOG_LEVEL_RANK_0( 0 , "SurfaceGenerator::separationDriver building new face element list.");
+
     elementManager.forElementSubRegionsComplete< FaceElementSubRegion >( [&]( localIndex const er,
                                                                               localIndex const esr,
                                                                               ElementRegionBase &,
@@ -655,6 +668,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
       }
     } );
 
+    GEOSX_LOG_LEVEL_RANK_0( 0 , "SurfaceGenerator::separationDriver face to node mapping.");
 
     elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
@@ -686,16 +700,19 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
     } );
   }
 
+  GEOSX_LOG_LEVEL_RANK_0( 0 , "SurfaceGenerator::separationDriver calculate rupture rate.");
 
   real64 ruptureRate = calculateRuptureRate( elementManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName ) );
 
-  GEOSX_LOG_LEVEL_RANK_0( 3, "rupture rate is " << ruptureRate );
+  GEOSX_LOG_LEVEL_RANK_0( 0, "rupture rate is " << ruptureRate );
   if( ruptureRate > 0 )
     m_nextDt = ruptureRate < 1e99 ? m_cflFactor / ruptureRate : 1e99;
 
 
 //  if( rval>0 )
   {
+    GEOSX_LOG_LEVEL_RANK_0( 0 , "SurfaceGenerator::separationDriver touching lists in host memory space to mark dirty flag.");
+
     elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
     {
       elemSubRegion.nodeList().registerTouch( hostMemorySpace );
@@ -720,6 +737,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   }
 
+  GEOSX_LOG_LEVEL_RANK_0( 0 , "SurfaceGenerator::separationDriver complete.");
   return rval;
 }
 

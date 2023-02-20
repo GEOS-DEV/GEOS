@@ -60,7 +60,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
 
   if( params.logLevel >= 1 )
   {
-    GEOSX_LOG_RANK_0( numComponentsPerField );
+    // GEOSX_LOG_RANK_0( numComponentsPerField );
   }
   if( params.logLevel >= 2 )
   {

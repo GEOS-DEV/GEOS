@@ -188,6 +188,10 @@ bool EventManager::run( DomainPartition & domain )
         earlyReturn = subEvent->execute( m_time, m_dt, m_cycle, 0, 0, domain );
       }
 
+      // Print debug information for logLevel >= 1
+      GEOSX_LOG_LEVEL_RANK_0( 1,
+                              "     Event: " << m_currentSubEvent << " execution complete." );
+
       // Check the exit flag
       // Note: Currently, this is only being used by the HaltEvent
       //       If it starts being used elsewhere it may need to be synchronized
