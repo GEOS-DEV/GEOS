@@ -26,9 +26,13 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/TimingMacros.hpp"
 
-#define LIFO_MARK_FUNCTION if( std::getenv( "LIFO_TRACE_ON" ) != NULL ) GEOSX_MARK_FUNCTION;
-#define LIFO_MARK_SCOPE( a )  if( std::getenv( "LIFO_TRACE_ON" ) != NULL ) GEOSX_MARK_SCOPE( a );
-
+#ifdef LIFO_DISABLE_CALIPER
+#define LIFO_MARK_FUNCTION
+#define LIFO_MARK_SCOPE(a)
+#else
+#define LIFO_MARK_FUNCTION GEOSX_MARK_FUNCTION
+#define LIFO_MARK_SCOPE(a) GEOSX_MARK_SCOPE(a)
+#endif
 
 namespace geosx
 {

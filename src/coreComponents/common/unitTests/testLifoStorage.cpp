@@ -1,4 +1,5 @@
 #include "mainInterface/initialization.hpp"
+#define LIFO_DISABLE_CALIPER
 #include "common/lifoStorage.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/MallocBuffer.hpp"
