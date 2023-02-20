@@ -5,7 +5,8 @@
     <File name="./ThermoElastic_2d_base.xml" />
   </Included>
 
-   <Mesh>
+  <!-- SPHINX_WellboreMesh -->
+  <Mesh>
     <InternalWellbore
       name="mesh1"
       elementTypes="{ C3D8, C3D8, C3D8 }"
@@ -22,6 +23,7 @@
       cellBlockNames="{ casing, cement, rock }"
       />
   </Mesh>
+  <!-- SPHINX_WellboreMeshEnd -->
 
   <Events
     maxTime="1e5">

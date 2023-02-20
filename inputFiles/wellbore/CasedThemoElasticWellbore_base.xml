@@ -101,6 +101,7 @@
       permeabilityModelName="rockPerm"
       solidInternalEnergyModelName="rockInternalEnergy"/>
 
+    <!-- SPHINX_PoroElasticProperties -->
     <BiotPorosity
       name="casingPorosity"
       defaultReferencePorosity="1e-6"
@@ -115,7 +116,9 @@
       name="rockPorosity"
       defaultReferencePorosity="1e-6"
       grainBulkModulus="5.535714286e9"/>
+    <!-- SPHINX_PoroElasticPropertiesEnd -->
 
+    <!-- SPHINX_HeatCapacityProperties -->
     <SolidInternalEnergy
       name="casingInternalEnergy"
       volumetricHeatCapacity="1.375e6"
@@ -133,7 +136,9 @@
       volumetricHeatCapacity="4.56e6"
       referenceTemperature="0"
       referenceInternalEnergy="0"/>
+    <!-- SPHINX_HeatCapacityPropertiesEnd -->
 
+    <!-- SPHINX_PermeabilityProperties -->
     <ConstantPermeability
       name="casingPerm"
       permeabilityComponents="{ 1.0e-100, 1.0e-100, 1.0e-100 }"/>
@@ -145,7 +150,9 @@
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 1.0e-100, 1.0e-100, 1.0e-100 }"/>
+    <!-- SPHINX_PermeabilityPropertiesEnd -->
 
+    <!-- SPHINX_ThermalProperties -->
     <SinglePhaseConstantThermalConductivity
       name="casingThermalCond"
       thermalConductivityComponents="{ 15, 15, 15 }"/>
@@ -157,7 +164,9 @@
     <SinglePhaseConstantThermalConductivity
       name="rockThermalCond"
       thermalConductivityComponents="{ 1.66, 1.66, 1.66 }"/>
+    <!-- SPHINX_ThermalPropertiesEnd -->
 
+    <!-- SPHINX_FluidProperties -->
     <ThermalCompressibleSinglePhaseFluid
       name="fluid"
       defaultDensity="1000"
@@ -169,7 +178,9 @@
       viscosibility="0.0"
       volumetricHeatCapacity="1"
       referenceInternalEnergy="1"/>
+    <!-- SPHINX_FluidPropertiesEnd -->
 
+	<!-- SPHINX_ThermoElasticProperties -->
     <ElasticIsotropic
       name="casingSolid"
       defaultDensity="7500"
@@ -190,11 +201,13 @@
       defaultBulkModulus="5.535714286e9"
       defaultShearModulus="3.81147541e9"
       defaultThermalExpansionCoefficient="2.0e-5"/>
+    <!-- SPHINX_ThermoElasticPropertiesEnd -->
     
   </Constitutive>
 
   <FieldSpecifications>
 
+    <!-- SPHINX_FixedFarFieldBC -->
     <FieldSpecification
       name="rPosConstraint_x"
       objectPath="nodeManager"
@@ -210,7 +223,9 @@
       component="1"
       scale="0.0"
       setNames="{ rpos }"/>
+    <!-- SPHINX_FixedFarFieldBCEnd -->
 
+    <!-- SPHINX_PlaneStrainAxisymmetryBC -->
     <FieldSpecification
       name="tNegConstraint"
       objectPath="nodeManager"
@@ -234,7 +249,9 @@
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>
+    <!-- SPHINX_PlaneStrainAxisymmetryBCEnd -->
 
+    <!-- SPHINX_StressCasingInit -->
     <FieldSpecification
       name="initialSigma_x_casing"
       initialCondition="1"
@@ -259,6 +276,7 @@
       fieldName="casingSolid_stress"
       component="2"
       scale="573913043.5"/>
+    <!-- SPHINX_StressCasingInit -->
 
     <FieldSpecification
       name="initialSigma_x_cement"
@@ -310,6 +328,7 @@
       component="2"
       scale="33214285.71"/>
 
+    <!-- SPHINX_ZeroPorePressureBC -->
     <FieldSpecification
       name="zeroPressure"
       setNames="{ all }"
@@ -330,7 +349,9 @@
       objectPath="faceManager"
       fieldName="pressure"
       scale="0"/>
+    <!-- SPHINX_ZeroPorePressureBCEnd -->
 
+    <!-- SPHINX_TemperatureBC -->
     <FieldSpecification
       name="initialTemperature"
       initialCondition="1"
@@ -352,13 +373,16 @@
       objectPath="faceManager"
       fieldName="temperature"
       scale="-20.0"/>
+    <!-- SPHINX_TemperatureBCEnd -->
 
+    <!-- SPHINX_ZeroInnerTractionBC -->
     <Traction
       name="innerPressure"
       objectPath="faceManager"
       tractionType="normal"
       scale="0.0e6"
       setNames="{ rneg }"/>
+    <!-- SPHINX_ZeroInnerTractionBCEnd -->
 
   </FieldSpecifications>
 
