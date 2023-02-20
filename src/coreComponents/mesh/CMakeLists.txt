@@ -136,7 +136,7 @@ if( ENABLE_VTK )
          generators/VTKMeshGeneratorTools.cpp
          generators/VTKUtilities.cpp
          )
-    set( dependencyList ${dependencyList} VTK::IOLegacy VTK::FiltersParallelDIY2 )
+    set( dependencyList ${dependencyList} VTK::IOLegacy )# VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )
       set( dependencyList ${dependencyList} VTK::IOParallelXML VTK::ParallelMPI )
     endif()

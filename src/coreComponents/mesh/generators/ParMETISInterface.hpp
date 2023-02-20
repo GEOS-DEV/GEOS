@@ -47,9 +47,9 @@ namespace parmetis
  * @note elemDist must be a comm-wide exclusive scan of elemToNodes.size();
  *       the user may compute it once and reuse in a subsequent call to partition().
  */
-ArrayOfArrays< int64_t, int64_t >
-meshToDual( ArrayOfArraysView< int64_t const, int64_t > const & elemToNodes,
-            arrayView1d< int64_t const > const & elemDist,
+ArrayOfArrays< pmet_idx_t, pmet_idx_t >
+meshToDual( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & elemToNodes,
+            arrayView1d< pmet_idx_t const > const & elemDist,
             MPI_Comm comm,
             int const minCommonNodes );
 

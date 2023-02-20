@@ -67,7 +67,7 @@ void SurfaceElementRegion::generateMesh( Group & faceBlocks )
 #if 0
     else
     {
-      GEOSX_INFO( "No face block \"" << m_faceBlockName << "\" was found in the mesh. Empty surface region was created." );
+      GEOSX_LOG_RANK_0( "No face block \"" << m_faceBlockName << "\" was found in the mesh. Empty surface region was created." );
     }
 #endif
   }

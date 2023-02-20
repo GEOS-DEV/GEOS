@@ -717,7 +717,7 @@ if(DEFINED VTK_DIR)
     message( " ----> VTK_VERSION=${VTK_VERSION}")
 
     set( VTK_TARGETS
-         VTK::FiltersParallelDIY2
+        #  VTK::FiltersParallelDIY2
          VTK::IOLegacy
          VTK::IOParallelXML
          VTK::IOXML
