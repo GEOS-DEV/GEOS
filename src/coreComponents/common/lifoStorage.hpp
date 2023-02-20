@@ -585,7 +585,13 @@ public:
     popWait();
   }
 
-
+  /**
+   * @brief Returns true if the LIFO does not contain a buffer.
+   */
+  bool isEmpty()
+  {
+    return m_bufferCount == 0;
+  }
 private:
 
   /**

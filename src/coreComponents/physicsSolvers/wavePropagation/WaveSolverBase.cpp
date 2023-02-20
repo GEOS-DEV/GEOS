@@ -26,6 +26,8 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
+#include <limits>
+
 namespace geosx
 {
 
@@ -92,19 +94,24 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Set the current shot for temporary files" );
 
-  registerWrapper( viewKeyStruct::lifoSizeString(), &m_lifoSize ).
+  registerWrapper( viewKeyStruct::enableLifoString(), &m_enableLifo ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Set the capacity of the lifo storage" );
+    setDescription( "Set to 1 to enable LIFO storage feature" );
+
+  registerWrapper( viewKeyStruct::lifoSizeString(), &m_lifoSize ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( std::numeric_limits<int>::max() ).
+    setDescription( "Set the capacity of the lifo storage (should be the total number of buffers to store in the LIFO)" );
 
   registerWrapper( viewKeyStruct::lifoOnDeviceString(), &m_lifoOnDevice ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( 2 ).
     setDescription( "Set the capacity of the lifo device storage" );
 
   registerWrapper( viewKeyStruct::lifoOnHostString(), &m_lifoOnHost ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( 20 ).
     setDescription( "Set the capacity of the lifo host storage" );
 
 

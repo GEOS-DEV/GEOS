@@ -183,11 +183,6 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< fields::PartialGradient >( this->getName() );
     } );
 
-    arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
-    int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-    std::string lifoPrefix = GEOSX_FMT( "lifo/rank_{:05}/pdt2_shot{:06}", rank, m_shotIndex );
-    m_lifo = std::unique_ptr< lifoStorage< real32 > >( new lifoStorage< real32 >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize ) );
-
   } );
 }
 
@@ -887,8 +882,15 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
       arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
 
-      if( NULL == std::getenv( "DISABLE_LIFO" ) )
+      if( m_enableLifo )
       {
+        if ( ! m_lifo )
+        {
+          int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+          std::string lifoPrefix = GEOSX_FMT( "lifo/rank_{:05}/pdt2_shot{:06}", rank, m_shotIndex );
+          m_lifo = std::unique_ptr< lifoStorage< real32 > >( new lifoStorage< real32 >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize ) );
+        }
+
         m_lifo->pushWait();
       }
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIdx )
@@ -896,7 +898,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
         p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
       } );
 
-      if( NULL == std::getenv( "DISABLE_LIFO" ) )
+      if( m_enableLifo )
       {
         // Need to tell LvArray data is on GPU to avoir HtoD copy
         p_dt2.move( MemorySpace::cuda, false );
@@ -967,9 +969,10 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 
       arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
 
-      if( NULL == std::getenv( "DISABLE_LIFO" ) )
+      if( m_enableLifo )
       {
         m_lifo->pop( p_dt2 );
+        if ( m_lifo->isEmpty() ) delete m_lifo.release();
       }
       else
       {

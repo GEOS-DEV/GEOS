@@ -84,6 +84,7 @@ public:
     static constexpr char const * forwardString() { return "forward"; }
     static constexpr char const * saveFieldsString() { return "saveFields"; }
     static constexpr char const * shotIndexString() { return "shotIndex"; }
+    static constexpr char const * enableLifoString() { return "enableLifo"; }
     static constexpr char const * lifoSizeString() { return "lifoSize"; }
     static constexpr char const * lifoOnDeviceString() { return "lifoOnDevice"; }
     static constexpr char const * lifoOnHostString() { return "lifoOnHost"; }
@@ -218,7 +219,10 @@ protected:
   /// Flag to apply PML
   integer m_usePML;
 
-  /// lifo size
+  /// Flag to enable LIFO
+  localIndex m_enableLifo;
+
+  /// lifo size (should be the total number of buffer to save in LIFO)
   localIndex m_lifoSize;
 
   /// Number of buffers to store on device by LIFO
