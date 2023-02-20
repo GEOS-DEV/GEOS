@@ -102,6 +102,10 @@ RETURN_TYPE tokenize( string const & str,
                       string const & delimiters,
                       bool const treatConsecutiveDelimAsOne = true );
 
+/// Subdivide string by whitespaces (see std::isspace()) (do not create any empty token).
+template< typename RETURN_TYPE = string_array >
+RETURN_TYPE tokenizeBySpaces( string const & str );
+
 /**
  * @brief Trim the string
  * @param[in] str the string to trim

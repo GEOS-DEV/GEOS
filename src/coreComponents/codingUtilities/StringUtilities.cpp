@@ -63,6 +63,44 @@ RETURN_TYPE tokenize( string const & str,
 
   return tokens;
 }
+/**
+ * String tokenizing by whitespace function
+ **/
+template< typename RETURN_TYPE >
+RETURN_TYPE tokenizeBySpaces( string const & str )
+{
+  if( str.empty() )
+  {
+    return {};
+  } else {
+    const size_t strEnd=str.size();
+    RETURN_TYPE tokens;
+    size_t pos=0;
+
+    while (pos<strEnd) {
+      //search for a token begining
+      while ( pos<strEnd && ( std::isspace( str[pos] ) ) )
+      {
+        ++pos;
+      }
+
+      if (pos<strEnd)
+      {
+        size_t lastPos=pos;
+
+        //search for the token ending
+        do
+        {
+          ++pos;
+        } while ( pos<strEnd && !std::isspace( str[pos] ) );
+
+        tokens.emplace_back( str.substr( lastPos, pos - lastPos ) );
+      }
+    }
+    
+    return tokens;
+  }
+}
 
 template string_array tokenize< string_array >( string const & str,
                                                 string const & delimiters,
