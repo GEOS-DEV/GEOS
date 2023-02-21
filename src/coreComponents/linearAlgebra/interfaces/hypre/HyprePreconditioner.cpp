@@ -386,7 +386,7 @@ void HyprePreconditioner::setup( Matrix const & mat )
     // Perform setup of the main solver, if needed
     if( m_precond->setup )
     {
-      GEOSX_LOG_RANK_0("Setup the actual hypre preconditioner matrx.");
+      GEOSX_LOG_RANK_0("Setup the actual hypre preconditioner matrix.");
       GEOSX_LAI_CHECK_ERROR( m_precond->setup( m_precond->ptr, precondMat.unwrapped(), nullptr, nullptr ) );
     }
     else if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::direct )
