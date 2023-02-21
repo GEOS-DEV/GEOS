@@ -157,13 +157,15 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     // if all sets are missing, we stop the simulation.
     if( areAllSetsMissing )
     {
-      // still loop over the map to get the set name
+      // loop again over the map to collect the set names
+      array1d< string > missingSetNames;
       for( auto const & mapEntry : isTargetSetCreated )
       {
-        GEOSX_THROW( GEOSX_FMT( "\n{}: there is no set named `{}` under the {} `{}`, check the XML input\n",
-                                fs.getName(), mapEntry.first, FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() ),
-                     InputError );
+        missingSetNames.emplace_back( mapEntry.first );
       }
+      GEOSX_THROW( GEOSX_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`, check the XML input\n",
+                              fs.getName(), fmt::join( missingSetNames, ", " ), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() ),
+                   InputError );
     }
 
     // if a target set is empty, we issue a warning
@@ -173,11 +175,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       GEOSX_LOG_RANK_0_IF( mapEntry.second == 1, // target set is empty
                            GEOSX_FMT( "\nWarning!"
                                       "\n{}: this FieldSpecification targets (an) empty set(s)"
-                                      "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`."
-                                      "\n  -If `{}` is in ElementRegions, the set(s) must contain at least an element"
-                                      "\n  -If `{}` is faceManager, the set(s) must contain at least a face"
-                                      "\n  -If `{}` is nodeManager, the set(s) must contain at least a node"
-                                      "\nIf the set of elements/faces is created using a Box in <Geometry>, make sure the nodes of the elements/faces are fully inside the Box\n",
+                                      "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
                                       fs.getName(), mapEntry.first,
                                       fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath() ) );
     }
