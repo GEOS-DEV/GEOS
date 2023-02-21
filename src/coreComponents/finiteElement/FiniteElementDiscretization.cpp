@@ -56,7 +56,7 @@ FiniteElementDiscretization::~FiniteElementDiscretization()
 void FiniteElementDiscretization::postProcessInput()
 {
 //  GEOSX_ERROR_IF_NE_MSG( m_order, 1, "Higher order finite element spaces are currently not supported." );
-  GEOSX_ERROR_IF( m_formulation != "default" && m_formulation != "SEM", "Only standard element formulations and spectral element formulations are currently supported." );
+  GEOSX_ERROR_IF( m_formulation != "default" && m_formulation != "SEM" && m_formulation != "DG", "Only standard element formulations and spectral element formulations are currently supported." );
   GEOSX_ERROR_IF_GT_MSG( m_useVem, 1, "The flag useVirtualElements can be either 0 or 1" );
 }
 
@@ -110,7 +110,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
         {
           return std::make_unique< H1_Hexahedron_VEM_Gauss1 >();
         }
-        else if( m_formulation == "SEM" )
+        else if( m_formulation == "SEM" || m_formulation == "DG")
         {
           return std::make_unique< Q1_Hexahedron_Lagrange_GaussLobatto >();
         }

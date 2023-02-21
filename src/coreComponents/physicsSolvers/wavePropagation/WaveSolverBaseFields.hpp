@@ -119,6 +119,31 @@ DECLARE_FIELD( FreeSurfaceNodeIndicator,
                WRITE_AND_READ,
                "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
 
+//Pressure fileds for DG
+DECLARE_FIELD( PressureDG_np1,
+               "pressure_np1",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Scalar pressure at time n+1 for discontinuous galerkin solver." );
+
+DECLARE_FIELD( PressureDG_n,
+               "pressure_n",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Scalar pressure at time n for discontinuous galerkin solver." );
+
+DECLARE_FIELD( PressureDG_nm1,
+               "pressure_nm1",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Scalar pressure at time n-1 for discontinuous galerkin solver." );
+
 
 }
 
