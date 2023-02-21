@@ -110,6 +110,9 @@ template std::vector< string > tokenize< std::vector< string > >( string const &
                                                                   string const & delimiters,
                                                                   bool const treatConsecutiveDelimAsOne );
 
+template string_array tokenizeBySpaces< string_array >( string const & str );
+
+template std::vector< string > tokenizeBySpaces< std::vector< string > >( string const & str );
 
 string trim( string const & str,
              string const & charsToRemove )
