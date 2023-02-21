@@ -39,36 +39,6 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
                   parent )
 {
 
-  registerWrapper( viewKeyStruct::sourceNodeIdsString(), &m_sourceNodeIds ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Indices of the nodes (in the right order) for each source point" );
-
-  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstants ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds" );
-
-  registerWrapper( viewKeyStruct::sourceIsAccessibleString(), &m_sourceIsAccessible ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Flag that indicates whether the source is accessible to this MPI rank" );
-
-  registerWrapper( viewKeyStruct::receiverNodeIdsString(), &m_receiverNodeIds ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Indices of the nodes (in the right order) for each receiver point" );
-
-  registerWrapper( viewKeyStruct::receiverConstantsString(), &m_receiverConstants ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Constant part of the receiver for the nodes listed in m_receiverNodeIds" );
-
-  registerWrapper( viewKeyStruct::receiverIsLocalString(), &m_receiverIsLocal ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Flag that indicates whether the receiver is local to this MPI rank" );
-
   registerWrapper( viewKeyStruct::pressureNp1AtReceiversString(), &m_pressureNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
@@ -79,49 +49,6 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
 AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
 {
   // TODO Auto-generated destructor stub
-}
-
-localIndex AcousticWaveEquationSEM::getNumNodesPerElem()
-{
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const * const
-  feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOSX_THROW_IF( feDiscretization == nullptr,
-                  getName() << ": FE discretization not found: " << m_discretizationName,
-                  InputError );
-
-  localIndex numNodesPerElem = 0;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
-                                  [&]( string const &,
-                                       MeshLevel const & mesh,
-                                       arrayView1d< string const > const & regionNames )
-  {
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-    elemManager.forElementRegions( regionNames,
-                                   [&] ( localIndex const,
-                                         ElementRegionBase const & elemRegion )
-    {
-      elemRegion.forElementSubRegions( [&]( ElementSubRegionBase const & elementSubRegion )
-      {
-        finiteElement::FiniteElementBase const &
-        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-        localIndex const numSupportPoints = fe.getNumSupportPoints();
-        if( numSupportPoints > numNodesPerElem )
-        {
-          numNodesPerElem = numSupportPoints;
-        }
-      } );
-    } );
-
-
-  } );
-  return numNodesPerElem;
 }
 
 void AcousticWaveEquationSEM::initializePreSubGroups()
@@ -180,54 +107,10 @@ void AcousticWaveEquationSEM::postProcessInput()
 {
 
   WaveSolverBase::postProcessInput();
-  GEOSX_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
-                  "Invalid number of physical coordinates for the sources",
-                  InputError );
-
-  GEOSX_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
-                  "Invalid number of physical coordinates for the receivers",
-                  InputError );
-
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
-  real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
-  real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
-  real64 dt = 0;
-  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
-  {
-    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
-    {
-      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
-    }
-  }
-
-  GEOSX_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
-
-  if( m_dtSeismoTrace > 0 )
-  {
-    m_nsamplesSeismoTrace = int( maxTime / m_dtSeismoTrace) + 1;
-  }
-  else
-  {
-    m_nsamplesSeismoTrace = 0;
-  }
-  localIndex const nsamples = int((maxTime - minTime)/dt) + 1;
-
-
-  localIndex numNodesPerElem = getNumNodesPerElem();
-
-  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
-  m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
-  m_sourceIsAccessible.resize( numSourcesGlobal );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
-  m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
-  m_receiverIsLocal.resize( numReceiversGlobal );
 
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  m_sourceValue.resize( nsamples, numSourcesGlobal );
 
 }
 
