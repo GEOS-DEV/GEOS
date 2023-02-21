@@ -356,9 +356,9 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
   string str;
   while( std::getline( is, str ) )
   {
-    string_array const strs = stringutilities::tokenize( str, " " );
+    string_array const strs = stringutilities::tokenizeBySpaces( str );
 
-    if( strs[0] == key )
+    if( strs.size()>0 && strs[0] == key )
     {
       pvtFunction = std::make_unique< MODEL >( strs[1],
                                                strs,
@@ -396,9 +396,9 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
   string str;
   while( std::getline( is, str ) )
   {
-    string_array const strs = stringutilities::tokenize( str, " " );
+    string_array const strs = stringutilities::tokenizeBySpaces( str );
 
-    if( strs[0] == key )
+    if( strs.size()>0 && strs[0] == key )
     {
       flashModel = std::make_unique< MODEL >( strs[1],
                                               strs,

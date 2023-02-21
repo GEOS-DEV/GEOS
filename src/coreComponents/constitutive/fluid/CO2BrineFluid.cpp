@@ -272,21 +272,25 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     string str;
     while( std::getline( is, str ) )
     {
-      string_array const strs = stringutilities::tokenize( str, " " );
-      if( strs[0] == "FlashModel" )
+      string_array const strs = stringutilities::tokenizeBySpaces( str );
+
+      if ( strs.size()>0 )
       {
-        if( strs[1] == FLASH::catalogName() )
+        if( strs[0] == "FlashModel" )
         {
-          m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
-                                               strs,
-                                               m_phaseNames,
-                                               m_componentNames,
-                                               m_componentMolarWeight );
+          if( strs[1] == FLASH::catalogName() )
+          {
+            m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
+                                                strs,
+                                                m_phaseNames,
+                                                m_componentNames,
+                                                m_componentMolarWeight );
+          }
         }
-      }
-      else
-      {
-        GEOSX_THROW( GEOSX_FMT( "{}: invalid flash model type '{}'", getFullName(), strs[0] ), InputError );
+        else
+        {
+          GEOSX_THROW( GEOSX_FMT( "{}: invalid flash model type '{}'", getFullName(), strs[0] ), InputError );
+        }
       }
     }
     is.close();
