@@ -90,6 +90,7 @@
       forceDt="1e4"
       target="/Outputs/temperatureHistoryOutput_rock"/>
 
+    <!-- SPHINX_DisplacementPeriodicEvent -->
     <PeriodicEvent
       name="displacementHistoryCollection"
       endTime="1e5"
@@ -100,6 +101,7 @@
       endTime="1e5"
       forceDt="1e4"
       target="/Outputs/displacementHistoryOutput"/>
+    <!-- SPHINX_DisplacementPeriodicEventEnd -->
 
     <PeriodicEvent
       name="outputs"

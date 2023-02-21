@@ -388,6 +388,7 @@
 
   <Tasks>
 
+    <!-- SPHINX_TemperatureCollection -->
     <PackCollection
       name="temperatureCollection_casing"
       objectPath="ElementRegions/casing/casing"
@@ -400,7 +401,9 @@
       name="temperatureCollection_rock"
       objectPath="ElementRegions/rock/rock"
       fieldName="temperature"/>
+    <!-- SPHINX_TemperatureCollectionEnd -->
 
+    <!-- SPHINX_SolidStressCollection -->
     <PackCollection
       name="stressCollection_casing"
       objectPath="ElementRegions/casing/casing"
@@ -413,15 +416,19 @@
       name="stressCollection_rock"
       objectPath="ElementRegions/rock/rock"
       fieldName="rockSolid_stress"/>
+    <!-- SPHINX_SolidStressCollectionEnd -->
 
+    <!-- SPHINX_DisplacementCollection -->
     <PackCollection
       name="displacementCollection"
       objectPath="nodeManager"
       fieldName="totalDisplacement"/>
-    
+    <!-- SPHINX_DisplacementCollectionEnd -->
+
   </Tasks>
 
   <Outputs>
+    <!-- SPHINX_TemperatureTimeHistory -->
     <TimeHistory
       name="stressHistoryOutput_casing"
       sources="{ /Tasks/stressCollection_casing }"
@@ -434,7 +441,9 @@
       name="stressHistoryOutput_rock"
       sources="{ /Tasks/stressCollection_rock }"
       filename="stressHistory_rock"/>
+    <!-- SPHINX_TemperatureTimeHistoryEnd -->
 
+    <!-- SPHINX_SolidStressTimeHistory -->
     <TimeHistory
       name="temperatureHistoryOutput_casing"
       sources="{ /Tasks/temperatureCollection_casing }"
@@ -447,11 +456,14 @@
       name="temperatureHistoryOutput_rock"
       sources="{ /Tasks/temperatureCollection_rock }"
       filename="temperatureHistory_rock"/>
+    <!-- SPHINX_SolidStressTimeHistoryEnd -->
 
+    <!-- SPHINX_DisplacementTimeHistory -->
     <TimeHistory
       name="displacementHistoryOutput"
       sources="{ /Tasks/displacementCollection }"
       filename="displacementHistory"/>
+    <!-- SPHINX_DisplacementTimeHistoryEnd -->
 
     <VTK
       name="vtkOutput"/>
