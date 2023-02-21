@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./ThermoElastic_2d_base.xml" />
+    <File name="./CasedThermoElasticWellbore_base.xml" />
   </Included>
 
   <!-- SPHINX_WellboreMesh -->

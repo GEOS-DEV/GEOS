@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./ThermoElastic_2d_base.xml" />
+    <File name="./CasedThermoElasticWellbore_base.xml" />
   </Included>
 
    <Mesh>
@@ -12,8 +12,8 @@
       radius="{ 0.15707, 0.17780, 0.21272, 1.5707 }"
       theta="{ 0, 90 }"
       zCoords="{ 0, 0.1 }"
-      nr="{ 5, 5, 5 }"
-      nt="{ 10 }"
+      nr="{ 2, 2, 2 }"
+      nt="{ 4 }"
       nz="{ 1 }"
       trajectory="{ { 0.0, 0.0, 0.0 },
                     { 0.0, 0.0, 0.1 } }"
@@ -32,7 +32,7 @@
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="1e3"
+      maxEventDt="1e4"
       target="/Solvers/thermoElasticSolver"/>
 
     <PeriodicEvent
