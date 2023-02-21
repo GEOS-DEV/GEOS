@@ -22,7 +22,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "common/fixedSizeDeque.hpp"
+#include "common/FixedSizeDeque.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/TimingMacros.hpp"
 
@@ -40,7 +40,7 @@ namespace geosx
 /**
  * @brief Class to handle locks using 2 mutexes
  */
-class twoMutexLock
+class TwoMutexLock
 {
 public:
   /**
@@ -48,7 +48,7 @@ public:
    * @param mutex1 First mutex of the dual mutex
    * @param mutex2 Second mutex of the dual mutex
    */
-  twoMutexLock( std::mutex & mutex1, std::mutex & mutex2 ):
+  TwoMutexLock( std::mutex & mutex1, std::mutex & mutex2 ):
     m_islocked( false ), m_mutex1( &mutex1 ), m_mutex2( &mutex2 )
   {
     lock();
@@ -57,7 +57,7 @@ public:
   /**
    * @brief Unlock the mutexes and destroy the locks.
    */
-  ~twoMutexLock()
+  ~TwoMutexLock()
   {
     unlock();
   }
@@ -94,7 +94,7 @@ private:
 /**
  * @brief Class to handle locks using 4 mutexes
  */
-class fourMutexLock
+class FourMutexLock
 {
 public:
   /**
@@ -104,7 +104,7 @@ public:
    * @param mutex3 Third mutex of the dual mutex
    * @param mutex4 Fourth mutex of the dual mutex
    */
-  fourMutexLock( std::mutex & mutex1, std::mutex & mutex2, std::mutex & mutex3, std::mutex & mutex4 ):
+  FourMutexLock( std::mutex & mutex1, std::mutex & mutex2, std::mutex & mutex3, std::mutex & mutex4 ):
     m_islocked( false ), m_mutex1( &mutex1 ), m_mutex2( &mutex2 ), m_mutex3( &mutex3 ), m_mutex4( &mutex4 )
   {
     lock();
@@ -113,7 +113,7 @@ public:
   /**
    * @brief Unlock the mutexes and destroy the locks.
    */
-  ~fourMutexLock()
+  ~FourMutexLock()
   {
     unlock();
   }
@@ -155,7 +155,7 @@ private:
 
 /// Associate mutexes with the fixedSizeDeque
 template< typename T >
-class fixedSizeDequeAndMutexes : public fixedSizeDeque< T, int >
+class FixedSizeDequeAndMutexes : public FixedSizeDeque< T, int >
 {
 public:
   /// Mutex to protect access to the front
@@ -178,7 +178,7 @@ public:
    * @param valuesPerEntry Number of values in each array of the deque.
    * @param space          Space used to store que queue.
    */
-  fixedSizeDequeAndMutexes( int maxEntries, int valuesPerEntry, LvArray::MemorySpace space ): fixedSizeDeque< T, int >( maxEntries, valuesPerEntry, space,
+  FixedSizeDequeAndMutexes( int maxEntries, int valuesPerEntry, LvArray::MemorySpace space ): FixedSizeDeque< T, int >( maxEntries, valuesPerEntry, space,
 #ifdef GEOSX_USE_CUDA
                                                                                                                         camp::resources::Resource{ camp::resources::Cuda{} }
 #else
@@ -197,14 +197,14 @@ public:
     LIFO_MARK_FUNCTION;
     camp::resources::Event e;
     {
-      twoMutexLock lock( m_emplaceMutex, m_frontMutex );
+      TwoMutexLock lock( m_emplaceMutex, m_frontMutex );
       {
         LIFO_MARK_SCOPE( waitingForBuffer );
         m_notFullCond.wait( lock, [ this ]  { return !this->full(); } );
       }
       {
         LIFO_MARK_SCOPE( copy );
-        e = fixedSizeDeque< T, int >::emplace_front( array.toSliceConst() );
+        e = FixedSizeDeque< T, int >::emplace_front( array.toSliceConst() );
       }
     }
     m_notEmptyCond.notify_all();
@@ -222,7 +222,7 @@ public:
     LIFO_MARK_FUNCTION;
     camp::resources::Event e;
     {
-      twoMutexLock lock( m_popMutex, m_frontMutex );
+      TwoMutexLock lock( m_popMutex, m_frontMutex );
       {
         LIFO_MARK_SCOPE( waitingForBuffer );
         m_notEmptyCond.wait( lock, [ this ]  { return !this->empty(); } );
@@ -246,11 +246,11 @@ public:
    *
    * @param q2 The queue to copy data from.
    */
-  void emplaceFrontFromBack( fixedSizeDequeAndMutexes< T > & q2 )
+  void emplaceFrontFromBack( FixedSizeDequeAndMutexes< T > & q2 )
   {
     LIFO_MARK_FUNCTION;
     {
-      fourMutexLock lock( m_emplaceMutex, q2.m_popMutex, m_frontMutex, q2.m_backMutex );
+      FourMutexLock lock( m_emplaceMutex, q2.m_popMutex, m_frontMutex, q2.m_backMutex );
       while( this->full() || q2.empty() )
       {
         {
@@ -275,11 +275,11 @@ public:
    *
    * @param q2 The queue to copy data from.
    */
-  void emplaceBackFromFront( fixedSizeDequeAndMutexes< T > & q2 )
+  void emplaceBackFromFront( FixedSizeDequeAndMutexes< T > & q2 )
   {
     LIFO_MARK_FUNCTION;
     {
-      fourMutexLock lock( m_emplaceMutex, q2.m_popMutex, m_backMutex, q2.m_frontMutex );
+      FourMutexLock lock( m_emplaceMutex, q2.m_popMutex, m_backMutex, q2.m_frontMutex );
       while( this->full() || q2.empty() )
       {
         m_notFullCond.wait( lock, [ this ]  { return !this->full(); } );
@@ -297,7 +297,7 @@ public:
  * This class is used to store in a LIFO way buffers, first on device, then on host, then on disk.
  */
 template< typename T >
-class lifoStorage
+class LifoStorage
 {
 
 private:
@@ -310,10 +310,10 @@ private:
   std::string m_name;
 #ifdef GEOSX_USE_CUDA
   /// ueue of data stored on device
-  fixedSizeDequeAndMutexes< T > m_deviceDeque;
+  FixedSizeDequeAndMutexes< T > m_deviceDeque;
 #endif
   /// ueue of data stored on host memory
-  fixedSizeDequeAndMutexes< T > m_hostDeque;
+  FixedSizeDequeAndMutexes< T > m_hostDeque;
 
   /// counter of buffer stored in LIFO
   int m_bufferCount;
@@ -359,7 +359,7 @@ public:
    * @param numberOfBuffersToStoreOnHost   Maximum number of array to store on host memory.
    * @param maxNumberOfBuffers             Number of arrays expected to be stores in the LIFO.
    */
-  lifoStorage( std::string name, size_t elemCnt, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
+  LifoStorage( std::string name, size_t elemCnt, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
     m_maxNumberOfBuffers( maxNumberOfBuffers ),
     m_bufferSize( elemCnt*sizeof( T ) ),
     m_name( name ),
@@ -382,8 +382,8 @@ public:
 #ifndef GEOSX_USE_CUDA
     GEOSX_UNUSED_VAR( numberOfBuffersToStoreOnDevice );
 #endif
-    m_worker[0] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 0 );
-    m_worker[1] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 1 );
+    m_worker[0] = std::thread( &LifoStorage< T >::wait_and_consume_tasks, this, 0 );
+    m_worker[1] = std::thread( &LifoStorage< T >::wait_and_consume_tasks, this, 1 );
   }
 
   /**
@@ -395,10 +395,10 @@ public:
    * @param numberOfBuffersToStoreOnHost   Maximum number of array to store on host memory.
    * @param maxNumberOfBuffers             Number of arrays expected to be stores in the LIFO.
    */
-  lifoStorage( std::string name, arrayView1d< T > array, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
-    lifoStorage( name, array.size(), numberOfBuffersToStoreOnDevice, numberOfBuffersToStoreOnHost, maxNumberOfBuffers ) {}
+  LifoStorage( std::string name, arrayView1d< T > array, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
+    LifoStorage( name, array.size(), numberOfBuffersToStoreOnDevice, numberOfBuffersToStoreOnHost, maxNumberOfBuffers ) {}
 
-  ~lifoStorage()
+  ~LifoStorage()
   {
     m_continue = false;
     m_task_queue_not_empty_cond[0].notify_all();
@@ -430,7 +430,7 @@ public:
       {
         LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
         // This buffer will go to host memory, and maybe on disk
-        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this, m_bufferToHostCount++ ) );
+        std::packaged_task< void() > task( std::bind( &LifoStorage< T >::deviceToHost, this, m_bufferToHostCount++ ) );
         {
           std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
           m_task_queue[0].emplace_back( std::move( task ) );
@@ -448,7 +448,7 @@ public:
         {
           LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
           // This buffer will go to host memory, and maybe on disk
-          std::packaged_task< void() > t2( std::bind( &lifoStorage< T >::hostToDisk, this, m_bufferToDiskCount++ ) );
+          std::packaged_task< void() > t2( std::bind( &LifoStorage< T >::hostToDisk, this, m_bufferToDiskCount++ ) );
           {
             std::unique_lock< std::mutex > l2( m_task_queue_mutex[1] );
             m_task_queue[1].emplace_back( std::move( t2 ) );
@@ -520,9 +520,9 @@ public:
 
       if( m_bufferToHostCount > 0 )
       {
-        LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
+        LIFO_MARK_SCOPE( geosx::LifoStorage< T >::popAddTasks );
         // Trigger pull one buffer from host, and maybe from disk
-        std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this, --m_bufferToHostCount, id ) );
+        std::packaged_task< void() > task( std::bind( &LifoStorage< T >::hostToDevice, this, --m_bufferToHostCount, id ) );
         {
           std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
           m_task_queue[0].emplace_back( std::move( task ) );
@@ -538,9 +538,9 @@ public:
 
         if( m_bufferToDiskCount > 0 )
         {
-          LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
+          LIFO_MARK_SCOPE( geosx::LifoStorage< T >::popAddTasks );
           // Trigger pull one buffer from host, and maybe from disk
-          std::packaged_task< void() > task2( std::bind( &lifoStorage< T >::diskToHost, this, --m_bufferToDiskCount ) );
+          std::packaged_task< void() > task2( std::bind( &LifoStorage< T >::diskToHost, this, --m_bufferToDiskCount ) );
           {
             std::unique_lock< std::mutex > lock2( m_task_queue_mutex[1] );
             m_task_queue[1].emplace_back( std::move( task2 ) );
@@ -616,7 +616,7 @@ private:
     if( m_maxNumberOfBuffers - id > (int)(m_deviceDeque.capacity() + m_hostDeque.capacity()) )
     {
       // This buffer will go to host then maybe to disk
-      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDisk, this, m_bufferToDiskCount++ ) );
+      std::packaged_task< void() > task( std::bind( &LifoStorage< T >::hostToDisk, this, m_bufferToDiskCount++ ) );
       {
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
         m_task_queue[1].emplace_back( std::move( task ) );
@@ -635,7 +635,7 @@ private:
   {
     LIFO_MARK_FUNCTION;
     {
-      twoMutexLock lock( m_hostDeque.m_popMutex, m_hostDeque.m_backMutex );
+      TwoMutexLock lock( m_hostDeque.m_popMutex, m_hostDeque.m_backMutex );
       writeOnDisk( m_hostDeque.back().dataIfContiguous(), id );
       m_hostDeque.pop_back();
     }
@@ -659,7 +659,7 @@ private:
     if( m_bufferToDiskCount > 0 )
     {
       // This buffer will go to host then to disk
-      std::packaged_task< void() > task( std::bind( &lifoStorage< T >::diskToHost, this, --m_bufferToDiskCount ) );
+      std::packaged_task< void() > task( std::bind( &LifoStorage< T >::diskToHost, this, --m_bufferToDiskCount ) );
       {
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
         m_task_queue[1].emplace_back( std::move( task ) );
@@ -678,7 +678,7 @@ private:
   {
     LIFO_MARK_FUNCTION;
     {
-      twoMutexLock lock( m_hostDeque.m_emplaceMutex, m_hostDeque.m_backMutex );
+      TwoMutexLock lock( m_hostDeque.m_emplaceMutex, m_hostDeque.m_backMutex );
       m_hostDeque.m_notFullCond.wait( lock, [ this ]  { return !( m_hostDeque.full() ); } );
       readOnDisk( const_cast< T * >(m_hostDeque.next_back().dataIfContiguous()), id );
       m_hostDeque.inc_back();

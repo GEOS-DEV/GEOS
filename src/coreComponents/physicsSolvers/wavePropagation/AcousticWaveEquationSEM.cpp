@@ -888,7 +888,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
         {
           int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
           std::string lifoPrefix = GEOSX_FMT( "lifo/rank_{:05}/pdt2_shot{:06}", rank, m_shotIndex );
-          m_lifo = std::unique_ptr< lifoStorage< real32 > >( new lifoStorage< real32 >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize ) );
+          m_lifo = std::unique_ptr< LifoStorage< real32 > >( new LifoStorage< real32 >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize ) );
         }
 
         m_lifo->pushWait();

@@ -16,6 +16,7 @@
 
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/memcpy.hpp"
+#include "LvArray/src/ChaiBuffer.hpp"
 #include "common/Logger.hpp"
 
 /// Get the positive value of a module b
@@ -24,7 +25,7 @@ namespace geosx
 {
 template< typename T, typename INDEX_TYPE >
 /// Implement a double ended queue with fixed number of fixed size buffer to be stored
-class fixedSizeDeque
+class FixedSizeDeque
 {
   /// The integer type used for indexing.
   using IndexType = INDEX_TYPE;
@@ -41,7 +42,7 @@ public:
    * @param space          Space used to store que queue.
    * @param stream         Camp resource to perform the copies.
    */
-  fixedSizeDeque( IndexType maxEntries, IndexType valuesPerEntry, LvArray::MemorySpace space, camp::resources::Resource stream ):
+  FixedSizeDeque( IndexType maxEntries, IndexType valuesPerEntry, LvArray::MemorySpace space, camp::resources::Resource stream ):
     m_stream( stream )
   {
     GEOSX_ERROR_IF( maxEntries < 0, "Fixed sized queue size must be positive" );

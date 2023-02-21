@@ -1,6 +1,6 @@
 #include "mainInterface/initialization.hpp"
 #define LIFO_DISABLE_CALIPER
-#include "common/lifoStorage.hpp"
+#include "common/LifoStorage.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/MallocBuffer.hpp"
 #if defined(LVARRAY_USE_CHAI)
@@ -72,7 +72,7 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
 
   array1d< float > array( elemCnt );
   array.move( RAJAHelper< POLICY >::space );
-  lifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
+  LifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {
@@ -98,7 +98,7 @@ void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int number
 {
   array1d< float > array( elemCnt );
   array.move( RAJAHelper< POLICY >::space );
-  lifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
+  LifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {

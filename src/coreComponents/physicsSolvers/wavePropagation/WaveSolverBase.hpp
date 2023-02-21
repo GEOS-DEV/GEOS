@@ -23,7 +23,7 @@
 
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "common/lifoStorage.hpp"
+#include "common/LifoStorage.hpp"
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 
 #define SEM_FE_TYPES \
@@ -260,7 +260,7 @@ protected:
   localIndex m_lifoOnHost;
 
   /// LIFO to store p_dt2
-  std::unique_ptr< lifoStorage< real32 > > m_lifo;
+  std::unique_ptr< LifoStorage< real32 > > m_lifo;
 
   struct parametersPML
   {
