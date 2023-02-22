@@ -26,6 +26,7 @@
 namespace geosx
 {
 
+using namespace fields;
 /// Namespace to contain the acoustic wave kernels.
 namespace acousticWaveEquationSEMKernels
 {
@@ -736,8 +737,8 @@ public:
           finiteElementSpace,
           inputConstitutiveType ),
     m_X( nodeManager.referencePosition() ),
-    m_p_n( nodeManager.getField< fields::Pressure_n >() ),
-    m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
+    m_p_n( nodeManager.getField< wavesolverfields::Pressure_n >() ),
+    m_stiffnessVector( nodeManager.getField< wavesolverfields::StiffnessVector >() ),
     m_dt( dt )
   {
     GEOSX_UNUSED_VAR( edgeManager );
