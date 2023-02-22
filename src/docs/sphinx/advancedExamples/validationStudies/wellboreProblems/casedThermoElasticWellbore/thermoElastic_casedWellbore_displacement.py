@@ -11,7 +11,7 @@ def main():
 	# File paths
 	hdf5FilePath = "displacementHistory.hdf5"
 
-	# Plot GEOSX results
+	# Get GEOSX results
 	hf = h5py.File(hdf5FilePath, 'r')
 	time = np.array( hf.get('totalDisplacement Time') )
 	center = np.array( hf.get('totalDisplacement ReferencePosition') )
@@ -21,22 +21,24 @@ def main():
 	xCoord = center[0, 0:nNodes, 0]
 	yCoord = center[0, 0:nNodes, 1]
 	
+	# Extract displacement components at 1e4 seconds that corresponds to 9th time step
 	ux_10000s = displacement[9, 0:nNodes, 0]
 	uy_10000s = displacement[9, 0:nNodes, 1]
 	
+	# Extract displacement components at 1e5 seconds that corresponds to 99th time step
 	ux_100000s = displacement[99, 0:nNodes, 0]
 	uy_100000s = displacement[99, 0:nNodes, 1]
 
+	# Extract radial data at angle theta = 0 where yCoord = 0
 	rCoord, ur_10000s, ur_100000s = [], [], []
 
-	# Extract radial data at theta = 0
 	for idx in range(nNodes):
 		if (yCoord[idx] < 1e-6):
 			rCoord.append(xCoord[idx])
 			ur_10000s.append(ux_10000s[idx]*1e6) # converted to um
 			ur_100000s.append(ux_100000s[idx]*1e6) # converted to um
 	
-	# Reference results
+	# Get analytical results
 	displacement_radial_analytic_1e4s = genfromtxt('displacement_radial_analytic_10000s.txt')
 	displacement_radial_analytic_1e5s = genfromtxt('displacement_radial_analytic_100000s.txt')
 
