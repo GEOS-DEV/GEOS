@@ -237,7 +237,7 @@ static std::array< localIndex, 6 > createNodeKey( localIndex const (&elemNodes)[
   else if( extremal3 )
   {
     // face node on the face of type 3 
-    return createNodeKey( elemNodes[ 4*v3 ], elemNodes[ 1 + 4*v2 ], elemNodes[ 2 + 4*v3 ], elemNodes[ 1 + 2 + 4*v3 ], q1, q2, order ); 
+    return createNodeKey( elemNodes[ 4*v3 ], elemNodes[ 1 + 4*v3 ], elemNodes[ 2 + 4*v3 ], elemNodes[ 1 + 2 + 4*v3 ], q1, q2, order ); 
   }
   else
   {
@@ -1144,16 +1144,12 @@ if ( strategy == 2 )
         for( localIndex iter_vertex = 0; iter_vertex < numVerticesPerCell; iter_vertex++ )
         {
           elemMeshVertices[ iter_vertex ] = elemsToNodesSource[ iter_elem ][ iter_vertex ];
-        }
-        std::swap(elemMeshVertices[ 2 ], elemMeshVertices[ 3 ] );
-        std::swap(elemMeshVertices[ 6 ], elemMeshVertices[ 7 ] );
-        for( localIndex iter_vertex = 0; iter_vertex < numVerticesPerCell; iter_vertex++ )
-        {
           for( int i =0; i < 3; i++ )
           {
             Xmesh[ iter_vertex ][ i ] = refPosSource[ elemMeshVertices[ iter_vertex ] ][ i ];
           }
         }
+        GEOSX_LOG_RANK ("!!!! INFO !!!! cell vertices: " << elemMeshVertices[ 0 ] << " "<< elemMeshVertices[ 1 ] << " " << elemMeshVertices[ 2 ] << " " << elemMeshVertices[ 3 ] << " " << elemMeshVertices[ 4 ] << " " << elemMeshVertices[ 5 ]  << " " << elemMeshVertices[ 6 ] << " " << elemMeshVertices[ 7 ]);
 
         for( int q = 0; q < numNodesPerCell; q++ )
         {
