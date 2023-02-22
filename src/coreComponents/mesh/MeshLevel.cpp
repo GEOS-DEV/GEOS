@@ -890,7 +890,8 @@ if ( strategy == 2 )
     localNodeID++;
   }
 
-
+  GEOSX_LOG_RANK ("!!!! INFO !!!! created vertex nodes (" << localNodeID << " so far)" );
+  
 
 
   //////////////////////////
@@ -944,6 +945,7 @@ if ( strategy == 2 )
       edgeToNodeMapNew[ iter_edge ][ q ] = nodeID;
     }
   }
+  GEOSX_LOG_RANK ("!!!! INFO !!!! created edge nodes (" << localNodeID << " so far)" );
 
   /////////////////////////
   // Faces
@@ -1024,6 +1026,7 @@ if ( strategy == 2 )
       }
     }
   }
+  GEOSX_LOG_RANK ("!!!! INFO !!!! created face nodes (" << localNodeID << " so far)" );
 
 
 
@@ -1165,6 +1168,7 @@ if ( strategy == 2 )
           elemsToNodesNew[ iter_elem ][ q ] = nodeID;
         }
       }
+      GEOSX_LOG_RANK ("!!!! INFO !!!! created cell nodes (" << localNodeID << " in total)" );
       
 
 
