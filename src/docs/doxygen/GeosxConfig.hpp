@@ -82,7 +82,7 @@
 /// Denotes HYPRE using HIP
 #define GEOSX_USE_HYPRE_HIP 2
 /// Macro determining what parellel interface hypre is using
-#define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_HIP
+#define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_CPU
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
 #define GEOSX_USE_SUPERLU_DIST
@@ -124,7 +124,7 @@
 #define GEOSX_GLOBALINDEX_TYPE_FLAG 2
 
 /// The default block size for GEOSX on this platform
-#define GEOSX_BLOCK_SIZE 64 
+#define GEOSX_BLOCK_SIZE 64
 
 /// Version information for HDF5
 #define HDF5_VERSION 1.12.2
