@@ -1168,14 +1168,14 @@ if ( strategy == 2 )
       
 
 
-       GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
-       // GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalSource = "<< nodeLocalToGlobalSource );
-       GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalNew = "<< nodeLocalToGlobalNew );
-       //GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapSource = "<< edgeToNodeMapSource);
-       GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapNew = "<< edgeToNodeMapNew);
-       //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapSource = "<< faceToNodeMapSource);
-       GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
-       GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
+       //GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
+       //// GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalSource = "<< nodeLocalToGlobalSource );
+       //GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalNew = "<< nodeLocalToGlobalNew );
+       ////GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapSource = "<< edgeToNodeMapSource);
+       //GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapNew = "<< edgeToNodeMapNew);
+       ////GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapSource = "<< faceToNodeMapSource);
+       //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
+       //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
 
       //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
       //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
