@@ -1,0 +1,281 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <MultiResolutionHF
+      name="MultiResolutionSolve"
+      baseSolverName="EFEMSolve"
+      patchSolverName="PhaseFieldSolve"
+      logLevel="1"
+      discretization="FE1"
+      initialBaseTip = "{-0.1429,0,0}"
+      initialTipElementIndex="24"
+      targetRegions="{base/base_cer,patch/patch_cer}">
+      <NonlinearSolverParameters
+        newtonMaxIter="10"/>
+      <LinearSolverParameters
+        logLevel="1"/>
+    </MultiResolutionHF>
+
+    <SolidMechanicsEmbeddedFractures
+      name="EFEMSolve"
+      targetRegions="{base/base_cer,base/Fracture_cer}"
+      fractureRegionName="Fracture_cer"
+      initialDt="1"
+      solidSolverName="EFEMSolidMechSolve"
+      contactRelationName="fractureContact"
+      logLevel="1"> 
+      <NonlinearSolverParameters
+        newtonTol="1.0e-0"
+        newtonMaxIter="2"
+        maxTimeStepCuts="1"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"
+        logLevel="1"/>
+    </SolidMechanicsEmbeddedFractures>
+
+    <SolidMechanicsLagrangianSSLE
+      name="EFEMSolidMechSolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="0"
+      discretization="FE1"
+      targetRegions="{base/base_cer}">
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonTol="1.0e-0"/>
+    </SolidMechanicsLagrangianSSLE>
+
+    <EmbeddedSurfaceGenerator
+      name="SurfaceGenerator"
+      discretization="FE1"
+      targetRegions="{base/base_cer,base/Fracture_cer}"
+      fractureRegion="Fracture_cer"
+      logLevel="2"
+      mpiCommOrder="1"/>
+    
+    <PhaseFieldFracture
+      name="PhaseFieldSolve"
+      solidSolverName="PFSolidMechSolve"
+      damageSolverName="DamageSolve"
+      logLevel="1"
+      targetRegions="{patch/patch_cer}">
+      <NonlinearSolverParameters
+        newtonMaxIter="2"
+        subcycling="0"
+        couplingType="Sequential"/>
+      <LinearSolverParameters
+        logLevel="2"/>
+    </PhaseFieldFracture>
+
+    <SolidMechanicsLagrangianSSLE
+      name="PFSolidMechSolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{patch/patch_cer}"
+      >
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonTol="1.0e-0"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+
+    <PhaseFieldDamageFEM
+      name="DamageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      localDissipation="Quadratic"
+      logLevel="1"
+      targetRegions="{patch/patch_cer}">
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonTol="1.0e-8"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </PhaseFieldDamageFEM>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="base"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ -1, 1 }"
+      zCoords="{ -1, 1 }"
+      nx="{ 7 }"
+      ny="{ 7 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+    <InternalMesh
+      name="patch"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ -1, 1 }"
+      zCoords="{ -1, 1 }"
+      nx="{ 7 }"
+      ny="{ 7 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb2 }"/>
+  </Mesh>
+
+  <Geometry>
+    <BoundedPlane
+      name="FracturePlane"
+      normal="{0.0,1.0,0.0}"
+      origin="{-0.5, 0.0, 0.0 }"
+      lengthVector="{1.0, 0.0, 0.0}"
+      widthVector="{0.0, 0.0, 1.0}"
+      dimensions="{1.01, 2}"/>
+  </Geometry>
+  
+  <Events
+      maxTime="12.0">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGenerator"/>
+    
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1"
+      target="/Solvers/MultiResolutionSolve"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/MRBasicTest_VTKOutput"/>
+
+    <!-- <PeriodicEvent
+      name="siloOutputs"
+      timeFrequency="1.0"
+      target="/Outputs/MRBasicTest_SiloOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/> -->
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="base_cer"
+      meshBody="base"
+      cellBlocks="{ cb1 }"
+      materialList="{ shale }"/>
+    <CellElementRegion
+      name="patch_cer"
+      meshBody="patch"
+      cellBlocks="{ cb2 }"
+      materialList="{ shale }"/>
+    <SurfaceElementRegion
+      name="Fracture_cer"
+      subRegionType="embeddedElement"
+      materialList="{ fractureContact }"
+      defaultAperture="1.0e-3"
+	    meshBody="base"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <DamageVolDevElasticIsotropic
+      name="shale"
+      defaultDensity="2700"
+      defaultBulkModulus="2.00e5"
+      defaultShearModulus="3.00e5"
+      lengthScale="0.2"
+      degradationLowerLimit="1e-6"
+      criticalFractureEnergy="2.7"
+      criticalStrainEnergy="16.875"/>
+
+    <FrictionlessContact
+      name="fractureContact"
+      penaltyStiffness="0.0e8"
+      apertureTableName="apertureTable"/> 
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="xpos"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="5.0e-3"
+      functionName="f_b"
+      setNames="{ ypos }"/>
+
+    <!-- <FieldSpecification
+      name="ypos"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      functionName="f_b"
+      setNames="{ ypos }"/>   -->
+
+    <FieldSpecification
+      name="yneg"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      functionName="f_b"
+      setNames="{ yneg }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      setNames="{ yneg }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      setNames="{ all }"/>
+
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+        name="apertureTable"
+        coordinates="{ -1.0e-3, 0.0 }"
+        values="{ 0.002e-3, 0.02e-3 }"/>
+    <TableFunction
+        name="f_b"
+        inputVarNames="{ time }"
+        coordinates="{ 0, 501 }"
+        values="{ 0, 501 }"/>
+  </Functions>
+
+  <!-- <Tasks>
+    <PackCollection
+      name="displacementJumpCollection"
+      objectPath="ElementRegions/Fracture_cer/embeddedSurfaceSubRegion"
+      fieldName="displacementJump"/>
+    </Tasks> -->
+
+  <Outputs>
+    <!-- <Silo
+	    name="MRBasicTest_SiloOutput"/> -->
+
+    <VTK
+      name="MRBasicTest_VTKOutput"
+      plotFileRoot="plot_files_int"/>
+
+    <!-- <Restart
+      name="restartOutput"/> -->
+  </Outputs>
+
+</Problem>

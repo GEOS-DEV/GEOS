@@ -554,6 +554,13 @@ Element: MultiPhaseVolumeWeightedThermalConductivity
 .. include:: ../../coreComponents/schema/docs/MultiPhaseVolumeWeightedThermalConductivity.rst
 
 
+.. _XML_MultiResolutionHF:
+
+Element: MultiResolutionHF
+==========================
+.. include:: ../../coreComponents/schema/docs/MultiResolutionHF.rst
+
+
 .. _XML_MultiphasePoromechanics:
 
 Element: MultiphasePoromechanics
@@ -1739,6 +1746,13 @@ Datastructure: MultiPhaseConstantThermalConductivity
 Datastructure: MultiPhaseVolumeWeightedThermalConductivity
 ==========================================================
 .. include:: ../../coreComponents/schema/docs/MultiPhaseVolumeWeightedThermalConductivity_other.rst
+
+
+.. _DATASTRUCTURE_MultiResolutionHF:
+
+Datastructure: MultiResolutionHF
+================================
+.. include:: ../../coreComponents/schema/docs/MultiResolutionHF_other.rst
 
 
 .. _DATASTRUCTURE_MultiphasePoromechanics:

@@ -119,6 +119,13 @@ public:
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs );
 
+  void setInitialCrackDamageBCs( DomainPartition & domain,
+                                 DofManager const & dofManager,
+                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs );
+
+  void setInitialCrackNodes( arrayView1d< localIndex > const & fracturedNodes );
+
   void applyIrreversibilityConstraint( DofManager const & dofManager,
                                        DomainPartition & domain,
                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -140,7 +147,7 @@ public:
     static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
 
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
-    dataRepository::ViewKey fieldVarName = { "fieldName" };
+    dataRepository::ViewKey damageVarName = { "Damage" };
   } PhaseFieldDamageFEMViewKeys;
 
   inline ParallelVector const * getSolution() const
@@ -153,16 +160,16 @@ public:
     return m_matrix.numGlobalRows();
   }
 
-  string const & getFieldName() const
+  string const getFieldName() const
   {
-    return m_fieldName;
+    return m_damageName;
   }
 
 protected:
   virtual void postProcessInput() override final;
 
 private:
-  string m_fieldName;
+  string m_damageName;
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
@@ -170,6 +177,7 @@ private:
   real64 m_damageUpperBound;
 
   array1d< real64 > m_coeff;
+  array1d< localIndex > m_initialCrack;
 
   PhaseFieldDamageFEM();
 };

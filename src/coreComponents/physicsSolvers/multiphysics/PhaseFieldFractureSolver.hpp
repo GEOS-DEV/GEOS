@@ -115,9 +115,6 @@ struct DamageInterpolationKernel
         for( localIndex a = 0; a < numNodesPerElement; ++a )
         {
           damageFieldOnMaterial( k, q ) += N[a] * nodalDamage[elemToNodes( k, a )];
-          //solution is probably not going to work because the solution of the coupled solver
-          //has both damage and displacements. Using the damageResult field from the Damage solver
-          //is probably better
         }
       }
 
