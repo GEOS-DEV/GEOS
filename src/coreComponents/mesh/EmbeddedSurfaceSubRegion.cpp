@@ -113,7 +113,7 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex
                                                       EmbeddedSurfaceNodeManager & embSurfNodeManager,
                                                       EdgeManager const & edgeManager,
                                                       FixedOneToManyRelation const & cellToEdges,
-                                                      BoundedPlane const * fracture )
+                                                      BoundedPlanarObject const * fracture )
 {
   /* The goal is to add an embeddedSurfaceElem if it is contained within the BoundedPlane
    *

@@ -24,28 +24,13 @@ namespace geosx
 using namespace dataRepository;
 
 BoundedPlane::BoundedPlane( const string & name, Group * const parent ):
-  SimpleGeometricObjectBase( name, parent ),
+  BoundedPlanarObject( name, parent ),
   m_origin{ 0.0, 0.0, 0.0 },
-  m_normal{ 0.0, 0.0, 1.0 },
-  m_lengthVector{ 0.0, 0.0, 0.0 },
-  m_widthVector{ 0.0, 0.0, 0.0 },
   m_tolerance()
 {
   registerWrapper( viewKeyStruct::originString(), &m_origin ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Origin point (x,y,z) of the plane (basically, any point on the plane)" );
-
-  registerWrapper( viewKeyStruct::normalString(), &m_normal ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)" );
-
-  registerWrapper( viewKeyStruct::mLengthVectorString(), &m_lengthVector ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Tangent vector defining the orthonormal basis along with the normal." );
-
-  registerWrapper( viewKeyStruct::mWidthVectorString(), &m_widthVector ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Tangent vector defining the orthonormal basis along with the normal." );
 
   registerWrapper( viewKeyStruct::dimensionsString(), &m_dimensions ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -65,11 +50,8 @@ BoundedPlane::BoundedPlane( const string & name, Group * const parent ):
 BoundedPlane::BoundedPlane( const real64 oldX, const real64 oldY,
                             const real64 newX, const real64 newY,
                             const string & name, Group * const parent ):
-  SimpleGeometricObjectBase( name, parent ),
+  BoundedPlanarObject( name, parent ),
   m_origin{ 0.0, 0.0, 0.0 },
-  m_normal{ 0.0, 0.0, 1.0 },
-  m_lengthVector{ 0.0, 0.0, 0.0 },
-  m_widthVector{ 0.0, 0.0, 0.0 },
   m_tolerance( 1e-5 )
 {
   m_origin = { (oldX + newX)/2.0, (oldY + newY)/2.0, 0.0};

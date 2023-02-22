@@ -142,7 +142,7 @@ public:
                               EmbeddedSurfaceNodeManager & embSurfNodeManager,
                               EdgeManager const & edgeManager,
                               FixedOneToManyRelation const & cellToEdges,
-                              BoundedPlane const * fracture );
+                              BoundedPlanarObject const * fracture );
 
   /**
    * @brief inherit ghost rank from cell elements.

@@ -13,11 +13,11 @@
  */
 
 /**
- * @file BoundedPlane.hpp
+ * @file Circle.hpp
  */
 
-#ifndef GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_
-#define GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_
+#ifndef GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_CIRCLE_HPP_
+#define GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_CIRCLE_HPP_
 
 #include "SimpleGeometricObjectBase.hpp"
 #include "BoundedPlanarObject.hpp"
@@ -26,10 +26,10 @@ namespace geosx
 {
 
 /**
- * @class BoundedPlane
- * @brief Class to represent a geometric box in GEOSX.
+ * @class Circle
+ * @brief Class to represent a geometric disc in GEOSX.
  */
-class BoundedPlane : public BoundedPlanarObject
+class Circle : public BoundedPlanarObject
 {
 public:
 
@@ -43,26 +43,13 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  BoundedPlane( const string & name,
+  Circle( const string & name,
                 Group * const parent );
-
-  /**
-   * @brief Internal constructor. This is used to make planar cuts from point (oldX, oldY) to (newX, newY)
-   * in 2.5D problems.
-   * @param oldX x-coordinate of first point
-   * @param oldY y-coordinate of first point
-   * @param newX x-coordinate of second point
-   * @param newY y-coordinate of second point
-   * @param name name of the object in the data hierarchy.
-   * @param parent pointer to the parent group in the data hierarchy.
-   */
-  BoundedPlane( const real64 oldX, const real64 oldY, const real64 newX,
-                const real64 newY, const string & name, Group * const parent );
 
   /**
    * @brief Default destructor.
    */
-  virtual ~BoundedPlane() override;
+  virtual ~Circle() override;
 
   ///@}
 
@@ -75,16 +62,11 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string catalogName() { return "BoundedPlane"; }
+  static string catalogName() { return "Circle"; }
 
   ///@}
 
   bool isCoordInObject( real64 const ( &coord ) [3] ) const override final;
-
-  /**
-   * @brief Find the bounds of the plane.
-   */
-  void findRectangleLimits();
 
   /**
    * @name Getters
@@ -92,18 +74,15 @@ public:
   ///@{
 
   /**
-   * @brief Get the origin of the plane.
-   * @return the origin of the plane
+   * @brief Get the center of the circle.
+   * @return the center of the circle
    */
-  virtual R1Tensor & getCenter() override final {return m_origin;}
+  virtual R1Tensor & getCenter() override final {return m_center;}
 
   /**
    * @copydoc getCenter()
    */
-  virtual R1Tensor const & getCenter() const override final {return m_origin;}
-
-
-
+  virtual R1Tensor const & getCenter() const override final {return m_center;}
 
 protected:
 
@@ -115,21 +94,19 @@ protected:
 
 private:
 
-  /// Origin point (x,y,z) of the plane (basically, any point on the plane)
-  R1Tensor m_origin;
-  /// Dimensions of the bounded plane
-  array1d< real64 > m_dimensions;
-  /// Length and width of the bounded plane
-  array2d< real64 > m_points;
-  /// tolerance to determine if a point sits on the plane or not
+  /// center of the circle in (x,y,z) coordinates
+  R1Tensor m_center;
+  /// Dimensions of the circle's radius
+  real64 m_radius;
+  /// tolerance to determine if a point sits on the circle or not
   real64 m_tolerance;
 
   /// @cond DO_NOT_DOCUMENT
 
   struct viewKeyStruct
   {
-    static constexpr char const * originString() { return "origin"; }
-    static constexpr char const * dimensionsString() { return "dimensions"; }
+    static constexpr char const * centerString() { return "center"; }
+    static constexpr char const * radiusString() { return "radius"; }
     static constexpr char const * toleranceString() { return "tolerance"; }
   };
 
@@ -138,4 +115,4 @@ private:
 };
 } /* namespace geosx */
 
-#endif /* GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_*/
+#endif /* GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_CIRCLE_HPP_*/
