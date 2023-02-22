@@ -1141,10 +1141,14 @@ if ( strategy == 2 )
       // retrieve finite element type 
       for( localIndex iter_elem = 0; iter_elem < numLocalCells; ++iter_elem )
       {
-          GEOSX_LOG_RANK ("!!!! INFO !!!! treating cell "<< iter_elem );
         for( localIndex iter_vertex = 0; iter_vertex < numVerticesPerCell; iter_vertex++ )
         {
           elemMeshVertices[ iter_vertex ] = elemsToNodesSource[ iter_elem ][ iter_vertex ];
+        }
+        std::swap(elemMeshVertices[ 2 ], elemMeshVertices[ 3 ] );
+        std::swap(elemMeshVertices[ 6 ], elemMeshVertices[ 7 ] );
+        for( localIndex iter_vertex = 0; iter_vertex < numVerticesPerCell; iter_vertex++ )
+        {
           for( int i =0; i < 3; i++ )
           {
             Xmesh[ iter_vertex ][ i ] = refPosSource[ elemMeshVertices[ iter_vertex ] ][ i ];
@@ -1153,7 +1157,6 @@ if ( strategy == 2 )
 
         for( int q = 0; q < numNodesPerCell; q++ )
         {
-          GEOSX_LOG_RANK ("!!!! INFO !!!! treating cell/dof "<< iter_elem << "/" << q );
           localIndex nodeID;
           int dof = q;
           int q1 = dof % numNodesPerEdge;
@@ -1172,17 +1175,18 @@ if ( strategy == 2 )
           {
             // the node is internal to a cell -- create it
             nodeID = localNodeID;
+          GEOSX_LOG_RANK ("!!!! INFO !!!! created node for cell, node ID= "<< nodeID );
             nodeLocalToGlobalNew[ nodeID ] = offset
                                              + elementLocalToGlobal[ iter_elem ] * numInternalNodesPerCell
                                              + numInternalNodesPerFace * (q1 - 1)
                                              + numInternalNodesPerEdge * (q2 - 1)
                                              + (q3 - 1);
-          GEOSX_LOG_RANK ("!!!! INFO !!!! created node for cell, node ID= "<< nodeID );
+            localNodeID++;
           }
           else
           {
             nodeID = nodeIDs[ nodeKey ]; 
-            GEOSX_LOG_RANK ("!!!! INFO !!!! found previous node, node ID= "<< nodeID );
+          GEOSX_LOG_RANK ("!!!! INFO !!!! found previous node, node ID= "<< nodeID );
           }
           for( int i=0; i<3; i++ )
           {
@@ -1191,7 +1195,9 @@ if ( strategy == 2 )
           elemsToNodesNew[ iter_elem ][ q ] = nodeID;
         }
       }
-      GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
+  GEOSX_LOG_RANK ("!!!! INFO !!!! finished cell nodes (" << localNodeID << " so far )" );
+      
+       GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
 
 
        GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
