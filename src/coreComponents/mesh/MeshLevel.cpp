@@ -111,7 +111,6 @@ struct NodeKeyHasher {
     for (auto v : arr) {
         hash ^= std::hash<localIndex>{}( v )  + 0x9e3779b9 + ( hash << 6 ) + ( hash >> 2 ); 
     }
-    GEOSX_LOG_RANK ("!!!! INFO !!!! creating hash for array "<< arr[0] << " " << arr[1] << " " << arr[2] << " " << arr[3] << " " << arr[4] << " " << arr[5] <<" : " << hash );
     return hash;
   }   
 };
@@ -119,24 +118,20 @@ struct NodeKeyHasher {
 struct NodeKeyEqual {
   bool operator()(const std::array< localIndex, 6 > & lhs, const std::array< localIndex, 6 > & rhs) const
   {
-    GEOSX_LOG_RANK ("!!!! INFO !!!! comparing array "<< lhs[0] << " " << lhs[1] << " " << lhs[2] << " " << lhs[3] << " " << lhs[4] << " " << lhs[5] << " with " << rhs[0] << " " << rhs[1] << " " << rhs[2] << " " << rhs[3] << " " << rhs[4] << " " << rhs[5] );
      for( int i=0; i< 6; i++ )
      { 
        if( lhs[ i ] != rhs[ i ] )
        {
-    GEOSX_LOG_RANK ("!!!! INFO !!!! they are different." );
        
          return false;
        }
      }
-    GEOSX_LOG_RANK ("!!!! INFO !!!! they are equal." );
      return true;
   }
 };
 
 static std::array< localIndex, 6 > createNodeKey( localIndex v )
 {
-  GEOSX_LOG_RANK ("!!!! INFO !!!! creating key for vertex "<< v );
   return std::array< localIndex, 6 > { v, -1, -1 ,-1 ,-1, -1 };
 }
 
@@ -146,12 +141,10 @@ static std::array< localIndex, 6 > createNodeKey( localIndex v1, localIndex v2, 
   if( a == order ) return createNodeKey( v2 );
   if( v1 < v2 )
   {
-  GEOSX_LOG_RANK ("!!!! INFO !!!! creating key for edge "<< v1 << " " << v2 << ", location " << a );
     return std::array< localIndex, 6 > { v1, v2, -1 ,-1 ,a , -1 };
   }
   else
   {
-  GEOSX_LOG_RANK ("!!!! INFO !!!! creatingkey for edge "<< v2 << " " << v1 << ", location "<< (order - a) );
     return std::array< localIndex, 6 > { v2, v1, -1 ,-1 ,order - a , -1 };
   }
 }
@@ -192,7 +185,6 @@ static std::array< localIndex, 6 > createNodeKey( localIndex v1, localIndex v2, 
       std::swap( a, b );
     }
   }
-  GEOSX_LOG_RANK ("!!!! INFO !!!! creating key for face "<< v1 << " " << v2 << " "<< v3 << " "<< v4 << ", location " << a << " " << b );
   return std::array< localIndex, 6 > { v1, v2, v3, v4, a, b };
 }
 
@@ -895,10 +887,8 @@ if ( strategy == 2 )
   {
     nodeLocalToGlobalNew[ localNodeID ] = nodeLocalToGlobalSource[ iter_vertex ];
     nodeIDs[ createNodeKey( iter_vertex ) ] = localNodeID;
-    GEOSX_LOG_RANK ("!!!! INFO !!!! created node for vertex, node ID= "<<localNodeID );
     localNodeID++;
   }
-  GEOSX_LOG_RANK ("!!!! INFO !!!! finished vertex nodes (" << localNodeID << " so far )" );
 
 
 
@@ -944,19 +934,16 @@ if ( strategy == 2 )
         // this is an internal edge node: create it
         nodeID = localNodeID;
         nodeIDs[ nodeKey ] = localNodeID;
-        GEOSX_LOG_RANK ("!!!! INFO !!!! created node for edge, node ID= "<< nodeID );
         nodeLocalToGlobalNew[ nodeID ] = offset + edgeLocalToGlobal[ iter_edge ] * numInternalNodesPerEdge + (q - 1);
         localNodeID++;                 
       }
       else
       {
         nodeID = nodeIDs[ nodeKey ];
-        GEOSX_LOG_RANK ("!!!! INFO !!!! found previous node, node ID= "<< nodeID );
       }
       edgeToNodeMapNew[ iter_edge ][ q ] = nodeID;
     }
   }
-  GEOSX_LOG_RANK ("!!!! INFO !!!! finished edge nodes (" << localNodeID << " so far )" );
 
   /////////////////////////
   // Faces
@@ -1023,7 +1010,6 @@ if ( strategy == 2 )
           // this is an internal face node: create it
           nodeID = localNodeID;
           nodeIDs[ nodeKey ] = localNodeID;
-          GEOSX_LOG_RANK ("!!!! INFO !!!! created node for face, node ID= "<< nodeID );
           nodeLocalToGlobalNew[ nodeID ] = offset 
                                               + faceLocalToGlobal[ iter_face ] * numInternalNodesPerFace 
                                               + numInternalNodesPerEdge * ( q1 - 1 )
@@ -1033,16 +1019,12 @@ if ( strategy == 2 )
         else
         {
           nodeID = nodeIDs[ nodeKey ];
-          GEOSX_LOG_RANK ("!!!! INFO !!!! found previous node, node ID= "<< nodeID );
         }
         faceToNodeMapNew[ iter_face ][ q2 + q1*numNodesPerEdge ] = nodeID;
       }
     }
   }
-  GEOSX_LOG_RANK ("!!!! INFO !!!! finished face nodes (" << localNodeID << " so far )" );
 
-  GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapSource = "<< faceToNodeMapSource ); 
-  GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew ); 
 
 
   //////////////////////////
@@ -1060,7 +1042,6 @@ if ( strategy == 2 )
   {
     allNodes.insert( iter_nodes );
   }
-  GEOSX_LOG_RANK ("!!!! INFO !!!! finished allnodes" );
 
   //GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
   //GEOSX_LOG_RANK ("!!!! INFO !!!! refPosSource = "<< refPosSource );
@@ -1073,7 +1054,6 @@ if ( strategy == 2 )
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const refPosSource = source.m_nodeManager->referencePosition();
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > refPosNew = cellBlockManager.getNodePositions();
   refPosNew.setValues< parallelHostPolicy >( -1.0 );
-  GEOSX_LOG_RANK ("!!!! INFO !!!! retrieved refposnew" );
 
   real64 Xmesh[ numVerticesPerCell ][ 3 ] = { { } };
   real64 X[ 3 ] = { { } };
@@ -1081,10 +1061,8 @@ if ( strategy == 2 )
   localIndex elemMeshVertices[ numVerticesPerCell ] = { };
   offset = numLocalVertices + numLocalEdges * numInternalNodesPerEdge + numLocalFaces * numInternalNodesPerFace;
   std::array< localIndex, 6 > const nullKey = std::array< localIndex, 6 >{ -1, -1 ,-1, -1, -1, -1 };
-  GEOSX_LOG_RANK ("!!!! INFO !!!! looping on regions" );
   source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
   {
-  GEOSX_LOG_RANK ("!!!! INFO !!!! in region" );
     // create element region with the same name as source element region "Region"
     CellElementRegion & region = *(dynamic_cast< CellElementRegion * >( m_elementManager->createChild( sourceRegion.getCatalogName(),
                                                                                                        sourceRegion.getName() ) ) );
@@ -1093,7 +1071,6 @@ if ( strategy == 2 )
 
     sourceRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
     {
-  GEOSX_LOG_RANK ("!!!! INFO !!!! in subregion" );
  
       // create element sub region with the same name as source element sub region "cb"
       CellElementSubRegion & newSubRegion = region.getSubRegions().registerGroup< CellElementSubRegion >( sourceSubRegion.getName() );
@@ -1149,7 +1126,6 @@ if ( strategy == 2 )
             Xmesh[ iter_vertex ][ i ] = refPosSource[ elemMeshVertices[ iter_vertex ] ][ i ];
           }
         }
-        GEOSX_LOG_RANK ("!!!! INFO !!!! cell vertices: " << elemMeshVertices[ 0 ] << " "<< elemMeshVertices[ 1 ] << " " << elemMeshVertices[ 2 ] << " " << elemMeshVertices[ 3 ] << " " << elemMeshVertices[ 4 ] << " " << elemMeshVertices[ 5 ]  << " " << elemMeshVertices[ 6 ] << " " << elemMeshVertices[ 7 ]);
 
         for( int q = 0; q < numNodesPerCell; q++ )
         {
@@ -1171,7 +1147,6 @@ if ( strategy == 2 )
           {
             // the node is internal to a cell -- create it
             nodeID = localNodeID;
-          GEOSX_LOG_RANK ("!!!! INFO !!!! created node for cell, node ID= "<< nodeID );
             nodeLocalToGlobalNew[ nodeID ] = offset
                                              + elementLocalToGlobal[ iter_elem ] * numInternalNodesPerCell
                                              + numInternalNodesPerFace * (q1 - 1)
@@ -1182,7 +1157,6 @@ if ( strategy == 2 )
           else
           {
             nodeID = nodeIDs[ nodeKey ]; 
-          GEOSX_LOG_RANK ("!!!! INFO !!!! found previous node, node ID= "<< nodeID );
           }
           for( int i=0; i<3; i++ )
           {
@@ -1191,22 +1165,17 @@ if ( strategy == 2 )
           elemsToNodesNew[ iter_elem ][ q ] = nodeID;
         }
       }
-  GEOSX_LOG_RANK ("!!!! INFO !!!! finished cell nodes (" << localNodeID << " so far )" );
       
-       GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
 
 
        GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
-       GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalSource = "<< nodeLocalToGlobalSource );
+       // GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalSource = "<< nodeLocalToGlobalSource );
        GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalNew = "<< nodeLocalToGlobalNew );
-       GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapSource = "<< faceToNodeMapSource);
-       GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
-       GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapSource = "<< edgeToNodeMapSource);
+       G//EOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapSource = "<< edgeToNodeMapSource);
        GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapNew = "<< edgeToNodeMapNew);
+       G//EOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapSource = "<< faceToNodeMapSource);
+       GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
        GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
-
-       GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesSource = "<< elemsToNodesSource);
-       GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
 
       //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
       //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
