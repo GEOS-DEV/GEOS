@@ -143,11 +143,11 @@
     <TableFunction
       name="apertureTable"
       coordinates="{ -1.0e-3, 0.0 }"
-      values="{ 0.0, 0.0 }"/>
+      values="{ 1.0e-3, 1.0e-3 }"/>
   </Functions>
 
   <Outputs>
-    <Silo
+    <VTK
       name="siloOutput"
       plotLevel="3"/>
 

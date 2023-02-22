@@ -29,6 +29,11 @@ using namespace dataRepository;
 namespace xmlWrapper
 {
 
+template<> void stringToInputVariable<string>(string & target, string const & value )
+{
+  target = value;
+}
+
 template< typename T, int SIZE >
 void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValue )
 {

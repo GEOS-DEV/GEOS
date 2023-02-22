@@ -159,7 +159,7 @@
     <FieldSpecification
       name="xconstraint"
       component="0"
-      setNames="{ topPoint, bottomPoint }"
+      setNames="{ xneg, xpos }"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       scale="0.0"/>
@@ -181,45 +181,40 @@
       setNames="{zposFace, znegFace}"/>
 
     <FieldSpecification 
-      name="initialStress1"
+      name="initialStressXX_reservoir"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Reservoir"
+      objectPath="ElementRegions/{Reservoir}"
       fieldName="reservoirRock_stress"
       component="0"
-      scale="-1.0e6"/>
+      scale="-0.5e6"/>
       
     <FieldSpecification 
-      name="initialStress2"
+      name="initialStressYY_reservoir"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Underburden"
-      fieldName="burdenRock_stress"
-      component="0"
-      scale="-1.0e6"/>
-      
-    <FieldSpecification 
-      name="initialStress3"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Overburden"
-      fieldName="burdenRock_stress"
-      component="0"
-      scale="-1.0e6"/>  
+      objectPath="ElementRegions/{Reservoir}"
+      fieldName="reservoirRock_stress"
+      component="1"
+      scale="-0.2e6"/>
 
-    <!-- <Traction
-      name="tractionRight"
-      objectPath="faceManager"
-      tractionType="normal"
-      scale="-1.0e6"      
-      setNames="{ xpos }"/>
+    <FieldSpecification 
+      name="initialStressXX_burdens"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/{Overburden Underburden}"
+      fieldName="burdenRock_stress"
+      component="0"
+      scale="-0.5e6"/>
       
-    <Traction
-      name="tractionLeft"
-      objectPath="faceManager"
-      tractionType="normal"
-      scale="-1.0e6"      
-      setNames="{ xneg }"/>    -->
+    <FieldSpecification 
+      name="initialStressYY_burdens"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/{Overburden Underburden}"
+      fieldName="burdenRock_stress"
+      component="1"
+      scale="-0.2e6"/>  
       
   </FieldSpecifications>
 
@@ -254,13 +249,6 @@
       name="solverApplications"
       forceDt="1000"
       target="/Solvers/fractureMechSolver"/>
-
-    <!-- <PeriodicEvent
-      name="solverApplications"
-      forceDt="1000"
-      target="/Solvers/mechanicsSolver"/>   -->
-      
-      
   </Events>
 
 </Problem>
