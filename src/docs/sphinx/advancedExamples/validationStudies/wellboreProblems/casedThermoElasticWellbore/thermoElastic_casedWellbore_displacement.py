@@ -68,7 +68,7 @@ def main():
 	plt.xlim(0.15,0.4)
 
 	plt.legend(loc='upper left')
-	plt.show()
+	#plt.show()
 
 	plt.savefig('displacement.png')
 

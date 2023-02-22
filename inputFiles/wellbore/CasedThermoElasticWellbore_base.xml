@@ -13,9 +13,7 @@
         couplingType="FullyImplicit"
         newtonMaxIter="100"/>
       <LinearSolverParameters
-        solverType="direct"
-	    logLevel="1" 
-    	krylovTol="1e-6"/>
+        solverType="direct"/>
     </SinglePhasePoromechanics>
 
     <SolidMechanicsLagrangianSSLE
@@ -24,12 +22,6 @@
       logLevel="1"
       discretization="FE1"
       targetRegions="{ casing, cement, rock }">
-      <NonlinearSolverParameters
-        newtonMaxIter="100"/>
-      <LinearSolverParameters
-        solverType="direct"
-	    logLevel="1" 
-    	krylovTol="1e-6"/>
     </SolidMechanicsLagrangianSSLE>
    
     <SinglePhaseFVM
@@ -39,12 +31,6 @@
       temperature="0"
       isThermal="1"
       targetRegions="{ casing, cement, rock }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="100"/>
-      <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"/>
     </SinglePhaseFVM>
   </Solvers>
 

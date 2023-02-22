@@ -113,10 +113,10 @@
       maxEventDt="1e3"
       target="/Solvers/thermoElasticSolver"/>
 
-    <!--PeriodicEvent
+    <PeriodicEvent
       name="restarts"
-      timeFrequency="1e5"
-      target="/Outputs/restartOutput"/-->
+      timeFrequency="5e4"
+      target="/Outputs/restartOutput"/>
   </Events>
 
 </Problem>
