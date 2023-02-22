@@ -683,9 +683,9 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     arrayView2d< real32 > const uYReceivers   = m_displacementYNp1AtReceivers.toView();
     arrayView2d< real32 > const uZReceivers   = m_displacementZNp1AtReceivers.toView();
 
-    computeAllSeismoTraces( time_n, dt, ux_np1, ux_n, uXReceivers );
-    computeAllSeismoTraces( time_n, dt, uy_np1, uy_n, uYReceivers );
-    computeAllSeismoTraces( time_n, dt, uz_np1, uz_n, uZReceivers );
+    WaveSolverUtils::computeAllSeismoTraces( time_n, 0, m_dtSeismoTrace, m_receiverNodeIds, m_receiverConstants, m_receiverIsLocal, m_indexSeismoTrace, m_nsamplesSeismoTrace, m_outputSeismoTrace, ux_np1, ux_n, uXReceivers );
+    WaveSolverUtils::computeAllSeismoTraces( time_n, 0, m_dtSeismoTrace, m_receiverNodeIds, m_receiverConstants, m_receiverIsLocal, m_indexSeismoTrace, m_nsamplesSeismoTrace, m_outputSeismoTrace, uy_np1, uy_n, uYReceivers );
+    WaveSolverUtils::computeAllSeismoTraces( time_n, 0, m_dtSeismoTrace, m_receiverNodeIds, m_receiverConstants, m_receiverIsLocal, m_indexSeismoTrace, m_nsamplesSeismoTrace, m_outputSeismoTrace, uz_np1, uz_n, uZReceivers );
 
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
@@ -740,9 +740,9 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
     arrayView2d< real32 > const uYReceivers   = m_displacementYNp1AtReceivers.toView();
     arrayView2d< real32 > const uZReceivers   = m_displacementZNp1AtReceivers.toView();
 
-    computeAllSeismoTraces( time_n, 0, ux_np1, ux_n, uXReceivers );
-    computeAllSeismoTraces( time_n, 0, uy_np1, uy_n, uYReceivers );
-    computeAllSeismoTraces( time_n, 0, uz_np1, uz_n, uZReceivers );
+    WaveSolverUtils::computeAllSeismoTraces( time_n, 0, m_dtSeismoTrace, m_receiverNodeIds, m_receiverConstants, m_receiverIsLocal, m_indexSeismoTrace, m_nsamplesSeismoTrace, m_outputSeismoTrace, ux_np1, ux_n, uXReceivers );
+    WaveSolverUtils::computeAllSeismoTraces( time_n, 0, m_dtSeismoTrace, m_receiverNodeIds, m_receiverConstants, m_receiverIsLocal, m_indexSeismoTrace, m_nsamplesSeismoTrace, m_outputSeismoTrace, uy_np1, uy_n, uYReceivers );
+    WaveSolverUtils::computeAllSeismoTraces( time_n, 0, m_dtSeismoTrace, m_receiverNodeIds, m_receiverConstants, m_receiverIsLocal, m_indexSeismoTrace, m_nsamplesSeismoTrace, m_outputSeismoTrace, uz_np1, uz_n, uZReceivers );
 
     /// Compute DAS data if requested
     /// Pairs of receivers are assumed to be modeled ( see WaveSolverBase::initializeDAS() )
@@ -756,23 +756,6 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
   while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
   {
     m_indexSeismoTrace++;
-  }
-}
-
-void ElasticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
-                                                     real64 const dt,
-                                                     arrayView1d< real32 const > const var_np1,
-                                                     arrayView1d< real32 const > const var_n,
-                                                     arrayView2d< real32 > varAtReceivers )
-{
-  localIndex indexSeismoTrace = m_indexSeismoTrace;
-
-  for( real64 timeSeismo;
-       (timeSeismo = m_dtSeismoTrace*indexSeismoTrace) <= (time_n + epsilonLoc) && indexSeismoTrace < m_nsamplesSeismoTrace;
-       indexSeismoTrace++ )
-  {
-    WaveSolverUtils::computeSeismoTrace( time_n, dt, timeSeismo, indexSeismoTrace, m_receiverNodeIds, m_receiverConstants, m_receiverIsLocal,
-                                         m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
   }
 }
 

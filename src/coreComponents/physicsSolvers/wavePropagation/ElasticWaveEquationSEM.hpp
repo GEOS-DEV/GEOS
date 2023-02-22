@@ -80,21 +80,6 @@ public:
   void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhsx, arrayView1d< real32 > const rhsy, arrayView1d< real32 > const rhsz );
 
   /**
-   * TODO: move implementation into WaveSolverBase
-   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
-   * @param time_n the time corresponding to the field values at iteration n
-   * @param dt the simulation timestep
-   * @param var_np1 the field values at time_n + dt
-   * @param var_n the field values at time_n
-   * @param varAtreceivers the array holding the trace values, where the output is written
-   */
-  virtual void computeAllSeismoTraces( real64 const time_n,
-                                       real64 const dt,
-                                       arrayView1d< real32 const > const var_np1,
-                                       arrayView1d< real32 const > const var_n,
-                                       arrayView2d< real32 > varAtReceivers );
-
-  /**
    * TODO: move implementation into WaveSolverBase once 'm_receiverIsLocal' is also moved
    * @brief Compute DAS data from the appropriate three-component receiver pairs
    * @param xCompRcv the array holding the x-component of pairs of receivers

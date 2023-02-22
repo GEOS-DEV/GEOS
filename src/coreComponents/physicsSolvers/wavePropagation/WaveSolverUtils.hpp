@@ -166,6 +166,8 @@ struct WaveSolverUtils
       } );
     }
 
+
+
     // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized.
     // Output will then only be done via the previous code.
     if( iSeismo == nsamplesSeismoTrace - 1 )
@@ -191,6 +193,29 @@ struct WaveSolverUtils
     }
 
   }
+
+ static void computeAllSeismoTraces( real64 const time_n,
+                                     real64 const dt,
+                                     real64 const dtSeismoTrace,
+                                     arrayView2d< localIndex const > const receiverNodeIds,
+                                     arrayView2d< real64 const > const receiverConstants,
+                                     arrayView1d< localIndex const > const receiverIsLocal,
+                                     localIndex indexSeismoTrace,
+                                     localIndex const nsamplesSeismoTrace,
+                                     localIndex const outputSeismoTrace,
+                                     arrayView1d< real32 const > const var_np1,
+                                     arrayView1d< real32 const > const var_n,
+                                     arrayView2d< real32 > varAtReceivers )
+{
+
+  for( real64 timeSeismo;
+       (timeSeismo = dtSeismoTrace*indexSeismoTrace) <= (time_n + WaveSolverBase::epsilonLoc) && indexSeismoTrace < nsamplesSeismoTrace;
+       indexSeismoTrace++ )
+  {
+    WaveSolverUtils::computeSeismoTrace( time_n, dt, timeSeismo, indexSeismoTrace, receiverNodeIds, receiverConstants, receiverIsLocal,
+                                         nsamplesSeismoTrace, outputSeismoTrace, var_np1, var_n, varAtReceivers );
+  }
+}
 
 
   /**
