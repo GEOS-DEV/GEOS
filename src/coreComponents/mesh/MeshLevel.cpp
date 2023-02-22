@@ -898,6 +898,8 @@ if ( strategy == 2 )
     GEOSX_LOG_RANK ("!!!! INFO !!!! created node for vertex, node ID= "<<localNodeID );
     localNodeID++;
   }
+  GEOSX_LOG_RANK ("!!!! INFO !!!! finished vertex nodes (" << localNodeID << " so far )" );
+
 
 
 
@@ -931,7 +933,6 @@ if ( strategy == 2 )
   localIndex offset = numLocalVertices;
   for( localIndex iter_edge = 0; iter_edge < numLocalEdges; iter_edge++ )
   {
-
     localIndex v1 = source.m_edgeManager->nodeList()[ iter_edge ][ 0 ];
     localIndex v2 = source.m_edgeManager->nodeList()[ iter_edge ][ 1 ];
     for( int q=0;q<numNodesPerEdge; q++ )
@@ -955,6 +956,7 @@ if ( strategy == 2 )
       edgeToNodeMapNew[ iter_edge ][ q ] = nodeID;
     }
   }
+  GEOSX_LOG_RANK ("!!!! INFO !!!! finished edge nodes (" << localNodeID << " so far )" );
 
   /////////////////////////
   // Faces
@@ -1009,6 +1011,7 @@ if ( strategy == 2 )
     localIndex v2 = source.m_faceManager->nodeList()[ iter_face ][ 1 ];
     localIndex v3 = source.m_faceManager->nodeList()[ iter_face ][ 2 ];
     localIndex v4 = source.m_faceManager->nodeList()[ iter_face ][ 3 ];
+    std::swap(v3, v4);
     for( int q1=0;q1<numNodesPerEdge; q1++ )
     {
       for( int q2=0;q2<numNodesPerEdge; q2++ )
@@ -1036,6 +1039,7 @@ if ( strategy == 2 )
       }
     }
   }
+  GEOSX_LOG_RANK ("!!!! INFO !!!! finished face nodes (" << localNodeID << " so far )" );
 
   GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapSource = "<< faceToNodeMapSource ); 
   GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew ); 
