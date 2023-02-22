@@ -94,6 +94,33 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
 }
 
 template< typename POLICY >
+void testLifoStorageBig( int elemCnt, int numberOfElementsOnDevice, int numberOfElementsOnHost, int totalNumberOfBuffers )
+{
+
+  array1d< float > array( elemCnt );
+  array.move( RAJAHelper< POLICY >::space );
+  LifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
+
+  for( int j = 0; j < 10; j++ )
+  {
+
+    float * dataPointer = array.data();
+    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOSX_HOST_DEVICE ( int i ) { dataPointer[ i ] = j*elemCnt+i; } );
+    lifo.push( array );
+  }
+
+  for( int j = 0; j < 10; j++ )
+  {
+    lifo.pop( array );
+    float * dataPointer = array.data();
+    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOSX_HOST_DEVICE ( int i )
+    {
+      PORTABLE_EXPECT_EQ( dataPointer[ i ], (float)(10-j-1)*elemCnt+i );
+    } );
+  }
+}
+
+template< typename POLICY >
 void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int numberOfElementsOnHost, int totalNumberOfBuffers )
 {
   array1d< float > array( elemCnt );
@@ -143,6 +170,27 @@ TEST( LifoStorageTest, LifoStorageBufferOnCUDA )
 {
   testLifoStorage< parallelDevicePolicy< > >( 10, 2, 3, 10 );
 }
+
+TEST( LifoStorageTest, LifoStorageBufferOnCUDAlarge )
+{
+  testLifoStorageBig< parallelDevicePolicy< > >( 10, 2, 3, 10000 );
+}
+
+TEST( LifoStorageTest, LifoStorageBufferOnCUDAlargeAutoSizeHost )
+{
+  testLifoStorageBig< parallelDevicePolicy< > >( 10, 2, -1, 10000 );
+}
+
+TEST( LifoStorageTest, LifoStorageBufferOnCUDAlargeAutoSizeDevice )
+{
+  testLifoStorageBig< parallelDevicePolicy< > >( 10, -1, 3, 10000 );
+}
+
+TEST( LifoStorageTest, LifoStorageBufferOnCUDAlargeAutoSizeBoth )
+{
+  testLifoStorageBig< parallelDevicePolicy< > >( 10, -1, -1, 10000 );
+}
+
 
 TEST( LifoStorageTest, LifoStorageBufferOnCUDANoDeviceBuffer )
 {

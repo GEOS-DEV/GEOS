@@ -21,6 +21,8 @@
 #include <camp/camp.hpp>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <algorithm>
 
 #include "common/FixedSizeDeque.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -29,9 +31,11 @@
 #ifdef LIFO_DISABLE_CALIPER
 #define LIFO_MARK_FUNCTION
 #define LIFO_MARK_SCOPE(a)
+#define LIFO_LOG_RANK(a) std::cerr << a << std::endl;
 #else
 #define LIFO_MARK_FUNCTION GEOSX_MARK_FUNCTION
 #define LIFO_MARK_SCOPE(a) GEOSX_MARK_SCOPE(a)
+#define LIFO_LOG_RANK(a) GEOSX_LOG_RANK(a)
 #endif
 
 namespace geosx
@@ -310,10 +314,10 @@ private:
   std::string m_name;
 #ifdef GEOSX_USE_CUDA
   /// ueue of data stored on device
-  FixedSizeDequeAndMutexes< T > m_deviceDeque;
+  std::unique_ptr< FixedSizeDequeAndMutexes< T > > m_deviceDeque;
 #endif
   /// ueue of data stored on host memory
-  FixedSizeDequeAndMutexes< T > m_hostDeque;
+  std::unique_ptr< FixedSizeDequeAndMutexes< T > > m_hostDeque;
 
   /// counter of buffer stored in LIFO
   int m_bufferCount;
@@ -345,7 +349,8 @@ private:
   std::thread m_worker[2];
   /// boolean to keep m_worker alive.
   bool m_continue;
-
+  /// marker to detect first pop
+  bool m_hasPoppedBefore = false;
 public:
 
 
@@ -355,33 +360,51 @@ public:
    *
    * @param name                           Prefix of the files used to save the occurenncy of the saved buffer on disk.
    * @param elemCnt                        Number of elments in the LvArray we want to store in the LIFO storage.
-   * @param numberOfBuffersToStoreOnDevice Maximum number of array to store on device memory.
-   * @param numberOfBuffersToStoreOnHost   Maximum number of array to store on host memory.
+   * @param numberOfBuffersToStoreOnDevice Maximum number of array to store on device memory ( -1 = use 80% of remaining memory ).
+   * @param numberOfBuffersToStoreOnHost   Maximum number of array to store on host memory ( -1 = use 80% of remaining memory ).
    * @param maxNumberOfBuffers             Number of arrays expected to be stores in the LIFO.
    */
   LifoStorage( std::string name, size_t elemCnt, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
     m_maxNumberOfBuffers( maxNumberOfBuffers ),
     m_bufferSize( elemCnt*sizeof( T ) ),
     m_name( name ),
-#ifdef GEOSX_USE_CUDA
-    m_deviceDeque( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda ),
-#endif
-    m_hostDeque( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host ),
     m_bufferCount( 0 ), m_bufferToHostCount( 0 ), m_bufferToDiskCount( 0 ),
-#ifdef GEOSX_USE_CUDA
-    m_pushToDeviceEvents( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 ),
-    m_pushToHostFutures( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers ),
-    m_popFromDeviceEvents( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 ),
-    m_popFromHostFutures( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers ),
-#else
+#ifndef GEOSX_USE_CUDA
     m_pushToHostFutures( maxNumberOfBuffers ),
     m_popFromHostFutures( maxNumberOfBuffers ),
 #endif
     m_continue( true )
   {
+    LIFO_LOG_RANK(" LIFO : maximum size "<< m_maxNumberOfBuffers << " buffers ");
+    double bufferSize = ( ( double ) m_bufferSize ) / ( 1024.0 * 1024.0 );
+    LIFO_LOG_RANK(" LIFO : buffer size "<< bufferSize << "MB");
 #ifndef GEOSX_USE_CUDA
-    GEOSX_UNUSED_VAR( numberOfBuffersToStoreOnDevice );
+    numberOfBuffersToStoreOnDevice = 0;
+#else
+    if ( numberOfBuffersToStoreOnDevice == -1 )
+    {
+      size_t free, total;
+      GEOSX_ERROR_IF( cudaSuccess != cudaMemGetInfo( &free, &total ), "Error getting CUDA device available memory" );
+      double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
+      LIFO_LOG_RANK(" LIFO : available memory on device " << freeGB << " GB");
+      numberOfBuffersToStoreOnDevice = std::min( (int)( 0.8 * free / m_bufferSize ), m_maxNumberOfBuffers );
+    }
+    m_deviceDeque = std::unique_ptr< FixedSizeDequeAndMutexes< T > >( new FixedSizeDequeAndMutexes< T >( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda ) );
+    m_pushToDeviceEvents = std::vector< camp::resources::Event >( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 );
+    m_pushToHostFutures = std::vector< std::future< void > >( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers );
+    m_popFromDeviceEvents = std::vector< camp::resources::Event >( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 );
+    m_popFromHostFutures = std::vector< std::future< void > >( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers );
+    LIFO_LOG_RANK(" LIFO : allocating "<< numberOfBuffersToStoreOnDevice <<" buffers on device");
 #endif
+    if ( numberOfBuffersToStoreOnHost == -1 )
+    {
+      size_t free = sysconf(_SC_AVPHYS_PAGES) * sysconf(_SC_PAGESIZE);
+      numberOfBuffersToStoreOnHost = std::max( 1 , std::min( (int)( 0.8 * free / m_bufferSize ), m_maxNumberOfBuffers - numberOfBuffersToStoreOnDevice ) );
+      double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
+      LIFO_LOG_RANK(" LIFO : available memory on host " << freeGB << " GB");
+    }
+    LIFO_LOG_RANK(" LIFO : allocating "<< numberOfBuffersToStoreOnHost <<" buffers on host");
+    m_hostDeque = std::unique_ptr< FixedSizeDequeAndMutexes< T > >( new FixedSizeDequeAndMutexes< T >( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host ) );
     m_worker[0] = std::thread( &LifoStorage< T >::wait_and_consume_tasks, this, 0 );
     m_worker[1] = std::thread( &LifoStorage< T >::wait_and_consume_tasks, this, 1 );
   }
@@ -418,15 +441,15 @@ public:
     //To be sure 2 pushes are not mixed
     pushWait();
     int id = m_bufferCount++;
-    GEOSX_ERROR_IF( m_hostDeque.capacity() == 0,
+    GEOSX_ERROR_IF( m_hostDeque->capacity() == 0,
                     "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
 
 #ifdef GEOSX_USE_CUDA
-    if( m_deviceDeque.capacity() > 0 )
+    if( m_deviceDeque->capacity() > 0 )
     {
-      m_pushToDeviceEvents[id] = m_deviceDeque.emplaceFront( array );
+      m_pushToDeviceEvents[id] = m_deviceDeque->emplaceFront( array );
 
-      if( m_maxNumberOfBuffers - id > (int)m_deviceDeque.capacity() )
+      if( m_maxNumberOfBuffers - id > (int)m_deviceDeque->capacity() )
       {
         LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
         // This buffer will go to host memory, and maybe on disk
@@ -442,9 +465,9 @@ public:
 #endif
     {
       std::packaged_task< void() > task( std::bind( [ this ] ( int pushId, arrayView1d< T > pushedArray ) {
-        m_hostDeque.emplaceFront( pushedArray );
+        m_hostDeque->emplaceFront( pushedArray );
 
-        if( m_maxNumberOfBuffers - pushId > (int)m_hostDeque.capacity() )
+        if( m_maxNumberOfBuffers - pushId > (int)m_hostDeque->capacity() )
         {
           LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
           // This buffer will go to host memory, and maybe on disk
@@ -476,7 +499,7 @@ public:
     if( m_bufferCount > 0 )
     {
 #ifdef GEOSX_USE_CUDA
-      if( m_deviceDeque.capacity() > 0 )
+      if( m_deviceDeque->capacity() > 0 )
       {
         m_pushToDeviceEvents[m_bufferCount-1].wait();
       }
@@ -510,13 +533,28 @@ public:
     LIFO_MARK_FUNCTION;
     //wait the last push to avoid race condition
     pushWait();
-    // Ensure last pop is finished
-    popWait();
-    int id = --m_bufferCount;
-#ifdef GEOSX_USE_CUDA
-    if( m_deviceDeque.capacity() > 0 )
+    if ( m_hasPoppedBefore )
     {
-      m_popFromDeviceEvents[id] = m_deviceDeque.popFront( array );
+      // Ensure last pop is finished
+      popWait();
+    }
+    else
+    {
+      if ( m_maxNumberOfBuffers != m_bufferCount ) LIFO_LOG_RANK(" LIFO : warning number of entered buffered (" << m_bufferCount
+                                                                 << ") != max LIFO size (" << m_maxNumberOfBuffers << ") !" );
+      // Ensure that all push step are ended
+      for ( int queueId = 0; queueId < 2; queueId++ )
+      {
+        std::unique_lock< std::mutex > lock( m_task_queue_mutex[queueId] );
+        m_task_queue_not_empty_cond[queueId].wait( lock, [ this, &queueId ] { return m_task_queue[queueId].empty(); } );
+      }
+    }
+    m_hasPoppedBefore = true;
+    int id = --m_bufferCount;
+
+#ifdef GEOSX_USE_CUDA
+    if( m_deviceDeque->capacity() > 0 )
+    {
 
       if( m_bufferToHostCount > 0 )
       {
@@ -529,12 +567,14 @@ public:
         }
         m_task_queue_not_empty_cond[0].notify_all();
       }
+
+      m_popFromDeviceEvents[id] = m_deviceDeque->popFront( array );
     }
     else
 #endif
     {
       std::packaged_task< void() > task( std::bind ( [ this ] ( int popId, arrayView1d< T > poppedArray ) {
-        m_hostDeque.popFront( poppedArray );
+        m_hostDeque->popFront( poppedArray );
 
         if( m_bufferToDiskCount > 0 )
         {
@@ -566,7 +606,7 @@ public:
     if( m_bufferCount < m_maxNumberOfBuffers )
     {
 #ifdef GEOSX_USE_CUDA
-      if( m_deviceDeque.capacity() > 0 )
+      if( m_deviceDeque->capacity() > 0 )
       {
         auto *cuda_event = m_popFromDeviceEvents[m_bufferCount].try_get< camp::resources::CudaEvent >();
         if ( cuda_event ) cudaEventSynchronize( cuda_event->getCudaEvent_t() );
@@ -610,10 +650,10 @@ private:
   {
     LIFO_MARK_FUNCTION;
     // The copy to host will only start when the data is copied on device buffer
-    m_hostDeque.getStream().wait_for( const_cast< camp::resources::Event * >( &m_pushToDeviceEvents[id] ) );
-    m_hostDeque.emplaceFrontFromBack( m_deviceDeque );
+    m_hostDeque->getStream().wait_for( const_cast< camp::resources::Event * >( &m_pushToDeviceEvents[id] ) );
+    m_hostDeque->emplaceFrontFromBack( *m_deviceDeque );
 
-    if( m_maxNumberOfBuffers - id > (int)(m_deviceDeque.capacity() + m_hostDeque.capacity()) )
+    if( m_maxNumberOfBuffers - id > (int)(m_deviceDeque->capacity() + m_hostDeque->capacity()) )
     {
       // This buffer will go to host then maybe to disk
       std::packaged_task< void() > task( std::bind( &LifoStorage< T >::hostToDisk, this, m_bufferToDiskCount++ ) );
@@ -635,11 +675,11 @@ private:
   {
     LIFO_MARK_FUNCTION;
     {
-      TwoMutexLock lock( m_hostDeque.m_popMutex, m_hostDeque.m_backMutex );
-      writeOnDisk( m_hostDeque.back().dataIfContiguous(), id );
-      m_hostDeque.pop_back();
+      TwoMutexLock lock( m_hostDeque->m_popMutex, m_hostDeque->m_backMutex );
+      writeOnDisk( m_hostDeque->back().dataIfContiguous(), id );
+      m_hostDeque->pop_back();
     }
-    m_hostDeque.m_notFullCond.notify_all();
+    m_hostDeque->m_notFullCond.notify_all();
   }
 
   /**
@@ -652,9 +692,6 @@ private:
   void hostToDevice( int id, int id_pop )
   {
     LIFO_MARK_FUNCTION;
-    m_hostDeque.getStream().wait_for( const_cast< camp::resources::Event * >( &m_popFromDeviceEvents[ id_pop ] ) );
-    m_deviceDeque.emplaceBackFromFront( m_hostDeque );
-
     // enqueue diskToHost on worker #2 if needed
     if( m_bufferToDiskCount > 0 )
     {
@@ -666,6 +703,8 @@ private:
       }
       m_task_queue_not_empty_cond[1].notify_all();
     }
+
+    m_deviceDeque->emplaceBackFromFront( *m_hostDeque );
   }
 #endif
 
@@ -678,12 +717,12 @@ private:
   {
     LIFO_MARK_FUNCTION;
     {
-      TwoMutexLock lock( m_hostDeque.m_emplaceMutex, m_hostDeque.m_backMutex );
-      m_hostDeque.m_notFullCond.wait( lock, [ this ]  { return !( m_hostDeque.full() ); } );
-      readOnDisk( const_cast< T * >(m_hostDeque.next_back().dataIfContiguous()), id );
-      m_hostDeque.inc_back();
+      TwoMutexLock lock( m_hostDeque->m_emplaceMutex, m_hostDeque->m_backMutex );
+      m_hostDeque->m_notFullCond.wait( lock, [ this ]  { return !( m_hostDeque->full() ); } );
+      readOnDisk( const_cast< T * >(m_hostDeque->next_back().dataIfContiguous()), id );
+      m_hostDeque->inc_back();
     }
-    m_hostDeque.m_notEmptyCond.notify_all();
+    m_hostDeque->m_notEmptyCond.notify_all();
   }
   /**
    * Checks if a directory exists.
@@ -758,6 +797,7 @@ private:
       std::packaged_task< void() > task( std::move( m_task_queue[queueId].front() ) );
       m_task_queue[queueId].pop_front();
       lock.unlock();
+      m_task_queue_not_empty_cond[queueId].notify_all();
       {
         LIFO_MARK_SCOPE( runningTask );
         task();
