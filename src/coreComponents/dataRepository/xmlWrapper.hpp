@@ -125,6 +125,12 @@ stringToInputVariable( T & target, string const & value )
                   InputError );
 }
 
+/**
+ * @brief Parse a string and fill a variable with the value(s) in the string.
+ * @param[out] target the object to read values into
+ * @param[in]  value  the string that contains the data to be parsed into target
+ * @return void.
+ */
 template<> void stringToInputVariable<string>(string & target, string const & value );
 
 /**
