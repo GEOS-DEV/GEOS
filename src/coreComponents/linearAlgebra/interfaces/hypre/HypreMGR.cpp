@@ -54,11 +54,13 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   // Hypre's parameters to use MGR as a preconditioner
   GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, 0.0 ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.logLevel ) ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( precond.ptr, ((LvArray::integerConversion< HYPRE_Int >( params.logLevel ) == 2) ||
+                                                               (LvArray::integerConversion< HYPRE_Int >( params.logLevel ) > 3)) ? 1 : 0 ) );;
 
   array1d< int > const numComponentsPerField = dofManager->numComponentsPerField();
   dofManager->getLocalDofComponentLabels( mgrData.pointMarkers );
 
+#if 0
   if( params.logLevel >= 1 )
   {
     GEOSX_LOG_RANK_0( numComponentsPerField );
@@ -67,6 +69,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   {
     GEOSX_LOG_RANK_VAR( mgrData.pointMarkers );
   }
+#endif
 
   switch( params.mgr.strategy )
   {
