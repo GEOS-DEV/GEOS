@@ -136,6 +136,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       if( mapEntry.second == 0 ) // target set is not empty
       {
         areAllSetsEmpty = false;
+        break;
       }
     }
 

@@ -222,8 +222,7 @@ public:
     this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
     {
       int const isInitialCondition = fs.initialCondition();
-      if( ( isInitialCondition && fieldName=="") ||
-          ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && fieldName == fs.getFieldName() ) )
+      if( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && fieldName == fs.getFieldName() )
       {
         fs.template apply< OBJECT_TYPE, BCTYPE, LAMBDA >( mesh, std::forward< LAMBDA >( lambda ) );
       }
