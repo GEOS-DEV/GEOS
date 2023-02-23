@@ -8,7 +8,6 @@ beginTime              real64       -1e+99   Time at which the boundary conditio
 component              integer      -1       Component of field (if tensor) to apply boundary condition to.                 
 direction              R1Tensor     {0,0,0}  Direction to apply boundary condition to.                                      
 endTime                real64       1e+99    Time at which the boundary condition will stop being applied.                  
-fieldName              string                Name of field that boundary condition is applied to.                           
 functionName           string                Name of function that specifies variation of the boundary condition.           
 initialCondition       integer      0        Boundary condition is applied as an initial condition.                         
 logLevel               integer      0        Log level                                                                      

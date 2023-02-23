@@ -179,6 +179,12 @@ public:
    */
   void applyInitialConditions( MeshLevel & mesh ) const;
 
+  /**
+   * @brief function to validate the application of boundary conditions
+   * @param mesh the MeshLevel object
+   */
+  void validateBoundaryConditions( MeshLevel & mesh ) const;
+
 
   /**
    * @brief This function is the main driver for the field applications
@@ -215,8 +221,8 @@ public:
     // loop over all FieldSpecificationBase objects
     this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
     {
-      int const isInitialCondition = fs.initialCondition();
-      if( ( isInitialCondition && fieldName=="") ||
+      integer const isInitialCondition = fs.initialCondition();
+      if( ( isInitialCondition && fieldName=="") || // this only use case for this line is in the unit test for field specification
           ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && fieldName == fs.getFieldName() ) )
       {
         fs.template apply< OBJECT_TYPE, BCTYPE, LAMBDA >( mesh, std::forward< LAMBDA >( lambda ) );
