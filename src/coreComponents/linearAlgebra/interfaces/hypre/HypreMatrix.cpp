@@ -191,6 +191,7 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
 
   // This is necessary so that localMatrix.getColumns() and localMatrix.getEntries() return device pointers
   localMatrix.move( hypre::memorySpace, false );
+  // GEOSX_ERROR_IF( localMatrix.template NaNCheck< hypre::execPolicy >(), GEOSX_FMT( "NaN dected in matrix assembly on rank {}! ", MpiWrapper::commRank( MPI_COMM_GEOSX ) ) );
   GEOSX_LOG_RANK_0("Inserting values into HypreMatrix.");
   open();
   GEOSX_HYPRE_CHECK_DEVICE_ERRORS( "before HYPRE_IJMatrixAddToValues2" );

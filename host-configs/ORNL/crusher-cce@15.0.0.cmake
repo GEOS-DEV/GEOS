@@ -6,6 +6,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/crusher-base.cmake)
 set( CONDUIT_DIR "${GEOSX_TPL_DIR}/conduit" CACHE PATH "" )
 set( HDF5_DIR "${GEOSX_TPL_DIR}/hdf5" CACHE PATH "" )
 
+# set(ENABLE_SILO FALSE CACHE BOOL "" )
 set(ENABLE_SILO TRUE CACHE BOOL "" )
 set(SILO_DIR "${GEOSX_TPL_DIR}/silo" CACHE PATH "" )
 
@@ -44,13 +45,16 @@ set( FMT_DIR "${GEOSX_TPL_DIR}/fmt" CACHE PATH "" )
 set( SUITESPARSE_DIR "${GEOSX_TPL_DIR}/suite-sparse" CACHE PATH "" )
 
 # HYPRE options
-set( ENABLE_HYPRE_MIXINT TRUE CACHE STRING "" )
+# set( ENABLE_HYPRE_DEVICE "CPU" CACHE STRING "" )
 set( ENABLE_HYPRE_DEVICE "HIP" CACHE STRING "" )
-if( ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
-  set( HYPRE_DIR "/gpfs/alpine/geo127/world-shared/hypre/hypre_v2.27.0-210-ga33f9c499_cce-15.0.0_rocm-5.4.0_mixint_umpire-2022.3.0_caliper_rel/" CACHE PATH "" )
-else()
-  set( HYPRE_DIR "${GEOSX_TPL_DIR}/hypre" CACHE PATH "" )
-endif()
 
+# set( ENABLE_HYPRE_MIXINT FALSE CACHE STRING "" )
+set( ENABLE_HYPRE_MIXINT TRUE CACHE STRING "" )
+
+# set( HYPRE_DIR "/gpfs/alpine/geo127/world-shared/hypre/hypre_v2.27.0-18-ga592bbd12_cce-15.0.0_rel" CACHE PATH "" ) # CPU SERIAL (WORKS)
+# set( HYPRE_DIR "/gpfs/alpine/geo127/world-shared/hypre/hypre_v2.27.0-200-ge907ce401_cce-15.0.0_mixint_rel" CACHE PATH "" ) # cpu serial mixint (working depending on solver config)
+
+# set( HYPRE_DIR "/gpfs/alpine/geo127/world-shared/hypre/hypre_v2.27.0-201-g6ad0909ec_cce-15.0.0_rocm-5.4.0_mixint_umpire-2022.3.0_caliper_rel" CACHE PATH "" ) # rocm, no unified memory, int64/int32 (working dependeing on solver config)
+set( HYPRE_DIR "/gpfs/alpine/geo127/world-shared/hypre/hypre_v2.27.0-210-ga33f9c499_cce-15.0.0_rocm-5.4.0_mixint_umpire-2022.3.0_caliper_rel/" CACHE PATH "" )
 set( ENABLE_CALIPER ON CACHE BOOL "" FORCE )
 set( CALIPER_DIR "${GEOSX_TPL_DIR}/caliper" CACHE PATH "" )
