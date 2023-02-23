@@ -32,7 +32,7 @@ class FixedSizeDeque
   /// 1D array slice
   using ArraySlice1D = LvArray::ArraySlice< T const, 1, 0, INDEX_TYPE >;
   /// 2D array type. See LvArray:Array for details.
-  using Array2D = LvArray::Array< T, 2, camp::make_idx_seq_t< 2 >, IndexType, LvArray::ChaiBuffer >;
+  using Array2D = LvArray::Array< T, 2, camp::make_idx_seq_t< 2 >, INDEX_TYPE, LvArray::ChaiBuffer >;
 public:
   /**
    * Create a fixed size double ended queue.

@@ -158,8 +158,8 @@ private:
 };
 
 /// Associate mutexes with the fixedSizeDeque
-template< typename T >
-class FixedSizeDequeAndMutexes : public FixedSizeDeque< T, int >
+template< typename T, typename INDEX_TYPE >
+class FixedSizeDequeAndMutexes : public FixedSizeDeque< T, INDEX_TYPE >
 {
 public:
   /// Mutex to protect access to the front
@@ -182,7 +182,7 @@ public:
    * @param valuesPerEntry Number of values in each array of the deque.
    * @param space          Space used to store que queue.
    */
-  FixedSizeDequeAndMutexes( int maxEntries, int valuesPerEntry, LvArray::MemorySpace space ): FixedSizeDeque< T, int >( maxEntries, valuesPerEntry, space,
+  FixedSizeDequeAndMutexes( int maxEntries, int valuesPerEntry, LvArray::MemorySpace space ): FixedSizeDeque< T, INDEX_TYPE >( maxEntries, valuesPerEntry, space,
 #ifdef GEOSX_USE_CUDA
                                                                                                                         camp::resources::Resource{ camp::resources::Cuda{} }
 #else
@@ -208,7 +208,7 @@ public:
       }
       {
         LIFO_MARK_SCOPE( copy );
-        e = FixedSizeDeque< T, int >::emplace_front( array.toSliceConst() );
+        e = FixedSizeDeque< T, INDEX_TYPE >::emplace_front( array.toSliceConst() );
       }
     }
     m_notEmptyCond.notify_all();
@@ -250,7 +250,7 @@ public:
    *
    * @param q2 The queue to copy data from.
    */
-  void emplaceFrontFromBack( FixedSizeDequeAndMutexes< T > & q2 )
+  void emplaceFrontFromBack( FixedSizeDequeAndMutexes< T, INDEX_TYPE > & q2 )
   {
     LIFO_MARK_FUNCTION;
     {
@@ -279,7 +279,7 @@ public:
    *
    * @param q2 The queue to copy data from.
    */
-  void emplaceBackFromFront( FixedSizeDequeAndMutexes< T > & q2 )
+  void emplaceBackFromFront( FixedSizeDequeAndMutexes< T, INDEX_TYPE > & q2 )
   {
     LIFO_MARK_FUNCTION;
     {
@@ -300,7 +300,7 @@ public:
 /**
  * This class is used to store in a LIFO way buffers, first on device, then on host, then on disk.
  */
-template< typename T >
+template< typename T, typename INDEX_TYPE >
 class LifoStorage
 {
 
@@ -314,10 +314,10 @@ private:
   std::string m_name;
 #ifdef GEOSX_USE_CUDA
   /// ueue of data stored on device
-  std::unique_ptr< FixedSizeDequeAndMutexes< T > > m_deviceDeque;
+  std::unique_ptr< FixedSizeDequeAndMutexes< T, INDEX_TYPE > > m_deviceDeque;
 #endif
   /// ueue of data stored on host memory
-  std::unique_ptr< FixedSizeDequeAndMutexes< T > > m_hostDeque;
+  std::unique_ptr< FixedSizeDequeAndMutexes< T, INDEX_TYPE > > m_hostDeque;
 
   /// counter of buffer stored in LIFO
   int m_bufferCount;
@@ -388,8 +388,10 @@ public:
       double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
       LIFO_LOG_RANK(" LIFO : available memory on device " << freeGB << " GB");
       numberOfBuffersToStoreOnDevice = std::min( (int)( 0.8 * free / m_bufferSize ), m_maxNumberOfBuffers );
+      // Ensure that we won't be overflowed
+      numberOfBuffersToStoreOnDevice = std::min( (size_t) std::numeric_limits< INDEX_TYPE >::max(), ( size_t )(numberOfBuffersToStoreOnDevice)*elemCnt )/elemCnt;
     }
-    m_deviceDeque = std::unique_ptr< FixedSizeDequeAndMutexes< T > >( new FixedSizeDequeAndMutexes< T >( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda ) );
+    m_deviceDeque = std::unique_ptr< FixedSizeDequeAndMutexes< T, INDEX_TYPE > >( new FixedSizeDequeAndMutexes< T, INDEX_TYPE >( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda ) );
     m_pushToDeviceEvents = std::vector< camp::resources::Event >( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 );
     m_pushToHostFutures = std::vector< std::future< void > >( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers );
     m_popFromDeviceEvents = std::vector< camp::resources::Event >( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 );
@@ -400,13 +402,15 @@ public:
     {
       size_t free = sysconf(_SC_AVPHYS_PAGES) * sysconf(_SC_PAGESIZE);
       numberOfBuffersToStoreOnHost = std::max( 1 , std::min( (int)( 0.8 * free / m_bufferSize ), m_maxNumberOfBuffers - numberOfBuffersToStoreOnDevice ) );
+      // Ensure that we won't be overflowed
+      numberOfBuffersToStoreOnHost = std::min( (size_t) std::numeric_limits< INDEX_TYPE >::max(), ( size_t )(numberOfBuffersToStoreOnHost)*elemCnt )/elemCnt;
       double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
       LIFO_LOG_RANK(" LIFO : available memory on host " << freeGB << " GB");
     }
     LIFO_LOG_RANK(" LIFO : allocating "<< numberOfBuffersToStoreOnHost <<" buffers on host");
-    m_hostDeque = std::unique_ptr< FixedSizeDequeAndMutexes< T > >( new FixedSizeDequeAndMutexes< T >( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host ) );
-    m_worker[0] = std::thread( &LifoStorage< T >::wait_and_consume_tasks, this, 0 );
-    m_worker[1] = std::thread( &LifoStorage< T >::wait_and_consume_tasks, this, 1 );
+    m_hostDeque = std::unique_ptr< FixedSizeDequeAndMutexes< T, INDEX_TYPE > >( new FixedSizeDequeAndMutexes< T, INDEX_TYPE >( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host ) );
+    m_worker[0] = std::thread( &LifoStorage< T, INDEX_TYPE >::wait_and_consume_tasks, this, 0 );
+    m_worker[1] = std::thread( &LifoStorage< T, INDEX_TYPE >::wait_and_consume_tasks, this, 1 );
   }
 
   /**
@@ -451,9 +455,9 @@ public:
 
       if( m_maxNumberOfBuffers - id > (int)m_deviceDeque->capacity() )
       {
-        LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
+        LIFO_MARK_SCOPE( geosx::lifoStorage::pushAddTasks );
         // This buffer will go to host memory, and maybe on disk
-        std::packaged_task< void() > task( std::bind( &LifoStorage< T >::deviceToHost, this, m_bufferToHostCount++ ) );
+        std::packaged_task< void() > task( std::bind( &LifoStorage< T, INDEX_TYPE >::deviceToHost, this, m_bufferToHostCount++ ) );
         {
           std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
           m_task_queue[0].emplace_back( std::move( task ) );
@@ -469,9 +473,9 @@ public:
 
         if( m_maxNumberOfBuffers - pushId > (int)m_hostDeque->capacity() )
         {
-          LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
+          LIFO_MARK_SCOPE( geosx::lifoStorage::pushAddTasks );
           // This buffer will go to host memory, and maybe on disk
-          std::packaged_task< void() > t2( std::bind( &LifoStorage< T >::hostToDisk, this, m_bufferToDiskCount++ ) );
+          std::packaged_task< void() > t2( std::bind( &LifoStorage< T, INDEX_TYPE >::hostToDisk, this, m_bufferToDiskCount++ ) );
           {
             std::unique_lock< std::mutex > l2( m_task_queue_mutex[1] );
             m_task_queue[1].emplace_back( std::move( t2 ) );
@@ -558,9 +562,9 @@ public:
 
       if( m_bufferToHostCount > 0 )
       {
-        LIFO_MARK_SCOPE( geosx::LifoStorage< T >::popAddTasks );
+        LIFO_MARK_SCOPE( geosx::LifoStorage::popAddTasks );
         // Trigger pull one buffer from host, and maybe from disk
-        std::packaged_task< void() > task( std::bind( &LifoStorage< T >::hostToDevice, this, --m_bufferToHostCount, id ) );
+        std::packaged_task< void() > task( std::bind( &LifoStorage< T, INDEX_TYPE >::hostToDevice, this, --m_bufferToHostCount, id ) );
         {
           std::unique_lock< std::mutex > lock( m_task_queue_mutex[0] );
           m_task_queue[0].emplace_back( std::move( task ) );
@@ -578,9 +582,9 @@ public:
 
         if( m_bufferToDiskCount > 0 )
         {
-          LIFO_MARK_SCOPE( geosx::LifoStorage< T >::popAddTasks );
+          LIFO_MARK_SCOPE( geosx::LifoStorage::popAddTasks );
           // Trigger pull one buffer from host, and maybe from disk
-          std::packaged_task< void() > task2( std::bind( &LifoStorage< T >::diskToHost, this, --m_bufferToDiskCount ) );
+          std::packaged_task< void() > task2( std::bind( &LifoStorage< T, INDEX_TYPE >::diskToHost, this, --m_bufferToDiskCount ) );
           {
             std::unique_lock< std::mutex > lock2( m_task_queue_mutex[1] );
             m_task_queue[1].emplace_back( std::move( task2 ) );
@@ -656,7 +660,7 @@ private:
     if( m_maxNumberOfBuffers - id > (int)(m_deviceDeque->capacity() + m_hostDeque->capacity()) )
     {
       // This buffer will go to host then maybe to disk
-      std::packaged_task< void() > task( std::bind( &LifoStorage< T >::hostToDisk, this, m_bufferToDiskCount++ ) );
+      std::packaged_task< void() > task( std::bind( &LifoStorage< T, INDEX_TYPE >::hostToDisk, this, m_bufferToDiskCount++ ) );
       {
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
         m_task_queue[1].emplace_back( std::move( task ) );
@@ -696,7 +700,7 @@ private:
     if( m_bufferToDiskCount > 0 )
     {
       // This buffer will go to host then to disk
-      std::packaged_task< void() > task( std::bind( &LifoStorage< T >::diskToHost, this, --m_bufferToDiskCount ) );
+      std::packaged_task< void() > task( std::bind( &LifoStorage< T, INDEX_TYPE >::diskToHost, this, --m_bufferToDiskCount ) );
       {
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[1] );
         m_task_queue[1].emplace_back( std::move( task ) );

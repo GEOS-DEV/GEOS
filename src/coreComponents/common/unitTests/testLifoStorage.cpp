@@ -72,7 +72,7 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
 
   array1d< float > array( elemCnt );
   array.move( RAJAHelper< POLICY >::space );
-  LifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
+  LifoStorage< float, localIndex > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {
@@ -99,7 +99,7 @@ void testLifoStorageBig( int elemCnt, int numberOfElementsOnDevice, int numberOf
 
   array1d< float > array( elemCnt );
   array.move( RAJAHelper< POLICY >::space );
-  LifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
+  LifoStorage< float, localIndex > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
   for( int j = 0; j < 10; j++ )
   {
@@ -125,7 +125,7 @@ void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int number
 {
   array1d< float > array( elemCnt );
   array.move( RAJAHelper< POLICY >::space );
-  LifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
+  LifoStorage< float, localIndex > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {
@@ -173,22 +173,22 @@ TEST( LifoStorageTest, LifoStorageBufferOnCUDA )
 
 TEST( LifoStorageTest, LifoStorageBufferOnCUDAlarge )
 {
-  testLifoStorageBig< parallelDevicePolicy< > >( 10, 2, 3, 10000 );
+  testLifoStorageBig< parallelDevicePolicy< > >( 1000000, 2, 3, 10000 );
 }
 
 TEST( LifoStorageTest, LifoStorageBufferOnCUDAlargeAutoSizeHost )
 {
-  testLifoStorageBig< parallelDevicePolicy< > >( 10, 2, -1, 10000 );
+  testLifoStorageBig< parallelDevicePolicy< > >( 1000000, 2, -1, 10000 );
 }
 
 TEST( LifoStorageTest, LifoStorageBufferOnCUDAlargeAutoSizeDevice )
 {
-  testLifoStorageBig< parallelDevicePolicy< > >( 10, -1, 3, 10000 );
+  testLifoStorageBig< parallelDevicePolicy< > >( 1000000, -1, 3, 10000 );
 }
 
 TEST( LifoStorageTest, LifoStorageBufferOnCUDAlargeAutoSizeBoth )
 {
-  testLifoStorageBig< parallelDevicePolicy< > >( 10, -1, -1, 10000 );
+  testLifoStorageBig< parallelDevicePolicy< > >( 1000000, -1, -1, 10000 );
 }
 
 

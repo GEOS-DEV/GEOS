@@ -260,7 +260,7 @@ protected:
   localIndex m_lifoOnHost;
 
   /// LIFO to store p_dt2
-  std::unique_ptr< LifoStorage< real32 > > m_lifo;
+  std::unique_ptr< LifoStorage< real32, localIndex > > m_lifo;
 
   struct parametersPML
   {
