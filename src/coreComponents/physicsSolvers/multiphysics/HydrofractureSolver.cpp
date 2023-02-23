@@ -180,11 +180,18 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
     int locallyFractured = 0;
     int globallyFractured = 0;
 
-    setupSystem( domain,
-                 m_dofManager,
-                 m_localMatrix,
-                 m_rhs,
-                 m_solution );
+    Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
+    // Only build the sparsity pattern if the mesh has changed
+    if( meshModificationTimestamp > getSystemSetupTimestamp() )
+    {
+      setupSystem( domain,
+                   m_dofManager,
+                   m_localMatrix,
+                   m_rhs,
+                   m_solution );
+      setSystemSetupTimestamp( meshModificationTimestamp );
+    }
 
     // currently the only method is implicit time integration
     dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
