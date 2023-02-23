@@ -116,7 +116,7 @@
 
     <Box
     name="znegFace"
-    xMin="{ -2250.01,     -2250.01,   -0.01 }"
+    xMin="{ -2250.01,  -2250.01,   -0.01 }"
     xMax="{ 2250.01,   2250.01,   0.01 }"/>
   </Geometry>
 
@@ -291,7 +291,8 @@
       setNames="{ all }"
       objectPath="ElementRegions/Fault"
       fieldName="pressure"
-      scale="8.499070100061999256e6"/>  
+      functionName="pressure_fault"
+      scale="1.e6"/>  
   </FieldSpecifications>
 
   <Functions>
@@ -333,6 +334,13 @@
       inputVarNames="{ elementCenter }"
       coordinateFiles="{ tables/x_pres2d.geos, tables/y_pres2d.geos, tables/zlin.geos }"
       voxelFile="tables/pressure_vertical_25.geos"
+      interpolation="linear"/>
+
+    <TableFunction
+      name="pressure_fault"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ tables/x_pres2d.geos, tables/y_pres2d.geos, tables/zlin.geos }"
+      voxelFile="tables/pressure_vertical_fault_25.geos"
       interpolation="linear"/>
 
   </Functions>
