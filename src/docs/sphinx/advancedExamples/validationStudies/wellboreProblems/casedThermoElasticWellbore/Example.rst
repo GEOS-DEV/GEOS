@@ -144,7 +144,7 @@ The initial reservoir temperature (that is also the far-field boundary temperatu
   :start-after: <!-- SPHINX_TemperatureBC -->
   :end-before: <!-- SPHINX_TemperatureBCEnd -->
 
-It is important to remark that the initial stress of each layers must be set with accordance to the initial temperature: :math:`\sigma_{0} = 3K\alpha T_{0}` where :math:`\sigma_{0}` is the initial principal stress, :math:`T_{0}` is the initial temperature, :math:`K` is the drained bulk modulus and :math:`alpha` is the drained linear thermal expansion coefficient of the materials.
+It is important to remark that the initial stress of each layers must be set with accordance to the initial temperature: :math:`\sigma_{0} = 3K\alpha T_{0}` where :math:`\sigma_{0}` is the initial principal stress, :math:`T_{0}` is the initial temperature, :math:`K` is the drained bulk modulus and :math:`\alpha` is the drained linear thermal expansion coefficient of the materials.
 
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/CasedThermoElasticWellbore_base.xml
   :language: xml
