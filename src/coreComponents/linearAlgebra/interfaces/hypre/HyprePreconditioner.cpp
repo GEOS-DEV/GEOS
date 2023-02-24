@@ -171,7 +171,7 @@ void createAMG( LinearSolverParameters const & params,
     HYPRE_BoomerAMGSetAggNumLevels( precond.ptr, params.amg.aggresiveNumLevels ); // agg_num_levels = 1
   }
 
-  HYPRE_BoomerAMGSetAggInterpType( precond.ptr, 5 ); // agg_interp_type = 5,7
+  HYPRE_BoomerAMGSetAggInterpType( precond.ptr, 4 ); // agg_interp_type = 5,7
 
   // Set coarsest level solver
   HYPRE_Int const coarseType = hypre::getAMGCoarseType( params.amg.coarseType );
