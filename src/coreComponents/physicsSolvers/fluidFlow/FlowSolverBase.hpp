@@ -20,7 +20,6 @@
 #define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/SolverBaseKernels.hpp"
 
 namespace geosx
 {
@@ -69,7 +68,6 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // misc inputs
-    static constexpr char const * normTypeString() { return "normType"; }
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
@@ -132,9 +130,6 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
-
-  /// Norm used to check the nonlinear loop convergence
-  solverBaseKernels::NormType m_normType;
 
   /// the number of Degrees of Freedom per cell
   integer m_numDofPerCell;

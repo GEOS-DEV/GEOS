@@ -199,11 +199,13 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOSX_U
 {
   GEOSX_MARK_FUNCTION;
 
-  integer const numNorm = m_isThermal ? 2 : 1;
+  integer constexpr numNorm = 2; // mass balance and energy balance
   array1d< real64 > localResidualNorm;
   array1d< real64 > localResidualNormalizer;
   localResidualNorm.resize( numNorm );
   localResidualNormalizer.resize( numNorm );
+
+  solverBaseKernels::NormType const normType = getNonlinearSolverParameters().normType();
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
@@ -216,8 +218,8 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOSX_U
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
-      real64 subRegionResidualNorm[2]{};
-      real64 subRegionResidualNormalizer[2]{};
+      real64 subRegionResidualNorm[numNorm]{};
+      real64 subRegionResidualNormalizer[numNorm]{};
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
@@ -234,7 +236,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOSX_U
 
         thermalCompositionalMultiphaseBaseKernels::
           ResidualNormKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_normType,
+          createAndLaunch< parallelDevicePolicy<> >( normType,
                                                      numFluidComponents(),
                                                      numFluidPhases(),
                                                      rankOffset,
@@ -253,7 +255,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOSX_U
         real64 subRegionFlowResidualNormalizer[1]{};
         isothermalCompositionalMultiphaseBaseKernels::
           ResidualNormKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_normType,
+          createAndLaunch< parallelDevicePolicy<> >( normType,
                                                      numFluidComponents(),
                                                      rankOffset,
                                                      dofKey,
@@ -269,14 +271,15 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOSX_U
 
       // step 2: first reduction across meshBodies/regions/subRegions
 
-      if( m_normType == solverBaseKernels::NormType::Linf )
+      if( normType == solverBaseKernels::NormType::Linf )
       {
-        solverBaseKernels::LinfResidualNormHelper::updateLocalNorm< 2 >( subRegionResidualNorm, localResidualNorm );
+        solverBaseKernels::LinfResidualNormHelper::
+          updateLocalNorm< numNorm >( subRegionResidualNorm, localResidualNorm );
       }
       else
       {
         solverBaseKernels::L2ResidualNormHelper::
-          updateLocalNorm< 2 >( subRegionResidualNorm, subRegionResidualNormalizer, localResidualNorm, localResidualNormalizer );
+          updateLocalNorm< numNorm >( subRegionResidualNorm, subRegionResidualNormalizer, localResidualNorm, localResidualNormalizer );
       }
     } );
   } );
@@ -288,13 +291,16 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOSX_U
   {
 
     array1d< real64 > globalResidualNorm;
-    if( m_normType == solverBaseKernels::NormType::Linf )
+    globalResidualNorm.resize( numNorm );
+    if( normType == solverBaseKernels::NormType::Linf )
     {
-      solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm, globalResidualNorm );
+      solverBaseKernels::LinfResidualNormHelper::
+        computeGlobalNorm( localResidualNorm, globalResidualNorm );
     }
     else
     {
-      solverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, globalResidualNorm );
+      solverBaseKernels::L2ResidualNormHelper::
+        computeGlobalNorm( localResidualNorm, localResidualNormalizer, globalResidualNorm );
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
@@ -307,7 +313,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOSX_U
   else
   {
 
-    if( m_normType == solverBaseKernels::NormType::Linf )
+    if( normType == solverBaseKernels::NormType::Linf )
     {
       solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm[0], residualNorm );
     }

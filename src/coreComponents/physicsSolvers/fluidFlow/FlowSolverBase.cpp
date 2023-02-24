@@ -30,6 +30,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/NonlinearSolverParameters.hpp"
 
 namespace geosx
 {
@@ -77,15 +78,13 @@ FlowSolverBase::FlowSolverBase( string const & name,
   m_numDofPerCell( 0 ),
   m_isThermal( 0 )
 {
-  this->registerWrapper( viewKeyStruct::normTypeString(), &m_normType ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( solverBaseKernels::NormType::Linf ).
-    setDescription( "Norm used by the solver to check nonlinear convergence. Valid options:\n* " + EnumStrings< solverBaseKernels::NormType >::concat( "\n* " ) );
-
   this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
+
+  // allow the user to select a norm
+  getNonlinearSolverParameters().getWrapper< solverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
 }
 
 void FlowSolverBase::registerDataOnMesh( Group & meshBodies )

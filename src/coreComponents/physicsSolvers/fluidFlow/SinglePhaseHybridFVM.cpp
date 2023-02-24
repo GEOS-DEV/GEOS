@@ -444,6 +444,8 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOSX_UNUSED_
   real64 localResidualNorm = 0.0;
   real64 localResidualNormalizer = 0.0;
 
+  solverBaseKernels::NormType const normType = getNonlinearSolverParameters().normType();
+
   globalIndex const rankOffset = dofManager.rankOffset();
   string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   string const faceDofKey = dofManager.getKey( fields::flow::facePressure::key() );
@@ -478,7 +480,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOSX_UNUSED_
 
       singlePhaseBaseKernels::
         ResidualNormKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >( m_normType,
+        createAndLaunch< parallelDevicePolicy<> >( normType,
                                                    rankOffset,
                                                    elemDofKey,
                                                    localRhs,
@@ -490,7 +492,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOSX_UNUSED_
 
       // step 1.2: reduction across meshBodies/regions/subRegions
 
-      if( m_normType == solverBaseKernels::NormType::Linf )
+      if( normType == solverBaseKernels::NormType::Linf )
       {
         if( subRegionResidualNorm[0] > localResidualNorm )
         {
@@ -516,7 +518,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOSX_UNUSED_
 
     singlePhaseHybridFVMKernels::
       ResidualNormKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( m_normType,
+      createAndLaunch< parallelDevicePolicy<> >( normType,
                                                  rankOffset,
                                                  faceDofKey,
                                                  localRhs,
@@ -531,7 +533,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOSX_UNUSED_
 
     // step 2.2: reduction across meshBodies/regions/subRegions
 
-    if( m_normType == solverBaseKernels::NormType::Linf )
+    if( normType == solverBaseKernels::NormType::Linf )
     {
       if( faceResidualNorm[0] > localResidualNorm )
       {
@@ -548,7 +550,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOSX_UNUSED_
   // step 3: second reduction across MPI ranks
 
   real64 residualNorm = 0.0;
-  if( m_normType == solverBaseKernels::NormType::Linf )
+  if( normType == solverBaseKernels::NormType::Linf )
   {
     solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm, residualNorm );
   }

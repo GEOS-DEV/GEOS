@@ -17,6 +17,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
+#include "physicsSolvers/SolverBaseKernels.hpp"
 
 namespace geosx
 {
@@ -70,6 +71,7 @@ public:
     static constexpr auto lineSearchCutFactorString     = "lineSearchCutFactor";
     static constexpr auto lineSearchInterpolationTypeString   = "lineSearchInterpolationType";
 
+    static constexpr char const * normTypeString() { return "normType"; }
     static constexpr auto newtonTolString               = "newtonTol";
     static constexpr auto newtonMaxIterString           = "newtonMaxIter";
     static constexpr auto newtonMinIterString           = "newtonMinIter";
@@ -136,6 +138,15 @@ public:
   }
 
   /**
+   * @brief Getter for the norm type used to check convergence in the flow/well solvers
+   * @return the norm type
+   */
+  solverBaseKernels::NormType normType() const
+  {
+    return m_normType;
+  }
+
+  /**
    * @brief Indicates the handling of line search in a Newton loop.
    */
   enum class LineSearchAction : integer
@@ -175,6 +186,9 @@ public:
 
   /// The reduction factor for each line search cut.
   real64 m_lineSearchCutFactor;
+
+  /// Norm used to check the nonlinear loop convergence
+  solverBaseKernels::NormType m_normType;
 
   /// The tolerance for the nonlinear convergence check.
   real64 m_newtonTol;

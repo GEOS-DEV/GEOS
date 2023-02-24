@@ -581,6 +581,8 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
   real64 localResidualNorm = 0.0;
   real64 localResidualNormalizer = 0.0;
 
+  solverBaseKernels::NormType const normType = getNonlinearSolverParameters().normType();
+
   // local residual
   globalIndex const rankOffset = dofManager.rankOffset();
   string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
@@ -615,7 +617,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 
       isothermalCompositionalMultiphaseBaseKernels::
         ResidualNormKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >( m_normType,
+        createAndLaunch< parallelDevicePolicy<> >( normType,
                                                    numFluidComponents(),
                                                    rankOffset,
                                                    elemDofKey,
@@ -628,7 +630,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 
       // step 1.2: reduction across meshBodies/regions/subRegions
 
-      if( m_normType == solverBaseKernels::NormType::Linf )
+      if( normType == solverBaseKernels::NormType::Linf )
       {
         if( subRegionResidualNorm[0] > localResidualNorm )
         {
@@ -651,7 +653,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 
     compositionalMultiphaseHybridFVMKernels::
       ResidualNormKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( m_normType,
+      createAndLaunch< parallelDevicePolicy<> >( normType,
                                                  rankOffset,
                                                  faceDofKey,
                                                  localRhs,
@@ -665,7 +667,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 
     // step 2.2: reduction across meshBodies/regions/subRegions
 
-    if( m_normType == solverBaseKernels::NormType::Linf )
+    if( normType == solverBaseKernels::NormType::Linf )
     {
       if( faceResidualNorm[0] > localResidualNorm )
       {
@@ -682,7 +684,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
   // step 3: second reduction across MPI ranks
 
   real64 residualNorm = 0.0;
-  if( m_normType == solverBaseKernels::NormType::Linf )
+  if( normType == solverBaseKernels::NormType::Linf )
   {
     solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm, residualNorm );
   }

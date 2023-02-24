@@ -54,6 +54,11 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setDescription( "Line search cut factor. For instance, a value of 0.5 will result in the effective application of"
                     " the last solution by a factor of (0.5, 0.25, 0.125, ...)" );
 
+  registerWrapper( viewKeysStruct::normTypeString(), &m_normType ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( solverBaseKernels::NormType::Linf ).
+    setDescription( "Norm used by the flow solver to check nonlinear convergence. "
+                    "Valid options:\n* " + EnumStrings< solverBaseKernels::NormType >::concat( "\n* " ) );
 
   registerWrapper( viewKeysStruct::newtonTolString, &m_newtonTol ).
     setApplyDefaultValue( 1.0e-6 ).

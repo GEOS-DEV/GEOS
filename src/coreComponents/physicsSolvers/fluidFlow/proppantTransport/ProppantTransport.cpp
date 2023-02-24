@@ -829,6 +829,8 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( tim
   real64 localResidualNorm = 0.0;
   real64 localResidualNormalizer = 0.0;
 
+  solverBaseKernels::NormType const normType = getNonlinearSolverParameters().normType();
+
   localIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( fields::proppant::proppantConcentration::key() );
 
@@ -847,7 +849,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( tim
 
       proppantTransportKernels::
         ResidualNormKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >( m_normType,
+        createAndLaunch< parallelDevicePolicy<> >( normType,
                                                    m_numDofPerCell,
                                                    rankOffset,
                                                    dofKey,
@@ -858,7 +860,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( tim
 
       // step 2: first reduction across meshBodies/regions/subRegions
 
-      if( m_normType == solverBaseKernels::NormType::Linf )
+      if( normType == solverBaseKernels::NormType::Linf )
       {
         if( subRegionResidualNorm[0] > localResidualNorm )
         {
@@ -876,7 +878,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( tim
   // step 3: second reduction across MPI ranks
 
   real64 residualNorm = 0.0;
-  if( m_normType == solverBaseKernels::NormType::Linf )
+  if( normType == solverBaseKernels::NormType::Linf )
   {
     solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm, residualNorm );
   }
