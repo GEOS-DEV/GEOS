@@ -638,7 +638,9 @@ public:
   }
 
   /**
-   * @brief Returns true if the LIFO does not contain a buffer.
+   * Check if the LIFO is empty
+   *
+   * @return true if the LIFO does not contain a buffer.
    */
   bool isEmpty()
   {
