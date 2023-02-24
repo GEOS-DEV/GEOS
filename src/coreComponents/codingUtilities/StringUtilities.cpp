@@ -30,7 +30,7 @@ string toLower( string const & input )
   string output;
   output.resize( input.size() );
   auto const toLowerCase = []( unsigned char c )
-  { return std::tolower( c ); };
+      { return std::tolower( c ); };
   std::transform( input.cbegin(), input.cend(), output.begin(), toLowerCase );
   return output;
 }
