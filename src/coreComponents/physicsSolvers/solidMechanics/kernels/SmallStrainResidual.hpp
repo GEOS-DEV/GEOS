@@ -182,7 +182,8 @@ public:
   GEOSX_HOST_DEVICE
   void setup( localIndex const k,
               real64 (&xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
-              real64 (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const;
+              real64 (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
+              localIndex (&nodeIndices)[ numNodesPerElem ]  ) const;
 
   /**
    * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
@@ -210,7 +211,8 @@ public:
    */
   GEOSX_HOST_DEVICE
   real64 complete( localIndex const k,
-                   real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const;
+                   real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ],
+                   localIndex const (&nodeIndices)[ numNodesPerElem ]  ) const;
 
 
 

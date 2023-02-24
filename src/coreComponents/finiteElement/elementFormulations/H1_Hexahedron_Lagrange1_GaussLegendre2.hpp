@@ -415,7 +415,7 @@ private:
 /// @cond Doxygen_Suppress
 
 template< typename FUNC, typename ... PARAMS >
-GEOSX_HOST_DEVICE inline void
+GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
 H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
                                                      int const qb,
                                                      int const qc,
@@ -442,10 +442,13 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
   constexpr real64 dpsi[2] = { -0.5, 0.5 };
 
   // Loop over the linear basis indices in each direction.
+  #pragma unroll
   for( int a=0; a<2; ++a )
   {
+    #pragma unroll
     for( int b=0; b<2; ++b )
     {
+      #pragma unroll
       for( int c=0; c<2; ++c )
       {
 
@@ -568,7 +571,7 @@ real64 H1_Hexahedron_Lagrange1_GaussLegendre2::
 #endif
 
 GEOSX_HOST_DEVICE
-inline
+GEOSX_FORCE_INLINE
 void
 H1_Hexahedron_Lagrange1_GaussLegendre2::
   jacobianTransformation( int const qa,
@@ -676,8 +679,10 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
   {
 
     real64 gradN[3] = {0, 0, 0};
+    #pragma unroll
     for( int i = 0; i < 3; ++i )
     {
+      #pragma unroll
       for( int j = 0; j < 3; ++j )
       {
         gradN[i] = gradN[i] + dNdXi[ j ] * invJ[j][i];
@@ -713,8 +718,10 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const q,
   {
 
     real64 gradN[3] = {0, 0, 0};
+    #pragma unroll
     for( int i = 0; i < 3; ++i )
     {
+      #pragma unroll
       for( int j = 0; j < 3; ++j )
       {
         gradN[i] = gradN[i] + dNdXi[ j ] * invJ[j][i];

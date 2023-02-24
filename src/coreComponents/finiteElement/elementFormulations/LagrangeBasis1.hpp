@@ -309,7 +309,7 @@ public:
      * @param i2 The Cartesian index of the support point in the xi2 direction.
      */
     GEOSX_HOST_DEVICE
-    inline
+    GEOSX_FORCE_INLINE
     constexpr static void multiIndex( const int linearIndex,
                                       int & i0,
                                       int & i1,

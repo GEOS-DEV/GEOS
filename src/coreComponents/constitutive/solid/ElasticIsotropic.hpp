@@ -83,7 +83,9 @@ public:
   virtual void smallStrainNoStateUpdate_StressOnly( localIndex const k,
                                                     localIndex const q,
                                                     real64 const ( &totalStrain )[6],
-                                                    real64 ( &stress )[6] ) const override final;
+                                                    real64 ( &stress )[6],
+                                                    real64 bulkModulus,
+                                                    real64 shearModulus ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
@@ -130,12 +132,14 @@ public:
                                  real64 ( &elasticStrain )[6] ) const override final;
 
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   virtual real64 getBulkModulus( localIndex const k ) const override final
   {
     return m_bulkModulus[k];
   }
 
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   virtual real64 getShearModulus( localIndex const k ) const override final
   {
     return m_shearModulus[k];
@@ -218,16 +222,17 @@ void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
 
 
 GEOSX_HOST_DEVICE
-inline
-void ElasticIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
-                                                                   localIndex const q,
+GEOSX_FORCE_INLINE
+void ElasticIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const q,
                                                                    real64 const ( &totalStrain )[6],
-                                                                   real64 ( & stress )[6] ) const
+                                                                   real64 ( & stress )[6],
+                                                                   real64 const bulkModulus,
+                                                                   real64 const shearModulus ) const
 {
   GEOSX_UNUSED_VAR( q );
 
   real64 const twoG   = 2 * m_shearModulus[k];
-  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], m_shearModulus[k] );
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( bulkModulus, shearModulus );
   real64 const vol    = lambda * ( totalStrain[0] + totalStrain[1] + totalStrain[2] );
 
   stress[0] = vol + twoG * totalStrain[0];
@@ -248,7 +253,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         real64 ( & stress )[6],
                                                         real64 ( & stiffness )[6][6] ) const
 {
-  smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress );
+  smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress, m_bulkModulus[k], m_shearModulus[k] );
   getElasticStiffness( k, q, stiffness );
 }
 
@@ -261,9 +266,9 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         real64 ( & stress )[6],
                                                         DiscretizationOps & stiffness ) const
 {
-  smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress );
   stiffness.m_bulkModulus = m_bulkModulus[k];
   stiffness.m_shearModulus = m_shearModulus[k];
+  smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress, stiffness.m_bulkModulus, stiffness.m_shearModulus );
 }
 
 
@@ -274,7 +279,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                             real64 const ( &strainIncrement )[6],
                                                             real64 ( & stress )[6] ) const
 {
-  smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress  = incrementalStress
+  smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress, m_bulkModulus[k], m_shearModulus[k] ); // stress  = incrementalStress
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
   saveStress( k, q, stress );                                           // m_newStress = stress
 }

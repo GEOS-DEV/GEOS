@@ -20,7 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_SMALLSTRAINRESIDUAL_IMPL_HPP_
 
 #include "SmallStrainResidual.hpp"
-
+#include "/opt/rocm-5.4.3/include/hip/hip_runtime.h"
 
 namespace geosx
 {
@@ -163,17 +163,34 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
                                                                                real64 (&xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
-                                                                               real64 (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
+                                                                               real64 (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
+                                                                               localIndex (&nodeIndices)[ numNodesPerElem ],
+                                                                               real64 & bulkModulus,
+                                                                               real64 & shearModulus ) const
 {
+  bulkModulus = m_constitutiveUpdate.getBulkModulus[k];
+  shearModulus = m_constitutiveUpdate.getShearModulus[k];
+
   #pragma unroll
-  for( localIndex a=0; a< numNodesPerElem; ++a )
+  for( localIndex a = 0; a < numNodesPerElem; ++a )
+    nodeIndices[a] = m_elemsToNodes( k, a );
+
+  #pragma unroll
+  for( localIndex a = 0; a < numNodesPerElem; ++a )
   {
-    localIndex const nodeIndex = m_elemsToNodes( k, a );
     #pragma unroll
-    for( int i=0; i<numDofPerTrialSupportPoint; ++i )
+    for( int i = 0; i<numDofPerTrialSupportPoint; ++i )
     {
-      xLocal[ a ][ i ] = m_X( nodeIndex, i );
-      varLocal[ a ][ i ] = m_input( nodeIndex, i );
+      xLocal[ a ][ i ] = m_X( nodeIndices[ a ], i );
+    }
+  }
+  #pragma unroll
+  for( localIndex a = 0; a < numNodesPerElem; ++a )
+  {
+    #pragma unroll
+    for( int i = 0; i < numDofPerTrialSupportPoint; ++i )
+    {
+      varLocal[ a ][ i ] = m_input( nodeIndices[ a ], i );
     }
   }
 }
@@ -183,10 +200,11 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
-                                                                                               localIndex const qa,
+void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const qa,
                                                                                                localIndex const qb,
                                                                                                localIndex const qc,
+                                                                                               realIndex const bulkModulus,
+                                                                                               realIndex const shearModulus,
                                                                                                real64 const (&xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                                                                                                real64 const (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                                                                                                real64 (&fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
@@ -199,14 +217,13 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   FE_TYPE::symmetricGradient( dNdX, varLocal, strain );
 
   real64 stressLocal[ 6 ] = {0};
-  m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, qa+2*qb+4*qc, strain, stressLocal );
+  m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( qa+2*qb+4*qc, strain, stressLocal, bulkModulus, shearModulus );
   #pragma unroll
   for( localIndex c = 0; c < 6; ++c )
   {
     stressLocal[ c ] *= -detJ;
   }
   FE_TYPE::plusGradNajAij( dNdX, stressLocal, fLocal );
-
 
 }
 
@@ -215,15 +232,19 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
-                                                                                    real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const
+real64 SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ],
+                                                                                    localIndex const (&nodeIndices)[ numNodesPerElem ] ) const
 {
+  #pragma unroll
   for( localIndex a = 0; a < numNodesPerElem; ++a )
   {
-    localIndex const nodeIndex = m_elemsToNodes( k, a );
+    #pragma unroll
     for( int i = 0; i < numDofPerTestSupportPoint; ++i )
     {
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_res( nodeIndex, i ), fLocal[ a ][ i ] );
+      // RAJA::atomicAdd< parallelDeviceAtomic >( &m_res( nodeIndex, i ), fLocal[ a ][ i ] );
+#ifdef GEOSX_DEVICE_COMPILE
+      unsafeAtomicAdd( &m_res( nodeIndices[ a ], i ), fLocal[ a ][ i ] );
+#endif
     }
   }
   return 0;
@@ -279,15 +300,21 @@ kernelLaunch( localIndex const numElems,
       real64 fLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ] = {{0}};
       real64 varLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
       real64 xLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+      localIndex nodeIndices[ KERNEL_TYPE::numNodesPerElem ];
+      real64 bulkModulus;
+      real64 shearModulus;
 
-      kernelComponent.setup( k, xLocal, varLocal );
+      kernelComponent.setup( k, xLocal, varLocal, nodeIndices );
+      #pragma unroll
       for( integer qc=0; qc<2; ++qc )
+      #pragma unroll
       for( integer qb=0; qb<2; ++qb )
+      #pragma unroll
       for( integer qa=0; qa<2; ++qa )
       {
-        kernelComponent.quadraturePointKernel( k, qa, qb, qc, xLocal, varLocal, fLocal );
+        kernelComponent.quadraturePointKernel( qa, qb, qc, xLocal, varLocal, fLocal, bulkModulus, shearModulus );
       }
-      kernelComponent.complete( k, fLocal );
+      kernelComponent.complete( fLocal, nodeIndices );
 
     } );
 #else
