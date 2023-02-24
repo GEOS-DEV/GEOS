@@ -30,12 +30,12 @@
 
 #ifdef LIFO_DISABLE_CALIPER
 #define LIFO_MARK_FUNCTION
-#define LIFO_MARK_SCOPE(a)
-#define LIFO_LOG_RANK(a) std::cerr << a << std::endl;
+#define LIFO_MARK_SCOPE( a )
+#define LIFO_LOG_RANK( a ) std::cerr << a << std::endl;
 #else
 #define LIFO_MARK_FUNCTION GEOSX_MARK_FUNCTION
-#define LIFO_MARK_SCOPE(a) GEOSX_MARK_SCOPE(a)
-#define LIFO_LOG_RANK(a) GEOSX_LOG_RANK(a)
+#define LIFO_MARK_SCOPE( a ) GEOSX_MARK_SCOPE( a )
+#define LIFO_LOG_RANK( a ) GEOSX_LOG_RANK( a )
 #endif
 
 namespace geosx
@@ -184,11 +184,11 @@ public:
    */
   FixedSizeDequeAndMutexes( int maxEntries, int valuesPerEntry, LvArray::MemorySpace space ): FixedSizeDeque< T, INDEX_TYPE >( maxEntries, valuesPerEntry, space,
 #ifdef GEOSX_USE_CUDA
-                                                                                                                        camp::resources::Resource{ camp::resources::Cuda{} }
+                                                                                                                               camp::resources::Resource{ camp::resources::Cuda{} }
 #else
-                                                                                                                        camp::resources::Resource{ camp::resources::Host{} }
+                                                                                                                               camp::resources::Resource{ camp::resources::Host{} }
 #endif
-                                                                                                                        ) {}
+                                                                                                                               ) {}
 
   /**
    * Emplace on front from array with locks.
@@ -375,39 +375,40 @@ public:
 #endif
     m_continue( true )
   {
-    LIFO_LOG_RANK(" LIFO : maximum size "<< m_maxNumberOfBuffers << " buffers ");
+    LIFO_LOG_RANK( " LIFO : maximum size "<< m_maxNumberOfBuffers << " buffers " );
     double bufferSize = ( ( double ) m_bufferSize ) / ( 1024.0 * 1024.0 );
-    LIFO_LOG_RANK(" LIFO : buffer size "<< bufferSize << "MB");
+    LIFO_LOG_RANK( " LIFO : buffer size "<< bufferSize << "MB" );
 #ifndef GEOSX_USE_CUDA
     numberOfBuffersToStoreOnDevice = 0;
 #else
-    if ( numberOfBuffersToStoreOnDevice == -1 )
+    if( numberOfBuffersToStoreOnDevice == -1 )
     {
       size_t free, total;
       GEOSX_ERROR_IF( cudaSuccess != cudaMemGetInfo( &free, &total ), "Error getting CUDA device available memory" );
       double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
-      LIFO_LOG_RANK(" LIFO : available memory on device " << freeGB << " GB");
+      LIFO_LOG_RANK( " LIFO : available memory on device " << freeGB << " GB" );
       numberOfBuffersToStoreOnDevice = std::min( (int)( 0.8 * free / m_bufferSize ), m_maxNumberOfBuffers );
       // Ensure that we won't be overflowed
       numberOfBuffersToStoreOnDevice = std::min( (size_t) std::numeric_limits< INDEX_TYPE >::max(), ( size_t )(numberOfBuffersToStoreOnDevice)*elemCnt )/elemCnt;
     }
-    m_deviceDeque = std::unique_ptr< FixedSizeDequeAndMutexes< T, INDEX_TYPE > >( new FixedSizeDequeAndMutexes< T, INDEX_TYPE >( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda ) );
+    m_deviceDeque =
+      std::unique_ptr< FixedSizeDequeAndMutexes< T, INDEX_TYPE > >( new FixedSizeDequeAndMutexes< T, INDEX_TYPE >( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda ) );
     m_pushToDeviceEvents = std::vector< camp::resources::Event >( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 );
     m_pushToHostFutures = std::vector< std::future< void > >( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers );
     m_popFromDeviceEvents = std::vector< camp::resources::Event >( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 );
     m_popFromHostFutures = std::vector< std::future< void > >( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers );
-    LIFO_LOG_RANK(" LIFO : allocating "<< numberOfBuffersToStoreOnDevice <<" buffers on device");
+    LIFO_LOG_RANK( " LIFO : allocating "<< numberOfBuffersToStoreOnDevice <<" buffers on device" );
 #endif
-    if ( numberOfBuffersToStoreOnHost == -1 )
+    if( numberOfBuffersToStoreOnHost == -1 )
     {
-      size_t free = sysconf(_SC_AVPHYS_PAGES) * sysconf(_SC_PAGESIZE);
-      numberOfBuffersToStoreOnHost = std::max( 1 , std::min( (int)( 0.8 * free / m_bufferSize ), m_maxNumberOfBuffers - numberOfBuffersToStoreOnDevice ) );
+      size_t free = sysconf( _SC_AVPHYS_PAGES ) * sysconf( _SC_PAGESIZE );
+      numberOfBuffersToStoreOnHost = std::max( 1, std::min( (int)( 0.8 * free / m_bufferSize ), m_maxNumberOfBuffers - numberOfBuffersToStoreOnDevice ) );
       // Ensure that we won't be overflowed
       numberOfBuffersToStoreOnHost = std::min( (size_t) std::numeric_limits< INDEX_TYPE >::max(), ( size_t )(numberOfBuffersToStoreOnHost)*elemCnt )/elemCnt;
       double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
-      LIFO_LOG_RANK(" LIFO : available memory on host " << freeGB << " GB");
+      LIFO_LOG_RANK( " LIFO : available memory on host " << freeGB << " GB" );
     }
-    LIFO_LOG_RANK(" LIFO : allocating "<< numberOfBuffersToStoreOnHost <<" buffers on host");
+    LIFO_LOG_RANK( " LIFO : allocating "<< numberOfBuffersToStoreOnHost <<" buffers on host" );
     m_hostDeque = std::unique_ptr< FixedSizeDequeAndMutexes< T, INDEX_TYPE > >( new FixedSizeDequeAndMutexes< T, INDEX_TYPE >( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host ) );
     m_worker[0] = std::thread( &LifoStorage< T, INDEX_TYPE >::wait_and_consume_tasks, this, 0 );
     m_worker[1] = std::thread( &LifoStorage< T, INDEX_TYPE >::wait_and_consume_tasks, this, 1 );
@@ -537,17 +538,18 @@ public:
     LIFO_MARK_FUNCTION;
     //wait the last push to avoid race condition
     pushWait();
-    if ( m_hasPoppedBefore )
+    if( m_hasPoppedBefore )
     {
       // Ensure last pop is finished
       popWait();
     }
     else
     {
-      if ( m_maxNumberOfBuffers != m_bufferCount ) LIFO_LOG_RANK(" LIFO : warning number of entered buffered (" << m_bufferCount
-                                                                 << ") != max LIFO size (" << m_maxNumberOfBuffers << ") !" );
+      if( m_maxNumberOfBuffers != m_bufferCount )
+        LIFO_LOG_RANK( " LIFO : warning number of entered buffered (" << m_bufferCount
+                                                                      << ") != max LIFO size (" << m_maxNumberOfBuffers << ") !" );
       // Ensure that all push step are ended
-      for ( int queueId = 0; queueId < 2; queueId++ )
+      for( int queueId = 0; queueId < 2; queueId++ )
       {
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[queueId] );
         m_task_queue_not_empty_cond[queueId].wait( lock, [ this, &queueId ] { return m_task_queue[queueId].empty(); } );
@@ -613,7 +615,7 @@ public:
       if( m_deviceDeque->capacity() > 0 )
       {
         auto *cuda_event = m_popFromDeviceEvents[m_bufferCount].try_get< camp::resources::CudaEvent >();
-        if ( cuda_event ) cudaEventSynchronize( cuda_event->getCudaEvent_t() );
+        if( cuda_event ) cudaEventSynchronize( cuda_event->getCudaEvent_t() );
       }
       else
 #endif
