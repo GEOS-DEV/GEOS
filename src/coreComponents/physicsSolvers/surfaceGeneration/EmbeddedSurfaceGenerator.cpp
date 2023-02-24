@@ -487,16 +487,213 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
   //addToFractureStencil( domain );
 }
 
+void EmbeddedSurfaceGenerator::propagationStep3D( DomainPartition & domain,
+                                                  localIndex elemToCut )
+{
+  //pseudocode
+  //loop over elements in newFracElemList, add "horizontal" cut
+  //the fracIndex parameter should tell with fracture (surfaceElementRegion) we are adding to
+  //from that we should be able to get the z value to keep things connected
+  //loop over elem in newFracElemList
+  //get surfaceElementRegion of index fracIndexOfElem[i]
+  //get z value of this penny crack
+  //add a new cut in newFracElemList[i] at this z value
+  //update connectivity of this frac
+  GEOSX_MARK_FUNCTION;
+  localIndex er = 0; //should be the element region number
+  localIndex esr = 0; //should be the element subregion number
+  // Get geometric object manager
+  GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();
+   // Get meshLevel
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
+  // Get managers
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
+  NodeManager & nodeManager = meshLevel.getNodeManager();
+  EmbeddedSurfaceNodeManager & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
+  EdgeManager & edgeManager = meshLevel.getEdgeManager();
+  FaceManager & faceManager = meshLevel.getFaceManager();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
+  // Get EmbeddedSurfaceSubRegions
+  SurfaceElementRegion & embeddedSurfaceRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
+  EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion = embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+  localIndex localNumberOfSurfaceElems = embeddedSurfaceSubRegion.size();
+  NewObjectLists newObjects;
+  // Initialize variables
+  globalIndex nodeIndex;
+  integer isPositive, isNegative;
+  real64 distVec[ 3 ];
 
-real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+  // Get sub-region geometric properties
+  ElementRegionBase & elementRegion = elemManager.getRegion( er );
+  CellElementSubRegion & subRegion = elementRegion.getSubRegion< CellElementSubRegion >( esr );
+  arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();  
+  arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes = subRegion.nodeList();
+  FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
+  arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+  auto fracturedElements = subRegion.fracturedElementsList();
+  //save old embNodesPositions to find new embNodes later
+  localIndex embSurfNodesNumberOld = embSurfNodeManager.size();
+  //this part probably needs explicit dynamic allocation
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosOld = embSurfNodeManager.referencePosition();
+  bool added = false;
+  real64 fracCenterX = 0.0; //TODO: retrive this correctly
+  // if (elemToCut > 624){
+  //   fracCenterX = 2.0;
+  // }
+  R1Tensor fractureCenter = {elemCenter[elemToCut][0], elemCenter[elemToCut][1], elemCenter[elemToCut][2]};
+  if( ghostRank[elemToCut] < 0 && (fracturedElements.contains(elemToCut)==false) ) //TODO: this do not allow for multiple cuts of the same element - ok for now
+  {
+      added = embeddedSurfaceSubRegion.addNewPlanarEmbeddedSurface( elemToCut,
+                                                                    er,
+                                                                    esr,
+                                                                    nodeManager,
+                                                                    embSurfNodeManager,
+                                                                    edgeManager,
+                                                                    cellToEdges,
+                                                                    fractureCenter );
+
+      if( added )//this should always be true, but it is good to have this safety check
+      {
+        GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << elemToCut << " is fractured" );
+        // Add the information to the CellElementSubRegion
+        subRegion.addFracturedElement( elemToCut, localNumberOfSurfaceElems );
+        newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( localNumberOfSurfaceElems );
+        localNumberOfSurfaceElems++;
+      }    
+  }
+  //TODO: this should probably be inside an if(added) zone
+  finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
+  finiteElement::dispatchlowOrder3D( subRegionFE, [&] ( auto const finiteElement )
+  {
+    using FE_TYPE = decltype( finiteElement );
+
+    auto kernel = CIcomputationKernel< FE_TYPE >( finiteElement,
+                                                  nodeManager,
+                                                  subRegion,
+                                                  embeddedSurfaceSubRegion );
+
+    using KERNEL_TYPE = decltype( kernel );
+
+    KERNEL_TYPE::template launchCIComputationKernel< parallelDevicePolicy< 32 >, KERNEL_TYPE >( kernel );
+  } );
+
+  // add all new nodes to newObject list
+  for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
+  {
+    newObjects.newNodes.insert( ni );
+  }
+
+
+  // add all new nodes to newObject list
+  // also, get index of edges that were just cut
+  //array1d< globalIndex > newEdges;
+  //arrayView1d< globalIndex > & parentEdgeGlobalIndex = embSurfNodeManager.getParentEdgeGlobalIndex();
+  //localIndex embSurfNodeNumberUpdated = embSurfNodeManager.size();
+  //arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > embSurfNodesPosUpdated = embSurfNodeManager.referencePosition();
+
+  // Set the ghostRank form the parent cell
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
+    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+
+  embeddedSurfaceSubRegion.inheritGhostRank( cellElemGhostRank );
+
+  setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
+
+  embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
+                                                               domain.getNeighbors(),
+                                                               newObjects,
+                                                               m_mpiCommOrder,
+                                                               this->m_fractureRegionName );
+
+  addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
+
+  EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
+
+  // Populate EdgeManager for embedded surfaces.
+  EdgeManager & embSurfEdgeManager = meshLevel.getEmbSurfEdgeManager();
+
+  EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion.edgeList();
+
+  localIndex numOfPoints = embSurfNodeManager.size();
+
+  // Create the edges
+  embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
+  // Node to cell map
+  embSurfNodeManager.setElementMaps( elemManager );
+  // Node to edge map
+  embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
+  embSurfNodeManager.compressRelationMaps();
+  // Add the embedded elements to the fracture stencil.
+  //addToFractureStencil( domain );
+}
+
+
+real64 EmbeddedSurfaceGenerator::solverStep( real64 const & time_n,
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                             const int GEOSX_UNUSED_PARAM( cycleNumber ),
+                                             integer const cycleNumber,
                                              DomainPartition & domain )
 {
   real64 rval = 0;
   /*
    * This should be the method that generates new fracture elements based on the propagation criterion of choice.
    */
+
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
+  // Get managers
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
+  ElementRegionBase & elementRegion = elemManager.getRegion( 0 );
+  CellElementSubRegion & subRegion = elementRegion.getSubRegion< CellElementSubRegion >( 0 );
+  auto fracturedElements = subRegion.fracturedElementsList();
+  if(time_n >= 1.0)
+  {
+  //make a list of elems to test
+    //std::vector<localIndex> toCut = {250, 251, 252, 253, 539, 564, 589, 614, 639, 664, 689, 714, 739, 2275, 2276, 2277, 2278};
+    //std::set<localIndex> initialFront = {8,33,58,83,107,132,156,179,180,200,201,202,203};
+    std::set<localIndex> toCut;
+    if(cycleNumber%2==0)
+    {
+      for(auto item:fracturedElements){
+        if (item > 624){
+          toCut.insert(item+25);//y prop
+        }
+        else {
+          toCut.insert(item+1);//z prop
+          toCut.insert(item+25);//y prop
+        }
+      }
+    }
+    else
+    {
+      for(auto item:fracturedElements){
+        if (item > 624){
+          toCut.insert(item+1);//z prop
+          toCut.insert(item+25);//y prop
+        }
+        else {
+          toCut.insert(item+1);//z prop
+        }
+      }
+    } 
+    //time update
+    //for(size_t i=0; i<toCut.size(); i++)
+    //{
+    for(auto item:toCut ) 
+    { 
+      propagationStep3D( domain, item );
+
+      // if(toCut[i] < 300){
+      //   propagationStep3D( domain, toCut[i]-25*(time_n-1) );
+      // }
+      // else if(toCut[i] > 2000){
+      //   propagationStep3D( domain, toCut[i]+25*(time_n-1) );
+      // }
+      // else{
+      //   propagationStep3D( domain, toCut[i]+time_n-1 );
+      // }
+    }
+  }
+
   // Add the embedded elements to the fracture stencil.
   addToFractureStencil( domain );
 

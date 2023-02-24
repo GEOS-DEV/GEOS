@@ -73,6 +73,13 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
+  //this must be implement for this class since, when fractures propagate, setupSystem must be called before solve
+  //and the solverBase implementation of solverStep does not do that (it would be inneficient for most solvers)
+  virtual real64 solverStep( real64 const & time_n,
+                             real64 const & dt,
+                             const integer cycleNumber,
+                             DomainPartition & domain ) override;                           
+
   virtual real64
   calculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,

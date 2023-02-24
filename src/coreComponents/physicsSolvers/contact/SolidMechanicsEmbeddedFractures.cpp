@@ -549,6 +549,18 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
   } );
 }
 
+real64 SolidMechanicsEmbeddedFractures::solverStep( real64 const & time_n,
+                                                    real64 const & dt,
+                                                    const integer cycleNumber,
+                                                    DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+  setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution, true );
+  //setupSystem( domain, this->getDofManager(), this->getLocalMatrix(), this->getSystemRhs(), this->getSystemSolution(), true );
+  implicitStepSetup( time_n, dt, domain );
+  return SolverBase::solverStep( time_n, dt, cycleNumber, domain );
+}
+
 real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition const & domain,
                                                                DofManager const & dofManager,
                                                                arrayView1d< real64 const > const & localRhs )
@@ -582,7 +594,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition c
         arrayView1d< globalIndex const > const &
         dofNumber = subRegion.getReference< array1d< globalIndex > >( jumpDofKey );
         arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-
+        
         forAll< parallelDevicePolicy<> >( subRegion.size(),
                                           [localRhs, localSum, dofNumber, rankOffset, ghostRank] GEOSX_HOST_DEVICE ( localIndex const k )
         {
@@ -590,7 +602,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition c
           {
             localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
             for( localIndex i = 0; i < 3; ++i )
-            {
+            {  
               localSum += localRhs[localRow + i] * localRhs[localRow + i];
             }
           }

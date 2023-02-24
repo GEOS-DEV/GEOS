@@ -74,11 +74,21 @@ public:
   }
 
   /**
+   * @brief function to update embedded fracture geometry in the 3D planar case 
+   * @param[in] domain the problem's domain
+   * @param[in] elemToCut is the element that is to be cut
+   * @return no return, but all parameters are updated if propagation is succesful
+   *
+   */
+  void propagationStep3D( DomainPartition & domain,
+                          localIndex elemToCut );
+
+  /**
    * @brief function to update embedded fracture geometry - only works with a single fracture
+   * @param[in] domain the problem's domain
    * @param[in] currentTip is the current tip of the embedded fracture
    * @param[in] targetTip is the point where the crack is supposed to propagate
    * @param[in] tipElementIndex is the element right in front of the current tip
-   * @param[in] subRegion is the sub-region which contains the tipElement
    * @return no return, but all parameters are updated if propagation is succesful
    *
    */
@@ -135,6 +145,7 @@ private:
 
   // fracture region name
   string m_fractureRegionName;
+
   // Flag for consistent communication ordering
   int m_mpiCommOrder;
 };
