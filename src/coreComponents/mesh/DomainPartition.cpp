@@ -211,10 +211,12 @@ void DomainPartition::setupCommunications( bool use_nonblocking , bool setUpGhos
         }
         else if ( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
         {
-          for( NeighborCommunicator const & neighbor : m_neighbors )
+         for( NeighborCommunicator const & neighbor : m_neighbors )
           {   
             neighbor.addNeighborGroupToMesh( meshLevel );
           }   
+          NodeManager & nodeManager = meshLevel.getNodeManager();
+          CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, m_neighbors );
           CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
         }
 
