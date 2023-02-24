@@ -830,9 +830,9 @@ if ( strategy == 2 )
   localIndex const numLocalVertices = source.m_nodeManager->size();
   localIndex const numLocalEdges = source.m_edgeManager->size();
   localIndex const numLocalFaces = source.m_faceManager->size();
-  localIndex const numGlobalVertices = source.m_nodeManager->maxGlobalIndex() + 1;
-  localIndex const numGlobalEdges = source.m_edgeManager->maxGlobalIndex() + 1;
-  localIndex const numGlobalFaces = source.m_faceManager->maxGlobalIndex() + 1;
+  localIndex const maxVertexGlobalID = source.m_nodeManager->maxGlobalIndex() + 1;
+  localIndex const maxEdgeGlobalID = source.m_edgeManager->maxGlobalIndex() + 1;
+  localIndex const maxFaceGlobalID = source.m_faceManager->maxGlobalIndex() + 1;
   localIndex n1 = 0;
   // localIndex n2 = 0;
   source.m_elementManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
@@ -854,9 +854,9 @@ if ( strategy == 2 )
   GEOSX_LOG_RANK ("!!!! INFO !!!! numLocalEdgess " << numLocalEdges );
   GEOSX_LOG_RANK ("!!!! INFO !!!! numLocalFaces " << numLocalFaces );
   GEOSX_LOG_RANK ("!!!! INFO !!!! numLocalCells " << numLocalCells );
-  GEOSX_LOG_RANK ("!!!! INFO !!!! numGlobalVertices " << numGlobalVertices );
-  GEOSX_LOG_RANK ("!!!! INFO !!!! numGlobalEdgess " << numGlobalEdges );
-  GEOSX_LOG_RANK ("!!!! INFO !!!! numGlobalFaces " << numGlobalFaces );
+  GEOSX_LOG_RANK ("!!!! INFO !!!! maxVertexGlobalID " << maxVertexGlobalID );
+  GEOSX_LOG_RANK ("!!!! INFO !!!! maxEdgeGlobalIDs " << maxEdgeGlobalID );
+  GEOSX_LOG_RANK ("!!!! INFO !!!! maxFaceGlobalID " << maxFaceGlobalID );
   //GEOSX_LOG_RANK ("!!!! INFO !!!! numGlobalCells " << numGlobalCells );
 
 
@@ -885,6 +885,7 @@ if ( strategy == 2 )
   localIndex localNodeID = 0;
   for( localIndex iter_vertex=0; iter_vertex < numLocalVertices; iter_vertex++)
   {
+    //GEOSX_LOG_RANK ("!!!! INFO !!!! localToGlobal[" << localNodeID <<"] =  " << nodeLocalToGlobalSource[ iter_vertex ] );
     nodeLocalToGlobalNew[ localNodeID ] = nodeLocalToGlobalSource[ iter_vertex ];
     nodeIDs[ createNodeKey( iter_vertex ) ] = localNodeID;
     localNodeID++;
@@ -920,7 +921,7 @@ if ( strategy == 2 )
   arrayView2d< localIndex > edgeToNodeMapNew = cellBlockManager.getEdgeToNodes();
   m_edgeManager->nodeList().resize( numLocalEdges, numNodesPerEdge );
   // create / retrieve nodes on edges
-  localIndex offset = numGlobalVertices;
+  localIndex offset = maxVertexGlobalID;
   for( localIndex iter_edge = 0; iter_edge < numLocalEdges; iter_edge++ )
   {
     localIndex newEdgeNodes = 0;
@@ -994,7 +995,7 @@ if ( strategy == 2 )
 
 
   // create / retrieve nodes on faces
-  offset = numGlobalVertices + numGlobalEdges * numInternalNodesPerEdge;
+  offset = maxVertexGlobalID + maxEdgeGlobalID * numInternalNodesPerEdge;
   for( localIndex iter_face = 0; iter_face < numLocalFaces; iter_face++ )
   {
     localIndex newFaceNodes = 0;
@@ -1062,7 +1063,7 @@ if ( strategy == 2 )
   real64 X[ 3 ] = { { } };
   array1d< real64 > glCoords = gaussLobattoPoints( order );
   localIndex elemMeshVertices[ numVerticesPerCell ] = { };
-  offset = numGlobalVertices + numGlobalEdges * numInternalNodesPerEdge + numGlobalFaces * numInternalNodesPerFace;
+  offset = maxVertexGlobalID + maxEdgeGlobalID * numInternalNodesPerEdge + maxFaceGlobalID * numInternalNodesPerFace;
   std::array< localIndex, 6 > const nullKey = std::array< localIndex, 6 >{ -1, -1 ,-1, -1, -1, -1 };
   source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
   {
@@ -1172,7 +1173,7 @@ if ( strategy == 2 )
 
        //GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
        //// GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalSource = "<< nodeLocalToGlobalSource );
-       GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalNew = "<< nodeLocalToGlobalNew );
+       // GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalNew = "<< nodeLocalToGlobalNew );
        ////GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapSource = "<< edgeToNodeMapSource);
        //GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapNew = "<< edgeToNodeMapNew);
        ////GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapSource = "<< faceToNodeMapSource);
