@@ -92,7 +92,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerField< temperature >( getName() );
       subRegion.registerField< temperature_n >( getName() );
-
+      subRegion.registerField< initialTemperature >( getName() );
       subRegion.registerField< bcTemperature >( getName() ); // needed for the application of boundary conditions
 
       subRegion.registerField< mobility >( getName() );
@@ -408,8 +408,11 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
                                                                   ElementSubRegionBase & subRegion )
     {
       arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 > const presInit   = subRegion.getField< fields::flow::initialPressure >();
-      presInit.setValues< parallelDevicePolicy<> >( pres );
+      arrayView1d< real64 > const initPres = subRegion.getField< fields::flow::initialPressure >();
+      arrayView1d< real64 const > const & temp = subRegion.template getField< fields::flow::temperature >();
+      arrayView1d< real64 > const initTemp = subRegion.template getField< fields::flow::initialTemperature >();
+      initPres.setValues< parallelDevicePolicy<> >( pres );
+      initTemp.setValues< parallelDevicePolicy<> >( temp );
     } );
   } );
 }
@@ -604,6 +607,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
       arrayView1d< real64 const > const & initPres = subRegion.template getField< fields::flow::initialPressure >();
       arrayView1d< real64 > const & deltaPres = subRegion.template getField< fields::flow::deltaPressure >();
       arrayView1d< real64 > const & pres_n = subRegion.template getField< fields::flow::pressure_n >();
+
       pres_n.setValues< parallelDevicePolicy<> >( pres );
       singlePhaseBaseKernels::StatisticsKernel::
         saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
@@ -989,14 +993,15 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & )
   {
-    fsManager.apply< ElementSubRegionBase >( time_n + dt,
-                                             mesh,
-                                             FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                                             [&]( FieldSpecificationBase const & fs,
-                                                  string const & setName,
-                                                  SortedArrayView< localIndex const > const & targetSet,
-                                                  ElementSubRegionBase & subRegion,
-                                                  string const & )
+    fsManager.apply< ElementSubRegionBase,
+                     SourceFluxBoundaryCondition >( time_n + dt,
+                                                    mesh,
+                                                    SourceFluxBoundaryCondition::catalogName(),
+                                                    [&]( SourceFluxBoundaryCondition const & fs,
+                                                         string const & setName,
+                                                         SortedArrayView< localIndex const > const & targetSet,
+                                                         ElementSubRegionBase & subRegion,
+                                                         string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
