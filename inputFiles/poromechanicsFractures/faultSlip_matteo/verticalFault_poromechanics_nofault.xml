@@ -1,0 +1,180 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers gravityVector="{0.0, 0.0, 0.0}">
+
+    <SinglePhasePoromechanics 
+      name="poroSolver" 
+      solidSolverName="mechanicsSolver"
+      flowSolverName="singlePhaseFlowSolver"
+      logLevel="1"
+      targetRegions="{ Reservoir, Overburden, Underburden}" >
+    </SinglePhasePoromechanics>
+
+    <SolidMechanicsLagrangianSSLE 
+      name="mechanicsSolver" 
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Reservoir, Overburden, Underburden }" >
+    </SolidMechanicsLagrangianSSLE>
+
+    <SinglePhaseFVM 
+      name="singlePhaseFlowSolver"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Reservoir, Overburden, Underburden}" > 
+      <NonlinearSolverParameters
+        newtonTol="1.0e-2"
+        newtonMaxIter="8"
+        allowNonConverged="1"/>
+      <LinearSolverParameters
+        directParallel="0"/> 
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+    name="mesh1"
+    elementTypes="{ C3D8 }"
+    xCoords="{ -2250, 0, 2250 }"
+    yCoords="{ -2250, -150, -75, 75, 150, 2250 }"
+    zCoords="{ 0, 500 }"
+    nx="{ 60, 60 }"
+    ny="{ 56, 2, 4, 2, 56 }"
+    nz="{ 1 }"
+    cellBlockNames="{ cb1, cb2, cb3, cb4, cb5, cb6, cb7, cb8, cb9, cb10 }"/>
+  </Mesh> 
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Reservoir"
+      cellBlocks="{ cb2, cb3, cb8, cb9 }"
+      materialList="{ water, porousRock }"/>
+    <CellElementRegion
+      name="Overburden"
+      cellBlocks="{  cb4, cb5, cb10 }"
+      materialList="{ water, porousRock }"/> 
+    <CellElementRegion
+      name="Underburden"
+      cellBlocks="{ cb1, cb6, cb7 }"
+      materialList="{ water, porousRock }"/>       
+  </ElementRegions> 
+
+  <Geometry>
+    <Box
+    name="zposFace"
+    xMin="{ -2250.01,  -2250.01,     499.99 }"
+    xMax="{ 2250.01,   2250.01,   500.01 }"/>
+
+    <Box
+    name="znegFace"
+    xMin="{ -2250.01,  -2250.01,   -0.01 }"
+    xMax="{ 2250.01,   2250.01,   0.01 }"/>
+  </Geometry>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <Constitutive>
+    <!--porousRock-->
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2650.0"
+      defaultYoungModulus="14.95e9"
+      defaultPoissonRatio="0.15"/>
+
+    <CompressibleSinglePhaseFluid 
+      name="water"
+      defaultDensity="1020"
+      defaultViscosity="0.001"
+      referencePressure="35e6"
+      referenceDensity="1020"
+      compressibility="1.e-20"
+      referenceViscosity="0.001"
+      viscosibility="0.0"/>
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="7.1190476190476195e10"
+      defaultReferencePorosity="0.15"/>
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{0.9869233e-12, 0.9869233e-12, 0.9869233e-21}"/>
+  </Constitutive>
+
+  <FieldSpecifications> 
+    <FieldSpecification
+      name="xconstraint"
+      component="0"
+      setNames="{ xneg, xpos }"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      component="1"
+      setNames="{ yneg, ypos }"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{zposFace, znegFace}"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/{Underburden Overburden}"
+      fieldName="pressure"
+      scale="1e6"/>  
+
+    <FieldSpecification
+      name="reservoirPressure"
+      initialCondition="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="pressure"
+      scale="0.5e6"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK 
+      name="vtkOutput"
+      parallelThreads="1"
+      plotFileRoot="verticalFault_nofault"/>
+  </Outputs>
+
+  <Events maxTime="1000.0">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1000.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1000"
+      target="/Solvers/poroSolver"/>	     
+  </Events>
+
+</Problem>

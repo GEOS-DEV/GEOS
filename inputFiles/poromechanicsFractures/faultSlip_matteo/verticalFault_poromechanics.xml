@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers gravityVector="{0.0, -9.81, 0.0}">
+  <Solvers gravityVector="{0.0, 0.0, 0.0}">
     <SinglePhasePoromechanicsConformingFractures
       name="poroFractureSolver"
       targetRegions="{ Reservoir, Overburden, Underburden, Fault}" 
@@ -104,10 +104,6 @@
     name="fault"
     xMin="{ -0.01,  -150.01,   -0.01 }"
     xMax="{ 0.01,    150.01,   500.01 }"/>
-    <Box
-    name="faultReservoir"
-    xMin="{ -0.01,  -150.01,   -0.01 }"
-    xMax="{ 0.01,    150.01,   500.01 }"/>
 
     <Box
     name="zposFace"
@@ -183,7 +179,7 @@
     <Coulomb
       name="fractureContact"
       cohesion="0.0"
-      frictionCoefficient="0.5"
+      frictionCoefficient="0.01"
       apertureTableName="apertureTable"/>
 
     <NullModel
@@ -215,58 +211,22 @@
       objectPath="ElementRegions/Fault"
       fieldName="fracturePorosity_porosity"
       scale="1.00"/>
-    	     
-    <FieldSpecification
-      name="initialPressure"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions"
-      fieldName="pressure"
-      scale="1e6"
-      functionName="pressure"/>
 
     <FieldSpecification
-      name="xconstraint0"
+      name="xconstraint"
       component="0"
-      setNames="{ xneg }"
+      setNames="{ xneg, xpos }"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
-      scale="1.0"
-      functionName="xm"/>
+      scale="0.0"/>
 
     <FieldSpecification
-      name="xconstraint1"
-      component="0"
-      setNames="{ xpos }"
-      objectPath="nodeManager"
-      fieldName="totalDisplacement"
-      scale="1.0"
-      functionName="xp"/>
-
-    <FieldSpecification
-      name="yconstraint0"
+      name="yconstraint"
       component="1"
-      setNames="{ yneg }"
+      setNames="{ yneg, ypos }"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
-      scale="1.0"
-      functionName="ym"/>
-
-    <!--FieldSpecification
-      name="yconstraint1"
-      component="1"
-      setNames="{ ypos }"
-      objectPath="nodeManager"
-      fieldName="totalDisplacement"
-      scale="1.0"
-      functionName="yp"/-->
-
-    <Traction
-      name="yconstraint1"
-      objectPath="faceManager"
-      tractionType="normal"
-      scale="-29497443.75"      
-      setNames="{ ypos }"/> 
+      scale="0.0"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -275,23 +235,30 @@
       component="2"
       scale="0.0"
       setNames="{zposFace, znegFace}"/>
-
+    
     <FieldSpecification
-      name="production"
+      name="burdenPressure"
       initialCondition="0"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/{Underburden Overburden}"
       fieldName="pressure"
-      functionName="pressure"
-      scale="1.e6"/>
+      scale="1e6"/>
 
     <FieldSpecification
-      name="productionFault"
+      name="reservoirPressure"
+      initialCondition="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/{Reservoir}"
+      fieldName="pressure"
+      scale="0.5e6"/>  
+
+    <!-- <FieldSpecification
+      name="faultPressure"
       initialCondition="0"
       setNames="{ all }"
       objectPath="ElementRegions/Fault"
       fieldName="pressure"
-      scale="8.499070100061999256e6"/>  
+      scale="0.5e6"/>   -->
   </FieldSpecifications>
 
   <Functions>
@@ -299,42 +266,6 @@
       name="apertureTable"
       coordinates="{ -1.0e-3, 0.0 }"
       values="{ 1.0e-3, 1.0e-3 }"/>
-
-    <TableFunction
-      name="xm"
-      inputVarNames="{ ReferencePosition }"
-      coordinateFiles="{ tables/xm_x.geos, tables/x_ylin.geos, tables/zlin.geos }"
-      voxelFile="tables/xm.geos"
-      interpolation="linear"/>
-
-    <TableFunction
-      name="xp"
-      inputVarNames="{ ReferencePosition }"
-      coordinateFiles="{ tables/xp_x.geos, tables/x_ylin.geos, tables/zlin.geos }"
-      voxelFile="tables/xp.geos"
-      interpolation="linear"/>
-
-    <TableFunction
-      name="ym"
-      inputVarNames="{ ReferencePosition }"
-      coordinateFiles="{ tables/xlin.geos, tables/ym_y.geos, tables/zlin.geos }"
-      voxelFile="tables/ym.geos"
-      interpolation="linear"/>
-
-    <TableFunction
-      name="yp"
-      inputVarNames="{ ReferencePosition }"
-      coordinateFiles="{ tables/xlin.geos, tables/yp_y.geos, tables/zlin.geos }"
-      voxelFile="tables/yp.geos"
-      interpolation="linear"/>
-
-    <TableFunction
-      name="pressure"
-      inputVarNames="{ elementCenter }"
-      coordinateFiles="{ tables/x_pres2d.geos, tables/y_pres2d.geos, tables/zlin.geos }"
-      voxelFile="tables/pressure_vertical_25.geos"
-      interpolation="linear"/>
-
   </Functions>
 
   <Outputs>
@@ -342,9 +273,6 @@
       name="vtkOutput"
       parallelThreads="1"
       plotFileRoot="verticalFault"/>
-
-    <Restart
-      name="restartOutput"/>  
   </Outputs>
 
   <Events maxTime="100.0">

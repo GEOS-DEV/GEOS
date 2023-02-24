@@ -83,10 +83,6 @@
     xMin="{ -0.01,  -150.01,   -0.01 }"
     xMax="{ 0.01,    150.01,   500.01 }"/>
     <Box
-    name="faultReservoir"
-    xMin="{ -0.01,  -150.01,   -0.01 }"
-    xMax="{ 0.01,    150.01,   500.01 }"/>
-    <Box
     name="bottomPoint"
     xMin="{ -0.01,  -0.01,   -0.01 }"
     xMax="{ 0.01,    0.01,   500.01 }"/>
@@ -178,7 +174,7 @@
       fieldName="totalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{zposFace, znegFace}"/>
+      setNames="{znegFace, zposFace}"/>
 
     <FieldSpecification 
       name="initialStressXX_reservoir"
@@ -199,23 +195,14 @@
       scale="-0.5e6"/>
 
     <FieldSpecification 
-      name="initialStressXX_burdens"
+      name="initialStressZZ_reservoir"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/{Overburden Underburden}"
-      fieldName="burdenRock_stress"
-      component="0"
-      scale="-0.0e6"/>
-      
-    <FieldSpecification 
-      name="initialStressYY_burdens"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/{Overburden Underburden}"
-      fieldName="burdenRock_stress"
-      component="1"
-      scale="-0.0e6"/>  
-      
+      objectPath="ElementRegions/{Reservoir}"
+      fieldName="reservoirRock_stress"
+      component="2"
+      scale="-0.5e6"/>  
+
   </FieldSpecifications>
 
   <Functions>
@@ -229,10 +216,7 @@
     <VTK 
       name="vtkOutput"
       parallelThreads="1"
-      plotFileRoot="verticalFault"/>
-
-    <Restart
-      name="restartOutput"/>  
+      plotFileRoot="verticalFault_mechanicsOnly"/>
   </Outputs>
 
   <Events maxTime="1000.0">
@@ -244,11 +228,16 @@
       name="outputs"
       cycleFrequency="1"
       target="/Outputs/vtkOutput"/>
+<!-- 
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1000"
+      target="/Solvers/mechanicsSolver"/> -->
 
     <PeriodicEvent
       name="solverApplications"
       forceDt="1000"
-      target="/Solvers/fractureMechSolver"/>
+      target="/Solvers/fractureMechSolver"/>  
   </Events>
 
 </Problem>
