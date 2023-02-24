@@ -97,6 +97,12 @@ public:
                                string const & childName ) override;
 
   /**
+   * @brief Accessor for the singleton Catalog object
+   * @return a static reference to the Catalog object
+   */
+  static CatalogInterface::CatalogType & getCatalog();
+
+  /**
    * @brief Expand any catalogs in the data structure.
    */
   virtual void expandObjectCatalogs() override;

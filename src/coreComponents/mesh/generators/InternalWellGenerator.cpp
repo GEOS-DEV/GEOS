@@ -635,5 +635,11 @@ void InternalWellGenerator::debugWellGeometry() const
 
 }
 
-  REGISTER_CATALOG_ENTRY( InternalWellGenerator, InternalWellGenerator, string const &, Group * const )
+InternalWellGenerator::CatalogInterface::CatalogType & InternalWellGenerator::getCatalog()
+{
+  static InternalWellGenerator::CatalogInterface::CatalogType catalog;
+  return catalog;
+}
+
+REGISTER_CATALOG_ENTRY( InternalWellGenerator, InternalWellGenerator, string const &, Group * const )
 }
