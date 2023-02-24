@@ -194,7 +194,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     {
       string_array const strs = stringutilities::tokenizeBySpaces( str );
 
-      if( strs.size()>0 ) 
+      if( strs.size()>0 )
       {
         if( strs[0] == "DensityFun" )
         {
@@ -274,17 +274,17 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     {
       string_array const strs = stringutilities::tokenizeBySpaces( str );
 
-      if ( strs.size()>0 )
+      if( strs.size()>0 )
       {
         if( strs[0] == "FlashModel" )
         {
           if( strs[1] == FLASH::catalogName() )
           {
             m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
-                                                strs,
-                                                m_phaseNames,
-                                                m_componentNames,
-                                                m_componentMolarWeight );
+                                                 strs,
+                                                 m_phaseNames,
+                                                 m_componentNames,
+                                                 m_componentMolarWeight );
           }
         }
         else

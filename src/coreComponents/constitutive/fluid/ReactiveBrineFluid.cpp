@@ -142,7 +142,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
     {
       string_array const strs = stringutilities::tokenizeBySpaces( str );
 
-      if( strs.size()>0 ) 
+      if( strs.size()>0 )
       {
         if( strs[0] == "DensityFun" )
         {

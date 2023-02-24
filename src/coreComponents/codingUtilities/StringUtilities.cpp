@@ -30,7 +30,7 @@ string toLower( string const & input )
   string output;
   output.resize( input.size() );
   auto const toLowerCase = []( unsigned char c )
-  { return std::tolower( c ); };
+      { return std::tolower( c ); };
   std::transform( input.cbegin(), input.cend(), output.begin(), toLowerCase );
   return output;
 }
@@ -72,19 +72,22 @@ RETURN_TYPE tokenizeBySpaces( string const & str )
   if( str.empty() )
   {
     return {};
-  } else {
+  }
+  else
+  {
     const size_t strEnd=str.size();
     RETURN_TYPE tokens;
     size_t pos=0;
 
-    while (pos<strEnd) {
+    while( pos<strEnd )
+    {
       //search for a token begining
-      while ( pos<strEnd && ( std::isspace( str[pos] ) ) )
+      while( pos<strEnd && ( std::isspace( str[pos] ) ) )
       {
         ++pos;
       }
 
-      if (pos<strEnd)
+      if( pos<strEnd )
       {
         size_t lastPos=pos;
 
@@ -92,12 +95,13 @@ RETURN_TYPE tokenizeBySpaces( string const & str )
         do
         {
           ++pos;
-        } while ( pos<strEnd && !std::isspace( str[pos] ) );
+        }
+        while ( pos<strEnd && !std::isspace( str[pos] ) );
 
         tokens.emplace_back( str.substr( lastPos, pos - lastPos ) );
       }
     }
-    
+
     return tokens;
   }
 }
