@@ -19,7 +19,7 @@ This example uses the thermal option of the ``SinglePhasePoromechanics`` solver 
 
    Sketch of a cased thermoelastic wellbore 
 
-Solution to this axisymetric problem can be obtained in the cylindrical coordinate system by an implicit 1D finite difference method `(Jane and Lee 1999) <https://www.sciencedirect.com/science/article/abs/pii/S0093641399000828>`__. Results of such analysis will be considered as reference resutls to validate GEOSX results.
+Solution to this axisymmetric problem can be obtained in the cylindrical coordinate system by using an implicit 1D finite difference method `(Jane and Lee 1999) <https://www.sciencedirect.com/science/article/abs/pii/S0093641399000828>`__. Results of such analysis will be considered as reference solutions to validate GEOSX results.
 
 
 **Input file**
@@ -47,7 +47,7 @@ The corresponding integrated test is
 Geometry and Mesh
 -----------------------------------------------------------
 
-The internal wellbore mesh generator ``InternalWellbore`` is employed to create the mesh of this wellbore problem. The radii of the casing cylinder, the cement sheath cylinder and the far-field boundary of the surrounding rock formation are defined by a vector ``radius``. In the tangent direction, ``theta`` angle is specified from 0 to 90 degree for to simulate the problem on  a quarter of the wellbore geometry. The problem is plane strain and therefore we only consider radial thermal diffusion on a single layer in the z-axis. The trajectory of the well is defined by ``trajectory``, which is vertical in this case. The ``autoSpaceRadialElems`` parameters allow for optimally increasing the element size from the wellbore to the far-field zone. In this example, the auto spacing option is only applied to the rock formation. The ``useCartesianOuterBoundary`` with a value 3 specified for the rock layer transforms the far-field boundary to a circular shape. The ``cellBlockNames`` and ``elementTypes`` define the regions and related element types associated to casing, cement sheath, and rock. 
+The internal wellbore mesh generator ``InternalWellbore`` is employed to create the mesh of this wellbore problem. The radii of the casing cylinder, the cement sheath cylinder and the far-field boundary of the surrounding rock formation are defined by a vector ``radius``. In the tangent direction, ``theta`` angle is specified from 0 to 90 degree to simulate the problem on a quarter of the wellbore geometry. The problem is under plane strain condition and therefore we only consider radial thermal diffusion on a single horizontal layer. The trajectory of the well is defined by ``trajectory``, which is vertical in this case. The ``autoSpaceRadialElems`` parameters allow for optimally increasing the element size from the wellbore to the far-field zone. In this example, the auto spacing option is only applied to the rock formation. The ``useCartesianOuterBoundary`` with a value 3 specified for the rock layer transforms the far-field boundary to a circular shape. The ``cellBlockNames`` and ``elementTypes`` define the regions and related element types associated to casing, cement sheath, and rock. 
  
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/CasedThermoElasticWellbore_benchmark.xml
   :language: xml
@@ -96,7 +96,7 @@ and
   :start-after: <!-- SPHINX_HeatCapacityProperties -->
   :end-before: <!-- SPHINX_HeatCapacityPropertiesEnd -->
 
-A negligible permeability is defined for the three layers to simulate a thermoelastic problem without fluid flow.
+An ultra low permeability is defined for the three layers to simulate a thermoelastic problem without the impact of fluid flow.
 
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/CasedThermoElasticWellbore_base.xml
   :language: xml
@@ -123,21 +123,21 @@ The mechanical boundary conditions are applied to ensure the axisymmetric plane 
   :start-after: <!-- SPHINX_PlaneStrainAxisymmetryBC -->
   :end-before: <!-- SPHINX_PlaneStrainAxisymmetryBCEnd -->
 
-Besides, the far-field boundray is assumed to be fixed because the local changes on the wellbore must have negligible effect on the far-field boundary. 
+Besides, the far-field boundary is assumed to be fixed because the local changes on the wellbore must have negligible effect on the far-field boundary. 
 
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/CasedThermoElasticWellbore_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FixedFarFieldBC -->
   :end-before: <!-- SPHINX_FixedFarFieldBCEnd -->
 
-The stress-free condition on the inner surface of the casing is defined by:
+The traction-free condition on the inner surface of the casing is defined by:
 
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/CasedThermoElasticWellbore_base.xml
   :language: xml
   :start-after: <!-- SPHINX_ZeroInnerTractionBC -->
   :end-before: <!-- SPHINX_ZeroInnerTractionBCEnd -->
 
-The initial resevoir temperature (that is also the far-field boundary temperature) and the temperature of a cold fluid applied on the inner surface of the casing are defined as
+The initial reservoir temperature (that is also the far-field boundary temperature) and the temperature of a cold fluid applied on the inner surface of the casing are defined as
 
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/CasedThermoElasticWellbore_base.xml
   :language: xml
@@ -214,37 +214,13 @@ A good agreement between the GEOSX results and analytical results for temperatur
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedThermoElasticWellbore/thermoElastic_casedWellbore_temperature.py
 
-.. _resultsCasedThermoElasticWellbore_temperatureFig:
-.. figure:: temperature.png
-   :align: center
-   :width: 500
-   :figclass: align-center
-
-   Temperature distribution around the cased wellbore
-
 and the validation for the radial displacement around the cased wellbore is shown below:
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedThermoElasticWellbore/thermoElastic_casedWellbore_displacement.py
 
-.. _resultsCasedThermoElasticWellbore_displacementFig:
-.. figure:: displacement.png
-   :align: center
-   :width: 500
-   :figclass: align-center
-
-   Radial displacement around the cased wellbore
-
 The validations of the total radial and hoop stress (tangent stress) components computed by GEOSX against reference results are shown in the figure below:
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedThermoElasticWellbore/thermoElastic_casedWellbore_stress.py
-
-.. _resultsCasedThermoElasticWellbore_stressFig:
-.. figure:: stress.png
-   :align: center
-   :width: 1000
-   :figclass: align-center
-
-   Distribution of radial and hoop stress around the cased wellbore
 
 ------------------------------------------------------------------
 To go further

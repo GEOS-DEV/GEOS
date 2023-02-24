@@ -1,4 +1,4 @@
-import matplotlib
+mport matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ElementTree
@@ -149,9 +149,7 @@ def main():
 	plt.ylabel('Hoop stress [Pa]')
 	plt.xlabel('Radial coordinate [m]')
 	plt.xlim(0.15,0.4)
-	#plt.show()
-
-	plt.savefig('stress.png')
+	plt.show()
 	
 if __name__ == "__main__":
 	main()
