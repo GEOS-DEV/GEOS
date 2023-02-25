@@ -196,6 +196,7 @@ void GeosxState::run()
   GEOSX_MARK_FUNCTION;
   Timer timer( m_runTime );
 
+  getProblemManager().printMemoryAllocation();
   GEOSX_THROW_IF_NE( m_state, State::READY_TO_RUN, std::logic_error );
 
   if( !getProblemManager().runSimulation() )

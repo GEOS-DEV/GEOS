@@ -160,6 +160,9 @@ public:
    */
   void printDataHierarchy( integer indent = 0 );
 
+
+  void printMemoryAllocation( integer indent = 0 );
+
   /**
    * @brief @return a table formatted string containing all input options.
    */

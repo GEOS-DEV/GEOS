@@ -254,6 +254,93 @@ void Group::printDataHierarchy( integer const indent )
   }
 }
 
+void Group::printMemoryAllocation( integer const indent )
+{
+  static bool terminateBranch[64]{};
+  
+  if( indent==0 )
+  {
+    for( int i=0; i<64; ++i )
+    {
+      terminateBranch[i] = false;
+    }
+  }
+
+
+
+  std::vector< std::pair< string, float > > wrapperAllocations;
+  float groupAllocation = 0;
+  for( auto & view : wrappers() )
+  {
+    string const & wrapperName = view.second->getName();
+    float const mbAllocated = view.second->bytesAllocated() / 1e6;
+    groupAllocation += mbAllocated;
+    wrapperAllocations.emplace_back( std::make_pair( wrapperName, mbAllocated ) );
+  }
+
+  if( indent==0 )
+  {
+  GEOSX_LOG_RANK_0( GEOSX_FMT( "[{}] = {} ",
+                                 getName(), 
+                                 groupAllocation ) );
+
+  }
+  else
+  {
+    string outputLine;
+    for( int i=0; i<indent-1; ++i )
+    {
+      if( terminateBranch[i]==false )
+      {
+        outputLine += "|  ";
+      }
+      else
+      {
+        outputLine += "   ";
+      }
+    }
+    GEOSX_LOG_RANK_0( outputLine.c_str()<<"|" );
+    outputLine += "|--[{}]: {:2.1g}";
+    GEOSX_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
+                                 getName(), 
+                                 groupAllocation ) );
+  }
+
+
+  for( auto wrapperAllocation : wrapperAllocations )
+  {
+
+    string outputLine;
+    for( int i=0; i<indent; ++i )
+    {
+      if( terminateBranch[i]==false )
+      {
+        outputLine += "|  ";
+      }
+      else
+      {
+        outputLine += "   ";
+      }
+    }
+    outputLine += "| -{}: {:3.1g}";
+    GEOSX_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
+                                 wrapperAllocation.first,
+                                 wrapperAllocation.second ) );
+
+    // GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: {:2.1g} ",
+    //                              wrapperAllocation.first,
+    //                              wrapperAllocation.second ) );
+  }
+
+  localIndex const numSubGroups = m_subGroups.size();
+  localIndex groupCounter = 0;
+  for( auto & group : m_subGroups )
+  {
+    terminateBranch[indent] = ++groupCounter==numSubGroups ? true : false;
+    group.second->printMemoryAllocation( indent + 1 );
+  }
+}
+
 string Group::dumpInputOptions() const
 {
   string rval;

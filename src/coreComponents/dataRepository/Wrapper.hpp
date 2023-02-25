@@ -358,6 +358,12 @@ public:
   virtual localIndex elementByteSize() const override
   { return wrapperHelpers::byteSizeOfElement< T >(); }
 
+  virtual size_t bytesAllocated() const override final
+  {
+    return wrapperHelpers::byteSize<T>(*m_data);
+  }
+
+
   /**
    * @name Methods that delegate to the wrapped type
    *

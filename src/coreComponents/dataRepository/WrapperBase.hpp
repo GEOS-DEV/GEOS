@@ -107,6 +107,9 @@ public:
    */
   virtual localIndex elementByteSize() const = 0;
 
+  virtual size_t bytesAllocated() const = 0;
+
+
   /**
    * @brief Calls T::resize( num_dims, dims )
    * @param[in] num_dims number of dimensions in T
