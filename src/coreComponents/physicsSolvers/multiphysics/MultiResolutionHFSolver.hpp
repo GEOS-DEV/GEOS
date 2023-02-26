@@ -69,11 +69,22 @@ public:
                                          MeshLevel const & patch,
                                          MeshLevel const & base );
 
+  virtual void findNewlyDamagedElements(sortedArray<localIndex> toCutElems, 
+                                        meshLevel const & base, 
+                                        meshLevel const & patch);
+
+
   virtual void findPhaseFieldTip( R1Tensor & tip,
                                   MeshLevel const & patch );
 
   virtual void prepareSubProblemBCs( MeshLevel const & base,
                                      MeshLevel & patch );
+
+  virtual void testElemMappingPatchToBase( MeshLevel const & base,
+                                           MeshLevel & patch );
+
+  virtual void testElemMappingBaseToPatch( MeshLevel const & base,
+                                           MeshLevel & patch );                                                                      
 
   real64 splitOperatorStep( real64 const & time_n,
                             real64 const & dt,

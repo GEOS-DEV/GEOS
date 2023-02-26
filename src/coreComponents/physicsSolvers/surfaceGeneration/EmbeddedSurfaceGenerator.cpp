@@ -490,15 +490,6 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
 void EmbeddedSurfaceGenerator::propagationStep3D( DomainPartition & domain,
                                                   localIndex elemToCut )
 {
-  //pseudocode
-  //loop over elements in newFracElemList, add "horizontal" cut
-  //the fracIndex parameter should tell with fracture (surfaceElementRegion) we are adding to
-  //from that we should be able to get the z value to keep things connected
-  //loop over elem in newFracElemList
-  //get surfaceElementRegion of index fracIndexOfElem[i]
-  //get z value of this penny crack
-  //add a new cut in newFracElemList[i] at this z value
-  //update connectivity of this frac
   GEOSX_MARK_FUNCTION;
   localIndex er = 0; //should be the element region number
   localIndex esr = 0; //should be the element subregion number
@@ -537,9 +528,6 @@ void EmbeddedSurfaceGenerator::propagationStep3D( DomainPartition & domain,
   array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosOld = embSurfNodeManager.referencePosition();
   bool added = false;
   real64 fracCenterX = 0.0; //TODO: retrive this correctly
-  // if (elemToCut > 624){
-  //   fracCenterX = 2.0;
-  // }
   R1Tensor fractureCenter = {elemCenter[elemToCut][0], elemCenter[elemToCut][1], elemCenter[elemToCut][2]};
   if( ghostRank[elemToCut] < 0 && (fracturedElements.contains(elemToCut)==false) ) //TODO: this do not allow for multiple cuts of the same element - ok for now
   {
@@ -583,14 +571,6 @@ void EmbeddedSurfaceGenerator::propagationStep3D( DomainPartition & domain,
   {
     newObjects.newNodes.insert( ni );
   }
-
-
-  // add all new nodes to newObject list
-  // also, get index of edges that were just cut
-  //array1d< globalIndex > newEdges;
-  //arrayView1d< globalIndex > & parentEdgeGlobalIndex = embSurfNodeManager.getParentEdgeGlobalIndex();
-  //localIndex embSurfNodeNumberUpdated = embSurfNodeManager.size();
-  //arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > embSurfNodesPosUpdated = embSurfNodeManager.referencePosition();
 
   // Set the ghostRank form the parent cell
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =

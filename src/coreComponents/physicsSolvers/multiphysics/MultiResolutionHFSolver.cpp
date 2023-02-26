@@ -87,6 +87,8 @@ MultiResolutionHFSolver::MultiResolutionHFSolver( const string & name,
 void MultiResolutionHFSolver::RegisterDataOnMesh( dataRepository::Group & MeshBodies )
 {
   GEOSX_UNUSED_VAR( MeshBodies );
+  //register mapped elem index baseToPatch
+  //register mapped elem index patchToBase
 }
 
 MultiResolutionHFSolver::~MultiResolutionHFSolver()
@@ -140,6 +142,8 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX
   baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
     m_nodeFixDamage.zero();
+    //for this parte, it might be a good idea to use the initial bounded circles to cut the fine mesh as well, and help 
+    //initialize the damage
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
     m_nodeFixDamage.resize( cellElementSubRegion.numNodesPerElement()*fracturedElements.size() );
     localIndex count = 0;
@@ -162,6 +166,21 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX
     m_nodeFixDamage.resize( count );
   } );
 }
+
+void MultiResolutionHFSolver::findNewlyDamagedElements(sortedArray<localIndex> toCutElems, 
+                                                       meshLevel const & base, 
+                                                       meshLevel const & patch)
+{
+  //loop over all coarse elements - meshLevel base
+  baseElementManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
+  {
+    //discard elements already fractured
+    //loop over all fine elements associated with base element
+      //test if there is a plane of fully damaged elements inside with d_elemental > thr
+      //if yes, add base element to cut list
+  });
+}
+
 
 // this function will read the patch solution and locate the crack tip to uptade the crack geometry in the base solver
 void MultiResolutionHFSolver::findPhaseFieldTip( R1Tensor & tip,
@@ -280,6 +299,23 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
   }
 
 }
+
+void MultiResolutionHFSolver::testElemMappingPatchToBase( MeshLevel const & base,
+                                                          MeshLevel & patch )
+{
+  //for every elem in base
+  //call coarseToFineStructuredElemMap
+  //loop over all associated patch elements and write the base elem number
+}
+
+void MultiResolutionHFSolver::testElemMappingBaseToPatch( MeshLevel const & base,
+                                                          MeshLevel & patch )
+{
+  //for every elem in patch
+  //call fineToCoarseStructuredElemMap
+  //write index of the associated base elem to all patch elems
+  //this should be exactly the same as the function above
+}                                                          
 
 real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
                                                    real64 const & dt,
