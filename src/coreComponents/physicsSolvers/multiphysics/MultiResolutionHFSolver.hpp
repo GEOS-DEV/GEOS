@@ -48,7 +48,7 @@ public:
     return "MultiResolutionHF";
   }
 
-  virtual void RegisterDataOnMesh( Group & MeshBodies );
+  virtual void registerDataOnMesh( Group & meshBodies );
 
   virtual void
   implicitStepSetup( real64 const & time_n,
@@ -69,9 +69,9 @@ public:
                                          MeshLevel const & patch,
                                          MeshLevel const & base );
 
-  virtual void findNewlyDamagedElements(sortedArray<localIndex> toCutElems, 
-                                        meshLevel const & base, 
-                                        meshLevel const & patch);
+  virtual void findNewlyDamagedElements(SortedArray<localIndex> toCutElems, 
+                                        MeshLevel const & base, 
+                                        MeshLevel const & patch);
 
 
   virtual void findPhaseFieldTip( R1Tensor & tip,
@@ -80,10 +80,10 @@ public:
   virtual void prepareSubProblemBCs( MeshLevel const & base,
                                      MeshLevel & patch );
 
-  virtual void testElemMappingPatchToBase( MeshLevel const & base,
+  virtual void testElemMappingPatchToBase( MeshLevel & base,
                                            MeshLevel & patch );
 
-  virtual void testElemMappingBaseToPatch( MeshLevel const & base,
+  virtual void testElemMappingBaseToPatch( MeshLevel & base,
                                            MeshLevel & patch );                                                                      
 
   real64 splitOperatorStep( real64 const & time_n,

@@ -13,7 +13,7 @@
  */
 
 /**
- * @file MeshLevel.hpp
+ * @file MapMeshLevels.hpp
  */
 
 #ifndef GEOSX_MESH_MESHLEVEL_HPP_
@@ -21,45 +21,48 @@
 
 namespace geosx{
 
-R1Tensor const coarseToFineStructuredElemMap(localIndex const coarseElemIndex
-                                             localIndex const coarseNx, 
-                                             localIndex const coarseNy,
-                                             localIndex const coarseNz,
-                                             localIndex const fineRx,
-                                             localIndex const fineRy,
-                                             localIndex const fineRz)   
-{
-    localIndex X = coarseElemIndex/(coarseNy*coarseNz);
-    localIndex Y = (coarseElemIndex - u*(coarseNy*coarseNz)) / coarseNz;
-    localIndex Z = (coarseElemIndex - u*(coarseNy*coarseNz) - v * coarseNz);
-    //this only returns the triplet for the first element 
-    //to generate all, the equation is the following
-    //0<= u < fineRx
-    //0<= v < fineRy
-    //0<= w < fineRz
-    //fineIndex = (X*fineRx + u)*fineRy*coarseNy*fineRz*coarseNz 
-    // + (Y*fineRy + v)*fineRz*coarseNz + (Z*fineRz + w)
-    //vary u,v,w
-    R1Tensor fineRefElem = {X*fineRx, Y*fineRy, Z*fineRz};
-    return fineRefElem;
-} 
+// GEOSX_HOST_DEVICE inline
+// R1Tensor const coarseToFineStructuredElemMap(localIndex const coarseElemIndex,
+//                                              localIndex const coarseNx, 
+//                                              localIndex const coarseNy,
+//                                              localIndex const coarseNz,
+//                                              localIndex const fineRx,
+//                                              localIndex const fineRy,
+//                                              localIndex const fineRz)   
+// {
+//     localIndex X = coarseElemIndex/(coarseNy*coarseNz);
+//     localIndex Y = (coarseElemIndex - u*(coarseNy*coarseNz)) / coarseNz;
+//     localIndex Z = (coarseElemIndex - u*(coarseNy*coarseNz) - v * coarseNz);
+//     //this only returns the triplet for the first element 
+//     //to generate all, the equation is the following
+//     //0<= u < fineRx
+//     //0<= v < fineRy
+//     //0<= w < fineRz
+//     //fineIndex = (X*fineRx + u)*fineRy*coarseNy*fineRz*coarseNz 
+//     // + (Y*fineRy + v)*fineRz*coarseNz + (Z*fineRz + w)
+//     //vary u,v,w
+//     R1Tensor fineRefElem = {X*fineRx, Y*fineRy, Z*fineRz};
+//     return fineRefElem;
+// } 
 
-localIndex const fineToCoarseStructuredElemMap(localIndex const fineElemIndex
-                                               localIndex const coarseNx, 
-                                               localIndex const coarseNy,
-                                               localIndex const coarseNz,
-                                               localIndex const fineRx,
-                                               localIndex const fineRy,
-                                               localIndex const fineRz)   
-{
-    localIndex coarseElemIndex = 0;
-    localIndex x = fineElemIndex/(fineRy*coarseNy*fineRz*coarseNz);
-    localIndex y = (fineElemIndex - x * (fineRy*coarseNy*fineRz*coarseNz)) / (fineRz*coarseNz);
-    localIndex z = fineElemIndex - x * (fineRy*coarseNy*fineRz*coarseNz) - y * (fineRz*coarseNz);
-    coarseElemIndex = (x/fineRx) * coarseNy * coarseNz + (y/fineRy) * coarseNz + (z/fineRz); 
-    return coarseElemIndex;    
-} 
+// GEOSX_HOST_DEVICE inline
+// localIndex fineToCoarseStructuredElemMap(localIndex const fineElemIndex,
+//                                                localIndex const coarseNx, 
+//                                                localIndex const coarseNy,
+//                                                localIndex const coarseNz,
+//                                                localIndex const fineRx,
+//                                                localIndex const fineRy,
+//                                                localIndex const fineRz)   
+// {
+//     localIndex coarseElemIndex = 0;
+//     localIndex x = fineElemIndex/(fineRy*coarseNy*fineRz*coarseNz);
+//     localIndex y = (fineElemIndex - x * (fineRy*coarseNy*fineRz*coarseNz)) / (fineRz*coarseNz);
+//     localIndex z = fineElemIndex - x * (fineRy*coarseNy*fineRz*coarseNz) - y * (fineRz*coarseNz);
+//     coarseElemIndex = (x/fineRx) * coarseNy * coarseNz + (y/fineRy) * coarseNz + (z/fineRz); 
+//     return coarseElemIndex;    
+// } 
 
+GEOSX_HOST_DEVICE inline
 localIndex const coarseToFineStructuredNodeMap(localIndex const coarseNodeIndex
                                                localIndex const coarseNx, 
                                                localIndex const coarseNy,
@@ -74,7 +77,8 @@ localIndex const coarseToFineStructuredNodeMap(localIndex const coarseNodeIndex
     return fineNodeIndex;
 }
 
-localIndex const coarseToFineStructuredNodeMap(localIndex const coarseNodeIndex
+GEOSX_HOST_DEVICE inline
+localIndex const fineToCoarseStructuredNodeMap(localIndex const coarseNodeIndex
                                                localIndex const coarseNx, 
                                                localIndex const coarseNy,
                                                localIndex const coarseNz,
@@ -83,9 +87,9 @@ localIndex const coarseToFineStructuredNodeMap(localIndex const coarseNodeIndex
                                                localIndex const fineNx)   
 {
 
-    localIndex fineNodeIndex = 0;
+    localIndex coarseNodeIndex = 0;
 
-    return fineNodeIndex;
+    return coarseNodeIndex;
 }
 
 } /* namespace geosx */

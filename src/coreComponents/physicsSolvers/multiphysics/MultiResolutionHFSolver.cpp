@@ -30,6 +30,7 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/MapMeshLevels.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
@@ -48,6 +49,50 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
+
+GEOSX_HOST_DEVICE inline
+void coarseToFineStructuredElemMap(localIndex const coarseElemIndex,
+                                             localIndex const coarseNx, 
+                                             localIndex const coarseNy,
+                                             localIndex const coarseNz,
+                                             localIndex const fineRx,
+                                             localIndex const fineRy,
+                                             localIndex const fineRz,
+                                             localIndex triplet[3])   
+{
+    localIndex X = coarseElemIndex/(coarseNy*coarseNz);
+    localIndex Y = (coarseElemIndex - X*(coarseNy*coarseNz)) / coarseNz;
+    localIndex Z = (coarseElemIndex - X*(coarseNy*coarseNz) - Y * coarseNz);
+    //this only returns the triplet for the first element 
+    //to generate all, the equation is the following
+    //0<= u < fineRx
+    //0<= v < fineRy
+    //0<= w < fineRz
+    //fineIndex = (X*fineRx + u)*fineRy*coarseNy*fineRz*coarseNz 
+    // + (Y*fineRy + v)*fineRz*coarseNz + (Z*fineRz + w)
+    //vary u,v,w
+    triplet[0] = X*fineRx;
+    triplet[1] = Y*fineRy;
+    triplet[2] = Z*fineRz;
+    //R1Tensor fineRefElem = {X*fineRx, Y*fineRy, Z*fineRz};
+} 
+
+GEOSX_HOST_DEVICE inline
+localIndex fineToCoarseStructuredElemMap(localIndex const fineElemIndex,
+                                               localIndex const coarseNx, 
+                                               localIndex const coarseNy,
+                                               localIndex const coarseNz,
+                                               localIndex const fineRx,
+                                               localIndex const fineRy,
+                                               localIndex const fineRz)   
+{
+    localIndex coarseElemIndex = 0;
+    localIndex x = fineElemIndex/(fineRy*coarseNy*fineRz*coarseNz);
+    localIndex y = (fineElemIndex - x * (fineRy*coarseNy*fineRz*coarseNz)) / (fineRz*coarseNz);
+    localIndex z = fineElemIndex - x * (fineRy*coarseNy*fineRz*coarseNz) - y * (fineRz*coarseNz);
+    coarseElemIndex = (x/fineRx) * coarseNy * coarseNz + (y/fineRy) * coarseNz + (z/fineRz); 
+    return coarseElemIndex;    
+}                                               
 
 MultiResolutionHFSolver::MultiResolutionHFSolver( const string & name,
                                                   Group * const parent ):
@@ -84,11 +129,33 @@ MultiResolutionHFSolver::MultiResolutionHFSolver( const string & name,
 
 }
 
-void MultiResolutionHFSolver::RegisterDataOnMesh( dataRepository::Group & MeshBodies )
+void MultiResolutionHFSolver::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
-  GEOSX_UNUSED_VAR( MeshBodies );
-  //register mapped elem index baseToPatch
-  //register mapped elem index patchToBase
+  //GEOSX_UNUSED_VAR( meshBodies );
+  //the patch elem manager
+  // forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+  //                                                   MeshLevel & meshLevel,
+  //                                                   arrayView1d< string const > const & )
+  // {
+
+    //ElementRegionManager & patchElemManager = meshLevel.getElemManager();
+    ElementRegionManager & patchElemManager = meshBodies.getGroup<MeshBody>(1).getBaseDiscretization().getElemManager();
+
+    patchElemManager.forElementSubRegions< CellElementSubRegion,
+                                          FaceElementSubRegion >( [&] ( auto & elementSubRegion )
+    {                                  
+    //register mapped elem index baseToPatch
+    //register mapped elem index patchToBase
+    //register fake pressures for testing purposes
+      elementSubRegion.template registerWrapper< array1d< localIndex > >( "coarseToFineMap" ).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setDescription( "mapping elem indices from coarse to fine" );
+      elementSubRegion.template registerWrapper< array1d< localIndex > >( "fineToCoarseMap" ).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setDescription( "mapping elem indices from fine to coarse" );
+    });
+
+  // } );
 }
 
 MultiResolutionHFSolver::~MultiResolutionHFSolver()
@@ -134,11 +201,12 @@ real64 MultiResolutionHFSolver::solverStep( real64 const & time_n,
 // distance is smaller than 1 element size (subdomain), we set the damage in this node to be fixed at 1.
 void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
                                                         CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
-                                                        MeshLevel const & GEOSX_UNUSED_PARAM( patch ),
+                                                        MeshLevel const & patch,
                                                         MeshLevel const & base )
 {
   GEOSX_MARK_FUNCTION;
-  ElementRegionManager const & baseElemManager = base.getElemManager();
+  //ElementRegionManager const & baseElemManager = base.getElemManager();
+  ElementRegionManager const & baseElemManager = patch.getElemManager();//TODO: wrong name
   baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
     m_nodeFixDamage.zero();
@@ -149,6 +217,7 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX
     localIndex count = 0;
     for( localIndex a : fracturedElements )
     {
+      GEOSX_LOG_LEVEL_RANK_0( 3, "patch fractured elem: " << a << "\n" ); 
       //get all nodes of fracturedElements(a)
       for( localIndex b=0; b < cellElementSubRegion.numNodesPerElement(); b++ )
       {
@@ -167,18 +236,18 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX
   } );
 }
 
-void MultiResolutionHFSolver::findNewlyDamagedElements(sortedArray<localIndex> toCutElems, 
-                                                       meshLevel const & base, 
-                                                       meshLevel const & patch)
+void MultiResolutionHFSolver::findNewlyDamagedElements(SortedArray<localIndex> GEOSX_UNUSED_PARAM(toCutElems), 
+                                                       MeshLevel const & GEOSX_UNUSED_PARAM(base), 
+                                                       MeshLevel const & GEOSX_UNUSED_PARAM(patch))
 {
   //loop over all coarse elements - meshLevel base
-  baseElementManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
-  {
+  // baseElementManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
+  // {
     //discard elements already fractured
     //loop over all fine elements associated with base element
       //test if there is a plane of fully damaged elements inside with d_elemental > thr
       //if yes, add base element to cut list
-  });
+  // });
 }
 
 
@@ -300,21 +369,67 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
 
 }
 
-void MultiResolutionHFSolver::testElemMappingPatchToBase( MeshLevel const & base,
+void MultiResolutionHFSolver::testElemMappingPatchToBase( MeshLevel & base,
                                                           MeshLevel & patch )
 {
   //for every elem in base
   //call coarseToFineStructuredElemMap
   //loop over all associated patch elements and write the base elem number
+  //get patch elem manager
+  ElementRegionManager & patchElemManager = patch.getElemManager();
+
+  //get accessor to elemental field
+  ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const fineToCoarseMap =
+  patchElemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( "fineToCoarseMap" );
+  //fineToCoarseMap[0][0][0] = fineToCoarseStructuredElemMap(0,5,5,5,3,3,3);
+  patchElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
+  {
+
+    forAll< serialPolicy >( cellElementSubRegion.size(), [&] ( localIndex const k )
+    {
+      fineToCoarseMap[0][0][k] = fineToCoarseStructuredElemMap(k,5,5,5,3,3,3);
+    } );
+  } );  
 }
 
-void MultiResolutionHFSolver::testElemMappingBaseToPatch( MeshLevel const & base,
+void MultiResolutionHFSolver::testElemMappingBaseToPatch( MeshLevel & base,
                                                           MeshLevel & patch )
 {
   //for every elem in patch
   //call fineToCoarseStructuredElemMap
   //write index of the associated base elem to all patch elems
   //this should be exactly the same as the function above
+  ElementRegionManager & coarseElemManager = base.getElemManager();
+  ElementRegionManager & patchElemManager = patch.getElemManager();
+
+  //get accessor to elemental field
+  ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const coarseToFineMap =
+  patchElemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( "coarseToFineMap" );
+  localIndex rx=3;
+  localIndex ry=3;
+  localIndex rz=3;
+  //R1Tensor refElem = coarseToFineStructuredElemMap(0,5,5,5,rx,ry,rz);
+  coarseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
+  {
+    forAll< serialPolicy >( cellElementSubRegion.size(), [&] ( localIndex const K )
+    {
+      localIndex triplet[3];
+      coarseToFineStructuredElemMap(K,5,5,5,rx,ry,rz,triplet);
+      GEOSX_LOG_LEVEL_RANK_0( 3, "Base elem index: " << K << " triplet: ( "<<triplet[0]<<", "<<triplet[1]<<", "<<triplet[2]<<" )\n" );
+      for(int i=0; i<rx; i++){
+        for(int j=0; j<ry; j++){
+          for(int k=0; k<rz; k++){
+            localIndex fineK = (triplet[0] + i)*ry*5*rz*5 + (triplet[1] + j)*rz*5 + (triplet[2] + k);
+            if(fineK > 0){
+                GEOSX_LOG_LEVEL_RANK_0( 3, "fineK: " << fineK << " from base elem: "<<K<<"\n" );
+            }
+            coarseToFineMap[0][0][fineK] = K;
+          }        
+        }
+      }
+    } );
+  } );
+
 }                                                          
 
 real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
@@ -379,6 +494,13 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
     map< std::pair< string, string >, array1d< string > > const & patchTargets = patchSolver.getReference< map< std::pair< string, string >, array1d< string > > >(
       SolverBase::viewKeyStruct::meshTargetsString());
     auto const patchTarget = patchTargets.begin()->first;
+
+    // testElemMappingPatchToBase( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), 
+    //                             domain.getMeshBody( patchTarget.first ).getBaseDiscretization() );
+
+    // testElemMappingBaseToPatch( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), 
+    //                             domain.getMeshBody( patchTarget.first ).getBaseDiscretization() );
+
     CRSMatrix< real64, globalIndex > & patchDamageLocalMatrix = patchDamageSolver.getLocalMatrix();
     this->setInitialCrackDamageBCs( patchDamageSolver.getDofManager(), patchDamageLocalMatrix.toViewConstSizes(), domain.getMeshBody( patchTarget.first ).getBaseDiscretization(),
                                     domain.getMeshBody( baseTarget.first ).getBaseDiscretization() );
@@ -415,7 +537,7 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
     }
 
     //here, before calling the nonlinarImplicitStep of the patch solver, we must prescribe the displacement boundary conditions
-    this->prepareSubProblemBCs( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), domain.getMeshBody( patchTarget.first ).getBaseDiscretization());
+    //this->prepareSubProblemBCs( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), domain.getMeshBody( patchTarget.first ).getBaseDiscretization());
 
     //write disp BCs to local disp solver
     //TODO: m_nodeFixDisp and m_fixedDispList dont need to be members, they can be initialized at every time step, this is actually safer
