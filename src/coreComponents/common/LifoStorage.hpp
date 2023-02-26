@@ -389,7 +389,6 @@ public:
       LIFO_LOG_RANK( " LIFO : available memory on device " << freeGB << " GB" );
       numberOfBuffersToStoreOnDevice = std::min( (int)( 0.8 * free / m_bufferSize ), m_maxNumberOfBuffers );
       // Ensure that we won't be overflowed
-      numberOfBuffersToStoreOnDevice = std::min( (size_t) std::numeric_limits< INDEX_TYPE >::max(), ( size_t )(numberOfBuffersToStoreOnDevice)*elemCnt )/elemCnt;
     }
     m_deviceDeque =
       std::unique_ptr< FixedSizeDequeAndMutexes< T, INDEX_TYPE > >( new FixedSizeDequeAndMutexes< T, INDEX_TYPE >( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda ) );
@@ -404,7 +403,6 @@ public:
       size_t free = sysconf( _SC_AVPHYS_PAGES ) * sysconf( _SC_PAGESIZE );
       numberOfBuffersToStoreOnHost = std::max( 1, std::min( (int)( 0.8 * free / m_bufferSize ), m_maxNumberOfBuffers - numberOfBuffersToStoreOnDevice ) );
       // Ensure that we won't be overflowed
-      numberOfBuffersToStoreOnHost = std::min( (size_t) std::numeric_limits< INDEX_TYPE >::max(), ( size_t )(numberOfBuffersToStoreOnHost)*elemCnt )/elemCnt;
       double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
       LIFO_LOG_RANK( " LIFO : available memory on host " << freeGB << " GB" );
     }

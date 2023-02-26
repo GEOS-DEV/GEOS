@@ -30,9 +30,9 @@ class FixedSizeDeque
   /// The integer type used for indexing.
   using IndexType = INDEX_TYPE;
   /// 1D array slice
-  using ArraySlice1D = LvArray::ArraySlice< T const, 1, 0, INDEX_TYPE >;
+  using ArraySlice1DLarge = LvArray::ArraySlice< T const, 1, 0, std::ptrdiff_t >;
   /// 2D array type. See LvArray:Array for details.
-  using Array2D = LvArray::Array< T, 2, camp::make_idx_seq_t< 2 >, INDEX_TYPE, LvArray::ChaiBuffer >;
+  using Array2D = LvArray::Array< T, 2, camp::make_idx_seq_t< 2 >, std::ptrdiff_t, LvArray::ChaiBuffer >;
 public:
   /**
    * Create a fixed size double ended queue.
@@ -75,28 +75,28 @@ public:
   }
 
   /// @returns the first array in the queue
-  ArraySlice1D front() const
+  ArraySlice1DLarge front() const
   {
     GEOSX_ERROR_IF( empty(), "Can't get front from empty queue" );
     return m_storage[ POSITIVE_MODULO( m_begin, m_storage.size( 0 ) ) ];
   }
 
   /// @returns the future first array in the queue after inc_front will be called
-  ArraySlice1D next_front() const
+  ArraySlice1DLarge next_front() const
   {
     GEOSX_ERROR_IF( full(), "Can't increase in a full queue" );
     return m_storage[ POSITIVE_MODULO( m_begin-1, m_storage.size( 0 ) ) ];
   }
 
   /// @returns the last array of the queue
-  ArraySlice1D back() const
+  ArraySlice1DLarge back() const
   {
     GEOSX_ERROR_IF( empty(), "Can't get back from empty queue" );
     return m_storage[ POSITIVE_MODULO( m_end, m_storage.size( 0 ) ) ];
   }
 
   /// @returns the future last array of the queue when inc_back will be called
-  ArraySlice1D next_back() const
+  ArraySlice1DLarge next_back() const
   {
     GEOSX_ERROR_IF( full(), "Can't increase in a full queue" );
     return m_storage[ POSITIVE_MODULO( m_end+1, m_storage.size( 0 ) ) ];
@@ -136,7 +136,8 @@ public:
    * @param src Array to emplace at the front of the queue
    * @return Event associated to the copy.
    */
-  camp::resources::Event emplace_front( const ArraySlice1D & src )
+  template< typename INDEX_TYPE2 >
+  camp::resources::Event emplace_front( const LvArray::ArraySlice< T const, 1, 0, INDEX_TYPE2 > & src )
   {
     GEOSX_ERROR_IF( full(), "Can't emplace in a full  queue" );
     camp::resources::Event e = LvArray::memcpy( m_stream, m_storage[ POSITIVE_MODULO( m_begin-1, m_storage.size( 0 ) ) ], src );
@@ -150,7 +151,8 @@ public:
    * @param src Array to emplace at the end of the queue
    * @return Event associated to the copy.
    */
-  camp::resources::Event emplace_back( const ArraySlice1D & src )
+  template< typename INDEX_TYPE2 >
+  camp::resources::Event emplace_back( const LvArray::ArraySlice< T const, 1, 0, INDEX_TYPE2 > & src )
   {
     GEOSX_ERROR_IF( full(), "Can't emplace in a full queue" );
     camp::resources::Event e = LvArray::memcpy( m_stream, m_storage[ POSITIVE_MODULO( m_end+1, m_storage.size( 0 ) ) ], src );
