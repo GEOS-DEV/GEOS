@@ -360,7 +360,7 @@ public:
 
   virtual size_t bytesAllocated() const override final
   {
-    return wrapperHelpers::byteSize<T>(*m_data);
+    return wrapperHelpers::byteSize< T >( *m_data );
   }
 
 

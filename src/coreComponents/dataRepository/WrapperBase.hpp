@@ -107,6 +107,9 @@ public:
    */
   virtual localIndex elementByteSize() const = 0;
 
+  /**
+   * @brief @return the number of bytes allocated for the wrapped object.
+   */
   virtual size_t bytesAllocated() const = 0;
 
 

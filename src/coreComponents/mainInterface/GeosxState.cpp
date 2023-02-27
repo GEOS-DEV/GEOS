@@ -168,6 +168,12 @@ bool GeosxState::initializeDataRepository()
 
   m_state = State::INITIALIZED;
 
+  if( m_commandLineOptions->printMemoryUsage > 0.0 )
+  {
+    std::cout<<"m_commandLineOptions->printMemoryUsage = "<<m_commandLineOptions->printMemoryUsage<<std::endl;
+    getProblemManager().printMemoryAllocation( 0, m_commandLineOptions->printMemoryUsage );
+  }
+
   return true;
 }
 
@@ -196,7 +202,6 @@ void GeosxState::run()
   GEOSX_MARK_FUNCTION;
   Timer timer( m_runTime );
 
-  getProblemManager().printMemoryAllocation();
   GEOSX_THROW_IF_NE( m_state, State::READY_TO_RUN, std::logic_error );
 
   if( !getProblemManager().runSimulation() )

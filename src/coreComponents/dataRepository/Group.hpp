@@ -160,8 +160,12 @@ public:
    */
   void printDataHierarchy( integer indent = 0 );
 
-
-  void printMemoryAllocation( integer indent = 0 );
+  /**
+   * @brief Prints the memory allocations for the data repository
+   * @param[in] indent The level of indentation to add to this level of output.
+   * @param[in] threshold The allocation size required to output a allocation size.
+   */
+  void printMemoryAllocation( integer const indent, real64 const threshold );
 
   /**
    * @brief @return a table formatted string containing all input options.

@@ -82,6 +82,8 @@ struct CommandLineOptions
 
   /// Trace host-device data migration.
   integer traceDataMigration = false;
+
+  real64 printMemoryUsage = -1.0;
 };
 
 /**
