@@ -52,13 +52,16 @@ protected:
    * @brief constructor
    * @param[in] newStress The new stress data from the constitutive model class.
    * @param[in] oldStress The old stress data from the constitutive model class.
+   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] disableInelasticity Flag to disable inelastic response
    */
   SolidBaseUpdates( arrayView3d< real64, solid::STRESS_USD > const & newStress,
                     arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                    arrayView1d< real64 const > const & thermalExpansionCoefficient,
                     const bool & disableInelasticity ):
     m_newStress( newStress ),
     m_oldStress( oldStress ),
+    m_thermalExpansionCoefficient( thermalExpansionCoefficient ),
     m_disableInelasticity ( disableInelasticity )
   {}
 
@@ -109,6 +112,9 @@ public:
   /// A reference the previous material stress at quadrature points.
   arrayView3d< real64, solid::STRESS_USD > const m_oldStress;
 
+  /// A reference to the ArrayView holding the thermal expansion coefficient for each element.
+  arrayView1d< real64 const > const m_thermalExpansionCoefficient;
+
   /// Flag to disable inelasticity
   const bool & m_disableInelasticity;
 
@@ -139,6 +145,17 @@ public:
   }
 
   /**
+   * @brief Get thermalExpansionCoefficient
+   * @param[in] k Element index.
+   * @return the thermalExpansionCoefficient of element k
+   */
+  GEOSX_HOST_DEVICE
+  real64 getThermalExpansionCoefficient( localIndex const k ) const
+  {
+    return m_thermalExpansionCoefficient[k];
+  }
+
+  /**
    * @brief Get shear modulus
    * @param[in] k Element index.
    * @return the shear modulus of element k
@@ -148,7 +165,6 @@ public:
   {
     GEOSX_UNUSED_VAR( k );
     GEOSX_ERROR( "getShearModulus() not implemented for this model" );
-
     return 0;
   }
 
@@ -621,6 +637,13 @@ public:
     static constexpr char const * oldStressString() { return "oldStress"; }            ///< Old stress key
     static constexpr char const * densityString() { return "density"; }                ///< Density key
     static constexpr char const * defaultDensityString() { return "defaultDensity"; }  ///< Default density key
+    static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; } // Thermal expansion
+                                                                                                                // coefficient key
+    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultThermalExpansionCoefficient"; } // Default
+                                                                                                                              // thermal
+                                                                                                                              // expansion
+                                                                                                                              // coefficient
+                                                                                                                              // key
   };
 
   /**
@@ -747,6 +770,12 @@ protected:
 
   /// The default density for new allocations.
   real64 m_defaultDensity = 0;
+
+  /// The thermal expansion coefficient for each upper level dimension (i.e. cell) of *this
+  array1d< real64 > m_thermalExpansionCoefficient;
+
+  /// The default value of the thermal expansion coefficient for any new allocations.
+  real64 m_defaultThermalExpansionCoefficient = 0;
 
   /// Flag to disable inelasticity (plasticity, damage, etc.)
   bool m_disableInelasticity = false;

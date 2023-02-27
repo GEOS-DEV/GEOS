@@ -28,6 +28,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsDamage.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
@@ -42,8 +43,19 @@ using namespace fields;
 SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & name,
                                                                 Group * const parent ):
   Base( name, parent ),
-  m_damageFlag()
+  m_damageFlag(),
+  m_isThermal( 0 )
 {
+  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether the problem is thermal or not." );
+
+  this->registerWrapper( viewKeyStruct::performStressInitializationString(), &m_performStressInitialization ).
+    setApplyDefaultValue( false ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
+
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
   m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
@@ -133,12 +145,17 @@ void SinglePhasePoromechanicsSolver::setupSystem( DomainPartition & domain,
 
 void SinglePhasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups()
 {
+  integer & isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
+  GEOSX_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
+                       GEOSX_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
+                                  catalogName(), getName(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
+  isFlowThermal = m_isThermal;
+
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM )
   {
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::hybridSinglePhasePoromechanics;
   }
 }
-
 
 void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                      real64 const dt,
@@ -165,7 +182,6 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
     string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
-
     if( m_damageFlag )
     {
       poromechanicsMaxForce =
@@ -178,6 +194,19 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                                                                    localRhs,
                                                                                                    flowDofKey,
                                                                                                    FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    }                                                                                              
+    else if( m_isThermal )
+    {
+      poromechanicsMaxForce =
+        assemblyLaunch< constitutive::PorousSolidBase,
+                        thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory >( mesh,
+                                                                                                     dofManager,
+                                                                                                     regionNames,
+                                                                                                     viewKeyStruct::porousMaterialNamesString(),
+                                                                                                     localMatrix,
+                                                                                                     localRhs,
+                                                                                                     flowDofKey,
+                                                                                                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
     else
     {
@@ -193,7 +222,6 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                                                        FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
   } );
-
 
   // step 2: apply mechanics solver on its target regions not included in the poromechanics solver target regions
 
@@ -233,14 +261,28 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
   solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
 
 
+  // tell the flow solver that this is a stress initialization step
+  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
+
   // step 3: compute the fluxes (face-based contributions)
 
-  flowSolver()->assemblePoroelasticFluxTerms( time_n, dt,
-                                              domain,
-                                              dofManager,
-                                              localMatrix,
-                                              localRhs,
-                                              " " );
+  if( m_isThermal )
+  {
+    flowSolver()->assembleFluxTerms( time_n, dt,
+                                     domain,
+                                     dofManager,
+                                     localMatrix,
+                                     localRhs );
+  }
+  else
+  {
+    flowSolver()->assemblePoroelasticFluxTerms( time_n, dt,
+                                                domain,
+                                                dofManager,
+                                                localMatrix,
+                                                localRhs,
+                                                " " );
+  }
 
 }
 
@@ -285,7 +327,10 @@ void SinglePhasePoromechanicsSolver::updateState( DomainPartition & domain )
                                                                    CellElementSubRegion & subRegion )
     {
       flowSolver()->updateFluidState( subRegion );
-
+      if( m_isThermal )
+      {
+        flowSolver()->updateSolidInternalEnergyModel( subRegion );
+      }
     } );
   } );
 }

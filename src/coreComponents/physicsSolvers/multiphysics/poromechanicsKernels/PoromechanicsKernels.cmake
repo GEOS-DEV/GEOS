@@ -4,6 +4,7 @@ set( SinglePhasePoromechanicsPolicy "geosx::parallelDevicePolicy<32>" )
 set( SinglePhasePoromechanicsDamagePolicy "geosx::parallelDevicePolicy<32>" )
 set( SinglePhasePoromechanicsEFEMPolicy "geosx::parallelDevicePolicy<32>" )
 set( MultiphasePoromechanicsPolicy "geosx::parallelDevicePolicy<32>" )
+set( ThermalSinglePhasePoromechanicsPolicy "geosx::parallelDevicePolicy<32>" )
 
 configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
                 ${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/policies.hpp )
@@ -28,7 +29,6 @@ set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
                            H1_Wedge_Lagrange1_Gauss6
                            H1_Tetrahedron_Lagrange1_Gauss1
                            H1_Pyramid_Lagrange1_Gauss5
-                           Q3_Hexahedron_Lagrange_GaussLobatto
                            H1_Tetrahedron_VEM_Gauss1
                            H1_Wedge_VEM_Gauss1
                            H1_Hexahedron_VEM_Gauss1
