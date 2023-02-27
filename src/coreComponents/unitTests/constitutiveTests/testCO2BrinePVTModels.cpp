@@ -48,8 +48,9 @@ static const char * pvtLiquidPhillipsTableContent = "DensityFun PhillipsBrineDen
 static const char * pvtLiquidEnthalpyTableContent = "EnthalpyFun BrineEnthalpy 1e6 1.5e7 5e4 367.15 369.15 1 0.2";
 
 // the last are set relatively high (1e-4) to increase derivative value and check it properly
-static const char * pvtLiquidEzrokhiTableContent = "DensityFun EzrokhiBrineDensity 2.01e-6 -6.34e-7 1e-4\n"
-                                                   "ViscosityFun EzrokhiBrineViscosity 2.42e-7 0 1e-4";
+// This string has some more various whitespace values in it to test if everything goes well anyway.
+static const char * pvtLiquidEzrokhiTableContent = "\tDensityFun   EzrokhiBrineDensity   2.01e-6 -6.34e-7 1e-4\n\r"
+                                                   "\tViscosityFun EzrokhiBrineViscosity 2.42e-7 0        1e-4\n\r\n\r";
 
 static const char * pvtGasTableContent = "DensityFun SpanWagnerCO2Density 1e5 7.5e7 5e4 285.15 369.15 4.0\n" // we want to test the full
                                                                                                              // (pres, temp) range here
