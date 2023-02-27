@@ -79,6 +79,18 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
     setApplyDefaultValue( 1.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The upper bound of the damage" );
+
+  registerWrapper( viewKeyStruct::damageViscosityFlagString(), &m_damageViscosityFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Add damage viscosity to governing equations" );  
+
+  registerWrapper( viewKeyStruct::damageViscosityParameterString(), &m_damageViscosityCoeff ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The coefficient of the viscosity term" );   
+
+    
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
@@ -98,6 +110,11 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
       .setApplyDefaultValue( 0.0 )
       .setPlotLevel( PlotLevel::LEVEL_0 )
       .setDescription( "Damage variable" );
+
+    nodes.registerWrapper< real64_array >( "Damage_n" )
+      .setApplyDefaultValue( 0.0 )
+      .setPlotLevel( PlotLevel::LEVEL_0 )
+      .setDescription( "Damage variable in the previous time step" );  
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -197,8 +214,30 @@ real64 PhaseFieldDamageFEM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( tim
 
 void PhaseFieldDamageFEM::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                                 real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                                DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-{}
+                                                DomainPartition & domain )
+{
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+
+    if( m_damageViscosityFlag )
+    {
+      NodeManager & nodeManager = mesh.getNodeManager();
+      localIndex const numNodes = nodeManager.size();
+
+      arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( "Damage" );
+      arrayView1d< real64 > const nodalDamageN = nodeManager.getReference< array1d< real64 > >( "Damage_n" );
+
+      RAJA::forall< parallelDevicePolicy<> >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
+                                              [=] GEOSX_HOST_DEVICE ( localIndex const a )
+      {
+        nodalDamageN[a] = nodalDamage[a];
+      } );
+    }
+
+  } );
+}
 
 void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                                      DofManager & dofManager ) const
@@ -215,8 +254,8 @@ void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM(
 
 }
 
-void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                          real64 const GEOSX_UNUSED_PARAM( dt ),
+void PhaseFieldDamageFEM::assembleSystem( real64 const time_n,
+                                          real64 const dt,
                                           DomainPartition & domain,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -241,7 +280,10 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                                  localMatrix,
                                                  localRhs,
                                                  m_damageName,
-                                                 m_localDissipationOption=="Linear" ? 1 : 2 );
+                                                 m_localDissipationOption=="Linear" ? 1 : 2,
+                                                 m_damageViscosityFlag,
+                                                 m_damageViscosityCoeff,
+                                                 time_n<dt/2.0 ? 1e17 : dt );
 
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy<>,
@@ -430,7 +472,6 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
                                                DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-
   dofManager.addVectorToField( localSolution, m_damageName, m_damageName, scalingFactor );
 
   // Syncronize ghost nodes

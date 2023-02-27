@@ -100,7 +100,10 @@ public:
                           CRSMatrixView< real64, globalIndex const > const inputMatrix,
                           arrayView1d< real64 > const inputRhs,
                           string const fieldName,
-                          int const localDissipationOption ):
+                          int const localDissipationOption,
+                          integer const damageViscosityFlag,
+                          real64 const damageViscosityCoeff,
+                          real64 const inputDt ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -114,9 +117,13 @@ public:
           inputRhs ),
     m_X( nodeManager.referencePosition()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
+    m_nodalDamageN( nodeManager.template getReference< array1d< real64 > >( "Damage_n" )),
     m_quadDamage( inputConstitutiveType.getDamage() ),
     m_quadExtDrivingForce( inputConstitutiveType.getExtDrivingForce() ),
-    m_localDissipationOption( localDissipationOption )
+    m_localDissipationOption( localDissipationOption ),
+    m_damageViscosityFlag( damageViscosityFlag ),
+    m_damageViscosityCoeff( damageViscosityCoeff ),
+    m_dt( inputDt )
   {}
 
   //***************************************************************************
@@ -137,7 +144,8 @@ public:
     StackVariables():
       Base::StackVariables(),
             xLocal(),
-            nodalDamageLocal{ 0.0 }
+            nodalDamageLocal{ 0.0 },
+            nodalDamageNLocal{ 0.0 }
     {}
 
 #if !defined(CALC_FEM_SHAPE_IN_KERNEL)
@@ -150,6 +158,7 @@ public:
 
     /// C-array storage for the element local primary field variable.
     real64 nodalDamageLocal[numNodesPerElem];
+    real64 nodalDamageNLocal[numNodesPerElem];
   };
 
 
@@ -175,6 +184,7 @@ public:
 #endif
 
       stack.nodalDamageLocal[ a ] = m_nodalDamage[ localNodeIndex ];
+      stack.nodalDamageNLocal[ a ] = m_nodalDamageN[ localNodeIndex ];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
     }
@@ -202,8 +212,10 @@ public:
     FE_TYPE::calcN( q, N );
 
     real64 qp_damage = 0.0;
+    real64 qp_damage_n = 0.0;
     real64 qp_grad_damage[3] = {0, 0, 0};
     FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
+    FE_TYPE::value( N, stack.nodalDamageNLocal, qp_damage_n );
 
     real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy
@@ -241,6 +253,14 @@ public:
           stack.localJacobian[ a ][ b ] -= detJ * ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
                                                     + N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * ell * strainEnergyDensity/Gc ) );
         }
+        if(m_damageViscosityFlag)
+        {
+          stack.localJacobian[ a ][ b ] -= detJ * N[a] * N[b] * m_damageViscosityCoeff/m_dt;
+        }
+      }
+      if(m_damageViscosityFlag)
+      {
+        stack.localResidual[a] -= detJ * N[a] * m_damageViscosityCoeff * (qp_damage - qp_damage_n)/m_dt;
       }
     }
   }
@@ -285,6 +305,9 @@ protected:
   /// The global primary field array.
   arrayView1d< real64 const > const m_nodalDamage;
 
+  /// The global primary field array.
+  arrayView1d< real64 const > const m_nodalDamageN;
+
   /// The array containing the damage on each quadrature point of all elements
   arrayView2d< real64 const > const m_quadDamage;
 
@@ -292,6 +315,12 @@ protected:
   arrayView2d< real64 const > const m_quadExtDrivingForce;
 
   int const m_localDissipationOption;
+
+  integer const m_damageViscosityFlag;
+
+  real64 const m_damageViscosityCoeff;
+
+  real64 const m_dt;
 
 };
 
@@ -301,7 +330,10 @@ using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDa
                                                                     CRSMatrixView< real64, globalIndex const > const,
                                                                     arrayView1d< real64 > const,
                                                                     string const,
-                                                                    int >;
+                                                                    int,
+                                                                    integer,
+                                                                    real64,
+                                                                    real64 >;
 
 } // namespace geosx
 
