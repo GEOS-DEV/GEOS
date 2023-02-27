@@ -100,7 +100,8 @@ string concat( S const & delim, T const & v, Ts const & ... vs )
 template< typename RETURN_TYPE = string_array >
 RETURN_TYPE tokenize( string const & str,
                       string const & delimiters,
-                      bool const treatConsecutiveDelimAsOne = true );
+                      bool const treatConsecutiveDelimAsOne = true,
+                      bool const preTrimStr = false );
 
 /// Subdivide string by whitespaces (see std::isspace()) (do not create any empty token).
 template< typename RETURN_TYPE = string_array >

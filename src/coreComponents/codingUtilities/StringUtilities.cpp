@@ -30,7 +30,7 @@ string toLower( string const & input )
   string output;
   output.resize( input.size() );
   auto const toLowerCase = []( unsigned char c )
-      { return std::tolower( c ); };
+  { return std::tolower( c ); };
   std::transform( input.cbegin(), input.cend(), output.begin(), toLowerCase );
   return output;
 }
@@ -41,24 +41,44 @@ string toLower( string const & input )
 template< typename RETURN_TYPE >
 RETURN_TYPE tokenize( string const & str,
                       string const & delimiters,
-                      bool const treatConsecutiveDelimAsOne )
+                      bool const treatConsecutiveDelimAsOne,
+                      bool const preTrimStr )
 {
-  if( str.empty() )
+  if( str.empty())
   {
     return {};
   }
 
   RETURN_TYPE tokens;
-  size_t lastPos = 0;
-  size_t newPos;
-  while( ( newPos = str.find_first_of( delimiters, lastPos ) ) != string::npos )
+  size_t tokenBegin, tokenEnd, strEnd;
+
+  if( preTrimStr )
   {
-    tokens.emplace_back( str.substr( lastPos, newPos - lastPos ) );
-    lastPos = !treatConsecutiveDelimAsOne ? newPos + 1 : str.find_first_not_of( delimiters, newPos );
+    tokenBegin = str.find_first_not_of( delimiters );
+    strEnd = str.find_last_not_of( delimiters ) + 1;
   }
-  if( lastPos != string::npos )
+  else
   {
-    tokens.emplace_back( str.substr( lastPos ) );
+    tokenBegin = 0;
+    strEnd = str.size();
+  }
+
+  while( ( ( tokenEnd = str.find_first_of( delimiters, tokenBegin ) ) < strEnd ) && tokenBegin < strEnd )
+  {
+    tokens.emplace_back( str.substr( tokenBegin, tokenEnd - tokenBegin ) );
+    tokenBegin = !treatConsecutiveDelimAsOne ? tokenEnd + 1 : str.find_first_not_of( delimiters, tokenEnd );
+  }
+
+  if( tokenBegin < strEnd )
+  {
+    tokens.emplace_back( str.substr( tokenBegin, strEnd-tokenBegin ));
+  }
+  else if( !preTrimStr )
+  {
+    if( str.find_first_of( delimiters, strEnd - 1 ) != string::npos )
+    {
+      tokens.emplace_back( "" );
+    }
   }
 
   return tokens;
@@ -69,50 +89,18 @@ RETURN_TYPE tokenize( string const & str,
 template< typename RETURN_TYPE >
 RETURN_TYPE tokenizeBySpaces( string const & str )
 {
-  if( str.empty() )
-  {
-    return {};
-  }
-  else
-  {
-    const size_t strEnd=str.size();
-    RETURN_TYPE tokens;
-    size_t pos=0;
-
-    while( pos<strEnd )
-    {
-      //search for a token begining
-      while( pos<strEnd && ( std::isspace( str[pos] ) ) )
-      {
-        ++pos;
-      }
-
-      if( pos<strEnd )
-      {
-        size_t lastPos=pos;
-
-        //search for the token ending
-        do
-        {
-          ++pos;
-        }
-        while ( pos<strEnd && !std::isspace( str[pos] ) );
-
-        tokens.emplace_back( str.substr( lastPos, pos - lastPos ) );
-      }
-    }
-
-    return tokens;
-  }
+  return tokenize< RETURN_TYPE >( str, " \f\n\r\t\v", true, true );
 }
 
 template string_array tokenize< string_array >( string const & str,
                                                 string const & delimiters,
-                                                bool const treatConsecutiveDelimAsOne );
+                                                bool const treatConsecutiveDelimAsOne,
+                                                bool const preTrimStr );
 
 template std::vector< string > tokenize< std::vector< string > >( string const & str,
                                                                   string const & delimiters,
-                                                                  bool const treatConsecutiveDelimAsOne );
+                                                                  bool const treatConsecutiveDelimAsOne,
+                                                                  bool const preTrimStr );
 
 template string_array tokenizeBySpaces< string_array >( string const & str );
 
