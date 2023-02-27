@@ -261,7 +261,7 @@ void Group::printDataHierarchy( integer const indent )
 void Group::printMemoryAllocation( integer const indent, real64 const threshold )
 {
   static bool terminateBranch[64]{};
-  static std::unordered_set<void*> groupsPrinted;
+  static std::unordered_set< void * > groupsPrinted;
 
   if( indent==0 )
   {
@@ -289,7 +289,7 @@ void Group::printMemoryAllocation( integer const indent, real64 const threshold 
 
   if( MpiWrapper::commRank()==0 )
   {
-    globalAllocations.resize( numRanks * numValues);
+    globalAllocations.resize( numRanks * numValues );
   }
 
   MpiWrapper::gather( localAllocations.data(),
@@ -301,73 +301,37 @@ void Group::printMemoryAllocation( integer const indent, real64 const threshold 
 
   if( MpiWrapper::commRank()==0 )
   {
-  array2d<double> allocationReductions( numValues, 3 );
-  for( int a=0; a<numValues; ++a )
-  {
-    allocationReductions( a, 0 ) = 1e99;
-    allocationReductions( a, 1 ) = 0;
-    allocationReductions( a, 1 ) = 0;
-    for( int b=0; b<numRanks; ++b )
+    array2d< double > allocationReductions( numValues, 3 );
+    for( int a=0; a<numValues; ++a )
     {
-      int const recvIndex = a + b * numValues;
-      double const value = globalAllocations[recvIndex];
-      allocationReductions( a, 0 ) = std::min( allocationReductions( a, 0 ), value );
-      allocationReductions( a, 1 ) = std::max( allocationReductions( a, 1 ), value );
-      allocationReductions( a, 2 ) += value;
-    }
-  }
-
-  double const * const groupAllocations = allocationReductions[0];
-
-  if( indent==0 )
-  {
-    GEOSX_LOG_RANK_0( GEOSX_FMT( "[{}] = ( {}, {}, {} ) ",
-                                 getName(),
-                                 groupAllocations[0],
-                                 groupAllocations[1],
-                                 groupAllocations[2] ) );
-
-  }
-  else
-  {
-    string outputLine;
-    for( int i=0; i<indent-1; ++i )
-    {
-      if( terminateBranch[i]==false )
+      allocationReductions( a, 0 ) = 1e99;
+      allocationReductions( a, 1 ) = 0;
+      allocationReductions( a, 1 ) = 0;
+      for( int b=0; b<numRanks; ++b )
       {
-        outputLine += "|  ";
-      }
-      else
-      {
-        outputLine += "   ";
+        int const recvIndex = a + b * numValues;
+        double const value = globalAllocations[recvIndex];
+        allocationReductions( a, 0 ) = std::min( allocationReductions( a, 0 ), value );
+        allocationReductions( a, 1 ) = std::max( allocationReductions( a, 1 ), value );
+        allocationReductions( a, 2 ) += value;
       }
     }
-    GEOSX_LOG_RANK_0( outputLine.c_str()<<"|" );
-    if( groupAllocations[0] > threshold )
+
+    double const * const groupAllocations = allocationReductions[0];
+
+    if( indent==0 )
     {
-      outputLine += "|--[{}]: ( {:5.3g}, {:5.3g}, {:5.3g} )";
-      GEOSX_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "[{}] = ( {}, {}, {} ) ",
                                    getName(),
                                    groupAllocations[0],
                                    groupAllocations[1],
                                    groupAllocations[2] ) );
+
     }
     else
     {
-      outputLine += "|--[{}]";
-      GEOSX_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
-                                   getName() ) );
-    }
-
-  }
-
-  localIndex viewCount = 1;
-  for( auto & view : wrappers() )
-  {
-    if( allocationReductions(viewCount,0) > threshold )
-    {
       string outputLine;
-      for( int i=0; i<indent; ++i )
+      for( int i=0; i<indent-1; ++i )
       {
         if( terminateBranch[i]==false )
         {
@@ -378,15 +342,51 @@ void Group::printMemoryAllocation( integer const indent, real64 const threshold 
           outputLine += "   ";
         }
       }
-      outputLine += "| - {}: ( {:5.3g}, {:5.3g}, {:5.3g} )";
-      GEOSX_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
-                                   view.second->getName(),
-                                   allocationReductions(viewCount,0),
-                                   allocationReductions(viewCount,1),
-                                   allocationReductions(viewCount,2) ) );
+      GEOSX_LOG_RANK_0( outputLine.c_str()<<"|" );
+      if( groupAllocations[0] > threshold )
+      {
+        outputLine += "|--[{}]: ( {:5.3g}, {:5.3g}, {:5.3g} )";
+        GEOSX_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
+                                     getName(),
+                                     groupAllocations[0],
+                                     groupAllocations[1],
+                                     groupAllocations[2] ) );
+      }
+      else
+      {
+        outputLine += "|--[{}]";
+        GEOSX_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
+                                     getName() ) );
+      }
+
     }
-    ++viewCount;
-  }
+
+    localIndex viewCount = 1;
+    for( auto & view : wrappers() )
+    {
+      if( allocationReductions( viewCount, 0 ) > threshold )
+      {
+        string outputLine;
+        for( int i=0; i<indent; ++i )
+        {
+          if( terminateBranch[i]==false )
+          {
+            outputLine += "|  ";
+          }
+          else
+          {
+            outputLine += "   ";
+          }
+        }
+        outputLine += "| - {}: ( {:5.3g}, {:5.3g}, {:5.3g} )";
+        GEOSX_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
+                                     view.second->getName(),
+                                     allocationReductions( viewCount, 0 ),
+                                     allocationReductions( viewCount, 1 ),
+                                     allocationReductions( viewCount, 2 ) ) );
+      }
+      ++viewCount;
+    }
   }
 
   localIndex const numSubGroups = m_subGroups.size();

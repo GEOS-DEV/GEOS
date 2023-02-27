@@ -170,7 +170,6 @@ bool GeosxState::initializeDataRepository()
 
   if( m_commandLineOptions->printMemoryUsage > 0.0 )
   {
-    std::cout<<"m_commandLineOptions->printMemoryUsage = "<<m_commandLineOptions->printMemoryUsage<<std::endl;
     getProblemManager().printMemoryAllocation( 0, m_commandLineOptions->printMemoryUsage );
   }
 

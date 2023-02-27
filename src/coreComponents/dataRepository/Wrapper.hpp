@@ -76,7 +76,7 @@ public:
                     Group & parent ):
     WrapperBase( name, parent ),
     m_ownsData( true ),
-    m_isClone(false),
+    m_isClone( false ),
     m_data( new T() ),
     m_default()
   {
@@ -99,7 +99,7 @@ public:
                     std::unique_ptr< T > object ):
     WrapperBase( name, parent ),
     m_ownsData( true ),
-    m_isClone(false),
+    m_isClone( false ),
     m_data( object.release() ),
     m_default()
   {
@@ -122,7 +122,7 @@ public:
                     T * object ):
     WrapperBase( name, parent ),
     m_ownsData( false ),
-    m_isClone(false),
+    m_isClone( false ),
     m_data( object ),
     m_default()
   {
