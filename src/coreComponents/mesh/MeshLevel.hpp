@@ -49,6 +49,15 @@ public:
   MeshLevel( string const & name,
              Group * const parent );
 
+  /**
+   * @brief Constructor for the MeshLevel object.
+   * @param[in] name the name of the MeshLevel object in the repository
+   * @param[in] parent the parent group of the MeshLevel object being constructed
+   * @param[in] order the order of the mesh level
+   */
+  MeshLevel( string const & name,
+             Group * const parent,
+             int order );
 
   /**
    * @brief Constructor to create a shallow MeshLevel.
@@ -266,6 +275,13 @@ public:
    */
   MeshLevel & getShallowParent();
 
+  /**
+   * @brief Returns the order of the mesh level
+   *
+   * @return int
+   */
+  int getOrder() const;
+
   ///@}
 
 private:
@@ -290,7 +306,9 @@ private:
   bool const m_isShallowCopy = false;
 
   MeshLevel * const m_shallowParent;
-
+  
+  int m_order;
+ 
 };
 
 } /* namespace geosx */

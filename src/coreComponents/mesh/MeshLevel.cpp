@@ -29,6 +29,12 @@ using namespace dataRepository;
 
 MeshLevel::MeshLevel( string const & name,
                       Group * const parent ):
+  MeshLevel(name, parent, 1)
+{}
+
+MeshLevel::MeshLevel( string const & name,
+                      Group * const parent,
+                      int order ):
   Group( name, parent ),
   m_nodeManager( new NodeManager( groupStructKeys::nodeManagerString(), this ) ),
   m_edgeManager( new EdgeManager( groupStructKeys::edgeManagerString(), this ) ),
@@ -38,7 +44,8 @@ MeshLevel::MeshLevel( string const & name,
   m_embSurfEdgeManager( new EdgeManager( groupStructKeys::embSurfEdgeManagerString, this ) ),
   m_modificationTimestamp( 0 ),
   m_isShallowCopy( false ),
-  m_shallowParent( nullptr )
+  m_shallowParent( nullptr ),
+  m_order( order )
 {
 
   registerGroup( groupStructKeys::nodeManagerString(), m_nodeManager );
@@ -77,7 +84,8 @@ MeshLevel::MeshLevel( string const & name,
   m_embSurfEdgeManager( source.m_embSurfEdgeManager ),
   m_modificationTimestamp( 0 ),
   m_isShallowCopy( true ),
-  m_shallowParent( &source )
+  m_shallowParent( &source ),
+  m_order( source.getOrder() )
 {
   this->setRestartFlags( RestartFlags::NO_WRITE );
 
@@ -308,7 +316,7 @@ MeshLevel::MeshLevel( string const & name,
                       CellBlockManagerABC & cellBlockManager,
                       int const order,
                       int const strategy ):
-  MeshLevel( name, parent )
+  MeshLevel( name, parent, order )
 {
 
 if ( strategy == 1 )
@@ -876,9 +884,8 @@ if ( strategy == 2 )
   // - edge nodes are given by a linear interpolation between vertices v1 and v2, 'a' steps away from v1.
   //   We assume that v1 < v2 and identify these nodes with [v1 v2 -1 -1 a -1].
   // - face nodes are given by a bilinear interpolation between edges v1-v2 and v3-v4 (v1-v4 and v2-v3 are the diagonals), with interpolation parameters 'a' and 'b'.
-  //   We assume that v1 is the smallest, and that v2 < v3. Then these nodes are identified with [v1 v2 v3 v4 -1 -1 -1 -1 a b -1]
-  // - cell nodes are given as a trilinear interpolation between nodes v1--v8 in the usual lexicographical order of hex cell corners.
-  //   these nodes are not inserted in the hash map, since they are only visited once.
+  //   We assume that v1 is the smallest, and that v2 < v3. Then these nodes are identified with [v1 v2 v3 v4 a b]
+  // - cell nodes are encountered only once, and thus do not need to be put in the hash map
   std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher, NodeKeyEqual > nodeIDs;
 
   // Create new nodes, with local and global IDs
@@ -931,11 +938,11 @@ if ( strategy == 2 )
     {
       localIndex nodeID;
       std::array< localIndex, 6 > nodeKey = createNodeKey( v1, v2, q, order );
-      if( !nodeIDs.count( nodeKey ) == 1 )
+      if( nodeIDs.count( nodeKey ) == 0 )
       {
         // this is an internal edge node: create it
         nodeID = localNodeID;
-        nodeIDs[ nodeKey ] = localNodeID;
+        nodeIDs[ nodeKey ] = nodeID;
         nodeLocalToGlobalNew[ nodeID ] = offset + edgeLocalToGlobal[ iter_edge ] * numInternalNodesPerEdge + newEdgeNodes;
         localNodeID++;
         newEdgeNodes++;
@@ -961,6 +968,8 @@ if ( strategy == 2 )
   m_faceManager->edgeList() = source.m_faceManager->edgeList();
   // copy the faces-to-elements map from source
   m_faceManager->elementList() = source.m_faceManager->elementList();
+  m_faceManager->elementRegionList() = source.m_faceManager->elementRegionList();
+  m_faceManager->elementSubRegionList() = source.m_faceManager->elementSubRegionList();
   // copy the faces-boundaryIndicator from source
   m_faceManager->getDomainBoundaryIndicator() = source.m_faceManager->getDomainBoundaryIndicator();
 
@@ -1010,11 +1019,11 @@ if ( strategy == 2 )
       {
         localIndex nodeID;
         std::array< localIndex, 6 > nodeKey = createNodeKey( v1, v2, v3, v4, q1, q2, order );
-        if( !nodeIDs.count( nodeKey ) == 1 )
+        if( nodeIDs.count( nodeKey ) == 0 )
         {
           // this is an internal face node: create it
           nodeID = localNodeID;
-          nodeIDs[ nodeKey ] = localNodeID;
+          nodeIDs[ nodeKey ] = nodeID;
           nodeLocalToGlobalNew[ nodeID ] = offset + faceLocalToGlobal[ iter_face ] * numInternalNodesPerFace + newFaceNodes;
           localNodeID++;
           newFaceNodes++;
@@ -1032,7 +1041,7 @@ if ( strategy == 2 )
 
 
   //////////////////////////
-  // Nodes
+  // TODO check if this piece below is still necessary or not
   //////////////////////////
 
   // the number of nodes per elements depends on the order number
@@ -1171,17 +1180,21 @@ if ( strategy == 2 )
 
 
 
-       //GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
+       GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
        //// GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalSource = "<< nodeLocalToGlobalSource );
-       // GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalNew = "<< nodeLocalToGlobalNew );
+       GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalNew = "<< nodeLocalToGlobalNew );
        ////GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapSource = "<< edgeToNodeMapSource);
        //GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapNew = "<< edgeToNodeMapNew);
        ////GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapSource = "<< faceToNodeMapSource);
        //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
        //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
+       //GEOSX_LOG_RANK ("!!!! INFO !!!! faceCentersNew = "<< m_faceManager->faceCenter() );
 
       //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
       //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
+      //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! elemCenterNew= "<< elemCenterNew);
+      //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! faceCenterNew= "<< m_faceManager->faceCenter());
+      //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! faceNormalNew= "<< m_faceManager->faceNormal());
     } );
   } );
 }
@@ -1191,7 +1204,7 @@ MeshLevel::MeshLevel( string const & name,
                       Group * const parent,
                       MeshLevel const & source,
                       int const order ):
-  MeshLevel( name, parent )
+  MeshLevel( name, parent, order )
 {
 
   GEOSX_MARK_FUNCTION;
@@ -1211,6 +1224,8 @@ MeshLevel::MeshLevel( string const & name,
   m_faceManager->faceNormal() = source.m_faceManager->faceNormal();
   m_faceManager->getDomainBoundaryIndicator() = source.m_faceManager->getDomainBoundaryIndicator();
   m_faceManager->elementList() = source.m_faceManager->elementList();
+  m_faceManager->elementRegionList() = source.m_faceManager->elementRegionList();
+  m_faceManager->elementSubRegionList() = source.m_faceManager->elementSubRegionList();
 
   // Faces
   ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceManager->nodeList();
@@ -1600,10 +1615,13 @@ MeshLevel::~MeshLevel()
 
 void MeshLevel::initializePostInitialConditionsPostSubGroups()
 {
-  m_elementManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+  if( getOrder() > 1 )
   {
-    subRegion.calculateElementGeometricQuantities( *m_nodeManager, *m_faceManager );
-  } );
+    m_elementManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      subRegion.calculateElementGeometricQuantities( *m_nodeManager, *m_faceManager );
+    } );
+  }
 }
 
 void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & seedNodeList,
@@ -1797,5 +1815,9 @@ bool MeshLevel::isShallowCopyOf( MeshLevel const & comparisonLevel ) const
          isShallowCopy();
 }
 
+int MeshLevel::getOrder() const
+{
+  return m_order;
+}
 
 } /* namespace geosx */

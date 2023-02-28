@@ -221,7 +221,6 @@ struct WaveSolverUtils
     real64 tmpVector[3]{};
     for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
     {
-
       localIndex const iface = elemsToFaces[kfe];
       real64 faceCenterOnFace[3] = {faceCenter[iface][0],
                                     faceCenter[iface][1],

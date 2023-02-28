@@ -150,9 +150,11 @@ public:
    * @brief Copies the nodes positions and the nodes to (edges|faces|elements) mappings from @p cellBlockManager.
    * @param[in] cellBlockManager Will provide the mappings.
    * @param[in] elemRegionManager element region manager, needed to map blocks to subregion
+   * @param[in] baseMeshLevel flag that indicates if we are operating on the base mesh level or on another mesh level
    */
   void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
-                                ElementRegionManager const & elemRegionManager, bool baseLevelMesh );
+                                ElementRegionManager const & elemRegionManager,
+                                bool baseMeshLevel );
 
   /**
    * @brief Link the current manager to other managers.

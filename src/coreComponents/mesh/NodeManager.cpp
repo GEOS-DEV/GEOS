@@ -126,13 +126,14 @@ void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
 }
 
 void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
-                                           ElementRegionManager const & elemRegionManager, bool baseLevelMesh )
+                                           ElementRegionManager const & elemRegionManager,
+                                           bool baseMeshLevel )
 {
   GEOSX_MARK_FUNCTION;
-
-  if ( baseLevelMesh )
+  if( baseMeshLevel )
+  {
     resize( cellBlockManager.numNodes() );
-
+  }
   m_referencePosition = cellBlockManager.getNodePositions();
 
   m_toEdgesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToEdges(),

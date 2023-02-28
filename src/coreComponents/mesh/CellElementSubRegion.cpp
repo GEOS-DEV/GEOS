@@ -403,7 +403,7 @@ void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager cons
                                                                 FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) )
 {
   GEOSX_MARK_FUNCTION;
-
+    
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
 
   forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )

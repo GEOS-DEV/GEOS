@@ -74,12 +74,12 @@ void DomainPartition::initializationOrder( string_array & order )
   }
 }
 
-void DomainPartition::setupCommunications( bool use_nonblocking , bool setUpGhostFlag)
+void DomainPartition::setupCommunications( bool use_nonblocking, bool setUpGhosts )
 {
-  GEOSX_MARK_FUNCTION;
+
 
 #if defined(GEOSX_USE_MPI)
-  if ( setUpGhostFlag == 0 )  
+  if ( !setUpGhosts )  
   {
   
     if( m_metisNeighborList.empty() )
@@ -159,7 +159,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking , bool setUpGhos
   forMeshBodies( [&]( MeshBody & meshBody )
   {
 
-    if ( setUpGhostFlag == 0 )  
+    if ( !setUpGhosts )  
     { 
   
       meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
@@ -190,10 +190,12 @@ void DomainPartition::setupCommunications( bool use_nonblocking , bool setUpGhos
   
         CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
                                                                                m_neighbors );
+	     faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
+	     faceManager.computeGeometry( nodeManager );
       } );
       //GEOSX_LOG_RANK( "INFO: use_nonblocking="<<use_nonblocking);
     }
-    else if (setUpGhostFlag == 1)
+    else if ( setUpGhosts )
     {
 
       meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
@@ -206,27 +208,28 @@ void DomainPartition::setupCommunications( bool use_nonblocking , bool setUpGhos
 	        FaceManager & faceManager = meshLevel.getFaceManager();
 
 	        CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
-	        faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
-	        faceManager.computeGeometry( nodeManager );
 
         }
         else if ( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
         {
           for( NeighborCommunicator const & neighbor : m_neighbors )
-           {   
-             neighbor.addNeighborGroupToMesh( meshLevel );
-           }   
-	      FaceManager & faceManager = meshLevel.getFaceManager();
-         NodeManager & nodeManager = meshLevel.getNodeManager();
-         CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager, m_neighbors );
-         CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, m_neighbors );
-         CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+          {   
+            neighbor.addNeighborGroupToMesh( meshLevel );
+          }   
+	       FaceManager & faceManager = meshLevel.getFaceManager();
+          NodeManager & nodeManager = meshLevel.getNodeManager();
+          CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager, m_neighbors );
+          CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, m_neighbors );
+          CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
         }
 
       } );
     }
   } );
 }
+
+
+
 
 void DomainPartition::addNeighbors( const unsigned int idim,
                                     MPI_Comm & cartcomm,

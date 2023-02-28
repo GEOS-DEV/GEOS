@@ -75,7 +75,6 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
   globalIndex const offset = MpiWrapper::prefixSum< globalIndex >( numberOfObjectsHere );
 
   arrayView1d< globalIndex > const localToGlobal = object.localToGlobalMap();
-
   // set the global indices as if they were all local to this process
   for( localIndex a = 0; a < object.size(); ++a )
   {
@@ -87,7 +86,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
   ArrayOfSets< globalIndex > const objectToCompositionObject =
     object.extractMapFromObjectForAssignGlobalIndexNumbers( compositionObject );
 
-  // now arrange the data from objectToCompositionObject into a map "indexByFirstCompositionIndex", such that the key
+  // now arrange the data from objectToCompositionObject into a map \n"indexByFirstCompositionIndex\n", such that the key
   // is the lowest global index of the composition object that make up this object. The value of the map is a pair, with
   // the array being the remaining composition object global indices, and the second being the global index of the
   // object itself.
@@ -216,7 +215,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
     // and neighborCompositionObjects[neighborNum].
     auto iter_local = indexByFirstCompositionIndex.begin();
     auto iter_neighbor = neighborCompositionObjects[neighborIndex].begin();
-
+    int MYCOUNT = 0;
     // now we continue the while loop as long as both of our iterators are in range.
     while( iter_local != indexByFirstCompositionIndex.end() &&
            iter_neighbor != neighborCompositionObjects[neighborIndex].end() )
@@ -254,6 +253,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
         }
         ++iter_local;
         ++iter_neighbor;
+       MYCOUNT++;
       }
       else if( iter_local->first < iter_neighbor->first )
       {
@@ -267,6 +267,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
   }
 
   object.constructGlobalToLocalMap();
+
 
   object.setMaxGlobalIndex();
 }

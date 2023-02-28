@@ -360,6 +360,12 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   arrayView1d< localIndex const > const nodeGhostsToReceive = nodeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
+  //printf(" prepareAndSendSyncLists number of ghosts to receive: %i\n",nodeGhostsToReceive.size() );
+  //printf(" ghosts to receive: ");
+  //for(int i=0;i<nodeGhostsToReceive.size(); i++){
+  //  printf("%i ",nodeGhostsToReceive[i] );
+  //}
+  //printf("\n");
   arrayView1d< localIndex const > const edgeGhostsToReceive = edgeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
   arrayView1d< localIndex const > const faceGhostsToReceive = faceManager.getNeighborData( m_neighborRank ).ghostsToReceive();
 
@@ -450,6 +456,14 @@ void NeighborCommunicator::unpackAndRebuildSyncLists( MeshLevel & mesh,
   ElementRegionManager & elemManager = mesh.getElemManager();
 
   localIndex_array & nodeGhostsToSend = nodeManager.getNeighborData( m_neighborRank ).ghostsToSend();
+  GEOSX_LOG_RANK ("!!!! INFO !!!! unpackAndRebuildSyncList nodeGhostsToSend = "<< nodeGhostsToSend );
+  GEOSX_LOG_RANK ("!!!! INFO !!!! unpackAndRebuildSyncList globalToLocalMap = "<< nodeManager.globalToLocalMap() );
+  //printf(" unpackAndRebuild number of ghosts to send: %i\n",nodeGhostsToSend.size() );
+  //printf(" ghosts to send: ");
+  //for(int i=0;i<nodeGhostsToSend.size(); i++){
+  //  printf("%i ",nodeGhostsToSend[i] );
+  //}
+  //printf("\n");
   localIndex_array & edgeGhostsToSend = edgeManager.getNeighborData( m_neighborRank ).ghostsToSend();
   localIndex_array & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
 
@@ -480,6 +494,7 @@ void NeighborCommunicator::unpackAndRebuildSyncLists( MeshLevel & mesh,
 
     subRegion.setGhostRankForSenders( m_neighborRank );
   } );
+  GEOSX_LOG_RANK ("!!!! INFO !!!! unpackAndRebuildSyncList at end nodeGhostsToSend = "<< nodeGhostsToSend );
 }
 
 
@@ -499,6 +514,7 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
   arrayView1d< localIndex const > const & nodeGhostsToSend = nodeManager.getNeighborData( m_neighborRank ).ghostsToSend();
   arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( m_neighborRank ).ghostsToSend();
   arrayView1d< localIndex const > const & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
+  GEOSX_LOG_RANK ("!!!! INFO !!!! packCOmmSizeForSync nodeGhostsToSend = "<< nodeGhostsToSend );
 
   int bufferSize = 0;
 
@@ -534,6 +550,7 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
     }
   }
   this->m_sendBufferSize[commID] = bufferSize;
+  GEOSX_LOG_RANK ("!!!! INFO !!!! packCOmmSizeForSync at the end nodeGhostsToSend = "<< nodeGhostsToSend );
   return bufferSize;
 }
 
@@ -553,6 +570,10 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
   arrayView1d< localIndex const > const & nodeGhostsToSend = nodeManager.getNeighborData( m_neighborRank ).ghostsToSend();
   arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( m_neighborRank ).ghostsToSend();
   arrayView1d< localIndex const > const & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
+  GEOSX_LOG_RANK ("!!!! INFO !!!! packCOmmBuffForSync at the end nodeGhostsToSend = "<< nodeGhostsToSend );
+   
+
+  GEOSX_LOG_RANK ("!!!! INFO !!!! packCommBufferForSync nodeGhostsToSend = "<< nodeGhostsToSend );
 
   buffer_type & sendBuff = sendBuffer( commID );
   int const bufferSize =  LvArray::integerConversion< int >( sendBuff.size());
@@ -592,6 +613,7 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
     }
   }
 
+  GEOSX_LOG_RANK ("!!!! INFO !!!! packCOmmBuffForSync at the end nodeGhostsToSend = "<< nodeGhostsToSend );
   GEOSX_ERROR_IF_NE( bufferSize, packedSize );
 }
 
@@ -613,6 +635,12 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
   ElementRegionManager & elemManager = mesh.getElemManager();
 
   array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
+  //printf(" unpackBufferForSync  number of ghosts to receive: %i\n",nodeGhostsToReceive.size() );
+  //printf(" ghosts to receive: ");
+  //for(int i=0;i<nodeGhostsToReceive.size(); i++){
+  //  printf("%i ",nodeGhostsToReceive[i] );
+  //}
+  //printf("\n");
   array1d< localIndex > & edgeGhostsToReceive = edgeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
   array1d< localIndex > & faceGhostsToReceive = faceManager.getNeighborData( m_neighborRank ).ghostsToReceive();
 

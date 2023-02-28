@@ -114,12 +114,14 @@ void FaceManager::setDomainBoundaryObjects()
 
 void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                            ElementRegionManager const & elemRegionManager,
-                                           NodeManager const & nodeManager, bool baseLevelMesh )
+                                           NodeManager const & nodeManager, bool baseMeshLevel )
 {
   GEOSX_MARK_FUNCTION;
 
-  if ( baseLevelMesh )
+  if( baseMeshLevel )
+  {
     resize( cellBlockManager.numFaces() );
+  }
 
   m_toNodesRelation.base() = cellBlockManager.getFaceToNodes();
   m_toEdgesRelation.base() = cellBlockManager.getFaceToEdges();
@@ -129,8 +131,10 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( blockToSubRegion.toViewConst(),
                                                                          toCellBlock,
                                                                          m_toElements );
-  if ( baseLevelMesh )
+  if( baseMeshLevel )
+  {
     computeGeometry( nodeManager );
+  }
 }
 
 void FaceManager::setupRelatedObjectsInRelations( NodeManager const & nodeManager,
@@ -176,7 +180,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
                                     ElementRegionManager const & elemManager )
 {
   GEOSX_MARK_FUNCTION;
-
+  
   arrayView2d< localIndex const > const facesToElementRegions = elementRegionList();
   arrayView2d< localIndex const > const facesToElementSubRegions = elementSubRegionList();
   arrayView2d< localIndex const > const facesToElements = elementList();
@@ -280,7 +284,17 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
     }
 
     std::sort( thetaOrder, thetaOrder + numFaceNodes );
-
+    // printf(" sorted face. Previous order ");
+    //for( localIndex n = 0; n < numFaceNodes; ++n )
+    //{
+    //  printf(" %i ", faceNodes[n]);
+    //}
+    //printf(", new order ");
+    //for( localIndex n = 0; n < numFaceNodes; ++n )
+    //{
+    //  printf(" %i ", thetaOrder[n].second);
+    //}
+    //printf("\n");
     // Reorder nodes on face
     for( localIndex n = 0; n < numFaceNodes; ++n )
     {

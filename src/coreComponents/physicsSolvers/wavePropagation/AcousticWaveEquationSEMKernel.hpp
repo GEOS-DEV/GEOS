@@ -107,6 +107,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                   coords );
           if( sourceFound )
           {
+            printf("found source in element %i with center %f, %f, %f\n",k, center[0], center[1], center[2]);
             real64 coordsOnRefElem[3]{};
 
 
@@ -221,7 +222,7 @@ struct MassMatrixKernel
 
       real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
       //GEOSX_LOG_RANK_0 ( "!!! INFO !!! velocity["<<k<<"] = "<< velocity[k]<<"; invC2="<<invC2);
-
+      //printf("!!! INFO !!! velocity[%i] = %f; invC2=%f\n", k, velocity[k],invC2); 
       real64 xLocal[ numNodesPerElem ][ 3 ];
 
 
@@ -237,6 +238,8 @@ struct MassMatrixKernel
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
+        //GEOSX_LOG_RANK_0 ( "!!! INFO !!! local increment for "<<k<<", " << q <<" = "<< localIncrement );
+        //printf("!!! INFO !!! local increment for %i, %i = %f\n",k, q,localIncrement );
         RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][q]], localIncrement );
       }
     } ); // end loop over element
@@ -298,13 +301,16 @@ struct DampingMatrixKernel
         constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
 
         real64 xLocal[ numNodesPerFace ][ 3 ];
+        //  printf("facesToNodes %i ",f);
         for( localIndex a = 0; a < numNodesPerFace; ++a )
         {
+        //  printf("%i ",facesToNodes(f,a) );
           for( localIndex i = 0; i < 3; ++i )
           {
             xLocal[a][i] = X( facesToNodes( f, a ), i );
           }
         }
+        //  printf("\n" );
 
         for( localIndex q = 0; q < numNodesPerFace; ++q )
         {
@@ -814,7 +820,10 @@ public:
   {
     m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
+      //printf("m_elemsToNodes[%i][%i]=%i\n",k,j,m_elemsToNodes[k][j]);
       real32 const localIncrement = val*m_p_n[m_elemsToNodes[k][j]];
+      //printf("localIncrement[%i][%i]=%e\n",k,j,localIncrement);
+      //printf("val[%i][%i]=%e\n",k,j,val);                      
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
     } );
   }
