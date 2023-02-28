@@ -191,7 +191,7 @@ We advise users to use absolute path to the mesh file.
 
 GEOSX uses ``ElementRegions`` to support different physics
 or to define different constitutive properties.
-An ``ElementRegion`` is defined as a set of ``CellBlocks``.
+The ``ElementRegions`` block can contain several ``CellElementRegion`` blocks. A ``CellElementRegion`` is defined as a set of ``CellBlocks``.
 A ``CellBlock`` is an ensemble of elements with the same element geometry.
 
 .. figure:: mesh_multi.png
@@ -206,14 +206,14 @@ The ``ElementRegions`` are defined as below :
 .. code-block:: xml
 
   <ElementRegions>
-    <ElementRegion
+    <CellElementRegion
       name="Top"
-      cellBlocks="Top_hexahedra Top_wedges Top_tetrahedra"
-      materialList="water rock"/>
-    <ElementRegion
+      cellBlocks="{ Top_hexahedra, Top_wedges, Top_tetrahedra }"
+      materialList="{ water, rock }"/>
+    <CellElementRegion
       name="Bot"
-      cellBlocks="Bot_hexahedra Bot_wedges Bot_tetrahedra"
-      materialList="water rock"/>
+      cellBlocks="{ Bot_hexahedra, Bot_wedges, Bot_tetrahedra }"
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
 You have to use the following syntax to declare your ``CellBlocks`` :
