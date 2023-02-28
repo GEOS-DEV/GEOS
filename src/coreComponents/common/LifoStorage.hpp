@@ -119,13 +119,6 @@ public:
   LifoStorage( std::string name, arrayView1d< T > array, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
     LifoStorage( name, array.size(), numberOfBuffersToStoreOnDevice, numberOfBuffersToStoreOnHost, maxNumberOfBuffers ) {}
 
-  ~LifoStorage()
-  {
-    size_t free, total;
-    GEOSX_ERROR_IF( cudaSuccess != cudaMemGetInfo( &free, &total ), "Error getting CUDA device available memory" );
-    double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
-  }
-
   /**
    * Asynchroneously push a copy of the given LvArray into the LIFO
    *
