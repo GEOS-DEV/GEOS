@@ -12,14 +12,14 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "RelpermDriver.hpp"
-
 #include "common/MpiWrapper.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
+
+#include "RelpermDriver.hpp"
 
 namespace geosx
 {
