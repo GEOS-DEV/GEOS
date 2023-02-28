@@ -19,11 +19,11 @@
 #ifndef GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
 #define GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
 
-#include <iomanip>
-#include <sstream>
-
 #include "common/DataTypes.hpp"
 
+#include <iomanip>
+#include <sstream>
+#include <cmath>
 namespace geosx
 {
 namespace stringutilities
@@ -138,6 +138,30 @@ array1d< T > fromStringToArray( string const & str )
     v.emplace_back( sub );
   }
   return v;
+}
+
+template< typename T >
+string toMetricPrefixString( T const & value )
+{
+  char const prefixes[7] = { ' ', 'K', 'M', 'G', 'T', 'P', 'E'};
+
+  T rval;
+  string retString;
+  for( int a=6; a>=0; --a )
+  {
+    T const scaleFactor = pow( 10.0, 3*a );
+    if( value > scaleFactor || a==0 )
+    {
+      rval = value / scaleFactor;
+      rval = round( rval * 10 ) / 10;
+      retString = std::to_string( rval );
+      int const preDecimalDigits = retString.find( "." );
+      int const digits = (preDecimalDigits<=2) ? preDecimalDigits+2 : preDecimalDigits;
+      retString = retString.substr( 0, digits ) + " " + prefixes[a];
+      break;
+    }
+  }
+  return retString;
 }
 
 } // namespace stringutilities

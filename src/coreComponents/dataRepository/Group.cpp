@@ -17,6 +17,7 @@
 #include "ConduitRestart.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
 
@@ -321,16 +322,24 @@ void Group::printMemoryAllocation( integer const indent, real64 const threshold 
 
     if( indent==0 )
     {
-      GEOSX_LOG_RANK_0( GEOSX_FMT( "[{}] = ( {}, {}, {} ) ",
-                                   getName(),
-                                   groupAllocations[0],
-                                   groupAllocations[1],
-                                   groupAllocations[2] ) );
+      //         1         2         3         4         5         6         7         8         9        10        11        12
+      //123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+      GEOSX_LOG_RANK_0( "************************************************************************************************************************" );
+      GEOSX_LOG_RANK_0( " Data repository memory allocations " );
+      GEOSX_LOG_RANK_0( "                                                                                       min          max          sum    " );
+      GEOSX_LOG_RANK_0( "                                                                                   -----------  -----------  -----------" );
+
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "{:.<83} {:>9s}    {:>9s}    {:>9s}",
+                                   "[" + getName() + "]",
+                                   stringutilities::toMetricPrefixString( groupAllocations[0] ) + 'B',
+                                   stringutilities::toMetricPrefixString( groupAllocations[1] ) + 'B',
+                                   stringutilities::toMetricPrefixString( groupAllocations[2] ) + 'B' ) );
 
     }
     else
     {
       string outputLine;
+      int indentChars = 0;
       for( int i=0; i<indent-1; ++i )
       {
         if( terminateBranch[i]==false )
@@ -341,16 +350,19 @@ void Group::printMemoryAllocation( integer const indent, real64 const threshold 
         {
           outputLine += "   ";
         }
+        indentChars += 3;
       }
       GEOSX_LOG_RANK_0( outputLine.c_str()<<"|" );
+      indentChars += 1;
       if( groupAllocations[0] > threshold )
       {
-        outputLine += "|--[{}]: ( {:5.3g}, {:5.3g}, {:5.3g} )";
+        indentChars += 3;
+        outputLine += "|--{:.<" + std::to_string( 83-indentChars ) + "} {:>9s}    {:>9s}    {:>9s}";
         GEOSX_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
-                                     getName(),
-                                     groupAllocations[0],
-                                     groupAllocations[1],
-                                     groupAllocations[2] ) );
+                                     "[" + getName() + "]",
+                                     stringutilities::toMetricPrefixString( groupAllocations[0] ) + 'B',
+                                     stringutilities::toMetricPrefixString( groupAllocations[1] ) + 'B',
+                                     stringutilities::toMetricPrefixString( groupAllocations[2] ) + 'B' ) );
       }
       else
       {
@@ -367,6 +379,7 @@ void Group::printMemoryAllocation( integer const indent, real64 const threshold 
       if( allocationReductions( viewCount, 0 ) > threshold )
       {
         string outputLine;
+        int indentChars = 0;
         for( int i=0; i<indent; ++i )
         {
           if( terminateBranch[i]==false )
@@ -377,13 +390,16 @@ void Group::printMemoryAllocation( integer const indent, real64 const threshold 
           {
             outputLine += "   ";
           }
+          indentChars += 3;
         }
-        outputLine += "| - {}: ( {:5.3g}, {:5.3g}, {:5.3g} )";
+        indentChars += 5;
+//        outputLine += "| - {:.<" + std::to_string(83-indentChars) + "} {:>9.4g}    {:>9.4g}    {:>9.4g}";
+        outputLine += "| - {:.<" + std::to_string( 83-indentChars ) + "} {:>9s}    {:>9s}    {:>9s}";
         GEOSX_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
                                      view.second->getName(),
-                                     allocationReductions( viewCount, 0 ),
-                                     allocationReductions( viewCount, 1 ),
-                                     allocationReductions( viewCount, 2 ) ) );
+                                     stringutilities::toMetricPrefixString( allocationReductions( viewCount, 0 ) ) + 'B',
+                                     stringutilities::toMetricPrefixString( allocationReductions( viewCount, 1 ) ) + 'B',
+                                     stringutilities::toMetricPrefixString( allocationReductions( viewCount, 2 ) ) + 'B' ) );
       }
       ++viewCount;
     }
@@ -399,6 +415,12 @@ void Group::printMemoryAllocation( integer const indent, real64 const threshold 
       groupsPrinted.insert( group.second );
       group.second->printMemoryAllocation( indent + 1, threshold );
     }
+  }
+  if( indent==0 )
+  {
+    //         1         2         3         4         5         6         7         8         9        10
+    //1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+    GEOSX_LOG_RANK_0( "****************************************************************************************************" );
   }
 }
 
