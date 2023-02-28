@@ -25,6 +25,7 @@
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -374,14 +375,15 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & )
   {
-    fsManager.apply< ElementSubRegionBase >( time + dt,
-                                             mesh,
-                                             FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                                             [&]( FieldSpecificationBase const & fs,
-                                                  string const &,
-                                                  SortedArrayView< localIndex const > const & targetSet,
-                                                  ElementSubRegionBase & subRegion,
-                                                  string const & )
+    fsManager.apply< ElementSubRegionBase,
+                     SourceFluxBoundaryCondition >( time + dt,
+                                                    mesh,
+                                                    SourceFluxBoundaryCondition::catalogName(),
+                                                    [&]( SourceFluxBoundaryCondition const & fs,
+                                                         string const &,
+                                                         SortedArrayView< localIndex const > const & targetSet,
+                                                         ElementSubRegionBase & subRegion,
+                                                         string const & )
     {
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
