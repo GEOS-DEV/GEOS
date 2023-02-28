@@ -123,8 +123,7 @@ TEST( testStringUtilities, tokenize )
                << " ) failed : " << r.size()
                << " results instead of " << test.m_results.size();
       }
-
-      if( r.size() == test.m_results.size())
+      else
       {
         for( int i = 0, rEnd = r.size(); i < rEnd; ++i )
         {
@@ -171,14 +170,13 @@ TEST( testStringUtilities, tokenize )
     {
       std::vector< string > r = stringutilities::tokenizeBySpaces< std::vector< string > >( test.m_strToTest );
 
-      if( r.size() == test.m_results.size() )
+      if( r.size() != test.m_results.size() )
       {
         FAIL() << "TokenizeBySpacesTest( '" << test.m_strToTest
                << " ) failed : " << r.size()
                << " results instead of " << test.m_results.size();
       }
-
-      if( r.size() == test.m_results.size() )
+      else
       {
         for( int i = 0, rEnd = r.size(); i < rEnd; ++i )
         {
