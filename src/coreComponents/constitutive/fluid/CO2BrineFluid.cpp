@@ -192,7 +192,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     string str;
     while( std::getline( is, str ) )
     {
-      string_array const strs = stringutilities::tokenizeBySpaces( str );
+      array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
 
       if( strs.size()>0 )
       {
@@ -272,7 +272,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     string str;
     while( std::getline( is, str ) )
     {
-      string_array const strs = stringutilities::tokenizeBySpaces( str );
+      array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
 
       if( strs.size()>0 )
       {

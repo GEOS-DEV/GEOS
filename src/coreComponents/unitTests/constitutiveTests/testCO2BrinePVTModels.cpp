@@ -357,7 +357,7 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
   string str;
   while( std::getline( is, str ) )
   {
-    string_array const strs = stringutilities::tokenizeBySpaces( str );
+    array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
 
     if( strs.size()>0 && strs[0] == key )
     {
@@ -397,7 +397,7 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
   string str;
   while( std::getline( is, str ) )
   {
-    string_array const strs = stringutilities::tokenizeBySpaces( str );
+    array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
 
     if( strs.size()>0 && strs[0] == key )
     {

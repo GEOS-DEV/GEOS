@@ -38,18 +38,18 @@ string toLower( string const & input )
 /**
  * String tokenizing function
  **/
-template< typename RETURN_TYPE >
-RETURN_TYPE tokenize( string const & str,
-                      string const & delimiters,
-                      bool const treatConsecutiveDelimAsOne,
-                      bool const preTrimStr )
+template< template< class ... > class LIST_T = std::vector >
+LIST_T< string > tokenize( string const & str,
+                           string const & delimiters,
+                           bool const treatConsecutiveDelimAsOne,
+                           bool const preTrimStr )
 {
   if( str.empty())
   {
     return {};
   }
 
-  RETURN_TYPE tokens;
+  LIST_T< string > tokens;
   size_t tokenBegin, tokenEnd, strEnd;
 
   if( preTrimStr )
@@ -86,25 +86,28 @@ RETURN_TYPE tokenize( string const & str,
 /**
  * String tokenizing by whitespace function
  **/
-template< typename RETURN_TYPE >
-RETURN_TYPE tokenizeBySpaces( string const & str )
+template< template< class ... > class LIST_T = std::vector >
+LIST_T< string > tokenizeBySpaces( string const & str )
 {
-  return tokenize< RETURN_TYPE >( str, " \f\n\r\t\v", true, true );
+  return tokenize< LIST_T >( str, " \f\n\r\t\v", true, true );
 }
 
-template string_array tokenize< string_array >( string const & str,
+//template specialization for tokenize and tokenizeBySpaces
+template std::vector< string > tokenize< std::vector >( string const & str,
+                                                        string const & delimiters,
+                                                        bool const treatConsecutiveDelimAsOne,
+                                                        bool const preTrimStr );
+template std::list< string > tokenize< std::list >( string const & str,
+                                                    string const & delimiters,
+                                                    bool const treatConsecutiveDelimAsOne,
+                                                    bool const preTrimStr );
+template array1d< string > tokenize< array1d >( string const & str,
                                                 string const & delimiters,
                                                 bool const treatConsecutiveDelimAsOne,
                                                 bool const preTrimStr );
-
-template std::vector< string > tokenize< std::vector< string > >( string const & str,
-                                                                  string const & delimiters,
-                                                                  bool const treatConsecutiveDelimAsOne,
-                                                                  bool const preTrimStr );
-
-template string_array tokenizeBySpaces< string_array >( string const & str );
-
-template std::vector< string > tokenizeBySpaces< std::vector< string > >( string const & str );
+template std::vector< string > tokenizeBySpaces< std::vector >( string const & str );
+template std::list< string > tokenizeBySpaces< std::list >( string const & str );
+template array1d< string > tokenizeBySpaces< array1d >( string const & str );
 
 string trim( string const & str,
              string const & charsToRemove )

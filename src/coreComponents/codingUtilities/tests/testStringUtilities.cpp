@@ -40,8 +40,8 @@ TEST( testStringUtilities, tokenize )
       std::vector< string > const & values0 = entry.second.first;
       std::vector< string > const & values1 = entry.second.second;
 
-      std::vector< string > tokens0 = stringutilities::tokenize< std::vector< string > >( key, "/", true );
-      std::vector< string > tokens1 = stringutilities::tokenize< std::vector< string > >( key, "/", false );
+      std::vector< string > tokens0 = stringutilities::tokenize( key, "/", true );
+      std::vector< string > tokens1 = stringutilities::tokenize( key, "/", false );
 
 
       EXPECT_TRUE( tokens0==values0 );
@@ -111,9 +111,9 @@ TEST( testStringUtilities, tokenize )
 
     for( TokenizeTest test : tokenizeTests )
     {
-      std::vector< string > r = stringutilities::tokenize< std::vector< string > >( test.m_strToTest, "|",
-                                                                                    bool(test.m_treatConsecutiveDelimAsOne),
-                                                                                    bool(test.m_preTrimStr));
+      std::vector< string > r = stringutilities::tokenize( test.m_strToTest, "|",
+                                                           bool(test.m_treatConsecutiveDelimAsOne),
+                                                           bool(test.m_preTrimStr));
 
       if( r.size() != test.m_results.size() )
       {
@@ -168,7 +168,7 @@ TEST( testStringUtilities, tokenize )
 
     for( TokenizeBySpacesTest test : tokenizeBSTests )
     {
-      std::vector< string > r = stringutilities::tokenizeBySpaces< std::vector< string > >( test.m_strToTest );
+      std::vector< string > r = stringutilities::tokenizeBySpaces( test.m_strToTest );
 
       if( r.size() != test.m_results.size() )
       {
