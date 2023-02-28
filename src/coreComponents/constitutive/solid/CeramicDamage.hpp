@@ -327,10 +327,8 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 mu = 0.5773502691896258;
 
   // Intermediate strength parameter
-  // real64 Yt0 = std::max( 0.5 * m_tensileStrength, std::min( 2.0 * m_tensileStrength, (3.0 * m_compressiveStrength * m_tensileStrength) / (2.0 * m_compressiveStrength + m_tensileStrength) ) );
-  real64 Yt0 = m_tensileStrength;
+  real64 Yt0 = std::max( 0.5 * m_tensileStrength, std::min( 2.0 * m_tensileStrength, (3.0 * m_compressiveStrength * m_tensileStrength) / (2.0 * m_compressiveStrength + m_tensileStrength) ) );
   Yt0 = std::min( Yt0, ( 3.0 * m_compressiveStrength - m_compressiveStrength * mu ) / ( 3 + mu ) );
-
 
   // Compute the vertex pressure (should be pmin0 < 0) for the undamaged yield surface.
   real64 pmin0 = -( 2.0 * m_compressiveStrength * Yt0 ) / ( 3.0 * ( m_compressiveStrength - Yt0 ) );
@@ -370,21 +368,26 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
     
     real64 brittleDuctileTransitionPressure = m_maximumStrength / mu;
     real64 J2 = vonMises * vonMises / 3.0;
-    real64 J3 = deviator[0] * deviator[1] * deviator[2] + 
+    real64 J3 = vonMises * vonMises * vonMises * 
+              ( deviator[0] * deviator[1] * deviator[2] + 
                 2.0 * deviator[3] * deviator[4] * deviator[5] - 
                 deviator[0] * deviator[3] * deviator[3] -
                 deviator[1] * deviator[4] * deviator[4] -
-                deviator[2] * deviator[5] * deviator[5];
+                deviator[2] * deviator[5] * deviator[5] );
 
     // Find the strength
     real64 strength = CeramicDamageUpdates::getStrength( m_damage[k][q], pressure, J2, J3, mu, Yt0 );
 
     // Increment damage and get new associated yield surface
     real64 newDeviatorMagnitude = vonMises;
-    if( vonMises > strength && pressure <= brittleDuctileTransitionPressure )
+    if( vonMises > strength )
     {
-      m_damage[k][q] = std::min( m_damage[k][q] + dt / tFail, 1.0 );
-      newDeviatorMagnitude = CeramicDamageUpdates::getStrength( m_damage[k][q], pressure, J2, J3, mu, Yt0 );
+      if( pressure <= brittleDuctileTransitionPressure )
+      {
+        m_damage[k][q] = std::min( m_damage[k][q] + dt / tFail, 1.0 );
+        strength = CeramicDamageUpdates::getStrength( m_damage[k][q], pressure, J2, J3, mu, Yt0 );
+      }
+      newDeviatorMagnitude = strength;
     }
 
     // Radial return
@@ -404,55 +407,56 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
                                           const real64 mu,         // friction slope
                                           const real64 Yt0 ) const // strength parameter
 {
-  real64 f, dfdp;
-
   auto ceramicY10 = [&]( const real64 p,   // pressure
                          const real64 d,   // damage,
                          const real64 mu,  // friction slope
                          const real64 Yt0, // strength parameter
-                         real64 & f,       // OUTPUT: Yield surface
-                         real64 & dfdp )   // OUTPUT: Yield surface slope
+                         real64 & f )      // OUTPUT: Yield surface
   { 
     f = (((3.0 + d * (-3.0 + mu)) * m_compressiveStrength + (-3.0 + d * (3.0 + mu)) * Yt0) * (p - (2.0 * (d - 1.0) * m_compressiveStrength * Yt0) / (3.0 * (m_compressiveStrength - Yt0)))) / (m_compressiveStrength + Yt0);
-    dfdp = ((3.0 + d * (-3.0 + mu)) * m_compressiveStrength + (-3.0 + d * (3.0 + mu)) * Yt0) / (m_compressiveStrength + Yt0);
   };
 
-  if( pressure < m_compressiveStrength / 3.0 )
+  // Bounding pressure values
+  real64 p1 = m_compressiveStrength / 3.0;
+  real64 p2 = m_maximumStrength / mu ;
+
+  // Get the scaling associated with p1
+  real64 dfdp1 = ((3.0 + damage * (-3.0 + mu)) * m_compressiveStrength + (-3.0 + damage * (3.0 + mu)) * Yt0) / (m_compressiveStrength + Yt0);
+  real64 gamma1 = 1.0;
+  if( J2 > 0.0 )
   {
-    ceramicY10( pressure, damage, mu, Yt0, f, dfdp );
+    real64 psi = std::min(2.0, std::max(0.5, 1.0 / (1.0 + dfdp1 / 3.0)));
+    real64 theta = (1.0 / 3.0) * asin(std::min(1.0, std::max(-1.0, -0.5 * J3 * std::pow(3.0 / J2, 1.5))));
+    real64 cosPi6plusTheta = cos(0.5235987755982989 + theta);
+    real64 num = (2.0 * psi - 1.0) * (2.0 * psi - 1.0) + 4.0 * (1.0 - psi * psi) * cosPi6plusTheta * cosPi6plusTheta;
+    real64 denom = 2.0 * (1.0 - psi * psi) * cosPi6plusTheta + (2.0 * psi - 1.0) * sqrt(std::max(0.0, -4.0 * psi + 5.0 * psi * psi + 4.0 * (1.0 - psi * psi) * cosPi6plusTheta * cosPi6plusTheta));
+    if( denom > 1.0e-12 )
+    {
+      gamma1 = (1 - damage) * num / denom + damage;
+    }
   }
-  else if( pressure < m_maximumStrength / mu )
+
+  // Determine scaled strength
+  if( pressure < p1 )
   {
-    real64 y1, m1;
-    real64 p1 = m_compressiveStrength / 3.0;
-    real64 p2 = m_maximumStrength / mu ;
-    real64 y2 = m_maximumStrength;
-    ceramicY10( p1, damage, mu, Yt0, y1, m1 );
-    real64 beta = (m1 * p1 - m1 * p2 - y1 + y2) / (y1 - y2);
-    f = -(((m1 * (p1 - p2) + m1 * std::pow((pressure - p2) / (p1 - p2), beta) * (-pressure + p2) + (m1 * (-p1 + p2) * y1) / (y1 - y2)) * (y1 - y2)) / (m1 * (p1 - p2)));
-    real64 xi = (pressure - p1) / (p2 - p1);
-    dfdp = m1 * ( 1.0 - 3.0 * xi * xi + 2.0 * xi * xi * xi );
+    real64 f;
+    ceramicY10( pressure, damage, mu, Yt0, f );
+    return( f / gamma1 );
+  }
+  else if( pressure < p2 )
+  {
+    real64 f, m1, f1, y1, y2;
+    m1 = dfdp1 / gamma1;
+    ceramicY10( p1, damage, mu, Yt0, f1 );
+    y1 = f1 / gamma1;
+    y2 = m_maximumStrength;
+    f = std::pow((pressure - p2) / (p1 - p2), m1 * (p1 - p2) / (y1 - y2)) * (y1 - y2) + y2;
+    return( f );
   }
   else
   {
-    f = m_maximumStrength;
-    dfdp = 0.0;
+    return( m_maximumStrength );
   }
-  real64 oneOverGamma = 1.0;
-  real64 psi = std::min(2.0, std::max(0.5, 1.0 / (1.0 + dfdp / 3.0)));
-  if( J2 > 1.0e-12 )
-  {
-    real64 theta = (1.0 / 3.0) * asin(std::min(1.0, std::max(-1.0, -0.5 * J3 * std::pow(3.0 / J2, 1.5))));
-    real64 cosPi6plusTheta = cos(0.5235987755982989 + theta);
-    real64 num = 2.0 * (1.0 - psi * psi) * cosPi6plusTheta + (2.0 * psi - 1.0) * sqrt(std::max(0.0, -4.0 * psi + 5.0 * psi * psi + 4.0 * (1.0 - psi * psi) * cosPi6plusTheta * cosPi6plusTheta));
-    real64 denom = (2.0 * psi - 1.0) * (2.0 * psi - 1.0) + 4.0 * (1.0 - psi * psi) * cosPi6plusTheta * cosPi6plusTheta;
-    if( denom > 1.0e-12 )
-    {
-      oneOverGamma = num / denom;
-    }
-  }
-  oneOverGamma = 1.0; // DELETE ME!!
-  return oneOverGamma * f;
 }
 
 
