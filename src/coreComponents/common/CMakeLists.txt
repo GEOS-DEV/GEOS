@@ -20,7 +20,13 @@ set( common_headers
      TypeDispatch.hpp
      initializeEnvironment.hpp
      LifoStorage.hpp
+     LifoStorageCommon.hpp
+     LifoStorageCuda.hpp
+     LifoStorageHost.hpp
      FixedSizeDeque.hpp
+     FixedSizeDequeWithMutexes.hpp
+     TwoMutexesLock.hpp
+     FourMutexesLock.hpp
    )
 
 #
