@@ -84,7 +84,16 @@ public:
                                            MeshLevel & patch );
 
   virtual void testElemMappingBaseToPatch( MeshLevel & base,
-                                           MeshLevel & patch );                                                                      
+                                           MeshLevel & patch );
+
+  real64 utilGetElemAverageDamage(localIndex const patchElemNum,
+                                  MeshLevel const & patch);
+
+  void initializeCrackFront( MeshLevel & base);                                        
+
+  void cutDamagedElements( DomainPartition & domain,
+                           MeshLevel & base,
+                           MeshLevel const & patch );                                                                                                               
 
   real64 splitOperatorStep( real64 const & time_n,
                             real64 const & dt,
@@ -153,6 +162,9 @@ private:
 
   integer m_maxNumResolves;
   //integer m_numResolves[2];
+
+  //set of base elements in the crack front
+  SortedArray<localIndex> m_baseCrackFront;
 
 };
 

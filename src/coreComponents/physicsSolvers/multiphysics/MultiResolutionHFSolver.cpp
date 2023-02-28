@@ -52,7 +52,7 @@ using namespace constitutive;
 
 GEOSX_HOST_DEVICE inline
 void coarseToFineStructuredElemMap(localIndex const coarseElemIndex,
-                                             localIndex const coarseNx, 
+                                             localIndex const GEOSX_UNUSED_PARAM(coarseNx), 
                                              localIndex const coarseNy,
                                              localIndex const coarseNz,
                                              localIndex const fineRx,
@@ -79,7 +79,7 @@ void coarseToFineStructuredElemMap(localIndex const coarseElemIndex,
 
 GEOSX_HOST_DEVICE inline
 localIndex fineToCoarseStructuredElemMap(localIndex const fineElemIndex,
-                                               localIndex const coarseNx, 
+                                               localIndex const GEOSX_UNUSED_PARAM(coarseNx), 
                                                localIndex const coarseNy,
                                                localIndex const coarseNz,
                                                localIndex const fineRx,
@@ -102,7 +102,8 @@ MultiResolutionHFSolver::MultiResolutionHFSolver( const string & name,
   m_nodeFixDamage(),
   m_nodeFixDisp(),
   m_fixedDispList(),
-  m_maxNumResolves( 10 )
+  m_maxNumResolves( 10 ),
+  m_baseCrackFront()
 {
   registerWrapper( viewKeyStruct::baseSolverNameString(), &m_baseSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -139,6 +140,20 @@ void MultiResolutionHFSolver::registerDataOnMesh( dataRepository::Group & meshBo
   // {
 
     //ElementRegionManager & patchElemManager = meshLevel.getElemManager();
+    ElementRegionManager & baseElemManager = meshBodies.getGroup<MeshBody>(0).getBaseDiscretization().getElemManager();
+
+    baseElemManager.forElementSubRegions< CellElementSubRegion,
+                                          FaceElementSubRegion >( [&] ( auto & elementSubRegion )
+    {                                  
+    //register mapped elem index baseToPatch
+    //register mapped elem index patchToBase
+    //register fake pressures for testing purposes
+      elementSubRegion.template registerWrapper< array1d< localIndex > >( "frontIndicator" ).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setDescription( "indicator of the crack front elements" );
+    });
+
+
     ElementRegionManager & patchElemManager = meshBodies.getGroup<MeshBody>(1).getBaseDiscretization().getElemManager();
 
     patchElemManager.forElementSubRegions< CellElementSubRegion,
@@ -202,7 +217,7 @@ real64 MultiResolutionHFSolver::solverStep( real64 const & time_n,
 void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
                                                         CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
                                                         MeshLevel const & patch,
-                                                        MeshLevel const & base )
+                                                        MeshLevel const & GEOSX_UNUSED_PARAM(base) )
 {
   GEOSX_MARK_FUNCTION;
   //ElementRegionManager const & baseElemManager = base.getElemManager();
@@ -369,7 +384,7 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
 
 }
 
-void MultiResolutionHFSolver::testElemMappingPatchToBase( MeshLevel & base,
+void MultiResolutionHFSolver::testElemMappingPatchToBase( MeshLevel & GEOSX_UNUSED_PARAM(base),
                                                           MeshLevel & patch )
 {
   //for every elem in base
@@ -430,7 +445,180 @@ void MultiResolutionHFSolver::testElemMappingBaseToPatch( MeshLevel & base,
     } );
   } );
 
-}                                                          
+}
+
+
+real64 MultiResolutionHFSolver::utilGetElemAverageDamage(localIndex const patchElemNum,
+                                                         MeshLevel const & patch)
+{
+
+    ElementRegionManager const & elemManager = patch.getElemManager();
+
+    // Hard-coded region and subRegion
+    ElementRegionBase const & elementRegion = elemManager.getRegion( 0 );
+    CellElementSubRegion const & subRegion = elementRegion.getSubRegion< CellElementSubRegion >( 0 );
+
+    string const & damageModelName = subRegion.getReference< string >( PhaseFieldDamageFEM::viewKeyStruct::solidModelNamesString());
+    //TODO: this call may need to constitutive pass-thru loop to be generalized to multiple damage types
+
+    const constitutive::Damage< ElasticIsotropic > & damageUpdates = subRegion.getConstitutiveModel< Damage< ElasticIsotropic > >( damageModelName );
+
+    arrayView2d< const real64 > allElemCenters = subRegion.getElementCenter();
+
+    const arrayView2d< real64 const > qp_damage = damageUpdates.getDamage();
+
+    /////////////LONG PATH TO GET numQuadPointPerElem  
+    localIndex numQuadraturePointsPerElem = 0;
+    finiteElement::FiniteElementBase const & fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+    finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
+    {
+      using FE_TYPE = TYPEOFREF( finiteElement );
+      numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+    } );
+    ///////////////
+
+    //compute elemental averaged damage
+    real64 average_d = 0;
+    for( localIndex q=0; q<numQuadraturePointsPerElem; q++ )
+    {
+      //get damage at quadrature point i
+      average_d = average_d + qp_damage( patchElemNum, q )/8.0;
+    }
+
+    return average_d;
+    
+}
+
+
+void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base)
+{
+  ElementRegionManager & baseElemManager = base.getElemManager();
+  FaceManager & baseFaceManager = base.getFaceManager();
+  auto faceToElemList = baseFaceManager.elementList();
+  auto faceNormals = baseFaceManager.faceNormal();
+
+  //get accessor to elemental field
+  ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const frontIndicator =
+  baseElemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( "frontIndicator" );
+
+  baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
+  {
+    auto elemToFaceList = cellElementSubRegion.faceList();
+    SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
+    //TODO: can we make this a forall?
+    for(auto && fracElem:fracturedElements)
+    {
+      //getElemFaces
+      for(auto && face:elemToFaceList[fracElem])
+      {
+        if(pow(faceNormals[face][1],2) + pow(faceNormals[face][2],2) < 1e-6) //remove faces with normal pointing in x direction
+        {
+            continue; //these faces dont contain fractures
+        }
+        for(auto && elem:faceToElemList[face])
+        {
+          if(!fracturedElements.contains(elem) && elem > -1)
+          {
+            m_baseCrackFront.insert(elem);
+            frontIndicator[0][0][elem] = 1;
+          }
+        }
+      }
+    } 
+  } );
+}                                                   
+
+void MultiResolutionHFSolver::cutDamagedElements( DomainPartition & domain,
+                                                  MeshLevel & base,
+                                                  MeshLevel const & patch )
+{
+  EmbeddedSurfaceGenerator &
+  efemGenerator = this->getParent().getGroup< EmbeddedSurfaceGenerator >( "SurfaceGenerator" ); //this is hard coded
+  
+  ElementRegionManager & baseElemManager = base.getElemManager();
+
+  // Hard-coded region and subRegion
+  ElementRegionBase const & elementRegion = baseElemManager.getRegion( 0 );
+  CellElementSubRegion const & subRegion = elementRegion.getSubRegion< CellElementSubRegion >( 0 );
+  
+  FaceManager const & baseFaceManager = base.getFaceManager();
+  auto elemToFaceList = subRegion.faceList();
+  auto faceToElemList = baseFaceManager.elementList();
+  auto faceNormals = baseFaceManager.faceNormal();
+  localIndex rx=3;
+  localIndex ry=3;
+  localIndex rz=3;
+  localIndex Nx=3;
+  localIndex Ny=15;
+  localIndex Nz=15;
+  SortedArrayView< localIndex const > const fracturedElements = subRegion.fracturedElementsList();
+  //get accessor to elemental field
+  ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const frontIndicator =
+  baseElemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( "frontIndicator" );
+  for(auto && elem:m_baseCrackFront)
+  {
+    localIndex triplet[3];
+    integer fracCount = 0;
+    coarseToFineStructuredElemMap(elem,Nx,Ny,Nz,rx,ry,rz,triplet);
+    GEOSX_LOG_LEVEL_RANK_0( 3, "Base elem index: " << elem << " triplet: ( "<<triplet[0]<<", "<<triplet[1]<<", "<<triplet[2]<<" )\n" );
+    for(int i=0; i<rx; i++){
+      for(int j=0; j<ry; j++){
+        for(int k=0; k<rz; k++){
+          localIndex fineElem = (triplet[0] + i)*ry*Ny*rz*Nz + (triplet[1] + j)*rz*Nz + (triplet[2] + k);
+          if(fineElem > 0){
+              GEOSX_LOG_LEVEL_RANK_0( 3, "fineElem: " << fineElem << " from base elem: "<<elem<<"\n" );
+          }
+          //get averageDamage in fineElem
+          real64 averageDamage = utilGetElemAverageDamage(fineElem, patch);
+          if(elem==234){
+            GEOSX_LOG_LEVEL_RANK_0( 1, "fineElem: " << fineElem << " from base elem: "<<elem<<"has damage = "<< averageDamage <<"\n" );
+          }
+          if (averageDamage > 0.9)
+          {
+            //GEOSX_LOG_LEVEL_RANK_0( 1, "fineElem: " << fineElem << " has damage above 0.9. \n" );
+            fracCount++;  
+            //GEOSX_LOG_LEVEL_RANK_0( 1, "updated fracCount for element " << elem << " now is "<< fracCount <<"\n" ); 
+          }
+
+        }        
+      }
+    }
+    //if a lot of subelements are damaged, cut base element
+    if (fracCount >= ry*rz)
+    {
+      //cutElement
+      GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " being cut "<<"\n" );
+      if(elem==335){
+        std::cout<<"breakpoint\n";
+      }
+      efemGenerator.propagationStep3D( domain, elem );
+      //add non-fractured neighbors to fron
+      for(auto && face:elemToFaceList[elem])
+      {
+        if(pow(faceNormals[face][1],2) + pow(faceNormals[face][2],2) < 1e-6) //remove faces with normal pointing in x direction
+        {
+          continue; //these faces dont contain fractures
+        }
+        for(auto && neighbor:faceToElemList[face])
+        {
+          if(neighbor == elem){
+            continue;
+          }
+          if(!fracturedElements.contains(neighbor) && !m_baseCrackFront.contains(neighbor) && neighbor > -1)
+          {
+            GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << neighbor << " being added to front "<<"\n" );
+            m_baseCrackFront.insert(neighbor);
+            frontIndicator[0][0][neighbor] = 1;
+          }
+        }
+      }
+      //remove from front
+      GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " removed from front "<<"\n" );
+      m_baseCrackFront.remove(elem);
+    }
+  }
+
+}                                                  
 
 real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
                                                    real64 const & dt,
@@ -447,15 +635,14 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
   PhaseFieldFractureSolver &
   patchSolver = this->getParent().getGroup< PhaseFieldFractureSolver >( m_patchSolverName );
 
-  EmbeddedSurfaceGenerator &
-  efemGenerator = this->getParent().getGroup< EmbeddedSurfaceGenerator >( "SurfaceGenerator" ); //this is hard coded
+  // EmbeddedSurfaceGenerator &
+  // efemGenerator = this->getParent().getGroup< EmbeddedSurfaceGenerator >( "SurfaceGenerator" ); //this is hard coded
 
   PhaseFieldDamageFEM &
   patchDamageSolver = *patchSolver.damageSolver();
 
   SolidMechanicsLagrangianFEM &
   patchSolidSolver = *patchSolver.solidMechanicsSolver();
-
 
   baseSolver.setupSystem( domain,
                           baseSolver.getDofManager(),
@@ -467,6 +654,16 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
   baseSolver.implicitStepSetup( time_n, dt, domain );
 
   this->implicitStepSetup( time_n, dt, domain );
+
+  map< std::pair< string, string >, array1d< string > > const & baseTargets = baseSolver.getReference< map< std::pair< string, string >, array1d< string > > >(
+  SolverBase::viewKeyStruct::meshTargetsString());
+  auto const baseTarget = baseTargets.begin()->first;
+  map< std::pair< string, string >, array1d< string > > const & patchTargets = patchSolver.getReference< map< std::pair< string, string >, array1d< string > > >(
+  SolverBase::viewKeyStruct::meshTargetsString());
+  auto const patchTarget = patchTargets.begin()->first;
+  MeshLevel & base = domain.getMeshBody( baseTarget.first ).getBaseDiscretization();
+  MeshLevel & patch = domain.getMeshBody( patchTarget.first ).getBaseDiscretization();
+  initializeCrackFront(base);
 
   NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
   //although these iterations are not really Newton iterations, we will use this nomeclature to keep things consistent
@@ -488,12 +685,7 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
 
     //we probably want to run a phase-field solve in the patch problem at timestep 0 to get a smooth initial crack. Also, re-run this
     // anytime the base crack changes
-    map< std::pair< string, string >, array1d< string > > const & baseTargets = baseSolver.getReference< map< std::pair< string, string >, array1d< string > > >(
-      SolverBase::viewKeyStruct::meshTargetsString());
-    auto const baseTarget = baseTargets.begin()->first;
-    map< std::pair< string, string >, array1d< string > > const & patchTargets = patchSolver.getReference< map< std::pair< string, string >, array1d< string > > >(
-      SolverBase::viewKeyStruct::meshTargetsString());
-    auto const patchTarget = patchTargets.begin()->first;
+
 
     // testElemMappingPatchToBase( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), 
     //                             domain.getMeshBody( patchTarget.first ).getBaseDiscretization() );
@@ -502,8 +694,8 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
     //                             domain.getMeshBody( patchTarget.first ).getBaseDiscretization() );
 
     CRSMatrix< real64, globalIndex > & patchDamageLocalMatrix = patchDamageSolver.getLocalMatrix();
-    this->setInitialCrackDamageBCs( patchDamageSolver.getDofManager(), patchDamageLocalMatrix.toViewConstSizes(), domain.getMeshBody( patchTarget.first ).getBaseDiscretization(),
-                                    domain.getMeshBody( baseTarget.first ).getBaseDiscretization() );
+    this->setInitialCrackDamageBCs( patchDamageSolver.getDofManager(), patchDamageLocalMatrix.toViewConstSizes(), patch,
+                                    base );
     patchDamageSolver.setInitialCrackNodes( m_nodeFixDamage );
 
     //now perform the subproblem run with no BCs on displacements, just to set the damage inital condition;
@@ -550,11 +742,13 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
                                                 dtReturn,
                                                 cycleNumber,
                                                 domain );
-    this->findPhaseFieldTip( m_patchTip, domain.getMeshBody( patchTarget.first ).getBaseDiscretization());
+                             
+    // this->findPhaseFieldTip( m_patchTip, domain.getMeshBody( patchTarget.first ).getBaseDiscretization());
 
     if( time_n > 0 )
     {
-      efemGenerator.propagationStep( domain, m_baseTip, m_patchTip, m_baseTipElementIndex );
+      //efemGenerator.propagationStep( domain, m_baseTip, m_patchTip, m_baseTipElementIndex );
+      cutDamagedElements( domain, base, patch );  
       baseSolver.setupSystem( domain,
                               baseSolver.getDofManager(),
                               baseSolver.getLocalMatrix(),

@@ -493,8 +493,6 @@ void EmbeddedSurfaceGenerator::propagationStep3D( DomainPartition & domain,
   GEOSX_MARK_FUNCTION;
   localIndex er = 0; //should be the element region number
   localIndex esr = 0; //should be the element subregion number
-  // Get geometric object manager
-  GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();
    // Get meshLevel
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
   // Get managers
@@ -502,17 +500,12 @@ void EmbeddedSurfaceGenerator::propagationStep3D( DomainPartition & domain,
   NodeManager & nodeManager = meshLevel.getNodeManager();
   EmbeddedSurfaceNodeManager & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
   EdgeManager & edgeManager = meshLevel.getEdgeManager();
-  FaceManager & faceManager = meshLevel.getFaceManager();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
   // Get EmbeddedSurfaceSubRegions
   SurfaceElementRegion & embeddedSurfaceRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
   EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion = embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
   localIndex localNumberOfSurfaceElems = embeddedSurfaceSubRegion.size();
   NewObjectLists newObjects;
   // Initialize variables
-  globalIndex nodeIndex;
-  integer isPositive, isNegative;
-  real64 distVec[ 3 ];
 
   // Get sub-region geometric properties
   ElementRegionBase & elementRegion = elemManager.getRegion( er );
@@ -523,11 +516,9 @@ void EmbeddedSurfaceGenerator::propagationStep3D( DomainPartition & domain,
   arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
   auto fracturedElements = subRegion.fracturedElementsList();
   //save old embNodesPositions to find new embNodes later
-  localIndex embSurfNodesNumberOld = embSurfNodeManager.size();
   //this part probably needs explicit dynamic allocation
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosOld = embSurfNodeManager.referencePosition();
   bool added = false;
-  real64 fracCenterX = 0.0; //TODO: retrive this correctly
+  //real64 fracCenterX = 0.0; //TODO: retrive this correctly
   R1Tensor fractureCenter = {elemCenter[elemToCut][0], elemCenter[elemToCut][1], elemCenter[elemToCut][2]};
   if( ghostRank[elemToCut] < 0 && (fracturedElements.contains(elemToCut)==false) ) //TODO: this do not allow for multiple cuts of the same element - ok for now
   {

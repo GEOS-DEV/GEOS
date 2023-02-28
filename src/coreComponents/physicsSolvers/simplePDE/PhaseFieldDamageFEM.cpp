@@ -218,7 +218,7 @@ void PhaseFieldDamageFEM::implicitStepComplete( real64 const & GEOSX_UNUSED_PARA
 {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                arrayView1d< string const > const & GEOSX_UNUSED_PARAM(regionNames) )
   {
 
     if( m_damageViscosityFlag )
