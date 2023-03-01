@@ -253,6 +253,8 @@ assembleCouplingTerms( real64 const time_n,
                                                                                MeshLevel const & mesh,
                                                                                arrayView1d< string const > const & regionNames )
   {
+    integer areWellsShut = 1;
+
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     string const resDofKey = dofManager.getKey( Base::wellSolver()->resElementDofName() );
@@ -273,6 +275,8 @@ assembleCouplingTerms( real64 const time_n,
       {
         return;
       }
+
+      areWellsShut = 0;
 
       // get the degrees of freedom
       string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
@@ -349,6 +353,12 @@ assembleCouplingTerms( real64 const time_n,
         }
       } );
     } );
+
+    // update dynamically the MGR recipe to optimize the linear solve if all wells are shut
+    areWellsShut = MpiWrapper::min( areWellsShut );
+    m_linearSolverParameters.get().mgr.areWellsShut = areWellsShut;
+
+
   } );
 
 }

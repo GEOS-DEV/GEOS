@@ -52,6 +52,7 @@ public:
    * each quadrature point.
    * @param[in] bulkModulus                 The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus                The ArrayView holding the shear modulus data for each element.
+   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress                   The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress                   The ArrayView holding the old stress data from the previous converged state for each point
    * @param[in] disableInelasticity         Flag to disable plastic response
@@ -64,10 +65,11 @@ public:
                    arrayView2d< real64 > const & oldPreConsolidationPressure,
                    arrayView1d< real64 const > const & bulkModulus,
                    arrayView1d< real64 const > const & shearModulus,
+                   arrayView1d< real64 const > const & thermalExpansionCoefficient,
                    arrayView3d< real64, solid::STRESS_USD > const & newStress,
                    arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                    const bool & disableInelasticity ):
-    ElasticIsotropicUpdates( bulkModulus, shearModulus, newStress, oldStress, disableInelasticity ),
+    ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity ),
     m_recompressionIndex( recompressionIndex ),
     m_virginCompressionIndex( virginCompressionIndex ),
     m_cslSlope( cslSlope ),
@@ -262,7 +264,7 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 
   eps_s_trial = trialQ/3.0/mu;
 
-  real64 solution[3], residual[3], delta[3];
+  real64 solution[3]{}, residual[3]{}, delta[3]{};
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
 
   solution[0] = eps_v_trial; // initial guess for elastic volumetric strain
@@ -545,6 +547,7 @@ public:
                             m_oldPreConsolidationPressure,
                             m_bulkModulus,
                             m_shearModulus,
+                            m_thermalExpansionCoefficient,
                             m_newStress,
                             m_oldStress,
                             m_disableInelasticity );
@@ -569,6 +572,7 @@ public:
                           m_oldPreConsolidationPressure,
                           m_bulkModulus,
                           m_shearModulus,
+                          m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity );

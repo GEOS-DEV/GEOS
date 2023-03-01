@@ -5,8 +5,7 @@ import logging
 import textwrap
 from typing import List, Dict, Set
 
-from . import all_checks_helpers
-
+from . import CheckHelper
 
 __OPTIONS_SEP = ":"
 __KV_SEP = "="
@@ -19,18 +18,6 @@ __QUIET_KEY = "quiet"
 class Arguments:
     vtk_input_file: str
     checks: OrderedDict()
-
-
-def __get_checks_help_msg() -> str:
-    """
-    Gathers all the doc messages into one string.
-    :return: A string.
-    """
-    tmp = []
-    for check_name, check_helper in all_checks_helpers.items():
-        h = check_name + ": " + check_helper.get_help()
-        tmp.append(h)
-    return "\n".join(tmp)
 
 
 def parse_cli_option(s: str) -> Dict[str, str]:
@@ -60,7 +47,8 @@ def validate_cli_options(check_name: str, valid_keys: Set[str], options: Dict[st
         if len(invalid_keys) == 1:
             logging.warning(f"Key \"{invalid_keys.pop()}\" is not a valid option of \"{check_name}\". Ignoring it.")
         else:
-            logging.warning(f"Keys \"{', '.join(invalid_keys)}\" are not valid options of \"{check_name}\". Ignoring them.")
+            logging.warning(
+                f"Keys \"{', '.join(invalid_keys)}\" are not valid options of \"{check_name}\". Ignoring them.")
 
 
 def parse_and_set_verbosity(cli_args: List[str]) -> None:
@@ -70,16 +58,8 @@ def parse_and_set_verbosity(cli_args: List[str]) -> None:
     :return: None
     """
     dummy_verbosity_parser = argparse.ArgumentParser(add_help=None)
-    dummy_verbosity_parser.add_argument('-v',
-                                        '--verbose',
-                                        action='count',
-                                        default=1,
-                                        dest=__VERBOSE_KEY)
-    dummy_verbosity_parser.add_argument('-q',
-                                        '--quiet',
-                                        action='count',
-                                        default=0,
-                                        dest=__QUIET_KEY)
+    dummy_verbosity_parser.add_argument('-v', '--verbose', action='count', default=2, dest=__VERBOSE_KEY)
+    dummy_verbosity_parser.add_argument('-q', '--quiet', action='count', default=0, dest=__QUIET_KEY)
     args = dummy_verbosity_parser.parse_known_args(cli_args[1:])[0]
     d = vars(args)
     v = d[__VERBOSE_KEY] - d[__QUIET_KEY]
@@ -92,9 +72,10 @@ def parse_and_set_verbosity(cli_args: List[str]) -> None:
     logging.info(f"Logger level set to \"{logging.getLevelName(verbosity)}\"")
 
 
-def parse(cli_args: List[str]) -> Arguments:
+def parse(all_checks_helpers: Dict[str, CheckHelper], cli_args: List[str]) -> Arguments:
     """
     Parse the command line arguments and return the corresponding structure.
+    :param all_checks_helpers: All the checks
     :param cli_args: The list of arguments (as strings)
     :return: The struct
     """
@@ -116,14 +97,14 @@ def parse(cli_args: List[str]) -> Arguments:
     misc_grp.add_argument('-v',
                           '--verbose',
                           action='count',
-                          default=1,
+                          default=2,
                           dest=__VERBOSE_KEY,
-                          help="Use -v for warning, -vv for info, -vvv for debug. Defaults to 'ERROR'.")
+                          help="Use -v 'INFO', -vv for 'DEBUG'. Defaults to 'WARNING'.")
     misc_grp.add_argument('-q',
                           '--quiet',
                           action='count',
                           default=0,
-                          dest=__VERBOSE_KEY,
+                          dest=__QUIET_KEY,
                           help="Use -q to reduce the verbosity of the output.")
     misc_grp.add_argument('-i',
                           '--vtk-input-file',
@@ -141,7 +122,7 @@ def parse(cli_args: List[str]) -> Arguments:
                                 help=check_helper.get_help())
     args = parser.parse_args(cli_args[1:])
 
-    args = vars(args)  # converting to `dict` allows to access keys by variable.
+    args = vars(args)    # converting to `dict` allows to access keys by variable.
     checks = OrderedDict()
     for check_name in all_checks_helpers.keys():
         options = args[check_name]

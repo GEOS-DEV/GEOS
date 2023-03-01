@@ -485,8 +485,6 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
                                                                       MeshLevel const & mesh,
                                                                       arrayView1d< string const > const & )
   {
-    std::cout<<mesh.getName()<<std::endl;
-
     ElementRegionManager const & elemManager = mesh.getElemManager();
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
     elemDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
@@ -538,7 +536,10 @@ SinglePhaseFVM< BASE >::applyBoundaryConditions( real64 const time_n,
   GEOSX_MARK_FUNCTION;
 
   BASE::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
+  if( !BASE::m_keepFlowVariablesConstantDuringInitStep )
+  {
+    applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
+  }
 }
 
 namespace
@@ -576,15 +577,39 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
     FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    arrayView1d< real64 const > const presFace =
-      faceManager.getField< fields::flow::facePressure >();
+    // Take BCs defined for "temperature" field and apply values to "faceTemperature"
 
-    arrayView1d< real64 const > const gravCoefFace =
-      faceManager.getField< fields::flow::gravityCoefficient >();
+    fsManager.apply< FaceManager >( time_n + dt,
+                                    mesh,
+                                    fields::flow::temperature::key(),
+                                    [&] ( FieldSpecificationBase const & fs,
+                                          string const & setName,
+                                          SortedArrayView< localIndex const > const & targetSet,
+                                          FaceManager & targetGroup,
+                                          string const & )
+    {
+      BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
-    elemDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
-    elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
+      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      {
+        globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
+                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+      }
+
+      if( stencil.size() == 0 )
+      {
+        return;
+      }
+
+      // Specify the bc value of the field
+      fs.applyFieldValue< FieldSpecificationEqual,
+                          parallelDevicePolicy<> >( targetSet,
+                                                    time_n + dt,
+                                                    targetGroup,
+                                                    fields::flow::faceTemperature::key() );
+    } );
 
     // Take BCs defined for "pressure" field and apply values to "facePressure"
     fsManager.apply< FaceManager >( time_n + dt,
@@ -618,6 +643,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                                     targetGroup,
                                                     fields::flow::facePressure::key() );
 
+
       // TODO: currently we just use model from the first cell in this stencil
       //       since it's not clear how to create fluid kernel wrappers for arbitrary models.
       //       Can we just use cell properties for an approximate flux computation?
@@ -628,33 +654,38 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       string const & fluidName = subRegion.getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
       SingleFluidBase & fluidBase = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
 
-      constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
+      BoundaryStencilWrapper const stencilWrapper = stencil.createKernelWrapper();
+
+      if( m_isThermal )
       {
-        typename TYPEOFREF( fluid ) ::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
-
-        typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
-        typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
-        typename FluxKernel::PermeabilityAccessors permAccessors( elemManager, this->getName() );
-
-        FaceDirichletBCKernel::launch( stencil.createKernelWrapper(),
-                                       flowAccessors.get< fields::ghostRank >(),
-                                       elemDofNumber.toNestedViewConst(),
-                                       dofManager.rankOffset(),
-                                       permAccessors.get< fields::permeability::permeability >(),
-                                       permAccessors.get< fields::permeability::dPerm_dPressure >(),
-                                       flowAccessors.get< fields::flow::pressure >(),
-                                       flowAccessors.get< fields::flow::gravityCoefficient >(),
-                                       fluidAccessors.get< fields::singlefluid::density >(),
-                                       fluidAccessors.get< fields::singlefluid::dDensity_dPressure >(),
-                                       flowAccessors.get< fields::flow::mobility >(),
-                                       flowAccessors.get< fields::flow::dMobility_dPressure >(),
-                                       presFace,
-                                       gravCoefFace,
-                                       fluidWrapper,
-                                       dt,
-                                       localMatrix,
-                                       localRhs );
-      } );
+        thermalSinglePhaseFVMKernels::
+          DirichletFaceBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                     dofKey,
+                                                     this->getName(),
+                                                     faceManager,
+                                                     elemManager,
+                                                     stencilWrapper,
+                                                     fluidBase,
+                                                     dt,
+                                                     localMatrix,
+                                                     localRhs );
+      }
+      else
+      {
+        singlePhaseFVMKernels::
+          DirichletFaceBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                     dofKey,
+                                                     this->getName(),
+                                                     faceManager,
+                                                     elemManager,
+                                                     stencilWrapper,
+                                                     fluidBase,
+                                                     dt,
+                                                     localMatrix,
+                                                     localRhs );
+      }
     } );
   } );
 
@@ -739,7 +770,6 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
 
     } );
   } );
-
 
 }
 

@@ -37,6 +37,7 @@ MeshLevel::MeshLevel( string const & name,
   m_elementManager( new ElementRegionManager( groupStructKeys::elemManagerString(), this ) ),
   m_embSurfNodeManager( new EmbeddedSurfaceNodeManager( groupStructKeys::embSurfNodeManagerString, this ) ),
   m_embSurfEdgeManager( new EdgeManager( groupStructKeys::embSurfEdgeManagerString, this ) ),
+  m_modificationTimestamp( 0 ),
   m_isShallowCopy( false ),
   m_shallowParent( nullptr )
 {
@@ -59,6 +60,11 @@ MeshLevel::MeshLevel( string const & name,
   registerGroup< EmbeddedSurfaceNodeManager >( groupStructKeys::embSurfNodeManagerString, m_embSurfNodeManager );
 
   registerWrapper< integer >( viewKeys.meshLevel );
+
+  // increment the modification timestamp at mesh level creation
+  // this is to make sure that the actions that depend on this timestamp (such as system setup) are performed at the beginning of the
+  // simulations
+  modified();
 }
 
 
@@ -73,6 +79,7 @@ MeshLevel::MeshLevel( string const & name,
   m_elementManager( source.m_elementManager ),
   m_embSurfNodeManager( source.m_embSurfNodeManager ),
   m_embSurfEdgeManager( source.m_embSurfEdgeManager ),
+  m_modificationTimestamp( 0 ),
   m_isShallowCopy( true ),
   m_shallowParent( &source )
 {
@@ -95,7 +102,10 @@ MeshLevel::MeshLevel( string const & name,
 
   registerWrapper< integer >( viewKeys.meshLevel );
 
-
+  // increment the modification timestamp at mesh level creation
+  // this is to make sure that the actions that depend on this timestamp (such as system setup) are performed at the beginning of the
+  // simulations
+  modified();
 }
 
 
@@ -106,6 +116,7 @@ MeshLevel::MeshLevel( string const & name,
   MeshLevel( name, parent )
 {
 
+  GEOSX_MARK_FUNCTION;
   localIndex const numBasisSupportPoints = order+1;
 
 
@@ -114,40 +125,46 @@ MeshLevel::MeshLevel( string const & name,
   localIndex const numNonVertexNodesPerEdge = numNodesPerEdge - 2;
 
   m_edgeManager->resize( source.m_edgeManager->size() );
-//  EdgeManager::NodeMapType const & edgesToNodesSource = source.m_edgeManager->nodeList();
-//  EdgeManager::NodeMapType const & edgesToNodes = m_edgeManager->nodeList();
-
   localIndex const numInternalEdgeNodes = m_edgeManager->size() * numNonVertexNodesPerEdge;
 
   m_faceManager->resize( source.m_faceManager->size() );
   m_faceManager->edgeList() = source.m_faceManager->edgeList();
   m_faceManager->faceCenter() = source.m_faceManager->faceCenter();
   m_faceManager->faceNormal() = source.m_faceManager->faceNormal();
+  m_faceManager->getDomainBoundaryIndicator() = source.m_faceManager->getDomainBoundaryIndicator();
+  m_faceManager->elementList() = source.m_faceManager->elementList();
 
   // Faces
-//  ArrayOfArraysView< localIndex const > const facesToNodesMapSource = m_faceManager->nodeList().toViewConst();
   ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceManager->nodeList();
   ArrayOfArraysView< localIndex const > const & facesToEdges = m_faceManager->edgeList().toViewConst();
-  localIndex const estimatedNumNodesPerFace = pow( order+1, 2 );
-  faceToNodeMapNew.resize( faceToNodeMapNew.size(), estimatedNumNodesPerFace );
+  localIndex const numNodesPerFace = pow( order+1, 2 );
 
+  // number of elements in each row of the map as capacity
+  array1d< localIndex > counts( faceToNodeMapNew.size());
+  counts.setValues< parallelHostPolicy >( numNodesPerFace );
+
+  //  reconstructs the faceToNodeMap with the provided capacity in counts
+  faceToNodeMapNew.resizeFromCapacities< parallelHostPolicy >( faceToNodeMapNew.size(), counts.data() );
+
+  // setup initial values of the faceToNodeMap using emplaceBack
+  forAll< parallelHostPolicy >( faceToNodeMapNew.size(),
+                                [faceToNodeMapNew = faceToNodeMapNew.toView()]
+                                  ( localIndex const faceIndex )
+  {
+    for( localIndex i = 0; i < faceToNodeMapNew.capacityOfArray( faceIndex ); ++i )
+    {
+      faceToNodeMapNew.emplaceBack( faceIndex, -1 );
+    }
+  } );
 
   // add the number of non-edge face nodes
   localIndex numInternalFaceNodes = 0;
+  localIndex const numNonEdgeNodesPerFace = pow( order-1, 2 );
   for( localIndex kf=0; kf<m_faceManager->size(); ++kf )
   {
     localIndex const numEdgesPerFace = facesToEdges.sizeOfArray( kf );
-//    localIndex const numVertexNodesPerFace = facesToNodesMapSource.sizeOfArray( kf );
-//    localIndex const numEdgeNodesPerFace = numVertexNodesPerFace + numEdgesPerFace * numNonVertexNodesPerEdge;
-
     if( numEdgesPerFace==4 )
-    {
-      localIndex const numNonEdgeNodesPerFace = pow( order-1, 2 );
       numInternalFaceNodes += numNonEdgeNodesPerFace;
-
-      localIndex const numNodesPerFace = pow( order+1, 2 );
-      faceToNodeMapNew.resizeArray( kf, numNodesPerFace );
-    }
     else
     {
       GEOSX_ERROR( "need more support for face geometry" );
@@ -240,8 +257,6 @@ MeshLevel::MeshLevel( string const & name,
         }
       }
 
-//      elemsToNodesNew.resize( elemsToNodesSource.size(0), numNodesPerElem );
-
       // Fill a temporary table which knowing the global number of a degree of freedom and a face, gives you the local number of this degree
       // of freedom on the considering face
       array2d< localIndex > localElemToLocalFace( 6, numNodesPerElem );
@@ -249,7 +264,7 @@ MeshLevel::MeshLevel( string const & name,
       //Init arrays
       for( localIndex i = 0; i < 6; ++i )
       {
-        for( localIndex j = 0; j < pow( order+1, 3 ); ++j )
+        for( localIndex j = 0; j < numNodesPerElem; ++j )
         {
           localElemToLocalFace[i][j]=-1;
         }
@@ -260,7 +275,7 @@ MeshLevel::MeshLevel( string const & name,
 
       for( localIndex i = 0; i < faceToNodeMapSource.size(); ++i )
       {
-        for( localIndex j = 0; j < pow( order+1, 2 ); ++j )
+        for( localIndex j = 0; j < numNodesPerFace; ++j )
         {
           faceToNodeMapNew[i][j] = -1;
         }
@@ -272,7 +287,7 @@ MeshLevel::MeshLevel( string const & name,
       {
         for( localIndex j = 0; j <order+1; j++ )
         {
-          localElemToLocalFace[0][i + pow( order+1, 2 )*j] = i + (order+1)*j;
+          localElemToLocalFace[0][i + numNodesPerFace * j] = i + (order+1)*j;
         }
 
       }
@@ -292,7 +307,7 @@ MeshLevel::MeshLevel( string const & name,
       {
         for( localIndex j = 0; j < order+1; j++ )
         {
-          localElemToLocalFace[2][k*pow( order+1, 2 )+j*(order+1)] = j + (order+1)*k;
+          localElemToLocalFace[2][k * numNodesPerFace +j*(order+1)] = j + (order+1)*k;
         }
 
       }
@@ -302,7 +317,7 @@ MeshLevel::MeshLevel( string const & name,
       {
         for( localIndex k = 0; k < order+1; k++ )
         {
-          localElemToLocalFace[3][order +k*(order+1)+j*pow( order+1, 2 )] = k + (order+1)*j;
+          localElemToLocalFace[3][order +k*(order+1)+j * numNodesPerFace] = k + (order+1)*j;
         }
 
       }
@@ -312,7 +327,7 @@ MeshLevel::MeshLevel( string const & name,
       {
         for( localIndex i = 0; i < order+1; i++ )
         {
-          localElemToLocalFace[4][order*(order+1)+i+j*pow( order+1, 2 )] = i + (order+1)*j;
+          localElemToLocalFace[4][order*(order+1)+i+j * numNodesPerFace] = i + (order+1)*j;
         }
 
       }
@@ -322,7 +337,7 @@ MeshLevel::MeshLevel( string const & name,
       {
         for( localIndex i = 0; i < order+1; i++ )
         {
-          localElemToLocalFace[5][order*pow( order+1, 2 )+i+k*(order+1)] = i + (order+1)*k;
+          localElemToLocalFace[5][order * numNodesPerFace +i+k*(order+1)] = i + (order+1)*k;
         }
 
       }
@@ -350,9 +365,11 @@ MeshLevel::MeshLevel( string const & name,
 
               localIndex face = 0;
               localIndex foundFace = 0;
+              localIndex nodeindex = i + (order+1)*j + (order+1)*(order+1)*k;
+
               while( face<6 && foundFace<1 )
               {
-                localIndex m = localElemToLocalFace[face][i +(order+1)*j + pow( order+1, 2 )*k];
+                localIndex m = localElemToLocalFace[face][nodeindex];
 
                 if( m != -1 )
                 {
@@ -364,11 +381,11 @@ MeshLevel::MeshLevel( string const & name,
                       localIndex elemNeighbour = faceToElemIndex[elemToFaces[elem][face]][l];
                       if( elemNeighbour != elem && elemNeighbour != -1 )
                       {
-                        for( localIndex node = 0; node < pow( order+1, 3 ); ++node )
+                        for( localIndex node = 0; node < numNodesPerElem; ++node )
                         {
                           if( elemsToNodesNew[elemNeighbour][node] == faceToNodeMapNew[elemToFaces[elem][face]][m] )
                           {
-                            elemsToNodesNew[elem][i + (order+1)*j + pow( order+1, 2 )*k] = elemsToNodesNew[elemNeighbour][node];
+                            elemsToNodesNew[elem][nodeindex] = elemsToNodesNew[elemNeighbour][node];
                             break;
                           }
                         }
@@ -377,7 +394,7 @@ MeshLevel::MeshLevel( string const & name,
                     }
                     for( localIndex face2 = 0; face2 < 6; ++face2 )
                     {
-                      localIndex m2 = localElemToLocalFace[face2][i +(order+1)*j + pow( order+1, 2 )*k];
+                      localIndex m2 = localElemToLocalFace[face2][nodeindex];
 
                       if( m2 != -1 && face2!=face )
                       {
@@ -394,7 +411,7 @@ MeshLevel::MeshLevel( string const & name,
               }
               if( face > 5 && foundFace < 1 )
               {
-                elemsToNodesNew[elem][i + (order+1)*j + pow( order+1, 2 )*k] = count;
+                elemsToNodesNew[elem][nodeindex] = count;
                 count++;
               }
             }
@@ -402,38 +419,46 @@ MeshLevel::MeshLevel( string const & name,
         }
       }
 
-
-
       //Fill a temporary array which contains the Gauss-Lobatto points depending on the order
-      array1d< real64 > GaussLobattoPts( 4 );
+      array1d< real64 > GaussLobattoPts( order+1 );
 
-      if( order==1 )
+      switch( order )
       {
-        GaussLobattoPts[0] = -1.0;
-        GaussLobattoPts[1] = 1.0;
-      }
-
-      if( order==3 )
-      {
-        GaussLobattoPts[0] = -1.0;
-        GaussLobattoPts[1] = -1./sqrt( 5 );
-        GaussLobattoPts[2] = 1./sqrt( 5 );
-        GaussLobattoPts[3] = 1.;
-      }
-
-      if( order==5 )
-      {
-        static constexpr real64 sqrt__7_plus_2sqrt7__ = 3.50592393273573196;
-        static constexpr real64 sqrt__7_mins_2sqrt7__ = 1.30709501485960033;
-
-        static constexpr real64 sqrt_inv21 = 0.218217890235992381;
-
-        GaussLobattoPts[0] = -1.0;
-        GaussLobattoPts[1] = -sqrt_inv21*sqrt__7_plus_2sqrt7__;
-        GaussLobattoPts[2] = -sqrt_inv21*sqrt__7_mins_2sqrt7__;
-        GaussLobattoPts[3] = sqrt_inv21*sqrt__7_mins_2sqrt7__;
-        GaussLobattoPts[4] = sqrt_inv21*sqrt__7_plus_2sqrt7__;
-        GaussLobattoPts[5] = 1.0;
+        case 1:
+          GaussLobattoPts[0] = -1.0;
+          GaussLobattoPts[1] = 1.0;
+          break;
+        case 2:
+          GaussLobattoPts[0] = -1.0;
+          GaussLobattoPts[1] = 0.0;
+          GaussLobattoPts[2] = 1.0;
+          break;
+        case 3:
+          static constexpr real64 sqrt5 = 2.2360679774997897;
+          GaussLobattoPts[0] = -1.0;
+          GaussLobattoPts[1] = -1./sqrt5;
+          GaussLobattoPts[2] = 1./sqrt5;
+          GaussLobattoPts[3] = 1.;
+          break;
+        case 4:
+          static constexpr real64 sqrt3_7 = 0.6546536707079771;
+          GaussLobattoPts[0] = -1.0;
+          GaussLobattoPts[1] = -sqrt3_7;
+          GaussLobattoPts[2] = 0.0;
+          GaussLobattoPts[3] = sqrt3_7;
+          GaussLobattoPts[4] = 1.0;
+          break;
+        case 5:
+          static constexpr real64 sqrt__7_plus_2sqrt7__ = 3.50592393273573196;
+          static constexpr real64 sqrt__7_mins_2sqrt7__ = 1.30709501485960033;
+          static constexpr real64 sqrt_inv21 = 0.218217890235992381;
+          GaussLobattoPts[0] = -1.0;
+          GaussLobattoPts[1] = -sqrt_inv21*sqrt__7_plus_2sqrt7__;
+          GaussLobattoPts[2] = -sqrt_inv21*sqrt__7_mins_2sqrt7__;
+          GaussLobattoPts[3] = sqrt_inv21*sqrt__7_mins_2sqrt7__;
+          GaussLobattoPts[4] = sqrt_inv21*sqrt__7_plus_2sqrt7__;
+          GaussLobattoPts[5] = 1.0;
+          break;
       }
 
       //Three 1D arrays to contains the GL points in the new coordinates knowing the mesh nodes
@@ -462,7 +487,7 @@ MeshLevel::MeshLevel( string const & name,
           {
             for( localIndex i = 0; i < order+1; i++ )
             {
-              localIndex const nodeIndex = elemsToNodesNew( e, i+j*(order+1)+k*pow( order+1, 2 ) );
+              localIndex const nodeIndex = elemsToNodesNew( e, i+j*(order+1)+k* numNodesPerFace );
 
               refPosNew( nodeIndex, 0 ) = x[i];
               refPosNew( nodeIndex, 1 ) = y[j];

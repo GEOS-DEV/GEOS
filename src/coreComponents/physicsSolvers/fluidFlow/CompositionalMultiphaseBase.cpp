@@ -27,7 +27,7 @@
 #include "constitutive/fluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
-#include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "constitutive/thermalConductivity/multiPhaseThermalConductivitySelector.hpp"
@@ -56,13 +56,12 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
                                                           Group * const parent )
   :
   FlowSolverBase( name, parent ),
-  m_systemSetupDone( false ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_hasCapPressure( 0 ),
+  m_keepFlowVariablesConstantDuringInitStep( 0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
-
 {
 //START_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
@@ -128,11 +127,11 @@ void CompositionalMultiphaseBase::postProcessInput()
   GEOSX_ERROR_IF_LE_MSG( m_maxCompFracChange, 0.0,
                          "The maximum absolute change in component fraction in a Newton iteration must be larger than 0.0" );
   GEOSX_ERROR_IF_GT_MSG( m_maxRelativePresChange, 1.0,
-                         "The maximum relative change in pressure in a Newton iteration must be smaller or equal to 1.0 (i.e., 100% change)" );
+                         "The maximum relative change in pressure in a Newton iteration must be smaller or equal to 1.0 (i.e., 100 percent change)" );
   GEOSX_ERROR_IF_LE_MSG( m_maxRelativePresChange, 0.0,
                          "The maximum relative change in pressure in a Newton iteration must be larger than 0.0" );
   GEOSX_ERROR_IF_GT_MSG( m_maxRelativeTempChange, 1.0,
-                         "The maximum relative change in temperature in a Newton iteration must be smaller or equal to 1.0 (i.e., 100% change)" );
+                         "The maximum relative change in temperature in a Newton iteration must be smaller or equal to 1.0 (i.e., 100 percent change)" );
   GEOSX_ERROR_IF_LE_MSG( m_maxRelativeTempChange, 0.0,
                          "The maximum relative change in temperature in a Newton iteration must be larger than 0.0" );
 
@@ -1069,44 +1068,38 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 
-    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
-                                                                  ElementSubRegionBase & subRegion )
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames,
+                                                                                                 [&]( localIndex const,
+                                                                                                      auto & subRegion )
     {
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
       fluid.setMassFlag( m_useMass );
+
+      CoupledSolidBase const & porousSolid =
+        getConstitutiveModel< CoupledSolidBase >( subRegion,
+                                                  subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+
+      updatePorosityAndPermeability( subRegion );
+
+      porousSolid.initializeState();
     } );
 
     // Initialize primary variables from applied initial conditions
     initializeFluidState( mesh, regionNames );
 
+    mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames,
+                                                                     [&]( localIndex const,
+                                                                          SurfaceElementRegion & region )
+    {
+      region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+      {
+        subRegion.getWrapper< real64_array >( fields::flow::hydraulicAperture::key() ).
+          setApplyDefaultValue( region.getDefaultAperture() );
+      } );
+    } );
+
   } );
-}
-
-real64 CompositionalMultiphaseBase::solverStep( real64 const & time_n,
-                                                real64 const & dt,
-                                                integer const cycleNumber,
-                                                DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-
-  // Only build the sparsity pattern once
-  // TODO: this should be triggered by a topology change indicator
-  if( !m_systemSetupDone )
-  {
-    setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-    m_systemSetupDone = true;
-  }
-
-  implicitStepSetup( time_n, dt, domain );
-
-  // currently the only method is implicit time integration
-  real64 const dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
-  implicitStepComplete( time_n, dt_return, domain );
-
-  return dt_return;
 }
 
 void
@@ -1261,14 +1254,25 @@ void CompositionalMultiphaseBase::applyBoundaryConditions( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  // apply pressure boundary conditions.
-  applyDirichletBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+  if( m_keepFlowVariablesConstantDuringInitStep )
+  {
+    // this function is going to force the current flow state to be constant during the time step
+    // this is used when the poromechanics solver is performing the stress initialization
+    // TODO: in the future, a dedicated poromechanics kernel should eliminate the flow vars to construct a reduced system
+    //       which will remove the need for this brittle passing aroung of flag
+    keepFlowVariablesConstantDuringInitStep( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+  }
+  else
+  {
+    // apply pressure boundary conditions.
+    applyDirichletBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 
-  // apply flux boundary conditions
-  applySourceFluxBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+    // apply flux boundary conditions
+    applySourceFluxBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 
-  // apply aquifer boundary conditions
-  applyAquiferBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+    // apply aquifer boundary conditions
+    applyAquiferBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+  }
 }
 
 namespace
@@ -1327,14 +1331,15 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & )
   {
-    fsManager.apply< ElementSubRegionBase >( time + dt,
-                                             mesh,
-                                             FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                                             [&]( FieldSpecificationBase const & fs,
-                                                  string const & setName,
-                                                  SortedArrayView< localIndex const > const & targetSet,
-                                                  ElementSubRegionBase & subRegion,
-                                                  string const & )
+    fsManager.apply< ElementSubRegionBase,
+                     SourceFluxBoundaryCondition >( time + dt,
+                                                    mesh,
+                                                    SourceFluxBoundaryCondition::catalogName(),
+                                                    [&]( SourceFluxBoundaryCondition const & fs,
+                                                         string const & setName,
+                                                         SortedArrayView< localIndex const > const & targetSet,
+                                                         ElementSubRegionBase & subRegion,
+                                                         string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
@@ -1725,7 +1730,85 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
         } );
       } );
     }
+  } );
+}
 
+void CompositionalMultiphaseBase::keepFlowVariablesConstantDuringInitStep( real64 const time,
+                                                                           real64 const dt,
+                                                                           DofManager const & dofManager,
+                                                                           DomainPartition & domain,
+                                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                           arrayView1d< real64 > const & localRhs ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( time, dt );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel const & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase const & subRegion )
+    {
+      globalIndex const rankOffset = dofManager.rankOffset();
+      string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+
+      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+      arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
+      arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::flow::globalCompDensity >();
+
+      integer const numComp = m_numComponents;
+      integer const isThermal = m_isThermal;
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] >= 0 )
+        {
+          return;
+        }
+
+        globalIndex const dofIndex = dofNumber[ei];
+        localIndex const localRow = dofIndex - rankOffset;
+        real64 rhsValue;
+
+        // 4.1. Apply pressure value to the matrix/rhs
+        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
+                                                    rankOffset,
+                                                    localMatrix,
+                                                    rhsValue,
+                                                    pres[ei], // freeze the current pressure value
+                                                    pres[ei] );
+        localRhs[localRow] = rhsValue;
+
+        // 4.2. Apply temperature value to the matrix/rhs
+        if( isThermal )
+        {
+          FieldSpecificationEqual::SpecifyFieldValue( dofIndex + numComp + 1,
+                                                      rankOffset,
+                                                      localMatrix,
+                                                      rhsValue,
+                                                      temp[ei], // freeze the current temperature value
+                                                      temp[ei] );
+          localRhs[localRow + numComp + 1] = rhsValue;
+        }
+
+        // 4.3. For each component, apply target global density value
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ic + 1,
+                                                      rankOffset,
+                                                      localMatrix,
+                                                      rhsValue,
+                                                      compDens[ei][ic], // freeze the current component density values
+                                                      compDens[ei][ic] );
+          localRhs[localRow + ic + 1] = rhsValue;
+        }
+      } );
+    } );
   } );
 }
 

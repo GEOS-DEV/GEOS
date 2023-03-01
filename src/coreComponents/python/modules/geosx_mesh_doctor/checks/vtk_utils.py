@@ -1,5 +1,6 @@
 import os.path
 import logging
+import sys
 
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
@@ -14,10 +15,22 @@ from vtkmodules.vtkIOXML import (
 
 
 def read_mesh(vtk_input_file: str) -> vtkUnstructuredGrid:
-    reader = vtkXMLUnstructuredGridReader()  # TODO Find a generic way to read the vtk mesh.
+    # Testing legacy file format.
+    reader = vtkUnstructuredGridReader()
     reader.SetFileName(vtk_input_file)
-    reader.Update()
-    return reader.GetOutput()
+    if reader.IsFileUnstructuredGrid():
+        logging.debug(f"Reading file \"{vtk_input_file}\" using legacy format reader.")
+        reader.Update()
+        return reader.GetOutput()
+    # Now it's xml time!
+    reader = vtkXMLUnstructuredGridReader()
+    if reader.CanReadFile(vtk_input_file):
+        logging.debug(f"Reading file \"{vtk_input_file}\" using XML format reader.")
+        reader.SetFileName(vtk_input_file)
+        reader.Update()
+        return reader.GetOutput()
+    logging.critical(f"Could not find the appropriate VTK reader for file \"{vtk_input_file}\". Dying...")
+    sys.exit(1)
 
 
 def write_mesh(mesh: vtkUnstructuredGrid, output: str) -> None:
@@ -36,5 +49,3 @@ def write_mesh(mesh: vtkUnstructuredGrid, output: str) -> None:
     writer.SetInputData(mesh)
     logging.info(f"Writing mesh into file {output}")
     writer.Write()
-
-
