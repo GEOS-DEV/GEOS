@@ -69,6 +69,9 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 5;
 
+  /// The number of sampling points per element.
+  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
+
   virtual ~H1_Pyramid_Lagrange1_Gauss5() override
   {}
 
@@ -115,41 +118,28 @@ public:
   }
 
   /**
-   * @brief Method to fill a MeshData object.
-   * @param nodeManager The node manager.
-   * @param edgeManager The edge manager.
-   * @param faceManager The face manager.
-   * @param cellSubRegion The cell sub-region for which the element has to be initialized.
-   * @param meshData MeshData struct to be filled.
+   * @brief Get the Sampling Point Coord In the Parent Space
+   *
+   * @param linearIndex linear index of the sampling point
+   * @param samplingPointCoord coordinates of the sampling point
    */
-  template< typename SUBREGION_TYPE >
-  static void fillMeshData( NodeManager const & nodeManager,
-                            EdgeManager const & edgeManager,
-                            FaceManager const & faceManager,
-                            SUBREGION_TYPE const & cellSubRegion,
-                            MeshData< SUBREGION_TYPE > & meshData );
-
-  /**
-   * @brief Empty setup method.
-   * @param cellIndex The index of the cell with respect to the cell sub region.
-   * @param meshData MeshData struct filled by @ref fillMeshData.
-   * @param stack Object that holds stack variables.
-   */
-  template< typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void setupStack( localIndex const & cellIndex,
-                          MeshData< SUBREGION_TYPE > const & meshData,
-                          StackVariables & stack );
-
+  static void getSamplingPointCoordInParentSpace( int const & linearIndex,
+                                                  real64 (& samplingPointCoord)[3] )
+  {
+    GEOSX_UNUSED_VAR( linearIndex, samplingPointCoord );
+    GEOSX_ERROR( " Element type not supported." );
+  }
 
   /**
    * @brief Calculate shape functions values at a single point.
-   * @param[in] coords The parent coordinates at which to evaluate the shape function value
+   * @param[in] pointCoord The parent coordinates at which to evaluate the shape function value
    * @param[out] N The shape function values.
    */
   GEOSX_HOST_DEVICE
-  static void calcN( real64 const (&coords)[3],
+  GEOSX_FORCE_INLINE
+  static void calcN( real64 const (&pointCoord)[3],
                      real64 ( &N )[numNodes] );
 
   /**
@@ -218,19 +208,6 @@ public:
   GEOSX_HOST_DEVICE
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const (&X)[numNodes][3] );
-
-  /**
-   * @brief Empty method, here for compatibility with methods that require a stabilization of the
-   * grad-grad bilinear form.
-   * @tparam MATRIXTYPE The type of @p matrix.
-   * @param stack Stack variables as filled by @ref setupStack.
-   * @param matrix The matrix that needs to be stabilized.
-   */
-  template< typename MATRIXTYPE >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void addGradGradStabilization( StackVariables const & stack,
-                                        MATRIXTYPE & matrix );
 
   /**
    * @brief Calculates the isoparametric "Jacobian" transformation
@@ -404,33 +381,6 @@ private:
 
 /// @cond Doxygen_Suppress
 
-template< typename SUBREGION_TYPE >
-GEOSX_FORCE_INLINE
-void H1_Pyramid_Lagrange1_Gauss5::
-  fillMeshData( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-                EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
-                FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
-                SUBREGION_TYPE const & GEOSX_UNUSED_PARAM( cellSubRegion ),
-                MeshData< SUBREGION_TYPE > & GEOSX_UNUSED_PARAM( meshData ) )
-{}
-
-template< typename SUBREGION_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void H1_Pyramid_Lagrange1_Gauss5::
-  setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
-              MeshData< SUBREGION_TYPE > const & GEOSX_UNUSED_PARAM( meshData ),
-              StackVariables & GEOSX_UNUSED_PARAM( stack ) )
-{}
-
-template< typename MATRIXTYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void H1_Pyramid_Lagrange1_Gauss5::
-  addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-                            MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
-{}
-
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
@@ -526,19 +476,18 @@ H1_Pyramid_Lagrange1_Gauss5::
 
 //*************************************************************************************************
 
-
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_Pyramid_Lagrange1_Gauss5::
-  calcN( real64 const (&xi)[3],
+  calcN( real64 const ( &pointCoord )[3],
          real64 ( & N )[numNodes] )
 {
-  N[0] = 0.125*( 1.0 - xi[0] ) * ( 1.0 - xi[1] ) * ( 1.0 - xi[2] );
-  N[1] = 0.125*( 1.0 + xi[0] ) * ( 1.0 - xi[1] ) * ( 1.0 - xi[2] );
-  N[2] = 0.125*( 1.0 - xi[0] ) * ( 1.0 + xi[1] ) * ( 1.0 - xi[2] );
-  N[3] = 0.125*( 1.0 + xi[0] ) * ( 1.0 + xi[1] ) * ( 1.0 - xi[2] );
-  N[4] = 0.5*( 1.0 + xi[2] );
+  N[0] = 0.125*( 1.0 - pointCoord[0] ) * ( 1.0 - pointCoord[1] ) * ( 1.0 - pointCoord[2] );
+  N[1] = 0.125*( 1.0 + pointCoord[0] ) * ( 1.0 - pointCoord[1] ) * ( 1.0 - pointCoord[2] );
+  N[2] = 0.125*( 1.0 - pointCoord[0] ) * ( 1.0 + pointCoord[1] ) * ( 1.0 - pointCoord[2] );
+  N[3] = 0.125*( 1.0 + pointCoord[0] ) * ( 1.0 + pointCoord[1] ) * ( 1.0 - pointCoord[2] );
+  N[4] = 0.5*( 1.0 + pointCoord[2] );
 }
 
 GEOSX_HOST_DEVICE
@@ -552,11 +501,7 @@ H1_Pyramid_Lagrange1_Gauss5::
                          quadratureParentCoords1( q ),
                          quadratureParentCoords2( q ) };
 
-  N[0] = 0.125*( 1.0 - xi[0] ) * ( 1.0 - xi[1] ) * ( 1.0 - xi[2] );
-  N[1] = 0.125*( 1.0 + xi[0] ) * ( 1.0 - xi[1] ) * ( 1.0 - xi[2] );
-  N[2] = 0.125*( 1.0 - xi[0] ) * ( 1.0 + xi[1] ) * ( 1.0 - xi[2] );
-  N[3] = 0.125*( 1.0 + xi[0] ) * ( 1.0 + xi[1] ) * ( 1.0 - xi[2] );
-  N[4] = 0.5*( 1.0 + xi[2] );
+  calcN( xi, N );
 }
 
 GEOSX_HOST_DEVICE

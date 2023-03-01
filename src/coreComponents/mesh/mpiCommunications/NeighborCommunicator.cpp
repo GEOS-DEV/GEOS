@@ -368,22 +368,22 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
   arrayView1d< globalIndex const > const faceLocalToGlobal = faceManager.localToGlobalMap();
 
   buffer_type & sendBuff = sendBuffer( commID );
-  buffer_unit_type * sendBufferPtr = sendBuff.data();
+  buffer_unit_type * sendBufferPtrTemp = sendBuff.data();
 
   int bufferSize = 0;
-  bufferSize += bufferOps::Pack< false >( sendBufferPtr,
+  bufferSize += bufferOps::Pack< false >( sendBufferPtrTemp,
                                           nodeGhostsToReceive.toSliceConst(),
                                           nullptr,
                                           nodeGhostsToReceive.size(),
                                           nodeLocalToGlobal.toSliceConst() );
 
-  bufferSize += bufferOps::Pack< false >( sendBufferPtr,
+  bufferSize += bufferOps::Pack< false >( sendBufferPtrTemp,
                                           edgeGhostsToReceive.toSliceConst(),
                                           nullptr,
                                           edgeGhostsToReceive.size(),
                                           edgeLocalToGlobal.toSliceConst() );
 
-  bufferSize += bufferOps::Pack< false >( sendBufferPtr,
+  bufferSize += bufferOps::Pack< false >( sendBufferPtrTemp,
                                           faceGhostsToReceive.toSliceConst(),
                                           nullptr,
                                           faceGhostsToReceive.size(),
@@ -393,7 +393,7 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
   {
     arrayView1d< localIndex const > const ghostsToReceive = subRegion.getNeighborData( m_neighborRank ).ghostsToReceive();
     arrayView1d< globalIndex const > const localToGlobal = subRegion.localToGlobalMap();
-    bufferSize += bufferOps::Pack< false >( sendBufferPtr,
+    bufferSize += bufferOps::Pack< false >( sendBufferPtrTemp,
                                             ghostsToReceive.toSliceConst(),
                                             nullptr,
                                             ghostsToReceive.size(),
@@ -402,6 +402,7 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
 
   this->resizeSendBuffer( commID, bufferSize );
   this->postSizeSend( commID, mpiSendSizeRequest );
+  buffer_unit_type * sendBufferPtr = sendBuff.data();
 
   int packedSize = 0;
   packedSize += bufferOps::Pack< true >( sendBufferPtr,

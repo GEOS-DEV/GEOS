@@ -510,7 +510,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
                                                                 MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    // 1. check cell-centered variables for each region
+    // check cell-centered variables for each region
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames, [&]( localIndex const,
                                                                                           ElementSubRegionBase const & subRegion )
     {
@@ -528,28 +528,6 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
 
       localCheck = std::min( localCheck, subRegionSolutionCheck );
     } );
-
-    // 2. check face-centered variables in the domain
-
-    FaceManager const & faceManager = mesh.getFaceManager();
-    string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
-    arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
-    arrayView1d< globalIndex const > const faceDofNumber =
-      faceManager.getReference< array1d< globalIndex > >( faceDofKey );
-    arrayView1d< real64 const > const facePres =
-      faceManager.getField< fields::flow::facePressure >();
-
-    // check that face pressure is non-negative
-    integer const faceSolutionCheck =
-      compositionalMultiphaseHybridFVMKernels::
-        SolutionCheckKernel::launch< parallelDevicePolicy<> >( localSolution,
-                                                               dofManager.rankOffset(),
-                                                               faceDofNumber,
-                                                               faceGhostRank,
-                                                               facePres,
-                                                               scalingFactor );
-    localCheck = std::min( localCheck, faceSolutionCheck );
-
   } );
 
   return MpiWrapper::min( localCheck );

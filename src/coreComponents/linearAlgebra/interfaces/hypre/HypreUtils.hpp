@@ -486,13 +486,18 @@ enum class MGRFRelaxationMethod : HYPRE_Int
 enum class MGRFRelaxationType : HYPRE_Int
 {
   jacobi = 0,                       //!< Jacobi
+  singleVCycleSmoother = 1,         //!< V(1,0) cycle smoother
+  amgVCycle = 2,                    //!< Full AMG VCycle solver
   forwardHybridGaussSeidel = 3,     //!< hybrid Gauss-Seidel or SOR, forward solve
   backwardHybridGaussSeidel = 4,    //!< hybrid Gauss-Seidel or SOR, backward solve
   hybridSymmetricGaussSeidel = 6,   //!< hybrid symmetric Gauss-Seidel or SSOR
   l1hybridSymmetricGaussSeidel = 8, //!< \f$\ell_1\f$-scaled hybrid symmetric Gauss-Seidel
+  gsElim = 9,                       //!< Gaussian Elimination direct solver (for small systems)
   l1forwardGaussSeidel = 13,        //!< \f$\ell_1\f$ Gauss-Seidel, forward solve
   l1backwardGaussSeidel = 14,       //!< \f$\ell_1\f$ Gauss-Seidel, backward solve
   l1jacobi = 18,                    //!< \f$\ell_1\f$-scaled Jacobi
+  gsElimWPivoting = 99,             //!< Gaussian Elimination with pivoting direct solver (for small systems)
+  gsElimWInverse = 199              //!< Direct Inversion with Gaussian Elimination (OK for larger systems)
 };
 
 /**

@@ -676,6 +676,11 @@ CellBlock & CellBlockManager::registerCellBlock( string const & name )
   return this->getCellBlocks().registerGroup< CellBlock >( name );
 }
 
+FaceBlock & CellBlockManager::registerFaceBlock( string const & name )
+{
+  return this->getFaceBlocks().registerGroup< FaceBlock >( name );
+}
+
 array2d< real64, nodes::REFERENCE_POSITION_PERM > CellBlockManager::getNodePositions() const
 {
   return m_nodesPositions;

@@ -1,8 +1,7 @@
 import numpy
 
 from vtkmodules.vtkCommonCore import (
-    vtkPoints,
-)
+    vtkPoints, )
 from vtkmodules.vtkCommonDataModel import (
     VTK_HEXAHEDRON,
     vtkCellArray,
@@ -38,7 +37,7 @@ def __build_mesh() -> vtkUnstructuredGrid:
     cells = vtkCellArray()
     cells.AllocateExact(num_cells, num_cells * 8)
 
-    m = (0, 1, 3, 2, 4, 5, 7, 6)  # VTK_VOXEL and VTK_HEXAHEDRON do not share the same ordering.
+    m = (0, 1, 3, 2, 4, 5, 7, 6)    # VTK_VOXEL and VTK_HEXAHEDRON do not share the same ordering.
 
     for i in range(rg.GetNumberOfCells()):
         c = rg.GetCell(i)
@@ -62,7 +61,11 @@ def test_generate_fracture():
     attribute.SetName("attribute")
     mesh.GetCellData().AddArray(attribute)
 
-    options = Options(policy="field", field="attribute", field_values={0, 1, 2}, output="", split_on_domain_boundary=True)
+    options = Options(policy="field",
+                      field="attribute",
+                      field_values={0, 1, 2},
+                      output="",
+                      split_on_domain_boundary=True)
     cell_frac_info, node_frac_info = __find_involved_cells(mesh, options)
     assert set(cell_frac_info.cell_to_faces.keys()) == {0, 1, 2, 3, 4, 5, 7, 8}
     assert len(cell_frac_info.field_data) == 5

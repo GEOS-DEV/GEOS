@@ -279,8 +279,7 @@ if __name__ == "__main__":
                         nargs='?',
                         const=5,
                         default=5,
-                        help='Integer random number generator seed, default=5')                                        
-
+                        help='Integer random number generator seed, default=5')
 
     args = parser.parse_args()
 

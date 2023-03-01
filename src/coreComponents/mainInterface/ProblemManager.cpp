@@ -503,7 +503,7 @@ void ProblemManager::postProcessInput()
   {
     partition.setPartitions( xpar, ypar, zpar );
     int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
-    // Case : Using MPI domain decomposition and partition are not defined (mainly pamela usage)
+    // Case : Using MPI domain decomposition and partition are not defined (mainly for external mesh readers)
     if( mpiSize > 1 && xpar == 1 && ypar == 1 && zpar == 1 )
     {
       //TODO  confirm creates no issues with MPI_Cart_Create
@@ -672,12 +672,7 @@ void ProblemManager::importFields()
   GEOSX_MARK_FUNCTION;
   DomainPartition & domain = getDomainPartition();
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
-
-  meshManager.forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & generator )
-  {
-    generator.importFields( domain );
-    generator.freeResources();
-  } );
+  meshManager.importFields( domain );
 }
 
 void ProblemManager::applyNumericalMethods()
@@ -970,12 +965,10 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
                                           ConstitutiveManager const & constitutiveManager,
                                           map< std::tuple< string, string, string, string >, localIndex > const & regionQuadratures )
 {
-
-
-  for( auto regionQuadrature=regionQuadratures.begin(); regionQuadrature!=regionQuadratures.end(); ++regionQuadrature )
+  for( auto const & regionQuadrature : regionQuadratures )
   {
-    std::tuple< string, string, string, string > const key = regionQuadrature->first;
-    localIndex const numQuadraturePoints = regionQuadrature->second;
+    std::tuple< string, string, string, string > const key = regionQuadrature.first;
+    localIndex const numQuadraturePoints = regionQuadrature.second;
     string const meshBodyName = std::get< 0 >( key );
     string const meshLevelName = std::get< 1 >( key );
     string const regionName = std::get< 2 >( key );
@@ -1092,6 +1085,10 @@ void ProblemManager::applyInitialConditions()
   {
     meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
     {
+      if( !meshLevel.isShallowCopy() ) // to avoid messages printed three times
+      {
+        m_fieldSpecificationManager->validateBoundaryConditions( meshLevel );
+      }
       m_fieldSpecificationManager->applyInitialConditions( meshLevel );
     } );
   } );

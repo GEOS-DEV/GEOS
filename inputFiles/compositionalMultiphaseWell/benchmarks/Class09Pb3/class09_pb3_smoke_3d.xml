@@ -1,0 +1,98 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./class09_pb3_hystRelperm_direct_base.xml"/>
+  </Included>
+
+  <!-- SPHINX_MESH -->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 5240, 5640 }"
+      yCoords="{ 3100, 3500 }"
+      zCoords="{ -3000, -2950 }"
+      nx="{ 5 }"
+      ny="{ 5 }"
+      nz="{ 5 }"
+      cellBlockNames="{ 1_hexahedra }"/>
+    <InternalWell
+      name="wellInjector1"
+      wellRegionName="wellRegion"
+      wellControlsName="wellControls"
+      logLevel="1"
+      meshName="mesh"
+      polylineNodeCoords="{ { 5440.0, 3300.0, -2950.0 },
+                            { 5440.0, 3300.0, -3000.00 } }"
+      polylineSegmentConn="{ { 0, 1 } }"
+      radius="0.1"
+      numElementsPerSegment="5">
+      <Perforation
+        name="injector1_perf1"
+        distanceFromHead="45"/>
+      <Perforation
+        name="injector1_perf2"
+        distanceFromHead="35"/>
+      <Perforation
+        name="injector1_perf3"
+        distanceFromHead="25"/>
+      <Perforation
+        name="injector1_perf4"
+        distanceFromHead="15"/>
+      <Perforation
+        name="injector1_perf5"
+        distanceFromHead="5"/> 
+    </InternalWell>
+  </Mesh>
+  <!-- SPHINX_MESH_END -->
+
+  <Tasks>
+    <!-- SPHINX_STATS -->
+    <CompositionalMultiphaseStatistics
+      name="compflowStatistics"
+      flowSolverName="compositionalMultiphaseFlow"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
+    <!-- SPHINX_STATS_END -->
+  </Tasks>
+
+  <Outputs>
+    <VTK
+      name="simpleReservoirViz"/>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Events
+    maxTime="1e6">
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1e5"
+      targetExactTimestep="1"
+      target="/Outputs/simpleReservoirViz"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="5e5"
+      targetExactTimestep="1"
+      target="/Outputs/restartOutput"/>
+
+    <!-- SPHINX_STAT_EV -->
+    <PeriodicEvent
+      name="statistics"
+      timeFrequency="1e5"
+      target="/Tasks/compflowStatistics"/>
+    <!-- SPHINX_STAT_EV_END -->
+
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="0"
+      endTime="7.884e8"
+      forceDt="1e5"        
+      target="/Solvers/coupledFlowAndWells"/>
+
+  </Events>
+</Problem>

@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Events maxTime="10">
+    <PeriodicEvent
+      name="python"
+      maxEventDt="1"
+      target="/Outputs/pythonOutput"/>
+  </Events>
+
+  <Outputs>
+    <Python
+      name="pythonOutput"/>
+  </Outputs>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cellBlock01 }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="dummy"
+      cellBlocks="{ cellBlock01 }"
+      materialList="{ dummy }"/>
+  </ElementRegions>
+
+</Problem>

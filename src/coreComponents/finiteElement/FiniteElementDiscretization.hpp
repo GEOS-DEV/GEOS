@@ -116,6 +116,10 @@ FiniteElementDiscretization::
 {
   GEOSX_MARK_FUNCTION;
 
+  // do not precompute shape functions in case of SEM formulation (not needed)
+  if( m_formulation == "SEM" )
+    return;
+
   array4d< real64 > & dNdX = elementSubRegion->dNdX();
   array2d< real64 > & detJ = elementSubRegion->detJ();
   auto const & elemsToNodes = elementSubRegion->nodeList().toViewConst();
