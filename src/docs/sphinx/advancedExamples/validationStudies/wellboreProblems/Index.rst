@@ -25,5 +25,7 @@ Wellbore Problems
 
    pureThermalDiffusion/Example
 
+   casedThermoElasticWellbore/Example
+
 
 
