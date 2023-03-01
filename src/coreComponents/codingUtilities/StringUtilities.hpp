@@ -119,7 +119,7 @@ CONTAINER< string > tokenize( string const & str,
   }
 
   CONTAINER< string > tokens;
-  size_t tokenBegin, tokenEnd, strEnd;
+  string::size_type tokenBegin, tokenEnd, strEnd;
 
   if( preTrimStr )
   {
@@ -142,19 +142,16 @@ CONTAINER< string > tokenize( string const & str,
   {
     tokens.emplace_back( str.substr( tokenBegin, strEnd-tokenBegin ));
   }
-  else if( !preTrimStr )
+  else if( !preTrimStr && str.find_first_of( delimiters, strEnd - 1 ) != string::npos )
   {
-    if( str.find_first_of( delimiters, strEnd - 1 ) != string::npos )
-    {
-      tokens.emplace_back( "" );
-    }
+    tokens.emplace_back( "" );
   }
 
   return tokens;
 }
 
 /**
- * @brief Subdivide the string in substrings by whitespaces (see std::isspace()).
+ * @brief Subdivide the string in substrings by whitespaces separators (see std::isspace()).
  *        Do not create any empty substrings.
  * @tparam CONTAINER The templated class of the results container (std::vector by default).
  * @param str The string to subdivide.

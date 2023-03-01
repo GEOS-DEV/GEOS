@@ -20,6 +20,54 @@
 
 using namespace geosx;
 
+struct TokenizeTest
+{
+  string m_strToTest;
+  string m_delims;
+  bool m_treatConsecutiveDelimAsOne;
+  bool m_preTrimStr;
+  std::vector< string > m_results;
+
+  TokenizeTest( string const & strToTest,
+                string const & delims,
+                bool treatConsecutiveDelimAsOne,
+                bool preTrimStr,
+                std::vector< string > const & results ):
+    m_strToTest( strToTest ),
+    m_delims( delims ),
+    m_treatConsecutiveDelimAsOne( treatConsecutiveDelimAsOne ),
+    m_preTrimStr( preTrimStr ),
+    m_results( results )
+  {}
+
+  friend std::ostream & operator<<( std::ostream & os, TokenizeTest const & test )
+  {
+    os << "TokenizeTests( \"" << test.m_strToTest
+       << "\", \"" << test.m_delims << '\"'
+       << ", delimsAsOne=" << test.m_treatConsecutiveDelimAsOne
+       << ", preTrim=" << test.m_preTrimStr << " )";
+    return os;
+  }
+};
+
+struct TokenizeBySpacesTest
+{
+  string m_strToTest;
+  std::vector< string > m_results;
+
+  TokenizeBySpacesTest( string const & strToTest,
+                        std::vector< string > const & results ):
+    m_strToTest( strToTest ),
+    m_results( results )
+  {}
+
+  friend std::ostream & operator<<( std::ostream & os, TokenizeBySpacesTest const & test )
+  {
+    os << "TokenizeBySpacesTest( \"" << test.m_strToTest << "\" )";
+    return os;
+  }
+};
+
 TEST( testStringUtilities, tokenize )
 {
 
@@ -51,89 +99,78 @@ TEST( testStringUtilities, tokenize )
 
   // Various strings tokenizing test
   {
-    struct TokenizeTest
-    {
-      string m_strToTest;
-      std::vector< string > m_results;
-      bool m_treatConsecutiveDelimAsOne, m_preTrimStr;
-
-      TokenizeTest( string const & strToTest,
-                    bool treatConsecutiveDelimAsOne,
-                    bool preTrimStr,
-                    std::vector< string > const & results ):
-        m_strToTest( strToTest ),
-        m_results( results ),
-        m_treatConsecutiveDelimAsOne( treatConsecutiveDelimAsOne ),
-        m_preTrimStr( preTrimStr )
-      {}
-    };
     std::vector< TokenizeTest > tokenizeTests = {
-      TokenizeTest( string( "a|b" ), false, false, { "a", "b" } ),
-      TokenizeTest( string( "a|b" ), true, false, { "a", "b" } ),
-      TokenizeTest( string( "a|b" ), false, true, { "a", "b" } ),
-      TokenizeTest( string( "a|b" ), true, true, { "a", "b" } ),
+      TokenizeTest( string( "a|b" ), "|", false, false, { "a", "b" } ),
+      TokenizeTest( string( "a|b" ), "|", true, false, { "a", "b" } ),
+      TokenizeTest( string( "a|b" ), "|", false, true, { "a", "b" } ),
+      TokenizeTest( string( "a|b" ), "|", true, true, { "a", "b" } ),
 
-      TokenizeTest( string( "|a|b|" ), false, false, { "", "a", "b", "" } ),
-      TokenizeTest( string( "|a|b|" ), true, false, { "", "a", "b", "" } ),
-      TokenizeTest( string( "|a|b|" ), false, true, { "a", "b" } ),
-      TokenizeTest( string( "|a|b|" ), true, true, { "a", "b" } ),
+      TokenizeTest( string( "|a|b|" ), "|", false, false, { "", "a", "b", "" } ),
+      TokenizeTest( string( "|a|b|" ), "|", true, false, { "", "a", "b", "" } ),
+      TokenizeTest( string( "|a|b|" ), "|", false, true, { "a", "b" } ),
+      TokenizeTest( string( "|a|b|" ), "|", true, true, { "a", "b" } ),
 
-      TokenizeTest( string( "|a||b|" ), false, false, { "", "a", "", "b", "" } ),
-      TokenizeTest( string( "|a||b|" ), true, false, { "", "a", "b", "" } ),
-      TokenizeTest( string( "|a||b|" ), false, true, { "a", "", "b" } ),
-      TokenizeTest( string( "|a||b|" ), true, true, { "a", "b" } ),
+      TokenizeTest( string( "|a||b|" ), "|", false, false, { "", "a", "", "b", "" } ),
+      TokenizeTest( string( "|a||b|" ), "|", true, false, { "", "a", "b", "" } ),
+      TokenizeTest( string( "|a||b|" ), "|", false, true, { "a", "", "b" } ),
+      TokenizeTest( string( "|a||b|" ), "|", true, true, { "a", "b" } ),
 
-      TokenizeTest( string( "a|||b" ), false, false, { "a", "", "", "b" } ),
-      TokenizeTest( string( "a|||b" ), true, false, { "a", "b" } ),
-      TokenizeTest( string( "a|||b" ), false, true, { "a", "", "", "b" } ),
-      TokenizeTest( string( "a|||b" ), true, true, { "a", "b" } ),
+      TokenizeTest( string( "a|||b" ), "|", false, false, { "a", "", "", "b" } ),
+      TokenizeTest( string( "a|||b" ), "|", true, false, { "a", "b" } ),
+      TokenizeTest( string( "a|||b" ), "|", false, true, { "a", "", "", "b" } ),
+      TokenizeTest( string( "a|||b" ), "|", true, true, { "a", "b" } ),
 
-      TokenizeTest( string( "||a|||b||" ), false, false, { "", "", "a", "", "", "b", "", "" } ),
-      TokenizeTest( string( "||a|||b||" ), true, false, { "", "a", "b", "" } ),
-      TokenizeTest( string( "||a|||b||" ), false, true, { "a", "", "", "b" } ),
-      TokenizeTest( string( "||a|||b||" ), true, true, { "a", "b" } ),
+      TokenizeTest( string( "||a|||b||" ), "|", false, false, { "", "", "a", "", "", "b", "", "" } ),
+      TokenizeTest( string( "||a|||b||" ), "|", true, false, { "", "a", "b", "" } ),
+      TokenizeTest( string( "||a|||b||" ), "|", false, true, { "a", "", "", "b" } ),
+      TokenizeTest( string( "||a|||b||" ), "|", true, true, { "a", "b" } ),
 
-      TokenizeTest( string( "|" ), false, false, { "", "" } ),
-      TokenizeTest( string( "|" ), true, false, { "", "" } ),
-      TokenizeTest( string( "|" ), false, true, { } ),
-      TokenizeTest( string( "|" ), true, true, { } ),
+      TokenizeTest( string( "|" ), "|", false, false, { "", "" } ),
+      TokenizeTest( string( "|" ), "|", true, false, { "", "" } ),
+      TokenizeTest( string( "|" ), "|", false, true, { } ),
+      TokenizeTest( string( "|" ), "|", true, true, { } ),
 
-      TokenizeTest( string( "|||" ), false, false, { "", "", "", "" } ),
-      TokenizeTest( string( "|||" ), true, false, { "", "" } ),
-      TokenizeTest( string( "|||" ), false, true, { } ),
-      TokenizeTest( string( "|||" ), true, true, { } ),
+      TokenizeTest( string( "|||" ), "|", false, false, { "", "", "", "" } ),
+      TokenizeTest( string( "|||" ), "|", true, false, { "", "" } ),
+      TokenizeTest( string( "|||" ), "|", false, true, { } ),
+      TokenizeTest( string( "|||" ), "|", true, true, { } ),
 
-      TokenizeTest( string( "ab" ), false, false, { "ab" } ),
-      TokenizeTest( string( "ab" ), true, false, { "ab" } ),
-      TokenizeTest( string( "ab" ), false, true, { "ab" } ),
-      TokenizeTest( string( "ab" ), true, true, { "ab" } ),
+      TokenizeTest( string( "ab" ), "|", false, false, { "ab" } ),
+      TokenizeTest( string( "ab" ), "|", true, false, { "ab" } ),
+      TokenizeTest( string( "ab" ), "|", false, true, { "ab" } ),
+      TokenizeTest( string( "ab" ), "|", true, true, { "ab" } ),
+
+      TokenizeTest( string( "| a|  b |" ), "| ", false, false, { "", "", "a", "", "", "b", "", "" } ),
+      TokenizeTest( string( "| a|  b |" ), "| ", true, false, { "", "a", "b", "" } ),
+      TokenizeTest( string( "| a|  b |" ), "| ", false, true, { "a", "", "", "b" } ),
+      TokenizeTest( string( "| a|  b |" ), "| ", true, true, { "a", "b" } ),
+
+      TokenizeTest( string( " |a ||b| " ), "| ", false, false, { "", "", "a", "", "", "b", "", "" } ),
+      TokenizeTest( string( " |a ||b| " ), "| ", true, false, { "", "a", "b", "" } ),
+      TokenizeTest( string( " |a ||b| " ), "| ", false, true, { "a", "", "", "b" } ),
+      TokenizeTest( string( " |a ||b| " ), "| ", true, true, { "a", "b" } ),
     };
 
     for( TokenizeTest test : tokenizeTests )
     {
-      std::vector< string > r = stringutilities::tokenize( test.m_strToTest, "|",
-                                                           bool(test.m_treatConsecutiveDelimAsOne),
-                                                           bool(test.m_preTrimStr));
+      std::vector< string > r = stringutilities::tokenize( test.m_strToTest,
+                                                           test.m_delims,
+                                                           test.m_treatConsecutiveDelimAsOne,
+                                                           test.m_preTrimStr );
 
       if( r.size() != test.m_results.size() )
       {
-        FAIL() << "tokenizeTests( '" << test.m_strToTest << "', \"|\""
-               << ", delimsAsOne=" << bool(test.m_treatConsecutiveDelimAsOne)
-               << ", preTrim=" << bool(test.m_preTrimStr)
-               << " ) failed : " << r.size()
-               << " results instead of " << test.m_results.size();
+        FAIL() << test << " failed: "
+               << r.size() << " results instead of " << test.m_results.size();
       }
       else
       {
-        for( int i = 0, rEnd = r.size(); i < rEnd; ++i )
+        for( size_t i = 0; i < r.size(); ++i )
         {
           if( r[i] != test.m_results[i] )
           {
-            FAIL() << "tokenizeTests( '" << test.m_strToTest << "', \"|\""
-                   << ", delimsAsOne=" << bool(test.m_treatConsecutiveDelimAsOne)
-                   << ", preTrim=" << bool(test.m_preTrimStr)
-                   << " ) failed : result no." << i << " was '" << r[i]
-                   << "' instead of '" << test.m_results[i] <<"'.";
+            FAIL() << test << " failed: "
+                   << "result no." << i << " was '" << r[i] << "' instead of '" << test.m_results[i] <<"'.";
           }
         }
       }
@@ -143,18 +180,6 @@ TEST( testStringUtilities, tokenize )
 
   // Spaces tokenizing test
   {
-    struct TokenizeBySpacesTest
-    {
-      string m_strToTest;
-      std::vector< string > m_results;
-
-      TokenizeBySpacesTest( string const & strToTest,
-                            std::vector< string > const & results ):
-        m_strToTest( strToTest ),
-        m_results( results )
-      {}
-    };
-
     std::vector< TokenizeBySpacesTest > tokenizeBSTests = {
       TokenizeBySpacesTest( string( "a b" ), { "a", "b" } ),
       TokenizeBySpacesTest( string( " a b " ), { "a", "b" } ),
@@ -172,19 +197,17 @@ TEST( testStringUtilities, tokenize )
 
       if( r.size() != test.m_results.size() )
       {
-        FAIL() << "TokenizeBySpacesTest( '" << test.m_strToTest
-               << " ) failed : " << r.size()
-               << " results instead of " << test.m_results.size();
+        FAIL() << test << " failed: "
+               << r.size() << " results instead of " << test.m_results.size();
       }
       else
       {
-        for( int i = 0, rEnd = r.size(); i < rEnd; ++i )
+        for( size_t i = 0; i < r.size(); ++i )
         {
           if( r[i] != test.m_results[i] )
           {
-            FAIL() << "TokenizeBySpacesTest( '" << test.m_strToTest
-                   << " ) failed : result no." << i << " was '" << r[i]
-                   << "' instead of '" << test.m_results[i] <<"'.";
+            FAIL() << test << " failed: "
+                   << "result no." << i << " was '" << r[i] << "' instead of '" << test.m_results[i] <<"'.";
           }
         }
       }
