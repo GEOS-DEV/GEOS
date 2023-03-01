@@ -101,10 +101,13 @@ public:
       drainageExtremaSCALValue = drainE.second;
     }
 
-    bool isWetting() const
+    GEOSX_HOST_DEVICE
+    inline bool isWetting() const
     {
       return ((drainageExtremaPhaseVolFraction > oppositeBoundPhaseVolFraction) ? PhaseWettability::WETTING : PhaseWettability::NONWETTING) == PhaseWettability::WETTING;
     }
+
+
     bool isZero() const
     {
       return (oppositeBoundPhaseVolFraction <= 0.0) && (imbibitionExtremaPhaseVolFraction <= 0.0) && (drainageExtremaPhaseVolFraction <= 0.0);

@@ -53,7 +53,7 @@ void KilloughHysteresis::postProcessInput( real64 const & jerauldParam_a, real64
 
 
 
-//TODO
+GEOSX_HOST_DEVICE
 void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisCurve const & hcurve,
                                                  real64 & landParam )
 {
