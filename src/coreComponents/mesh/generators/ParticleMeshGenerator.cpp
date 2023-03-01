@@ -34,7 +34,7 @@ namespace geosx
 using namespace dataRepository;
 
 ParticleMeshGenerator::ParticleMeshGenerator( string const & name, Group * const parent ):
-  MeshGeneratorBase( name, parent ),
+  ExternalMeshGeneratorBase( name, parent ),
   m_dim( 3 ),
   m_min(),
   m_max()
@@ -318,5 +318,14 @@ void ParticleMeshGenerator::postProcessInput()
   GEOSX_LOG_RANK_0("Someone called ParticleMeshGenerator::postProcessInput!");
 }
 
+void ParticleMeshGenerator::importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const
+{
+  GEOSX_UNUSED_PARAM(cellBlockName);
+  GEOSX_UNUSED_PARAM(meshFieldName);
+  GEOSX_UNUSED_PARAM(isMaterialField);
+  GEOSX_UNUSED_PARAM(wrapper);
+}
+
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, ParticleMeshGenerator, string const &, Group * const )
+
 } /* namespace geosx */
