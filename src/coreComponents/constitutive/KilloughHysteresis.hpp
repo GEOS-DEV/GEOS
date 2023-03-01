@@ -19,16 +19,15 @@
 #ifndef GEOSX_KILLOUGHHYSTERESIS_HPP
 #define GEOSX_KILLOUGHHYSTERESIS_HPP
 
-#include "constitutive/ConstitutiveBase.hpp"
-#include "functions/TableFunction.hpp"
-
 #include "relativePermeability/Layouts.hpp"
 #include "capillaryPressure/Layouts.hpp"
 
+#include "constitutive/ConstitutiveBase.hpp"
+#include "functions/TableFunction.hpp"
+
+
 namespace geosx
 {
-
-using namespace dataRepository;
 
 namespace constitutive
 {

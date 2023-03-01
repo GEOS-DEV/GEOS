@@ -100,7 +100,6 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
   KilloughHysteresis::HysteresisCurve const nonWettingCurve = relperm.template getReference< KilloughHysteresis::HysteresisCurve >(
     TableRelativePermeabilityHysteresis::viewKeyStruct::nonWettingCurveString());
-
   //setting for drainage
   {
     if( phaseHasHysteresis[ipNonWetting] )

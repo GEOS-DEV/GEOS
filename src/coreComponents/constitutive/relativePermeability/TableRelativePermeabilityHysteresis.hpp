@@ -19,11 +19,13 @@
 #ifndef GEOSX_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP
 #define GEOSX_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP
 
+///helper model class with data struct for curves and computing recipe for trapped and Land Coeff
+#include "constitutive/KilloughHysteresis.hpp"
+
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
 #include "functions/TableFunction.hpp"
-///helper model class with data struct for curves and computing recipe for trapped and Land Coeff
-#include "constitutive/KilloughHysteresis.hpp"
+
 
 namespace geosx
 {
