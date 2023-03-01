@@ -150,7 +150,7 @@ public:
       m_levelFRelaxType[1] = MGRFRelaxationType::jacobi;
     }
 
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetFLevelRelaxType( precond.ptr, toUnderlyingPtr( m_levelFRelaxType ) ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxType( precond.ptr, toUnderlyingPtr( m_levelFRelaxType ) ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
