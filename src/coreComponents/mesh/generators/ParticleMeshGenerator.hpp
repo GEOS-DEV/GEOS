@@ -20,7 +20,7 @@
 #define GEOSX_MESH_GENERATORS_PARTICLEMESHGENERATOR_HPP
 
 #include "codingUtilities/EnumStrings.hpp"
-#include "mesh/generators/MeshGeneratorBase.hpp"
+#include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 
 namespace geosx
 {
@@ -32,7 +32,7 @@ class SpatialPartition;
  * @class ParticleMeshGenerator
  * @brief The ParticleMeshGenerator class is a class handling import of particle data from an externel particle file.
  */
-class ParticleMeshGenerator : public MeshGeneratorBase
+class ParticleMeshGenerator : public ExternalMeshGeneratorBase
 {
 public:
 
@@ -60,6 +60,8 @@ public:
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   virtual void generateMesh( DomainPartition & domain ) override;
+
+  void importFieldsOnArray( string const & cellBlockName, string const & meshFieldNam, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const override;
 
 protected:
 
