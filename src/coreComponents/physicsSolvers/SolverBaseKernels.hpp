@@ -32,7 +32,8 @@ namespace solverBaseKernels
 /******************************** ResidualNormKernelBase ********************************/
 
 /**
- * @tparam NUM_NORM number of norms to compute (say, mass and energy)
+ * @tparam NUM_NORM number of norms to compute (NUM_NORM is related to the number of equations to solve)
+ * For instance, NUM_NORM=1 for isothermal simulations and NUM_NORM=2 for thermal simulations
  * @brief Define the base interface for the residual calculations
  */
 template< integer NUM_NORM >
