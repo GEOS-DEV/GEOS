@@ -130,7 +130,7 @@ public:
     // Note: uncomment HYPRE_MGRSetLevelFRelaxMethod and comment HYPRE_MGRSetRelaxType breaks the recipe, this requires further
     // investigation
     //GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetFLevelRelaxType( precond.ptr, toUnderlyingPtr( m_levelFRelaxType ) ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxType( precond.ptr, toUnderlyingPtr( m_levelFRelaxType ) ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
 
 #ifdef GEOSX_USE_HYPRE_CUDA
