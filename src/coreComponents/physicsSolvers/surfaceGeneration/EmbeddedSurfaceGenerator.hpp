@@ -81,7 +81,7 @@ public:
    *
    */
   void propagationStep3D( DomainPartition & domain,
-                          localIndex elemToCut );
+                          localIndex const elemToCut );
 
   /**
    * @brief function to update embedded fracture geometry - only works with a single fracture

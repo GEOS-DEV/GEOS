@@ -555,7 +555,8 @@ void MultiResolutionHFSolver::cutDamagedElements( DomainPartition & domain,
   //get accessor to elemental field
   ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const frontIndicator =
   baseElemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( "frontIndicator" );
-  for(auto && elem:m_baseCrackFront)
+  SortedArray<localIndex> baseFrontCopy = m_baseCrackFront;
+  for(auto && elem:baseFrontCopy)
   {
     localIndex triplet[3];
     integer fracCount = 0;
@@ -590,8 +591,21 @@ void MultiResolutionHFSolver::cutDamagedElements( DomainPartition & domain,
       GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " being cut "<<"\n" );
       if(elem==335){
         std::cout<<"breakpoint\n";
+        std::cout<<"{";
+        for(auto && eleme:m_baseCrackFront)
+        {
+          std::cout<<eleme<<",";
+        }
+        std::cout<<"}\n";
       }
       efemGenerator.propagationStep3D( domain, elem );
+      GEOSX_LOG_LEVEL_RANK_0( 1, "after propagationStep, base elem = " << elem << "\n" );
+      std::cout<<"{";
+      for(auto && eleme:m_baseCrackFront)
+      {
+          GEOSX_LOG_LEVEL_RANK_0( 1, eleme << "," );
+      }
+      std::cout<<"}\n";
       //add non-fractured neighbors to fron
       for(auto && face:elemToFaceList[elem])
       {
