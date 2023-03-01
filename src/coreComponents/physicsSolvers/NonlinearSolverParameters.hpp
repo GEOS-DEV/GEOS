@@ -66,35 +66,35 @@ public:
 
   struct viewKeysStruct
   {
-    static constexpr auto lineSearchActionString        = "lineSearchAction";
-    static constexpr auto lineSearchMaxCutsString       = "lineSearchMaxCuts";
-    static constexpr auto lineSearchCutFactorString     = "lineSearchCutFactor";
-    static constexpr auto lineSearchInterpolationTypeString   = "lineSearchInterpolationType";
+    static constexpr char const * lineSearchActionString()        { return "lineSearchAction"; }
+    static constexpr char const * lineSearchMaxCutsString()       { return "lineSearchMaxCuts"; }
+    static constexpr char const * lineSearchCutFactorString()     { return "lineSearchCutFactor"; }
+    static constexpr char const * lineSearchInterpolationTypeString() { return "lineSearchInterpolationType"; }
 
-    static constexpr char const * normTypeString() { return "normType"; }
-    static constexpr auto newtonTolString               = "newtonTol";
-    static constexpr auto newtonMaxIterString           = "newtonMaxIter";
-    static constexpr auto newtonMinIterString           = "newtonMinIter";
-    static constexpr auto newtonNumIterationsString     = "newtonNumberOfIterations";
-    static constexpr auto newtonSplitOperMaxIterString  = "newtonSplitOperMaxIter";
+    static constexpr char const * normTypeString()                { return "normType"; }
+    static constexpr char const * newtonTolString()               { return "newtonTol"; }
+    static constexpr char const * newtonMaxIterString()           { return "newtonMaxIter"; }
+    static constexpr char const * newtonMinIterString()           { return "newtonMinIter"; }
+    static constexpr char const * newtonNumIterationsString()     { return "newtonNumberOfIterations"; }
+    static constexpr char const * newtonSplitOperMaxIterString()  { return "newtonSplitOperMaxIter"; }
 
-    static constexpr auto allowNonConvergedString       = "allowNonConverged";
-    static constexpr auto timeStepDecreaseIterLimString = "timeStepDecreaseIterLimit";
-    static constexpr auto timeStepIncreaseIterLimString = "timeStepIncreaseIterLimit";
-    static constexpr auto timeStepDecreaseFactorString  = "timeStepDecreaseFactor";
-    static constexpr auto timeStepIncreaseFactorString  = "timeStepIncreaseFactor";
+    static constexpr char const * allowNonConvergedString()       { return "allowNonConverged"; }
+    static constexpr char const * timeStepDecreaseIterLimString() { return "timeStepDecreaseIterLimit"; }
+    static constexpr char const * timeStepIncreaseIterLimString() { return "timeStepIncreaseIterLimit"; }
+    static constexpr char const * timeStepDecreaseFactorString()  { return "timeStepDecreaseFactor"; }
+    static constexpr char const * timeStepIncreaseFactorString()  { return "timeStepIncreaseFactor"; }
 
-    static constexpr auto maxSubStepsString             = "maxSubSteps";
-    static constexpr auto maxTimeStepCutsString         = "maxTimeStepCuts";
-    static constexpr auto minNumNewtonIterationsString  = "minNumberOfNewtonIterations";
-    static constexpr auto timeStepCutFactorString       = "timeStepCutFactor";
-    static constexpr auto maxAllowedResidualNormString  = "maxAllowedResidualNorm";
+    static constexpr char const * maxSubStepsString()             { return "maxSubSteps"; }
+    static constexpr char const * maxTimeStepCutsString()         { return "maxTimeStepCuts"; }
+    static constexpr char const * minNumNewtonIterationsString()  { return "minNumberOfNewtonIterations"; }
+    static constexpr char const * timeStepCutFactorString()       { return "timeStepCutFactor"; }
+    static constexpr char const * maxAllowedResidualNormString()  { return "maxAllowedResidualNorm"; }
 
-    static constexpr auto numConfigurationAttemptsString    = "numConfigurationAttempts";
-    static constexpr auto maxNumConfigurationAttemptsString = "maxNumConfigurationAttempts";
+    static constexpr char const * numConfigurationAttemptsString()    { return "numConfigurationAttempts"; }
+    static constexpr char const * maxNumConfigurationAttemptsString() { return "maxNumConfigurationAttempts"; }
 
-    static constexpr auto couplingTypeString     = "couplingType";
-    static constexpr auto subcyclingOptionString = "subcycling";
+    static constexpr char const * couplingTypeString()     { return "couplingType"; }
+    static constexpr char const * subcyclingOptionString() { return "subcycling"; }
   } viewKeys;
 
 
