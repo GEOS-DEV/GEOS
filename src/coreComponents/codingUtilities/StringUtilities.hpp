@@ -151,25 +151,32 @@ array1d< T > fromStringToArray( string const & str )
 template< typename T >
 string toMetricPrefixString( T const & value )
 {
+  // These are the metric prefixes corrosponding to kilo, mega, giga...etc.
   char const prefixes[7] = { ' ', 'K', 'M', 'G', 'T', 'P', 'E'};
+  string rval;
 
-  T rval;
-  string retString;
+  // go from larger to smaller prefixes
   for( int a=6; a>=0; --a )
   {
     T const scaleFactor = pow( 10.0, 3*a );
     if( value > scaleFactor || a==0 )
     {
-      rval = value / scaleFactor;
-      rval = round( rval * 10 ) / 10;
-      retString = std::to_string( rval );
-      int const preDecimalDigits = retString.find( "." );
+      // scale the value, then round off to 1 digit past decimal, then convert to string.
+      rval = std::to_string( round( value / scaleFactor * 10 ) / 10 );
+
+      // calculate the number of digits are before the decimal. This will be 1,2, or 3.
+      int const preDecimalDigits = rval.find( "." );
+
+      // calculate the desired number of digits in the string.
+      // one digit past the decimal if there is only one digit to the left of the decimal,
+      // otherwise none.
       int const digits = (preDecimalDigits<=2) ? preDecimalDigits+2 : preDecimalDigits;
-      retString = retString.substr( 0, digits ) + " " + prefixes[a];
+
+      rval = rval.substr( 0, digits ) + " " + prefixes[a];
       break;
     }
   }
-  return retString;
+  return rval;
 }
 
 } // namespace stringutilities

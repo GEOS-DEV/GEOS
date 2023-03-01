@@ -168,7 +168,7 @@ bool GeosxState::initializeDataRepository()
 
   m_state = State::INITIALIZED;
 
-  if( m_commandLineOptions->printMemoryUsage > 0.0 )
+  if( m_commandLineOptions->printMemoryUsage >= 0.0 )
   {
     getProblemManager().printMemoryAllocation( 0, m_commandLineOptions->printMemoryUsage );
   }

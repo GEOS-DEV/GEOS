@@ -261,20 +261,29 @@ void Group::printDataHierarchy( integer const indent )
 
 void Group::printMemoryAllocation( integer const indent, real64 const threshold )
 {
+  // static flag to keep track of whether or not a subgroup is the last one, and thus
+  // visually will terminate the tree.
   static bool terminateBranch[64]{};
+
+  // keep track of the address of the groups that have been printed. Not the best
+  // way to do this, but doens't require infrastructure changes.
   static std::unordered_set< void * > groupsPrinted;
 
+  // initialize the static variables at the head of the tree.
   if( indent==0 )
   {
-    for( int i=0; i<64; ++i )
+    terminateBranch[0] = true;
+    for( int i=1; i<64; ++i )
     {
       terminateBranch[i] = false;
     }
     groupsPrinted.clear();
   }
 
+  // store the local allocations for each wrapper
   std::vector< double > localAllocations;
 
+  // use the first index for the summation of all Wrappers in a Group
   localAllocations.emplace_back( 0 );
   for( auto & view : wrappers() )
   {
@@ -286,8 +295,8 @@ void Group::printMemoryAllocation( integer const indent, real64 const threshold 
   int const numRanks = MpiWrapper::commSize();
   int const numValues = localAllocations.size();
 
+  // storage for the gathered values of localAllocation
   std::vector< double > globalAllocations;
-
   if( MpiWrapper::commRank()==0 )
   {
     globalAllocations.resize( numRanks * numValues );
@@ -300,6 +309,7 @@ void Group::printMemoryAllocation( integer const indent, real64 const threshold 
                       0,
                       MPI_COMM_GEOSX );
 
+  // reduce data across ranks (min, max, sum)
   if( MpiWrapper::commRank()==0 )
   {
     array2d< double > allocationReductions( numValues, 3 );
@@ -318,43 +328,34 @@ void Group::printMemoryAllocation( integer const indent, real64 const threshold 
       }
     }
 
-    double const * const groupAllocations = allocationReductions[0];
-
-    if( indent==0 )
+    // scope for the output of groups
     {
-      //         1         2         3         4         5         6         7         8         9        10        11        12
-      //123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
-      GEOSX_LOG_RANK_0( "************************************************************************************************************************" );
-      GEOSX_LOG_RANK_0( " Data repository memory allocations " );
-      GEOSX_LOG_RANK_0( "                                                                                       min          max          sum    " );
-      GEOSX_LOG_RANK_0( "                                                                                   -----------  -----------  -----------" );
+      double const * const groupAllocations = allocationReductions[0];
 
-      GEOSX_LOG_RANK_0( GEOSX_FMT( "{:.<83} {:>9s}    {:>9s}    {:>9s}",
-                                   "[" + getName() + "]",
-                                   stringutilities::toMetricPrefixString( groupAllocations[0] ) + 'B',
-                                   stringutilities::toMetricPrefixString( groupAllocations[1] ) + 'B',
-                                   stringutilities::toMetricPrefixString( groupAllocations[2] ) + 'B' ) );
+      if( indent==0 )
+      {
+        //                          1         2         3         4         5         6         7         8         9        10        11
+        //        12
+        //                 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+        GEOSX_LOG_RANK_0( "************************************************************************************************************************" );
+        GEOSX_LOG_RANK_0( " Data repository memory allocations " );
+        GEOSX_LOG_RANK_0( "                                                                                       min          max          sum    " );
+        GEOSX_LOG_RANK_0( "                                                                                   -----------  -----------  -----------" );
+      }
 
-    }
-    else
-    {
+
       string outputLine;
       int indentChars = 0;
-      for( int i=0; i<indent-1; ++i )
+      for( int i=0; i<indent; ++i )
       {
-        if( terminateBranch[i]==false )
-        {
-          outputLine += "|  ";
-        }
-        else
-        {
-          outputLine += "   ";
-        }
+        outputLine += terminateBranch[i]==true ? "   " : "|  ";
         indentChars += 3;
       }
+      // put a indent between groups in the tree
       GEOSX_LOG_RANK_0( outputLine.c_str()<<"|" );
       indentChars += 1;
-      if( groupAllocations[0] > threshold )
+      // only allocation data if it is above the threshold...
+      if( groupAllocations[0] >= threshold )
       {
         indentChars += 3;
         outputLine += "|--{:.<" + std::to_string( 83-indentChars ) + "} {:>9s}    {:>9s}    {:>9s}";
@@ -364,54 +365,54 @@ void Group::printMemoryAllocation( integer const indent, real64 const threshold 
                                      stringutilities::toMetricPrefixString( groupAllocations[1] ) + 'B',
                                      stringutilities::toMetricPrefixString( groupAllocations[2] ) + 'B' ) );
       }
-      else
+      else  // ...but we still need to output the group name to have a valid tree.
       {
-        outputLine += "|--[{}]";
+        outputLine += "|--[{:<}]";
         GEOSX_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
                                      getName() ) );
       }
-
     }
 
-    localIndex viewCount = 1;
-    for( auto & view : wrappers() )
+    // output the views
     {
-      if( allocationReductions( viewCount, 0 ) > threshold )
+      localIndex viewCount = 1;
+      for( auto & view : wrappers() )
       {
-        string outputLine;
-        int indentChars = 0;
-        for( int i=0; i<indent; ++i )
+        if( allocationReductions( viewCount, 0 ) > threshold )
         {
-          if( terminateBranch[i]==false )
+          string outputLine;
+          int indentChars = 0;
+          for( int i=0; i<=indent; ++i )
           {
-            outputLine += "|  ";
+            outputLine += terminateBranch[i]==true ? "   " : "|  ";
+            indentChars += 3;
           }
-          else
-          {
-            outputLine += "   ";
-          }
-          indentChars += 3;
+          indentChars += 5;
+          outputLine += "| - {:.<" + std::to_string( 83-indentChars ) + "} {:>9s}    {:>9s}    {:>9s}";
+          GEOSX_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
+                                       view.second->getName(),
+                                       stringutilities::toMetricPrefixString( allocationReductions( viewCount, 0 ) ) + 'B',
+                                       stringutilities::toMetricPrefixString( allocationReductions( viewCount, 1 ) ) + 'B',
+                                       stringutilities::toMetricPrefixString( allocationReductions( viewCount, 2 ) ) + 'B' ) );
         }
-        indentChars += 5;
-//        outputLine += "| - {:.<" + std::to_string(83-indentChars) + "} {:>9.4g}    {:>9.4g}    {:>9.4g}";
-        outputLine += "| - {:.<" + std::to_string( 83-indentChars ) + "} {:>9s}    {:>9s}    {:>9s}";
-        GEOSX_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
-                                     view.second->getName(),
-                                     stringutilities::toMetricPrefixString( allocationReductions( viewCount, 0 ) ) + 'B',
-                                     stringutilities::toMetricPrefixString( allocationReductions( viewCount, 1 ) ) + 'B',
-                                     stringutilities::toMetricPrefixString( allocationReductions( viewCount, 2 ) ) + 'B' ) );
+        ++viewCount;
       }
-      ++viewCount;
     }
   }
 
+  // process subgroups
   localIndex const numSubGroups = m_subGroups.size();
   localIndex groupCounter = 0;
   for( auto & group : m_subGroups )
   {
-    terminateBranch[indent] = ++groupCounter==numSubGroups ? true : false;
+    // set flag to indicate whether or not this is the last subgroup so that
+    // the ascii art tree may be constructed properly
+    terminateBranch[indent+1] = ++groupCounter==numSubGroups ? true : false;
+
+    // check to see that the group hasen't been printed yet.
     if( groupsPrinted.count( group.second ) == 0 )
     {
+      // insert the address of the Group into the map that holds printed groups.
       groupsPrinted.insert( group.second );
       group.second->printMemoryAllocation( indent + 1, threshold );
     }
