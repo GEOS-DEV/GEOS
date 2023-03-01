@@ -799,6 +799,13 @@ Element: Python
 .. include:: ../../coreComponents/schema/docs/Python.rst
 
 
+.. _XML_RESQML:
+
+Element: RESQML
+===============
+.. include:: ../../coreComponents/schema/docs/RESQML.rst
+
+
 .. _XML_ReactiveBrine:
 
 Element: ReactiveBrine
@@ -1984,6 +1991,13 @@ Datastructure: ProppantTransport
 Datastructure: Python
 =====================
 .. include:: ../../coreComponents/schema/docs/Python_other.rst
+
+
+.. _DATASTRUCTURE_RESQML:
+
+Datastructure: RESQML
+=====================
+.. include:: ../../coreComponents/schema/docs/RESQML_other.rst
 
 
 .. _DATASTRUCTURE_ReactiveBrine:

@@ -81,6 +81,8 @@ public:
     static constexpr auto objectName = "objectName";
     static constexpr auto onlyPlotSpecifiedFieldNames = "onlyPlotSpecifiedFieldNames";
     static constexpr auto fieldNames = "fieldNames";
+    static constexpr auto parentMeshUUID = "parentMeshUUID";
+    static constexpr auto parentMeshName = "parentMeshName";
   } RESQMLOutputViewKeys;
   /// @endcond
 
@@ -100,6 +102,12 @@ private:
 
   /// Name of the Mesh input node
   string m_objectName;
+
+  /// UUID of the parent grid
+  string m_parentMeshUUID;
+
+  // Name of the parent grid
+  string m_parentMeshName;
 
   RESQMLWriterInterface m_writer;
 };

@@ -19,7 +19,7 @@
 #include "RESQMLOutput.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshManager.hpp"
-#include "mesh/generators/RESQMLMeshGenerator.hpp"
+// #include "mesh/generators/RESQMLMeshGenerator.hpp"
 
 
 
@@ -59,8 +59,16 @@ RESQMLOutput::RESQMLOutput( string const & name,
     setDescription( "Names of the fields to output. If this attribute is specified, GEOSX outputs all the fields specified by the user, regardless of their `plotLevel`" );
 
   registerWrapper( viewKeysStruct::objectName, &m_objectName ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The name of the object from which to retrieve field values." );
+
+  registerWrapper( viewKeysStruct::parentMeshUUID, &m_parentMeshUUID ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The UUID of the grid." );
+
+  registerWrapper( viewKeysStruct::parentMeshName, &m_parentMeshName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The name of the grid." );
 }
 
 RESQMLOutput::~RESQMLOutput()
@@ -68,17 +76,34 @@ RESQMLOutput::~RESQMLOutput()
 
 void RESQMLOutput::postProcessInput()
 {
-  MeshManager & meshManager = this->getGroupByPath< MeshManager >( "/Problem/Mesh" );
-  RESQMLMeshGenerator * resqmlMeshGenerator = meshManager.getGroupPointer< RESQMLMeshGenerator >( m_objectName );
-
-  GEOSX_THROW_IF( resqmlMeshGenerator == nullptr,
-                  getName() << ": RESQMLMesh not found: " << m_objectName,
-                  InputError );
-
   m_writer.setOutputLocation( getOutputDirectory(), m_plotFileName );
   m_writer.setFieldNames( m_fieldNames.toViewConst() );
   m_writer.setOnlyPlotSpecifiedFieldNamesFlag( m_onlyPlotSpecifiedFieldNames );
-  m_writer.setParentRepresentation( resqmlMeshGenerator->getParentRepresentation());
+
+//SupportingRepresentation
+
+  // Use the information of the parent grid provided by the user
+  if(!m_parentMeshUUID.empty() && !m_parentMeshName.empty())
+  {
+    m_writer.setParentRepresentation( { m_parentMeshUUID, m_parentMeshName } );
+  }
+  // else if(!m_objectName.empty())// or search for a RESQML input grid in the simulation deck to fill the blanks
+  // {
+  //   MeshManager & meshManager = this->getGroupByPath< MeshManager >( "/Problem/Mesh" );
+  //   RESQMLMeshGenerator * resqmlMeshGenerator = meshManager.getGroupPointer< RESQMLMeshGenerator >( m_objectName );
+
+  //   GEOSX_THROW_IF( resqmlMeshGenerator == nullptr,
+  //                   getName() << ": RESQMLMesh not found: " << m_objectName,
+  //                   InputError );
+    
+  //   m_writer.setParentRepresentation( resqmlMeshGenerator->getParentRepresentation());
+  // }
+  else
+  {
+    GEOSX_THROW(GEOSX_FMT("{}: You must provide either a RESQMLMesh name or the parent grid Name and UUID", getName() ),
+                    InputError );
+  }
+  
   m_writer.initializeOutput();
 }
 
@@ -99,10 +124,10 @@ bool RESQMLOutput::execute( real64 const time_n,
     m_writer.generateSubRepresentations( domain );
   }
 
-  if( cycleNumber == 0 )
-  {
+  // if( cycleNumber == 0 )
+  // {
     m_writer.write( time_n, cycleNumber, domain );
-  }
+  // }
 
   return false;
 }

@@ -33,6 +33,8 @@
 #include "fesapi/eml2/TimeSeries.h"
 #include "fesapi/resqml2_0_1/PropertyKind.h"
 #include "fesapi/tools/TimeTools.h"
+#include "fesapi/resqml2_0_1/ContinuousProperty.h"
+#include "fesapi/resqml2_0_1/DiscreteProperty.h"
 
 // System includes
 #include <random>
@@ -467,28 +469,45 @@ void RESQMLWriterInterface::write( real64 const time,
         data->SetNumberOfTuples( numElements );
         data->SetName( field.c_str());
 
+
         //RESQML Property same for all ranks
         string property = uuid::generate_uuid_v4();
         MpiWrapper::broadcast( property, 0 );
 
-        RESQML2_0_1_NS::ContinuousProperty *contProp1 =
-          m_outputRepository->createContinuousProperty(
-            m_subrepresentations[field], property, field, data->GetNumberOfComponents(),
-            gsoap_eml2_3::resqml22__IndexableElement::cells,
-            gsoap_resqml2_0_1::resqml20__ResqmlUom::m,
-            gsoap_resqml2_0_1::resqml20__ResqmlPropertyKind::length );
+        if( data->GetDataType() == VTK_FLOAT ||
+            data->GetDataType() == VTK_DOUBLE)
+        {
+          RESQML2_0_1_NS::ContinuousProperty *contProp1 =
+            m_outputRepository->createContinuousProperty(
+              m_subrepresentations[field], property, field, data->GetNumberOfComponents(),
+              gsoap_eml2_3::resqml22__IndexableElement::cells,
+              gsoap_resqml2_0_1::resqml20__ResqmlUom::m,
+              gsoap_resqml2_0_1::resqml20__ResqmlPropertyKind::length );
 
-        contProp1->setTimeSeries( m_timeSeries );
-        contProp1->setSingleTimestamp( timestamp );
+          contProp1->setTimeSeries( m_timeSeries );
+          contProp1->setSingleTimestamp( timestamp );
 
-        m_property_uuid[field] = contProp1;
+          m_property_uuid[field] = contProp1;
+        }
+        else
+        {
+          RESQML2_0_1_NS::DiscreteProperty *discProp1 = 
+            m_outputRepository->createDiscreteProperty(
+              m_subrepresentations[field], property, field, data->GetNumberOfComponents(),
+              gsoap_eml2_3::resqml22__IndexableElement::cells,              
+              gsoap_resqml2_0_1::resqml20__ResqmlPropertyKind::length);
+
+          discProp1->setTimeSeries( m_timeSeries );
+          discProp1->setSingleTimestamp( timestamp );
+
+          m_property_uuid[field] = discProp1;
+        }
 
         globalIndex maxCount =
           m_subrepresentations[field]->getElementCountOfPatch( 0 );
 
-        // GEOSX_LOG_RANK_VAR(maxCount);
 
-        if( numDims == 1 ) // scalar data
+        if( data->GetNumberOfComponents() == 1 ) // scalar data
         {
           if( data->GetDataType() == VTK_DOUBLE )
           {
@@ -510,6 +529,18 @@ void RESQMLWriterInterface::write( real64 const time,
           }
           else if( data->GetDataType() == VTK_LONG )
           {
+            #if VTK_SIZEOF_LONG == 4
+            m_property_uuid[field]->pushBackHdf5Array1dOfValues(
+              COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32,
+              maxCount );
+            #elif VTK_SIZEOF_LONG == 8
+            m_property_uuid[field]->pushBackHdf5Array1dOfValues(
+              COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64,
+              maxCount );
+            #endif
+          }
+          else if( data->GetDataType() == VTK_LONG_LONG)
+          {                        
             m_property_uuid[field]->pushBackHdf5Array1dOfValues(
               COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64,
               maxCount );
@@ -541,6 +572,18 @@ void RESQMLWriterInterface::write( real64 const time,
           }
           else if( data->GetDataType() == VTK_LONG )
           {
+            #if VTK_SIZEOF_LONG == 4
+            m_property_uuid[field]->pushBackHdf5Array2dOfValues(
+              COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32,
+              data->GetNumberOfComponents(), maxCount );
+            #elif VTK_SIZEOF_LONG == 8
+            m_property_uuid[field]->pushBackHdf5Array2dOfValues(
+              COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64,
+              data->GetNumberOfComponents(), maxCount );
+            #endif
+          }
+          else if( data->GetDataType() == VTK_LONG_LONG)
+          {                        
             m_property_uuid[field]->pushBackHdf5Array2dOfValues(
               COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64,
               data->GetNumberOfComponents(), maxCount );
@@ -550,6 +593,7 @@ void RESQMLWriterInterface::write( real64 const time,
             GEOSX_LOG_RANK_0(GEOSX_FMT("data type {} for property {} not handled yet", data->GetDataTypeAsString(), data->GetName()));
           }
         }
+
         // 2. Fill data buffer for each rank
         localIndex offset = 0;
         elemManager.forElementRegions< CellElementRegion >(
@@ -600,6 +644,7 @@ void RESQMLWriterInterface::write( real64 const time,
 
         if( data->GetNumberOfComponents() == 1 )
         {
+          
           if( data->GetDataType() == VTK_DOUBLE )
           {
             m_property_uuid[field]->setValuesOfDoubleHdf5Array1dOfValues(
@@ -623,8 +668,22 @@ void RESQMLWriterInterface::write( real64 const time,
           }
           else if( data->GetDataType() == VTK_LONG )
           {
+            #if VTK_SIZEOF_LONG == 4
+            m_property_uuid[field]->setValuesOfInt32Hdf5Array1dOfValues(
+              static_cast< long * >(data->GetVoidPointer( 0 )),
+              data->GetNumberOfTuples(),
+              rankOffset );
+            #elif VTK_SIZEOF_LONG == 8
             m_property_uuid[field]->setValuesOfInt64Hdf5Array1dOfValues(
               static_cast< long * >(data->GetVoidPointer( 0 )),
+              data->GetNumberOfTuples(),
+              rankOffset );
+            #endif
+          }
+          else if( data->GetDataType() == VTK_LONG_LONG)
+          {                        
+            m_property_uuid[field]->setValuesOfInt64Hdf5Array1dOfValues(
+              static_cast< int64_t * >(data->GetVoidPointer( 0 )),
               data->GetNumberOfTuples(),
               rankOffset );
           }
@@ -660,8 +719,26 @@ void RESQMLWriterInterface::write( real64 const time,
           }
           else if( data->GetDataType() == VTK_LONG )
           {
+            #if VTK_SIZEOF_LONG == 4
+            m_property_uuid[field]->setValuesOfInt32Hdf5Array2dOfValues(
+              static_cast< long * >(data->GetVoidPointer( 0 )),
+              data->GetNumberOfComponents(),
+              data->GetNumberOfTuples(),
+              0,
+              rankOffset );
+            #elif VTK_SIZEOF_LONG == 8
             m_property_uuid[field]->setValuesOfInt64Hdf5Array2dOfValues(
               static_cast< long * >(data->GetVoidPointer( 0 )),
+              data->GetNumberOfComponents(),
+              data->GetNumberOfTuples(),
+              0,
+              rankOffset );
+            #endif
+          }
+          else if( data->GetDataType() == VTK_LONG_LONG)
+          {                        
+            m_property_uuid[field]->setValuesOfInt64Hdf5Array2dOfValues(
+              static_cast< int64_t * >(data->GetVoidPointer( 0 )),
               data->GetNumberOfComponents(),
               data->GetNumberOfTuples(),
               0,

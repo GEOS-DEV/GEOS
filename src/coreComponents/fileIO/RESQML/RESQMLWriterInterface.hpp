@@ -21,7 +21,7 @@
 #include "fesapi/common/EpcDocument.h"
 #include "fesapi/common/DataObjectRepository.h"
 
-#include "fesapi/resqml2_0_1/ContinuousProperty.h"
+
 #include "fesapi/resqml2_0_1/UnstructuredGridRepresentation.h"
 #include "fesapi/resqml2/SubRepresentation.h"
 
@@ -142,7 +142,7 @@ private:
   RESQML2_0_1_NS::UnstructuredGridRepresentation * m_parent;
 
   /// Index the properties to reuse them accross the multiple regions subgroups
-  std::map< string, RESQML2_0_1_NS::ContinuousProperty * > m_property_uuid;
+  std::map< string, RESQML2_NS::AbstractValuesProperty * > m_property_uuid;
 
   /// Permutation vector for each field
   std::map< string, array1d< int > > m_countPerProp;
