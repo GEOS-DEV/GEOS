@@ -25,20 +25,11 @@ using namespace dataRepository;
 
 SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, Group * const parent ):
   FieldSpecificationBase( name, parent )
-{}
-
-SourceFluxBoundaryCondition::~SourceFluxBoundaryCondition()
 {
-  // TODO Auto-generated destructor stub
+  getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
+    setInputFlag( InputFlags::FALSE );
+  setFieldName( catalogName() );
 }
-
-void SourceFluxBoundaryCondition::initializePreSubGroups()
-{
-  this->setFieldName( viewKeyStruct::fluxBoundaryConditionString() );
-
-  FieldSpecificationBase::initializePreSubGroups();
-}
-
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, SourceFluxBoundaryCondition, string const &, Group * const )
 

@@ -1,4 +1,3 @@
-
 import argparse
 from typing import Tuple, Iterable
 
@@ -87,5 +86,3 @@ def build_xml_redundancy_input_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', '--root', type=str, help='GEOSX root', default='')
     return parser
-
-

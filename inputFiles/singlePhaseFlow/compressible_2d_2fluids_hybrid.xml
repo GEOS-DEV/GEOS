@@ -170,7 +170,8 @@
 
     <FieldSpecification
       name="sourceTerm"
-      objectPath="ElementRegions"
+      logLevel="1"	
+      objectPath="faceManager"
       fieldName="pressure"
       scale="5e7"
       setNames="{ source }"/>

@@ -23,5 +23,9 @@ Wellbore Problems
 
    verticalPoroElastoPlasticWellbore/Example
 
+   pureThermalDiffusion/Example
+
+   casedThermoElasticWellbore/Example
+
 
 

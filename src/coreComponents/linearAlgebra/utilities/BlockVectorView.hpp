@@ -20,6 +20,7 @@
 #define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORVIEW_HPP_
 
 #include "common/common.hpp"
+#include "linearAlgebra/common/common.hpp"
 
 namespace geosx
 {

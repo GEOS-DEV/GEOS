@@ -158,12 +158,12 @@ def main():
 
     # Global Coordinate of Nodal Point
     hf = h5py.File(hdf5File2Path, 'r')
-    xl_node = hf.get('TotalDisplacement ReferencePosition')
+    xl_node = hf.get('totalDisplacement ReferencePosition')
     xcord_node = xl_node[0, :, 0]
     ycord_node = xl_node[0, :, 1]
     zcord_node = xl_node[0, :, 2]
     # Load Displacement Components
-    disp = hf.get('TotalDisplacement')
+    disp = hf.get('totalDisplacement')
 
     # Extract Mechanical Properties and Fracture Geometry from XML
     hydromechanicalParameters = getHydromechanicalParametersFromXML(xmlFile1Path)
@@ -257,7 +257,6 @@ def main():
     ax[1].yaxis.set_tick_params(labelsize=fsize)
 
     plt.show()
-
 
 if __name__ == "__main__":
     main()

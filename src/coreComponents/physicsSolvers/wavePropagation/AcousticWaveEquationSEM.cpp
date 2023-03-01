@@ -26,6 +26,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "WaveSolverUtils.hpp"
 
 namespace geosx
 {
@@ -132,16 +133,10 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
-  //m_sourceIsLocal.resize( numSourcesGlobal );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
   m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
-  m_receiverIsLocal.resize( numReceiversGlobal );
-
-  m_pressureNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
-
-
 
 }
 
@@ -188,6 +183,11 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< fields::PartialGradient >( this->getName() );
     } );
 
+    arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
+    int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    std::string lifoPrefix = GEOSX_FMT( "lifo/rank_{:05}/pdt2_shot{:06}", rank, m_shotIndex );
+    m_lifo = std::unique_ptr< lifoStorage< real32 > >( new lifoStorage< real32 >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize ) );
+
   } );
 }
 
@@ -228,17 +228,10 @@ void AcousticWaveEquationSEM::postProcessInput()
   }
   localIndex const nsamples = int(maxTime/dt) + 1;
 
-
-  localIndex numNodesPerElem = getNumNodesPerElem();
-
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
-  m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceIsAccessible.resize( numSourcesGlobal );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
-  m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverIsLocal.resize( numReceiversGlobal );
 
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
@@ -254,6 +247,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const
   X = nodeManager.referencePosition().toViewConst();
+
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
 
@@ -288,22 +282,11 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     }
   }
 
-  // arrayView2d< real64 >  center;
-
-  // arrayView2d< localIndex >  tmp;
-
-  // mesh0.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-  //                                                                                        CellElementSubRegion & elementSubRegion0 )
-  // {
-  //   center = elementSubRegion0.getElementCenter();
-  //   tmp = elementSubRegion0.faceList();
-  // } );
-
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
     GEOSX_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                    "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
+                    "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
                     InputError );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
@@ -347,9 +330,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         rickerOrder );
     } );
   } );
-
 }
-
 
 void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
 {
@@ -370,78 +351,6 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
       }
     }
   } );
-}
-
-void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
-                                                  real64 const dt,
-                                                  real64 const timeSeismo,
-                                                  localIndex iSeismo,
-                                                  arrayView1d< real32 const > const var_np1,
-                                                  arrayView1d< real32 const > const var_n,
-                                                  arrayView2d< real32 > varAtReceivers )
-{
-  real64 const time_np1 = time_n + dt;
-  arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
-  arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
-  arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
-
-
-  real32 const a1 = (std::abs( dt ) < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
-  real32 const a2 = 1.0 - a1;
-
-  if( m_nsamplesSeismoTrace > 0 )
-  {
-    forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
-    {
-      if( receiverIsLocal[ircv] == 1 )
-      {
-        varAtReceivers[iSeismo][ircv] = 0.0;
-        real32 vtmp_np1 = 0.0;
-        real32 vtmp_n = 0.0;
-        for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
-        {
-          vtmp_np1 += var_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
-          vtmp_n += var_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
-        }
-        // linear interpolation between the pressure value at time_n and time_(n+1)
-        varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;
-      }
-    } );
-  }
-
-  // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized.
-  // Output will then only be done via the previous code.
-  if( iSeismo == m_nsamplesSeismoTrace - 1 )
-  {
-    forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
-    {
-      if( this->m_outputSeismoTrace == 1 )
-      {
-        if( receiverIsLocal[ircv] == 1 )
-        {
-          // Note: this "manual" output to file is temporary
-          //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-          // TODO: remove saveSeismo and replace with TimeHistory
-          std::ofstream f( GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
-          for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
-          {
-            f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
-          }
-          f.close();
-        }
-      }
-    } );
-  }
-
-}
-
-/// Use for now until we get the same functionality in TimeHistory
-/// TODO: move implementation into WaveSolverBase
-void AcousticWaveEquationSEM::saveSeismo( localIndex const iSeismo, real32 const val, string const & filename )
-{
-  std::ofstream f( filename, std::ios::app );
-  f<< iSeismo << " " << val << std::endl;
-  f.close();
 }
 
 void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
@@ -466,15 +375,12 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
-    //TODO: Please make a shallow copy of face normal in the constructo for the new mesh level
-    FaceManager & faceManager0 = this->getGroupByPath< FaceManager >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/faceManager" );
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
-    /// get table containing all the face normals
-    arrayView2d< real64 const > const faceNormal  = faceManager0.faceNormal();
+    /// get face to node map
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
@@ -492,7 +398,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     {
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-      arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
+      arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
 
       /// Partial gradient if gradient as to be computed
@@ -505,24 +411,24 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-        localIndex const numNodesPerFace = facesToNodes.sizeOfArray( 0 );
+        acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        acousticWaveEquationSEMKernels::MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
+        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               X,
+                                                               elemsToNodes,
+                                                               velocity,
+                                                               mass );
 
-        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                              numFacesPerElem,
-                                                              numNodesPerFace,
-                                                              X,
-                                                              elemsToNodes,
-                                                              elemsToFaces,
-                                                              facesToNodes,
-                                                              facesDomainBoundaryIndicator,
-                                                              freeSurfaceFaceIndicator,
-                                                              faceNormal,
-                                                              velocity,
-                                                              mass,
-                                                              damping );
+        acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
+
+        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
+                                                               X,
+                                                               facesToElements,
+                                                               facesToNodes,
+                                                               facesDomainBoundaryIndicator,
+                                                               freeSurfaceFaceIndicator,
+                                                               velocity,
+                                                               damping );
       } );
     } );
   } );
@@ -945,6 +851,17 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
   } );
 
 }
+/**
+ * Checks if a directory exists.
+ *
+ * @param dirName Directory name to check existence of.
+ * @return true is dirName exists and is a directory.
+ */
+bool dirExists( const std::string & dirName )
+{
+  struct stat buffer;
+  return stat( dirName.c_str(), &buffer ) == 0;
+}
 
 real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                      real64 const & dt,
@@ -970,23 +887,46 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
       arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
 
+      if( NULL == std::getenv( "DISABLE_LIFO" ) )
+      {
+        m_lifo->pushWait();
+      }
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIdx )
       {
         p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
       } );
 
-      p_dt2.move( MemorySpace::host, false );
-      int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-      std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
-      std::ofstream wf( fileName, std::ios::out | std::ios::binary );
-      GEOSX_THROW_IF( !wf,
-                      "Could not open file "<< fileName << " for writting",
-                      InputError );
-      wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
-      wf.close();
-      GEOSX_THROW_IF( !wf.good(),
-                      "An error occured while writting "<< fileName,
-                      InputError );
+      if( NULL == std::getenv( "DISABLE_LIFO" ) )
+      {
+        // Need to tell LvArray data is on GPU to avoir HtoD copy
+        p_dt2.move( MemorySpace::cuda, false );
+        m_lifo->pushAsync( p_dt2 );
+      }
+      else
+      {
+        GEOSX_MARK_SCOPE ( DirectWrite );
+        p_dt2.move( MemorySpace::host, false );
+        int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+        std::string fileName = GEOSX_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
+        int lastDirSeparator = fileName.find_last_of( "/\\" );
+        std::string dirName = fileName.substr( 0, lastDirSeparator );
+        if( string::npos != (size_t)lastDirSeparator && !dirExists( dirName ))
+          makeDirsForPath( dirName );
+
+        //std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
+        //const int fileDesc = open( fileName.c_str(), O_CREAT | O_WRONLY | O_DIRECT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP |
+        // S_IROTH | S_IWOTH );
+
+        std::ofstream wf( fileName, std::ios::out | std::ios::binary );
+        GEOSX_THROW_IF( !wf,
+                        "Could not open file "<< fileName << " for writting",
+                        InputError );
+        wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+        wf.close( );
+        GEOSX_THROW_IF( !wf.good(),
+                        "An error occured while writting "<< fileName,
+                        InputError );
+      }
 
     }
 
@@ -1027,18 +967,30 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 
       arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
 
-      int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-      std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
-      std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-      GEOSX_THROW_IF( !wf,
-                      "Could not open file "<< fileName << " for reading",
-                      InputError );
-      // maybe better with registerTouch()
-      p_dt2.move( MemorySpace::host, true );
-      wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
-      wf.close();
-      remove( fileName.c_str() );
+      if( NULL == std::getenv( "DISABLE_LIFO" ) )
+      {
+        m_lifo->pop( p_dt2 );
+      }
+      else
+      {
+        GEOSX_MARK_SCOPE ( DirectRead );
 
+        int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+        std::string fileName = GEOSX_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
+        std::ifstream wf( fileName, std::ios::in | std::ios::binary );
+        GEOSX_THROW_IF( !wf,
+                        "Could not open file "<< fileName << " for reading",
+                        InputError );
+        //std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
+        //const int fileDesc = open( fileName.c_str(), O_RDONLY | O_DIRECT );
+        //GEOSX_ERROR_IF( fileDesc == -1,
+        //                "Could not open file "<< fileName << " for reading: " << strerror( errno ) );
+        // maybe better with registerTouch()
+        p_dt2.move( MemorySpace::host, true );
+        wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+        wf.close( );
+        remove( fileName.c_str() );
+      }
       elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                   CellElementSubRegion & elementSubRegion )
       {
@@ -1280,7 +1232,9 @@ void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
        ((timeSeismo = m_dtSeismoTrace*(m_nsamplesSeismoTrace-m_indexSeismoTrace-1)) >= (time_n - dt -  epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace);
        m_indexSeismoTrace++ )
   {
-    computeSeismoTrace( time_n, (m_forward)?dt:-dt, timeSeismo, (m_forward)?m_indexSeismoTrace:(m_nsamplesSeismoTrace-m_indexSeismoTrace-1), var_np1, var_n, varAtReceivers );
+    WaveSolverUtils::computeSeismoTrace( time_n, (m_forward)?dt:-dt, timeSeismo, (m_forward)?m_indexSeismoTrace:(m_nsamplesSeismoTrace-m_indexSeismoTrace-1), m_receiverNodeIds, m_receiverConstants,
+                                         m_receiverIsLocal,
+                                         m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
   }
 }
 

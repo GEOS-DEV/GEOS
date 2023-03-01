@@ -32,7 +32,7 @@ SurfaceElementRegion::SurfaceElementRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::subRegionTypeString(), &m_subRegionType ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_subRegionType ).
-    setDescription( "Type of surface element subregion. Valid options:\n* " + EnumStrings< SurfaceSubRegionType >::concat( "\n* " ) );
+    setDescription( "Type of surface element subregion. Valid options: {" + EnumStrings< SurfaceSubRegionType >::concat( ", " ) + "}." );
 
   registerWrapper( viewKeyStruct::faceBlockString(), &m_faceBlockName ).
     setInputFlag( InputFlags::OPTIONAL ).

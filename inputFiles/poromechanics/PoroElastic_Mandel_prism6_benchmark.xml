@@ -1,0 +1,51 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./PoroElastic_Mandel_prism6_base_hybrid.xml"/>
+  </Included>
+
+  <!-- SPHINX_MESH -->
+  <Mesh>
+    <VTKMesh
+        name="mesh"
+        file="../../../GEOSXDATA/DataSets/mandelMeshes/mandel_prism6_0430_cells.vtu"/>
+  </Mesh>
+  <!-- SPHINX_MESH_END -->
+
+  <Events
+    maxTime="10.0">
+    
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="5.0e-01"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="pressureCollection" 
+      target="/Tasks/pressureCollection"/>
+
+    <PeriodicEvent
+      name="pressureOutput"
+      targetExactTimestep="0"
+      target="/Outputs/pressureHistoryOutput"/>
+
+    <PeriodicEvent
+      name="displacementCollection" 
+      target="/Tasks/displacementCollection" />
+
+    <PeriodicEvent
+      name="displacementOutput"
+      targetExactTimestep="0" 
+      target="/Outputs/displacementHistoryOutput" />
+
+    <PeriodicEvent
+      name="solverApplication0"
+      beginTime="0.0"
+      endTime="10.0"
+      forceDt="0.0025"
+      target="/Solvers/poroSolve"/> 
+
+  </Events>
+  
+</Problem>

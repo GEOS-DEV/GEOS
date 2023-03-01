@@ -12,7 +12,6 @@ git lfs uninstall &> /dev/null
 git submodule update --init src/cmake/blt
 git submodule update --init src/coreComponents/LvArray
 git submodule update --init src/coreComponents/constitutive/PVTPackage
-git submodule update --init src/coreComponents/mesh/PAMELA
 git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
 
 
@@ -31,7 +30,6 @@ declare -Ar main_branches=(
   ["LvArray"]="origin/develop"
   ["integratedTests"]="origin/develop"
   ["hdf5_interface"]="origin/master"
-  ["PAMELA"]="origin/master"
   ["PVTPackage"]="origin/master"
 )
 

@@ -137,6 +137,15 @@ integer CO2BrineFluid< PHASE1, PHASE2, FLASH >::getWaterPhaseIndex() const
   return PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
 }
 
+template< typename PHASE1, typename PHASE2, typename FLASH >
+void CO2BrineFluid< PHASE1, PHASE2, FLASH >::initializePreSubGroups()
+{
+  GEOSX_THROW_IF( this->catalogName() == CO2BrineEzrokhiThermalFluid::catalogName(),
+                  GEOSX_FMT( "The `{}` model is disabled for now. Please use the other thermal CO2-brine model instead: `{}`",
+                             CO2BrineEzrokhiThermalFluid::catalogName(),
+                             CO2BrinePhillipsThermalFluid::catalogName() ),
+                  InputError );
+}
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()

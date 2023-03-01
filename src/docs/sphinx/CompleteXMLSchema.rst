@@ -8,6 +8,13 @@ Input Schema Definitions
 :download:`XML Schema <../../coreComponents/schema/docs/../schema.xsd>`
 
 
+.. _XML_AcousticFirstOrderSEM:
+
+Element: AcousticFirstOrderSEM
+==============================
+.. include:: ../../coreComponents/schema/docs/AcousticFirstOrderSEM.rst
+
+
 .. _XML_AcousticSEM:
 
 Element: AcousticSEM
@@ -221,7 +228,7 @@ Element: CompressibleSolidSlipDependentPermeability
 .. _XML_CompressibleSolidWillisRichardsPermeability:
 
 Element: CompressibleSolidWillisRichardsPermeability
-===================================================
+====================================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability.rst
 
 
@@ -554,6 +561,13 @@ Element: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
 
 
+.. _XML_MultiphasePoromechanicsInitialization:
+
+Element: MultiphasePoromechanicsInitialization
+==============================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsInitialization.rst
+
+
 .. _XML_MultiphasePoromechanicsReservoir:
 
 Element: MultiphasePoromechanicsReservoir
@@ -594,13 +608,6 @@ Element: NumericalMethods
 Element: Outputs
 ================
 .. include:: ../../coreComponents/schema/docs/Outputs.rst
-
-
-.. _XML_PAMELAMesh:
-
-Element: PAMELAMesh
-===================
-.. include:: ../../coreComponents/schema/docs/PAMELAMesh.rst
 
 
 .. _XML_PML:
@@ -813,11 +820,39 @@ Element: Python
 .. include:: ../../coreComponents/schema/docs/Python.rst
 
 
+.. _XML_ReactiveBrine:
+
+Element: ReactiveBrine
+======================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrine.rst
+
+
+.. _XML_ReactiveBrineThermal:
+
+Element: ReactiveBrineThermal
+=============================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrineThermal.rst
+
+
 .. _XML_ReactiveCompositionalMultiphaseOBL:
 
 Element: ReactiveCompositionalMultiphaseOBL
 ===========================================
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL.rst
+
+
+.. _XML_ReactiveFluidDriver:
+
+Element: ReactiveFluidDriver
+============================
+.. include:: ../../coreComponents/schema/docs/ReactiveFluidDriver.rst
+
+
+.. _XML_RelpermDriver:
+
+Element: RelpermDriver
+======================
+.. include:: ../../coreComponents/schema/docs/RelpermDriver.rst
 
 
 .. _XML_Restart:
@@ -869,11 +904,25 @@ Element: SinglePhasePoromechanics
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics.rst
 
 
+.. _XML_SinglePhasePoromechanicsConformingFractures:
+
+Element: SinglePhasePoromechanicsConformingFractures
+====================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures.rst
+
+
 .. _XML_SinglePhasePoromechanicsEmbeddedFractures:
 
 Element: SinglePhasePoromechanicsEmbeddedFractures
 ==================================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures.rst
+
+
+.. _XML_SinglePhasePoromechanicsInitialization:
+
+Element: SinglePhasePoromechanicsInitialization
+===============================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsInitialization.rst
 
 
 .. _XML_SinglePhasePoromechanicsReservoir:
@@ -1114,13 +1163,6 @@ Element: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
-.. _XML_WillisRichardsPermeability:
-
-Element: WillisRichardsPermeability
-==================================
-.. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability.rst
-
-
 .. _XML_WellControls:
 
 Element: WellControls
@@ -1133,6 +1175,13 @@ Element: WellControls
 Element: WellElementRegion
 ==========================
 .. include:: ../../coreComponents/schema/docs/WellElementRegion.rst
+
+
+.. _XML_WillisRichardsPermeability:
+
+Element: WillisRichardsPermeability
+===================================
+.. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability.rst
 
 
 .. _XML_lassen:
@@ -1151,6 +1200,13 @@ Element: quartz
 ********************************
 Datastructure Definitions
 ********************************
+
+
+.. _DATASTRUCTURE_AcousticFirstOrderSEM:
+
+Datastructure: AcousticFirstOrderSEM
+====================================
+.. include:: ../../coreComponents/schema/docs/AcousticFirstOrderSEM_other.rst
 
 
 .. _DATASTRUCTURE_AcousticSEM:
@@ -1366,7 +1422,7 @@ Datastructure: CompressibleSolidSlipDependentPermeability
 .. _DATASTRUCTURE_CompressibleSolidWillisRichardsPermeability:
 
 Datastructure: CompressibleSolidWillisRichardsPermeability
-=========================================================
+==========================================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability_other.rst
 
 
@@ -1720,6 +1776,13 @@ Datastructure: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
 
 
+.. _DATASTRUCTURE_MultiphasePoromechanicsInitialization:
+
+Datastructure: MultiphasePoromechanicsInitialization
+====================================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsInitialization_other.rst
+
+
 .. _DATASTRUCTURE_MultiphasePoromechanicsReservoir:
 
 Datastructure: MultiphasePoromechanicsReservoir
@@ -1760,13 +1823,6 @@ Datastructure: NumericalMethods
 Datastructure: Outputs
 ======================
 .. include:: ../../coreComponents/schema/docs/Outputs_other.rst
-
-
-.. _DATASTRUCTURE_PAMELAMesh:
-
-Datastructure: PAMELAMesh
-=========================
-.. include:: ../../coreComponents/schema/docs/PAMELAMesh_other.rst
 
 
 .. _DATASTRUCTURE_PML:
@@ -1979,11 +2035,39 @@ Datastructure: Python
 .. include:: ../../coreComponents/schema/docs/Python_other.rst
 
 
+.. _DATASTRUCTURE_ReactiveBrine:
+
+Datastructure: ReactiveBrine
+============================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrine_other.rst
+
+
+.. _DATASTRUCTURE_ReactiveBrineThermal:
+
+Datastructure: ReactiveBrineThermal
+===================================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrineThermal_other.rst
+
+
 .. _DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL:
 
 Datastructure: ReactiveCompositionalMultiphaseOBL
 =================================================
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL_other.rst
+
+
+.. _DATASTRUCTURE_ReactiveFluidDriver:
+
+Datastructure: ReactiveFluidDriver
+==================================
+.. include:: ../../coreComponents/schema/docs/ReactiveFluidDriver_other.rst
+
+
+.. _DATASTRUCTURE_RelpermDriver:
+
+Datastructure: RelpermDriver
+============================
+.. include:: ../../coreComponents/schema/docs/RelpermDriver_other.rst
 
 
 .. _DATASTRUCTURE_Restart:
@@ -2035,11 +2119,25 @@ Datastructure: SinglePhasePoromechanics
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics_other.rst
 
 
+.. _DATASTRUCTURE_SinglePhasePoromechanicsConformingFractures:
+
+Datastructure: SinglePhasePoromechanicsConformingFractures
+==========================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures_other.rst
+
+
 .. _DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures:
 
 Datastructure: SinglePhasePoromechanicsEmbeddedFractures
 ========================================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsInitialization:
+
+Datastructure: SinglePhasePoromechanicsInitialization
+=====================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsInitialization_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhasePoromechanicsReservoir:
@@ -2287,13 +2385,6 @@ Datastructure: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
 
 
-.. _DATASTRUCTURE_WillisRichardsPermeability:
-
-Datastructure: WillisRichardsPermeability
-========================================
-.. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability_other.rst
-
-
 .. _DATASTRUCTURE_WellControls:
 
 Datastructure: WellControls
@@ -2313,6 +2404,13 @@ Datastructure: WellElementRegion
 Datastructure: WellElementRegionUniqueSubRegion
 ===============================================
 .. include:: ../../coreComponents/schema/docs/WellElementRegionUniqueSubRegion_other.rst
+
+
+.. _DATASTRUCTURE_WillisRichardsPermeability:
+
+Datastructure: WillisRichardsPermeability
+=========================================
+.. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:
