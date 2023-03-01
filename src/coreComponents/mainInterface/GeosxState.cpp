@@ -14,6 +14,7 @@
 
 // Source includes
 #include "GeosxState.hpp"
+#include "dataRepository/Utilities.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -170,7 +171,7 @@ bool GeosxState::initializeDataRepository()
 
   if( m_commandLineOptions->printMemoryUsage >= 0.0 )
   {
-    getProblemManager().printMemoryAllocation( 0, m_commandLineOptions->printMemoryUsage );
+    dataRepository::printMemoryAllocation( getProblemManager(), 0, m_commandLineOptions->printMemoryUsage );
   }
 
   return true;
