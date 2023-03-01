@@ -65,6 +65,7 @@ public:
    * @param[in] crackSpeed The crack speed.
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
+   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
    */
@@ -77,10 +78,11 @@ public:
                         real64 const & crackSpeed,
                         arrayView1d< real64 const > const & bulkModulus,
                         arrayView1d< real64 const > const & shearModulus,
+                        arrayView1d< real64 const > const & thermalExpansionCoefficient,
                         arrayView3d< real64, solid::STRESS_USD > const & newStress,
                         arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                         bool const & disableInelasticity ):
-    ElasticIsotropicUpdates( bulkModulus, shearModulus, newStress, oldStress, disableInelasticity ),
+    ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity ),
     m_damage( damage ),
     m_jacobian( jacobian ),
     m_lengthScale( lengthScale ),
@@ -550,6 +552,7 @@ public:
                                  m_crackSpeed,
                                  m_bulkModulus,
                                  m_shearModulus,
+                                 m_thermalExpansionCoefficient,
                                  m_newStress,
                                  m_oldStress,
                                  m_disableInelasticity );
@@ -575,6 +578,7 @@ public:
                           m_crackSpeed,
                           m_bulkModulus,
                           m_shearModulus,
+                          m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity );
