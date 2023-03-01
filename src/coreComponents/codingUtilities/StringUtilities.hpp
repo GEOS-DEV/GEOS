@@ -96,16 +96,75 @@ string concat( S const & delim, T const & v, Ts const & ... vs )
   return oss.str();
 }
 
-/// Subdivide string by delimiters
-template< template< class ... > class LIST_T = std::vector >
-LIST_T< string > tokenize( string const & str,
-                           string const & delimiters,
-                           bool const treatConsecutiveDelimAsOne = true,
-                           bool const preTrimStr = false );
+/**
+ * @brief Subdivide the string in substrings by the specified delimiters.
+ * @tparam CONTAINER The templated class of the results container (std::vector by default).
+ * @param str The string to subdivide.
+ * @param delimiters String that contains the list of possible delimiters.
+ * @param treatConsecutiveDelimAsOne If enabled, consecutive delimiters will be treated as one.
+ *                                   If not enabled, consecutive delimiters will result in empty entries.
+ * @param preTrimStr If enabled, delimiters at the borders of the string will be ignored.
+ *                   If not enabled, those delimiters will result in in empty entries.
+ * @return CONTAINER< string > The list of the subdivided substrings (std::vector< string > for instance).
+ */
+template< template< class ... > class CONTAINER = std::vector >
+CONTAINER< string > tokenize( string const & str,
+                              string const & delimiters,
+                              bool const treatConsecutiveDelimAsOne = true,
+                              bool const preTrimStr = false )
+{
+  if( str.empty())
+  {
+    return {};
+  }
 
-/// Subdivide string by whitespaces (see std::isspace()) (do not create any empty token).
-template< template< class ... > class LIST_T = std::vector >
-LIST_T< string > tokenizeBySpaces( string const & str );
+  CONTAINER< string > tokens;
+  size_t tokenBegin, tokenEnd, strEnd;
+
+  if( preTrimStr )
+  {
+    tokenBegin = str.find_first_not_of( delimiters );
+    strEnd = str.find_last_not_of( delimiters ) + 1;
+  }
+  else
+  {
+    tokenBegin = 0;
+    strEnd = str.size();
+  }
+
+  while( ( ( tokenEnd = str.find_first_of( delimiters, tokenBegin ) ) < strEnd ) && tokenBegin < strEnd )
+  {
+    tokens.emplace_back( str.substr( tokenBegin, tokenEnd - tokenBegin ) );
+    tokenBegin = !treatConsecutiveDelimAsOne ? tokenEnd + 1 : str.find_first_not_of( delimiters, tokenEnd );
+  }
+
+  if( tokenBegin < strEnd )
+  {
+    tokens.emplace_back( str.substr( tokenBegin, strEnd-tokenBegin ));
+  }
+  else if( !preTrimStr )
+  {
+    if( str.find_first_of( delimiters, strEnd - 1 ) != string::npos )
+    {
+      tokens.emplace_back( "" );
+    }
+  }
+
+  return tokens;
+}
+
+/**
+ * @brief Subdivide the string in substrings by whitespaces (see std::isspace()).
+ *        Do not create any empty substrings.
+ * @tparam CONTAINER The templated class of the results container (std::vector by default).
+ * @param str The string to subdivide.
+ * @return CONTAINER< string > The list of the subdivided substrings (std::vector< string > for instance).
+ */
+template< template< class ... > class CONTAINER = std::vector >
+CONTAINER< string > tokenizeBySpaces( string const & str )
+{
+  return tokenize< CONTAINER >( str, " \f\n\r\t\v", true, true );
+}
 
 /**
  * @brief Trim the string
