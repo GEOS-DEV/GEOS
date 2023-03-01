@@ -359,7 +359,7 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
   {
     array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
 
-    if( strs.size()>0 && strs[0] == key )
+    if( strs.size()>1 && strs[0] == key )
     {
       pvtFunction = std::make_unique< MODEL >( strs[1],
                                                strs,
@@ -399,7 +399,7 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
   {
     array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
 
-    if( strs.size()>0 && strs[0] == key )
+    if( strs.size()>1 && strs[0] == key )
     {
       flashModel = std::make_unique< MODEL >( strs[1],
                                               strs,
