@@ -50,7 +50,7 @@ def main():
             dslist.append(shearJump[i])
 
     # Load reference data
-    ts_ref, depth_ref = np.loadtxt('Sxy_Analytical.txt', skiprows=1, unpack=True)    
+    depth_ref, ts_ref = np.loadtxt('Sxy_Analytical.txt', skiprows=1, unpack=True)    
 
 
     fsize = 30
@@ -63,7 +63,7 @@ def main():
 
     #ax[0].plot(tnlist, depth, color=cmap(0), label='Normal', lw=lw)
     ax[0].plot(tslist, depth, 'o', color=cmap(2), markersize=msize, alpha=malpha, label='GEOS', mec='k', mew=2)
-    ax[0].plot(ts_ref, depth_ref, color=cmap(2), alpha=lalpha, lw=lw, label='Analytical')
+    ax[0].plot(ts_ref/1.0e6, depth_ref, color=cmap(2), alpha=lalpha, lw=lw, label='Analytical')
     ax[0].grid()
     ax[0].set_xlim(-20, 20)
     ax[0].set_ylim(-250, 250)
