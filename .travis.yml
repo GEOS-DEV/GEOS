@@ -135,6 +135,7 @@ jobs:
   - name: documentation
   - name: check_submodules
   - name: check_that_pull_request_is_assigned
+  - name: check_integrated_tests
   include:
   - stage: check_that_pull_request_is_not_a_draft
     name: Check that the PR is not a draft (cancel job otherwise).
@@ -153,6 +154,9 @@ jobs:
     - DOCKER_REPOSITORY=geosx/ubuntu20.04-gcc9
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--test-documentation
+  - stage: checks
+    name: check_integrated_tests
+    script: scripts/integrated_tests_status.sh
   - stage: non_blocking_failures
     name: check_submodules
     script: scripts/test_submodule_updated.sh
