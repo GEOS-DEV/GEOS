@@ -210,13 +210,37 @@ A good agreement between the GEOSX results and analytical results for temperatur
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/THM_wellbore/THM_wellbore_temperature_pressure.py
 
+.. _problemThermoPoroElasticWellbore_Temperature_Pressure_Fig:
+.. figure:: temperature_pressure.png
+   :align: center
+   :width: 800
+   :figclass: align-center
+
+   Validation of temperature and pore pressure.
+
 and the validation for the radial displacement around the cased wellbore is shown below:
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/THM_wellbore/THM_wellbore_displacement.py
 
+.. _problemThermoPoroElasticWellbore_Displacement_Fig:
+.. figure:: displacement.png
+   :align: center
+   :width: 500
+   :figclass: align-center
+
+   Validation of the radial displacement.
+
 The validations of the total radial and hoop stress (tangent stress) components computed by GEOSX against reference results are shown in the figure below:
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/THM_wellbore/THM_wellbore_stress.py
+
+.. _problemThermoPoroElasticWellbore_Stress_Fig:
+.. figure:: stress.png
+   :align: center
+   :width: 800
+   :figclass: align-center
+
+   Validation of the radial and tangent stresses.
 
 ------------------------------------------------------------------
 To go further
