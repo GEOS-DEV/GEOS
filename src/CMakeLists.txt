@@ -176,5 +176,13 @@ install( DIRECTORY ../examples/
 install( DIRECTORY ../scripts/
          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/scripts )
 
-install( FILES ${SCHEMA_DIR}/schema.xsd
+add_custom_target( geosx_generate_install_schema
+         ALL
+         COMMAND geosx -s ${CMAKE_BINARY_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
+         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+         DEPENDS geosx
+         COMMENT "Generating XML schema to install"
+         )
+
+install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/schema )
