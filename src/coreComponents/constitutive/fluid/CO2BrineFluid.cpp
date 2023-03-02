@@ -196,49 +196,46 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
 
       if( !strs.empty() )
       {
-        if( strs.size()>1 )
+        GEOSX_THROW_IF( strs.size() < 2,
+                        GEOSX_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
+                        InputError );
+
+        if( strs[0] == "DensityFun" )
         {
-          if( strs[0] == "DensityFun" )
+          if( strs[1] == PHASE1::Density::catalogName() )
           {
-            if( strs[1] == PHASE1::Density::catalogName() )
-            {
-              phase1InputParams[PHASE1::InputParamOrder::DENSITY] = strs;
-            }
-            else if( strs[1] == PHASE2::Density::catalogName() )
-            {
-              phase2InputParams[PHASE2::InputParamOrder::DENSITY] = strs;
-            }
+            phase1InputParams[PHASE1::InputParamOrder::DENSITY] = strs;
           }
-          else if( strs[0] == "ViscosityFun" )
+          else if( strs[1] == PHASE2::Density::catalogName() )
           {
-            if( strs[1] == PHASE1::Viscosity::catalogName() )
-            {
-              phase1InputParams[PHASE1::InputParamOrder::VISCOSITY] = strs;
-            }
-            else if( strs[1] == PHASE2::Viscosity::catalogName() )
-            {
-              phase2InputParams[PHASE2::InputParamOrder::VISCOSITY] = strs;
-            }
+            phase2InputParams[PHASE2::InputParamOrder::DENSITY] = strs;
           }
-          else if( strs[0] == "EnthalpyFun" )
+        }
+        else if( strs[0] == "ViscosityFun" )
+        {
+          if( strs[1] == PHASE1::Viscosity::catalogName() )
           {
-            if( strs[1] == PHASE1::Enthalpy::catalogName() )
-            {
-              phase1InputParams[PHASE1::InputParamOrder::ENTHALPY] = strs;
-            }
-            else if( strs[1] == PHASE2::Enthalpy::catalogName() )
-            {
-              phase2InputParams[PHASE2::InputParamOrder::ENTHALPY] = strs;
-            }
+            phase1InputParams[PHASE1::InputParamOrder::VISCOSITY] = strs;
           }
-          else
+          else if( strs[1] == PHASE2::Viscosity::catalogName() )
           {
-            GEOSX_THROW( GEOSX_FMT( "{}: invalid PVT function type '{}'", getFullName(), strs[0] ), InputError );
+            phase2InputParams[PHASE2::InputParamOrder::VISCOSITY] = strs;
+          }
+        }
+        else if( strs[0] == "EnthalpyFun" )
+        {
+          if( strs[1] == PHASE1::Enthalpy::catalogName() )
+          {
+            phase1InputParams[PHASE1::InputParamOrder::ENTHALPY] = strs;
+          }
+          else if( strs[1] == PHASE2::Enthalpy::catalogName() )
+          {
+            phase2InputParams[PHASE2::InputParamOrder::ENTHALPY] = strs;
           }
         }
         else
         {
-          GEOSX_THROW( GEOSX_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ), InputError );
+          GEOSX_THROW( GEOSX_FMT( "{}: invalid PVT function type '{}'", getFullName(), strs[0] ), InputError );
         }
       }
     }
@@ -283,27 +280,24 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
 
       if( !strs.empty() )
       {
-        if( strs.size()>1 )
+        GEOSX_THROW_IF( strs.size() < 2,
+                        GEOSX_FMT( "{}: missing flash model in line '{}'", getFullName(), str ),
+                        InputError );
+
+        if( strs[0] == "FlashModel" )
         {
-          if( strs[0] == "FlashModel" )
+          if( strs[1] == FLASH::catalogName() )
           {
-            if( strs[1] == FLASH::catalogName() )
-            {
-              m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
-                                                   strs,
-                                                   m_phaseNames,
-                                                   m_componentNames,
-                                                   m_componentMolarWeight );
-            }
-          }
-          else
-          {
-            GEOSX_THROW( GEOSX_FMT( "{}: invalid flash model type '{}'", getFullName(), strs[0] ), InputError );
+            m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
+                                                 strs,
+                                                 m_phaseNames,
+                                                 m_componentNames,
+                                                 m_componentMolarWeight );
           }
         }
         else
         {
-          GEOSX_THROW( GEOSX_FMT( "{}: missing flash model in line '{}'", getFullName(), str ), InputError );
+          GEOSX_THROW( GEOSX_FMT( "{}: invalid flash model type '{}'", getFullName(), strs[0] ), InputError );
         }
       }
     }

@@ -144,37 +144,34 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
 
       if( !strs.empty() )
       {
-        if( strs.size()>1 )
+        GEOSX_THROW_IF( strs.size() < 2,
+                        GEOSX_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
+                        InputError );
+
+        if( strs[0] == "DensityFun" )
         {
-          if( strs[0] == "DensityFun" )
+          if( strs[1] == PHASE::Density::catalogName() )
           {
-            if( strs[1] == PHASE::Density::catalogName() )
-            {
-              phase1InputParams[PHASE::InputParamOrder::DENSITY] = strs;
-            }
+            phase1InputParams[PHASE::InputParamOrder::DENSITY] = strs;
           }
-          else if( strs[0] == "ViscosityFun" )
+        }
+        else if( strs[0] == "ViscosityFun" )
+        {
+          if( strs[1] == PHASE::Viscosity::catalogName() )
           {
-            if( strs[1] == PHASE::Viscosity::catalogName() )
-            {
-              phase1InputParams[PHASE::InputParamOrder::VISCOSITY] = strs;
-            }
+            phase1InputParams[PHASE::InputParamOrder::VISCOSITY] = strs;
           }
-          else if( strs[0] == "EnthalpyFun" )
+        }
+        else if( strs[0] == "EnthalpyFun" )
+        {
+          if( strs[1] == PHASE::Enthalpy::catalogName() )
           {
-            if( strs[1] == PHASE::Enthalpy::catalogName() )
-            {
-              phase1InputParams[PHASE::InputParamOrder::ENTHALPY] = strs;
-            }
-          }
-          else
-          {
-            GEOSX_THROW( GEOSX_FMT( "{}: invalid PVT function type '{}'", getFullName(), strs[0] ), InputError );
+            phase1InputParams[PHASE::InputParamOrder::ENTHALPY] = strs;
           }
         }
         else
         {
-          GEOSX_THROW( GEOSX_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ), InputError );
+          GEOSX_THROW( GEOSX_FMT( "{}: invalid PVT function type '{}'", getFullName(), strs[0] ), InputError );
         }
       }
     }
