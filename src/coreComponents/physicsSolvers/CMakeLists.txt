@@ -180,7 +180,7 @@ set( physicsSolvers_sources
      wavePropagation/AcousticWaveEquationSEM.cpp
      wavePropagation/ElasticWaveEquationSEM.cpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.cpp
-
+     wavePropagation/AcousticWaveEquationDG.cpp
    )
 
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)

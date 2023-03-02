@@ -20,8 +20,12 @@
 #ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONDG_HPP_
 #define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONDG_HPP_
 
-#include "WaveSolverBase.hpp"
+#include "mesh/MeshFields.hpp"
+#include "physicsSolvers/SolverBase.hpp"
+
+#include "WaveSolverUtils.hpp"
 #include "WaveSolverBaseFields.hpp"
+#include "WaveSolverBase.hpp"
 
 namespace geosx
 {
@@ -64,14 +68,6 @@ public:
                                        bool const computeGradient ) override;
 
   /**@}*/
-
-  /**
-   * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
-   * @param cycleNumber the cycle number/step number of evaluation of the source
-   * @param rhs the right hand side vector to be computed
-   * TODO: keep or not?
-   */
-  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
 
   /**
    * TODO: move implementation into WaveSolverBase
@@ -127,7 +123,8 @@ protected:
 
   virtual void postProcessInput() override final;
 
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
+  //Nothing to do inside ? (no global mass or damping)
+  //virtual void initializePostInitialConditionsPreSubGroups() override final;
 
 private:
 
