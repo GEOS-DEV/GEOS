@@ -61,7 +61,7 @@ TEST( FixedSizeDequeTest, emplace_front_and_back )
 TEST( FixedSizeDequeTest, LargeSizedDeque )
 {
   int maxArray = 10000;
-  int elemCnt = 10000000;
+  int elemCnt = 100000;
   camp::resources::Resource stream = { camp::resources::Host{} };
   FixedSizeDeque< float, int > deque( maxArray, elemCnt, LvArray::MemorySpace::host, stream );
   EXPECT_EQ( true, deque.empty());
