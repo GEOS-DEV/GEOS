@@ -293,12 +293,10 @@ protected:
   void calculateElementCenters( NODE_MAP const & toNodesRelation,
                                 arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
   {
-    //printf("calculating element centers\n ");
     arrayView2d< real64 > const & elementCenters = m_elementCenter;
     localIndex const nNodes = numNodesPerElement();
     auto const e2n = toNodesRelation.toViewConst();
 
-    //printf("nNodes = %i\n",nNodes);
     forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
     {
       LvArray::tensorOps::copy< 3 >( elementCenters[k], X[e2n( k, 0 )] );
@@ -308,7 +306,6 @@ protected:
       }
 
       LvArray::tensorOps::scale< 3 >( elementCenters[k], 1.0 / nNodes );
-      // printf("center = %f %f %f\n",elementCenters[k][0], elementCenters[k][1], elementCenters[k][2]);
     } );
   }
 };

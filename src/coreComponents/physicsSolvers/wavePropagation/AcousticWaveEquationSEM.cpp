@@ -379,11 +379,9 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
-    //GEOSX_LOG_RANK_0 ( "!!! INFO !!! initializePostInitialConditionsPreSubGroups X = " << X );
 
     /// get face to node map
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
-    //GEOSX_LOG_RANK_0 ( "!!! INFO !!! initializePostInitialConditionsPreSubGroups facesToNodes = " << facesToNodes );
 
     // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
@@ -400,13 +398,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     {
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-      //GEOSX_LOG_RANK_0 ( "!!! INFO !!! initializePostInitialConditionsPreSubGroups elemsToNodes = " << elemsToNodes );
-
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
-      //GEOSX_LOG_RANK_0 ( "!!! INFO !!! initializePostInitialConditionsPreSubGroups facesToElements = " << facesToElements );
-
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
-      //GEOSX_LOG_RANK_0 ( "!!! INFO !!! initializePostInitialConditionsPreSubGroups velocity = " << velocity );
 
       /// Partial gradient if gradient as to be computed
       arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
@@ -1045,19 +1038,11 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     NodeManager & nodeManager = mesh.getNodeManager();
 
     arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
-    //GEOSX_LOG_RANK_0 ( "!!! INFO !!! explicitStepInternal mass = " << mass );
-
     arrayView1d< real32 const > const damping = nodeManager.getField< fields::DampingVector >();
-    //GEOSX_LOG_RANK_0 ( "!!! INFO !!! explicitStepInternal damping = " << damping );
 
     arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::Pressure_nm1 >();
-    //GEOSX_LOG_RANK_0 ( "!!! INFO !!! explicitStepInternal p_nm1 = " << p_nm1 );
-
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
-    //GEOSX_LOG_RANK_0 ( "!!! INFO !!! explicitStepInternal p_n = " << p_n );
-
     arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
-    //GEOSX_LOG_RANK_0 ( "!!! INFO !!! explicitStepInternal p_np1 = " << p_np1 );
 
     arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
     arrayView1d< real32 > const stiffnessVector = nodeManager.getField< fields::StiffnessVector >();
@@ -1080,8 +1065,6 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     /// calculate your time integrators
     real64 const dt2 = dt*dt;
-    //int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-    //arrayView1d< globalIndex > const & localToGlobal = nodeManager.localToGlobalMap();
 
     if( !usePML )
     {
@@ -1089,7 +1072,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
-        {                                                                                           
+        {
           p_np1[a] = p_n[a];
           p_np1[a] *= 2.0*mass[a];
           p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
@@ -1176,6 +1159,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                   mesh,
                                   domain.getNeighbors(),
                                   true );
+
     // compute the seismic traces since last step.
     arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
 

@@ -360,12 +360,6 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   arrayView1d< localIndex const > const nodeGhostsToReceive = nodeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
-  //printf(" prepareAndSendSyncLists number of ghosts to receive: %i\n",nodeGhostsToReceive.size() );
-  //printf(" ghosts to receive: ");
-  //for(int i=0;i<nodeGhostsToReceive.size(); i++){
-  //  printf("%i ",nodeGhostsToReceive[i] );
-  //}
-  //printf("\n");
   arrayView1d< localIndex const > const edgeGhostsToReceive = edgeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
   arrayView1d< localIndex const > const faceGhostsToReceive = faceManager.getNeighborData( m_neighborRank ).ghostsToReceive();
 
@@ -559,8 +553,6 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
   arrayView1d< localIndex const > const & nodeGhostsToSend = nodeManager.getNeighborData( m_neighborRank ).ghostsToSend();
   arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( m_neighborRank ).ghostsToSend();
   arrayView1d< localIndex const > const & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
-   
-
 
   buffer_type & sendBuff = sendBuffer( commID );
   int const bufferSize =  LvArray::integerConversion< int >( sendBuff.size());
@@ -621,12 +613,6 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
   ElementRegionManager & elemManager = mesh.getElemManager();
 
   array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
-  //printf(" unpackBufferForSync  number of ghosts to receive: %i\n",nodeGhostsToReceive.size() );
-  //printf(" ghosts to receive: ");
-  //for(int i=0;i<nodeGhostsToReceive.size(); i++){
-  //  printf("%i ",nodeGhostsToReceive[i] );
-  //}
-  //printf("\n");
   array1d< localIndex > & edgeGhostsToReceive = edgeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
   array1d< localIndex > & faceGhostsToReceive = faceManager.getNeighborData( m_neighborRank ).ghostsToReceive();
 
