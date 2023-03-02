@@ -58,7 +58,7 @@ public:
    * @param maxNumberOfBuffers             Number of arrays expected to be stores in the LIFO.
    */
   LifoStorageHost( std::string name, size_t elemCnt, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
-    LifoStorageCommon< T, INDEX_TYPE >( name, elemCnt, 0, numberOfBuffersToStoreOnHost, maxNumberOfBuffers ),
+    LifoStorageCommon< T, INDEX_TYPE >( name, elemCnt, numberOfBuffersToStoreOnHost, maxNumberOfBuffers ),
     m_pushToHostFutures( maxNumberOfBuffers ),
     m_popFromHostFutures( maxNumberOfBuffers )
   {}
@@ -119,7 +119,7 @@ public:
   {
     int id = --baseLifo::m_bufferCount;
 
-    std::packaged_task< void() > task( std::bind ( [ this ] ( int popId, arrayView1d< T > poppedArray ) {
+    std::packaged_task< void() > task( std::bind ( [ this ] ( arrayView1d< T > poppedArray ) {
       baseLifo::m_hostDeque.popFront( poppedArray );
 
       if( baseLifo::m_bufferToDiskCount > 0 )
@@ -133,7 +133,7 @@ public:
         }
         baseLifo::m_task_queue_not_empty_cond[1].notify_all();
       }
-    }, id, array ) );
+    }, array ) );
     m_popFromHostFutures[id] = task.get_future();
     {
       std::unique_lock< std::mutex > lock( baseLifo::m_task_queue_mutex[0] );

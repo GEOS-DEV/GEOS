@@ -63,7 +63,7 @@ public:
    * @param maxNumberOfBuffers             Number of arrays expected to be stores in the LIFO.
    */
   LifoStorageCuda( std::string name, size_t elemCnt, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
-    LifoStorageCommon< T, INDEX_TYPE >( name, elemCnt, numberOfBuffersToStoreOnDevice, numberOfBuffersToStoreOnHost, maxNumberOfBuffers ),
+    LifoStorageCommon< T, INDEX_TYPE >( name, elemCnt, numberOfBuffersToStoreOnHost, maxNumberOfBuffers ),
     m_deviceDeque( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda ),
     m_pushToDeviceEvents( maxNumberOfBuffers ),
     m_popFromDeviceEvents( maxNumberOfBuffers )
