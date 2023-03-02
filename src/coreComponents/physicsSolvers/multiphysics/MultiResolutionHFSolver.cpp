@@ -31,6 +31,8 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MapMeshLevels.hpp"
+#include "mesh/MeshManager.hpp"
+#include "mesh/generators/InternalMeshGenerator.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
@@ -448,7 +450,7 @@ void MultiResolutionHFSolver::testElemMappingBaseToPatch( MeshLevel & base,
 }
 
 
-real64 MultiResolutionHFSolver::utilGetElemAverageDamage(localIndex const patchElemNum,
+real64 MultiResolutionHFSolver::utilGetElemAverageDamage(globalIndex const patchElemNum,
                                                          MeshLevel const & patch)
 {
 
@@ -482,7 +484,7 @@ real64 MultiResolutionHFSolver::utilGetElemAverageDamage(localIndex const patchE
     for( localIndex q=0; q<numQuadraturePointsPerElem; q++ )
     {
       //get damage at quadrature point i
-      average_d = average_d + qp_damage( patchElemNum, q )/8.0;
+      average_d = average_d + qp_damage( subRegion.globalToLocalMap().at(patchElemNum), q )/8.0;
     }
 
     return average_d;
@@ -500,11 +502,26 @@ void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base)
   //get accessor to elemental field
   ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const frontIndicator =
   baseElemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( "frontIndicator" );
+  GEOSX_LOG_LEVEL_RANK_0( 1, "num regions: "<<baseElemManager.numRegions()<<"\n" );
+  //int i = 0;
+  // baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & GEOSX_UNUSED_PARAM(cellElementSubRegion) ) 
+  // {
+  //   GEOSX_LOG_LEVEL_RANK_0( 1, "I am subregion "<<i<<"\n" );
+  
+  //   i++;
+  // } );
 
   baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
     auto elemToFaceList = cellElementSubRegion.faceList();
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
+    GEOSX_LOG_LEVEL_RANK_0( 1, "fracturedElements at the front initialization step\n" );
+    std::cout<<"{";
+    for(auto && eleme:fracturedElements)
+    {
+      std::cout<<eleme<<",";
+    }
+    std::cout<<"}\n";
     //TODO: can we make this a forall?
     for(auto && fracElem:fracturedElements)
     {
@@ -526,6 +543,14 @@ void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base)
       }
     } 
   } );
+  GEOSX_LOG_LEVEL_RANK_0( 1, "m_baseCrackFront at the end of initialization\n" );
+  std::cout<<"{";
+  for(auto && eleme:m_baseCrackFront)
+  {
+    std::cout<<eleme<<",";
+  }
+  std::cout<<"}\n";
+
 }                                                   
 
 void MultiResolutionHFSolver::cutDamagedElements( DomainPartition & domain,
@@ -545,27 +570,42 @@ void MultiResolutionHFSolver::cutDamagedElements( DomainPartition & domain,
   auto elemToFaceList = subRegion.faceList();
   auto faceToElemList = baseFaceManager.elementList();
   auto faceNormals = baseFaceManager.faceNormal();
-  localIndex rx=3;
-  localIndex ry=3;
-  localIndex rz=3;
-  localIndex Nx=3;
-  localIndex Ny=15;
-  localIndex Nz=15;
+  //meshManager/meshGeneratorBase.m_nElems[0]/
+  // Get domain
+  MeshManager & meshManager = this->getGroupByPath< MeshManager >( "/Problem/Mesh");
+  integer Nx = meshManager.getGroup<InternalMeshGenerator>(0).getNx();
+  integer Ny = meshManager.getGroup<InternalMeshGenerator>(0).getNy();
+  integer Nz = meshManager.getGroup<InternalMeshGenerator>(0).getNz();
+  integer nx = meshManager.getGroup<InternalMeshGenerator>(1).getNx();
+  integer ny = meshManager.getGroup<InternalMeshGenerator>(1).getNy();
+  integer nz = meshManager.getGroup<InternalMeshGenerator>(1).getNz();
+  // localIndex rx = this->getGroupByPath< InternalMeshGenerator >( "/Problem/meshManager/meshGeneratorBase").m_nElems[0];
+
+  localIndex rx=nx/Nx;
+  localIndex ry=ny/Ny;
+  localIndex rz=nz/Nz;
   SortedArrayView< localIndex const > const fracturedElements = subRegion.fracturedElementsList();
   //get accessor to elemental field
   ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const frontIndicator =
   baseElemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( "frontIndicator" );
   SortedArray<localIndex> baseFrontCopy = m_baseCrackFront;
+  GEOSX_LOG_LEVEL_RANK_0( 1, "baseFrontCopy is: \n" );
+  std::cout<<"{";
+  for(auto && eleme:baseFrontCopy)
+  {
+    std::cout<<subRegion.localToGlobalMap()[eleme]<<",";
+  }
+  std::cout<<"}\n";
   for(auto && elem:baseFrontCopy)
   {
     localIndex triplet[3];
     integer fracCount = 0;
-    coarseToFineStructuredElemMap(elem,Nx,Ny,Nz,rx,ry,rz,triplet);
+    coarseToFineStructuredElemMap(subRegion.localToGlobalMap()[elem],Nx,Ny,Nz,rx,ry,rz,triplet);
     GEOSX_LOG_LEVEL_RANK_0( 3, "Base elem index: " << elem << " triplet: ( "<<triplet[0]<<", "<<triplet[1]<<", "<<triplet[2]<<" )\n" );
     for(int i=0; i<rx; i++){
       for(int j=0; j<ry; j++){
         for(int k=0; k<rz; k++){
-          localIndex fineElem = (triplet[0] + i)*ry*Ny*rz*Nz + (triplet[1] + j)*rz*Nz + (triplet[2] + k);
+          globalIndex fineElem = (triplet[0] + i)*ry*Ny*rz*Nz + (triplet[1] + j)*rz*Nz + (triplet[2] + k);
           if(fineElem > 0){
               GEOSX_LOG_LEVEL_RANK_0( 3, "fineElem: " << fineElem << " from base elem: "<<elem<<"\n" );
           }
@@ -585,6 +625,7 @@ void MultiResolutionHFSolver::cutDamagedElements( DomainPartition & domain,
       }
     }
     //if a lot of subelements are damaged, cut base element
+    GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " has "<< fracCount <<" damaged subelements.\n" );
     if (fracCount >= ry*rz)
     {
       //cutElement

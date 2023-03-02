@@ -86,7 +86,7 @@ public:
   virtual void testElemMappingBaseToPatch( MeshLevel & base,
                                            MeshLevel & patch );
 
-  real64 utilGetElemAverageDamage(localIndex const patchElemNum,
+  real64 utilGetElemAverageDamage(globalIndex const patchElemNum,
                                   MeshLevel const & patch);
 
   void initializeCrackFront( MeshLevel & base);                                        

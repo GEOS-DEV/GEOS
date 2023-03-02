@@ -134,6 +134,20 @@ public:
     GEOSX_UNUSED_VAR( nodeSets );
   }
 
+  //accessors for nx, ny, nz
+  integer getNx()
+  {
+    return m_nElems[0][0];
+  }
+  integer getNy()
+  {
+    return m_nElems[1][0];
+  }
+  integer getNz()
+  {
+    return m_nElems[2][0];
+  }
+
 
 protected:
 
