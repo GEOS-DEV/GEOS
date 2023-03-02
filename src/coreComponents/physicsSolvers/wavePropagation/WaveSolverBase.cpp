@@ -102,7 +102,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
 
   registerWrapper( viewKeyStruct::lifoSizeString(), &m_lifoSize ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( std::numeric_limits<int>::max() ).
+    setApplyDefaultValue( std::numeric_limits< int >::max() ).
     setDescription( "Set the capacity of the lifo storage (should be the total number of buffers to store in the LIFO)" );
 
   registerWrapper( viewKeyStruct::lifoOnDeviceString(), &m_lifoOnDevice ).

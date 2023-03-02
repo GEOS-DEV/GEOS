@@ -884,7 +884,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
       if( m_enableLifo )
       {
-        if ( ! m_lifo )
+        if( !m_lifo )
         {
           int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
           std::string lifoPrefix = GEOSX_FMT( "lifo/rank_{:05}/pdt2_shot{:06}", rank, m_shotIndex );
@@ -972,7 +972,8 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       if( m_enableLifo )
       {
         m_lifo->pop( p_dt2 );
-        if ( m_lifo->isEmpty() ) delete m_lifo.release();
+        if( m_lifo->isEmpty() )
+          delete m_lifo.release();
       }
       else
       {
