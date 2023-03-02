@@ -1090,9 +1090,6 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
         {                                                                                           
-          //globalIndex ga = localToGlobal[a];
-          //if(rank == 0) printf("mass[%i] = %e, damping[%i] = %e, stiffness[%i] = %e, rhs[%i] = %e",ga,mass[a],ga,damping[a],ga,stiffnessVector[a],ga,rhs[a]);
-          //printf("mass[%i] = %e, damping[%i] = %e, stiffness[%i] = %e, rhs[%i] = %e\n",ga,mass[a],ga,damping[a],ga,stiffnessVector[a],ga,rhs[a]);
           p_np1[a] = p_n[a];
           p_np1[a] *= 2.0*mass[a];
           p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
@@ -1175,19 +1172,10 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     }
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
-    int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-    p_np1.move( MemorySpace::host, true );
-    for (localIndex i=0;i<nodeManager.size(); i++){
-      printf("before sync: rank=%i, localId=%i, globalId=%i, p=%e\n",rank, i,nodeManager.localToGlobalMap()[i],p_np1[i]);
-    }
     syncFields.synchronizeFields( fieldsToBeSync,
                                   mesh,
                                   domain.getNeighbors(),
                                   true );
-    p_np1.move( MemorySpace::host, true );
-    for (localIndex i=0;i<nodeManager.size(); i++){
-      printf("after sync: rank=%i, localId=%i, globalId=%i, p=%e\n",rank, i,nodeManager.localToGlobalMap()[i],p_np1[i]);
-    }
     // compute the seismic traces since last step.
     arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
 
