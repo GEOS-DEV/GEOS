@@ -5,122 +5,35 @@
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2020-     GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * @file InternalWellGenerator.hpp
- *
- */
+#ifndef GEOSX_WELLBLOCK_HPP
+#define GEOSX_WELLBLOCK_HPP
 
-#ifndef GEOSX_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_
-#define GEOSX_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_
+#include "mesh/generators/WellBlockABC.hpp"
+#include "mesh/generators/InternalWellGenerator.hpp"
 
-#include "MeshGeneratorBase.hpp"
 
 namespace geosx
 {
 
 /**
- * @class InternalWellGenerator
- *
- * This class processes the data of a single well from the XML and generates the well geometry
+ * Implementation of the WellBlock responsible for modification/creation capabilities.
  */
-class InternalWellGenerator : public dataRepository::Group
+class WellBlock : public WellBlockABC
 {
 public:
-
   /**
-   * @brief Struct to define the top and bottom node of a segment.
+   * @brief Constructor
+   * @param internallWellGenerator
    */
-  struct NodeLocation
-  {
-    static constexpr integer TOP    = 0; /**< Top of the well */
-    static constexpr integer BOTTOM = 1; /**< Bottom of the well */
-  };
+  WellBlock( const InternalWellGenerator & internalWellGenrator );
 
-  /**
-   * @name Constructor / Destructor
-   */
-  ///@{
-
-  /**
-   * @brief Constructor.
-   * @param name name of the object in the data hierarchy.
-   * @param parent pointer to the parent group in the data hierarchy.
-   */
-  InternalWellGenerator( const string & name,
-                         Group * const parent );
-
-  /**
-   * @brief Default destructor.
-   */
-  virtual ~InternalWellGenerator();
-
-  ///@}
-
-  /**
-   * @name Static Factory Catalog Functions
-   */
-  ///@{
-
-  /**
-   * @brief Get the catalog name.
-   * @return the name of this type in the catalog
-   */
-  static string catalogName() { return "InternalWell"; }
-
-  ///@}
-
-  /**
-   * @name Overriding functions defined in MeshGeneratorBase and above
-   */
-  ///@{
-
-
-  /// using alias for templated Catalog meshGenerator type
-  using CatalogInterface = dataRepository::CatalogInterface< InternalWellGenerator, string const &, Group * const >;
-
-  /**
-   * @brief Creates a new sub-Group using the ObjectCatalog functionality.
-   * @param[in] childKey The name of the new object type's key in the
-   *                     ObjectCatalog.
-   * @param[in] childName The name of the new object in the collection of
-   *                      sub-Groups.
-   * @return A pointer to the new Group created by this function.
-   */
-  virtual Group * createChild( string const & childKey,
-                               string const & childName ) override;
-
-  /**
-   * @brief Accessor for the singleton Catalog object
-   * @return a static reference to the Catalog object
-   */
-  static CatalogInterface::CatalogType & getCatalog();
-
-  /**
-   * @brief Expand any catalogs in the data structure.
-   */
-  virtual void expandObjectCatalogs() override;
-
-  /**
-   * @brief Main function of the class that generates the well geometry
-   */
-  virtual void generateWellGeometry( );
-
-
-  /**
-   * @brief Main function of the class that generates the well geometry
-   * @param[in] domain the domain object
-   */
-  //virtual void generateMesh( DomainPartition & domain ) override;
-
-
-  ///@}
 
   /**
    * @name Getters / Setters
@@ -134,41 +47,6 @@ public:
    * @return the global number of elements
    */
   globalIndex getNumElements() const { return m_numElems; }
-
-  /**
-   * @brief Get the number of well elements per segment.
-   * @return the global number of elements
-   */
-  globalIndex getNumElementsPerSegment() const { return m_numElemsPerSegment; }
-
-  const array2d< globalIndex > & getSegmentToPolyNodeMap() const { return m_segmentToPolyNodeMap; };
-
-  /**
-   * @brief Get the number of nodes per well element
-   * @return the number of nodes per well element
-   */
-  globalIndex getNumNodesPerElement() const { return m_numNodesPerElem; }
-
-  /**
-   * @brief Get the Coordinates of the polyline nodes
-   * @return the Coordinates of the polyline nodes
-   */
-  const array2d< real64 > & getPolyNodeCoord() const { return m_polyNodeCoords; }
-
-  /**
-   * @return The minimum segment length
-   */
-  real64 getMinSegmentLength() const { return m_minSegmentLength; }
-
-  /**
-   * @return The minimum element length
-   */
-  real64 getMinElemLength() const { return m_minElemLength; }
-
-  /**
-   * @return The list of perforation names
-   */
-  const string_array & getPerforationList() const { return m_perforationList; }
 
   /**
    * @brief Get the physical location of the centers of well elements.
@@ -248,41 +126,20 @@ public:
    */
   arrayView1d< globalIndex const > getPerfElemIndex() const { return m_perfElemId; }
 
-  /**
-   * @returns The number of physical dimensions
-   */
-  int getPhysicalDimensionsNumber() const { return m_nDims; }
-
   ///@}
-
-  ///@cond DO_NOT_DOCUMENT
-  struct viewKeyStruct
-  {
-    constexpr static char const * polylineNodeCoordsString() { return "polylineNodeCoords"; }
-    constexpr static char const * polylineSegmentConnString() { return "polylineSegmentConn"; }
-    constexpr static char const * numElementsPerSegmentString() { return "numElementsPerSegment"; }
-    constexpr static char const * minSegmentLengthString() { return "minSegmentLength"; }
-    constexpr static char const * minElementLengthString() { return "minElementLength"; }
-    constexpr static char const * radiusString() { return "radius"; }
-    constexpr static char const * wellRegionNameString() { return "wellRegionName"; }
-    constexpr static char const * wellControlsNameString() { return "wellControlsName"; }
-    constexpr static char const * meshNameString() { return "meshName"; }
-    constexpr static char const * perforationString() { return "Perforation"; }
-  };
 
   const string getWellRegionName() const { return m_wellRegionName; }
   const string getWellControlsName() const { return m_wellControlsName; }
-
   /// @endcond
   
   
 protected:
 
-  /**
-   * @brief This function provides capability to post process input values prior to
-   * any other initialization operations.
-   */
-  void postProcessInput() override final;
+  // /**
+  //  * @brief This function provides capability to post process input values prior to
+  //  * any other initialization operations.
+  //  */
+  // void postProcessInput() override final;
 
 private:
 
@@ -294,34 +151,34 @@ private:
   /**
    * @brief Map each polyline node to the polyline segment(s) it is connected to.
    */
-  void constructPolylineNodeToSegmentMap();
+  void constructPolylineNodeToSegmentMap( const InternalWellGenerator & internalWellGenerator );
 
   /**
    * @brief Find the head node of the well (i.e., top node of the polyline).
    */
-  void findPolylineHeadNodeIndex();
+  void findPolylineHeadNodeIndex( const InternalWellGenerator & internalWellGenerator );
 
   /**
    * @brief Discretize the polyline by placing well elements.
    */
-  void discretizePolyline();
+  void discretizePolyline( const InternalWellGenerator & internalWellGenerator );
 
   /**
    * @brief Map each perforation to a well element.
    */
-  void connectPerforationsToWellElements();
+  void connectPerforationsToWellElements( const InternalWellGenerator & internalWellGenerator );
 
   /**
    * @brief Make sure that the perforation locations are valid:
    *   - for partitioning purposes
    *   - to have a well-posed problem
    */
-  void checkPerforationLocationsValidity();
+  void checkPerforationLocationsValidity( const InternalWellGenerator & internalWellGenerator );
 
   /**
    * @brief Merge perforations on the elements with multiple perforations.
    */
-  void mergePerforations( array1d< array1d< localIndex > > const & elemToPerfMap );
+  void mergePerforations( array1d< array1d< localIndex > > const & elemToPerfMap, const InternalWellGenerator & internalWellGenerator );
 
   /**
    * @brief At a given node, find the next segment going in the direction of the bottom of the well.
@@ -334,13 +191,10 @@ private:
   ///@}
 
   /// @cond DO_NOT_DOCUMENT
-  void debugWellGeometry() const;
+  void debugWellGeometry( const InternalWellGenerator & internalWellGenerator ) const;
   /// @endcond
 
   // XML Input
-
-  /// Connectivity between the polyline nodes
-  array2d< globalIndex > m_segmentToPolyNodeMap;
 
   /// Number of well elements per polyline interval
   int m_numElemsPerSegment;
@@ -420,8 +274,6 @@ private:
   // Number of physical dimensions
   const int m_nDims;
 
-  /// Coordinates of the polyline nodes
-  array2d< real64 > m_polyNodeCoords;
 
   /// Map from the polyline nodes to the polyline nodes
   array1d< SortedArray< globalIndex > > m_polyNodeToSegmentMap;
@@ -442,5 +294,4 @@ private:
 
 };
 }
-
-#endif /* GEOSX_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_ */
+#endif

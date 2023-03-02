@@ -68,41 +68,41 @@ private:
 /**
  * @struct description of a well block
  */
-class WellBlock
-{
-public:
-  /**
-   * @brief Getter for the well name
-   */
-  const string & getName() { return m_name; }
-  /**
-   * @brief Getter for the well region name
-   */
-  const string & getWellRegionName() { return m_wellRegionName; }
-  /**
-   * @brief Getter for the well controls name
-   */
-  const string & getWellControlsName() { return m_wellControlsName; }
-  /**
-   * @brief Setter for the well name
-   * @param name The name to set.
-   */
-  void setName( const string & name ) { m_name = name; }
-  /**
-   * @brief Setter for the well region name
-   * @param wellRegionName the name to set.
-   */
-  void setWellRegionName( const string & wellRegionName ) { m_wellRegionName = wellRegionName; }
-  /**
-   * @brief Setter for the well controls name
-   * @param wellControlsName the name to set.
-   */
-  void setWellControlsName( const string & wellControlsName ) { m_wellControlsName = wellControlsName; }
-private:
-  string m_name; ///< The name of the well
-  string m_wellRegionName; ///< The name of the region associated with the well
-  string m_wellControlsName; ///< The name of the controls associated with the well
-};
+// class WellBlock
+// {
+// public:
+//   /**
+//    * @brief Getter for the well name
+//    */
+//   const string & getName() { return m_name; }
+//   /**
+//    * @brief Getter for the well region name
+//    */
+//   const string & getWellRegionName() { return m_wellRegionName; }
+//   /**
+//    * @brief Getter for the well controls name
+//    */
+//   const string & getWellControlsName() { return m_wellControlsName; }
+//   /**
+//    * @brief Setter for the well name
+//    * @param name The name to set.
+//    */
+//   void setName( const string & name ) { m_name = name; }
+//   /**
+//    * @brief Setter for the well region name
+//    * @param wellRegionName the name to set.
+//    */
+//   void setWellRegionName( const string & wellRegionName ) { m_wellRegionName = wellRegionName; }
+//   /**
+//    * @brief Setter for the well controls name
+//    * @param wellControlsName the name to set.
+//    */
+//   void setWellControlsName( const string & wellControlsName ) { m_wellControlsName = wellControlsName; }
+// private:
+//   string m_name; ///< The name of the well
+//   string m_wellRegionName; ///< The name of the region associated with the well
+//   string m_wellControlsName; ///< The name of the controls associated with the well
+// };
 
 /**
  * @class CellBlockManager
@@ -269,14 +269,14 @@ public:
    */
   void registerWellBlock( const string & name, const string & wellRegionName, const string & wellControlsName )
   {
-    WellBlock wellBlock;
-    wellBlock.setName( name );
-    wellBlock.setWellRegionName( wellRegionName );
-    wellBlock.setWellControlsName( wellControlsName);
-    m_wellBlocks.emplace_back( wellBlock );
+    // WellBlock wellBlock;
+    // wellBlock.setName( name );
+    // wellBlock.setWellRegionName( wellRegionName );
+    // wellBlock.setWellControlsName( wellControlsName);
+    // m_wellBlocks.emplace_back( wellBlock );
   }
 
-  std::vector<WellBlock> getWellBlocks( ) { return m_wellBlocks; }
+  //std::vector<WellBlock> getWellBlocks( ) { return m_wellBlocks; }
 private:
 
   struct viewKeyStruct
@@ -342,7 +342,7 @@ private:
   localIndex m_numFaces;
   localIndex m_numEdges;
   
-  std::vector<WellBlock> m_wellBlocks;
+  //std::vector<WellBlock> m_wellBlocks;
 };
 
 }

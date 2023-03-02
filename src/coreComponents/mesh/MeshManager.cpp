@@ -69,13 +69,13 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     meshGen.generateMesh( cellBlockManager );
     meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
     ElementRegionManager & elemManager = meshLevel.getElemManager();
-    for ( WellBlock wellBlock : cellBlockManager.getWellBlocks() ) {
+    /*for ( WellBlock wellBlock : cellBlockManager.getWellBlocks() ) {
       WellElementRegion &
         wellRegion = elemManager.getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() ).
         getGroup< WellElementRegion >( wellBlock.getWellRegionName() );
       wellRegion.setWellGeneratorName( wellBlock.getName() );
       wellRegion.setWellControlsName( wellBlock.getWellControlsName() );
-    }
+      }*/
 
     PartitionDescriptor & partitionDescriptor = cellBlockManager.getPartitionDescriptor();
     if ( partitionDescriptor.hasMetisNeighborList() )
