@@ -153,10 +153,9 @@ string toMetricPrefixString( T const & value )
 {
   // These are the metric prefixes corrosponding to kilo, mega, giga...etc.
   char const prefixes[7] = { ' ', 'K', 'M', 'G', 'T', 'P', 'E'};
-  string rval( 8, ' ' );
+  string rval;
 
   // go from larger to smaller prefixes
-  bool success = false;
   for( int a=6; a>=0; --a )
   {
     T const scaleFactor = pow( 10.0, 3*a );
@@ -166,12 +165,13 @@ string toMetricPrefixString( T const & value )
       // metric prefix.
       real64 const scaledValue = value / scaleFactor;
       int const p = abs( scaledValue ) > 1.0 ? 2-trunc( log10( abs( scaledValue ) ) ) : 0;
-      snprintf( &rval[0], 8, "%5.*f %c", p, scaledValue, prefixes[a] );
-      success = true;
+      char temp[10];
+      snprintf( temp, 8, "%5.*f %c", p, scaledValue, prefixes[a] );
+      rval = temp;
       break;
     }
   }
-  GEOSX_ERROR_IF( !success,
+  GEOSX_ERROR_IF( rval.empty(),
                   GEOSX_FMT( "The value of {} was not able to be converted with a metic prefix",
                              value ) );
 
