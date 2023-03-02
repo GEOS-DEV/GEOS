@@ -153,29 +153,29 @@ string toMetricPrefixString( T const & value )
 {
   // These are the metric prefixes corrosponding to kilo, mega, giga...etc.
   char const prefixes[7] = { ' ', 'K', 'M', 'G', 'T', 'P', 'E'};
-  string rval;
+  string rval( 8, ' ' );
 
   // go from larger to smaller prefixes
+  bool success = false;
   for( int a=6; a>=0; --a )
   {
     T const scaleFactor = pow( 10.0, 3*a );
-    if( value > scaleFactor || a==0 )
+    if( abs( value ) > scaleFactor || a==0 )
     {
-      // scale the value, then round off to 1 digit past decimal, then convert to string.
-      rval = std::to_string( round( value / scaleFactor * 10 ) / 10 );
-
-      // calculate the number of digits are before the decimal. This will be 1,2, or 3.
-      int const preDecimalDigits = rval.find( "." );
-
-      // calculate the desired number of digits in the string.
-      // one digit past the decimal if there is only one digit to the left of the decimal,
-      // otherwise none.
-      int const digits = (preDecimalDigits<=2) ? preDecimalDigits+2 : preDecimalDigits;
-
-      rval = rval.substr( 0, digits ) + " " + prefixes[a];
+      // format the output of the value to 3 significant digits and append the
+      // metric prefix.
+      real64 const scaledValue = value / scaleFactor;
+      int const p = abs( scaledValue ) > 1.0 ? 2-trunc( log10( abs( scaledValue ) ) ) : 0;
+      snprintf( &rval[0], 8, "%5.*f %c", p, scaledValue, prefixes[a] );
+      success = true;
       break;
     }
   }
+  GEOSX_ERROR_IF( !success,
+                  GEOSX_FMT( "The value of {} was not able to be converted with a metic prefix",
+                             value ) );
+
+
   return rval;
 }
 
