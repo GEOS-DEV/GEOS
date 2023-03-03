@@ -208,7 +208,7 @@ Results and benchmark
 
 A good agreement between the GEOSX results and analytical results for temperature and pore pressure distribution around the wellbore is shown in the figures below:
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/THM_wellbore/THM_wellbore_temperature_pressure.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/thermoPoroElasticWellbore/THM_wellbore_temperature_pressure.py
 
 .. _problemThermoPoroElasticWellbore_Temperature_Pressure_Fig:
 .. figure:: temperature_pressure.png
