@@ -232,7 +232,7 @@ and the validation for the radial displacement around the cased wellbore is show
 
 The validations of the total radial and hoop stress (tangent stress) components computed by GEOSX against reference results are shown in the figure below:
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/THM_wellbore/THM_wellbore_stress.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/thermoPoroElasticWellbore/THM_wellbore_stress.py
 
 .. _problemThermoPoroElasticWellbore_Stress_Fig:
 .. figure:: stress.png
