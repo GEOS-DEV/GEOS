@@ -118,6 +118,7 @@ set( physicsSolvers_headers
      wavePropagation/AcousticFirstOrderWaveEquationSEM.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEMKernel.hpp
      wavePropagation/AcousticWaveEquationDG.hpp
+     wavePropagation/AcousticWaveEquationDGKernel.hpp
    )
 
 #
