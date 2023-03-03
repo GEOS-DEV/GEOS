@@ -220,7 +220,7 @@ A good agreement between the GEOSX results and analytical results for temperatur
 
 and the validation for the radial displacement around the cased wellbore is shown below:
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/THM_wellbore/THM_wellbore_displacement.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/thermoPoroElasticWellbore/THM_wellbore_displacement.py
 
 .. _problemThermoPoroElasticWellbore_Displacement_Fig:
 .. figure:: displacement.png
