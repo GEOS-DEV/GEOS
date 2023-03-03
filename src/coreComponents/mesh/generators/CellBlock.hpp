@@ -77,6 +77,9 @@ public:
   localIndex numFacesPerElement() const override
   { return m_numFacesPerElement; }
 
+  localIndex maxNodesPerFace() const override
+  { return m_maxNodesPerFace; }
+
   localIndex numElements() const override
   { return size(); }
 
@@ -207,14 +210,17 @@ public:
 
 private:
 
-  /// Number of nodes per element in this subregion.
-  localIndex m_numNodesPerElement;
+  /// Number of nodes per element in this block.
+  localIndex m_numNodesPerElement = -1;
 
-  /// Number of edges per element in this subregion.
-  localIndex m_numEdgesPerElement;
+  /// Number of edges per element in this block.
+  localIndex m_numEdgesPerElement = -1;
 
-  /// Number of faces per element in this subregion.
-  localIndex m_numFacesPerElement;
+  /// Number of faces per element in this block.
+  localIndex m_numFacesPerElement = -1;
+
+  /// Maximum number of face nodes in this block.
+  localIndex m_maxNodesPerFace = -1;
 
   /// Element-to-node relation
   array2d< localIndex, cells::NODE_MAP_PERMUTATION > m_elementsToNodes;
@@ -231,7 +237,7 @@ private:
   /// Name of the properties registered from an external mesh
   string_array m_externalPropertyNames;
 
-  /// Type of element in this subregion.
+  /// Type of element in this block.
   ElementType m_elementType;
 
   std::list< dataRepository::WrapperBase * > getExternalProperties() override
