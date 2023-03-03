@@ -42,7 +42,6 @@ __geosx_linux_build: &__geosx_linux_build
     # but that would not have solved the problem for the TPLs (we would require extra action to copy them to the mount point).
   - CONTAINER_NAME=geosx_build
     # Now we can build GEOSX.
-  - while sleep 5m; do echo "... still building ..."; done &
   - docker run
     --name=${CONTAINER_NAME}
     --volume=${TRAVIS_BUILD_DIR}:${TRAVIS_BUILD_DIR_MOUNT_POINT}
