@@ -237,6 +237,7 @@ void AcousticWaveEquationSEM::postProcessInput()
 void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
 {
+  GEOSX_MARK_FUNCTION;
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
@@ -350,7 +351,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
 
 void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
-
+  GEOSX_MARK_FUNCTION;
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
   if( m_usePML )
   {
@@ -380,50 +381,61 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
-    mass.zero();
+    {
+      GEOSX_MARK_SCOPE(mass_zero);
+      mass.zero();
+    }
     /// damping matrix to be computed for each dof in the boundary of the mesh
     arrayView1d< real32 > const damping = nodeManager.getField< fields::DampingVector >();
-    damping.zero();
-
+    {
+      GEOSX_MARK_SCOPE(damping_zero);
+      damping.zero();
+    }
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
-
+      GEOSX_MARK_SCOPE(lambda_1);
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
 
       /// Partial gradient if gradient as to be computed
       arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
-      grad.zero();
-
+      {
+        GEOSX_MARK_SCOPE(grad_zero);
+        grad.zero();
+      }
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
+        {
+          GEOSX_MARK_SCOPE(MassMatrixKernel);
+          acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
+          kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                 X,
+                                                                 elemsToNodes,
+                                                                 velocity,
+                                                                 mass );
+        }
+        {
+          GEOSX_MARK_SCOPE(DampingMatrixKernel);
+          acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
-        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               X,
-                                                               elemsToNodes,
-                                                               velocity,
-                                                               mass );
-
-        acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
-
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
-                                                               X,
-                                                               facesToElements,
-                                                               facesToNodes,
-                                                               facesDomainBoundaryIndicator,
-                                                               freeSurfaceFaceIndicator,
-                                                               velocity,
-                                                               damping );
+          kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
+                                                                 X,
+                                                                 facesToElements,
+                                                                 facesToNodes,
+                                                                 facesDomainBoundaryIndicator,
+                                                                 freeSurfaceFaceIndicator,
+                                                                 velocity,
+                                                                 damping );
+        }
       } );
     } );
   } );
@@ -433,6 +445,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
 void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition & domain )
 {
+  GEOSX_MARK_FUNCTION;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
@@ -888,7 +901,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
         {
           int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
           std::string lifoPrefix = GEOSX_FMT( "lifo/rank_{:05}/pdt2_shot{:06}", rank, m_shotIndex );
-          m_lifo = std::unique_ptr< LifoStorage< real32, localIndex > >( new LifoStorage< real32, localIndex >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize ) );
+          m_lifo = std::make_unique< LifoStorage< real32, localIndex > >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize );
         }
 
         m_lifo->pushWait();
@@ -972,7 +985,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       if( m_enableLifo )
       {
         m_lifo->pop( p_dt2 );
-        if( m_lifo->isEmpty() )
+        if( m_lifo->empty() )
           delete m_lifo.release();
       }
       else

@@ -41,14 +41,6 @@ template< typename T, typename INDEX_TYPE >
 class LifoStorageCuda : public LifoStorageCommon< T, INDEX_TYPE >
 {
   typedef LifoStorageCommon< T, INDEX_TYPE > baseLifo;
-private:
-
-  /// ueue of data stored on device
-  FixedSizeDequeWithMutexes< T, INDEX_TYPE > m_deviceDeque;
-  // Events associated to ith  copies to device buffer
-  std::vector< camp::resources::Event > m_pushToDeviceEvents;
-  // Events associated to ith  copies from device buffer
-  std::vector< camp::resources::Event > m_popFromDeviceEvents;
 public:
 
 
@@ -145,6 +137,22 @@ public:
     }
   }
 
+  /**
+   * Compute the number of arrays that can be stored on device
+   * @param percent Percentage of the remaining device memory that can be dedicated to the LIFO storage.
+   * @param bufferSize Size of one buffer
+   * @param maxNumberOfBuffers Maximum number of buffers to store in the LIFO storage
+   * @return The maximum number of buffer to allocate to fit in the percentage of the available memory.
+   */
+  static int computeNumberOfBufferOnDevice( int percent, size_t bufferSize, int maxNumberOfBuffers ) {
+      GEOSX_ERROR_IF( percent > 100, "Error, percentage of memory should be smaller than 100, check lifoOnDevice (should be greater than -100)");
+      size_t free, total;
+      GEOSX_ERROR_IF( cudaSuccess != cudaMemGetInfo( &free, &total ), "Error getting CUDA device available memory" );
+      double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
+      LIFO_LOG_RANK( " LIFO : available memory on device " << freeGB << " GB" );
+      return std::min( ( int )( 0.01 * percent * free / bufferSize ), maxNumberOfBuffers );
+  }
+
 private:
 
   /**
@@ -194,6 +202,13 @@ private:
 
     m_deviceDeque.emplaceBackFromFront( baseLifo::m_hostDeque );
   }
+
+  /// ueue of data stored on device
+  FixedSizeDequeWithMutexes< T, INDEX_TYPE > m_deviceDeque;
+  // Events associated to ith  copies to device buffer
+  std::vector< camp::resources::Event > m_pushToDeviceEvents;
+  // Events associated to ith  copies from device buffer
+  std::vector< camp::resources::Event > m_popFromDeviceEvents;
 };
 }
 #endif // LIFOSTORAGE_HPP

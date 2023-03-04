@@ -38,13 +38,6 @@ class LifoStorageHost : public LifoStorageCommon< T, INDEX_TYPE >
 {
   typedef LifoStorageCommon< T, INDEX_TYPE > baseLifo;
 
-private:
-
-  // Futures associated to push to host in case we have no device buffers
-  std::vector< std::future< void > > m_pushToHostFutures;
-  // Futures associated to pop from host in case we have no device buffers
-  std::vector< std::future< void > > m_popFromHostFutures;
-
 public:
 
 
@@ -152,6 +145,22 @@ public:
       m_popFromHostFutures[baseLifo::m_bufferCount].wait();
     }
   }
+
+  /**
+   * Compute the number of arrays that can be stored on device
+   * @param percent Percentage of the remaining device memory that can be dedicated to the LIFO storage.
+   * @param bufferSize Size of one buffer
+   * @param maxNumberOfBuffers Maximum number of buffers to store in the LIFO storage
+   * @return The maximum number of buffer to allocate to fit in the percentage of the available memory.
+   */
+  static int computeNumberOfBufferOnDevice( int percent, size_t bufferSize, int maxNumberOfBuffers ) { return 0; }
+
+private:
+
+  // Futures associated to push to host in case we have no device buffers
+  std::vector< std::future< void > > m_pushToHostFutures;
+  // Futures associated to pop from host in case we have no device buffers
+  std::vector< std::future< void > > m_popFromHostFutures;
 };
 }
 #endif // LIFOSTORAGEHOST_HPP

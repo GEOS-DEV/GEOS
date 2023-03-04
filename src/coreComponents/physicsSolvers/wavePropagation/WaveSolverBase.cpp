@@ -107,13 +107,13 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
 
   registerWrapper( viewKeyStruct::lifoOnDeviceString(), &m_lifoOnDevice ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Set the capacity of the lifo device storage" );
+    setApplyDefaultValue( -80 ).
+    setDescription( "Set the capacity of the lifo device storage (if negative, opposite of percentage of remaining memory)" );
 
   registerWrapper( viewKeyStruct::lifoOnHostString(), &m_lifoOnHost ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Set the capacity of the lifo host storage" );
+    setApplyDefaultValue( -80 ).
+    setDescription( "Set the capacity of the lifo host storage (if negative, opposite of percentage of remaining memory)" );
 
 
   registerWrapper( viewKeyStruct::usePMLString(), &m_usePML ).

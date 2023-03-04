@@ -30,6 +30,9 @@
 #include "common/LifoStorageHost.hpp"
 #ifdef GEOSX_USE_CUDA
 #include "common/LifoStorageCuda.hpp"
+#else
+template< typename T, typename INDEX_TYPE >
+using LifoStorageCuda = LifoStorageHost< T, INDEX_TYPE >;
 #endif
 
 namespace geosx
@@ -41,16 +44,6 @@ template< typename T, typename INDEX_TYPE >
 class LifoStorage
 {
 
-private:
-  /// number of buffers to be inserted into the LIFO
-  int m_maxNumberOfBuffers;
-  /// size of one buffer in bytes
-  size_t m_bufferSize;
-  /// counter of buffer stored in LIFO
-  int m_bufferCount;
-
-  /// pointer either to CUDA aware or host only LifoStorage
-  std::unique_ptr< LifoStorageCommon< T, INDEX_TYPE > > m_lifo;
 public:
 
 
@@ -60,8 +53,8 @@ public:
    *
    * @param name                           Prefix of the files used to save the occurenncy of the saved buffer on disk.
    * @param elemCnt                        Number of elments in the LvArray we want to store in the LIFO storage.
-   * @param numberOfBuffersToStoreOnDevice Maximum number of array to store on device memory ( -1 = use 80% of remaining memory ).
-   * @param numberOfBuffersToStoreOnHost   Maximum number of array to store on host memory ( -1 = use 80% of remaining memory ).
+   * @param numberOfBuffersToStoreOnDevice Maximum number of array to store on device memory. If negative opposite of the percent of left memory we want to use( -80 = use 80% of remaining memory ).
+   * @param numberOfBuffersToStoreOnHost   Maximum number of array to store on host memory . If negative opposite of the percent of left memory we want to use( -80 = use 80% of remaining memory ).
    * @param maxNumberOfBuffers             Number of arrays expected to be stores in the LIFO.
    */
   LifoStorage( std::string name, size_t elemCnt, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
@@ -72,37 +65,27 @@ public:
     LIFO_LOG_RANK( " LIFO : maximum size "<< m_maxNumberOfBuffers << " buffers " );
     double bufferSize = ( ( double ) m_bufferSize ) / ( 1024.0 * 1024.0 );
     LIFO_LOG_RANK( " LIFO : buffer size "<< bufferSize << "MB" );
-#ifndef GEOSX_USE_CUDA
-    numberOfBuffersToStoreOnDevice = 0;
-#else
-    if( numberOfBuffersToStoreOnDevice == -1 )
+    if( numberOfBuffersToStoreOnDevice < 0 )
     {
-      size_t free, total;
-      GEOSX_ERROR_IF( cudaSuccess != cudaMemGetInfo( &free, &total ), "Error getting CUDA device available memory" );
-      double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
-      LIFO_LOG_RANK( " LIFO : available memory on device " << freeGB << " GB" );
-      numberOfBuffersToStoreOnDevice = std::min( (int)( 0.8 * free / m_bufferSize ), m_maxNumberOfBuffers );
+      numberOfBuffersToStoreOnDevice = LifoStorageCuda< T, INDEX_TYPE>::computeNumberOfBufferOnDevice( -numberOfBuffersToStoreOnDevice, m_bufferSize, m_maxNumberOfBuffers );
     }
-#endif
-    if( numberOfBuffersToStoreOnHost == -1 )
+    if( numberOfBuffersToStoreOnHost < 0 )
     {
+      GEOSX_ERROR_IF( numberOfBuffersToStoreOnHost < -100, "Error, numberOfBuffersToStoreOnHost should be greater than -100");
       size_t free = sysconf( _SC_AVPHYS_PAGES ) * sysconf( _SC_PAGESIZE );
-      numberOfBuffersToStoreOnHost = std::max( 1, std::min( (int)( 0.8 * free / m_bufferSize ), m_maxNumberOfBuffers - numberOfBuffersToStoreOnDevice ) );
-      double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
+      numberOfBuffersToStoreOnHost = std::max( 1, std::min( ( int )( -0.01 * numberOfBuffersToStoreOnHost * free / m_bufferSize ), m_maxNumberOfBuffers - numberOfBuffersToStoreOnDevice ) );
+      double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 ) / MpiWrapper::nodeCommSize();
       LIFO_LOG_RANK( " LIFO : available memory on host " << freeGB << " GB" );
     }
     LIFO_LOG_RANK( " LIFO : allocating "<< numberOfBuffersToStoreOnHost <<" buffers on host" );
     LIFO_LOG_RANK( " LIFO : allocating "<< numberOfBuffersToStoreOnDevice <<" buffers on device" );
-#ifdef GEOSX_USE_CUDA
     if( numberOfBuffersToStoreOnDevice > 0 )
     {
-      m_lifo =
-        std::unique_ptr< LifoStorageCuda< T, INDEX_TYPE > >( new LifoStorageCuda< T, INDEX_TYPE >( name, elemCnt, numberOfBuffersToStoreOnDevice, numberOfBuffersToStoreOnHost, maxNumberOfBuffers ));
+      m_lifo = std::make_unique< LifoStorageCuda< T, INDEX_TYPE > >( name, elemCnt, numberOfBuffersToStoreOnDevice, numberOfBuffersToStoreOnHost, maxNumberOfBuffers );
     }
     else
-#endif
     {
-      m_lifo = std::unique_ptr< LifoStorageHost< T, INDEX_TYPE > >( new LifoStorageHost< T, INDEX_TYPE >( name, elemCnt, numberOfBuffersToStoreOnHost, maxNumberOfBuffers ));
+      m_lifo = std::make_unique< LifoStorageHost< T, INDEX_TYPE > >( name, elemCnt, numberOfBuffersToStoreOnHost, maxNumberOfBuffers );
     }
 
   }
@@ -189,10 +172,22 @@ public:
    *
    * @return true if the LIFO does not contain a buffer.
    */
-  bool isEmpty()
+  bool empty()
   {
-    return m_lifo->isEmpty();
+    return m_lifo->empty();
   }
+
+private:
+  /// number of buffers to be inserted into the LIFO
+  int m_maxNumberOfBuffers;
+  /// size of one buffer in bytes
+  size_t m_bufferSize;
+  /// counter of buffer stored in LIFO
+  int m_bufferCount;
+
+  /// pointer either to CUDA aware or host only LifoStorage
+  std::unique_ptr< LifoStorageCommon< T, INDEX_TYPE > > m_lifo;
+
 };
 }
 #endif // LIFOSTORAGE_HPP

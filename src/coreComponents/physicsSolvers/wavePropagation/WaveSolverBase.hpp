@@ -253,10 +253,10 @@ protected:
   /// lifo size (should be the total number of buffer to save in LIFO)
   localIndex m_lifoSize;
 
-  /// Number of buffers to store on device by LIFO
+  /// Number of buffers to store on device by LIFO  (if negative, opposite of percentage of remaining memory)
   localIndex m_lifoOnDevice;
 
-  /// Number of buffers to store on host by LIFO
+  /// Number of buffers to store on host by LIFO  (if negative, opposite of percentage of remaining memory)
   localIndex m_lifoOnHost;
 
   /// LIFO to store p_dt2

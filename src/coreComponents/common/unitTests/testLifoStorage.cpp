@@ -178,17 +178,17 @@ TEST( LifoStorageTest, LifoStorageBufferOnCUDAlarge )
 
 TEST( LifoStorageTest, LifoStorageBufferOnCUDAlargeAutoSizeHost )
 {
-  testLifoStorageBig< parallelDevicePolicy< > >( 1000000, 2, -1, 10000 );
+  testLifoStorageBig< parallelDevicePolicy< > >( 1000000, 2, -80, 10000 );
 }
 
 TEST( LifoStorageTest, LifoStorageBufferOnCUDAlargeAutoSizeDevice )
 {
-  testLifoStorageBig< parallelDevicePolicy< > >( 1000000, -1, 3, 10000 );
+  testLifoStorageBig< parallelDevicePolicy< > >( 1000000, -80, 3, 10000 );
 }
 
 TEST( LifoStorageTest, LifoStorageBufferOnCUDAlargeAutoSizeBoth )
 {
-  testLifoStorageBig< parallelDevicePolicy< > >( 1000000, -1, -1, 10000 );
+  testLifoStorageBig< parallelDevicePolicy< > >( 1000000, -80, -80, 10000 );
 }
 
 

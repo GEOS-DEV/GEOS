@@ -21,13 +21,16 @@ set( common_headers
      initializeEnvironment.hpp
      LifoStorage.hpp
      LifoStorageCommon.hpp
-     LifoStorageCuda.hpp
      LifoStorageHost.hpp
      FixedSizeDeque.hpp
      FixedSizeDequeWithMutexes.hpp
      TwoMutexesLock.hpp
      FourMutexesLock.hpp
    )
+
+if ( ENABLE_CUDA )
+  list( APPEND common_headers LifoStorageCuda.hpp )
+endif( )
 
 #
 # Specify all sources

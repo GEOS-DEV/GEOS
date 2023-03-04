@@ -48,37 +48,6 @@ namespace geosx
 template< typename T, typename INDEX_TYPE >
 class LifoStorageCommon
 {
-protected:
-
-  /// number of buffers to be inserted into the LIFO
-  int m_maxNumberOfBuffers;
-  /// size of one buffer in bytes
-  size_t m_bufferSize;
-  /// name used to store data on disk
-  std::string m_name;
-  /// Queue of data stored on host memory
-  FixedSizeDequeWithMutexes< T, INDEX_TYPE > m_hostDeque;
-
-  /// counter of buffer stored in LIFO
-  int m_bufferCount;
-  /// counter of buffer pushed to host
-  int m_bufferToHostCount;
-  /// counter of buffer pushed to disk
-  int m_bufferToDiskCount;
-
-
-  /// condition used to tell m_worker queue has been filled or processed is stopped.
-  std::condition_variable m_task_queue_not_empty_cond[2];
-  /// mutex to protect access to m_task_queue.
-  std::mutex m_task_queue_mutex[2];
-  /// queue of task to be executed by m_worker.
-  std::deque< std::packaged_task< void() > > m_task_queue[2];
-  /// thread to execute tasks.
-  std::thread m_worker[2];
-  /// boolean to keep m_worker alive.
-  bool m_continue;
-  /// marker to detect first pop
-  bool m_hasPoppedBefore;
 public:
 
 
@@ -170,12 +139,42 @@ public:
    *
    * @return true if the LIFO does not contain a buffer.
    */
-  bool isEmpty()
+  bool empty()
   {
     return m_bufferCount == 0;
   }
 
 protected:
+
+  /// number of buffers to be inserted into the LIFO
+  int m_maxNumberOfBuffers;
+  /// size of one buffer in bytes
+  size_t m_bufferSize;
+  /// name used to store data on disk
+  std::string m_name;
+  /// Queue of data stored on host memory
+  FixedSizeDequeWithMutexes< T, INDEX_TYPE > m_hostDeque;
+
+  /// counter of buffer stored in LIFO
+  int m_bufferCount;
+  /// counter of buffer pushed to host
+  int m_bufferToHostCount;
+  /// counter of buffer pushed to disk
+  int m_bufferToDiskCount;
+
+
+  /// condition used to tell m_worker queue has been filled or processed is stopped.
+  std::condition_variable m_task_queue_not_empty_cond[2];
+  /// mutex to protect access to m_task_queue.
+  std::mutex m_task_queue_mutex[2];
+  /// queue of task to be executed by m_worker.
+  std::deque< std::packaged_task< void() > > m_task_queue[2];
+  /// thread to execute tasks.
+  std::thread m_worker[2];
+  /// boolean to keep m_worker alive.
+  bool m_continue;
+  /// marker to detect first pop
+  bool m_hasPoppedBefore;
 
   /**
    * Copy data from host memory to disk

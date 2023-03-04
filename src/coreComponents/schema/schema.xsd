@@ -1827,10 +1827,10 @@ the relative residual norm satisfies:
 		<xsd:attribute name="enableLifo" type="integer" default="0" />
 		<!--lifoSize => The number of buffer to be stored into the LIFO ( should be the total number of buffer that will be pushed in the LIFO ) -->
 		<xsd:attribute name="lifoSize" type="integer" default="2147483647" />
-		<!--lifoOnDevice => The number of buffer to be stored on device by the LIFO -->
-		<xsd:attribute name="lifoOnDevice" type="integer" default="-1" />
-		<!--lifoOnHost => The number of buffer to be stored on host by the LIFO -->
-		<xsd:attribute name="lifoOnHost" type="integer" default="-1" />
+		<!--lifoOnDevice => The number of buffer to be stored on device by the LIFO ( if negative, opposite of percentage of remaining memory) -->
+		<xsd:attribute name="lifoOnDevice" type="integer" default="-80" />
+		<!--lifoOnHost => The number of buffer to be stored on host by the LIFO ( if negative, opposite of percentage of remaining memory) -->
+		<xsd:attribute name="lifoOnHost" type="integer" default="-80" />
 		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
 		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
