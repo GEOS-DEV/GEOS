@@ -20,8 +20,14 @@
   <Mesh>
     <VTKMesh
       name="mesh1"
-      faceBlocks="{fracture_info}"
-      file="tShapedFracturedCube.vtk"/>
+      useGlobalIds="1"
+      faceBlocks="{/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/fracture.vtu}"
+      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/region.vtu"/>
+<!--      file="/tmp/tmp.EtfQgEUXLg/src/coreComponents/unitTests/meshTests/cube.vtu"/>-->
+<!--    <VTKMesh-->
+<!--      name="mesh1"-->
+<!--      faceBlocks="{fracture_info}"-->
+<!--      file="tShapedFracturedCube.vtk"/>-->
   </Mesh>
 
   <Geometry>
@@ -170,6 +176,7 @@
   <Outputs>
     <VTK
       name="vtkOutput"
+      format="ascii"
       plotFileRoot="fractureFlow_conforming_2d_vtk_input-vtk"/>
 
     <Silo

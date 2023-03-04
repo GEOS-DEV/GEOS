@@ -34,6 +34,10 @@ void importFractureNetwork( string const & faceBlockName,
                             vtkSmartPointer< vtkDataSet > vtkMesh,
                             CellBlockManager & cellBlockManager );
 
+void importFractureNetwork2( string const & faceBlockName,
+                             vtkSmartPointer< vtkDataSet > vtkMesh,
+                             CellBlockManager & cellBlockManager );
+
 }
 
 #endif // include guard
