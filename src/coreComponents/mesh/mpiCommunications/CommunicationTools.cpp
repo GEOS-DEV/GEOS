@@ -490,7 +490,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
 {
   int nonLocalGhostsTag = 45;
 
-  std::vector< MPI_Request > nonLocalGhostsRequests( neighbors.size() );
+  std::vector< MPI_Request > nonLocalGhostsRequests( neighbors.size(), MPI_REQUEST_NULL );
 
   /// For each neighbor send them the indices of their ghosts that they mistakenly believe are owned by this rank.
   for( std::size_t i = 0; i < neighbors.size(); ++i )
