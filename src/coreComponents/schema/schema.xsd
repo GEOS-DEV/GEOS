@@ -1090,8 +1090,6 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
-		<!--fieldName => Name of field that boundary condition is applied to.-->
-		<xsd:attribute name="fieldName" type="string" default="" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="string" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->

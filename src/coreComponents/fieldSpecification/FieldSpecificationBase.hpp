@@ -128,8 +128,6 @@ public:
     meshObjectPaths.forObjectsInPath< OBJECT_TYPE >( mesh,
                                                      [&] ( OBJECT_TYPE & object )
     {
-// Cannot have this check due to applications like the traction BC which specify a field name that doesn't exist.
-//      if( object.hasWrapper( getFieldName() ) )
       {
         dataRepository::Group const & setGroup = object.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
         string_array setNames = this->getSetNames();
@@ -144,7 +142,6 @@ public:
       }
     } );
   }
-
 
   /**
    * @tparam FIELD_OP type that contains static functions to apply the value to the field
@@ -395,8 +392,6 @@ public:
     constexpr static char const * beginTimeString() { return "beginTime"; }
     /// @return The key for endTime
     constexpr static char const * endTimeString() { return "endTime"; }
-    /// @return The key for fluxBoundaryCondition
-    constexpr static char const * fluxBoundaryConditionString() { return "fluxBoundaryCondition"; }
   };
 
   /**

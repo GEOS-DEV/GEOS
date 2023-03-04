@@ -31,7 +31,6 @@ formats: all
 
 submodules:
   include: 
-  - src/coreComponents/LvArray
   - src/coreComponents/constitutive/PVTPackage
   - integratedTests
   recursive: true
