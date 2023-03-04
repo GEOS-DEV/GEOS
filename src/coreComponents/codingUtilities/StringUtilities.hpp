@@ -159,12 +159,12 @@ string toMetricPrefixString( T const & value )
   for( int a=6; a>=0; --a )
   {
     T const scaleFactor = pow( 10.0, 3*a );
-    if( abs( value ) > scaleFactor || a==0 )
+    if( std::abs( value ) > scaleFactor || a==0 )
     {
       // format the output of the value to 3 significant digits and append the
       // metric prefix.
       real64 const scaledValue = value / scaleFactor;
-      int const p = abs( scaledValue ) > 1.0 ? 2-trunc( log10( abs( scaledValue ) ) ) : 0;
+      int const p = std::abs( scaledValue ) > 1.0 ? 2-trunc( log10( std::abs( scaledValue ) ) ) : 0;
       char temp[10];
       snprintf( temp, 8, "%5.*f %c", p, scaledValue, prefixes[a] );
       rval = temp;
