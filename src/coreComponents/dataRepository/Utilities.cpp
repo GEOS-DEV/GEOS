@@ -71,7 +71,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
     {
       allocationReductions( a, 0 ) = 1e99;
       allocationReductions( a, 1 ) = 0;
-      allocationReductions( a, 1 ) = 0;
+      allocationReductions( a, 2 ) = 0;
       for( int b=0; b<numRanks; ++b )
       {
         int const recvIndex = a + b * numValues;

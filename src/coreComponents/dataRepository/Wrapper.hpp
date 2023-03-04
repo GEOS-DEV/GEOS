@@ -190,7 +190,7 @@ public:
 
   virtual void copyWrapper( WrapperBase const & source ) override
   {
-    GEOSX_ERROR_IF( source.getName() != m_name, "Tried to copy wrapper of with different name" );
+    GEOSX_ERROR_IF( source.getName() != m_name, "Tried to copy wrapper with a different name" );
     copyWrapperAttributes( source );
     copyData( source );
   }
