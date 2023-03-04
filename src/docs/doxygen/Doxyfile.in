@@ -763,7 +763,6 @@ INPUT = @PROJECT_SOURCE_DIR@/coreComponents/common \
         @PROJECT_SOURCE_DIR@/coreComponents/dataRepository \
         @PROJECT_SOURCE_DIR@/coreComponents/fileIO \
         @PROJECT_SOURCE_DIR@/coreComponents/linearAlgebra \
-        @PROJECT_SOURCE_DIR@/coreComponents/LvArray/src \
         @PROJECT_SOURCE_DIR@/coreComponents/mesh \
         @PROJECT_SOURCE_DIR@/coreComponents/finiteElement/elementFormulations \
         @PROJECT_SOURCE_DIR@/coreComponents/finiteElement/kernelInterface \
