@@ -64,6 +64,7 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
                                                     Group * const parent ):
   SolverBase( name, parent ),
   m_fractureRegionName(),
+  m_elemsToCut(),
   m_mpiCommOrder( 0 )
 {
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
@@ -487,10 +488,16 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
   //addToFractureStencil( domain );
 }
 
-void EmbeddedSurfaceGenerator::propagationStep3D( DomainPartition & domain,
-                                                  localIndex const elemToCut )
+void EmbeddedSurfaceGenerator::propagationStep3D()
 {
   GEOSX_MARK_FUNCTION;
+  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  //int const commSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
+  std::cout<<"propStep this Rank: "<<thisRank<<std::endl;
+
+  // Get domain
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
   localIndex er = 0; //should be the element region number
   localIndex esr = 0; //should be the element subregion number
    // Get meshLevel
@@ -519,28 +526,34 @@ void EmbeddedSurfaceGenerator::propagationStep3D( DomainPartition & domain,
   //this part probably needs explicit dynamic allocation
   bool added = false;
   //real64 fracCenterX = 0.0; //TODO: retrive this correctly
-  R1Tensor fractureCenter = {elemCenter[elemToCut][0], elemCenter[elemToCut][1], elemCenter[elemToCut][2]};
-  if( ghostRank[elemToCut] < 0 && (fracturedElements.contains(elemToCut)==false) ) //TODO: this do not allow for multiple cuts of the same element - ok for now
-  {
-      added = embeddedSurfaceSubRegion.addNewPlanarEmbeddedSurface( elemToCut,
-                                                                    er,
-                                                                    esr,
-                                                                    nodeManager,
-                                                                    embSurfNodeManager,
-                                                                    edgeManager,
-                                                                    cellToEdges,
-                                                                    fractureCenter );
+  for(auto && elemToCut:m_elemsToCut){
+    //localIndex elemToCut = subRegion.globalToLocalMap().at(globalElemToCut); 
+    R1Tensor fractureCenter = {elemCenter[elemToCut][0], elemCenter[elemToCut][1], elemCenter[elemToCut][2]};
+    //GEOSX_LOG_LEVEL_RANK_0( 2, "Trying to add element " << elemToCut );
+    if( ghostRank[elemToCut] < 0 && (fracturedElements.contains(elemToCut)==false) ) //TODO: this do not allow for multiple cuts of the same element - ok for now
+    {
+        //GEOSX_LOG_LEVEL_RANK_0( 2, "Trying to add new element " << elemToCut );
+        added = embeddedSurfaceSubRegion.addNewPlanarEmbeddedSurface( elemToCut,
+                                                                      er,
+                                                                      esr,
+                                                                      nodeManager,
+                                                                      embSurfNodeManager,
+                                                                      edgeManager,
+                                                                      cellToEdges,
+                                                                      fractureCenter );
 
-      if( added )//this should always be true, but it is good to have this safety check
-      {
-        GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << elemToCut << " is fractured" );
-        // Add the information to the CellElementSubRegion
-        subRegion.addFracturedElement( elemToCut, localNumberOfSurfaceElems );
-        newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( localNumberOfSurfaceElems );
-        localNumberOfSurfaceElems++;
-      }    
+        if( added )//this should always be true, but it is good to have this safety check
+        {
+          //GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << elemToCut << " is fractured" );
+          // Add the information to the CellElementSubRegion
+          subRegion.addFracturedElement( elemToCut, localNumberOfSurfaceElems );
+          newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( localNumberOfSurfaceElems );
+          localNumberOfSurfaceElems++;
+        }    
+    }
   }
   //TODO: this should probably be inside an if(added) zone
+  std::cout<<"Rank "<<thisRank<<" Before Kernels\n";
   finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
   finiteElement::dispatchlowOrder3D( subRegionFE, [&] ( auto const finiteElement )
@@ -556,21 +569,27 @@ void EmbeddedSurfaceGenerator::propagationStep3D( DomainPartition & domain,
 
     KERNEL_TYPE::template launchCIComputationKernel< parallelDevicePolicy< 32 >, KERNEL_TYPE >( kernel );
   } );
+  std::cout<<"Rank "<<thisRank<<" Past Kernels\n";
+  //GEOSX_LOG_LEVEL_RANK_0( 2, "Past Kernels" );
 
   // add all new nodes to newObject list
   for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
   {
     newObjects.newNodes.insert( ni );
   }
+  //GEOSX_LOG_LEVEL_RANK_0( 2, "Past insert loop" );
 
   // Set the ghostRank form the parent cell
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-
+  
+  //GEOSX_LOG_LEVEL_RANK_0( 2, "Past element view accessor" );
+  
   embeddedSurfaceSubRegion.inheritGhostRank( cellElemGhostRank );
-
+  GEOSX_LOG_LEVEL_RANK_0( 2, "Before set global indices" );
   setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
+  GEOSX_LOG_LEVEL_RANK_0( 2, "Before synchronizations" );
   embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
                                                                domain.getNeighbors(),
                                                                newObjects,
@@ -578,6 +597,7 @@ void EmbeddedSurfaceGenerator::propagationStep3D( DomainPartition & domain,
                                                                this->m_fractureRegionName );
 
   addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "Past synchronizations" );
 
   EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
 
@@ -595,6 +615,8 @@ void EmbeddedSurfaceGenerator::propagationStep3D( DomainPartition & domain,
   // Node to edge map
   embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
   embSurfNodeManager.compressRelationMaps();
+  //GEOSX_LOG_LEVEL_RANK_0( 2, "end function" );
+
   // Add the embedded elements to the fracture stencil.
   //addToFractureStencil( domain );
 }
@@ -701,11 +723,13 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
   // Add new globalIndices
   int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   int const commSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
-
+  // std::cout<<"this Rank: "<<thisRank<<std::endl;
+  // std::cout<<"commSize: "<<commSize<<std::endl;
   localIndex_array numberOfSurfaceElemsPerRank( commSize );
   localIndex_array globalIndexOffset( commSize );
+  std::cout<<"rank "<<thisRank<<" before allGather "<<std::endl;
   MpiWrapper::allGather( embeddedSurfaceSubRegion.size(), numberOfSurfaceElemsPerRank );
-
+  std::cout<<"rank "<<thisRank<<" after allGather "<<std::endl;
   globalIndexOffset[0] = 0; // offSet for the globalIndex
   localIndex totalNumberOfSurfaceElements = numberOfSurfaceElemsPerRank[ 0 ];  // Sum across all ranks
   for( int rank = 1; rank < commSize; ++rank )
@@ -713,7 +737,6 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
     globalIndexOffset[rank] = globalIndexOffset[rank - 1] + numberOfSurfaceElemsPerRank[rank - 1];
     totalNumberOfSurfaceElements += numberOfSurfaceElemsPerRank[rank];
   }
-
   GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << totalNumberOfSurfaceElements );
 
   arrayView1d< globalIndex > const & elemLocalToGlobal = embeddedSurfaceSubRegion.localToGlobalMap();
@@ -723,7 +746,6 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
     elemLocalToGlobal( ei ) = ei + globalIndexOffset[ thisRank ] + elemManager.maxGlobalIndex() + 1;
     embeddedSurfaceSubRegion.updateGlobalToLocalMap( ei );
   } );
-
   embeddedSurfaceSubRegion.setMaxGlobalIndex();
 
   elemManager.setMaxGlobalIndex();
@@ -737,7 +759,6 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
   {
     globalIndexOffset[rank] = globalIndexOffset[rank - 1] + numberOfNodesPerRank[rank - 1];
   }
-
   arrayView1d< globalIndex > const & nodesLocalToGlobal = embSurfNodeManager.localToGlobalMap();
   forAll< serialPolicy >( embSurfNodeManager.size(), [=, &embSurfNodeManager, &globalIndexOffset] ( localIndex const ni )
   {

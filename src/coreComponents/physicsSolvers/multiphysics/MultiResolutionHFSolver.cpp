@@ -455,9 +455,12 @@ real64 MultiResolutionHFSolver::utilGetElemAverageDamage(globalIndex const patch
 {
 
     ElementRegionManager const & elemManager = patch.getElemManager();
-
+    //GEOSX_LOG_LEVEL( 2, "Element Manager has "<< elemManager.numRegions() << "regions." << "\n" );
     // Hard-coded region and subRegion
     ElementRegionBase const & elementRegion = elemManager.getRegion( 0 );
+    //ElementRegionBase const & elementRegionOther = elemManager.getRegion( 1 );
+    //GEOSX_LOG_LEVEL( 2, "Element Region 0 has "<< elementRegion.numSubRegions() << " subregions." << "\n" );
+    //GEOSX_LOG_LEVEL( 2, "Element Region 1 has "<< elementRegionOther.numSubRegions() << " subregions." << "\n" );
     CellElementSubRegion const & subRegion = elementRegion.getSubRegion< CellElementSubRegion >( 0 );
 
     string const & damageModelName = subRegion.getReference< string >( PhaseFieldDamageFEM::viewKeyStruct::solidModelNamesString());
@@ -481,23 +484,31 @@ real64 MultiResolutionHFSolver::utilGetElemAverageDamage(globalIndex const patch
 
     //compute elemental averaged damage
     real64 average_d = 0;
+    if(patchElemNum==6773){
+      GEOSX_LOG_LEVEL( 2, "before damage call, patchElemNum: "<< patchElemNum << "\n" );
+      GEOSX_LOG_LEVEL( 2, "globalIndex is: "<< subRegion.globalToLocalMap().at(patchElemNum) << "\n" );
+    }
     for( localIndex q=0; q<numQuadraturePointsPerElem; q++ )
     {
+      if(patchElemNum==6773){
+        continue;
+      }
       //get damage at quadrature point i
       average_d = average_d + qp_damage( subRegion.globalToLocalMap().at(patchElemNum), q )/8.0;
     }
-
+    //GEOSX_LOG_LEVEL( 2, "after damage call\n" );
     return average_d;
     
 }
 
 
-void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base)
+void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base )
 {
   ElementRegionManager & baseElemManager = base.getElemManager();
   FaceManager & baseFaceManager = base.getFaceManager();
   auto faceToElemList = baseFaceManager.elementList();
   auto faceNormals = baseFaceManager.faceNormal();
+  
 
   //get accessor to elemental field
   ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const frontIndicator =
@@ -514,28 +525,41 @@ void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base)
   baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
     auto elemToFaceList = cellElementSubRegion.faceList();
+    arrayView1d< integer const > const ghostRank = cellElementSubRegion.ghostRank();
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
-    GEOSX_LOG_LEVEL_RANK_0( 1, "fracturedElements at the front initialization step\n" );
-    std::cout<<"{";
-    for(auto && eleme:fracturedElements)
-    {
-      std::cout<<eleme<<",";
-    }
-    std::cout<<"}\n";
+    // GEOSX_LOG_LEVEL_RANK_0( 1, "fracturedElements at the front initialization step\n" );
+    // std::cout<<"funny rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<"\n";
+    // std::cout<<"{";
+    // for(auto && eleme:fracturedElements)
+    // {
+    //   std::cout<<"rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<" "<<eleme<<",";
+    //   std::cout<<eleme<<",";
+    // }
+    // std::cout<<"}\n";
     //TODO: can we make this a forall?
+    //PARALLEL: Do ghost elements count as fracturedElements? - lets assume not
     for(auto && fracElem:fracturedElements)
     {
       //getElemFaces
+      //PARALLEL: assume each rank owns all associated faces
       for(auto && face:elemToFaceList[fracElem])
       {
         if(pow(faceNormals[face][1],2) + pow(faceNormals[face][2],2) < 1e-6) //remove faces with normal pointing in x direction
         {
             continue; //these faces dont contain fractures
         }
+        //PARALLEL: are all elem here owned by current node? some may be ghosts 
+        //if ghost is in fracturedList, then this may contain elements from another rank
+        //if ghost are not in fracturedList, this may contain ghost, but not elems from other rank <--- assumed this
         for(auto && elem:faceToElemList[face])
         {
-          if(!fracturedElements.contains(elem) && elem > -1)
+          //PARALLEL: what does faceToElemList return if elem is ghost??
+          //PARALLEL ISSUE: If elem is ghost, it might be fractured, but contains() will return it is not, so, we cant add ghosts here
+          //on the other had, if this possible front element is only on the front because of this neighbor in the current rank, it will
+          //not be added to the front from another rank - TODO: global fracturedElements check? 
+          if(!fracturedElements.contains(elem) && elem > -1 && ghostRank[elem] < 0)
           {
+            //PARALLEL: since these are global arrays, insert globalIndices
             m_baseCrackFront.insert(elem);
             frontIndicator[0][0][elem] = 1;
           }
@@ -543,18 +567,17 @@ void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base)
       }
     } 
   } );
-  GEOSX_LOG_LEVEL_RANK_0( 1, "m_baseCrackFront at the end of initialization\n" );
-  std::cout<<"{";
-  for(auto && eleme:m_baseCrackFront)
-  {
-    std::cout<<eleme<<",";
-  }
-  std::cout<<"}\n";
+  // GEOSX_LOG_LEVEL_RANK_0( 1, "m_baseCrackFront at the end of initialization\n" );
+  // std::cout<<"{";
+  // for(auto && eleme:m_baseCrackFront)
+  // {
+  //   std::cout<<eleme<<",";
+  // }
+  // std::cout<<"}\n";
 
 }                                                   
 
-void MultiResolutionHFSolver::cutDamagedElements( DomainPartition & domain,
-                                                  MeshLevel & base,
+void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
                                                   MeshLevel const & patch )
 {
   EmbeddedSurfaceGenerator &
@@ -588,31 +611,41 @@ void MultiResolutionHFSolver::cutDamagedElements( DomainPartition & domain,
   //get accessor to elemental field
   ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const frontIndicator =
   baseElemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( "frontIndicator" );
+ // std::cout<<"{";
+//for(auto && eleme:m_baseCrackFront)
+ // {
+ //   std::cout<<"rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<eleme<<",";
+ // }
+  //std::cout<<"}\n";
   SortedArray<localIndex> baseFrontCopy = m_baseCrackFront;
-  GEOSX_LOG_LEVEL_RANK_0( 1, "baseFrontCopy is: \n" );
-  std::cout<<"{";
-  for(auto && eleme:baseFrontCopy)
-  {
-    std::cout<<subRegion.localToGlobalMap()[eleme]<<",";
-  }
-  std::cout<<"}\n";
+  //GEOSX_LOG_LEVEL_RANK_0( 1, "baseFrontCopy is: \n" );
+ // std::cout<<"I am rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX ) << " and my baseFront is: \n";
+ // std::cout<<"{";
+ // for(auto && eleme:baseFrontCopy)
+ // {
+//    std::cout<<"rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<subRegion.localToGlobalMap()[eleme]<<",";
+ // }
+//  std::cout<<"}\n";
+  //PARALLEL: baseFrontCopy is an array of globalIndex, so, we must split the work here correctly
   for(auto && elem:baseFrontCopy)
   {
+    //PARALLEL: split the work to the right rank
     localIndex triplet[3];
     integer fracCount = 0;
+    GEOSX_LOG_LEVEL( 3, "Entering coarseMap\n" );
     coarseToFineStructuredElemMap(subRegion.localToGlobalMap()[elem],Nx,Ny,Nz,rx,ry,rz,triplet);
-    GEOSX_LOG_LEVEL_RANK_0( 3, "Base elem index: " << elem << " triplet: ( "<<triplet[0]<<", "<<triplet[1]<<", "<<triplet[2]<<" )\n" );
+    GEOSX_LOG_LEVEL( 3, "Base elem index: " << elem << " triplet: ( "<<triplet[0]<<", "<<triplet[1]<<", "<<triplet[2]<<" )\n" );
     for(int i=0; i<rx; i++){
       for(int j=0; j<ry; j++){
         for(int k=0; k<rz; k++){
           globalIndex fineElem = (triplet[0] + i)*ry*Ny*rz*Nz + (triplet[1] + j)*rz*Nz + (triplet[2] + k);
           if(fineElem > 0){
-              GEOSX_LOG_LEVEL_RANK_0( 3, "fineElem: " << fineElem << " from base elem: "<<elem<<"\n" );
+              GEOSX_LOG_LEVEL( 3, "fineElem: " << fineElem << " from base elem: "<<elem<<"\n" );
           }
           //get averageDamage in fineElem
           real64 averageDamage = utilGetElemAverageDamage(fineElem, patch);
           if(elem==234){
-            GEOSX_LOG_LEVEL_RANK_0( 1, "fineElem: " << fineElem << " from base elem: "<<elem<<"has damage = "<< averageDamage <<"\n" );
+            //GEOSX_LOG_LEVEL( 1, "fineElem: " << fineElem << " from base elem: "<<elem<<"has damage = "<< averageDamage <<"\n" );
           }
           if (averageDamage > 0.9)
           {
@@ -625,53 +658,82 @@ void MultiResolutionHFSolver::cutDamagedElements( DomainPartition & domain,
       }
     }
     //if a lot of subelements are damaged, cut base element
-    GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " has "<< fracCount <<" damaged subelements.\n" );
+    //GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " has "<< fracCount <<" damaged subelements.\n" );
+
     if (fracCount >= ry*rz)
     {
       //cutElement
-      GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " being cut "<<"\n" );
-      if(elem==335){
-        std::cout<<"breakpoint\n";
-        std::cout<<"{";
-        for(auto && eleme:m_baseCrackFront)
-        {
-          std::cout<<eleme<<",";
-        }
-        std::cout<<"}\n";
-      }
-      efemGenerator.propagationStep3D( domain, elem );
-      GEOSX_LOG_LEVEL_RANK_0( 1, "after propagationStep, base elem = " << elem << "\n" );
-      std::cout<<"{";
-      for(auto && eleme:m_baseCrackFront)
-      {
-          GEOSX_LOG_LEVEL_RANK_0( 1, eleme << "," );
-      }
-      std::cout<<"}\n";
-      //add non-fractured neighbors to fron
-      for(auto && face:elemToFaceList[elem])
-      {
-        if(pow(faceNormals[face][1],2) + pow(faceNormals[face][2],2) < 1e-6) //remove faces with normal pointing in x direction
-        {
-          continue; //these faces dont contain fractures
-        }
-        for(auto && neighbor:faceToElemList[face])
-        {
-          if(neighbor == elem){
-            continue;
-          }
-          if(!fracturedElements.contains(neighbor) && !m_baseCrackFront.contains(neighbor) && neighbor > -1)
-          {
-            GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << neighbor << " being added to front "<<"\n" );
-            m_baseCrackFront.insert(neighbor);
-            frontIndicator[0][0][neighbor] = 1;
-          }
-        }
-      }
-      //remove from front
-      GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " removed from front "<<"\n" );
-      m_baseCrackFront.remove(elem);
+      //GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " being cut "<<"\n" );
+      // if(elem==335){
+      //   std::cout<<"breakpoint\n";
+      //   std::cout<<"{";
+      //   for(auto && eleme:m_baseCrackFront)
+      //   {
+      //     std::cout<<eleme<<",";
+      //   }
+      //   std::cout<<"}\n";
+      // }
+      efemGenerator.insertToCut(elem);
+      //efemGenerator.insertToCut(subRegion.localToGlobalMap()[elem]);
+      //std::cout<<"after propagationStep, base elem = " << elem << "\n";
+      //GEOSX_LOG_LEVEL_RANK_0( 1, "after propagationStep, base elem = " << elem << "\n" );
     }
   }
+
+  SortedArray<localIndex> const & toCutList = efemGenerator.getCutList();
+  std::cout<<"local crackFront rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<": {";
+  for(auto && eleme:m_baseCrackFront)
+  {
+    std::cout<<eleme<<",";
+  }
+  std::cout<<"}\n";
+  std::cout<<"global crackFront rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<": {";
+  for(auto && eleme:m_baseCrackFront)
+  {
+    std::cout<<subRegion.localToGlobalMap()[eleme]<<",";
+  }
+  std::cout<<"}\n";
+    std::cout<<"local toCut rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<": {";
+  for(auto && eleme:toCutList)
+  {
+    std::cout<<eleme<<",";
+  }
+  std::cout<<"}\n";
+  std::cout<<"global toCut rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<": {";
+  for(auto && eleme:toCutList)
+  {
+    std::cout<<subRegion.localToGlobalMap()[eleme]<<",";
+  }
+  std::cout<<"}\n";
+  efemGenerator.propagationStep3D();
+
+  for (auto elem:toCutList)
+  {
+    //add non-fractured neighbors to fron
+    for(auto && face:elemToFaceList[elem])
+    {
+      if(pow(faceNormals[face][1],2) + pow(faceNormals[face][2],2) < 1e-6) //remove faces with normal pointing in x direction
+      {
+        continue; //these faces dont contain fractures
+      }
+      for(auto && neighbor:faceToElemList[face])
+      {
+        if(neighbor == elem){
+          continue;
+        }
+        if(!fracturedElements.contains(neighbor) && !m_baseCrackFront.contains(neighbor) && neighbor > -1)
+        {
+          GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << neighbor << " being added to front "<<"\n" );
+          m_baseCrackFront.insert(neighbor);
+          frontIndicator[0][0][neighbor] = 1;
+        }
+      }
+    }
+    //remove from front
+    GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " removed from front "<<"\n" );
+    m_baseCrackFront.remove(elem);
+  }
+  efemGenerator.emptyCutList();
 
 }                                                  
 
@@ -681,6 +743,7 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
                                                    DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
+  //int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
 
@@ -799,11 +862,10 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
                                                 domain );
                              
     // this->findPhaseFieldTip( m_patchTip, domain.getMeshBody( patchTarget.first ).getBaseDiscretization());
-
     if( time_n > 0 )
     {
       //efemGenerator.propagationStep( domain, m_baseTip, m_patchTip, m_baseTipElementIndex );
-      cutDamagedElements( domain, base, patch );  
+      cutDamagedElements( base, patch );  
       baseSolver.setupSystem( domain,
                               baseSolver.getDofManager(),
                               baseSolver.getLocalMatrix(),

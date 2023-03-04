@@ -91,8 +91,7 @@ public:
 
   void initializeCrackFront( MeshLevel & base);                                        
 
-  void cutDamagedElements( DomainPartition & domain,
-                           MeshLevel & base,
+  void cutDamagedElements( MeshLevel & base,
                            MeshLevel const & patch );                                                                                                               
 
   real64 splitOperatorStep( real64 const & time_n,

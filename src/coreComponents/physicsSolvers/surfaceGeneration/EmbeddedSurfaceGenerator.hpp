@@ -75,13 +75,10 @@ public:
 
   /**
    * @brief function to update embedded fracture geometry in the 3D planar case 
-   * @param[in] domain the problem's domain
-   * @param[in] elemToCut is the element that is to be cut
    * @return no return, but all parameters are updated if propagation is succesful
    *
    */
-  void propagationStep3D( DomainPartition & domain,
-                          localIndex const elemToCut );
+  void propagationStep3D();
 
   /**
    * @brief function to update embedded fracture geometry - only works with a single fracture
@@ -109,6 +106,21 @@ public:
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain ) override;
+
+  void insertToCut(localIndex elem)
+  {
+    m_elemsToCut.insert(elem);
+  }                           
+
+  SortedArray<localIndex> const & getCutList()
+  {
+    return m_elemsToCut;
+  } 
+
+  void emptyCutList()
+  {
+    m_elemsToCut.empty();
+  } 
 
   /**@}*/
 
@@ -145,6 +157,9 @@ private:
 
   // fracture region name
   string m_fractureRegionName;
+
+  // set of elems to cut at a certain time step
+  SortedArray<localIndex> m_elemsToCut;
 
   // Flag for consistent communication ordering
   int m_mpiCommOrder;
