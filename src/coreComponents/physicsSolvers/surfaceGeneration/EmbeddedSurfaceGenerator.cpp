@@ -241,6 +241,25 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
     setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
+    //TEST ELEM TO EMBEDDED CELL MAP
+    int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+
+    elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex const, localIndex const, ElementRegionBase &, CellElementSubRegion const & cellElementSubRegion )
+    {
+
+      SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
+      ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = cellElementSubRegion.embeddedSurfacesList().toViewConst();
+      std::cout<<"Rank "<<thisRank<<" before sync topology"<<std::endl;
+      for( localIndex ei=0; ei<fracturedElements.size(); ++ei )
+      {
+        localIndex const cellIndex = fracturedElements[ei];
+        
+        localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
+        std::cout<<"Rank "<<thisRank<<" bulk cell: "<<cellIndex<<", embedded cell: "<<k<<std::endl;
+      } 
+    });
+
+
     embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
                                                                  domain.getNeighbors(),
                                                                  newObjects,
@@ -248,6 +267,22 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
                                                                  this->m_fractureRegionName );
 
     addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
+
+    //TEST ELEM TO EMBEDDED CELL MAP
+    elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex const, localIndex const, ElementRegionBase &, CellElementSubRegion const & cellElementSubRegion )
+    {
+
+      SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
+      ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = cellElementSubRegion.embeddedSurfacesList().toViewConst();
+      std::cout<<"Rank "<<thisRank<<" after sync topology"<<std::endl;
+      for( localIndex ei=0; ei<fracturedElements.size(); ++ei )
+      {
+        localIndex const cellIndex = fracturedElements[ei];
+        
+        localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
+        std::cout<<"Rank "<<thisRank<<" bulk cell: "<<cellIndex<<", embedded cell: "<<k<<std::endl;
+      } 
+    });
 
     EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
 
@@ -524,6 +559,12 @@ void EmbeddedSurfaceGenerator::propagationStep3D()
   auto fracturedElements = subRegion.fracturedElementsList();
   //save old embNodesPositions to find new embNodes later
   //this part probably needs explicit dynamic allocation
+  std::cout<<"on prop3d rank "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" fracturedElements "<<": {";
+  for(auto && eleme:fracturedElements)
+  {
+    std::cout<<eleme<<",";
+  }
+  std::cout<<"}\n";
   bool added = false;
   //real64 fracCenterX = 0.0; //TODO: retrive this correctly
   for(auto && elemToCut:m_elemsToCut){
@@ -552,31 +593,33 @@ void EmbeddedSurfaceGenerator::propagationStep3D()
         }    
     }
   }
-  //TODO: this should probably be inside an if(added) zone
-  std::cout<<"Rank "<<thisRank<<" Before Kernels\n";
-  finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+  if(added){
+    //TODO: this should probably be inside an if(added) zone
+    std::cout<<"Rank "<<thisRank<<" Before Kernels\n";
+    finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
-  finiteElement::dispatchlowOrder3D( subRegionFE, [&] ( auto const finiteElement )
-  {
-    using FE_TYPE = decltype( finiteElement );
+    finiteElement::dispatchlowOrder3D( subRegionFE, [&] ( auto const finiteElement )
+    {
+      using FE_TYPE = decltype( finiteElement );
 
-    auto kernel = CIcomputationKernel< FE_TYPE >( finiteElement,
-                                                  nodeManager,
-                                                  subRegion,
-                                                  embeddedSurfaceSubRegion );
+      auto kernel = CIcomputationKernel< FE_TYPE >( finiteElement,
+                                                    nodeManager,
+                                                    subRegion,
+                                                    embeddedSurfaceSubRegion );
 
-    using KERNEL_TYPE = decltype( kernel );
+      using KERNEL_TYPE = decltype( kernel );
 
-    KERNEL_TYPE::template launchCIComputationKernel< parallelDevicePolicy< 32 >, KERNEL_TYPE >( kernel );
-  } );
-  std::cout<<"Rank "<<thisRank<<" Past Kernels\n";
-  //GEOSX_LOG_LEVEL_RANK_0( 2, "Past Kernels" );
-
-  // add all new nodes to newObject list
-  for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
-  {
-    newObjects.newNodes.insert( ni );
-  }
+      KERNEL_TYPE::template launchCIComputationKernel< parallelDevicePolicy< 32 >, KERNEL_TYPE >( kernel );
+    } );
+    std::cout<<"Rank "<<thisRank<<" Past Kernels\n";
+    //GEOSX_LOG_LEVEL_RANK_0( 2, "Past Kernels" );
+  
+    // add all new nodes to newObject list
+    for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
+    {
+      newObjects.newNodes.insert( ni );
+    }
+  
   //GEOSX_LOG_LEVEL_RANK_0( 2, "Past insert loop" );
 
   // Set the ghostRank form the parent cell
@@ -590,6 +633,19 @@ void EmbeddedSurfaceGenerator::propagationStep3D()
   setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "Before synchronizations" );
+
+  //TEST ELEM TO EMBEDDED CELL MAP
+  SortedArray< localIndex > fElements = subRegion.fracturedElementsList();
+  ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = subRegion.embeddedSurfacesList().toViewConst();
+  std::cout<<"rank "<<thisRank<<" before sync topology"<<std::endl;
+  for( localIndex ei=0; ei<fElements.size(); ++ei )
+  {
+    localIndex const cellIndex = fElements[ei];
+    
+    localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
+    std::cout<<"before sync rank "<<thisRank<<" bulk cell: "<<cellIndex<<", embedded cell: "<<k<<std::endl;
+  } 
+
   embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
                                                                domain.getNeighbors(),
                                                                newObjects,
@@ -598,6 +654,18 @@ void EmbeddedSurfaceGenerator::propagationStep3D()
 
   addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
   GEOSX_LOG_LEVEL_RANK_0( 2, "Past synchronizations" );
+
+    //TEST ELEM TO EMBEDDED CELL MAP
+  SortedArray< localIndex > nfElements = subRegion.fracturedElementsList();
+  ArrayOfArraysView< localIndex const > const ncellsToEmbeddedSurfaces = subRegion.embeddedSurfacesList().toViewConst();
+  std::cout<<"rank "<<thisRank<<" after sync topology"<<std::endl;
+  for( localIndex ei=0; ei<nfElements.size(); ++ei )
+  {
+    localIndex const cellIndex = nfElements[ei];
+    
+    localIndex k = ncellsToEmbeddedSurfaces[cellIndex][0];
+    std::cout<<"after sync rank "<<thisRank<<" bulk cell: "<<cellIndex<<", embedded cell: "<<k<<std::endl;
+  }
 
   EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
 
@@ -615,6 +683,8 @@ void EmbeddedSurfaceGenerator::propagationStep3D()
   // Node to edge map
   embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
   embSurfNodeManager.compressRelationMaps();
+  }
+
   //GEOSX_LOG_LEVEL_RANK_0( 2, "end function" );
 
   // Add the embedded elements to the fracture stencil.

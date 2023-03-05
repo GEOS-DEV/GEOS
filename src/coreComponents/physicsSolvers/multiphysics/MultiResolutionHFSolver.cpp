@@ -43,6 +43,7 @@
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "physicsSolvers/surfaceGeneration/EmbeddedSurfaceGenerator.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
+#include <unistd.h>
 
 
 
@@ -54,13 +55,13 @@ using namespace constitutive;
 
 GEOSX_HOST_DEVICE inline
 void coarseToFineStructuredElemMap(localIndex const coarseElemIndex,
-                                             localIndex const GEOSX_UNUSED_PARAM(coarseNx), 
-                                             localIndex const coarseNy,
-                                             localIndex const coarseNz,
-                                             localIndex const fineRx,
-                                             localIndex const fineRy,
-                                             localIndex const fineRz,
-                                             localIndex triplet[3])   
+                                   localIndex const GEOSX_UNUSED_PARAM(coarseNx), 
+                                   localIndex const coarseNy,
+                                   localIndex const coarseNz,
+                                   localIndex const fineRx,
+                                   localIndex const fineRy,
+                                   localIndex const fineRz,
+                                   localIndex triplet[3])   
 {
     localIndex X = coarseElemIndex/(coarseNy*coarseNz);
     localIndex Y = (coarseElemIndex - X*(coarseNy*coarseNz)) / coarseNz;
@@ -580,6 +581,11 @@ void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base )
 void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
                                                   MeshLevel const & patch )
 {
+  // int ii=0;
+  // while(ii == 0)
+  // {
+  //   sleep(10);
+  // }
   EmbeddedSurfaceGenerator &
   efemGenerator = this->getParent().getGroup< EmbeddedSurfaceGenerator >( "SurfaceGenerator" ); //this is hard coded
   
@@ -732,8 +738,31 @@ void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
     //remove from front
     GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " removed from front "<<"\n" );
     m_baseCrackFront.remove(elem);
+    frontIndicator[0][0][elem] = 0;
   }
+
+  //to cut list pre
+  SortedArray<localIndex> const & preToCutList = efemGenerator.getCutList();
+  std::cout<<"local toCutList rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<": {";
+  for(auto && eleme:preToCutList)
+  {
+    std::cout<<eleme<<",";
+  }
+  std::cout<<"}\n";
+
+  std::cout<<"before emptying rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<"\n";
   efemGenerator.emptyCutList();
+  std::cout<<"after emptying rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<"\n";
+
+  //to cut list pre
+  SortedArray<localIndex> const & postToCutList = efemGenerator.getCutList();
+  std::cout<<"local toCutList rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<": {";
+  for(auto && eleme:postToCutList)
+  {
+    std::cout<<eleme<<",";
+  }
+  std::cout<<"}\n";
+  MpiWrapper::barrier();
 
 }                                                  
 
@@ -781,8 +810,9 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
   auto const patchTarget = patchTargets.begin()->first;
   MeshLevel & base = domain.getMeshBody( baseTarget.first ).getBaseDiscretization();
   MeshLevel & patch = domain.getMeshBody( patchTarget.first ).getBaseDiscretization();
-  initializeCrackFront(base);
-
+  if(cycleNumber == 0){
+      initializeCrackFront(base);
+  }
   NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
   //although these iterations are not really Newton iterations, we will use this nomeclature to keep things consistent
   integer & iter = solverParams.m_numNewtonIterations;

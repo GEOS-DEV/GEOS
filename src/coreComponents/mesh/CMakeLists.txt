@@ -55,6 +55,7 @@ set( mesh_headers
      mpiCommunications/SpatialPartition.hpp
      simpleGeometricObjects/BoundedPlane.hpp
      simpleGeometricObjects/Circle.hpp
+     simpleGeometricObjects/RTheta.hpp
      simpleGeometricObjects/Box.hpp
      simpleGeometricObjects/Cylinder.hpp
      simpleGeometricObjects/GeometricObjectManager.hpp
@@ -112,6 +113,7 @@ set( mesh_sources
      mpiCommunications/SpatialPartition.cpp
      simpleGeometricObjects/BoundedPlane.cpp
      simpleGeometricObjects/Circle.cpp
+     simpleGeometricObjects/RTheta.cpp
      simpleGeometricObjects/Box.cpp
      simpleGeometricObjects/Cylinder.cpp
      simpleGeometricObjects/GeometricObjectManager.cpp

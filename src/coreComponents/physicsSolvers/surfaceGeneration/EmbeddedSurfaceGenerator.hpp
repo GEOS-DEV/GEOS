@@ -119,7 +119,7 @@ public:
 
   void emptyCutList()
   {
-    m_elemsToCut.empty();
+    m_elemsToCut.clear();
   } 
 
   /**@}*/

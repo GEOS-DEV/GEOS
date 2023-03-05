@@ -116,7 +116,8 @@ bool EmbeddedSurfaceSubRegion::addNewPlanarEmbeddedSurface( localIndex const cel
                                                             R1Tensor const & fracCenter )
 
 {
-  std::cout<<"checkPoint 0"<<std::endl;
+  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  std::cout<<"Rank "<<thisRank<<" checkPoint 0"<<std::endl;
   GEOSX_LOG_LEVEL_RANK_0( 1, "checkPoint 0 ");
   bool addEmbeddedElem = true;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
@@ -135,7 +136,7 @@ bool EmbeddedSurfaceSubRegion::addNewPlanarEmbeddedSurface( localIndex const cel
   array1d< localIndex > pointParentIndex;
 
   localIndex numPoints = 0;
-  std::cout<<"checkPoint 1"<<std::endl;
+  std::cout<<"Rank "<<thisRank<<" checkPoint 1"<<std::endl;
   GEOSX_LOG_LEVEL_RANK_0( 1, "checkPoint 1 ");
   for( localIndex ke = 0; ke < cellToEdges.size( 1 ); ke++ )
   {
@@ -169,7 +170,7 @@ bool EmbeddedSurfaceSubRegion::addNewPlanarEmbeddedSurface( localIndex const cel
       numPoints++;
     }
   } //end of edge loop
-  std::cout<<"checkPoint 2"<<std::endl;
+  std::cout<<"Rank "<<thisRank<<" checkPoint 2"<<std::endl;
   GEOSX_LOG_LEVEL_RANK_0( 2, "checkPoint 2 ");
   if( addEmbeddedElem && intersectionPoints.size( 0 ) > 0 )
   {
@@ -223,7 +224,7 @@ bool EmbeddedSurfaceSubRegion::addNewPlanarEmbeddedSurface( localIndex const cel
       }
       elemNodes[ j ] =  nodeIndex;
     }
-    std::cout<<"checkPoint 3"<<std::endl;
+    std::cout<<"Rank "<<thisRank<<" checkPoint 3"<<std::endl;
     GEOSX_LOG_LEVEL_RANK_0( 2, "checkPoint 3 ");
 
     m_toNodesRelation.resizeArray( surfaceIndex, elemNodes.size() );
@@ -239,7 +240,7 @@ bool EmbeddedSurfaceSubRegion::addNewPlanarEmbeddedSurface( localIndex const cel
     LvArray::tensorOps::copy< 3 >( m_tangentVector1[ surfaceIndex ], widthVector);
     LvArray::tensorOps::copy< 3 >( m_tangentVector2[ surfaceIndex ], lengthVector);
     this->calculateElementGeometricQuantities( intersectionPoints.toViewConst(), this->size()-1 );
-    std::cout<<"checkPoint 4"<<std::endl;
+    std::cout<<"Rank "<<thisRank<<" checkPoint 4"<<std::endl;
     GEOSX_LOG_LEVEL_RANK_0( 2, "checkPoint 4 ");
   }
   return addEmbeddedElem;
