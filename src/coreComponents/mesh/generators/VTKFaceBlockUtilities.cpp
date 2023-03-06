@@ -683,29 +683,17 @@ private:
   std::vector< std::vector< vtkIdType > > m_duplicatedNodes;
 };
 
-localIndex computeNum2dFaces2( vtkSmartPointer< vtkDataSet > faceMesh )
-{
-  auto edgesExtractor = vtkSmartPointer< vtkExtractEdges >::New();
-  edgesExtractor->SetInputData( faceMesh );
-  edgesExtractor->UseAllPointsOn();
-  edgesExtractor->Update();
-  vtkPolyData * edges = edgesExtractor->GetOutput();
-  return edges->GetNumberOfCells();
-}
 
 struct Face2dAndMore
 {
-  std::vector< std::vector< vtkIdType > > face2dToElems2d;
   std::vector< vtkIdType > face2dToEdge;
   std::vector< std::vector< vtkIdType > > elem2dToEdges;
   std::vector< std::vector< vtkIdType > > elem2dToFace2d;
 
-  Face2dAndMore( std::vector< std::vector< vtkIdType>> const & face2DToElems2D,
-                 std::vector< vtkIdType > const & face2DToEdge,
+  Face2dAndMore( std::vector< vtkIdType > const & face2DToEdge,
                  std::vector< std::vector< vtkIdType>> const & elem2DToEdges,
                  std::vector< std::vector< vtkIdType>> const & elem2DToFace2D )
-    : face2dToElems2d( face2DToElems2D ),
-      face2dToEdge( face2DToEdge ),
+    : face2dToEdge( face2DToEdge ),
       elem2dToEdges( elem2DToEdges ),
       elem2dToFace2d( elem2DToFace2D )
   { }
@@ -728,17 +716,11 @@ struct hash_pair {
 };
 
 
-Face2dAndMore computeFace2dToElems2d( vtkSmartPointer< vtkDataSet > faceMesh,
-                                      DuplicatedPoints const & duplicatedPoints,
-                                      ArrayOfArrays< localIndex > const nodeToEdges )
+std::vector< std::vector< vtkIdType > > computeFace2dToElems2d( vtkPolyData * edges,
+                                                                vtkSmartPointer< vtkDataSet > faceMesh,
+                                                                DuplicatedPoints const & duplicatedPoints,
+                                                                ArrayOfArrays< localIndex > const nodeToEdges )
 {
-  // TODO Duplicated with computeNum2dFaces2
-  auto edgesExtractor = vtkSmartPointer< vtkExtractEdges >::New();
-  edgesExtractor->SetInputData( faceMesh );
-  edgesExtractor->UseAllPointsOn();
-  edgesExtractor->Update();
-  vtkPolyData * edges = edgesExtractor->GetOutput();
-
   std::unordered_map< std::pair< vtkIdType, vtkIdType >, int, hash_pair > face2dIds;
   for( int i = 0; i < edges->GetNumberOfCells(); ++i )
   {
@@ -759,10 +741,19 @@ Face2dAndMore computeFace2dToElems2d( vtkSmartPointer< vtkDataSet > faceMesh,
       vtkIdList * edgePointIds = e->GetPointIds();
       GEOSX_ASSERT( edgePointIds->GetNumberOfIds() == 2 );
       std::pair< vtkIdType, vtkIdType > const minMax = std::minmax( edgePointIds->GetId( 0 ), edgePointIds->GetId( 1 ) );
-      face2dToElems2d[face2dIds.at(minMax)].emplace_back( i );
+      face2dToElems2d[face2dIds.at( minMax )].emplace_back( i );
     }
   }
 
+  return face2dToElems2d;
+}
+
+Face2dAndMore computeFace2dToElems2dAll( vtkPolyData * edges,
+                                         vtkSmartPointer< vtkDataSet > faceMesh,
+                                         DuplicatedPoints const & duplicatedPoints,
+                                         std::vector< std::vector< vtkIdType > > const & face2dToElems2d,
+                                         ArrayOfArrays< localIndex > const nodeToEdges )
+{
   // Computing the face2dToEdges mapping. It does not require face2dToElems2d: split the function.
   auto const comp = []( std::pair< vtkIdType, int > const & l, std::pair< vtkIdType, int > const & r ) { return l.second < r.second; };
   std::vector< vtkIdType > face2dToEdge( edges->GetNumberOfCells() );
@@ -810,7 +801,7 @@ Face2dAndMore computeFace2dToElems2d( vtkSmartPointer< vtkDataSet > faceMesh,
     }
   }
 
-  return Face2dAndMore( face2dToElems2d, face2dToEdge, elem2dToEdges, elem2dToFace2d );
+  return Face2dAndMore( face2dToEdge, elem2dToEdges, elem2dToFace2d );
 }
 
 struct Elem2dTo
@@ -869,10 +860,8 @@ Elem2dTo buildElem2dToNodes( vtkSmartPointer< vtkDataSet > faceMesh,
     std::set< vtkIdType > allDuplicatedNodes;
     for( std::size_t i = 0; i < duplicatedPoints.size(); ++i )
     {
-      for( auto const & n: duplicatedPoints( i ) )
-      {
-        allDuplicatedNodes.insert( n );
-      }
+      std::vector< vtkIdType > const & ns = duplicatedPoints( i );
+      allDuplicatedNodes.insert( ns.cbegin(), ns.cend() );
     }
 
     for( vtkIdType const & n: allDuplicatedNodes )
@@ -893,10 +882,8 @@ Elem2dTo buildElem2dToNodes( vtkSmartPointer< vtkDataSet > faceMesh,
     std::set< vtkIdType > duplicatedPointOfElem2d; // All the duplicated points of the 2d element. Note that we lose the collocation of the duplicated nodes.
     for( vtkIdType j = 0; j < pointIds->GetNumberOfIds(); ++j )
     {
-      for(auto const & p : duplicatedPoints(pointIds->GetId(j)))
-      {
-        duplicatedPointOfElem2d.insert( p );
-      }
+      std::vector< vtkIdType > const & ns = duplicatedPoints( pointIds->GetId( j ) );
+      duplicatedPointOfElem2d.insert( ns.cbegin(), ns.cend() );
     }
 
     // Now we search for the 3d elements (by finding its cell)
@@ -1021,12 +1008,21 @@ void importFractureNetwork2( string const & faceBlockName,
   DuplicatedPoints const duplicatedPoints( faceMesh );
   // Add the appropriate validations (only 2d cells...)
 
+
+  auto edgesExtractor = vtkSmartPointer< vtkExtractEdges >::New();
+  edgesExtractor->SetInputData( faceMesh );
+  edgesExtractor->UseAllPointsOn();  // Important: we want to prevent any node renumbering.
+  edgesExtractor->Update();
+  vtkPolyData * edges = edgesExtractor->GetOutput();
+
+  localIndex const num2dFaces = edges->GetNumberOfCells();
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
-  localIndex const num2dFaces = computeNum2dFaces2( faceMesh );
   // Now let's build the elem2dTo* mappings.
   Elem2dTo const elem2DTo = buildElem2dToNodes( faceMesh, vtkMesh, duplicatedPoints, faceToNodes, elemToFaces );
 
-  Face2dAndMore const face2DAndMore = computeFace2dToElems2d( faceMesh, duplicatedPoints, nodeToEdges );
+  std::vector< std::vector< vtkIdType > > const face2dToElems2d = computeFace2dToElems2d( edges, faceMesh, duplicatedPoints, nodeToEdges );
+
+  Face2dAndMore const face2DAndMore = computeFace2dToElems2dAll( edges, faceMesh, duplicatedPoints, face2dToElems2d, nodeToEdges );
 
   // Mappings are now computed. Just create the face block by value.
   FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( "fracture_info" );  // TODO
@@ -1038,8 +1034,7 @@ void importFractureNetwork2( string const & faceBlockName,
   faceBlock.set2dElemToEdges( convertToArrayOfArrays( face2DAndMore.elem2dToEdges ) );
   faceBlock.set2dFaceToEdge( convert1d( face2DAndMore.face2dToEdge ) );
 
-  faceBlock.set2dFaceTo2dElems( convertToArrayOfArrays( face2DAndMore.face2dToElems2d ) );
-  faceBlock.set2dFaceTo2dElems( convertToArrayOfArrays( face2DAndMore.face2dToElems2d ) );
+  faceBlock.set2dFaceTo2dElems( convertToArrayOfArrays( face2dToElems2d ) );
 
   faceBlock.set2dElemToFaces( convertTo2dArray( elem2DTo.elem2dToFaces ) );
   array2d< localIndex > const elem2dToElems3d = convertTo2dArray( elem2DTo.elem2dToElem3d );
