@@ -23,7 +23,7 @@
 
 #include <iomanip>
 #include <sstream>
-#include <cmath>
+
 namespace geosx
 {
 namespace stringutilities
@@ -149,35 +149,7 @@ array1d< T > fromStringToArray( string const & str )
  * @return String containging the scaled value.
  */
 template< typename T >
-string toMetricPrefixString( T const & value )
-{
-  // These are the metric prefixes corrosponding to kilo, mega, giga...etc.
-  char const prefixes[7] = { ' ', 'K', 'M', 'G', 'T', 'P', 'E'};
-  string rval;
-
-  // go from larger to smaller prefixes
-  for( int a=6; a>=0; --a )
-  {
-    T const scaleFactor = pow( 10.0, 3*a );
-    if( std::abs( value ) > scaleFactor || a==0 )
-    {
-      // format the output of the value to 3 significant digits and append the
-      // metric prefix.
-      real64 const scaledValue = value / scaleFactor;
-      int const p = std::abs( scaledValue ) > 1.0 ? 2-trunc( log10( std::abs( scaledValue ) ) ) : 0;
-      char temp[10];
-      snprintf( temp, 8, "%5.*f %c", p, scaledValue, prefixes[a] );
-      rval = temp;
-      break;
-    }
-  }
-  GEOSX_ERROR_IF( rval.empty(),
-                  GEOSX_FMT( "The value of {} was not able to be converted with a metic prefix",
-                             value ) );
-
-
-  return rval;
-}
+string toMetricPrefixString( T const & value );
 
 } // namespace stringutilities
 } // namespace geosx

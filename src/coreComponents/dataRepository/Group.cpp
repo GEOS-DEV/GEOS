@@ -17,13 +17,7 @@
 #include "ConduitRestart.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "codingUtilities/Utilities.hpp"
-#include "codingUtilities/StringUtilities.hpp"
-#include "common/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
-
-#include <numeric>
-#include <unordered_set>
-
 #if defined(GEOSX_USE_PYGEOSX)
 #include "python/PyGroupType.hpp"
 #endif

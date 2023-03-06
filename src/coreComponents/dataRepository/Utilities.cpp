@@ -37,8 +37,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
 
   // keep track of the address of the groups that have been printed. Not the best
   // way to do this, but doens't require infrastructure changes.
-  static std::unordered_set< void const * > groupsPrinted;
-
+  static std::unordered_set< Group const * > groupsPrinted;
   // initialize the static variables at the head of the tree.
   if( indent==0 )
   {
@@ -51,13 +50,13 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
   }
 
   // store the local allocations for each wrapper
-  std::vector< double > localAllocations;
+  std::vector< size_t > localAllocations;
 
   // use the first index for the summation of all Wrappers in a Group
   localAllocations.emplace_back( 0 );
   for( auto & view : group.wrappers() )
   {
-    double const bytesAllocated = view.second->bytesAllocated();
+    size_t const bytesAllocated = view.second->bytesAllocated();
     localAllocations.emplace_back( bytesAllocated );
     localAllocations[0] += bytesAllocated;
   }
@@ -66,7 +65,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
   int const numValues = localAllocations.size();
 
   // storage for the gathered values of localAllocation
-  std::vector< double > globalAllocations;
+  std::vector< size_t > globalAllocations;
   if( MpiWrapper::commRank()==0 )
   {
     globalAllocations.resize( numRanks * numValues );
@@ -82,16 +81,16 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
   // reduce data across ranks (min, max, sum)
   if( MpiWrapper::commRank()==0 )
   {
-    array2d< double > allocationReductions( numValues, 3 );
+    array2d< size_t > allocationReductions( numValues, 3 );
     for( int a=0; a<numValues; ++a )
     {
-      allocationReductions( a, 0 ) = 1e99;
+      allocationReductions( a, 0 ) = std::numeric_limits< size_t >::max();
       allocationReductions( a, 1 ) = 0;
       allocationReductions( a, 2 ) = 0;
       for( int b=0; b<numRanks; ++b )
       {
         int const recvIndex = a + b * numValues;
-        double const value = globalAllocations[recvIndex];
+        size_t const value = globalAllocations[recvIndex];
         allocationReductions( a, 0 ) = std::min( allocationReductions( a, 0 ), value );
         allocationReductions( a, 1 ) = std::max( allocationReductions( a, 1 ), value );
         allocationReductions( a, 2 ) += value;
@@ -100,7 +99,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
 
     // scope for the output of groups
     {
-      double const * const groupAllocations = allocationReductions[0];
+      size_t const * const groupAllocations = allocationReductions[0];
 
       if( indent==0 )
       {
