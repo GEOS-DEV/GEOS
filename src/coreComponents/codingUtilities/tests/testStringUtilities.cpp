@@ -22,48 +22,48 @@ using namespace geosx;
 
 struct TokenizeTest
 {
-  string m_strToTest;
-  string m_delims;
-  bool m_treatConsecutiveDelimAsOne;
-  bool m_preTrimStr;
-  std::vector< string > m_results;
+  string const strToTest;
+  string const delims;
+  bool const treatConsecutiveDelimAsOne;
+  bool const preTrimStr;
+  std::vector< string > const expected;
 
-  TokenizeTest( string const & strToTest,
-                string const & delims,
-                bool treatConsecutiveDelimAsOne,
-                bool preTrimStr,
-                std::vector< string > const & results ):
-    m_strToTest( strToTest ),
-    m_delims( delims ),
-    m_treatConsecutiveDelimAsOne( treatConsecutiveDelimAsOne ),
-    m_preTrimStr( preTrimStr ),
-    m_results( results )
+  TokenizeTest( string const & strToTest_,
+                string const & delims_,
+                bool treatConsecutiveDelimAsOne_,
+                bool preTrimStr_,
+                std::vector< string > const & expected_ ):
+    strToTest( strToTest_ ),
+    delims( delims_ ),
+    treatConsecutiveDelimAsOne( treatConsecutiveDelimAsOne_ ),
+    preTrimStr( preTrimStr_ ),
+    expected( expected_ )
   {}
 
   friend std::ostream & operator<<( std::ostream & os, TokenizeTest const & test )
   {
-    os << "TokenizeTests( \"" << test.m_strToTest
-       << "\", \"" << test.m_delims << '\"'
-       << ", delimsAsOne=" << test.m_treatConsecutiveDelimAsOne
-       << ", preTrim=" << test.m_preTrimStr << " )";
+    os << "TokenizeTests( \"" << test.strToTest
+       << "\", \"" << test.delims << '\"'
+       << ", delimsAsOne=" << test.treatConsecutiveDelimAsOne
+       << ", preTrim=" << test.preTrimStr << " )";
     return os;
   }
 };
 
 struct TokenizeBySpacesTest
 {
-  string m_strToTest;
-  std::vector< string > m_results;
+  string const strToTest;
+  std::vector< string > const expected;
 
-  TokenizeBySpacesTest( string const & strToTest,
-                        std::vector< string > const & results ):
-    m_strToTest( strToTest ),
-    m_results( results )
+  TokenizeBySpacesTest( string const & strToTest_,
+                        std::vector< string > const & expected_ ):
+    strToTest( strToTest_ ),
+    expected( expected_ )
   {}
 
   friend std::ostream & operator<<( std::ostream & os, TokenizeBySpacesTest const & test )
   {
-    os << "TokenizeBySpacesTest( \"" << test.m_strToTest << "\" )";
+    os << "TokenizeBySpacesTest( \"" << test.strToTest << "\" )";
     return os;
   }
 };
@@ -73,7 +73,7 @@ TEST( testStringUtilities, tokenize )
 
   // Path tokenizing test
   {
-    map< string, std::pair< std::vector< string >, std::vector< string > > >
+    const map< string, std::pair< std::vector< string >, std::vector< string > > >
     entries =
     {
       { "//entry0//entry1//entry2", { { "", "entry0", "entry1", "entry2" },
@@ -140,6 +140,21 @@ TEST( testStringUtilities, tokenize )
       TokenizeTest( string( "ab" ), "|", false, true, { "ab" } ),
       TokenizeTest( string( "ab" ), "|", true, true, { "ab" } ),
 
+      TokenizeTest( string( "" ), "|", false, false, { } ),
+      TokenizeTest( string( "" ), "|", true, false, { } ),
+      TokenizeTest( string( "" ), "|", false, true, { } ),
+      TokenizeTest( string( "" ), "|", true, true, { } ),
+
+      TokenizeTest( string( "" ), "", false, false, { } ),
+      TokenizeTest( string( "" ), "", true, false, { } ),
+      TokenizeTest( string( "" ), "", false, true, { } ),
+      TokenizeTest( string( "" ), "", true, true, { } ),
+
+      TokenizeTest( string( "ab" ), "", false, false, { "ab" } ),
+      TokenizeTest( string( "ab" ), "", true, false, { "ab" } ),
+      TokenizeTest( string( "ab" ), "", false, true, { "ab" } ),
+      TokenizeTest( string( "ab" ), "", true, true, { "ab" } ),
+
       TokenizeTest( string( "| a|  b |" ), "| ", false, false, { "", "", "a", "", "", "b", "", "" } ),
       TokenizeTest( string( "| a|  b |" ), "| ", true, false, { "", "a", "b", "" } ),
       TokenizeTest( string( "| a|  b |" ), "| ", false, true, { "a", "", "", "b" } ),
@@ -153,26 +168,16 @@ TEST( testStringUtilities, tokenize )
 
     for( TokenizeTest test : tokenizeTests )
     {
-      std::vector< string > r = stringutilities::tokenize( test.m_strToTest,
-                                                           test.m_delims,
-                                                           test.m_treatConsecutiveDelimAsOne,
-                                                           test.m_preTrimStr );
+      const std::vector< string > r = stringutilities::tokenize( test.strToTest,
+                                                                 test.delims,
+                                                                 test.treatConsecutiveDelimAsOne,
+                                                                 test.preTrimStr );
 
-      if( r.size() != test.m_results.size() )
+      if( r != test.expected )
       {
-        FAIL() << test << " failed: "
-               << r.size() << " results instead of " << test.m_results.size();
-      }
-      else
-      {
-        for( size_t i = 0; i < r.size(); ++i )
-        {
-          if( r[i] != test.m_results[i] )
-          {
-            FAIL() << test << " failed: "
-                   << "result no." << i << " was '" << r[i] << "' instead of '" << test.m_results[i] <<"'.";
-          }
-        }
+        string const result = "{ '" + stringutilities::join( r, "' , '" ) + "' }";
+        string const expected = "{ '" + stringutilities::join( test.expected, "' , '" ) + "' }";
+        FAIL() << test << " failed: " << result <<" results instead of " << expected << ".";
       }
     }
 
@@ -180,7 +185,7 @@ TEST( testStringUtilities, tokenize )
 
   // Spaces tokenizing test
   {
-    std::vector< TokenizeBySpacesTest > tokenizeBSTests = {
+    const std::vector< TokenizeBySpacesTest > tokenizeBSTests = {
       TokenizeBySpacesTest( string( "a b" ), { "a", "b" } ),
       TokenizeBySpacesTest( string( " a b " ), { "a", "b" } ),
       TokenizeBySpacesTest( string( "  a  b  " ), { "a", "b" } ),
@@ -193,23 +198,13 @@ TEST( testStringUtilities, tokenize )
 
     for( TokenizeBySpacesTest test : tokenizeBSTests )
     {
-      std::vector< string > r = stringutilities::tokenizeBySpaces( test.m_strToTest );
+      const std::vector< string > r = stringutilities::tokenizeBySpaces( test.strToTest );
 
-      if( r.size() != test.m_results.size() )
+      if( r != test.expected )
       {
-        FAIL() << test << " failed: "
-               << r.size() << " results instead of " << test.m_results.size();
-      }
-      else
-      {
-        for( size_t i = 0; i < r.size(); ++i )
-        {
-          if( r[i] != test.m_results[i] )
-          {
-            FAIL() << test << " failed: "
-                   << "result no." << i << " was '" << r[i] << "' instead of '" << test.m_results[i] <<"'.";
-          }
-        }
+        string const result = "{ '" + stringutilities::concat( r, "' , '" ) + "' }";
+        string const expected = "{ '" + stringutilities::concat( test.expected, "' , '" ) + "' }";
+        FAIL() << test << " failed: " << result << " results instead of " << expected << ".";
       }
     }
   }

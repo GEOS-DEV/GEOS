@@ -105,7 +105,7 @@ string concat( S const & delim, T const & v, Ts const & ... vs )
  *                                   If not enabled, consecutive delimiters will result in empty entries.
  * @param preTrimStr If enabled, delimiters at the borders of the string will be ignored.
  *                   If not enabled, those delimiters will result in in empty entries.
- * @return CONTAINER< string > The list of the subdivided substrings (std::vector< string > for instance).
+ * @return The container of the divided substrings.
  */
 template< template< class ... > class CONTAINER = std::vector >
 CONTAINER< string > tokenize( string const & str,
@@ -113,11 +113,6 @@ CONTAINER< string > tokenize( string const & str,
                               bool const treatConsecutiveDelimAsOne = true,
                               bool const preTrimStr = false )
 {
-  if( str.empty())
-  {
-    return {};
-  }
-
   CONTAINER< string > tokens;
   string::size_type tokenBegin, tokenEnd, strEnd;
 
