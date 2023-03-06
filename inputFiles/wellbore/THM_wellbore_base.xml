@@ -103,7 +103,7 @@
       referenceInternalEnergy="1"/>
     <!-- SPHINX_FluidPropertiesEnd -->
 
-	<!-- SPHINX_ThermoElasticProperties -->
+    <!-- SPHINX_ThermoElasticProperties -->
     <ElasticIsotropic
       name="rockSolid"
       defaultDensity="2700"
@@ -188,7 +188,7 @@
     <!-- SPHINX_PorePressureBC -->
     <FieldSpecification
       name="initialPressure"
-	  initialCondition="1"
+      initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
       fieldName="pressure"
@@ -207,7 +207,7 @@
       objectPath="faceManager"
       fieldName="pressure"
       scale="0"/>
-    <!-- SPHINX_ZeroPorePressureBCEnd -->
+    <!-- SPHINX_PorePressureBCEnd -->
 
     <!-- SPHINX_TemperatureBC -->
     <FieldSpecification
@@ -253,7 +253,7 @@
       fieldName="temperature"/>
     <!-- SPHINX_TemperatureCollectionEnd -->
 
-	<!-- SPHINX_PressureCollection -->
+    <!-- SPHINX_PressureCollection -->
     <PackCollection
       name="pressureCollection_rock"
       objectPath="ElementRegions/rock/rock"
@@ -291,12 +291,12 @@
       filename="pressureHistory_rock"/>
     <!-- SPHINX_PressureTimeHistoryEnd -->
 
-	<!-- SPHINX_SolidStressTimeHistory -->
+    <!-- SPHINX_SolidStressTimeHistory -->
     <TimeHistory
       name="stressHistoryOutput_rock"
       sources="{ /Tasks/stressCollection_rock }"
       filename="stressHistory_rock"/>
-	<!-- SPHINX_SolidStressTimeHistoryEnd -->
+    <!-- SPHINX_SolidStressTimeHistoryEnd -->
 
     <!-- SPHINX_DisplacementTimeHistory -->
     <TimeHistory

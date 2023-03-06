@@ -30,75 +30,75 @@
 
     <PeriodicEvent
       name="stressHistoryCollection_rock_1"
-	  beginTime="0"
+      beginTime="0"
       endTime="360"
       forceDt="60"
       target="/Tasks/stressCollection_rock"/>
     <PeriodicEvent
       name="stressTimeHistoryOutput_rock_1"
-	  beginTime="0"
+      beginTime="0"
       endTime="360"
       forceDt="60"
       target="/Outputs/stressHistoryOutput_rock"/>
 	<PeriodicEvent
       name="stressHistoryCollection_rock_2"
-	  beginTime="360"
+      beginTime="360"
       endTime="3600"
       forceDt="360"
       target="/Tasks/stressCollection_rock"/>
     <PeriodicEvent
       name="stressTimeHistoryOutput_rock_2"
-	  beginTime="360"
+      beginTime="360"
       endTime="3600"
       forceDt="360"
       target="/Outputs/stressHistoryOutput_rock"/>
 
     <PeriodicEvent
       name="temperatureHistoryCollection_rock_1"
-	  beginTime="0"
+      beginTime="0"
       endTime="360"
       forceDt="60"
       target="/Tasks/temperatureCollection_rock"/>
     <PeriodicEvent
       name="temperatureTimeHistoryOutput_rock_1"
-	  beginTime="0"
+      beginTime="0"
       endTime="360"
       forceDt="60"
       target="/Outputs/temperatureHistoryOutput_rock"/>
 	<PeriodicEvent
       name="temperatureHistoryCollection_rock_2"
-	  beginTime="360"
+      beginTime="360"
       endTime="3600"
       forceDt="360"
       target="/Tasks/temperatureCollection_rock"/>
     <PeriodicEvent
       name="temperatureTimeHistoryOutput_rock_2"
-	  beginTime="360"
+      beginTime="360"
       endTime="3600"
       forceDt="360"
       target="/Outputs/temperatureHistoryOutput_rock"/>
 
 	<PeriodicEvent
       name="pressureHistoryCollection_rock_1"
-	  beginTime="0"
+      beginTime="0"
       endTime="360"
       forceDt="60"
       target="/Tasks/pressureCollection_rock"/>
     <PeriodicEvent
       name="pressureTimeHistoryOutput_rock_1"
-	  beginTime="0"
+      beginTime="0"
       endTime="360"
       forceDt="60"
       target="/Outputs/pressureHistoryOutput_rock"/>
 	<PeriodicEvent
       name="pressureHistoryCollection_rock_2"
-	  beginTime="360"
+      beginTime="360"
       endTime="3600"
       forceDt="360"
       target="/Tasks/pressureCollection_rock"/>
     <PeriodicEvent
       name="pressureTimeHistoryOutput_rock_2"
-	  beginTime="360"
+      beginTime="360"
       endTime="3600"
       forceDt="360"
       target="/Outputs/pressureHistoryOutput_rock"/>
@@ -106,25 +106,25 @@
     <!-- SPHINX_DisplacementPeriodicEvent -->
     <PeriodicEvent
       name="displacementHistoryCollection"
-	  beginTime="0"
+      beginTime="0"
       endTime="360"
       forceDt="60"
       target="/Tasks/displacementCollection"/>
     <PeriodicEvent
       name="displacementTimeHistoryOutput_1"
-	  beginTime="0"
+      beginTime="0"
       endTime="360"
       forceDt="60"
       target="/Outputs/displacementHistoryOutput"/>
 	<PeriodicEvent
       name="displacementHistoryCollection_2"
-	  beginTime="360"
+      beginTime="360"
       endTime="3600"
       forceDt="360"
       target="/Tasks/displacementCollection"/>
     <PeriodicEvent
       name="displacementTimeHistoryOutput_2"
-	  beginTime="360"
+      beginTime="360"
       endTime="3600"
       forceDt="360"
       target="/Outputs/displacementHistoryOutput"/>
@@ -135,21 +135,21 @@
       timeFrequency="360"
       target="/Outputs/vtkOutput"/>
 
-	<PeriodicEvent
+    <PeriodicEvent
       name="solverApplications_1"
-	  endTime="60"
+      endTime="60"
       forceDt="6"
       target="/Solvers/THMSolver"/>
-	<PeriodicEvent
+    <PeriodicEvent
       name="solverApplications_2"
-	  beginTime="60"
-	  endTime="360"
+      beginTime="60"
+      endTime="360"
       forceDt="60"
       target="/Solvers/THMSolver"/>
-	<PeriodicEvent
+    <PeriodicEvent
       name="solverApplications_3"
-	  beginTime="360"
-	  endTime="3600"
+      beginTime="360"
+      endTime="3600"
       forceDt="360"
       target="/Solvers/THMSolver"/>
 

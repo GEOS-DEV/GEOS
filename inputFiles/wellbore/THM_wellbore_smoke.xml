@@ -50,7 +50,7 @@
       forceDt="12"
       target="/Outputs/temperatureHistoryOutput_rock"/>
 
-	<PeriodicEvent
+    <PeriodicEvent
       name="pressureHistoryCollection_rock"
       endTime="12"
       forceDt="12"

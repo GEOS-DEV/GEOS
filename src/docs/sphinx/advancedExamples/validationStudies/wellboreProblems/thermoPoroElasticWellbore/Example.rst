@@ -9,7 +9,7 @@ ThermoPoroElastic Wellbore Problem
 Problem description
 ------------------------------------------------------------------
 
-This example uses the thermal option of the ``SinglePhasePoromechanics`` solver to handle an open wellbore problem subjected to a uniform temperature change on the its inner surface. Isotropic linear thermoporoelastic behavior is considered the rock formation around the wellbore. Plane strain and axissymetric conditions are assumed.
+This example uses the thermal option of the ``SinglePhasePoromechanics`` solver to handle an open wellbore problem subjected to a uniform temperature change on its inner surface. Isotropic linear thermoporoelastic behavior is considered the rock formation around the wellbore. Plane strain and axissymetric conditions are assumed.
 
 .. _problemSketchThermoPoroElasticWellboreFig:
 .. figure:: sketch.png
@@ -19,7 +19,7 @@ This example uses the thermal option of the ``SinglePhasePoromechanics`` solver 
 
    Sketch of a thermoporoelastic wellbore 
 
-Analytical solutions to this problem were first derived by `(Wang and Papamichos 1994) <https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94WR01774>`__ with one way coupling simplification. They are also reformulated for the full coupling assumption in the book of `(Cheng 2016) <https://link.springer.com/book/10.1007/978-3-319-25202-5>`__. These solutions will be considered to validate GEOSX results.
+Analytical solutions to this problem were first derived by `(Wang and Papamichos 1994) <https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94WR01774>`__ using a one-way coupling simplification. They are also reformulated for the full coupling assumption in the book of `(Cheng 2016) <https://link.springer.com/book/10.1007/978-3-319-25202-5>`__. These solutions will be considered to validate GEOSX results.
 
 
 **Input file**
@@ -44,10 +44,10 @@ The corresponding integrated test is
   inputFiles/wellbore/THM_wellbore_smoke.xml
 
 -----------------------------------------------------------
-Geometry and Mesh
+Geometry and mesh
 -----------------------------------------------------------
 
-The internal wellbore mesh generator ``InternalWellbore`` is employed to create the mesh of this wellbore problem. The radii of the open wellbore and the far-field boundary of the surrounding rock formation are defined by a vector ``radius``. In the tangent direction, ``theta`` angle is specified from 0 to 90 degree to simulate the problem on a quarter of the wellbore geometry. The problem is under plane strain condition and therefore we only consider radial thermal diffusion on a single horizontal layer. The trajectory of the well is defined by ``trajectory``, which is vertical in this case. The ``autoSpaceRadialElems`` parameters allow for optimally increasing the element size from the wellbore to the far-field zone. 
+The internal wellbore mesh generator ``InternalWellbore`` is employed to create the mesh of this wellbore problem. The radii of the open wellbore and the far-field boundary of the surrounding rock formation are defined by a vector ``radius``. In the tangent direction, ``theta`` angle is specified from 0 to 90 degrees to simulate the problem on a quarter of the wellbore geometry. The problem is under plane strain condition and therefore we only consider radial thermal diffusion on a single horizontal layer. The trajectory of the well is defined by ``trajectory``, which is vertical in this case. The ``autoSpaceRadialElems`` parameters allow for optimally increasing the element size from the wellbore to the far-field zone. 
  
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/THM_wellbore_benchmark.xml
   :language: xml
@@ -66,7 +66,7 @@ The internal wellbore mesh generator ``InternalWellbore`` is employed to create 
 Material properties
 -----------------------------------------------------------
 
-The bulk and shear drained elastic moduli of rock as well as its drained linear thermal expansion coefficient relating stress change to temperature change are defined within the ``Constitution`` tag as follows:
+The bulk and shear drained elastic moduli of rock as well as its drained linear thermal expansion coefficient relating stress change to temperature change are defined within the ``Constitutive`` tag as follows:
  
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/THM_wellbore_base.xml
   :language: xml
@@ -140,7 +140,7 @@ The initial temperature (that is also the far-field boundary temperature) and th
   :start-after: <!-- SPHINX_TemperatureBC -->
   :end-before: <!-- SPHINX_TemperatureBCEnd -->
 
-It is important to remark that the initial stress of each layers must be set with accordance to the initial temperature: :math:`\sigma_{0} = 3K\alpha T_{0}` where :math:`\sigma_{0}` is the initial principal stress, :math:`T_{0}` is the initial temperature, :math:`K` is the drained bulk modulus and :math:`\alpha` is the drained linear thermal expansion coefficient of the materials. In this example, the initial stresses are set to zero because the initial temperature is set to zero (°C).
+It is important to remark that the initial effective stress of rock must be set with accordance to the initial temperature change: :math:`\sigma_{0} = 3K\alpha \delta T_{0}` where :math:`\sigma_{0}` is the initial effective principal stress, :math:`\delta T_{0}` is the initial temperature change, :math:`K` is the drained bulk modulus and :math:`\alpha` is the drained linear thermal expansion coefficient of the materials. In this example, the initial effective stresses are set to zero because the initial temperature change is set to zero.
 
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/THM_wellbore_base.xml
   :language: xml

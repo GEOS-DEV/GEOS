@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import h5py
 from numpy import genfromtxt
+from xml.etree import ElementTree
+
 import analyticalResults
 
 def stressRotation(stress, phi_x):
@@ -12,9 +14,13 @@ def stressRotation(stress, phi_x):
 
 def main():
 	# Material properties from input XML file
-	bulkModulus = 20.7e9 # drained bulk modulus of the porous medium
-	thermalExpansionCoefficients = 4e-5 # drained linear thermal expansion coefficient of the porous medium
-	grainBulkModulus = 23.5e9
+	xmlFilePathPrefix = "../../../../../../../inputFiles/wellbore/THM_wellbore"
+
+	xmlData = analyticalResults.getDataFromXML(xmlFilePathPrefix)
+
+	bulkModulus = xmlData[2] # drained bulk modulus of the porous medium
+	thermalExpansionCoefficients = xmlData[4] # drained linear thermal expansion coefficient of the porous medium
+	grainBulkModulus = xmlData[6]
 	BiotCoefficient = 1.0 - bulkModulus / grainBulkModulus
 
 	# Get solid stress, time and element center from GEOSX results
