@@ -18,9 +18,10 @@
 
 #include "TableRelativePermeabilityHysteresis.hpp"
 
-#include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "constitutive/relativePermeability/TableRelativePermeabilityHelpers.hpp"
 #include "functions/FunctionManager.hpp"
+#include "constitutive/relativePermeability/RelpermDriver.hpp"
 
 namespace geosx
 {
@@ -131,8 +132,8 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setSizedFromParent( 0 );
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseMaxHistoricalVolFraction{}, &m_phaseMaxHistoricalVolFraction );
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseMinHistoricalVolFraction{}, &m_phaseMinHistoricalVolFraction );
+  registerField( fields::relperm::phaseMaxHistoricalVolFraction{}, &m_phaseMaxHistoricalVolFraction );
+  registerField( fields::relperm::phaseMinHistoricalVolFraction{}, &m_phaseMinHistoricalVolFraction );
 
   registerWrapper( viewKeyStruct::drainageRelPermKernelWrappersString(), &m_drainageRelPermKernelWrappers ).
     setSizedFromParent( 0 ).
@@ -606,6 +607,8 @@ void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, l
 
 void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
 {
+  RelativePermeabilityBase::saveConvergedState();
+
   arrayView2d< real64, compflow::USD_PHASE > phaseMaxHistoricalVolFraction = m_phaseMaxHistoricalVolFraction.toView();
   arrayView2d< real64, compflow::USD_PHASE > phaseMinHistoricalVolFraction = m_phaseMinHistoricalVolFraction.toView();
 
@@ -664,6 +667,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::KernelWrapper( arrayView1d< 
   m_phaseMinHistoricalVolFraction( phaseMinHistoricalVolFraction ),
   m_phaseMaxHistoricalVolFraction( phaseMaxHistoricalVolFraction )
 {}
+
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, TableRelativePermeabilityHysteresis, std::string const &, Group * const )

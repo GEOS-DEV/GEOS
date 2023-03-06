@@ -15,6 +15,7 @@ set( codingUtilities_headers
 # Specify all sources
 #
 set( codingUtilities_sources
+     Parsing.cpp
      StringUtilities.cpp )
 
 set( dependencyList common fast_float )
@@ -29,6 +30,9 @@ blt_add_library( NAME       codingUtilities
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
+
+# Avoid compiling with nvcc which sometimes crashes on fast_float
+set_source_files_properties( Parsing.cpp PROPERTIES LANGUAGE CXX )
 
 target_include_directories( codingUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 

@@ -26,9 +26,9 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
@@ -54,6 +54,11 @@ CompositionalMultiphaseStatistics::CompositionalMultiphaseStatistics( const stri
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to decide whether region statistics are computed or not" );
+
+  registerWrapper( viewKeyStruct::relpermThresholdString(), &m_relpermThreshold ).
+    setApplyDefaultValue( 1e-6 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2" );
 }
 
 void CompositionalMultiphaseStatistics::postProcessInput()
@@ -103,6 +108,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
         regionStatistics.phasePoreVolume.resizeDimension< 0 >( numPhases );
         regionStatistics.phaseMass.resizeDimension< 0 >( numPhases );
         regionStatistics.trappedPhaseMass.resizeDimension< 0 >( numPhases );
+        regionStatistics.immobilePhaseMass.resizeDimension< 0 >( numPhases );
         regionStatistics.dissolvedComponentMass.resizeDimension< 0, 1 >( numPhases, numComps );
       }
     }
@@ -113,12 +119,12 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
       elemManager.forElementSubRegions( regionNames, [&]( localIndex const,
                                                           ElementSubRegionBase & subRegion )
       {
-        subRegion.registerExtrinsicData< extrinsicMeshData::flow::phaseOutflux >( getName() ).
+        subRegion.registerField< fields::flow::phaseOutflux >( getName() ).
           reference().resizeDimension< 1 >( numPhases );
-        subRegion.registerExtrinsicData< extrinsicMeshData::flow::componentOutflux >( getName() ).
+        subRegion.registerField< fields::flow::componentOutflux >( getName() ).
           reference().resizeDimension< 1 >( numComps );
-        subRegion.registerExtrinsicData< extrinsicMeshData::flow::phaseCFLNumber >( getName() );
-        subRegion.registerExtrinsicData< extrinsicMeshData::flow::componentCFLNumber >( getName() );
+        subRegion.registerField< fields::flow::phaseCFLNumber >( getName() );
+        subRegion.registerField< fields::flow::componentCFLNumber >( getName() );
       } );
     }
   } );
@@ -181,6 +187,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
 
     regionStatistics.phaseMass.setValues< serialPolicy >( 0.0 );
     regionStatistics.trappedPhaseMass.setValues< serialPolicy >( 0.0 );
+    regionStatistics.immobilePhaseMass.setValues< serialPolicy >( 0.0 );
     regionStatistics.dissolvedComponentMass.setValues< serialPolicy >( 0.0 );
   }
 
@@ -191,13 +198,13 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
 
     arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-    arrayView1d< real64 > const deltaPres = subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
-    arrayView1d< real64 const > const temp = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+    arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+    arrayView1d< real64 > const deltaPres = subRegion.getField< fields::flow::deltaPressure >();
+    arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+      subRegion.getField< fields::flow::phaseVolumeFraction >();
 
-    Group const & constitutiveModels = subRegion.getGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
+    Group const & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 
     string const & solidName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::solidNamesString() );
     CoupledSolidBase const & solid = constitutiveModels.getGroup< CoupledSolidBase >( solidName );
@@ -214,6 +221,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
     RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
     arrayView3d< real64 const, relperm::USD_RELPERM > const phaseTrappedVolFrac = relperm.phaseTrappedVolFraction();
+    arrayView3d< real64 const, relperm::USD_RELPERM > const phaseRelperm = relperm.phaseRelPerm();
 
     real64 subRegionAvgPresNumerator = 0.0;
     real64 subRegionMinPres = 0.0;
@@ -227,6 +235,8 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     array1d< real64 > subRegionPhaseDynamicPoreVol( numPhases );
     array1d< real64 > subRegionPhaseMass( numPhases );
     array1d< real64 > subRegionTrappedPhaseMass( numPhases );
+    array1d< real64 > subRegionImmobilePhaseMass( numPhases );
+    array1d< real64 > subRegionRelpermPhaseMass( numPhases );
     array2d< real64 > subRegionDissolvedComponentMass( numPhases, numComps );
 
     isothermalCompositionalMultiphaseBaseKernels::
@@ -234,6 +244,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
       launch< parallelDevicePolicy<> >( subRegion.size(),
                                         numComps,
                                         numPhases,
+                                        m_relpermThreshold,
                                         elemGhostRank,
                                         volume,
                                         pres,
@@ -245,6 +256,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
                                         phaseCompFraction,
                                         phaseVolFrac,
                                         phaseTrappedVolFrac,
+                                        phaseRelperm,
                                         subRegionMinPres,
                                         subRegionAvgPresNumerator,
                                         subRegionMaxPres,
@@ -257,6 +269,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
                                         subRegionPhaseDynamicPoreVol.toView(),
                                         subRegionPhaseMass.toView(),
                                         subRegionTrappedPhaseMass.toView(),
+                                        subRegionImmobilePhaseMass.toView(),
                                         subRegionDissolvedComponentMass.toView() );
 
     ElementRegionBase & region = elemManager.getRegion( subRegion.getParent().getParent().getName() );
@@ -297,6 +310,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
       regionStatistics.phasePoreVolume[ip] += subRegionPhaseDynamicPoreVol[ip];
       regionStatistics.phaseMass[ip] += subRegionPhaseMass[ip];
       regionStatistics.trappedPhaseMass[ip] += subRegionTrappedPhaseMass[ip];
+      regionStatistics.immobilePhaseMass[ip] += subRegionImmobilePhaseMass[ip];
 
       for( integer ic = 0; ic < numComps; ++ic )
       {
@@ -325,6 +339,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
       regionStatistics.phasePoreVolume[ip] = MpiWrapper::sum( regionStatistics.phasePoreVolume[ip] );
       regionStatistics.phaseMass[ip] = MpiWrapper::sum( regionStatistics.phaseMass[ip] );
       regionStatistics.trappedPhaseMass[ip] = MpiWrapper::sum( regionStatistics.trappedPhaseMass[ip] );
+      regionStatistics.immobilePhaseMass[ip] = MpiWrapper::sum( regionStatistics.immobilePhaseMass[ip] );
       regionStatistics.totalPoreVolume += regionStatistics.phasePoreVolume[ip];
       for( integer ic = 0; ic < numComps; ++ic )
       {
@@ -335,6 +350,15 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     regionStatistics.averagePressure /= regionStatistics.totalUncompactedPoreVolume;
     regionStatistics.averageTemperature = MpiWrapper::sum( regionStatistics.averageTemperature );
     regionStatistics.averageTemperature /= regionStatistics.totalUncompactedPoreVolume;
+
+    // helpers to report statistics
+    array1d< real64 > nonTrappedPhaseMass( numPhases );
+    array1d< real64 > mobilePhaseMass( numPhases );
+    for( integer ip = 0; ip < numPhases; ++ip )
+    {
+      nonTrappedPhaseMass[ip] = regionStatistics.phaseMass[ip] - regionStatistics.trappedPhaseMass[ip];
+      mobilePhaseMass[ip] = regionStatistics.phaseMass[ip] - regionStatistics.immobilePhaseMass[ip];
+    }
 
     integer const useMass = m_solver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
     string const massUnit = useMass ? "kg" : "mol";
@@ -353,9 +377,21 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Phase dynamic pore volumes: " << regionStatistics.phasePoreVolume << " rm^3" );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Phase mass (including both trapped and non-trapped): " << regionStatistics.phaseMass << " " << massUnit );
+                                         << ": Phase mass: " << regionStatistics.phaseMass << " " << massUnit );
+
+    // metric 1: trapping computed with the Land trapping coefficient (similar to Eclipse)
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Trapped phase mass: " << regionStatistics.trappedPhaseMass << " " << massUnit );
+                                         << ": Trapped phase mass (metric 1): " << regionStatistics.trappedPhaseMass << " " << massUnit );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                         << ": Non-trapped phase mass (metric 1): " << nonTrappedPhaseMass << " " << massUnit );
+
+    // metric 2: immobile phase mass computed with a threshold on relative permeability
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                         << ": Immobile phase mass (metric 2): " << regionStatistics.immobilePhaseMass << " " << massUnit );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                         << ": Mobile phase mass (metric 2): " << mobilePhaseMass << " " << massUnit );
+
+
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Dissolved component mass: " << regionStatistics.dissolvedComponentMass << " " << massUnit );
   }
@@ -379,9 +415,9 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
                                                      ElementSubRegionBase & subRegion )
     {
       arrayView2d< real64, compflow::USD_PHASE > const & phaseOutflux =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseOutflux >();
+        subRegion.getField< fields::flow::phaseOutflux >();
       arrayView2d< real64, compflow::USD_COMP > const & compOutflux =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::componentOutflux >();
+        subRegion.getField< fields::flow::componentOutflux >();
       phaseOutflux.zero();
       compOutflux.zero();
     } );
@@ -403,11 +439,11 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
     // TODO: find a way to compile with this modifiable accessors in CompFlowAccessors, and remove them from here
     ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const phaseOutfluxAccessor =
       mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_PHASE >,
-                                                   arrayView2d< real64, compflow::USD_PHASE > >( extrinsicMeshData::flow::phaseOutflux::key() );
+                                                   arrayView2d< real64, compflow::USD_PHASE > >( fields::flow::phaseOutflux::key() );
 
     ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_COMP > > const compOutfluxAccessor =
       mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_COMP >,
-                                                   arrayView2d< real64, compflow::USD_COMP > >( extrinsicMeshData::flow::componentOutflux::key() );
+                                                   arrayView2d< real64, compflow::USD_COMP > >( fields::flow::componentOutflux::key() );
 
 
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
@@ -421,16 +457,16 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
                                                                       numPhases,
                                                                       dt,
                                                                       stencilWrapper,
-                                                                      compFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
-                                                                      compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient{} ),
-                                                                      compFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
-                                                                      permeabilityAccessors.get( extrinsicMeshData::permeability::permeability{} ),
-                                                                      permeabilityAccessors.get( extrinsicMeshData::permeability::dPerm_dPressure{} ),
-                                                                      relPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm{} ),
-                                                                      multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseViscosity{} ),
-                                                                      multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
-                                                                      multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity{} ),
-                                                                      multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
+                                                                      compFlowAccessors.get( fields::flow::pressure{} ),
+                                                                      compFlowAccessors.get( fields::flow::gravityCoefficient{} ),
+                                                                      compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ),
+                                                                      permeabilityAccessors.get( fields::permeability::permeability{} ),
+                                                                      permeabilityAccessors.get( fields::permeability::dPerm_dPressure{} ),
+                                                                      relPermAccessors.get( fields::relperm::phaseRelPerm{} ),
+                                                                      multiFluidAccessors.get( fields::multifluid::phaseViscosity{} ),
+                                                                      multiFluidAccessors.get( fields::multifluid::phaseDensity{} ),
+                                                                      multiFluidAccessors.get( fields::multifluid::phaseMassDensity{} ),
+                                                                      multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ),
                                                                       phaseOutfluxAccessor.toNestedView(),
                                                                       compOutfluxAccessor.toNestedView() );
     } );
@@ -449,23 +485,23 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
                                                      ElementSubRegionBase & subRegion )
     {
       arrayView2d< real64 const, compflow::USD_PHASE > const & phaseOutflux =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseOutflux >();
+        subRegion.getField< fields::flow::phaseOutflux >();
       arrayView2d< real64 const, compflow::USD_COMP > const & compOutflux =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::componentOutflux >();
+        subRegion.getField< fields::flow::componentOutflux >();
 
-      arrayView1d< real64 > const & phaseCFLNumber = subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseCFLNumber >();
-      arrayView1d< real64 > const & compCFLNumber = subRegion.getExtrinsicData< extrinsicMeshData::flow::componentCFLNumber >();
+      arrayView1d< real64 > const & phaseCFLNumber = subRegion.getField< fields::flow::phaseCFLNumber >();
+      arrayView1d< real64 > const & compCFLNumber = subRegion.getField< fields::flow::componentCFLNumber >();
 
       arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
 
       arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+        subRegion.getField< fields::flow::globalCompDensity >();
       arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+        subRegion.getField< fields::flow::globalCompFraction >();
       arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+        subRegion.getField< fields::flow::phaseVolumeFraction >();
 
-      Group const & constitutiveModels = subRegion.getGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
+      Group const & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 
       string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = constitutiveModels.getGroup< MultiFluidBase >( fluidName );

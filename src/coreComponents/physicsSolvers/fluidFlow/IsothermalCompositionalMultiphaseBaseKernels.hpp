@@ -19,6 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
 
+#include "codingUtilities/Utilities.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -27,8 +28,8 @@
 #include "functions/TableFunction.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/ObjectManagerBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 
 namespace geosx
@@ -42,19 +43,6 @@ using namespace constitutive;
 static constexpr real64 minDensForDivision = 1e-10;
 
 /******************************** PropertyKernelBase ********************************/
-
-/**
- * @brief Internal struct to provide no-op defaults used in the inclusion
- *   of lambda functions into kernel component functions.
- * @struct NoOpFunc
- */
-struct NoOpFunc
-{
-  template< typename ... Ts >
-  GEOSX_HOST_DEVICE
-  constexpr void
-  operator()( Ts && ... ) const {}
-};
 
 /**
  * @class PropertyKernelBase
@@ -158,9 +146,9 @@ public:
    */
   ComponentFractionKernel( ObjectManagerBase & subRegion )
     : Base(),
-    m_compDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >() ),
-    m_compFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >() ),
-    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() )
+    m_compDens( subRegion.getField< fields::flow::globalCompDensity >() ),
+    m_compFrac( subRegion.getField< fields::flow::globalCompFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() )
   {}
 
   /**
@@ -271,10 +259,10 @@ public:
   PhaseVolumeFractionKernel( ObjectManagerBase & subRegion,
                              MultiFluidBase const & fluid )
     : Base(),
-    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
-    m_compDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >() ),
-    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
+    m_compDens( subRegion.getField< fields::flow::globalCompDensity >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseFrac( fluid.phaseFraction() ),
     m_dPhaseFrac( fluid.dPhaseFraction() ),
     m_phaseDens( fluid.phaseDensity() ),
@@ -551,10 +539,10 @@ public:
     m_porosity_n( solid.getPorosity_n() ),
     m_porosity( solid.getPorosity() ),
     m_dPoro_dPres( solid.getDporosity_dPressure() ),
-    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
-    m_phaseVolFrac_n( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction_n >() ),
-    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFrac_n( subRegion.getField< fields::flow::phaseVolumeFraction_n >() ),
+    m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens( fluid.dPhaseDensity() ),
@@ -948,7 +936,7 @@ public:
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
     m_ghostRank( subRegion.ghostRank() ),
     m_localSolution( localSolution ),
-    m_pressure( pressure ), // not passed with extrinsicData::flow to be able to reuse this for wells
+    m_pressure( pressure ), // not passed with fields::flow to be able to reuse this for wells
     m_compDens( compDens ) // same here
   {}
 
@@ -1209,9 +1197,9 @@ public:
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      subRegion.getField< fields::flow::pressure >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+      subRegion.getField< fields::flow::globalCompDensity >();
     ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxCompFracChange, rankOffset,
                                            numComp, dofKey, subRegion, localSolution, pressure, compDens );
     return ScalingForSystemSolutionKernel::launch< POLICY >( subRegion.size(), kernel );
@@ -1366,9 +1354,9 @@ public:
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      subRegion.getField< fields::flow::pressure >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+      subRegion.getField< fields::flow::globalCompDensity >();
     SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor, rankOffset,
                                 numComp, dofKey, subRegion, localSolution, pressure, compDens );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
@@ -1436,6 +1424,7 @@ struct StatisticsKernel
   launch( localIndex const size,
           integer const numComps,
           integer const numPhases,
+          real64 const relpermThreshold,
           arrayView1d< integer const > const & elemGhostRank,
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 const > const & pres,
@@ -1447,6 +1436,7 @@ struct StatisticsKernel
           arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFraction,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
+          arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelperm,
           real64 & minPres,
           real64 & avgPresNumerator,
           real64 & maxPres,
@@ -1459,6 +1449,7 @@ struct StatisticsKernel
           arrayView1d< real64 > const & phaseDynamicPoreVol,
           arrayView1d< real64 > const & phaseMass,
           arrayView1d< real64 > const & trappedPhaseMass,
+          arrayView1d< real64 > const & immobilePhaseMass,
           arrayView2d< real64 > const & dissolvedComponentMass )
   {
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPres( LvArray::NumericLimits< real64 >::max );
@@ -1477,6 +1468,7 @@ struct StatisticsKernel
 
     forAll< parallelDevicePolicy<> >( size, [numComps,
                                              numPhases,
+                                             relpermThreshold,
                                              elemGhostRank,
                                              volume,
                                              refPorosity,
@@ -1487,6 +1479,7 @@ struct StatisticsKernel
                                              phaseDensity,
                                              phaseVolFrac,
                                              phaseTrappedVolFrac,
+                                             phaseRelperm,
                                              phaseCompFraction,
                                              subRegionMinPres,
                                              subRegionAvgPresNumerator,
@@ -1500,6 +1493,7 @@ struct StatisticsKernel
                                              phaseDynamicPoreVol,
                                              phaseMass,
                                              trappedPhaseMass,
+                                             immobilePhaseMass,
                                              dissolvedComponentMass] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       if( elemGhostRank[ei] >= 0 )
@@ -1531,6 +1525,10 @@ struct StatisticsKernel
         RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseDynamicPoreVol[ip], elemPhaseVolume );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseMass[ip], elemPhaseMass );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &trappedPhaseMass[ip], elemTrappedPhaseMass );
+        if( phaseRelperm[ei][0][ip] < relpermThreshold )
+        {
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &immobilePhaseMass[ip], elemPhaseMass );
+        }
         for( integer ic = 0; ic < numComps; ++ic )
         {
           // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
@@ -1551,9 +1549,9 @@ struct StatisticsKernel
     totalUncompactedPoreVol = subRegionTotalUncompactedPoreVol.get();
 
     // dummy loop to bring data back to the CPU
-    forAll< serialPolicy >( 1, [phaseDynamicPoreVol, phaseMass, trappedPhaseMass, dissolvedComponentMass] ( localIndex const )
+    forAll< serialPolicy >( 1, [phaseDynamicPoreVol, phaseMass, trappedPhaseMass, immobilePhaseMass, dissolvedComponentMass] ( localIndex const )
     {
-      GEOSX_UNUSED_VAR( phaseDynamicPoreVol, phaseMass, trappedPhaseMass, dissolvedComponentMass );
+      GEOSX_UNUSED_VAR( phaseDynamicPoreVol, phaseMass, trappedPhaseMass, immobilePhaseMass, dissolvedComponentMass );
     } );
   }
 };

@@ -21,7 +21,7 @@
         lineSearchAction="Attempt"/>
       <LinearSolverParameters
         solverType="direct"
-	directParallel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseFVM>
   </Solvers>
   <!-- SPHINX_SOLVER_END -->        
@@ -47,7 +47,7 @@
       target="/Solvers/compflow"/>
     <PeriodicEvent
       name="solverApplications2"
-      beginTime="1e5"	
+      beginTime="1e5"   
       forceDt="1e5"
       target="/Solvers/compflow"/>
     <PeriodicEvent
@@ -73,15 +73,15 @@
     <CellElementRegion
       name="aquiferBottom"
       cellBlocks="{ aquiferBottom00, aquiferBottom01, aquiferBottom02,
-		            aquiferBottom10,                  aquiferBottom12,
-		            aquiferBottom20, aquiferBottom21, aquiferBottom22,
-	                aquiferBottom30,                  aquiferBottom32,
-		            aquiferBottom40, aquiferBottom41, aquiferBottom42 }"
+                    aquiferBottom10,                  aquiferBottom12,
+                    aquiferBottom20, aquiferBottom21, aquiferBottom22,
+                    aquiferBottom30,                  aquiferBottom32,
+                    aquiferBottom40, aquiferBottom41, aquiferBottom42 }"
       materialList="{ fluid, rock, relperm }"/>
     <CellElementRegion
       name="aquiferTop"
       cellBlocks="{ aquiferTop00, aquiferTop01, aquiferTop02,
-		            aquiferTop10,               aquiferTop12,
+                    aquiferTop10,               aquiferTop12,
                     aquiferTop20, aquiferTop21, aquiferTop22,
                     aquiferTop30,               aquiferTop32,
                     aquiferTop40, aquiferTop41, aquiferTop42 }"
@@ -95,7 +95,7 @@
       cellBlocks="{ aquiferTop11, aquitard11, aquiferBottom11 }"
       materialList="{ fluid, rockWell, relperm }"/>
     <CellElementRegion
-      name="Barrier"
+      name="barrier"
       cellBlocks="{ aquitard00, aquitard01, aquitard02,
                     aquitard10,             aquitard12,
                     aquitard20, aquitard21, aquitard22,
@@ -196,20 +196,6 @@
       functionName="pressureFunction"
       scale="1"/>
     <FieldSpecification
-      name="bcPressureInjectionWell"
-      objectPath="ElementRegions/injectionWell"
-      setNames="{ east, west, south, north }"
-      fieldName="pressure"
-      functionName="pressureFunction"
-      scale="1"/>
-    <FieldSpecification
-      name="bcPressureLeakyWell"
-      objectPath="ElementRegions/leakyWell"
-      setNames="{ east, west, south, north }"
-      fieldName="pressure"
-      functionName="pressureFunction"
-      scale="1"/>
-    <FieldSpecification
       name="bcCompositionOilAquiferBottom"
       setNames="{ east, west, south, north }"
       objectPath="ElementRegions/aquiferBottom"
@@ -224,20 +210,6 @@
       component="0"
       scale="0.000001"/>
     <FieldSpecification
-      name="bcCompositionOilInjectionWell"
-      setNames="{ east, west, south, north }"
-      objectPath="ElementRegions/injectionWell"
-      fieldName="globalCompFraction"
-      component="0"
-      scale="0.000001"/>
-    <FieldSpecification
-      name="bcCompositionOilLeakyWell"
-      setNames="{ east, west, south, north }"
-      objectPath="ElementRegions/leakyWell"
-      fieldName="globalCompFraction"
-      component="0"
-      scale="0.000001"/>
-    <FieldSpecification
       name="bcCompositionWaterAquiferBottom"
       setNames="{ east, west, south, north }"
       objectPath="ElementRegions/aquiferBottom"
@@ -248,20 +220,6 @@
       name="bcCompositionWaterAquiferTop"
       setNames="{ east, west, south, north }"
       objectPath="ElementRegions/aquiferTop"
-      fieldName="globalCompFraction"
-      component="1"
-      scale="0.999999"/>
-    <FieldSpecification
-      name="bcCompositionWaterInjectionWell"
-      setNames="{ east, west, south, north }"
-      objectPath="ElementRegions/injectionWell"
-      fieldName="globalCompFraction"
-      component="1"
-      scale="0.999999"/>
-    <FieldSpecification
-      name="bcCompositionWaterLeakyWell"
-      setNames="{ east, west, south, north }"
-      objectPath="ElementRegions/leakyWell"
       fieldName="globalCompFraction"
       component="1"
       scale="0.999999"/>

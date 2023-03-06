@@ -44,6 +44,7 @@ public:
    * @brief Constructor
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
+   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] stress The ArrayView holding the stress data for each quadrature point.
    */
   DruckerPragerExtendedUpdates( arrayView1d< real64 const > const & initialFriction,
@@ -55,10 +56,11 @@ public:
                                 arrayView2d< real64 > const & oldState,
                                 arrayView1d< real64 const > const & bulkModulus,
                                 arrayView1d< real64 const > const & shearModulus,
+                                arrayView1d< real64 const > const & thermalExpansionCoefficient,
                                 arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                 arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                                 bool const & disableInelasticity ):
-    ElasticIsotropicUpdates( bulkModulus, shearModulus, newStress, oldStress, disableInelasticity ),
+    ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity ),
     m_initialFriction( initialFriction ),
     m_residualFriction( residualFriction ),
     m_dilationRatio( dilationRatio ),
@@ -207,7 +209,7 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
   // else, plasticity (trial stress point lies outside yield surface)
   // the return mapping can in general be written as a newton iteration.
 
-  real64 solution[3], residual[3], delta[3];
+  real64 solution[3]{}, residual[3]{}, delta[3]{};
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
 
   solution[0] = trialP; // initial guess for newP
@@ -434,6 +436,7 @@ public:
                                          m_oldState,
                                          m_bulkModulus,
                                          m_shearModulus,
+                                         m_thermalExpansionCoefficient,
                                          m_newStress,
                                          m_oldStress,
                                          m_disableInelasticity );
@@ -459,6 +462,7 @@ public:
                           m_oldState,
                           m_bulkModulus,
                           m_shearModulus,
+                          m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity );

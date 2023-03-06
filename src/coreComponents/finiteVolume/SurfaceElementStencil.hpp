@@ -114,12 +114,12 @@ public:
   }
 
   /**
-   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @brief Compute weights and derivatives w.r.t to one variable.
    * @param[in] iconn connection index
    * @param[in] coefficient view accessor to the coefficient used to compute the weights
    * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
    * @param[out] weight view weights
-   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+   * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
    */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
@@ -129,12 +129,12 @@ public:
                        real64 ( &dWeight_dVar )[maxNumConnections][2] ) const;
 
   /**
-   * @brief Compute weigths and derivatives w.r.t to one variable without coefficient
+   * @brief Compute weights and derivatives w.r.t to one variable without coefficient
    * Used in ReactiveCompositionalMultiphaseOBL solver for thermal transmissibility computation:
    * here, conductivity is a part of operator and connot be used directly as a coefficient
    * @param[in] iconn connection index
    * @param[out] weight view weights
-   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+   * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
    */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
@@ -149,8 +149,8 @@ public:
    * @param[in] dCoeff_dVar1 view accessor to the derivative of the coefficient w.r.t to the variable 1
    * @param[in] dCoeff_dVar2 view accessor to the derivative of the coefficient w.r.t to the variable 2
    * @param[out] weight view weights
-   * @param[out] dWeight_dVar1 derivative of the weigths w.r.t to the variable 1
-   * @param[out] dWeight_dVar2 derivative of the weigths w.r.t to the variable 2
+   * @param[out] dWeight_dVar1 derivative of the weights w.r.t to the variable 1
+   * @param[out] dWeight_dVar2 derivative of the weights w.r.t to the variable 2
    */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
@@ -162,7 +162,7 @@ public:
                        real64 ( &dWeight_dVar2 )[maxNumConnections][2][3] ) const;
 
   /**
-   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @brief Compute weights and derivatives w.r.t to one variable.
    * @param[in] iconn connection index
    * @param[in] coefficient view accessor to the coefficient used to compute the weights
    * @param[in] coefficientMultiplier view accessor to the coefficient multiplier used to compute the weights
@@ -177,7 +177,7 @@ public:
                        real64 ( &weight )[maxNumConnections][2] ) const;
 
   /**
-   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @brief Compute weights and derivatives w.r.t to one variable.
    * @param[in] iconn connection index
    * @param[in] coefficient1 view accessor to the first coefficient used to compute the first weights
    * @param[in] coefficient1Multiplier view accessor to the coefficient multiplier used to compute the first weights
@@ -197,6 +197,15 @@ public:
                        real64 ( &weight2 )[maxNumPointsInFlux],
                        real64 ( &geometricWeight )[maxNumPointsInFlux] ) const;
 
+  /**
+   * @brief Compute the stabilization weights
+   * @param[in] iconn connection index
+   * @param[out] stabilizationWeight view weights
+   */
+  GEOSX_HOST_DEVICE
+  void computeStabilizationWeights( localIndex iconn,
+                                    real64 ( & stabilizationWeight )[maxNumConnections][2] ) const
+  { GEOSX_UNUSED_VAR( iconn, stabilizationWeight ); }
 
   /**
    * @brief Accessor to the CellCenterToEdgeCenter vector

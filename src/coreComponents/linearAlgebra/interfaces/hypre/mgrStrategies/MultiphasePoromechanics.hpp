@@ -89,10 +89,12 @@ public:
     m_levelRestrictType[2]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[2] = MGRCoarseGridMethod::cprLikeBlockDiag;
 
-    // Global smoother at each level, only do block-GS for the condensed system
-    m_levelSmoothType[2] = 1;
+    // ILU smoothing for the system made of pressure and densities
+    m_levelSmoothType[1]  = 16;
+    m_levelSmoothIters[1] = 1;
+    // Block GS smoothing for the system made of pressure and densities (except the last one)
+    m_levelSmoothType[2]  = 1;
     m_levelSmoothIters[2] = 1;
-
   }
 
   /**
@@ -128,6 +130,9 @@ public:
     mgrData.coarseSolver.setup = HYPRE_BoomerAMGSetup;
     mgrData.coarseSolver.solve = HYPRE_BoomerAMGSolve;
     mgrData.coarseSolver.destroy = HYPRE_BoomerAMGDestroy;
+
+    // Configure the BoomerAMG solver used as F-relaxation for the first level
+    setMechanicsFSolver( precond, mgrData );
   }
 };
 

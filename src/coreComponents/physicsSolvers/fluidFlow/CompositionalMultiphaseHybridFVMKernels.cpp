@@ -23,7 +23,7 @@
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
 
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/HybridFVMHelperKernels.hpp"
 
 namespace geosx
@@ -760,14 +760,14 @@ AssemblerKernelHelper::
     // 1) Find if there is a neighbor, and if there is, grab the indices of the neighbor element
 
     localIndex neighborIds[ 3 ] = { localIds[0], localIds[1], localIds[2] };
-    hybridFVMKernels::CellConnectivity::findNeighbor( localIds,
-                                                      ifaceLoc,
-                                                      elemRegionList,
-                                                      elemSubRegionList,
-                                                      elemList,
-                                                      regionFilter,
-                                                      elemToFaces,
-                                                      neighborIds );
+    hybridFVMKernels::CellConnectivity::isNeighborFound( localIds,
+                                                         ifaceLoc,
+                                                         elemRegionList,
+                                                         elemSubRegionList,
+                                                         elemList,
+                                                         regionFilter,
+                                                         elemToFaces,
+                                                         neighborIds );
     localIndex const neighborDofNumber = elemDofNumber[neighborIds[0]][neighborIds[1]][neighborIds[2]];
 
     // 2) *************** Assemble viscous terms ******************
@@ -1485,7 +1485,7 @@ FluxKernel::
 
   // get the cell-centered pressures
   arrayView1d< real64 const > const & elemPres  =
-    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+    subRegion.getReference< array1d< real64 > >( fields::flow::pressure::key() );
 
   // get the element data needed for transmissibility computation
   arrayView2d< real64 const > const & elemCenter =
@@ -1500,7 +1500,7 @@ FluxKernel::
 
   // get the cell-centered depth
   arrayView1d< real64 const > const & elemGravCoef =
-    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::gravityCoefficient::key() );
+    subRegion.getReference< array1d< real64 > >( fields::flow::gravityCoefficient::key() );
 
   // assemble the residual and Jacobian element by element
   // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces

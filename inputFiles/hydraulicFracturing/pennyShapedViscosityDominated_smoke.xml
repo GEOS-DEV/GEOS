@@ -13,7 +13,6 @@
       solidSolverName="lagsolve"
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      couplingTypeOption="FIM"
       logLevel="1"
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
@@ -92,13 +91,6 @@
       endTime="10.0"
       forceDt="1.0"
       target="/Solvers/hydrofracture"/>
-   
-    <PeriodicEvent
-      name="outputs"
-      beginTime="2.0"
-      timeFrequency="2.0"
-      targetExactTimestep="0"
-      target="/Outputs/siloOutput"/>
 
     <PeriodicEvent 
       name="restarts"

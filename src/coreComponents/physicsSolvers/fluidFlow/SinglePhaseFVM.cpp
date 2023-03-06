@@ -21,7 +21,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -30,8 +30,8 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
@@ -244,13 +244,13 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
 
     dofManager.addVectorToField( localSolution,
                                  BASE::viewKeyStruct::elemDofFieldString(),
-                                 extrinsicMeshData::flow::pressure::key(),
+                                 fields::flow::pressure::key(),
                                  scalingFactor,
                                  pressureMask );
 
     dofManager.addVectorToField( localSolution,
                                  BASE::viewKeyStruct::elemDofFieldString(),
-                                 extrinsicMeshData::flow::temperature::key(),
+                                 fields::flow::temperature::key(),
                                  scalingFactor,
                                  temperatureMask );
   }
@@ -258,7 +258,7 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
   {
     dofManager.addVectorToField( localSolution,
                                  BASE::viewKeyStruct::elemDofFieldString(),
-                                 extrinsicMeshData::flow::pressure::key(),
+                                 fields::flow::pressure::key(),
                                  scalingFactor );
   }
 
@@ -266,11 +266,11 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                                                       MeshLevel & mesh,
                                                                       arrayView1d< string const > const & regionNames )
   {
-    std::vector< string > fields{ extrinsicMeshData::flow::pressure::key() };
+    std::vector< string > fields{ fields::flow::pressure::key() };
 
     if( m_isThermal )
     {
-      fields.emplace_back( extrinsicMeshData::flow::temperature::key() );
+      fields.emplace_back( fields::flow::temperature::key() );
     }
 
     FieldIdentifiers fieldsToBeSync;
@@ -380,17 +380,17 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
                                      dt,
                                      dofManager.rankOffset(),
                                      elemDofNumber.toNestedViewConst(),
-                                     flowAccessors.get< extrinsicMeshData::ghostRank >(),
-                                     flowAccessors.get< extrinsicMeshData::flow::pressure >(),
-                                     flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
-                                     fluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
-                                     fluidAccessors.get< extrinsicMeshData::singlefluid::dDensity_dPressure >(),
-                                     flowAccessors.get< extrinsicMeshData::flow::mobility >(),
-                                     flowAccessors.get< extrinsicMeshData::flow::dMobility_dPressure >(),
-                                     permAccessors.get< extrinsicMeshData::permeability::permeability >(),
-                                     permAccessors.get< extrinsicMeshData::permeability::dPerm_dPressure >(),
-                                     permAccessors.get< extrinsicMeshData::permeability::dPerm_dDispJump >(),
-                                     permAccessors.get< extrinsicMeshData::permeability::permeabilityMultiplier >(),
+                                     flowAccessors.get< fields::ghostRank >(),
+                                     flowAccessors.get< fields::flow::pressure >(),
+                                     flowAccessors.get< fields::flow::gravityCoefficient >(),
+                                     fluidAccessors.get< fields::singlefluid::density >(),
+                                     fluidAccessors.get< fields::singlefluid::dDensity_dPressure >(),
+                                     flowAccessors.get< fields::flow::mobility >(),
+                                     flowAccessors.get< fields::flow::dMobility_dPressure >(),
+                                     permAccessors.get< fields::permeability::permeability >(),
+                                     permAccessors.get< fields::permeability::dPerm_dPressure >(),
+                                     permAccessors.get< fields::permeability::dPerm_dDispJump >(),
+                                     permAccessors.get< fields::permeability::permeabilityMultiplier >(),
                                      this->gravityVector(),
                                      localMatrix,
                                      localRhs );
@@ -431,7 +431,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
     jumpDofNumber.setName( this->getName() + "/accessors/" + jumpDofKey );
 
     ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > dPerm_dDispJump =
-      elemManager.constructMaterialArrayViewAccessor< PermeabilityBase, real64, 4 >( extrinsicMeshData::permeability::dPerm_dDispJump::key() );
+      elemManager.constructMaterialArrayViewAccessor< PermeabilityBase, real64, 4 >( fields::permeability::dPerm_dDispJump::key() );
 
     fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
     {
@@ -446,15 +446,15 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
                                          dofManager.rankOffset(),
                                          pressureDofNumber.toNestedViewConst(),
                                          jumpDofNumber.toNestedViewConst(),
-                                         flowAccessors.get< extrinsicMeshData::ghostRank >(),
-                                         flowAccessors.get< extrinsicMeshData::flow::pressure >(),
-                                         flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
-                                         fluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
-                                         fluidAccessors.get< extrinsicMeshData::singlefluid::dDensity_dPressure >(),
-                                         flowAccessors.get< extrinsicMeshData::flow::mobility >(),
-                                         flowAccessors.get< extrinsicMeshData::flow::dMobility_dPressure >(),
-                                         permAccessors.get< extrinsicMeshData::permeability::permeability >(),
-                                         permAccessors.get< extrinsicMeshData::permeability::dPerm_dPressure >(),
+                                         flowAccessors.get< fields::ghostRank >(),
+                                         flowAccessors.get< fields::flow::pressure >(),
+                                         flowAccessors.get< fields::flow::gravityCoefficient >(),
+                                         fluidAccessors.get< fields::singlefluid::density >(),
+                                         fluidAccessors.get< fields::singlefluid::dDensity_dPressure >(),
+                                         flowAccessors.get< fields::flow::mobility >(),
+                                         flowAccessors.get< fields::flow::dMobility_dPressure >(),
+                                         permAccessors.get< fields::permeability::permeability >(),
+                                         permAccessors.get< fields::permeability::dPerm_dPressure >(),
                                          dPerm_dDispJump.toNestedViewConst(),
                                          localMatrix,
                                          localRhs );
@@ -485,15 +485,13 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
                                                                       MeshLevel const & mesh,
                                                                       arrayView1d< string const > const & )
   {
-    std::cout<<mesh.getName()<<std::endl;
-
     ElementRegionManager const & elemManager = mesh.getElemManager();
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
     elemDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
     ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > dPerm_dDispJump =
-      elemManager.constructMaterialArrayViewAccessor< PermeabilityBase, real64, 4 >( extrinsicMeshData::permeability::dPerm_dDispJump::key() );
+      elemManager.constructMaterialArrayViewAccessor< PermeabilityBase, real64, 4 >( fields::permeability::dPerm_dDispJump::key() );
 
     fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
     {
@@ -507,15 +505,15 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
                                      dt,
                                      dofManager.rankOffset(),
                                      elemDofNumber.toNestedViewConst(),
-                                     flowAccessors.get< extrinsicMeshData::ghostRank >(),
-                                     flowAccessors.get< extrinsicMeshData::flow::pressure >(),
-                                     flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
-                                     fluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
-                                     fluidAccessors.get< extrinsicMeshData::singlefluid::dDensity_dPressure >(),
-                                     flowAccessors.get< extrinsicMeshData::flow::mobility >(),
-                                     flowAccessors.get< extrinsicMeshData::flow::dMobility_dPressure >(),
-                                     permAccessors.get< extrinsicMeshData::permeability::permeability >(),
-                                     permAccessors.get< extrinsicMeshData::permeability::dPerm_dPressure >(),
+                                     flowAccessors.get< fields::ghostRank >(),
+                                     flowAccessors.get< fields::flow::pressure >(),
+                                     flowAccessors.get< fields::flow::gravityCoefficient >(),
+                                     fluidAccessors.get< fields::singlefluid::density >(),
+                                     fluidAccessors.get< fields::singlefluid::dDensity_dPressure >(),
+                                     flowAccessors.get< fields::flow::mobility >(),
+                                     flowAccessors.get< fields::flow::dMobility_dPressure >(),
+                                     permAccessors.get< fields::permeability::permeability >(),
+                                     permAccessors.get< fields::permeability::dPerm_dPressure >(),
                                      dPerm_dDispJump.toNestedViewConst(),
                                      localMatrix,
                                      localRhs,
@@ -538,7 +536,10 @@ SinglePhaseFVM< BASE >::applyBoundaryConditions( real64 const time_n,
   GEOSX_MARK_FUNCTION;
 
   BASE::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
+  if( !BASE::m_keepFlowVariablesConstantDuringInitStep )
+  {
+    applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
+  }
 }
 
 namespace
@@ -576,20 +577,44 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
     FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    arrayView1d< real64 const > const presFace =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
+    // Take BCs defined for "temperature" field and apply values to "faceTemperature"
 
-    arrayView1d< real64 const > const gravCoefFace =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
+    fsManager.apply< FaceManager >( time_n + dt,
+                                    mesh,
+                                    fields::flow::temperature::key(),
+                                    [&] ( FieldSpecificationBase const & fs,
+                                          string const & setName,
+                                          SortedArrayView< localIndex const > const & targetSet,
+                                          FaceManager & targetGroup,
+                                          string const & )
+    {
+      BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
-    elemDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
-    elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
+      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      {
+        globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
+                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+      }
+
+      if( stencil.size() == 0 )
+      {
+        return;
+      }
+
+      // Specify the bc value of the field
+      fs.applyFieldValue< FieldSpecificationEqual,
+                          parallelDevicePolicy<> >( targetSet,
+                                                    time_n + dt,
+                                                    targetGroup,
+                                                    fields::flow::faceTemperature::key() );
+    } );
 
     // Take BCs defined for "pressure" field and apply values to "facePressure"
     fsManager.apply< FaceManager >( time_n + dt,
                                     mesh,
-                                    extrinsicMeshData::flow::pressure::key(),
+                                    fields::flow::pressure::key(),
                                     [&] ( FieldSpecificationBase const & fs,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const & targetSet,
@@ -616,7 +641,8 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                           parallelDevicePolicy<> >( targetSet,
                                                     time_n + dt,
                                                     targetGroup,
-                                                    extrinsicMeshData::flow::facePressure::key() );
+                                                    fields::flow::facePressure::key() );
+
 
       // TODO: currently we just use model from the first cell in this stencil
       //       since it's not clear how to create fluid kernel wrappers for arbitrary models.
@@ -628,33 +654,38 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       string const & fluidName = subRegion.getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
       SingleFluidBase & fluidBase = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
 
-      constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
+      BoundaryStencilWrapper const stencilWrapper = stencil.createKernelWrapper();
+
+      if( m_isThermal )
       {
-        typename TYPEOFREF( fluid ) ::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
-
-        typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
-        typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
-        typename FluxKernel::PermeabilityAccessors permAccessors( elemManager, this->getName() );
-
-        FaceDirichletBCKernel::launch( stencil.createKernelWrapper(),
-                                       flowAccessors.get< extrinsicMeshData::ghostRank >(),
-                                       elemDofNumber.toNestedViewConst(),
-                                       dofManager.rankOffset(),
-                                       permAccessors.get< extrinsicMeshData::permeability::permeability >(),
-                                       permAccessors.get< extrinsicMeshData::permeability::dPerm_dPressure >(),
-                                       flowAccessors.get< extrinsicMeshData::flow::pressure >(),
-                                       flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
-                                       fluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
-                                       fluidAccessors.get< extrinsicMeshData::singlefluid::dDensity_dPressure >(),
-                                       flowAccessors.get< extrinsicMeshData::flow::mobility >(),
-                                       flowAccessors.get< extrinsicMeshData::flow::dMobility_dPressure >(),
-                                       presFace,
-                                       gravCoefFace,
-                                       fluidWrapper,
-                                       dt,
-                                       localMatrix,
-                                       localRhs );
-      } );
+        thermalSinglePhaseFVMKernels::
+          DirichletFaceBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                     dofKey,
+                                                     this->getName(),
+                                                     faceManager,
+                                                     elemManager,
+                                                     stencilWrapper,
+                                                     fluidBase,
+                                                     dt,
+                                                     localMatrix,
+                                                     localRhs );
+      }
+      else
+      {
+        singlePhaseFVMKernels::
+          DirichletFaceBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                     dofKey,
+                                                     this->getName(),
+                                                     faceManager,
+                                                     elemManager,
+                                                     stencilWrapper,
+                                                     fluidBase,
+                                                     dt,
+                                                     localMatrix,
+                                                     localRhs );
+      }
     } );
   } );
 
@@ -724,14 +755,14 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
       singlePhaseFVMKernels::AquiferBCKernel::launch( stencil,
                                                       dofManager.rankOffset(),
                                                       elemDofNumber.toNestedViewConst(),
-                                                      flowAccessors.get< extrinsicMeshData::ghostRank >(),
+                                                      flowAccessors.get< fields::ghostRank >(),
                                                       aquiferBCWrapper,
                                                       aquiferDens,
-                                                      flowAccessors.get< extrinsicMeshData::flow::pressure >(),
-                                                      flowAccessors.get< extrinsicMeshData::flow::pressure_n >(),
-                                                      flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
-                                                      fluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
-                                                      fluidAccessors.get< extrinsicMeshData::singlefluid::dDensity_dPressure >(),
+                                                      flowAccessors.get< fields::flow::pressure >(),
+                                                      flowAccessors.get< fields::flow::pressure_n >(),
+                                                      flowAccessors.get< fields::flow::gravityCoefficient >(),
+                                                      fluidAccessors.get< fields::singlefluid::density >(),
+                                                      fluidAccessors.get< fields::singlefluid::dDensity_dPressure >(),
                                                       time,
                                                       dt,
                                                       localMatrix.toViewConstSizes(),
@@ -739,7 +770,6 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
 
     } );
   } );
-
 
 }
 

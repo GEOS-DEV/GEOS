@@ -302,7 +302,7 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   m_fieldSpecificationManager->generateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( *m_fieldSpecificationManager, schemaRoot, targetChoiceNode, documentationType );
 
-  ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+  ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
   schemaUtilities::SchemaConstruction( constitutiveManager, schemaRoot, targetChoiceNode, documentationType );
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
@@ -413,7 +413,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
   // The objects in domain are handled separately for now
   {
     DomainPartition & domain = getDomainPartition();
-    ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+    ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
     constitutiveManager.processInputFileRecursive( topLevelNode );
 
@@ -478,7 +478,7 @@ void ProblemManager::postProcessInput()
   {
     partition.setPartitions( xpar, ypar, zpar );
     int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
-    // Case : Using MPI domain decomposition and partition are not defined (mainly pamela usage)
+    // Case : Using MPI domain decomposition and partition are not defined (mainly for external mesh readers)
     if( mpiSize > 1 && xpar == 1 && ypar == 1 && zpar == 1 )
     {
       //TODO  confirm creates no issues with MPI_Cart_Create
@@ -610,11 +610,8 @@ void ProblemManager::generateMesh()
 
     meshBody.deregisterGroup( keys::cellManager );
 
-//    GEOSX_THROW_IF_NE( meshBody.getMeshLevels().numSubGroups(), 1, InputError );
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
-//    MeshLevel & meshLevel = meshBody.getMeshLevel(MeshBody::groupStructKeys::baseDiscretizationString() );
-
       FaceManager & faceManager = meshLevel.getFaceManager();
       EdgeManager & edgeManager = meshLevel.getEdgeManager();
 
@@ -631,19 +628,14 @@ void ProblemManager::importFields()
   GEOSX_MARK_FUNCTION;
   DomainPartition & domain = getDomainPartition();
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
-
-  meshManager.forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & generator )
-  {
-    generator.importFields( domain );
-    generator.freeResources();
-  } );
+  meshManager.importFields( domain );
 }
 
 void ProblemManager::applyNumericalMethods()
 {
 
   DomainPartition & domain  = getDomainPartition();
-  ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+  ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
   Group & meshBodies = domain.getMeshBodies();
 
   // this contains a key tuple< mesh body name, mesh level name, region name, subregion name> with a value of the number of quadrature
@@ -836,8 +828,8 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
                        setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).reference();
                 subRegion.excludeWrappersFromPacking( { discretizationName } );
 
-                finiteElement::dispatch3D( fe,
-                                           [&] ( auto & finiteElement )
+                finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe,
+                                                                                         [&] ( auto & finiteElement )
                 {
                   using FE_TYPE = std::remove_const_t< TYPEOFREF( finiteElement ) >;
                   using SUBREGION_TYPE = TYPEOFREF( subRegion );
@@ -888,12 +880,10 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
                                           ConstitutiveManager const & constitutiveManager,
                                           map< std::tuple< string, string, string, string >, localIndex > const & regionQuadratures )
 {
-
-
-  for( auto regionQuadrature=regionQuadratures.begin(); regionQuadrature!=regionQuadratures.end(); ++regionQuadrature )
+  for( auto const & regionQuadrature : regionQuadratures )
   {
-    std::tuple< string, string, string, string > const key = regionQuadrature->first;
-    localIndex const numQuadraturePoints = regionQuadrature->second;
+    std::tuple< string, string, string, string > const key = regionQuadrature.first;
+    localIndex const numQuadraturePoints = regionQuadrature.second;
     string const meshBodyName = std::get< 0 >( key );
     string const meshLevelName = std::get< 1 >( key );
     string const regionName = std::get< 2 >( key );
@@ -970,12 +960,12 @@ bool ProblemManager::runSimulation()
 
 DomainPartition & ProblemManager::getDomainPartition()
 {
-  return getGroup< DomainPartition >( keys::domain );
+  return getGroup< DomainPartition >( groupKeys.domain );
 }
 
 DomainPartition const & ProblemManager::getDomainPartition() const
 {
-  return getGroup< DomainPartition >( keys::domain );
+  return getGroup< DomainPartition >( groupKeys.domain );
 }
 
 void ProblemManager::applyInitialConditions()
@@ -990,6 +980,10 @@ void ProblemManager::applyInitialConditions()
   {
     meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
     {
+      if( !meshLevel.isShallowCopy() ) // to avoid messages printed three times
+      {
+        m_fieldSpecificationManager->validateBoundaryConditions( meshLevel );
+      }
       m_fieldSpecificationManager->applyInitialConditions( meshLevel );
     } );
   } );

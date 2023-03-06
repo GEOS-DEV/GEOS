@@ -56,6 +56,7 @@ or_die python3 scripts/config-build.py \
                -bt ${CMAKE_BUILD_TYPE} \
                -bp ${GEOSX_BUILD_DIR} \
                -ip ${GEOSX_DIR} \
+               --ninja \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"'
 
 or_die cd ${GEOSX_BUILD_DIR}
@@ -75,15 +76,14 @@ fi
 # "Make" target check (builds geosx executable target only if true)
 # Use one process to prevent out-of-memory error
 if [[ "$*" == *--build-exe-only* ]]; then
-  or_die make -j 1 geosx VERBOSE=1
+  or_die ninja -j $(nproc) geosx
 else
-  or_die make -j $(nproc) VERBOSE=1
-
+  or_die ninja -j $(nproc)
   # Verbosity check for installation to prevent hitting Travis log limit
   if [[ "$*" == *--reduce-install-logs* ]]; then
-    or_die make install
+    or_die ninja install
   else
-    or_die make install VERBOSE=1
+    or_die ninja install
   fi
 fi
 

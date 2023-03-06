@@ -29,8 +29,8 @@ def main():
     fig, ax = plt.subplots(3, 2, figsize=(32, 18))
     cmap = plt.get_cmap("tab10")
 
-    ax[0, 0].plot(tlist[1::1],
-                  Pblist[1::1],
+    ax[0, 0].plot(tlist,
+                  Pblist,
                   'o',
                   alpha=1.0,
                   color=cmap(0),
@@ -41,7 +41,7 @@ def main():
                   label=lablelist[0])
     ax[0, 0].plot(GTime, GWellP / 1000000, lw=lw, alpha=0.5, color=cmap(2), label=lablelist[1])
     ax[0, 0].set_xlim([0, max(GTime)])
-    ax[0, 0].set_ylim(0, 5)
+    ax[0, 0].set_ylim(0, 10)
     ax[0, 0].set_xlabel(r'Time (s)', size=fsize, weight="bold")
     ax[0, 0].set_ylabel(r'Pressure @ Well (MPa)', size=fsize, weight="bold")
     ax[0, 0].legend(loc='upper right', fontsize=fsize)
@@ -59,7 +59,7 @@ def main():
                   markersize=msize,
                   mew=5,
                   label=lablelist[0])
-    ax[1, 0].plot(GTime[13::1], G58P[13::1] / 1000000, lw=lw, alpha=0.5, color=cmap(2), label=lablelist[1])
+    ax[1, 0].plot(GTime[13:], G58P[13:] / 1000000, lw=lw, alpha=0.5, color=cmap(2), label=lablelist[1])
     ax[1, 0].set_xlim([0, max(GTime)])
     ax[1, 0].set_ylim(0, 5)
     ax[1, 0].set_xlabel(r'Time (s)', size=fsize, weight="bold")
@@ -78,7 +78,7 @@ def main():
                   markersize=msize,
                   mew=5,
                   label=lablelist[0])
-    ax[2, 0].plot(GTime[28::1], G57P[28::1] / 1000000, lw=lw, alpha=0.5, color=cmap(2), label=lablelist[1])
+    ax[2, 0].plot(GTime, G57P / 1000000, lw=lw, alpha=0.5, color=cmap(2), label=lablelist[1])
     ax[2, 0].set_xlim([0, max(GTime)])
     ax[2, 0].set_ylim(0, 5)
     ax[2, 0].set_xlabel(r'Time (s)', size=fsize, weight="bold")

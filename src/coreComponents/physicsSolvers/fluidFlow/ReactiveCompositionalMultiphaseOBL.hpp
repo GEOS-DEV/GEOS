@@ -106,12 +106,6 @@ public:
    */
   /**@{*/
 
-  virtual real64
-  solverStep( real64 const & time_n,
-              real64 const & dt,
-              integer const cycleNumber,
-              DomainPartition & domain ) override;
-
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
@@ -300,7 +294,7 @@ public:
    *    In that case, the solution will be chopped all the time and Newton will never converge
    * @param domain the physical domain object
    */
-  void chopPrimaryVariablesToOBLLimits( DomainPartition & domain );
+  void chopPrimaryVariables( DomainPartition & domain );
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
@@ -349,9 +343,6 @@ private:
 
   /// flag indicating whether DARTS L2 norm is used for Newton convergence criterion
   integer m_useDARTSL2Norm;
-
-  /// flag to decide whether the sparsity pattern has to be formed again
-  bool m_systemSetupDone;
 };
 
 

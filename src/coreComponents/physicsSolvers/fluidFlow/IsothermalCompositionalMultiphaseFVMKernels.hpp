@@ -19,23 +19,24 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
+#include "codingUtilities/Utilities.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/capillaryPressure/CapillaryPressureExtrinsicData.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
+#include "constitutive/fluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
-#include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
@@ -77,17 +78,17 @@ public:
                        MultiFluidBase const & fluid,
                        RelativePermeabilityBase const & relperm )
     : Base(),
-    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
-    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens( fluid.dPhaseDensity() ),
     m_phaseVisc( fluid.phaseViscosity() ),
     m_dPhaseVisc( fluid.dPhaseViscosity() ),
     m_phaseRelPerm( relperm.phaseRelPerm() ),
     m_dPhaseRelPerm_dPhaseVolFrac( relperm.dPhaseRelPerm_dPhaseVolFraction() ),
-    m_phaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >() ),
-    m_dPhaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility >() )
+    m_phaseMob( subRegion.getField< fields::flow::phaseMobility >() ),
+    m_dPhaseMob( subRegion.getField< fields::flow::dPhaseMobility >() )
   {}
 
   /**
@@ -96,10 +97,10 @@ public:
    * @param[in] ei the element index
    * @param[in] phaseMobilityKernelOp the function used to customize the kernel
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void compute( localIndex const ei,
-                FUNC && phaseMobilityKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                FUNC && phaseMobilityKernelOp = NoOpFunc{} ) const
   {
     using Deriv = multifluid::DerivativeOffset;
 
@@ -276,29 +277,29 @@ public:
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
   using CompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::ghostRank,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity,
-                      extrinsicMeshData::flow::dPhaseVolumeFraction,
-                      extrinsicMeshData::flow::phaseMobility,
-                      extrinsicMeshData::flow::dPhaseMobility >;
+    StencilAccessors< fields::ghostRank,
+                      fields::flow::gravityCoefficient,
+                      fields::flow::pressure,
+                      fields::flow::dGlobalCompFraction_dGlobalCompDensity,
+                      fields::flow::dPhaseVolumeFraction,
+                      fields::flow::phaseMobility,
+                      fields::flow::dPhaseMobility >;
   using MultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseMassDensity,
-                              extrinsicMeshData::multifluid::dPhaseMassDensity,
-                              extrinsicMeshData::multifluid::phaseCompFraction,
-                              extrinsicMeshData::multifluid::dPhaseCompFraction >;
+                              fields::multifluid::phaseMassDensity,
+                              fields::multifluid::dPhaseMassDensity,
+                              fields::multifluid::phaseCompFraction,
+                              fields::multifluid::dPhaseCompFraction >;
 
   using CapPressureAccessors =
     StencilMaterialAccessors< CapillaryPressureBase,
-                              extrinsicMeshData::cappres::phaseCapPressure,
-                              extrinsicMeshData::cappres::dPhaseCapPressure_dPhaseVolFraction >;
+                              fields::cappres::phaseCapPressure,
+                              fields::cappres::dPhaseCapPressure_dPhaseVolFraction >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
-                              extrinsicMeshData::permeability::permeability,
-                              extrinsicMeshData::permeability::dPerm_dPressure >;
+                              fields::permeability::permeability,
+                              fields::permeability::dPerm_dPressure >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -414,6 +415,9 @@ public:
   /// Maximum number of points in the stencil
   static constexpr localIndex maxStencilSize = STENCILWRAPPER::maxStencilSize;
 
+  /// Number of flux support points (hard-coded for TFPA)
+  static constexpr integer numFluxSupportPoints = 2;
+
   /**
    * @brief Constructor for the kernel interface
    * @param[in] numPhases the number of fluid phases
@@ -474,10 +478,7 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : stencilSize( size ),
-      numFluxElems( numElems ),
-      compFlux( numComp ),
-      dCompFlux_dP( size, numComp ),
-      dCompFlux_dC( size, numComp, numComp ),
+      numConnectedElems( numElems ),
       dofColIndices( size * numDof ),
       localFlux( numElems * numEqn ),
       localFluxJacobian( numElems * numEqn, size * numDof )
@@ -487,25 +488,15 @@ public:
 
     /// Stencil size for a given connection
     localIndex const stencilSize;
-
-    /// Number of elements for a given connection
-    localIndex const numFluxElems;
+    /// Number of elements connected at a given connection
+    localIndex const numConnectedElems;
 
     // Transmissibility and derivatives
 
     /// Transmissibility
-    real64 transmissibility[maxNumConns][2]{};
+    real64 transmissibility[maxNumConns][numFluxSupportPoints]{};
     /// Derivatives of transmissibility with respect to pressure
-    real64 dTrans_dPres[maxNumConns][2]{};
-
-    // Component fluxes and derivatives
-
-    /// Component fluxes
-    stackArray1d< real64, numComp > compFlux;
-    /// Derivatives of component fluxes wrt pressure
-    stackArray2d< real64, maxStencilSize * numComp > dCompFlux_dP;
-    /// Derivatives of component fluxes wrt component densities
-    stackArray3d< real64, maxStencilSize * numComp * numComp > dCompFlux_dC;
+    real64 dTrans_dPres[maxNumConns][numFluxSupportPoints]{};
 
     // Local degrees of freedom and local residual/jacobian
 
@@ -516,7 +507,6 @@ public:
     stackArray1d< real64, maxNumElems * numEqn > localFlux;
     /// Storage for the face local Jacobian matrix
     stackArray2d< real64, maxNumElems * numEqn * maxStencilSize * numDof > localFluxJacobian;
-
   };
 
 
@@ -567,11 +557,11 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC && compFluxKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                    FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
     using Deriv = multifluid::DerivativeOffset;
 
@@ -582,246 +572,256 @@ public:
                                      stack.transmissibility,
                                      stack.dTrans_dPres );
 
-    // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
-    for( integer ip = 0; ip < m_numPhases; ++ip )
+
+    localIndex k[numFluxSupportPoints];
+    localIndex connectionIndex = 0;
+    for( k[0] = 0; k[0] < stack.numConnectedElems; ++k[0] )
     {
-      // clear working arrays
-      real64 densMean{};
-      stackArray1d< real64, maxNumElems > dDensMean_dP( stack.numFluxElems );
-      stackArray2d< real64, maxNumElems * numComp > dDensMean_dC( stack.numFluxElems, numComp );
-
-      // create local work arrays
-      real64 phaseFlux{};
-      real64 dPhaseFlux_dP[maxStencilSize]{};
-      real64 dPhaseFlux_dC[maxStencilSize][numComp]{};
-
-      real64 presGrad{};
-      stackArray1d< real64, maxStencilSize > dPresGrad_dP( stack.stencilSize );
-      stackArray2d< real64, maxStencilSize *numComp > dPresGrad_dC( stack.stencilSize, numComp );
-
-      real64 gravHead{};
-      stackArray1d< real64, maxNumElems > dGravHead_dP( stack.numFluxElems );
-      stackArray2d< real64, maxNumElems * numComp > dGravHead_dC( stack.numFluxElems, numComp );
-
-      real64 dCapPressure_dC[numComp]{};
-
-      // Working array
-      real64 dProp_dC[numComp]{};
-
-      // calculate quantities on primary connected cells
-      for( integer i = 0; i < stack.numFluxElems; ++i )
+      for( k[1] = k[0] + 1; k[1] < stack.numConnectedElems; ++k[1] )
       {
-        localIndex const er  = m_seri( iconn, i );
-        localIndex const esr = m_sesri( iconn, i );
-        localIndex const ei  = m_sei( iconn, i );
+        /// cell indices
+        localIndex const seri[numFluxSupportPoints]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
+        localIndex const sesri[numFluxSupportPoints] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
+        localIndex const sei[numFluxSupportPoints]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
-        // density
-        real64 const density  = m_phaseMassDens[er][esr][ei][0][ip];
-        real64 const dDens_dP = m_dPhaseMassDens[er][esr][ei][0][ip][Deriv::dP];
+        // clear working arrays
+        real64 compFlux[numComp]{};
+        real64 dCompFlux_dP[numFluxSupportPoints][numComp]{};
+        real64 dCompFlux_dC[numFluxSupportPoints][numComp][numComp]{};
 
-        applyChainRule( numComp,
-                        m_dCompFrac_dCompDens[er][esr][ei],
-                        m_dPhaseMassDens[er][esr][ei][0][ip],
-                        dProp_dC,
-                        Deriv::dC );
+        real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
+                                                     stack.transmissibility[connectionIndex][1] };
 
-        // average density and derivatives
-        densMean += 0.5 * density;
-        dDensMean_dP[i] = 0.5 * dDens_dP;
-        for( integer jc = 0; jc < numComp; ++jc )
+        real64 const dTrans_dPres[numFluxSupportPoints] = { stack.dTrans_dPres[connectionIndex][0],
+                                                            stack.dTrans_dPres[connectionIndex][1] };
+
+        //***** calculation of flux *****
+        // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
+        for( integer ip = 0; ip < m_numPhases; ++ip )
         {
-          dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
-        }
-      }
+          // create local work arrays
+          real64 densMean = 0.0;
+          real64 dDensMean_dP[numFluxSupportPoints]{};
+          real64 dDensMean_dC[numFluxSupportPoints][numComp]{};
 
-      //***** calculation of flux *****
+          real64 phaseFlux = 0.0;
+          real64 dPhaseFlux_dP[numFluxSupportPoints]{};
+          real64 dPhaseFlux_dC[numFluxSupportPoints][numComp]{};
 
-      // compute potential difference MPFA-style
-      for( integer i = 0; i < stack.stencilSize; ++i )
-      {
-        localIndex const er  = m_seri( iconn, i );
-        localIndex const esr = m_sesri( iconn, i );
-        localIndex const ei  = m_sei( iconn, i );
+          real64 presGrad = 0.0;
+          real64 dPresGrad_dP[numFluxSupportPoints]{};
+          real64 dPresGrad_dC[numFluxSupportPoints][numComp]{};
 
-        // capillary pressure
-        real64 capPressure     = 0.0;
-        real64 dCapPressure_dP = 0.0;
+          real64 gravHead = 0.0;
+          real64 dGravHead_dP[numFluxSupportPoints]{};
+          real64 dGravHead_dC[numFluxSupportPoints][numComp]{};
 
+          real64 dCapPressure_dC[numComp]{};
+
+          // Working array
+          real64 dProp_dC[numComp]{};
+
+          // calculate quantities on primary connected cells
+          for( integer i = 0; i < numFluxSupportPoints; ++i )
+          {
+            localIndex const er  = seri[i];
+            localIndex const esr = sesri[i];
+            localIndex const ei  = sei[i];
+
+            // density
+            real64 const density  = m_phaseMassDens[er][esr][ei][0][ip];
+            real64 const dDens_dP = m_dPhaseMassDens[er][esr][ei][0][ip][Deriv::dP];
+
+            applyChainRule( numComp,
+                            m_dCompFrac_dCompDens[er][esr][ei],
+                            m_dPhaseMassDens[er][esr][ei][0][ip],
+                            dProp_dC,
+                            Deriv::dC );
+
+            // average density and derivatives
+            densMean += 0.5 * density;
+            dDensMean_dP[i] = 0.5 * dDens_dP;
+            for( integer jc = 0; jc < numComp; ++jc )
+            {
+              dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
+            }
+          }
+
+          /// compute the TPFA potential difference
+          for( integer i = 0; i < numFluxSupportPoints; i++ )
+          {
+            localIndex const er  = seri[i];
+            localIndex const esr = sesri[i];
+            localIndex const ei  = sei[i];
+
+            // capillary pressure
+            real64 capPressure     = 0.0;
+            real64 dCapPressure_dP = 0.0;
+
+            for( integer ic = 0; ic < numComp; ++ic )
+            {
+              dCapPressure_dC[ic] = 0.0;
+            }
+
+            if( m_hasCapPressure )
+            {
+              capPressure = m_phaseCapPressure[er][esr][ei][0][ip];
+
+              for( integer jp = 0; jp < m_numPhases; ++jp )
+              {
+                real64 const dCapPressure_dS = m_dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
+                dCapPressure_dP += dCapPressure_dS * m_dPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
+
+                for( integer jc = 0; jc < numComp; ++jc )
+                {
+                  dCapPressure_dC[jc] += dCapPressure_dS * m_dPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
+                }
+              }
+            }
+
+            presGrad += trans[i] * (m_pres[er][esr][ei] - capPressure);
+            dPresGrad_dP[i] += trans[i] * (1 - dCapPressure_dP)
+                               + dTrans_dPres[i] * (m_pres[er][esr][ei] - capPressure);
+            for( integer jc = 0; jc < numComp; ++jc )
+            {
+              dPresGrad_dC[i][jc] += -trans[i] * dCapPressure_dC[jc];
+            }
+
+            real64 const gravD     = trans[i] * m_gravCoef[er][esr][ei];
+            real64 const dGravD_dP = dTrans_dPres[i] * m_gravCoef[er][esr][ei];
+
+            // the density used in the potential difference is always a mass density
+            // unlike the density used in the phase mobility, which is a mass density
+            // if useMass == 1 and a molar density otherwise
+            gravHead += densMean * gravD;
+
+            // need to add contributions from both cells the mean density depends on
+            for( integer j = 0; j < numFluxSupportPoints; ++j )
+            {
+              dGravHead_dP[j] += dDensMean_dP[j] * gravD + dGravD_dP * densMean;
+              for( integer jc = 0; jc < numComp; ++jc )
+              {
+                dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
+              }
+            }
+          }
+
+          // *** upwinding ***
+          // compute phase potential gradient
+          real64 const potGrad = presGrad - gravHead;
+
+          // choose upstream cell
+          localIndex const k_up = (potGrad >= 0) ? 0 : 1;
+
+          localIndex const er_up  = seri[k_up];
+          localIndex const esr_up = sesri[k_up];
+          localIndex const ei_up  = sei[k_up];
+
+          real64 const mobility = m_phaseMob[er_up][esr_up][ei_up][ip];
+
+          // skip the phase flux if phase not present or immobile upstream
+          if( LvArray::math::abs( mobility ) < 1e-20 ) // TODO better constant
+          {
+            continue;
+          }
+
+          // pressure gradient depends on all points in the stencil
+          for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
+          {
+            dPhaseFlux_dP[ke] += dPresGrad_dP[ke] - dGravHead_dP[ke];
+            dPhaseFlux_dP[ke] *= mobility;
+            for( integer jc = 0; jc < numComp; ++jc )
+            {
+              dPhaseFlux_dC[ke][jc] += dPresGrad_dC[ke][jc] - dGravHead_dC[ke][jc];
+              dPhaseFlux_dC[ke][jc] *= mobility;
+            }
+          }
+          // compute phase flux using upwind mobility.
+          phaseFlux = mobility * potGrad;
+
+          real64 const dMob_dP  = m_dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP];
+          arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 > dPhaseMobSub =
+            m_dPhaseMob[er_up][esr_up][ei_up][ip];
+
+          // add contribution from upstream cell mobility derivatives
+          dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
+          for( integer jc = 0; jc < numComp; ++jc )
+          {
+            dPhaseFlux_dC[k_up][jc] += dPhaseMobSub[Deriv::dC+jc] * potGrad;
+          }
+
+          // slice some constitutive arrays to avoid too much indexing in component loop
+          arraySlice1d< real64 const, multifluid::USD_PHASE_COMP-3 > phaseCompFracSub =
+            m_phaseCompFrac[er_up][esr_up][ei_up][0][ip];
+          arraySlice2d< real64 const, multifluid::USD_PHASE_COMP_DC-3 > dPhaseCompFracSub =
+            m_dPhaseCompFrac[er_up][esr_up][ei_up][0][ip];
+
+          // compute component fluxes and derivatives using upstream cell composition
+          for( integer ic = 0; ic < numComp; ++ic )
+          {
+            real64 const ycp = phaseCompFracSub[ic];
+            compFlux[ic] += phaseFlux * ycp;
+
+            // derivatives stemming from phase flux
+            for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
+            {
+              dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
+              for( integer jc = 0; jc < numComp; ++jc )
+              {
+                dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
+              }
+            }
+
+            // additional derivatives stemming from upstream cell phase composition
+            dCompFlux_dP[k_up][ic] += phaseFlux * dPhaseCompFracSub[ic][Deriv::dP];
+
+            // convert derivatives of comp fraction w.r.t. comp fractions to derivatives w.r.t. comp densities
+            applyChainRule( numComp,
+                            m_dCompFrac_dCompDens[er_up][esr_up][ei_up],
+                            dPhaseCompFracSub[ic],
+                            dProp_dC,
+                            Deriv::dC );
+            for( integer jc = 0; jc < numComp; ++jc )
+            {
+              dCompFlux_dC[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
+            }
+          } // *** end of upwinding
+
+          // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
+          // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
+          compFluxKernelOp( ip, k, seri, sesri, sei, connectionIndex,
+                            k_up, er_up, esr_up, ei_up, potGrad,
+                            phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
+
+        } // loop over phases
+
+        // populate local flux vector and derivatives
         for( integer ic = 0; ic < numComp; ++ic )
         {
-          dCapPressure_dC[ic] = 0.0;
-        }
+          integer const eqIndex0 = k[0] * numEqn + ic;
+          integer const eqIndex1 = k[1] * numEqn + ic;
 
-        if( m_hasCapPressure )
-        {
-          capPressure = m_phaseCapPressure[er][esr][ei][0][ip];
+          stack.localFlux[eqIndex0]  +=  m_dt * compFlux[ic];
+          stack.localFlux[eqIndex1]  -=  m_dt * compFlux[ic];
 
-          for( integer jp = 0; jp < m_numPhases; ++jp )
+          for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
           {
-            real64 const dCapPressure_dS = m_dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-            dCapPressure_dP += dCapPressure_dS * m_dPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
+            localIndex const localDofIndexPres = k[ke] * numDof;
+            stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * dCompFlux_dP[ke][ic];
+            stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * dCompFlux_dP[ke][ic];
 
             for( integer jc = 0; jc < numComp; ++jc )
             {
-              dCapPressure_dC[jc] += dCapPressure_dS * m_dPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
+              localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
+              stack.localFluxJacobian[eqIndex0][localDofIndexComp] += m_dt * dCompFlux_dC[ke][ic][jc];
+              stack.localFluxJacobian[eqIndex1][localDofIndexComp] -= m_dt * dCompFlux_dC[ke][ic][jc];
             }
           }
         }
+        connectionIndex++;
+      }   // loop over k[1]
+    }   // loop over k[0]
 
-        presGrad += stack.transmissibility[0][i] * (m_pres[er][esr][ei] - capPressure);
-        dPresGrad_dP[i] += stack.transmissibility[0][i] * (1 - dCapPressure_dP)
-                           + stack.dTrans_dPres[0][i] * (m_pres[er][esr][ei] - capPressure);
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          dPresGrad_dC[i][jc] += -stack.transmissibility[0][i] * dCapPressure_dC[jc];
-        }
-
-        real64 const gravD     = stack.transmissibility[0][i] * m_gravCoef[er][esr][ei];
-        real64 const dGravD_dP = stack.dTrans_dPres[0][i] * m_gravCoef[er][esr][ei];
-
-        // the density used in the potential difference is always a mass density
-        // unlike the density used in the phase mobility, which is a mass density
-        // if useMass == 1 and a molar density otherwise
-        gravHead += densMean * gravD;
-
-        // need to add contributions from both cells the mean density depends on
-        for( integer j = 0; j < stack.numFluxElems; ++j )
-        {
-          dGravHead_dP[j] += dDensMean_dP[j] * gravD + dGravD_dP * densMean;
-          for( integer jc = 0; jc < numComp; ++jc )
-          {
-            dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
-          }
-        }
-      }
-
-      // *** upwinding ***
-
-      // compute phase potential gradient
-      real64 const potGrad = presGrad - gravHead;
-
-      // choose upstream cell
-      localIndex const k_up = (potGrad >= 0) ? 0 : 1;
-
-      localIndex const er_up  = m_seri( iconn, k_up );
-      localIndex const esr_up = m_sesri( iconn, k_up );
-      localIndex const ei_up  = m_sei( iconn, k_up );
-
-      real64 const mobility = m_phaseMob[er_up][esr_up][ei_up][ip];
-
-      // skip the phase flux if phase not present or immobile upstream
-      if( LvArray::math::abs( mobility ) < 1e-20 ) // TODO better constant
-      {
-        continue;
-      }
-
-      // pressure gradient depends on all points in the stencil
-      for( integer ke = 0; ke < stack.stencilSize; ++ke )
-      {
-        dPhaseFlux_dP[ke] += dPresGrad_dP[ke];
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          dPhaseFlux_dC[ke][jc] += dPresGrad_dC[ke][jc];
-        }
-      }
-
-      // gravitational head depends only on the two cells connected (same as mean density)
-      for( integer ke = 0; ke < stack.numFluxElems; ++ke )
-      {
-        dPhaseFlux_dP[ke] -= dGravHead_dP[ke];
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          dPhaseFlux_dC[ke][jc] -= dGravHead_dC[ke][jc];
-        }
-      }
-
-      // compute the phase flux and derivatives using upstream cell mobility
-      phaseFlux = mobility * potGrad;
-      for( integer ke = 0; ke < stack.stencilSize; ++ke )
-      {
-        dPhaseFlux_dP[ke] *= mobility;
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          dPhaseFlux_dC[ke][jc] *= mobility;
-        }
-      }
-
-      real64 const dMob_dP  = m_dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP];
-      arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 > dPhaseMobSub =
-        m_dPhaseMob[er_up][esr_up][ei_up][ip];
-
-      // add contribution from upstream cell mobility derivatives
-      dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
-      for( integer jc = 0; jc < numComp; ++jc )
-      {
-        dPhaseFlux_dC[k_up][jc] += dPhaseMobSub[Deriv::dC+jc] * potGrad;
-      }
-
-      // slice some constitutive arrays to avoid too much indexing in component loop
-      arraySlice1d< real64 const, multifluid::USD_PHASE_COMP-3 > phaseCompFracSub =
-        m_phaseCompFrac[er_up][esr_up][ei_up][0][ip];
-      arraySlice2d< real64 const, multifluid::USD_PHASE_COMP_DC-3 > dPhaseCompFracSub =
-        m_dPhaseCompFrac[er_up][esr_up][ei_up][0][ip];
-
-      // compute component fluxes and derivatives using upstream cell composition
-      for( integer ic = 0; ic < numComp; ++ic )
-      {
-        real64 const ycp = phaseCompFracSub[ic];
-        stack.compFlux[ic] += phaseFlux * ycp;
-
-        // derivatives stemming from phase flux
-        for( integer ke = 0; ke < stack.stencilSize; ++ke )
-        {
-          stack.dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
-          for( integer jc = 0; jc < numComp; ++jc )
-          {
-            stack.dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
-          }
-        }
-
-        // additional derivatives stemming from upstream cell phase composition
-        stack.dCompFlux_dP[k_up][ic] += phaseFlux * dPhaseCompFracSub[ic][Deriv::dP];
-
-        // convert derivatives of comp fraction w.r.t. comp fractions to derivatives w.r.t. comp densities
-        applyChainRule( numComp,
-                        m_dCompFrac_dCompDens[er_up][esr_up][ei_up],
-                        dPhaseCompFracSub[ic],
-                        dProp_dC,
-                        Deriv::dC );
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          stack.dCompFlux_dC[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
-        }
-      }
-
-      // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
-      // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
-      compFluxKernelOp( ip, k_up, er_up, esr_up, ei_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
-
-    }
-
-    // *** end of upwinding
-
-    // populate local flux vector and derivatives
-    for( integer ic = 0; ic < numComp; ++ic )
-    {
-      stack.localFlux[ic]          =  m_dt * stack.compFlux[ic];
-      stack.localFlux[numEqn + ic] = -m_dt * stack.compFlux[ic];
-
-      for( integer ke = 0; ke < stack.stencilSize; ++ke )
-      {
-        localIndex const localDofIndexPres = ke * numDof;
-        stack.localFluxJacobian[ic][localDofIndexPres]          =  m_dt * stack.dCompFlux_dP[ke][ic];
-        stack.localFluxJacobian[numEqn + ic][localDofIndexPres] = -m_dt * stack.dCompFlux_dP[ke][ic];
-
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-          stack.localFluxJacobian[ic][localDofIndexComp]          =  m_dt * stack.dCompFlux_dC[ke][ic][jc];
-          stack.localFluxJacobian[numEqn + ic][localDofIndexComp] = -m_dt * stack.dCompFlux_dC[ke][ic][jc];
-        }
-      }
-    }
   }
 
   /**
@@ -829,25 +829,25 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
-                 FUNC && assemblyKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                 FUNC && assemblyKernelOp = NoOpFunc{} ) const
   {
     using namespace compositionalMultiphaseUtilities;
 
     // Apply equation/variable change transformation(s)
     stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
-    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof*stack.stencilSize, stack.numFluxElems,
+    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof*stack.stencilSize, stack.numConnectedElems,
                                                              stack.localFluxJacobian, work );
-    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numFluxElems,
+    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numConnectedElems,
                                                                stack.localFlux );
 
     // add contribution to residual and jacobian into:
     // - the component mass balance equations (i = 0 to i = numComp-1)
     // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
-    for( integer i = 0; i < stack.numFluxElems; ++i )
+    for( integer i = 0; i < stack.numConnectedElems; ++i )
     {
       if( m_ghostRank[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] < 0 )
       {
@@ -1073,10 +1073,10 @@ public:
             dt,
             localMatrix,
             localRhs ),
-    m_facePres( faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >() ),
-    m_faceTemp( faceManager.getExtrinsicData< extrinsicMeshData::flow::faceTemperature >() ),
-    m_faceCompFrac( faceManager.getExtrinsicData< extrinsicMeshData::flow::faceGlobalCompFraction >() ),
-    m_faceGravCoef( faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >() ),
+    m_facePres( faceManager.getField< fields::flow::facePressure >() ),
+    m_faceTemp( faceManager.getField< fields::flow::faceTemperature >() ),
+    m_faceCompFrac( faceManager.getField< fields::flow::faceGlobalCompFraction >() ),
+    m_faceGravCoef( faceManager.getField< fields::flow::gravityCoefficient >() ),
     m_fluidWrapper( fluidWrapper )
   {}
 
@@ -1149,11 +1149,11 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC && compFluxKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                    FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
     using Deriv = multifluid::DerivativeOffset;
     using Order = BoundaryStencil::Order;
@@ -1351,11 +1351,11 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
-                 FUNC && assemblyKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                 FUNC && assemblyKernelOp = NoOpFunc{} ) const
   {
     using namespace compositionalMultiphaseUtilities;
     using Order = BoundaryStencil::Order;
@@ -1498,27 +1498,27 @@ struct CFLFluxKernel
   using ElementView = ElementRegionManager::ElementView< VIEWTYPE >;
 
   using CompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::flow::phaseVolumeFraction,
-                      extrinsicMeshData::flow::phaseOutflux,
-                      extrinsicMeshData::flow::componentOutflux >;
+    StencilAccessors< fields::flow::pressure,
+                      fields::flow::gravityCoefficient,
+                      fields::flow::phaseVolumeFraction,
+                      fields::flow::phaseOutflux,
+                      fields::flow::componentOutflux >;
 
   using MultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseViscosity,
-                              extrinsicMeshData::multifluid::phaseDensity,
-                              extrinsicMeshData::multifluid::phaseMassDensity,
-                              extrinsicMeshData::multifluid::phaseCompFraction >;
+                              fields::multifluid::phaseViscosity,
+                              fields::multifluid::phaseDensity,
+                              fields::multifluid::phaseMassDensity,
+                              fields::multifluid::phaseCompFraction >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
-                              extrinsicMeshData::permeability::permeability,
-                              extrinsicMeshData::permeability::dPerm_dPressure >;
+                              fields::permeability::permeability,
+                              fields::permeability::dPerm_dPressure >;
 
 
   using RelPermAccessors =
-    StencilMaterialAccessors< RelativePermeabilityBase, extrinsicMeshData::relperm::phaseRelPerm >;
+    StencilMaterialAccessors< RelativePermeabilityBase, fields::relperm::phaseRelPerm >;
 
   template< integer NC, localIndex NUM_ELEMS, localIndex maxStencilSize >
   GEOSX_HOST_DEVICE
@@ -1629,20 +1629,20 @@ struct AquiferBCKernel
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using CompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::ghostRank,
-                      extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::pressure_n,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::flow::phaseVolumeFraction,
-                      extrinsicMeshData::flow::dPhaseVolumeFraction,
-                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
+    StencilAccessors< fields::ghostRank,
+                      fields::flow::pressure,
+                      fields::flow::pressure_n,
+                      fields::flow::gravityCoefficient,
+                      fields::flow::phaseVolumeFraction,
+                      fields::flow::dPhaseVolumeFraction,
+                      fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseDensity,
-                              extrinsicMeshData::multifluid::dPhaseDensity,
-                              extrinsicMeshData::multifluid::phaseCompFraction,
-                              extrinsicMeshData::multifluid::dPhaseCompFraction >;
+                              fields::multifluid::phaseDensity,
+                              fields::multifluid::dPhaseDensity,
+                              fields::multifluid::phaseCompFraction,
+                              fields::multifluid::dPhaseCompFraction >;
 
   template< integer NC >
   GEOSX_HOST_DEVICE

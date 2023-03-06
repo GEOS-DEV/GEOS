@@ -28,9 +28,10 @@
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
+#include "mesh/utilities/CIcomputationKernel.hpp"
+#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/simpleGeometricObjects/BoundedPlane.hpp"
 
@@ -69,6 +70,9 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( "FractureRegion" );
 
+  // this->getWrapper< string >( viewKeyStruct::discretizationString() ).
+  // setInputFlag( InputFlags::FALSE );
+
   registerWrapper( viewKeyStruct::mpiCommOrderString(), &m_mpiCommOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable MPI consistent communication ordering" );
@@ -86,7 +90,7 @@ void EmbeddedSurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
     EmbeddedSurfaceNodeManager & nodeManager = meshLevel.getEmbSurfNodeManager();
 
-    nodeManager.registerExtrinsicData< extrinsicMeshData::ParentEdgeIndex >( this->getName() );
+    nodeManager.registerField< fields::parentEdgeIndex >( this->getName() );
   } );
 }
 
@@ -187,8 +191,6 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
               // Add the information to the CellElementSubRegion
               subRegion.addFracturedElement( cellIndex, localNumberOfSurfaceElems );
 
-              embeddedSurfaceSubRegion.computeConnectivityIndex( localNumberOfSurfaceElems, cellToNodes, nodesCoord );
-
               newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( localNumberOfSurfaceElems );
 
               localNumberOfSurfaceElems++;
@@ -198,6 +200,27 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
       } );// end loop over cells
     } );// end loop over subregions
   } );// end loop over thick planes
+
+  // Launch kernel to compute connectivity index of each fractured element.
+  elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
+    [&]( localIndex const, localIndex const, ElementRegionBase &, CellElementSubRegion & subRegion )
+  {
+    finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
+    finiteElement::dispatchlowOrder3D( subRegionFE, [&] ( auto const finiteElement )
+    {
+      using FE_TYPE = decltype( finiteElement );
+
+      auto kernel = CIcomputationKernel< FE_TYPE >( finiteElement,
+                                                    nodeManager,
+                                                    subRegion,
+                                                    embeddedSurfaceSubRegion );
+
+      using KERNEL_TYPE = decltype( kernel );
+
+      KERNEL_TYPE::template launchCIComputationKernel< parallelDevicePolicy< 32 >, KERNEL_TYPE >( kernel );
+    } );
+  } );
 
   // add all new nodes to newObject list
   for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
