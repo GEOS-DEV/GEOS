@@ -76,7 +76,7 @@ void DomainPartition::initializationOrder( string_array & order )
 
 void DomainPartition::setupCommunications( bool use_nonblocking, bool setUpGhosts )
 {
-
+  GEOSX_MARK_FUNCTION;
 #if defined(GEOSX_USE_MPI)
   if ( !setUpGhosts )  
   {
