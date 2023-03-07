@@ -226,7 +226,10 @@ public:
    *              which has completed.
    * @return MPI_SUCCESS or an MPI_ERROR returned by internal calls to MPI_WaitAny.
    */
-  static int activeWaitAny( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func );
+  static int activeWaitAny( const int count,
+                            MPI_Request array_of_requests[],
+                            MPI_Status array_of_statuses[],
+                            std::function< void ( int ) > func );
 
   /**
    * Wait on MPI_Requests to complete on or more at a time and trigger a callback to
@@ -237,22 +240,10 @@ public:
    *              which has completed.
    * @return MPI_SUCCESS or an MPI_ERROR returned by internal calls to MPI_WaitSome.
    */
-  static int activeWaitSome( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func );
-
-  /**
-   * Active non-blocking phased communication with multiple participants,
-   *  each participant in each phase cannot depend on the previous phases
-   *  being complete for any participant other than itself.
-   * @param[in] participants The number of participants in each phase
-   * @param[in] phases A vector of function objects taking int and returning MPI_Requests
-   *               denoting the state of that participant in that phase.
-   * @note The only restriction on phase[N](index) being called is that phase[N-1](index)
-   *       has been called and the MPI_Request returned by that call has completed.
-   * @note One can add a final recv phase by having that phase return MPI_REQUEST_NULL.
-   * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
-   */
-  static int activeWaitSomePartialPhase( const int participants,
-                                         std::vector< std::function< MPI_Request ( int ) > > const & phases );
+  static int activeWaitSome( const int count,
+                             MPI_Request array_of_requests[],
+                             MPI_Status array_of_statuses[],
+                             std::function< void ( int ) > func );
 
   /**
    * Active non-blocking phased communication with multiple participants,
@@ -267,7 +258,7 @@ public:
    * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int activeWaitSomeCompletePhase( const int participants,
-                                          std::vector< std::function< MPI_Request ( int ) > > const & phases );
+                                          std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< void ( int ) > > > const & phases );
 
   /**
    * Active blocking phased communication with multiple participants,
@@ -283,7 +274,7 @@ public:
    * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int activeWaitOrderedCompletePhase( const int participants,
-                                             std::vector< std::function< MPI_Request ( int ) > > const & phases );
+                                             std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< void ( int ) > > > const & phases );
   ///@}
 
 #if !defined(GEOSX_USE_MPI)
@@ -863,6 +854,8 @@ int MpiWrapper::iRecv( T * const buf,
                        MPI_Request * MPI_PARAM( request ) )
 {
 #ifdef GEOSX_USE_MPI
+  GEOSX_ERROR_IF( (*request)!=MPI_REQUEST_NULL,
+                  "Attempting to use an MPI_Request that is still in use." );
   return MPI_Irecv( buf, count, internal::getMpiType< T >(), source, tag, comm, request );
 #else
   std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
@@ -870,8 +863,7 @@ int MpiWrapper::iRecv( T * const buf,
 
   if( iPointer==pointerMap.end() )
   {
-    pointerMap.insert( {tag, {1, buf}
-                       } );
+    pointerMap.insert( {tag, {1, buf} } );
   }
   else
   {
@@ -921,6 +913,8 @@ int MpiWrapper::iSend( arrayView1d< T const > const & buf,
                        MPI_Request * MPI_PARAM( request ) )
 {
 #ifdef GEOSX_USE_MPI
+  GEOSX_ERROR_IF( (*request)!=MPI_REQUEST_NULL,
+                  "Attempting to use an MPI_Request that is still in use." );
   return MPI_Isend( reinterpret_cast< char const * >( buf.data() ),
                     buf.size() * sizeof( T ),
                     MPI_CHAR,
@@ -943,6 +937,8 @@ int MpiWrapper::iSend( T const * const buf,
                        MPI_Request * MPI_PARAM( request ) )
 {
 #ifdef GEOSX_USE_MPI
+  GEOSX_ERROR_IF( (*request)!=MPI_REQUEST_NULL,
+                  "Attempting to use an MPI_Request that is still in use." );
   return MPI_Isend( buf, count, internal::getMpiType< T >(), dest, tag, comm, request );
 #else
   std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();

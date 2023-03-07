@@ -119,7 +119,8 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
   int neighborsTag = 54;
 
   // Send this list of neighbors to all neighbors.
-  std::vector< MPI_Request > requests( m_neighbors.size() );
+  std::vector< MPI_Request > requests( m_neighbors.size(), MPI_REQUEST_NULL );
+
   for( std::size_t i = 0; i < m_neighbors.size(); ++i )
   {
     MpiWrapper::iSend( firstNeighborRanks.toViewConst(), m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOSX, &requests[ i ] );
