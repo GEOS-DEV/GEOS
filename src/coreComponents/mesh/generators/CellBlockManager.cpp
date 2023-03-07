@@ -417,7 +417,7 @@ FaceBuilder createLowestNodeToFaces( localIndex const numNodes, const Group & ce
     } );
 
     totalDuplicateFaces += numFacesPerElement * numElements;
-    totalDuplicateFaceNodes += numElements * cb.maxNodesPerFace();
+    totalDuplicateFaceNodes += numElements * cb.maxNodesPerFace() * cb.numFacesPerElement();
   }
 
   FaceBuilder faceBuilder;
@@ -598,7 +598,6 @@ void CellBlockManager::buildFaceMaps()
 {
   GEOSX_MARK_FUNCTION;
 
-  // Corbett pick back up here
   FaceBuilder const faceBuilder =
     createLowestNodeToFaces( m_numNodes, this->getCellBlocks() );
 

@@ -77,12 +77,6 @@ public:
   virtual localIndex numFacesPerElement() const = 0;
 
   /**
-   * @brief Get the maximum number of nodes comprising a face.
-   * @return maximum number of nodes comprising a face.
-   */
-  virtual localIndex maxNodesPerFace() const = 0;
-
-  /**
    * @brief Get the number of elements.
    * @return number of elements in the cell block
    */

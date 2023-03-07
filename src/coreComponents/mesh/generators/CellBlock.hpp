@@ -77,11 +77,15 @@ public:
   localIndex numFacesPerElement() const override
   { return m_numFacesPerElement; }
 
-  localIndex maxNodesPerFace() const override
-  { return m_maxNodesPerFace; }
-
   localIndex numElements() const override
   { return size(); }
+
+  /**
+   * @brief Get the maximum number of nodes comprising a face.
+   * @return maximum number of nodes comprising a face.
+   */
+  localIndex maxNodesPerFace() const
+  { return m_maxNodesPerFace; }
 
   /**
    * @brief Puts the nodes of face @p faceNum of element @p cellIndex inside vector @p nodesInFaces.
