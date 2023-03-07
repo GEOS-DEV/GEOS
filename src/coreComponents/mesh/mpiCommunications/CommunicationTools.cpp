@@ -266,6 +266,10 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
     }
   }
 
+  MpiWrapper::waitAll( neighbors.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( neighbors.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
+
+
   object.constructGlobalToLocalMap();
 
   object.setMaxGlobalIndex();
@@ -486,7 +490,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
 {
   int nonLocalGhostsTag = 45;
 
-  std::vector< MPI_Request > nonLocalGhostsRequests( neighbors.size() );
+  std::vector< MPI_Request > nonLocalGhostsRequests( neighbors.size(), MPI_REQUEST_NULL );
 
   /// For each neighbor send them the indices of their ghosts that they mistakenly believe are owned by this rank.
   for( std::size_t i = 0; i < neighbors.size(); ++i )
@@ -601,7 +605,9 @@ void removeUnusedNeighbors( NodeManager & nodeManager,
  * @param phases list of phases.
  * @param unorderedComms if true complete the communications of each phase in the order they are received.
  */
-void waitOrderedOrWaitAll( int const n, std::vector< std::function< MPI_Request ( int ) > > const & phases, bool const unorderedComms )
+void waitOrderedOrWaitAll( int const n,
+                           std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< void ( int ) > > > const & phases,
+                           bool const unorderedComms )
 {
   if( unorderedComms )
   {
@@ -650,7 +656,11 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
     return MPI_REQUEST_NULL;
   };
 
-  waitOrderedOrWaitAll( neighbors.size(), { sendGhosts, postRecv, unpackGhosts }, unorderedComms );
+  waitOrderedOrWaitAll( neighbors.size(),
+                        { { static_cast< MPI_Request * >(nullptr), static_cast< MPI_Status * >(nullptr), sendGhosts},
+                          { commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv},
+                          { commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), unpackGhosts} },
+                        unorderedComms );
 
   // There are cases where the multiple waitOrderedOrWaitAll methods here will clash with
   // each other. This typically occurs at higher processor counts (>256) and large meshes
@@ -684,7 +694,11 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
     return MPI_REQUEST_NULL;
   };
 
-  waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
+  waitOrderedOrWaitAll( neighbors.size(),
+                        { { static_cast< MPI_Request * >(nullptr), static_cast< MPI_Status * >(nullptr), sendSyncLists },
+                          { commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv },
+                          { commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), rebuildSyncLists} },
+                        unorderedComms );
 
   // See above comments for the reason behind these waitAll commands
   // RE: isolate multiple async-wait calls
@@ -695,7 +709,11 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
   fixReceiveLists( edgeManager, neighbors );
   fixReceiveLists( faceManager, neighbors );
 
-  waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
+  waitOrderedOrWaitAll( neighbors.size(),
+                        { { static_cast< MPI_Request * >(nullptr), static_cast< MPI_Status * >(nullptr), sendSyncLists },
+                          { commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv },
+                          { commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), rebuildSyncLists} },
+                        unorderedComms );
 
   // See above comments for the reason behind these waitAll commands
   // RE: isolate multiple async-wait
