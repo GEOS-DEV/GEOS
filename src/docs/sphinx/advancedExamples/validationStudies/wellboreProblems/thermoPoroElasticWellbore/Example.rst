@@ -9,7 +9,7 @@ ThermoPoroElastic Wellbore Problem
 Problem description
 ------------------------------------------------------------------
 
-This example uses the thermal option of the ``SinglePhasePoromechanics`` solver to handle an open wellbore problem subjected to a uniform temperature change on its inner surface. Isotropic linear thermoporoelastic behavior is considered the rock formation around the wellbore. Plane strain and axissymetric conditions are assumed.
+This example uses the thermal option of the ``SinglePhasePoromechanics`` solver to handle an open wellbore problem subjected to a uniform temperature change on its inner surface. Isotropic linear thermoporoelastic behavior is considered for the rock formation around the wellbore. Plane strain and axisymmetric conditions are assumed.
 
 .. _problemSketchThermoPoroElasticWellboreFig:
 .. figure:: sketch.png
@@ -47,7 +47,7 @@ The corresponding integrated test is
 Geometry and mesh
 -----------------------------------------------------------
 
-The internal wellbore mesh generator ``InternalWellbore`` is employed to create the mesh of this wellbore problem. The radii of the open wellbore and the far-field boundary of the surrounding rock formation are defined by a vector ``radius``. In the tangent direction, ``theta`` angle is specified from 0 to 90 degrees to simulate the problem on a quarter of the wellbore geometry. The problem is under plane strain condition and therefore we only consider radial thermal diffusion on a single horizontal layer. The trajectory of the well is defined by ``trajectory``, which is vertical in this case. The ``autoSpaceRadialElems`` parameters allow for optimally increasing the element size from the wellbore to the far-field zone. 
+The internal wellbore mesh generator ``InternalWellbore`` is employed to create the mesh of this wellbore problem. The radii of the open wellbore and the far-field boundary of the surrounding rock formation are defined by a vector ``radius``. In the tangent direction, ``theta`` angle is specified from 0 to 90 degrees to simulate the problem on a quarter of the wellbore geometry. The problem is under plane strain condition and therefore we only consider thermal diffusion along the radial direction within a single horizontal layer. The trajectory of the well is defined by ``trajectory``, which is vertical in this case. The ``autoSpaceRadialElems`` parameters allow for optimally increasing the element size from the near wellbore zone to the far-field one. 
  
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/THM_wellbore_benchmark.xml
   :language: xml
@@ -66,14 +66,14 @@ The internal wellbore mesh generator ``InternalWellbore`` is employed to create 
 Material properties
 -----------------------------------------------------------
 
-The bulk and shear drained elastic moduli of rock as well as its drained linear thermal expansion coefficient relating stress change to temperature change are defined within the ``Constitutive`` tag as follows:
+The bulk and shear drained elastic moduli of rock as well as its drained linear thermal expansion coefficient relating stress change to temperature variation are defined within the ``Constitutive`` tag as follows:
  
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/THM_wellbore_base.xml
   :language: xml
   :start-after: <!-- SPHINX_ThermoElasticProperties -->
   :end-before: <!-- SPHINX_ThermoElasticPropertiesEnd -->
 
-Here the solid density is also defined but it is not used because the gravitational effect is ignored in this example. The porosity and the elastic bulk modulus :math:`K_{s}` of the solid skeleton are defined as:
+Here the solid density is also defined, but it is not used as the gravitational effect is ignored in this example. The porosity and the elastic bulk modulus :math:`K_{s}` of the solid skeleton are defined as:
 
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/THM_wellbore_base.xml
   :language: xml
@@ -101,7 +101,7 @@ The permeability of rock is defined by:
   :start-after: <!-- SPHINX_PermeabilityProperties -->
   :end-before: <!-- SPHINX_PermeabilityPropertiesEnd -->
 
-Fluid properties such as viscosity, thermal expansion coefficient, etc. are defined by the XML block below. A negligible volumetric heat capacity is defined for fluid to ignore the thermal convection effect such that only thermal transfer via the diffusion phenomenon is considered.
+Fluid properties such as viscosity, thermal expansion coefficient, etc. are defined by the XML block below. A negligible volumetric heat capacity is defined for fluid to ignore the thermal convection effect. This way, only thermal transfer via the diffusion phenomenon is considered.
 
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/THM_wellbore_base.xml
   :language: xml
@@ -170,7 +170,7 @@ It is convenient to collect data in hdf5 format that can be easily post-processe
   :start-after: <!-- SPHINX_TemperatureTimeHistory -->
   :end-before: <!-- SPHINX_TemperatureTimeHistoryEnd -->
 
-Similarly, the following blocks are needed to collect the solid stress:
+Similarly, the following blocks are needed to collect the effective stress field across the domain:
 
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/THM_wellbore_base.xml
   :language: xml
@@ -194,7 +194,7 @@ The displacement field can be collected using ``nodeManager`` as follows
   :start-after: <!-- SPHINX_DisplacementTimeHistory -->
   :end-before: <!-- SPHINX_DisplacementTimeHistoryEnd -->
 
-Also, periodic events are required to trigger the collection of this data on the mesh. For example, the periodic events for collecting the displacement field are defined as:
+Also, periodic events are required to trigger the collection of this data during the entire simulation. For example, the periodic events for collecting the displacement field are defined as:
 
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/THM_wellbore_benchmark.xml
   :language: xml
