@@ -73,7 +73,7 @@ TEST( testStringUtilities, tokenize )
 
   // Path tokenizing test
   {
-    const map< string, std::pair< std::vector< string >, std::vector< string > > >
+    map< string, std::pair< std::vector< string >, std::vector< string > > > const
     entries =
     {
       { "//entry0//entry1//entry2", { { "", "entry0", "entry1", "entry2" },
@@ -99,7 +99,7 @@ TEST( testStringUtilities, tokenize )
 
   // Various strings tokenizing test
   {
-    std::vector< TokenizeTest > tokenizeTests = {
+    std::vector< TokenizeTest > const tokenizeTests = {
       TokenizeTest( string( "a|b" ), "|", false, false, { "a", "b" } ),
       TokenizeTest( string( "a|b" ), "|", true, false, { "a", "b" } ),
       TokenizeTest( string( "a|b" ), "|", false, true, { "a", "b" } ),
@@ -168,7 +168,7 @@ TEST( testStringUtilities, tokenize )
 
     for( TokenizeTest test : tokenizeTests )
     {
-      const std::vector< string > r = stringutilities::tokenize( test.strToTest,
+      std::vector< string > const r = stringutilities::tokenize( test.strToTest,
                                                                  test.delims,
                                                                  test.treatConsecutiveDelimAsOne,
                                                                  test.preTrimStr );
@@ -185,7 +185,7 @@ TEST( testStringUtilities, tokenize )
 
   // Spaces tokenizing test
   {
-    const std::vector< TokenizeBySpacesTest > tokenizeBSTests = {
+    std::vector< TokenizeBySpacesTest > const tokenizeBSTests = {
       TokenizeBySpacesTest( string( "a b" ), { "a", "b" } ),
       TokenizeBySpacesTest( string( " a b " ), { "a", "b" } ),
       TokenizeBySpacesTest( string( "  a  b  " ), { "a", "b" } ),
@@ -198,7 +198,7 @@ TEST( testStringUtilities, tokenize )
 
     for( TokenizeBySpacesTest test : tokenizeBSTests )
     {
-      const std::vector< string > r = stringutilities::tokenizeBySpaces( test.strToTest );
+      std::vector< string > const r = stringutilities::tokenizeBySpaces( test.strToTest );
 
       if( r != test.expected )
       {
