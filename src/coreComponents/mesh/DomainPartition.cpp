@@ -77,7 +77,6 @@ void DomainPartition::initializationOrder( string_array & order )
 void DomainPartition::setupCommunications( bool use_nonblocking, bool setUpGhosts )
 {
 
-
 #if defined(GEOSX_USE_MPI)
   if ( !setUpGhosts )  
   {
@@ -185,8 +184,6 @@ void DomainPartition::setupCommunications( bool use_nonblocking, bool setUpGhost
                                                                nodeManager,
                                                                m_neighbors );
   
-        //GEOSX_LOG_RANK( "INFO: meshLevel="<<meshLevel.getName()<<"; faceManager.localToGlobalMap()="<<faceManager.localToGlobalMap());
-  
         CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
                                                                                m_neighbors );
   
@@ -195,22 +192,17 @@ void DomainPartition::setupCommunications( bool use_nonblocking, bool setUpGhost
 	     faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
 	     faceManager.computeGeometry( nodeManager );
       } );
-      //GEOSX_LOG_RANK( "INFO: use_nonblocking="<<use_nonblocking);
     }
     else if ( setUpGhosts )
     {
-
       meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
       {
-        //GEOSX_LOG_RANK( "INFO: meshLevel="<<meshLevel.getName() );
-
 	     if ( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() ) 
 	     {
            NodeManager & nodeManager = meshLevel.getNodeManager();
 	        FaceManager & faceManager = meshLevel.getFaceManager();
 
 	        CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
-
         }
         else if ( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
         {
@@ -224,7 +216,6 @@ void DomainPartition::setupCommunications( bool use_nonblocking, bool setUpGhost
           CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, m_neighbors );
           CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
         }
-
       } );
     }
   } );

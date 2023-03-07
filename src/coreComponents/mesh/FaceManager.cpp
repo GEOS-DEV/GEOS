@@ -284,17 +284,6 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
     }
 
     std::sort( thetaOrder, thetaOrder + numFaceNodes );
-    // printf(" sorted face. Previous order ");
-    //for( localIndex n = 0; n < numFaceNodes; ++n )
-    //{
-    //  printf(" %i ", faceNodes[n]);
-    //}
-    //printf(", new order ");
-    //for( localIndex n = 0; n < numFaceNodes; ++n )
-    //{
-    //  printf(" %i ", thetaOrder[n].second);
-    //}
-    //printf("\n");
     // Reorder nodes on face
     for( localIndex n = 0; n < numFaceNodes; ++n )
     {

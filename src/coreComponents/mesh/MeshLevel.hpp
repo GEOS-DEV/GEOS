@@ -86,8 +86,7 @@ public:
              Group * const parent,
              MeshLevel const & source,
              CellBlockManagerABC & cellBlockManager,
-             int const order,
-             int const strategy);
+             int const order );
 
   virtual ~MeshLevel() override;
 

@@ -56,7 +56,7 @@ MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
 MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
                                        string const & newLevelName,
                                        CellBlockManagerABC & cellBlockManager,
-                                       int const order, int const strategy)
+                                       int const order )
 {
   MeshLevel const & sourceMeshLevel = this->getMeshLevel( sourceLevelName );
   return m_meshLevels.registerGroup( newLevelName,
@@ -64,7 +64,7 @@ MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
                                                                     this,
                                                                     sourceMeshLevel,
                                                                     cellBlockManager,
-                                                                    order, strategy ) );
+                                                                    order ) );
 }
 
 MeshLevel & MeshBody::createShallowMeshLevel( string const & sourceLevelName,

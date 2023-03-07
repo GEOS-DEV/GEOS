@@ -918,7 +918,7 @@ computeBMatrix( int const qa,
   B[3] = (J[0][1]*J[0][2]+J[1][1]*J[1][2]+J[2][1]*J[2][2])/detJ;
   B[4] = (J[0][0]*J[0][2]+J[1][0]*J[1][2]+J[2][0]*J[2][2])/detJ;
   B[5] = (J[0][0]*J[0][1]+J[1][0]*J[1][1]+J[2][0]*J[2][1])/detJ;
-  //printf("detJ=%e\n",detJ);
+
   // compute detJ*J^{-1}J^{-T}
   LvArray::tensorOps::symInvert< 3 >( B );
 }
@@ -939,7 +939,6 @@ computeStiffnessTerm( int q,
   real64 J[3][3] = {{0}};
   int qa, qb, qc;
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-  //GEOSX_LOG_RANK_0 ( "!!! INFO !!! q="<<q<<"; qa="<<qa<<"; qb="<<qb<<"; qc="<<qc);
   computeBMatrix( qa, qb, qc, X, J, B );
   // diagonal terms
   for( int i=0; i<num1dNodes; i++ )

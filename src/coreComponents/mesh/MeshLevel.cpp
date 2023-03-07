@@ -319,499 +319,8 @@ MeshLevel::MeshLevel( string const & name,
                       Group * const parent,
                       MeshLevel const & source,
                       CellBlockManagerABC & cellBlockManager,
-                      int const order,
-                      int const strategy ):
+                      int const order ):
   MeshLevel( name, parent, order )
-{
-
-if ( strategy == 1 )
-{
-
-  GEOSX_MARK_FUNCTION;
-
-  ////////////////////////////////
-  // Get the new number of nodes
-  ////////////////////////////////
-
-  // the total number of nodes: to add the number of non-vertex edge nodes
-  localIndex const numBasisSupportPoints = order+1;
-  localIndex const numNodesPerEdge = numBasisSupportPoints;
-  localIndex const numNonVertexNodesPerEdge = numNodesPerEdge - 2;
-  localIndex const numInternalEdgeNodes = source.m_edgeManager->size() * numNonVertexNodesPerEdge;
-
-  // the total number of nodes: to add the number of non-edge face nodes
-  localIndex const numNodesPerFace = pow( order+1, 2 );
-  localIndex const numNonEdgeNodesPerFace = pow( order-1, 2 );
-  localIndex numInternalFaceNodes = 0;
-
-  ArrayOfArraysView< localIndex const > const & facesToEdges = source.m_faceManager->edgeList().toViewConst();
-  for( localIndex kf=0; kf<source.m_faceManager->size(); ++kf )
-  {
-    localIndex const numEdgesPerFace = facesToEdges.sizeOfArray( kf );
-    if( numEdgesPerFace==4 )
-      numInternalFaceNodes += numNonEdgeNodesPerFace;
-    else
-    {
-      GEOSX_ERROR( "need more support for face geometry" );
-    }
-  }
-
-  // the total number of nodes: to add the number of non-face element nodes
-  localIndex numInternalElementNodes = 0;
-  source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
-  {
-    sourceRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
-    {
-      if( sourceSubRegion.getElementType() == ElementType::Hexahedron )
-      {
-        numInternalElementNodes += sourceSubRegion.size() * pow( order-1, 3 );
-      }
-    } );
-  } );
-
-  // calculate the total number of nodes
-  localIndex const numNodes = source.m_nodeManager->size()
-                              + numInternalEdgeNodes
-                              + numInternalFaceNodes
-                              + numInternalElementNodes;
-
-  //
-  // ---- to initialize the node local to global map ----
-  //
-
-  cellBlockManager.setNumNodes( numNodes, order );
-
-  arrayView1d< globalIndex const > const sourceNodeLocalToGlobal = source.m_nodeManager->localToGlobalMap();
-  arrayView1d< globalIndex > nodeLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
-
-  //GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobal = "<< nodeLocalToGlobal );
-  //GEOSX_LOG_RANK ("!!!! INFO !!!! sourceNodeLocalToGlobal = "<< sourceNodeLocalToGlobal);
-
-
-
-  //////////////////////////
-  // Edges
-  //////////////////////////
-
-  // the total number of nodes: to add the number of non-vertex edge nodes
-  m_edgeManager->resize( source.m_edgeManager->size() );
-  m_edgeManager->getDomainBoundaryIndicator() = source.m_edgeManager->getDomainBoundaryIndicator();
-
-  arrayView1d< globalIndex const > const edgeLocalToGlobal = m_edgeManager->localToGlobalMap();
-  for (localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < source.m_edgeManager->localToGlobalMap().size(); iter_localToGlobalsize++)
-  {
-    m_edgeManager->localToGlobalMap()[iter_localToGlobalsize] = source.m_edgeManager->localToGlobalMap()[iter_localToGlobalsize];
-  }
-  m_edgeManager->constructGlobalToLocalMap();
-  //GEOSX_LOG_RANK ("!!!! INFO !!!! edgeLocalToGlobal = "<< edgeLocalToGlobal <<"; numInternalEdgeNodes="<<numInternalEdgeNodes);
-  //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! test="<<test);
-
-  //
-  // ---- initialize edge-to-node map ----
-  //
-
-  // get information from the source (base mesh-level) edge-to-node map
-  arrayView2d< localIndex const > const & edgeToNodeMapSource = source.m_edgeManager->nodeList();
-  //array2d< localIndex > & edgeToNodeMapNew = m_edgeManager->nodeList();
-  arrayView2d< localIndex > edgeToNodeMapNew = cellBlockManager.getEdgeToNodes();
-  m_edgeManager->nodeList().resize( source.m_edgeManager->size(), numNodesPerEdge );
-
-
-  /////////////////////////
-  // Faces
-  //////////////////////////
-
-  m_faceManager->resize( source.m_faceManager->size() );
-  m_faceManager->faceCenter() = source.m_faceManager->faceCenter();
-  m_faceManager->faceNormal() = source.m_faceManager->faceNormal();
-
-  // copy the faces-to-edgs map from source
-  m_faceManager->edgeList() = source.m_faceManager->edgeList();
-  // copy the faces-to-elements map from source
-  m_faceManager->elementList() = source.m_faceManager->elementList();
-  // copy the faces-boundaryIndicator from source
-  m_faceManager->getDomainBoundaryIndicator() = source.m_faceManager->getDomainBoundaryIndicator();
-
-  arrayView1d< globalIndex const > const faceLocalToGlobal = m_faceManager->localToGlobalMap();
-  for (localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < source.m_faceManager->localToGlobalMap().size(); iter_localToGlobalsize++)
-  {
-    m_faceManager->localToGlobalMap()[iter_localToGlobalsize] = source.m_faceManager->localToGlobalMap()[iter_localToGlobalsize];
-  }
-  m_faceManager->constructGlobalToLocalMap();
-  //GEOSX_LOG_RANK ("!!!! INFO !!!! faceLocalToGlobal = "<< faceLocalToGlobal <<"; numInternalFaceNodes="<<numInternalFaceNodes);
-
-  ArrayOfArraysView< localIndex const > const & faceToNodeMapSource = source.m_faceManager->nodeList().toViewConst();
-  ArrayOfArrays< localIndex > & faceToNodesRelation = m_faceManager->nodeList();
-  ArrayOfArrays< localIndex > & faceToNodeMapNew = cellBlockManager.getFaceToNodes();
-
-  // number of elements in each row of the map as capacity
-  array1d< localIndex > counts( faceToNodeMapNew.size());
-  counts.setValues< parallelHostPolicy >( numNodesPerFace );
-
-  //  reconstructs the faceToNodeMap with the provided capacity in counts
-  faceToNodeMapNew.resizeFromCapacities< parallelHostPolicy >( faceToNodeMapNew.size(), counts.data() );
-  faceToNodesRelation.resizeFromCapacities< parallelHostPolicy >( faceToNodesRelation.size(), counts.data() );
-
-  // setup initial values of the faceToNodeMap using emplaceBack
-  forAll< parallelHostPolicy >( faceToNodeMapNew.size(),
-                                [faceToNodeMapNew = faceToNodeMapNew.toView()]
-                                  ( localIndex const faceIndex )
-  {
-    for( localIndex i = 0; i < faceToNodeMapNew.capacityOfArray( faceIndex ); ++i )
-    {
-      faceToNodeMapNew.emplaceBack( faceIndex, -1 );
-    }
-  } );
-
-  //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapSource = "<< faceToNodeMapSource );
-  //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew );
-  //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodesRelation = "<< faceToNodesRelation );
-
-
-  //////////////////////////
-  // Nodes
-  //////////////////////////
-
-  m_nodeManager->resize( numNodes );
-
-  Group & nodeSets = m_nodeManager->sets();
-  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
-  allNodes.reserve( m_nodeManager->size() );
-
-  for( localIndex a=0; a<m_nodeManager->size(); ++a )
-  {
-    allNodes.insert( a );
-  }
-
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const refPosSource = source.m_nodeManager->referencePosition();
-  //arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const refPosNew = m_nodeManager->referencePosition().toView();
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > refPosNew = cellBlockManager.getNodePositions();
-
-
-  /////////////////////////
-  // Elements
-  //////////////////////////
-
-  source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
-  {
-    // create element region with the same name as source element region "Region"
-    CellElementRegion & region = *(dynamic_cast< CellElementRegion * >( m_elementManager->createChild( sourceRegion.getCatalogName(),
-                                                                                                       sourceRegion.getName() ) ) );
-    // add cell block to the new element region with the same name as cell block name from source element region
-    region.addCellBlockNames( sourceRegion.getCellBlockNames() );
-
-    sourceRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
-    {
-      // create element sub region with the same name as source element sub region "cb"
-      CellElementSubRegion & newSubRegion = region.getSubRegions().registerGroup< CellElementSubRegion >( sourceSubRegion.getName() );
-      newSubRegion.setElementType( sourceSubRegion.getElementType() );
-
-      // the number of nodes per elements depends on the order number
-      localIndex const numNodesPerElem = pow( order+1, 3 );
-
-      // resize per elements value for the new sub region with the new number of nodes per element
-      newSubRegion.resizePerElementValues( numNodesPerElem,
-                                           sourceSubRegion.numEdgesPerElement(),
-                                           sourceSubRegion.numFacesPerElement() );
-
-      newSubRegion.resize( sourceSubRegion.size() );
-
-      // copy new elemCenter map from source
-      array2d< real64 > & elemCenterNew = newSubRegion.getElementCenter();
-      arrayView2d< real64 const > const elemCenterOld = sourceSubRegion.getElementCenter();
-      elemCenterNew = elemCenterOld;
-
-      // copy the elements-to-faces map from source
-      arrayView2d< localIndex const > const & elemsToFaces = sourceSubRegion.faceList();
-      array2d< localIndex > & elemsToFacesNew = newSubRegion.faceList();
-      elemsToFacesNew = elemsToFaces;
-
-      // copy the elements-to-edgs map from source
-      arrayView2d< localIndex const > const & elemsToEdges = sourceSubRegion.edgeList();
-      array2d< localIndex > & elemsToEdgesNew = newSubRegion.edgeList();
-      elemsToEdgesNew = elemsToEdges;
-
-
-      // initialize the elements-to-nodes map
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
-      //array2d< localIndex, cells::NODE_MAP_PERMUTATION > & elemsToNodesNew = newSubRegion.nodeList();
-      arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew = cellBlockManager.getElemToNodes(newSubRegion.getName(), numNodesPerElem);
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew.size(1));
-
-      arrayView1d< globalIndex const > const elementLocalToGlobal = sourceSubRegion.localToGlobalMap();
-
-      for (localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < sourceSubRegion.localToGlobalMap().size(); iter_localToGlobalsize++)
-      {
-        newSubRegion.localToGlobalMap()[iter_localToGlobalsize] = sourceSubRegion.localToGlobalMap()[iter_localToGlobalsize];
-      }
-      newSubRegion.constructGlobalToLocalMap();
-
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! elementLocalToGlobal="<<elementLocalToGlobal);
-
-      //Fill a temporary array which contains the Gauss-Lobatto points depending on the order
-      array1d< real64 > GaussLobattoPts( order+1 );
-
-      switch( order )
-      {
-        case 1:
-          GaussLobattoPts[0] = -1.0;
-          GaussLobattoPts[1] = 1.0;
-          break;
-        case 2:
-          GaussLobattoPts[0] = -1.0;
-          GaussLobattoPts[1] = 0.0;
-          GaussLobattoPts[2] = 1.0;
-          break;
-        case 3:
-          static constexpr real64 sqrt5 = 2.2360679774997897;
-          GaussLobattoPts[0] = -1.0;
-          GaussLobattoPts[1] = -1./sqrt5;
-          GaussLobattoPts[2] = 1./sqrt5;
-          GaussLobattoPts[3] = 1.;
-          break;
-        case 4:
-          static constexpr real64 sqrt3_7 = 0.6546536707079771;
-          GaussLobattoPts[0] = -1.0;
-          GaussLobattoPts[1] = -sqrt3_7;
-          GaussLobattoPts[2] = 0.0;
-          GaussLobattoPts[3] = sqrt3_7;
-          GaussLobattoPts[4] = 1.0;
-          break;
-        case 5:
-          static constexpr real64 sqrt__7_plus_2sqrt7__ = 3.50592393273573196;
-          static constexpr real64 sqrt__7_mins_2sqrt7__ = 1.30709501485960033;
-          static constexpr real64 sqrt_inv21 = 0.218217890235992381;
-          GaussLobattoPts[0] = -1.0;
-          GaussLobattoPts[1] = -sqrt_inv21*sqrt__7_plus_2sqrt7__;
-          GaussLobattoPts[2] = -sqrt_inv21*sqrt__7_mins_2sqrt7__;
-          GaussLobattoPts[3] = sqrt_inv21*sqrt__7_mins_2sqrt7__;
-          GaussLobattoPts[4] = sqrt_inv21*sqrt__7_plus_2sqrt7__;
-          GaussLobattoPts[5] = 1.0;
-          break;
-      }
-
-      // initiate the localNodeID to be the totalnumber of local nodes from the current rank
-      localIndex localNodeID = source.m_nodeManager->size();
-
-      // firstly loop through all the nodes from source ( base-mesh level )
-      // and copy the nodeLocalToGlobal map for the existing local nodes
-      for( localIndex iter_node = 0; iter_node < localNodeID; ++iter_node )
-      {
-        nodeLocalToGlobal[iter_node] =  sourceNodeLocalToGlobal[iter_node];
-      }
-
-      // secondly loop through all the edges and assign the globalID according to the globalID of the Edge
-      // and insert the new local to global ID ( for the internal edge nodes ) into the nodeLocalToGlobal
-      globalIndex const firstGlobalNodeIDforEdges = source.m_nodeManager->maxGlobalIndex() + 1;
-      localIndex const numOfNodesPerEdgeForBase = 2;
-
-      for( localIndex iter_edge = 0; iter_edge < m_edgeManager->size(); ++iter_edge )
-      {
-        for ( localIndex iter_nodesPerEdgeBase  = 0; iter_nodesPerEdgeBase < numOfNodesPerEdgeForBase; iter_nodesPerEdgeBase++)
-        {
-          edgeToNodeMapNew[iter_edge][ iter_nodesPerEdgeBase ] = edgeToNodeMapSource[iter_edge][ iter_nodesPerEdgeBase ];
-        }
-
-        globalIndex edgeGlobalID = edgeLocalToGlobal[iter_edge];
-        for (localIndex iter_internalnode = 0; iter_internalnode < numNonVertexNodesPerEdge;  ++iter_internalnode)
-        {
-          nodeLocalToGlobal[localNodeID] = firstGlobalNodeIDforEdges + edgeGlobalID * numNonVertexNodesPerEdge +  iter_internalnode;
-          edgeToNodeMapNew[iter_edge][ numOfNodesPerEdgeForBase + iter_internalnode ] = localNodeID;
-
-          refPosNew[localNodeID][0] = refPosSource[ edgeToNodeMapSource[iter_edge][0]][0]
-                                    + ((refPosSource[ edgeToNodeMapSource[iter_edge][1]][0]-refPosSource[ edgeToNodeMapSource[iter_edge][0]][0])/2.)
-                                      * GaussLobattoPts[iter_internalnode + 1]
-                                    + (refPosSource[ edgeToNodeMapSource[iter_edge][1]][0]-refPosSource[ edgeToNodeMapSource[iter_edge][0]][0])/2;
-
-          refPosNew[localNodeID][1] = refPosSource[ edgeToNodeMapSource[iter_edge][0]][1]
-                                    + ((refPosSource[ edgeToNodeMapSource[iter_edge][1]][1]-refPosSource[ edgeToNodeMapSource[iter_edge][0]][1])/2.)
-                                      * GaussLobattoPts[iter_internalnode + 1]
-                                    + (refPosSource[ edgeToNodeMapSource[iter_edge][1]][1]-refPosSource[ edgeToNodeMapSource[iter_edge][0]][1])/2;
-
-          refPosNew[localNodeID][2] = refPosSource[ edgeToNodeMapSource[iter_edge][0]][2]
-                                    + ((refPosSource[ edgeToNodeMapSource[iter_edge][1]][2]-refPosSource[ edgeToNodeMapSource[iter_edge][0]][2])/2.)
-                                      * GaussLobattoPts[iter_internalnode + 1]
-                                    + (refPosSource[ edgeToNodeMapSource[iter_edge][1]][2]-refPosSource[ edgeToNodeMapSource[iter_edge][0]][2])/2;
-          localNodeID++;
-        }
-      }
-
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapSource = "<< edgeToNodeMapSource);
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapNew = "<< edgeToNodeMapNew);
-
-      // then loop through all the faces and assign the globalID according to the globalID of the Face
-      // and insert the new local to global ID ( for the internal nodes of faces ) into the nodeLocalToGlobal
-      globalIndex const firstGlobalNodeIDforFaces = firstGlobalNodeIDforEdges + numInternalEdgeNodes * ( source.m_edgeManager->maxGlobalIndex() + 1 );
-      localIndex const numOfNodesPerFaceForBase = 4;
-      localIndex const numOfEdgesPerFace = 4;
-
-
-      for( localIndex iter_face = 0; iter_face < m_faceManager->size(); ++iter_face )
-      {
-        for ( localIndex iter_nodesPerFaceBase  = 0; iter_nodesPerFaceBase < numOfNodesPerFaceForBase; iter_nodesPerFaceBase++)
-        {
-          faceToNodeMapNew[iter_face][ iter_nodesPerFaceBase ] = faceToNodeMapSource[iter_face][ iter_nodesPerFaceBase ];
-        }
-
-        globalIndex faceGlobalID = faceLocalToGlobal[iter_face];
-
-        for( localIndex iter_edge = 0; iter_edge < numOfEdgesPerFace; ++iter_edge )
-        {
-          for (localIndex iter_internalnode = 0; iter_internalnode < numNonVertexNodesPerEdge;  ++iter_internalnode)
-            faceToNodeMapNew[iter_face][ numOfNodesPerFaceForBase + iter_edge * numNonVertexNodesPerEdge + iter_internalnode ] =
-              edgeToNodeMapNew[facesToEdges[iter_face][iter_edge]][numOfNodesPerEdgeForBase + iter_internalnode] ;
-        }
-
-        real64 refPosXmax = std::max( std::max( refPosSource[faceToNodeMapSource[iter_face][0]][0], refPosSource[faceToNodeMapSource[iter_face][1]][0] ),
-                                refPosSource[faceToNodeMapSource[iter_face][2]][0] );
-        real64 refPosYmax = std::max( std::max( refPosSource[faceToNodeMapSource[iter_face][0]][1], refPosSource[faceToNodeMapSource[iter_face][1]][1] ),
-                                refPosSource[faceToNodeMapSource[iter_face][2]][1] );
-        real64 refPosZmax = std::max( std::max( refPosSource[faceToNodeMapSource[iter_face][0]][2], refPosSource[faceToNodeMapSource[iter_face][1]][2] ),
-                                refPosSource[faceToNodeMapSource[iter_face][2]][2] );
-
-        for (localIndex iter_internalnodeA = 0; iter_internalnodeA < numNonVertexNodesPerEdge;  ++iter_internalnodeA)
-        {
-          for (localIndex iter_internalnodeB = 0; iter_internalnodeB < numNonVertexNodesPerEdge;  ++iter_internalnodeB)
-          {
-            localIndex iter_internalnode = iter_internalnodeA + iter_internalnodeB * numNonVertexNodesPerEdge;
-            nodeLocalToGlobal[localNodeID]= firstGlobalNodeIDforFaces + faceGlobalID * numNonEdgeNodesPerFace +  iter_internalnode;
-            faceToNodeMapNew[iter_face][ numOfNodesPerFaceForBase + numOfEdgesPerFace * numNonVertexNodesPerEdge + iter_internalnode] = localNodeID ;
-
-            if ( std::fabs ( refPosXmax - refPosSource[faceToNodeMapSource[iter_face][0]][0] ) < 1e-5 )
-            {
-              refPosNew[localNodeID][0] = refPosSource[faceToNodeMapSource[iter_face][0]][0];
-              refPosNew[localNodeID][1] = refPosSource[faceToNodeMapSource[iter_face][0]][1]
-                                        + ((refPosYmax-refPosSource[faceToNodeMapSource[iter_face][0]][1])/2.)*GaussLobattoPts[iter_internalnodeA + 1]
-                                        + (refPosYmax-refPosSource[faceToNodeMapSource[iter_face][0]][1])/2;
-              refPosNew[localNodeID][2] = refPosSource[faceToNodeMapSource[iter_face][0]][2]
-                                        + ((refPosZmax-refPosSource[faceToNodeMapSource[iter_face][0]][2])/2.)*GaussLobattoPts[iter_internalnodeB + 1]
-                                        + (refPosZmax-refPosSource[faceToNodeMapSource[iter_face][0]][2])/2;
-            }
-
-            else if ( std::fabs ( refPosYmax - refPosSource[faceToNodeMapSource[iter_face][0]][1] ) < 1e-5 )
-            {
-              refPosNew[localNodeID][0] = refPosSource[faceToNodeMapSource[iter_face][0]][0]
-                                        + ((refPosXmax-refPosSource[faceToNodeMapSource[iter_face][0]][0])/2.)*GaussLobattoPts[iter_internalnodeA + 1]
-                                        + (refPosXmax-refPosSource[faceToNodeMapSource[iter_face][0]][0])/2;
-              refPosNew[localNodeID][1] = refPosSource[faceToNodeMapSource[iter_face][0]][1];
-              refPosNew[localNodeID][2] = refPosSource[faceToNodeMapSource[iter_face][0]][2]
-                                        + ((refPosZmax-refPosSource[faceToNodeMapSource[iter_face][0]][2])/2.)*GaussLobattoPts[iter_internalnodeB + 1]
-                                        + (refPosZmax-refPosSource[faceToNodeMapSource[iter_face][0]][2])/2;
-            }
-            else
-            {
-              refPosNew[localNodeID][0] = refPosSource[faceToNodeMapSource[iter_face][0]][0]
-                                        + ((refPosXmax-refPosSource[faceToNodeMapSource[iter_face][0]][0])/2.)*GaussLobattoPts[iter_internalnodeA + 1]
-                                        + (refPosXmax-refPosSource[faceToNodeMapSource[iter_face][0]][0])/2;
-              refPosNew[localNodeID][1] = refPosSource[faceToNodeMapSource[iter_face][0]][1]
-                                        + ((refPosYmax-refPosSource[faceToNodeMapSource[iter_face][0]][1])/2.)*GaussLobattoPts[iter_internalnodeB + 1]
-                                        + (refPosYmax-refPosSource[faceToNodeMapSource[iter_face][0]][1])/2;
-              refPosNew[localNodeID][2] = refPosSource[faceToNodeMapSource[iter_face][0]][2];
-            }
-
-            localNodeID++;
-          }
-        }
-      }
-
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapSource = "<< faceToNodeMapSource);
-
-
-      // then loop through all the elements and assign the globalID according to the globalID of the Element
-      // and insert the new local to global ID ( for the internal nodes of elements ) into the nodeLocalToGlobal
-      globalIndex const firstGlobalNodeIDforElems = firstGlobalNodeIDforFaces + numInternalFaceNodes * ( source.m_faceManager->maxGlobalIndex() + 1 );
-      localIndex const numOfNodesPerElementForBase = 8;
-      localIndex const numOfEdgesPerElement = 12;
-      localIndex const numOfFacesPerElement = 6;
-      localIndex const numInternalNodesPerElement = ( order - 1 ) * ( order - 1 ) * ( order - 1 );
-
-
-      for( localIndex iter_elem = 0; iter_elem < elemsToNodesSource.size( 0 ); ++iter_elem )
-      {
-        for ( localIndex iter_nodesPerElemBase  = 0; iter_nodesPerElemBase < numOfNodesPerElementForBase; iter_nodesPerElemBase++)
-        {
-          elemsToNodesNew[iter_elem][ iter_nodesPerElemBase ] = elemsToNodesSource[iter_elem][ iter_nodesPerElemBase ];
-          refPosNew[elemsToNodesSource[iter_elem][iter_nodesPerElemBase]][0] = refPosSource[elemsToNodesSource[iter_elem][iter_nodesPerElemBase]][0];
-          refPosNew[elemsToNodesSource[iter_elem][iter_nodesPerElemBase]][1] = refPosSource[elemsToNodesSource[iter_elem][iter_nodesPerElemBase]][1];
-          refPosNew[elemsToNodesSource[iter_elem][iter_nodesPerElemBase]][2] = refPosSource[elemsToNodesSource[iter_elem][iter_nodesPerElemBase]][2];
-        }
-
-        globalIndex elemGlobalID = elementLocalToGlobal[iter_elem];
-
-        //Three 1D arrays to contains the GL points in the new coordinates knowing the mesh nodes
-        array1d< real64 > x( order+1 );
-        array1d< real64 > y( order+1 );
-        array1d< real64 > z( order+1 );
-
-        //Fill the three 1D array
-        for( localIndex i = 0; i < order+1; i++ )
-        {
-          x[i] = refPosSource[elemsToNodesSource[iter_elem][0]][0] +
-                 ((refPosSource[elemsToNodesSource[iter_elem][1]][0]-refPosSource[elemsToNodesSource[iter_elem][0]][0])/2.)*GaussLobattoPts[i]
-                 + (refPosSource[elemsToNodesSource[iter_elem][1]][0]-refPosSource[elemsToNodesSource[iter_elem][0]][0])/2;
-          y[i] = refPosSource[elemsToNodesSource[iter_elem][0]][1] +
-                 ((refPosSource[elemsToNodesSource[iter_elem][2]][1]-refPosSource[elemsToNodesSource[iter_elem][0]][1])/2.)*GaussLobattoPts[i]
-                 + (refPosSource[elemsToNodesSource[iter_elem][2]][1]-refPosSource[elemsToNodesSource[iter_elem][0]][1])/2;
-          z[i] = refPosSource[elemsToNodesSource[iter_elem][0]][2] +
-                 ((refPosSource[elemsToNodesSource[iter_elem][4]][2]-refPosSource[elemsToNodesSource[iter_elem][0]][2])/2.)*GaussLobattoPts[i]
-                 + (refPosSource[elemsToNodesSource[iter_elem][4]][2]-refPosSource[elemsToNodesSource[iter_elem][0]][2])/2;
-        }
-
-        for( localIndex iter_edge = 0; iter_edge < numOfEdgesPerElement; ++iter_edge )
-        {
-          for (localIndex iter_internalnode = 0; iter_internalnode < numNonVertexNodesPerEdge;  ++iter_internalnode)
-            elemsToNodesNew[iter_elem][ numOfNodesPerElementForBase + iter_edge * numNonVertexNodesPerEdge + iter_internalnode ]
-              = edgeToNodeMapNew[elemsToEdges[iter_elem][iter_edge]][numOfNodesPerEdgeForBase + iter_internalnode];
-        }
-
-        localIndex elemToNodeCounter = numOfNodesPerElementForBase + numOfEdgesPerElement * numNonVertexNodesPerEdge;
-        for( localIndex iter_face = 0; iter_face < numOfFacesPerElement; ++iter_face )
-        {
-          for (localIndex iter_internalnode = 0; iter_internalnode < numNonEdgeNodesPerFace;  ++iter_internalnode)
-            elemsToNodesNew[iter_elem][ elemToNodeCounter + iter_face * numNonEdgeNodesPerFace + iter_internalnode ]
-              = faceToNodeMapNew[elemsToFaces[iter_elem][iter_face]][numOfNodesPerFaceForBase + numOfEdgesPerFace * numNonVertexNodesPerEdge + iter_internalnode];
-        }
-
-        elemToNodeCounter += numOfFacesPerElement * numNonEdgeNodesPerFace;
-        for (localIndex iter_internalnodeZ = 0; iter_internalnodeZ < numNonVertexNodesPerEdge;  ++iter_internalnodeZ)
-        {
-          for (localIndex iter_internalnodeY = 0; iter_internalnodeY < numNonVertexNodesPerEdge;  ++iter_internalnodeY)
-          {
-            for (localIndex iter_internalnodeX = 0; iter_internalnodeX < numNonVertexNodesPerEdge;  ++iter_internalnodeX)
-            {
-              localIndex iter_internalnode = iter_internalnodeX + iter_internalnodeY * numNonVertexNodesPerEdge
-                                           + iter_internalnodeZ * numNonVertexNodesPerEdge * numNonVertexNodesPerEdge;
-              nodeLocalToGlobal[localNodeID] = firstGlobalNodeIDforElems + elemGlobalID * numInternalNodesPerElement +  iter_internalnode;
-              elemsToNodesNew[ iter_elem ][ elemToNodeCounter + iter_internalnode ] = localNodeID;
-
-              refPosNew[localNodeID][0] = x[iter_internalnodeX+1];
-              refPosNew[localNodeID][1] = y[iter_internalnodeY+1];
-              refPosNew[localNodeID][2] = z[iter_internalnodeZ+1];
-
-              localNodeID++;
-            }
-          }
-        }
-      }
-
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobal = "<< nodeLocalToGlobal );
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! sourceNodeLocalToGlobal = "<< sourceNodeLocalToGlobal);
-
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapNew = "<< edgeToNodeMapNew);
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesSource = "<< elemsToNodesSource);
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
-
-
-    } );
-  } );
-}
-if ( strategy == 2 )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -828,12 +337,7 @@ if ( strategy == 2 )
   } );
 
   // constants for hex mesh
-  // localIndex const numVerticesPerEdge = 2;
-  // localIndex const numVerticesPerFace = 4;
   localIndex const numVerticesPerCell = 8;
-  // localIndex const numEdgesPerFace = 4;
-  // localIndex const numEdgesPerCell = 12;
-  // localIndex const numFacesPerCell = 6;
   localIndex const numNodesPerEdge = ( order+1 );
   localIndex const numNodesPerFace = ( order+1 )*( order+1 );
   localIndex const numNodesPerCell = ( order+1 )*( order+1 )*( order+1 );
@@ -847,15 +351,12 @@ if ( strategy == 2 )
   localIndex const maxEdgeGlobalID = source.m_edgeManager->maxGlobalIndex() + 1;
   localIndex const maxFaceGlobalID = source.m_faceManager->maxGlobalIndex() + 1;
   localIndex n1 = 0;
-  // localIndex n2 = 0;
   source.m_elementManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
   {
    n1 += sourceSubRegion.size();
    localIndex maxRegionIndex = sourceSubRegion.maxGlobalIndex() + 1;
-   // n2 = std::max( n2, maxRegionIndex );
   } );
   localIndex const numLocalCells = n1;
-  // localIndex const numGlobalCells = n2;
   ////////////////////////////////
   // Get the new number of nodes
   ////////////////////////////////
@@ -863,25 +364,12 @@ if ( strategy == 2 )
                              + numLocalEdges * numInternalNodesPerEdge
                              + numLocalFaces * numInternalNodesPerFace
                              + numLocalCells * numInternalNodesPerCell;
-  GEOSX_LOG_RANK ("!!!! INFO !!!! numLocalVertices " << numLocalVertices );
-  GEOSX_LOG_RANK ("!!!! INFO !!!! numLocalEdgess " << numLocalEdges );
-  GEOSX_LOG_RANK ("!!!! INFO !!!! numLocalFaces " << numLocalFaces );
-  GEOSX_LOG_RANK ("!!!! INFO !!!! numLocalCells " << numLocalCells );
-  GEOSX_LOG_RANK ("!!!! INFO !!!! maxVertexGlobalID " << maxVertexGlobalID );
-  GEOSX_LOG_RANK ("!!!! INFO !!!! maxEdgeGlobalIDs " << maxEdgeGlobalID );
-  GEOSX_LOG_RANK ("!!!! INFO !!!! maxFaceGlobalID " << maxFaceGlobalID );
-  //GEOSX_LOG_RANK ("!!!! INFO !!!! numGlobalCells " << numGlobalCells );
-
-
   // initialize the node local to global map
 
   cellBlockManager.setNumNodes( numLocalNodes, order );
 
   arrayView1d< globalIndex const > const nodeLocalToGlobalSource = source.m_nodeManager->localToGlobalMap();
   arrayView1d< globalIndex > nodeLocalToGlobalNew = cellBlockManager.getNodeLocalToGlobal();
-
-  //GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalSource = "<< nodeLocalToGlobalSource );
-  //GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalNew = "<< nodeLocalToGlobalNew );
 
   // hash map that contains unique vertices and their indices for shared nodes.
   // a vertex is identified by 6 integers [i1 i2 i3 i4 a b], as follows
@@ -897,15 +385,10 @@ if ( strategy == 2 )
   localIndex localNodeID = 0;
   for( localIndex iter_vertex=0; iter_vertex < numLocalVertices; iter_vertex++)
   {
-    //GEOSX_LOG_RANK ("!!!! INFO !!!! localToGlobal[" << localNodeID <<"] =  " << nodeLocalToGlobalSource[ iter_vertex ] );
     nodeLocalToGlobalNew[ localNodeID ] = nodeLocalToGlobalSource[ iter_vertex ];
     nodeIDs[ createNodeKey( iter_vertex ) ] = localNodeID;
     localNodeID++;
   }
-
-  GEOSX_LOG_RANK ("!!!! INFO !!!! created vertex nodes (" << localNodeID << " so far)" );
-
-
 
   //////////////////////////
   // Edges
@@ -921,8 +404,6 @@ if ( strategy == 2 )
     m_edgeManager->localToGlobalMap()[iter_localToGlobalsize] = source.m_edgeManager->localToGlobalMap()[iter_localToGlobalsize];
   }
   m_edgeManager->constructGlobalToLocalMap();
-  //GEOSX_LOG_RANK ("!!!! INFO !!!! edgeLocalToGlobal = "<< edgeLocalToGlobal <<"; numInternalEdgeNodes="<<numInternalEdgeNodes);
-  //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! test="<<test);
 
   //
   // ---- initialize edge-to-node map ----
@@ -959,7 +440,6 @@ if ( strategy == 2 )
       edgeToNodeMapNew[ iter_edge ][ q ] = nodeID;
     }
   }
-  GEOSX_LOG_RANK ("!!!! INFO !!!! created edge nodes (" << localNodeID << " so far)" );
 
   /////////////////////////
   // Faces
@@ -984,7 +464,6 @@ if ( strategy == 2 )
     m_faceManager->localToGlobalMap()[iter_localToGlobalsize] = source.m_faceManager->localToGlobalMap()[iter_localToGlobalsize];
   }
   m_faceManager->constructGlobalToLocalMap();
-  //GEOSX_LOG_RANK ("!!!! INFO !!!! faceLocalToGlobal = "<< faceLocalToGlobal <<"; numInternalFaceNodes="<<numInternalFaceNodes);
 
   ArrayOfArraysView< localIndex const > const & faceToNodeMapSource = source.m_faceManager->nodeList().toViewConst();
   ArrayOfArrays< localIndex > & faceToNodeMapNew = cellBlockManager.getFaceToNodes();
@@ -1050,9 +529,6 @@ if ( strategy == 2 )
       }
     }
   }
-  GEOSX_LOG_RANK ("!!!! INFO !!!! created face nodes (" << localNodeID << " so far)" );
-
-
 
   //////////////////////////
   // TODO check if this piece below is still necessary or not
@@ -1069,10 +545,6 @@ if ( strategy == 2 )
   {
     allNodes.insert( iter_nodes );
   }
-
-  //GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
-  //GEOSX_LOG_RANK ("!!!! INFO !!!! refPosSource = "<< refPosSource );
-
 
   /////////////////////////
   // Elements
@@ -1129,7 +601,6 @@ if ( strategy == 2 )
       // initialize the elements-to-nodes map
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
       arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew = cellBlockManager.getElemToNodes(newSubRegion.getName(), numNodesPerCell);
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesSource="<<elemsToNodesSource);
 
       arrayView1d< globalIndex const > const elementLocalToGlobal = sourceSubRegion.localToGlobalMap();
       for (localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < sourceSubRegion.localToGlobalMap().size(); iter_localToGlobalsize++)
@@ -1137,8 +608,6 @@ if ( strategy == 2 )
         newSubRegion.localToGlobalMap()[iter_localToGlobalsize] = sourceSubRegion.localToGlobalMap()[iter_localToGlobalsize];
       }
       newSubRegion.constructGlobalToLocalMap();
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! elementLocalToGlobal="<<elementLocalToGlobal);
-
 
       // then loop through all the elements and assign the globalID according to the globalID of the Element
       // and insert the new local to global ID ( for the internal nodes of elements ) into the nodeLocalToGlobal
@@ -1190,38 +659,8 @@ if ( strategy == 2 )
           elemsToNodesNew[ iter_elem ][ q ] = nodeID;
         }
       }
-      GEOSX_LOG_RANK ("!!!! INFO !!!! created cell nodes (" << localNodeID << " in total)" );
-
-    //int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-    //for(int r = 0; r < MpiWrapper::commSize(); r++) {
-    //  MpiWrapper::barrier(MPI_COMM_GEOSX);
-    //  if (r == rank) {
-    //    for( localIndex a = 0; a < m_nodeManager->size(); a++ )
-    //    {
-    //      printf(" in MeshLevel: rank %i coords = %f %f %f, globalId=%i\n", rank, refPosNew[a][0], refPosNew[a][1],refPosNew[a][2],nodeLocalToGlobalNew[a]);
-    //    } 
-    //  }
-    //}
-
-
-       //GEOSX_LOG_RANK ("!!!! INFO !!!! refPosNew = "<< refPosNew );
-       //// GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalSource = "<< nodeLocalToGlobalSource );
-       //GEOSX_LOG_RANK ("!!!! INFO !!!! nodeLocalToGlobalNew = "<< nodeLocalToGlobalNew );
-       ////GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapSource = "<< edgeToNodeMapSource);
-       //GEOSX_LOG_RANK ("!!!! INFO !!!! edgeToNodeMapNew = "<< edgeToNodeMapNew);
-       ////GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapSource = "<< faceToNodeMapSource);
-       //GEOSX_LOG_RANK ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
-       //GEOSX_LOG_RANK ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
-       //GEOSX_LOG_RANK ("!!!! INFO !!!! faceCentersNew = "<< m_faceManager->faceCenter() );
-
-      //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! elemsToNodesNew = "<< elemsToNodesNew);
-      //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! faceToNodeMapNew = "<< faceToNodeMapNew);
-      //GEOSX_LOG_RANK ("!!!! INFO !!!! elemCenterNew= "<< elemCenterNew);
-      //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! faceCenterNew= "<< m_faceManager->faceCenter());
-      //GEOSX_LOG_RANK_0 ("!!!! INFO !!!! faceNormalNew= "<< m_faceManager->faceNormal());
     } );
   } );
-}
 }
 
 MeshLevel::MeshLevel( string const & name,
