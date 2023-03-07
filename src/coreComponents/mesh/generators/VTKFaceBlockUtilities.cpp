@@ -803,22 +803,19 @@ struct Elem2dTo
 {
   std::vector< std::vector< vtkIdType > > elem2dToElem3d;
   std::vector< std::vector< vtkIdType > > elem2dToFaces;
-  std::vector< std::set< vtkIdType > > elem2dToNodes;
 
-  Elem2dTo( std::vector< std::vector< vtkIdType>> const & elem2DToElem3D,
-            std::vector< std::vector< vtkIdType>> const & elem2DToFaces,
-            std::vector< std::set< vtkIdType>> const & elem2DToNodes )
+  Elem2dTo( std::vector< std::vector< vtkIdType > > && elem2DToElem3D,
+            std::vector< std::vector< vtkIdType > > && elem2DToFaces )
     : elem2dToElem3d( elem2DToElem3D ),
-      elem2dToFaces( elem2DToFaces ),
-      elem2dToNodes( elem2DToNodes )
+      elem2dToFaces( elem2DToFaces )
   { }
 };
 
-Elem2dTo buildElem2dToNodes( vtkSmartPointer< vtkDataSet > faceMesh,
-                             vtkSmartPointer< vtkDataSet > mesh,
-                             DuplicatedPoints const & duplicatedPoints,
-                             ArrayOfArrays< localIndex > const & faceToNodes,
-                             geosx::internal::ElementToFace const & elemToFaces )
+Elem2dTo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMesh,
+                                        vtkSmartPointer< vtkDataSet > mesh,
+                                        DuplicatedPoints const & duplicatedPoints,
+                                        ArrayOfArrays< localIndex > const & faceToNodes,
+                                        geosx::internal::ElementToFace const & elemToFaces )
 {
   const char * const boundaryPointsName = "boundary points";
   const char * const boundaryCellsName = "boundary cells";
@@ -917,7 +914,15 @@ Elem2dTo buildElem2dToNodes( vtkSmartPointer< vtkDataSet > faceMesh,
     }
   }
 
-  std::vector< std::set< vtkIdType > > elem2dToNodes( faceMesh->GetNumberOfCells() );
+  return Elem2dTo( std::move( elem2dToElem3d ), std::move( elem2dToFaces ) );
+}
+
+
+std::vector< std::set< vtkIdType > > computeElem2dToNodes( vtkIdType num2dElements,
+                                                           ArrayOfArrays< localIndex > const & faceToNodes,
+                                                           std::vector< std::vector< vtkIdType > > const & elem2dToFaces )
+{
+  std::vector< std::set< vtkIdType > > elem2dToNodes( num2dElements );
   for( std::size_t elem2dIndex = 0; elem2dIndex < elem2dToFaces.size(); ++elem2dIndex )
   {
     for( vtkIdType const & faceIndex: elem2dToFaces[elem2dIndex] )
@@ -930,7 +935,7 @@ Elem2dTo buildElem2dToNodes( vtkSmartPointer< vtkDataSet > faceMesh,
     }
   }
 
-  return Elem2dTo(elem2dToElem3d, elem2dToFaces, elem2dToNodes);
+  return elem2dToNodes;
 }
 
 
@@ -1013,7 +1018,8 @@ void importFractureNetwork2( string const & faceBlockName,
   localIndex const num2dFaces = edges->GetNumberOfCells();
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
   // Now let's build the elem2dTo* mappings.
-  Elem2dTo const elem2DTo = buildElem2dToNodes( faceMesh, vtkMesh, duplicatedPoints, faceToNodes, elemToFaces );
+  Elem2dTo const elem2DTo = computeElem2dTo3dElemAndFaces( faceMesh, vtkMesh, duplicatedPoints, faceToNodes, elemToFaces );
+  std::vector< std::set< vtkIdType > > const elem2dToNodes = computeElem2dToNodes( num2dElements, faceToNodes, elem2DTo.elem2dToFaces );
 
   std::vector< std::vector< vtkIdType > > const face2dToElems2d = computeFace2dToElems2d( edges, faceMesh );
   std::vector< vtkIdType > const face2dToEdge = computeFace2dToEdge( edges, duplicatedPoints, nodeToEdges );
@@ -1025,7 +1031,7 @@ void importFractureNetwork2( string const & faceBlockName,
   faceBlock.setNum2DElements( num2dElements );
   faceBlock.setNum2DFaces( num2dFaces );
 
-  faceBlock.set2dElemToNodes( convertToArrayOfArraysFromSet( elem2DTo.elem2dToNodes ) );
+  faceBlock.set2dElemToNodes( convertToArrayOfArraysFromSet( elem2dToNodes ) );
 
   faceBlock.set2dElemToEdges( convertToArrayOfArrays( elem2DToEdges ) );
   faceBlock.set2dFaceToEdge( convert1d( face2dToEdge ) );
