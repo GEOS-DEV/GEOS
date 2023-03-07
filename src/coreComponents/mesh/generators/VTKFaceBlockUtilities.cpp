@@ -683,22 +683,6 @@ private:
   std::vector< std::vector< vtkIdType > > m_duplicatedNodes;
 };
 
-
-struct Face2dAndMore
-{
-  std::vector< vtkIdType > face2dToEdge;
-  std::vector< std::vector< vtkIdType > > elem2dToEdges;
-  std::vector< std::vector< vtkIdType > > elem2dToFace2d;
-
-  Face2dAndMore( std::vector< vtkIdType > const & face2DToEdge,
-                 std::vector< std::vector< vtkIdType>> const & elem2DToEdges,
-                 std::vector< std::vector< vtkIdType>> const & elem2DToFace2D )
-    : face2dToEdge( face2DToEdge ),
-      elem2dToEdges( elem2DToEdges ),
-      elem2dToFace2d( elem2DToFace2D )
-  { }
-};
-
 struct hash_pair {
   template <class T1, class T2>
   size_t operator()(const std::pair<T1, T2>& p) const
@@ -717,9 +701,7 @@ struct hash_pair {
 
 
 std::vector< std::vector< vtkIdType > > computeFace2dToElems2d( vtkPolyData * edges,
-                                                                vtkSmartPointer< vtkDataSet > faceMesh,
-                                                                DuplicatedPoints const & duplicatedPoints,
-                                                                ArrayOfArrays< localIndex > const nodeToEdges )
+                                                                vtkSmartPointer< vtkDataSet > faceMesh )
 {
   std::unordered_map< std::pair< vtkIdType, vtkIdType >, int, hash_pair > face2dIds;
   for( int i = 0; i < edges->GetNumberOfCells(); ++i )
@@ -748,11 +730,9 @@ std::vector< std::vector< vtkIdType > > computeFace2dToElems2d( vtkPolyData * ed
   return face2dToElems2d;
 }
 
-Face2dAndMore computeFace2dToElems2dAll( vtkPolyData * edges,
-                                         vtkSmartPointer< vtkDataSet > faceMesh,
-                                         DuplicatedPoints const & duplicatedPoints,
-                                         std::vector< std::vector< vtkIdType > > const & face2dToElems2d,
-                                         ArrayOfArrays< localIndex > const nodeToEdges )
+std::vector< vtkIdType > computeFace2dToEdge( vtkPolyData * edges,
+                                              DuplicatedPoints const & duplicatedPoints,
+                                              ArrayOfArrays< localIndex > const nodeToEdges )
 {
   // Computing the face2dToEdges mapping. It does not require face2dToElems2d: split the function.
   auto const comp = []( std::pair< vtkIdType, int > const & l, std::pair< vtkIdType, int > const & r ) { return l.second < r.second; };
@@ -781,10 +761,14 @@ Face2dAndMore computeFace2dToElems2dAll( vtkPolyData * edges,
     face2dToEdge[i] = res->first;
   }
 
-  // Computing elem2dToEdges.
-  std::vector< std::vector< vtkIdType > > elem2dToEdges( faceMesh->GetNumberOfCells() );
+  return face2dToEdge;
+}
+
+std::vector< std::vector< vtkIdType > > computeElem2dToFace2d( vtkIdType num2dElements,
+                                                               std::vector< std::vector< vtkIdType > > const & face2dToElems2d )
+{
   // Let's first invert face2dToElems2d into elem2dToFace2d
-  std::vector< std::vector< vtkIdType > > elem2dToFace2d( faceMesh->GetNumberOfCells() );
+  std::vector< std::vector< vtkIdType > > elem2dToFace2d( num2dElements );
   for( std::size_t face2dIndex = 0; face2dIndex < face2dToElems2d.size(); ++face2dIndex )
   {
     for( vtkIdType const & elem2dIndex: face2dToElems2d[face2dIndex] )
@@ -792,6 +776,17 @@ Face2dAndMore computeFace2dToElems2dAll( vtkPolyData * edges,
       elem2dToFace2d[elem2dIndex].emplace_back( face2dIndex );
     }
   }
+
+  return elem2dToFace2d;
+}
+
+std::vector< std::vector< vtkIdType > > computeElem2dToEdges( vtkIdType num2dElements,
+                                                              std::vector< vtkIdType > const & face2dToEdge,
+                                                              std::vector< std::vector< vtkIdType > > const & elem2dToFace2d )
+{
+  // Computing elem2dToEdges.
+  std::vector< std::vector< vtkIdType > > elem2dToEdges( num2dElements );
+  // Let's first invert face2dToElems2d into elem2dToFace2d
   // Now that we have elem2dToFace2d, we can compose with face2dToEdge to create elem2dToEdges.
   for( std::size_t elemIndex = 0; elemIndex < elem2dToFace2d.size(); ++elemIndex )
   {
@@ -801,7 +796,7 @@ Face2dAndMore computeFace2dToElems2dAll( vtkPolyData * edges,
     }
   }
 
-  return Face2dAndMore( face2dToEdge, elem2dToEdges, elem2dToFace2d );
+  return elem2dToEdges;
 }
 
 struct Elem2dTo
@@ -1020,9 +1015,10 @@ void importFractureNetwork2( string const & faceBlockName,
   // Now let's build the elem2dTo* mappings.
   Elem2dTo const elem2DTo = buildElem2dToNodes( faceMesh, vtkMesh, duplicatedPoints, faceToNodes, elemToFaces );
 
-  std::vector< std::vector< vtkIdType > > const face2dToElems2d = computeFace2dToElems2d( edges, faceMesh, duplicatedPoints, nodeToEdges );
-
-  Face2dAndMore const face2DAndMore = computeFace2dToElems2dAll( edges, faceMesh, duplicatedPoints, face2dToElems2d, nodeToEdges );
+  std::vector< std::vector< vtkIdType > > const face2dToElems2d = computeFace2dToElems2d( edges, faceMesh );
+  std::vector< vtkIdType > const face2dToEdge = computeFace2dToEdge( edges, duplicatedPoints, nodeToEdges );
+  std::vector< std::vector< vtkIdType > > const elem2dToFace2d = computeElem2dToFace2d( num2dElements, face2dToElems2d );
+  std::vector< std::vector< vtkIdType > > const elem2DToEdges = computeElem2dToEdges( num2dElements, face2dToEdge, elem2dToFace2d );
 
   // Mappings are now computed. Just create the face block by value.
   FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( "fracture_info" );  // TODO
@@ -1031,8 +1027,8 @@ void importFractureNetwork2( string const & faceBlockName,
 
   faceBlock.set2dElemToNodes( convertToArrayOfArraysFromSet( elem2DTo.elem2dToNodes ) );
 
-  faceBlock.set2dElemToEdges( convertToArrayOfArrays( face2DAndMore.elem2dToEdges ) );
-  faceBlock.set2dFaceToEdge( convert1d( face2DAndMore.face2dToEdge ) );
+  faceBlock.set2dElemToEdges( convertToArrayOfArrays( elem2DToEdges ) );
+  faceBlock.set2dFaceToEdge( convert1d( face2dToEdge ) );
 
   faceBlock.set2dFaceTo2dElems( convertToArrayOfArrays( face2dToElems2d ) );
 
