@@ -32,7 +32,7 @@ class SpatialPartition;
  * @class ParticleMeshGenerator
  * @brief The ParticleMeshGenerator class is a class handling import of particle data from an externel particle file.
  */
-class ParticleMeshGenerator : public ExternalMeshGeneratorBase
+class ParticleMeshGenerator : public MeshGeneratorBase
 {
 public:
 
