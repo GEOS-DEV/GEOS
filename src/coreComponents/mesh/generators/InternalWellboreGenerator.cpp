@@ -346,6 +346,10 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
   SortedArray< localIndex > & tnegNodes = nodeSets["tneg"];
   SortedArray< localIndex > & tposNodes = nodeSets["tpos"];
 
+  // Nodesets for the casing-cement and cement-rock interfaces of a cased wellbore
+  SortedArray< localIndex > & rinterface1Nodes = nodeSets["rIT1"];
+  SortedArray< localIndex > & rinterface2Nodes = nodeSets["rIT2"];
+
   // Map to radial mesh
   for( localIndex a = 0; a < numNodes; ++a )
   {
@@ -383,6 +387,18 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
     if( isEqual( X[a][1], m_max[1], m_coordinatePrecision ) )
     {
       tposNodes.insert( a );
+    }
+
+    // Nodeset of the first interface, next to rneg
+    if( isEqual( X[a][0], m_vertices[0][1], m_coordinatePrecision ) )
+    {
+      rinterface1Nodes.insert( a );
+    }
+
+    // Nodeset of the second interface
+    if( isEqual( X[a][0], m_vertices[0][2], m_coordinatePrecision ) )
+    {
+      rinterface2Nodes.insert( a );
     }
 
     X[a][0] = meshRact * cos( meshTheta );
