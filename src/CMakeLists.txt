@@ -130,10 +130,9 @@ set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
-set(SCHEMA_DIR ${CMAKE_SOURCE_DIR}/coreComponents/schema)
-
 if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT ENABLE_CUDA )
 
+  set(SCHEMA_DIR ${CMAKE_SOURCE_DIR}/coreComponents/schema)
   set(SCRIPT_DIR ${CMAKE_SOURCE_DIR}/../scripts)
 
   add_custom_target( geosx_generate_schema
@@ -183,6 +182,10 @@ add_custom_target( geosx_generate_install_schema
          DEPENDS geosx
          COMMENT "Generating XML schema to install"
          )
+
+if (NOT GEOSX_INSTALL_SCHEMA)
+  set_target_properties(geosx_generate_install_schema PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
+endif()
 
 install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/schema )

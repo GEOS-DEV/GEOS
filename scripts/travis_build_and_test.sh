@@ -37,6 +37,12 @@ if [[ -z "${GEOSX_DIR}" ]]; then
   exit 1
 fi
 
+GEOSX_INSTALL_SCHEMA=1
+if [[ "$*" == *--disable-schema-deployment* ]]; then
+  GEOSX_INSTALL_SCHEMA=0
+fi  
+
+
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
 # OpenMPI prevents from running as `root` user by default.
@@ -58,6 +64,7 @@ or_die python3 scripts/config-build.py \
                -ip ${GEOSX_DIR} \
                --ninja \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"'
+               -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA}
 
 or_die cd ${GEOSX_BUILD_DIR}
 
@@ -91,5 +98,7 @@ fi
 if [[ "$*" != *--disable-unit-tests* ]]; then
   or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
+
+
 
 exit 0
