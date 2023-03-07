@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <cmath>
 
 namespace geosx
 {
@@ -111,25 +112,21 @@ template< typename T >
 string toMetricPrefixString( T const & value )
 {
   // These are the metric prefixes corrosponding to kilo, mega, giga...etc.
-  char const prefixes[7] = { ' ', 'K', 'M', 'G', 'T', 'P', 'E'};
+  char const prefixes[12] = { 'f', 'p', 'n', 'u', 'm', ' ', 'K', 'M', 'G', 'T', 'P', 'E'};
   string rval;
 
-  // go from larger to smaller prefixes
-  for( int a=6; a>=0; --a )
-  {
-    real64 const scaledValue = value * pow( 10.0, -3*a );
-    real64 const absScaledValue = std::abs( scaledValue );
-    if( absScaledValue > 1.0 || a==0 )
-    {
-      // format the output of the value to 3 significant digits and append the
-      // metric prefix.
-      int const p = absScaledValue > 1.0 ? 2-trunc( log10( absScaledValue ) ) : 0;
-      char temp[10];
-      snprintf( temp, 8, "%5.*f %c", p, scaledValue, prefixes[a] );
-      rval = temp;
-      break;
-    }
-  }
+  int const power = floor( log10( std::abs( (double)value ); ) );
+  int const a = floor( power / 3.0 );
+
+  real64 const scaledValue = value * pow( 10.0, -a * 3 );
+
+  // format the output of the value to 3 significant digits and append the
+  // metric prefix.
+  int const p = 2-std::abs( power - a * 3 );
+  char temp[10];
+  snprintf( temp, 8, "%5.*f %c", p, scaledValue, prefixes[a+5] );
+  rval = temp;
+
   GEOSX_ERROR_IF( rval.empty(),
                   GEOSX_FMT( "The value of {} was not able to be converted with a metric prefix", value ) );
 
