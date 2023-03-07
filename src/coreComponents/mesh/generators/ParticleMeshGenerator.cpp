@@ -34,7 +34,7 @@ namespace geosx
 using namespace dataRepository;
 
 ParticleMeshGenerator::ParticleMeshGenerator( string const & name, Group * const parent ):
-  ExternalMeshGeneratorBase( name, parent ),
+  MeshGeneratorBase( name, parent ),
   m_dim( 3 ),
   m_min(),
   m_max()
