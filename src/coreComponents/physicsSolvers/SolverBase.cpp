@@ -110,7 +110,7 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
   for( auto const & target : m_targetRegionNames )
   {
 
-    string_array targetTokens = stringutilities::tokenize( target, "/" );
+    std::vector< string > targetTokens = stringutilities::tokenize( target, "/" );
 
     if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
     {
