@@ -216,7 +216,7 @@ struct PressureComputation
    * @param[in] dt time-step
    * @param[out] p_np1 pressure array at time n+1 (updated here)
    */
-
+  //List is not complete, it will need several GEOSX maps to add 
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
@@ -234,6 +234,7 @@ struct PressureComputation
 
   {
 
+    //For now lots of comments with ideas  + needed array to add to the method prototype
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -259,22 +260,52 @@ struct PressureComputation
         //Stiffness terms
         m_finiteElement.template computeStiffnessTerm(q, xLocal, [&] (int i, int j, real64 val )
         {
-          //Add stiffness to flow: flow[i] += val * p_n[k][i]
+          //Maybe reverse j and i 
+          //Add stiffness to flow: flow[i] += val * p_n[k][j]
         } );
 
         //Fluxes
-        for (localIndex f = 0; i < numFacesPerElem; ++1
+        for (localIndex f = 0; f < numFacesPerElem; ++f)
         {
           //Possible way: 
-          //Get the global number of face using elemeToFaces : localIndex face_glob = elemToFaces[k][f]
+          //Get the global number of face using elemeToFaces :
+          // localIndex face_glob = elemToFaces[k][f]
           //Use faceToElemIndex map to know which element shared this global face: faceToElemIndex is a 2d array which knowing a face and a index between 0 and 1 can give you the two 
-          // element which shzare the face and if you get -1 it means that the element will be in the boundary.
+          // element which share the face and if you get -1 it means that the element will be in the boundary.
+          // Initialize the storage value for contributions: real32 fp = 0.0;
           for (localIndex m = 0; m < 2; ++m)
           {
-            //localIndex
+            //fix the value only for compilation 
+            localIndex elem = 1;//faceToElemIndex[face_glob][m]
+            //We start by the test on the boundaries to skip it directly: 
+            if(elem == -1)
+            {
+              //Nothing we continue the loop
+            }
+
+            else if (elem == k )
+            {
+              //Here we compute the fluxes part corresponding to the element itself (the (K,K) part seen in the latex document). We can both compute the "classical" flux part + the penalization one:
+              //m_finiteElement.template computeFluxLocalTerm(q,xLocal,f [&] (int i, int j, real32 val)
+              //PS: Not sure about how to include the normals so I'll just put "normals" (surely missing something with the gradient inside the flux matrix)
+              //{ 
+                  //fp += 0.5* val *  p_n[k][i] + gamma[k]* val * p_n[k][i];
+                  //flow[j] += fp*normals
+              //} );
+            }
+            else
+            {
+              //It remains the case where we look at the neighbour element and we need to add the (K,L) contribution.
+              //It will be transparent here, but inside the mathematical computation we need to be careful on which degrees of freedom we send back for the pressure as we get the contribution 
+              //of the neighbour so we need to get the correct dof (can be taken in account inside the math stuff)
+              //m_finiteElement.template computeFluxNeighTerm(q, xLocal,f [&] (int i, real32 val) 
+              //{
+                  //fp += 0.5* val * p_n[k][i] - gamma[k]* val * p_n[k][i];
+                  //flow[j] += fp*normals
+              //} );
+            }
           }
           
-
         }
         
 
@@ -301,7 +332,7 @@ struct PressureComputation
 
     } );
 
-    //Pre-mult by the first factor for damping
+   
   }
 
   /// The finite element space/discretization object for the element type in the subRegion
