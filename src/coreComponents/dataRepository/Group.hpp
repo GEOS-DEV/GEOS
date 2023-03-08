@@ -396,6 +396,16 @@ public:
    */
   bool hasGroupByPath( string const & path ) const;
 
+  template < typename T >
+  bool hasSubGroupOfType( ) const
+  {
+    bool hasSubGroup = false;
+    // since forSubGroups only applies the lambda to groups matching the type, any calls to the lambda
+    //  indicates that we have a group of the correct type.
+    forSubGroups< T >( [&]( T * ){ hasSubGroup = true; } );
+    return hasSubGroup;
+  }
+
   ///@}
 
   /**

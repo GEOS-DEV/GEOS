@@ -38,6 +38,7 @@
 #include "mesh/FaceElementSubRegion.hpp"
 #include "mesh/CellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+#include "fileIO/Outputs/ChomboIO.hpp"
 
 namespace geosx
 {
@@ -146,7 +147,8 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
     nodes.registerField< solidMechanics::incrementalDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
-    if( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic || Group::hasGroupByPath("/Outputs/ChombIO") )
+    OutputManager outputs = Group::getBaseGroupByPath( GEOSX_FMT( "/{}", ProblemManager::groupKeysStruct().outputManager.key() ), true );
+    if( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic || outputs.hasSubGroupOfType< ChombIO >() )
     {
       nodes.registerField< solidMechanics::velocity >( getName() ).
         reference().resizeDimension< 1 >( 3 );
