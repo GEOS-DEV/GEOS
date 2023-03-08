@@ -202,6 +202,12 @@ public:
    * @return A reference to constant map.
    */
   virtual std::map< string, SortedArray< localIndex > > const & getNodeSets() const = 0;
+
+  /**
+   * @brief Returns a mutable reference to the node sets. Key of the map is the name of the set.
+   * @return A mutable reference to the map.
+   */
+  virtual std::map< string, SortedArray< localIndex > > & getNodeSets() = 0;
 };
 
 }

@@ -530,20 +530,15 @@ MeshLevel::MeshLevel( string const & name,
     }
   }
 
-  //////////////////////////
-  // TODO check if this piece below is still necessary or not
-  //////////////////////////
-
-  // the number of nodes per elements depends on the order number
+  // add all nodes to the target set "all"
   m_nodeManager->resize( numLocalNodes );
-
-  Group & nodeSets = m_nodeManager->sets();
-  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
-  allNodes.reserve( numLocalNodes );
+  
+  SortedArray< localIndex > & allNodesSet = cellBlockManager.getNodeSets()[ "all" ];
+  allNodesSet.reserve( numLocalNodes );
 
   for( localIndex iter_nodes=0; iter_nodes< numLocalNodes; ++iter_nodes )
   {
-    allNodes.insert( iter_nodes );
+    allNodesSet.insert( iter_nodes );
   }
 
   /////////////////////////
@@ -592,7 +587,7 @@ MeshLevel::MeshLevel( string const & name,
       array2d< localIndex > & elemsToFacesNew = newSubRegion.faceList();
       elemsToFacesNew = elemsToFacesSource;
 
-      // copy the elements-to-edgs map from source
+      // copy the elements-to-edges map from source
       arrayView2d< localIndex const > const & elemsToEdgesSource = sourceSubRegion.edgeList();
       array2d< localIndex > & elemsToEdgesNew = newSubRegion.edgeList();
       elemsToEdgesNew = elemsToEdgesSource;
@@ -661,6 +656,7 @@ MeshLevel::MeshLevel( string const & name,
       }
     } );
   } );
+  this->generateSets();
 }
 
 MeshLevel::MeshLevel( string const & name,
