@@ -830,18 +830,18 @@ Elem2dTo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMesh,
   boundaryExtractor->Update();
   vtkPolyData * boundary = boundaryExtractor->GetOutput();
 
-  vtkDataArray * boundaryPoints = boundary->GetPointData()->GetArray( boundaryPointsName );  // TODO cast to integer array?
-  vtkDataArray * boundaryCells = boundary->GetCellData()->GetArray( boundaryCellsName );  // TODO cast to integer array?
+  vtkIdTypeArray const * boundaryPoints = vtkIdTypeArray::FastDownCast( boundary->GetPointData()->GetArray( boundaryPointsName ) );
+  vtkIdTypeArray const * boundaryCells = vtkIdTypeArray::FastDownCast( boundary->GetCellData()->GetArray( boundaryCellsName ) );
 
   // Building the elem2d to elem3d mapping. We need to find the 3d elements!
   std::map< vtkIdType, std::vector< vtkIdType > > nodesToCellsFull;
   for( vtkIdType i = 0; i < boundary->GetNumberOfCells(); ++i )
   {
-    vtkIdType cellId = boundaryCells->GetTuple1( i ); // TODO cast to integer array?
+    vtkIdType const cellId = boundaryCells->GetValue( i );
     vtkIdList * pointIds = boundary->GetCell( i )->GetPointIds();
     for( int j = 0; j < pointIds->GetNumberOfIds(); ++j )
     {
-      vtkIdType pointId = boundaryPoints->GetTuple1( pointIds->GetId( j ) );
+      vtkIdType const pointId = boundaryPoints->GetValue( pointIds->GetId( j ) );
       nodesToCellsFull[pointId].emplace_back( cellId );
     }
   }
