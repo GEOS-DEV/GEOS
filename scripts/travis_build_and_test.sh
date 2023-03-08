@@ -61,7 +61,7 @@ or_die python3 scripts/config-build.py \
                -bp ${GEOSX_BUILD_DIR} \
                -ip ${GEOSX_DIR} \
                --ninja \
-               -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"'
+               -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA}
 
 or_die cd ${GEOSX_BUILD_DIR}
@@ -96,7 +96,5 @@ fi
 if [[ "$*" != *--disable-unit-tests* ]]; then
   or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
-
-
 
 exit 0
