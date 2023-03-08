@@ -864,10 +864,11 @@ Elem2dTo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMesh,
     }
   }
 
-  std::vector< std::vector< vtkIdType > > elem2dToElem3d( faceMesh->GetNumberOfCells() );
-  std::vector< std::vector< vtkIdType > > elem2dToFaces( faceMesh->GetNumberOfCells() );
+  vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
+  std::vector< std::vector< vtkIdType > > elem2dToElem3d( num2dElements );
+  std::vector< std::vector< vtkIdType > > elem2dToFaces( num2dElements );
   // Now we loop on all the 2d elements.
-  for( int i = 0; i < faceMesh->GetNumberOfCells(); ++i )
+  for( int i = 0; i < num2dElements; ++i )
   {
     vtkIdList * pointIds = faceMesh->GetCell( i )->GetPointIds();
     std::size_t const elem2dNumPoints = pointIds->GetNumberOfIds();
@@ -1015,7 +1016,7 @@ void importFractureNetwork2( string const & faceBlockName,
   edgesExtractor->Update();
   vtkPolyData * edges = edgesExtractor->GetOutput();
 
-  localIndex const num2dFaces = edges->GetNumberOfCells();
+  vtkIdType const num2dFaces = edges->GetNumberOfCells();
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
   // Now let's build the elem2dTo* mappings.
   Elem2dTo const elem2DTo = computeElem2dTo3dElemAndFaces( faceMesh, vtkMesh, duplicatedPoints, faceToNodes, elemToFaces );
