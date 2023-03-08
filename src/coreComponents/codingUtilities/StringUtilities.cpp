@@ -115,7 +115,7 @@ string toMetricPrefixString( T const & value )
   char const prefixes[12] = { 'f', 'p', 'n', 'u', 'm', ' ', 'K', 'M', 'G', 'T', 'P', 'E'};
   string rval;
 
-  int const power = floor( log10( std::abs( (double)value ); ) );
+  int const power = floor( log10( std::abs( (double)value ) ) );
   int const a = floor( power / 3.0 );
 
   real64 const scaledValue = value * pow( 10.0, -a * 3 );
