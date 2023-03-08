@@ -68,18 +68,36 @@ public:
 
   array2d< localIndex > getEdgeToNodes() const override;
 
+  /**
+   * @brief Returns a view to the vector holding the edges to nodes map
+   * @return The reference
+   *
+   * @note This is meant to be used as a values setter.
+   */
   arrayView2d< localIndex > getEdgeToNodes() override;
 
   ArrayOfArrays< localIndex > getEdgeToFaces() const override;
 
   ArrayOfArrays< localIndex > getFaceToNodes() const override;
 
+  /**
+   * @brief Returns a view to the vector holding the faces to nodes map
+   * @return The reference
+   *
+   * @note This is meant to be used as a values setter.
+   */
   ArrayOfArrays< localIndex > & getFaceToNodes() override;
 
   ArrayOfArrays< localIndex > getFaceToEdges() const override;
 
   ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
 
+  /**
+   * @brief Returns a view to the vector holding the elements to nodes map
+   * @return The reference
+   *
+   * @note This is meant to be used as a values setter.
+   */
   arrayView2d< localIndex, cells::NODE_MAP_USD > getElemToNodes( string const & name, localIndex const numNodesPartition ) override;
 
   array1d< globalIndex > getNodeLocalToGlobal() const override;
@@ -112,8 +130,14 @@ public:
    */
   void setNumNodes( localIndex numNodes ); // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
 
-  void setNumNodes( localIndex numNodes, localIndex const order ) override; // TODO Improve doc. Is it per domain, are there duplicated
-                                                                            // nodes because of subregions?
+  /**
+   * @brief Defines the number of nodes and the order, and resizes some underlying arrays appropriately.
+   * @param[in] numNodes The number of nodes.
+   * @param[in] order The order of the cell block
+   *
+   * The nodes coordinates and nodes local to global mappings get resized to @p numNodes.
+   */
+  void setNumNodes( localIndex numNodes, localIndex const order ) override;
 
   localIndex numNodes() const override;
 

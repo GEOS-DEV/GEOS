@@ -131,7 +131,12 @@ public:
    */
   virtual array2d< real64, nodes::REFERENCE_POSITION_PERM > getNodePositions() const = 0;
 
+  /**
+   * @brief Returns a mutable view of the node coordinates in a (numNodes, 3) 2d array.
+   * @return A view to the array.
+   */
   virtual arrayView2d< real64, nodes::REFERENCE_POSITION_USD > getNodePositions() = 0;
+
   /**
    * @brief Returns the node to edges mapping.
    * @return The one to many relationship.
@@ -149,12 +154,17 @@ public:
    * @return A one to many relationship.
    */
   virtual ToCellRelation< ArrayOfArrays< localIndex > > getNodeToElements() const = 0;
+
   /**
    * @brief Returns the edge to nodes mapping.
    * @return A 1 to 2 relationship. The result is meant to have size (numEdges, 2).
    */
   virtual array2d< localIndex > getEdgeToNodes() const = 0;
 
+  /**
+   * @brief Returns a mutable view of the edge to nodes mapping.
+   * @return A 1 to 2 relationship. The result is meant to have size (numEdges, 2).
+   */
   virtual arrayView2d< localIndex > getEdgeToNodes() = 0;
 
   /**
@@ -169,6 +179,10 @@ public:
    */
   virtual ArrayOfArrays< localIndex > getFaceToNodes() const = 0;
 
+  /**
+   * @brief Returns a mutable view of the face to nodes mapping.
+   * @return The one to many relationship.
+   */
   virtual ArrayOfArrays< localIndex > & getFaceToNodes() = 0;
 
   /**
@@ -185,6 +199,10 @@ public:
    */
   virtual ToCellRelation< array2d< localIndex > > getFaceToElements() const = 0;
 
+  /**
+   * @brief Returns a mutable view of the element to nodes mapping.
+   * @return A one to many relationship.
+   */
   virtual arrayView2d< localIndex, cells::NODE_MAP_USD > getElemToNodes( string const & name, localIndex const numNodesPartition ) = 0;
 
   /**
@@ -193,8 +211,15 @@ public:
    */
   virtual array1d< globalIndex > getNodeLocalToGlobal() const = 0;
 
+  /**
+   * @brief Returns a mutable view of the node to global mapping for nodes.
+   * @return The mapping as an array of size numNodes.
+   */
   virtual arrayView1d< globalIndex > getNodeLocalToGlobal()  = 0;
 
+  /**
+   * @brief Sets the number of nodes and the order, and initializes some arrays/
+   */
   virtual void setNumNodes( localIndex numNodes, localIndex const order ) = 0;
 
   /**

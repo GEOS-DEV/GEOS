@@ -117,7 +117,7 @@ public:
    * @param[in] cellBlockManager Provides the mappings.
    * @param[in] elemRegionManager element region manager, needed to map blocks to subregion
    * @param[in] nodeManager Provides the nodes positions.
-   * @param[in] computeGeometry whether the face centers, normals and areas are computed or not
+   * @param[in] baseMeshLevel True if this manager belonds to the base mesh level, false otherwise
    */
   void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                 ElementRegionManager const & elemRegionManager,

@@ -364,7 +364,6 @@ public:
    * @brief computes the real-world coordinates of the support nodes
    * @param[in] Xmesh Array containing the coordinates of the corners of the mesh element
    * @param[out] X Array containing the coordinates of the support points.
-   * @return The diagonal mass term associated to q
    */
   GEOSX_HOST_DEVICE
   static void

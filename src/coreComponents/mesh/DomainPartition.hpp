@@ -90,10 +90,12 @@ public:
   /**
    * @brief Constructs the communications between this DomainPartition and its neighbors.
    * @param use_nonblocking If true complete the communications of each phase in the order they are received.
-   * @param setUpGhosts If true, also set up all the ghosting information
    */
   void setupCommunications( bool use_nonblocking );
 
+  /**
+   * @brief Constructs the global information of this DomainPartition, needed to set up ghosting 
+   */
   void setupBaseLevelMeshGlobalInfo();
 
   /**

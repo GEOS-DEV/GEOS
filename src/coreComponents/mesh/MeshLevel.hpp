@@ -82,6 +82,14 @@ public:
              MeshLevel const & source,
              int const order );
 
+  /**
+   * @brief Constructor for the MeshLevel object. Also updates the data of the given CellBlockManager.
+   * @param[in] name the name of the MeshLevel object in the repository
+   * @param[in] parent the parent group of the MeshLevel object being constructed
+   * @param[in] source The source MeshLevel to build the new one from
+   * @param[out] cellBlockManager the cellBlockManager to be updated
+   * @param[in] order The order of the MeshLevel
+   */
   MeshLevel( string const & name,
              Group * const parent,
              MeshLevel const & source,
