@@ -74,155 +74,148 @@ void DomainPartition::initializationOrder( string_array & order )
   }
 }
 
-void DomainPartition::setupCommunications( bool use_nonblocking, bool setUpGhosts )
+void DomainPartition::setupBaseLevelMeshGlobalInfo()
 {
   GEOSX_MARK_FUNCTION;
 #if defined(GEOSX_USE_MPI)
-  if ( !setUpGhosts )  
+  
+  if( m_metisNeighborList.empty() )
   {
-  
-    if( m_metisNeighborList.empty() )
+    PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
+    SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
+
+    //get communicator, rank, and coordinates
+    MPI_Comm cartcomm;
     {
-      PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
-      SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
-  
-      //get communicator, rank, and coordinates
-      MPI_Comm cartcomm;
-      {
-        int reorder = 0;
-        MpiWrapper::cartCreate( MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm );
-        GEOSX_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
-      }
-      int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-      int nsdof = 3;
-  
-      MpiWrapper::cartCoords( cartcomm, rank, nsdof, partition.m_coords.data() );
-  
-      int ncoords[3];
-      addNeighbors( 0, cartcomm, ncoords );
-  
-      MpiWrapper::commFree( cartcomm );
+      int reorder = 0;
+      MpiWrapper::cartCreate( MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm );
+      GEOSX_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
     }
-    else
-    {
-      for( integer const neighborRank : m_metisNeighborList )
-      {
-        m_neighbors.emplace_back( neighborRank );
-      }
-    }
-  
-    // Create an array of the first neighbors.
-    array1d< int > firstNeighborRanks;
-    for( NeighborCommunicator const & neighbor : m_neighbors )
-    {
-      firstNeighborRanks.emplace_back( neighbor.neighborRank() );
-    }
-  
-    int neighborsTag = 54;
-  
-    // Send this list of neighbors to all neighbors.
-    std::vector< MPI_Request > requests( m_neighbors.size(), MPI_REQUEST_NULL );
-  
-    for( std::size_t i = 0; i < m_neighbors.size(); ++i )
-    {
-      MpiWrapper::iSend( firstNeighborRanks.toViewConst(), m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOSX, &requests[ i ] );
-    }
-  
-    // This set will contain the second (neighbor of) neighbors ranks.
-    std::set< int > secondNeighborRanks;
-  
-    array1d< int > neighborOfNeighborRanks;
-    for( std::size_t i = 0; i < m_neighbors.size(); ++i )
-    {
-      MpiWrapper::recv( neighborOfNeighborRanks, m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOSX, MPI_STATUS_IGNORE );
-  
-      // Insert the neighbors of the current neighbor into the set of second neighbors.
-      secondNeighborRanks.insert( neighborOfNeighborRanks.begin(), neighborOfNeighborRanks.end() );
-    }
-  
-    // Remove yourself and all the first neighbors from the second neighbors.
-    secondNeighborRanks.erase( MpiWrapper::commRank() );
-    for( NeighborCommunicator const & neighbor : m_neighbors )
-    {
-      secondNeighborRanks.erase( neighbor.neighborRank() );
-    }
-  
-    for( integer const neighborRank : secondNeighborRanks )
+    int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    int nsdof = 3;
+
+    MpiWrapper::cartCoords( cartcomm, rank, nsdof, partition.m_coords.data() );
+
+    int ncoords[3];
+    addNeighbors( 0, cartcomm, ncoords );
+
+    MpiWrapper::commFree( cartcomm );
+  }
+  else
+  {
+    for( integer const neighborRank : m_metisNeighborList )
     {
       m_neighbors.emplace_back( neighborRank );
     }
-
-    MpiWrapper::waitAll( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
   }
+
+  // Create an array of the first neighbors.
+  array1d< int > firstNeighborRanks;
+  for( NeighborCommunicator const & neighbor : m_neighbors )
+  {
+    firstNeighborRanks.emplace_back( neighbor.neighborRank() );
+  }
+
+  int neighborsTag = 54;
+
+  // Send this list of neighbors to all neighbors.
+  std::vector< MPI_Request > requests( m_neighbors.size(), MPI_REQUEST_NULL );
+
+  for( std::size_t i = 0; i < m_neighbors.size(); ++i )
+  {
+    MpiWrapper::iSend( firstNeighborRanks.toViewConst(), m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOSX, &requests[ i ] );
+  }
+
+  // This set will contain the second (neighbor of) neighbors ranks.
+  std::set< int > secondNeighborRanks;
+
+  array1d< int > neighborOfNeighborRanks;
+  for( std::size_t i = 0; i < m_neighbors.size(); ++i )
+  {
+    MpiWrapper::recv( neighborOfNeighborRanks, m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOSX, MPI_STATUS_IGNORE );
+
+    // Insert the neighbors of the current neighbor into the set of second neighbors.
+    secondNeighborRanks.insert( neighborOfNeighborRanks.begin(), neighborOfNeighborRanks.end() );
+  }
+
+  // Remove yourself and all the first neighbors from the second neighbors.
+  secondNeighborRanks.erase( MpiWrapper::commRank() );
+  for( NeighborCommunicator const & neighbor : m_neighbors )
+  {
+    secondNeighborRanks.erase( neighbor.neighborRank() );
+  }
+
+  for( integer const neighborRank : secondNeighborRanks )
+  {
+    m_neighbors.emplace_back( neighborRank );
+  }
+
+  MpiWrapper::waitAll( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
 
 #endif
 
   forMeshBodies( [&]( MeshBody & meshBody )
   {
+    MeshLevel & meshLevel = meshBody.getBaseDiscretization();      
 
-    if ( !setUpGhosts )  
-    { 
-  
-      meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
-      {
-        
-        NodeManager & nodeManager = meshLevel.getNodeManager();
-        FaceManager & faceManager = meshLevel.getFaceManager();
-        EdgeManager & edgeManager = meshLevel.getEdgeManager();
-  
-        nodeManager.setMaxGlobalIndex();
-        for( NeighborCommunicator const & neighbor : m_neighbors )
-        {
-          neighbor.addNeighborGroupToMesh( meshLevel );
-        }
-  
-        CommunicationTools::getInstance().assignGlobalIndices( faceManager,
-                                                               nodeManager,
-                                                               m_neighbors );
-  
-        CommunicationTools::getInstance().assignGlobalIndices( edgeManager,
-                                                               nodeManager,
-                                                               m_neighbors );
-  
-        CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
-                                                                               m_neighbors );
-  
-        CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
-                                                                               m_neighbors );
-	     faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
-	     faceManager.computeGeometry( nodeManager );
-      } );
-    }
-    else if ( setUpGhosts )
+    NodeManager & nodeManager = meshLevel.getNodeManager();
+    FaceManager & faceManager = meshLevel.getFaceManager();
+    EdgeManager & edgeManager = meshLevel.getEdgeManager();
+
+    nodeManager.setMaxGlobalIndex();
+    for( NeighborCommunicator const & neighbor : m_neighbors )
     {
-      meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
-      {
-	     if ( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() ) 
-	     {
-           NodeManager & nodeManager = meshLevel.getNodeManager();
-	        FaceManager & faceManager = meshLevel.getFaceManager();
-
-	        CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
-        }
-        else if ( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
-        {
-          for( NeighborCommunicator const & neighbor : m_neighbors )
-          {   
-            neighbor.addNeighborGroupToMesh( meshLevel );
-          }   
-	       FaceManager & faceManager = meshLevel.getFaceManager();
-          NodeManager & nodeManager = meshLevel.getNodeManager();
-          CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager, m_neighbors );
-          CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, m_neighbors );
-          CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
-        }
-      } );
+      neighbor.addNeighborGroupToMesh( meshLevel );
     }
+
+    CommunicationTools::getInstance().assignGlobalIndices( faceManager,
+                                                           nodeManager,
+                                                           m_neighbors );
+
+    CommunicationTools::getInstance().assignGlobalIndices( edgeManager,
+                                                           nodeManager,
+                                                           m_neighbors );
+
+    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
+                                                                           m_neighbors );
+
+    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
+                                                                           m_neighbors );
   } );
 }
 
 
-
+void DomainPartition::setupCommunications( bool use_nonblocking )
+{
+  forMeshBodies( [&]( MeshBody & meshBody )
+  {
+    meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+    {
+      if ( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() ) 
+      {
+        NodeManager & nodeManager = meshLevel.getNodeManager();
+        FaceManager & faceManager = meshLevel.getFaceManager();
+  
+        CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+        faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
+        faceManager.computeGeometry( nodeManager );
+      }
+      else if ( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
+      {
+        for( NeighborCommunicator const & neighbor : m_neighbors )
+        {   
+          neighbor.addNeighborGroupToMesh( meshLevel );
+        }   
+        NodeManager & nodeManager = meshLevel.getNodeManager();
+        FaceManager & faceManager = meshLevel.getFaceManager();
+  
+        CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager, m_neighbors );
+        CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, m_neighbors );
+        CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+      }
+    } );
+  } );
+}
 
 void DomainPartition::addNeighbors( const unsigned int idim,
                                     MPI_Comm & cartcomm,

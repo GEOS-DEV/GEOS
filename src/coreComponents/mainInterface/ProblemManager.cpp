@@ -549,7 +549,7 @@ void ProblemManager::generateMesh()
 
   Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
-  domain.setupCommunications( useNonblockingMPI, false );
+  domain.setupBaseLevelMeshGlobalInfo();
 
   // setup the MeshLevel associated with the discretizations
   for( auto const & discretizationPair: discretizations )
@@ -602,7 +602,7 @@ void ProblemManager::generateMesh()
     }
   }
 
-  domain.setupCommunications( useNonblockingMPI, true );
+  domain.setupCommunications( useNonblockingMPI );
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
