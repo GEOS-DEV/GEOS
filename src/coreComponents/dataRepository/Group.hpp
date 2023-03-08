@@ -407,7 +407,7 @@ public:
     bool hasSubGroup = false;
     // since forSubGroups only applies the lambda to groups matching the type,
     //   any calls to the lambda indicates that we have a subgroup of the correct type.
-    forSubGroups< T >( [&]( T * ){ hasSubGroup = true; } );
+    forSubGroups< T >( [&]( T const & ){ hasSubGroup = true; } );
     return hasSubGroup;
   }
 

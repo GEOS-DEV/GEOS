@@ -147,7 +147,7 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
     nodes.registerField< solidMechanics::incrementalDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
-    OutputManager outputs = Group::getBaseGroupByPath( GEOSX_FMT( "/{}", ProblemManager::groupKeysStruct().outputManager.key() ), true );
+    Group const & outputs = Group::getGroupByPath( GEOSX_FMT( "/{}", ProblemManager::groupKeysStruct().outputManager.key() ) );
     if( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic || outputs.hasSubGroupOfType< ChomboIO >() )
     {
       nodes.registerField< solidMechanics::velocity >( getName() ).
