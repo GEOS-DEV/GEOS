@@ -29,7 +29,7 @@ namespace dataRepository
 {
 
 /// @brief An empty orphan group node for null-value checks by address
-static Group NullGroup("null",nullptr);
+// static Group NullGroup("null",nullptr);
 
 Group::Group( string const & name,
               Group * const parent ):
@@ -616,10 +616,6 @@ Group const & Group::getBaseGroupByPath( string const & path, bool hardQuery ) c
     }
     GEOSX_ERROR_IF( !foundTarget && hardQuery,
                     "Could not find the specified path from the starting group." );
-    if( !foundTarget )
-    {
-      currentGroup = &NullGroup;
-    }
   }
 
   string::size_type currentPosition;
@@ -638,10 +634,6 @@ Group const & Group::getBaseGroupByPath( string const & path, bool hardQuery ) c
     {
       currentGroup = &this->getParent();
     }
-    else if( currentGroup == &NullGroup )
-    {
-      break;
-    }
     else
     {
       if( hardQuery || currentGroup->hasGroup( curGroupName ) )
@@ -650,7 +642,7 @@ Group const & Group::getBaseGroupByPath( string const & path, bool hardQuery ) c
       }
       else
       {
-        currentGroup = &NullGroup;
+        break;
       }
     }
   }
@@ -661,7 +653,15 @@ Group const & Group::getBaseGroupByPath( string const & path, bool hardQuery ) c
 
 bool Group::hasGroupByPath( string const & path ) const
 {
-  return &getBaseGroupByPath( path, false ) != &NullGroup;
+  Group const & grp = getBaseGroupByPath( path, false );
+  string const & name = grp.getName();
+  // allow the path being searched to end with '/'
+  int endswith = 0;
+  if( path.compare( path.length() - 1, 1, "/" ) )
+  {
+    endswith = 1;
+  }
+  return path.compare( path.length() - name.length() - endswith, name.length(), grp.getName() ) == 0;
 }
 
 localIndex Group::getSubGroupIndex( keyType const & key ) const
