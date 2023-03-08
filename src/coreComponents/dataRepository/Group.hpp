@@ -394,7 +394,6 @@ public:
    * @param name the name of group to search for
    * @return @p true if group exists, @p false otherwise
    */
-  template< typename T = Group >
   bool hasGroupByPath( string const & path ) const;
 
   ///@}
@@ -1455,7 +1454,7 @@ private:
    */
   virtual void processInputFile( xmlWrapper::xmlNode const & targetNode );
 
-  Group const & getBaseGroupByPath( string const & path ) const;
+  Group const & getBaseGroupByPath( string const & path, bool hardQuery ) const;
 
   /**
    * @brief Concrete implementation of the packing method.

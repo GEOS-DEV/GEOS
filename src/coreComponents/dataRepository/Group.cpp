@@ -28,7 +28,7 @@ namespace geosx
 namespace dataRepository
 {
 
-/// @brief An empty orphan group node for null-value checks by address 
+/// @brief An empty orphan group node for null-value checks by address
 static Group NullGroup("null",nullptr);
 
 Group::Group( string const & name,
@@ -661,7 +661,7 @@ Group const & Group::getBaseGroupByPath( string const & path, bool hardQuery ) c
 
 bool Group::hasGroupByPath( string const & path ) const
 {
-  return &getGroupByPath( path, false ) != &NullGroup;
+  return &getBaseGroupByPath( path, false ) != &NullGroup;
 }
 
 localIndex Group::getSubGroupIndex( keyType const & key ) const
