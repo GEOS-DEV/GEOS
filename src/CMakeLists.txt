@@ -10,7 +10,11 @@ endif()
 ################################
 project( geosx LANGUAGES C CXX )
 set( BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard" )
-set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "" )
+if(CMAKE_BUILD_TYPE EQUAL "Debug")
+  set( ENABLE_WARNINGS_AS_ERRORS "OFF" CACHE PATH "")
+else()
+  set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "")
+endif()
 set( CMAKE_ENABLE_EXPORTS ON )
 
 #set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
