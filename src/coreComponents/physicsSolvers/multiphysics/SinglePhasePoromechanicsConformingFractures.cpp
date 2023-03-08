@@ -735,9 +735,10 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
       arrayView1d< real64 const > const oldHydraulicAperture = subRegion.template getField< fields::flow::aperture0 >();
 
 
-      arrayView1d< real64 > const aperture            = subRegion.getElementAperture();
-      arrayView1d< real64 > const & hydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
-      arrayView1d< real64 > const & deltaVolume       = subRegion.getField< flow::deltaVolume >();
+      arrayView1d< real64 > const aperture                 = subRegion.getElementAperture();
+      arrayView1d< real64 > const hydraulicAperture        = subRegion.getField< flow::hydraulicAperture >();
+      arrayView1d< real64 > const minimumHydraulicAperture = subRegion.getField< flow::minimumHydraulicAperture >();
+      arrayView1d< real64 > const deltaVolume              = subRegion.getField< flow::deltaVolume >();
 
       string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
@@ -749,12 +750,9 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
 
         forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
         {
-
-          real64 constexpr minimumHydraulicAperture = 1.e-4;    //hardcoded for now
-
           aperture[kfe] = dispJump[kfe][0];
 
-          hydraulicAperture[kfe] = minimumHydraulicAperture + aperture[kfe];
+          hydraulicAperture[kfe] = minimumHydraulicAperture[kfe] + aperture[kfe];
 
           deltaVolume[kfe] = hydraulicAperture[kfe] * area[kfe] - volume[kfe];
 
