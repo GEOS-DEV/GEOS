@@ -364,7 +364,6 @@ MeshLevel::MeshLevel( string const & name,
   source.m_elementManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
   {
     n1 += sourceSubRegion.size();
-    localIndex maxRegionIndex = sourceSubRegion.maxGlobalIndex() + 1;
   } );
   localIndex const numLocalCells = n1;
   ////////////////////////////////
@@ -421,7 +420,6 @@ MeshLevel::MeshLevel( string const & name,
   //
 
   // get information from the source (base mesh-level) edge-to-node map
-  arrayView2d< localIndex const > const & edgeToNodeMapSource = source.m_edgeManager->nodeList();
   arrayView2d< localIndex > edgeToNodeMapNew = cellBlockManager.getEdgeToNodes();
   m_edgeManager->nodeList().resize( numLocalEdges, numNodesPerEdge );
   // create / retrieve nodes on edges
@@ -476,7 +474,6 @@ MeshLevel::MeshLevel( string const & name,
   }
   m_faceManager->constructGlobalToLocalMap();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMapSource = source.m_faceManager->nodeList().toViewConst();
   ArrayOfArrays< localIndex > & faceToNodeMapNew = cellBlockManager.getFaceToNodes();
 
   // number of elements in each row of the map as capacity
