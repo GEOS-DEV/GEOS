@@ -18,7 +18,6 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
-
 #if defined(GEOSX_USE_PYGEOSX)
 #include "python/PyGroupType.hpp"
 #endif

@@ -142,12 +142,12 @@ private:
 };
 
 template< typename T >
-inline std::enable_if_t< traits::HasMemberFunction_size< T >, localIndex >
+inline std::enable_if_t< traits::HasMemberFunction_size< T >, size_t >
 size( T const & value )
-{ return LvArray::integerConversion< localIndex >( value.size() ); }
+{ return value.size(); }
 
 template< typename T >
-inline std::enable_if_t< !traits::HasMemberFunction_size< T >, localIndex >
+inline std::enable_if_t< !traits::HasMemberFunction_size< T >, size_t >
 size( T const & GEOSX_UNUSED_PARAM( value ) )
 { return 1; }
 
@@ -226,7 +226,7 @@ byteSizeOfElement()
 
 
 template< typename T >
-inline localIndex
+inline size_t
 byteSize( T const & value )
 { return size( value ) * byteSizeOfElement< T >(); }
 

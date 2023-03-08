@@ -76,6 +76,7 @@ public:
                     Group & parent ):
     WrapperBase( name, parent ),
     m_ownsData( true ),
+    m_isClone( false ),
     m_data( new T() ),
     m_default()
   {
@@ -98,6 +99,7 @@ public:
                     std::unique_ptr< T > object ):
     WrapperBase( name, parent ),
     m_ownsData( true ),
+    m_isClone( false ),
     m_data( object.release() ),
     m_default()
   {
@@ -120,6 +122,7 @@ public:
                     T * object ):
     WrapperBase( name, parent ),
     m_ownsData( false ),
+    m_isClone( false ),
     m_data( object ),
     m_default()
   {
@@ -181,12 +184,13 @@ public:
   {
     std::unique_ptr< Wrapper< T > > clonedWrapper = std::make_unique< Wrapper< T > >( name, parent, m_data );
     clonedWrapper->copyWrapperAttributes( *this );
+    clonedWrapper->m_isClone = true;
     return clonedWrapper;
   }
 
   virtual void copyWrapper( WrapperBase const & source ) override
   {
-    GEOSX_ERROR_IF( source.getName() != m_name, "Tried to clone wrapper of with different name" );
+    GEOSX_ERROR_IF( source.getName() != m_name, "Tried to copy wrapper with a different name" );
     copyWrapperAttributes( source );
     copyData( source );
   }
@@ -357,6 +361,12 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual localIndex elementByteSize() const override
   { return wrapperHelpers::byteSizeOfElement< T >(); }
+
+  virtual size_t bytesAllocated() const override final
+  {
+    return m_isClone ? 0 : wrapperHelpers::byteSize< T >( *m_data );
+  }
+
 
   /**
    * @name Methods that delegate to the wrapped type
@@ -935,6 +945,8 @@ private:
   /// flag to indicate whether or not this wrapper is responsible for allocation/deallocation of the object at the
   /// address of m_data
   bool m_ownsData;
+
+  bool m_isClone;
 
   /// the object being wrapped by this wrapper
   T * m_data;
