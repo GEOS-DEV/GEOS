@@ -19,10 +19,10 @@
 #ifndef GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
 #define GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
 
+#include "common/DataTypes.hpp"
+
 #include <iomanip>
 #include <sstream>
-
-#include "common/DataTypes.hpp"
 
 namespace geosx
 {
@@ -195,6 +195,17 @@ array1d< T > fromStringToArray( string const & str )
   }
   return v;
 }
+
+/**
+ * @brief Take a numerical value and convert/scale it to a string with a metric
+ *  prefix. i.e. Kilo, Mega, Giga, Tera, Peta, Exa
+ *
+ * @tparam T Type of the value to be converted
+ * @param value The value to be converted
+ * @return String containging the scaled value.
+ */
+template< typename T >
+string toMetricPrefixString( T const & value );
 
 } // namespace stringutilities
 } // namespace geosx
