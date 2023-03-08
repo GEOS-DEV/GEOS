@@ -38,7 +38,7 @@ if [[ -z "${GEOSX_DIR}" ]]; then
 fi
 
 if [[ "$*" == *--disable-schema-deployment* ]]; then
-  GEOSX_INSTALL_SCHEMA=0  
+  GEOSX_INSTALL_SCHEMA=0
 fi  
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
@@ -84,12 +84,7 @@ if [[ "$*" == *--build-exe-only* ]]; then
   or_die ninja -j $(nproc) geosx
 else
   or_die ninja -j $(nproc)
-  # Verbosity check for installation to prevent hitting Travis log limit
-  if [[ "$*" == *--reduce-install-logs* ]]; then
-    or_die ninja install
-  else
-    or_die ninja install
-  fi
+  or_die ninja install
 fi
 
 # Unit tests (excluding previously ran checks)
