@@ -108,6 +108,12 @@ public:
   virtual localIndex elementByteSize() const = 0;
 
   /**
+   * @brief @return the number of bytes allocated for the wrapped object.
+   */
+  virtual size_t bytesAllocated() const = 0;
+
+
+  /**
    * @brief Calls T::resize( num_dims, dims )
    * @param[in] num_dims number of dimensions in T
    * @param[in] dims pointer to the new dims
