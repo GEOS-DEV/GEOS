@@ -35,44 +35,6 @@ string toLower( string const & input )
   return output;
 }
 
-/**
- * String tokenizing function
- **/
-template< typename RETURN_TYPE >
-RETURN_TYPE tokenize( string const & str,
-                      string const & delimiters,
-                      bool const treatConsecutiveDelimAsOne )
-{
-  if( str.empty() )
-  {
-    return {};
-  }
-
-  RETURN_TYPE tokens;
-  size_t lastPos = 0;
-  size_t newPos;
-  while( ( newPos = str.find_first_of( delimiters, lastPos ) ) != string::npos )
-  {
-    tokens.emplace_back( str.substr( lastPos, newPos - lastPos ) );
-    lastPos = !treatConsecutiveDelimAsOne ? newPos + 1 : str.find_first_not_of( delimiters, newPos );
-  }
-  if( lastPos != string::npos )
-  {
-    tokens.emplace_back( str.substr( lastPos ) );
-  }
-
-  return tokens;
-}
-
-template string_array tokenize< string_array >( string const & str,
-                                                string const & delimiters,
-                                                bool const treatConsecutiveDelimAsOne );
-
-template std::vector< string > tokenize< std::vector< string > >( string const & str,
-                                                                  string const & delimiters,
-                                                                  bool const treatConsecutiveDelimAsOne );
-
-
 string trim( string const & str,
              string const & charsToRemove )
 {
