@@ -730,13 +730,13 @@ std::vector< std::vector< vtkIdType > > computeFace2dToElems2d( vtkPolyData * ed
   return face2dToElems2d;
 }
 
-std::vector< vtkIdType > computeFace2dToEdge( vtkPolyData * edges,
-                                              DuplicatedPoints const & duplicatedPoints,
-                                              ArrayOfArrays< localIndex > const nodeToEdges )
+array1d< localIndex > computeFace2dToEdge( vtkPolyData * edges,
+                                           DuplicatedPoints const & duplicatedPoints,
+                                           ArrayOfArrays< localIndex > const nodeToEdges )
 {
   // Computing the face2dToEdges mapping. It does not require face2dToElems2d: split the function.
   auto const comp = []( std::pair< vtkIdType, int > const & l, std::pair< vtkIdType, int > const & r ) { return l.second < r.second; };
-  std::vector< vtkIdType > face2dToEdge( edges->GetNumberOfCells() );
+  array1d< localIndex > face2dToEdge( edges->GetNumberOfCells() );
   for( int i = 0; i < edges->GetNumberOfCells(); ++i )
   {
     std::vector< vtkIdType > allDuplicatedNodesOfEdge;
@@ -758,7 +758,7 @@ std::vector< vtkIdType > computeFace2dToEdge( vtkPolyData * edges,
       }
     }
     auto const res = std::max_element( edgeCount.cbegin(), edgeCount.cend(), comp );
-    face2dToEdge[i] = res->first;
+    face2dToEdge[i] = res->first; // TODO cast
   }
 
   return face2dToEdge;
@@ -781,7 +781,7 @@ std::vector< std::vector< vtkIdType > > computeElem2dToFace2d( vtkIdType num2dEl
 }
 
 std::vector< std::vector< vtkIdType > > computeElem2dToEdges( vtkIdType num2dElements,
-                                                              std::vector< vtkIdType > const & face2dToEdge,
+                                                              array1d< localIndex > const & face2dToEdge,
                                                               std::vector< std::vector< vtkIdType > > const & elem2dToFace2d )
 {
   // Computing elem2dToEdges.
@@ -790,9 +790,9 @@ std::vector< std::vector< vtkIdType > > computeElem2dToEdges( vtkIdType num2dEle
   // Now that we have elem2dToFace2d, we can compose with face2dToEdge to create elem2dToEdges.
   for( std::size_t elemIndex = 0; elemIndex < elem2dToFace2d.size(); ++elemIndex )
   {
-    for(auto const & face2dIndex : elem2dToFace2d[elemIndex])
+    for( auto const & face2dIndex: elem2dToFace2d[elemIndex] )
     {
-      elem2dToEdges[elemIndex].emplace_back(face2dToEdge[face2dIndex]);
+      elem2dToEdges[elemIndex].emplace_back( face2dToEdge[face2dIndex] );
     }
   }
 
@@ -1023,7 +1023,7 @@ void importFractureNetwork2( string const & faceBlockName,
   std::vector< std::set< vtkIdType > > const elem2dToNodes = computeElem2dToNodes( num2dElements, faceToNodes, elem2DTo.elem2dToFaces );
 
   std::vector< std::vector< vtkIdType > > const face2dToElems2d = computeFace2dToElems2d( edges, faceMesh );
-  std::vector< vtkIdType > const face2dToEdge = computeFace2dToEdge( edges, duplicatedPoints, nodeToEdges );
+  array1d< localIndex > const face2dToEdge = computeFace2dToEdge( edges, duplicatedPoints, nodeToEdges );
   std::vector< std::vector< vtkIdType > > const elem2dToFace2d = computeElem2dToFace2d( num2dElements, face2dToElems2d );
   std::vector< std::vector< vtkIdType > > const elem2DToEdges = computeElem2dToEdges( num2dElements, face2dToEdge, elem2dToFace2d );
 
@@ -1035,7 +1035,7 @@ void importFractureNetwork2( string const & faceBlockName,
   faceBlock.set2dElemToNodes( convertToArrayOfArraysFromSet( elem2dToNodes ) );
 
   faceBlock.set2dElemToEdges( convertToArrayOfArrays( elem2DToEdges ) );
-  faceBlock.set2dFaceToEdge( convert1d( face2dToEdge ) );
+  faceBlock.set2dFaceToEdge( face2dToEdge );
 
   faceBlock.set2dFaceTo2dElems( convertToArrayOfArrays( face2dToElems2d ) );
 
