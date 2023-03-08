@@ -4,7 +4,7 @@
         "buildDirectory": "${userHome}/geosx-build",
         "cacheInit": "/workspaces/GEOSX/host-configs/environment.cmake",
         "configureSettings": {
-            "BLT_MPI_COMMAND_APPEND": "--allow-run-as-root;--use-hwthread-cpus;--oversubscribe",
+            "BLT_MPI_COMMAND_APPEND": "--use-hwthread-cpus;--oversubscribe",
             "ENABLE_OPENMP": "OFF",
             "ENABLE_HYPRE": "ON",
             "ENABLE_TRILINOS": "OFF",
