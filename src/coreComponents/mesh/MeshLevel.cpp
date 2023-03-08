@@ -29,7 +29,7 @@ using namespace dataRepository;
 
 MeshLevel::MeshLevel( string const & name,
                       Group * const parent ):
-  MeshLevel(name, parent, 1)
+  MeshLevel( name, parent, 1 )
 {}
 
 MeshLevel::MeshLevel( string const & name,
@@ -113,61 +113,71 @@ MeshLevel::MeshLevel( string const & name,
 }
 
 template< typename T >
-struct NodeKeyHasher {
-  std::size_t operator()(const std::array< T, 6 >& arr) const {
+struct NodeKeyHasher
+{
+  std::size_t operator()( const std::array< T, 6 > & arr ) const
+  {
     std::size_t hash = 0;
     // use a boost-style hash function
-    for (auto v : arr) {
-        hash ^= std::hash<T>{}( v )  + 0x9e3779b9 + ( hash << 6 ) + ( hash >> 2 );
+    for( auto v : arr )
+    {
+      hash ^= std::hash< T >{} ( v )  + 0x9e3779b9 + ( hash << 6 ) + ( hash >> 2 );
     }
     return hash;
   }
 };
 
 template< typename T >
-struct NodeKeyEqual {
-  bool operator()(const std::array< T, 6 > & lhs, const std::array< T, 6 > & rhs) const
+struct NodeKeyEqual
+{
+  bool operator()( const std::array< T, 6 > & lhs, const std::array< T, 6 > & rhs ) const
   {
-     for( int i=0; i< 6; i++ )
-     {
-       if( lhs[ i ] != rhs[ i ] )
-       {
+    for( int i=0; i< 6; i++ )
+    {
+      if( lhs[ i ] != rhs[ i ] )
+      {
 
-         return false;
-       }
-     }
-     return true;
+        return false;
+      }
+    }
+    return true;
   }
 };
 
 template< typename T >
 static std::array< T, 6 > createNodeKey( T v )
 {
-  return std::array< T, 6 > { v, -1, -1 ,-1 ,-1, -1 };
+  return std::array< T, 6 > { v, -1, -1, -1, -1, -1 };
 }
 
 template< typename T >
 static std::array< T, 6 > createNodeKey( T v1, T v2, int a, int order )
 {
-  if( a == 0) return createNodeKey( v1 );
-  if( a == order ) return createNodeKey( v2 );
+  if( a == 0 )
+    return createNodeKey( v1 );
+  if( a == order )
+    return createNodeKey( v2 );
   if( v1 < v2 )
   {
-    return std::array< T, 6 > { v1, v2, -1 ,-1 ,a , -1 };
+    return std::array< T, 6 > { v1, v2, -1, -1, a, -1 };
   }
   else
   {
-    return std::array< T, 6 > { v2, v1, -1 ,-1 ,order - a , -1 };
+    return std::array< T, 6 > { v2, v1, -1, -1, order - a, -1 };
   }
 }
 
 template< typename T >
 static std::array< T, 6 > createNodeKey( T v1, T v2, T v3, T v4, int a, int b, int order )
 {
-  if( a == 0 ) return createNodeKey( v1, v3, b, order );
-  if( a == order ) return createNodeKey( v2, v4, b, order );
-  if( b == 0 ) return createNodeKey( v1, v2, a, order );
-  if( b == order ) return createNodeKey( v3, v4, a, order );
+  if( a == 0 )
+    return createNodeKey( v1, v3, b, order );
+  if( a == order )
+    return createNodeKey( v2, v4, b, order );
+  if( b == 0 )
+    return createNodeKey( v1, v2, a, order );
+  if( b == order )
+    return createNodeKey( v3, v4, a, order );
   // arrange the vertices of the face such that v1 is the lowest value, and v2 is lower than v3
   // this ensures a coherent orientation of all face nodes
   while( v1 > v2 || v1 > v3 || v1 > v4 || v2 > v3 )
@@ -246,8 +256,8 @@ static std::array< T, 6 > createNodeKey( T const (&elemNodes)[ 8 ], int q1, int 
   }
   else
   {
-   // node internal to the cell -- no need for key, it will be created
-   return createNodeKey( -1 );
+    // node internal to the cell -- no need for key, it will be created
+    return createNodeKey( -1 );
   }
 }
 
@@ -300,7 +310,7 @@ static void trilinearInterp( real64 const alpha,
                              real64 const beta,
                              real64 const gamma,
                              real64 const (&X)[8][3],
-                             real64 (&coords)[3] )
+                             real64 (& coords)[3] )
 {
   for( int i=0; i<3; i++ )
   {
@@ -353,8 +363,8 @@ MeshLevel::MeshLevel( string const & name,
   localIndex n1 = 0;
   source.m_elementManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
   {
-   n1 += sourceSubRegion.size();
-   localIndex maxRegionIndex = sourceSubRegion.maxGlobalIndex() + 1;
+    n1 += sourceSubRegion.size();
+    localIndex maxRegionIndex = sourceSubRegion.maxGlobalIndex() + 1;
   } );
   localIndex const numLocalCells = n1;
   ////////////////////////////////
@@ -376,14 +386,15 @@ MeshLevel::MeshLevel( string const & name,
   // - nodes on a vertex v are identified by the vector [v -1 -1 -1 -1 -1]
   // - edge nodes are given by a linear interpolation between vertices v1 and v2, 'a' steps away from v1.
   //   We assume that v1 < v2 and identify these nodes with [v1 v2 -1 -1 a -1].
-  // - face nodes are given by a bilinear interpolation between edges v1-v2 and v3-v4 (v1-v4 and v2-v3 are the diagonals), with interpolation parameters 'a' and 'b'.
+  // - face nodes are given by a bilinear interpolation between edges v1-v2 and v3-v4 (v1-v4 and v2-v3 are the diagonals), with
+  // interpolation parameters 'a' and 'b'.
   //   We assume that v1 is the smallest, and that v2 < v3. Then these nodes are identified with [v1 v2 v3 v4 a b]
   // - cell nodes are encountered only once, and thus do not need to be put in the hash map
   std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex >, NodeKeyEqual< localIndex > > nodeIDs;
 
   // Create new nodes, with local and global IDs
   localIndex localNodeID = 0;
-  for( localIndex iter_vertex=0; iter_vertex < numLocalVertices; iter_vertex++)
+  for( localIndex iter_vertex=0; iter_vertex < numLocalVertices; iter_vertex++ )
   {
     nodeLocalToGlobalNew[ localNodeID ] = nodeLocalToGlobalSource[ iter_vertex ];
     nodeIDs[ createNodeKey( iter_vertex ) ] = localNodeID;
@@ -399,7 +410,7 @@ MeshLevel::MeshLevel( string const & name,
   m_edgeManager->getDomainBoundaryIndicator() = source.m_edgeManager->getDomainBoundaryIndicator();
 
   arrayView1d< globalIndex const > const edgeLocalToGlobal = m_edgeManager->localToGlobalMap();
-  for (localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < numLocalEdges; iter_localToGlobalsize++)
+  for( localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < numLocalEdges; iter_localToGlobalsize++ )
   {
     m_edgeManager->localToGlobalMap()[iter_localToGlobalsize] = source.m_edgeManager->localToGlobalMap()[iter_localToGlobalsize];
   }
@@ -420,7 +431,7 @@ MeshLevel::MeshLevel( string const & name,
     localIndex newEdgeNodes = 0;
     localIndex v1 = source.m_edgeManager->nodeList()[ iter_edge ][ 0 ];
     localIndex v2 = source.m_edgeManager->nodeList()[ iter_edge ][ 1 ];
-    for( int q=0;q<numNodesPerEdge; q++ )
+    for( int q=0; q<numNodesPerEdge; q++ )
     {
       localIndex nodeID;
       std::array< localIndex, 6 > nodeKey = createNodeKey( v1, v2, q, order );
@@ -459,7 +470,7 @@ MeshLevel::MeshLevel( string const & name,
   m_faceManager->getDomainBoundaryIndicator() = source.m_faceManager->getDomainBoundaryIndicator();
 
   arrayView1d< globalIndex const > const faceLocalToGlobal = m_faceManager->localToGlobalMap();
-  for (localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < numLocalFaces; iter_localToGlobalsize++)
+  for( localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < numLocalFaces; iter_localToGlobalsize++ )
   {
     m_faceManager->localToGlobalMap()[iter_localToGlobalsize] = source.m_faceManager->localToGlobalMap()[iter_localToGlobalsize];
   }
@@ -499,14 +510,14 @@ MeshLevel::MeshLevel( string const & name,
     localIndex v2 = source.m_faceManager->nodeList()[ iter_face ][ 1 ];
     localIndex v3 = source.m_faceManager->nodeList()[ iter_face ][ 2 ];
     localIndex v4 = source.m_faceManager->nodeList()[ iter_face ][ 3 ];
-    std::swap(v3, v4);
+    std::swap( v3, v4 );
     globalIndex gv1 = nodeLocalToGlobalSource[v1];
     globalIndex gv2 = nodeLocalToGlobalSource[v2];
     globalIndex gv3 = nodeLocalToGlobalSource[v3];
     globalIndex gv4 = nodeLocalToGlobalSource[v4];
-    for( int q1=0;q1<numNodesPerEdge; q1++ )
+    for( int q1=0; q1<numNodesPerEdge; q1++ )
     {
-      for( int q2=0;q2<numNodesPerEdge; q2++ )
+      for( int q2=0; q2<numNodesPerEdge; q2++ )
       {
         localIndex nodeID;
         std::array< localIndex, 6 > nodeKey = createNodeKey( v1, v2, v3, v4, q1, q2, order );
@@ -518,7 +529,7 @@ MeshLevel::MeshLevel( string const & name,
           std::array< globalIndex, 6 > referenceOrientation = createNodeKey( gv1, gv2, gv3, gv4, q1, q2, order );
           int gq1 = referenceOrientation[4];
           int gq2 = referenceOrientation[5];
-          nodeLocalToGlobalNew[ nodeID ] = offset + faceLocalToGlobal[ iter_face ] * numInternalNodesPerFace + gq1* numInternalNodesPerEdge + gq2; 
+          nodeLocalToGlobalNew[ nodeID ] = offset + faceLocalToGlobal[ iter_face ] * numInternalNodesPerFace + gq1* numInternalNodesPerEdge + gq2;
           localNodeID++;
         }
         else
@@ -532,7 +543,7 @@ MeshLevel::MeshLevel( string const & name,
 
   // add all nodes to the target set "all"
   m_nodeManager->resize( numLocalNodes );
-  
+
   SortedArray< localIndex > & allNodesSet = cellBlockManager.getNodeSets()[ "all" ];
   allNodesSet.reserve( numLocalNodes );
 
@@ -554,7 +565,7 @@ MeshLevel::MeshLevel( string const & name,
   array1d< real64 > glCoords = gaussLobattoPoints( order );
   localIndex elemMeshVertices[ numVerticesPerCell ] = { };
   offset = maxVertexGlobalID + maxEdgeGlobalID * numInternalNodesPerEdge + maxFaceGlobalID * numInternalNodesPerFace;
-  std::array< localIndex, 6 > const nullKey = std::array< localIndex, 6 >{ -1, -1 ,-1, -1, -1, -1 };
+  std::array< localIndex, 6 > const nullKey = std::array< localIndex, 6 >{ -1, -1, -1, -1, -1, -1 };
   source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
   {
     // create element region with the same name as source element region "Region"
@@ -595,10 +606,10 @@ MeshLevel::MeshLevel( string const & name,
 
       // initialize the elements-to-nodes map
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
-      arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew = cellBlockManager.getElemToNodes(newSubRegion.getName(), numNodesPerCell);
+      arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew = cellBlockManager.getElemToNodes( newSubRegion.getName(), numNodesPerCell );
 
       arrayView1d< globalIndex const > const elementLocalToGlobal = sourceSubRegion.localToGlobalMap();
-      for (localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < sourceSubRegion.localToGlobalMap().size(); iter_localToGlobalsize++)
+      for( localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < sourceSubRegion.localToGlobalMap().size(); iter_localToGlobalsize++ )
       {
         newSubRegion.localToGlobalMap()[iter_localToGlobalsize] = sourceSubRegion.localToGlobalMap()[iter_localToGlobalsize];
       }

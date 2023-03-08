@@ -180,7 +180,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
                                     ElementRegionManager const & elemManager )
 {
   GEOSX_MARK_FUNCTION;
-  
+
   arrayView2d< localIndex const > const facesToElementRegions = elementRegionList();
   arrayView2d< localIndex const > const facesToElementSubRegions = elementSubRegionList();
   arrayView2d< localIndex const > const facesToElements = elementList();

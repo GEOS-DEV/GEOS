@@ -73,7 +73,7 @@ public:
   ArrayOfArrays< localIndex > getEdgeToFaces() const override;
 
   ArrayOfArrays< localIndex > getFaceToNodes() const override;
-  
+
   ArrayOfArrays< localIndex > & getFaceToNodes() override;
 
   ArrayOfArrays< localIndex > getFaceToEdges() const override;
@@ -112,7 +112,8 @@ public:
    */
   void setNumNodes( localIndex numNodes ); // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
 
-  void setNumNodes( localIndex numNodes,  localIndex const order) override; // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
+  void setNumNodes( localIndex numNodes, localIndex const order ) override; // TODO Improve doc. Is it per domain, are there duplicated
+                                                                            // nodes because of subregions?
 
   localIndex numNodes() const override;
 

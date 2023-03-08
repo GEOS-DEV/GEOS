@@ -196,7 +196,7 @@ public:
    */
   void resize( dataRepository::indexType const numElements ) override final;
 
-  void resizeNumNodes ( dataRepository::indexType const numNodes);
+  void resizeNumNodes ( dataRepository::indexType const numNodes );
   ///@}
 
   /**

@@ -345,7 +345,7 @@ public:
                                       real64 ( &J )[3][3] );
   /**
    * @brief performs a trilinear interpolation to determine the real-world coordinates of a
-   *   vertex 
+   *   vertex
    * @param[in] alpha Interpolation coefficient in [0,1] for the first coordinate
    * @param[in] beta Interpolation coefficient in [0,1] for the second coordinate
    * @param[in] gamma Interpolation coefficient in [0,1] for the third coordinate
@@ -353,12 +353,12 @@ public:
    * @param[out] coords Real-world coordinates of the interpolated point
    */
   GEOSX_HOST_DEVICE
-  static void 
-  trilinearInterp( real64 const alpha,
-                   real64 const beta, 
-                   real64 const gamma,
-                   real64 const (&X)[8][3],
-                   real64 (&coords)[3] );
+  static void
+    trilinearInterp( real64 const alpha,
+                     real64 const beta,
+                     real64 const gamma,
+                     real64 const (&X)[8][3],
+                     real64 ( &coords )[3] );
 
   /**
    * @brief computes the real-world coordinates of the support nodes
@@ -367,7 +367,7 @@ public:
    * @return The diagonal mass term associated to q
    */
   GEOSX_HOST_DEVICE
-  static void 
+  static void
   computeLocalCoords( real64 const (&Xmesh)[8][3],
                       real64 const (&X)[numNodes][3] );
 
@@ -787,10 +787,10 @@ GEOSX_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 trilinearInterp( real64 const alpha,
-                 real64 const beta, 
+                 real64 const beta,
                  real64 const gamma,
                  real64 const (&X)[8][3],
-                 real64 (&coords)[3] )
+                 real64 (& coords)[3] )
 {
   for( int i=0; i<3; i++ )
   {
@@ -803,7 +803,7 @@ trilinearInterp( real64 const alpha,
                 X[6][i]*( 1.0-alpha )*    beta    *  gamma+
                 X[7][i]*    alpha    *    beta    *  gamma;
   }
-} 
+}
 
 
 template< typename GL_BASIS >
@@ -821,7 +821,7 @@ computeLocalCoords( real64 const (&Xmesh)[8][3],
     real64 alpha = ( GL_BASIS::parentSupportCoord( qa ) + 1.0 ) / 2.0;
     real64 beta = ( GL_BASIS::parentSupportCoord( qb ) + 1.0 ) / 2.0;
     real64 gamma = ( GL_BASIS::parentSupportCoord( qc ) + 1.0 ) / 2.0;
-    trilinearInterp( alpha, beta, gamma, Xmesh, X[q] ); 
+    trilinearInterp( alpha, beta, gamma, Xmesh, X[q] );
   }
 }
 

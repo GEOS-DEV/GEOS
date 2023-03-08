@@ -305,9 +305,9 @@ private:
   bool const m_isShallowCopy = false;
 
   MeshLevel * const m_shallowParent;
-  
+
   int m_order;
- 
+
 };
 
 } /* namespace geosx */

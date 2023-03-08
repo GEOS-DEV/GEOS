@@ -78,7 +78,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 {
   GEOSX_MARK_FUNCTION;
 #if defined(GEOSX_USE_MPI)
-  
+
   if( m_metisNeighborList.empty() )
   {
     PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
@@ -156,7 +156,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 
   forMeshBodies( [&]( MeshBody & meshBody )
   {
-    MeshLevel & meshLevel = meshBody.getBaseDiscretization();      
+    MeshLevel & meshLevel = meshBody.getBaseDiscretization();
 
     NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
@@ -191,24 +191,24 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
   {
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
-      if ( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() ) 
+      if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
       {
         NodeManager & nodeManager = meshLevel.getNodeManager();
         FaceManager & faceManager = meshLevel.getFaceManager();
-  
+
         CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
         faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
         faceManager.computeGeometry( nodeManager );
       }
-      else if ( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
+      else if( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
       {
         for( NeighborCommunicator const & neighbor : m_neighbors )
-        {   
+        {
           neighbor.addNeighborGroupToMesh( meshLevel );
-        }   
+        }
         NodeManager & nodeManager = meshLevel.getNodeManager();
         FaceManager & faceManager = meshLevel.getFaceManager();
-  
+
         CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager, m_neighbors );
         CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, m_neighbors );
         CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
