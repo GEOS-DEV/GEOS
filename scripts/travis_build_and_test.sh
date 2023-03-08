@@ -37,11 +37,9 @@ if [[ -z "${GEOSX_DIR}" ]]; then
   exit 1
 fi
 
-GEOSX_INSTALL_SCHEMA=1
 if [[ "$*" == *--disable-schema-deployment* ]]; then
-  GEOSX_INSTALL_SCHEMA=0
+  GEOSX_INSTALL_SCHEMA=0  
 fi  
-
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
