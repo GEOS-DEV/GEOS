@@ -146,17 +146,20 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
     nodes.registerField< solidMechanics::incrementalDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
-    nodes.registerField< solidMechanics::velocity >( getName() ).
-      reference().resizeDimension< 1 >( 3 );
+    if( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic || Group::hasGroupByPath("/Outputs/ChombIO") )
+    {
+      nodes.registerField< solidMechanics::velocity >( getName() ).
+        reference().resizeDimension< 1 >( 3 );
 
-    nodes.registerField< solidMechanics::acceleration >( getName() ).
-      reference().resizeDimension< 1 >( 3 );
+      nodes.registerField< solidMechanics::acceleration >( getName() ).
+        reference().resizeDimension< 1 >( 3 );
 
-    nodes.registerField< solidMechanics::velocityTilde >( getName() ).
-      reference().resizeDimension< 1 >( 3 );
+      nodes.registerField< solidMechanics::velocityTilde >( getName() ).
+        reference().resizeDimension< 1 >( 3 );
 
-    nodes.registerField< solidMechanics::uhatTilde >( getName() ).
-      reference().resizeDimension< 1 >( 3 );
+      nodes.registerField< solidMechanics::uhatTilde >( getName() ).
+        reference().resizeDimension< 1 >( 3 );
+    }
 
     nodes.registerField< solidMechanics::mass >( getName() );
 

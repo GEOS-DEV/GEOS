@@ -123,8 +123,6 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
                                  targetTokens[0] ) );
     }
 
-
-
     string const meshBodyName = targetTokens[0];
     MeshBody const & meshBody = domain.getMeshBody( meshBodyName );
 

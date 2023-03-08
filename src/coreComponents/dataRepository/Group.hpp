@@ -349,14 +349,14 @@ public:
    */
   template< typename T = Group >
   T & getGroupByPath( string const & path )
-  { return dynamicCast< T & >( const_cast< Group & >( getBaseGroupByPath( path ) ) ); }
+  { return dynamicCast< T & >( const_cast< Group & >( getBaseGroupByPath( path, true ) ) ); }
 
   /**
    * @copydoc getGroupByPath(string const &)
    */
   template< typename T = Group >
   T const & getGroupByPath( string const & path ) const
-  { return dynamicCast< T const & >( getBaseGroupByPath( path ) ); }
+  { return dynamicCast< T const & >( getBaseGroupByPath( path, true ) ); }
 
   //END_SPHINX_INCLUDE_GET_GROUP
 
@@ -388,6 +388,14 @@ public:
   template< typename T = Group >
   bool hasGroup( string const & name ) const
   { return dynamicCast< T const * >( m_subGroups[ name ] ) != nullptr; }
+
+  /**
+   * @brief Check whether a group from the hierarchy existsusing a path.
+   * @param name the name of group to search for
+   * @return @p true if group exists, @p false otherwise
+   */
+  template< typename T = Group >
+  bool hasGroupByPath( string const & path ) const;
 
   ///@}
 

@@ -28,6 +28,9 @@ namespace geosx
 namespace dataRepository
 {
 
+/// @brief An empty orphan group node for null-value checks by address 
+static Group NullGroup("null",nullptr);
+
 Group::Group( string const & name,
               Group * const parent ):
   Group( name, parent->getConduitNode() )
@@ -590,7 +593,7 @@ void Group::enableLogLevelInput()
     setDescription( "Log level" );
 }
 
-Group const & Group::getBaseGroupByPath( string const & path ) const
+Group const & Group::getBaseGroupByPath( string const & path, bool hardQuery ) const
 {
   Group const * currentGroup = this;
   string::size_type previousPosition = 0;
@@ -611,8 +614,12 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
         break;
       }
     }
-    GEOSX_ERROR_IF( !foundTarget,
+    GEOSX_ERROR_IF( !foundTarget && hardQuery,
                     "Could not find the specified path from the starting group." );
+    if( !foundTarget )
+    {
+      currentGroup = &NullGroup;
+    }
   }
 
   string::size_type currentPosition;
@@ -631,14 +638,30 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
     {
       currentGroup = &this->getParent();
     }
+    else if( currentGroup == &NullGroup )
+    {
+      break;
+    }
     else
     {
-      currentGroup = &currentGroup->getGroup( curGroupName );
+      if( hardQuery || currentGroup->hasGroup( curGroupName ) )
+      {
+        currentGroup = &currentGroup->getGroup( curGroupName );
+      }
+      else
+      {
+        currentGroup = &NullGroup;
+      }
     }
   }
   while( currentPosition != string::npos );
 
   return *currentGroup;
+}
+
+bool Group::hasGroupByPath( string const & path ) const
+{
+  return &getGroupByPath( path, false ) != &NullGroup;
 }
 
 localIndex Group::getSubGroupIndex( keyType const & key ) const
