@@ -45,13 +45,6 @@ public:
   SourceFluxBoundaryCondition() = delete;
 
   /**
-   * @brief destructor
-   */
-  virtual ~SourceFluxBoundaryCondition() override;
-
-  virtual void initializePreSubGroups() override;
-
-  /**
    * @brief Static Factory Catalog Functions
    * @return the catalog name
    */

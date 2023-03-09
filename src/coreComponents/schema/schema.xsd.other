@@ -296,7 +296,10 @@
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" />
 	</xsd:complexType>
-	<xsd:complexType name="SourceFluxType" />
+	<xsd:complexType name="SourceFluxType">
+		<!--fieldName => Name of field that boundary condition is applied to.-->
+		<xsd:attribute name="fieldName" type="string" />
+	</xsd:complexType>
 	<xsd:complexType name="TractionType">
 		<!--component => Component of field (if tensor) to apply boundary condition to.-->
 		<xsd:attribute name="component" type="integer" />
