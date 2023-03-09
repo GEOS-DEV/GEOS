@@ -244,7 +244,7 @@ ArrayOfArrays< localIndex > computeFace2dToElems2d( vtkPolyData * edges,
 
 array1d< localIndex > computeFace2dToEdge( vtkPolyData * edges,
                                            DuplicatedPoints const & duplicatedPoints,
-                                           ArrayOfArrays< localIndex > const nodeToEdges )
+                                           ArrayOfArraysView< localIndex const > nodeToEdges )
 {
   // Computing the face2dToEdges mapping. It does not require face2dToElems2d: split the function.
   auto const comp = []( std::pair< vtkIdType, int > const & l, std::pair< vtkIdType, int > const & r ) { return l.second < r.second; };
@@ -277,7 +277,7 @@ array1d< localIndex > computeFace2dToEdge( vtkPolyData * edges,
 }
 
 ArrayOfArrays< localIndex > computeElem2dToFace2d( vtkIdType num2dElements,
-                                                   ArrayOfArrays< localIndex > const & face2dToElems2d )
+                                                   ArrayOfArraysView< localIndex const > face2dToElems2d )
 {
   // Let's first invert face2dToElems2d into elem2dToFace2d
   ArrayOfArrays< localIndex > elem2dToFace2d( num2dElements );
@@ -293,8 +293,8 @@ ArrayOfArrays< localIndex > computeElem2dToFace2d( vtkIdType num2dElements,
 }
 
 ArrayOfArrays< localIndex > computeElem2dToEdges( vtkIdType num2dElements,
-                                                  array1d< localIndex > const & face2dToEdge,
-                                                  ArrayOfArrays< localIndex > const & elem2dToFace2d )
+                                                  arrayView1d< localIndex const > face2dToEdge,
+                                                  ArrayOfArraysView< localIndex const > elem2dToFace2d )
 {
   // Computing elem2dToEdges.
   ArrayOfArrays< localIndex > elem2dToEdges( num2dElements );
@@ -326,7 +326,7 @@ struct Elem2dTo
 Elem2dTo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMesh,
                                         vtkSmartPointer< vtkDataSet > mesh,
                                         DuplicatedPoints const & duplicatedPoints,
-                                        ArrayOfArrays< localIndex > const & faceToNodes,
+                                        ArrayOfArraysView< localIndex const > faceToNodes,
                                         geosx::internal::ElementToFace const & elemToFaces )
 {
   const char * const boundaryPointsName = "boundary points";
@@ -435,8 +435,8 @@ Elem2dTo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMesh,
 
 
 ArrayOfArrays< localIndex > computeElem2dToNodes( vtkIdType num2dElements,
-                                                  ArrayOfArrays< localIndex > const & faceToNodes,
-                                                  array2d< localIndex > const & elem2dToFaces )
+                                                  ArrayOfArraysView< localIndex const > faceToNodes,
+                                                  arrayView2d< localIndex const > elem2dToFaces )
 {
   ArrayOfArrays< localIndex > elem2dToNodes( num2dElements );
   for( localIndex elem2dIndex = 0; elem2dIndex < elem2dToFaces.size( 0 ); ++elem2dIndex )
@@ -482,30 +482,30 @@ void importFractureNetwork( string const & faceBlockName,
   vtkIdType const num2dFaces = edges->GetNumberOfCells();
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
   // Now let's build the elem2dTo* mappings.
-  Elem2dTo const elem2DTo = computeElem2dTo3dElemAndFaces( faceMesh, vtkMesh, duplicatedPoints, faceToNodes, elemToFaces );
-  ArrayOfArrays< localIndex > const elem2dToNodes = computeElem2dToNodes( num2dElements, faceToNodes, elem2DTo.elem2dToFaces );
+  Elem2dTo elem2DTo = computeElem2dTo3dElemAndFaces( faceMesh, vtkMesh, duplicatedPoints, faceToNodes.toViewConst(), elemToFaces );
+  ArrayOfArrays< localIndex > elem2dToNodes = computeElem2dToNodes( num2dElements, faceToNodes.toViewConst(), elem2DTo.elem2dToFaces.toViewConst() );
 
-  ArrayOfArrays< localIndex > const face2dToElems2d = computeFace2dToElems2d( edges, faceMesh );
-  array1d< localIndex > const face2dToEdge = computeFace2dToEdge( edges, duplicatedPoints, nodeToEdges );
-  ArrayOfArrays< localIndex > const elem2dToFace2d = computeElem2dToFace2d( num2dElements, face2dToElems2d );
-  ArrayOfArrays< localIndex > const elem2DToEdges = computeElem2dToEdges( num2dElements, face2dToEdge, elem2dToFace2d );
+  ArrayOfArrays< localIndex > face2dToElems2d = computeFace2dToElems2d( edges, faceMesh );
+  array1d< localIndex > face2dToEdge = computeFace2dToEdge( edges, duplicatedPoints, nodeToEdges.toViewConst() );
+  ArrayOfArrays< localIndex > const elem2dToFace2d = computeElem2dToFace2d( num2dElements, face2dToElems2d.toViewConst() );
+  ArrayOfArrays< localIndex > elem2DToEdges = computeElem2dToEdges( num2dElements, face2dToEdge.toViewConst(), elem2dToFace2d.toViewConst() );
 
   // Mappings are now computed. Just create the face block by value.
   FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( "fracture_info" );  // TODO
   faceBlock.setNum2DElements( num2dElements );
   faceBlock.setNum2DFaces( num2dFaces );
 
-  faceBlock.set2dElemToNodes( elem2dToNodes );
+  faceBlock.set2dElemToNodes( std::move( elem2dToNodes ) );
 
-  faceBlock.set2dElemToEdges( elem2DToEdges );
-  faceBlock.set2dFaceToEdge( face2dToEdge );
+  faceBlock.set2dElemToEdges( std::move( elem2DToEdges ) );
+  faceBlock.set2dFaceToEdge( std::move( face2dToEdge ) );
 
-  faceBlock.set2dFaceTo2dElems( face2dToElems2d );
+  faceBlock.set2dFaceTo2dElems( std::move( face2dToElems2d ) );
 
-  faceBlock.set2dElemToFaces( elem2DTo.elem2dToFaces );
+  faceBlock.set2dElemToFaces( std::move( elem2DTo.elem2dToFaces ) );
   array2d< localIndex > elem2dToElems3dCB( elem2DTo.elem2dToElem3d );
   elem2dToElems3dCB.setValues< serialPolicy >( 0 );  // TODO
-  faceBlock.set2dElemToElems( ToCellRelation< array2d< localIndex > >( elem2dToElems3dCB, elem2DTo.elem2dToElem3d ) );
+  faceBlock.set2dElemToElems( ToCellRelation< array2d< localIndex > >( std::move( elem2dToElems3dCB ), std::move( elem2DTo.elem2dToElem3d ) ) );
 }
 
 } // end of namespace
