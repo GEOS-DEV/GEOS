@@ -115,7 +115,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   for( string const & faceBlockName: m_faceBlockNames )
   {
-    importFractureNetwork2( faceBlockName, m_vtkMesh, cellBlockManager );
+    importFractureNetwork( faceBlockName, m_vtkMesh, cellBlockManager );
   }
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  done!" );
