@@ -764,35 +764,35 @@ array1d< localIndex > computeFace2dToEdge( vtkPolyData * edges,
   return face2dToEdge;
 }
 
-std::vector< std::vector< vtkIdType > > computeElem2dToFace2d( vtkIdType num2dElements,
-                                                               ArrayOfArrays< localIndex > const & face2dToElems2d )
+ArrayOfArrays< localIndex > computeElem2dToFace2d( vtkIdType num2dElements,
+                                                   ArrayOfArrays< localIndex > const & face2dToElems2d )
 {
   // Let's first invert face2dToElems2d into elem2dToFace2d
-  std::vector< std::vector< vtkIdType > > elem2dToFace2d( num2dElements );
+  ArrayOfArrays< localIndex > elem2dToFace2d( num2dElements );
   for( localIndex face2dIndex = 0; face2dIndex < face2dToElems2d.size(); ++face2dIndex )
   {
     for( localIndex const & elem2dIndex: face2dToElems2d[face2dIndex] )
     {
-      elem2dToFace2d[elem2dIndex].emplace_back( face2dIndex );  // TODO cast
+      elem2dToFace2d.emplaceBack(elem2dIndex, face2dIndex );  // TODO cast
     }
   }
 
   return elem2dToFace2d;
 }
 
-std::vector< std::vector< vtkIdType > > computeElem2dToEdges( vtkIdType num2dElements,
-                                                              array1d< localIndex > const & face2dToEdge,
-                                                              std::vector< std::vector< vtkIdType > > const & elem2dToFace2d )
+ArrayOfArrays< localIndex > computeElem2dToEdges( vtkIdType num2dElements,
+                                                  array1d< localIndex > const & face2dToEdge,
+                                                  ArrayOfArrays< localIndex > const & elem2dToFace2d )
 {
   // Computing elem2dToEdges.
-  std::vector< std::vector< vtkIdType > > elem2dToEdges( num2dElements );
+  ArrayOfArrays< localIndex > elem2dToEdges( num2dElements );
   // Let's first invert face2dToElems2d into elem2dToFace2d
   // Now that we have elem2dToFace2d, we can compose with face2dToEdge to create elem2dToEdges.
-  for( std::size_t elemIndex = 0; elemIndex < elem2dToFace2d.size(); ++elemIndex )
+  for( localIndex elemIndex = 0; elemIndex < elem2dToFace2d.size(); ++elemIndex )
   {
     for( auto const & face2dIndex: elem2dToFace2d[elemIndex] )
     {
-      elem2dToEdges[elemIndex].emplace_back( face2dToEdge[face2dIndex] );
+      elem2dToEdges.emplaceBack(elemIndex, face2dToEdge[face2dIndex] );
     }
   }
 
@@ -801,11 +801,11 @@ std::vector< std::vector< vtkIdType > > computeElem2dToEdges( vtkIdType num2dEle
 
 struct Elem2dTo
 {
-  std::vector< std::vector< vtkIdType > > elem2dToElem3d;
-  std::vector< std::vector< vtkIdType > > elem2dToFaces;
+  array2d< localIndex > elem2dToElem3d;
+  array2d< localIndex > elem2dToFaces;
 
-  Elem2dTo( std::vector< std::vector< vtkIdType > > && elem2DToElem3D,
-            std::vector< std::vector< vtkIdType > > && elem2DToFaces )
+  Elem2dTo( array2d< localIndex > && elem2DToElem3D,
+            array2d< localIndex > && elem2DToFaces )
     : elem2dToElem3d( elem2DToElem3D ),
       elem2dToFaces( elem2DToFaces )
   { }
@@ -865,8 +865,10 @@ Elem2dTo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMesh,
   }
 
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
-  std::vector< std::vector< vtkIdType > > elem2dToElem3d( num2dElements );
-  std::vector< std::vector< vtkIdType > > elem2dToFaces( num2dElements );
+  array2d< localIndex > elem2dToElem3d( num2dElements, 2 );
+  array2d< localIndex > elem2dToFaces( num2dElements, 2 );
+  elem2dToElem3d.setValues< serialPolicy >( -1 );
+  elem2dToFaces.setValues< serialPolicy >( -1 );
   // Now we loop on all the 2d elements.
   for( int i = 0; i < num2dElements; ++i )
   {
@@ -898,7 +900,8 @@ Elem2dTo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMesh,
       {
         GEOSX_LOG( e2n.first << " is a bordering 3d element for 2d element " << i );
         // Now we know that the element 3d has a face that touches the element 2d. Let's find which one.
-        elem2dToElem3d[i].emplace_back( e2n.first );  // Warning about the ordering. // Warning about the element 3d being global id.
+        localIndex const idx = elem2dToElem3d[i][0] == -1 ? 0 : 1;
+        elem2dToElem3d[i][idx] = e2n.first;  // Warning about the ordering. // Warning about the element 3d being global id.
         // Computing the elem2dToFaces mapping.
         auto faces = elemToFaces[e2n.first];
         for( int faceIndex = 0; faceIndex < faces.size( 0 ); ++faceIndex )
@@ -907,7 +910,7 @@ Elem2dTo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMesh,
           auto nodes = faceToNodes[f];
           if( std::set< vtkIdType >( nodes.begin(), nodes.end() ) == e2n.second )
           {
-            elem2dToFaces[i].emplace_back( f );
+            elem2dToFaces[i][idx] = f;
             break;
           }
         }
@@ -919,19 +922,24 @@ Elem2dTo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMesh,
 }
 
 
-std::vector< std::set< vtkIdType > > computeElem2dToNodes( vtkIdType num2dElements,
-                                                           ArrayOfArrays< localIndex > const & faceToNodes,
-                                                           std::vector< std::vector< vtkIdType > > const & elem2dToFaces )
+ArrayOfArrays< localIndex > computeElem2dToNodes( vtkIdType num2dElements,
+                                                  ArrayOfArrays< localIndex > const & faceToNodes,
+                                                  array2d< localIndex > const & elem2dToFaces )
 {
-  std::vector< std::set< vtkIdType > > elem2dToNodes( num2dElements );
-  for( std::size_t elem2dIndex = 0; elem2dIndex < elem2dToFaces.size(); ++elem2dIndex )
+  ArrayOfArrays< localIndex > elem2dToNodes( num2dElements );
+  for( localIndex elem2dIndex = 0; elem2dIndex < elem2dToFaces.size( 0 ); ++elem2dIndex )
   {
-    for( vtkIdType const & faceIndex: elem2dToFaces[elem2dIndex] )
+    for( localIndex const & faceIndex: elem2dToFaces[elem2dIndex] )
     {
+      std::set< localIndex > tmp;
       for( auto j = 0; j < faceToNodes[faceIndex].size(); ++j )
       {
         localIndex const & nodeIndex = faceToNodes[faceIndex][j];
-        elem2dToNodes[elem2dIndex].insert( nodeIndex );
+        tmp.insert( nodeIndex );
+      }
+      for( localIndex const & nodeIndex: tmp )
+      {
+        elem2dToNodes.emplaceBack( elem2dIndex, nodeIndex );
       }
     }
   }
@@ -939,62 +947,6 @@ std::vector< std::set< vtkIdType > > computeElem2dToNodes( vtkIdType num2dElemen
   return elem2dToNodes;
 }
 
-
-template< class T >
-array1d< localIndex > convert1d( std::vector< T > const & v )
-{
-  array1d< localIndex > result( v.size() );
-  std::copy( v.cbegin(), v.cend(), result.begin() );
-  return result;
-}
-
-
-template< class T >
-ArrayOfArrays< localIndex > convertToArrayOfArrays( std::vector< std::vector< T > > const & v )
-{
-  ArrayOfArrays< localIndex > result;
-  result.reserve( v.size() );
-  for( std::vector< T > const & vv: v )
-  {
-    result.appendArray( vv.size() );
-    std::copy( vv.cbegin(), vv.cend(), result[result.size() - 1].begin() );
-  }
-  return result;
-}
-
-template< class T >
-ArrayOfArrays< localIndex > convertToArrayOfArraysFromSet( std::vector< std::set< T > > const & v )
-{
-  ArrayOfArrays< localIndex > result;
-  result.reserve( v.size() );
-  for( std::set< T > const & vv: v )
-  {
-    result.appendArray( vv.size() );
-    std::copy( vv.cbegin(), vv.cend(), result[result.size() - 1].begin() );
-  }
-  return result;
-}
-
-template< class T >
-array2d< localIndex > convertTo2dArray( std::vector< std::vector< T > > const & v )
-{
-  std::set<std::size_t> sizes;
-  for(std::vector< T > const & vv : v)
-  {
-    sizes.insert(vv.size());
-  }
-  GEOSX_ERROR_IF(sizes.size() != 1, "wrong sizes....");
-
-  array2d< localIndex > result(v.size(), *sizes.begin());
-  for( std::size_t i = 0; i < v.size(); ++i )
-  {
-    for( std::size_t j = 0; j < v[i].size(); ++j )
-    {
-      result[i][j] = v[i][j];
-    }
-  }
-  return result;
-}
 
 void importFractureNetwork2( string const & faceBlockName,
                             vtkSmartPointer< vtkDataSet > vtkMesh,
@@ -1019,30 +971,29 @@ void importFractureNetwork2( string const & faceBlockName,
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
   // Now let's build the elem2dTo* mappings.
   Elem2dTo const elem2DTo = computeElem2dTo3dElemAndFaces( faceMesh, vtkMesh, duplicatedPoints, faceToNodes, elemToFaces );
-  std::vector< std::set< vtkIdType > > const elem2dToNodes = computeElem2dToNodes( num2dElements, faceToNodes, elem2DTo.elem2dToFaces );
+  ArrayOfArrays< localIndex > const elem2dToNodes = computeElem2dToNodes( num2dElements, faceToNodes, elem2DTo.elem2dToFaces );
 
   ArrayOfArrays< localIndex > const face2dToElems2d = computeFace2dToElems2d( edges, faceMesh );
   array1d< localIndex > const face2dToEdge = computeFace2dToEdge( edges, duplicatedPoints, nodeToEdges );
-  std::vector< std::vector< vtkIdType > > const elem2dToFace2d = computeElem2dToFace2d( num2dElements, face2dToElems2d );
-  std::vector< std::vector< vtkIdType > > const elem2DToEdges = computeElem2dToEdges( num2dElements, face2dToEdge, elem2dToFace2d );
+  ArrayOfArrays< localIndex > const elem2dToFace2d = computeElem2dToFace2d( num2dElements, face2dToElems2d );
+  ArrayOfArrays< localIndex > const elem2DToEdges = computeElem2dToEdges( num2dElements, face2dToEdge, elem2dToFace2d );
 
   // Mappings are now computed. Just create the face block by value.
   FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( "fracture_info" );  // TODO
   faceBlock.setNum2DElements( num2dElements );
   faceBlock.setNum2DFaces( num2dFaces );
 
-  faceBlock.set2dElemToNodes( convertToArrayOfArraysFromSet( elem2dToNodes ) );
+  faceBlock.set2dElemToNodes( elem2dToNodes );
 
-  faceBlock.set2dElemToEdges( convertToArrayOfArrays( elem2DToEdges ) );
+  faceBlock.set2dElemToEdges( elem2DToEdges );
   faceBlock.set2dFaceToEdge( face2dToEdge );
 
   faceBlock.set2dFaceTo2dElems( face2dToElems2d );
 
-  faceBlock.set2dElemToFaces( convertTo2dArray( elem2DTo.elem2dToFaces ) );
-  array2d< localIndex > const elem2dToElems3d = convertTo2dArray( elem2DTo.elem2dToElem3d );
-  array2d< localIndex > elem2dToElems3dCB( elem2dToElems3d );
+  faceBlock.set2dElemToFaces( elem2DTo.elem2dToFaces );
+  array2d< localIndex > elem2dToElems3dCB( elem2DTo.elem2dToElem3d );
   elem2dToElems3dCB.setValues< serialPolicy >( 0 );  // TODO
-  faceBlock.set2dElemToElems( ToCellRelation< array2d< localIndex > >( elem2dToElems3dCB, elem2dToElems3d ) );
+  faceBlock.set2dElemToElems( ToCellRelation< array2d< localIndex > >( elem2dToElems3dCB, elem2DTo.elem2dToElem3d ) );
 }
 
 } // end of namespace
