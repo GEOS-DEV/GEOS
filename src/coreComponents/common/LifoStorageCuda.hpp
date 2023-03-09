@@ -28,7 +28,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/FixedSizeDequeWithMutexes.hpp"
-#include "common/TwoMutexesLock.hpp"
+#include "common/MultiMutexesLock.hpp"
 #include "common/LifoStorageCommon.hpp"
 
 namespace geosx

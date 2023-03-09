@@ -68,7 +68,7 @@ public:
     LIFO_MARK_FUNCTION;
     camp::resources::Event e;
     {
-      MultiMutexesLock< std::mutex, std::mutex > lock( m_emplaceMutex, m_frontMutex );
+      auto lock = make_multilock( m_emplaceMutex, m_frontMutex );
       {
         LIFO_MARK_SCOPE( waitingForBuffer );
         m_notFullCond.wait( lock, [ this ]  { return !this->full(); } );
@@ -93,7 +93,7 @@ public:
     LIFO_MARK_FUNCTION;
     camp::resources::Event e;
     {
-      MultiMutexesLock< std::mutex, std::mutex > lock( m_popMutex, m_frontMutex );
+      auto lock = make_multilock( m_popMutex, m_frontMutex );
       {
         LIFO_MARK_SCOPE( waitingForBuffer );
         m_notEmptyCond.wait( lock, [ this ]  { return !this->empty(); } );
@@ -121,7 +121,7 @@ public:
   {
     LIFO_MARK_FUNCTION;
     {
-      MultiMutexesLock< std::mutex, std::mutex, std::mutex, std::mutex > lock( m_emplaceMutex, q2.m_popMutex, m_frontMutex, q2.m_backMutex );
+      auto lock = make_multilock( m_emplaceMutex, q2.m_popMutex, m_frontMutex, q2.m_backMutex );
       while( this->full() || q2.empty() )
       {
         {
@@ -150,7 +150,7 @@ public:
   {
     LIFO_MARK_FUNCTION;
     {
-      MultiMutexesLock< std::mutex, std::mutex, std::mutex, std::mutex > lock( m_emplaceMutex, q2.m_popMutex, m_backMutex, q2.m_frontMutex );
+      auto lock = make_multilock( m_emplaceMutex, q2.m_popMutex, m_backMutex, q2.m_frontMutex );
       while( this->full() || q2.empty() )
       {
         m_notFullCond.wait( lock, [ this ]  { return !this->full(); } );

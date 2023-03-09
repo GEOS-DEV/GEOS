@@ -34,7 +34,7 @@ public:
    * @param mutexes The mutexes associated with the lock.
    */
   MultiMutexesLock( Mutexes&... mutexes )
-    : m_islocked(false), m_mutexes(std::make_tuple(std::ref(mutexes)...))
+    : m_islocked( false ), m_mutexes( mutexes... )
   {
     lock();
   }
@@ -73,5 +73,12 @@ private:
   /// Array of references to the mutexes
   std::tuple<Mutexes&...> m_mutexes;
 };
+
+// We need this helper without CTAD to avoid awkward typing
+template< typename ... Mutexes >
+auto make_multilock( Mutexes && ... mutexes )
+{
+  return MultiMutexesLock< Mutexes... >( std::forward< Mutexes >( mutexes )... );
+}
 }
 #endif // MULTIMUTEXESLOCK_HPP

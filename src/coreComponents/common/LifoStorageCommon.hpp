@@ -185,7 +185,7 @@ protected:
   {
     LIFO_MARK_FUNCTION;
     {
-      MultiMutexesLock< std::mutex, std::mutex > lock( m_hostDeque.m_popMutex, m_hostDeque.m_backMutex );
+      auto lock = make_multilock( m_hostDeque.m_popMutex, m_hostDeque.m_backMutex );
       writeOnDisk( m_hostDeque.back().dataIfContiguous(), id );
       m_hostDeque.pop_back();
     }
@@ -201,7 +201,7 @@ protected:
   {
     LIFO_MARK_FUNCTION;
     {
-      MultiMutexesLock< std::mutex, std::mutex > lock( m_hostDeque.m_emplaceMutex, m_hostDeque.m_backMutex );
+      auto lock = make_multilock( m_hostDeque.m_emplaceMutex, m_hostDeque.m_backMutex );
       m_hostDeque.m_notFullCond.wait( lock, [ this ]  { return !( m_hostDeque.full() ); } );
       readOnDisk( const_cast< T * >(m_hostDeque.next_back().dataIfContiguous()), id );
       m_hostDeque.inc_back();
