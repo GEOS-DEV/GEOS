@@ -38,7 +38,7 @@ public:
   MPI_iCommData( int const inputCommID );
 
   /// Default destructor
-  ~MPI_iCommData() = default;
+  ~MPI_iCommData();
 
   /**
    * Resize all the arrays of requests and status'.

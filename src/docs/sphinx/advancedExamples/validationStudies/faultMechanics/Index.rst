@@ -16,6 +16,3 @@ Fault Mechanics
    mandel/Example
 
    faultVerification/Example
-
-
-
