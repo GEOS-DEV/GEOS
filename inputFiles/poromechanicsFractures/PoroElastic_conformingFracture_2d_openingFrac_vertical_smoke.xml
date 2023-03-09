@@ -24,6 +24,15 @@
       name="fracture"
       xMin="{ -0.01, -0.8, -0.01 }"
       xMax="{ 0.01,  0.8,  1.01 }"/>
+
+    <Box name="bottomFace" 
+         xMax="{1.01, 1.01,  0.01 }" 
+         xMin="{-1.01, -1.01, -0.01 }"/>
+
+    <Box name="topFace" 
+         xMax="{1.01, 1.01,   1.01 }" 
+         xMin="{-1.01, -1.01, 0.99 }"/>     
+  
   </Geometry>
   
   <Events
@@ -116,7 +125,7 @@
       fieldName="totalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{ xneg, xpos, yneg, ypos }"/>
+      setNames="{ bottomFace }"/>
 
     <FieldSpecification
       name="zeroPressure"

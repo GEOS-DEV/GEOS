@@ -469,6 +469,9 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
 
   } );
 
+  // Get geometric object manager
+  GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();
+
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -492,6 +495,9 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
     FaceElementSubRegion & subRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
     subRegion.m_recalculateFractureConnectorEdges.clear();
     subRegion.m_newFaceElements.clear();
+
+    // Recreate geometric sets
+    meshLevel.getNodeManager().buildGeometricSets( geometricObjManager );
 
     // Create set "all" on the faceElementSubregion
     FaceElementSubRegion & fractureSubRegion  = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
