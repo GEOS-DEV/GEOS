@@ -509,8 +509,8 @@ public:
     massNormalizer = LvArray::math::max( minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
     energyNormalizer =
       LvArray::math::max( minNormalizer,
-                          m_solidInternalEnergy_n[ei][0] * ( 1.0 - m_porosity_n[ei][0] ) * m_volume[ei]
-                          + m_fluidInternalEnergy_n[ei][0] * m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+                          LvArray::math::abs( m_solidInternalEnergy_n[ei][0] * ( 1.0 - m_porosity_n[ei][0] ) * m_volume[ei]
+                                              + m_fluidInternalEnergy_n[ei][0] * m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] ) );
   }
 
   GEOSX_HOST_DEVICE

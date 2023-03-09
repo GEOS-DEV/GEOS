@@ -56,63 +56,96 @@ public:
   /**
    * @brief Get the number of 2d faces (geometrical segments in 3d).
    * @return Number of 2d faces in the current face block.
-   * @deprecated
    */
   virtual localIndex num2dFaces() const = 0;
 
   /**
    * @brief Get the nodes of each 2d element (geometrical surfaces in 3d).
    * @return The mapping of first dimension @p num2dElements.
-   * @note Element numbering is local to the FaceBlockABC. Node numbering is local to the rank.
+   * Second dimension depends on the number of nodes of each 2d element.
+   * Element numbering is local to the FaceBlockABC. Node numbering is local to the rank.
+   *
+   * @details Mesh is supposed to be conformal, so each 2d element touches two 3d faces (or only one on boundaries).
+   * The returned mapping provides @e all the nodes of all those 3d faces, in no particular order.
+   * For example, a triangular 2d element will provide 6 nodes.
    */
   virtual ArrayOfArrays< localIndex > get2dElemToNodes() const = 0;
 
   /**
-   * @brief Get the 3d edges of each 2d elements (geometrical surfaces in 3d).
+   * @brief Get the 3d edges of each 2d element (geometrical surfaces in 3d).
    * @return The mapping of first dimension @p num2dElements.
-   * @note Element numbering is local to the FaceBlockABC. Edges numbering is local to the rank.
+   * Second dimension depends on the number of edges of each 2d element.
+   * Element numbering is local to the @p FaceBlockABC. Edges numbering is local to the rank.
+   *
+   * @details On faults and fractures, because nodes are duplicated (and collocated),
+   * there are two collocated 3d edges as well.
+   * But the returned mapping only refers to one unique 3d edge; the other one is simply not provided.
+   *
+   * @note One unique 3d edge gets chosen and the other one is simply ignored.
+   * And this choice is consistent with the @p get2dFaceToEdge mapping.
+   * That is, when one 3d edge gets selected over its collocated twin,
+   * it's guaranteed that the same 3d edge will always be selected over the ignored one,
+   * in all the mappings provided by this @p FaceBlockABC.
+   * There is no particular rule to define which of the two 3d edges is going to be selected,
+   * but this rule is consistently used throughout the different mapping computations.
    */
   virtual ArrayOfArrays< localIndex > get2dElemToEdges() const = 0;
 
   /**
    * @brief Get the 3d faces (of the volumic mesh) that are aside each 2d element (geometrical surfaces in 3d) of the @p FaceBlockABC.
    * @return A mapping of size @p num2dFaces * 2 (each 2d element matches two 3d faces).
-   * @note Mesh is supposed to be conformal, so each 2d element touches two faces (or one on boundaries).
-   * In case of one unique touching face, second missing value with we @p -1.
-   * @note Element numbering is local to the FaceBlockABC. Faces numbering is local to the rank.
+   * Element numbering is local to the @p FaceBlockABC. Faces numbering is local to the rank.
+   *
+   * @details Mesh is supposed to be conformal, so each 2d element touches two 3d faces (or only one on boundaries).
+   * In the case where the 2d element lies on a boundary, the second mapped value will be @p -1.
+   *
+   * @note Both mappings @p get2dElemToFaces and @p get2dElemToElems are consistent.
+   * For the same given 2d element, the 3d face at index 0 (or 1) in the @p get2dElemToFaces mapping
+   * will be part of the boundary of the 3d element at the same index 0 (or 1) in the @p get2dElemToElems mapping.
    */
   virtual array2d< localIndex > get2dElemToFaces() const = 0;
 
   /**
    * @brief Get the 3d elements that are aside each 2d element (geometrical surfaces in 3d) of the @p FaceBlockABC.
    * @return The mapping of dimension @p num2dElements * 2.
-   * @note Mesh is supposed to be conformal, so each 2d element touches two 3d elements (or one on boundaries).
-   * In case of one unique touching face, second missing value with we @p -1.
-   * @note 2d element numbering is local to the FaceBlockABC. 3d element numbering is local to the CellBlockABC.
+   * 2d element numbering is local to the @p FaceBlockABC.
+   * 3d element numbering is local to the @p CellBlockABC.
+   *
+   * @details Mesh is supposed to be conformal, so each 2d element touches two 3d elements (or only one on boundaries).
+   * In the case where the 2d element lies on a boundary, the second mapped value will be @p -1.
+   *
+   * @note Both mappings @p get2dElemToFaces and @p get2dElemToElems are consistent.
+   * For the same given 2d element, the 3d face at index 0 (or 1) in the @p get2dElemToFaces mapping
+   * will be part of the boundary of the 3d element at the same index 0 (or 1) in the @p get2dElemToElems mapping.
    */
   virtual ToCellRelation< array2d< localIndex > > get2dElemToElems() const = 0;
 
   /**
    * @brief Get @e one 3d edge equivalent for each 2d faces (geometrical edges in 3d).
    * @return The mapping of size @p num2dFaces.
-   * @note 2d face numbering is local to the FaceBlockABC. 3d edge numbering is local to the rank.
+   * 2d face numbering is local to the FaceBlockABC.
+   * 3d edge numbering is local to the rank.
    *
-   * The current @p FaceBlockABC has its own 2d faces (which are segments in terms of 3d geometry).
+   * @details The current @p FaceBlockABC has its own 2d faces (which are segments in terms of 3d geometry).
    * Those segments are edges in the volumic mesh.
-   * The current mapping informs which edge (in the volumic mesh) is the geometrical equivalent of the 2d face of the @p FaceBlockABC.
+   * The returned mapping tells which 3d edge is the geometrical equivalent of the 2d face of the @p FaceBlockABC.
+   * There can be two collocated 3d edges (because for faults and fractures situations, nodes are duplicated).
+   * But the returned mapping only refers to one unique 3d edge; the other is simply not provided.
    *
-   * @note Instead of returning only @e one 3d edge, we should actually return 2.
-   * But this mapping is used to distinguish between the 2d faces: which ones are the same, which ones are different.
-   * As such, since we are careful to always return the smallest edge index,
-   * knowing one unique 3d edge for any given 2d face is enough.
-   * @deprecated This computational trick could be replaced by something more explicit.
+   * @note Instead of returning only @e one 3d edge, we could actually return 2.
+   * Note that both @p get2dElemToEdges and @p get2dFaceToEdge are consistent.
+   * When one 3d edge gets selected over its collocated twin,
+   * it's guaranteed that the same 3d edge will always be selected and the same always ignored,
+   * in all the mappings provided by the @p FaceBlockABC.
+   * There is no particular rule to define which of the two edges is going to be selected,
+   * but this rule is consistently used throughout the different mapping computations.
    */
   virtual array1d< localIndex > get2dFaceToEdge() const = 0;
 
   /**
    * @brief Get the 2d element(s) (geometrical surfaces in 3d) connected to each 2d face (geometrical 3d segment).
    * @return The mapping of first dimension @p num2dFaces.
-   * @note 2d face and 2d element numberings are both local to the @p FaceBlockABC.
+   * 2d face and 2d element numberings are both local to the @p FaceBlockABC.
    */
   virtual ArrayOfArrays< localIndex > get2dFaceTo2dElems() const = 0;
 };

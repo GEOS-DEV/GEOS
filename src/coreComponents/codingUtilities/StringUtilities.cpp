@@ -17,8 +17,11 @@
  */
 
 #include "StringUtilities.hpp"
+#include "limits.h"
 
 #include <algorithm>
+#include <cstdlib>
+#include <cmath>
 
 namespace geosx
 {
@@ -34,44 +37,6 @@ string toLower( string const & input )
   std::transform( input.cbegin(), input.cend(), output.begin(), toLowerCase );
   return output;
 }
-
-/**
- * String tokenizing function
- **/
-template< typename RETURN_TYPE >
-RETURN_TYPE tokenize( string const & str,
-                      string const & delimiters,
-                      bool const treatConsecutiveDelimAsOne )
-{
-  if( str.empty() )
-  {
-    return {};
-  }
-
-  RETURN_TYPE tokens;
-  size_t lastPos = 0;
-  size_t newPos;
-  while( ( newPos = str.find_first_of( delimiters, lastPos ) ) != string::npos )
-  {
-    tokens.emplace_back( str.substr( lastPos, newPos - lastPos ) );
-    lastPos = !treatConsecutiveDelimAsOne ? newPos + 1 : str.find_first_not_of( delimiters, newPos );
-  }
-  if( lastPos != string::npos )
-  {
-    tokens.emplace_back( str.substr( lastPos ) );
-  }
-
-  return tokens;
-}
-
-template string_array tokenize< string_array >( string const & str,
-                                                string const & delimiters,
-                                                bool const treatConsecutiveDelimAsOne );
-
-template std::vector< string > tokenize< std::vector< string > >( string const & str,
-                                                                  string const & delimiters,
-                                                                  bool const treatConsecutiveDelimAsOne );
-
 
 string trim( string const & str,
              string const & charsToRemove )
@@ -101,6 +66,43 @@ string removeStringAndFollowingContent( string const & str,
   }
   return newStr;
 }
+
+// put definition here so we can control the allowable values of T and
+// modication of this function triggers a whole code recompile...which
+// should be avoided.
+template< typename T >
+string toMetricPrefixString( T const & value )
+{
+  // These are the metric prefixes corrosponding to kilo, mega, giga...etc.
+  char const prefixes[12] = { 'f', 'p', 'n', 'u', 'm', ' ', 'K', 'M', 'G', 'T', 'P', 'E'};
+  string rval;
+
+  int const power = floor( log10( std::abs( (double)value ) ) );
+  int const a = floor( power / 3.0 );
+
+  real64 const scaledValue = value * pow( 10.0, -a * 3 );
+
+  // format the output of the value to 3 significant digits and append the
+  // metric prefix.
+  int const p = 2-std::abs( power - a * 3 );
+  char temp[10];
+  snprintf( temp, 8, "%5.*f %c", p, scaledValue, prefixes[a+5] );
+  rval = temp;
+
+  GEOSX_ERROR_IF( rval.empty(),
+                  GEOSX_FMT( "The value of {} was not able to be converted with a metric prefix", value ) );
+
+
+  return rval;
+}
+template string toMetricPrefixString( int const & );
+template string toMetricPrefixString( long int const & );
+template string toMetricPrefixString( long long int const & );
+template string toMetricPrefixString( unsigned long int const & );
+template string toMetricPrefixString( unsigned long long int const & );
+template string toMetricPrefixString( float const & );
+template string toMetricPrefixString( double const & );
+
 
 }
 }
