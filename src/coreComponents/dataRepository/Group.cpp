@@ -28,9 +28,6 @@ namespace geosx
 namespace dataRepository
 {
 
-/// @brief An empty orphan group node for null-value checks by address
-// static Group NullGroup("null",nullptr);
-
 Group::Group( string const & name,
               Group * const parent ):
   Group( name, parent->getConduitNode() )
@@ -661,7 +658,15 @@ bool Group::hasGroupByPath( string const & path ) const
   {
     endswith = 1;
   }
-  return path.compare( path.length() - name.length() - endswith, name.length(), grp.getName() ) == 0;
+  // since what is actually returned with a 'soft' getBaseGroupByPath isn't well-defined,
+  //  the name of the returned group *could* be longer than the path being looked for
+  //  so check to avoid calling compare with invalid sizes and 
+  bool has = false;
+  if( name.length() < path.length() )
+  {
+    has = path.compare( path.length() - name.length() - endswith, name.length(), grp.getName() ) == 0;
+  }
+  return has;
 }
 
 localIndex Group::getSubGroupIndex( keyType const & key ) const
