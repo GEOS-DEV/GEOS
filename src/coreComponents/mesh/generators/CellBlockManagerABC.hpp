@@ -200,7 +200,9 @@ public:
   virtual ToCellRelation< array2d< localIndex > > getFaceToElements() const = 0;
 
   /**
-   * @brief Returns a mutable view of the element to nodes mapping.
+   * @brief Returns a mutable view of the element to nodes mapping, and resizes it.
+   * @param name The name of the cell block
+   * @param numNodesPartition The number of nodes in the partition, used for resizing
    * @return A one to many relationship.
    */
   virtual arrayView2d< localIndex, cells::NODE_MAP_USD > getElemToNodes( string const & name, localIndex const numNodesPartition ) = 0;
@@ -218,7 +220,9 @@ public:
   virtual arrayView1d< globalIndex > getNodeLocalToGlobal()  = 0;
 
   /**
-   * @brief Sets the number of nodes and the order, and initializes some arrays/
+   * @brief Sets the number of nodes and the order, and initializes some arrays
+   * @param numNodes The number of nodes in the cell block
+   * @param order The order of the cell block
    */
   virtual void setNumNodes( localIndex numNodes, localIndex const order ) = 0;
 

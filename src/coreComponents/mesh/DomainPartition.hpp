@@ -94,7 +94,7 @@ public:
   void setupCommunications( bool use_nonblocking );
 
   /**
-   * @brief Constructs the global information of this DomainPartition, needed to set up ghosting 
+   * @brief Constructs the global information of this DomainPartition, needed to set up ghosting
    */
   void setupBaseLevelMeshGlobalInfo();
 
