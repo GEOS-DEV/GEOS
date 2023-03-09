@@ -24,6 +24,7 @@
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
@@ -727,17 +728,16 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion & subRegion )
     {
-      arrayView2d< real64 const > const & dispJump           = subRegion.getField< contact::dispJump >();
-      arrayView1d< real64 const > const & area               = subRegion.getElementArea().toViewConst();
-      arrayView1d< real64 const > const & volume             = subRegion.getElementVolume();
-      arrayView2d< real64 const > const & fractureTraction   = subRegion.getField< fields::contact::traction >();
-      arrayView1d< real64 const > const & pressure           = subRegion.getField< fields::flow::pressure >();
+      arrayView2d< real64 const > const dispJump           = subRegion.getField< contact::dispJump >();
+      arrayView1d< real64 const > const area               = subRegion.getElementArea().toViewConst();
+      arrayView1d< real64 const > const volume             = subRegion.getElementVolume();
+      arrayView2d< real64 const > const fractureTraction   = subRegion.getField< fields::contact::traction >();
+      arrayView1d< real64 const > const pressure           = subRegion.getField< fields::flow::pressure >();
       arrayView1d< real64 const > const oldHydraulicAperture = subRegion.template getField< fields::flow::aperture0 >();
-
+      arrayView1d< real64 const > const minimumHydraulicAperture = subRegion.getField< flow::minimumHydraulicAperture >();
 
       arrayView1d< real64 > const aperture                 = subRegion.getElementAperture();
       arrayView1d< real64 > const hydraulicAperture        = subRegion.getField< flow::hydraulicAperture >();
-      arrayView1d< real64 > const minimumHydraulicAperture = subRegion.getField< flow::minimumHydraulicAperture >();
       arrayView1d< real64 > const deltaVolume              = subRegion.getField< flow::deltaVolume >();
 
       string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
@@ -748,21 +748,20 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
 
         typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
-        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
-        {
-          aperture[kfe] = dispJump[kfe][0];
+        poromechanicsFracturesKernels::StateUpdateKernel::
+          launch< parallelDevicePolicy<> >( subRegion.size(),
+                                            porousMaterialWrapper,
+                                            dispJump,
+                                            pressure,
+                                            area,
+                                            volume,
+                                            deltaVolume,
+                                            aperture,
+                                            minimumHydraulicAperture,
+                                            oldHydraulicAperture,
+                                            hydraulicAperture,
+                                            fractureTraction );
 
-          hydraulicAperture[kfe] = minimumHydraulicAperture[kfe] + aperture[kfe];
-
-          deltaVolume[kfe] = hydraulicAperture[kfe] * area[kfe] - volume[kfe];
-
-          real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[kfe] );
-          real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fractureTraction[kfe] );
-
-          porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( kfe, 0, pressure[kfe],
-                                                                                oldHydraulicAperture[kfe], hydraulicAperture[kfe],
-                                                                                jump, traction );
-        } );
       } );
     } );
   } );

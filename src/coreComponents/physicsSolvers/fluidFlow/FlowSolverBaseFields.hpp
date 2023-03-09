@@ -150,7 +150,7 @@ DECLARE_FIELD( minimumHydraulicAperture,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "minimum value of the hydraulic aperture" );               
+               "minimum value of the hydraulic aperture" );
 
 DECLARE_FIELD( gravityCoefficient,
                "gravityCoefficient",
