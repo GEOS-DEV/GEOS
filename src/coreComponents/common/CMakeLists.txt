@@ -24,8 +24,7 @@ set( common_headers
      LifoStorageHost.hpp
      FixedSizeDeque.hpp
      FixedSizeDequeWithMutexes.hpp
-     TwoMutexesLock.hpp
-     FourMutexesLock.hpp
+     MultiMutexesLock.hpp
    )
 
 if ( ENABLE_CUDA )
