@@ -91,7 +91,7 @@ void NodeManager::buildSets( CellBlockManagerABC const & cellBlockManager,
 }
 
 void NodeManager::buildGeometricSets( GeometricObjectManager const & geometries )
-{ 
+{
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = this->referencePosition();
   localIndex const numNodes = this->size();
 
