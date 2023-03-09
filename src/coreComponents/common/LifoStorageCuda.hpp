@@ -144,13 +144,14 @@ public:
    * @param maxNumberOfBuffers Maximum number of buffers to store in the LIFO storage
    * @return The maximum number of buffer to allocate to fit in the percentage of the available memory.
    */
-  static int computeNumberOfBufferOnDevice( int percent, size_t bufferSize, int maxNumberOfBuffers ) {
-      GEOSX_ERROR_IF( percent > 100, "Error, percentage of memory should be smaller than 100, check lifoOnDevice (should be greater than -100)");
-      size_t free, total;
-      GEOSX_ERROR_IF( cudaSuccess != cudaMemGetInfo( &free, &total ), "Error getting CUDA device available memory" );
-      double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
-      LIFO_LOG_RANK( " LIFO : available memory on device " << freeGB << " GB" );
-      return std::min( ( int )( 0.01 * percent * free / bufferSize ), maxNumberOfBuffers );
+  static int computeNumberOfBufferOnDevice( int percent, size_t bufferSize, int maxNumberOfBuffers )
+  {
+    GEOSX_ERROR_IF( percent > 100, "Error, percentage of memory should be smaller than 100, check lifoOnDevice (should be greater than -100)" );
+    size_t free, total;
+    GEOSX_ERROR_IF( cudaSuccess != cudaMemGetInfo( &free, &total ), "Error getting CUDA device available memory" );
+    double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
+    LIFO_LOG_RANK( " LIFO : available memory on device " << freeGB << " GB" );
+    return std::min( ( int )( 0.01 * percent * free / bufferSize ), maxNumberOfBuffers );
   }
 
 private:

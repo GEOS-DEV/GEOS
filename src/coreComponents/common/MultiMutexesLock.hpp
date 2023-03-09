@@ -11,10 +11,13 @@
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
-#ifndef TWOMUTEXESLOCK_HPP
-#define TWOMUTEXESLOCK_HPP
+#ifndef MULTIMUTEXESLOCK_HPP
+#define MULTIMUTEXESLOCK_HPP
 
 #include <mutex>
+#include <tuple>
+
+#include "codingUtilities/Utilities.hpp"
 
 namespace geosx
 {
@@ -22,16 +25,16 @@ namespace geosx
 /**
  * @brief Class to handle locks using 2 mutexes
  */
-class TwoMutexesLock
+template < typename... Mutexes >
+class MultiMutexesLock
 {
 public:
   /**
-   * @brief Construct a dual mutex lock and lock the mutexes.
-   * @param mutex1 First mutex of the dual mutex
-   * @param mutex2 Second mutex of the dual mutex
+   * @brief Construct a multi mutexes lock and lock the mutexes.
+   * @param mutexes The mutexes associated with the lock.
    */
-  TwoMutexesLock( std::mutex & mutex1, std::mutex & mutex2 ):
-    m_islocked( false ), m_mutex1( &mutex1 ), m_mutex2( &mutex2 )
+  MultiMutexesLock( Mutexes&... mutexes )
+    : m_islocked(false), m_mutexes(std::make_tuple(std::ref(mutexes)...))
   {
     lock();
   }
@@ -39,7 +42,7 @@ public:
   /**
    * @brief Unlock the mutexes and destroy the locks.
    */
-  ~TwoMutexesLock()
+  ~MultiMutexesLock()
   {
     unlock();
   }
@@ -50,7 +53,7 @@ public:
   void lock()
   {
     if( m_islocked ) return;
-    std::lock( *m_mutex1, *m_mutex2 );
+    apply( []( auto && ... mutexes ){ std::lock( mutexes... ); }, m_mutexes );
     m_islocked = true;
   }
 
@@ -60,17 +63,15 @@ public:
   void unlock()
   {
     if( !m_islocked ) return;
-    m_mutex1->unlock();
-    m_mutex2->unlock();
+    forEachArgInTuple( m_mutexes, []( auto & mutex, auto ){ mutex.unlock(); } );
     m_islocked = false;
   }
+
 private:
   /// Indicate if the mutexes are owned by the lock
   bool m_islocked;
-  /// Pointer to the first mutex
-  std::mutex *m_mutex1;
-  /// Pointer to the second mutex
-  std::mutex *m_mutex2;
+  /// Array of references to the mutexes
+  std::tuple<Mutexes&...> m_mutexes;
 };
 }
-#endif // TWOMUTEXESLOCK_HPP
+#endif // MULTIMUTEXESLOCK_HPP

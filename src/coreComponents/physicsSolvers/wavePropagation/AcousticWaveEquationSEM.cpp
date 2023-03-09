@@ -299,31 +299,34 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
-      acousticWaveEquationSEMKernels::
-        PrecomputeSourceAndReceiverKernel::
-        launch< EXEC_POLICY, FE_TYPE >
-        ( elementSubRegion.size(),
-        numNodesPerElem,
-        numFacesPerElem,
-        X,
-        elemGhostRank,
-        elemsToNodes,
-        elemsToFaces,
-        elemCenter,
-        faceNormal,
-        faceCenter,
-        sourceCoordinates,
-        sourceIsAccessible,
-        sourceNodeIds,
-        sourceConstants,
-        receiverCoordinates,
-        receiverIsLocal,
-        receiverNodeIds,
-        receiverConstants,
-        sourceValue,
-        dt,
-        timeSourceFrequency,
-        rickerOrder );
+      {
+        GEOSX_MARK_SCOPE( acousticWaveEquationSEMKernels::PrecomputeSourceAndReceiverKernel );
+        acousticWaveEquationSEMKernels::
+          PrecomputeSourceAndReceiverKernel::
+          launch< EXEC_POLICY, FE_TYPE >
+          ( elementSubRegion.size(),
+            numNodesPerElem,
+            numFacesPerElem,
+            X,
+            elemGhostRank,
+            elemsToNodes,
+            elemsToFaces,
+            elemCenter,
+            faceNormal,
+            faceCenter,
+            sourceCoordinates,
+            sourceIsAccessible,
+            sourceNodeIds,
+            sourceConstants,
+            receiverCoordinates,
+            receiverIsLocal,
+            receiverNodeIds,
+            receiverConstants,
+            sourceValue,
+            dt,
+            timeSourceFrequency,
+            rickerOrder );
+      }
     } );
   } );
 }
@@ -352,7 +355,10 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
 void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
   GEOSX_MARK_FUNCTION;
-  WaveSolverBase::initializePostInitialConditionsPreSubGroups();
+  {
+    GEOSX_MARK_SCOPE(WaveSolverBase::initializePostInitialConditionsPreSubGroups);
+    WaveSolverBase::initializePostInitialConditionsPreSubGroups();
+  }
   if( m_usePML )
   {
     AcousticWaveEquationSEM::initializePML();
