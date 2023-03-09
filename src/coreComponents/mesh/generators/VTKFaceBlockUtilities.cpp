@@ -311,23 +311,23 @@ ArrayOfArrays< localIndex > computeElem2dToEdges( vtkIdType num2dElements,
   return elem2dToEdges;
 }
 
-struct Elem2dTo
+struct Elem2dTo3dInfo
 {
   array2d< localIndex > elem2dToElem3d;
   array2d< localIndex > elem2dToFaces;
 
-  Elem2dTo( array2d< localIndex > && elem2DToElem3D,
-            array2d< localIndex > && elem2DToFaces )
+  Elem2dTo3dInfo( array2d< localIndex > && elem2DToElem3D,
+                  array2d< localIndex > && elem2DToFaces )
     : elem2dToElem3d( elem2DToElem3D ),
       elem2dToFaces( elem2DToFaces )
   { }
 };
 
-Elem2dTo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMesh,
-                                        vtkSmartPointer< vtkDataSet > mesh,
-                                        DuplicatedPoints const & duplicatedPoints,
-                                        ArrayOfArraysView< localIndex const > faceToNodes,
-                                        geosx::internal::ElementToFace const & elemToFaces )
+Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMesh,
+                                              vtkSmartPointer< vtkDataSet > mesh,
+                                              DuplicatedPoints const & duplicatedPoints,
+                                              ArrayOfArraysView< localIndex const > faceToNodes,
+                                              geosx::internal::ElementToFace const & elemToFaces )
 {
   const char * const boundaryPointsName = "boundary points";
   const char * const boundaryCellsName = "boundary cells";
@@ -430,7 +430,7 @@ Elem2dTo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMesh,
     }
   }
 
-  return Elem2dTo( std::move( elem2dToElem3d ), std::move( elem2dToFaces ) );
+  return Elem2dTo3dInfo( std::move( elem2dToElem3d ), std::move( elem2dToFaces ) );
 }
 
 
@@ -482,30 +482,27 @@ void importFractureNetwork( string const & faceBlockName,
   vtkIdType const num2dFaces = edges->GetNumberOfCells();
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
   // Now let's build the elem2dTo* mappings.
-  Elem2dTo elem2DTo = computeElem2dTo3dElemAndFaces( faceMesh, vtkMesh, duplicatedPoints, faceToNodes.toViewConst(), elemToFaces );
-  ArrayOfArrays< localIndex > elem2dToNodes = computeElem2dToNodes( num2dElements, faceToNodes.toViewConst(), elem2DTo.elem2dToFaces.toViewConst() );
+  Elem2dTo3dInfo elem2dTo3d = computeElem2dTo3dElemAndFaces( faceMesh, vtkMesh, duplicatedPoints, faceToNodes.toViewConst(), elemToFaces );
+  ArrayOfArrays< localIndex > elem2dToNodes = computeElem2dToNodes( num2dElements, faceToNodes.toViewConst(), elem2dTo3d.elem2dToFaces.toViewConst() );
 
   ArrayOfArrays< localIndex > face2dToElems2d = computeFace2dToElems2d( edges, faceMesh );
   array1d< localIndex > face2dToEdge = computeFace2dToEdge( edges, duplicatedPoints, nodeToEdges.toViewConst() );
   ArrayOfArrays< localIndex > const elem2dToFace2d = computeElem2dToFace2d( num2dElements, face2dToElems2d.toViewConst() );
   ArrayOfArrays< localIndex > elem2DToEdges = computeElem2dToEdges( num2dElements, face2dToEdge.toViewConst(), elem2dToFace2d.toViewConst() );
 
+  array2d< localIndex > elem2dToElems3dCB( elem2dTo3d.elem2dToElem3d );
+  elem2dToElems3dCB.setValues< serialPolicy >( 0 );  // TODO
+
   // Mappings are now computed. Just create the face block by value.
   FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( "fracture_info" );  // TODO
   faceBlock.setNum2DElements( num2dElements );
   faceBlock.setNum2DFaces( num2dFaces );
-
   faceBlock.set2dElemToNodes( std::move( elem2dToNodes ) );
-
   faceBlock.set2dElemToEdges( std::move( elem2DToEdges ) );
   faceBlock.set2dFaceToEdge( std::move( face2dToEdge ) );
-
   faceBlock.set2dFaceTo2dElems( std::move( face2dToElems2d ) );
-
-  faceBlock.set2dElemToFaces( std::move( elem2DTo.elem2dToFaces ) );
-  array2d< localIndex > elem2dToElems3dCB( elem2DTo.elem2dToElem3d );
-  elem2dToElems3dCB.setValues< serialPolicy >( 0 );  // TODO
-  faceBlock.set2dElemToElems( ToCellRelation< array2d< localIndex > >( std::move( elem2dToElems3dCB ), std::move( elem2DTo.elem2dToElem3d ) ) );
+  faceBlock.set2dElemToFaces( std::move( elem2dTo3d.elem2dToFaces ) );
+  faceBlock.set2dElemToElems( ToCellRelation< array2d< localIndex > >( std::move( elem2dToElems3dCB ), std::move( elem2dTo3d.elem2dToElem3d ) ) );
 }
 
 } // end of namespace
