@@ -59,7 +59,7 @@ public:
   /**
    * @brief Default destructor.
    */
-  virtual ~InternalWellGenerator();
+  ~InternalWellGenerator() override;
 
   ///@}
 
@@ -272,7 +272,6 @@ public:
 
   const string getWellRegionName() const { return m_wellRegionName; }
   const string getWellControlsName() const { return m_wellControlsName; }
-
   /// @endcond
   
   
