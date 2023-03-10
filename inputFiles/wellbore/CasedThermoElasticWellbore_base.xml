@@ -14,7 +14,7 @@
 	maxAllowedResidualNorm="1e19"
         newtonMaxIter="100"/>
       <LinearSolverParameters
-        solverType="direct"/>
+        directParallel="0"/>
     </SinglePhasePoromechanics>
 
     <SolidMechanicsLagrangianSSLE
