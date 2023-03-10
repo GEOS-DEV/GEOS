@@ -162,8 +162,8 @@ struct Stone2
           dThreePhaseRelPerm_dVolFrac[ipOil] = dGoRelPerm_dOilVolFrac;
       } else {
           threePhaseRelPerm = connatewoRelPerm * ((woRelPerm/connatewoRelPerm + wRelPerm)*(goRelPerm/connatewoRelPerm + gRelPerm) - (wRelPerm + gRelPerm));
-          if (threePhaseRelPerm < 0)
-              threePhaseRelPerm = 0;
+//          if (threePhaseRelPerm < 0)
+//              threePhaseRelPerm = 0;
           // derivative w.r.t. Sw
           dThreePhaseRelPerm_dVolFrac[ipWater] = connatewoRelPerm * ((woRelPerm/connatewoRelPerm + dWRelPerm_dWaterVolFrac)*(goRelPerm/connatewoRelPerm + gRelPerm) - dWRelPerm_dWaterVolFrac);
           // derivative w.r.t. So
