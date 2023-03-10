@@ -66,7 +66,11 @@ public:
     LIFO_LOG_RANK( " LIFO : buffer size "<< bufferSize << "MB" );
     if( numberOfBuffersToStoreOnDevice < 0 )
     {
+#ifdef GEOSX_USE_CUDA
       numberOfBuffersToStoreOnDevice = LifoStorageCuda< T, INDEX_TYPE >::computeNumberOfBufferOnDevice( -numberOfBuffersToStoreOnDevice, m_bufferSize, m_maxNumberOfBuffers );
+#else
+      numberOfBuffersToStoreOnDevice = 0;
+#endif
     }
     if( numberOfBuffersToStoreOnHost < 0 )
     {

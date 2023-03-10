@@ -305,27 +305,27 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
           PrecomputeSourceAndReceiverKernel::
           launch< EXEC_POLICY, FE_TYPE >
           ( elementSubRegion.size(),
-            numNodesPerElem,
-            numFacesPerElem,
-            X,
-            elemGhostRank,
-            elemsToNodes,
-            elemsToFaces,
-            elemCenter,
-            faceNormal,
-            faceCenter,
-            sourceCoordinates,
-            sourceIsAccessible,
-            sourceNodeIds,
-            sourceConstants,
-            receiverCoordinates,
-            receiverIsLocal,
-            receiverNodeIds,
-            receiverConstants,
-            sourceValue,
-            dt,
-            timeSourceFrequency,
-            rickerOrder );
+          numNodesPerElem,
+          numFacesPerElem,
+          X,
+          elemGhostRank,
+          elemsToNodes,
+          elemsToFaces,
+          elemCenter,
+          faceNormal,
+          faceCenter,
+          sourceCoordinates,
+          sourceIsAccessible,
+          sourceNodeIds,
+          sourceConstants,
+          receiverCoordinates,
+          receiverIsLocal,
+          receiverNodeIds,
+          receiverConstants,
+          sourceValue,
+          dt,
+          timeSourceFrequency,
+          rickerOrder );
       }
     } );
   } );
@@ -356,7 +356,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
   GEOSX_MARK_FUNCTION;
   {
-    GEOSX_MARK_SCOPE(WaveSolverBase::initializePostInitialConditionsPreSubGroups);
+    GEOSX_MARK_SCOPE( WaveSolverBase::initializePostInitialConditionsPreSubGroups );
     WaveSolverBase::initializePostInitialConditionsPreSubGroups();
   }
   if( m_usePML )
@@ -388,13 +388,13 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
     {
-      GEOSX_MARK_SCOPE(mass_zero);
+      GEOSX_MARK_SCOPE( mass_zero );
       mass.zero();
     }
     /// damping matrix to be computed for each dof in the boundary of the mesh
     arrayView1d< real32 > const damping = nodeManager.getField< fields::DampingVector >();
     {
-      GEOSX_MARK_SCOPE(damping_zero);
+      GEOSX_MARK_SCOPE( damping_zero );
       damping.zero();
     }
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
@@ -403,7 +403,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
-      GEOSX_MARK_SCOPE(lambda_1);
+      GEOSX_MARK_SCOPE( lambda_1 );
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
@@ -411,7 +411,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       /// Partial gradient if gradient as to be computed
       arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
       {
-        GEOSX_MARK_SCOPE(grad_zero);
+        GEOSX_MARK_SCOPE( grad_zero );
         grad.zero();
       }
       finiteElement::FiniteElementBase const &
@@ -420,7 +420,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
         {
-          GEOSX_MARK_SCOPE(MassMatrixKernel);
+          GEOSX_MARK_SCOPE( MassMatrixKernel );
           acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
           kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
@@ -430,7 +430,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                  mass );
         }
         {
-          GEOSX_MARK_SCOPE(DampingMatrixKernel);
+          GEOSX_MARK_SCOPE( DampingMatrixKernel );
           acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
           kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
