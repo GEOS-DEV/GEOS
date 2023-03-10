@@ -411,14 +411,16 @@ int MpiWrapper::activeWaitOrderedCompletePhase( const int participants,
 int MpiWrapper::nodeCommSize()
 {
   // if not initialized then we guess there is no MPI.
-  if ( ! initialized() ) return 1;
+  if( !initialized() )
+    return 1;
 
   int len;
   std::array< char, MPI_MAX_PROCESSOR_NAME + 1 > hostname;
-  MPI_Get_processor_name( hostname.data(),&len );
+  MPI_Get_processor_name( hostname.data(), &len );
   hostname[len] = '\0';
-  int color = (int)std::hash<string>{}(hostname.data());
-  if ( color < 0 ) color *= -1;
+  int color = (int)std::hash< string >{} (hostname.data());
+  if( color < 0 )
+    color *= -1;
 
   /**
    * Create intra-node communicator

@@ -25,7 +25,7 @@ namespace geosx
 /**
  * @brief Class to handle locks using 2 mutexes
  */
-template < typename... Mutexes >
+template< typename ... Mutexes >
 class MultiMutexesLock
 {
 public:
@@ -33,8 +33,8 @@ public:
    * @brief Construct a multi mutexes lock and lock the mutexes.
    * @param mutexes The mutexes associated with the lock.
    */
-  MultiMutexesLock( Mutexes&... mutexes )
-    : m_islocked( false ), m_mutexes( mutexes... )
+  MultiMutexesLock( Mutexes &... mutexes )
+    : m_islocked( false ), m_mutexes( mutexes ... )
   {
     lock();
   }
@@ -53,7 +53,7 @@ public:
   void lock()
   {
     if( m_islocked ) return;
-    apply( []( auto && ... mutexes ){ std::lock( mutexes... ); }, m_mutexes );
+    apply( []( auto && ... mutexes ){ std::lock( mutexes ... ); }, m_mutexes );
     m_islocked = true;
   }
 
@@ -71,12 +71,11 @@ private:
   /// Indicate if the mutexes are owned by the lock
   bool m_islocked;
   /// Array of references to the mutexes
-  std::tuple<Mutexes&...> m_mutexes;
+  std::tuple< Mutexes &... > m_mutexes;
 };
 
 /**
  * @brief Helper to construct MultiMutexesLock (usage auto lock = make_multilock( mutex1, mutex2, ... ))
- * @param Mutexes List of mutex types (eg. std::mutex)
  * @param mutexes List of mutex parameters
  */
 template< typename ... Mutexes >
