@@ -74,7 +74,11 @@ private:
   std::tuple<Mutexes&...> m_mutexes;
 };
 
-// We need this helper without CTAD to avoid awkward typing
+/**
+ * @brief Helper to construct MultiMutexesLock (usage auto lock = make_multilock( mutex1, mutex2, ... ))
+ * @param Mutexes List of mutex types (eg. std::mutex)
+ * @param mutexes List of mutex parameters
+ */
 template< typename ... Mutexes >
 auto make_multilock( Mutexes && ... mutexes )
 {

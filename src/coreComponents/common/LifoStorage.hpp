@@ -51,9 +51,9 @@ public:
    * @param name                           Prefix of the files used to save the occurenncy of the saved buffer on disk.
    * @param elemCnt                        Number of elments in the LvArray we want to store in the LIFO storage.
    * @param numberOfBuffersToStoreOnDevice Maximum number of array to store on device memory. If negative opposite of the percent of left
-   *memory we want to use( -80 = use 80% of remaining memory ).
+   * memory we want to use( -80 = use 80% of remaining memory ).
    * @param numberOfBuffersToStoreOnHost   Maximum number of array to store on host memory . If negative opposite of the percent of left
-   *memory we want to use( -80 = use 80% of remaining memory ).
+   * memory we want to use( -80 = use 80% of remaining memory ).
    * @param maxNumberOfBuffers             Number of arrays expected to be stores in the LIFO.
    */
   LifoStorage( std::string name, size_t elemCnt, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
