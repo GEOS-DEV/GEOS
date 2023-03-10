@@ -392,12 +392,12 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
     {
 
       SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
-      std::cout<<"on addCoupling rank "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" fracturedElements "<<": {";
-      for(auto && eleme:fracturedElements)
-      {
-        std::cout<<eleme<<",";
-      }
-      std::cout<<"}\n";
+      // std::cout<<"on addCoupling rank "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" fracturedElements "<<": {";
+      // for(auto && eleme:fracturedElements)
+      // {
+      //   std::cout<<eleme<<",";
+      // }
+      // std::cout<<"}\n";
       //std::cout<<"Rank "<<thisRank<<" checkPoint 2"<<std::endl;
       ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = cellElementSubRegion.embeddedSurfacesList().toViewConst();
 
@@ -410,7 +410,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
         localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
         //std::cout<<"Rank "<<thisRank<<" index k: "<<k<<std::endl;
         //std::cout<<"Rank "<<thisRank<<" cellIndex: "<<cellIndex<<std::endl;
-        if(k==-1 || cellIndex>150){
+        if(k==-1){
           std::cout<<"Rank "<<thisRank<<" index k: "<<k<<std::endl;
           std::cout<<"Rank "<<thisRank<<" cellIndex: "<<cellIndex<<std::endl;
         }

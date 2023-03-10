@@ -29,6 +29,8 @@
 namespace geosx
 {
 
+//very serial
+using serialSerial = RAJA::seq_exec;
 using serialPolicy = RAJA::loop_exec;
 using serialReduce = RAJA::seq_reduce;
 using serialAtomic = RAJA::seq_atomic;

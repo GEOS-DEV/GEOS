@@ -116,9 +116,7 @@ bool EmbeddedSurfaceSubRegion::addNewPlanarEmbeddedSurface( localIndex const cel
                                                             R1Tensor const & fracCenter )
 
 {
-  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  std::cout<<"Rank "<<thisRank<<" checkPoint 0"<<std::endl;
-  GEOSX_LOG_LEVEL_RANK_0( 1, "checkPoint 0 ");
+  //int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   bool addEmbeddedElem = true;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
   arrayView2d< localIndex const > const edgeToNodes = edgeManager.nodeList();
@@ -136,8 +134,6 @@ bool EmbeddedSurfaceSubRegion::addNewPlanarEmbeddedSurface( localIndex const cel
   array1d< localIndex > pointParentIndex;
 
   localIndex numPoints = 0;
-  std::cout<<"Rank "<<thisRank<<" checkPoint 1"<<std::endl;
-  GEOSX_LOG_LEVEL_RANK_0( 1, "checkPoint 1 ");
   for( localIndex ke = 0; ke < cellToEdges.size( 1 ); ke++ )
   {
     edgeIndex = cellToEdges[cellIndex][ke];
@@ -170,8 +166,6 @@ bool EmbeddedSurfaceSubRegion::addNewPlanarEmbeddedSurface( localIndex const cel
       numPoints++;
     }
   } //end of edge loop
-  std::cout<<"Rank "<<thisRank<<" checkPoint 2"<<std::endl;
-  GEOSX_LOG_LEVEL_RANK_0( 2, "checkPoint 2 ");
   if( addEmbeddedElem && intersectionPoints.size( 0 ) > 0 )
   {
     // resize
@@ -224,8 +218,6 @@ bool EmbeddedSurfaceSubRegion::addNewPlanarEmbeddedSurface( localIndex const cel
       }
       elemNodes[ j ] =  nodeIndex;
     }
-    std::cout<<"Rank "<<thisRank<<" checkPoint 3"<<std::endl;
-    GEOSX_LOG_LEVEL_RANK_0( 2, "checkPoint 3 ");
 
     m_toNodesRelation.resizeArray( surfaceIndex, elemNodes.size() );
     for( localIndex inode = 0; inode < elemNodes.size(); inode++ )
@@ -240,8 +232,7 @@ bool EmbeddedSurfaceSubRegion::addNewPlanarEmbeddedSurface( localIndex const cel
     LvArray::tensorOps::copy< 3 >( m_tangentVector1[ surfaceIndex ], widthVector);
     LvArray::tensorOps::copy< 3 >( m_tangentVector2[ surfaceIndex ], lengthVector);
     this->calculateElementGeometricQuantities( intersectionPoints.toViewConst(), this->size()-1 );
-    std::cout<<"Rank "<<thisRank<<" checkPoint 4"<<std::endl;
-    GEOSX_LOG_LEVEL_RANK_0( 2, "checkPoint 4 ");
+
   }
   return addEmbeddedElem;
 }                                                      

@@ -546,6 +546,7 @@ void EmbeddedSurfaceGenerator::propagationStep3D()
   SurfaceElementRegion & embeddedSurfaceRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
   EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion = embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
   localIndex localNumberOfSurfaceElems = embeddedSurfaceSubRegion.size();
+  localIndex localNumberOfSurfaceElemsOld = localNumberOfSurfaceElems;
   NewObjectLists newObjects;
   // Initialize variables
 
@@ -557,6 +558,7 @@ void EmbeddedSurfaceGenerator::propagationStep3D()
   FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
   arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
   auto fracturedElements = subRegion.fracturedElementsList();
+  localIndex numEmbNodesBeforeCutting = embSurfNodeManager.size();
   //save old embNodesPositions to find new embNodes later
   //this part probably needs explicit dynamic allocation
   std::cout<<"on prop3d rank "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" fracturedElements "<<": {";
@@ -611,11 +613,13 @@ void EmbeddedSurfaceGenerator::propagationStep3D()
 
       KERNEL_TYPE::template launchCIComputationKernel< parallelDevicePolicy< 32 >, KERNEL_TYPE >( kernel );
     } );
+    //}
     std::cout<<"Rank "<<thisRank<<" Past Kernels\n";
     //GEOSX_LOG_LEVEL_RANK_0( 2, "Past Kernels" );
   
+  //TODO: only add new nodes, and not all are new in the propStep()
     // add all new nodes to newObject list
-    for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
+    for( localIndex ni = numEmbNodesBeforeCutting; ni < embSurfNodeManager.size(); ni++ )
     {
       newObjects.newNodes.insert( ni );
     }
@@ -630,7 +634,9 @@ void EmbeddedSurfaceGenerator::propagationStep3D()
   
   embeddedSurfaceSubRegion.inheritGhostRank( cellElemGhostRank );
   GEOSX_LOG_LEVEL_RANK_0( 2, "Before set global indices" );
-  setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
+  //setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
+  }
+  updateGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion, localNumberOfSurfaceElemsOld, numEmbNodesBeforeCutting);
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "Before synchronizations" );
 
@@ -640,8 +646,7 @@ void EmbeddedSurfaceGenerator::propagationStep3D()
   std::cout<<"rank "<<thisRank<<" before sync topology"<<std::endl;
   for( localIndex ei=0; ei<fElements.size(); ++ei )
   {
-    localIndex const cellIndex = fElements[ei];
-    
+    localIndex const cellIndex = fElements[ei];  
     localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
     std::cout<<"before sync rank "<<thisRank<<" bulk cell: "<<cellIndex<<", embedded cell: "<<k<<std::endl;
   } 
@@ -656,16 +661,16 @@ void EmbeddedSurfaceGenerator::propagationStep3D()
   GEOSX_LOG_LEVEL_RANK_0( 2, "Past synchronizations" );
 
     //TEST ELEM TO EMBEDDED CELL MAP
-  SortedArray< localIndex > nfElements = subRegion.fracturedElementsList();
-  ArrayOfArraysView< localIndex const > const ncellsToEmbeddedSurfaces = subRegion.embeddedSurfacesList().toViewConst();
-  std::cout<<"rank "<<thisRank<<" after sync topology"<<std::endl;
-  for( localIndex ei=0; ei<nfElements.size(); ++ei )
-  {
-    localIndex const cellIndex = nfElements[ei];
+  // SortedArray< localIndex > nfElements = subRegion.fracturedElementsList();
+  // ArrayOfArraysView< localIndex const > const ncellsToEmbeddedSurfaces = subRegion.embeddedSurfacesList().toViewConst();
+  // std::cout<<"rank "<<thisRank<<" after sync topology"<<std::endl;
+  // for( localIndex ei=0; ei<nfElements.size(); ++ei )
+  // {
+  //   localIndex const cellIndex = nfElements[ei];
     
-    localIndex k = ncellsToEmbeddedSurfaces[cellIndex][0];
-    std::cout<<"after sync rank "<<thisRank<<" bulk cell: "<<cellIndex<<", embedded cell: "<<k<<std::endl;
-  }
+  //   localIndex k = ncellsToEmbeddedSurfaces[cellIndex][0];
+  //   std::cout<<"after sync rank "<<thisRank<<" bulk cell: "<<cellIndex<<", embedded cell: "<<k<<std::endl;
+  // }
 
   EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
 
@@ -683,8 +688,8 @@ void EmbeddedSurfaceGenerator::propagationStep3D()
   // Node to edge map
   embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
   embSurfNodeManager.compressRelationMaps();
-  }
 
+  
   //GEOSX_LOG_LEVEL_RANK_0( 2, "end function" );
 
   // Add the embedded elements to the fracture stencil.
@@ -783,6 +788,69 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
       }
     }
   }
+
+}
+
+void EmbeddedSurfaceGenerator::updateGlobalIndices( ElementRegionManager & elemManager,
+                                                    EmbeddedSurfaceNodeManager & embSurfNodeManager,
+                                                    EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion,
+                                                    localIndex numberOfEmbElemsBeforeCut,
+                                                    localIndex numberOfEmbNodesBeforeCut )
+{
+  // // NEED TO GET THIS AS YOU ADD THEM: numberOfNewSurfaceElementsOnThisRank; 
+
+  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  int const commSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
+
+  localIndex_array numberOfNewSurfaceElemsPerRank( commSize );
+  localIndex_array globalIndexOffset( commSize );
+  MpiWrapper::allGather( embeddedSurfaceSubRegion.size() - numberOfEmbElemsBeforeCut, numberOfNewSurfaceElemsPerRank );
+
+  globalIndexOffset[0] = elemManager.maxGlobalIndex(); // should be like elemManager.getMaxGlobalIndex();
+  localIndex totalNumberOfNewSurfaceElements = numberOfNewSurfaceElemsPerRank[ 0 ];  // Sum across all ranks
+  for( int rank = 1; rank < commSize; ++rank )
+  {
+    globalIndexOffset[rank] = globalIndexOffset[rank - 1] + numberOfNewSurfaceElemsPerRank[rank - 1];
+    totalNumberOfNewSurfaceElements += numberOfNewSurfaceElemsPerRank[rank];
+  }
+
+  //SETTING ELEMENTAL GLOBAL INDICES// Add new globalIndices
+  arrayView1d< globalIndex > const & elemLocalToGlobal = embeddedSurfaceSubRegion.localToGlobalMap();
+  forAll< serialPolicy >( embeddedSurfaceSubRegion.size(), [&, elemLocalToGlobal] ( localIndex const ei )
+  {
+    if(ei >= numberOfEmbElemsBeforeCut){
+      //localIndex const indexOfNewSurfaceElement = newSurfaceElementsonThisRank[ei]; 
+      elemLocalToGlobal( ei ) = globalIndexOffset[thisRank] + ei + 1;
+      embeddedSurfaceSubRegion.updateGlobalToLocalMap( ei );   
+    }  
+  } );
+  embeddedSurfaceSubRegion.setMaxGlobalIndex();
+  elemManager.setMaxGlobalIndex();
+  std::cout<<"hello from rank "<<thisRank<<std::endl;
+  MpiWrapper::barrier(MPI_COMM_GEOSX);
+  //print map for debugging
+  for(int i=0;i<embeddedSurfaceSubRegion.size();i++){
+    std::cout<<"Rank: "<<thisRank<<", local elem: "<<i<<" mapped to global: "<<elemLocalToGlobal[i]<<"\n";
+  }
+  MpiWrapper::barrier(MPI_COMM_GEOSX);
+
+  //now, let's do the nodes
+  arrayView1d< globalIndex > const & nodesLocalToGlobal = embSurfNodeManager.localToGlobalMap();
+  forAll< serialPolicy >( embSurfNodeManager.size(), [=, &embSurfNodeManager] ( localIndex const ni )
+  {
+    localIndex counter = 1;
+    if(ni >= numberOfEmbNodesBeforeCut){
+      nodesLocalToGlobal( ni ) = embSurfNodeManager.maxGlobalIndex() + counter;
+      embSurfNodeManager.updateGlobalToLocalMap( ni );
+      counter++;
+    }
+    if(ni==embSurfNodeManager.size()-1)//do this only one time
+    {
+      embSurfNodeManager.setMaxGlobalIndex();
+    }
+  } );
+  MpiWrapper::barrier(MPI_COMM_GEOSX);
+  std::cout<<"exiting function rank "<<thisRank<<std::endl;
 
 }
 

@@ -134,6 +134,12 @@ private:
 
   void addToFractureStencil( DomainPartition & domain );
 
+  void updateGlobalIndices( ElementRegionManager & elemManager,
+                            EmbeddedSurfaceNodeManager & embSurfNodeManager,
+                            EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion,
+                            localIndex numberOfEmbElemsBeforeCut,
+                            localIndex numberOfEmbNodesBeforeCut );
+
   void setGlobalIndices( ElementRegionManager & elemManager,
                          EmbeddedSurfaceNodeManager & embSurfNodeManager,
                          EmbeddedSurfaceSubRegion & embeddedSurfaceSubregion );
