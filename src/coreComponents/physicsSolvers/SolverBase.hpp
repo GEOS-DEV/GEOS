@@ -399,16 +399,20 @@ public:
 
   /**
    * @brief calculate the norm of the global system residual
-   * @param rhs the system right-hand side vector
-   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param time the time at the beginning of the step
+   * @param dt the desired timestep
    * @param domain the domain partition
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localRhs the system right-hand side vector
    * @return norm of the residual
    *
    * This function returns the norm of global residual vector, which is suitable for comparison with
    * a tolerance.
    */
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs );
 
@@ -734,7 +738,6 @@ public:
     return m_meshTargets;
   }
 protected:
-
 
   static real64 eisenstatWalker( real64 const newNewtonNorm,
                                  real64 const oldNewtonNorm,

@@ -67,18 +67,12 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    // input data
-    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
-    static constexpr char const * permeabilityString() { return "permeability"; }
-
     // misc inputs
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
-    static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
-
   };
 
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
@@ -142,9 +136,6 @@ protected:
 
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
-
-  real64 m_fluxEstimate;
-
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

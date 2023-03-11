@@ -289,7 +289,9 @@ void ReactiveCompositionalMultiphaseOBL::registerDataOnMesh( Group & meshBodies 
   } );
 }
 
-real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( DomainPartition const & domain,
+real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time ),
+                                                                  real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                                                  DomainPartition const & domain,
                                                                   DofManager const & dofManager,
                                                                   arrayView1d< real64 const > const & localRhs )
 {

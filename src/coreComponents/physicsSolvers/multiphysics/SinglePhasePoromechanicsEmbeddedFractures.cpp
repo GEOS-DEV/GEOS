@@ -520,15 +520,18 @@ void SinglePhasePoromechanicsEmbeddedFractures::resetStateToBeginningOfStep( Dom
   m_fracturesSolver->resetStateToBeginningOfStep( domain );
 }
 
-real64 SinglePhasePoromechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition const & domain,
+
+real64 SinglePhasePoromechanicsEmbeddedFractures::calculateResidualNorm( real64 const & time_n,
+                                                                         real64 const & dt,
+                                                                         DomainPartition const & domain,
                                                                          DofManager const & dofManager,
                                                                          arrayView1d< real64 const > const & localRhs )
 {
   // compute norm of momentum balance residual equations
-  real64 const momentumResidualNorm = m_fracturesSolver->calculateResidualNorm( domain, dofManager, localRhs );
+  real64 const momentumResidualNorm = m_fracturesSolver->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
 
   // compute norm of mass balance residual equations
-  real64 const massResidualNorm = flowSolver()->calculateResidualNorm( domain, dofManager, localRhs );
+  real64 const massResidualNorm = flowSolver()->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
 
   real64 const residual = sqrt( momentumResidualNorm * momentumResidualNorm + massResidualNorm * massResidualNorm );
 
