@@ -229,7 +229,7 @@ public:
   static int activeWaitAny( const int count,
                             MPI_Request array_of_requests[],
                             MPI_Status array_of_statuses[],
-                            std::function< MPI_Request ( int ) > func );
+                            std::function< void ( int ) > func );
 
   /**
    * Wait on MPI_Requests to complete on or more at a time and trigger a callback to
@@ -243,7 +243,7 @@ public:
   static int activeWaitSome( const int count,
                              MPI_Request array_of_requests[],
                              MPI_Status array_of_statuses[],
-                             std::function< MPI_Request ( int ) > func );
+                             std::function< void ( int ) > func );
 
   /**
    * Active non-blocking phased communication with multiple participants,
@@ -258,7 +258,7 @@ public:
    * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int activeWaitSomeCompletePhase( const int participants,
-                                          std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
+                                          std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< void ( int ) > > > const & phases );
 
   /**
    * Active blocking phased communication with multiple participants,
@@ -274,7 +274,7 @@ public:
    * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int activeWaitOrderedCompletePhase( const int participants,
-                                             std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
+                                             std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< void ( int ) > > > const & phases );
   ///@}
 
 #if !defined(GEOSX_USE_MPI)
