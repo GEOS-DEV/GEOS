@@ -31,6 +31,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/NonlinearSolverParameters.hpp"
 
 namespace geosx
 {
@@ -76,19 +77,15 @@ FlowSolverBase::FlowSolverBase( string const & name,
                                 Group * const parent ):
   SolverBase( name, parent ),
   m_numDofPerCell( 0 ),
-  m_isThermal( 0 ),
-  m_fluxEstimate()
+  m_isThermal( 0 )
 {
   this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
 
-  this->registerWrapper( viewKeyStruct::inputFluxEstimateString(), &m_fluxEstimate ).
-    setApplyDefaultValue( 1.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Initial estimate of the input flux used only for residual scaling. This should be "
-                    "essentially equivalent to the input flux * dt." );
+  // allow the user to select a norm
+  getNonlinearSolverParameters().getWrapper< solverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
 }
 
 void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
