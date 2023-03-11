@@ -125,16 +125,13 @@ smallStrainUpdate( localIndex const k,
                                                        dSolidDensity_dPressure );
 
   // Step 2: compute the body force
-  if( m_gravityAcceleration > 0.0 )
-  {
-    computeBodyForce( k, q,
-                      porosity,
-                      dPorosity_dVolStrain,
-                      dPorosity_dPressure,
-                      dPorosity_dTemperature,
-                      dSolidDensity_dPressure,
-                      stack );
-  }
+  computeBodyForce( k, q,
+                    porosity,
+                    dPorosity_dVolStrain,
+                    dPorosity_dPressure,
+                    dPorosity_dTemperature,
+                    dSolidDensity_dPressure,
+                    stack );
 
   // Step 3: compute fluid mass increment
   computeFluidIncrement( k, q,
@@ -257,19 +254,16 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
     1.0,
     -detJxW );
 
-  if( m_gravityAcceleration > 0.0 )
-  {
-    BilinearFormUtilities::compute< displacementTestSpace,
-                                    pressureTrialSpace,
-                                    DifferentialOperator::Identity,
-                                    DifferentialOperator::Identity >
-    (
-      stack.dLocalResidualMomentum_dTemperature,
-      N,
-      stack.dBodyForce_dTemperature,
-      1.0,
-      detJxW );
-  }
+  BilinearFormUtilities::compute< displacementTestSpace,
+                                  pressureTrialSpace,
+                                  DifferentialOperator::Identity,
+                                  DifferentialOperator::Identity >
+  (
+    stack.dLocalResidualMomentum_dTemperature,
+    N,
+    stack.dBodyForce_dTemperature,
+    1.0,
+    detJxW );
 }
 
 template< typename SUBREGION_TYPE,
