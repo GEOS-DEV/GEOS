@@ -27,9 +27,9 @@ There are several main components of the FEMKI:
 
 #. A ``launch`` function, which launches the kernel, and calls the kernel
    interface functions conforming to the interface defined by ``KernelBase``.
-   This function is actaully a member function of the ``Kernel`` class, so it
+   This function is actually a member function of the ``Kernel`` class, so it
    may be overridden by a specific physics kernel, allowing complete
-   customizationAn of the interface, while maintaining the usage of the
+   customization of the interface, while maintaining the usage of the
    looping patterns.
 
 A Generic Element Looping Pattern
