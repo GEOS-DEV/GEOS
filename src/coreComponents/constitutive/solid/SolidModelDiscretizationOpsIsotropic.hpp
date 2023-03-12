@@ -91,6 +91,16 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
                        real64 ( &diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] );
 
   /**
+   * @brief Compute the tensor contraction \tensorTwo{output}=\mathbb{C}:\tensorTwo{input} where
+   * \mathbb{C} is the fourth-order stiffness tensor
+   * @param[out] input the input second-order tensor
+   * @param[out] output the output second-order tensor
+   */
+  GEOSX_HOST_DEVICE
+  void tensorContraction( real64 const (&input)[6],
+                          real64 ( &output )[6] );
+
+  /**
    * Scale stiffness parameters by a constant
    * @param scale Scaling constant
    */
@@ -265,6 +275,26 @@ void SolidModelDiscretizationOpsIsotropic::diagRowSumBTDB( BASIS_GRADIENT const 
                                      gradNa_gradNb[2][2] * lambda2G;
   } );
 }
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void SolidModelDiscretizationOpsIsotropic::tensorContraction( real64 const (&input)[6],
+                                                              real64 (& output)[6] )
+{
+  real64 const G = this->m_shearModulus;
+  real64 const K = this->m_bulkModulus;
+
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( K, G );
+  real64 const lambda2G = lambda + 2*G;
+
+  output[0] = lambda2G * input[0] + lambda   * input[1] + lambda   * input[2];
+  output[1] = lambda   * input[0] + lambda2G * input[1] + lambda   * input[2];
+  output[2] = lambda   * input[0] + lambda   * input[1] + lambda2G * input[2];
+  output[3] = G * input[3];
+  output[4] = G * input[4];
+  output[5] = G * input[5];
+}
+
 #if __GNUC__
 #pragma GCC diagnostic pop
 #endif

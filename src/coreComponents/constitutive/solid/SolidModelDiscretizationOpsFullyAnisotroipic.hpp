@@ -58,6 +58,11 @@ struct SolidModelDiscretizationOpsFullyAnisotroipic : public SolidModelDiscretiz
                        real64 const & detJxW,
                        real64 ( &diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] );
 
+  /// @copydoc SolidModelDiscretizationOpsIsotropic::tensorContraction
+  GEOSX_HOST_DEVICE
+  void tensorContraction( real64 const (&input)[6],
+                          real64 ( &output )[6] );
+
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void scaleParams( real64 const scale )
@@ -269,6 +274,20 @@ void SolidModelDiscretizationOpsFullyAnisotroipic::diagRowSumBTDB( BASIS_GRADIEN
     }
   }
 }
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void SolidModelDiscretizationOpsFullyAnisotroipic::tensorContraction( real64 const (&input)[6],
+                                                                      real64 (& output)[6] )
+{
+  output[0] = m_c[0][0] * input[0] + m_c[0][1] * input[1] + m_c[0][2] * input[2] + m_c[0][3] * input[3] + m_c[0][4] * input[4] + m_c[0][5] * input[5];
+  output[1] = m_c[1][0] * input[0] + m_c[1][1] * input[1] + m_c[1][2] * input[2] + m_c[1][3] * input[3] + m_c[1][4] * input[4] + m_c[1][5] * input[5];
+  output[2] = m_c[2][0] * input[0] + m_c[2][1] * input[1] + m_c[2][2] * input[2] + m_c[2][3] * input[3] + m_c[2][4] * input[4] + m_c[2][5] * input[5];
+  output[3] = m_c[3][0] * input[0] + m_c[3][1] * input[1] + m_c[3][2] * input[2] + m_c[3][3] * input[3] + m_c[3][4] * input[4] + m_c[3][5] * input[5];
+  output[4] = m_c[4][0] * input[0] + m_c[4][1] * input[1] + m_c[4][2] * input[2] + m_c[4][3] * input[3] + m_c[4][4] * input[4] + m_c[4][5] * input[5];
+  output[5] = m_c[5][0] * input[0] + m_c[5][1] * input[1] + m_c[5][2] * input[2] + m_c[5][3] * input[3] + m_c[5][4] * input[4] + m_c[5][5] * input[5];
+}
+
 
 }
 }

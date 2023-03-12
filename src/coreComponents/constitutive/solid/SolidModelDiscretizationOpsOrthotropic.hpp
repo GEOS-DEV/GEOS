@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SolidModelHelperOrthotropic.hpp
+ * @file SolidModelDiscretizationOpsOrthotropic.hpp
  */
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIZATIONOPSORTHOTROPIC_HPP_
@@ -55,6 +55,11 @@ struct SolidModelDiscretizationOpsOrthotropic : public SolidModelDiscretizationO
   void diagRowSumBTDB( BASIS_GRADIENT const & gradN,
                        real64 const & detJxW,
                        real64 ( &diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] );
+
+  /// @copydoc SolidModelDiscretizationOpsIsotropic::tensorContraction
+  GEOSX_HOST_DEVICE
+  void tensorContraction( real64 const (&input)[6],
+                          real64 ( &output )[6] );
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -278,6 +283,21 @@ void SolidModelDiscretizationOpsOrthotropic::diagRowSumBTDB( BASIS_GRADIENT cons
                                      c33 * gradNa_gradNb[2][2];
   } );
 }
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void SolidModelDiscretizationOpsOrthotropic::tensorContraction( real64 const (&input)[6],
+                                                                real64 (& output)[6] )
+{
+
+  output[0] = m_c11 * input[0] + m_c12 * input[1] + m_c13 * input[2];
+  output[1] = m_c12 * input[0] + m_c22 * input[1] + m_c23 * input[2];
+  output[2] = m_c13 * input[0] + m_c23 * input[1] + m_c33 * input[2];
+  output[3] = m_c44 * input[3];
+  output[4] = m_c55 * input[4];
+  output[5] = m_c66 * input[5];
+}
+
 
 #if __GNUC__
 #pragma GCC diagnostic pop

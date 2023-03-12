@@ -178,22 +178,29 @@ private:
                            real64 ( & dTotalStress_dTemperature )[6],
                            DiscretizationOps & stiffness ) const
   {
-    // Compute total stress increment and its derivative w.r.t. pressure
+    // Step 1: First, include the temperature component in the strain increment
+    // \epsilon perturbed = \epsilon - \alpha T
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    real64 work[6] = // we will reuse this variable in the tensor contraction below
+    { strainIncrement[0] - thermalExpansionCoefficient * temperature,
+      strainIncrement[1] - thermalExpansionCoefficient * temperature,
+      strainIncrement[2] - thermalExpansionCoefficient * temperature,
+      strainIncrement[3],
+      strainIncrement[4],
+      strainIncrement[5] };
+
+    // Step 2: Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,
                                      q,
-                                     strainIncrement,
+                                     work, // perturbed strain increment
                                      totalStress, // first effective stress increment accumulated
                                      stiffness );
 
     updateBiotCoefficient( k );
 
-    // Add the contributions of pressure and temperature to the total stress
+    // Step 3: Add the contributions of pressure (+ derivatives) to the total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
-    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
-    real64 const thermalExpansionCoefficientTimesBulkModulus = thermalExpansionCoefficient * bulkModulus;
-
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * temperature );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * pressure );
 
     // Compute derivatives of total stress
     dTotalStress_dPressure[0] = -biotCoefficient;
@@ -203,13 +210,22 @@ private:
     dTotalStress_dPressure[4] = 0;
     dTotalStress_dPressure[5] = 0;
 
-    dTotalStress_dTemperature[0] = -3 * thermalExpansionCoefficientTimesBulkModulus;
-    dTotalStress_dTemperature[1] = -3 * thermalExpansionCoefficientTimesBulkModulus;
-    dTotalStress_dTemperature[2] = -3 * thermalExpansionCoefficientTimesBulkModulus;
-    dTotalStress_dTemperature[3] = 0;
-    dTotalStress_dTemperature[4] = 0;
-    dTotalStress_dTemperature[5] = 0;
+    // Step 4: Add the contributions of temperature (+ derivatives) to the total stress
+    // We are ready to compute \mathbb{C} : (\alpha \tensorTwo{1})
+    work[0] = -thermalExpansionCoefficient;
+    work[1] = -thermalExpansionCoefficient;
+    work[2] = -thermalExpansionCoefficient;
+    work[3] = 0;
+    work[4] = 0;
+    work[5] = 0;
+    stiffness.tensorContraction( work, dTotalStress_dTemperature );
 
+    std::cout << "totalStress = " << totalStress[0] << " " << totalStress[1] << " " << totalStress[2] << std::endl;
+
+    std::cout << "dTotalStress_dTemperature[0] = " << dTotalStress_dTemperature[0]
+              << "dTotalStress_dTemperature[1] = " << dTotalStress_dTemperature[1]
+              << "dTotalStress_dTemperature[2] = " << dTotalStress_dTemperature[2]
+              << std::endl;
   }
 
 };
