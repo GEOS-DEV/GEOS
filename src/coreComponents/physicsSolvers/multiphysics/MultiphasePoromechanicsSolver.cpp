@@ -148,7 +148,8 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
                                                                                                     flowDofKey,
                                                                                                     flowSolver()->numFluidComponents(),
                                                                                                     flowSolver()->numFluidPhases(),
-                                                                                                    FlowSolverBase::viewKeyStruct::fluidNamesString() );
+                                                                                                    FlowSolverBase::viewKeyStruct::fluidNamesString(),
+                                                                                                    CompositionalMultiphaseBase::viewKeyStruct::capPressureNamesString() );
     }
     else
     {
@@ -163,7 +164,8 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
                                                                                       flowDofKey,
                                                                                       flowSolver()->numFluidComponents(),
                                                                                       flowSolver()->numFluidPhases(),
-                                                                                      FlowSolverBase::viewKeyStruct::fluidNamesString() );
+                                                                                      FlowSolverBase::viewKeyStruct::fluidNamesString(),
+                                                                                      CompositionalMultiphaseBase::viewKeyStruct::capPressureNamesString() );
     }
   } );
 

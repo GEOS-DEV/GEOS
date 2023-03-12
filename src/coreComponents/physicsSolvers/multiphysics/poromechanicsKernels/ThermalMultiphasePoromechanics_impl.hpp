@@ -49,7 +49,8 @@ ThermalMultiphasePoromechanics( NodeManager const & nodeManager,
                                 string const inputFlowDofKey,
                                 localIndex const numComponents,
                                 localIndex const numPhases,
-                                string const fluidModelKey ):
+                                string const fluidModelKey,
+                                string const capPressureModelKey ):
   Base( nodeManager,
         edgeManager,
         faceManager,
@@ -65,7 +66,8 @@ ThermalMultiphasePoromechanics( NodeManager const & nodeManager,
         inputFlowDofKey,
         numComponents,
         numPhases,
-        fluidModelKey ),
+        fluidModelKey,
+        capPressureModelKey ),
   m_rockInternalEnergy_n( inputConstitutiveType.getInternalEnergy_n() ),
   m_rockInternalEnergy( inputConstitutiveType.getInternalEnergy() ),
   m_dRockInternalEnergy_dTemperature( inputConstitutiveType.getDinternalEnergy_dTemperature() ),
@@ -112,6 +114,8 @@ smallStrainUpdate( localIndex const k,
                    localIndex const q,
                    StackVariables & stack ) const
 {
+  using Deriv = constitutive::multifluid::DerivativeOffset;
+
   real64 porosity = 0.0;
   real64 porosity_n = 0.0;
   real64 dPorosity_dVolStrain = 0.0;
@@ -119,7 +123,48 @@ smallStrainUpdate( localIndex const k,
   real64 dPorosity_dTemperature = 0.0;
   real64 dSolidDensity_dPressure = 0.0;
 
-  // Step 1: call the constitutive model to update the total stress, the porosity and their derivatives
+  real64 phasePressure = 0.0;
+  real64 avgPressure = 0.0;
+  real64 dAvgPressure_dPres = 0.0;
+  real64 dAvgPressure_dTemp = 0.0;
+  real64 dAvgPressure_dComp[maxNumComponents]{};
+
+  real64 dCapPressure_dPres = 0.0;
+  real64 dCapPressure_dTemp = 0.0;
+  real64 dCapPressure_dComp[maxNumComponents]{};
+
+  // Step 1: compute the average (saturation-weighted) pressure in the cell
+  for( integer ip = 0; ip < m_numPhases; ++ip )
+  {
+
+    // Step 1.1: reset the work variables
+    dCapPressure_dPres = 0.0;
+    dCapPressure_dTemp = 0.0;
+    LvArray::tensorOps::fill< maxNumComponents >( dCapPressure_dComp, 0.0 );
+
+    // Step 1.2: compute the derivatives of capPressure wrt pressure, temperature, and compositions
+    for( integer jp = 0; jp < m_numPhases; ++jp )
+    {
+      dCapPressure_dPres += m_dFluidPhaseCapPressure_dPhaseVolFrac[k][0][ip][jp] * m_dFluidPhaseVolFrac[k][jp][Deriv::dP];
+      dCapPressure_dTemp += m_dFluidPhaseCapPressure_dPhaseVolFrac[k][0][ip][jp] * m_dFluidPhaseVolFrac[k][jp][Deriv::dT];
+      for( integer jc = 0; jc < m_numComponents; ++jc )
+      {
+        dCapPressure_dComp[jc] += m_dFluidPhaseCapPressure_dPhaseVolFrac[k][0][ip][jp] * m_dFluidPhaseVolFrac[k][jp][Deriv::dC+jc];
+      }
+    }
+
+    // Step 1.3: increment the avgPressure and its derivatives wrt pressure, temperature, and compositions
+    phasePressure = m_pressure[k] + m_fluidPhaseCapPressure[k][q][ip];
+    avgPressure += m_fluidPhaseVolFrac[k][ip] * phasePressure;
+    dAvgPressure_dPres += m_dFluidPhaseVolFrac[k][ip][Deriv::dP] * phasePressure + m_fluidPhaseVolFrac[k][ip] * dCapPressure_dPres;
+    dAvgPressure_dTemp += m_dFluidPhaseVolFrac[k][ip][Deriv::dT] * phasePressure + m_fluidPhaseVolFrac[k][ip] * dCapPressure_dTemp;
+    for( integer ic = 0; ic < m_numComponents; ++ic )
+    {
+      dAvgPressure_dComp[ic] += m_dFluidPhaseVolFrac[k][ip][Deriv::dC+ic] * phasePressure + m_fluidPhaseVolFrac[k][ip] * dCapPressure_dComp[ic];
+    }
+  }
+
+  // Step 2: call the constitutive model to update the total stress, the porosity and their derivatives
   m_constitutiveUpdate.smallStrainUpdatePoromechanics( k, q,
                                                        m_pressure_n[k],
                                                        m_pressure[k],
@@ -137,7 +182,7 @@ smallStrainUpdate( localIndex const k,
                                                        dPorosity_dTemperature,
                                                        dSolidDensity_dPressure );
 
-  // Step 2: compute the body force
+  // Step 3: compute the body force
   computeBodyForce( k, q,
                     porosity,
                     dPorosity_dVolStrain,
@@ -146,7 +191,7 @@ smallStrainUpdate( localIndex const k,
                     dSolidDensity_dPressure,
                     stack );
 
-  // Step 3: compute fluid mass increment
+  // Step 4: compute fluid mass increment
   computeFluidIncrement( k, q,
                          porosity,
                          porosity_n,
@@ -155,7 +200,7 @@ smallStrainUpdate( localIndex const k,
                          dPorosity_dTemperature,
                          stack );
 
-  // Step 4: compute pore volume constraint
+  // Step 5: compute pore volume constraint
   computePoreVolumeConstraint( k,
                                porosity,
                                dPorosity_dVolStrain,

@@ -85,6 +85,8 @@ public:
   using Base::m_fluidPhaseCompFrac;
   using Base::m_dFluidPhaseCompFrac;
   using Base::m_dGlobalCompFraction_dGlobalCompDensity;
+  using Base::m_fluidPhaseCapPressure;
+  using Base::m_dFluidPhaseCapPressure_dPhaseVolFrac;
 
   /**
    * @brief Constructor
@@ -106,7 +108,8 @@ public:
                                   string const inputFlowDofKey,
                                   localIndex const numComponents,
                                   localIndex const numPhases,
-                                  string const fluidModelKey );
+                                  string const fluidModelKey,
+                                  string const capPressureModelKey );
 
   /**
    * @class StackVariables
@@ -341,6 +344,7 @@ using ThermalMultiphasePoromechanicsKernelFactory =
                                 string const,
                                 localIndex const,
                                 localIndex const,
+                                string const,
                                 string const >;
 
 } // namespace thermalporomechanicsKernels

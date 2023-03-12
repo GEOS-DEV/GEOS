@@ -96,7 +96,8 @@ public:
                            string const inputFlowDofKey,
                            localIndex const numComponents,
                            localIndex const numPhases,
-                           string const fluidModelKey );
+                           string const fluidModelKey,
+                           string const capPressureModelKey );
 
   //*****************************************************************************
   /**
@@ -336,6 +337,10 @@ protected:
   arrayView2d< real64 const, compflow::USD_PHASE > const m_fluidPhaseVolFrac_n;
   arrayView3d< real64 const, compflow::USD_PHASE_DC > const m_dFluidPhaseVolFrac;
 
+  /// Views on capillary pressure
+  arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > m_fluidPhaseCapPressure;
+  arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > m_dFluidPhaseCapPressure_dPhaseVolFrac;
+
   /// Views on derivatives of global comp fraction wrt global comp density
   arrayView3d< real64 const, compflow::USD_COMP_DC > const m_dGlobalCompFraction_dGlobalCompDensity;
 
@@ -357,6 +362,7 @@ using MultiphasePoromechanicsKernelFactory =
                                 string const,
                                 localIndex const,
                                 localIndex const,
+                                string const,
                                 string const >;
 
 } // namespace poromechanicsKernels
