@@ -22,7 +22,8 @@
       name="mesh1"
       useGlobalIds="1"
       faceBlocks="{/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/fracture.vtu}"
-      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/region.vtu"/>
+      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/region2.vtu"/>
+<!--      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/region.vtu"/>-->
 <!--      file="/tmp/tmp.EtfQgEUXLg/src/coreComponents/unitTests/meshTests/cube.vtu"/>-->
 <!--    <VTKMesh-->
 <!--      name="mesh1"-->
@@ -86,7 +87,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ hexahedra }"
+      cellBlocks="{ hexahedra, wedges }"
       materialList="{ water, rock }"/>
 
     <SurfaceElementRegion
@@ -145,7 +146,7 @@
       name="Porosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region/hexahedra"
+      objectPath="ElementRegions/Region"
       fieldName="rockPorosity_referencePorosity"
       scale="0.01"/>
 
@@ -161,7 +162,7 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region/hexahedra"
+      objectPath="ElementRegions/Region"
       fieldName="pressure"
       scale="0.0"/>
 

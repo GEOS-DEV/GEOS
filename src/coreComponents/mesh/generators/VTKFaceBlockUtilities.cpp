@@ -99,8 +99,8 @@ public:
    */
   localIndex getElementIndexInCellBlock( int const & ei ) const
   {
-    int const cbi = getCellBlockIndex( ei );
-    int const offset = getElementCellBlockOffset( cbi );
+    int const iCellBlock = getCellBlockIndex( ei );
+    int const offset = getElementCellBlockOffset( iCellBlock );
     return ei - offset;
   }
 
@@ -313,13 +313,13 @@ ArrayOfArrays< localIndex > computeElem2dToEdges( vtkIdType num2dElements,
 
 struct Elem2dTo3dInfo
 {
-  array2d< localIndex > elem2dToElem3d;
+  ToCellRelation< array2d< localIndex > > elem2dToElem3d;
   array2d< localIndex > elem2dToFaces;
 
-  Elem2dTo3dInfo( array2d< localIndex > && elem2DToElem3D,
-                  array2d< localIndex > && elem2DToFaces )
-    : elem2dToElem3d( elem2DToElem3D ),
-      elem2dToFaces( elem2DToFaces )
+  Elem2dTo3dInfo( ToCellRelation< array2d< localIndex > > && elem2dToElem3d_,
+                  array2d< localIndex > && elem2dToFaces_ )
+    : elem2dToElem3d( elem2dToElem3d_ ),
+      elem2dToFaces( elem2dToFaces_ )
   { }
 };
 
@@ -378,8 +378,10 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
 
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
   array2d< localIndex > elem2dToElem3d( num2dElements, 2 );
+  array2d< localIndex > elem2dToCellBlock( num2dElements, 2 );
   array2d< localIndex > elem2dToFaces( num2dElements, 2 );
   elem2dToElem3d.setValues< serialPolicy >( -1 );
+  elem2dToCellBlock.setValues< serialPolicy >( -1 );
   elem2dToFaces.setValues< serialPolicy >( -1 );
   // Now we loop on all the 2d elements.
   for( int i = 0; i < num2dElements; ++i )
@@ -413,7 +415,7 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
         GEOSX_LOG( e2n.first << " is a bordering 3d element for 2d element " << i );
         // Now we know that the element 3d has a face that touches the element 2d. Let's find which one.
         localIndex const idx = elem2dToElem3d[i][0] == -1 ? 0 : 1;
-        elem2dToElem3d[i][idx] = e2n.first;  // Warning about the ordering. // Warning about the element 3d being global id.
+        elem2dToElem3d[i][idx] = elemToFaces.getElementIndexInCellBlock( e2n.first );  // Warning about the element 3d being global id.
         // Computing the elem2dToFaces mapping.
         auto faces = elemToFaces[e2n.first];
         for( int faceIndex = 0; faceIndex < faces.size( 0 ); ++faceIndex )
@@ -423,6 +425,7 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
           if( std::set< vtkIdType >( nodes.begin(), nodes.end() ) == e2n.second )
           {
             elem2dToFaces[i][idx] = f;
+            elem2dToCellBlock[i][idx] = elemToFaces.getCellBlockIndex( e2n.first );
             break;
           }
         }
@@ -430,7 +433,8 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
     }
   }
 
-  return Elem2dTo3dInfo( std::move( elem2dToElem3d ), std::move( elem2dToFaces ) );
+  auto cellRelation = ToCellRelation< array2d< localIndex > >( std::move( elem2dToCellBlock ), std::move( elem2dToElem3d ) );
+  return Elem2dTo3dInfo( std::move( cellRelation ), std::move( elem2dToFaces ) );
 }
 
 
@@ -464,7 +468,6 @@ void importFractureNetwork( string const & faceBlockName,
                             vtkSmartPointer< vtkDataSet > vtkMesh,
                             CellBlockManager & cellBlockManager )
 {
-  GEOSX_LOG("here and there!");
   ArrayOfArrays< localIndex > const faceToNodes = cellBlockManager.getFaceToNodes();
   geosx::internal::ElementToFace const elemToFaces( cellBlockManager.getCellBlocks() );
   ArrayOfArrays< localIndex > const nodeToEdges = cellBlockManager.getNodeToEdges();
@@ -490,11 +493,9 @@ void importFractureNetwork( string const & faceBlockName,
   ArrayOfArrays< localIndex > const elem2dToFace2d = computeElem2dToFace2d( num2dElements, face2dToElems2d.toViewConst() );
   ArrayOfArrays< localIndex > elem2DToEdges = computeElem2dToEdges( num2dElements, face2dToEdge.toViewConst(), elem2dToFace2d.toViewConst() );
 
-  array2d< localIndex > elem2dToElems3dCB( elem2dTo3d.elem2dToElem3d );
-  elem2dToElems3dCB.setValues< serialPolicy >( 0 );  // TODO
-
   // Mappings are now computed. Just create the face block by value.
   FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( "fracture_info" );  // TODO
+//  FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( faceBlockName );  // TODO
   faceBlock.setNum2DElements( num2dElements );
   faceBlock.setNum2DFaces( num2dFaces );
   faceBlock.set2dElemToNodes( std::move( elem2dToNodes ) );
@@ -502,7 +503,7 @@ void importFractureNetwork( string const & faceBlockName,
   faceBlock.set2dFaceToEdge( std::move( face2dToEdge ) );
   faceBlock.set2dFaceTo2dElems( std::move( face2dToElems2d ) );
   faceBlock.set2dElemToFaces( std::move( elem2dTo3d.elem2dToFaces ) );
-  faceBlock.set2dElemToElems( ToCellRelation< array2d< localIndex > >( std::move( elem2dToElems3dCB ), std::move( elem2dTo3d.elem2dToElem3d ) ) );
+  faceBlock.set2dElemToElems( std::move( elem2dTo3d.elem2dToElem3d ) );
 }
 
 } // end of namespace
