@@ -37,6 +37,7 @@ if [[ -z "${GEOSX_DIR}" ]]; then
   exit 1
 fi
 
+GEOSX_INSTALL_SCHEMA=1
 if [[ "$*" == *--disable-schema-deployment* ]]; then
   GEOSX_INSTALL_SCHEMA=0
 fi  
