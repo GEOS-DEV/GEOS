@@ -144,6 +144,24 @@ public:
     return m_bufferCount == 0;
   }
 
+  /**
+   * Compute the number of arrays that can be stored on host
+   * @param percent Percentage of the remaining device memory that can be dedicated to the LIFO storage.
+   * @param bufferSize Size of one buffer
+   * @param maxNumberOfBuffers Maximum number of buffers to store in the LIFO storage
+   * @param numberOfBuffersToStoreOnDevice The number of buffer that will be stored on device by the LIFO.
+   * @return The maximum number of buffer to allocate to fit in the percentage of the available memory.
+   */
+  static int computeNumberOfBufferOnHost( int percent, size_t bufferSize, int maxNumberOfBuffers, int numberOfBuffersToStoreOnDevice )
+  {
+    GEOSX_ERROR_IF( percent > 100, "Error, percentage of memory should be smallerer than -100, check lifoOnHost (should be greater that -100)" );
+    size_t free = sysconf( _SC_AVPHYS_PAGES ) * sysconf( _SC_PAGESIZE );
+    int numberOfBuffersToStoreOnHost = std::max( 1, std::min( ( int )( 0.01 * percent * free / bufferSize ), maxNumberOfBuffers - numberOfBuffersToStoreOnDevice ) );
+    double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 ) / MpiWrapper::nodeCommSize();
+    LIFO_LOG_RANK( " LIFO : available memory on host " << freeGB << " GB" );
+    return numberOfBuffersToStoreOnHost;
+  }
+
 protected:
 
   /// number of buffers to be inserted into the LIFO
@@ -261,6 +279,7 @@ protected:
     wf.close();
     remove( fileName.c_str() );
   }
+
 
 private:
   /**

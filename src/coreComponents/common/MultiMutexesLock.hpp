@@ -77,6 +77,7 @@ private:
 /**
  * @brief Helper to construct MultiMutexesLock (usage auto lock = make_multilock( mutex1, mutex2, ... ))
  * @param mutexes List of mutex parameters
+ * @return A MultiMutexesLock using the mutexes given in parameter.
  */
 template< typename ... Mutexes >
 auto make_multilock( Mutexes && ... mutexes )

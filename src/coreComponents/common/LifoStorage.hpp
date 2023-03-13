@@ -74,11 +74,7 @@ public:
     }
     if( numberOfBuffersToStoreOnHost < 0 )
     {
-      GEOSX_ERROR_IF( numberOfBuffersToStoreOnHost < -100, "Error, numberOfBuffersToStoreOnHost should be greater than -100" );
-      size_t free = sysconf( _SC_AVPHYS_PAGES ) * sysconf( _SC_PAGESIZE );
-      numberOfBuffersToStoreOnHost = std::max( 1, std::min( ( int )( -0.01 * numberOfBuffersToStoreOnHost * free / m_bufferSize ), m_maxNumberOfBuffers - numberOfBuffersToStoreOnDevice ) );
-      double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 ) / MpiWrapper::nodeCommSize();
-      LIFO_LOG_RANK( " LIFO : available memory on host " << freeGB << " GB" );
+      numberOfBuffersToStoreOnHost = LifoStorageCommon< T, INDEX_TYPE >::computeNumberOfBufferOnHost( - numberOfBuffersToStoreOnHost, m_bufferSize, m_maxNumberOfBuffers, numberOfBuffersToStoreOnDevice );
     }
     LIFO_LOG_RANK( " LIFO : allocating "<< numberOfBuffersToStoreOnHost <<" buffers on host" );
     LIFO_LOG_RANK( " LIFO : allocating "<< numberOfBuffersToStoreOnDevice <<" buffers on device" );

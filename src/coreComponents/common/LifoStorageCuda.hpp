@@ -66,7 +66,7 @@ public:
    *
    * @param array The LvArray to store in the LIFO, should match the size of the data used in constructor.
    */
-  void pushAsync( arrayView1d< T > array )
+  void pushAsync( arrayView1d< T > array ) override final
   {
     //To be sure 2 pushes are not mixed
     pushWait();
@@ -92,7 +92,7 @@ public:
   /**
    * Waits for last push to be terminated
    */
-  void pushWait()
+  void pushWait() override final
   {
     if( baseLifo::m_bufferCount > 0 )
     {
@@ -105,7 +105,7 @@ public:
    *
    * @param array LvArray to store data from the LIFO into it.
    */
-  void popAsync( arrayView1d< T > array )
+  void popAsync( arrayView1d< T > array ) override final
   {
     LIFO_MARK_FUNCTION;
     int id = --baseLifo::m_bufferCount;
@@ -127,7 +127,7 @@ public:
   /**
    * Waits for last pop to be terminated
    */
-  void popWait()
+  void popWait() override final
   {
     if( baseLifo::m_bufferCount < baseLifo::m_maxNumberOfBuffers )
     {
