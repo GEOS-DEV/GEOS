@@ -78,6 +78,7 @@ public:
     // Compute total stress increment and its derivative
     computeTotalStress( k,
                         q,
+                        pressure_n,
                         pressure,
                         deltaTemperatureFromInit,
                         strainIncrement,
@@ -212,6 +213,7 @@ private:
   GEOSX_HOST_DEVICE
   void computeTotalStress( localIndex const k,
                            localIndex const q,
+                           real64 const & pressure_n,
                            real64 const & pressure,
                            real64 const & deltaTemperature,
                            real64 const ( &strainIncrement )[6],
@@ -220,6 +222,8 @@ private:
                            real64 ( & dTotalStress_dTemperature )[6],
                            DiscretizationOps & stiffness ) const
   {
+    GEOSX_UNUSED_VAR( pressure_n );
+    
     // Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,
                                      q,
@@ -238,11 +242,11 @@ private:
     real64 const pressureDamage = m_solidUpdate.pressureDamageFunction( k, q );
     real64 const damagedBiotCoefficient = pressureDamage * biotCoefficient;
 
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, (pressureDamage - damagedBiotCoefficient) * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * deltaTemperature );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, pressureDamage * pressure_n - damagedBiotCoefficient * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * deltaTemperature );
 
-    dTotalStress_dPressure[0] = pressureDamage - damagedBiotCoefficient;
-    dTotalStress_dPressure[1] = pressureDamage - damagedBiotCoefficient;
-    dTotalStress_dPressure[2] = pressureDamage - damagedBiotCoefficient;
+    dTotalStress_dPressure[0] = - damagedBiotCoefficient;
+    dTotalStress_dPressure[1] = - damagedBiotCoefficient;
+    dTotalStress_dPressure[2] = - damagedBiotCoefficient;
     dTotalStress_dPressure[3] = 0;
     dTotalStress_dPressure[4] = 0;
     dTotalStress_dPressure[5] = 0;
