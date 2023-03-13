@@ -113,6 +113,8 @@ set( physicsSolvers_headers
      wavePropagation/WaveSolverBaseFields.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
      wavePropagation/AcousticWaveEquationSEMKernel.hpp
+     wavePropagation/AcousticWaveEquationSEMLowMem.hpp
+     wavePropagation/AcousticWaveEquationSEMLowMemKernel.hpp
      wavePropagation/ElasticWaveEquationSEM.hpp
      wavePropagation/ElasticWaveEquationSEMKernel.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.hpp
@@ -177,6 +179,7 @@ set( physicsSolvers_sources
      surfaceGeneration/SurfaceGenerator.cpp
      wavePropagation/WaveSolverBase.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
+     wavePropagation/AcousticWaveEquationSEMLowMem.cpp
      wavePropagation/ElasticWaveEquationSEM.cpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.cpp
 
