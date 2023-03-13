@@ -3,33 +3,37 @@
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-    
-    <!-- SPHINX_POROMECHANICSSOLVER -->    
     <SinglePhasePoromechanics
       name="thermoPoroSolver"
-      solidSolverName="solidMechSolver"
-      flowSolverName="flowSolver"
-      isThermal="1"
+      solidSolverName="SolidMechSolve"
+      flowSolverName="FlowSolve"
       logLevel="1"
+      isThermal="1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
-        couplingType="FullyImplicit"
+        couplingType="Sequential"
+        subcycling="1"
         newtonMaxIter="200"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhasePoromechanics>
-    <!-- SPHINX_POROMECHANICSSOLVER_END -->
-    <!-- SPHINX_MECHANICALSOLVER -->    
+
     <SolidMechanicsLagrangianSSLE
-      name="solidMechSolver"
+      name="SolidMechSolve"
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain }"/>
-    <!-- SPHINX_MECHANICALSOLVER_END -->
-    <!-- SPHINX_SINGLEPHASEFVM -->    
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonMinIter="0"
+        newtonTol="1.0e-6"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+
     <SinglePhaseFVM
-      name="flowSolver"
+      name="FlowSolve"
       logLevel="1"
       discretization="tpfaFlow"
       temperature="273.0"
@@ -42,7 +46,6 @@
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseFVM>
-    <!-- SPHINX_SINGLEPHASEFVM_END -->    
   </Solvers>
 
   <NumericalMethods>
@@ -73,31 +76,28 @@
       permeabilityModelName="rockPerm"
       solidInternalEnergyModelName="rockInternalEnergy"/>
 
-    <!-- SPHINX_SOLID -->
     <ElasticIsotropic
       name="rockSolid"
-      defaultDensity="2400"
+      defaultDensity="0.0"
       defaultBulkModulus="1e4"
       defaultShearModulus="2.143e3"
       defaultThermalExpansionCoefficient="3e-7"/>
-    <!-- SPHINX_SOLID_END -->
-
-    <!-- SPHINX_POROSITY -->    
+    
     <BiotPorosity
       name="rockPorosity"
       grainBulkModulus="1.0e27"
       defaultReferencePorosity="0.2"/>
-    <!-- SPHINX_POROSITY_END -->        
-
-    <!-- SPHINX_INTERNAL_ENERGY -->            
+    
     <SolidInternalEnergy
       name="rockInternalEnergy"
       volumetricHeatCapacity="1.672e5"
       referenceTemperature="0.0"
       referenceInternalEnergy="0.0"/>
-    <!-- SPHINX_INTERNAL_ENERGY_END -->        
-    
-    <!-- SPHINX_FLUID -->                
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 4.0e-9, 4.0e-9, 4.0e-9 }"/>
+
     <ThermalCompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
@@ -109,23 +109,13 @@
       viscosibility="0.0"
       volumetricHeatCapacity="1.672e2"
       referenceInternalEnergy="0.001"/>
-    <!-- SPHINX_FLUID_END -->                
 
-    <!-- SPHINX_PERMEABILITY_CONDUCTIVITY -->    
-    <ConstantPermeability
-      name="rockPerm"
-      permeabilityComponents="{ 4.0e-9, 4.0e-9, 4.0e-9 }"/>
-    
     <SinglePhaseConstantThermalConductivity
       name="thermalCond"
       thermalConductivityComponents="{ 836, 836, 836 }"/>
-    <!-- SPHINX_PERMEABILITY_CONDUCTIVITY_END -->
-    
   </Constitutive>
 
   <FieldSpecifications>
-
-    <!-- SPHINX_IC -->        
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -142,33 +132,6 @@
       fieldName="temperature"
       scale="273.0"/>
 
-    <FieldSpecification
-      name="initialSigma_x"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="rockSolid_stress"
-      component="0"
-      scale="2.457"/>
-    <FieldSpecification
-      name="initialSigma_y"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="rockSolid_stress"
-      component="1"
-      scale="2.457"/>
-    <FieldSpecification
-      name="initialSigma_z"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="rockSolid_stress"
-      component="2"
-      scale="2.457"/>
-    <!-- SPHINX_IC_END -->            
-
-    <!-- SPHINX_ZERO_DISPLACEMENT_BC -->    
     <FieldSpecification
       name="xconstraint"
       fieldName="totalDisplacement"
@@ -189,9 +152,7 @@
       component="2"
       objectPath="nodeManager"
       setNames="{ zneg, zpos }"/>
-    <!-- SPHINX_ZERO_DISPLACEMENT_BC_END -->        
 
-    <!-- SPHINX_TOP_SURFACE_BC -->
     <Traction
       name="traction"
       objectPath="faceManager"
@@ -202,19 +163,17 @@
 
     <FieldSpecification
       name="boundaryPressure"
-      objectPath="faceManager"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"
       scale="0.0"
-      setNames="{ ypos }"/>
+      setNames="{ top }"/>
 
     <FieldSpecification
       name="boundaryTemperature"
-      objectPath="faceManager"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="temperature"
       scale="323.0"
-      setNames="{ ypos }"/>
-    <!-- SPHINX_TOP_SURFACE_BC_END -->
-    
+      setNames="{ top }"/>
   </FieldSpecifications>
 
   <Functions>
@@ -225,41 +184,10 @@
       values="{ 0.0, 1.0, 1.0 }"/>
   </Functions>
 
-  <Tasks>
-
-    <PackCollection
-      name="pressureCollection"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="pressure"/>
-    <PackCollection
-      name="temperatureCollection"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="temperature"/>
-    <PackCollection
-      name="displacementCollection"
-      objectPath="nodeManager"
-      fieldName="totalDisplacement"/>
-    
-  </Tasks>
-  
   <Outputs>
     <VTK
-      name="thermoPoroVTKOutput"
-      plotFileRoot="thermoPoro_consolidation_fim"/>
+      name="thermoPoroVTKOutput"/>
 
-    <TimeHistory
-      name="pressureHistoryOutput"
-      sources="{ /Tasks/pressureCollection }"
-      filename="pressureHistory"/>
-    <TimeHistory
-      name="temperatureHistoryOutput"
-      sources="{ /Tasks/temperatureCollection }"
-      filename="temperatureHistory"/>
-    <TimeHistory
-      name="displacementHistoryOutput"
-      sources="{ /Tasks/displacementCollection }"
-      filename="displacementHistory"/>
-    
     <Restart
       name="restartOutput"/>
   </Outputs>

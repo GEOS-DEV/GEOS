@@ -57,8 +57,7 @@ public:
                            const bool & disableInelasticity ):
     SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity ),
     m_bulkModulus( bulkModulus ),
-    m_shearModulus( shearModulus ),
-    m_thermalExpansionCoefficient( thermalExpansionCoefficient )
+    m_shearModulus( shearModulus )
   {}
 
   /// Deleted default constructor
@@ -136,12 +135,6 @@ public:
   virtual real64 getBulkModulus( localIndex const k ) const override final
   {
     return m_bulkModulus[k];
-  }
-
-  GEOSX_HOST_DEVICE
-  virtual real64 getThermalExpansionCoefficient( localIndex const k ) const override final
-  {
-    return m_thermalExpansionCoefficient[k];
   }
 
   virtual real64 getShearModulus( localIndex const k ) const override final

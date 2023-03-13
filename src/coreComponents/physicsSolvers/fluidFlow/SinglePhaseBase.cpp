@@ -93,10 +93,6 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< temperature >( getName() );
       subRegion.registerField< temperature_n >( getName() );
       subRegion.registerField< initialTemperature >( getName() );
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/develop
       subRegion.registerField< bcTemperature >( getName() ); // needed for the application of boundary conditions
 
       subRegion.registerField< mobility >( getName() );

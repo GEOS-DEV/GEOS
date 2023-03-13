@@ -77,8 +77,7 @@ public:
     m_c33( c33 ),
     m_c44( c44 ),
     m_c55( c55 ),
-    m_c66( c66 ),
-    m_thermalExpansionCoefficient( thermalExpansionCoefficient )
+    m_c66( c66 )
   {}
 
   /// Deleted default constructor
@@ -158,13 +157,6 @@ public:
 
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( &stiffness )[6][6] ) const override final;
-
-  GEOSX_HOST_DEVICE
-  virtual real64 getThermalExpansionCoefficient( localIndex const k ) const override final
-  {
-    return m_thermalExpansionCoefficient[k];
-  }
-
 
 private:
   /// A reference to the ArrayView holding c11 for each element.

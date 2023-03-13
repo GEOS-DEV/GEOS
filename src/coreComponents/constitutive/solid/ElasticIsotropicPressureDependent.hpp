@@ -64,8 +64,7 @@ public:
     m_refPressure( refPressure ),
     m_refStrainVol( refStrainVol ),
     m_recompressionIndex( recompressionIndex ),
-    m_shearModulus( shearModulus ),
-    m_thermalExpansionCoefficient( thermalExpansionCoefficient )
+    m_shearModulus( shearModulus )
   {}
 
   /// Deleted default constructor
@@ -113,13 +112,6 @@ public:
                                  localIndex const q,
                                  real64 ( &elasticStrain )[6] ) const override final;
 
-  GEOSX_HOST_DEVICE
-  virtual real64 getThermalExpansionCoefficient( localIndex const k ) const override final
-  {
-    return m_thermalExpansionCoefficient[k];
-  }
-
-
 protected:
 
   /// A reference to the ArrayView holding the reference pressure for each element.
@@ -134,8 +126,6 @@ protected:
   /// A reference to the ArrayView holding the shear modulus for each element.
   arrayView1d< real64 const > const m_shearModulus;
 
-  /// A reference to the ArrayView holding the thermal expansion coefficient for each element.
-  arrayView1d< real64 const > const m_thermalExpansionCoefficient;
 };
 
 

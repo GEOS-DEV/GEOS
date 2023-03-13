@@ -118,11 +118,11 @@ public:
     real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * biotCoefficient;
 
     porosity = porosity_n + biotSkeletonModulusInverse * pressure + biotCoefficient * biotCoefficient / bulkModulus * pressure
-               + porosityThermalExpansion * temperature
+               - porosityThermalExpansion * temperature
                + biotCoefficient * meanStressIncrement / bulkModulus;
 
     dPorosity_dPressure = biotSkeletonModulusInverse + biotCoefficient * biotCoefficient / bulkModulus;
-    dPorosity_dTemperature = porosityThermalExpansion;
+    dPorosity_dTemperature = -porosityThermalExpansion;
   }
 
   GEOSX_HOST_DEVICE

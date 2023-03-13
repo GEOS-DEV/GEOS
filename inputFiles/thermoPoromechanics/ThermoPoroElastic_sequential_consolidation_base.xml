@@ -13,8 +13,9 @@
       logLevel="1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
-        couplingType="FullyImplicit"
-        newtonMaxIter="200"/>
+        couplingType="Sequential"
+        newtonMaxIter="200"
+        subcycling="1"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhasePoromechanics>
@@ -38,7 +39,7 @@
       <NonlinearSolverParameters
         newtonMaxIter="100"
         newtonMinIter="0"
-        newtonTol="1.0e-6"/>
+        newtonTol="1.0e-10"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseFVM>
@@ -245,7 +246,7 @@
   <Outputs>
     <VTK
       name="thermoPoroVTKOutput"
-      plotFileRoot="thermoPoro_consolidation_fim"/>
+      plotFileRoot="thermoPoro_consolidation_sequential"/>
 
     <TimeHistory
       name="pressureHistoryOutput"

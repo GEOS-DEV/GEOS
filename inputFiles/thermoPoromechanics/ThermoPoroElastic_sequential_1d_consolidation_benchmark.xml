@@ -1,0 +1,99 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./1D_thermoPoroElastic_1d_consolidation_base.xml" />
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 7 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 70 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="100001">
+    <PeriodicEvent
+      name="outputs0"
+      endTime="1e-2"
+      forceDt="1e-2"
+      target="/Outputs/thermoPoroVTKOutput"/>
+
+    <PeriodicEvent
+      name="outputs1"
+      beginTime="1e-2"
+      endTime="1"
+      forceDt="0.99"
+      target="/Outputs/thermoPoroVTKOutput"/>
+    
+    <PeriodicEvent
+      name="outputs2"
+      beginTime="1"
+      endTime="1001"
+      forceDt="2"
+      target="/Outputs/thermoPoroVTKOutput"/>
+
+    <PeriodicEvent
+      name="outputs3"
+      beginTime="1001"
+      endTime="10001"
+      forceDt="100"
+      target="/Outputs/thermoPoroVTKOutput"/>
+
+    <PeriodicEvent
+      name="outputs4"
+      beginTime="10001"
+      endTime="100001"
+      forceDt="1000"
+      target="/Outputs/thermoPoroVTKOutput"/>
+
+    <PeriodicEvent
+      name="solverApplication0"
+      endTime="1e-2"
+      forceDt="1e-2"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="solverApplication1"
+      beginTime="1e-2"
+      endTime="1"
+      forceDt="0.99"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="solverApplication2"
+      beginTime="1"
+      endTime="1001"
+      forceDt="2"
+      target="/Solvers/thermoPoroSolver"/>
+    
+    <PeriodicEvent
+      name="solverApplication3"
+      beginTime="1001"
+      endTime="10001"
+      forceDt="100"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="solverApplication4"
+      beginTime="10001"
+      endTime="100001"
+      forceDt="1000"
+      target="/Solvers/thermoPoroSolver"/>
+
+  </Events>
+
+  <Geometry>
+    <Box
+      name="top"
+      xMin="{ -0.001, 6.899, -0.001 }"
+      xMax="{ 1.001, 7.001, 1.001 }"/>
+  </Geometry>
+</Problem>
