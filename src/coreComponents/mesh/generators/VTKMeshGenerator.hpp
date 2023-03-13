@@ -87,7 +87,7 @@ public:
    */
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  virtual void importFields( DomainPartition & domain ) const override;
+  void importFieldsOnArray( string const & cellBlockName, string const & meshFieldNam, bool isMaterialField, WrapperBase & wrapper ) const override;
 
   virtual void freeResources() override;
 

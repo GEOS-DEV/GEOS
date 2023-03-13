@@ -62,7 +62,7 @@ public:
                                      arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                      arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                                      bool const & disableInelasticity ):
-    SolidBaseUpdates( newStress, oldStress, disableInelasticity ),
+    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity ),
     m_c11( c11 ),
     m_c13( c13 ),
     m_c33( c33 ),
@@ -174,8 +174,6 @@ private:
   /// A reference to the ArrayView holding c66 for each element.
   arrayView1d< real64 const > const m_c66;
 
-  /// A reference to the ArrayView holding the thermal expansion coefficient for each element.
-  arrayView1d< real64 const > const m_thermalExpansionCoefficient;
 };
 
 GEOSX_FORCE_INLINE
@@ -629,7 +627,6 @@ protected:
 
   /// The 66 component of the Voigt stiffness tensor.
   array1d< real64 > m_c66;
-
 };
 
 } /* namespace constitutive */

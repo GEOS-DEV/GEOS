@@ -40,7 +40,8 @@ SolverBase::SolverBase( string const & name,
   m_dofManager( name ),
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
-  m_solverStatistics( groupKeyStruct::solverStatisticsString(), this )
+  m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
+  m_systemSetupTimestamp( 0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -109,7 +110,7 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
   for( auto const & target : m_targetRegionNames )
   {
 
-    string_array targetTokens = stringutilities::tokenize( target, "/" );
+    std::vector< string > targetTokens = stringutilities::tokenize( target, "/" );
 
     if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
     {
@@ -198,12 +199,31 @@ bool SolverBase::registerCallback( void * func, const std::type_info & funcType 
   return false;
 }
 
-real64 SolverBase::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                               real64 const & GEOSX_UNUSED_PARAM( dt ),
-                               const integer GEOSX_UNUSED_PARAM( cycleNumber ),
-                               DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+real64 SolverBase::solverStep( real64 const & time_n,
+                               real64 const & dt,
+                               const integer cycleNumber,
+                               DomainPartition & domain )
 {
-  return 0;
+  GEOSX_MARK_FUNCTION;
+
+  // Only build the sparsity pattern if the mesh has changed
+  Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
+  if( meshModificationTimestamp > getSystemSetupTimestamp() )
+  {
+    setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+    setSystemSetupTimestamp( meshModificationTimestamp );
+  }
+
+  implicitStepSetup( time_n, dt, domain );
+
+  // currently the only method is implicit time integration
+  real64 const dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+
+  // final step for completion of timestep. typically secondary variable updates and cleanup.
+  implicitStepComplete( time_n, dt_return, domain );
+
+  return dt_return;
 }
 
 bool SolverBase::execute( real64 const time_n,
@@ -467,7 +487,7 @@ bool SolverBase::lineSearch( real64 const & time_n,
     }
 
     // get residual norm
-    residualNorm = calculateResidualNorm( domain, dofManager, rhs.values() );
+    residualNorm = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
@@ -567,7 +587,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
     }
 
     // get residual norm
-    residualNormT = calculateResidualNorm( domain, dofManager, rhs.values() );
+    residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
     ffm = ffT;
     ffT = residualNormT*residualNormT;
     lineSearchIteration += 1;
@@ -785,8 +805,6 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                       m_localMatrix.toViewConstSizes(),
                       localRhs );
 
-      //  LvArray::print<serialPolicy>( m_localMatrix.toViewConst() );
-
       // apply boundary conditions to system
       applyBoundaryConditions( time_n,
                                stepDt,
@@ -796,9 +814,6 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                                localRhs );
 
       m_rhs.close();
-
-//      m_rhs.print( std::cout );
-//      LvArray::print<serialPolicy>( m_localMatrix.toViewConst() );
 
     }
     if( m_assemblyCallback )
@@ -810,7 +825,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     // get residual norm
-    real64 residualNorm = calculateResidualNorm( domain, m_dofManager, m_rhs.values() );
+    real64 residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
 
 
     GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
@@ -833,7 +848,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     // the Newton loop to avoid crashes due to Newton divergence
     if( residualNorm > m_nonlinearSolverParameters.m_maxAllowedResidualNorm )
     {
-      string const maxAllowedResidualNormString = NonlinearSolverParameters::viewKeysStruct::maxAllowedResidualNormString;
+      string const maxAllowedResidualNormString = NonlinearSolverParameters::viewKeysStruct::maxAllowedResidualNormString();
       GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
                                             maxAllowedResidualNormString,
                                             m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
@@ -1093,7 +1108,9 @@ void SolverBase::debugOutputSolution( real64 const & time,
 }
 
 real64
-SolverBase::calculateResidualNorm( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+SolverBase::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time ),
+                                   real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                   DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                                    DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
                                    arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( localRhs ) )
 {
@@ -1207,6 +1224,21 @@ void SolverBase::cleanup( real64 const GEOSX_UNUSED_PARAM( time_n ),
                           DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   m_solverStatistics.outputStatistics();
+}
+
+Timestamp SolverBase::getMeshModificationTimestamp( DomainPartition & domain ) const
+{
+  Timestamp meshModificationTimestamp = 0;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & )
+  {
+    if( meshModificationTimestamp < mesh.getModificationTimestamp() )
+    {
+      meshModificationTimestamp = mesh.getModificationTimestamp();
+    }
+  } );
+  return meshModificationTimestamp;
 }
 
 R1Tensor const SolverBase::gravityVector() const

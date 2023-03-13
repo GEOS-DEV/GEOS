@@ -818,17 +818,21 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
 }
 
 real64
-ProppantTransport::calculateResidualNorm( DomainPartition const & domain,
+ProppantTransport::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                          DomainPartition const & domain,
                                           DofManager const & dofManager,
                                           arrayView1d< real64 const > const & localRhs )
 {
-  localIndex const NDOF = m_numDofPerCell;
+  GEOSX_MARK_FUNCTION;
+
+  real64 localResidualNorm = 0.0;
+  real64 localResidualNormalizer = 0.0;
+
+  solverBaseKernels::NormType const normType = getNonlinearSolverParameters().normType();
 
   localIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( fields::proppant::proppantConcentration::key() );
-
-  // compute the norm of local residual scaled by cell pore volume
-  real64 localResidualNorm = 0.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -838,33 +842,57 @@ ProppantTransport::calculateResidualNorm( DomainPartition const & domain,
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
-      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
-      arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+      real64 subRegionResidualNorm[1]{};
+      real64 subRegionResidualNormalizer[1]{};
 
-      RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
+      // step 1: compute the norm in the subRegion
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      proppantTransportKernels::
+        ResidualNormKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( normType,
+                                                   m_numDofPerCell,
+                                                   rankOffset,
+                                                   dofKey,
+                                                   localRhs,
+                                                   subRegion,
+                                                   subRegionResidualNorm,
+                                                   subRegionResidualNormalizer );
+
+      // step 2: first reduction across meshBodies/regions/subRegions
+
+      if( normType == solverBaseKernels::NormType::Linf )
       {
-        if( elemGhostRank[ei] < 0 )
+        if( subRegionResidualNorm[0] > localResidualNorm )
         {
-          localIndex const lid = dofNumber[ei] - rankOffset;
-          for( localIndex idof = 0; idof < NDOF; ++idof )
-          {
-            real64 const val = localRhs[lid] / volume[ei];
-            localSum += val * val;
-          }
+          localResidualNorm = subRegionResidualNorm[0];
         }
-      } );
-
-      localResidualNorm += localSum.get();
+      }
+      else
+      {
+        localResidualNorm += subRegionResidualNorm[0];
+        localResidualNormalizer += subRegionResidualNormalizer[0];
+      }
     } );
   } );
 
-  // compute global residual norm
-  real64 const globalResidualNorm = MpiWrapper::sum( localResidualNorm, MPI_COMM_GEOSX );
+  // step 3: second reduction across MPI ranks
 
-  return sqrt( globalResidualNorm );
+  real64 residualNorm = 0.0;
+  if( normType == solverBaseKernels::NormType::Linf )
+  {
+    solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm, residualNorm );
+  }
+  else
+  {
+    solverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, residualNorm );
+  }
+
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  {
+    std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", ProppantTransport::coupledSolverAttributePrefix(), residualNorm );
+  }
+
+  return residualNorm;
 }
 
 void ProppantTransport::applySystemSolution( DofManager const & dofManager,

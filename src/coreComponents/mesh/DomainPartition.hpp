@@ -175,6 +175,16 @@ public:
   { return this->getGroup( groupKeys.meshBodies ); }
 
   /**
+   * @brief Check if a MeshBody is present given a name.
+   * @tparam KEY_TYPE The type of the key used to look up the MeshBody.
+   * @param key The key to the MeshBody.
+   * @return True is the MeshBody exists in the domain.
+   */
+  template< typename KEY_TYPE >
+  bool hasMeshBody( KEY_TYPE const & key ) const
+  { return getMeshBodies().hasGroup< MeshBody >( key ); }
+
+  /**
    * @brief Get a MeshBody by name, const version.
    * @tparam KEY_TYPE The type of the key used to look up the MeshBody.
    * @param key The key to the MeshBody.

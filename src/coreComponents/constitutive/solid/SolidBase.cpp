@@ -53,14 +53,14 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default Material Density" );
 
-  registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Thermal Expansion Coefficient Field" );
-
   registerWrapper( viewKeyStruct::defaultThermalExpansionCoefficientString(), &m_defaultThermalExpansionCoefficient ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Thermal Expansion Coefficient" );
+
+  registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
+    setApplyDefaultValue( -1.0 ). // will be overwritten
+    setDescription( "Thermal Expansion Coefficient Field" );
 }
 
 

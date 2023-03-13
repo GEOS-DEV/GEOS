@@ -55,7 +55,7 @@ public:
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
                            arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                            const bool & disableInelasticity ):
-    SolidBaseUpdates( newStress, oldStress, disableInelasticity ),
+    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity ),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus ),
     m_thermalExpansionCoefficient( thermalExpansionCoefficient )
@@ -174,8 +174,6 @@ protected:
   /// A reference to the ArrayView holding the shear modulus for each element.
   arrayView1d< real64 const > const m_shearModulus;
 
-  /// A reference to the ArrayView holding the thermal expansion coefficient for each element.
-  arrayView1d< real64 const > const m_thermalExpansionCoefficient;
 };
 
 
@@ -436,6 +434,7 @@ public:
 
     /// string/key for shear modulus
     static constexpr char const * shearModulusString() { return "shearModulus"; }
+
   };
 
   /**

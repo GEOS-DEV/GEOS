@@ -49,6 +49,7 @@ public:
    * @param[in] newCohesion The ArrayView holding the new cohesion data for each element.
    * @param[in] oldCohesion The ArrayView holding the old cohesion data for each element.
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
+   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.

@@ -37,6 +37,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/FaceElementSubRegion.hpp"
+#include "mesh/CellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
 namespace geosx
@@ -214,6 +215,7 @@ void SolidMechanicsLagrangianFEM::setConstitutiveNamesCallSuper( ElementSubRegio
   string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
   solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
   GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+
 }
 
 void SolidMechanicsLagrangianFEM::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
@@ -435,8 +437,6 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
   } );
 }
 
-
-
 real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
                                                 real64 const & dt,
                                                 const int cycleNumber,
@@ -465,7 +465,15 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
     implicitStepSetup( time_n, dt, domain );
     for( int solveIter=0; solveIter<maxNumResolves; ++solveIter )
     {
-      setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+
+      Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
+      // Only build the sparsity pattern if the mesh has changed
+      if( meshModificationTimestamp > getSystemSetupTimestamp() || globallyFractured )
+      {
+        setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+        setSystemSetupTimestamp( meshModificationTimestamp );
+      }
 
       dtReturn = nonlinearImplicitStep( time_n,
                                         dt,
@@ -1049,7 +1057,9 @@ SolidMechanicsLagrangianFEM::
 
 real64
 SolidMechanicsLagrangianFEM::
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                         real64 const & GEOSX_UNUSED_PARAM( dt ),
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs )
 {

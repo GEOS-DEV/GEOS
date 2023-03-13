@@ -3,6 +3,7 @@
 =========================================== ==== ================================================================ 
 Name                                        Type Description                                                      
 =========================================== ==== ================================================================ 
+AcousticFirstOrderSEM                       node :ref:`DATASTRUCTURE_AcousticFirstOrderSEM`                       
 AcousticSEM                                 node :ref:`DATASTRUCTURE_AcousticSEM`                                 
 CompositionalMultiphaseFVM                  node :ref:`DATASTRUCTURE_CompositionalMultiphaseFVM`                  
 CompositionalMultiphaseHybridFVM            node :ref:`DATASTRUCTURE_CompositionalMultiphaseHybridFVM`            

@@ -36,7 +36,11 @@
     <SinglePhaseFVM
       name="flowSolver"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain, Fracture }"/>
+      targetRegions="{ Domain, Fracture }">
+      <NonlinearSolverParameters
+        normType="L2"/>
+    </SinglePhaseFVM>      
+      
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"      

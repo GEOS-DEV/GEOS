@@ -60,7 +60,7 @@ public:
                                             arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                             arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                                             bool const & disableInelasticity ):
-    SolidBaseUpdates( newStress, oldStress, disableInelasticity ),
+    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity ),
     m_refPressure( refPressure ),
     m_refStrainVol( refStrainVol ),
     m_recompressionIndex( recompressionIndex ),
@@ -582,7 +582,6 @@ protected:
 
   /// The shear modulus for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_shearModulus;
-
 };
 
 }
