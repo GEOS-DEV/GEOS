@@ -287,6 +287,17 @@ struct WaveSolverUtils
     }
   }
 
+/**
+ * Checks if a directory exists.
+ *
+ * @param dirName Directory name to check existence of.
+ * @return true is dirName exists and is a directory.
+ */
+static bool dirExists( const std::string & dirName )
+{
+  struct stat buffer;
+  return stat( dirName.c_str(), &buffer ) == 0;
+}
 
 
 };

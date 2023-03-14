@@ -851,17 +851,6 @@ void AcousticWaveEquationSEMLowMem::applyPML( real64 const time, DomainPartition
   } );
 
 }
-/**
- * Checks if a directory exists.
- *
- * @param dirName Directory name to check existence of.
- * @return true is dirName exists and is a directory.
- */
-bool dirExists( const std::string & dirName )
-{
-  struct stat buffer;
-  return stat( dirName.c_str(), &buffer ) == 0;
-}
 
 real64 AcousticWaveEquationSEMLowMem::explicitStepForward( real64 const & time_n,
                                                      real64 const & dt,
@@ -910,7 +899,7 @@ real64 AcousticWaveEquationSEMLowMem::explicitStepForward( real64 const & time_n
         std::string fileName = GEOSX_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
         int lastDirSeparator = fileName.find_last_of( "/\\" );
         std::string dirName = fileName.substr( 0, lastDirSeparator );
-        if( string::npos != (size_t)lastDirSeparator && !dirExists( dirName ))
+        if( string::npos != (size_t)lastDirSeparator && !WaveSolverUtils::dirExists( dirName ))
           makeDirsForPath( dirName );
 
         //std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
