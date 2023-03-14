@@ -25,6 +25,7 @@
 #include "mesh/MeshManager.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "schema/schemaUtilities.hpp"
+#include "mesh/generators/WellBlockABC.hpp"
 
 namespace geosx
 {
@@ -151,7 +152,7 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC & cellBlockManager 
 
 }
 
-void ElementRegionManager::generateWells( MeshManager & meshManager,
+void ElementRegionManager::generateWells( CellBlockManagerABC & cellBlockManager,
                                           MeshLevel & meshLevel )
 {
   NodeManager & nodeManager = meshLevel.getNodeManager();
@@ -171,8 +172,8 @@ void ElementRegionManager::generateWells( MeshManager & meshManager,
 
     // get the global well geometry from the well generator
     string const generatorName = wellRegion.getWellGeneratorName();
-    InternalWellGenerator const & wellGeometry =
-      meshManager.getGroup< InternalWellGenerator >( generatorName );
+    WellBlockABC const & wellGeometry =
+      cellBlockManager.getGroup< WellBlockABC >( generatorName );
 
     // generate the local data (well elements, nodes, perforations) on this well
     // note: each MPI rank knows the global info on the entire well (constructed earlier in InternalWellGenerator)
@@ -180,8 +181,8 @@ void ElementRegionManager::generateWells( MeshManager & meshManager,
     wellRegion.generateWell( meshLevel, wellGeometry, nodeOffsetGlobal + wellNodeCount, elemOffsetGlobal + wellElemCount );
 
     // increment counters with global number of nodes and elements
-    wellElemCount += wellGeometry.getNumElements();
-    wellNodeCount += wellGeometry.getNumNodes();
+    wellElemCount += wellGeometry.numElements();
+    wellNodeCount += wellGeometry.numNodes();
 
     string const & subRegionName = wellRegion.getSubRegionName();
     WellElementSubRegion &
@@ -190,7 +191,7 @@ void ElementRegionManager::generateWells( MeshManager & meshManager,
 
     globalIndex const numWellElemsGlobal = MpiWrapper::sum( subRegion.size() );
 
-    GEOSX_ERROR_IF( numWellElemsGlobal != wellGeometry.getNumElements(),
+    GEOSX_ERROR_IF( numWellElemsGlobal != wellGeometry.numElements(),
                     "Invalid partitioning in well " << subRegionName );
 
   } );

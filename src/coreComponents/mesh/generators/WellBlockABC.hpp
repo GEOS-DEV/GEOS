@@ -31,9 +31,29 @@ namespace geosx
  * It's noteworthy that the WellblockABC is immutable oriented.
  * The derived implementations need to have the modification/creation capabilities.
  */
-class WellBlockABC
+class WellBlockABC : public dataRepository::Group
 {
 public:
+
+  /**
+   * @brief Struct to define the top and bottom node of a segment.
+   */
+  struct NodeLocation
+  {
+    static constexpr integer TOP    = 0; /**< Top of the well */
+    static constexpr integer BOTTOM = 1; /**< Bottom of the well */
+  };
+
+  /**
+   * @brief Constructor
+   * @param name The name of this Group.
+   * @param parent The parent Group.
+   */
+  WellBlockABC( string const & name,
+                Group * const parent )
+    :
+    Group( name, parent )
+  { }
 
   /**
    * @name Getters / Setters
@@ -52,37 +72,37 @@ public:
    * @brief Get the physical location of the centers of well elements.
    * @return list of center locations of the well elements
    */
-  virtual arrayView2d< real64 const > elemCoords() const = 0;
+  virtual arrayView2d< real64 const > getElemCoords() const = 0;
 
   /**
    * @brief Get the global indices mapping an element to the next.
    * @return list providing the global index of the next element for each element
    */
-  virtual arrayView1d< globalIndex const > nextElemIndex() const = 0;
+  virtual arrayView1d< globalIndex const > getNextElemIndex() const = 0;
 
   /**
    * @brief Get the global indices mapping an element to the previous ones.
    * @return list providing the global indices of the previous elements for each element
    */
-  virtual arrayView1d< arrayView1d< globalIndex const > const > prevElemIndices() const = 0;
+  virtual arrayView1d< arrayView1d< globalIndex const > const > getPrevElemIndices() const = 0;
 
   /**
    * @brief Get the global indices of the well nodes nodes connected to each element.
    * @return list providing the global index of the well nodes for each well element
    */
-  virtual arrayView2d< globalIndex const > elemToNodesMap() const = 0;
+  virtual arrayView2d< globalIndex const > getElemToNodesMap() const = 0;
 
   /**
    * @brief Get the volume of the well elements.
    * @return list of volumes of the well elements
    */
-  virtual arrayView1d< real64 const > elemVolume() const = 0;
+  virtual arrayView1d< real64 const > getElemVolume() const = 0;
 
   /**
    * @brief Get the radius in the well.
    * @return the radius in the well
    */
-  virtual real64 elementRadius() const = 0;
+  virtual real64 getElementRadius() const = 0;
 
   // getters for node data
 
@@ -96,7 +116,7 @@ public:
    * @brief Get the physical location of the centers of well elements.
    * @return list of center locations of the well elements
    */
-  virtual arrayView2d< real64 const > nodeCoords() const = 0;
+  virtual arrayView2d< real64 const > getNodeCoords() const = 0;
 
 
 
@@ -112,19 +132,24 @@ public:
    * @brief Get the locations of the perforations.
    * @return list of locations of all the perforations on the well
    */
-  virtual arrayView2d< real64 const > perfCoords() const = 0;
+  virtual arrayView2d< real64 const > getPerfCoords() const = 0;
 
   /**
    * @brief Get the well transmissibility at the perforations.
    * @return list of well transmissibility at all the perforations on the well
    */
-  virtual arrayView1d< real64 const > perfTransmissibility() const = 0;
+  virtual arrayView1d< real64 const > getPerfTransmissibility() const = 0;
 
   /**
    * @brief Get the global indices of the well elements connected to each perforation.
    * @return list providing the global index of the connected well element for each perforation
    */
-  virtual arrayView1d< globalIndex const > perfElemIndex() const = 0;
+  virtual arrayView1d< globalIndex const > getPerfElemIndex() const = 0;
+
+  virtual const string getName() const = 0;
+  virtual const string getWellRegionName() const = 0;
+  virtual const string getWellControlsName() const = 0;
+
 
 };
 

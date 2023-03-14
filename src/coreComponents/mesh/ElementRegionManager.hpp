@@ -153,7 +153,7 @@ public:
    * @param [in] meshManager pointer to meshManager
    * @param [in] meshLevel pointer to meshLevel
    */
-  void generateWells( MeshManager & meshManager, MeshLevel & meshLevel );
+  void generateWells( CellBlockManagerABC & meshManager, MeshLevel & meshLevel );
 
   /**
    * @brief Build sets from the node sets

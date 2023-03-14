@@ -48,8 +48,8 @@ void MeshGeneratorBase::generateMesh( CellBlockManager & cellBlockManager ) {
 
 void MeshGeneratorBase::generateWells( CellBlockManager & cellBlockManager ) {
   forSubGroups<InternalWellGenerator>( [&]( InternalWellGenerator & wellGen ) { 
-      wellGen.generateWellGeometry();
-      cellBlockManager.registerWellBlock( wellGen.getName(), wellGen.getWellRegionName(), wellGen.getWellControlsName() );
+      WellBlock & wb = cellBlockManager.registerWellBlock( wellGen.getName() );
+      wb.importFieldsFromInternalWellGenerator( wellGen );
     } );
 }
 }

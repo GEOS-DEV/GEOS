@@ -19,6 +19,7 @@
 #include "WellElementRegion.hpp"
 
 #include "common/MpiWrapper.hpp"
+#include "mesh/generators/InternalWellGenerator.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 
 namespace geosx
@@ -41,9 +42,8 @@ WellElementRegion::WellElementRegion( string const & name, Group * const parent 
 WellElementRegion::~WellElementRegion()
 {}
 
-
 void WellElementRegion::generateWell( MeshLevel & mesh,
-                                      InternalWellGenerator const & wellGeometry,
+                                      WellBlockABC const & wellGeometry,
                                       globalIndex nodeOffsetGlobal,
                                       globalIndex elemOffsetGlobal )
 {
@@ -55,10 +55,10 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
   subRegion.setWellControlsName( m_wellControlsName );
 
   PerforationData * const perforationData = subRegion.getPerforationData();
-  perforationData->setNumPerforationsGlobal( wellGeometry.getNumPerforations() );
+  perforationData->setNumPerforationsGlobal( wellGeometry.numPerforations() );
 
-  globalIndex const numElemsGlobal        = wellGeometry.getNumElements();
-  globalIndex const numPerforationsGlobal = wellGeometry.getNumPerforations();
+  globalIndex const numElemsGlobal        = wellGeometry.numElements();
+  globalIndex const numPerforationsGlobal = wellGeometry.numPerforations();
 
   // 1) select the local perforations based on connectivity to the local reservoir elements
   subRegion.connectPerforationsToMeshElements( mesh, wellGeometry );

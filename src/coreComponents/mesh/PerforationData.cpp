@@ -161,8 +161,8 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
 
     // get the index of the well element, and of the neighboring well nodes
     localIndex const wellElemIndex = m_wellElementIndex[iperf];
-    localIndex const topNode = elemToNodeMap[wellElemIndex][InternalWellGenerator::NodeLocation::TOP];
-    localIndex const bottomNode = elemToNodeMap[wellElemIndex][InternalWellGenerator::NodeLocation::BOTTOM];
+    localIndex const topNode = elemToNodeMap[wellElemIndex][WellBlockABC::NodeLocation::TOP];
+    localIndex const bottomNode = elemToNodeMap[wellElemIndex][WellBlockABC::NodeLocation::BOTTOM];
     // using the direction of the segment, compute the perforation "direction"
     // that will be used to construct the Peaceman index
     real64 topToBottomVec[3] = { X[bottomNode][0],
@@ -243,7 +243,7 @@ void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
   dz /= dx * dy;
 }
 
-void PerforationData::connectToWellElements( InternalWellGenerator const & wellGeometry,
+void PerforationData::connectToWellElements( WellBlockABC const & wellGeometry,
                                              unordered_map< globalIndex, localIndex > const & globalToLocalWellElemMap,
                                              globalIndex elemOffsetGlobal )
 {

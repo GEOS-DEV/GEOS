@@ -543,7 +543,7 @@ void ProblemManager::generateMesh()
     this->generateMeshLevel( baseMesh, cellBlockManager, nullptr, junk.toViewConst() );
 
     ElementRegionManager & elemManager = baseMesh.getElemManager();
-    elemManager.generateWells( meshManager, baseMesh );
+    elemManager.generateWells( cellBlockManager, baseMesh );
 
   } );
 

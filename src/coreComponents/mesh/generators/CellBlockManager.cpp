@@ -15,6 +15,7 @@
 #include "CellBlockManager.hpp"
 
 #include "mesh/generators/CellBlockUtilities.hpp"
+#include "mesh/generators/WellBlock.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 
 #include <algorithm>
@@ -29,6 +30,7 @@ CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
 {
   this->registerGroup< Group >( viewKeyStruct::cellBlocks() );
   this->registerGroup< Group >( viewKeyStruct::faceBlocks() );
+  this->registerGroup< Group >( viewKeyStruct::wellBlocks() );
 }
 
 void CellBlockManager::resize( integer_array const & numElements,
@@ -624,6 +626,11 @@ Group & CellBlockManager::getFaceBlocks()
   return this->getGroup( viewKeyStruct::faceBlocks() );
 }
 
+Group & CellBlockManager::getWellBlocks()
+{
+  return this->getGroup( viewKeyStruct::wellBlocks() );
+}
+
 localIndex CellBlockManager::numNodes() const
 {
   return m_numNodes;
@@ -679,6 +686,11 @@ CellBlock & CellBlockManager::registerCellBlock( string const & name )
 FaceBlock & CellBlockManager::registerFaceBlock( string const & name )
 {
   return this->getFaceBlocks().registerGroup< FaceBlock >( name );
+}
+
+WellBlock & CellBlockManager::registerWellBlock( string const & name )
+{
+  return this->getWellBlocks().registerGroup< WellBlock >( name );
 }
 
 array2d< real64, nodes::REFERENCE_POSITION_PERM > CellBlockManager::getNodePositions() const

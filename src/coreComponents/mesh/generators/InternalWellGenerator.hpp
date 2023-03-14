@@ -20,7 +20,10 @@
 #ifndef GEOSX_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_
 #define GEOSX_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_
 
-#include "MeshGeneratorBase.hpp"
+#include "dataRepository/Group.hpp"
+#include "codingUtilities/Utilities.hpp"
+#include "common/DataTypes.hpp"
+
 
 namespace geosx
 {
@@ -34,14 +37,6 @@ class InternalWellGenerator : public dataRepository::Group
 {
 public:
 
-  /**
-   * @brief Struct to define the top and bottom node of a segment.
-   */
-  struct NodeLocation
-  {
-    static constexpr integer TOP    = 0; /**< Top of the well */
-    static constexpr integer BOTTOM = 1; /**< Bottom of the well */
-  };
 
   /**
    * @name Constructor / Destructor
@@ -272,6 +267,7 @@ public:
 
   const string getWellRegionName() const { return m_wellRegionName; }
   const string getWellControlsName() const { return m_wellControlsName; }
+
   /// @endcond
   
   
@@ -441,5 +437,4 @@ private:
 
 };
 }
-
 #endif /* GEOSX_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_ */

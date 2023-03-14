@@ -22,11 +22,13 @@
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlock.hpp"
 #include "mesh/generators/FaceBlock.hpp"
+#include "mesh/generators/InternalWellGenerator.hpp"
+#include "mesh/generators/WellBlock.hpp"
+#include "mesh/generators/WellBlockABC.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 namespace geosx
 {
-
 
 /**
  * @class PartitionDescriptor
@@ -225,6 +227,8 @@ public:
 
   Group & getFaceBlocks() override;
 
+  Group & getWellBlocks() override;
+
   /**
    * @brief Registers and returns a cell block of name @p name.
    * @param name The name of the created cell block.
@@ -239,6 +243,12 @@ public:
    */
   FaceBlock & registerFaceBlock( string const & name );
 
+  /**
+   * @brief Registers and returns a well block of name @p name.
+   * @param name The name of the created well block.
+   * @return A reference to the new well block. The CellBlockManager owns this new instance.
+   */
+  WellBlock & registerWellBlock( string const & name );
   /**
    * @brief Launch kernel function over all the sub-regions
    * @tparam LAMBDA type of the user-provided function
@@ -263,20 +273,7 @@ public:
    */
   void setGlobalLength( real64 globalLength) { m_globalLength = globalLength; }
 
-  /**
-   * @brief Register a well block
-   * 
-   */
-  void registerWellBlock( const string & name, const string & wellRegionName, const string & wellControlsName )
-  {
-    // WellBlock wellBlock;
-    // wellBlock.setName( name );
-    // wellBlock.setWellRegionName( wellRegionName );
-    // wellBlock.setWellControlsName( wellControlsName);
-    // m_wellBlocks.emplace_back( wellBlock );
-  }
-
-  //std::vector<WellBlock> getWellBlocks( ) { return m_wellBlocks; }
+  //std::vector<WellBlockABC> getWellBlocks( ) { return m_wellBlocks; }
 private:
 
   struct viewKeyStruct
@@ -288,6 +285,10 @@ private:
     /// Face blocks key
     static constexpr char const * faceBlocks()
     { return "faceBlocks"; }
+
+    /// Well blocks key
+    static constexpr char const * wellBlocks()
+    { return "wellBlocks"; }
   };
 
   /**
@@ -313,6 +314,7 @@ private:
   /**
    * @brief Trigger the face to nodes, edges and elements mappings.
    */
+
   void buildFaceMaps();
 
   template< typename BASEMAP, typename FUNC >
@@ -342,7 +344,7 @@ private:
   localIndex m_numFaces;
   localIndex m_numEdges;
   
-  //std::vector<WellBlock> m_wellBlocks;
+   //std::vector<WellBlockABC> m_wellBlocks;
 };
 
 }

@@ -21,7 +21,7 @@
 #define GEOSX_MESH_WELLELEMENTREGION_HPP_
 
 #include "mesh/ElementRegionBase.hpp"
-#include "mesh/generators/InternalWellGenerator.hpp"
+#include "mesh/generators/WellBlockABC.hpp"
 
 namespace geosx
 {
@@ -131,7 +131,7 @@ public:
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
   void generateWell( MeshLevel & mesh,
-                     InternalWellGenerator const & wellGeometry,
+                     WellBlockABC const & wellGeometry,
                      globalIndex nodeOffsetGlobal,
                      globalIndex elemOffsetGlobal );
 
