@@ -494,10 +494,21 @@ real64 MultiResolutionHFSolver::utilGetElemAverageDamage(globalIndex const patch
       if(patchElemNum==6773){
         continue;
       }
+      if(patchElemNum==6906){
+        continue;
+      }
+      if(patchElemNum==7038){
+        continue;
+      }
+      if(patchElemNum==7039){
+        continue;
+      }
       //get damage at quadrature point i
+      std::cout<<"this rank is: "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" patchElemNum is: "<<patchElemNum<<std::endl;
       average_d = average_d + qp_damage( subRegion.globalToLocalMap().at(patchElemNum), q )/8.0;
     }
     //GEOSX_LOG_LEVEL( 2, "after damage call\n" );
+    std::cout<<"this rank is: "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" is exiting the damageFunction"<<std::endl;
     return average_d;
     
 }
@@ -510,7 +521,7 @@ void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base )
   auto faceToElemList = baseFaceManager.elementList();
   auto faceNormals = baseFaceManager.faceNormal();
   
-
+  
   //get accessor to elemental field
   ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const frontIndicator =
   baseElemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( "frontIndicator" );
@@ -525,6 +536,7 @@ void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base )
 
   baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
+    m_baseCrackFront.clear();
     auto elemToFaceList = cellElementSubRegion.faceList();
     arrayView1d< integer const > const ghostRank = cellElementSubRegion.ghostRank();
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
@@ -538,16 +550,32 @@ void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base )
     // }
     // std::cout<<"}\n";
     //TODO: can we make this a forall?
-    //PARALLEL: Do ghost elements count as fracturedElements? - lets assume not
+    //PARALLEL: Do ghost elements count as fracturedElements? - YES
+    if(MpiWrapper::commRank( MPI_COMM_GEOSX )==2)
+    {
+      std::cout<<"test initFrac cuts rank 2"<<std::endl;
+    }
+    if(MpiWrapper::commRank( MPI_COMM_GEOSX )==3)
+    {
+      std::cout<<"test testInit cuts rank 3"<<std::endl;
+    }
     for(auto && fracElem:fracturedElements)
     {
       //getElemFaces
       //PARALLEL: assume each rank owns all associated faces
+      if(MpiWrapper::commRank( MPI_COMM_GEOSX )==3)
+      {
+        std::cout<<"on Rank 3, elem number "<<fracElem<<std::endl;
+      }
       for(auto && face:elemToFaceList[fracElem])
       {
         if(pow(faceNormals[face][1],2) + pow(faceNormals[face][2],2) < 1e-6) //remove faces with normal pointing in x direction
         {
             continue; //these faces dont contain fractures
+        }
+        if(MpiWrapper::commRank( MPI_COMM_GEOSX )==3)
+        {
+          std::cout<<"on Rank 3, face number "<<face<<std::endl;
         }
         //PARALLEL: are all elem here owned by current node? some may be ghosts 
         //if ghost is in fracturedList, then this may contain elements from another rank
@@ -558,15 +586,28 @@ void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base )
           //PARALLEL ISSUE: If elem is ghost, it might be fractured, but contains() will return it is not, so, we cant add ghosts here
           //on the other had, if this possible front element is only on the front because of this neighbor in the current rank, it will
           //not be added to the front from another rank - TODO: global fracturedElements check? 
-          if(!fracturedElements.contains(elem) && elem > -1 && ghostRank[elem] < 0)
+          if(!fracturedElements.contains(elem) && elem > -1)// && ghostRank[elem] < 0)
           {
-            //PARALLEL: since these are global arrays, insert globalIndices
-            m_baseCrackFront.insert(elem);
+            m_baseCrackFront.insert(elem);//Maybe I should insert the ghosts here and them synchronize later using global indices?
             frontIndicator[0][0][elem] = 1;
           }
+          //MAKE SURE THAT FRACTUREDELEMENTS OF AN INITIALLY INTACT DOMAIN PARTITION RECEIVES THE GHOST ELEMENTS AS THE FRONT APPROACHES IT.
+          //TRY JUST REMOVING THE GHOST IN THE PREVIOUS IF
+          //send information about ghost elments to owning ranks
+          // if(ghostRank[elem] >= 0)
+          // {
+          //   integer sendTo = ghostRank[elem];
+          //   MpiWrapper::iSend(elem, sendTo, tag, commGeosx, request);
+          //   //communicate with other rank
+          //   //insert to m_baseCrackFront of rank ghostRank[elem]
+          //   //and updata frontIndicator at that rank
+          // }
         }
       }
-    } 
+    }
+    //add MPI Barrier
+    //MpiWrapper::barrier(); 
+     //add received elements from other ranks 
   } );
   // GEOSX_LOG_LEVEL_RANK_0( 1, "m_baseCrackFront at the end of initialization\n" );
   // std::cout<<"{";
@@ -594,6 +635,9 @@ void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
   // Hard-coded region and subRegion
   ElementRegionBase const & elementRegion = baseElemManager.getRegion( 0 );
   CellElementSubRegion const & subRegion = elementRegion.getSubRegion< CellElementSubRegion >( 0 );
+
+  //ghosts
+  arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
   
   FaceManager const & baseFaceManager = base.getFaceManager();
   auto elemToFaceList = subRegion.faceList();
@@ -635,6 +679,9 @@ void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
   //PARALLEL: baseFrontCopy is an array of globalIndex, so, we must split the work here correctly
   for(auto && elem:baseFrontCopy)
   {
+    // if(ghostRank[elem]>=0){
+    //   continue;
+    // }
     //PARALLEL: split the work to the right rank
     localIndex triplet[3];
     integer fracCount = 0;
@@ -649,7 +696,17 @@ void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
               GEOSX_LOG_LEVEL( 3, "fineElem: " << fineElem << " from base elem: "<<elem<<"\n" );
           }
           //get averageDamage in fineElem
-          real64 averageDamage = utilGetElemAverageDamage(fineElem, patch);
+          if(fineElem==7038)
+          {
+            std::cout<<"rank "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" fineElem: " << fineElem<<" from coarse elem: "<<elem <<std::endl;
+          }
+          real64 averageDamage;
+          if(ghostRank[elem]>=0){
+             averageDamage = 0.0;
+          }
+          else{
+             averageDamage = utilGetElemAverageDamage(fineElem, patch);
+          }
           if(elem==234){
             //GEOSX_LOG_LEVEL( 1, "fineElem: " << fineElem << " from base elem: "<<elem<<"has damage = "<< averageDamage <<"\n" );
           }
@@ -666,7 +723,7 @@ void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
     //if a lot of subelements are damaged, cut base element
     //GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " has "<< fracCount <<" damaged subelements.\n" );
 
-    if (fracCount >= ry*rz)
+    if (fracCount >= ry*rz || fracturedElements.contains(elem))
     {
       //cutElement
       //GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " being cut "<<"\n" );
@@ -712,34 +769,35 @@ void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
   }
   std::cout<<"}\n";
   efemGenerator.propagationStep3D();
+  initializeCrackFront(base);
 
-  for (auto elem:toCutList)
-  {
-    //add non-fractured neighbors to fron
-    for(auto && face:elemToFaceList[elem])
-    {
-      if(pow(faceNormals[face][1],2) + pow(faceNormals[face][2],2) < 1e-6) //remove faces with normal pointing in x direction
-      {
-        continue; //these faces dont contain fractures
-      }
-      for(auto && neighbor:faceToElemList[face])
-      {
-        if(neighbor == elem){
-          continue;
-        }
-        if(!fracturedElements.contains(neighbor) && !m_baseCrackFront.contains(neighbor) && neighbor > -1)
-        {
-          GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << neighbor << " being added to front "<<"\n" );
-          m_baseCrackFront.insert(neighbor);
-          frontIndicator[0][0][neighbor] = 1;
-        }
-      }
-    }
-    //remove from front
-    GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " removed from front "<<"\n" );
-    m_baseCrackFront.remove(elem);
-    frontIndicator[0][0][elem] = 0;
-  }
+  // for (auto elem:toCutList)
+  // {
+  //   //add non-fractured neighbors to fron
+  //   for(auto && face:elemToFaceList[elem])
+  //   {
+  //     if(pow(faceNormals[face][1],2) + pow(faceNormals[face][2],2) < 1e-6) //remove faces with normal pointing in x direction
+  //     {
+  //       continue; //these faces dont contain fractures
+  //     }
+  //     for(auto && neighbor:faceToElemList[face])
+  //     {
+  //       if(neighbor == elem){
+  //         continue;
+  //       }
+  //       if(!fracturedElements.contains(neighbor) && !m_baseCrackFront.contains(neighbor) && neighbor > -1)
+  //       {
+  //         GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << neighbor << " being added to front "<<"\n" );
+  //         m_baseCrackFront.insert(neighbor);
+  //         frontIndicator[0][0][neighbor] = 1;
+  //       }
+  //     }
+  //   }
+  //   //remove from front
+  //   GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " removed from front "<<"\n" );
+  //   m_baseCrackFront.remove(elem);
+  //   frontIndicator[0][0][elem] = 0;
+  // }
 
   //to cut list pre
   SortedArray<localIndex> const & preToCutList = efemGenerator.getCutList();

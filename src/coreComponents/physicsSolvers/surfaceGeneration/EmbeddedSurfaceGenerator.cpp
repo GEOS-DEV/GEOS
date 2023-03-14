@@ -641,15 +641,15 @@ void EmbeddedSurfaceGenerator::propagationStep3D()
   GEOSX_LOG_LEVEL_RANK_0( 2, "Before synchronizations" );
 
   //TEST ELEM TO EMBEDDED CELL MAP
-  SortedArray< localIndex > fElements = subRegion.fracturedElementsList();
-  ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = subRegion.embeddedSurfacesList().toViewConst();
-  std::cout<<"rank "<<thisRank<<" before sync topology"<<std::endl;
-  for( localIndex ei=0; ei<fElements.size(); ++ei )
-  {
-    localIndex const cellIndex = fElements[ei];  
-    localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
-    std::cout<<"before sync rank "<<thisRank<<" bulk cell: "<<cellIndex<<", embedded cell: "<<k<<std::endl;
-  } 
+  // SortedArray< localIndex > fElements = subRegion.fracturedElementsList();
+  // ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = subRegion.embeddedSurfacesList().toViewConst();
+  // std::cout<<"rank "<<thisRank<<" before sync topology"<<std::endl;
+  // for( localIndex ei=0; ei<fElements.size(); ++ei )
+  // {
+  //   localIndex const cellIndex = fElements[ei];  
+  //   localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
+  //   std::cout<<"before sync rank "<<thisRank<<" bulk cell: "<<cellIndex<<", embedded cell: "<<k<<std::endl;
+  // } 
 
   embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
                                                                domain.getNeighbors(),
@@ -829,9 +829,9 @@ void EmbeddedSurfaceGenerator::updateGlobalIndices( ElementRegionManager & elemM
   std::cout<<"hello from rank "<<thisRank<<std::endl;
   MpiWrapper::barrier(MPI_COMM_GEOSX);
   //print map for debugging
-  for(int i=0;i<embeddedSurfaceSubRegion.size();i++){
-    std::cout<<"Rank: "<<thisRank<<", local elem: "<<i<<" mapped to global: "<<elemLocalToGlobal[i]<<"\n";
-  }
+  // for(int i=0;i<embeddedSurfaceSubRegion.size();i++){
+  //   std::cout<<"Rank: "<<thisRank<<", local elem: "<<i<<" mapped to global: "<<elemLocalToGlobal[i]<<"\n";
+  // }
   MpiWrapper::barrier(MPI_COMM_GEOSX);
 
   //now, let's do the nodes
