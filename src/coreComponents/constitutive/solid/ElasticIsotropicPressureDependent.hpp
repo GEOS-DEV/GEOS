@@ -112,6 +112,7 @@ public:
                                  localIndex const q,
                                  real64 ( &elasticStrain )[6] ) const override final;
 
+
 protected:
 
   /// A reference to the ArrayView holding the reference pressure for each element.
@@ -125,7 +126,6 @@ protected:
 
   /// A reference to the ArrayView holding the shear modulus for each element.
   arrayView1d< real64 const > const m_shearModulus;
-
 };
 
 

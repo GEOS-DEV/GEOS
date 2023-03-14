@@ -11,7 +11,7 @@
       isThermal="1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
-        couplingType="Sequential"
+        couplingType="FullyImplicit"
         subcycling="1"
         newtonMaxIter="200"/>
       <LinearSolverParameters
@@ -187,7 +187,7 @@
   <Outputs>
     <VTK
       name="thermoPoroVTKOutput"
-      plotFileRoot="thermoPoro_consolidation_seq"/>
+      plotFileRoot="thermoPoro_consolidation_fim"/>
 
     <Restart
       name="restartOutput"/>

@@ -158,6 +158,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( &stiffness )[6][6] ) const override final;
 
+
 private:
   /// A reference to the ArrayView holding c11 for each element.
   arrayView1d< real64 const > const m_c11;
