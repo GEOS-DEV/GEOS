@@ -465,7 +465,7 @@ compute2dFaceAnd2dElemToEdges( vtkSmartPointer< vtkDataSet > vtkMesh,
                                localIndex const num2dFaces,
                                ArrayOfArraysView< localIndex const > nodeToEdges )
 {
-  // What we hereafter call a `pairSig` (for `pair signature`) the pair
+  // Let's hereafter call a `pairSig` (for `pair signature`) the pair
   // with the lowest duplicated node indices for each of the two indices.
   // It's worth mentioning that such a pair may not be an existing edge.
   // It's a more kind of signature/hash to reconcile duplicated edges.

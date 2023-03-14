@@ -296,7 +296,10 @@
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" />
 	</xsd:complexType>
-	<xsd:complexType name="SourceFluxType" />
+	<xsd:complexType name="SourceFluxType">
+		<!--fieldName => Name of field that boundary condition is applied to.-->
+		<xsd:attribute name="fieldName" type="string" />
+	</xsd:complexType>
 	<xsd:complexType name="TractionType">
 		<!--component => Component of field (if tensor) to apply boundary condition to.-->
 		<xsd:attribute name="component" type="integer" />
@@ -395,7 +398,16 @@
 	<xsd:complexType name="NonlinearSolverParametersType">
 		<!--newtonNumberOfIterations => Number of Newton's iterations.-->
 		<xsd:attribute name="newtonNumberOfIterations" type="integer" />
+		<!--normType => Norm used by the flow solver to check nonlinear convergence. Valid options:
+* Linfinity
+* L2-->
+		<xsd:attribute name="normType" type="geosx_solverBaseKernels_NormType" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_solverBaseKernels_NormType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|Linfinity|L2" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="HybridMimeticDiscretization" type="HybridMimeticDiscretizationType" />
