@@ -119,8 +119,8 @@ public:
                                                   localIndex const q,
                                                   real64 const & pressure_n,
                                                   real64 const & pressure,
-                                                  real64 const & deltaTemperatureFromInit,
-                                                  real64 const & deltaTemperatureFromLastStep,
+                                                  real64 const & temperature_n,
+                                                  real64 const & temperature,
                                                   real64 const ( &strainIncrement )[6],
                                                   real64 ( & totalStress )[6],
                                                   DiscretizationOps & stiffness ) const
@@ -132,7 +132,7 @@ public:
     computeTotalStress( k,
                         q,
                         pressure,
-                        deltaTemperatureFromInit,
+                        temperature,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure, // To pass something here
@@ -140,7 +140,9 @@ public:
                         stiffness );
 
     // Compute porosity
-    real64 const deltaPressure = pressure - pressure_n;
+    real64 const deltaPressure    = pressure - pressure_n;
+    real64 const deltaTemperature = temperature - temperature_n;
+
 
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
@@ -148,7 +150,7 @@ public:
 
     real64 const effectiveMeanStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
-    real64 const totalMeanStressIncrement = effectiveMeanStressIncrement - biotCoefficient * deltaPressure - 3 * thermalExpansionCoefficient * bulkModulus * deltaTemperatureFromLastStep;
+    real64 const totalMeanStressIncrement = effectiveMeanStressIncrement - biotCoefficient * deltaPressure - 3 * thermalExpansionCoefficient * bulkModulus * deltaTemperature;
 
     m_porosityUpdate.updateTotalMeanStressIncrement( k, q, totalMeanStressIncrement );
 

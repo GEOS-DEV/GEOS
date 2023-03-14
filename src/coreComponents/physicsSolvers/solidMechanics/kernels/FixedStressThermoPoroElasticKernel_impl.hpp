@@ -117,9 +117,6 @@ quadraturePointKernel( localIndex const k,
                        localIndex const q,
                        StackVariables & stack ) const
 {
-  real64 const deltaTemperatureFromInit = m_temperature[k] - m_initialTemperature[k];
-  real64 const deltaTemperatureFromLastStep = m_temperature[k] - m_temperature_n[k];
-
   real64 dNdX[ numNodesPerElem ][ 3 ];
   real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
                                                                            stack.feStack, dNdX );
@@ -136,8 +133,8 @@ quadraturePointKernel( localIndex const k,
                                                                   q,
                                                                   m_pressure_n[k],
                                                                   m_pressure[k],
-                                                                  deltaTemperatureFromInit,
-                                                                  deltaTemperatureFromLastStep,
+                                                                  m_temperature_n[k],
+                                                                  m_temperature[k],
                                                                   strainInc,
                                                                   totalStress,
                                                                   stiffness );

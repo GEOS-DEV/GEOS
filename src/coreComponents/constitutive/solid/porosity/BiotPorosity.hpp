@@ -133,7 +133,7 @@ public:
                                                  real64 const & temperature,
                                                  real64 const & temperature_n ) const override final
   {
-    real64 const deltaPressure = pressure - pressure_n;
+    real64 const deltaPressure    = pressure - pressure_n;
     real64 const deltaTemperature = temperature - temperature_n;
 
     computePorosity( deltaPressure,
