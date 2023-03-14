@@ -94,7 +94,7 @@ void SinglePhasePoromechanicsSolver::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  if ( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
+  if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
   {
     solidMechanicsSolver()->turnOnFixedStressThermoPoroElasticityFlag();
   }
