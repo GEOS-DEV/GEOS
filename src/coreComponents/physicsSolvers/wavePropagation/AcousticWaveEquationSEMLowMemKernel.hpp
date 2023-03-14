@@ -13,11 +13,11 @@
  */
 
 /**
- * @file AcousticWaveEquationSEMlowMemKernel.hpp
+ * @file AcousticWaveEquationSEMLowMemKernel.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMlowMemKERNEL_HPP_
-#define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMlowMemKERNEL_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMLowMemKERNEL_HPP_
+#define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMLowMemKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "WaveSolverUtils.hpp"
@@ -27,7 +27,7 @@ namespace geosx
 {
 
 /// Namespace to contain the acoustic wave kernels.
-namespace acousticWaveEquationSEMlowMemKernels
+namespace acousticWaveEquationSEMLowMemKernels
 {
 
 struct PrecomputeSourceAndReceiverKernel
@@ -672,7 +672,7 @@ struct waveSpeedPMLKernel
  * @copydoc geosx::finiteElement::KernelBase
  * @tparam SUBREGION_TYPE The type of subregion that the kernel will act on.
  *
- * ### AcousticWaveEquationSEMlowMemKernel Description
+ * ### AcousticWaveEquationSEMLowMemKernel Description
  * Implements the KernelBase interface functions required for solving
  * the acoustic wave equations using the
  * "finite element kernel application" functions such as
@@ -686,7 +686,7 @@ struct waveSpeedPMLKernel
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ExplicitAcousticSEMlowMem : public finiteElement::KernelBase< SUBREGION_TYPE,
+class ExplicitAcousticSEMLowMem : public finiteElement::KernelBase< SUBREGION_TYPE,
                                                               CONSTITUTIVE_TYPE,
                                                               FE_TYPE,
                                                               1,
@@ -724,7 +724,7 @@ public:
    * @param dt The time interval for the step.
    *   elements to be processed during this kernel launch.
    */
-  ExplicitAcousticSEMlowMem( NodeManager & nodeManager,
+  ExplicitAcousticSEMLowMem( NodeManager & nodeManager,
                        EdgeManager const & edgeManager,
                        FaceManager const & faceManager,
                        localIndex const targetRegionIndex,
@@ -749,7 +749,7 @@ public:
   /**
    * @copydoc geosx::finiteElement::KernelBase::StackVariables
    *
-   * ### ExplicitAcousticSEMlowMem Description
+   * ### ExplicitAcousticSEMLowMem Description
    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
    */
   struct StackVariables : Base::StackVariables
@@ -790,7 +790,7 @@ public:
   /**
    * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
    *
-   * ### ExplicitAcousticSEMlowMem Description
+   * ### ExplicitAcousticSEMLowMem Description
    * Calculates stiffness vector
    *
    */
@@ -826,11 +826,11 @@ protected:
 
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
-using ExplicitAcousticSEMlowMemFactory = finiteElement::KernelFactory< ExplicitAcousticSEMlowMem,
+using ExplicitAcousticSEMLowMemFactory = finiteElement::KernelFactory< ExplicitAcousticSEMLowMem,
                                                                  real64 >;
 
 
-} // namespace acousticWaveEquationSEMlowMemKernels
+} // namespace acousticWaveEquationSEMLowMemKernels
 
 } // namespace geosx
 

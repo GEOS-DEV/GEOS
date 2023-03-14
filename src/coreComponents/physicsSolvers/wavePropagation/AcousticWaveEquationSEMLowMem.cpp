@@ -14,7 +14,7 @@
 
 
 /**
- * @file AcousticWaveEquationSEMlowMem.cpp
+ * @file AcousticWaveEquationSEMLowMem.cpp
  */
 
 #include "AcousticWaveEquationSEMLowMem.hpp"
@@ -33,7 +33,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-AcousticWaveEquationSEMlowMem::AcousticWaveEquationSEMlowMem( const std::string & name,
+AcousticWaveEquationSEMLowMem::AcousticWaveEquationSEMLowMem( const std::string & name,
                                                   Group * const parent ):
   WaveSolverBase( name,
                   parent )
@@ -76,12 +76,12 @@ AcousticWaveEquationSEMlowMem::AcousticWaveEquationSEMlowMem( const std::string 
 
 }
 
-AcousticWaveEquationSEMlowMem::~AcousticWaveEquationSEMlowMem()
+AcousticWaveEquationSEMLowMem::~AcousticWaveEquationSEMLowMem()
 {
   // TODO Auto-generated destructor stub
 }
 
-localIndex AcousticWaveEquationSEMlowMem::getNumNodesPerElem()
+localIndex AcousticWaveEquationSEMLowMem::getNumNodesPerElem()
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -124,7 +124,7 @@ localIndex AcousticWaveEquationSEMlowMem::getNumNodesPerElem()
   return numNodesPerElem;
 }
 
-void AcousticWaveEquationSEMlowMem::initializePreSubGroups()
+void AcousticWaveEquationSEMLowMem::initializePreSubGroups()
 {
   WaveSolverBase::initializePreSubGroups();
 
@@ -141,7 +141,7 @@ void AcousticWaveEquationSEMlowMem::initializePreSubGroups()
 }
 
 
-void AcousticWaveEquationSEMlowMem::registerDataOnMesh( Group & meshBodies )
+void AcousticWaveEquationSEMLowMem::registerDataOnMesh( Group & meshBodies )
 {
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -192,7 +192,7 @@ void AcousticWaveEquationSEMlowMem::registerDataOnMesh( Group & meshBodies )
 }
 
 
-void AcousticWaveEquationSEMlowMem::postProcessInput()
+void AcousticWaveEquationSEMLowMem::postProcessInput()
 {
 
   WaveSolverBase::postProcessInput();
@@ -239,7 +239,7 @@ void AcousticWaveEquationSEMlowMem::postProcessInput()
 
 }
 
-void AcousticWaveEquationSEMlowMem::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
+void AcousticWaveEquationSEMLowMem::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
@@ -303,7 +303,7 @@ void AcousticWaveEquationSEMlowMem::precomputeSourceAndReceiverTerm( MeshLevel &
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
-      acousticWaveEquationSEMlowMemKernels::
+      acousticWaveEquationSEMLowMemKernels::
         PrecomputeSourceAndReceiverKernel::
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
@@ -332,7 +332,7 @@ void AcousticWaveEquationSEMlowMem::precomputeSourceAndReceiverTerm( MeshLevel &
   } );
 }
 
-void AcousticWaveEquationSEMlowMem::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
+void AcousticWaveEquationSEMLowMem::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
@@ -353,13 +353,13 @@ void AcousticWaveEquationSEMlowMem::addSourceToRightHandSide( integer const & cy
   } );
 }
 
-void AcousticWaveEquationSEMlowMem::initializePostInitialConditionsPreSubGroups()
+void AcousticWaveEquationSEMLowMem::initializePostInitialConditionsPreSubGroups()
 {
 
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
   if( m_usePML )
   {
-    AcousticWaveEquationSEMlowMem::initializePML();
+    AcousticWaveEquationSEMLowMem::initializePML();
   }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -411,7 +411,7 @@ void AcousticWaveEquationSEMlowMem::initializePostInitialConditionsPreSubGroups(
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        acousticWaveEquationSEMlowMemKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
+        acousticWaveEquationSEMLowMemKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
         kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                                X,
@@ -419,7 +419,7 @@ void AcousticWaveEquationSEMlowMem::initializePostInitialConditionsPreSubGroups(
                                                                velocity,
                                                                mass );
 
-        acousticWaveEquationSEMlowMemKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
+        acousticWaveEquationSEMLowMemKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
         kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
                                                                X,
@@ -436,7 +436,7 @@ void AcousticWaveEquationSEMlowMem::initializePostInitialConditionsPreSubGroups(
 }
 
 
-void AcousticWaveEquationSEMlowMem::applyFreeSurfaceBC( real64 time, DomainPartition & domain )
+void AcousticWaveEquationSEMLowMem::applyFreeSurfaceBC( real64 time, DomainPartition & domain )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager const & functionManager = FunctionManager::getInstance();
@@ -498,7 +498,7 @@ void AcousticWaveEquationSEMlowMem::applyFreeSurfaceBC( real64 time, DomainParti
   } );
 }
 
-void AcousticWaveEquationSEMlowMem::initializePML()
+void AcousticWaveEquationSEMLowMem::initializePML()
 {
   GEOSX_MARK_FUNCTION;
 
@@ -679,7 +679,7 @@ void AcousticWaveEquationSEMlowMem::initializePML()
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        acousticWaveEquationSEMlowMemKernels::
+        acousticWaveEquationSEMLowMemKernels::
           waveSpeedPMLKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( targetSet,
@@ -752,7 +752,7 @@ void AcousticWaveEquationSEMlowMem::initializePML()
 
 
 
-void AcousticWaveEquationSEMlowMem::applyPML( real64 const time, DomainPartition & domain )
+void AcousticWaveEquationSEMLowMem::applyPML( real64 const time, DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -827,7 +827,7 @@ void AcousticWaveEquationSEMlowMem::applyPML( real64 const time, DomainPartition
         using FE_TYPE = TYPEOFREF( finiteElement );
 
         /// apply the PML kernel
-        acousticWaveEquationSEMlowMemKernels::
+        acousticWaveEquationSEMLowMemKernels::
           PMLKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( targetSet,
@@ -863,7 +863,7 @@ bool dirExists( const std::string & dirName )
   return stat( dirName.c_str(), &buffer ) == 0;
 }
 
-real64 AcousticWaveEquationSEMlowMem::explicitStepForward( real64 const & time_n,
+real64 AcousticWaveEquationSEMLowMem::explicitStepForward( real64 const & time_n,
                                                      real64 const & dt,
                                                      integer cycleNumber,
                                                      DomainPartition & domain,
@@ -941,7 +941,7 @@ real64 AcousticWaveEquationSEMlowMem::explicitStepForward( real64 const & time_n
 }
 
 
-real64 AcousticWaveEquationSEMlowMem::explicitStepBackward( real64 const & time_n,
+real64 AcousticWaveEquationSEMLowMem::explicitStepBackward( real64 const & time_n,
                                                       real64 const & dt,
                                                       integer cycleNumber,
                                                       DomainPartition & domain,
@@ -1021,7 +1021,7 @@ real64 AcousticWaveEquationSEMlowMem::explicitStepBackward( real64 const & time_
   return dtOut;
 }
 
-real64 AcousticWaveEquationSEMlowMem::explicitStepInternal( real64 const & time_n,
+real64 AcousticWaveEquationSEMLowMem::explicitStepInternal( real64 const & time_n,
                                                       real64 const & dt,
                                                       integer cycleNumber,
                                                       DomainPartition & domain )
@@ -1050,7 +1050,7 @@ real64 AcousticWaveEquationSEMlowMem::explicitStepInternal( real64 const & time_
 
     bool const usePML = m_usePML;
 
-    auto kernelFactory = acousticWaveEquationSEMlowMemKernels::ExplicitAcousticSEMlowMemFactory( dt );
+    auto kernelFactory = acousticWaveEquationSEMLowMemKernels::ExplicitAcousticSEMLowMemFactory( dt );
 
     finiteElement::
       regionBasedKernelApplication< EXEC_POLICY,
@@ -1115,7 +1115,7 @@ real64 AcousticWaveEquationSEMlowMem::explicitStepInternal( real64 const & time_
             xLocal[i] = X[a][i];
           }
 
-          acousticWaveEquationSEMlowMemKernels::PMLKernelHelper::computeDampingProfilePML(
+          acousticWaveEquationSEMLowMemKernels::PMLKernelHelper::computeDampingProfilePML(
             xLocal,
             xMin,
             xMax,
@@ -1185,7 +1185,7 @@ real64 AcousticWaveEquationSEMlowMem::explicitStepInternal( real64 const & time_
   return dt;
 }
 
-void AcousticWaveEquationSEMlowMem::cleanup( real64 const time_n,
+void AcousticWaveEquationSEMLowMem::cleanup( real64 const time_n,
                                        integer const cycleNumber,
                                        integer const eventCounter,
                                        real64 const eventProgress,
@@ -1207,7 +1207,7 @@ void AcousticWaveEquationSEMlowMem::cleanup( real64 const time_n,
   } );
 }
 
-void AcousticWaveEquationSEMlowMem::computeAllSeismoTraces( real64 const time_n,
+void AcousticWaveEquationSEMLowMem::computeAllSeismoTraces( real64 const time_n,
                                                       real64 const dt,
                                                       arrayView1d< real32 const > const var_np1,
                                                       arrayView1d< real32 const > const var_n,
@@ -1236,8 +1236,8 @@ void AcousticWaveEquationSEMlowMem::computeAllSeismoTraces( real64 const time_n,
                                          m_receiverIsLocal,
                                          m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
   }
-}Acou
+}
 
-REGISTER_CATALOG_ENTRY( SolverBase, AcousticWaveEquationSEMlowMem, string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, AcousticWaveEquationSEMLowMem, string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

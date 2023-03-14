@@ -34,20 +34,20 @@ public:
   using EXEC_POLICY = parallelDevicePolicy< 32 >;
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
-  AcousticWaveEquationSEMlowMem( const std::string & name,
+  AcousticWaveEquationSEMLowMem( const std::string & name,
                                  Group * const parent );
 
-  virtual ~AcousticWaveEquationSEMlowMem() override;
+  virtual ~AcousticWaveEquationSEMLowMem() override;
 
-  AcousticWaveEquationSEMlowMem() = delete;
-  AcousticWaveEquationSEMlowMem( AcousticWaveEquationSEMlowMem const & ) = delete;
-  AcousticWaveEquationSEMlowMem( AcousticWaveEquationSEMlowMem && ) = default;
+  AcousticWaveEquationSEMLowMem() = delete;
+  AcousticWaveEquationSEMLowMem( AcousticWaveEquationSEMLowMem const & ) = delete;
+  AcousticWaveEquationSEMLowMem( AcousticWaveEquationSEMLowMem && ) = default;
 
-  AcousticWaveEquationSEMlowMem & operator=( AcousticWaveEquationSEMlowMem const & ) = delete;
-  AcousticWaveEquationSEMlowMem & operator=( AcousticWaveEquationSEMlowMem && ) = delete;
+  AcousticWaveEquationSEMLowMem & operator=( AcousticWaveEquationSEMLowMem const & ) = delete;
+  AcousticWaveEquationSEMLowMem & operator=( AcousticWaveEquationSEMLowMem && ) = delete;
 
 
-  static string catalogName() { return "AcousticSEMlowMem"; }
+  static string catalogName() { return "AcousticSEMLowMem"; }
 
   virtual void initializePreSubGroups() override;
 
