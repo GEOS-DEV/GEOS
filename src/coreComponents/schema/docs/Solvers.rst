@@ -34,8 +34,7 @@ SinglePhaseWell                             node                 :ref:`XML_Singl
 SolidMechanicsEmbeddedFractures             node                 :ref:`XML_SolidMechanicsEmbeddedFractures`             
 SolidMechanicsLagrangianSSLE                node                 :ref:`XML_SolidMechanicsLagrangianSSLE`                
 SolidMechanics_LagrangianFEM                node                 :ref:`XML_SolidMechanics_LagrangianFEM`                
-SurfaceGenerator                            node                 :ref:`XML_SurfaceGenerator`    
-ThermalSinglePhasePoromechanicsFixedStress  node                 :ref:`XML_ThermalSinglePhasePoromechanicsFixedStress`                         
+SurfaceGenerator                            node                 :ref:`XML_SurfaceGenerator`                            
 =========================================== ======== =========== ====================================================== 
 
 

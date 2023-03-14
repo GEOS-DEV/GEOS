@@ -1072,13 +1072,6 @@ Element: ThermalCompressibleSinglePhaseFluid
 .. include:: ../../coreComponents/schema/docs/ThermalCompressibleSinglePhaseFluid.rst
 
 
-.. _XML_ThermalSinglePhasePoromechanicsFixedStress:
-
-Element: ThermalSinglePhasePoromechanicsFixedStress
-===================================================
-.. include:: ../../coreComponents/schema/docs/ThermalSinglePhasePoromechanicsFixedStress.rst
-
-
 .. _XML_ThickPlane:
 
 Element: ThickPlane
@@ -2271,13 +2264,6 @@ Datastructure: Tasks
 Datastructure: ThermalCompressibleSinglePhaseFluid
 ==================================================
 .. include:: ../../coreComponents/schema/docs/ThermalCompressibleSinglePhaseFluid_other.rst
-
-
-.. _DATASTRUCTURE_ThermalSinglePhasePoromechanicsFixedStress:
-
-Datastructure: ThermalSinglePhasePoromechanicsFixedStress
-=========================================================
-.. include:: ../../coreComponents/schema/docs/ThermalSinglePhasePoromechanicsFixedStress_other.rst
 
 
 .. _DATASTRUCTURE_ThickPlane:
