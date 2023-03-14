@@ -12,6 +12,7 @@
       <NonlinearSolverParameters
         maxTimeStepCuts="3"
         newtonTol="1e0"
+        lineSearchAction="None"
         newtonMaxIter="10"
         maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
@@ -379,19 +380,19 @@
       filename="displacementJump_history" /> 
   </Outputs>
 
-  <Events maxTime="100.0">
+  <Events maxTime="100000.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="100.0"
+      timeFrequency="100000.0"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="10"
+      forceDt="100000.0"
       target="/Solvers/poroFractureSolver"/>
 
     <PeriodicEvent
