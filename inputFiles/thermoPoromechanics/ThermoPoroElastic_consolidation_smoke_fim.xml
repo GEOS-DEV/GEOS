@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./ThermoPoroElastic_consolidatio_smoke_base.xml" />
+    <File name="./ThermoPoroElastic_consolidation_smoke_base.xml" />
   </Included>
 
   <Solvers

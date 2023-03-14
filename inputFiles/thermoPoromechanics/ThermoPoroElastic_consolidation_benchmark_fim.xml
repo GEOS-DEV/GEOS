@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./ThermoPoroElastic_consolidatio_benchmark_base.xml" />
+    <File name="./ThermoPoroElastic_consolidation_benchmark_base.xml" />
   </Included>
 
   <Solvers
