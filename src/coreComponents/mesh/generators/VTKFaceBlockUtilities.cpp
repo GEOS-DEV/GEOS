@@ -69,11 +69,36 @@ public:
     {
       arrayView1d< globalIndex const > const l2g = m_localToGlobalMaps[i];
       auto const size = l2g.size();
-      for( int j = 0; j < size - 1; ++j )
+      for( int j = 0, start = 0; j < size - 1; ++j )
       {
-        GEOSX_ERROR_IF_NE_MSG( l2g[i] + 1, l2g[i + 1], "Internal error: the code is assuming that the cell block indexing is continuously increasing." );
+        if( l2g[j] + 1 != l2g[j + 1] )
+        {
+          m_ranges[{ l2g[start], l2g[j] + 1 }] = { i, -1 };
+          start = j + 1;
+        }
+        else if( j + 1 == size - 1 )
+        {
+          m_ranges[{ l2g[start], l2g[j + 1] + 1 }] = { i, -1 };
+        }
       }
-      m_ranges.emplace_back( l2g.front(), l2g.back() );
+    }
+
+    std::vector< int > cbOffset( numCellBlocks, 0 );
+    for( auto & p: m_ranges )
+    {
+      auto const & range = p.first;
+      auto & cb = p.second;
+      size_t const cbi = cb.first;
+      auto & offset = cb.second;
+
+      offset = cbOffset[cbi];
+      for( size_t i = 0; i < cbOffset.size(); ++i )
+      {
+        if( i != cbi )
+        {
+          cbOffset[i] += range.second - range.first;
+        }
+      }
     }
   }
 
@@ -84,12 +109,7 @@ public:
    */
   int getCellBlockIndex( int const & ei ) const
   {
-    auto const it = std::find_if( m_ranges.cbegin(), m_ranges.cend(), [&]( auto const & p ) -> bool
-    {
-      return p.first <= ei && ei <= p.second;
-    } );
-
-    return std::distance( m_ranges.cbegin(), it );
+    return getCellBlockInfo( ei ).first;
   }
 
   /**
@@ -99,9 +119,8 @@ public:
    */
   localIndex getElementIndexInCellBlock( int const & ei ) const
   {
-    int const iCellBlock = getCellBlockIndex( ei );
-    int const offset = getElementCellBlockOffset( iCellBlock );
-    return ei - offset;
+    std::pair< int, int > const & p = getCellBlockInfo( ei ); // cellBlock, offset
+    return ei - p.second;
   }
 
   /**
@@ -111,30 +130,41 @@ public:
    */
   auto operator[]( int const & ei ) const
   {
-    const localIndex iCellBlock = getCellBlockIndex( ei );
-    arrayView2d< localIndex const > const & e2f = m_elemToFacesMaps[iCellBlock];
-    return e2f[ei - getElementCellBlockOffset( iCellBlock )];
+    std::pair< int, int > const & p = getCellBlockInfo( ei ); // cellBlock, offset
+    arrayView2d< localIndex const > const & e2f = m_elemToFacesMaps[p.first];
+    return e2f[ei - p.second];
   }
 
 private:
 
-  /**
-   * @brief Returns the index offset for cell block of index @p iCellBlock
-   * @param[in] iCellBlock The index of the cell block.
-   * @return The offset.
-   * Cell block indices span a continuous range of global indices.
-   * The offset makes possible to compute the cell block local index using a simple subtraction.
-   */
-  int getElementCellBlockOffset( int const & iCellBlock ) const
+  struct MinMax
   {
-    return m_ranges[iCellBlock].first;
-  }
+    int min;
+    int max;
+  };
+
+  struct CellBlockInfo
+  {
+    int index;
+    int offset;
+  };
 
   /**
-   * @brief The cell indices ranges for each cell block.
-   * he range is inclusive since min and max are in the cell block.
+   * @brief
+   * @param ei
+   * @return the {cellBlockIndex, cellBlockOffset} pair.
    */
-  std::vector< std::pair< int, int > > m_ranges;
+  std::pair< int, int > const & getCellBlockInfo( int const & ei ) const
+  {
+    auto const it = std::find_if( m_ranges.cbegin(), m_ranges.cend(), [&]( std::pair< std::pair< int, int >, std::pair< int, int > > const & p ) -> bool
+    {
+      return p.first.first <= ei && ei < p.first.second;
+    } );
+
+    return it->second;
+  }
+
+  std::map< std::pair< int, int >, std::pair< int, int > > m_ranges; // [min, max] to [cellBlock, offset]
   /**
    * @brief The local to global map, for each cell block.
    * The indexing the the same as the cell block indexing.
