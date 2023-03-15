@@ -150,10 +150,10 @@ public:
 
   /**
    * @brief Generate the wells.
-   * @param [in] meshManager pointer to meshManager
+   * @param [in] cellBlockManager pointer to cellBlockManager
    * @param [in] meshLevel pointer to meshLevel
    */
-  void generateWells( CellBlockManagerABC & meshManager, MeshLevel & meshLevel );
+  void generateWells( CellBlockManagerABC const & cellBlockManager, MeshLevel & meshLevel );
 
   /**
    * @brief Build sets from the node sets

@@ -22,7 +22,8 @@
 #include "SurfaceElementRegion.hpp"
 #include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "mesh/MeshManager.hpp"
+#include "mesh/NodeManager.hpp"
+#include "mesh/MeshLevel.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "schema/schemaUtilities.hpp"
 #include "mesh/generators/WellBlockABC.hpp"
@@ -152,7 +153,7 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC & cellBlockManager 
 
 }
 
-void ElementRegionManager::generateWells( CellBlockManagerABC & cellBlockManager,
+void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockManager,
                                           MeshLevel & meshLevel )
 {
   NodeManager & nodeManager = meshLevel.getNodeManager();

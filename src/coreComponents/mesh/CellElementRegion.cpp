@@ -13,6 +13,7 @@
  */
 
 #include "CellElementRegion.hpp"
+#include "CellElementSubRegion.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
 
 namespace geosx
