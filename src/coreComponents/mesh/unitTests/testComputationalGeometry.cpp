@@ -54,7 +54,7 @@ TEST( testComputationalGeometry, checkCentroid3DPolygon )
 
   for( int ci = 0; ci < 3; ++ci )
   {
-    array1d< int > indices;
+    array1d< localIndex  > indices;
     for( int i = 0; i < n; ++i )
     {
       indices.emplace_back( ci*n + i );
@@ -63,7 +63,7 @@ TEST( testComputationalGeometry, checkCentroid3DPolygon )
     GEOSX_LOG_VAR( indices );
 
     real64 faceCenter[ 3 ], faceNormal[ 3 ];
-    real64 const faceArea = computationalGeometry::centroid_3DPolygon( indices.toSliceConst(), points, faceCenter, faceNormal, areaTolerance );
+    real64 const faceArea = computationalGeometry::centroid_3DPolygon( indices.toSliceConst(), points.toViewConst(), faceCenter, faceNormal, areaTolerance );
 
     real64 norm = LvArray::math::square( faceNormal[0] ) + LvArray::math::square( faceNormal[1] ) + LvArray::math::square( faceNormal[2] );
     GEOSX_LOG( GEOSX_FMT( "Cell: {} Normal: [{}, {}, {}], Area: {}", ci, faceNormal[0], faceNormal[1], faceNormal[2], faceArea ));
