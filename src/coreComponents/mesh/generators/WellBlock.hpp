@@ -135,9 +135,6 @@ public:
 
   ///@}
 
-  const string getName() const override final { return m_name; }
-  const string getWellRegionName() const override final { return m_wellRegionName; }
-  const string getWellControlsName() const override final { return m_wellControlsName; }
   /// @endcond
   
   
@@ -158,17 +155,6 @@ private:
 
   /// Radius area of the well (assumed to be valid for the entire well)
   real64 m_radius;
-
-  /// Name of the corresponding well region
-  string m_name;
-
-  /// Name of the corresponding well region
-  string m_wellRegionName;
-
-  /// Name of the constraints associated with this well
-  string m_wellControlsName;
-
-
 
   // Geometry of the well (later passed to the WellElementSubRegion)
 

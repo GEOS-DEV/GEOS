@@ -145,12 +145,6 @@ public:
    * @return list providing the global index of the connected well element for each perforation
    */
   virtual arrayView1d< globalIndex const > getPerfElemIndex() const = 0;
-
-  virtual const string getName() const = 0;
-  virtual const string getWellRegionName() const = 0;
-  virtual const string getWellControlsName() const = 0;
-
-
 };
 
 }

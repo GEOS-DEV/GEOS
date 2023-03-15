@@ -35,9 +35,6 @@ void WellBlock::importFieldsFromInternalWellGenerator( InternalWellGenerator con
   m_minSegmentLength = internalWellGenerator.getMinSegmentLength();
   m_minElemLength = internalWellGenerator.getMinElemLength();
   m_radius = internalWellGenerator.getElementRadius();
-  m_name = internalWellGenerator.getName();
-  m_wellRegionName = internalWellGenerator.getWellRegionName();
-  m_wellControlsName = internalWellGenerator.getWellControlsName();
   m_numElems = internalWellGenerator.getNumElements();
   m_elemCenterCoords = internalWellGenerator.getElemCoords();
   m_nextElemId = internalWellGenerator.getNextElemIndex();
