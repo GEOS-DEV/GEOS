@@ -46,6 +46,19 @@ public:
                 Group * const parent );
 
   /**
+   * @brief Internal constructor. This is used to make planar cuts from point (oldX, oldY) to (newX, newY)
+   * in 2.5D problems.
+   * @param oldX x-coordinate of first point
+   * @param oldY y-coordinate of first point
+   * @param newX x-coordinate of second point
+   * @param newY y-coordinate of second point
+   * @param name name of the object in the data hierarchy.
+   * @param parent pointer to the parent group in the data hierarchy.
+   */
+  BoundedPlane( const real64 oldX, const real64 oldY, const real64 newX,
+                const real64 newY, const string & name, Group * const parent );
+
+  /**
    * @brief Default destructor.
    */
   virtual ~BoundedPlane() override;

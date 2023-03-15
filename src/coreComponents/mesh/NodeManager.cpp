@@ -105,6 +105,32 @@ void NodeManager::buildSets( CellBlockManagerABC const & cellBlockManager,
   } );
 }
 
+//TODO: implement a similar function to set the boundary faces in the 2D case and reduce the size of the loop that is done here
+void NodeManager::setDomain2DBoundaryObjects( FaceManager const & faceManager )
+{
+  arrayView1d< integer const > const isFaceOnDomainBoundary = faceManager.getDomainBoundaryIndicator();
+  arrayView1d< integer > const isNodeOnDomainBoundary = getDomain2DBoundaryIndicator();
+  isNodeOnDomainBoundary.zero();
+
+  ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
+  //get normals to all faces
+  arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
+
+  forAll< parallelHostPolicy >( faceManager.size(), [=]( localIndex const faceIndex )
+  {
+    if( isFaceOnDomainBoundary[faceIndex] == 1 )
+    {
+      for( localIndex const nodeIndex : faceToNodes[faceIndex] )
+      {
+        if( faceNormals( faceIndex, 2 )*faceNormals( faceIndex, 2 ) < 1e-10 )
+        {
+          isNodeOnDomainBoundary[nodeIndex] = 1;
+        }
+      }
+    }
+  } );
+}
+
 void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
 {
   arrayView1d< integer const > const isFaceOnDomainBoundary = faceManager.getDomainBoundaryIndicator();

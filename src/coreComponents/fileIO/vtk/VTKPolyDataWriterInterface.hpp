@@ -203,8 +203,6 @@ private:
    * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the CellElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
-   * @param[in] meshLevelName the name of the MeshLevel containing the nodes and elements to be output
-   * @param[in] meshBodyName the name of the MeshBody containing the nodes and elements to be output
    */
   void writeCellElementRegions( real64 time,
                                 ElementRegionManager const & elemManager,
@@ -231,8 +229,6 @@ private:
    * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the FaceElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
-   * @param[in] meshLevelName the name of the MeshLevel containing the nodes and elements to be output
-   * @param[in] meshBodyName the name of the MeshBody containing the nodes and elements to be output
    */
   void writeSurfaceElementRegions( real64 time,
                                    ElementRegionManager const & elemManager,

@@ -55,16 +55,16 @@ using namespace constitutive;
 PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
-  m_fieldName( "primaryField" )
+  m_damageName( "Damage" )
 {
 
   registerWrapper< string >( PhaseFieldDamageFEMViewKeys.timeIntegrationOption.key() ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "option for default time integration method" );
 
-  registerWrapper< string >( PhaseFieldDamageFEMViewKeys.fieldVarName.key(), &m_fieldName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "name of field variable" );
+  // registerWrapper< string >( PhaseFieldDamageFEMViewKeys.damageVarName.key(),"Damage" ).
+  //   setInputFlag( InputFlags::OPTIONAL ).
+  //   setDescription( "name of damage variable" );
 
   registerWrapper( viewKeyStruct::localDissipationOptionString(), &m_localDissipationOption ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -94,10 +94,10 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodes = mesh.getNodeManager();
 
-    nodes.registerWrapper< real64_array >( m_fieldName )
+    nodes.registerWrapper< real64_array >( "Damage" )
       .setApplyDefaultValue( 0.0 )
       .setPlotLevel( PlotLevel::LEVEL_0 )
-      .setDescription( "Primary field variable" );
+      .setDescription( "Damage variable" );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -204,13 +204,13 @@ void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM(
                                      DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
-  dofManager.addField( m_fieldName,
+  dofManager.addField( m_damageName,
                        FieldLocation::Node,
                        1,
                        getMeshTargets() );
 
-  dofManager.addCoupling( m_fieldName,
-                          m_fieldName,
+  dofManager.addCoupling( m_damageName,
+                          m_damageName,
                           DofManager::Connector::Elem );
 
 }
@@ -229,7 +229,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+    arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_damageName ) );
 
     // Initialize all entries to zero
 #if 1 // Andre...this is the new code
@@ -240,7 +240,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                                  dofManager.rankOffset(),
                                                  localMatrix,
                                                  localRhs,
-                                                 m_fieldName,
+                                                 m_damageName,
                                                  m_localDissipationOption=="Linear" ? 1 : 2 );
 
     finiteElement::
@@ -301,9 +301,9 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
           //real64 Gc = m_criticalFractureEnergy;             //energy release rate
           real64 Gc = constitutiveUpdate.getCriticalFractureEnergy();
 
-          real64 threshold = constitutiveUpdate.getEnergyThreshold();//elastic energy threshold - use when Local Dissipation is linear
+          real64 threshold = constitutiveUpdate.getEnergyThreshold();  //elastic energy threshold - use when Local Dissipation is linear
 
-          arrayView1d< real64 > const & nodalDamage = nodeManager.getReference< array1d< real64 > >( m_fieldName );
+          arrayView1d< real64 > const & nodalDamage = nodeManager.getReference< array1d< real64 > >( m_damageName );
           //real64 diffusion = 1.0;
           // begin element loop, skipping ghost elements
           for( localIndex k = 0; k < elementSubRegion.size(); ++k )
@@ -346,7 +346,8 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                   if( m_localDissipationOption == "Linear" )
                   {
                     // element_rhs( a ) += detJ[k][q] * (Na * (ell * D - 3 * Gc / 16 )/ Gc -
-                    //                                   0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] )
+                    //                                   0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a]
+                    // )
                     // -
                     //                                   (ell * D/Gc) * Na * qp_damage);
 
@@ -430,7 +431,7 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
 
-  dofManager.addVectorToField( localSolution, m_fieldName, m_fieldName, scalingFactor );
+  dofManager.addVectorToField( localSolution, m_damageName, m_damageName, scalingFactor );
 
   // Syncronize ghost nodes
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -438,7 +439,7 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
                                                                 arrayView1d< string const > const & )
   {
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addFields( FieldLocation::Node, { m_fieldName } );
+    fieldsToBeSync.addFields( FieldLocation::Node, { m_damageName } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
@@ -468,6 +469,10 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
   {
     applyIrreversibilityConstraint( dofManager, domain, localMatrix, localRhs );
   }
+
+#if 1
+  setInitialCrackDamageBCs( domain, dofManager, localMatrix, localRhs );
+#endif
 
   if( getLogLevel() == 2 )
   {
@@ -516,7 +521,7 @@ PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( t
     const arrayView1d< const integer > & ghostRank = nodeManager.ghostRank();
 
     const arrayView1d< const globalIndex > &
-    dofNumber = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+    dofNumber = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_damageName ) );
     const globalIndex rankOffset = dofManager.rankOffset();
 
 
@@ -576,7 +581,6 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                     DomainPartition & domain,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs )
-
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -585,19 +589,20 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
   {
     fsManager.template apply< NodeManager >( time,
                                              mesh,
-                                             m_fieldName,
+                                             m_damageName,
                                              [&]( FieldSpecificationBase const & bc,
                                                   string const &,
                                                   SortedArrayView< localIndex const > const & targetSet,
                                                   NodeManager & targetGroup,
                                                   string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
+
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                          parallelDevicePolicy< 32 > >( targetSet,
                                                                        time,
                                                                        targetGroup,
-                                                                       m_fieldName,
-                                                                       dofManager.getKey( m_fieldName ),
+                                                                       m_damageName,
+                                                                       dofManager.getKey( m_damageName ),
                                                                        dofManager.rankOffset(),
                                                                        localMatrix,
                                                                        localRhs );
@@ -605,6 +610,67 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
 
     fsManager.applyFieldValue< serialPolicy >( time, mesh, viewKeyStruct::coeffNameString() );
   } );
+
+}
+
+void PhaseFieldDamageFEM::setInitialCrackNodes( arrayView1d< localIndex > const & fracturedNodes )
+{
+  localIndex count = 0;
+  m_initialCrack.resize( fracturedNodes.size() );
+  for( localIndex c : fracturedNodes )
+  {
+    m_initialCrack( count ) = c;
+    ++count;
+  }
+
+}
+
+void PhaseFieldDamageFEM::setInitialCrackDamageBCs( DomainPartition & domain,
+                                                    DofManager const & dofManager,
+                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    arrayView1d< real64 > const & localRhs )
+{
+  if( getLogLevel() == 2 )
+  {
+    GEOSX_LOG_RANK_0( "Before PhaseFieldDamageFEM::setInitialCrackDamageBCs" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+    std::cout << localMatrix.toViewConst();
+  }
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    const NodeManager & nodeManager = mesh.getNodeManager();
+    arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( "Damage" ) );
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( "Damage" );
+
+    for( localIndex c : m_initialCrack )
+    {
+      localIndex const dof = dofIndex[c];
+      real64 const damageAtNode = nodalDamage[c];
+      real64 rhsContribution;
+      FieldSpecificationEqual::SpecifyFieldValue( dof,
+                                                  dofManager.rankOffset(),
+                                                  localMatrix,
+                                                  rhsContribution,
+                                                  1.0,
+                                                  damageAtNode );
+
+      globalIndex const localRow = dof - dofManager.rankOffset();
+      if( localRow >=0 && localRow < localRhs.size() )
+      {
+        localRhs[ localRow ] = rhsContribution;
+      }
+    }
+
+  } );
+  if( getLogLevel() == 2 )
+  {
+    GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::setInitialCrackDamageBCs" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+    std::cout << localMatrix.toViewConst();
+  }
 }
 
 void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dofManager,
@@ -620,9 +686,9 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< globalIndex const > const dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+    arrayView1d< globalIndex const > const dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_damageName ) );
 
-    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( m_fieldName );
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( m_damageName );
 
     globalIndex const rankOffSet = dofManager.rankOffset();
 

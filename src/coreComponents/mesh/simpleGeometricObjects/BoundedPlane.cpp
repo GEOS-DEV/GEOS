@@ -61,6 +61,31 @@ BoundedPlane::BoundedPlane( const string & name, Group * const parent ):
   m_points.resize( 4, 3 );
 }
 
+//constructor given two points, used for 2.5D problems
+BoundedPlane::BoundedPlane( const real64 oldX, const real64 oldY,
+                            const real64 newX, const real64 newY,
+                            const string & name, Group * const parent ):
+  SimpleGeometricObjectBase( name, parent ),
+  m_origin{ 0.0, 0.0, 0.0 },
+  m_normal{ 0.0, 0.0, 1.0 },
+  m_lengthVector{ 0.0, 0.0, 0.0 },
+  m_widthVector{ 0.0, 0.0, 0.0 },
+  m_tolerance( 1e-5 )
+{
+  m_origin = { (oldX + newX)/2.0, (oldY + newY)/2.0, 0.0};
+  m_normal = { -(newY-oldY), newX-oldX, 0.0 };
+  m_lengthVector = { newX-oldX, newY-oldY, 0.0 };
+  m_widthVector = { 0.0, 0.0, 1.0 };
+  real64 norm = std::sqrt( pow( newX-oldX, 2 )+pow( newY-oldY, 2 ));
+  m_dimensions.resize( 2 );
+  m_dimensions[0] = norm+m_tolerance; //small tolerance to ensure that both ends are contained in the plane - TODO: try to use m_tolerance
+  m_dimensions[1] = 5; //TODO: this is arbitrary, it only needs to be larger than the z thickness in the 2.5D model
+
+  m_points.resize( 4, 3 );
+  //parent->registerGroup< BoundedPlane >( name, std::move( this ) );
+  this->postProcessInput();
+}
+
 BoundedPlane::~BoundedPlane()
 {}
 

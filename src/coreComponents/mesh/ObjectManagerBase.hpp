@@ -659,6 +659,9 @@ public:
     /// @return String key to domain boundary indicator
     static constexpr char const * domainBoundaryIndicatorString() { return "domainBoundaryIndicator"; }
 
+    /// @return String key to 2D version of domain boundary indicator
+    static constexpr char const * domain2DBoundaryIndicatorString() { return "domain2DBoundaryIndicator"; }
+
     /// @return String key to external set
     static constexpr char const * externalSetString() { return "externalSet"; }
 
@@ -915,6 +918,22 @@ public:
     return m_domainBoundaryIndicator.toViewConst();
   }
 
+  /**
+   * @brief Get the domain boundary indicator, for domains which are extruded in the z direction
+   * @return The information in an array of integers, mainly treated as booleans
+   *         (1 meaning the "index" is on the boundary).
+   */
+  array1d< integer > & getDomain2DBoundaryIndicator()
+  {
+    return m_domain2DBoundaryIndicator;
+  }
+
+  /// @copydoc getDomainBoundaryIndicator()
+  arrayView1d< integer const > getDomain2DBoundaryIndicator() const
+  {
+    return m_domain2DBoundaryIndicator.toViewConst();
+  }
+
 protected:
   /// Group that holds object sets.
   Group m_sets;
@@ -936,6 +955,9 @@ protected:
 
   /// Domain boundary indicator: 1 means the "index" is on the boundary.
   array1d< integer > m_domainBoundaryIndicator;
+
+  /// Domain boundary indicator for 2D cases: 1 means the "index" is on the boundary.
+  array1d< integer > m_domain2DBoundaryIndicator;
 
   /**
    * @brief Array that holds the ghost information about each object.

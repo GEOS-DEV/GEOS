@@ -140,6 +140,13 @@ public:
                   GeometricObjectManager const & geometries );
 
   /**
+   * @brief Builds the node-on-domain-boundary indicator for 2D problems extruded in the z direction.
+   * @param[in] faceIndex The computation is based on the face-on-domain-boundary indicator.
+   * @see ObjectManagerBase::getDomainBoundaryIndicator()
+   */
+  void setDomain2DBoundaryObjects( FaceManager const & faceIndex );
+
+  /**
    * @brief Builds the node-on-domain-boundary indicator.
    * @param[in] faceIndex The computation is based on the face-on-domain-boundary indicator.
    * @see ObjectManagerBase::getDomainBoundaryIndicator()
