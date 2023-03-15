@@ -114,7 +114,7 @@ void NodeManager::setDomain2DBoundaryObjects( FaceManager const & faceManager )
 
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
   //get normals to all faces
-  arrayView2d< real64 const > const normalOfAllFaces = faceManager.faceNormal();
+  arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
 
   forAll< parallelHostPolicy >( faceManager.size(), [=]( localIndex const faceIndex )
   {
@@ -122,7 +122,7 @@ void NodeManager::setDomain2DBoundaryObjects( FaceManager const & faceManager )
     {
       for( localIndex const nodeIndex : faceToNodes[faceIndex] )
       {
-        if( normalOfAllFaces( faceIndex, 2 )*normalOfAllFaces( faceIndex, 2 ) < 1e-10 )
+        if( faceNormals( faceIndex, 2 )*faceNormals( faceIndex, 2 ) < 1e-10 )
         {
           isNodeOnDomainBoundary[nodeIndex] = 1;
         }

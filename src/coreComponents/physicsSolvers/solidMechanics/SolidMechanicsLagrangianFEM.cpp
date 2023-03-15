@@ -1150,25 +1150,6 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                solidMechanics::totalDisplacement::key(),
                                scalingFactor );
 
-  //Add print of total displacement for debugging purposes
-  // NodeManager const & nodeManager = domain.getMeshBody( 1 ).getBaseDiscretization().getNodeManager();
-  // arrayView2d< real64 const > const totDisp = nodeManager.totalDisplacement();
-  // localIndex const numDofs = localSolution.size();
-  // if( getLogLevel() == 2 )
-  // {
-  //   for (localIndex i=0; i<numDofs; i++)
-  //   {
-  //       std::cout<<"dof number: "<<i<<std::endl;
-  //       localIndex a = i/3;
-  //       localIndex b = i - 3*a;
-  //       if (a<72)
-  //       {
-  //         std::cout<<"disp value: "<<totDisp(a,b)<<std::endl;
-  //       }
-  //   }
-  // }
-  //
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
