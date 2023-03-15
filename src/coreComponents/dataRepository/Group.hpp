@@ -1244,6 +1244,7 @@ public:
 
   /**
    * @brief Return the path of this Group in the data repository.
+   * Starts with '/' followed up by the "Problem" children in which the Group is.
    * @return The path of this group in the data repository.
    */
   string getPath() const;
