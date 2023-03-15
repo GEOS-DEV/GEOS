@@ -22,7 +22,6 @@
 namespace geosx
 {
 
-GEOSX_HOST_DEVICE
 TEST( testComputationalGeometry, checkCentroid3DPolygon )
 {
   constexpr int n = 12;
@@ -32,7 +31,9 @@ TEST( testComputationalGeometry, checkCentroid3DPolygon )
 
   real64 e[3] = { -1.0e-6, 0.0, 1.0e-6 };
 
-  array2d< real64 > points( n*3, nodeDim );
+  array2d< real64, nodes::REFERENCE_POSITION_PERM  > points;
+
+  points.resize( n*3, nodeDim );
 
   int idx = 0;
   for( int z = 0; z < 3; ++z )
