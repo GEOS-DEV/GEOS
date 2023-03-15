@@ -349,14 +349,14 @@ public:
    */
   template< typename T = Group >
   T & getGroupByPath( string const & path )
-  { return dynamicCast< T & >( const_cast< Group & >( getBaseGroupByPath( path, true ) ) ); }
+  { return dynamicCast< T & >( const_cast< Group & >( getBaseGroupByPath( path ) ) ); }
 
   /**
    * @copydoc getGroupByPath(string const &)
    */
   template< typename T = Group >
   T const & getGroupByPath( string const & path ) const
-  { return dynamicCast< T const & >( getBaseGroupByPath( path, true ) ); }
+  { return dynamicCast< T const & >( getBaseGroupByPath( path ) ); }
 
   //END_SPHINX_INCLUDE_GET_GROUP
 
@@ -388,13 +388,6 @@ public:
   template< typename T = Group >
   bool hasGroup( string const & name ) const
   { return dynamicCast< T const * >( m_subGroups[ name ] ) != nullptr; }
-
-  /**
-   * @brief Check whether a group from the hierarchy existsusing a path.
-   * @param name the name of group to search for
-   * @return @p true if group exists, @p false otherwise
-   */
-  bool hasGroupByPath( string const & path ) const;
 
   /**
    * @brief Check whether a sub-group exists by type.
@@ -1469,7 +1462,7 @@ private:
    */
   virtual void processInputFile( xmlWrapper::xmlNode const & targetNode );
 
-  Group const & getBaseGroupByPath( string const & path, bool hardQuery ) const;
+  Group const & getBaseGroupByPath( string const & path ) const;
 
   /**
    * @brief Concrete implementation of the packing method.

@@ -589,7 +589,7 @@ void Group::enableLogLevelInput()
     setDescription( "Log level" );
 }
 
-Group const & Group::getBaseGroupByPath( string const & path, bool hardQuery ) const
+Group const & Group::getBaseGroupByPath( string const & path ) const
 {
   Group const * currentGroup = this;
   string::size_type previousPosition = 0;
@@ -610,7 +610,7 @@ Group const & Group::getBaseGroupByPath( string const & path, bool hardQuery ) c
         break;
       }
     }
-    GEOSX_ERROR_IF( !foundTarget && hardQuery,
+    GEOSX_ERROR_IF( !foundTarget,
                     "Could not find the specified path from the starting group." );
   }
 
@@ -632,40 +632,12 @@ Group const & Group::getBaseGroupByPath( string const & path, bool hardQuery ) c
     }
     else
     {
-      if( hardQuery || currentGroup->hasGroup( curGroupName ) )
-      {
-        currentGroup = &currentGroup->getGroup( curGroupName );
-      }
-      else
-      {
-        break;
-      }
+      currentGroup = &currentGroup->getGroup( curGroupName );
     }
   }
   while( currentPosition != string::npos );
 
   return *currentGroup;
-}
-
-bool Group::hasGroupByPath( string const & path ) const
-{
-  Group const & grp = getBaseGroupByPath( path, false );
-  string const & name = grp.getName();
-  // allow the path being searched to end with '/'
-  int endswith = 0;
-  if( path.compare( path.length() - 1, 1, "/" ) )
-  {
-    endswith = 1;
-  }
-  // since what is actually returned with a 'soft' getBaseGroupByPath isn't well-defined,
-  //  the name of the returned group *could* be longer than the path being looked for
-  //  so check to avoid calling compare with invalid sizes and 
-  bool has = false;
-  if( name.length() < path.length() )
-  {
-    has = path.compare( path.length() - name.length() - endswith, name.length(), grp.getName() ) == 0;
-  }
-  return has;
 }
 
 localIndex Group::getSubGroupIndex( keyType const & key ) const
