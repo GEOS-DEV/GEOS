@@ -394,7 +394,7 @@ public:
    * @tparam T The type of sub-group to search for
    * @return @p true if sub-group of type T exists, @p false otherwise
    */
-  template < typename T >
+  template< typename T >
   bool hasSubGroupOfType( ) const
   {
     bool hasSubGroup = false;
