@@ -456,12 +456,9 @@ real64 MultiResolutionHFSolver::utilGetElemAverageDamage(globalIndex const patch
 {
 
     ElementRegionManager const & elemManager = patch.getElemManager();
-    //GEOSX_LOG_LEVEL( 2, "Element Manager has "<< elemManager.numRegions() << "regions." << "\n" );
     // Hard-coded region and subRegion
     ElementRegionBase const & elementRegion = elemManager.getRegion( 0 );
-    //ElementRegionBase const & elementRegionOther = elemManager.getRegion( 1 );
-    //GEOSX_LOG_LEVEL( 2, "Element Region 0 has "<< elementRegion.numSubRegions() << " subregions." << "\n" );
-    //GEOSX_LOG_LEVEL( 2, "Element Region 1 has "<< elementRegionOther.numSubRegions() << " subregions." << "\n" );
+
     CellElementSubRegion const & subRegion = elementRegion.getSubRegion< CellElementSubRegion >( 0 );
 
     string const & damageModelName = subRegion.getReference< string >( PhaseFieldDamageFEM::viewKeyStruct::solidModelNamesString());
@@ -485,32 +482,15 @@ real64 MultiResolutionHFSolver::utilGetElemAverageDamage(globalIndex const patch
 
     //compute elemental averaged damage
     real64 average_d = 0;
-    if(patchElemNum==6773){
-      GEOSX_LOG_LEVEL( 2, "before damage call, patchElemNum: "<< patchElemNum << "\n" );
-      GEOSX_LOG_LEVEL( 2, "globalIndex is: "<< subRegion.globalToLocalMap().at(patchElemNum) << "\n" );
-    }
     for( localIndex q=0; q<numQuadraturePointsPerElem; q++ )
     {
-      if(patchElemNum==6773){
-        continue;
-      }
-      if(patchElemNum==6906){
-        continue;
-      }
-      if(patchElemNum==7038){
-        continue;
-      }
-      if(patchElemNum==7039){
-        continue;
-      }
       //get damage at quadrature point i
-      std::cout<<"this rank is: "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" patchElemNum is: "<<patchElemNum<<std::endl;
+      //std::cout<<"this rank is: "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" patchElemNum is: "<<patchElemNum<<std::endl;
       average_d = average_d + qp_damage( subRegion.globalToLocalMap().at(patchElemNum), q )/8.0;
     }
     //GEOSX_LOG_LEVEL( 2, "after damage call\n" );
-    std::cout<<"this rank is: "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" is exiting the damageFunction"<<std::endl;
-    return average_d;
-    
+    //std::cout<<"this rank is: "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" is exiting the damageFunction"<<std::endl;
+    return average_d;    
 }
 
 
@@ -525,14 +505,7 @@ void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base )
   //get accessor to elemental field
   ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const frontIndicator =
   baseElemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( "frontIndicator" );
-  GEOSX_LOG_LEVEL_RANK_0( 1, "num regions: "<<baseElemManager.numRegions()<<"\n" );
-  //int i = 0;
-  // baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & GEOSX_UNUSED_PARAM(cellElementSubRegion) ) 
-  // {
-  //   GEOSX_LOG_LEVEL_RANK_0( 1, "I am subregion "<<i<<"\n" );
-  
-  //   i++;
-  // } );
+  //GEOSX_LOG_LEVEL_RANK_0( 1, "num regions: "<<baseElemManager.numRegions()<<"\n" );
 
   baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
@@ -540,42 +513,17 @@ void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base )
     auto elemToFaceList = cellElementSubRegion.faceList();
     arrayView1d< integer const > const ghostRank = cellElementSubRegion.ghostRank();
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
-    // GEOSX_LOG_LEVEL_RANK_0( 1, "fracturedElements at the front initialization step\n" );
-    // std::cout<<"funny rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<"\n";
-    // std::cout<<"{";
-    // for(auto && eleme:fracturedElements)
-    // {
-    //   std::cout<<"rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<" "<<eleme<<",";
-    //   std::cout<<eleme<<",";
-    // }
-    // std::cout<<"}\n";
     //TODO: can we make this a forall?
     //PARALLEL: Do ghost elements count as fracturedElements? - YES
-    if(MpiWrapper::commRank( MPI_COMM_GEOSX )==2)
-    {
-      std::cout<<"test initFrac cuts rank 2"<<std::endl;
-    }
-    if(MpiWrapper::commRank( MPI_COMM_GEOSX )==3)
-    {
-      std::cout<<"test testInit cuts rank 3"<<std::endl;
-    }
     for(auto && fracElem:fracturedElements)
     {
       //getElemFaces
       //PARALLEL: assume each rank owns all associated faces
-      if(MpiWrapper::commRank( MPI_COMM_GEOSX )==3)
-      {
-        std::cout<<"on Rank 3, elem number "<<fracElem<<std::endl;
-      }
       for(auto && face:elemToFaceList[fracElem])
       {
         if(pow(faceNormals[face][1],2) + pow(faceNormals[face][2],2) < 1e-6) //remove faces with normal pointing in x direction
         {
             continue; //these faces dont contain fractures
-        }
-        if(MpiWrapper::commRank( MPI_COMM_GEOSX )==3)
-        {
-          std::cout<<"on Rank 3, face number "<<face<<std::endl;
         }
         //PARALLEL: are all elem here owned by current node? some may be ghosts 
         //if ghost is in fracturedList, then this may contain elements from another rank
@@ -591,42 +539,17 @@ void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base )
             m_baseCrackFront.insert(elem);//Maybe I should insert the ghosts here and them synchronize later using global indices?
             frontIndicator[0][0][elem] = 1;
           }
-          //MAKE SURE THAT FRACTUREDELEMENTS OF AN INITIALLY INTACT DOMAIN PARTITION RECEIVES THE GHOST ELEMENTS AS THE FRONT APPROACHES IT.
-          //TRY JUST REMOVING THE GHOST IN THE PREVIOUS IF
-          //send information about ghost elments to owning ranks
-          // if(ghostRank[elem] >= 0)
-          // {
-          //   integer sendTo = ghostRank[elem];
-          //   MpiWrapper::iSend(elem, sendTo, tag, commGeosx, request);
-          //   //communicate with other rank
-          //   //insert to m_baseCrackFront of rank ghostRank[elem]
-          //   //and updata frontIndicator at that rank
-          // }
         }
       }
     }
-    //add MPI Barrier
-    //MpiWrapper::barrier(); 
-     //add received elements from other ranks 
   } );
-  // GEOSX_LOG_LEVEL_RANK_0( 1, "m_baseCrackFront at the end of initialization\n" );
-  // std::cout<<"{";
-  // for(auto && eleme:m_baseCrackFront)
-  // {
-  //   std::cout<<eleme<<",";
-  // }
-  // std::cout<<"}\n";
 
 }                                                   
 
 void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
                                                   MeshLevel const & patch )
 {
-  // int ii=0;
-  // while(ii == 0)
-  // {
-  //   sleep(10);
-  // }
+
   EmbeddedSurfaceGenerator &
   efemGenerator = this->getParent().getGroup< EmbeddedSurfaceGenerator >( "SurfaceGenerator" ); //this is hard coded
   
@@ -643,7 +566,6 @@ void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
   auto elemToFaceList = subRegion.faceList();
   auto faceToElemList = baseFaceManager.elementList();
   auto faceNormals = baseFaceManager.faceNormal();
-  //meshManager/meshGeneratorBase.m_nElems[0]/
   // Get domain
   MeshManager & meshManager = this->getGroupByPath< MeshManager >( "/Problem/Mesh");
   integer Nx = meshManager.getGroup<InternalMeshGenerator>(0).getNx();
@@ -652,7 +574,6 @@ void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
   integer nx = meshManager.getGroup<InternalMeshGenerator>(1).getNx();
   integer ny = meshManager.getGroup<InternalMeshGenerator>(1).getNy();
   integer nz = meshManager.getGroup<InternalMeshGenerator>(1).getNz();
-  // localIndex rx = this->getGroupByPath< InternalMeshGenerator >( "/Problem/meshManager/meshGeneratorBase").m_nElems[0];
 
   localIndex rx=nx/Nx;
   localIndex ry=ny/Ny;
@@ -661,22 +582,9 @@ void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
   //get accessor to elemental field
   ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const frontIndicator =
   baseElemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( "frontIndicator" );
- // std::cout<<"{";
-//for(auto && eleme:m_baseCrackFront)
- // {
- //   std::cout<<"rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<eleme<<",";
- // }
-  //std::cout<<"}\n";
+
   SortedArray<localIndex> baseFrontCopy = m_baseCrackFront;
-  //GEOSX_LOG_LEVEL_RANK_0( 1, "baseFrontCopy is: \n" );
- // std::cout<<"I am rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX ) << " and my baseFront is: \n";
- // std::cout<<"{";
- // for(auto && eleme:baseFrontCopy)
- // {
-//    std::cout<<"rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<subRegion.localToGlobalMap()[eleme]<<",";
- // }
-//  std::cout<<"}\n";
-  //PARALLEL: baseFrontCopy is an array of globalIndex, so, we must split the work here correctly
+
   for(auto && elem:baseFrontCopy)
   {
     // if(ghostRank[elem]>=0){
@@ -696,10 +604,6 @@ void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
               GEOSX_LOG_LEVEL( 3, "fineElem: " << fineElem << " from base elem: "<<elem<<"\n" );
           }
           //get averageDamage in fineElem
-          if(fineElem==7038)
-          {
-            std::cout<<"rank "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" fineElem: " << fineElem<<" from coarse elem: "<<elem <<std::endl;
-          }
           real64 averageDamage;
           if(ghostRank[elem]>=0){
              averageDamage = 0.0;
@@ -707,70 +611,24 @@ void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
           else{
              averageDamage = utilGetElemAverageDamage(fineElem, patch);
           }
-          if(elem==234){
-            //GEOSX_LOG_LEVEL( 1, "fineElem: " << fineElem << " from base elem: "<<elem<<"has damage = "<< averageDamage <<"\n" );
-          }
           if (averageDamage > 0.9)
           {
-            //GEOSX_LOG_LEVEL_RANK_0( 1, "fineElem: " << fineElem << " has damage above 0.9. \n" );
             fracCount++;  
-            //GEOSX_LOG_LEVEL_RANK_0( 1, "updated fracCount for element " << elem << " now is "<< fracCount <<"\n" ); 
           }
-
         }        
       }
     }
-    //if a lot of subelements are damaged, cut base element
-    //GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " has "<< fracCount <<" damaged subelements.\n" );
 
     if (fracCount >= ry*rz || fracturedElements.contains(elem))
     {
-      //cutElement
-      //GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " being cut "<<"\n" );
-      // if(elem==335){
-      //   std::cout<<"breakpoint\n";
-      //   std::cout<<"{";
-      //   for(auto && eleme:m_baseCrackFront)
-      //   {
-      //     std::cout<<eleme<<",";
-      //   }
-      //   std::cout<<"}\n";
-      // }
       efemGenerator.insertToCut(elem);
-      //efemGenerator.insertToCut(subRegion.localToGlobalMap()[elem]);
-      //std::cout<<"after propagationStep, base elem = " << elem << "\n";
-      //GEOSX_LOG_LEVEL_RANK_0( 1, "after propagationStep, base elem = " << elem << "\n" );
     }
   }
 
-  SortedArray<localIndex> const & toCutList = efemGenerator.getCutList();
-  std::cout<<"local crackFront rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<": {";
-  for(auto && eleme:m_baseCrackFront)
-  {
-    std::cout<<eleme<<",";
-  }
-  std::cout<<"}\n";
-  std::cout<<"global crackFront rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<": {";
-  for(auto && eleme:m_baseCrackFront)
-  {
-    std::cout<<subRegion.localToGlobalMap()[eleme]<<",";
-  }
-  std::cout<<"}\n";
-    std::cout<<"local toCut rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<": {";
-  for(auto && eleme:toCutList)
-  {
-    std::cout<<eleme<<",";
-  }
-  std::cout<<"}\n";
-  std::cout<<"global toCut rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<": {";
-  for(auto && eleme:toCutList)
-  {
-    std::cout<<subRegion.localToGlobalMap()[eleme]<<",";
-  }
-  std::cout<<"}\n";
   efemGenerator.propagationStep3D();
   initializeCrackFront(base);
 
+  //SortedArray<localIndex> const & toCutList = efemGenerator.getCutList();
   // for (auto elem:toCutList)
   // {
   //   //add non-fractured neighbors to fron
@@ -799,27 +657,8 @@ void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
   //   frontIndicator[0][0][elem] = 0;
   // }
 
-  //to cut list pre
-  SortedArray<localIndex> const & preToCutList = efemGenerator.getCutList();
-  std::cout<<"local toCutList rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<": {";
-  for(auto && eleme:preToCutList)
-  {
-    std::cout<<eleme<<",";
-  }
-  std::cout<<"}\n";
-
-  std::cout<<"before emptying rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<"\n";
   efemGenerator.emptyCutList();
-  std::cout<<"after emptying rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<"\n";
 
-  //to cut list pre
-  SortedArray<localIndex> const & postToCutList = efemGenerator.getCutList();
-  std::cout<<"local toCutList rank "<< MpiWrapper::commRank( MPI_COMM_GEOSX )<<": {";
-  for(auto && eleme:postToCutList)
-  {
-    std::cout<<eleme<<",";
-  }
-  std::cout<<"}\n";
   MpiWrapper::barrier();
 
 }                                                  

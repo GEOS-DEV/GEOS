@@ -124,9 +124,9 @@ public:
     VariableRadius()
     {
       m_coefficients.resize(6);
-      m_coefficients[0] = 0.0;
+      m_coefficients[0] = 1.0;
       m_coefficients[1] = 0.0;
-      m_coefficients[2] = 1.0;
+      m_coefficients[2] = 0.15;
       m_coefficients[3] = 0.0;
       m_coefficients[4] = 0.0;
       m_coefficients[5] = 0.0;
