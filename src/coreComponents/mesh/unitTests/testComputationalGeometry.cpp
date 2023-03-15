@@ -22,6 +22,7 @@
 namespace geosx
 {
 
+GEOSX_HOST_DEVICE
 TEST( testComputationalGeometry, checkCentroid3DPolygon )
 {
   constexpr int n = 12;
@@ -54,7 +55,7 @@ TEST( testComputationalGeometry, checkCentroid3DPolygon )
 
   for( int ci = 0; ci < 3; ++ci )
   {
-    array1d< localIndex  > indices;
+    array1d< localIndex > indices;
     for( int i = 0; i < n; ++i )
     {
       indices.emplace_back( ci*n + i );
