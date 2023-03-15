@@ -30,30 +30,12 @@ WellBlock::WellBlock( string const & name, Group * const parent ):
   WellBlockABC( name, parent )
 {}
 
-void WellBlock::importFieldsFromInternalWellGenerator( InternalWellGenerator const & internalWellGenerator ) {
-  m_numElemsPerSegment = internalWellGenerator.getNumElementsPerSegment();
-  m_minSegmentLength = internalWellGenerator.getMinSegmentLength();
-  m_minElemLength = internalWellGenerator.getMinElemLength();
-  m_radius = internalWellGenerator.getElementRadius();
-  m_numElems = internalWellGenerator.getNumElements();
-  m_elemCenterCoords = internalWellGenerator.getElemCoords();
-  m_nextElemId = internalWellGenerator.getNextElemIndex();
-  int size = internalWellGenerator.getPrevElemIndices().size();
+void WellBlock::setPrevElemIndices( arrayView1d< arrayView1d< globalIndex const > const > prevElemIndices) {
+  int size = prevElemIndices.size();
   m_prevElemId.resize( size );
   for ( int i = 0; i < size; i++ )
   {
-    m_prevElemId[i] = internalWellGenerator.getPrevElemIndices()[i];
+    m_prevElemId[i] = prevElemIndices[i];
   }
-  m_elemToNodesMap = internalWellGenerator.getElemToNodesMap();
-  m_elemVolume = internalWellGenerator.getElemVolume();
-  m_numNodesPerElem = internalWellGenerator.getNumNodesPerElement();
-  m_numNodes = internalWellGenerator.getNumNodes();
-  m_nodeCoords = internalWellGenerator.getNodeCoords();
-  m_numPerforations = internalWellGenerator.getNumPerforations();
-  m_perfCoords = internalWellGenerator.getPerfCoords();
-  m_perfTransmissibility = internalWellGenerator.getPerfTransmissibility();
-  m_perfElemId = internalWellGenerator.getPerfElemIndex();
-  m_nDims = internalWellGenerator.getPhysicalDimensionsNumber();
-  m_perforationList = internalWellGenerator.getPerforationList();
 }
 }
