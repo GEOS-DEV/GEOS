@@ -268,6 +268,42 @@ string Group::dumpInputOptions() const
   return rval;
 }
 
+string Group::dumpChildrenName() const
+{
+  if( getSubGroups().size() > 0 )
+  {
+    string str = "";
+    forSubGroupsIndex( [&] ( localIndex i, const Group & subGroup )
+    {
+      str += (i==0 ? subGroup.getName() : ", "+subGroup.getName());
+    } );
+    return str;
+  }
+  else
+  {
+    return "No children";
+  }
+}
+
+string Group::dumpWrappersName() const
+{
+  if( numWrappers() > 0 )
+  {
+    localIndex i = 0;
+    string str = "";
+    forWrappers( [&] ( const WrapperBase & wrapper )
+    {
+      str += (i==0 ? wrapper.getName() : ", "+wrapper.getName());
+      ++i;
+    } );
+    return str;
+  }
+  else
+  {
+    return "No children";
+  }
+}
+
 void Group::deregisterGroup( string const & name )
 {
   GEOSX_ERROR_IF( !hasGroup( name ), "Group " << name << " doesn't exist." );
@@ -611,8 +647,10 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
         break;
       }
     }
-    GEOSX_ERROR_IF( !foundTarget,
-                    "Could not find the specified path from the starting group." );
+    GEOSX_THROW_IF( !foundTarget,
+                    "Could not find the specified path start.\n"<<
+                    "Specified path is " << path,
+                    std::domain_error );
   }
 
   string::size_type currentPosition;
