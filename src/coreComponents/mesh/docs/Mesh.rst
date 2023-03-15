@@ -212,8 +212,8 @@ In the example presented above, the mesh is is composed of two regions (*Top* an
 Each region contains 4 ``cellBlocks``.
 
 - If the vtu file does not contain ``regionAttribute``, then all the cells are grouped in a single
-region, and the cell block names are just constructed from the cell types (hexahedra, wedges,
-tetrahedra, etc). Then in the exemple above, the ``ElementRegions`` can be defined as bellow:
+  region, and the cell block names are just constructed from the cell types (hexahedra, wedges,
+  tetrahedra, etc). Then in the exemple above, the ``ElementRegions`` can be defined as bellow:
 
 .. code-block:: xml
 
@@ -225,9 +225,10 @@ tetrahedra, etc). Then in the exemple above, the ``ElementRegions`` can be defin
   </ElementRegions>
 
 - If the vtu file contains ``regionAttribute``, then the cells are grouped by regions based on their
-individual (numeric) ``regionAttribute``. In that case, the naming convention for the ``cellBlocks`` is
-``regionAttribute_elementType``. Let's assume that the top region of the exemple above is identified
- by the ``regionAttribute`` 1, and that the bottom region is identified with 2,
+  individual (numeric) ``regionAttribute``. In that case, the naming convention for the ``cellBlocks`` is
+  ``regionAttribute_elementType``. Let's assume that the top region of the exemple above is identified
+  by the ``regionAttribute`` 1, and that the bottom region is identified with 2,
+  
   * If we want the ``CellElementRegion`` to contain all the cells, we write:
 
   ..  code-block:: xml
