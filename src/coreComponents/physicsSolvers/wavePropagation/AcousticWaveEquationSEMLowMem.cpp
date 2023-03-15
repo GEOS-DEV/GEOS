@@ -256,16 +256,16 @@ void AcousticWaveEquationSEMLowMem::precomputeSourceAndReceiverTerm( MeshLevel &
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
   arrayView2d< real64 > const sourceConstants = m_sourceConstants.toView();
   arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
-  sourceNodeIds.setValues< EXEC_POLICY >( -1 );
-  sourceConstants.setValues< EXEC_POLICY >( -1 );
+  sourceNodeIds.setValues< parallelHostPolicy >( -1 );
+  sourceConstants.setValues< parallelHostPolicy >( -1 );
   sourceIsAccessible.zero();
 
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
-  receiverNodeIds.setValues< EXEC_POLICY >( -1 );
-  receiverConstants.setValues< EXEC_POLICY >( -1 );
+  receiverNodeIds.setValues< parallelHostPolicy >( -1 );
+  receiverConstants.setValues< parallelHostPolicy >( -1 );
   receiverIsLocal.zero();
 
   real32 const timeSourceFrequency = this->m_timeSourceFrequency;
@@ -305,7 +305,7 @@ void AcousticWaveEquationSEMLowMem::precomputeSourceAndReceiverTerm( MeshLevel &
 
       acousticWaveEquationSEMLowMemKernels::
         PrecomputeSourceAndReceiverKernel::
-        launch< EXEC_POLICY, FE_TYPE >
+        launch< parallelHostPolicy, FE_TYPE >
         ( elementSubRegion.size(),
         numNodesPerElem,
         numFacesPerElem,
@@ -340,14 +340,14 @@ void AcousticWaveEquationSEMLowMem::addSourceToRightHandSide( integer const & cy
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
   GEOSX_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
-  forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
+  forAll< parallelDevicePolicy< 32 > >( sourceConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
     {
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
         real32 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
-        RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
+        RAJA::atomicAdd< AtomicPolicy< parallelDevicePolicy< 32 > > >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
       }
     }
   } );
@@ -413,7 +413,7 @@ void AcousticWaveEquationSEMLowMem::initializePostInitialConditionsPreSubGroups(
 
         acousticWaveEquationSEMLowMemKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+        kernelM.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >( elementSubRegion.size(),
                                                                X,
                                                                elemsToNodes,
                                                                velocity,
@@ -421,7 +421,7 @@ void AcousticWaveEquationSEMLowMem::initializePostInitialConditionsPreSubGroups(
 
         acousticWaveEquationSEMLowMemKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
+        kernelD.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >( faceManager.size(),
                                                                X,
                                                                facesToElements,
                                                                facesToNodes,
@@ -570,7 +570,7 @@ void AcousticWaveEquationSEMLowMem::initializePML()
         subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
 
-      forAll< EXEC_POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const l )
+      forAll<parallelHostPolicy >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const l )
       {
         localIndex const k = targetSet[ l ];
         localIndex const numNodesPerElem = elemToNodesViewConst[k].size();
@@ -597,7 +597,7 @@ void AcousticWaveEquationSEMLowMem::initializePML()
     RAJA::ReduceMax< parallelDeviceReduce, real32 > yMaxInterior( -LvArray::NumericLimits< real32 >::max );
     RAJA::ReduceMax< parallelDeviceReduce, real32 > zMaxInterior( -LvArray::NumericLimits< real32 >::max );
 
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< parallelHostPolicy >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       xMinGlobal.min( X[a][0] );
       yMinGlobal.min( X[a][1] );
@@ -681,7 +681,7 @@ void AcousticWaveEquationSEMLowMem::initializePML()
 
         acousticWaveEquationSEMLowMemKernels::
           waveSpeedPMLKernel< FE_TYPE > kernel( finiteElement );
-        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
+        kernel.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >
           ( targetSet,
           X,
           elemToNodesViewConst,
@@ -829,7 +829,7 @@ void AcousticWaveEquationSEMLowMem::applyPML( real64 const time, DomainPartition
         /// apply the PML kernel
         acousticWaveEquationSEMLowMemKernels::
           PMLKernel< FE_TYPE > kernel( finiteElement );
-        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
+        kernel.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >
           ( targetSet,
           X,
           elemToNodesViewConst,
@@ -880,7 +880,7 @@ real64 AcousticWaveEquationSEMLowMem::explicitStepForward( real64 const & time_n
       {
         m_lifo->pushWait();
       }
-      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIdx )
+      forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIdx )
       {
         p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
       } );
@@ -919,7 +919,7 @@ real64 AcousticWaveEquationSEMLowMem::explicitStepForward( real64 const & time_n
 
     }
 
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       p_nm1[a] = p_n[a];
       p_n[a]   = p_np1[a];
@@ -989,7 +989,7 @@ real64 AcousticWaveEquationSEMLowMem::explicitStepBackward( real64 const & time_
         constexpr localIndex numNodesPerElem = 8;
 
         GEOSX_MARK_SCOPE ( updatePartialGradient );
-        forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const eltIdx )
+        forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const eltIdx )
         {
           for( localIndex i = 0; i < numNodesPerElem; ++i )
           {
@@ -1000,7 +1000,7 @@ real64 AcousticWaveEquationSEMLowMem::explicitStepBackward( real64 const & time_
       } );
     }
 
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       p_nm1[a] = p_n[a];
       p_n[a]   = p_np1[a];
@@ -1042,7 +1042,7 @@ real64 AcousticWaveEquationSEMLowMem::explicitStepInternal( real64 const & time_
     auto kernelFactory = acousticWaveEquationSEMLowMemKernels::ExplicitAcousticSEMLowMemFactory( dt );
 
     finiteElement::
-      regionBasedKernelApplication< EXEC_POLICY,
+      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::NullModel,
                                     CellElementSubRegion >( mesh,
                                                             regionNames,
@@ -1058,7 +1058,7 @@ real64 AcousticWaveEquationSEMLowMem::explicitStepInternal( real64 const & time_
     if( !usePML )
     {
       GEOSX_MARK_SCOPE ( updateP );
-      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+      forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
         {
@@ -1155,11 +1155,8 @@ real64 AcousticWaveEquationSEMLowMem::explicitStepInternal( real64 const & time_
     computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
 
     /// prepare next step
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
-    {
-      stiffnessVector[a] = 0.0;
-      rhs[a] = 0.0;
-    } );
+    stiffnessVector.zero();
+    rhs.zero();
 
     if( usePML )
     {

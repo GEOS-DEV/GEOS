@@ -31,9 +31,6 @@ class AcousticWaveEquationSEMLowMem : public WaveSolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >;
-  using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
-
   AcousticWaveEquationSEMLowMem( const std::string & name,
                                  Group * const parent );
 
