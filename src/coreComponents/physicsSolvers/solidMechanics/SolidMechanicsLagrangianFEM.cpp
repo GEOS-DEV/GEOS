@@ -967,7 +967,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   if( m_fixedStressUpdateThermoPoroElasticityFlag )
   {
     GEOSX_UNUSED_VAR( dt );
-    assemblyLaunch< constitutive::PorousSolidBase,
+    assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: chage once there is a cmake solution
                     solidMechanicsLagrangianFEMKernels::FixedStressThermoPoroElasticFactory >( domain,
                                                                                                dofManager,
                                                                                                localMatrix,

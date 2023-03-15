@@ -27,19 +27,7 @@ set( solidBaseDispatch DamageSpectral<ElasticIsotropic>
                        ElasticIsotropic
                        ElasticTransverseIsotropic
                        ElasticIsotropicPressureDependent
-                       ElasticOrthotropic )
-
-set( porousSolidDispatch PorousSolid<DruckerPragerExtended>
-                         PorousSolid<ModifiedCamClay>
-                         PorousSolid<DelftEgg>
-                         PorousSolid<DruckerPrager>
-                         PorousSolid<ElasticIsotropic>
-                         PorousSolid<ElasticTransverseIsotropic>
-                         PorousSolid<ElasticIsotropicPressureDependent>
-                         PorousSolid<ElasticOrthotropic>
-                         PorousSolid<DamageSpectral<ElasticIsotropic>>
-                         PorousSolid<DamageVolDev<ElasticIsotropic>>
-                         PorousSolid<Damage<ElasticIsotropic>> )
+                       ElasticOrthotropic )             
 
 set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
                            H1_Wedge_Lagrange1_Gauss6
@@ -73,8 +61,19 @@ set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
 
           list( APPEND physicsSolvers_sources ${filename} )
         endforeach()
+      endforeach()
+    endforeach()
+  endforeach()
 
-        foreach(CONSTITUTIVE_TYPE ${porousSolidDispatch})
+  set( porousSolidDispatch PorousSolid<ElasticIsotropic> )                         
+
+  set( kernelNames SolidMechanicsFixedStressThermoPoroElasticKernels )
+                         
+  
+  foreach( KERNELNAME ${kernelNames} )
+    foreach( SUBREGION_TYPE  ${subregionList} )
+      foreach( FE_TYPE ${finiteElementDispatch} )
+        foreach( CONSTITUTIVE_TYPE ${porousSolidDispatch} )
 
         set( filename "${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/${KERNELNAME}_${SUBREGION_TYPE}_${CONSTITUTIVE_TYPE}_${FE_TYPE}.cpp" )
         string(REPLACE "<" "-" filename ${filename})
@@ -84,10 +83,12 @@ set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
         message( " -- Generating file: ${filename}")
         configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/SolidMechanicsFixedStressThermoPoroElasticKernels.cpp.template
                         ${filename} )
-
           list( APPEND physicsSolvers_sources ${filename} )
+
         endforeach()
       endforeach()
     endforeach()
   endforeach()
   
+
+ 
