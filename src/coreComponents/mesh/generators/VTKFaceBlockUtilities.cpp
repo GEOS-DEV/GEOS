@@ -84,19 +84,19 @@ public:
     }
 
     std::vector< int > cbOffset( numCellBlocks, 0 );
-    for( auto & p: m_ranges )
+    for( std::pair< Range const, CellBlockInfo > & p: m_ranges )
     {
-      auto const & range = p.first;
-      auto & cb = p.second;
-      size_t const cbi = cb.first;
-      auto & offset = cb.second;
+      Range const & range = p.first;
+      CellBlockInfo & cb = p.second;
+      size_t const cbi = cb.index;
+      int & offset = cb.offset;
 
       offset = cbOffset[cbi];
       for( size_t i = 0; i < cbOffset.size(); ++i )
       {
         if( i != cbi )
         {
-          cbOffset[i] += range.second - range.first;
+          cbOffset[i] += range.max - range.min;
         }
       }
     }
@@ -109,7 +109,7 @@ public:
    */
   int getCellBlockIndex( int const & ei ) const
   {
-    return getCellBlockInfo( ei ).first;
+    return getCellBlockInfo( ei ).index;
   }
 
   /**
@@ -119,8 +119,8 @@ public:
    */
   localIndex getElementIndexInCellBlock( int const & ei ) const
   {
-    std::pair< int, int > const & p = getCellBlockInfo( ei ); // cellBlock, offset
-    return ei - p.second;
+    CellBlockInfo const & cbInfo = getCellBlockInfo( ei );
+    return ei - cbInfo.offset;
   }
 
   /**
@@ -130,17 +130,22 @@ public:
    */
   auto operator[]( int const & ei ) const
   {
-    std::pair< int, int > const & p = getCellBlockInfo( ei ); // cellBlock, offset
-    arrayView2d< localIndex const > const & e2f = m_elemToFacesMaps[p.first];
-    return e2f[ei - p.second];
+    CellBlockInfo const & cbInfo = getCellBlockInfo( ei );
+    arrayView2d< localIndex const > const & e2f = m_elemToFacesMaps[cbInfo.index];
+    return e2f[ei - cbInfo.offset];
   }
 
 private:
 
-  struct MinMax
+  struct Range
   {
-    int min;
-    int max;
+    globalIndex min;
+    globalIndex max;
+
+    bool operator<( Range const & other ) const
+    {
+      return std::tie( min, max ) < std::tie( other.min, other.max );
+    }
   };
 
   struct CellBlockInfo
@@ -150,21 +155,27 @@ private:
   };
 
   /**
-   * @brief
-   * @param ei
-   * @return the {cellBlockIndex, cellBlockOffset} pair.
+   * @brief Return the cell block information for element @p ei.
+   * @param ei The global index of the element.
+   * @return The cell block information.
+   *
+   * The cell block information contains which cell block (index) contains the global element that matches the @p range.
+   * It also contains which offset should be subtracted in order to compute the local (to the cell block) indexing of the global element.
    */
-  std::pair< int, int > const & getCellBlockInfo( int const & ei ) const
+  CellBlockInfo const & getCellBlockInfo( int const & ei ) const
   {
-    auto const it = std::find_if( m_ranges.cbegin(), m_ranges.cend(), [&]( std::pair< std::pair< int, int >, std::pair< int, int > > const & p ) -> bool
+    auto const it = std::find_if( m_ranges.cbegin(), m_ranges.cend(), [&]( std::pair< Range, CellBlockInfo > const & p ) -> bool
     {
-      return p.first.first <= ei && ei < p.first.second;
+      return p.first.min <= ei && ei < p.first.max;
     } );
 
     return it->second;
   }
 
-  std::map< std::pair< int, int >, std::pair< int, int > > m_ranges; // [min, max] to [cellBlock, offset]
+  /**
+   * @brief Stores the cell block information for each given global element index range (lower included, upper excluded).
+   */
+  std::map< Range, CellBlockInfo > m_ranges;
   /**
    * @brief The local to global map, for each cell block.
    * The indexing the the same as the cell block indexing.
