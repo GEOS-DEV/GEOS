@@ -280,7 +280,7 @@ TEST( testMeshObjectPath, invalidMeshBody )
   Group const & meshBodies = testMesh.meshBodies();
   {
     string const path = "*/level2/ElementRegions";
-    EXPECT_DEATH_IF_SUPPORTED( MeshObjectPath meshObjectPath( path, meshBodies ), ".*" );
+    ASSERT_THROW( MeshObjectPath meshObjectPath( path, meshBodies ), InputError );
   }
 }
 
@@ -291,7 +291,7 @@ TEST( testMeshObjectPath, invalidMeshLevel )
   Group const & meshBodies = testMesh.meshBodies();
   {
     string const path = "*/*/ElementRegions/{region2}";
-    EXPECT_DEATH_IF_SUPPORTED( MeshObjectPath meshObjectPath( path, meshBodies ), ".*" );
+    ASSERT_THROW( MeshObjectPath meshObjectPath( path, meshBodies ), InputError );
   }
 }
 
@@ -301,7 +301,7 @@ TEST( testMeshObjectPath, invalidMeshRegion )
   Group const & meshBodies = testMesh.meshBodies();
   {
     string const path = "*/*/ElementRegions/*/subreg2";
-    EXPECT_DEATH_IF_SUPPORTED( MeshObjectPath meshObjectPath( path, meshBodies ), ".*" );
+    ASSERT_THROW( MeshObjectPath meshObjectPath( path, meshBodies ), InputError );
   }
 }
 
