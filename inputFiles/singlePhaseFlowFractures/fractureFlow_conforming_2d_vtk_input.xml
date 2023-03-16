@@ -22,9 +22,12 @@
       name="mesh1"
       useGlobalIds="1"
       faceBlocks="{/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/fracture.vtu}"
-      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/region3.vtu"/>
-<!--      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/region.vtu"/>-->
-<!--      file="/tmp/tmp.EtfQgEUXLg/src/coreComponents/unitTests/meshTests/cube.vtu"/>-->
+      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/tFrac.vtm"/>
+<!--    <VTKMesh-->
+<!--      name="mesh1"-->
+<!--      useGlobalIds="1"-->
+<!--      faceBlocks="{/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/fracture.vtu}"-->
+<!--      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/region3.vtu"/>-->
 <!--    <VTKMesh-->
 <!--      name="mesh1"-->
 <!--      faceBlocks="{fracture_info}"-->
