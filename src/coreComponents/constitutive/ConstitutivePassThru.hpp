@@ -117,6 +117,30 @@ struct ConstitutivePassThru< NullModel >
   }
 };
 
+
+/**
+ * Specialization for the PorousSolid< ElasticIsotropic > model.
+ */
+template<>
+struct ConstitutivePassThru< PorousSolid< ElasticIsotropic > >
+{
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    if( auto * const ptr = dynamic_cast< PorousSolid< ElasticIsotropic > * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr );
+    }
+    else
+    {
+      GEOSX_ERROR( "ConstitutivePassThru< PorousSolid< ElasticIsotropic > >::execute failed. The constitutive relation is named "
+                   << constitutiveRelation.getName() << " with type "
+                   << LvArray::system::demangleType( constitutiveRelation ) );
+    }
+  }
+};
+
 /**
  * Specialization for the Damage models.
  */

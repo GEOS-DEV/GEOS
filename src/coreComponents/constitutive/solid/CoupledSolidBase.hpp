@@ -102,6 +102,13 @@ public:
   arrayView2d< real64 const > const  getDporosity_dPressure() const
   { return getBasePorosityModel().dPorosity_dPressure(); }
 
+  /**
+   * @brief get the dPorosity_dTemperature.
+   * return a constant arrayView2d to dPorosity_dTemperature
+   */
+  arrayView2d< real64 const > const  getDporosity_dTemperature() const
+  { return getBasePorosityModel().dPorosity_dTemperature(); }
+
 
   /**
    * @brief get the old internal energy.
