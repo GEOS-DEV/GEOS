@@ -93,7 +93,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
     }
     else // relative objectPaths use relative lookup identical to fieldSpecification to make xml input spec easier
     {
-      string_array targetTokens = stringutilities::tokenize( objectPath, "/" );
+      std::vector< string > targetTokens = stringutilities::tokenize( objectPath, "/" );
       localIndex targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
 
       dataRepository::Group const * targetGroup = nullptr;
@@ -106,7 +106,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
         if( targetTokens[0] != singleMeshBodyName )
         {
           ++targetTokenLength;
-          targetTokens.insert( 0, &singleMeshBodyName, (&singleMeshBodyName)+1 );
+          targetTokens.insert( targetTokens.begin(), singleMeshBodyName );
         }
       }
       else
@@ -138,7 +138,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
         if( targetTokens[1] != singleMeshLevelName )
         {
           ++targetTokenLength;
-          targetTokens.insert( 1, &singleMeshLevelName, (&singleMeshLevelName)+1 );
+          targetTokens.insert( targetTokens.begin()+1, singleMeshLevelName );
         }
         else
         {
@@ -163,7 +163,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
 
         string const baseMeshLevelName = MeshBody::groupStructKeys::baseDiscretizationString();
         ++targetTokenLength;
-        targetTokens.insert( 1, &baseMeshLevelName, (&baseMeshLevelName)+1 );
+        targetTokens.insert( targetTokens.begin()+1, baseMeshLevelName );
       }
 
       string meshLevelName = targetTokens[1];
