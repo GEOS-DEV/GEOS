@@ -505,7 +505,8 @@ ArrayOfArrays< localIndex > computeElem2dToNodes( vtkIdType num2dElements,
 }
 
 
-void importFractureNetwork( string const & faceBlockName,
+void importFractureNetwork( Path const & filePath,
+                            string const & faceBlockName,
                             vtkSmartPointer< vtkDataSet > vtkMesh,
                             CellBlockManager & cellBlockManager )
 {
@@ -513,7 +514,7 @@ void importFractureNetwork( string const & faceBlockName,
   geosx::internal::ElementToFace const elemToFaces( cellBlockManager.getCellBlocks() );
   ArrayOfArrays< localIndex > const nodeToEdges = cellBlockManager.getNodeToEdges();
 
-  vtkSmartPointer< vtkDataSet > faceMesh = vtk::loadMesh( Path( faceBlockName ) );
+  vtkSmartPointer< vtkDataSet > faceMesh = vtk::loadMesh( filePath, faceBlockName );
   DuplicatedPoints const duplicatedPoints( faceMesh );
   // Add the appropriate validations (only 2d cells...)
 
@@ -535,8 +536,7 @@ void importFractureNetwork( string const & faceBlockName,
   ArrayOfArrays< localIndex > elem2DToEdges = computeElem2dToEdges( num2dElements, face2dToEdge.toViewConst(), elem2dToFace2d.toViewConst() );
 
   // Mappings are now computed. Just create the face block by value.
-  FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( "fracture_info" );  // TODO
-//  FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( faceBlockName );  // TODO
+  FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( faceBlockName );
   faceBlock.setNum2DElements( num2dElements );
   faceBlock.setNum2DFaces( num2dFaces );
   faceBlock.set2dElemToNodes( std::move( elem2dToNodes ) );

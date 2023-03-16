@@ -71,9 +71,11 @@ vtkSmartPointer< vtkMultiProcessController > getController();
 /**
  * @brief Load the VTK file into the VTK data structure
  * @param[in] filePath the Path of the file to load
+ * @param[in] blockName The name of the block to import (for multi-block files).
  * @return a vtk mesh
  */
-vtkSmartPointer< vtkDataSet > loadMesh( Path const & filePath );
+vtkSmartPointer< vtkDataSet > loadMesh( Path const & filePath,
+                                        const string & blockName = "" );
 
 /**
  * @brief Compute the rank neighbor candidate list.

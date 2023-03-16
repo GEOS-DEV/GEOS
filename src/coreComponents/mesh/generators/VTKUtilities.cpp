@@ -371,7 +371,8 @@ VTKLegacyDatasetType getVTKLegacyDatasetType( vtkSmartPointer< vtkDataSetReader 
 }
 
 vtkSmartPointer< vtkDataSet >
-loadMesh( Path const & filePath )
+loadMesh( Path const & filePath,
+          string const & blockName )
 {
   string const extension = filePath.extension();
 
@@ -404,8 +405,6 @@ loadMesh( Path const & filePath )
   {
     case VTKMeshExtension::vtm:
     {
-      string const meshName = "region_name";  // TODO
-
       auto reader = vtkSmartPointer< vtkXMLMultiBlockDataReader >::New();
       reader->SetFileName( filePath.c_str() );
       reader->Update();
@@ -422,7 +421,7 @@ loadMesh( Path const & filePath )
       {
         vtkInformation * info = multiBlockDataSet->GetMetaData( i );
         string const dataSetName = info->Get( multiBlockDataSet->NAME() );
-        if( dataSetName == meshName )
+        if( dataSetName == blockName )
         {
           vtkDataObject * block = multiBlockDataSet->GetBlock( i );
           if( block->IsA( "vtkDataSet" ) )
@@ -432,7 +431,7 @@ loadMesh( Path const & filePath )
           }
         }
       }
-      GEOSX_ERROR( "Could not find mesh \"" << meshName << "\" in multi-block vtk file \"" << filePath << "\"" );
+      GEOSX_ERROR( "Could not find mesh \"" << blockName << "\" in multi-block vtk file \"" << filePath << "\"" );
       return {};
     }
     case VTKMeshExtension::vtk:

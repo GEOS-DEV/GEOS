@@ -44,9 +44,14 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Names of the VTK nodesets to import" );
 
+  registerWrapper( viewKeyStruct::mainBlockNameString(), &m_mainBlockName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( "main" ).
+    setDescription( "For multi-block files, name of the 3d mesh block." );
+
   registerWrapper( viewKeyStruct::faceBlockNamesString(), &m_faceBlockNames ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Names of the VTK faces to import" );
+    setDescription( "For multi-block files, names of the face mesh block." );
 
   registerWrapper( viewKeyStruct::partitionRefinementString(), &m_partitionRefinement ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -80,7 +85,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
   {
     GEOSX_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
-    vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath );
+    vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath, m_mainBlockName );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
     m_vtkMesh = vtk::redistributeMesh( *loadedMesh, comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
@@ -115,7 +120,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   for( string const & faceBlockName: m_faceBlockNames )
   {
-    importFractureNetwork( faceBlockName, m_vtkMesh, cellBlockManager );
+    importFractureNetwork( m_filePath, faceBlockName, m_vtkMesh, cellBlockManager );
   }
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  done!" );

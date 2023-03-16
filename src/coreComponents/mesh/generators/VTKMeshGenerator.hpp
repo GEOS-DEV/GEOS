@@ -97,6 +97,7 @@ private:
   struct viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
+    constexpr static char const * mainBlockNameString() { return "mainBlockName"; }
     constexpr static char const * faceBlockNamesString() { return "faceBlocks"; }
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
@@ -115,7 +116,10 @@ private:
   /// Name of VTK dataset attribute used to mark regions
   string m_attributeName;
 
-  /// Name of the face blocks to be imported
+  /// Name of the main block to be imported (for multi-block files).
+  string m_mainBlockName;
+
+  /// Name of the face blocks to be imported (for multi-block files).
   array1d< string > m_faceBlockNames;
 
   /// Names of VTK nodesets to import

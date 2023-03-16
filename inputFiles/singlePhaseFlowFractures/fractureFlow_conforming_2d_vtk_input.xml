@@ -21,17 +21,8 @@
     <VTKMesh
       name="mesh1"
       useGlobalIds="1"
-      faceBlocks="{/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/fracture.vtu}"
+      faceBlocks="{fracture}"
       file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/tFrac.vtm"/>
-<!--    <VTKMesh-->
-<!--      name="mesh1"-->
-<!--      useGlobalIds="1"-->
-<!--      faceBlocks="{/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/fracture.vtu}"-->
-<!--      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/region3.vtu"/>-->
-<!--    <VTKMesh-->
-<!--      name="mesh1"-->
-<!--      faceBlocks="{fracture_info}"-->
-<!--      file="tShapedFracturedCube.vtk"/>-->
   </Mesh>
 
   <Geometry>
@@ -95,7 +86,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      faceBlock="fracture_info"
+      faceBlock="fracture"
       defaultAperture="1.0e-5"
       materialList="{ water, fractureFilling }"/>
   </ElementRegions>
