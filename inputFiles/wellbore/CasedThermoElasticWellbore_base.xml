@@ -11,9 +11,10 @@
       targetRegions="{ casing, cement, rock }">
       <NonlinearSolverParameters
         couplingType="FullyImplicit"
+	maxAllowedResidualNorm="1e19"
         newtonMaxIter="100"/>
       <LinearSolverParameters
-        solverType="direct"/>
+        directParallel="0"/>
     </SinglePhasePoromechanics>
 
     <SolidMechanicsLagrangianSSLE
@@ -31,6 +32,8 @@
       temperature="0"
       isThermal="1"
       targetRegions="{ casing, cement, rock }">
+      <NonlinearSolverParameters
+	normType="L2"/>
     </SinglePhaseFVM>
   </Solvers>
 
