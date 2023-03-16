@@ -55,7 +55,7 @@ As demonstrated in this example, to setup a thermoporomechanical coupling, we ne
 
 - the mechanics solver, a solver of type ``SolidMechanicsLagrangianSSLE`` called here ``solidMechSolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`),
 
-.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_smoke_fim.xml
   :language: xml
   :start-after: <!-- SPHINX_MECHANICALSOLVER -->
   :end-before: <!-- SPHINX_MECHANICALSOLVER_END -->
@@ -63,7 +63,7 @@ As demonstrated in this example, to setup a thermoporomechanical coupling, we ne
 
 - the single-phase flow solver, a solver of type ``SinglePhaseFVM`` called here ``flowSolver`` (more information on these solvers at :ref:`SinglePhaseFlow`),
 
-.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_smoke_fim.xml
   :language: xml
   :start-after: <!-- SPHINX_SINGLEPHASEFVM -->
   :end-before: <!-- SPHINX_SINGLEPHASEFVM_END -->
@@ -71,7 +71,7 @@ As demonstrated in this example, to setup a thermoporomechanical coupling, we ne
 
 - the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics solvers above, which is named as ``thermoPoroSolver`` (more information at :ref:`PoroelasticSolver`).
 
-.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_smoke_fim.xml
   :language: xml
   :start-after: <!-- SPHINX_POROMECHANICSSOLVER -->
   :end-before: <!-- SPHINX_POROMECHANICSSOLVER_END -->

@@ -36,12 +36,26 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setDescription( "Grain bulk modulus" );
 
   registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient );
+
+  registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Thermal expansion coefficient" );
+
+  registerWrapper( viewKeyStruct::meanStressIncrementString(), &m_meanStressIncrement ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Volumetric stress increment" );
+
+  registerWrapper( viewKeyStruct::solidBulkModulusString(), &m_bulkModulus ).
+    setApplyDefaultValue( 1e-6 ).
+    setDescription( "Solid bulk modulus" );
 }
 
 void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
                                              localIndex const numConstitutivePointsPerParentIndex )
 {
   PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  m_meanStressIncrement.resize( 0, numConstitutivePointsPerParentIndex );
 }
 
 void BiotPorosity::postProcessInput()
