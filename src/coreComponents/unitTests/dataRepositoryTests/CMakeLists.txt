@@ -9,7 +9,7 @@ set( dataRepository_tests
      testPacking.cpp
      testWrapperHelpers.cpp
      testGroupPath.cpp
-   )
+     )
 
 set( dependencyList gtest )
 
