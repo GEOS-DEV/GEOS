@@ -489,7 +489,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       }
     }
 
-    FaceElementSubRegion & subRegion = fractureRegion.getUniqueSubRegion<FaceElementSubRegion>();
+    FaceElementSubRegion & subRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
     subRegion.m_recalculateFractureConnectorEdges.clear();
     subRegion.m_newFaceElements.clear();
 
