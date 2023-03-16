@@ -1237,7 +1237,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CylinderType">
-		<!--innerRadius => Inner radius of the anulus-->
+		<!--innerRadius => Inner radius of the annulus-->
 		<xsd:attribute name="innerRadius" type="real64" default="-1" />
 		<!--point1 => Center point of one (upper or lower) face of the cylinder-->
 		<xsd:attribute name="point1" type="R1Tensor" use="required" />
@@ -1592,6 +1592,10 @@ the relative residual norm satisfies:
 		<xsd:attribute name="timeStepIncreaseFactor" type="real64" default="2" />
 		<!--timeStepIncreaseIterLimit => Fraction of the max Newton iterations below which the solver asks for the time-step to be increased for the next time step.-->
 		<xsd:attribute name="timeStepIncreaseIterLimit" type="real64" default="0.4" />
+		<!--normType => Norm used by the flow solver to check nonlinear convergence. Valid options:
+* Linfinity
+* L2-->
+		<xsd:attribute name="normType" type="geosx_solverBaseKernels_NormType" default="Linfinity" />
 	</xsd:complexType>
 	<xsd:simpleType name="geosx_NonlinearSolverParameters_CouplingType">
 		<xsd:restriction base="xsd:string">
@@ -1907,8 +1911,6 @@ the relative residual norm satisfies:
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
-		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
@@ -1936,6 +1938,11 @@ the relative residual norm satisfies:
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_solverBaseKernels_NormType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|Linfinity|L2" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="CompositionalMultiphaseHybridFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1949,8 +1956,6 @@ the relative residual norm satisfies:
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
-		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
@@ -2377,8 +2382,6 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="frictionCoefficient" type="real64" default="0.03" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
-		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
@@ -2415,8 +2418,6 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="enableEnergyBalance" type="integer" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
-		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
@@ -2449,8 +2450,6 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
-		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
@@ -2473,8 +2472,6 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
-		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
@@ -2583,8 +2580,6 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
-		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
