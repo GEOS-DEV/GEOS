@@ -729,19 +729,19 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
                                                                    FaceElementSubRegion & subRegion )
     {
       arrayView2d< real64 const > const dispJump           = subRegion.getField< contact::dispJump >();
-      arrayView1d< real64 const > const area               = subRegion.getElementArea().toViewConst();
+      arrayView1d< real64 const > const area               = subRegion.getElementArea();
       arrayView1d< real64 const > const volume             = subRegion.getElementVolume();
       arrayView2d< real64 const > const fractureTraction   = subRegion.getField< fields::contact::traction >();
       arrayView1d< real64 const > const pressure           = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const oldHydraulicAperture = subRegion.template getField< fields::flow::aperture0 >();
+      arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< fields::flow::aperture0 >();
       arrayView1d< real64 const > const minimumHydraulicAperture = subRegion.getField< flow::minimumHydraulicAperture >();
 
       arrayView1d< real64 > const aperture                 = subRegion.getElementAperture();
       arrayView1d< real64 > const hydraulicAperture        = subRegion.getField< flow::hydraulicAperture >();
       arrayView1d< real64 > const deltaVolume              = subRegion.getField< flow::deltaVolume >();
 
-      string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
-      CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
+      string const porousSolidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
+      CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
       constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
       {

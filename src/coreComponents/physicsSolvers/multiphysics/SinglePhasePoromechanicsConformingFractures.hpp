@@ -132,12 +132,12 @@ private:
                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                        arrayView1d< real64 > const & localRhs );
 
-  virtual void  assembleCouplingTerms( real64 const time_n,
-                                       real64 const dt,
-                                       DomainPartition const & domain,
-                                       DofManager const & dofManager,
-                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                       arrayView1d< real64 > const & localRhs ) override final;
+  virtual void assembleCouplingTerms( real64 const time_n,
+                                      real64 const dt,
+                                      DomainPartition const & domain,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< real64 > const & localRhs ) override final;
 
   void assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
                                                    arrayView1d< string const > const & regionNames,
