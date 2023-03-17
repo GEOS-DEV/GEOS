@@ -162,14 +162,20 @@ struct Stone2
           dThreePhaseRelPerm_dVolFrac[ipOil] = dGoRelPerm_dOilVolFrac;
       } else {
           threePhaseRelPerm = connatewoRelPerm * ((woRelPerm/connatewoRelPerm + wRelPerm)*(goRelPerm/connatewoRelPerm + gRelPerm) - (wRelPerm + gRelPerm));
-//          if (threePhaseRelPerm < 0)
-//              threePhaseRelPerm = 0;
           // derivative w.r.t. Sw
-          dThreePhaseRelPerm_dVolFrac[ipWater] = connatewoRelPerm * ((woRelPerm/connatewoRelPerm + dWRelPerm_dWaterVolFrac)*(goRelPerm/connatewoRelPerm + gRelPerm) - dWRelPerm_dWaterVolFrac);
+          dThreePhaseRelPerm_dVolFrac[ipWater] = dWRelPerm_dWaterVolFrac * (goRelPerm + gRelPerm*connatewoRelPerm - connatewoRelPerm);
           // derivative w.r.t. So
           dThreePhaseRelPerm_dVolFrac[ipOil]   = dWoRelPerm_dOilVolFrac/connatewoRelPerm*goRelPerm + woRelPerm*dGoRelPerm_dOilVolFrac/connatewoRelPerm + wRelPerm*dGoRelPerm_dOilVolFrac + gRelPerm*dWoRelPerm_dOilVolFrac;
           // derivative w.r.t. Sg
-          dThreePhaseRelPerm_dVolFrac[ipGas]   = connatewoRelPerm * ((woRelPerm/connatewoRelPerm + wRelPerm) * (goRelPerm/connatewoRelPerm + dGRelPerm_dGasVolFrac) - dGRelPerm_dGasVolFrac);
+          dThreePhaseRelPerm_dVolFrac[ipGas] = dGRelPerm_dGasVolFrac * (woRelPerm + wRelPerm*connatewoRelPerm - connatewoRelPerm);
+          if (threePhaseRelPerm < 0) {
+              threePhaseRelPerm = 0;
+              dThreePhaseRelPerm_dVolFrac[ipWater] = 0;
+              // derivative w.r.t. So
+              dThreePhaseRelPerm_dVolFrac[ipOil]   = 0;
+              // derivative w.r.t. Sg
+              dThreePhaseRelPerm_dVolFrac[ipGas] = 0;
+          }
       }
 
 
