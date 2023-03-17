@@ -40,7 +40,7 @@ enum class ElementType : integer
   Hexahedron,    ///< Eight-node hexahedral element
   Prism5,        ///< Ten-node pentagonal prism
   Prism6,        ///< Twelve-node hexagonal prism
-  Prism7,        ///< HeptagonalPrism
+  Prism7,        ///< Heptagonal prism
   Prism8,        ///< Octagonal prism
   Prism9,        ///< Nonagonal prism
   Prism10,       ///< Decagonal prism
