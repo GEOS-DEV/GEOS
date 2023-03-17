@@ -61,6 +61,8 @@ public:
 
   void setSolidSolverDofFlags( bool const flag ) { m_setupSolidSolverDofs = flag; }
 
+  void synchronizeFractureState( DomainPartition & domain ) const;
+
 protected:
 
   virtual void postProcessInput() override;
@@ -79,8 +81,6 @@ protected:
            || ( state0 == fields::contact::FractureState::NewSlip && state1 == fields::contact::FractureState::Slip )
            || ( state0 == fields::contact::FractureState::Slip && state1 == fields::contact::FractureState::NewSlip );
   }
-
-  void synchronizeFractureState( DomainPartition & domain ) const;
 
   /// Solid mechanics solver name
   string m_solidSolverName;
