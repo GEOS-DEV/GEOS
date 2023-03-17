@@ -13,12 +13,12 @@
  */
 
 /**
- * @file MultiphasePoromechanicsSolver.cpp
+ * @file MultiphasePoromechanics.cpp
  */
 
 #define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
-#include "MultiphasePoromechanicsSolver.hpp"
+#include "MultiphasePoromechanics.hpp"
 
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
@@ -37,8 +37,8 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
 
-MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & name,
-                                                              Group * const parent )
+MultiphasePoromechanics::MultiphasePoromechanics( const string & name,
+                                                  Group * const parent )
   : Base( name, parent ),
   m_isThermal( 0 )
 {
@@ -74,7 +74,7 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
-void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
+void MultiphasePoromechanics::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
@@ -103,20 +103,20 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void MultiphasePoromechanicsSolver::setupCoupling( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
-                                                   DofManager & dofManager ) const
+void MultiphasePoromechanics::setupCoupling( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+                                             DofManager & dofManager ) const
 {
   dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
                           CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
 }
 
-void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time ),
-                                                    real64 const dt,
-                                                    DomainPartition & domain,
-                                                    DofManager const & dofManager,
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                    arrayView1d< real64 > const & localRhs )
+void MultiphasePoromechanics::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time ),
+                                              real64 const dt,
+                                              DomainPartition & domain,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -231,7 +231,7 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
   }
 }
 
-void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )
+void MultiphasePoromechanics::updateState( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -251,7 +251,7 @@ void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )
   } );
 }
 
-void MultiphasePoromechanicsSolver::initializePreSubGroups()
+void MultiphasePoromechanics::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
@@ -283,7 +283,7 @@ void MultiphasePoromechanicsSolver::initializePreSubGroups()
   } );
 }
 
-void MultiphasePoromechanicsSolver::updateStabilizationParameters( DomainPartition & domain ) const
+void MultiphasePoromechanics::updateStabilizationParameters( DomainPartition & domain ) const
 {
   // Step 1: we loop over the regions where stabilization is active and collect their name
 
@@ -347,6 +347,6 @@ void MultiphasePoromechanicsSolver::updateStabilizationParameters( DomainPartiti
 }
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoromechanicsSolver, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoromechanics, string const &, Group * const )
 
 } /* namespace geosx */
