@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="{ 0.0, 0.0, -9.81 }">
+    gravityVector="{ 0.0, 0.0, 0.0}">
     <SinglePhasePoromechanicsConformingFractures
       name="poroSolver"
       targetRegions="{ Domain, Fracture }"
@@ -11,7 +11,11 @@
       poromechanicsSolverName="singlePhasePoromechanicsSolver"
       logLevel="1">
       <NonlinearSolverParameters
-        maxTimeStepCuts="1"/>
+        maxTimeStepCuts="1"
+        newtonMaxIter="10"
+        maxNumConfigurationAttempts="10"
+        lineSearchInterpolationType="Parabolic"
+        maxAllowedResidualNorm="1.0e15"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhasePoromechanicsConformingFractures>
@@ -66,8 +70,8 @@
   <Geometry>
     <Box
       name="fracture"
-      xMin="{ -0.01, -1, -0.01 }"
-      xMax="{ 0.01,  1,  1.01 }"/>
+      xMin="{ -100.01,-0.01, -0.01 }"
+      xMax="{  100.01, 0.01,  1.01 }"/>
   </Geometry>
 
   <NumericalMethods>
@@ -112,7 +116,7 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
 
     <CompressibleSinglePhaseFluid
       name="water"
@@ -149,7 +153,7 @@
     <Coulomb
       name="fractureContact"
       cohesion="0.0"
-      frictionCoefficient="0.577350269"
+      frictionCoefficient="0.1"
       apertureTableName="apertureTable"/>
   </Constitutive>
 
@@ -183,15 +187,33 @@
       setNames="{ all }"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      scale="1.0e5"/>
+      scale="1.0e5"
+      functionName="injectionSchedule"/>
+
+    <FieldSpecification 
+      name="initialStress"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain"
+      fieldName="rock_stress"
+      component="1"
+      scale="-1.0e5"/>
 
     <FieldSpecification
-      name="xconstraint"
+      name="xconstraintBottom"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ xneg, xpos }"/>
+      setNames="{ yneg }"/>
+
+    <FieldSpecification
+      name="xconstraintTop"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.001"
+      setNames="{ ypos }"/>  
 
     <FieldSpecification
       name="yconstraint"
@@ -199,7 +221,7 @@
       fieldName="totalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ xneg, xpos }"/>
+      setNames="{ yneg, ypos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -207,21 +229,15 @@
       fieldName="totalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{ xneg, xpos }"/>
+      setNames="{ xneg, xpos, yneg, ypos }"/>
 
     <FieldSpecification
-      name="leftPressure"
+      name="zeroPressure"
       objectPath="faceManager"
       fieldName="pressure"
       scale="0.0"
-      setNames="{ xneg }"/>
+      setNames="{ yneg, ypos }"/>
 
-    <FieldSpecification
-      name="rightPressure"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="0.0"
-      setNames="{ xpos }"/>
   </FieldSpecifications>
 
   <Functions>
@@ -229,12 +245,19 @@
       name="apertureTable"
       coordinates="{ -1.0e-3, 0.0 }"
       values="{ 1.0e-6, 1.0e-3 }"/>
+
+    <TableFunction
+      name="injectionSchedule"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1000.0 }"
+      values="{ 0.0, 0.8 }"/>
+
   </Functions>
 
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="poroElastic_conformingFrac"/>
+      plotFileRoot="poroElastic_slippingFault"/>
 
     <Restart
     name="restarts"/>  
