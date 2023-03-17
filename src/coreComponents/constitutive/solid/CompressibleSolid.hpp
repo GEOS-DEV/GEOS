@@ -51,11 +51,14 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
-  virtual void updateStateFromPressure( localIndex const k,
-                                        localIndex const q,
-                                        real64 const & pressure ) const override final
+  virtual void updateStateFromPressureAndTemperature( localIndex const k,
+                                                      localIndex const q,
+                                                      real64 const & pressure,
+                                                      real64 const & pressure_n,
+                                                      real64 const & temperature,
+                                                      real64 const & temperature_n ) const override final
   {
-    m_porosityUpdate.updateFromPressure( k, q, pressure );
+    m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, pressure_n, temperature, temperature_n );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPorosity( k, q, porosity );
   }
@@ -67,7 +70,7 @@ public:
                                            real64 const & oldHydraulicAperture,
                                            real64 const & newHydraulicAperture ) const
   {
-    m_porosityUpdate.updateFromPressure( k, q, pressure );
+    m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, 0.0, 0.0, 0.0 );
     m_permUpdate.updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture );
   }
 
@@ -80,7 +83,7 @@ public:
                                                        real64 const ( &dispJump )[3],
                                                        real64 const ( &traction )[3] ) const
   {
-    m_porosityUpdate.updateFromPressure( k, q, pressure );
+    m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, 0.0, 0.0, 0.0 );
     m_permUpdate.updateFromApertureAndShearDisplacement( k, q, oldHydraulicAperture, newHydraulicAperture, pressure, dispJump, traction );
   }
 
