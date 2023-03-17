@@ -1,7 +1,7 @@
 ---
 name: EPIC
 about: Create a new EPIC issue
-title: "[EPIC]: "
+title: "[EPIC] Your Title"
 labels: EPIC
 assignees: ''
 
