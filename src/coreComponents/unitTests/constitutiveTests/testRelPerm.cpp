@@ -864,70 +864,70 @@ public:
   }
 };
 
-//TEST_F( RelPermTest, numericalDerivatives_brooksCoreyRelPerm )
-//{
-//  initialize( makeBrooksCoreyRelPerm( "relPerm", m_parent ) );
-//
-//  array1d< real64 > sat( 2 );
-//  sat[0] = 0.7;
-//  sat[1] = 0.3;
-//
-//  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
-//  real64 const tol = 1e-4;
-//
-//  test( sat, eps, tol );
-//}
-//
-//TEST_F( RelPermTest, numericalDerivatives_BrooksCoreyBakerRelPermTwoPhase )
-//{
-//  initialize( makeBrooksCoreyBakerRelPermTwoPhase( "relPerm", m_parent ) );
-//
-//  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
-//  real64 const tol = 1e-4;
-//
-//  real64 const startSat = 0.3;
-//  real64 const endSat   = 0.7;
-//  real64 const dS = 1e-1;
-//
-//  array1d< real64 > sat( 2 );
-//
-//  sat[0] = startSat;
-//  sat[1] = 1.0-sat[0];
-//
-//  while( sat[0] <= endSat )
-//  {
-//    test( sat, eps, tol );
-//    sat[0] += dS;
-//    sat[1] = 1-sat[0];
-//  }
-//}
-//
-//TEST_F( RelPermTest, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase )
-//{
-//  initialize( makeBrooksCoreyBakerRelPermThreePhase( "relPerm", m_parent ) );
-//
-//  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
-//  real64 const tol = 1e-4;
-//
-//  real64 const startSat = 0.3;
-//  real64 const endSat   = 0.7;
-//  real64 const dS = 1e-1;
-//  real64 const alpha = 0.4;
-//
-//  array1d< real64 > sat( 3 );
-//
-//  sat[0] = startSat;
-//  sat[1] = alpha*(1.0-sat[0]);
-//  sat[2] = (1-alpha)*(1.0-sat[0]);
-//
-//  while( sat[0] <= endSat )
-//  {
-//    test( sat, eps, tol );
-//    sat[0] += dS;
-//    sat[1] = alpha *(1-sat[0]);
-//    sat[2] = (1-alpha) *(1-sat[0]);
-//  }
-//}
+TEST_F( RelPermTest, numericalDerivatives_brooksCoreyRelPerm )
+{
+  initialize( makeBrooksCoreyRelPerm( "relPerm", m_parent ) );
+
+  array1d< real64 > sat( 2 );
+  sat[0] = 0.7;
+  sat[1] = 0.3;
+
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
+  real64 const tol = 1e-4;
+
+  test( sat, eps, tol );
+}
+
+TEST_F( RelPermTest, numericalDerivatives_BrooksCoreyBakerRelPermTwoPhase )
+{
+  initialize( makeBrooksCoreyBakerRelPermTwoPhase( "relPerm", m_parent ) );
+
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
+  real64 const tol = 1e-4;
+
+  real64 const startSat = 0.3;
+  real64 const endSat   = 0.7;
+  real64 const dS = 1e-1;
+
+  array1d< real64 > sat( 2 );
+
+  sat[0] = startSat;
+  sat[1] = 1.0-sat[0];
+
+  while( sat[0] <= endSat )
+  {
+    test( sat, eps, tol );
+    sat[0] += dS;
+    sat[1] = 1-sat[0];
+  }
+}
+
+TEST_F( RelPermTest, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase )
+{
+  initialize( makeBrooksCoreyBakerRelPermThreePhase( "relPerm", m_parent ) );
+
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
+  real64 const tol = 1e-4;
+
+  real64 const startSat = 0.3;
+  real64 const endSat   = 0.7;
+  real64 const dS = 1e-1;
+  real64 const alpha = 0.4;
+
+  array1d< real64 > sat( 3 );
+
+  sat[0] = startSat;
+  sat[1] = alpha*(1.0-sat[0]);
+  sat[2] = (1-alpha)*(1.0-sat[0]);
+
+  while( sat[0] <= endSat )
+  {
+    test( sat, eps, tol );
+    sat[0] += dS;
+    sat[1] = alpha *(1-sat[0]);
+    sat[2] = (1-alpha) *(1-sat[0]);
+  }
+}
 
 TEST_F( RelPermTest, numericalDerivatives_BrooksCoreyStone2RelPermThreePhase )
 {
@@ -956,144 +956,144 @@ TEST_F( RelPermTest, numericalDerivatives_BrooksCoreyStone2RelPermThreePhase )
     }
 }
 
-//
-//TEST_F( RelPermTest, numericalDerivatives_VanGenuchtenBakerRelPermTwoPhase )
-//{
-//  initialize( makeVanGenuchtenBakerRelPermTwoPhase( "relPerm", m_parent ) );
-//
-//  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
-//  real64 const tol = 1e-4;
-//
-//  real64 const startSat = 0.3;
-//  real64 const endSat   = 0.7;
-//  real64 const dS = 1e-1;
-//
-//  array1d< real64 > sat( 2 );
-//
-//  sat[0] = startSat;
-//  sat[1] = 1.0-sat[0];
-//
-//  while( sat[0] <= endSat )
-//  {
-//    test( sat, eps, tol );
-//    sat[0] += dS;
-//    sat[1] = 1-sat[0];
-//  }
-//}
-//
-//TEST_F( RelPermTest, numericalDerivatives_VanGenuchtenBakerRelPermThreePhase )
-//{
-//  initialize( makeVanGenuchtenBakerRelPermThreePhase( "relPerm", m_parent ) );
-//
-//  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
-//  real64 const tol = 1e-4;
-//
-//  real64 const startSat = 0.3;
-//  real64 const endSat   = 0.7;
-//  real64 const dS = 1e-1;
-//  real64 const alpha = 0.4;
-//
-//  array1d< real64 > sat( 3 );
-//
-//  sat[0] = startSat;
-//  sat[1] = alpha*(1.0-sat[0]);
-//  sat[2] = (1-alpha)*(1.0-sat[0]);
-//
-//  while( sat[0] <= endSat )
-//  {
-//    test( sat, eps, tol );
-//    sat[0] += dS;
-//    sat[1] = alpha *(1-sat[0]);
-//    sat[2] = (1-alpha) *(1-sat[0]);
-//  }
-//}
-//
-//TEST_F( RelPermTest, numericalDerivatives_TableRelPermTwoPhase )
-//{
-//  initialize( makeTableRelPermTwoPhase( "relPerm", m_parent ) );
-//
-//  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
-//  real64 const tol = 1e-4;
-//
-//  real64 const startSat = 0.2;
-//  real64 const endSat = 0.6;
-//  real64 const dS = 1e-1;
-//
-//  array1d< real64 > sat( 2 );
-//
-//  sat[0] = startSat;
-//  sat[1] = 1.0-sat[0];
-//  while( sat[0] <= endSat )
-//  {
-//    test( sat, eps, tol );
-//    sat[0] += dS;
-//    sat[1] = 1-sat[0];
-//  }
-//}
-//
-//TEST_F( RelPermTest, numericalDerivatives_TableRelPermThreePhase )
-//{
-//  initialize( makeTableRelPermThreePhase( "relPerm", m_parent ) );
-//
-//  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
-//  real64 const tol = 1e-4;
-//
-//  real64 const startSat = 0.3;
-//  real64 const endSat   = 0.7;
-//  real64 const dS = 1e-1;
-//  real64 const alpha = 0.4;
-//
-//  array1d< real64 > sat( 3 );
-//
-//  sat[0] = startSat;
-//  sat[1] = alpha*(1.0-sat[0]);
-//  sat[2] = (1-alpha)*(1.0-sat[0]);
-//
-//  while( sat[0] <= endSat )
-//  {
-//    test( sat, eps, tol );
-//    sat[0] += dS;
-//    sat[1] = alpha *(1-sat[0]);
-//    sat[2] = (1-alpha) *(1-sat[0]);
-//  }
-//}
-//
-//TEST_F( RelPermTest, numericalDerivatives_TableRelPermHysteresisTwoPhase )
-//{
-//  initialize( makeTableRelPermHysteresisTwoPhase( "relPerm", m_parent ) );
-//  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
-//  real64 const tol = 1e-4;
-//
-//  real64 const startSat = 0.352;
-//  real64 const endSat = 0.952;
-//  real64 const dS = 2e-2;
-//
-//  array1d< real64 > sat( 2 );
-//  array2d< real64, compflow::LAYOUT_PHASE > initSat( 1, 2 );
-//
-//  sat[0] = startSat;
-//  sat[1] = 1.0-sat[0];
-//  initSat[0][0] = 0.6;
-//  initSat[0][1] = 0.4;
-//
-//  m_model->allocateConstitutiveData( m_parent, 1 );
-//  m_model->saveConvergedPhaseVolFractionState( initSat.toViewConst() );
-//
-//  // move the historical phase vol fraction back to the CPU since the test is performed on the CPU
-//  auto & phaseMinHistoricalVolFraction =
-//    m_model->getReference< array2d< real64, compflow::LAYOUT_PHASE > >( fields::relperm::phaseMinHistoricalVolFraction::key() );
-//  phaseMinHistoricalVolFraction.move( LvArray::MemorySpace::host, false );
-//  auto & phaseMaxHistoricalVolFraction =
-//    m_model->getReference< array2d< real64, compflow::LAYOUT_PHASE > >( fields::relperm::phaseMaxHistoricalVolFraction::key() );
-//  phaseMaxHistoricalVolFraction.move( LvArray::MemorySpace::host, false );
-//
-//  while( sat[0] <= endSat )
-//  {
-//    test( sat, eps, tol );
-//    sat[0] += dS;
-//    sat[1] = 1-sat[0];
-//  }
-//}
+
+TEST_F( RelPermTest, numericalDerivatives_VanGenuchtenBakerRelPermTwoPhase )
+{
+  initialize( makeVanGenuchtenBakerRelPermTwoPhase( "relPerm", m_parent ) );
+
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
+  real64 const tol = 1e-4;
+
+  real64 const startSat = 0.3;
+  real64 const endSat   = 0.7;
+  real64 const dS = 1e-1;
+
+  array1d< real64 > sat( 2 );
+
+  sat[0] = startSat;
+  sat[1] = 1.0-sat[0];
+
+  while( sat[0] <= endSat )
+  {
+    test( sat, eps, tol );
+    sat[0] += dS;
+    sat[1] = 1-sat[0];
+  }
+}
+
+TEST_F( RelPermTest, numericalDerivatives_VanGenuchtenBakerRelPermThreePhase )
+{
+  initialize( makeVanGenuchtenBakerRelPermThreePhase( "relPerm", m_parent ) );
+
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
+  real64 const tol = 1e-4;
+
+  real64 const startSat = 0.3;
+  real64 const endSat   = 0.7;
+  real64 const dS = 1e-1;
+  real64 const alpha = 0.4;
+
+  array1d< real64 > sat( 3 );
+
+  sat[0] = startSat;
+  sat[1] = alpha*(1.0-sat[0]);
+  sat[2] = (1-alpha)*(1.0-sat[0]);
+
+  while( sat[0] <= endSat )
+  {
+    test( sat, eps, tol );
+    sat[0] += dS;
+    sat[1] = alpha *(1-sat[0]);
+    sat[2] = (1-alpha) *(1-sat[0]);
+  }
+}
+
+TEST_F( RelPermTest, numericalDerivatives_TableRelPermTwoPhase )
+{
+  initialize( makeTableRelPermTwoPhase( "relPerm", m_parent ) );
+
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
+  real64 const tol = 1e-4;
+
+  real64 const startSat = 0.2;
+  real64 const endSat = 0.6;
+  real64 const dS = 1e-1;
+
+  array1d< real64 > sat( 2 );
+
+  sat[0] = startSat;
+  sat[1] = 1.0-sat[0];
+  while( sat[0] <= endSat )
+  {
+    test( sat, eps, tol );
+    sat[0] += dS;
+    sat[1] = 1-sat[0];
+  }
+}
+
+TEST_F( RelPermTest, numericalDerivatives_TableRelPermThreePhase )
+{
+  initialize( makeTableRelPermThreePhase( "relPerm", m_parent ) );
+
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
+  real64 const tol = 1e-4;
+
+  real64 const startSat = 0.3;
+  real64 const endSat   = 0.7;
+  real64 const dS = 1e-1;
+  real64 const alpha = 0.4;
+
+  array1d< real64 > sat( 3 );
+
+  sat[0] = startSat;
+  sat[1] = alpha*(1.0-sat[0]);
+  sat[2] = (1-alpha)*(1.0-sat[0]);
+
+  while( sat[0] <= endSat )
+  {
+    test( sat, eps, tol );
+    sat[0] += dS;
+    sat[1] = alpha *(1-sat[0]);
+    sat[2] = (1-alpha) *(1-sat[0]);
+  }
+}
+
+TEST_F( RelPermTest, numericalDerivatives_TableRelPermHysteresisTwoPhase )
+{
+  initialize( makeTableRelPermHysteresisTwoPhase( "relPerm", m_parent ) );
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
+  real64 const tol = 1e-4;
+
+  real64 const startSat = 0.352;
+  real64 const endSat = 0.952;
+  real64 const dS = 2e-2;
+
+  array1d< real64 > sat( 2 );
+  array2d< real64, compflow::LAYOUT_PHASE > initSat( 1, 2 );
+
+  sat[0] = startSat;
+  sat[1] = 1.0-sat[0];
+  initSat[0][0] = 0.6;
+  initSat[0][1] = 0.4;
+
+  m_model->allocateConstitutiveData( m_parent, 1 );
+  m_model->saveConvergedPhaseVolFractionState( initSat.toViewConst() );
+
+  // move the historical phase vol fraction back to the CPU since the test is performed on the CPU
+  auto & phaseMinHistoricalVolFraction =
+    m_model->getReference< array2d< real64, compflow::LAYOUT_PHASE > >( fields::relperm::phaseMinHistoricalVolFraction::key() );
+  phaseMinHistoricalVolFraction.move( LvArray::MemorySpace::host, false );
+  auto & phaseMaxHistoricalVolFraction =
+    m_model->getReference< array2d< real64, compflow::LAYOUT_PHASE > >( fields::relperm::phaseMaxHistoricalVolFraction::key() );
+  phaseMaxHistoricalVolFraction.move( LvArray::MemorySpace::host, false );
+
+  while( sat[0] <= endSat )
+  {
+    test( sat, eps, tol );
+    sat[0] += dS;
+    sat[1] = 1-sat[0];
+  }
+}
 
 
 int main( int argc, char * * argv )
