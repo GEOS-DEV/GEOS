@@ -32,6 +32,8 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGeneratorFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+
 
 #include <algorithm>
 
@@ -510,6 +512,22 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
     {
       targetSet.insert( ei );
     } );
+
+    // // Compute gravity coefficient for new elements so that gravity term is correctly computed
+    // real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+
+    // if( subRegion.hasWrapper( fields::flow::gravityCoefficient::key()) )
+    // {
+    //   arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
+
+    //   arrayView1d< real64 > const gravityCoef = subRegion.getField< fields::flow::gravityCoefficient >();
+
+    //   forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
+    //   {
+    //     gravityCoef[ ei ] = LvArray::tensorOps::AiBi< 3 >( elemCenter[ ei ], gravVector );
+    //   } );
+    // }
+
   } );
 
   return rval;
