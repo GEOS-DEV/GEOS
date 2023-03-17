@@ -11,6 +11,3 @@ RUN apt-get install -y \
 # for paraview headless
     libcurl4 \
     libglapi-mesa
-
-WORKDIR /workspaces/GEOSX
-RUN ln -s .vscode-codespaces .vscode

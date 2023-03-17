@@ -20,5 +20,6 @@
         "ghcr.io/devcontainers/features/sshd:1": {
             "version": "latest"
         }
-    }
+    },
+    "postCreateCommand": "ln -s /workspaces/GEOSX/.vscode-codespaces /workspaces/GEOSX/.vscode"
 }
