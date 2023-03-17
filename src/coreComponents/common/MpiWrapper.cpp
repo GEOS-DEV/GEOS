@@ -309,7 +309,6 @@ double MpiWrapper::wtime( void )
 
 }
 
-
 int MpiWrapper::activeWaitAny( const int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[], std::function< MPI_Request ( int ) > func )
 {
   int cmp = 0;
@@ -358,7 +357,7 @@ int MpiWrapper::activeWaitSome( const int count,
 
 
 int MpiWrapper::activeWaitSomeCompletePhase( const int participants,
-                                             std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< void ( int ) > > > const & phases )
+                                             std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases )
 {
   const int num_phases = phases.size();
   int err = 0;
