@@ -1,8 +1,8 @@
 {
     "cmake": {
         "sourceDirectory": "${workspaceFolder}/src",
-        "buildDirectory": "${userHome}/geosx-build",
-        "cacheInit": "/workspaces/GEOSX/host-configs/environment.cmake",
+        "buildDirectory": "${userHome}/geos-build",
+        "cacheInit": "/workspaces/GEOS/host-configs/environment.cmake",
         "configureSettings": {
             "BLT_MPI_COMMAND_APPEND": "--use-hwthread-cpus;--oversubscribe",
             "ENABLE_OPENMP": "OFF",

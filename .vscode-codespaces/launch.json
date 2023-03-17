@@ -6,11 +6,11 @@
     "configurations": 
     [
         { 
-            "name": "Debug geosx",
+            "name": "Debug geos",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${userHome}/geosx-build/bin/geosx",
-            "args": ["-i", "${workspaceFolder}/inputFiles/simplePDE/10x10x10Hex_LaplaceFEM_smoke.xml", "-o", "${userHome}/geosx-output"],
+            "program": "${userHome}/geos-build/bin/geosx",
+            "args": ["-i", "${workspaceFolder}/inputFiles/simplePDE/10x10x10Hex_LaplaceFEM_smoke.xml", "-o", "${userHome}/geos-output"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
