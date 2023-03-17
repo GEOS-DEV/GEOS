@@ -403,7 +403,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
-      GEOSX_MARK_SCOPE( lambda_1 );
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
@@ -411,7 +410,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       /// Partial gradient if gradient as to be computed
       arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
       {
-        GEOSX_MARK_SCOPE( grad_zero );
         grad.zero();
       }
       finiteElement::FiniteElementBase const &
