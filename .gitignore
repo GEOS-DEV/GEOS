@@ -9,7 +9,7 @@ install-*
 *.swo
 *.swn
 *.nfs*
-*.vscode*
+*.vscode/*.json
 *.devcontainer*
 *.out
 *.core
