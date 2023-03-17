@@ -119,9 +119,25 @@ public:
 
   void initializePostInitialConditionsPostSubGroups() override final;
 
+  void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
+
   /**@}*/
 
 private:
+
+  void assembleCellBasedContributions( real64 const time_n,
+                                       real64 const dt,
+                                       DomainPartition & domain,
+                                       DofManager const & dofManager,
+                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       arrayView1d< real64 > const & localRhs );
+
+  virtual void assembleCouplingTerms( real64 const time_n,
+                                      real64 const dt,
+                                      DomainPartition const & domain,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< real64 > const & localRhs ) override final;
 
   void assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
                                                    arrayView1d< string const > const & regionNames,
@@ -176,7 +192,7 @@ private:
    *
    * @param domain
    */
-  void updateHydraulicAperture( DomainPartition & domain );
+  void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
 
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()

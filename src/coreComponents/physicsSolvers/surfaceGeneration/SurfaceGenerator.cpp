@@ -431,10 +431,11 @@ void SurfaceGenerator::postRestartInitialization()
       if( fluxApprox!=nullptr )
       {
         fluxApprox->addToFractureStencil( meshLevel, this->m_fractureRegionName, false );
-        fractureSubRegion.m_recalculateFractureConnectorEdges.clear();
-        fractureSubRegion.m_newFaceElements.clear();
       }
     }
+
+    fractureSubRegion.m_recalculateFractureConnectorEdges.clear();
+    fractureSubRegion.m_newFaceElements.clear();
   } );
 }
 
@@ -485,11 +486,15 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       if( fluxApprox!=nullptr )
       {
         fluxApprox->addToFractureStencil( meshLevel, this->m_fractureRegionName, true );
-        FaceElementSubRegion & subRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
-        subRegion.m_recalculateFractureConnectorEdges.clear();
-        subRegion.m_newFaceElements.clear();
       }
     }
+
+    FaceElementSubRegion & subRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
+    subRegion.m_recalculateFractureConnectorEdges.clear();
+    subRegion.m_newFaceElements.clear();
+
+    // Recreate geometric sets
+    meshLevel.getNodeManager().buildGeometricSets( GeometricObjectManager::getInstance() );
 
     // Create set "all" on the faceElementSubregion
     FaceElementSubRegion & fractureSubRegion  = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );

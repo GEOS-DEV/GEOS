@@ -78,9 +78,12 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
                                                            [&] ( localIndex const,
                                                                  SurfaceElementRegion & region )
     {
+      string const labels[3] = { "normal", "tangent1", "tangent2" };
+
       region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
       {
         subRegion.registerField< dispJump >( getName() ).
+          setDimLabels( 1, labels ).
           reference().resizeDimension< 1 >( 3 );
 
         subRegion.registerField< deltaDispJump >( getName() ).
@@ -90,6 +93,7 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
           reference().resizeDimension< 1 >( 3 );
 
         subRegion.registerField< traction >( getName() ).
+          setDimLabels( 1, labels ).
           reference().resizeDimension< 1 >( 3 );
 
         subRegion.registerField< fractureState >( getName() );
