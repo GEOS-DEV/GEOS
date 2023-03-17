@@ -114,10 +114,10 @@
 /* #undef chai_VERSION */
 
 /// Version information for adiak
-/* #undef adiak_VERSION */
+#define adiak_VERSION ..
 
 /// Version information for caliper
-/* #undef caliper_VERSION */
+#define caliper_VERSION 2.8.0
 
 /// Version information for Metis
 #define METIS_VERSION 5.1.0
@@ -141,7 +141,7 @@
 #define fmt_VERSION 8.0.1
 
 /// Version information for python
-/* #undef Python3_VERSION */
+#define Python3_VERSION 3.8.5
 
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */
