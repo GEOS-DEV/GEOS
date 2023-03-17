@@ -9,7 +9,9 @@ install-*
 *.swo
 *.swn
 *.nfs*
-*.vscode*
+*.vscode/*.json
+*.vscode-codespaces*
+*.devcontainer*
 *.out
 *.core
 *.DS_Store
