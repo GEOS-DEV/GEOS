@@ -90,7 +90,7 @@ TEST( testGroupPath, testGlobalPaths )
   ProblemManager & problem = getGlobalState().getProblemManager();
   problem.parseInputString( xmlInput );
 
-  for( string const path : groupPaths )
+  for( string const & path : groupPaths )
   {
     Group const & group = problem.getGroupByPath( path );
     ASSERT_STREQ( path.c_str(), group.getPath().c_str() );
