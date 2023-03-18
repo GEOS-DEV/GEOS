@@ -92,29 +92,29 @@ localIndex getFaceNodes( ElementType const elementType,
  * @brief Find and count ranges of repeated values in an array of sorted arrays and compute offsets.
  * @tparam POLICY execution policy
  * @tparam T value type of input arrays
- * @param [in] sortedLists the input array of sorted arrays of values
+ * @tparam COMP A comparator used to compare the values.
+ * @param [in] sortedLists the input array of sorted arrays of values.
+ * @param [in] comp the comparator used to compare the values in @p sortedLists.
  * @return an array of size @p sortedLists.size() + 1, where element i contains starting index of
  *         unique values from sub-array i in a global list of unique values, while the last value
  *         contains the total number of unique edges (i.e. an exclusive scan + total reduction).
  */
-template< typename POLICY, typename T >
+template< typename POLICY, typename T, typename COMP = std::equal_to<> >
 array1d< localIndex >
-computeUniqueValueOffsets( ArrayOfArraysView< T const > const & sortedLists )
+computeUniqueValueOffsets( ArrayOfArraysView< T const > const & sortedLists, COMP && comp = {} )
 {
   localIndex const numNodes = sortedLists.size();
   array1d< localIndex > uniqueValueOffsets( numNodes + 1 );
-  uniqueValueOffsets[0] = 0;
 
   // For each node, count number of unique edges that have the node as its lowest
   arrayView1d< localIndex > const numUniqueValuesView = uniqueValueOffsets.toView();
-  forAll< POLICY >( numNodes, [sortedLists, numUniqueValuesView]( localIndex const i )
+  forAll< POLICY >( numNodes, [sortedLists, numUniqueValuesView, comp=std::forward< COMP >( comp )]( localIndex const i )
   {
-    numUniqueValuesView[ i + 1 ] = 0;
     arraySlice1d< T const > const list = sortedLists[ i ];
     forEqualRanges( list.begin(), list.end(), [&]( auto, auto )
     {
       ++numUniqueValuesView[ i + 1 ];
-    } );
+    }, comp );
   } );
 
   // Perform an inplace prefix-sum to get the unique edge offset.

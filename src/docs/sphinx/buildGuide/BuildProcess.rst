@@ -78,4 +78,5 @@ Option                          Default   Explanation
 ``GEOSX_BUILD_SHARED_LIBS``     ``OFF``   Build ``geosx_core`` as a shared library instead of static
 ``GEOSX_PARALLEL_COMPILE_JOBS``           Max. number of compile jobs (when using Ninja), in addition to ``-j`` flag
 ``GEOSX_PARALLEL_LINK_JOBS``              Max. number of link jobs (when using Ninja), in addition to ``-j`` flag
+``GEOSX_INSTALL_SCHEMA``        ``ON``    Enables schema generation and installation
 =============================== ========= ==============================================================================
