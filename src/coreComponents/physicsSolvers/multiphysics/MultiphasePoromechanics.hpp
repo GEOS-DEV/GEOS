@@ -105,6 +105,8 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
+  /**@}*/
+
   /*
    * @brief Utility function to update the stabilization parameters at each time step
    * @param[in] domain the domain partition
@@ -118,7 +120,8 @@ public:
   void setStressInitialization( integer const performStressInitialization )
   { m_performStressInitialization = performStressInitialization; }
 
-  /**@}*/
+  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override final;
+
 
   enum class StabilizationType : integer
   {
@@ -128,6 +131,10 @@ public:
   };
 
 protected:
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  virtual void initializePreSubGroups() override;
 
   struct viewKeyStruct : Base::viewKeyStruct
   {
@@ -150,8 +157,6 @@ protected:
     constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
 
   };
-
-  virtual void initializePreSubGroups() override;
 
 private:
 

@@ -251,15 +251,25 @@ void MultiphasePoromechanics::updateState( DomainPartition & domain )
   } );
 }
 
-void MultiphasePoromechanics::initializePreSubGroups()
+void MultiphasePoromechanics::initializePostInitialConditionsPreSubGroups()
 {
-  SolverBase::initializePreSubGroups();
+  SolverBase::initializePostInitialConditionsPreSubGroups();
 
   integer & isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
   GEOSX_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
                        GEOSX_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
                                   catalogName(), getName(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
   isFlowThermal = m_isThermal;
+}
+
+void MultiphasePoromechanics::initializePreSubGroups()
+{
+  SolverBase::initializePreSubGroups();
+
+  if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    solidMechanicsSolver()->turnOnFixedStressThermoPoroElasticityFlag();
+  }
 
   GEOSX_THROW_IF( m_stabilizationType == StabilizationType::Local,
                   catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",
@@ -345,6 +355,25 @@ void MultiphasePoromechanics::updateStabilizationParameters( DomainPartition & d
     } );
   } );
 }
+
+void MultiphasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
+{
+  GEOSX_MARK_FUNCTION;
+  if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            auto & subRegion )
+      {
+        flowSolver()->updatePorosityAndPermeability( subRegion );
+      } );
+    } );
+  }
+}
+
 
 
 REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoromechanics, string const &, Group * const )
