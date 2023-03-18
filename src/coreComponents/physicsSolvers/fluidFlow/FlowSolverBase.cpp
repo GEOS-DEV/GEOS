@@ -25,11 +25,13 @@
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/NonlinearSolverParameters.hpp"
 
 namespace geosx
 {
@@ -38,26 +40,32 @@ using namespace dataRepository;
 using namespace constitutive;
 
 template< typename POROUSWRAPPER_TYPE >
-void execute1( POROUSWRAPPER_TYPE porousWrapper,
-               CellElementSubRegion & subRegion,
-               arrayView1d< real64 const > const & pressure )
+void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE porousWrapper,
+                                                              CellElementSubRegion & subRegion,
+                                                              arrayView1d< real64 const > const & pressure,
+                                                              arrayView1d< real64 const > const & pressure_n,
+                                                              arrayView1d< real64 const > const & temperature,
+                                                              arrayView1d< real64 const > const & temperature_n )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
     {
-      porousWrapper.updateStateFromPressure( k, q,
-                                             pressure[k] );
+      porousWrapper.updateStateFromPressureAndTemperature( k, q,
+                                                           pressure[k],
+                                                           pressure_n[k],
+                                                           temperature[k],
+                                                           temperature_n[k] );
     }
   } );
 }
 
 template< typename POROUSWRAPPER_TYPE >
-void execute2( POROUSWRAPPER_TYPE porousWrapper,
-               SurfaceElementSubRegion & subRegion,
-               arrayView1d< real64 const > const & pressure,
-               arrayView1d< real64 const > const & oldHydraulicAperture,
-               arrayView1d< real64 const > const & newHydraulicAperture )
+void updatePorosityAndPermeabilityFromPressureAndAperture( POROUSWRAPPER_TYPE porousWrapper,
+                                                           SurfaceElementSubRegion & subRegion,
+                                                           arrayView1d< real64 const > const & pressure,
+                                                           arrayView1d< real64 const > const & oldHydraulicAperture,
+                                                           arrayView1d< real64 const > const & newHydraulicAperture )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const k )
   {
@@ -75,19 +83,15 @@ FlowSolverBase::FlowSolverBase( string const & name,
                                 Group * const parent ):
   SolverBase( name, parent ),
   m_numDofPerCell( 0 ),
-  m_isThermal( 0 ),
-  m_fluxEstimate()
+  m_isThermal( 0 )
 {
   this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
 
-  this->registerWrapper( viewKeyStruct::inputFluxEstimateString(), &m_fluxEstimate ).
-    setApplyDefaultValue( 1.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Initial estimate of the input flux used only for residual scaling. This should be "
-                    "essentially equivalent to the input flux * dt." );
+  // allow the user to select a norm
+  getNonlinearSolverParameters().getWrapper< solverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
 }
 
 void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
@@ -123,6 +127,9 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
         setDefaultValue( faceRegion.getDefaultAperture() );
 
       subRegion.registerField< fields::flow::hydraulicAperture >( getName() ).
+        setDefaultValue( faceRegion.getDefaultAperture() );
+
+      subRegion.registerField< fields::flow::minimumHydraulicAperture >( getName() ).
         setDefaultValue( faceRegion.getDefaultAperture() );
 
     } );
@@ -279,6 +286,10 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   GEOSX_MARK_FUNCTION;
 
   arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
+  arrayView1d< real64 const > const & pressure_n = subRegion.getField< fields::flow::pressure_n >();
+
+  arrayView1d< real64 const > const & temperature = subRegion.getField< fields::flow::temperature >();
+  arrayView1d< real64 const > const & temperature_n = subRegion.getField< fields::flow::temperature_n >();
 
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
@@ -287,7 +298,8 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    execute1( porousWrapper, subRegion, pressure );
+    updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_n, temperature, temperature_n );
+
   } );
 }
 
@@ -307,7 +319,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    execute2( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+    updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
 
   } );
 }
@@ -377,14 +389,15 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & )
   {
-    fsManager.apply< ElementSubRegionBase >( time + dt,
-                                             mesh,
-                                             FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                                             [&]( FieldSpecificationBase const & fs,
-                                                  string const &,
-                                                  SortedArrayView< localIndex const > const & targetSet,
-                                                  ElementSubRegionBase & subRegion,
-                                                  string const & )
+    fsManager.apply< ElementSubRegionBase,
+                     SourceFluxBoundaryCondition >( time + dt,
+                                                    mesh,
+                                                    SourceFluxBoundaryCondition::catalogName(),
+                                                    [&]( SourceFluxBoundaryCondition const & fs,
+                                                         string const &,
+                                                         SortedArrayView< localIndex const > const & targetSet,
+                                                         ElementSubRegionBase & subRegion,
+                                                         string const & )
     {
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 

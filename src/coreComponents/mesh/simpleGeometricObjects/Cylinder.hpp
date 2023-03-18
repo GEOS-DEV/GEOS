@@ -68,18 +68,6 @@ public:
 
   bool isCoordInObject( real64 const ( &coord ) [3] ) const override final;
 
-
-private:
-
-  /// Center point of one (upper or lower) face of the cylinder
-  R1Tensor m_point1;
-  /// Center point of the other face of the cylinder
-  R1Tensor m_point2;
-  /// Radius of the cylinder
-  real64 m_radius = 0.0;
-
-  real64 m_innerRadius = 0.0;
-
   /// @cond DO_NOT_DOCUMENT
 
   struct viewKeyStruct
@@ -91,6 +79,17 @@ private:
   };
 
   /// @endcond
+
+private:
+
+  /// Center point of one (upper or lower) face of the cylinder
+  R1Tensor m_point1;
+  /// Center point of the other face of the cylinder
+  R1Tensor m_point2;
+  /// Radius of the cylinder
+  real64 m_radius = 0.0;
+  /// Inner radius of the cylinder
+  real64 m_innerRadius = 0.0;
 
 };
 } /* namespace geosx */

@@ -296,7 +296,10 @@
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" />
 	</xsd:complexType>
-	<xsd:complexType name="SourceFluxType" />
+	<xsd:complexType name="SourceFluxType">
+		<!--fieldName => Name of field that boundary condition is applied to.-->
+		<xsd:attribute name="fieldName" type="string" />
+	</xsd:complexType>
 	<xsd:complexType name="TractionType">
 		<!--component => Component of field (if tensor) to apply boundary condition to.-->
 		<xsd:attribute name="component" type="integer" />
@@ -395,7 +398,16 @@
 	<xsd:complexType name="NonlinearSolverParametersType">
 		<!--newtonNumberOfIterations => Number of Newton's iterations.-->
 		<xsd:attribute name="newtonNumberOfIterations" type="integer" />
+		<!--normType => Norm used by the flow solver to check nonlinear convergence. Valid options:
+* Linfinity
+* L2-->
+		<xsd:attribute name="normType" type="geosx_solverBaseKernels_NormType" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_solverBaseKernels_NormType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|Linfinity|L2" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="HybridMimeticDiscretization" type="HybridMimeticDiscretizationType" />
@@ -1111,14 +1123,22 @@
 		<xsd:attribute name="biotCoefficient" type="real64_array" />
 		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
+		<!--dPorosity_dTemperature => Derivative of rock porosity with respect to temperature-->
+		<xsd:attribute name="dPorosity_dTemperature" type="real64_array2d" />
 		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
+		<!--meanStressIncrement => Volumetric stress increment-->
+		<xsd:attribute name="meanStressIncrement" type="real64_array2d" />
 		<!--porosity => Rock porosity-->
 		<xsd:attribute name="porosity" type="real64_array2d" />
 		<!--porosity_n => Rock porosity at the previous converged time step-->
 		<xsd:attribute name="porosity_n" type="real64_array2d" />
 		<!--referencePorosity => Reference porosity-->
 		<xsd:attribute name="referencePorosity" type="real64_array" />
+		<!--solidBulkModulus => Solid bulk modulus-->
+		<xsd:attribute name="solidBulkModulus" type="real64_array" />
+		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="BlackOilFluidType">
 		<!--PVTO => (no description available)-->
@@ -1875,6 +1895,8 @@
 	<xsd:complexType name="PressurePorosityType">
 		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
+		<!--dPorosity_dTemperature => Derivative of rock porosity with respect to temperature-->
+		<xsd:attribute name="dPorosity_dTemperature" type="real64_array2d" />
 		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
 		<!--porosity => Rock porosity-->
@@ -1899,6 +1921,8 @@
 	<xsd:complexType name="ProppantPorosityType">
 		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
+		<!--dPorosity_dTemperature => Derivative of rock porosity with respect to temperature-->
+		<xsd:attribute name="dPorosity_dTemperature" type="real64_array2d" />
 		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
 		<!--porosity => Rock porosity-->

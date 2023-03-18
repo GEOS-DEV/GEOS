@@ -140,32 +140,39 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
     string str;
     while( std::getline( is, str ) )
     {
-      string_array const strs = stringutilities::tokenize( str, " " );
+      array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
 
-      if( strs[0] == "DensityFun" )
+      if( !strs.empty() )
       {
-        if( strs[1] == PHASE::Density::catalogName() )
+        GEOSX_THROW_IF( strs.size() < 2,
+                        GEOSX_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
+                        InputError );
+
+        if( strs[0] == "DensityFun" )
         {
-          phase1InputParams[PHASE::InputParamOrder::DENSITY] = strs;
+          if( strs[1] == PHASE::Density::catalogName() )
+          {
+            phase1InputParams[PHASE::InputParamOrder::DENSITY] = strs;
+          }
         }
-      }
-      else if( strs[0] == "ViscosityFun" )
-      {
-        if( strs[1] == PHASE::Viscosity::catalogName() )
+        else if( strs[0] == "ViscosityFun" )
         {
-          phase1InputParams[PHASE::InputParamOrder::VISCOSITY] = strs;
+          if( strs[1] == PHASE::Viscosity::catalogName() )
+          {
+            phase1InputParams[PHASE::InputParamOrder::VISCOSITY] = strs;
+          }
         }
-      }
-      else if( strs[0] == "EnthalpyFun" )
-      {
-        if( strs[1] == PHASE::Enthalpy::catalogName() )
+        else if( strs[0] == "EnthalpyFun" )
         {
-          phase1InputParams[PHASE::InputParamOrder::ENTHALPY] = strs;
+          if( strs[1] == PHASE::Enthalpy::catalogName() )
+          {
+            phase1InputParams[PHASE::InputParamOrder::ENTHALPY] = strs;
+          }
         }
-      }
-      else
-      {
-        GEOSX_THROW( GEOSX_FMT( "{}: invalid PVT function type '{}'", getFullName(), strs[0] ), InputError );
+        else
+        {
+          GEOSX_THROW( GEOSX_FMT( "{}: invalid PVT function type '{}'", getFullName(), strs[0] ), InputError );
+        }
       }
     }
     is.close();
