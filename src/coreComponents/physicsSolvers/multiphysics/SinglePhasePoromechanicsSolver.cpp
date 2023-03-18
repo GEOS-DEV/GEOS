@@ -94,6 +94,11 @@ void SinglePhasePoromechanicsSolver::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
+  if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    solidMechanicsSolver()->turnOnFixedStressThermoPoroElasticityFlag();
+  }
+
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -112,6 +117,7 @@ void SinglePhasePoromechanicsSolver::initializePreSubGroups()
                       InputError );
     } );
   } );
+
 }
 
 void SinglePhasePoromechanicsSolver::setupSystem( DomainPartition & domain,
@@ -330,6 +336,24 @@ void SinglePhasePoromechanicsSolver::updateState( DomainPartition & domain )
       }
     } );
   } );
+}
+
+void SinglePhasePoromechanicsSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
+{
+  GEOSX_MARK_FUNCTION;
+  if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            auto & subRegion )
+      {
+        flowSolver()->updatePorosityAndPermeability( subRegion );
+      } );
+    } );
+  }
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsSolver, string const &, Group * const )

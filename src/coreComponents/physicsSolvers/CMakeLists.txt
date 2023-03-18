@@ -6,6 +6,7 @@ set( physicsSolvers_headers
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
+     SolverBaseKernels.hpp	
      SolverStatistics.hpp
      FieldStatisticsBase.hpp
      contact/ContactSolverBase.hpp
@@ -77,6 +78,7 @@ set( physicsSolvers_headers
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp	          
      multiphysics/SinglePhasePoromechanicsFluxKernels.hpp

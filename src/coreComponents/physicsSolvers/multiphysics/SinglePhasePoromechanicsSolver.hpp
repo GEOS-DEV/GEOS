@@ -119,6 +119,8 @@ public:
 
   /**@}*/
 
+  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
+
   struct viewKeyStruct : Base::viewKeyStruct
   {
     /// Names of the porous materials

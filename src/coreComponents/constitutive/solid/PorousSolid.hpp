@@ -54,6 +54,17 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
+  virtual void updateStateFromPressureAndTemperature( localIndex const k,
+                                                      localIndex const q,
+                                                      real64 const & pressure,
+                                                      real64 const & pressure_n,
+                                                      real64 const & temperature,
+                                                      real64 const & temperature_n ) const override final
+  {
+    m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, pressure_n, temperature, temperature_n );
+  }
+
+  GEOSX_HOST_DEVICE
   void smallStrainUpdatePoromechanics( localIndex const k,
                                        localIndex const q,
                                        real64 const & pressure_n,
@@ -103,6 +114,49 @@ public:
     dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure();
   }
 
+  GEOSX_HOST_DEVICE
+  void smallStrainUpdatePoromechanicsFixedStress( localIndex const k,
+                                                  localIndex const q,
+                                                  real64 const & pressure_n,
+                                                  real64 const & pressure,
+                                                  real64 const & temperature_n,
+                                                  real64 const & temperature,
+                                                  real64 const ( &strainIncrement )[6],
+                                                  real64 ( & totalStress )[6],
+                                                  DiscretizationOps & stiffness ) const
+  {
+    real64 dTotalStress_dPressure[6];
+    real64 dTotalStress_dTemperature[6];
+
+    // Compute total stress increment and its derivative
+    computeTotalStress( k,
+                        q,
+                        pressure,
+                        temperature,
+                        strainIncrement,
+                        totalStress,
+                        dTotalStress_dPressure, // To pass something here
+                        dTotalStress_dTemperature, // To pass something here
+                        stiffness );
+
+    // Compute porosity
+    real64 const deltaPressure    = pressure - pressure_n;
+    real64 const deltaTemperature = temperature - temperature_n;
+
+
+    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
+
+    real64 const effectiveMeanStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
+
+    real64 const totalMeanStressIncrement = effectiveMeanStressIncrement - biotCoefficient * deltaPressure - 3 * thermalExpansionCoefficient * bulkModulus * deltaTemperature;
+
+    m_porosityUpdate.updateTotalMeanStressIncrement( k, q, totalMeanStressIncrement );
+
+    // The body force is calculated in the SolidMechanics kernel and the fluid contribution is neglected here
+  }
+
   /**
    * @brief Return the stiffness at a given element (small-strain interface)
    *
@@ -134,6 +188,14 @@ private:
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
     m_porosityUpdate.updateBiotCoefficient( k, bulkModulus );
+  }
+
+  GEOSX_HOST_DEVICE
+  void updateThermalExpansionCoefficient( localIndex const k ) const
+  {
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+
+    m_porosityUpdate.updateThermalExpansionCoefficient( k, thermalExpansionCoefficient );
   }
 
   GEOSX_HOST_DEVICE
@@ -211,7 +273,6 @@ private:
     dTotalStress_dTemperature[5] = 0;
 
   }
-
 };
 
 /**
