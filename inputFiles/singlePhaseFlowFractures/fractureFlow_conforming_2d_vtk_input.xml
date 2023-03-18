@@ -22,7 +22,7 @@
       name="mesh1"
       useGlobalIds="1"
       faceBlocks="{fracture}"
-      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/tFrac.vtm"/>
+      file="tShapedFracturedCube.vtm"/>
   </Mesh>
 
   <Geometry>
