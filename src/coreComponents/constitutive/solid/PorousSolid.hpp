@@ -153,6 +153,7 @@ private:
       m_solidUpdate.getThermalExpansionCoefficient( k );
 
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
+    real64 const shearModulus = m_solidUpdate.getShearModulus( k );
 
     m_porosityUpdate.updateFromPressureTemperatureAndStrain( k,
                                                              q,
@@ -160,6 +161,7 @@ private:
                                                              deltaTemperature,
                                                              strainIncrement,
                                                              bulkModulus,
+                                                             shearModulus,
                                                              thermalExpansionCoefficient,
                                                              dPorosity_dVolStrain,
                                                              dPorosity_dPressure,

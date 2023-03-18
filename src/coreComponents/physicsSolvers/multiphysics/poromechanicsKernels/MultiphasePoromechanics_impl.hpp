@@ -182,12 +182,14 @@ smallStrainUpdate( localIndex const k,
                          stack );
 
   // Step 4: compute pore volume constraint
+
   computePoreVolumeConstraint( k,
-                               porosity,
-                               dPorosity_dVolStrain,
-                               dPorosity_dPressure,
-                               dPorosity_dTemperature,
+                               porosity_n,
+                               0,
+                               0,
+                               0,
                                stack );
+
 }
 
 template< typename SUBREGION_TYPE,

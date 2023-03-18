@@ -74,7 +74,8 @@ public:
                                                real64 const & deltaPressure,
                                                real64 const & deltaTemperature,
                                                real64 const (&strainIncrement)[6],
-                                               real64 const & /*bulkModulus*/,
+                                               real64 const & bulkModulus,
+                                               real64 const & shearModulus,
                                                real64 const & thermalExpansionCoefficient,
                                                real64 & dPorosity_dVolStrain,
                                                real64 & dPorosity_dPressure,
@@ -82,18 +83,18 @@ public:
   {
     real64 const biotSkeletonModulusInverse = (m_biotCoefficient[k] - m_referencePorosity[k]) / m_grainBulkModulus;
     real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * m_biotCoefficient[k];
-    real64 const compressibility = 0; //m_biotCoefficient[k]*m_biotCoefficient[k]/bulkModulus;
+    real64 const compressibility = m_biotCoefficient[k]*m_biotCoefficient[k]/(bulkModulus+4./3.*shearModulus);
 
-    dPorosity_dVolStrain   = 0; //m_biotCoefficient[k];
-    dPorosity_dPressure    = biotSkeletonModulusInverse + compressibility;
+    real64 option = 1;
+
+    dPorosity_dVolStrain   = (1-option)*m_biotCoefficient[k];
+    dPorosity_dPressure    = biotSkeletonModulusInverse + option*compressibility;
     dPorosity_dTemperature = -porosityThermalExpansion;
 
     real64 const porosity = m_porosity_n[k][q]
                             + dPorosity_dVolStrain * LvArray::tensorOps::symTrace< 3 >( strainIncrement )
                             + dPorosity_dPressure * deltaPressure
                             + dPorosity_dTemperature * deltaTemperature;
-
-    //printf("%.2e %.2e\n", m_biotCoefficient[k]*LvArray::tensorOps::symTrace< 3 >( strainIncrement ), compressibility * deltaPressure );
 
     savePorosity( k, q, porosity, dPorosity_dPressure );
   }
