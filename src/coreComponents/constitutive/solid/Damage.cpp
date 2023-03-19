@@ -43,6 +43,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_tensileStrength(),
   m_compressStrength(),
   m_deltaCoefficient(),
+  m_damagePressure(),
   m_biotCoefficient()
 {
   this->registerWrapper( viewKeyStruct::newDamageString(), &m_newDamage ).
@@ -111,6 +112,11 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setApplyDefaultValue( -1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Coefficient in the calculation of the external driving force" );
+
+  this->registerWrapper( viewKeyStruct::damagePressureString(), &m_damagePressure ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "A prescribed uniform pressure in the phase-field crack" );
 
   this->registerWrapper( viewKeyStruct::biotCoefficientString(), &m_biotCoefficient ).
     setApplyDefaultValue( 0.0 ).

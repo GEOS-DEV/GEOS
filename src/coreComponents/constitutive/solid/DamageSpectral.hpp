@@ -54,11 +54,12 @@ public:
                          real64 const & inputTensileStrength,
                          real64 const & inputCompressStrength,
                          real64 const & inputDeltaCoefficient,
+                         real64 const & inputDamagePressure, 
                          arrayView1d< real64 > const & inputBiotCoefficient,
                          PARAMS && ... baseParams ):
     DamageUpdates< UPDATE_BASE >( inputNewDamage, inputOldDamage, inputDamageGrad, inputStrainEnergyDensity, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,
                                   inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputExtDrivingForceFlag,
-                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient, inputBiotCoefficient,
+                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient, inputDamagePressure, inputBiotCoefficient,
                                   std::forward< PARAMS >( baseParams )... )
   {}
 
@@ -310,6 +311,7 @@ public:
   using Damage< BASE >::m_tensileStrength;
   using Damage< BASE >::m_compressStrength;
   using Damage< BASE >::m_deltaCoefficient;
+  using Damage< BASE >::m_damagePressure;
   using Damage< BASE >::m_biotCoefficient;
 
   DamageSpectral( string const & name, dataRepository::Group * const parent );
@@ -336,6 +338,7 @@ public:
                                                                        m_tensileStrength,
                                                                        m_compressStrength,
                                                                        m_deltaCoefficient,
+                                                                       m_damagePressure,
                                                                        m_biotCoefficient.toView() );
   }
 

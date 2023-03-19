@@ -21,6 +21,7 @@
 #include "SolidMechanicsLagrangianFEM.hpp"
 #include "kernels/ImplicitSmallStrainNewmark.hpp"
 #include "kernels/ImplicitSmallStrainQuasiStatic.hpp"
+#include "kernels/ImplicitSmallStrainQuasiStaticPressurizedDamage.hpp"
 #include "kernels/ExplicitSmallStrain.hpp"
 #include "kernels/ExplicitFiniteStrain.hpp"
 
@@ -57,7 +58,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_maxForce( 0.0 ),
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
-  m_iComm( CommunicationTools::getInstance().getCommID() )
+  m_iComm( CommunicationTools::getInstance().getCommID() ),
+  m_pressurizedDamageFlag( 0 )
 {
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
@@ -112,6 +114,11 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
     setInputFlag( InputFlags::FALSE ).
     setDescription( "The maximum force contribution in the problem domain." );
 
+  registerWrapper( viewKeyStruct::pressurizedDamageFlagString(), &m_pressurizedDamageFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag to determine whether to add the pressurized term in the solid mechanics with phase-field damage." );
+
 }
 
 void SolidMechanicsLagrangianFEM::postProcessInput()
@@ -122,6 +129,7 @@ void SolidMechanicsLagrangianFEM::postProcessInput()
   linParams.isSymmetric = true;
   linParams.dofsPerNode = 3;
   linParams.amg.separateComponents = true;
+
 }
 
 SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
@@ -950,7 +958,7 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
 
 }
 
-void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void SolidMechanicsLagrangianFEM::assembleSystem( real64 const time_n,
                                                   real64 const dt,
                                                   DomainPartition & domain,
                                                   DofManager const & dofManager,
@@ -964,12 +972,25 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
 
   if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
   {
-    GEOSX_UNUSED_VAR( dt );
-    assemblyLaunch< constitutive::SolidBase,
-                    solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
-                                                                              dofManager,
-                                                                              localMatrix,
-                                                                              localRhs );
+    if( m_pressurizedDamageFlag )
+    {
+      assemblyLaunch< constitutive::DamageBase,
+                      solidMechanicsLagrangianFEMKernels::QuasiStaticPressurizedDamageFactory >( domain,
+                                                                                                 dofManager,
+                                                                                                 localMatrix,
+                                                                                                 localRhs,
+                                                                                                 time_n + dt );
+    }
+    else 
+    { 
+      GEOSX_UNUSED_VAR( time_n );
+      GEOSX_UNUSED_VAR( dt );
+      assemblyLaunch< constitutive::SolidBase,
+                      solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
+                                                                                dofManager,
+                                                                                localMatrix,
+                                                                                localRhs );
+    }
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {

@@ -222,8 +222,8 @@ void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM(
 
 }
 
-void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                          real64 const GEOSX_UNUSED_PARAM( dt ),
+void PhaseFieldDamageFEM::assembleSystem( real64 const time_n,
+                                          real64 const dt,
                                           DomainPartition & domain,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -245,6 +245,9 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
 
     if( m_fracturePressureTermFlag )
     {
+      GEOSX_UNUSED_VAR( time_n ); 
+      GEOSX_UNUSED_VAR( dt ); 
+      
       PhaseFieldPressurizedDamageKernelFactory kernelFactory( dofIndex,
                                                               dofManager.rankOffset(),
                                                               localMatrix,
@@ -268,7 +271,8 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                                    localMatrix,
                                                    localRhs,
                                                    m_fieldName,
-                                                   m_localDissipationOption=="Linear" ? 1 : 2 );
+                                                   m_localDissipationOption=="Linear" ? 1 : 2,
+                                                   time_n + dt );
 
       finiteElement::
         regionBasedKernelApplication< parallelDevicePolicy<>,

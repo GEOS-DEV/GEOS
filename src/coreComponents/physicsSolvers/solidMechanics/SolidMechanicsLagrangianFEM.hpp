@@ -237,6 +237,7 @@ public:
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
     static constexpr char const * targetNodesString() { return "targetNodes";}
     static constexpr char const * forceString() { return "Force";}
+    static constexpr char const * pressurizedDamageFlagString() { return "pressurizedDamageFlag"; }
 
     dataRepository::ViewKey newmarkGamma = { newmarkGammaString() };
     dataRepository::ViewKey newmarkBeta = { newmarkBetaString() };
@@ -284,6 +285,7 @@ protected:
   integer m_strainTheory;
   string m_contactRelationName;
   MPI_iCommData m_iComm;
+  integer m_pressurizedDamageFlag; 
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
