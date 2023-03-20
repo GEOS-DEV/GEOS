@@ -75,14 +75,7 @@ public:
   static CatalogInterface::CatalogType & getCatalog();
 
   /**
-   * @brief Generate the mesh object the input mesh object.
-   * @param[in] cellBlockManager to fill with the mesh informations
-   * @return The global length scale
-   */
-  virtual void generateCellBlockManager( CellBlockManager & cellBlockManager ) = 0;
-
-  /**
-   * @brief Generate the mesh object the input mesh object.
+   * @brief Generate the mesh.
    * @param A reference to the cellBlockManager
    */
   void generateMesh( CellBlockManager & cellBlockManager );
@@ -115,6 +108,13 @@ public:
    */
   std::map< string, string > getFieldsMapping() const { return m_fieldsMapping; }
 private:
+  /**
+   * @brief Generate the cellBlockManager object .
+   * @param[in] cellBlockManager to fill with the mesh informations
+   * @return The global length scale
+   */
+  virtual void generateCellBlockManager( CellBlockManager & cellBlockManager ) = 0;
+
   void generateWells( CellBlockManager & cellBlockManager );
 
 protected:
