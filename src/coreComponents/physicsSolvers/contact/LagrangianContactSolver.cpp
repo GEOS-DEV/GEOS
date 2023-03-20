@@ -594,7 +594,9 @@ void LagrangianContactSolver::assembleSystem( real64 const time,
 }
 
 
-real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & domain,
+real64 LagrangianContactSolver::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time ),
+                                                       real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                                       DomainPartition const & domain,
                                                        DofManager const & dofManager,
                                                        arrayView1d< real64 const > const & localRhs )
 {
@@ -1146,8 +1148,6 @@ void LagrangianContactSolver::
                 real64 sliding[ 2 ] = { dispJump[kfe][1] - previousDispJump[kfe][1], dispJump[kfe][2] - previousDispJump[kfe][2] };
                 real64 slidingNorm = sqrt( sliding[ 0 ]*sliding[ 0 ] + sliding[ 1 ]*sliding[ 1 ] );
 
-//                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding[0] << " " << sliding[1] );
-
                 if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == contact::FractureState::NewSlip ) )
                     && slidingNorm > slidingTolerance[kfe] )
                 {
@@ -1218,8 +1218,6 @@ void LagrangianContactSolver::
               }
             case contact::FractureState::Open:
               {
-//                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " opening: " << dispJump[kfe][0] );
-
                 for( localIndex i = 0; i < 3; ++i )
                 {
                   elemRHS[i] = +Ja * traction[kfe][i];
@@ -1881,30 +1879,6 @@ real64 LagrangianContactSolver::setNextDt( real64 const & currentDt,
 {
   GEOSX_UNUSED_VAR( domain );
   return currentDt;
-}
-
-bool LagrangianContactSolver::isElementInOpenState( FaceElementSubRegion const & subRegion,
-                                                    localIndex const kfe ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  using namespace fields::contact;
-
-  // It can be used only thanks to the global synchronization in AssembleSystem (SynchronizeFractureState)
-  bool res = false;
-  if( subRegion.hasWrapper( contact::traction::key() ) )
-  {
-    arrayView1d< integer const > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
-    if( kfe >= 0 && kfe < subRegion.size() )
-    {
-      res = ( fractureState[kfe] == FractureState::Open );
-    }
-    else
-    {
-      GEOSX_ERROR( "isElementInOpenState called with index out of range: " << kfe << " not in [0," << subRegion.size() << "]" );
-    }
-  }
-  return res;
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, LagrangianContactSolver, string const &, Group * const )
