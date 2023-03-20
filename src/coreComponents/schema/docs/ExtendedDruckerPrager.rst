@@ -12,7 +12,7 @@ defaultInitialFrictionAngle        real64 30       Initial friction angle (degre
 defaultPoissonRatio                real64 -1       Default Poisson's Ratio                                              
 defaultResidualFrictionAngle       real64 30       Residual friction angle (degrees)                                    
 defaultShearModulus                real64 -1       Default Shear Modulus Parameter                                      
-defaultThermalExpansionCoefficient real64 0        Default Thermal Expansion Coefficient                                
+defaultThermalExpansionCoefficient real64 0        Default Linear Thermal Expansion Coefficient of the Solid Rock Frame 
 defaultYoungModulus                real64 -1       Default Young's Modulus                                              
 name                               string required A name is required for any non-unique nodes                          
 ================================== ====== ======== ==================================================================== 

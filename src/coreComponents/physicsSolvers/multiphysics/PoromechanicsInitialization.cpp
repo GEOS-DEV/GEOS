@@ -19,8 +19,8 @@
 #include "PoromechanicsInitialization.hpp"
 
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/multiphysics/MultiphasePoromechanicsSolver.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
+#include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "mainInterface/ProblemManager.hpp"
 
 namespace geosx
@@ -35,14 +35,14 @@ namespace
 template< typename POROMECHANICS_SOLVER > class
   PoromechanicsCatalogNames {};
 
-// Class specialization for a POROMECHANICS_SOLVER set to SinglePhasePoromechanicsSolver
-template<> class PoromechanicsCatalogNames< SinglePhasePoromechanicsSolver >
+// Class specialization for a POROMECHANICS_SOLVER set to SinglePhasePoromechanics
+template<> class PoromechanicsCatalogNames< SinglePhasePoromechanics >
 {
 public:
   static string name() { return "SinglePhasePoromechanicsInitialization"; }
 };
 // Class specialization for a POROMECHANICS_SOLVER set to MultiphasePoromechanics
-template<> class PoromechanicsCatalogNames< MultiphasePoromechanicsSolver >
+template<> class PoromechanicsCatalogNames< MultiphasePoromechanics >
 {
 public:
   static string name() { return "MultiphasePoromechanicsInitialization"; }
@@ -126,8 +126,8 @@ execute( real64 const time_n,
 
 namespace
 {
-typedef PoromechanicsInitialization< MultiphasePoromechanicsSolver > MultiphasePoromechanicsInitialization;
-typedef PoromechanicsInitialization< SinglePhasePoromechanicsSolver > SinglePhasePoromechanicsInitialization;
+typedef PoromechanicsInitialization< MultiphasePoromechanics > MultiphasePoromechanicsInitialization;
+typedef PoromechanicsInitialization< SinglePhasePoromechanics > SinglePhasePoromechanicsInitialization;
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsInitialization, string const &, Group * const )
 }
