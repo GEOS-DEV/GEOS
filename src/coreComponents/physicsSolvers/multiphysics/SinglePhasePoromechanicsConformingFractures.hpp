@@ -19,18 +19,18 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
 
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/contact/LagrangianContactSolver.hpp"
 
 namespace geosx
 {
 
-class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< SinglePhasePoromechanicsSolver, LagrangianContactSolver >
+class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< SinglePhasePoromechanics, LagrangianContactSolver >
 {
 public:
 
-  using Base = CoupledSolver< SinglePhasePoromechanicsSolver, LagrangianContactSolver >;
+  using Base = CoupledSolver< SinglePhasePoromechanics, LagrangianContactSolver >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -77,7 +77,7 @@ public:
    * @brief accessor for the pointer to the poromechanics solver
    * @return a pointer to the flow solver
    */
-  SinglePhasePoromechanicsSolver * poromechanicsSolver() const
+  SinglePhasePoromechanics * poromechanicsSolver() const
   {
     return std::get< toUnderlying( SolverType::Poromechanics ) >( m_solvers );
   }

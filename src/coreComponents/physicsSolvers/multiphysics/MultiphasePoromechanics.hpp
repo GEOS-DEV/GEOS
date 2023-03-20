@@ -13,11 +13,11 @@
  */
 
 /**
- * @file MultiphasePoromechanicsSolver.hpp
+ * @file MultiphasePoromechanics.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_
 
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
@@ -28,8 +28,8 @@
 namespace geosx
 {
 
-class MultiphasePoromechanicsSolver : public CoupledSolver< SolidMechanicsLagrangianFEM,
-                                                            CompositionalMultiphaseBase >
+class MultiphasePoromechanics : public CoupledSolver< SolidMechanicsLagrangianFEM,
+                                                      CompositionalMultiphaseBase >
 {
 public:
 
@@ -50,19 +50,19 @@ public:
   static string coupledSolverAttributePrefix() { return "poromechanics"; }
 
   /**
-   * @brief main constructor for MultiphasePoromechanicsSolver Objects
-   * @param name the name of this instantiation of MultiphasePoromechanicsSolver in the repository
-   * @param parent the parent group of this instantiation of MultiphasePoromechanicsSolver
+   * @brief main constructor for MultiphasePoromechanics Objects
+   * @param name the name of this instantiation of MultiphasePoromechanics in the repository
+   * @param parent the parent group of this instantiation of MultiphasePoromechanics
    */
-  MultiphasePoromechanicsSolver( const string & name,
-                                 Group * const parent );
+  MultiphasePoromechanics( const string & name,
+                           Group * const parent );
 
   /// Destructor for the class
-  ~MultiphasePoromechanicsSolver() override {};
+  ~MultiphasePoromechanics() override {};
 
   /**
    * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new MultiphasePoromechanicsSolver object through the object catalog.
+   * @return string that contains the catalog name to generate a new MultiphasePoromechanics object through the object catalog.
    */
   static string catalogName() { return "MultiphasePoromechanics"; }
 
@@ -105,6 +105,8 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
+  /**@}*/
+
   /*
    * @brief Utility function to update the stabilization parameters at each time step
    * @param[in] domain the domain partition
@@ -118,7 +120,8 @@ public:
   void setStressInitialization( integer const performStressInitialization )
   { m_performStressInitialization = performStressInitialization; }
 
-  /**@}*/
+  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override final;
+
 
   enum class StabilizationType : integer
   {
@@ -128,6 +131,10 @@ public:
   };
 
 protected:
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  virtual void initializePreSubGroups() override;
 
   struct viewKeyStruct : Base::viewKeyStruct
   {
@@ -143,12 +150,13 @@ protected:
     /// Multiplier on stabilization
     constexpr static char const * stabilizationMultiplierString() { return "stabilizationMultiplier"; }
 
+    /// Flag to determine whether or not this is aa thermal simulation
+    constexpr static char const * isThermalString() { return "isThermal"; }
+
     /// Flag to indicate that the solver is going to perform stress initialization
     constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
 
   };
-
-  virtual void initializePreSubGroups() override;
 
 private:
 
@@ -172,12 +180,15 @@ private:
   /// Multiplier on stabilization constant
   real64 m_stabilizationMultiplier;
 
+  /// flag to determine whether or not this is a thermal simulation
+  integer m_isThermal;
+
   /// Flag to indicate that the solver is going to perform stress initialization
   integer m_performStressInitialization;
 
 };
 
-ENUM_STRINGS( MultiphasePoromechanicsSolver::StabilizationType,
+ENUM_STRINGS( MultiphasePoromechanics::StabilizationType,
               "None",
               "Global",
               "Local" );
@@ -185,13 +196,13 @@ ENUM_STRINGS( MultiphasePoromechanicsSolver::StabilizationType,
 template< typename CONSTITUTIVE_BASE,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
-real64 MultiphasePoromechanicsSolver::assemblyLaunch( MeshLevel & mesh,
-                                                      DofManager const & dofManager,
-                                                      arrayView1d< string const > const & regionNames,
-                                                      string const & materialNamesString,
-                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                      arrayView1d< real64 > const & localRhs,
-                                                      PARAMS && ... params )
+real64 MultiphasePoromechanics::assemblyLaunch( MeshLevel & mesh,
+                                                DofManager const & dofManager,
+                                                arrayView1d< string const > const & regionNames,
+                                                string const & materialNamesString,
+                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                arrayView1d< real64 > const & localRhs,
+                                                PARAMS && ... params )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -222,4 +233,4 @@ real64 MultiphasePoromechanicsSolver::assemblyLaunch( MeshLevel & mesh,
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_ */
