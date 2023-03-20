@@ -1,7 +1,7 @@
-
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp"
 #include "policies.hpp"
 
 
@@ -17,14 +17,10 @@ namespace geosx
 {
 using namespace constitutive;
 using namespace finiteElement;
-namespace poromechanicsKernels
+namespace thermalPoromechanicsKernels
 {
-  INSTANTIATION( SinglePhasePoromechanics )
-  INSTANTIATION( MultiphasePoromechanics )  
-}
-namespace poromechanicsEFEMKernels
-{
-  INSTANTIATION( SinglePhasePoromechanicsEFEM )
+  INSTANTIATION( ThermalMultiphasePoromechanics )	
+  INSTANTIATION( ThermalSinglePhasePoromechanics )
 }
 
 }
