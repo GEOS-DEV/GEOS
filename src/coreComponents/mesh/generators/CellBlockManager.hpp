@@ -197,7 +197,6 @@ public:
    */
   void setGlobalLength( real64 globalLength) { m_globalLength = globalLength; }
 
-  //std::vector<WellBlockABC> getWellBlocks( ) { return m_wellBlocks; }
 private:
 
   struct viewKeyStruct
@@ -268,7 +267,6 @@ private:
   localIndex m_numFaces;
   localIndex m_numEdges;
   
-   //std::vector<WellBlockABC> m_wellBlocks;
 };
 
 }
