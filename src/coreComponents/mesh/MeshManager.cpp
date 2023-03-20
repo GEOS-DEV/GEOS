@@ -89,7 +89,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
       SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
       partition = partitionDescriptor.getSpatialPartition();
     }
-    domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() ).setGlobalLengthScale( globalLength );
+    meshBody.setGlobalLengthScale( globalLength );
   } );
 }
 
