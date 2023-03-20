@@ -293,7 +293,7 @@ protected:
   /// View on derivative of fluid density w.r.t temperature
   arrayView2d< real64 const > const m_dDensity_dTemp;
 
-  /// View on derivative of fluid density w.r.t temperature
+  /// View on derivative of porosity w.r.t temperature
   arrayView2d< real64 const > const m_dPoro_dTemp;
 
   /// Views on fluid internal energy

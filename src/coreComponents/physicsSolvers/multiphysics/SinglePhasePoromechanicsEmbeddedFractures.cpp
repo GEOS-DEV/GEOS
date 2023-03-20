@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsSolverEmbeddedFractures.cpp
+ * @file SinglePhasePoromechanicsEmbeddedFractures.cpp
  */
 
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
@@ -38,7 +38,7 @@ using namespace fields;
 
 SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
                                                                                       Group * const parent ):
-  SinglePhasePoromechanicsSolver( name, parent ),
+  SinglePhasePoromechanics( name, parent ),
   m_fracturesSolverName()
 {
   registerWrapper( viewKeyStruct::fracturesSolverNameString(), &m_fracturesSolverName ).
@@ -59,14 +59,14 @@ SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFrac
 
 void SinglePhasePoromechanicsEmbeddedFractures::postProcessInput()
 {
-  SinglePhasePoromechanicsSolver::postProcessInput();
+  SinglePhasePoromechanics::postProcessInput();
 
   m_fracturesSolver  = &this->getParent().getGroup< SolidMechanicsEmbeddedFractures >( m_fracturesSolverName );
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
-  SinglePhasePoromechanicsSolver::registerDataOnMesh( meshBodies );
+  SinglePhasePoromechanics::registerDataOnMesh( meshBodies );
 
   using namespace fields::contact;
 
@@ -552,7 +552,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::applySystemSolution( DofManager 
 void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
   /// 1. update the reservoir
-  SinglePhasePoromechanicsSolver::updateState( domain );
+  SinglePhasePoromechanics::updateState( domain );
 
   /// 2. update the fractures
   m_fracturesSolver->updateState( domain );

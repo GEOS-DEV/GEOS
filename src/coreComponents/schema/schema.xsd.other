@@ -1542,7 +1542,7 @@
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageSpectralElasticIsotropicType">
@@ -1562,7 +1562,7 @@
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageVolDevElasticIsotropicType">
@@ -1582,7 +1582,7 @@
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DeadOilFluidType">
@@ -1662,7 +1662,7 @@
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--virginCompressionIndex => Virgin compression index-->
 		<xsd:attribute name="virginCompressionIndex" type="real64_array" />
@@ -1688,7 +1688,7 @@
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicType">
@@ -1702,7 +1702,7 @@
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicPressureDependentType">
@@ -1720,7 +1720,7 @@
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticOrthotropicType">
@@ -1748,7 +1748,7 @@
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticTransverseIsotropicType">
@@ -1768,7 +1768,7 @@
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ExtendedDruckerPragerType">
@@ -1796,7 +1796,7 @@
 		<xsd:attribute name="stateVariable" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="FrictionlessContactType" />
@@ -1835,7 +1835,7 @@
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--virginCompressionIndex => Virgin compression index-->
 		<xsd:attribute name="virginCompressionIndex" type="real64_array" />

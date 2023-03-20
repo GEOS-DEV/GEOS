@@ -26,7 +26,7 @@
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 
 namespace geosx
 {
@@ -49,10 +49,10 @@ public:
   static string name() { return "SinglePhaseReservoir"; }
 };
 // Class specialization for a RESERVOIR_SOLVER set to SinglePhasePoromechanics
-template<> class SinglePhaseCatalogNames< SinglePhasePoromechanicsSolver >
+template<> class SinglePhaseCatalogNames< SinglePhasePoromechanics >
 {
 public:
-  static string name() { return SinglePhasePoromechanicsSolver::catalogName()+"Reservoir"; }
+  static string name() { return SinglePhasePoromechanics::catalogName()+"Reservoir"; }
 };
 }
 
@@ -87,7 +87,7 @@ flowSolver() const
 
 template<>
 SinglePhaseBase const *
-SinglePhaseReservoirAndWells< SinglePhasePoromechanicsSolver >::
+SinglePhaseReservoirAndWells< SinglePhasePoromechanics >::
 flowSolver() const
 {
   return this->reservoirSolver()->flowSolver();
@@ -110,7 +110,7 @@ setMGRStrategy()
 
 template<>
 void
-SinglePhaseReservoirAndWells< SinglePhasePoromechanicsSolver >::
+SinglePhaseReservoirAndWells< SinglePhasePoromechanics >::
 setMGRStrategy()
 {
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM )
@@ -366,7 +366,7 @@ assembleCouplingTerms( real64 const time_n,
 namespace
 {
 typedef SinglePhaseReservoirAndWells< SinglePhaseBase > SinglePhaseFlowAndWells;
-typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanicsSolver > SinglePhasePoromechanicsAndWells;
+typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanics > SinglePhasePoromechanicsAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFlowAndWells, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsAndWells, string const &, Group * const )
 }
