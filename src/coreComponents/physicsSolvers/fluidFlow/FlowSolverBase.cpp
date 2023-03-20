@@ -129,6 +129,9 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< fields::flow::hydraulicAperture >( getName() ).
         setDefaultValue( faceRegion.getDefaultAperture() );
 
+      subRegion.registerField< fields::flow::minimumHydraulicAperture >( getName() ).
+        setDefaultValue( faceRegion.getDefaultAperture() );
+
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();

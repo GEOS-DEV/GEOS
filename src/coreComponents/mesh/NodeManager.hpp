@@ -140,6 +140,13 @@ public:
                   GeometricObjectManager const & geometries );
 
   /**
+   * @brief Build sets from geometric objects.
+   * @param geometries Provides other nodes sets, with some filtering based on node coordinates.
+   */
+  void buildGeometricSets( GeometricObjectManager const & geometries );
+
+
+  /**
    * @brief Builds the node-on-domain-boundary indicator.
    * @param[in] faceIndex The computation is based on the face-on-domain-boundary indicator.
    * @see ObjectManagerBase::getDomainBoundaryIndicator()

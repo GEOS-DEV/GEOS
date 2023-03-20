@@ -432,9 +432,9 @@ protected:
    * @param Domain the domain parition
    * @param solverType the index of the solver withing this coupled solver.
    */
-  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const solverType )
+  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
   {
-    GEOSX_UNUSED_VAR( Domain, solverType );
+    GEOSX_UNUSED_VAR( domain, solverType );
   }
 
   bool checkSequentialConvergence( int const & iter ) const
