@@ -74,7 +74,8 @@ public:
     }
     if( numberOfBuffersToStoreOnHost < 0 )
     {
-      numberOfBuffersToStoreOnHost = LifoStorageCommon< T, INDEX_TYPE >::computeNumberOfBufferOnHost( - numberOfBuffersToStoreOnHost, m_bufferSize, m_maxNumberOfBuffers, numberOfBuffersToStoreOnDevice );
+      numberOfBuffersToStoreOnHost =
+        LifoStorageCommon< T, INDEX_TYPE >::computeNumberOfBufferOnHost( -numberOfBuffersToStoreOnHost, m_bufferSize, m_maxNumberOfBuffers, numberOfBuffersToStoreOnDevice );
     }
     LIFO_LOG_RANK( " LIFO : allocating "<< numberOfBuffersToStoreOnHost <<" buffers on host" );
     LIFO_LOG_RANK( " LIFO : allocating "<< numberOfBuffersToStoreOnDevice <<" buffers on device" );
