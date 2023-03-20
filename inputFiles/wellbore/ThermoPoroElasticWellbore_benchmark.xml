@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./THM_wellbore_base.xml" />
+    <File name="./ThermoPoroElasticWellbore_base.xml" />
   </Included>
 
   <!-- SPHINX_WellboreMesh -->
@@ -40,7 +40,7 @@
       endTime="360"
       forceDt="60"
       target="/Outputs/stressHistoryOutput_rock"/>
-	<PeriodicEvent
+    <PeriodicEvent
       name="stressHistoryCollection_rock_2"
       beginTime="360"
       endTime="3600"
@@ -65,7 +65,7 @@
       endTime="360"
       forceDt="60"
       target="/Outputs/temperatureHistoryOutput_rock"/>
-	<PeriodicEvent
+    <PeriodicEvent
       name="temperatureHistoryCollection_rock_2"
       beginTime="360"
       endTime="3600"
@@ -78,7 +78,7 @@
       forceDt="360"
       target="/Outputs/temperatureHistoryOutput_rock"/>
 
-	<PeriodicEvent
+    <PeriodicEvent
       name="pressureHistoryCollection_rock_1"
       beginTime="0"
       endTime="360"
@@ -90,7 +90,7 @@
       endTime="360"
       forceDt="60"
       target="/Outputs/pressureHistoryOutput_rock"/>
-	<PeriodicEvent
+    <PeriodicEvent
       name="pressureHistoryCollection_rock_2"
       beginTime="360"
       endTime="3600"
@@ -116,7 +116,7 @@
       endTime="360"
       forceDt="60"
       target="/Outputs/displacementHistoryOutput"/>
-	<PeriodicEvent
+    <PeriodicEvent
       name="displacementHistoryCollection_2"
       beginTime="360"
       endTime="3600"
