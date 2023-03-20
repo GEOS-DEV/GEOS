@@ -105,16 +105,13 @@ smallStrainUpdate( localIndex const k,
                                                        dSolidDensity_dPressure );
 
   // Step 2: compute the body force
-  if( m_gravityAcceleration > 0.0 )
-  {
-    computeBodyForce( k, q,
-                      porosity,
-                      dPorosity_dVolStrain,
-                      dPorosity_dPressure,
-                      dPorosity_dTemperature,
-                      dSolidDensity_dPressure,
-                      stack );
-  }
+  computeBodyForce( k, q,
+                    porosity,
+                    dPorosity_dVolStrain,
+                    dPorosity_dPressure,
+                    dPorosity_dTemperature,
+                    dSolidDensity_dPressure,
+                    stack );
 
   // Step 3: compute fluid mass increment
   computeFluidIncrement( k, q,
@@ -202,16 +199,13 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
     stack.totalStress,
     -detJxW );
 
-  if( m_gravityAcceleration > 0.0 )
-  {
-    LinearFormUtilities::compute< displacementTestSpace,
-                                  DifferentialOperator::Identity >
-    (
-      stack.localResidualMomentum,
-      N,
-      stack.bodyForce,
-      detJxW );
-  }
+  LinearFormUtilities::compute< displacementTestSpace,
+                                DifferentialOperator::Identity >
+  (
+    stack.localResidualMomentum,
+    N,
+    stack.bodyForce,
+    detJxW );
 
   // Step 2: compute local linear momentum balance residual derivatives with respect to displacement
   BilinearFormUtilities::compute< displacementTestSpace,
@@ -225,19 +219,16 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
     dNdX,
     -detJxW );
 
-  if( m_gravityAcceleration > 0.0 )
-  {
-    BilinearFormUtilities::compute< displacementTestSpace,
-                                    displacementTrialSpace,
-                                    DifferentialOperator::Identity,
-                                    DifferentialOperator::Divergence >
-    (
-      stack.dLocalResidualMomentum_dDisplacement,
-      N,
-      stack.dBodyForce_dVolStrainIncrement,
-      dNdX,
-      detJxW );
-  }
+  BilinearFormUtilities::compute< displacementTestSpace,
+                                  displacementTrialSpace,
+                                  DifferentialOperator::Identity,
+                                  DifferentialOperator::Divergence >
+  (
+    stack.dLocalResidualMomentum_dDisplacement,
+    N,
+    stack.dBodyForce_dVolStrainIncrement,
+    dNdX,
+    detJxW );
 
   // Step 3: compute local linear momentum balance residual derivatives with respect to pressure
   BilinearFormUtilities::compute< displacementTestSpace,
@@ -251,19 +242,16 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
     1.0,
     -detJxW );
 
-  if( m_gravityAcceleration > 0.0 )
-  {
-    BilinearFormUtilities::compute< displacementTestSpace,
-                                    pressureTrialSpace,
-                                    DifferentialOperator::Identity,
-                                    DifferentialOperator::Identity >
-    (
-      stack.dLocalResidualMomentum_dPressure,
-      N,
-      stack.dBodyForce_dPressure,
-      1.0,
-      detJxW );
-  }
+  BilinearFormUtilities::compute< displacementTestSpace,
+                                  pressureTrialSpace,
+                                  DifferentialOperator::Identity,
+                                  DifferentialOperator::Identity >
+  (
+    stack.dLocalResidualMomentum_dPressure,
+    N,
+    stack.dBodyForce_dPressure,
+    1.0,
+    detJxW );
 }
 
 template< typename SUBREGION_TYPE,
