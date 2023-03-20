@@ -12,7 +12,7 @@
       solidSolverName="matrixMechSolver"      
       logLevel="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-5"
+        newtonTol="1.0e-1"
         newtonMaxIter="10"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
