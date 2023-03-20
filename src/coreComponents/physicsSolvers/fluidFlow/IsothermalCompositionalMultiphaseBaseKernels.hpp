@@ -31,6 +31,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
+#include "physicsSolvers/SolverBaseKernels.hpp"
 
 namespace geosx
 {
@@ -1175,9 +1176,9 @@ class ScalingForSystemSolutionKernelFactory
 {
 public:
 
-  /**
-   * @brief Create a new kernel and launch
-   * @tparam POLICY the policy used in the RAJA kernel
+  /*
+   * @brief Create and launch the kernel computing the scaling factor
+   * @tparam POLICY the kernel policy
    * @param[in] maxRelativePresChange the max allowed relative pressure change
    * @param[in] maxCompFracChange the max allowed comp fraction change
    * @param[in] rankOffset the rank offset
@@ -1185,6 +1186,7 @@ public:
    * @param[in] dofKey the dof key to get dof numbers
    * @param[in] subRegion the subRegion
    * @param[in] localSolution the Newton update
+   * @return the scaling factor
    */
   template< typename POLICY >
   static real64
@@ -1204,7 +1206,6 @@ public:
                                            numComp, dofKey, subRegion, localSolution, pressure, compDens );
     return ScalingForSystemSolutionKernel::launch< POLICY >( subRegion.size(), kernel );
   }
-
 };
 
 /******************************** SolutionCheckKernel ********************************/
@@ -1364,40 +1365,154 @@ public:
 
 };
 
-
 /******************************** ResidualNormKernel ********************************/
 
-struct ResidualNormKernel
+/**
+ * @class ResidualNormKernel
+ */
+class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
 {
+public:
 
-  template< typename POLICY >
-  static void launch( arrayView1d< real64 const > const & localResidual,
-                      globalIndex const rankOffset,
-                      integer const numComponents,
+  using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
+  using Base::minNormalizer;
+  using Base::m_rankOffset;
+  using Base::m_localResidual;
+  using Base::m_dofNumber;
+
+  ResidualNormKernel( globalIndex const rankOffset,
+                      arrayView1d< real64 const > const & localResidual,
                       arrayView1d< globalIndex const > const & dofNumber,
-                      arrayView1d< integer const > const & ghostRank,
-                      arrayView1d< real64 const > const & refPoro,
-                      arrayView1d< real64 const > const & volume,
-                      arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDens_n,
-                      real64 & localResidualNorm )
+                      arrayView1d< localIndex const > const & ghostRank,
+                      integer const numComponents,
+                      ElementSubRegionBase const & subRegion,
+                      MultiFluidBase const & fluid,
+                      CoupledSolidBase const & solid )
+    : Base( rankOffset,
+            localResidual,
+            dofNumber,
+            ghostRank ),
+    m_numComponents( numComponents ),
+    m_volume( subRegion.getElementVolume() ),
+    m_porosity_n( solid.getPorosity_n() ),
+    m_totalDens_n( fluid.totalDensity_n() )
+  {}
+
+  GEOSX_HOST_DEVICE
+  virtual void computeLinf( localIndex const ei,
+                            LinfStackVariables & stack ) const override
   {
-    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localSum( 0.0 );
+    // this should never be zero if the simulation is set up correctly, but we never know
+    real64 const massNormalizer = LvArray::math::max( minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const volumeNormalizer = LvArray::math::max( minNormalizer, m_porosity_n[ei][0] * m_volume[ei] );
 
-    forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    // step 1: mass residuals
+
+    for( integer idof = 0; idof < m_numComponents; ++idof )
     {
-      if( ghostRank[ei] < 0 )
+      real64 const valMass = LvArray::math::abs( m_localResidual[stack.localRow + idof] ) / massNormalizer;
+      if( valMass > stack.localValue[0] )
       {
-        localIndex const localRow = dofNumber[ei] - rankOffset;
-        real64 const normalizer = totalDens_n[ei][0] * refPoro[ei] * volume[ei];
-
-        for( integer idof = 0; idof < numComponents + 1; ++idof )
-        {
-          real64 const val = localResidual[localRow + idof] / normalizer;
-          localSum += val * val;
-        }
+        stack.localValue[0] = valMass;
       }
-    } );
-    localResidualNorm += localSum.get();
+    }
+
+    // step 2: volume residual
+
+    real64 const valVol = LvArray::math::abs( m_localResidual[stack.localRow + m_numComponents] ) / volumeNormalizer;
+    if( valVol > stack.localValue[0] )
+    {
+      stack.localValue[0] = valVol;
+    }
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual void computeL2( localIndex const ei,
+                          L2StackVariables & stack ) const override
+  {
+    // note: for the L2 norm, we bundle the volume and mass residuals/normalizers
+
+    real64 const massNormalizer = LvArray::math::max( minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+
+    // step 1: mass residuals
+
+    for( integer idof = 0; idof < m_numComponents; ++idof )
+    {
+      stack.localValue[0] += m_localResidual[stack.localRow + idof] * m_localResidual[stack.localRow + idof];
+      stack.localNormalizer[0] += massNormalizer;
+    }
+
+    // step 2: volume residual
+
+    real64 const val = m_localResidual[stack.localRow + m_numComponents] * m_totalDens_n[ei][0]; // we need a mass here, hence the
+                                                                                                 // multiplication
+    stack.localValue[0] += val * val;
+    stack.localNormalizer[0] += massNormalizer;
+  }
+
+
+protected:
+
+  /// Number of fluid coponents
+  integer const m_numComponents;
+
+  /// View on the volume
+  arrayView1d< real64 const > const m_volume;
+
+  /// View on porosity at the previous converged time step
+  arrayView2d< real64 const > const m_porosity_n;
+
+  /// View on total mass/molar density at the previous converged time step
+  arrayView2d< real64 const, multifluid::USD_FLUID > const m_totalDens_n;
+
+};
+
+/**
+ * @class ResidualNormKernelFactory
+ */
+class ResidualNormKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] normType the type of norm used (Linf or L2)
+   * @param[in] numComps the number of fluid components
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] localResidual the residual vector on my MPI rank
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   * @param[in] solid the solid model
+   * @param[out] residualNorm the residual norm on the subRegion
+   * @param[out] residualNormalizer the residual normalizer on the subRegion
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( solverBaseKernels::NormType const normType,
+                   integer const numComps,
+                   globalIndex const rankOffset,
+                   string const dofKey,
+                   arrayView1d< real64 const > const & localResidual,
+                   ElementSubRegionBase const & subRegion,
+                   MultiFluidBase const & fluid,
+                   CoupledSolidBase const & solid,
+                   real64 (& residualNorm)[1],
+                   real64 (& residualNormalizer)[1] )
+  {
+    arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, numComps, subRegion, fluid, solid );
+    if( normType == solverBaseKernels::NormType::Linf )
+    {
+      ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
+    }
+    else // L2 norm
+    {
+      ResidualNormKernel::launchL2< POLICY >( subRegion.size(), kernel, residualNorm, residualNormalizer );
+    }
   }
 
 };
@@ -1424,6 +1539,7 @@ struct StatisticsKernel
   launch( localIndex const size,
           integer const numComps,
           integer const numPhases,
+          real64 const relpermThreshold,
           arrayView1d< integer const > const & elemGhostRank,
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 const > const & pres,
@@ -1435,6 +1551,7 @@ struct StatisticsKernel
           arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFraction,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
+          arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelperm,
           real64 & minPres,
           real64 & avgPresNumerator,
           real64 & maxPres,
@@ -1447,6 +1564,7 @@ struct StatisticsKernel
           arrayView1d< real64 > const & phaseDynamicPoreVol,
           arrayView1d< real64 > const & phaseMass,
           arrayView1d< real64 > const & trappedPhaseMass,
+          arrayView1d< real64 > const & immobilePhaseMass,
           arrayView2d< real64 > const & dissolvedComponentMass )
   {
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPres( LvArray::NumericLimits< real64 >::max );
@@ -1465,6 +1583,7 @@ struct StatisticsKernel
 
     forAll< parallelDevicePolicy<> >( size, [numComps,
                                              numPhases,
+                                             relpermThreshold,
                                              elemGhostRank,
                                              volume,
                                              refPorosity,
@@ -1475,6 +1594,7 @@ struct StatisticsKernel
                                              phaseDensity,
                                              phaseVolFrac,
                                              phaseTrappedVolFrac,
+                                             phaseRelperm,
                                              phaseCompFraction,
                                              subRegionMinPres,
                                              subRegionAvgPresNumerator,
@@ -1488,6 +1608,7 @@ struct StatisticsKernel
                                              phaseDynamicPoreVol,
                                              phaseMass,
                                              trappedPhaseMass,
+                                             immobilePhaseMass,
                                              dissolvedComponentMass] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       if( elemGhostRank[ei] >= 0 )
@@ -1519,6 +1640,10 @@ struct StatisticsKernel
         RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseDynamicPoreVol[ip], elemPhaseVolume );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseMass[ip], elemPhaseMass );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &trappedPhaseMass[ip], elemTrappedPhaseMass );
+        if( phaseRelperm[ei][0][ip] < relpermThreshold )
+        {
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &immobilePhaseMass[ip], elemPhaseMass );
+        }
         for( integer ic = 0; ic < numComps; ++ic )
         {
           // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
@@ -1539,9 +1664,9 @@ struct StatisticsKernel
     totalUncompactedPoreVol = subRegionTotalUncompactedPoreVol.get();
 
     // dummy loop to bring data back to the CPU
-    forAll< serialPolicy >( 1, [phaseDynamicPoreVol, phaseMass, trappedPhaseMass, dissolvedComponentMass] ( localIndex const )
+    forAll< serialPolicy >( 1, [phaseDynamicPoreVol, phaseMass, trappedPhaseMass, immobilePhaseMass, dissolvedComponentMass] ( localIndex const )
     {
-      GEOSX_UNUSED_VAR( phaseDynamicPoreVol, phaseMass, trappedPhaseMass, dissolvedComponentMass );
+      GEOSX_UNUSED_VAR( phaseDynamicPoreVol, phaseMass, trappedPhaseMass, immobilePhaseMass, dissolvedComponentMass );
     } );
   }
 };

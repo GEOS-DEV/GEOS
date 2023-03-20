@@ -133,7 +133,6 @@ GEOSX_FORCE_INLINE
 void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 smallStrainUpdate( localIndex const k,
                    localIndex const q,
-                   real64 const ( &strainIncrement )[6],
                    StackVariables & stack ) const
 {
   real64 porosity = 0.0;
@@ -147,9 +146,9 @@ smallStrainUpdate( localIndex const k,
   m_constitutiveUpdate.smallStrainUpdatePoromechanics( k, q,
                                                        m_pressure_n[k],
                                                        m_pressure[k],
-                                                       stack.deltaTemperatureFromInit,
+                                                       stack.temperature,
                                                        stack.deltaTemperatureFromLastStep,
-                                                       strainIncrement,
+                                                       stack.strainIncrement,
                                                        stack.totalStress,
                                                        stack.dTotalStress_dPressure,
                                                        stack.dTotalStress_dTemperature,
@@ -162,16 +161,13 @@ smallStrainUpdate( localIndex const k,
                                                        dSolidDensity_dPressure );
 
   // Step 2: compute the body force
-  if( m_gravityAcceleration > 0.0 )
-  {
-    computeBodyForce( k, q,
-                      porosity,
-                      dPorosity_dVolStrain,
-                      dPorosity_dPressure,
-                      dPorosity_dTemperature,
-                      dSolidDensity_dPressure,
-                      stack );
-  }
+  computeBodyForce( k, q,
+                    porosity,
+                    dPorosity_dVolStrain,
+                    dPorosity_dPressure,
+                    dPorosity_dTemperature,
+                    dSolidDensity_dPressure,
+                    stack );
 
   // Step 3: compute fluid mass increment
   computeFluidIncrement( k, q,
@@ -426,16 +422,13 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
     stack.totalStress,
     -detJxW );
 
-  if( m_gravityAcceleration > 0.0 )
-  {
-    LinearFormUtilities::compute< displacementTestSpace,
-                                  DifferentialOperator::Identity >
-    (
-      stack.localResidualMomentum,
-      N,
-      stack.bodyForce,
-      detJxW );
-  }
+  LinearFormUtilities::compute< displacementTestSpace,
+                                DifferentialOperator::Identity >
+  (
+    stack.localResidualMomentum,
+    N,
+    stack.bodyForce,
+    detJxW );
 
   // Step 2: compute local linear momentum balance residual derivatives with respect to displacement
   BilinearFormUtilities::compute< displacementTestSpace,
@@ -449,19 +442,16 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
     dNdX,
     -detJxW );
 
-  if( m_gravityAcceleration > 0.0 )
-  {
-    BilinearFormUtilities::compute< displacementTestSpace,
-                                    displacementTrialSpace,
-                                    DifferentialOperator::Identity,
-                                    DifferentialOperator::Divergence >
-    (
-      stack.dLocalResidualMomentum_dDisplacement,
-      N,
-      stack.dBodyForce_dVolStrainIncrement,
-      dNdX,
-      detJxW );
-  }
+  BilinearFormUtilities::compute< displacementTestSpace,
+                                  displacementTrialSpace,
+                                  DifferentialOperator::Identity,
+                                  DifferentialOperator::Divergence >
+  (
+    stack.dLocalResidualMomentum_dDisplacement,
+    N,
+    stack.dBodyForce_dVolStrainIncrement,
+    dNdX,
+    detJxW );
 
   // Step 3: compute local linear momentum balance residual derivatives with respect to pressure
   BilinearFormUtilities::compute< displacementTestSpace,
@@ -475,34 +465,28 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
     1.0,
     -detJxW );
 
-  if( m_gravityAcceleration > 0.0 )
-  {
-    BilinearFormUtilities::compute< displacementTestSpace,
-                                    pressureTrialSpace,
-                                    DifferentialOperator::Identity,
-                                    DifferentialOperator::Identity >
-    (
-      stack.dLocalResidualMomentum_dPressure,
-      N,
-      stack.dBodyForce_dPressure,
-      1.0,
-      detJxW );
-  }
+  BilinearFormUtilities::compute< displacementTestSpace,
+                                  pressureTrialSpace,
+                                  DifferentialOperator::Identity,
+                                  DifferentialOperator::Identity >
+  (
+    stack.dLocalResidualMomentum_dPressure,
+    N,
+    stack.dBodyForce_dPressure,
+    1.0,
+    detJxW );
 
   // Step 4: compute local linear momentum balance residual derivatives with respect to components
-  if( m_gravityAcceleration > 0.0 )
-  {
-    BilinearFormUtilities::compute< displacementTestSpace,
-                                    FunctionSpace::P0,
-                                    DifferentialOperator::Identity,
-                                    DifferentialOperator::Identity >
-    (
-      stack.dLocalResidualMomentum_dComponents,
-      N,
-      stack.dBodyForce_dComponents,
-      1.0,
-      detJxW );
-  }
+  BilinearFormUtilities::compute< displacementTestSpace,
+                                  FunctionSpace::P0,
+                                  DifferentialOperator::Identity,
+                                  DifferentialOperator::Identity >
+  (
+    stack.dLocalResidualMomentum_dComponents,
+    N,
+    stack.dBodyForce_dComponents,
+    1.0,
+    detJxW );
 }
 
 template< typename SUBREGION_TYPE,
@@ -624,13 +608,13 @@ quadraturePointKernel( localIndex const k,
                                                                            stack.feStack, dNdX );
 
   // Step 2: compute strain increment
-  real64 strainIncrement[6]{};
-  FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
+  LvArray::tensorOps::fill< 6 >( stack.strainIncrement, 0.0 );
+  FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, stack.strainIncrement );
 
   // Step 3: compute 1) the total stress, 2) the body force terms, and 3) the fluidMassIncrement
   // using quantities returned by the PorousSolid constitutive model.
   // This function also computes the derivatives of these three quantities wrt primary variables
-  smallStrainUpdate( k, q, strainIncrement, stack );
+  smallStrainUpdate( k, q, stack );
 
   // Step 4: use the total stress and the body force to increment the local momentum balance residual
   // This function also fills the local Jacobian rows corresponding to the momentum balance.
@@ -675,6 +659,8 @@ complete( localIndex const k,
     for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[numDofPerTestSupportPoint * localNode + dim] - m_dofRankOffset );
+
+      // we need this check to filter out ghost nodes in the assembly
       if( dof < 0 || dof >= m_matrix.numRows() )
       {
         continue;
@@ -700,6 +686,8 @@ complete( localIndex const k,
   }
 
   localIndex const dof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex - m_dofRankOffset );
+
+  // we need this check to filter out ghost cells in the assembly
   if( 0 <= dof && dof < m_matrix.numRows() )
   {
     for( localIndex i = 0; i < m_numComponents; ++i )

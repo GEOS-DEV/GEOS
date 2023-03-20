@@ -55,7 +55,9 @@ PressurePorosity                              node :ref:`DATASTRUCTURE_PressureP
 ProppantPermeability                          node :ref:`DATASTRUCTURE_ProppantPermeability`                        
 ProppantPorosity                              node :ref:`DATASTRUCTURE_ProppantPorosity`                            
 ProppantSlurryFluid                           node :ref:`DATASTRUCTURE_ProppantSlurryFluid`                         
-ProppantSolidProppantPermeability             node :ref:`DATASTRUCTURE_ProppantSolidProppantPermeability`           
+ProppantSolidProppantPermeability             node :ref:`DATASTRUCTURE_ProppantSolidProppantPermeability`
+ReactiveBrine                                 node :ref:`DATASTRUCTURE_ReactiveBrine`                               
+ReactiveBrineThermal                          node :ref:`DATASTRUCTURE_ReactiveBrineThermal`            
 SinglePhaseConstantThermalConductivity        node :ref:`DATASTRUCTURE_SinglePhaseConstantThermalConductivity`      
 SlipDependentPermeability                     node :ref:`DATASTRUCTURE_SlipDependentPermeability`                   
 SolidInternalEnergy                           node :ref:`DATASTRUCTURE_SolidInternalEnergy`                         

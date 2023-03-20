@@ -11,7 +11,7 @@
       initialDt="1e11"
       targetRegions="{ reservoir }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-8"
         lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
@@ -40,8 +40,11 @@
     <VTKMesh
       name="mesh"
       logLevel="5"
+      partitionMethod="ptscotch"
       scale="{ 50, 50, 50 }"
-      file="../singlePhaseFlow/pebi3d.vtu"/>
+      fieldsToImport="{ PORO, NTG, DENSITY, BULKMOD }"
+      fieldNamesInGEOSX="{ rockPorosity_referencePorosity, netToGross, skeleton_density, skeleton_bulkModulus }"
+      file="../singlePhaseFlow/pebi3d_with_properties.vtu"/>
 
   </Mesh>
 
@@ -277,7 +280,8 @@
 
   <Outputs>
     <VTK
-      name="vtkOutput"/>
+      name="vtkOutput"
+      fieldNames="{ skeleton_density, skeleton_bulkModulus }"/>
     <Restart
       name="restartOutput"/>
   </Outputs>

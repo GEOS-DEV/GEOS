@@ -239,14 +239,16 @@ public:
 
 
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time_n,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override
   {
     real64 norm = 0.0;
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      real64 const singlePhysicsNorm = solver->calculateResidualNorm( domain, dofManager, localRhs );
+      real64 const singlePhysicsNorm = solver->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
       norm += singlePhysicsNorm * singlePhysicsNorm;
     } );
 
@@ -329,24 +331,9 @@ protected:
                                          int const cycleNumber,
                                          DomainPartition & domain )
   {
-    GEOSX_MARK_FUNCTION;
-
-    real64 dtReturn = dt;
-
-    // setup the coupled linear system
-    setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-
-    // setup reservoir and well systems
-    implicitStepSetup( time_n, dt, domain );
-
-    // currently the only method is implicit time integration
-    dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-    // complete time step
-    implicitStepComplete( time_n, dtReturn, domain );
-
-    return dtReturn;
+    return SolverBase::solverStep( time_n, dt, cycleNumber, domain );
   }
+
   /**
    * @brief Sequentially coupled solver step. It solves a nonlinear system of
    * equations using a sequential approach.
@@ -368,13 +355,21 @@ protected:
 
     real64 dtReturnTemporary;
 
+    Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->setupSystem( domain,
-                           solver->getDofManager(),
-                           solver->getLocalMatrix(),
-                           solver->getSystemRhs(),
-                           solver->getSystemSolution() );
+
+      // Only build the sparsity pattern if the mesh has changed
+      if( meshModificationTimestamp > solver->getSystemSetupTimestamp() )
+      {
+        solver->setupSystem( domain,
+                             solver->getDofManager(),
+                             solver->getLocalMatrix(),
+                             solver->getSystemRhs(),
+                             solver->getSystemSolution() );
+        solver->setSystemSetupTimestamp( meshModificationTimestamp );
+      }
 
       solver->implicitStepSetup( time_n, dt, domain );
 
@@ -437,9 +432,9 @@ protected:
    * @param Domain the domain parition
    * @param solverType the index of the solver withing this coupled solver.
    */
-  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const solverType )
+  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
   {
-    GEOSX_UNUSED_VAR( Domain, solverType );
+    GEOSX_UNUSED_VAR( domain, solverType );
   }
 
   bool checkSequentialConvergence( int const & iter ) const

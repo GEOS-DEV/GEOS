@@ -31,10 +31,6 @@ namespace poromechanicsKernels
 /**
  * @brief Implements kernels for solving quasi-static multiphase poromechanics.
  * @copydoc geosx::finiteElement::ImplicitKernelBase
- * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
- *                            @p SUBREGION_TYPE.
- * @tparam UNUSED An unused parameter since we are assuming that the test and
- *                trial space have the same number of support points.
  *
  * ### MultiphasePoroelastic Description
  * Implements the KernelBase interface functions required for solving the
@@ -185,13 +181,11 @@ public:
    * This function also computes the derivatives of these three quantities wrt primary variables
    * @param[in] k the element index
    * @param[in] q the quadrature point index
-   * @param[in] strainIncrement the strain increment used in total stress and porosity computation
    * @param[inout] stack the stack variables
    */
   GEOSX_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
                           localIndex const q,
-                          real64 const ( &strainIncrement )[6],
                           StackVariables & stack ) const;
 
   /**

@@ -4,6 +4,7 @@
 
 set( mesh_tests
      testMeshObjectPath.cpp
+     testGeometricObjects.cpp
    )
 
 set( dependencyList gtest mesh )
