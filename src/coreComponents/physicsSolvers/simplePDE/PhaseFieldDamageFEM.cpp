@@ -340,8 +340,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const time_n,
 
           //real64 ell = m_lengthScale;                       //phase-field length scale
           real64 ell = constitutiveUpdate.getRegularizationLength();
-          //real64 Gc = m_criticalFractureEnergy;             //energy release rate
-          real64 Gc = constitutiveUpdate.getCriticalFractureEnergy();
+
 
           real64 threshold = constitutiveUpdate.getEnergyThreshold();  //elastic energy threshold - use when Local Dissipation is linear
 
@@ -352,6 +351,8 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const time_n,
           {
             if( elemGhostRank[k] < 0 )
             {
+              //real64 Gc = m_criticalFractureEnergy[q];             //energy release rate
+              real64 Gc = constitutiveUpdate.getCriticalFractureEnergy(k);
               element_rhs = 0.0;
               element_matrix = 0.0;
               for( localIndex q = 0; q < n_q_points; ++q )
@@ -395,7 +396,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const time_n,
 
                     element_rhs( a ) += detJ[k][q] * ( -3 * Na / 16  -
                                                        0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[k][q][a] ) -
-                                                       (0.5 * ell * D/Gc) * Na * constitutiveUpdate.GetDegradationDerivative( qp_damage ));
+                                                       (0.5 * ell * D/Gc) * Na * constitutiveUpdate.GetDegradationDerivative( k, qp_damage ));
 
                   }
                   else
@@ -407,7 +408,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const time_n,
 
                     element_rhs( a ) -= detJ[k][q] * (Na * qp_damage +
                                                       (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[k][q][a] ) +
-                                                       Na * constitutiveUpdate.GetDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) );
+                                                       Na * constitutiveUpdate.GetDegradationDerivative( k, qp_damage ) * (ell*strainEnergyDensity/Gc)) );
                   }
 
                   for( localIndex b = 0; b < numNodesPerElement; ++b )
@@ -421,7 +422,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const time_n,
                       //
                       element_matrix( a, b ) -= detJ[k][q] *
                                                 (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[k][q][a], dNdX[k][q][b] ) +
-                                                 (0.5 * ell * D/Gc) * constitutiveUpdate.GetDegradationSecondDerivative( qp_damage ) * Na * Nb);
+                                                 (0.5 * ell * D/Gc) * constitutiveUpdate.GetDegradationSecondDerivative( k, qp_damage ) * Na * Nb);
 
                     }
                     else
@@ -433,7 +434,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const time_n,
 
                       element_matrix( a, b ) -= detJ[k][q] *
                                                 ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[k][q][a], dNdX[k][q][b] ) +
-                                                  Na * Nb * (1 + constitutiveUpdate.GetDegradationSecondDerivative( qp_damage ) * ell*strainEnergyDensity/Gc )
+                                                  Na * Nb * (1 + constitutiveUpdate.GetDegradationSecondDerivative( k, qp_damage ) * ell*strainEnergyDensity/Gc )
                                                 );
                     }
                   }

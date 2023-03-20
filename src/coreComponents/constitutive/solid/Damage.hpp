@@ -72,7 +72,7 @@ public:
                  arrayView2d< real64 > const & inputStrainEnergyDensity,
                  arrayView2d< real64 > const & inputExtDrivingForce,
                  real64 const & inputLengthScale,
-                 real64 const & inputCriticalFractureEnergy,
+                 arrayView1d< real64 > const & inputCriticalFractureEnergy,
                  real64 const & inputcriticalStrainEnergy,
                  real64 const & inputDegradationLowerLimit,
                  integer const & inputExtDrivingForceFlag,
@@ -135,7 +135,7 @@ public:
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  virtual real64 getDegradationDerivative( real64 const d ) const
+  virtual real64 getDegradationDerivative( localIndex const GEOSX_UNUSED_PARAM(k), real64 const d ) const
   {
     return -2*(1 - d);
   }
@@ -143,7 +143,7 @@ public:
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  virtual real64 getDegradationSecondDerivative( real64 const d ) const
+  virtual real64 getDegradationSecondDerivative( localIndex const GEOSX_UNUSED_PARAM(k), real64 const d ) const
   {
     GEOSX_UNUSED_VAR( d );
 
@@ -185,17 +185,17 @@ public:
       real64 sqrt_J2 = factor * stressQ / sqrt( 3. );
 
       // Calculate the external driving force according to Kumar et al.
-      real64 beta0 = m_deltaCoefficient * 0.375 * m_criticalFractureEnergy / m_lengthScale;
+      real64 beta0 = m_deltaCoefficient * 0.375 * m_criticalFractureEnergy[q] / m_lengthScale;
 
-      real64 beta1 = -0.375 * m_criticalFractureEnergy / m_lengthScale * ((1 + m_deltaCoefficient)*(m_compressStrength - m_tensileStrength)/2./m_compressStrength/m_tensileStrength)
+      real64 beta1 = -0.375 * m_criticalFractureEnergy[q] / m_lengthScale * ((1 + m_deltaCoefficient)*(m_compressStrength - m_tensileStrength)/2./m_compressStrength/m_tensileStrength)
                      - (8*mu + 24*kappa - 27*m_tensileStrength) * (m_compressStrength - m_tensileStrength) / 144. / mu / kappa
-                     - m_lengthScale / m_criticalFractureEnergy * ((mu + 3*kappa)*(pow( m_compressStrength, 3 ) - pow( m_tensileStrength, 3 ))*m_tensileStrength/18/(mu*mu)/(kappa*kappa));
+                     - m_lengthScale / m_criticalFractureEnergy[q] * ((mu + 3*kappa)*(pow( m_compressStrength, 3 ) - pow( m_tensileStrength, 3 ))*m_tensileStrength/18/(mu*mu)/(kappa*kappa));
 
-      real64 beta2 = -0.375 * m_criticalFractureEnergy / m_lengthScale * (sqrt( 3. )*(1 + m_deltaCoefficient)*(m_compressStrength + m_tensileStrength)/2./m_compressStrength/m_tensileStrength)
+      real64 beta2 = -0.375 * m_criticalFractureEnergy[q] / m_lengthScale * (sqrt( 3. )*(1 + m_deltaCoefficient)*(m_compressStrength + m_tensileStrength)/2./m_compressStrength/m_tensileStrength)
                      + (8*mu + 24*kappa - 27*m_tensileStrength)*(m_compressStrength + m_tensileStrength) / 48. / sqrt( 3. ) / mu / kappa
-                     + m_lengthScale / m_criticalFractureEnergy * ((mu + 3*kappa)*(pow( m_compressStrength, 3 ) + pow( m_tensileStrength, 3 ))*m_tensileStrength/6./sqrt( 3. )/(mu*mu)/(kappa*kappa));
+                     + m_lengthScale / m_criticalFractureEnergy[q] * ((mu + 3*kappa)*(pow( m_compressStrength, 3 ) + pow( m_tensileStrength, 3 ))*m_tensileStrength/6./sqrt( 3. )/(mu*mu)/(kappa*kappa));
 
-      real64 beta3 = m_lengthScale * (m_tensileStrength/mu/kappa) / m_criticalFractureEnergy;
+      real64 beta3 = m_lengthScale * (m_tensileStrength/mu/kappa) / m_criticalFractureEnergy[q];
 
       m_extDrivingForce( k, q ) = 1. / (1 + beta3*I1*I1) * (beta2 * sqrt_J2 + beta1*I1 + beta0);
     }
@@ -230,9 +230,9 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  real64 getCriticalFractureEnergy() const
+  real64 getCriticalFractureEnergy( localIndex const k ) const
   {
-    return m_criticalFractureEnergy;
+    return m_criticalFractureEnergy[k];
   }
 
   GEOSX_HOST_DEVICE
@@ -243,9 +243,9 @@ public:
     return m_criticalStrainEnergy;
     #else
     if( m_extDrivingForceFlag )
-      return 3*m_criticalFractureEnergy/(16 * m_lengthScale) + 0.5 * m_extDrivingForce( k, q );
+      return 3*m_criticalFractureEnergy[q]/(16 * m_lengthScale) + 0.5 * m_extDrivingForce( k, q );
     else
-      return 3*m_criticalFractureEnergy/(16 * m_lengthScale);
+      return 3*m_criticalFractureEnergy[q]/(16 * m_lengthScale);
 
     #endif
 
@@ -256,7 +256,8 @@ public:
   arrayView2d< real64 > const m_strainEnergyDensity;
   arrayView2d< real64 > const m_extDrivingForce;
   real64 const m_lengthScale;
-  real64 const m_criticalFractureEnergy;
+  //real64 const m_criticalFractureEnergy;
+  arrayView1d< real64 > const m_criticalFractureEnergy;
   real64 const m_criticalStrainEnergy;
   real64 const m_degradationLowerLimit;
   integer const m_extDrivingForceFlag;
@@ -301,7 +302,7 @@ public:
                                                                        m_strainEnergyDensity.toView(),
                                                                        m_extDrivingForce.toView(),
                                                                        m_lengthScale,
-                                                                       m_criticalFractureEnergy,
+                                                                       m_criticalFractureEnergy.toView(),
                                                                        m_criticalStrainEnergy,
                                                                        m_degradationLowerLimit,
                                                                        m_extDrivingForceFlag,
@@ -317,6 +318,8 @@ public:
     static constexpr char const * extDrivingForceString() { return "extDrivingForce"; }
     /// string/key for regularization length
     static constexpr char const * lengthScaleString() { return "lengthScale"; }
+    /// string/key for default Gc
+    static constexpr char const * defaultCriticalFractureEnergyString() { return "defaultCriticalFractureEnergy"; }
     /// string/key for Gc
     static constexpr char const * criticalFractureEnergyString() { return "criticalFractureEnergy"; }
     /// string/key for sigma_c
@@ -339,7 +342,9 @@ protected:
   array2d< real64 > m_strainEnergyDensity;
   array2d< real64 > m_extDrivingForce;
   real64 m_lengthScale;
-  real64 m_criticalFractureEnergy;
+  real64 m_defaultCriticalFractureEnergy;
+  //real64 m_criticalFractureEnergy[q];
+  array1d< real64 > m_criticalFractureEnergy;
   real64 m_criticalStrainEnergy;
   real64 m_degradationLowerLimit;
   integer m_extDrivingForceFlag;

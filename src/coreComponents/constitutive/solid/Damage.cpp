@@ -34,6 +34,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_strainEnergyDensity(),
   m_extDrivingForce(),
   m_lengthScale(),
+  m_defaultCriticalFractureEnergy(),
   m_criticalFractureEnergy(),
   m_criticalStrainEnergy(),
   m_degradationLowerLimit( 0.0 ),
@@ -61,8 +62,14 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Length scale l in the phase-field equation" );
 
+  this->registerWrapper( viewKeyStruct::defaultCriticalFractureEnergyString(), &m_defaultCriticalFractureEnergy ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default value of critical fracture energy (Gc)" );    
+
   this->registerWrapper( viewKeyStruct::criticalFractureEnergyString(), &m_criticalFractureEnergy ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setApplyDefaultValue( -1 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Critical fracture energy" );
 
   this->registerWrapper( viewKeyStruct::criticalStrainEnergyString(), &m_criticalStrainEnergy ).
@@ -100,6 +107,9 @@ template< typename BASE >
 void Damage< BASE >::postProcessInput()
 {
   BASE::postProcessInput();
+  //set results as array default values
+  this->template getWrapper< array1d< real64 > >( viewKeyStruct::criticalFractureEnergyString() ).
+    setApplyDefaultValue( m_defaultCriticalFractureEnergy );
 
   GEOSX_ERROR_IF( m_extDrivingForceFlag != 0 && m_extDrivingForceFlag!= 1, "invalid external driving force flag option - must be 0 or 1" );
   GEOSX_ERROR_IF( m_extDrivingForceFlag == 1 && m_tensileStrength <= 0.0, "tensile strength must be input and positive when the external driving force flag is turned on" );
