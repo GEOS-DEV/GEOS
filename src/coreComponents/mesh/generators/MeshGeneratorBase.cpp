@@ -39,11 +39,19 @@ MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog
   return catalog;
 }
 
-void MeshGeneratorBase::generateMesh( CellBlockManager & cellBlockManager ) {
+//std::tuple< std::unique_ptr< CellBlockManagerABC >, PartitionDescriptor const &, real64 > MeshGeneratorBase::generateMesh( )
+void MeshGeneratorBase::generateMesh( CellBlockManager & cellBlockManager )
+{
+  //std::unique_ptr< CellBlockManager > cellBlockManager = std::make_unique< CellBlockManager >( keys::cellManager, nullptr );
 
   generateCellBlockManager( cellBlockManager ); 
 
-  this->generateWells( cellBlockManager ); // Accroche les informations des puits à l'instance du CellBlockManager crée à la ligne du dessus.
+  this->generateWells( cellBlockManager );
+
+  //PartitionDescriptor const & partitionDescriptor = cellBlockManager->getPartitionDescriptor();
+  //real64 globalLength = cellBlockManager->getGlobalLength();
+  //std::unique_ptr< CellBlockManagerABC > cellBlockManagerABC( std::move( cellBlockManager ) );
+  //return std::make_tuple( std::move( cellBlockManagerABC ), partitionDescriptor, globalLength );
 }
 
 void MeshGeneratorBase::generateWells( CellBlockManager & cellBlockManager ) {

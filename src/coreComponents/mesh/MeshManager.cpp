@@ -15,6 +15,7 @@
 
 #include "MeshManager.hpp"
 #include "MeshBody.hpp"
+#include "MeshLevel.hpp"
 
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
@@ -67,17 +68,18 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
 
     meshGen.generateMesh( cellBlockManager );
-    meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
+    // std::tuple< std::unique_ptr< CellBlockManagerABC >, PartitionDescriptor const &, real64 > tup =  meshGen.generateMesh( );
+    // std::unique_ptr< CellBlockManagerABC > cellBlockManager( std::move( std::get<0>( tup ) ) );
+    // string name = keys::cellManager;
+    // CellBlockManagerABC & cbm = meshBody.registerGroup< CellBlockManagerABC >( name,  std::move( cellBlockManager ) );
+    // PartitionDescriptor const & partitionDescriptor = std::get<1>( tup );
+    // real64 globalLength = std::get<2>( tup );
+    PartitionDescriptor const & partitionDescriptor = cellBlockManager.getPartitionDescriptor();
+    real64 globalLength = cellBlockManager.getGlobalLength();
+    meshBody.setGlobalLengthScale( globalLength );
     ElementRegionManager & elemManager = meshLevel.getElemManager();
-    /*for ( WellBlock wellBlock : cellBlockManager.getWellBlocks() ) {
-      WellElementRegion &
-        wellRegion = elemManager.getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() ).
-        getGroup< WellElementRegion >( wellBlock.getWellRegionName() );
-      wellRegion.setWellGeneratorName( wellBlock.getName() );
-      wellRegion.setWellControlsName( wellBlock.getWellControlsName() );
-      }*/
 
-    PartitionDescriptor & partitionDescriptor = cellBlockManager.getPartitionDescriptor();
+    //PartitionDescriptor & partitionDescriptor = cellBlockManager.getPartitionDescriptor();
     if ( partitionDescriptor.hasMetisNeighborList() )
     {
       domain.getMetisNeighborList() = partitionDescriptor.getMetisNeighborList();
@@ -87,7 +89,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
       SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
       partition = partitionDescriptor.getSpatialPartition();
     }
-    domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() ).setGlobalLengthScale( cellBlockManager.getGlobalLength() );
+    domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() ).setGlobalLengthScale( globalLength );
   } );
 }
 

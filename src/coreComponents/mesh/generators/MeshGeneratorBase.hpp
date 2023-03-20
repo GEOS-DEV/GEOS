@@ -83,10 +83,14 @@ public:
 
   /**
    * @brief Generate the mesh object the input mesh object.
-   * @param[in] cellBlockManager to fill with the mesh informations
-   * @return The global length scale
+   * @param A reference to the cellBlockManager
    */
   void generateMesh( CellBlockManager & cellBlockManager );
+  /**
+   * @brief Generate the mesh object the input mesh object.
+   * @return A tuple containing the cellBlockManager in a unique_ptr, the PartitionDescriptor and the global length scale
+   */
+  //std::tuple< std::unique_ptr< CellBlockManagerABC >, PartitionDescriptor const &, real64 > generateMesh( );
 
   /**
    * @brief import fields from the mesh  on the array accessible via the given wrapper.

@@ -126,7 +126,7 @@ public:
   /**
    * @brief Build the local well elements and perforations from global well geometry.
    * @param[in] mesh the mesh object (single level only)
-   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
+   * @param[in] wellGeometry the WellBlockABC containing the global well topology
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */

@@ -19,7 +19,6 @@
 #include "WellElementRegion.hpp"
 
 #include "common/MpiWrapper.hpp"
-#include "mesh/generators/InternalWellGenerator.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 
 namespace geosx

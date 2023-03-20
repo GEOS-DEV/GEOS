@@ -25,86 +25,10 @@
 #include "mesh/generators/InternalWellGenerator.hpp"
 #include "mesh/generators/WellBlock.hpp"
 #include "mesh/generators/WellBlockABC.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/generators/PartitionDescriptor.hpp"
 
 namespace geosx
 {
-
-/**
- * @class PartitionDescriptor
- * @brief Simple utility to retrieve partition information in case of Metis or Spatial partition.
- */
-class PartitionDescriptor
-{
-public:
-  /**
-   * @brief indicate if the partition is described using a Metis Neighbor list.
-   */
-  bool hasMetisNeighborList() const { return m_hasMetisNeighborList; }
-  /**
-   * @brief Sets the boolean that indicates if the partition is described using a Metis Neighbor list.
-   */
-  void setHasMetisNeighborList( bool value ) { m_hasMetisNeighborList = value; }
-  /**
-   * @brief Gets a reference to the list of metis neighbor list.
-   */
-  std::set<int> & getMetisNeighborList() {return m_metisNeighborList; }
-  /**
-   * @brief indicate if the partition is described using a spatial partition.
-   */
-  bool hasSpatialParition() const { return !m_hasMetisNeighborList; }
-  /**
-   * @brief Sets the boolean that indicates if the partition is described using a Metis Neighbor list.
-   */
-  void setHasSpatialPartition( bool value ) { m_hasMetisNeighborList = !value; }
-  /**
-   * @brief Returns a reference to the spatialPartition
-   */
-  SpatialPartition & getSpatialPartition() { return m_spatialPartition; }
-private:
-  bool m_hasMetisNeighborList;         //< Indicate if we use metis neighbor list or spatial partition to describe the partition
-  std::set<int> m_metisNeighborList;   //< The list of neighbors computed wwith metis
-  SpatialPartition m_spatialPartition; //< The spatial partition
-};
-
-/**
- * @struct description of a well block
- */
-// class WellBlock
-// {
-// public:
-//   /**
-//    * @brief Getter for the well name
-//    */
-//   const string & getName() { return m_name; }
-//   /**
-//    * @brief Getter for the well region name
-//    */
-//   const string & getWellRegionName() { return m_wellRegionName; }
-//   /**
-//    * @brief Getter for the well controls name
-//    */
-//   const string & getWellControlsName() { return m_wellControlsName; }
-//   /**
-//    * @brief Setter for the well name
-//    * @param name The name to set.
-//    */
-//   void setName( const string & name ) { m_name = name; }
-//   /**
-//    * @brief Setter for the well region name
-//    * @param wellRegionName the name to set.
-//    */
-//   void setWellRegionName( const string & wellRegionName ) { m_wellRegionName = wellRegionName; }
-//   /**
-//    * @brief Setter for the well controls name
-//    * @param wellControlsName the name to set.
-//    */
-//   void setWellControlsName( const string & wellControlsName ) { m_wellControlsName = wellControlsName; }
-// private:
-//   string m_name; ///< The name of the well
-//   string m_wellRegionName; ///< The name of the region associated with the well
-//   string m_wellControlsName; ///< The name of the controls associated with the well
-// };
 
 /**
  * @class CellBlockManager

@@ -88,7 +88,7 @@ void VTKMeshGenerator::generateCellBlockManager( CellBlockManager & cellBlockMan
     GEOSX_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
     std::vector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
     std::vector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
-    partitionDescriptor.getMetisNeighborList().insert( neighbors.begin(), neighbors.end() );
+    partitionDescriptor.setMetisNeighborList( neighbors.begin(), neighbors.end() );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  done!" );
   }
 
