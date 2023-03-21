@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsSolver.hpp
+ * @file SinglePhasePoromechanics.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
@@ -26,8 +26,8 @@
 namespace geosx
 {
 
-class SinglePhasePoromechanicsSolver : public CoupledSolver< SolidMechanicsLagrangianFEM,
-                                                             SinglePhaseBase >
+class SinglePhasePoromechanics : public CoupledSolver< SolidMechanicsLagrangianFEM,
+                                                       SinglePhaseBase >
 {
 public:
 
@@ -48,19 +48,19 @@ public:
   static string coupledSolverAttributePrefix() { return "poromechanics"; }
 
   /**
-   * @brief main constructor for SinglePhasePoromechanicsSolver objects
-   * @param name the name of this instantiation of SinglePhasePoromechanicsSolver in the repository
-   * @param parent the parent group of this instantiation of SinglePhasePoromechanicsSolver
+   * @brief main constructor for SinglePhasePoromechanics objects
+   * @param name the name of this instantiation of SinglePhasePoromechanics in the repository
+   * @param parent the parent group of this instantiation of SinglePhasePoromechanics
    */
-  SinglePhasePoromechanicsSolver( const string & name,
-                                  Group * const parent );
+  SinglePhasePoromechanics( const string & name,
+                            Group * const parent );
 
   /// Destructor for the class
-  ~SinglePhasePoromechanicsSolver() override {}
+  ~SinglePhasePoromechanics() override {}
 
   /**
    * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new SinglePhasePoromechanicsSolver object through the object catalog.
+   * @return string that contains the catalog name to generate a new SinglePhasePoromechanics object through the object catalog.
    */
   static string catalogName() { return "SinglePhasePoromechanics"; }
 
@@ -119,6 +119,8 @@ public:
 
   /**@}*/
 
+  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
+
   struct viewKeyStruct : Base::viewKeyStruct
   {
     /// Names of the porous materials
@@ -164,13 +166,13 @@ private:
 template< typename CONSTITUTIVE_BASE,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
-real64 SinglePhasePoromechanicsSolver::assemblyLaunch( MeshLevel & mesh,
-                                                       DofManager const & dofManager,
-                                                       arrayView1d< string const > const & regionNames,
-                                                       string const & materialNamesString,
-                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                       arrayView1d< real64 > const & localRhs,
-                                                       PARAMS && ... params )
+real64 SinglePhasePoromechanics::assemblyLaunch( MeshLevel & mesh,
+                                                 DofManager const & dofManager,
+                                                 arrayView1d< string const > const & regionNames,
+                                                 string const & materialNamesString,
+                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 arrayView1d< real64 > const & localRhs,
+                                                 PARAMS && ... params )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -201,4 +203,4 @@ real64 SinglePhasePoromechanicsSolver::assemblyLaunch( MeshLevel & mesh,
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_ */
