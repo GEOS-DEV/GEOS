@@ -305,23 +305,23 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    using POLICY = parallelDevicePolicy<>;
-
-    srcWithBC = src;
+    using POLICY = parallelDeviceAsyncPolicy<>;
 
     arrayView1d< real64 > const localSrcWithBC = srcWithBC.open();
+    arrayView1d< real64 const > const localSrc = src.values();
+
+    forAll< POLICY >( localSrc.size(), [localSrcWithBC, localSrc] GEOSX_HOST_DEVICE ( localIndex const i )
+    {
+      localSrcWithBC[ i ] = localSrc[ i ];
+    } );
+
     arrayView1d< localIndex const > const localBCIndices = m_constrainedIndices.toViewConst();
 //    std::cout << "constrained ind: " << localBCIndices << std::endl;
 
-    static bool zero = true;
-    if( zero )
+    forAll< POLICY >( m_constrainedDofIndices.size(), [localSrcWithBC, localBCIndices] GEOSX_HOST_DEVICE ( localIndex const i )
     {
-      forAll< POLICY >( m_constrainedDofIndices.size(), [localSrcWithBC, localBCIndices] GEOSX_HOST_DEVICE ( localIndex const i )
-      {
-        localSrcWithBC[ localBCIndices[ i ] ] = 0.0;
-      } );
-      zero = false;
-    }
+      localSrcWithBC[ localBCIndices[ i ] ] = 0.0;
+    } );
     
     srcWithBC.close();
 
@@ -330,8 +330,7 @@ public:
     m_unconstrained_op.apply( srcWithBC, dst );
 
 //    std::cout << "dst: " << dst << std::endl;
-    
-    arrayView1d< real64 const > const localSrc = src.values();
+
 //    std::cout << "localSrc: " << localSrc << std::endl;
     arrayView1d< real64 > const localDst = dst.open();
     switch (m_diagPolicy)
