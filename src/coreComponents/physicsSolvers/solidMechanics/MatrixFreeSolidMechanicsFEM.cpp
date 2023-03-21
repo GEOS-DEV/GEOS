@@ -68,9 +68,15 @@ MatrixFreeSolidMechanicsFEMOperator::
 void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, ParallelVector & dst ) const
 {
   GEOSX_MARK_FUNCTION;
-  dst.zero();
+
   arrayView1d< real64 const > const localSrc = src.values();
   arrayView1d< real64 > const localDst = dst.open();
+  // We do it by hand to avoid hypre call
+  using POLICY = parallelDeviceAsyncPolicy<>;
+  forAll< POLICY >( localDst.size(), [localDst] GEOSX_HOST_DEVICE ( localIndex const i )
+  {
+    localDst[ i ] = 0.0;
+  } );
 
     // {
     // std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp1"<<std::endl;
@@ -300,7 +306,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
 //   std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp4"<<std::endl;
 
 
-  MatrixFreePreconditionerIdentity< HypreInterface > identity( m_dofManager );
+  // MatrixFreePreconditionerIdentity< HypreInterface > identity( m_dofManager );
 
 // std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp5"<<std::endl;
 
@@ -309,11 +315,20 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
 
 // std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp6"<<std::endl;
 
-  CgSolver< ParallelVector > solver( params, constrained_solid_mechanics, identity );
+  // CgSolver< ParallelVector > solver( params, constrained_solid_mechanics, identity );
+  UnprecCgSolver< ParallelVector > solver( params, constrained_solid_mechanics );
   
 //   std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp7"<<std::endl;
 
   solver.solve( m_rhs, m_solution );
+  const real64 elapsed_seconds = solver.result().solveTime;
+  std::cout << "solve time: " << elapsed_seconds << "s\n";
+  const integer num_iter = solver.result().numIterations;
+  const double time_per_iter = elapsed_seconds / num_iter;
+  std::cout << "Time per CG iteration: " << time_per_iter << "s\n";
+  const size_t num_dofs = m_dofManager.numLocalDofs();
+  std::cout << "Number of local dofs: " << num_dofs << "dofs\n";
+  std::cout << "Throughput: " << num_dofs/time_per_iter*1e-6 << "MDofs/s\n";
 
 // std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp8"<<std::endl;
 
