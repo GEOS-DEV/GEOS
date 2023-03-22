@@ -52,16 +52,13 @@ protected:
    * @brief constructor
    * @param[in] newStress The new stress data from the constitutive model class.
    * @param[in] oldStress The old stress data from the constitutive model class.
-   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] disableInelasticity Flag to disable inelastic response
    */
   SolidBaseUpdates( arrayView3d< real64, solid::STRESS_USD > const & newStress,
                     arrayView3d< real64, solid::STRESS_USD > const & oldStress,
-                    arrayView1d< real64 const > const & thermalExpansionCoefficient,
                     const bool & disableInelasticity ):
     m_newStress( newStress ),
     m_oldStress( oldStress ),
-    m_thermalExpansionCoefficient( thermalExpansionCoefficient ),
     m_disableInelasticity ( disableInelasticity )
   {}
 
@@ -112,9 +109,6 @@ public:
   /// A reference the previous material stress at quadrature points.
   arrayView3d< real64, solid::STRESS_USD > const m_oldStress;
 
-  /// A reference to the ArrayView holding the thermal expansion coefficient for each element.
-  arrayView1d< real64 const > const m_thermalExpansionCoefficient;
-
   /// Flag to disable inelasticity
   const bool & m_disableInelasticity;
 
@@ -145,30 +139,6 @@ public:
   }
 
   /**
-   * @brief Get thermalExpansionCoefficient
-   * @param[in] k Element index.
-   * @return the thermalExpansionCoefficient of element k
-   */
-  GEOSX_HOST_DEVICE
-  real64 getThermalExpansionCoefficient( localIndex const k ) const
-  {
-    return m_thermalExpansionCoefficient[k];
-  }
-
-  /**
-   * @brief Get shear modulus
-   * @param[in] k Element index.
-   * @return the shear modulus of element k
-   */
-  GEOSX_HOST_DEVICE
-  virtual real64 getShearModulus( localIndex const k ) const
-  {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_ERROR( "getShearModulus() not implemented for this model" );
-    return 0;
-  }
-
-  /**
    * @brief Small strain update.
    *
    * @param[in] k Element index.
@@ -190,6 +160,27 @@ public:
     GEOSX_UNUSED_VAR( stress );
     GEOSX_UNUSED_VAR( stiffness );
     GEOSX_ERROR( "smallStrainUpdate() not implemented for this model" );
+  }
+
+  /**
+   * @brief Small strain update. Modified to accept time step size.
+   *
+   * @param[in] k Element index.
+   * @param[in] q Quadrature point index.
+   * @param[in] strainIncrement Strain increment in Voight notation (linearized strain)
+   * @param[out] stress New stress value (Cauchy stress)
+   * @param[out] stiffness New tangent stiffness value
+   */
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate2( localIndex const k,
+                                   localIndex const q,
+                                   real64 const dt,
+                                   real64 const ( &strainIncrement )[6],
+                                   real64 ( & stress )[6],
+                                   real64 ( & stiffness )[6][6] ) const
+  {
+    GEOSX_UNUSED_VAR( dt );
+    smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
   }
 
   /**
@@ -257,6 +248,68 @@ public:
 
     real64 temp[6] = { 0 };
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
+    LvArray::tensorOps::copy< 6 >( stress, temp );
+    saveStress( k, q, stress );
+  }
+
+    /**
+   * @brief Hypo update 2 (large strain, large rotation).
+   * 
+   * Taken from http://www.sci.utah.edu/publications/Kam2011a/Kamojjala_ECTC2011.pdf
+   *
+   * The base class rotates the beginning-of-step stress and rate-of-deformation back
+   * to the reference configuration using the beginning-of-step rotation (found via
+   * polar decomposition of the beginning-of-step deformation gradient). It then calls
+   * the small strain update to incrementally update the stress, followed by a rotation
+   * of stress back to the end-of-step configuration (found using polar decomposition
+   * of the end-of-step deformation gradient). This should be valid for most constitutive
+   * models being explicitly integrated since the time steps are small enough that any given
+   * step can be assumed to behave like a small-strain deformation with pre-stress.
+   *
+   * Note that if the derived class has tensorial state variables (beyond the
+   * stress itself) care must be taken to rotate these as well.
+   * 
+   * This method should work as-is for anisotropic properties and yield functions.
+   *
+   * @param[in] k The element index.
+   * @param[in] q The quadrature point index.
+   * @param[in] Ddt The incremental deformation tensor (rate of deformation tensor * dt) WITHOUT factors of 2 on the shear terms
+   * @param[in] RotBeginning The incremental rotation tensor
+   * @param[in] RotEnd The incremental rotation tensor
+   * @param[out] stress New stress value (Cauchy stress)
+   * @param[out] stiffness New stiffness value
+   */
+  GEOSX_HOST_DEVICE
+  virtual void hypoUpdate2( localIndex const k,
+                            localIndex const q,
+                            real64 const dt,
+                            real64 ( &Ddt )[6],
+                            real64 const ( &RotBeginning )[3][3],
+                            real64 const ( &RotEnd )[3][3],
+                            real64 ( & stress )[6],
+                            real64 ( & stiffness )[6][6] ) const
+  {
+    // Rotate m_oldStress and Ddt from beginning-of-step configuration to reference configuration.
+    // Note that Ddt should not contain the factors of 2 on shear terms typically associated with Voigt
+    // notation. Including them at this stage would corrupt the rotation.
+    real64 temp[6] = { 0 };
+    real64 RotBeginningTranpose[3][3] = { {0} };    
+    LvArray::tensorOps::transpose< 3, 3 >( RotBeginningTranpose, RotBeginning ); // We require the transpose since we're un-rotating
+    LvArray::tensorOps::copy< 6 >( temp, m_oldStress[ k ][ q ]  );
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( m_oldStress[ k ][ q ], RotBeginningTranpose, temp );
+    LvArray::tensorOps::copy< 6 >( temp, Ddt  );
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( Ddt, RotBeginningTranpose, temp );
+    
+    // Convert strain increment to Voigt notation by re-introducing factors of 2 on shear terms
+    Ddt[3] *= 2;
+    Ddt[4] *= 2;
+    Ddt[5] *= 2;
+
+    // Stress increment
+    smallStrainUpdate2( k, q, dt, Ddt, stress, stiffness );
+
+    // Rotate final stress to end-of-step (current) configuration
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, RotEnd, m_newStress[ k ][ q ] );
     LvArray::tensorOps::copy< 6 >( stress, temp );
     saveStress( k, q, stress );
   }
@@ -335,6 +388,26 @@ public:
     GEOSX_ERROR( "smallStrainUpdate_StressOnly() not implemented for this model" );
   }
 
+    /**
+   * @brief Small strain update, returning only stress. Modified to use time step size.
+   *
+   * @param[in] k Element index.
+   * @param[in] q Quadrature point index.
+   * @param[in] dt Time step size
+   * @param[in] strainIncrement Strain increment in Voight notation (linearized strain)
+   * @param[out] stress New stress value (Cauchy stress)
+   */
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate2_StressOnly( localIndex const k,
+                                              localIndex const q,
+                                              real64 const dt,
+                                              real64 const ( &strainIncrement )[6],
+                                              real64 ( & stress )[6] ) const
+  {
+    GEOSX_UNUSED_VAR( dt );
+    smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  }
+
 
   /**
    * @brief Small strain, stateless update, returning only stress.
@@ -377,6 +450,50 @@ public:
 
     real64 temp[6] = { 0 };
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
+    LvArray::tensorOps::copy< 6 >( stress, temp );
+    saveStress( k, q, stress );
+  }
+
+  /**
+   * @brief Hypo update 2 (large strain, large rotation).
+   *
+   * @param[in] k The element index.
+   * @param[in] q The quadrature point index.
+   * @param[in] Ddt The incremental deformation tensor (rate of deformation tensor * dt) WITHOUT factors of 2 on the shear terms
+   * @param[in] RotBeginning The incremental rotation tensor
+   * @param[in] RotEnd The incremental rotation tensor
+   * @param[out] stress New stress value (Cauchy stress)
+   */
+  GEOSX_HOST_DEVICE
+  virtual void hypoUpdate2_StressOnly( localIndex const k,
+                                       localIndex const q,
+                                       real64 const dt,
+                                       real64 ( &Ddt )[6],
+                                       real64 const ( &RotBeginning )[3][3],
+                                       real64 const ( &RotEnd )[3][3],
+                                       real64 ( & stress )[6] ) const
+  {
+    // Rotate m_oldStress and Ddt from beginning-of-step configuration to reference configuration.
+    // Note that Ddt should not contain the factors of 2 on shear terms typically associated with Voigt
+    // notation. Including them at this stage would corrupt the rotation.
+    real64 temp[6] = { 0 };
+    real64 RotBeginningTranpose[3][3] = { {0} };    
+    LvArray::tensorOps::transpose< 3, 3 >( RotBeginningTranpose, RotBeginning ); // We require the transpose since we're un-rotating
+    LvArray::tensorOps::copy< 6 >( temp, m_oldStress[ k ][ q ]  );
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( m_oldStress[ k ][ q ], RotBeginningTranpose, temp );
+    LvArray::tensorOps::copy< 6 >( temp, Ddt  );
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( Ddt, RotBeginningTranpose, temp );
+    
+    // Convert strain increment to Voigt notation by re-introducing factors of 2 on shear terms
+    Ddt[3] *= 2;
+    Ddt[4] *= 2;
+    Ddt[5] *= 2;
+
+    // Stress increment
+    smallStrainUpdate2_StressOnly( k, q, dt, Ddt, stress );
+
+    // Rotate final stress to end-of-step (current) configuration
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, RotEnd, m_newStress[ k ][ q ] );
     LvArray::tensorOps::copy< 6 >( stress, temp );
     saveStress( k, q, stress );
   }
@@ -637,13 +754,6 @@ public:
     static constexpr char const * oldStressString() { return "oldStress"; }            ///< Old stress key
     static constexpr char const * densityString() { return "density"; }                ///< Density key
     static constexpr char const * defaultDensityString() { return "defaultDensity"; }  ///< Default density key
-    static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; } // Thermal expansion
-                                                                                                                // coefficient key
-    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultThermalExpansionCoefficient"; } // Default
-                                                                                                                              // thermal
-                                                                                                                              // expansion
-                                                                                                                              // coefficient
-                                                                                                                              // key
   };
 
   /**
@@ -708,6 +818,15 @@ public:
   }
 
   /**
+   * @brief Full accessor for stress
+   * @return Accessor
+   */
+  array3d< real64 > & getStressFull()
+  {
+    return m_newStress;
+  }
+
+  /**
    * @brief Non-const/Mutable accessor for density.
    * @return Accessor
    */
@@ -721,6 +840,15 @@ public:
    * @return Accessor
    */
   arrayView2d< real64 const > const getDensity() const
+  {
+    return m_density;
+  }
+
+  /**
+   * @brief Full accessor for density.
+   * @return Accessor
+   */
+  array2d< real64 > & getDensityFull()
   {
     return m_density;
   }
@@ -770,12 +898,6 @@ protected:
 
   /// The default density for new allocations.
   real64 m_defaultDensity = 0;
-
-  /// The thermal expansion coefficient for each upper level dimension (i.e. cell) of *this
-  array1d< real64 > m_thermalExpansionCoefficient;
-
-  /// The default value of the thermal expansion coefficient for any new allocations.
-  real64 m_defaultThermalExpansionCoefficient = 0;
 
   /// Flag to disable inelasticity (plasticity, damage, etc.)
   bool m_disableInelasticity = false;
