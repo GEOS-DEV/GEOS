@@ -65,15 +65,9 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
     meshBody.createMeshLevel( 0 );
     MeshLevel & meshLevel = meshBody.getBaseDiscretization();
-    CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
 
-    meshGen.generateMesh( cellBlockManager );
-    // std::tuple< std::unique_ptr< CellBlockManagerABC >, PartitionDescriptor const &, real64 > tup =  meshGen.generateMesh( );
-    // std::unique_ptr< CellBlockManagerABC > cellBlockManager( std::move( std::get<0>( tup ) ) );
-    // string name = keys::cellManager;
-    // CellBlockManagerABC & cbm = meshBody.registerGroup< CellBlockManagerABC >( name,  std::move( cellBlockManager ) );
-    // PartitionDescriptor const & partitionDescriptor = std::get<1>( tup );
-    // real64 globalLength = std::get<2>( tup );
+    CellBlockManagerABC & cellBlockManager =  meshGen.generateMesh( dynamic_cast< Group & >( meshBody ) );
+
     PartitionDescriptor const & partitionDescriptor = cellBlockManager.getPartitionDescriptor();
     real64 globalLength = cellBlockManager.getGlobalLength();
     meshBody.setGlobalLengthScale( globalLength );

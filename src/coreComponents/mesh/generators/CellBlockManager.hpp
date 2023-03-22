@@ -187,11 +187,12 @@ public:
   /**
    * @brief Get a reference to the partition descriptor.
    */
-  PartitionDescriptor & getPartitionDescriptor() { return m_partitionDescriptor; }
+  PartitionDescriptor const & getPartitionDescriptor() const override { return m_partitionDescriptor; }
+  PartitionDescriptor & getPartitionDescriptorInternal()  { return m_partitionDescriptor; }
   /**
    * @brief Getter for the global length
    */
-  real64 getGlobalLength() { return m_globalLength; }
+  real64 getGlobalLength() const override { return m_globalLength; }
   /**
    * @brief Setter for the global length
    */

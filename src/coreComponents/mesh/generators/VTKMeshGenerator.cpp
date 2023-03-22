@@ -73,7 +73,7 @@ void VTKMeshGenerator::generateCellBlockManager( CellBlockManager & cellBlockMan
 {
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
   GEOSX_MARK_FUNCTION;
-  PartitionDescriptor & partitionDescriptor = cellBlockManager.getPartitionDescriptor();
+  PartitionDescriptor & partitionDescriptor = cellBlockManager.getPartitionDescriptorInternal();
   partitionDescriptor.setHasMetisNeighborList( true );
   MPI_Comm const comm = MPI_COMM_GEOSX;
   vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();

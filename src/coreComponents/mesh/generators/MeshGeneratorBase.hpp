@@ -75,15 +75,11 @@ public:
   static CatalogInterface::CatalogType & getCatalog();
 
   /**
-   * @brief Generate the mesh.
-   * @param A reference to the cellBlockManager
-   */
-  void generateMesh( CellBlockManager & cellBlockManager );
-  /**
    * @brief Generate the mesh object the input mesh object.
-   * @return A tuple containing the cellBlockManager in a unique_ptr, the PartitionDescriptor and the global length scale
+   * @param parent The parent group of the CellBlockManager.
+   * @return The generated CellBlockManagerABC
    */
-  //std::tuple< std::unique_ptr< CellBlockManagerABC >, PartitionDescriptor const &, real64 > generateMesh( );
+  CellBlockManagerABC & generateMesh( Group & parent );
 
   /**
    * @brief import fields from the mesh  on the array accessible via the given wrapper.

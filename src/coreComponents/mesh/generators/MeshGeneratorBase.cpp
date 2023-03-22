@@ -15,6 +15,7 @@
 #include "MeshGeneratorBase.hpp"
 #include "InternalWellGenerator.hpp"
 #include "mesh/MeshBody.hpp"
+#include "mesh/generators/CellBlockManager.hpp"
 
 namespace geosx
 {
@@ -39,19 +40,15 @@ MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog
   return catalog;
 }
 
-//std::tuple< std::unique_ptr< CellBlockManagerABC >, PartitionDescriptor const &, real64 > MeshGeneratorBase::generateMesh( )
-void MeshGeneratorBase::generateMesh( CellBlockManager & cellBlockManager )
+CellBlockManagerABC & MeshGeneratorBase::generateMesh( Group & parent )
 {
-  //std::unique_ptr< CellBlockManager > cellBlockManager = std::make_unique< CellBlockManager >( keys::cellManager, nullptr );
+  CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
 
   generateCellBlockManager( cellBlockManager ); 
 
   this->generateWells( cellBlockManager );
 
-  //PartitionDescriptor const & partitionDescriptor = cellBlockManager->getPartitionDescriptor();
-  //real64 globalLength = cellBlockManager->getGlobalLength();
-  //std::unique_ptr< CellBlockManagerABC > cellBlockManagerABC( std::move( cellBlockManager ) );
-  //return std::make_tuple( std::move( cellBlockManagerABC ), partitionDescriptor, globalLength );
+  return cellBlockManager;
 }
 
 void MeshGeneratorBase::generateWells( CellBlockManager & cellBlockManager ) {

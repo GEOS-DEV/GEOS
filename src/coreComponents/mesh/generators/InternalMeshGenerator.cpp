@@ -546,9 +546,9 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
 void InternalMeshGenerator::generateCellBlockManager( CellBlockManager & cellBlockManager )
 {
   GEOSX_MARK_FUNCTION;
-  PartitionDescriptor &partitionDescriptor = cellBlockManager.getPartitionDescriptor();
+  PartitionDescriptor &partitionDescriptor = cellBlockManager.getPartitionDescriptorInternal();
   partitionDescriptor.setHasMetisNeighborList( false );
-  SpatialPartition partition = partitionDescriptor.getSpatialPartition();
+  SpatialPartition partition;
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
   {
@@ -965,6 +965,8 @@ void InternalMeshGenerator::generateCellBlockManager( CellBlockManager & cellBlo
   coordinateTransformation( X, nodeSets );
 
   cellBlockManager.buildMaps();
+
+  partitionDescriptor.setSpatialPartition( partition );
 
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: total number of nodes = {}", getName(),
                                ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );

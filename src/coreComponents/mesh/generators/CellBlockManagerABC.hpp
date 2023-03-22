@@ -17,6 +17,7 @@
 
 #include "CellBlockUtilities.hpp"
 #include "dataRepository/Group.hpp"
+#include "PartitionDescriptor.hpp"
 
 #include <map>
 
@@ -199,6 +200,18 @@ public:
    * @return A reference to constant map.
    */
   virtual std::map< string, SortedArray< localIndex > > const & getNodeSets() const = 0;
+
+  /**
+   * @brief Get a reference to the partition descriptor.
+   * @return The PartitionDescriptor
+   */
+  virtual PartitionDescriptor const & getPartitionDescriptor() const = 0;
+  /**
+   * @brief Getter for the global length
+   * @return the global length of the mesh
+   */
+  virtual real64 getGlobalLength() const = 0;
+
 };
 
 }
