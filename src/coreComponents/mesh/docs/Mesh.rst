@@ -184,58 +184,98 @@ The mesh block has the following syntax:
   <Mesh>
     <VTKMesh
       name="MyMeshName"
+      logLevel="1"
       file="/path/to/the/mesh/file.vtk"/>
   </Mesh>
 
-We advise users to use absolute path to the mesh file.
+We advise users to use absolute path to the mesh file, and strongly recommend the use of a logLevel
+of 1 or more to obtain some information about the mesh import. This information contains for 
+example the list of regions that are imported with their names, which is particularly useful to 
+fill the ``cellBlocks`` field of the ``ElementRegions`` block (see below). Some information about the 
+imported surfaces is also provided.
 
 GEOSX uses ``ElementRegions`` to support different physics
 or to define different constitutive properties.
-An ``ElementRegion`` is defined as a set of ``CellBlocks``.
+The ``ElementRegions`` block can contain several ``CellElementRegion`` blocks. A ``CellElementRegion`` is defined as a set of ``CellBlocks``.
 A ``CellBlock`` is an ensemble of elements with the same element geometry.
+
+The naming of the imported ``cellBlocks`` depends on whether the data array called ``regionAttribute`` is
+present in the vtu file or not. This data array is used to define regions in the vtu file and
+assign the cells to a given region. The ``regionAttribute`` is a integer and not a string
+(unfortunately).
 
 .. figure:: mesh_multi.png
    :align: center
    :width: 500
 
 In the example presented above, the mesh is is composed of two regions (*Top* and *Bot*).
-Each region contains 3 ``CellBlocks``.
+Each region contains 4 ``cellBlocks``.
 
-The ``ElementRegions`` are defined as below :
+- If the vtu file does not contain ``regionAttribute``, then all the cells are grouped in a single
+  region, and the cell block names are just constructed from the cell types (hexahedra, wedges,
+  tetrahedra, etc). Then in the exemple above, the ``ElementRegions`` can be defined as bellow:
 
 .. code-block:: xml
 
   <ElementRegions>
-    <ElementRegion
-      name="Top"
-      cellBlocks="Top_hexahedra Top_wedges Top_tetrahedra"
-      materialList="water rock"/>
-    <ElementRegion
-      name="Bot"
-      cellBlocks="Bot_hexahedra Bot_wedges Bot_tetrahedra"
-      materialList="water rock"/>
+    <CellElementRegion
+      name="cellRegion"
+      cellBlocks="{ hexahedra, wedges, tetrahedra, pyramids }"
+      materialList="{ water, rock }" />
   </ElementRegions>
 
-You have to use the following syntax to declare your ``CellBlocks`` :
+- If the vtu file contains ``regionAttribute``, then the cells are grouped by regions based on their
+  individual (numeric) ``regionAttribute``. In that case, the naming convention for the ``cellBlocks`` is
+  ``regionAttribute_elementType``. Let's assume that the top region of the exemple above is identified
+  by the ``regionAttribute`` 1, and that the bottom region is identified with 2,
+  
+  * If we want the ``CellElementRegion`` to contain all the cells, we write:
 
-.. code-block:: none
+  ..  code-block:: xml
 
-  nameOfTheRegionWithinTheMesh_typeOfTheElement
+    <ElementRegions>
+      <CellElementRegion
+        name="cellRegion"
+        cellBlocks="{ 1_hexahedra, 1_wedges, 1_tetrahedra, 1_pyramids, 3_hexahedra, 3_wedges, 3_tetrahedra, 3_pyramids }"
+        materialList="{ water, rock }" />
+    </ElementRegions>
 
-The keywords for the element types are :
+  * If we want two CellElementRegion with the top and bottom regions separated, we write:
 
-- hexahedra
-- tetrahedra
-- wedges
-- pyramids
-- pentagonalPrisms
-- hexagonalPrisms
-- heptagonalPrisms
-- octagonalPrisms
-- nonagonalPrisms
-- decagonalPrisms
-- hendecagonalPrisms
-- polyhedra
+  .. code-block:: xml
+
+    <ElementRegions>
+      <CellElementRegion
+        name="Top"
+        cellBlocks="{ 1_hexahedra, 1_wedges, 1_tetrahedra, 1_pyramids }"
+        materialList="{ water, rock }"/>
+      <CellElementRegion
+        name="Bot"
+        cellBlocks="{ 3_hexahedra, 3_wedges, 3_tetrahedra, 3_pyramids }"
+        materialList="{ water, rock }" />
+    </ElementRegions>
+
+.. warning::
+
+  We remind the user that **all** the imported ``cellBlocks`` must be included in one of the
+  ``CellElementRegion``. Even if some cells are meant to be inactive during the simulation,
+  they still have to be included in a ``CellElementRegion`` (this ``CellElementRegion`` should
+  simply not be included as a targetRegion of any of the solvers involved in the simulation).
+
+The keywords for the ``cellBlocks`` element types are :
+
+- `hexahedra <https://en.wikipedia.org/wiki/Hexahedron>`_
+- `tetrahedra <https://en.wikipedia.org/wiki/Tetrahedron>`_
+- `wedges <https://en.wikipedia.org/wiki/Triangular_prism>`_
+- `pyramids <https://en.wikipedia.org/wiki/Square_pyramid>`_
+- `pentagonalPrisms <https://en.wikipedia.org/wiki/Pentagonal_prism>`_
+- `hexagonalPrisms <https://en.wikipedia.org/wiki/Hexagonal_prism>`_
+- `heptagonalPrisms <https://en.wikipedia.org/wiki/Heptagonal_prism>`_
+- `octagonalPrisms <https://en.wikipedia.org/wiki/Octagonal_prism>`_
+- `nonagonalPrisms <https://en.wikipedia.org/wiki/Enneagonal_prism>`_
+- `decagonalPrisms <https://en.wikipedia.org/wiki/Decagonal_prism>`_
+- `hendecagonalPrisms <https://en.wikipedia.org/wiki/Hendecagonal_prism>`_
+- `polyhedra <https://en.wikipedia.org/wiki/Polyhedron>`_
 
 An example of a ``vtk`` file with all the physical regions defined is used in :ref:`TutorialFieldCase`.
 
