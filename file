@@ -1,0 +1,901 @@
+commit 9a7b29edf1e37d9e34df369814b3b5088f83dac2 (origin/feature/povolny1/particleManager, feature/povolny1/particleManager)
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Feb 28 09:48:57 2023 -0800
+
+    finalized ceramic model
+
+commit 5027de1a854a2a8a20abf3e26a7686cd45322517
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Feb 15 14:25:20 2023 -0800
+
+    WIP ceramic model implementation
+
+commit bd28ecb95b6b3d290ee8cedfbc5bb27c02a0d88c
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Feb 9 10:44:20 2023 -0800
+
+    implemented initial ceramic damage model, currently only kinematic i.e. uses DFG only
+
+commit c12189c0b8a33943a26614fcc6fd383448f198ef
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Feb 1 10:26:08 2023 -0800
+
+    implemented perfect plasticity model
+
+commit 166ab6d000cdc3b2cd26ce743196083f600330ad
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Jan 27 08:29:04 2023 -0800
+
+    connection from MPM solver to constitutive models is now complete; new hypoUpdate option hypoUpdate2_stressOnly unrotates to reference, calculates increment, and rerotates to current; preliminary testing of hypoUpdate2 complete
+
+commit d29fe22168a72f45ad60bc063136be4e10a85cc5
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Jan 25 12:20:52 2023 -0800
+
+    continued WIP on using built-in constitutive models in MPM solver
+
+commit d0b304c36e05e2bfee345646279ed972e7d6e384
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Jan 25 06:55:12 2023 -0800
+
+    retroactively committing files for MPM solver fields and explicit MPM kernels
+
+commit e5f23c3ae65a731cce42a34315735d8175e926b1
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Jan 24 15:08:29 2023 -0800
+
+    small change
+
+commit 6bd34fe365614ee309bd8621052bb7678ab46099
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Jan 24 14:59:05 2023 -0800
+
+    refactoring MPM solver to use built-in constitutive models
+
+commit 8584b0b70e3763f642289d88e02c1633565d5185
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Jan 20 12:42:41 2023 -0800
+
+    minor cleanup
+
+commit b7e866b1eeeabea69f09792833c468634657dcfa
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Dec 20 07:59:03 2022 -0800
+
+    Damage field partitioning is working after implementation of MPI_MAX sync operation. Removed all temp variables (such as p_m for particleMass[p]) from P2G2P maps, 20%  performance gain observed
+
+commit 105d30d5188536df899b55e2f8c2978faa86cd46
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Mon Dec 19 12:51:17 2022 -0800
+
+    Refactored the binning data structure to use unordered_map, no noticeable change in performance. Modified neighbor list construction to pass temporary arrays of neighbor region, subregion and local indices - significant speed-up observed.
+
+commit 8ebbfe25d9832345d7a39ec52e3c62561483b577
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Dec 16 13:57:52 2022 -0800
+
+    cleaned up tOps refactor, fixed the new particle deletion code
+
+commit 4ff28a053e6e2d99349ca2e70285151917970dc8
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Dec 15 13:10:43 2022 -0800
+
+    Refactor of vector/tensor arithmetic complete, working on optimizing particle deletion
+
+commit 1105d24b44b8cf928dff984e3c5afc532766906f
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Dec 14 07:03:21 2022 -0800
+
+    refactoring MPM solver to not use tensorOps as it has been demonstrated to be slower than using static arrays
+
+commit 612d40b668f630220bde77377ab12057e2fb4fc4
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Mon Dec 12 11:47:52 2022 -0800
+
+    WIP kernel field calculations
+
+commit 3df954541810102f0c3fb84ef6ba2a0a0cc2d21c
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Dec 9 13:58:48 2022 -0800
+
+    instrinsic particle fields and solver-specific fields are now properly separated and registered in the correct locations - instrinsic in ParticleSubRegionbase and solver-specific in SolidMechanicsMPM. Particle deletion is now done through the new ObjectManagerBase::eraseObject function, which automatically loops over subRegion wrappers and performs the deletion on each registered field.
+
+commit 3fda27e5c1d23e38b8ddacd4417adc3d8febb1b1
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Dec 6 08:12:20 2022 -0800
+
+    neighbor list is working, bin sort with optimization implemented
+
+commit 573eca06b300abb2da6d30ca94867d7b456232b1
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Nov 30 16:16:59 2022 -0800
+
+    neighbor list construction WIP - particle ghosting has been demonstrated to be working correctly
+
+commit a84a8f2e4840301f6e9d49001731c820b3b27316
+Merge: 458d13e06 b57efaaa6
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Nov 11 10:03:38 2022 -0800
+
+    merge from develop
+
+commit 458d13e069cc35a43231dd03f854d2921284551d
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Nov 11 09:11:16 2022 -0800
+
+    * CPDI domain scaling
+    * automatic plotting of unscaled particles, no toggle option yet
+    * local/global maps
+    * particle ghosting
+    * proper erasure of constitutive fields
+    * misbehaved particles are now flagged and deleted at the end of the time step to avoid having to rebuild the array of non-ghosts
+    * added placeholder flag for DFG
+    * added Ftable and BCtable infrastracture, not working yet
+    * fixed bugs in setting small mass and identifying boundary nodes
+
+commit 03a843467a150d596d6ca3b95b9702e9696efdc0
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Sep 21 10:34:59 2022 -0700
+
+    added CPDI domain scaling; removed some fields from plotting; treated multi-field contact edge cases; added deletion of J<0 particles
+
+commit 3bf8bedce569b6ffadbac62edee4e90d1353fa32
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Mon Sep 19 12:34:53 2022 -0700
+
+    changed constitutive model to the one from vortex MMS paper; cleaned up gradPhi calcs
+
+commit 0a3feed4c2df45f7449f615d63c0a567ec83e58d
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Fri Sep 16 08:15:29 2022 -0700
+
+    added logic to break out of loops when deleting out-of-domain particles
+
+commit 144bbe785bd5aa1fa25277d7efd0fd96c1455c34
+Merge: 04d844e37 2bda36dad
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Fri Sep 16 07:18:14 2022 -0700
+
+    Merge branch 'feature/povolny1/particleManager' of github.com:GEOSX/GEOSX into feature/povolny1/particleManager
+
+commit 04d844e37203fef38de353fd5314b4860578dc44
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Fri Sep 16 07:18:08 2022 -0700
+
+    a comment
+
+commit 2bda36dad7586a25ab7b34ababe82d8b8516dd03
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Sep 16 07:17:23 2022 -0700
+
+    fixed index ordering in symmetry BC code
+
+commit 539bb1a3afc3622cbf96fe4b7a26f2998497d5ec
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Thu Sep 15 14:31:08 2022 -0700
+
+    cleaned up MPI solver profiling
+
+commit 836870a1dfce0785a88e5fb2a090671efccb0024
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Thu Sep 15 13:51:55 2022 -0700
+
+    fixed a bug with MPI + profiling
+
+commit 0eca241bd80bb4ae2cb39e938b27c30194883d7a
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Thu Sep 15 13:31:24 2022 -0700
+
+    added averaging across partitions for profiling
+
+commit 074ffd9c3112ee173e206ec4e3396541b159df45
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Sep 15 13:13:18 2022 -0700
+
+    made profiling pretty; fixed bug with deleting out of range particles
+
+commit 01a89004c14d9262efff7e136610a2702fcd7f2e
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Thu Sep 15 09:28:41 2022 -0700
+
+    added symmetry BCs; added particle deletion when leaving global domain; added solver profiling tool
+
+commit ef8bde0a938731685f6407ab3a3d411e9e1bfb59
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Sep 9 09:46:24 2022 -0700
+
+    fixed parallelization initiation (basically we skip it for mesh bodies with particles)
+
+commit 4b7390547c32d412a50a40bb4cad2bb4830eb0bc
+Merge: 67a2f9b41 ffe51866a
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Fri Sep 9 08:22:59 2022 -0700
+
+    Merge branch 'develop' into feature/povolny1/particleManager
+
+commit 67a2f9b41d4a85797dd515d83494ff58674ef775
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Sep 9 07:41:13 2022 -0700
+
+    complete merge from develop
+
+commit c310eea4bc433d226b0cd998245181b5cbbb449a
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Fri Sep 9 06:57:30 2022 -0700
+
+    continue WIP merge
+
+commit bdd4b9d37711eaf66bf3672d110b0372779be132
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Thu Sep 8 14:02:30 2022 -0700
+
+    WIP merge from develop, compiles but something is wrong with particle manager registration
+
+commit 616b2b91f5815f9c6b0e8874251cb79827af541f
+Merge: a0d477e13 8bc506db4
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Wed Sep 7 12:26:13 2022 -0700
+
+    merge from develop, particle stuff is broken in ProblemManager, VTK output and MeshLevel
+
+commit a0d477e13ff6b5d4c5e09dede162c6f1fb4b78cf
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Sep 1 12:54:46 2022 -0700
+
+    renamed particleGhostRank to particleRank; made a function for creating grid field labels; made sure grid surface normals are normalized after they are created
+
+commit 399d74aab6b202dc9dae69e6e82035e555573a65
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Aug 31 12:21:35 2022 -0700
+
+    major cleanup of MPM solver class members, they are now registered for restart; proper intialization of grid fields in the -initializei subroutine; getAllWeights cleaned up; multi-field contact subroutines added, including new relevant grid fields; probably some other things i forgot
+
+commit c330d5297131eb01a7743fdc58fe731cbe910fe1
+Merge: f6b7d50d6 466e61bde
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Aug 25 12:18:36 2022 -0700
+
+    Merge branch 'feature/povolny1/particleManager' of github.com:GEOSX/GEOSX into feature/povolny1/particleManager
+
+commit f6b7d50d617651660002517b25ff78879693f50d
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Aug 25 12:18:26 2022 -0700
+
+    more cleanup, beginning work on multi-field contact
+
+commit 466e61bde2cbaca09adc0d96512afad2d47913e0
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Thu Aug 25 12:16:57 2022 -0700
+
+    release build cleanup
+
+commit ea993d432cc4c0d46c2a69bd91784bbbd258c37a
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Aug 25 09:44:25 2022 -0700
+
+    Added dimension labels to all 3d node arrays to avoid a VTK bug, cleaned up MPM solver including registration of class members to enable restart
+
+commit 2bda9359a71a45bf50bbc4f4345f48ad58228c81
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Aug 24 11:19:01 2022 -0700
+
+    added dimension labels to the grid fields so that VTK output does not crash
+
+commit aa6244008fe149325640d7c20c53c4716983dde2
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Mon Aug 22 16:15:17 2022 -0700
+
+    proper naming of initial particle volume and r-vectors, added contact groups to MPM solver - needs debugging
+
+commit 28edeca42614d083b64d2f004e4f93f66184b9f4
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Fri Aug 19 12:08:58 2022 -0700
+
+    fixed VTK output (again), got rid of unused variables in particle mesh generator
+
+commit ebf39db0394089281af93d97da44202c89ff792f
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Fri Aug 19 10:26:27 2022 -0700
+
+    merge now builds, but background grid is no longer present in VTK output
+
+commit 3334d0493cbc0bf6e7f5fa3280c23eac7cc7bbfb
+Merge: 3c8971376 3761021de
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Thu Aug 18 11:27:22 2022 -0700
+
+    initial merge from develop
+
+commit 3c89713760262c4f4ba5ee0b9a30112976576979
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri May 13 07:40:22 2022 -0700
+
+    rst and xsd update
+
+commit 065cfd0d8f38ed56f9a0d79f003d516cdedf7e1d
+Merge: d04286420 233f16160
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri May 13 07:27:38 2022 -0700
+
+    Merge branch 'develop' into feature/povolny1/particleManager
+
+commit d0428642080006227e702ef5f5591186f01e612f
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Thu May 12 14:45:11 2022 -0700
+
+    clean up
+
+commit a355f45c18519e142e773ec3c40d8e7748714960
+Merge: 8f3882d59 dcaf8102c
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed May 11 12:16:25 2022 -0700
+
+    merge from develop
+
+commit 8f3882d59dec6f1fbb5c52b21beba77d06aba178
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed May 11 10:16:45 2022 -0700
+
+    removed setters from ParticleBlockABC
+
+commit 554080324af17e118cf56ed8ad6962181d8c4f11
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue May 10 14:00:21 2022 -0700
+
+    finalizing implementation of ParticleBlockManagerABC
+
+commit d673cea811d34441fcd81517580283bb4062bbe1
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Tue May 10 12:13:21 2022 -0700
+
+    commit particle block manager abc file
+
+commit a675694e11a8c0e889381e6cc3eff474a5ff5c0d
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Tue May 10 12:09:55 2022 -0700
+
+    WIP ABC for particle block manager
+
+commit 2a0f81130faa20f55c27c5b04085c88a11a5a319
+Merge: 01cee8b7d 6e527c51c
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Mon May 9 12:54:37 2022 -0700
+
+    merge in develop 2022-05-09
+
+commit 01cee8b7da0ecddfd9ce0718b9c975c3b9ed6280
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Mon May 9 12:52:19 2022 -0700
+
+    update rsts
+
+commit 1b5556c7396e9499a88eff567416fcdd2032c7e3
+Merge: 5ed485f3f 3775e8bec
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Mon May 9 10:15:57 2022 -0700
+
+    Merge branch 'feature/povolny1/particleManager' of github.com:GEOSX/GEOSX into feature/povolny1/particleManager
+
+commit 5ed485f3fd6c5fb26586fd13470e17a265ba45f0
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Mon May 9 10:15:38 2022 -0700
+
+    m_hasParticles is now private with methods for getting and setting it. getParent.getParent hack removed in MPM solver. unpackers will now complain if the op argument is not MPI_REPLACE or MPI_SUM.
+
+commit 3775e8becf423d54afb3317d4262cb26dfa98c8f
+Merge: ea73ef763 8b6dab9a6
+Author: povolny1 <90001948+povolny1@users.noreply.github.com>
+Date:   Wed May 4 12:46:10 2022 -0700
+
+    Merge branch 'develop' into feature/povolny1/particleManager
+
+commit ea73ef76325c1201863d6bb9908605a34b5c3a95
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Wed May 4 12:32:17 2022 -0700
+
+    performed install to add updated rst and xsd files
+
+commit 1c090ed6d403a81de1e421b8922f7a960ce633bd
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Tue May 3 11:43:19 2022 -0700
+
+    cleaning up unused parameters for release build
+
+commit bcae8108efa331e747a25d8b5a37f81452c5b171
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Mon May 2 15:27:00 2022 -0700
+
+    fixed grid sync order (ghost-to-master additive, master-to-ghost replacement)
+
+commit 0958e77d07c7e211e499768b90c6f532f6866519
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Sun May 1 14:10:55 2022 -0700
+
+    merge from develop complete, currently debugging MPI comms on 4+ partitions
+
+commit e44629ee44c034f413567e17dee2b74e0fd26bc5
+Merge: 183a34d14 bb16d72e8
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Apr 28 13:55:06 2022 -0700
+
+    WIP merge from develop
+
+commit 183a34d149faf3bbc5bb6a201330c3f90a54b17d
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Wed Apr 27 15:20:59 2022 -0700
+
+    final commit before attempting merge from develop
+
+commit e9e13e88f9ccb6694cc848d046f1b8a0532ca31f
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Tue Apr 26 13:15:38 2022 -0700
+
+    cleaned up some superceded code for particle repartitioning
+
+commit 310a72098770c9adc7fcf50c0fbca00b8a75f218
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Apr 22 13:33:53 2022 -0700
+
+    particle repartitioning should be working, final confirmation pending
+
+commit 9a4c91237499d0d118ff41780e21159432308074
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Thu Apr 21 10:26:19 2022 -0700
+
+    particle deletion implemented, still need pack/unpack of constitutive fields
+
+commit 7d56376f97eec081b7008d58ae8df8371fb1dab1
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Thu Apr 21 06:15:50 2022 -0700
+
+    partition repartitioning almost complete, only need to implement repartitioning of constitutive fields along with deletion. also added density calculation to MPM solver
+
+commit 2ade276cd8154a1ecb8fa2a6bac18273d09f9055
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Fri Apr 15 15:16:54 2022 -0700
+
+    cleaning up commented code and debugging couts from the ongoing particle repartitioning work
+
+commit 82c3fedb3c8ebc22722cc651e5cea780332d036e
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Fri Apr 15 15:09:26 2022 -0700
+
+    initial particle repartitioning code now works, partitions successfully send their out-of-bound particle coordinates to all neighboring partitions
+
+commit 1b75f0aa680fe4145a23e256b20d137d94cb9a1e
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Fri Apr 15 10:48:27 2022 -0700
+
+    uncommented the send-receive of the actual buffer containing out-of-range particles, need to debug why the send buffer pointer is null
+
+commit 6fa46ab3d7d60b0ad36b435cf6285786f9ba2fd8
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Apr 14 15:11:48 2022 -0700
+
+    fixed the initial work for repartitioning particles with proper usage of packing and MPI
+
+commit a7810d5b74ef69dfb3091100ba7781d73b0bc58c
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Wed Apr 13 14:13:13 2022 -0700
+
+    more WIP particle repartitioning stuff - working on packing of out-of-range particles
+
+commit 251282246df9387f0a572c4684a0d2901b706a0a
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Tue Apr 12 13:07:52 2022 -0700
+
+    fixed issue with parallel particle read
+
+commit a063923836c919492fe29ac5bf2ea13161eb8cd9
+Author: povolny1 <povolny1@llnl.gov>
+Date:   Tue Apr 12 11:37:08 2022 -0700
+
+    WIP particle repartitioning
+
+commit b269014f2ebc3bb1c198cdd9ff008fc5163aaa3c
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Apr 7 13:50:06 2022 -0700
+
+    commented out changes to enable building
+
+commit 616d6bca3100b21d97df19937df4ed144d7547ed
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Apr 6 14:02:09 2022 -0700
+
+    started writing functions for particle repartitioning
+
+commit 315dfe3d57a93ae6a7cc482ee74d282d30a5b9d4
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Apr 5 11:09:13 2022 -0700
+
+    removed a lot of commented-out debugging couts, added a particle ID field variable needed for particle repartitioning
+
+commit f47e44f913cf44b3e6ed94060e422f7a8286a90a
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Apr 5 08:56:58 2022 -0700
+
+    parallel particle file read complete, fixed some incorrect definitions, added += operator for Tensor, added MPI_Op argument to lots of unpacking functions which now allows for additive grid syncs in addition to replacement syncs
+
+commit d408d123750a228a6a5bb6dea9dd1bc3844e3368
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Mar 30 11:48:33 2022 -0700
+
+    working on parallel mpm particle file read
+
+commit ac36fc22a4975b9d8fb4a9c4ce5c68ad71f803c0
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Mon Mar 28 13:48:21 2022 -0700
+
+    changed particle mesh generator to get particle metadata from a header file written by pfwx
+
+commit 4eb5a4a42e190234191084293e3a687850a74f7d
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Mar 23 13:44:18 2022 -0700
+
+    particle fields now plot, also made density plotlevel 0
+
+commit 71c3712f4cd3fa6c5627e4bae8ec665a144051c9
+Merge: 33a094e8b fd7c257f0
+Author: povolny1 <90001948+povolny1@users.noreply.github.com>
+Date:   Wed Mar 23 11:52:01 2022 -0700
+
+    Merge pull request #1842 from cmcrook5/feature/povolny1/particleManager
+    
+    Added support for writing particle fields to vtk files
+
+commit fd7c257f03b818bb000be875beff8d06ec465126
+Merge: be72d7323 33a094e8b
+Author: povolny1 <90001948+povolny1@users.noreply.github.com>
+Date:   Wed Mar 23 11:51:32 2022 -0700
+
+    Merge branch 'feature/povolny1/particleManager' into feature/povolny1/particleManager
+
+commit 33a094e8b61f4781c4163dcb4dece9af54ef8ac6
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Mar 22 13:33:52 2022 -0700
+
+    fixed CPDI shape function gradients, sign error, also maybe fixed r-vector update yet again, although they might have been fine
+
+commit cdf2ff28f3b95f44708ef550119225b57e7e5c84
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Mar 22 10:55:16 2022 -0700
+
+    removed WIP writeParticleFields
+
+commit 543f2147c7ed2b03a22e022ac628591e46947e67
+Merge: 90df07526 f6232269e
+Author: povolny1 <90001948+povolny1@users.noreply.github.com>
+Date:   Tue Mar 22 10:50:42 2022 -0700
+
+    Merge pull request #1839 from cmcrook5/feature/povolny1/particleManager
+    
+    Implemented VTK CPDI particle corner writing for rendering
+
+commit 90df07526acea79a416643fcf5cc04d172f4c86b
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Mon Mar 21 12:08:47 2022 -0700
+
+    made some modifications to address the fact that localIndex is int instead of long now
+
+commit cffe2a3bbfe78a4b249669533230cd1e4da39a7f
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Mon Mar 21 11:53:56 2022 -0700
+
+    something something LvArray
+
+commit efba3a43e5290555c3b63e6ae894a8eccb20540a
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Mar 18 18:08:48 2022 -0700
+
+    removing rigid-body rotation field that was not meant to be pushed
+
+commit 7c174c03e57690d86e2bd523ed29bf730a2bb406
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Mar 18 18:07:43 2022 -0700
+
+    fixed r-vector update yet again
+
+commit 5f68f96a74f875e9f159fd52b96524a6fbb9326b
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Mar 18 14:43:21 2022 -0700
+
+    WIP CPDI interpolation
+
+commit 83b6e7b052abb4ccb434a8e1c3504f6b6fabf87d
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Mar 18 12:52:52 2022 -0700
+
+    fixed r-vector update... again
+
+commit c54d6601825eca6404b66af021e424b7241310cd
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Mar 18 10:55:51 2022 -0700
+
+    particle corners are now plotted instead of particle centers for moving towards CPDI-type visualization. removed some old unneeded things
+
+commit d788bbe9319c66d9185874ce116c61ba57150c5d
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Mar 17 10:35:01 2022 -0700
+
+    fixed r vector block-to-subregion copy
+
+commit 5b237ef4611ea0290844e189a028bf04c2dd596c
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Mar 17 10:33:12 2022 -0700
+
+    fixed r vector update
+
+commit 52fff373cc53439b0ca3fb6493dd2b495eaea96a
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Mar 16 14:04:27 2022 -0700
+
+    r-vectors now exist in the particle data structure, and are updated by the mpm solver
+
+commit c1be40c02c4beb172aca3aa0c6827c308fc2ea47
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Mar 16 12:25:13 2022 -0700
+
+    moved the interpolation kernel to a method in ParticleSubRegion.hpp, now configured to automatically switch based on particle type. Currently functionaility defaults to single-point behavior.
+
+commit 99ec39ee7662f5a25be98c7d43ddb6c05db58d28
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Mon Mar 14 15:05:37 2022 -0700
+
+    basic serial algorithm has been implemented with a st venant-kirchhoff constitutive model (currently only in MPM solver)
+
+commit 22dba646e628949770d1123d2999f5471187f6dd
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Mar 11 13:31:51 2022 -0800
+
+    added particle/grid kinematic mappings
+
+commit fceae7dc38824448688d656ba208b708e53ee86e
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Mar 10 14:54:32 2022 -0800
+
+    added particle to node map and the node getter, working on the weights getter
+
+commit 917789931826c6c4a02d3bf2de0c10a655d78b22
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Mar 9 16:47:30 2022 -0800
+
+    starting working on stable time step calculation
+
+commit d016ee53cba81e0d88972186f5b2fa58453f74f7
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Mar 9 12:10:15 2022 -0800
+
+    added some pseudocode
+
+commit 2fa376fc4bcd5383a2701ff3e5ce270de3111d4a
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Mar 9 08:42:18 2022 -0800
+
+    added some hard-coded particle motion in the MPM solver for testing purposes
+
+commit 647525b26798c3049fd7d2bb97d7743002677688
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Mar 8 08:15:37 2022 -0800
+
+    added a check to make sure there is a particle block for every combination of material and particle type specified in the particle file
+
+commit fe35ed884a4827c6adc78cd4fa2a3a6cbdd00c9e
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Sun Mar 6 15:17:27 2022 -0800
+
+    added setters for ParticleBlock to properly modify particle center, velocity and volume during read-in. VTK output now partially works for particles with the centers being successfully written
+
+commit c7d4f1c6a0d51dcac74d72672b1130091a660b10
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Mar 3 14:36:32 2022 -0800
+
+    all particle data now successfully imports into GEOSX`s data structures, cleaned up some debugging cout statements, modified particle file order slightly, number of quadrature points initializes properly
+
+commit f58ff199855698053b1e4d1906df9a75829c40ab
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Mon Feb 28 10:38:32 2022 -0800
+
+    particle file now slightly more sophisticated, working on actually using regions/subregions
+
+commit 9b5452d817dbc229df491b02cbee5c231fabfc18
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Feb 18 11:52:26 2022 -0800
+
+    currently working on ProblemManager::calculateRegionQuadrature - want to assign one quadrature point to each particle for now
+
+commit 447a7b664953e693f39f57c2b9979f59360456cb
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Feb 16 10:05:47 2022 -0800
+
+    mostly working now
+
+commit d61d12a0a2bf4744cc4a8054bf0491e420b66f80
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Feb 16 08:59:32 2022 -0800
+
+    added/moved files for particle stuff
+
+commit dc893f34efd8fd56cddaa42a5708be21319cce0f
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Feb 16 08:58:28 2022 -0800
+
+    committing before refactoring particle regions, subregions, blocks, whatever the hell they are
+
+commit 221c4c581b4f1977167559785a64a7a8873c851a
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Feb 11 11:14:41 2022 -0800
+
+    codes builds but crashes while running at ProblemManager::generateMesh()
+
+commit 030480f241fc7e5dad5eefa23778a4581cb08e8a
+Merge: 37c850dce 6e018aa70
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Feb 11 09:11:28 2022 -0800
+
+    merging in latest version of multibody branch
+
+commit 37c850dcee4c655f9cb9ce0da91f7d10af99698c
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Feb 11 08:53:04 2022 -0800
+
+    saving temp changes
+
+commit a0454966a85a75888ab8c52e73e6f96aaa57af27
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Feb 8 15:55:57 2022 -0800
+
+    added new file write function for particle regions in VTKPolyDataWriterInterface.cpp
+
+commit cf57f882dd391efa6ab865886a1c0bb3edd0e7f9
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Feb 8 11:19:33 2022 -0800
+
+    cleaned up particle block, subregionbase classes
+
+commit 51fc6136d2e36e413ae7624a00ac6a2bc1a431b2
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Mon Feb 7 12:43:28 2022 -0800
+
+    actually adding ParticleRegionBase and ParticleSubRegionBase
+
+commit d1331e0d16bb28c849fefba0e4084452c9e589e1
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Mon Feb 7 12:42:07 2022 -0800
+
+    added ParticleRegionBase and ParticleSubRegionBase
+
+commit e52e532d8e581a59254bdf44b95271f9669cdff8
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Feb 4 09:36:49 2022 -0800
+
+    commiting for push, working on particle VTM output
+
+commit aec22728f7a0742143bd6e451dc9e8b4b2fcf8ab
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Feb 2 15:05:10 2022 -0800
+
+    fixed initialization of particle manager in ProblemManager::ParseInputFile
+
+commit 3a2c48ca3cc95fec2b86d29c6ce87f416bed5ada
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Feb 2 12:19:27 2022 -0800
+
+    redoing ParticleManager to be based on ElementRegionmanager, added ParticleBlockManager
+
+commit 66143ed8a95e8b42d831ed82e1349f2df305d6dd
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Feb 1 08:22:16 2022 -0800
+
+    compiles and runs with my test input file
+
+commit f0f45c627bcc680df7633a7b1a390545f7560bb9
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Mon Jan 31 14:50:35 2022 -0800
+
+    added particle blocks, fleshing out particle mesh generator (definitely not compilable yet)
+
+commit a8ccab513f2d5c742dd8172241959b50e0e2d299
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Jan 28 13:43:36 2022 -0800
+
+    added files for ParticleManager, currently a direct copy of NodeManager
+
+commit e63625c1126072074e865e7c5a78084cba87ce8c
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Mon Jan 24 11:15:55 2022 -0800
+
+    fixed compiler errors in VTK stuff
+
+commit 47f2fed35e2c9a2255456789d3d7c344012021fe
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Mon Jan 24 10:36:08 2022 -0800
+
+    implemented some conventions in VTKVTMWriter, made name more compact for sub-sub-block name maker
+
+commit f7260b04dd6db200c01e1792dd40994b05da8014
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Jan 21 12:46:51 2022 -0800
+
+    fixed complication issues arising from merging in parent branch changes
+
+commit ebf92635ebab1b63f2d8154ba3039f4fa10efb86
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Jan 21 10:28:48 2022 -0800
+
+    added missing rst files
+
+commit fb82719c981d7f8e5ca30a7cf9a53c2a34d1397c
+Merge: e25a07b2b 316634808
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Jan 21 10:20:31 2022 -0800
+
+    updating this branch with recent multibody changes
+
+commit 3166348084188dc923a68d5dced74e8335acec6a
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Jan 21 10:06:56 2022 -0800
+
+    vtm subsubblock naming convention moved to a new function
+
+commit afc5fb1e1fd89ca787b1cc90e772660d26543c52
+Merge: 69f068087 156e1a515
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Fri Jan 21 07:24:55 2022 -0800
+
+    Merge branch 'feature/settgast/multipleMeshBodies' into feature/povolny1/multibodyVTK
+
+commit 69f06808762a8df2d1b9dabef5cea9e99d87c5e4
+Merge: 236f54ab8 7d861f7c8
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Jan 20 13:15:26 2022 -0800
+
+    Merge branch 'feature/settgast/multipleMeshBodies' into feature/povolny1/multibodyVTK
+
+commit 236f54ab807da53e431261e3e70f27434a5a4767
+Merge: 3863cb69d 3fb20dc22
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Jan 20 12:45:13 2022 -0800
+
+    Merge branch 'feature/settgast/multipleMeshBodies' into feature/povolny1/multibodyVTK
+
+commit 3863cb69d6366b979fb9da80fe1aac3e8c359e99
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Jan 6 13:42:33 2022 -0800
+
+    initial commit, adding support for multibody VTK output
+
+commit e25a07b2b59ab1c249163c448bf7ab5d7311e5a1
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Thu Jan 6 11:34:41 2022 -0800
+
+    cleaned up VTKVTMWriter Doxygen parameters, added placeholder for a particle mesh generator
+
+commit 312c92eada1a67c61dfbcc6aaf44e74374b9abf8
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Jan 4 08:33:56 2022 -0800
+
+    created new files for particle mesh generation
+
+commit d72617842e4f44dd9213c8f741d97af3238b0965
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Dec 21 10:47:24 2021 -0800
+
+    added multi-body support for VTK output
+
+commit d3ed602bc7058817ddb6a432a5ec79db6f179ed0
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Mon Dec 6 11:47:59 2021 -0800
+
+    added MPM solver files, removed particle region stuff from make list
+
+commit ff9a8bf1913e8c42ef3ba4475ebc2cd5afaa8c0f
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Wed Nov 24 13:22:41 2021 -0800
+
+    made new mesh files for ParticleRegion and ParticleSubRegion
+
+commit 183c53d3d73c1737730e7a63fbdbe54e9abbb882
+Author: Stefan Povolny <povolny1@llnl.gov>
+Date:   Tue Nov 23 11:54:58 2021 -0800
+
+    initial commit
