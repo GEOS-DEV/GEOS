@@ -27,5 +27,7 @@ Wellbore Problems
 
    casedThermoElasticWellbore/Example
 
+   thermoPoroElasticWellbore/Example
+
 
 
