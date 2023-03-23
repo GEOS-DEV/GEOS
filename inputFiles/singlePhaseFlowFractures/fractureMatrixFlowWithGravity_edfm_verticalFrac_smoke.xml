@@ -132,7 +132,7 @@
       name="rockPorosity"
       defaultReferencePorosity="0.05"
       referencePressure="0.0"
-      compressibility="1.0e-9"/>
+      compressibility="0.0e-9"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -159,18 +159,27 @@
       scale="1.00"/>
 
     <FieldSpecification
-      name="topPressure"
-      initialCondition="0"
-      objectPath="ElementRegions/Fracture"
+      name="initalPressure"
+      initialCondition="1"
+      objectPath="ElementRegions"
       fieldName="pressure"
       scale="1.0e6"
-      setNames="{ fractureTop }"/>
+      setNames="{ all }"/>
+
+    <FieldSpecification
+      name="topPressure"
+      initialCondition="0"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="1.0e6"
+      setNames="{ ypos }"/>  
+
   </FieldSpecifications>
 
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="fractureFlow_Gravity_oldImpl"
+      plotFileRoot="fractureFlow_Gravity"
       plotLevel="1"/>
 
     <Restart

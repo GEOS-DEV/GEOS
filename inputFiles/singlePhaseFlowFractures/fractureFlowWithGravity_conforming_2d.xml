@@ -166,7 +166,7 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="fractureFlow_Gravity_oldImpl"
+      plotFileRoot="fractureFlow_Gravity"
       plotLevel="1"/>
 
     <Restart

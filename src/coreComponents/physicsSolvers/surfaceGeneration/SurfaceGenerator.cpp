@@ -491,16 +491,14 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       }
     }
 
-    FaceElementSubRegion & subRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
-    subRegion.m_recalculateFractureConnectorEdges.clear();
-    subRegion.m_newFaceElements.clear();
+    FaceElementSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
+    fractureSubRegion.m_recalculateFractureConnectorEdges.clear();
+    fractureSubRegion.m_newFaceElements.clear();
 
     // Recreate geometric sets
     meshLevel.getNodeManager().buildGeometricSets( GeometricObjectManager::getInstance() );
 
     // Create set "all" on the faceElementSubregion
-    FaceElementSubRegion & fractureSubRegion  = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
-
     dataRepository::Group & setGroup =
       fractureSubRegion.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
 
@@ -513,20 +511,20 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       targetSet.insert( ei );
     } );
 
-    // // Compute gravity coefficient for new elements so that gravity term is correctly computed
-    // real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+    // Compute gravity coefficient for new elements so that gravity term is correctly computed
+    real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    // if( subRegion.hasWrapper( fields::flow::gravityCoefficient::key()) )
-    // {
-    //   arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
+    if( fractureSubRegion.hasWrapper( fields::flow::gravityCoefficient::key()) )
+    {
+      arrayView2d< real64 const > const elemCenter = fractureSubRegion.getElementCenter();
 
-    //   arrayView1d< real64 > const gravityCoef = subRegion.getField< fields::flow::gravityCoefficient >();
+      arrayView1d< real64 > const gravityCoef = fractureSubRegion.getField< fields::flow::gravityCoefficient >();
 
-    //   forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
-    //   {
-    //     gravityCoef[ ei ] = LvArray::tensorOps::AiBi< 3 >( elemCenter[ ei ], gravVector );
-    //   } );
-    // }
+      forAll< parallelHostPolicy >( fractureSubRegion.size(), [=] ( localIndex const ei )
+      {
+        gravityCoef[ ei ] = LvArray::tensorOps::AiBi< 3 >( elemCenter[ ei ], gravVector );
+      } );
+    }
 
   } );
 
