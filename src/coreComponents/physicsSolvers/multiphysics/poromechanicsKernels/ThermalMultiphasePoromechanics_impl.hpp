@@ -158,10 +158,7 @@ smallStrainUpdate( localIndex const k,
 
   // Step 4: compute pore volume constraint
   computePoreVolumeConstraint( k,
-                               porosity,
-                               dPorosity_dVolStrain,
-                               dPorosity_dPressure,
-                               dPorosity_dTemperature,
+                               porosity_n,
                                stack );
 }
 
@@ -327,19 +324,13 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ThermalMultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 computePoreVolumeConstraint( localIndex const k,
-                             real64 const & porosity,
-                             real64 const & dPorosity_dVolStrain,
-                             real64 const & dPorosity_dPressure,
-                             real64 const & dPorosity_dTemperature,
+                             real64 const & porosity_n,
                              StackVariables & stack ) const
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
   Base::computePoreVolumeConstraint( k,
-                                     porosity,
-                                     dPorosity_dVolStrain,
-                                     dPorosity_dPressure,
-                                     dPorosity_dTemperature,
+                                     porosity_n,
                                      stack );
 
   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const phaseVolFrac = m_fluidPhaseVolFrac[k];
@@ -348,8 +339,7 @@ computePoreVolumeConstraint( localIndex const k,
   stack.dPoreVolConstraint_dTemperature = 0.0;
   for( integer ip = 0; ip < m_numPhases; ++ip )
   {
-    stack.dPoreVolConstraint_dTemperature += -dPhaseVolFrac( ip, Deriv::dT ) * porosity
-                                             - phaseVolFrac( ip ) * dPorosity_dTemperature;
+    stack.dPoreVolConstraint_dTemperature -= dPhaseVolFrac( ip, Deriv::dT ) * porosity_n;
   }
 }
 
