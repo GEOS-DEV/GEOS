@@ -165,6 +165,9 @@ private:
   //set of base elements in the crack front
   SortedArray<localIndex> m_baseCrackFront;
 
+  //indicator of insertion of new fracture elements
+  bool m_addedFractureElements;
+
 };
 
 } /* namespace geosx */

@@ -75,10 +75,10 @@ public:
 
   /**
    * @brief function to update embedded fracture geometry in the 3D planar case 
-   * @return no return, but all parameters are updated if propagation is succesful
+   * @return bool, true if a fracture element was added, false if none. 
    *
    */
-  void propagationStep3D();
+  bool propagationStep3D();
 
   /**
    * @brief function to update embedded fracture geometry - only works with a single fracture

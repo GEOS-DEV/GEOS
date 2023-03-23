@@ -310,6 +310,96 @@ public:
     return nextDt;
   }
 
+  /**
+   * @brief unit step in sequentially coupled solver step. 
+   * This only does a single nonlinear solve to the system of equations, in a sequential way.
+   * Convergence is informed by the parameter isConverged.
+   *
+   * @param isConverged informs if the step converged
+   * @param time_n the current time
+   * @param dt timestep size
+   * @param cycleNumber
+   * @param domain the domain partition
+   * @return real64 size of the accepted timestep
+   */
+  virtual real64 unitSequentiallyCoupledSolverStep( bool & isStepConverged,
+                                                    real64 const & time_n,
+                                                    real64 const & dt,
+                                                    int const cycleNumber,
+                                                    DomainPartition & domain )
+  {
+    GEOSX_MARK_FUNCTION;
+
+    real64 dtReturn = dt;
+
+    real64 dtReturnTemporary;
+
+    Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+
+      // Only build the sparsity pattern if the mesh has changed
+      if( meshModificationTimestamp > solver->getSystemSetupTimestamp() )
+      {
+        solver->setupSystem( domain,
+                             solver->getDofManager(),
+                             solver->getLocalMatrix(),
+                             solver->getSystemRhs(),
+                             solver->getSystemSolution() );
+        solver->setSystemSetupTimestamp( meshModificationTimestamp );
+      }
+
+      solver->implicitStepSetup( time_n, dt, domain );
+
+    } );
+
+    NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
+    integer & iter = solverParams.m_numNewtonIterations;
+    iter = 0;
+    bool isConverged = false;
+    /// Sequential coupling loop
+    while( iter < solverParams.m_maxIterNewton )
+    {
+      if( iter == 0 )
+      {
+        // Reset the states of all solvers if any of them had to restart
+        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+        {
+          solver->resetStateToBeginningOfStep( domain );
+        } );
+        resetStateToBeginningOfStep( domain );
+      }
+
+      forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
+      {
+        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "  Iteration {:2}: {}", iter+1, solver->getName() ) );
+        dtReturnTemporary = solver->nonlinearImplicitStep( time_n,
+                                                           dtReturn,
+                                                           cycleNumber,
+                                                           domain );
+
+        mapSolutionBetweenSolvers( domain, idx() );
+
+        if( dtReturnTemporary < dtReturn )
+        {
+          iter = 0;
+          dtReturn = dtReturnTemporary;
+        }
+      } );
+
+      isConverged = checkSequentialConvergence( iter );
+      isStepConverged = isConverged;
+      GEOSX_UNUSED_VAR(isStepConverged);
+
+      break;
+    }
+
+    implicitStepComplete( time_n, dt, domain );
+
+    return dtReturn;
+  }
+
 
   /**@}*/
 

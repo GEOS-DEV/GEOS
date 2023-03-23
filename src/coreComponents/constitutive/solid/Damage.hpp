@@ -243,9 +243,9 @@ public:
     return m_criticalStrainEnergy;
     #else
     if( m_extDrivingForceFlag )
-      return 3*m_criticalFractureEnergy[q]/(16 * m_lengthScale) + 0.5 * m_extDrivingForce( k, q );
+      return 3*m_criticalFractureEnergy[k]/(16 * m_lengthScale) + 0.5 * m_extDrivingForce( k, q );
     else
-      return 3*m_criticalFractureEnergy[q]/(16 * m_lengthScale);
+      return 3*m_criticalFractureEnergy[k]/(16 * m_lengthScale);
 
     #endif
 

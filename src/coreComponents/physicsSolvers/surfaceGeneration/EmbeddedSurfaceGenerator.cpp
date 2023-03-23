@@ -488,7 +488,7 @@ void EmbeddedSurfaceGenerator::propagationStep( DomainPartition & domain,
   //addToFractureStencil( domain );
 }
 
-void EmbeddedSurfaceGenerator::propagationStep3D()
+bool EmbeddedSurfaceGenerator::propagationStep3D()
 {
   GEOSX_MARK_FUNCTION;
   // int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
@@ -653,6 +653,7 @@ void EmbeddedSurfaceGenerator::propagationStep3D()
 
   // Add the embedded elements to the fracture stencil.
   //addToFractureStencil( domain );
+  return added;
 }
 
 
