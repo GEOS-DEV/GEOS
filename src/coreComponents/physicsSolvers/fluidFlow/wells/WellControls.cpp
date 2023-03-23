@@ -309,13 +309,13 @@ void WellControls::postProcessInput()
 
   // 6.2) Check incoherent information
   // A producer must be controlled by PhaseVolRate
-  GEOSX_THROW_IF( (isProducer() && (m_inputControl != Control::PHASEVOLRATE)),
+  GEOSX_THROW_IF( (isProducer() && (m_inputControl == Control::TOTALVOLRATE)),
                   "WellControls '" << getName() << "': You have to control a producer with "
                                    << EnumStrings< Control >::toString( Control::PHASEVOLRATE ),
                   InputError );
 
   // An injector must be controlled by TotalVolRate
-  GEOSX_THROW_IF( (isInjector() && (m_inputControl != Control::TOTALVOLRATE)),
+  GEOSX_THROW_IF( (isInjector() && (m_inputControl == Control::PHASEVOLRATE)),
                   "WellControls '" << getName() << "': You have to control an injector with "
                                    << EnumStrings< Control >::toString( Control::TOTALVOLRATE ),
                   InputError );
