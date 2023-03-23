@@ -29,7 +29,7 @@
       xCoords="{ -50, 50 }"
       yCoords="{ 0, 1000 }"
       zCoords="{ 0, 50 }"
-      nx="{ 10 }"
+      nx="{ 3 }"
       ny="{ 100 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
@@ -43,8 +43,8 @@
 
     <Box
     name="fractureTop"
-    xMin="{ -0.01, 889.99, -0.01 }"
-    xMax="{ 0.01, 900.01, 50.01 }"/>
+    xMin="{ -0.01, 979.99, -0.01 }"
+    xMax="{ 0.01, 990.01, 50.01 }"/>
   </Geometry>
 
   <Events
@@ -153,14 +153,6 @@
       objectPath="ElementRegions/Fracture"
       fieldName="fracturePorosity_porosity"
       scale="1.00"/>
-
-    <!-- <FieldSpecification
-      name="topPressure"
-      initialCondition="0"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="1.0e6"
-      setNames="{ ypos }"/> -->
 
     <FieldSpecification
       name="topPressure"
