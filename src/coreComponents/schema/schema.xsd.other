@@ -1522,6 +1522,8 @@
 		<xsd:attribute name="bulkModulus" type="real64_array" />
 		<!--damage => Material Damage Variable-->
 		<xsd:attribute name="damage" type="real64_array2d" />
+		<!--damageGrad => Material Damage Gradient-->
+		<xsd:attribute name="damageGrad" type="real64_array3d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--extDrivingForce => External Driving Force-->
@@ -1536,12 +1538,16 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--volumetricStrain => Volumetric strain-->
+		<xsd:attribute name="volumetricStrain" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageSpectralElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
 		<!--damage => Material Damage Variable-->
 		<xsd:attribute name="damage" type="real64_array2d" />
+		<!--damageGrad => Material Damage Gradient-->
+		<xsd:attribute name="damageGrad" type="real64_array3d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--extDrivingForce => External Driving Force-->
@@ -1554,14 +1560,21 @@
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
+<<<<<<< HEAD
 		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+=======
+		<!--volumetricStrain => Volumetric strain-->
+		<xsd:attribute name="volumetricStrain" type="real64_array2d" />
+>>>>>>> feature/andrembcosta/pressurizedPhaseField
 	</xsd:complexType>
 	<xsd:complexType name="DamageVolDevElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
 		<!--damage => Material Damage Variable-->
 		<xsd:attribute name="damage" type="real64_array2d" />
+		<!--damageGrad => Material Damage Gradient-->
+		<xsd:attribute name="damageGrad" type="real64_array3d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--extDrivingForce => External Driving Force-->
@@ -1574,8 +1587,13 @@
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
+<<<<<<< HEAD
 		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+=======
+		<!--volumetricStrain => Volumetric strain-->
+		<xsd:attribute name="volumetricStrain" type="real64_array2d" />
+>>>>>>> feature/andrembcosta/pressurizedPhaseField
 	</xsd:complexType>
 	<xsd:complexType name="DeadOilFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->

@@ -140,7 +140,9 @@ public:
 
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
+  #if 0
     static constexpr char const * coeffNameString() { return "coeffField"; }
+  #endif
     static constexpr char const * localDissipationOptionString() { return "localDissipation"; }
     static constexpr char const * irreversibilityFlagString() { return "irreversibilityFlag"; }
     static constexpr char const * damageUpperBoundString() { return "damageUpperBound"; }
@@ -167,6 +169,11 @@ public:
     return m_damageName;
   }
 
+  void setPressureEffects()
+  {
+    m_pressureEffectsFlag = 1;
+  }
+
 protected:
   virtual void postProcessInput() override final;
 
@@ -175,12 +182,11 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
+  integer m_pressureEffectsFlag;
   integer m_irreversibilityFlag;
   real64 m_damageUpperBound;
   integer m_damageViscosityFlag;
   real64 m_damageViscosityCoeff;
-
-  array1d< real64 > m_coeff;
   array1d< localIndex > m_initialCrack;
 
   PhaseFieldDamageFEM();

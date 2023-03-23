@@ -42,6 +42,8 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 
+#define LORENTZ 0
+
 #include "constitutive/solid/SolidBase.hpp"
 #include "InvariantDecompositions.hpp"
 
@@ -58,7 +60,7 @@ namespace constitutive
 //       function.  The developer should be very cautious if accessing the stress
 //       directly through an arrayView, as it does not represent the true stress.
 //
-// NOTE: This model is designed to work with phase field implementation where m_damage
+// NOTE: This model is designed to work with phase field implementation where m_newDamage
 //       is updated externally to the material model routine.  A modified implementation
 //       would be required to use this directly within a SolidMechanics-only solver, to
 //       internally update the damage variable and consistently linearize the system.
@@ -68,8 +70,10 @@ class DamageUpdates : public UPDATE_BASE
 {
 public:
   template< typename ... PARAMS >
-  DamageUpdates( arrayView2d< real64 > const & inputDamage,
+  DamageUpdates( arrayView2d< real64 > const & inputNewDamage,
+                 arrayView3d< real64 > const & inputDamageGrad,
                  arrayView2d< real64 > const & inputStrainEnergyDensity,
+                 arrayView2d< real64 > const & inputVolumetricStrain,
                  arrayView2d< real64 > const & inputExtDrivingForce,
                  real64 const & inputLengthScale,
                  arrayView1d< real64 > const & inputCriticalFractureEnergy,
@@ -79,10 +83,13 @@ public:
                  real64 const & inputTensileStrength,
                  real64 const & inputCompressStrength,
                  real64 const & inputDeltaCoefficient,
+                 arrayView1d< real64 > const & inputBiotCoefficient,
                  PARAMS && ... baseParams ):
     UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
-    m_damage( inputDamage ),
+    m_newDamage( inputNewDamage ),
+    m_damageGrad( inputDamageGrad ),
     m_strainEnergyDensity( inputStrainEnergyDensity ),
+    m_volStrain( inputVolumetricStrain ),
     m_extDrivingForce ( inputExtDrivingForce ),
     m_lengthScale( inputLengthScale ),
     m_criticalFractureEnergy( inputCriticalFractureEnergy ),
@@ -91,7 +98,8 @@ public:
     m_extDrivingForceFlag( inputExtDrivingForceFlag ),
     m_tensileStrength( inputTensileStrength ),
     m_compressStrength( inputCompressStrength ),
-    m_deltaCoefficient( inputDeltaCoefficient )
+    m_deltaCoefficient( inputDeltaCoefficient ),
+    m_biotCoefficient( inputBiotCoefficient )
   {}
 
   using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps;
@@ -119,11 +127,11 @@ public:
 
     if( m_extDrivingForceFlag )
     {
-      pf = fmax( fmin( 1.0, m_damage( k, q )), 0.0 );
+      pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
     }
     else
     {
-      pf = m_damage( k, q );
+      pf = m_newDamage( k, q );
     }
 
     // Set a lower bound tolerance for the degradation
@@ -140,7 +148,6 @@ public:
     return -2*(1 - d);
   }
 
-
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationSecondDerivative( localIndex const GEOSX_UNUSED_PARAM(k), real64 const d ) const
@@ -149,6 +156,92 @@ public:
 
     return 2.0;
   }
+
+//FRANKS VERSION
+// GEOSX_FORCE_INLINE
+// GEOSX_HOST_DEVICE
+// virtual real64 pressureDamageFunction( localIndex const k,
+//                                        localIndex const q ) const
+// {
+//   real64 pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
+
+  //   return 0.5*(1 + std::cos( M_PI*pf ));
+  // }
+
+
+  // GEOSX_FORCE_INLINE
+  // GEOSX_HOST_DEVICE
+  // virtual real64 pressureDamageFunctionDerivative( real64 const d ) const
+  // {
+  //   return -0.5*M_PI*std::sin( M_PI*d );
+  // }
+
+
+  // GEOSX_FORCE_INLINE
+  // GEOSX_HOST_DEVICE
+  // virtual real64 pressureDamageFunctionSecondDerivative( real64 const d ) const
+  // {
+  //   return -0.5*M_PI*M_PI*std::cos( M_PI*d );
+  // }
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual real64 pressureDamageFunction( localIndex const k,
+                                         localIndex const q ) const
+  {
+    //real64 pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
+
+    return (1-m_newDamage( k, q ));
+  }
+
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual real64 pressureDamageFunctionDerivative( real64 const d ) const
+  {
+    GEOSX_UNUSED_VAR( d );
+    return -1.0;
+  }
+
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual real64 pressureDamageFunctionSecondDerivative( real64 const d ) const
+  {
+    GEOSX_UNUSED_VAR( d );
+    return 0.0;
+  }
+
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual real64 getDamage( localIndex const k,
+                            localIndex const q ) const
+  {
+    return m_newDamage( k, q );
+  }
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual void getDamageGrad( localIndex const k,
+                              localIndex const q,
+                              real64 ( & damageGrad )[3] ) const
+  {
+    for( int dim=0; dim < 3; ++dim )
+    {
+      damageGrad[dim] = m_damageGrad[k][q][dim];
+    }
+
+  }
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual void updateBiotCoefficient( localIndex const k,
+                                      real64 const biotCoefficient ) const
+  {
+    m_biotCoefficient[k] = biotCoefficient;
+  }
+
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -165,6 +258,12 @@ public:
     }
 
     real64 factor = getDegradationValue( k, q );
+
+    // compute volumetric and deviatoric strain invariants
+    real64 strain[6] = {0};
+    UPDATE_BASE::getElasticStrain( k, q, strain );
+    real64 traceOfStrain = strain[0] + strain[1] + strain[2];
+    m_volStrain( k, q ) = traceOfStrain;
 
     if( m_extDrivingForceFlag )
     {
@@ -224,6 +323,13 @@ public:
   }
 
   GEOSX_HOST_DEVICE
+  virtual real64 getVolStrain( localIndex const k,
+                               localIndex const q ) const
+  {
+    return m_volStrain( k, q );
+  }
+
+  GEOSX_HOST_DEVICE
   real64 getRegularizationLength() const
   {
     return m_lengthScale;
@@ -252,8 +358,16 @@ public:
 
   }
 
-  arrayView2d< real64 > const m_damage;
+  GEOSX_HOST_DEVICE
+  virtual real64 getBiotCoefficient( localIndex const k ) const
+  {
+    return m_biotCoefficient[k];
+  }
+
+  arrayView2d< real64 > const m_newDamage;
+  arrayView3d< real64 > const m_damageGrad;
   arrayView2d< real64 > const m_strainEnergyDensity;
+  arrayView2d< real64 > const m_volStrain;
   arrayView2d< real64 > const m_extDrivingForce;
   real64 const m_lengthScale;
   //real64 const m_criticalFractureEnergy;
@@ -264,6 +378,7 @@ public:
   real64 const m_tensileStrength;
   real64 const m_compressStrength;
   real64 const m_deltaCoefficient;
+  arrayView1d< real64 > const m_biotCoefficient;
 };
 
 
@@ -291,15 +406,17 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// *** The interface to get member variables
-  arrayView2d< real64 const > getDamage() const { return m_damage; }
+  arrayView2d< real64 const > getDamage() const { return m_newDamage; }
 
   arrayView2d< real64 const > getExtDrivingForce() const { return m_extDrivingForce; }
 
 
   KernelWrapper createKernelUpdates() const
   {
-    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
+    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
+                                                                       m_damageGrad.toView(),
                                                                        m_strainEnergyDensity.toView(),
+                                                                       m_volStrain.toView(),
                                                                        m_extDrivingForce.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy.toView(),
@@ -308,14 +425,17 @@ public:
                                                                        m_extDrivingForceFlag,
                                                                        m_tensileStrength,
                                                                        m_compressStrength,
-                                                                       m_deltaCoefficient );
+                                                                       m_deltaCoefficient,
+                                                                       m_biotCoefficient.toView() );
   }
 
   struct viewKeyStruct : public BASE::viewKeyStruct
   {
     static constexpr char const * damageString() { return "damage"; }
+    static constexpr char const * damageGradString() { return "damageGrad"; }
     static constexpr char const * strainEnergyDensityString() { return "strainEnergyDensity"; }
     static constexpr char const * extDrivingForceString() { return "extDrivingForce"; }
+    static constexpr char const * volumetricStrainString() { return "volumetricStrain"; }
     /// string/key for regularization length
     static constexpr char const * lengthScaleString() { return "lengthScale"; }
     /// string/key for default Gc
@@ -334,12 +454,16 @@ public:
     static constexpr char const * compressStrengthString() { return "compressiveStrength"; }
     /// string/key for a delta coefficient in computing the external driving force
     static constexpr char const * deltaCoefficientString() { return "deltaCoefficient"; }
+    /// string/key for the Biot coefficient
+    static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }
   };
 
 
 protected:
-  array2d< real64 > m_damage;
+  array2d< real64 > m_newDamage;
+  array3d< real64 > m_damageGrad;
   array2d< real64 > m_strainEnergyDensity;
+  array2d< real64 > m_volStrain;
   array2d< real64 > m_extDrivingForce;
   real64 m_lengthScale;
   real64 m_defaultCriticalFractureEnergy;
@@ -351,6 +475,7 @@ protected:
   real64 m_tensileStrength;
   real64 m_compressStrength;
   real64 m_deltaCoefficient;
+  array1d< real64 > m_biotCoefficient;
 };
 
 }
