@@ -128,7 +128,7 @@ string Group::getPath() const
   // In the Conduit node heirarchy everything begins with 'Problem', we should change it so that
   // the ProblemManager actually uses the root Conduit Node but that will require a full rebaseline.
   string const noProblem = getConduitNode().path().substr( std::strlen( dataRepository::keys::ProblemManager ) );
-  return noProblem.empty() ? dataRepository::keys::ProblemManager : noProblem;
+  return noProblem.empty() ? "/" : noProblem;
 }
 
 void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
