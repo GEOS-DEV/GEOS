@@ -334,8 +334,8 @@ public:
   {
     Group * const child = m_subGroups[ key ];
     GEOSX_THROW_IF( child == nullptr,
-                    "Group " << getPath() << " doesn't have a child named " << key << std::endl <<
-                    getName() << " have the following children: " << dumpChildrenName(),
+                    "Group " << getPath() << " has no child named " << key << std::endl <<
+                    getName() << " children are: " << dumpChildrenName(),
                     std::domain_error );
     return dynamicCast< T & >( *child );
   }
@@ -348,8 +348,8 @@ public:
   {
     Group const * const child = m_subGroups[ key ];
     GEOSX_THROW_IF( child == nullptr,
-                    "Group " << getPath() << " doesn't have a child named " << key << std::endl <<
-                    getName() << " have the following children: " << dumpChildrenName(),
+                    "Group " << getPath() << " has no child named " << key << std::endl <<
+                    getName() << " children are: " << dumpChildrenName(),
                     std::domain_error );
     return dynamicCast< T const & >( *child );
   }
@@ -1064,8 +1064,8 @@ public:
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
     GEOSX_THROW_IF( wrapper == nullptr,
-                    "Group " << getPath() << " doesn't have a wrapper named " << key << std::endl <<
-                    getName() << " have the following wrappers: " << dumpWrappersName(),
+                    "Group " << getPath() << " has no wrapper named " << key << std::endl <<
+                    getName() << " wrappers are: " << dumpWrappersName(),
                     std::domain_error );
     return *wrapper;
   }
@@ -1078,8 +1078,8 @@ public:
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
     GEOSX_THROW_IF( wrapper == nullptr,
-                    "Group " << getPath() << " doesn't have a wrapper named " << key << std::endl <<
-                    getName() << " have the following wrappers: " << dumpWrappersName(),
+                    "Group " << getPath() << " has no wrapper named " << key << std::endl <<
+                    getName() << " wrappers are: " << dumpWrappersName(),
                     std::domain_error );
     return *wrapper;
   }
