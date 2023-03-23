@@ -612,6 +612,8 @@ protected:
 
   /// @endcond
 
+  void processInputException( std::exception const & ex, xmlWrapper::xmlNode const & targetNode ) const;
+
 protected:
 
   /// Name of the object that is being wrapped

@@ -611,25 +611,32 @@ public:
     InputFlags const inputFlag = getInputFlag();
     if( inputFlag >= InputFlags::OPTIONAL )
     {
-      if( inputFlag == InputFlags::REQUIRED || !hasDefaultValue() )
+      try
       {
-        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
-                                                                     getName(),
-                                                                     targetNode,
-                                                                     inputFlag == InputFlags::REQUIRED );
-        GEOSX_THROW_IF( !m_successfulReadFromInput,
-                        GEOSX_FMT( "XML Node '{}' with name='{}' is missing required attribute '{}'."
-                                   "Available options are:\n{}\nFor more details, please refer to documentation at:\n"
-                                   "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                                   targetNode.path(), targetNode.attribute( "name" ).value(), getName(), dumpInputOptions( true ) ),
-                        InputError );
+        if( inputFlag == InputFlags::REQUIRED || !hasDefaultValue() )
+        {
+          m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                       getName(),
+                                                                       targetNode,
+                                                                       inputFlag == InputFlags::REQUIRED );
+          GEOSX_THROW_IF( !m_successfulReadFromInput,
+                          GEOSX_FMT( "XML Node '{}' with name='{}' is missing required attribute '{}'."
+                                     "Available options are:\n{}\nFor more details, please refer to documentation at:\n"
+                                     "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
+                                     targetNode.path(), targetNode.attribute( "name" ).value(), getName(), dumpInputOptions( true ) ),
+                          InputError );
+        }
+        else
+        {
+          m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                       getName(),
+                                                                       targetNode,
+                                                                       getDefaultValueStruct() );
+        }
       }
-      else
+      catch( std::exception const & ex )
       {
-        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
-                                                                     getName(),
-                                                                     targetNode,
-                                                                     getDefaultValueStruct() );
+        processInputException( ex, targetNode );
       }
 
       return true;
