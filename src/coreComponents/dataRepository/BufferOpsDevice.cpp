@@ -218,27 +218,35 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
   localIndex unpackSize = numIndices * sliceSize * sizeof( T );
   T const * devBuffer = reinterpret_cast< T const * >( buffer );
   parallelDeviceStream stream;
-  events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOSX_DEVICE ( localIndex const ii )
+  if(op == MPI_SUM)
   {
-    T const * threadBuffer = &devBuffer[ ii * sliceSize ];
-    if(op == MPI_SUM)
+    events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOSX_DEVICE ( localIndex const ii )
     {
+      T const * threadBuffer = &devBuffer[ ii * sliceSize ];
       LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOSX_DEVICE ( T & value )
       {
         value += *threadBuffer;
         ++threadBuffer;
       } );
-    }
-    else if(op == MPI_REPLACE) // TODO: Add other types of syncs?
+    } ) );
+  }
+  else if(op == MPI_REPLACE)
+  {
+    events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOSX_DEVICE ( localIndex const ii )
     {
+      T const * threadBuffer = &devBuffer[ ii * sliceSize ];
       LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOSX_DEVICE ( T & value )
       {
         value = *threadBuffer;
         ++threadBuffer;
       } );
-    }
-    else if(op == MPI_MAX)
+    } ) );
+  }
+  else if(op == MPI_MAX)
+  {
+    events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOSX_DEVICE ( localIndex const ii )
     {
+      T const * threadBuffer = &devBuffer[ ii * sliceSize ];
       int count = 0;
       real64 LHSNormSquared = 0.0, RHSNormSquared = 0.0;
 
@@ -266,12 +274,12 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
           ++threadBuffer;
         } );
       }
-    }
-    else
-    {
-      GEOSX_ERROR("Unsupported MPI operator! MPI_SUM, MPI_REPLACE and MPI_MAX are supported.");
-    }
-  } ) );
+    } ) );
+  }
+  else
+  {
+    GEOSX_ERROR("Unsupported MPI operator! MPI_SUM, MPI_REPLACE and MPI_MAX are supported.");
+  }
 
   buffer += unpackSize;
   return unpackSize;

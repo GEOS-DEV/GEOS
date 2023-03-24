@@ -68,11 +68,6 @@ public:
   ///@}
 
   /**
-   * @brief Update the local-to-global and global-to-local maps
-   */
-  void updateMaps();
-
-  /**
    * @name Helpers for ParticleSubRegion construction
    */
   ///@{
@@ -108,8 +103,8 @@ public:
    * @param intialRVectors the particle's initial R-Vectors
    */
   void computeRVectors( int const p,
-                        arraySlice2d< real64 > const F,
-                        arraySlice2d< real64 > const initialRVectors );
+                        arraySlice2d< real64 const > const F,
+                        arraySlice2d< real64 const > const initialRVectors );
 
   void cpdiDomainScaling( real64 lCrit,
                           int m_planeStrain );
@@ -124,7 +119,7 @@ public:
                       std::array< real64, 3 > const & xMin,
                       std::array< real64, 3 > const & hx,
                       array3d< int > const & ijkMap,
-                      arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const g_X,
+                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const g_X,
                       arrayView1d< int > const nodeIDs,
                       arrayView1d< real64 > const weights,
                       arrayView2d< real64 > const gradWeights );

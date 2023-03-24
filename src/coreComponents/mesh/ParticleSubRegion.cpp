@@ -35,15 +35,6 @@ ParticleSubRegion::~ParticleSubRegion()
   // Left blank
 }
 
-void ParticleSubRegion::updateMaps()
-{
-  for( localIndex p=0; p<this->size(); p++ )
-  {
-    m_localToGlobalMap[p] = m_particleID[p];
-  }
-  this->constructGlobalToLocalMap();
-}
-
 void ParticleSubRegion::setParticleRank(int rank, int np)
 {
   for(int i=0; i<np; i++)
@@ -179,8 +170,8 @@ void ParticleSubRegion::flagOutOfRangeParticles( std::array< real64, 3 > const &
 }
 
 void ParticleSubRegion::computeRVectors( int const p,
-                                         arraySlice2d< real64 > const F,
-                                         arraySlice2d< real64 > const initialRVectors )
+                                         arraySlice2d< real64 const > const F,
+                                         arraySlice2d< real64 const > const initialRVectors )
 {
   if(m_hasRVectors)
   {
@@ -195,15 +186,16 @@ void ParticleSubRegion::computeRVectors( int const p,
 }
 
 void ParticleSubRegion::cpdiDomainScaling( real64 lCrit,
-                                           int m_planeStrain )
+                                           int planeStrain )
 {
- for( int p=0; p<this->size(); p++ )
- {
-    arraySlice1d< real64 > r1 = m_particleRVectors[p][0];
-    arraySlice1d< real64 > r2 = m_particleRVectors[p][1];
-    arraySlice1d< real64 > r3 = m_particleRVectors[p][2];
+  arrayView3d< real64 > const particleRVectors = m_particleRVectors;
+  forAll< parallelDevicePolicy<> >( this->size(), [=] GEOSX_HOST_DEVICE ( localIndex const p )
+  {
+    arraySlice1d< real64 > const r1 = particleRVectors[p][0];
+    arraySlice1d< real64 > const r2 = particleRVectors[p][1];
+    arraySlice1d< real64 > const r3 = particleRVectors[p][2];
 
-    if( m_planeStrain ) // 2D cpdi domain scaling
+    if( planeStrain ) // 2D cpdi domain scaling
     {
       // Initialize l-vectors.  Eq. 8a-d in the CPDI domain scaling paper.
       real64 l[2][3];
@@ -274,7 +266,7 @@ void ParticleSubRegion::cpdiDomainScaling( real64 lCrit,
         }
       }
     }
- }
+  } );
 }
 
 void ParticleSubRegion::getMappedNodes( int const p,
@@ -323,14 +315,6 @@ void ParticleSubRegion::getMappedNodes( int const p,
                           {  1, -1,  1 },
                           {  1,  1,  1 },
                           { -1,  1,  1 } };
-      real64 p_r1[3], p_r2[3], p_r3[3]; // allowing 1-indexed r-vectors to persist to torture future postdocs >:)
-
-      for(int i=0; i<3; i++)
-      {
-        p_r1[i] = m_particleRVectors[p][0][i];
-        p_r2[i] = m_particleRVectors[p][1][i];
-        p_r3[i] = m_particleRVectors[p][2][i];
-      }
 
       // get IJK associated with each corner
       int cornerIJK[8][3]; // CPDI can map to up to 8 cells
@@ -374,12 +358,12 @@ void ParticleSubRegion::getAllWeights( int const p,
                                        std::array< real64, 3 > const & xMin,
                                        std::array< real64, 3 > const & hx,
                                        array3d< int > const & ijkMap,
-                                       arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const g_X,
+                                       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const g_X,
                                        arrayView1d< localIndex > const nodeIDs,
                                        arrayView1d< real64 > const weights,
                                        arrayView2d< real64 > const gradWeights )
 {
-  arraySlice1d< real64 > const & p_x = m_particleCenter[p];
+  arraySlice1d< real64 const > const p_x = m_particleCenter[p];
 
   switch( m_particleType )
   {

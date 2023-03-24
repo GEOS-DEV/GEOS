@@ -363,7 +363,7 @@ namespace geosx
     std::vector< localIndex > outOfDomainParticleLocalIndices;
     unsigned int nn = m_neighbors.size(); // Number of partition neighbors.
 
-    for (localIndex pp = 0; pp < subRegion.size(); pp++)
+    forAll< serialPolicy >( subRegion.size(), [&] GEOSX_HOST ( localIndex const pp )
     {
       bool inPartition = true;
       R1Tensor p_x;
@@ -378,7 +378,7 @@ namespace geosx
         outOfDomainParticleLocalIndices.push_back( pp );     // Store the local index "pp" for the current coordinate.
         particleRank[pp] = -1;                               // Temporarily set particleRank of out-of-domain particle to -1 until it is requested by someone.
       }
-    }
+    } );
 
 
     // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
@@ -442,7 +442,7 @@ namespace geosx
         // The corresponding local index for each item in the request list is stored here:
         particleLocalIndicesRequestedFromNeighbors[n].resize(ni);
 
-        for(int k=0; k<ni; k++)
+        forAll< serialPolicy >( ni, [&] GEOSX_HOST ( localIndex const k )
         {
           int i = particleListIndicesRequestedFromNeighbors[n][k];
           outOfDomainParticleRequests[i] += 1;
@@ -451,7 +451,7 @@ namespace geosx
           particleLocalIndicesRequestedFromNeighbors[n][k] = pp;
           // Set ghost rank of the particle equal to neighbor rank.
           particleRank[pp] = m_neighbors[n].neighborRank();
-        }
+        } );
       }
 
       // Check that there is exactly one processor requesting each out-of-domain particle.
@@ -506,7 +506,7 @@ namespace geosx
     arrayView2d< real64 > const particleCenterAfter = subRegion.getParticleCenter();
     arrayView1d< int > const particleRankAfter = subRegion.getParticleRank();
     std::set< localIndex > indicesToErase;
-    for(int p=0; p<subRegion.size(); p++)
+    forAll< serialPolicy >( subRegion.size(), [&] GEOSX_HOST ( localIndex const p )
     {
       if( particleRankAfter[p] == -1 )
       {
@@ -517,7 +517,7 @@ namespace geosx
       {
         indicesToErase.insert(p);
       }
-    }
+    } );
     subRegion.erase(indicesToErase);
 
     // Resize particle region owning this subregion
@@ -567,7 +567,7 @@ namespace geosx
       std::vector< globalIndex > inDomainMasterParticleGlobalIndices;
       unsigned int nn = m_neighbors.size(); // Number of partition neighbors.
 
-      for( localIndex p=0; p<subRegion.size(); p++ )
+      forAll< serialPolicy >( subRegion.size(), [&] GEOSX_HOST ( localIndex const p )
       {
         bool inPartition = true;
         R1Tensor p_x;
@@ -581,7 +581,7 @@ namespace geosx
           inDomainMasterParticleCoordinates.emplace_back( p_x );  // Store the coordinate of the out-of-domain particle
           inDomainMasterParticleGlobalIndices.push_back( particleGlobalID[p] );     // Store the local index "pp" for the current coordinate.
         }
-      }
+      } );
 
 
       // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
@@ -630,16 +630,15 @@ namespace geosx
 
             // This particle should be a ghost on the current processor. See if it already exists here.
             bool alreadyHere = false;
-            for( localIndex p=0; p<subRegion.size(); p++ )
+            forAll< serialPolicy >( subRegion.size(), [&] GEOSX_HOST ( localIndex const p )
             {
               if( gI == particleGlobalID[p] )
               {
                 // The particle already exists as a ghost on this partition, so we should update its rank.
                 particleRank[p] = m_neighbors[n].neighborRank();
                 alreadyHere = true;
-                break;
               }
-            }
+            } );
             if( !alreadyHere )
             {
               // The global index is not represented on this partition, so we should add the particle.
@@ -664,13 +663,13 @@ namespace geosx
       //     masters, the ghost rank will be overwritten.  At the end of this function, any ghosts that
       //     still have ghostRank=-1 are orphans and need to be deleted.
 
-      for( localIndex p=0; p<subRegion.size(); ++p )
+      forAll< serialPolicy >( subRegion.size(), [&] GEOSX_HOST ( localIndex const p )
       {
         if( particleRank[p] != this->m_rank )
         {
           particleRank[p] = -1;
         }
-      }
+      } );
 
 
       // (6.1) Resize particle subRegion to accommodate incoming particles.
@@ -717,14 +716,16 @@ namespace geosx
 
       // (8) Delete any particles that have ghostRank=-1.  These will be ghosts from
       //     a previous step for which the master is no longer in the ghost domain,
+      std::set< localIndex > indicesToErase;
       arrayView1d< localIndex > const particleRankNew = subRegion.getParticleRank();
-      for (int p=subRegion.size()-1; p>=0; --p)
+      forAll< serialPolicy >( subRegion.size(), [&] GEOSX_HOST ( localIndex const p )
       {
         if( particleRankNew[p] == -1 )
         {
-          //subRegion.erase(p);
+          indicesToErase.insert(p);
         }
-      }
+      } );
+      subRegion.erase(indicesToErase);
 
     } );
   }

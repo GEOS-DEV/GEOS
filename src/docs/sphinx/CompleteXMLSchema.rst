@@ -134,6 +134,13 @@ Element: CellElementRegion
 .. include:: ../../coreComponents/schema/docs/CellElementRegion.rst
 
 
+.. _XML_CeramicDamage:
+
+Element: CeramicDamage
+======================
+.. include:: ../../coreComponents/schema/docs/CeramicDamage.rst
+
+
 .. _XML_ChomboIO:
 
 Element: ChomboIO
@@ -678,6 +685,13 @@ Element: ParticleRegion
 Element: ParticleRegions
 ========================
 .. include:: ../../coreComponents/schema/docs/ParticleRegions.rst
+
+
+.. _XML_PerfectlyPlastic:
+
+Element: PerfectlyPlastic
+=========================
+.. include:: ../../coreComponents/schema/docs/PerfectlyPlastic.rst
 
 
 .. _XML_Perforation:
@@ -1328,6 +1342,13 @@ Datastructure: CellElementRegion
 .. include:: ../../coreComponents/schema/docs/CellElementRegion_other.rst
 
 
+.. _DATASTRUCTURE_CeramicDamage:
+
+Datastructure: CeramicDamage
+============================
+.. include:: ../../coreComponents/schema/docs/CeramicDamage_other.rst
+
+
 .. _DATASTRUCTURE_ChomboIO:
 
 Datastructure: ChomboIO
@@ -1893,6 +1914,13 @@ Datastructure: ParticleRegion
 Datastructure: ParticleRegions
 ==============================
 .. include:: ../../coreComponents/schema/docs/ParticleRegions_other.rst
+
+
+.. _DATASTRUCTURE_PerfectlyPlastic:
+
+Datastructure: PerfectlyPlastic
+===============================
+.. include:: ../../coreComponents/schema/docs/PerfectlyPlastic_other.rst
 
 
 .. _DATASTRUCTURE_Perforation:
