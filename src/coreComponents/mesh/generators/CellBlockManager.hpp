@@ -110,7 +110,7 @@ public:
    *
    * @note This is meant to be used as a values setter.
    */
-  arrayView1d< globalIndex > getNodeLocalToGlobal();
+  arrayView1d< globalIndex > getNodeLocalToGlobal() override;
 
   std::map< string, SortedArray< localIndex > > const & getNodeSets() const override;
 
@@ -122,7 +122,7 @@ public:
    * While the values are sorted arrays which sizes are meant to be managed by the client code.
    * This member function is meant to be used like a setter.
    */
-  std::map< string, SortedArray< localIndex > > & getNodeSets();
+  std::map< string, SortedArray< localIndex > > & getNodeSets() override;
 
   /**
    * @brief Defines the number of nodes and resizes some underlying arrays appropriately.
