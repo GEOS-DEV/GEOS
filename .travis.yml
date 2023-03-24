@@ -124,19 +124,19 @@ __geosx_return_script: &__geosx_return_script
            jq '[ .jobs[] | select( (.stage.name == "checks") and (.allow_failure == true) and (.state != "passed")) ] | length')
 
 stages:
-- check_pr_is_not_a_draft
+- check_pull_request_is_not_a_draft
 - checks
 - builds
-- return_status
+- fail_at_end
 
 jobs:
   allow_failures:
   - name: code_style
   - name: documentation
   - name: check_submodules
-  - name: check_pr_is_assigned
+  - name: check_pull_request_is_assigned
   include:
-  - stage: check_pr_is_not_a_draft
+  - stage: check_pull_request_is_not_a_draft
     name: Check that the PR is not a draft (cancel job otherwise).
     <<: *__geosx_draft_script
   - stage: checks
@@ -157,7 +157,7 @@ jobs:
     name: check_submodules
     script: scripts/test_submodule_updated.sh
   - stage: checks
-    name: check_pr_is_assigned
+    name: check_pull_request_is_assigned
     <<: *__geosx_assigned_script
   - stage: builds
     name: Ubuntu CUDA debug (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.2.152)
@@ -248,5 +248,6 @@ jobs:
     - DOCKER_REPOSITORY=geosx/ubuntu22.04-gcc11
     - CMAKE_BUILD_TYPE=Release
     - GCP_BUCKET=geosx/ubuntu22.04-gcc11
-  - stage: return_status
+  - stage: fail_at_end
+    name: Checking if all the jobs have suceeded...
     <<: *__geosx_return_script
