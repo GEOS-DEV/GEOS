@@ -107,10 +107,12 @@ int WrapperBase::setTotalviewDisplay() const
 void WrapperBase::processInputException( std::exception const & ex,
                                          xmlWrapper::xmlNode const & targetNode ) const
 {
-  string const inputStr = string( targetNode.attribute( getName().c_str() ).value() );
-  string subExStr = string( "***** Error happened while reading attribute " ) + getName() +
-                 " from " + m_parent->getName() + ".\n***** Input value: '" + inputStr + "'\n";
-  
+  xmlWrapper::xmlAttribute const & attribute = targetNode.attribute( getName().c_str() );
+  string const inputStr = string( attribute.value() );
+  string subExStr = string( "***** XML parsing error in " ) + targetNode.path() +
+                    " (name=" + targetNode.attribute( "name" ).value() + ")/" + attribute.name() +
+                    "\n***** Input value: '" + inputStr + "'\n";
+
   throw InputError( subExStr + ex.what() );
 }
 
