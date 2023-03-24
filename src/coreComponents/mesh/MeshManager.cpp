@@ -71,7 +71,6 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     PartitionDescriptor const & partitionDescriptor = cellBlockManager.getPartitionDescriptor();
     real64 globalLength = cellBlockManager.getGlobalLength();
     meshBody.setGlobalLengthScale( globalLength );
-    ElementRegionManager & elemManager = meshLevel.getElemManager();
 
     //PartitionDescriptor & partitionDescriptor = cellBlockManager.getPartitionDescriptor();
     if( partitionDescriptor.hasMetisNeighborList() )
