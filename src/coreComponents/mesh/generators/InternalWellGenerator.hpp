@@ -136,6 +136,10 @@ public:
    */
   globalIndex getNumElementsPerSegment() const { return m_numElemsPerSegment; }
 
+  /**
+   * @brief Getter to the Segment to PolyNode mapping
+   * @return The Segment to PolyNode mapping as a 2D array
+   */
   const array2d< globalIndex > & getSegmentToPolyNodeMap() const { return m_segmentToPolyNodeMap; };
 
   /**

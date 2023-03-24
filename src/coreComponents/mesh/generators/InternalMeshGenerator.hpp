@@ -50,6 +50,10 @@ public:
    */
   static string catalogName() { return "InternalMesh"; }
 
+  /**
+   * @brief Fill cellBlockManager with all the mesh informations
+   * @param cellBlockManager the CellBlockManager to fill
+   */
   virtual void generateCellBlockManager( CellBlockManager & cellBlockManager ) override;
 
   void importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const override

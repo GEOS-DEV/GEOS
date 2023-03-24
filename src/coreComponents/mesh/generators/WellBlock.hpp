@@ -87,7 +87,7 @@ public:
 
   /**
    * @brief Set the global indices mapping an element to the previous ones.
-   * @param prevElemId.toNestedViewConst() list providing the global indices of the previous elements for each element
+   * @param prevElemId list providing the global indices of the previous elements for each element
    */
   void setPrevElemIndices( arrayView1d< arrayView1d< globalIndex const > const > prevElemIndices);
 
@@ -153,7 +153,7 @@ public:
 
   /**
    * @brief Set the physical location of the centers of well elements.
-   * @param list of center locations of the well elements
+   * @param nodeCoords list of center locations of the well elements
    */
   void setNodeCoords( arrayView2d< real64 const > nodeCoords ) { m_nodeCoords = nodeCoords; }
 

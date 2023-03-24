@@ -51,7 +51,7 @@ public:
 
   /**
    * @brief Generate the mesh using the VTK library.
-   * @param[in] domain the DomainPartition to be written
+   * @param[in] cellBlockManager the CellBlockManager to be written
    * @details This method leverages the VTK library to load the meshes.
    * The supported formats are the official VTK ones dedicated to
    * unstructured grids (.vtu, .pvtu and .vtk) and structured grids (.vts, .vti and .pvts).
