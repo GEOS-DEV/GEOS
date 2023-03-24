@@ -3,7 +3,7 @@
 <Problem>
   <Included>
     <File
-      name="./ExponentialDecayPermeability_ConformingFrac_base.xml"/>
+      name="./ExponentialDecayPermeability_conformingFracture_base.xml"/>
   </Included> 
 
   <Mesh>

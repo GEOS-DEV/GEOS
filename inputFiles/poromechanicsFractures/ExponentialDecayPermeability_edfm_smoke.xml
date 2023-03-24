@@ -3,7 +3,7 @@
 <Problem>
   <Included>
     <File
-      name="./ExponentialDecayPermeability_EDFM_base.xml"/>
+      name="./ExponentialDecayPermeability_edfm_base.xml"/>
   </Included>
 
   <Mesh>
