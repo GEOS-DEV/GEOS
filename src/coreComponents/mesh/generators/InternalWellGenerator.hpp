@@ -273,8 +273,8 @@ public:
   const string getWellControlsName() const { return m_wellControlsName; }
 
   /// @endcond
-  
-  
+
+
 protected:
 
   /**

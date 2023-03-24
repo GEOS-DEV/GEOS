@@ -74,7 +74,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     ElementRegionManager & elemManager = meshLevel.getElemManager();
 
     //PartitionDescriptor & partitionDescriptor = cellBlockManager.getPartitionDescriptor();
-    if ( partitionDescriptor.hasMetisNeighborList() )
+    if( partitionDescriptor.hasMetisNeighborList() )
     {
       domain.getMetisNeighborList() = partitionDescriptor.getMetisNeighborList();
     }

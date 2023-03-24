@@ -204,7 +204,7 @@ public:
    * @brief Setter for the global length
    * @param the global length
    */
-  void setGlobalLength( real64 globalLength) { m_globalLength = globalLength; }
+  void setGlobalLength( real64 globalLength ) { m_globalLength = globalLength; }
 
 private:
 
@@ -275,7 +275,7 @@ private:
   localIndex m_numNodes;
   localIndex m_numFaces;
   localIndex m_numEdges;
-  
+
 };
 
 }

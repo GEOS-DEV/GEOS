@@ -22,7 +22,6 @@
 
 
 
-
 namespace geosx
 {
 
@@ -30,10 +29,11 @@ WellBlock::WellBlock( string const & name, Group * const parent ):
   WellBlockABC( name, parent )
 {}
 
-void WellBlock::setPrevElemIndices( arrayView1d< arrayView1d< globalIndex const > const > prevElemIndices) {
+void WellBlock::setPrevElemIndices( arrayView1d< arrayView1d< globalIndex const > const > prevElemIndices )
+{
   int size = prevElemIndices.size();
   m_prevElemId.resize( size );
-  for ( int i = 0; i < size; i++ )
+  for( int i = 0; i < size; i++ )
   {
     m_prevElemId[i] = prevElemIndices[i];
   }

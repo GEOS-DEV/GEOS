@@ -546,7 +546,7 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
 void InternalMeshGenerator::generateCellBlockManager( CellBlockManager & cellBlockManager )
 {
   GEOSX_MARK_FUNCTION;
-  PartitionDescriptor &partitionDescriptor = cellBlockManager.getPartitionDescriptorInternal();
+  PartitionDescriptor & partitionDescriptor = cellBlockManager.getPartitionDescriptorInternal();
   partitionDescriptor.setHasMetisNeighborList( false );
   SpatialPartition partition;
   // Partition based on even spacing to get load balance
@@ -562,7 +562,7 @@ void InternalMeshGenerator::generateCellBlockManager( CellBlockManager & cellBlo
 
     partition.setSizes( m_min, m_max );
   }
-  
+
   // Make sure that the node manager fields are initialized
   auto & nodeSets = cellBlockManager.getNodeSets();
 

@@ -44,29 +44,30 @@ CellBlockManagerABC & MeshGeneratorBase::generateMesh( Group & parent )
 {
   CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
 
-  generateCellBlockManager( cellBlockManager ); 
+  generateCellBlockManager( cellBlockManager );
 
   this->generateWells( cellBlockManager );
 
   return cellBlockManager;
 }
 
-void MeshGeneratorBase::generateWells( CellBlockManager & cellBlockManager ) {
-  forSubGroups<InternalWellGenerator>( [&]( InternalWellGenerator & wellGen ) { 
-      WellBlock & wb = cellBlockManager.registerWellBlock( wellGen.getName() );
-      wb.setNumElements( wellGen.getNumElements() );
-      wb.setElemCoords( wellGen.getElemCoords() );
-      wb.setNextElemIndex( wellGen.getNextElemIndex() );
-      wb.setPrevElemIndices( wellGen.getPrevElemIndices() );
-      wb.setElemToNodesMap( wellGen.getElemToNodesMap() );
-      wb.setElemVolume( wellGen.getElemVolume() );
-      wb.setElementRadius( wellGen.getElementRadius() );
-      wb.setNumNodes( wellGen.getNumNodes() );
-      wb.setNodeCoords( wellGen.getNodeCoords() );
-      wb.setNumPerforations( wellGen.getNumPerforations() );
-      wb.setPerfCoords( wellGen.getPerfCoords() );
-      wb.setPerfTransmissibility( wellGen.getPerfTransmissibility() );
-      wb.setPerfElemIndex( wellGen.getPerfElemIndex() );
-    } );
+void MeshGeneratorBase::generateWells( CellBlockManager & cellBlockManager )
+{
+  forSubGroups< InternalWellGenerator >( [&]( InternalWellGenerator & wellGen ) {
+    WellBlock & wb = cellBlockManager.registerWellBlock( wellGen.getName() );
+    wb.setNumElements( wellGen.getNumElements() );
+    wb.setElemCoords( wellGen.getElemCoords() );
+    wb.setNextElemIndex( wellGen.getNextElemIndex() );
+    wb.setPrevElemIndices( wellGen.getPrevElemIndices() );
+    wb.setElemToNodesMap( wellGen.getElemToNodesMap() );
+    wb.setElemVolume( wellGen.getElemVolume() );
+    wb.setElementRadius( wellGen.getElementRadius() );
+    wb.setNumNodes( wellGen.getNumNodes() );
+    wb.setNodeCoords( wellGen.getNodeCoords() );
+    wb.setNumPerforations( wellGen.getNumPerforations() );
+    wb.setPerfCoords( wellGen.getPerfCoords() );
+    wb.setPerfTransmissibility( wellGen.getPerfTransmissibility() );
+    wb.setPerfElemIndex( wellGen.getPerfElemIndex() );
+  } );
 }
 }
