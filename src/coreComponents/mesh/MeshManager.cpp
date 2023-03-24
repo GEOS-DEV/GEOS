@@ -106,7 +106,13 @@ void MeshManager::importFields( DomainPartition & domain )
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & generator )
   {
     if( !domain.hasMeshBody( generator.getName() ) )
+    {
       return;
+    }
+    else if( domain.getMeshBody( generator.getName() ).hasParticles() )
+    {
+      return;
+    }
 
     GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: importing field data from mesh dataset", generator.getName() ) );
 

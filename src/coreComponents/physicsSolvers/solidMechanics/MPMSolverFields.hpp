@@ -76,7 +76,7 @@ DECLARE_FIELD( particleFDot,
                "particleFDot",
                array3d< real64 >,
                0,
-               LEVEL_1,
+               NOPLOT,
                WRITE_AND_READ,
                "Material time derivative of the particle deformation gradient." );    
 

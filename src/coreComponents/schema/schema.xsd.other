@@ -969,13 +969,48 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
 		</xsd:choice>
-		<!--maxForce => The maximum force contribution in the problem domain.-->
-		<xsd:attribute name="maxForce" type="real64" />
+		<!--bcTable => Array that stores time-dependent bc types on x-, x+, y-, y+, z- and z+ faces.-->
+		<xsd:attribute name="bcTable" type="real64_array2d" />
+		<!--binSizeMultiplier => Multiplier for setting bin size, used to speed up particle neighbor sorting-->
+		<xsd:attribute name="binSizeMultiplier" type="integer" />
+		<!--domainLengths => Lengths of each side of the computational domain-->
+		<xsd:attribute name="domainLengths" type="std_array&lt;double, 3ul&gt;" />
+		<!--fTable => Array that stores time-dependent grid-aligned stretches interpreted as a global background grid F.-->
+		<xsd:attribute name="fTable" type="real64_array2d" />
+		<!--hEl => Element dimensions-->
+		<xsd:attribute name="hEl" type="std_array&lt;double, 3ul&gt;" />
+		<!--ijkMap => Map from indices in each spatial dimension to local node ID-->
+		<xsd:attribute name="ijkMap" type="integer_array3d" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_string, LvArray_Array&lt;std_string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<!--nEl => Number of elements in each spatial dimension-->
+		<xsd:attribute name="nEl" type="std_array&lt;int, 3ul&gt;" />
+		<!--numContactFlags => Number of contact flags that can appear due to damage-->
+		<xsd:attribute name="numContactFlags" type="integer" />
+		<!--numContactGroups => Number of prescribed contact groups-->
+		<xsd:attribute name="numContactGroups" type="integer" />
+		<!--numDims => The number of active spatial dimensions, 2 for plane strain, 3 otherwise-->
+		<xsd:attribute name="numDims" type="integer" />
+		<!--numVelocityFields => Number of velocity fields-->
+		<xsd:attribute name="numVelocityFields" type="integer" />
+		<!--smallMass => The small mass threshold for ignoring extremely low-mass nodes.-->
+		<xsd:attribute name="smallMass" type="real64" />
+		<!--xGlobalMax => Global maximum grid extent excluding buffer cells-->
+		<xsd:attribute name="xGlobalMax" type="std_array&lt;double, 3ul&gt;" />
+		<!--xGlobalMin => Global minimum grid extent excluding buffer cells-->
+		<xsd:attribute name="xGlobalMin" type="std_array&lt;double, 3ul&gt;" />
+		<!--xLocalMax => Local maximum grid extent including ghosts-->
+		<xsd:attribute name="xLocalMax" type="std_array&lt;double, 3ul&gt;" />
+		<!--xLocalMaxNoGhost => Local maximum grid extent excluding ghosts-->
+		<xsd:attribute name="xLocalMaxNoGhost" type="std_array&lt;double, 3ul&gt;" />
+		<!--xLocalMin => Local minimum grid extent including ghosts-->
+		<xsd:attribute name="xLocalMin" type="std_array&lt;double, 3ul&gt;" />
+		<!--xLocalMinNoGhost => Local minimum grid extent excluding ghosts-->
+		<xsd:attribute name="xLocalMinNoGhost" type="std_array&lt;double, 3ul&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="SurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1074,6 +1109,7 @@
 			<xsd:element name="CO2BrinePhillipsFluid" type="CO2BrinePhillipsFluidType" />
 			<xsd:element name="CO2BrinePhillipsThermalFluid" type="CO2BrinePhillipsThermalFluidType" />
 			<xsd:element name="CarmanKozenyPermeability" type="CarmanKozenyPermeabilityType" />
+			<xsd:element name="CeramicDamage" type="CeramicDamageType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
@@ -1102,6 +1138,7 @@
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
+			<xsd:element name="PerfectlyPlastic" type="PerfectlyPlasticType" />
 			<xsd:element name="PermeabilityBase" type="PermeabilityBaseType" />
 			<xsd:element name="PorousDelftEgg" type="PorousDelftEggType" />
 			<xsd:element name="PorousDruckerPrager" type="PorousDruckerPragerType" />
@@ -1436,6 +1473,26 @@
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
 		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="CeramicDamageType">
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--damage => Array of quadrature point damage values-->
+		<xsd:attribute name="damage" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--jacobian => Array of quadrature point jacobian values-->
+		<xsd:attribute name="jacobian" type="real64_array2d" />
+		<!--lengthScale => Array of quadrature point damage values-->
+		<xsd:attribute name="lengthScale" type="real64_array" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--shearModulus => Elastic Shear Modulus Field-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
@@ -1881,6 +1938,22 @@
 		<xsd:attribute name="proppantPackPermeability" type="real64_array" />
 		<!--settlingFactor => Settling factor-->
 		<xsd:attribute name="settlingFactor" type="real64_array" />
+	</xsd:complexType>
+	<xsd:complexType name="PerfectlyPlasticType">
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--shearModulus => Elastic Shear Modulus Field-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--yieldStress => Array of element yield stresses-->
+		<xsd:attribute name="yieldStress" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="PermeabilityBaseType">
 		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->

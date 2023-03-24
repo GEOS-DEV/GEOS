@@ -13,6 +13,7 @@ CO2BrineEzrokhiThermalFluid                 node         :ref:`XML_CO2BrineEzrok
 CO2BrinePhillipsFluid                       node         :ref:`XML_CO2BrinePhillipsFluid`                       
 CO2BrinePhillipsThermalFluid                node         :ref:`XML_CO2BrinePhillipsThermalFluid`                
 CarmanKozenyPermeability                    node         :ref:`XML_CarmanKozenyPermeability`                    
+CeramicDamage                               node         :ref:`XML_CeramicDamage`                               
 CompositionalMultiphaseFluid                node         :ref:`XML_CompositionalMultiphaseFluid`                
 CompressibleSinglePhaseFluid                node         :ref:`XML_CompressibleSinglePhaseFluid`                
 CompressibleSolidCarmanKozenyPermeability   node         :ref:`XML_CompressibleSolidCarmanKozenyPermeability`   
@@ -41,6 +42,7 @@ MultiPhaseVolumeWeightedThermalConductivity node         :ref:`XML_MultiPhaseVol
 NullModel                                   node         :ref:`XML_NullModel`                                   
 ParallelPlatesPermeability                  node         :ref:`XML_ParallelPlatesPermeability`                  
 ParticleFluid                               node         :ref:`XML_ParticleFluid`                               
+PerfectlyPlastic                            node         :ref:`XML_PerfectlyPlastic`                            
 PermeabilityBase                            node         :ref:`XML_PermeabilityBase`                            
 PorousDelftEgg                              node         :ref:`XML_PorousDelftEgg`                              
 PorousDruckerPrager                         node         :ref:`XML_PorousDruckerPrager`                         
