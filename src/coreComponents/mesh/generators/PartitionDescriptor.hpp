@@ -34,42 +34,62 @@ class PartitionDescriptor
 public:
   /**
    * @brief indicate if the partition is described using a Metis Neighbor list.
+   * @return A boolean indicating if the partition is described usins a Metis neighbor list.
    */
   bool hasMetisNeighborList() const { return m_hasMetisNeighborList; }
+
   /**
    * @brief Sets the boolean that indicates if the partition is described using a Metis Neighbor list.
+   * @param hasMetisNeighborList A boolean indicating if the partition is described usins a Metis neighbor list.
    */
-  void setHasMetisNeighborList( bool value ) { m_hasMetisNeighborList = value; }
+  void setHasMetisNeighborList( bool hasMetisNeighborList ) { m_hasMetisNeighborList = hasMetisNeighborList; }
+
   /**
    * @brief Gets a reference to the list of metis neighbor list.
+   * @return A reference to the Metis neighbor list.
    */
   std::set< int > const & getMetisNeighborList() const { return m_metisNeighborList; }
 
   /**
    * @brief Sets the list of metis neighbor list.
+   * @param metisNeighborList A reference to the Metis neighbor list.
    */
   void setMetisNeighborList( std::set< int > const & metisNeighborList ) { m_metisNeighborList = metisNeighborList; }
+
+  /**
+   * @brief Sets the list of metis neighbor list.
+   * @param begin first iterator of the metis neighbor list.
+   * @parma end end iterator indicating the end of the metis neighbor list.
+   */
   template< class InputIt >
   void setMetisNeighborList( InputIt begin, InputIt end ) { m_metisNeighborList.insert( begin, end ); }
 
   /**
    * @brief indicate if the partition is described using a spatial partition.
+   * @return A boolean indicating if the parition is described using a spatial partition.
    */
-  bool hasSpatialParition() const { return !m_hasMetisNeighborList; }
+  bool hasSpatialPartition() const { return !m_hasMetisNeighborList; }
+
   /**
    * @brief Sets the boolean that indicates if the partition is described using a Metis Neighbor list.
+   * @param A boolean indicating if the parition is described using a spatial partition.
    */
-  void setHasSpatialPartition( bool value ) { m_hasMetisNeighborList = !value; }
+  void setHasSpatialPartition( bool hasSpatialPartition ) { m_hasMetisNeighborList = !hasSpatialPartition; }
+
   /**
    * @brief Returns a reference to the spatialPartition
+   * @return The spatial partiton.
    */
   SpatialPartition const & getSpatialPartition() const { return m_spatialPartition; }
 
   /**
    * @brief Sets the spatialPartition
+   * @param spatialPartition The spatial partiton.
    */
   void setSpatialPartition( SpatialPartition const & spatialPartition ) { m_spatialPartition = spatialPartition; }
+
 private:
+
   bool m_hasMetisNeighborList;         //< Indicate if we use metis neighbor list or spatial partition to describe the partition
   std::set< int > m_metisNeighborList;   //< The list of neighbors computed wwith metis
   SpatialPartition m_spatialPartition; //< The spatial partition

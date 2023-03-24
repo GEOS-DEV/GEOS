@@ -186,13 +186,13 @@ public:
 
   /**
    * @brief Get a reference to the partition descriptor.
-   * @retufn a const reference to tu PartitionDescriptor.
+   * @return a const reference to tu PartitionDescriptor.
    */
   PartitionDescriptor const & getPartitionDescriptor() const override { return m_partitionDescriptor; }
 
   /**
    * @brief Get a reference to the partition descriptor for modification.
-   * @retufn a reference to tu PartitionDescriptor.
+   * @return a reference to tu PartitionDescriptor.
    */
   PartitionDescriptor & getPartitionDescriptorInternal()  { return m_partitionDescriptor; }
   /**
