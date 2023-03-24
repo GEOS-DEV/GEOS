@@ -514,7 +514,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
     // Compute gravity coefficient for new elements so that gravity term is correctly computed
     real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    if( fractureSubRegion.hasWrapper( fields::flow::gravityCoefficient::key()) )
+    if( fractureSubRegion.hasField< fields::flow::gravityCoefficient >() )
     {
       arrayView2d< real64 const > const elemCenter = fractureSubRegion.getElementCenter();
 
