@@ -322,19 +322,19 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 tFail = m_lengthScale[k] / m_crackSpeed;
   
   // get trial pressure
-  real64 trialPressure = -m_bulkModulus[k] * std::log( m_jacobian[k][q] );
+  real64 trialPressure = -m_bulkModulus[k] * log( m_jacobian[k][q] );
   real64 pressure = trialPressure;
 
   // cohesion slope
   real64 mu = 0.5773502691896258;
 
   // Intermediate strength parameter
-  real64 Yt0 = std::max( 0.5 * m_tensileStrength, std::min( 2.0 * m_tensileStrength, (3.0 * m_compressiveStrength * m_tensileStrength) / (2.0 * m_compressiveStrength + m_tensileStrength) ) );
-  Yt0 = std::min( Yt0, ( 3.0 * m_compressiveStrength - m_compressiveStrength * mu ) / ( 3 + mu ) );
+  real64 Yt0 = fmax( 0.5 * m_tensileStrength, fmin( 2.0 * m_tensileStrength, (3.0 * m_compressiveStrength * m_tensileStrength) / (2.0 * m_compressiveStrength + m_tensileStrength) ) );
+  Yt0 = fmin( Yt0, ( 3.0 * m_compressiveStrength - m_compressiveStrength * mu ) / ( 3 + mu ) );
 
   // Compute the vertex pressure (should be pmin0 < 0) for the undamaged yield surface.
   real64 pmin0 = -( 2.0 * m_compressiveStrength * Yt0 ) / ( 3.0 * ( m_compressiveStrength - Yt0 ) );
-  pmin0 = std::min( pmin0, -1.0e-12 );
+  pmin0 = fmin( pmin0, -1.0e-12 );
   real64 pmin = ( 1.0 - m_damage[k][q] ) * pmin0;
 
   // Enforce vertex solution
@@ -345,7 +345,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   if( pressure < pmin ) // TODO: pressure or trial pressure?
   {
     // Increment damage
-    m_damage[k][q] = std::min( m_damage[k][q] + dt / tFail, 1.0 );
+    m_damage[k][q] = fmin( m_damage[k][q] + dt / tFail, 1.0 );
 
     // Pressure is on the vertex
     pressure = ( 1.0 - m_damage[k][q] ) * pmin0;
@@ -386,7 +386,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
     {
       if( pressure <= brittleDuctileTransitionPressure )
       {
-        m_damage[k][q] = std::min( m_damage[k][q] + dt / tFail, 1.0 );
+        m_damage[k][q] = fmin( m_damage[k][q] + dt / tFail, 1.0 );
         strength = CeramicDamageUpdates::getStrength( m_damage[k][q], pressure, J2, J3, mu, Yt0 );
       }
       newDeviatorMagnitude = strength;
@@ -427,11 +427,11 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
   real64 gamma1 = 1.0;
   if( J2 > 0.0 )
   {
-    real64 psi = std::min(2.0, std::max(0.5, 1.0 / (1.0 + dfdp1 / 3.0)));
-    real64 theta = (1.0 / 3.0) * asin(std::min(1.0, std::max(-1.0, -0.5 * J3 * std::pow(3.0 / J2, 1.5))));
+    real64 psi = fmin(2.0, fmax(0.5, 1.0 / (1.0 + dfdp1 / 3.0)));
+    real64 theta = (1.0 / 3.0) * asin(fmin(1.0, fmax(-1.0, -0.5 * J3 * pow(3.0 / J2, 1.5))));
     real64 cosPi6plusTheta = cos(0.5235987755982989 + theta);
     real64 num = (2.0 * psi - 1.0) * (2.0 * psi - 1.0) + 4.0 * (1.0 - psi * psi) * cosPi6plusTheta * cosPi6plusTheta;
-    real64 denom = 2.0 * (1.0 - psi * psi) * cosPi6plusTheta + (2.0 * psi - 1.0) * sqrt(std::max(0.0, -4.0 * psi + 5.0 * psi * psi + 4.0 * (1.0 - psi * psi) * cosPi6plusTheta * cosPi6plusTheta));
+    real64 denom = 2.0 * (1.0 - psi * psi) * cosPi6plusTheta + (2.0 * psi - 1.0) * sqrt(fmax(0.0, -4.0 * psi + 5.0 * psi * psi + 4.0 * (1.0 - psi * psi) * cosPi6plusTheta * cosPi6plusTheta));
     if( denom > 1.0e-12 )
     {
       gamma1 = (1 - damage) * num / denom + damage;
@@ -452,7 +452,7 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
     ceramicY10( p1, damage, mu, Yt0, f1 );
     y1 = f1 / gamma1;
     y2 = m_maximumStrength;
-    f = std::pow((pressure - p2) / (p1 - p2), m1 * (p1 - p2) / (y1 - y2)) * (y1 - y2) + y2;
+    f = pow((pressure - p2) / (p1 - p2), m1 * (p1 - p2) / (y1 - y2)) * (y1 - y2) + y2;
     return( f );
   }
   else

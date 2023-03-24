@@ -34,9 +34,9 @@ namespace solidMechanicsMPMKernels
 struct StateUpdateKernel
 {
   /**
-   * @brief Launch the kernel function doing fracture traction updates
+   * @brief Launch the kernel function doing constitutive updates
    * @tparam POLICY the type of policy used in the kernel launch
-   * @tparam CONTACT_WRAPPER the type of contact wrapper doing the fracture traction updates
+   * @tparam CONTACT_WRAPPER the type of contact wrapper doing the constitutive updates
    * @param[in] size the size of the subregion
    * @param[in] constitutiveWrapper the wrapper implementing the constitutive model
    * @param[in] deformationGradient the deformation gradient
@@ -44,14 +44,15 @@ struct StateUpdateKernel
    * @param[out] particleStress the new particle stress, returned for plotting convenience
    */
   template< typename POLICY, typename CONSTITUTIVE_WRAPPER >
-  static void launch( SortedArrayView< localIndex const > const indices,
+  static void launch( SortedArrayView< localIndex const > const & indices,
                       CONSTITUTIVE_WRAPPER const & constitutiveWrapper,
                       real64 dt,
-                      arrayView3d< real64 > const & deformationGradient,
-                      arrayView3d< real64 > const & fDot,
+                      arrayView3d< real64 const > const & deformationGradient,
+                      arrayView3d< real64 const > const & fDot,
                       arrayView3d< real64 const > const & velocityGradient,
                       arrayView2d< real64 > const & particleStress )
   {
+    // Perform constitutive call
     forAll< POLICY >( indices.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       // Particle index
@@ -94,7 +95,6 @@ struct StateUpdateKernel
       constitutiveWrapper.saveConvergedState( p, 0 );
     } );
   }
-
 };
 
 

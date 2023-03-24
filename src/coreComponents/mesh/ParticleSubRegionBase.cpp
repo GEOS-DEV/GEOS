@@ -135,14 +135,26 @@ void ParticleSubRegionBase::erase( std::set< localIndex > const & indicesToErase
 
 void ParticleSubRegionBase::setNonGhostIndices()
 {
+  m_nonGhostIndices.move( LvArray::MemorySpace::host ); // TODO: Is this needed?
   m_nonGhostIndices.clear();
-  for( int p = 0; p < this->size(); p++ )
+  forAll< serialPolicy >( this->size(), [&] GEOSX_HOST ( localIndex const p ) // This must be on host since we're dealing with a sorted array
   {
     if( m_particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) )
     {
       m_nonGhostIndices.insert( p );
     }
-  }
+  } );
+}
+
+void ParticleSubRegionBase::updateMaps()
+{
+  arrayView1d< globalIndex > const & localToGlobalMap = m_localToGlobalMap;
+  arrayView1d< globalIndex const > const & particleID = m_particleID;
+  forAll< parallelDevicePolicy<> >( this->size(), [=] GEOSX_HOST_DEVICE ( localIndex const p ) // TODO: change to device policy
+  {
+    localToGlobalMap[p] = particleID[p];
+  } );
+  this->constructGlobalToLocalMap();
 }
 
 } /* namespace geosx */

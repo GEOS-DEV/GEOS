@@ -312,6 +312,8 @@ public:
     return m_nonGhostIndices.toView();
   }
 
+  void updateMaps();
+
 private:
   /// Group in which the constitutive models of this subregion are registered
   dataRepository::Group m_constitutiveModels;

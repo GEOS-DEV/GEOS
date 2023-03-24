@@ -335,5 +335,13 @@ ParticleManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
   return unpackedSize;
 }
 
+void ParticleManager::updateMaps()
+{
+  this->forParticleSubRegions( [&]( ParticleSubRegionBase & subRegion )
+  {
+    subRegion.updateMaps();
+  } );
+}
+
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ParticleManager, string const &, Group * const )
 }

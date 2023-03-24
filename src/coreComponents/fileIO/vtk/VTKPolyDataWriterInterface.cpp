@@ -105,6 +105,7 @@ getVtkToGeosxNodeOrdering( ParticleType const particleType )
     case ParticleType::CPDI2:         return { 0, 1, 3, 2, 4, 5, 7, 6 };
     case ParticleType::CPTI:          return { 0, 1, 2, 3 };
   }
+  return {};
 }
 
 /**

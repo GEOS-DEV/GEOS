@@ -855,15 +855,6 @@ public:
   }
 
   /**
-   * @brief Full accessor for stress
-   * @return Accessor
-   */
-  array3d< real64 > & getStressFull()
-  {
-    return m_newStress;
-  }
-
-  /**
    * @brief Non-const/Mutable accessor for density.
    * @return Accessor
    */

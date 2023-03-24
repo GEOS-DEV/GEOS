@@ -188,6 +188,147 @@ public:
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
 
+  void initialize( NodeManager & nodeManager,
+                   ParticleManager & particleManager,
+                   SpatialPartition & partition );
+  
+  void resizeGrid( SpatialPartition & partition,
+                   NodeManager & nodeManager,
+                   real64 const dt );
+
+  void syncGridFields( std::vector< std::string > const & fieldNames,
+                       DomainPartition & domain,
+                       NodeManager & nodeManager,
+                       MeshLevel & mesh,
+                       MPI_Op op );
+
+  void singleFaceVectorFieldSymmetryBC( const int face,
+                                        arrayView3d< real64 > const & vectorMultiField,
+                                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                        Group & nodeSets );
+
+  void enforceGridVectorFieldSymmetryBC( arrayView3d< real64 > const & vectorMultiField,
+                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                         Group & nodeSets );
+
+  void applyEssentialBCs( const real64 dt,
+                          const real64 time_n,
+                          NodeManager & nodeManager );
+
+  void computeGridSurfaceNormals( ParticleManager & particleManager,
+                                  NodeManager & nodeManager );
+
+  void normalizeGridSurfaceNormals( arrayView2d< real64 const > const & gridMass,
+                                    arrayView3d< real64 > const & gridSurfaceNormal );
+
+  void computeContactForces( real64 const dt,
+                             arrayView2d< real64 const > const & gridMass,
+                             arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( gridDamage ),
+                             arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( gridMaxDamage ),
+                             arrayView3d< real64 const > const & gridVelocity,
+                             arrayView3d< real64 const > const & gridMomentum,
+                             arrayView3d< real64 const > const & gridSurfaceNormal,
+                             arrayView3d< real64 const > const & gridMaterialPosition,
+                             arrayView3d< real64 > const & gridContactForce );
+
+  void computePairwiseNodalContactForce( int const & separable,
+                                         real64 const & dt,
+                                         real64 const & mA,
+                                         real64 const & mB,
+                                         arraySlice1d< real64 const > const vA,
+                                         arraySlice1d< real64 const > const GEOSX_UNUSED_PARAM( vB ),
+                                         arraySlice1d< real64 const> const qA,
+                                         arraySlice1d< real64 const > const qB,
+                                         arraySlice1d< real64 const > const nA,
+                                         arraySlice1d< real64 const > const nB,
+                                         arraySlice1d< real64 const > const xA, // Position of field A
+                                         arraySlice1d< real64 const > const xB, // Position of field B
+                                         arraySlice1d< real64 > const fA,
+                                         arraySlice1d< real64 > const fB );
+
+  void computeOrthonormalBasis( const real64* e1,  // input "normal" unit vector.
+                                real64* e2,        // output "tangential" unit vector.
+                                real64* e3 );      // output "tangential" unit vector.
+
+  void setGridFieldLabels( NodeManager & nodeManager );
+
+  void solverProfiling( std::string label );
+
+  void solverProfilingIf( std::string label, bool condition );
+
+  real64 computeNeighborList( ParticleManager & particleManager );
+
+  void optimizeBinSort( ParticleManager & particleManager );
+
+  real64 kernel( real64 const & r ); // distance from particle to query point
+
+  void kernelGradient( arraySlice1d< real64 const > const x,  // query point
+                       std::vector< real64 > & xp,            // particle location
+                       real64 const & r,                      // distance from particle to query point
+                       real64* result );
+
+  real64 computeKernelField( arraySlice1d< real64 const > const x,    // query point
+                             arrayView2d< real64 const > const xp,    // List of neighbor particle locations.
+                             arrayView1d< real64 const > const Vp,    // List of neighbor particle volumes.
+                             arrayView1d< real64 const > const fp );  // scalar field values (e.g. damage) at neighbor particles
+
+  void computeKernelFieldGradient( arraySlice1d< real64 const > const x,       // query point
+                                   std::vector< std::vector< real64 > > & xp,  // List of neighbor particle locations.
+                                   std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
+                                   std::vector< real64 > & fp,                 // scalar field values (e.g. damage) at neighbor particles
+                                   arraySlice1d< real64 > const result );
+
+  void computeDamageFieldGradient( ParticleManager & particleManager );
+
+  void updateSurfaceFlagOverload( ParticleManager & particleManager );
+
+  void projectDamageFieldGradientToGrid( ParticleManager & particleManager,
+                                         NodeManager & nodeManager );
+
+  void updateDeformationGradient( real64 dt,
+                                  ParticleManager & particleManager );
+
+  void updateConstitutiveModelDependencies( ParticleManager & particleManager );
+
+  void updateStress( real64 dt,
+                     ParticleManager & particleManager );
+
+  void particleKinematicUpdate( ParticleManager & particleManager );
+
+  void computeAndWriteBoxAverage( const real64 dt,
+                                  const real64 time_n,
+                                  ParticleManager & particleManager );
+
+  void initializeGridFields( NodeManager & nodeManager );
+
+  void boundaryConditionUpdate( real64 dt, real64 time_n );
+
+  void particleToGrid( ParticleManager & particleManager,
+                       NodeManager & nodeManager );
+
+  void gridTrialUpdate( real64 dt,
+                        NodeManager & nodeManager );
+
+  void enforceContact( real64 dt,
+                       DomainPartition & domain,
+                       ParticleManager & particleManager,
+                       NodeManager & nodeManager,
+                       MeshLevel & mesh );
+
+  void interpolateFTable( real64 dt, real64 time_n );
+
+  void gridToParticle( real64 dt,
+                       ParticleManager & particleManager,
+                       NodeManager & nodeManager );
+  
+  void updateSolverDependencies( ParticleManager & particleManager );
+
+  real64 getStableTimeStep( ParticleManager & particleManager );
+
+  void deleteBadParticles( ParticleManager & particleManager );
+
+  void printProfilingResults();
+
 protected:
   virtual void postProcessInput() override final;
 
@@ -271,123 +412,6 @@ private:
   };
 
   virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const override;
-
-  void initialize( NodeManager & nodeManager,
-                   ParticleManager & particleManager,
-                   SpatialPartition & partition );
-  
-  void resizeGrid( SpatialPartition & partition,
-                   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const gridPosition,
-                   real64 const dt );
-
-  void syncGridFields( std::vector< std::string > const & fieldNames,
-                       DomainPartition & domain,
-                       NodeManager & nodeManager,
-                       MeshLevel & mesh,
-                       MPI_Op op );
-
-  void singleFaceVectorFieldSymmetryBC( const int face,
-                                        array3d< real64 > & vectorMultiField,
-                                        arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const gridPosition,
-                                        Group & nodeSets );
-
-  void enforceGridVectorFieldSymmetryBC( array3d< real64 > & vectorMultiField,
-                                         arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const gridPosition,
-                                         Group & nodeSets );
-
-  void applyEssentialBCs( const real64 dt,
-                          const real64 time_n,
-                          array3d< real64 > & velocity,
-                          array3d< real64 > & acceleration,
-                          array2d< real64 > & mass
-                          ,
-                          arrayView1d< int > const ghostRank,
-                          arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const gridPosition,
-                          Group & nodeSets );
-
-  void computeGridSurfaceNormals( ParticleManager & particleManager,
-                                  NodeManager & nodeManager );
-
-  void normalizeGridSurfaceNormals( array2d< real64 > & gridMass,
-                                    array3d< real64 > & gridSurfaceNormal );
-
-  void computeContactForces( const real64 dt,
-                             const array2d< real64 > & gridMass,
-                             const array2d< real64 > & GEOSX_UNUSED_PARAM( gridDamage ),
-                             const array2d< real64 > & GEOSX_UNUSED_PARAM( gridMaxDamage ),
-                             const array3d< real64 > & gridVelocity,
-                             const array3d< real64 > & gridMomentum,
-                             const array3d< real64 > & gridSurfaceNormal,
-                             const array3d< real64 > & gridMaterialPosition,
-                             array3d< real64 > & gridContactForce );
-
-  void computePairwiseNodalContactForce( const int & separable,
-                                         const real64 & dt,
-                                         const real64 & mA,
-                                         const real64 & mB,
-                                         const arraySlice1d< real64 > vA,
-                                         const arraySlice1d< real64 > GEOSX_UNUSED_PARAM( vB ),
-                                         const arraySlice1d< real64 > qA,
-                                         const arraySlice1d< real64 > qB,
-                                         const arraySlice1d< real64 > nA,
-                                         const arraySlice1d< real64 > nB,
-                                         const arraySlice1d< real64 > xA, // Position of field A
-                                         const arraySlice1d< real64 > xB, // Position of field B
-                                         arraySlice1d< real64 > fA,
-                                         arraySlice1d< real64 > fB );
-
-  void computeOrthonormalBasis( const real64* e1,  // input "normal" unit vector.
-                                real64* e2,        // output "tangential" unit vector.
-                                real64* e3 );      // output "tangential" unit vector.
-
-  void setGridFieldLabels( NodeManager & nodeManager );
-
-  void solverProfiling( std::string label );
-
-  void solverProfilingIf( std::string label, bool condition );
-
-  real64 computeNeighborList( ParticleManager & particleManager );
-
-  void optimizeBinSort( ParticleManager & particleManager );
-
-  real64 kernel( const real64 & r ); // distance from particle to query point
-
-  void kernelGradient( arraySlice1d< real64 > const x,  // query point
-                       arraySlice1d< real64 > const xp, // particle location
-                       const real64 & r,                // distance from particle to query point
-                       real64* result );
-
-  real64 computeKernelField( arraySlice1d< real64 > const x,    // query point
-                             arrayView2d< real64 > const xp,    // List of neighbor particle locations.
-                             arrayView1d< real64 > const Vp,    // List of neighbor particle volumes.
-                             arrayView1d< real64 > const fp );  // scalar field values (e.g. damage) at neighbor particles
-
-  void computeKernelFieldGradient( arraySlice1d< real64 > const x,   // query point
-                                   arrayView2d< real64 > const xp,   // List of neighbor particle locations.
-                                   arrayView1d< real64 > const Vp,   // List of neighbor particle volumes.
-                                   arrayView1d< real64 > const fp,   // scalar field values (e.g. damage) at neighbor particles
-                                   arraySlice1d< real64 > const result ); 
-
-  void computeDamageFieldGradient( ParticleManager & particleManager );
-
-  void updateSurfaceFlagOverload( ParticleManager & particleManager );
-
-  void projectDamageFieldGradientToGrid( ParticleManager & particleManager,
-                                         NodeManager & nodeManager );
-
-  void updateDeformationGradient( real64 dt,
-                                  ParticleManager & particleManager );
-
-  void updateConstitutiveModelDependencies( ParticleManager & particleManager );
-
-  void updateStress( real64 dt,
-                     ParticleManager & particleManager );
-
-  void particleKinematicUpdate( ParticleManager & particleManager );
-
-  void computeAndWriteBoxAverage( const real64 dt,
-                                  const real64 time_n,
-                                  ParticleManager & particleManager );
 };
 
 ENUM_STRINGS( SolidMechanicsMPM::TimeIntegrationOption,

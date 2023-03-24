@@ -318,12 +318,15 @@ void ParticleMeshGenerator::postProcessInput()
   GEOSX_LOG_RANK_0("Someone called ParticleMeshGenerator::postProcessInput!");
 }
 
-void ParticleMeshGenerator::importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const
+void ParticleMeshGenerator::importFieldsOnArray( string const & cellBlockName,
+                                                 string const & meshFieldName,
+                                                 bool isMaterialField,
+                                                 dataRepository::WrapperBase & wrapper ) const
 {
-  GEOSX_UNUSED_PARAM(cellBlockName);
-  GEOSX_UNUSED_PARAM(meshFieldName);
-  GEOSX_UNUSED_PARAM(isMaterialField);
-  GEOSX_UNUSED_PARAM(wrapper);
+  GEOSX_UNUSED_VAR( cellBlockName );
+  GEOSX_UNUSED_VAR( meshFieldName );
+  GEOSX_UNUSED_VAR( isMaterialField );
+  GEOSX_UNUSED_VAR( wrapper );
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, ParticleMeshGenerator, string const &, Group * const )

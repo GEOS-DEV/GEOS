@@ -1007,7 +1007,7 @@ public:
   int UnpackGlobalMaps( buffer_unit_type const * & buffer,
                         ParticleViewAccessor< ReferenceWrapper< localIndex_array > > & packList );
 
-
+  void updateMaps();
 
 
 private:

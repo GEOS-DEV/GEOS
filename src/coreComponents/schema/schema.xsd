@@ -506,6 +506,10 @@
 					<xsd:selector xpath="CarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="ConstitutiveCeramicDamageUniqueName">
+					<xsd:selector xpath="CeramicDamage" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="ConstitutiveCompositionalMultiphaseFluidUniqueName">
 					<xsd:selector xpath="CompositionalMultiphaseFluid" />
 					<xsd:field xpath="@name" />
@@ -616,6 +620,10 @@
 				</xsd:unique>
 				<xsd:unique name="ConstitutiveParticleFluidUniqueName">
 					<xsd:selector xpath="ParticleFluid" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="ConstitutivePerfectlyPlasticUniqueName">
+					<xsd:selector xpath="PerfectlyPlastic" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="ConstitutivePermeabilityBaseUniqueName">
@@ -2768,30 +2776,40 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
+		<!--boundaryConditionTypes => Boundary conditions on x-, x+, y-, y+, z- and z+ faces. Options are:
+* Outflow
+* Symmetry-->
+		<xsd:attribute name="boundaryConditionTypes" type="integer_array" default="{0}" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
-		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
+		<!--contactGapCorrection => Flag for mitigating contact gaps-->
+		<xsd:attribute name="contactGapCorrection" type="integer" default="0" />
+		<!--cpdiDomainScaling => Option for CPDI domain scaling-->
+		<xsd:attribute name="cpdiDomainScaling" type="integer" default="0" />
+		<!--damageFieldPartitioning => Flag for using the gradient of the particle damage field to partition material into separate velocity fields-->
+		<xsd:attribute name="damageFieldPartitioning" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
+		<!--fTableInterpType => The type of F table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial).-->
+		<xsd:attribute name="fTableInterpType" type="integer" default="0" />
+		<!--frictionCoefficient => Coefficient of friction, currently assumed to be the same everywhere-->
+		<xsd:attribute name="frictionCoefficient" type="real64" default="0" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--massDamping => Value of mass based damping coefficient. -->
-		<xsd:attribute name="massDamping" type="real64" default="0" />
-		<!--maxNumResolves => Value to indicate how many resolves may be executed after some other event is executed. For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. However if a new surface is generated, then the mechanics solve must be executed again due to the change in topology.-->
-		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
-		<!--newmarkBeta => Value of :math:`\beta` in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
-		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
-		<!--newmarkGamma => Value of :math:`\gamma` in the Newmark Method for Implicit Dynamic time integration option-->
-		<xsd:attribute name="newmarkGamma" type="real64" default="0.5" />
-		<!--stiffnessDamping => Value of stiffness based damping coefficient. -->
-		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
-		<!--strainTheory => Indicates whether or not to use `Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or `Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:
- 0 - Infinitesimal Strain 
- 1 - Finite Strain-->
-		<xsd:attribute name="strainTheory" type="integer" default="0" />
+		<!--needsNeighborList => Flag for whether to construct neighbor list-->
+		<xsd:attribute name="needsNeighborList" type="integer" default="0" />
+		<!--neighborRadius => Neighbor radius for SPH-type calculations-->
+		<xsd:attribute name="neighborRadius" type="real64" default="-1" />
+		<!--planeStrain => Flag for performing plane strain calculations-->
+		<xsd:attribute name="planeStrain" type="integer" default="0" />
+		<!--prescribedBcTable => Flag for whether to have time-dependent boundary condition types-->
+		<xsd:attribute name="prescribedBcTable" type="integer" default="0" />
+		<!--prescribedBoundaryFTable => Flag for whether to have time-dependent boundary conditions described by a global background grid F-->
+		<xsd:attribute name="prescribedBoundaryFTable" type="integer" default="0" />
+		<!--solverProfiling => Flag for timing subroutines in the solver-->
+		<xsd:attribute name="solverProfiling" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeIntegrationOption => Time integration method. Options are:
@@ -2799,8 +2817,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 * ImplicitDynamic
 * ExplicitDynamic-->
 		<xsd:attribute name="timeIntegrationOption" type="geosx_SolidMechanicsMPM_TimeIntegrationOption" default="ExplicitDynamic" />
-		<!--useVelocityForQS => Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
-		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
+		<!--useDamageAsSurfaceFlag => Indicates whether particle damage at the beginning of the simulation should be interpreted as a surface flag-->
+		<xsd:attribute name="useDamageAsSurfaceFlag" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -3010,6 +3028,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="CO2BrinePhillipsFluid" type="CO2BrinePhillipsFluidType" />
 			<xsd:element name="CO2BrinePhillipsThermalFluid" type="CO2BrinePhillipsThermalFluidType" />
 			<xsd:element name="CarmanKozenyPermeability" type="CarmanKozenyPermeabilityType" />
+			<xsd:element name="CeramicDamage" type="CeramicDamageType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
@@ -3038,6 +3057,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
+			<xsd:element name="PerfectlyPlastic" type="PerfectlyPlasticType" />
 			<xsd:element name="PermeabilityBase" type="PermeabilityBaseType" />
 			<xsd:element name="PorousDelftEgg" type="PorousDelftEggType" />
 			<xsd:element name="PorousDruckerPrager" type="PorousDruckerPragerType" />
@@ -3210,6 +3230,30 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="particleDiameter" type="real64" use="required" />
 		<!--sphericity => Sphericity of the particles.-->
 		<xsd:attribute name="sphericity" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CeramicDamageType">
+		<!--compressiveStrength => Compressive strength-->
+		<xsd:attribute name="compressiveStrength" type="real64" use="required" />
+		<!--crackSpeed => Crack speed-->
+		<xsd:attribute name="crackSpeed" type="real64" use="required" />
+		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultPoissonRatio => Default Poisson's Ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultShearModulus => Default Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultThermalExpansionCoefficient => Default Thermal Expansion Coefficient-->
+		<xsd:attribute name="defaultThermalExpansionCoefficient" type="real64" default="0" />
+		<!--defaultYoungModulus => Default Young's Modulus-->
+		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--maximumStrength => Maximum theoretical strength-->
+		<xsd:attribute name="maximumStrength" type="real64" use="required" />
+		<!--tensileStrength => Tensile strength-->
+		<xsd:attribute name="tensileStrength" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -3802,6 +3846,24 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 			<xsd:pattern value=".*[\[\]`$].*|Stokes|Intermediate|Turbulence" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:complexType name="PerfectlyPlasticType">
+		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultPoissonRatio => Default Poisson's Ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultShearModulus => Default Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultThermalExpansionCoefficient => Default Thermal Expansion Coefficient-->
+		<xsd:attribute name="defaultThermalExpansionCoefficient" type="real64" default="0" />
+		<!--defaultYieldStress => Default yield stress-->
+		<xsd:attribute name="defaultYieldStress" type="real64" default="1.79769e+308" />
+		<!--defaultYoungModulus => Default Young's Modulus-->
+		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PermeabilityBaseType">
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
