@@ -71,18 +71,18 @@ void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > fracturePressure =
       elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "hardCodedPFractureName" );
 
-    if( m_pressureEffects == 1 )
-    {
-      //***** loop over all elements and write manufactured pressure fields *****
-      forAllElemsInMesh( meshLevel, [ &]( localIndex const er,
-                                          localIndex const esr,
-                                          localIndex const k )
-      {
-        //make a non-trivial field to test
-        matrixPressure[er][esr][k] = k*1.0e-2;
-        fracturePressure[er][esr][k] = k*1.0e0;
-      } );
-    }
+    // if( m_pressureEffects == 1 )
+    // {
+    //   //***** loop over all elements and write manufactured pressure fields *****
+    //   forAllElemsInMesh( meshLevel, [ &]( localIndex const er,
+    //                                       localIndex const esr,
+    //                                       localIndex const k )
+    //   {
+    //     //make a non-trivial field to test
+    //     matrixPressure[er][esr][k] = k*1.0e-2;
+    //     fracturePressure[er][esr][k] = k*1.0e0;
+    //   } );
+    // }
 
   } );
 }

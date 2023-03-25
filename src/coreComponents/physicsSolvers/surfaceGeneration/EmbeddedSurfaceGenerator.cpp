@@ -734,10 +734,11 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
-
-  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
-  {
-    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getBaseDiscretization();
+ 
+  //for( auto & mesh : domain.getMeshBodies().getSubGroups() )
+  //{
+    MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
+    //MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getBaseDiscretization();
 
     for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
     {
@@ -747,7 +748,7 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
         fluxApprox->addEmbeddedFracturesToStencils( meshLevel, this->m_fractureRegionName );
       }
     }
-  }
+  //}
 
 }
 

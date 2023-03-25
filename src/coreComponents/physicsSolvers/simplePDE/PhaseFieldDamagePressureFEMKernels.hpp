@@ -212,7 +212,7 @@ public:
 
     real64 const strainEnergyDensity = m_constitutiveUpdate.getStrainEnergyDensity( k, q );
     real64 const ell = m_constitutiveUpdate.getRegularizationLength();
-    real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
+    real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy(k);
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold( k, q );
     //real64 const extDrivingForce = m_constitutiveUpdate.getExtDrivingForce( k, q );
     real64 const volStrain = m_constitutiveUpdate.getVolStrain( k, q );
@@ -257,7 +257,7 @@ public:
       (
         stack.localResidual,
         N,
-        m_constitutiveUpdate.getDegradationDerivative( qpDamage )*D,
+        m_constitutiveUpdate.getDegradationDerivative( k, qpDamage )*D,
         detJxW );
     }
     else //AT2 KERNELS
@@ -278,7 +278,7 @@ public:
       (
         stack.localResidual,
         N,
-        m_constitutiveUpdate.getDegradationDerivative( qpDamage )*strainEnergyDensity,
+        m_constitutiveUpdate.getDegradationDerivative( k, qpDamage )*strainEnergyDensity,
         detJxW );
 
     }
@@ -327,7 +327,7 @@ public:
       (
         stack.localJacobian,
         N,
-        D*m_constitutiveUpdate.getDegradationSecondDerivative( qpDamage ),
+        D*m_constitutiveUpdate.getDegradationSecondDerivative( k, qpDamage ),
         N,
         detJxW );
 
@@ -342,7 +342,7 @@ public:
       (
         stack.localJacobian,
         N,
-        strainEnergyDensity*m_constitutiveUpdate.getDegradationSecondDerivative( qpDamage ),
+        strainEnergyDensity*m_constitutiveUpdate.getDegradationSecondDerivative( k, qpDamage ),
         N,
         detJxW );
 

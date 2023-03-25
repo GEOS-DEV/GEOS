@@ -17,12 +17,13 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIRESOLUTIONHFSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIRESOLUTIONHFSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIRESOLUTIONFLOWHFSOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIRESOLUTIONFLOWHFSOLVER_HPP_
 
 #include "physicsSolvers/multiphysics/PhaseFieldFractureSolver.hpp"
 #include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geosx
@@ -30,13 +31,13 @@ namespace geosx
 
 class SurfaceGenerator;
 
-class MultiResolutionHFSolver : public SolverBase
+class MultiResolutionFlowHFSolver : public SolverBase
 {
 public:
-  MultiResolutionHFSolver( const string & name,
+  MultiResolutionFlowHFSolver( const string & name,
                            Group * const parent );
 
-  ~MultiResolutionHFSolver() override;
+  ~MultiResolutionFlowHFSolver() override;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -44,7 +45,7 @@ public:
    */
   static string catalogName()
   {
-    return "MultiResolutionHF";
+    return "MultiResolutionFlowHF";
   }
 
   virtual void registerDataOnMesh( Group & meshBodies );
@@ -91,7 +92,14 @@ public:
   void initializeCrackFront( MeshLevel & base);                                        
 
   void cutDamagedElements( MeshLevel & base,
-                           MeshLevel const & patch );                                                                                                                                    
+                           MeshLevel const & patch );   
+
+  void writeBasePressuresToPatch(MeshLevel & base,
+                                 MeshLevel & patch); 
+
+  localIndex closestFracElem(MeshLevel & base,
+                             MeshLevel & patch,
+                             localIndex patchElem);                                                                                                                                                                   
 
   real64 splitOperatorStep( real64 const & time_n,
                             real64 const & dt,
@@ -144,7 +152,7 @@ private:
   array2d< real64 > m_fixedDispList;
 
   // pointer to base efem solver
-  SolidMechanicsEmbeddedFractures * m_baseSolver;
+  SinglePhasePoromechanicsEmbeddedFractures * m_baseSolver;
 
   // pointer to patch phase-field fracture solver
   PhaseFieldFractureSolver * m_patchSolver;

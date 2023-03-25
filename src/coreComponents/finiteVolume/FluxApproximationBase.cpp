@@ -107,8 +107,9 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  domain.forMeshBodies( [&]( MeshBody & meshBody )
-  {
+  //domain.forMeshBodies( [&]( MeshBody & meshBody )
+  //{
+  MeshBody & meshBody = domain.getMeshBody( 0 );
     m_lengthScale = meshBody.getGlobalLengthScale();
     meshBody.forMeshLevels( [&]( MeshLevel & mesh )
     {
@@ -171,7 +172,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
         computeAquiferStencil( domain, mesh );
       }
     } );
-  } );
+  //} );
 }
 
 void FluxApproximationBase::setFieldName( string const & name )

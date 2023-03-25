@@ -157,7 +157,7 @@ struct DamageInterpolationKernel
 
         for( int dim=0; dim < 3; ++dim )
         {
-          damageFieldOnMaterial( k, q ) += N[a] * nodalDamage[elemToNodes( k, a )];
+          //damageFieldOnMaterial( k, q ) += N[a] * nodalDamage[elemToNodes( k, a )];
           damageGradOnMaterial[k][q][dim] = qDamageGrad[dim];
         }
       }
