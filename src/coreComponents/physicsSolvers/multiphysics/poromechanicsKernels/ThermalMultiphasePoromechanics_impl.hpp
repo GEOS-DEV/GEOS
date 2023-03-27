@@ -333,7 +333,6 @@ computePoreVolumeConstraint( localIndex const k,
                                      porosity_n,
                                      stack );
 
-  arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const phaseVolFrac = m_fluidPhaseVolFrac[k];
   arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dFluidPhaseVolFrac[k];
 
   stack.dPoreVolConstraint_dTemperature = 0.0;
