@@ -643,8 +643,17 @@ private:
     // Note: the xsd regex implementation does not allow an empty branch, so use allow whitespace at the end
     string rr = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
 
-    // Regex to match a string that does not contain the characters  ,{}
-    string rs = "[^,\\{\\}]*";
+    // Regex to match a string that can't be empty and does not contain any whitespaces nor the characters ,{}
+    string rs = "[^,\\{\\}\\s]+\\s*";
+
+    // Regex to match a string that does not contain any whitespaces nor the characters ,{}
+    string rse = "[^,\\{\\}\\s]*\\s*";
+
+    // Regex to match a path: a string that can't be empty and does not contain any space nor the characters *?<>|:",
+    string rp = "[^*?<>\\|:\";,\\s]+\\s*";//"[^*?\\&lt;\\&gt;\\|:\\&quot;,\\s]+\\s*";
+
+    // Regex to match a path: a string that does not contain any space nor the characters *?<>|:",
+    string rpe = "[^*?<>\\|:\";,\\s]*\\s*";//"[^*\\?&lt;\\&gt;\\|:\\&quot;,\\s]*\\s*";
 
     // Regex to match a R1Tensor
     string r1 = "\\s*\\{\\s*(" + rr + ",\\s*){2}" + rr + "\\s*\\}";
@@ -679,11 +688,11 @@ private:
       {"real32_array3d", constructArrayRegex( rr, 3 )},
       {"real64_array3d", constructArrayRegex( rr, 3 )},
       {"real64_array4d", constructArrayRegex( rr, 4 )},
-      {"string", rs},
-      {"path", rs},
+      {"string", rse},
+      {"path", rpe},
       {"string_array", constructArrayRegex( rs, 1 )},
-      {"path_array", constructArrayRegex( rs, 1 )},
-      {"mapPair", rs},
+      {"path_array", constructArrayRegex( rp, 1 )},
+      {"mapPair", rse},
       {"geosx_dataRepository_PlotLevel", ri}
     };
   };
