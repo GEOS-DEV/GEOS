@@ -36,7 +36,7 @@ namespace internal
 {
 
 /**
- * @brief This classes helps at building the mapping from global (vtk) element indices to the indices local to the cell blocks.
+ * @brief This classes builds the mapping from global (vtk) element indices to the indices local to the cell blocks.
  * Then the global element to global faces can be be also computed.
  */
 class ElementToFace
@@ -52,9 +52,11 @@ public:
   {
     // In order not to copy all the mappings into a main bigger mapping,
     // we base our implementation on the fact that for practical cases,
-    // cell blocks will contain continuous ranges of cell indices.
+    // cell blocks will contain multiple continuous ranges of cell indices.
     // Storing those ranges and relying on the fact that numbering is continuous within each range,
     // will save memory at the cost of look ups.
+    // Note that it's not required that the whole cell block contains a continuous.
+    // It can contain multiple chunks. Chucks of size one are supported.
     localIndex const numCellBlocks = cellBlocks.numSubGroups();
     for( int i = 0; i < numCellBlocks; ++i )
     {
@@ -101,7 +103,7 @@ public:
   }
 
   /**
-   * @brief Given the global (vtk) id, returns the cell block index @p ei belongs to.
+   * @brief Given the global (vtk) id @p ei, returns the cell block index it belongs to.
    * @param[in] ei global cell index.
    * @return The cell block index.
    */
@@ -122,9 +124,9 @@ public:
   }
 
   /**
-   * @brief GReturns the faces indices touching the global (vtk) element id.
+   * @brief Returns the faces indices touching the global (vtk) element id.
    * @param[in] ei global cell index.
-   * @return A container for the faces of element @p ei.
+   * @return A container for the face indices of element @p ei.
    */
   auto operator[]( vtkIdType const & ei ) const
   {
@@ -180,7 +182,8 @@ private:
   }
 
   /**
-   * @brief Stores the cell block information for each given global element index range (lower included, upper excluded).
+   * @brief Stores the cell block information for each given global element index range.
+   * Lower bound included, upper bound excluded.
    */
   std::map< Range, CellBlockInfo > m_ranges;
   /**
@@ -198,12 +201,20 @@ private:
 } // end of namespace internal
 
 
+/**
+ * @brief Convenience wrapper around the raw vtk information.
+ */
 class DuplicatedNodes
 {
 public:
-  DuplicatedNodes( vtkSmartPointer< vtkDataSet > faceMesh )
+  DuplicatedNodes( string const & faceBlockName,
+                   vtkSmartPointer< vtkDataSet > faceMesh )
   {
-    vtkIntArray const * duplicatedNodes = vtkIntArray::FastDownCast( faceMesh->GetPointData()->GetArray( "duplicated_nodes" ) );
+    // Field data key for duplicated nodes.
+    constexpr char key[] = "duplicated_nodes";
+
+    vtkIntArray const * duplicatedNodes = vtkIntArray::FastDownCast( faceMesh->GetPointData()->GetArray( key ) );
+    GEOSX_ERROR_IF( duplicatedNodes == nullptr, "Could not find valid field \"" << key << "\" for fracture \"" << faceBlockName << "\"." );
 
     vtkIdType const numTuples = duplicatedNodes->GetNumberOfTuples();
     int const numComponents = duplicatedNodes->GetNumberOfComponents();
@@ -228,7 +239,7 @@ public:
 
   /**
    * @brief For node @p i of the face block, returns all the duplicated global node indices in the main 3d mesh.
-   * @param i the node in the face block.
+   * @param i the node in the face block (numbering is local to the face block).
    * @return The list of global node indices in the main 3d mesh.
    */
   std::vector< vtkIdType > const & operator[]( std::size_t i ) const
@@ -237,8 +248,9 @@ public:
   }
 
   /**
-   * @brief Number of duplicated nodes.
-   * @return The size.
+   * @brief Number of duplicated nodes buckets.
+   * Multiple nodes that are considered to be duplicated one of each other make one bucket.
+   * @return The number of duplicated nodes buckets.
    */
   std::size_t size() const
   {
@@ -252,7 +264,7 @@ private:
 
 
 /**
- * @brief Quick hash function for pairs of integers.
+ * @brief Some hash function for pairs of integers.
  */
 struct pairHashComputer
 {
@@ -281,7 +293,7 @@ struct pairHashComputer
 ArrayOfArrays< localIndex > computeFace2dToElems2d( vtkPolyData * edges,
                                                     vtkSmartPointer< vtkDataSet > faceMesh )
 {
-  // Each edge is associated to a hash and to an id.
+  // Each edge is first associated to an hash and to an id.
   // Then we loop over all the edges of each cell and compute its hash to recover the associated id.
   std::unordered_map< std::pair< vtkIdType, vtkIdType >, int, pairHashComputer > face2dIds;
   for( int i = 0; i < edges->GetNumberOfCells(); ++i )
@@ -327,7 +339,7 @@ array1d< localIndex > computeFace2dToEdge( vtkPolyData * edges,
   array1d< localIndex > face2dToEdge( edges->GetNumberOfCells() );
   // We loop over all the (duplicated) nodes of each edge.
   // Then, thanks to the node to edges mapping,
-  // we can find all (ie 2) the edges that share at max 2 duplicated nodes.
+  // we can find all (ie 2) the edges that share (at max) 2 duplicated nodes.
   // Eventually we select one of these edges.
   for( int i = 0; i < edges->GetNumberOfCells(); ++i )
   {
@@ -404,7 +416,7 @@ ArrayOfArrays< localIndex > computeElem2dToEdges( vtkIdType num2dElements,
 }
 
 /**
- * @brief Utility structure which contains 2d element to their 3d element and faces neighbors.
+ * @brief Utility structure which connects 2d element to their 3d element and faces neighbors.
  */
 struct Elem2dTo3dInfo
 {
@@ -585,7 +597,7 @@ void importFractureNetwork( Path const & filePath,
   ArrayOfArrays< localIndex > const nodeToEdges = cellBlockManager.getNodeToEdges();
 
   vtkSmartPointer< vtkDataSet > faceMesh = vtk::loadMesh( filePath, faceBlockName );
-  DuplicatedNodes const duplicatedNodes( faceMesh );
+  DuplicatedNodes const duplicatedNodes( faceBlockName, faceMesh );
   // Add the appropriate validations (only 2d cells...)
 
   auto edgesExtractor = vtkSmartPointer< vtkExtractEdges >::New();
