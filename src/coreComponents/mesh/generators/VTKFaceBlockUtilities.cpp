@@ -263,8 +263,8 @@ struct pairHashComputer
    */
   size_t operator()( const std::pair< vtkIdType, vtkIdType > & p ) const
   {
-    auto hash1 = std::hash< vtkIdType >{}( p.first );
-    auto hash2 = std::hash< vtkIdType >{}( p.second );
+    auto hash1 = std::hash< vtkIdType >{} ( p.first );
+    auto hash2 = std::hash< vtkIdType >{} ( p.second );
 
     // If hash1 == hash2, their XOR is zero.
     return hash1 != hash2 ? hash1 ^ hash2: hash1;
@@ -370,7 +370,7 @@ ArrayOfArrays< localIndex > computeElem2dToFace2d( vtkIdType num2dElements,
   {
     for( localIndex const & elem2dIndex: face2dToElems2d[face2dIndex] )
     {
-      elem2dToFace2d.emplaceBack(elem2dIndex, face2dIndex );
+      elem2dToFace2d.emplaceBack( elem2dIndex, face2dIndex );
     }
   }
 
@@ -396,7 +396,7 @@ ArrayOfArrays< localIndex > computeElem2dToEdges( vtkIdType num2dElements,
   {
     for( auto const & face2dIndex: elem2dToFace2d[elemIndex] )
     {
-      elem2dToEdges.emplaceBack(elemIndex, face2dToEdge[face2dIndex] );
+      elem2dToEdges.emplaceBack( elemIndex, face2dToEdge[face2dIndex] );
     }
   }
 
@@ -414,7 +414,7 @@ struct Elem2dTo3dInfo
   Elem2dTo3dInfo( ToCellRelation< array2d< localIndex > > && elem2dToElem3d_,
                   array2d< localIndex > && elem2dToFaces_ )
     : elem2dToElem3d( elem2dToElem3d_ ),
-      elem2dToFaces( elem2dToFaces_ )
+    elem2dToFaces( elem2dToFaces_ )
   { }
 };
 
@@ -494,7 +494,8 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
     // We collect all the duplicated points that are involved for each 2d element.
     vtkIdList * pointIds = faceMesh->GetCell( i )->GetPointIds();
     std::size_t const elem2dNumPoints = pointIds->GetNumberOfIds();
-    std::set< vtkIdType > duplicatedPointOfElem2d; // All the duplicated points of the 2d element. Note that we lose the collocation of the duplicated nodes.
+    // All the duplicated points of the 2d element. Note that we lose the collocation of the duplicated nodes.
+    std::set< vtkIdType > duplicatedPointOfElem2d;
     for( vtkIdType j = 0; j < pointIds->GetNumberOfIds(); ++j )
     {
       std::vector< vtkIdType > const & ns = duplicatedNodes[ pointIds->GetId( j ) ];
