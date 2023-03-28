@@ -189,17 +189,6 @@ void SinglePhasePoromechanics::assembleSystem( real64 const time_n,
 
     string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
-    poromechanicsMaxForce =
-      assemblyLaunch< constitutive::PorousSolidBase,
-                      poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
-                                                                                     dofManager,
-                                                                                     regionNames,
-                                                                                     viewKeyStruct::porousMaterialNamesString(),
-                                                                                     localMatrix,
-                                                                                     localRhs,
-                                                                                     flowDofKey,
-                                                                                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
-
     if( m_isThermal )
     {
       poromechanicsMaxForce =
