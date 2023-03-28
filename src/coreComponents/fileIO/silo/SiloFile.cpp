@@ -1420,7 +1420,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
       typename TYPEOFREF( elementSubRegion ) ::NodeMapType const & elemsToNodes = elementSubRegion.nodeList();
 
       // TODO HACK. this isn't correct for variable relations.
-      elementToNodeMap[count].resize( elementSubRegion.size(), elementSubRegion.numNodesPerElement() );
+      elementToNodeMap[count].resize( elementSubRegion.size(), elementSubRegion.numNodesPerElement( 0 ) );
 
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
       std::vector< int > const nodeOrdering = getSiloNodeOrdering( elementSubRegion.getElementType() );
@@ -1447,7 +1447,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
       // globalElementNumbers[count] = elementRegion.localToGlobalMap().data();
       shapecnt[count] = static_cast< int >( elementSubRegion.size() );
       shapetype[count] = toSiloShapeType( elementSubRegion.getElementType() );
-      shapesize[count] = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement() );
+      shapesize[count] = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement( 0 ) );
       writeArbitraryPolygon = writeArbitraryPolygon || shapetype[count] == DB_ZONETYPE_PRISM || shapetype[count] == DB_ZONETYPE_PYRAMID;
       ++count;
     } );

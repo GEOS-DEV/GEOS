@@ -47,9 +47,6 @@ public:
   Path( Path const & rhs ): std::string( rhs )
   {}
 
-  Path( std::string const & rhs ): std::string( rhs )
-  {}
-
   /**
    * @brief Move constructor.
    * @param rhs Path to be moved.

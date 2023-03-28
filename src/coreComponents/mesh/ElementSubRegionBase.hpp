@@ -279,13 +279,13 @@ protected:
     forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
     {
       LvArray::tensorOps::copy< 3 >( elementCenters[k], X[e2n( k, 0 )] );
-      localIndex const nNodes = this->numNodesPerElement( k );
-      for( localIndex a = 1; a < nNodes; ++a )
+      localIndex const numNodes = this->numNodesPerElement( k );
+      for( localIndex a = 1; a < numNodes; ++a )
       {
         LvArray::tensorOps::add< 3 >( elementCenters[k], X[e2n( k, a )] );
       }
 
-      LvArray::tensorOps::scale< 3 >( elementCenters[k], 1.0 / nNodes );
+      LvArray::tensorOps::scale< 3 >( elementCenters[k], 1.0 / numNodes );
     } );
   }
 };

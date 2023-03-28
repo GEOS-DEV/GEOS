@@ -405,6 +405,8 @@ loadMesh( Path const & filePath,
   {
     case VTKMeshExtension::vtm:
     {
+      // The multi-block format is a container of multiple datasets (or even of other containers).
+      // We must navigate this multi-block to extract the relevant information.
       auto reader = vtkSmartPointer< vtkXMLMultiBlockDataReader >::New();
       reader->SetFileName( filePath.c_str() );
       reader->Update();
@@ -419,8 +421,7 @@ loadMesh( Path const & filePath,
       // No check is performed to validate that there is not name duplication.
       for( unsigned int i = 0; i < multiBlockDataSet->GetNumberOfBlocks(); ++i )
       {
-        vtkInformation * info = multiBlockDataSet->GetMetaData( i );
-        string const dataSetName = info->Get( multiBlockDataSet->NAME() );
+        string const dataSetName = multiBlockDataSet->GetMetaData( i )->Get( multiBlockDataSet->NAME() );
         if( dataSetName == blockName )
         {
           vtkDataObject * block = multiBlockDataSet->GetBlock( i );

@@ -71,7 +71,7 @@ vtkSmartPointer< vtkMultiProcessController > getController();
 /**
  * @brief Load the VTK file into the VTK data structure
  * @param[in] filePath the Path of the file to load
- * @param[in] blockName The name of the block to import (for multi-block files).
+ * @param[in] blockName The name of the block to import (will be considered for multi-block files only).
  * @return a vtk mesh
  */
 vtkSmartPointer< vtkDataSet > loadMesh( Path const & filePath,
