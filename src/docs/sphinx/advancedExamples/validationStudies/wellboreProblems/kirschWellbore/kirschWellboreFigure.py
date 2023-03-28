@@ -128,7 +128,7 @@ def main():
     ycord_elm = xl_elm[0, :, 1]
     zcord_elm = xl_elm[0, :, 2]
     # Load Stress Components
-    sigma = hf.get('stress')
+    sigma = hf.get('rock_stress')
     sigma = np.array(sigma)
     sigma_Cart = np.zeros([len(sigma[0, :, 0]), 6])
     for i in range(0, len(sigma[0, :, 0])):
@@ -138,13 +138,13 @@ def main():
 
     # Global Coordinate of Nodal Point
     hf = h5py.File(hdf5File2Path, 'r')
-    xl_node = hf.get('TotalDisplacement ReferencePosition')
+    xl_node = hf.get('totalDisplacement ReferencePosition')
     xl_node = np.array(xl_node)
     xcord_node = xl_node[0, :, 0]
     ycord_node = xl_node[0, :, 1]
     zcord_node = xl_node[0, :, 2]
     # Load Displacement Components
-    disp_load = hf.get('TotalDisplacement')
+    disp_load = hf.get('totalDisplacement')
     disp_load = np.array(disp_load)
     disp_Cart = disp_load[0, :, :]
 
