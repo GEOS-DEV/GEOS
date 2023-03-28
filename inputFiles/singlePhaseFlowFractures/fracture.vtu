@@ -39,6 +39,24 @@
         </DataArray>
       </PointData>
       <CellData>
+        <DataArray type="Float32" Name="aperture" NumberOfComponents="1" format="ascii" RangeMin="0.0001" RangeMax="0.0001">
+          0.0001
+          0.0001
+          0.0001
+          0.0001
+          0.0001
+          0.0001
+          0.0001
+          0.0001
+          0.0001
+          0.0001
+          0.0001
+          0.0001
+          0.0001
+          0.0001
+          0.0001
+          0.0001
+        </DataArray>
       </CellData>
       <Points>
         <DataArray type="Float32" Name="Points" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="10.04987562112089">

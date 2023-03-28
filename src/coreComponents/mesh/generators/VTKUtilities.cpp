@@ -65,6 +65,7 @@
 #include <vtkDummyController.h>
 #endif
 
+#include <numeric>
 
 namespace geosx
 {
@@ -1614,6 +1615,16 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
   } );
 }
 
+
+void importRegularField( vtkDataArray * vtkArray,
+                         WrapperBase & wrapper )
+{
+  std::vector< vtkIdType > cellIds( wrapper.size() );
+  std::iota( cellIds.begin(), cellIds.end(), 0 );
+  return importRegularField( cellIds, vtkArray, wrapper );
+}
+
+
 void printMeshStatistics( vtkDataSet & mesh,
                           CellMapType const & cellMap,
                           MPI_Comm const comm )
@@ -1707,6 +1718,11 @@ findArrayForImport( vtkDataSet & mesh,
                   GEOSX_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
                              sourceName, curArray->GetDataTypeAsString() ) );
   return vtkDataArray::SafeDownCast( curArray );
+}
+
+bool hasArray( vtkDataSet & mesh, string const & sourceName )
+{
+  return mesh.GetCellData()->GetAbstractArray( sourceName.c_str() ) != nullptr;
 }
 
 /**

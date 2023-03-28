@@ -117,10 +117,11 @@ void MeshManager::importFields( DomainPartition & domain )
     meshLevels.forSubGroups< MeshLevel >( [&]( MeshLevel & meshLevel )
     {
       ElementRegionManager & elemManager = meshLevel.getElemManager();
-      elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex,
-                                                                             localIndex,
-                                                                             ElementRegionBase const & region,
-                                                                             CellElementSubRegion & subRegion )
+      elemManager.forElementSubRegionsComplete< CellElementSubRegion, FaceElementSubRegion >(
+        [&]( localIndex,
+             localIndex,
+             ElementRegionBase const & region,
+             ElementSubRegionBase & subRegion )
       {
         std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
         // Writing properties

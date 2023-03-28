@@ -19,6 +19,8 @@
 
   <Mesh>
     <VTKMesh
+      fieldsToImport="{aperture}"
+      fieldNamesInGEOSX="{elementAperture}"
       name="mesh1"
       useGlobalIds="1"
       faceBlocks="{fracture}"

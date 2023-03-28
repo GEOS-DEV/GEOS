@@ -30,11 +30,12 @@ namespace geosx
  * @param[in] faceBlockName The face block name to include. (It's the name of the block in the multi-block file.)
  * @param[in] mesh The 3d vtk mesh.
  * @param[inout] cellBlockManager The face block instance (with name @p faceBlockName) will be attached to the @p cellBlockManager
+ * @return The vtk mesh instance for the considered face block.
  */
-void importFractureNetwork( Path const & filePath,
-                            string const & faceBlockName,
-                            vtkSmartPointer< vtkDataSet > mesh,
-                            CellBlockManager & cellBlockManager );
+vtkSmartPointer< vtkDataSet > importFractureNetwork( Path const & filePath,
+                                                     string const & faceBlockName,
+                                                     vtkSmartPointer< vtkDataSet > mesh,
+                                                     CellBlockManager & cellBlockManager );
 
 }
 

@@ -587,10 +587,10 @@ ArrayOfArrays< localIndex > computeElem2dToNodes( vtkIdType num2dElements,
 }
 
 
-void importFractureNetwork( Path const & filePath,
-                            string const & faceBlockName,
-                            vtkSmartPointer< vtkDataSet > mesh,
-                            CellBlockManager & cellBlockManager )
+vtkSmartPointer< vtkDataSet > importFractureNetwork( Path const & filePath,
+                                                     string const & faceBlockName,
+                                                     vtkSmartPointer< vtkDataSet > mesh,
+                                                     CellBlockManager & cellBlockManager )
 {
   ArrayOfArrays< localIndex > const faceToNodes = cellBlockManager.getFaceToNodes();
   geosx::internal::ElementToFace const elemToFaces( cellBlockManager.getCellBlocks() );
@@ -627,6 +627,8 @@ void importFractureNetwork( Path const & filePath,
   faceBlock.set2dFaceTo2dElems( std::move( face2dToElems2d ) );
   faceBlock.set2dElemToFaces( std::move( elem2dTo3d.elem2dToFaces ) );
   faceBlock.set2dElemToElems( std::move( elem2dTo3d.elem2dToElem3d ) );
+
+  return faceMesh;
 }
 
 } // end of namespace

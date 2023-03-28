@@ -120,7 +120,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   for( string const & faceBlockName: m_faceBlockNames )
   {
-    importFractureNetwork( m_filePath, faceBlockName, m_vtkMesh, cellBlockManager );
+    m_faceBlockMeshes[faceBlockName] = importFractureNetwork( m_filePath, faceBlockName, m_vtkMesh, cellBlockManager );
   }
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  done!" );
@@ -156,6 +156,21 @@ void VTKMeshGenerator::importFieldsOnArray( string const & cellBlockName, string
     }
   }
 
+  // If the field was not imported from cell blocks, we now look for it in the face blocks.
+  // This surely can be improved by clearly stating which field should be on which block.
+  // Note that there is no additional work w.r.t. the cells on which we want to import the fields,
+  // because the face blocks are heterogeneous.
+  // We always take the whole data, we do not select cell type by cell type.
+  for( auto const & p: m_faceBlockMeshes )
+  {
+    vtkSmartPointer< vtkDataSet > faceMesh = p.second;
+    if( vtk::hasArray( *faceMesh, meshFieldName ) )
+    {
+      vtkDataArray * vtkArray = vtk::findArrayForImport( *faceMesh, meshFieldName );
+      return vtk::importRegularField( vtkArray, wrapper );
+    }
+  }
+
   GEOSX_ERROR( "Could not import field \"" << meshFieldName << "\" from cell block \"" << cellBlockName << "\"." );
 }
 
@@ -163,6 +178,7 @@ void VTKMeshGenerator::freeResources()
 {
   m_vtkMesh = nullptr;
   m_cellMap.clear();
+  m_faceBlockMeshes.clear();
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, VTKMeshGenerator, string const &, Group * const )
