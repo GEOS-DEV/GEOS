@@ -78,7 +78,7 @@ TEST( testGroupPath, testGlobalPaths )
     "  </Constitutive>\n"
     "</Problem>";
 
-  std::vector< string > const groupPaths={
+  std::vector< string > const groupPaths{
     "/Mesh/mesh1",
     "/domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/Region2",
     "/domain/Constitutive/shale",

@@ -197,7 +197,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
                          stringutilities::join( targetTokens.begin(),
                                                 targetTokens.begin()+pathLevel,
                                                 '/' ) <<
-                         ": " << targetGroup->dumpChildrenName(),
+                         ": " << targetGroup->dumpChildrenNames(),
                          std::domain_error );
           }
         }

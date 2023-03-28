@@ -168,12 +168,12 @@ public:
   /**
    * @brief @return a comma separated string containing all children name.
    */
-  string dumpChildrenName() const;
+  string dumpChildrenNames() const;
 
   /**
    * @brief @return a comma separated string containing all children name.
    */
-  string dumpWrappersName() const;
+  string dumpWrappersNames() const;
 
   ///@}
 
@@ -335,7 +335,7 @@ public:
     Group * const child = m_subGroups[ key ];
     GEOSX_THROW_IF( child == nullptr,
                     "Group " << getPath() << " has no child named " << key << std::endl <<
-                    getName() << " children are: " << dumpChildrenName(),
+                    "The children of " + getName() + " are: " << dumpChildrenNames(),
                     std::domain_error );
     return dynamicCast< T & >( *child );
   }
@@ -349,7 +349,7 @@ public:
     Group const * const child = m_subGroups[ key ];
     GEOSX_THROW_IF( child == nullptr,
                     "Group " << getPath() << " has no child named " << key << std::endl <<
-                    getName() << " children are: " << dumpChildrenName(),
+                    "The children of " + getName() + " are: " << dumpChildrenNames(),
                     std::domain_error );
     return dynamicCast< T const & >( *child );
   }
@@ -1065,7 +1065,7 @@ public:
     WrapperBase const * const wrapper = m_wrappers[ key ];
     GEOSX_THROW_IF( wrapper == nullptr,
                     "Group " << getPath() << " has no wrapper named " << key << std::endl <<
-                    getName() << " wrappers are: " << dumpWrappersName(),
+                    "The wrappers of " + getName() + " are: " << dumpWrappersNames(),
                     std::domain_error );
     return *wrapper;
   }
@@ -1079,7 +1079,7 @@ public:
     WrapperBase * const wrapper = m_wrappers[ key ];
     GEOSX_THROW_IF( wrapper == nullptr,
                     "Group " << getPath() << " has no wrapper named " << key << std::endl <<
-                    getName() << " wrappers are: " << dumpWrappersName(),
+                    "The wrappers of " + getName() + " are: " << dumpWrappersNames(),
                     std::domain_error );
     return *wrapper;
   }
@@ -1266,7 +1266,7 @@ public:
 
   /**
    * @brief Return the path of this Group in the data repository.
-   * Starts with '/' followed up by the "Problem" children in which the Group is.
+   * Starts with '/' followed up by the hierarchy from the "Problem" children in which the Group is.
    * @return The path of this group in the data repository.
    */
   string getPath() const;

@@ -267,40 +267,18 @@ string Group::dumpInputOptions() const
   return rval;
 }
 
-string Group::dumpChildrenName() const
+string Group::dumpChildrenNames() const
 {
-  if( getSubGroups().size() > 0 )
-  {
-    string str = "";
-    forSubGroupsIndex( [&] ( localIndex i, const Group & subGroup )
-    {
-      str += (i==0 ? subGroup.getName() : ", "+subGroup.getName());
-    } );
-    return str;
-  }
-  else
-  {
-    return "No children";
-  }
+  std::vector< string > children;
+  forSubGroups( [&]( Group const & subGroup ){ children.push_back( subGroup.getName() ); } );
+  return "{ " + stringutilities::join( children, ", " ) + " }";
 }
 
-string Group::dumpWrappersName() const
+string Group::dumpWrappersNames() const
 {
-  if( numWrappers() > 0 )
-  {
-    localIndex i = 0;
-    string str = "";
-    forWrappers( [&] ( const WrapperBase & wrapper )
-    {
-      str += (i==0 ? wrapper.getName() : ", "+wrapper.getName());
-      ++i;
-    } );
-    return str;
-  }
-  else
-  {
-    return "No children";
-  }
+  std::vector< string > wrappers;
+  forWrappers( [&]( WrapperBase const & wrapper ){ wrappers.push_back( wrapper.getName() ); } );
+  return "{ " + stringutilities::join( wrappers, ", " ) + " }";
 }
 
 void Group::deregisterGroup( string const & name )
