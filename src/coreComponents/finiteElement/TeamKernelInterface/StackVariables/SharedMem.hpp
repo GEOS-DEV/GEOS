@@ -33,12 +33,12 @@ template < localIndex size_1d, localIndex batch_size >
 struct SharedMem
 {
   GEOSX_HOST_DEVICE
-  SharedMem( LaunchContext & ctx )
+  SharedMem( RAJA::LaunchContext & ctx )
   {
     // Element primary field gradients at quadrature points
     GEOSX_STATIC_SHARED real64 s_values[batch_size][size_1d][size_1d][size_1d];
 
-    loop<thread_z> (ctx, RAJA::RangeSegment(0, batch_size), [&] (localIndex batch_index) {
+    RAJA::loop<thread_z> (ctx, RAJA::RangeSegment(0, batch_size), [&] (localIndex batch_index) {
       values = &s_values[batch_index];
     } );
   }
@@ -63,12 +63,12 @@ template < localIndex size_1d, localIndex dim, localIndex batch_size >
 struct Shared1DMem
 {
   GEOSX_HOST_DEVICE
-  Shared1DMem( LaunchContext & ctx )
+  Shared1DMem( RAJA::LaunchContext & ctx )
   {
     // Element primary field gradients at quadrature points
     GEOSX_STATIC_SHARED real64 s_values[batch_size][size_1d][size_1d][size_1d][dim];
 
-    loop<thread_z> (ctx, RAJA::RangeSegment(0, batch_size), [&] (localIndex batch_index) {
+    RAJA::loop<thread_z> (ctx, RAJA::RangeSegment(0, batch_size), [&] (localIndex batch_index) {
       values = &s_values[batch_index];
     } );
   }
@@ -93,12 +93,12 @@ template < localIndex size_1d, localIndex dim, localIndex batch_size >
 struct Shared2DMem
 {
   GEOSX_HOST_DEVICE
-  Shared2DMem( LaunchContext & ctx )
+  Shared2DMem( RAJA::LaunchContext & ctx )
   {
     // Element primary field gradients at quadrature points
     GEOSX_STATIC_SHARED real64 s_values[batch_size][size_1d][size_1d][size_1d][dim][dim];
 
-    loop<thread_z> (ctx, RAJA::RangeSegment(0, batch_size), [&] (localIndex batch_index) {
+    RAJA::loop<thread_z> (ctx, RAJA::RangeSegment(0, batch_size), [&] (localIndex batch_index) {
       values = &s_values[batch_index];
     } );
   }

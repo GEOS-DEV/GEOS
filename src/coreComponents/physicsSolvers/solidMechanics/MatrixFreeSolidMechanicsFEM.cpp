@@ -105,7 +105,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
     arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > localDst2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localDst.dataBuffer() );
 
 #if 0
-    TeamSolidMechanicsFEMKernelFactory kernelFactory( localSrc2d, localDst2d );  
+    TeamSolidMechanicsFEMKernelFactory kernelFactory( localSrc2d, localDst2d );
     finiteElement::
       regionBasedKernelApplication< team_launch_policy,
                                     constitutive::SolidBase,
@@ -319,7 +319,6 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
   UnprecCgSolver< ParallelVector > solver( params, constrained_solid_mechanics );
   
 //   std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp7"<<std::endl;
-
   solver.solve( m_rhs, m_solution );
   const real64 elapsed_seconds = solver.result().solveTime;
   std::cout << "solve time: " << elapsed_seconds << "s\n";

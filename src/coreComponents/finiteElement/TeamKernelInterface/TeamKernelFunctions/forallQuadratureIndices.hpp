@@ -44,13 +44,22 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void forallQuadratureIndices( Stack & stack, Lambda && lambda )
 {
-  constexpr localIndex num_quads_1d = Stack::num_quads_1d;
-  loop3D( stack, num_quads_1d, num_quads_1d, num_quads_1d,
-          [&]( localIndex ind_x, localIndex ind_y, localIndex ind_z )
-  {
-    TensorIndex quad_index { ind_x, ind_y, ind_z };
-    lambda( quad_index );
-  } );
+  // constexpr localIndex num_quads_1d = Stack::num_quads_1d;
+  // loop3D( stack, num_quads_1d, num_quads_1d, num_quads_1d,
+  //         [&]( localIndex ind_x, localIndex ind_y, localIndex ind_z )
+  // {
+  //   // TensorIndex quad_index { ind_x, ind_y, ind_z };
+  //   // lambda( quad_index );
+  //   lambda( ind_x, ind_y, ind_z );
+  // } );
+  lambda( 0, 0, 0 );
+  lambda( 0, 0, 1 );
+  lambda( 0, 1, 0 );
+  lambda( 0, 1, 1 );
+  lambda( 1, 0, 0 );
+  lambda( 1, 0, 1 );
+  lambda( 1, 1, 0 );
+  lambda( 1, 1, 1 );
 }
 
 } // namespace finiteElement

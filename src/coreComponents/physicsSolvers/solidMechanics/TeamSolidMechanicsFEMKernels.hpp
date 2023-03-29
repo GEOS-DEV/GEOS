@@ -124,10 +124,15 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    fields.m_X.move( parallelDeviceMemorySpace, false );
-    fields.m_src.move( parallelDeviceMemorySpace, false );
-    fields.m_dst.move( parallelDeviceMemorySpace, true );
-    fields.m_elemsToNodes.move( parallelDeviceMemorySpace, false );
+    // fields.m_X.move( parallelDeviceMemorySpace, false );
+    // fields.m_src.move( parallelDeviceMemorySpace, false );
+    // fields.m_dst.move( parallelDeviceMemorySpace, true );
+    // fields.m_elemsToNodes.move( parallelDeviceMemorySpace, false );
+    // For amd
+    fields.m_X.move( LvArray::MemorySpace::hip, false );
+    fields.m_src.move( LvArray::MemorySpace::hip, false );
+    fields.m_dst.move( LvArray::MemorySpace::hip, true );
+    fields.m_elemsToNodes.move( LvArray::MemorySpace::hip, false );
 
     // FE Config
     constexpr localIndex num_dofs_1d = 2;
@@ -153,37 +158,63 @@ public:
 
     finiteElement::forallElements< KernelConf >( numElems, [=] GEOSX_HOST_DEVICE ( Stack & stack )
     {
+      constexpr localIndex dim = 3;
+
       /// Read element mesh nodes and residual input degrees of freedom
-      typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3 > mesh_nodes;
-      typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > dofs_in;
+      typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, dim > mesh_nodes;
+      typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, dim > dofs_in;
+      // real64 dofs_in[num_dofs_1d][num_dofs_1d][num_dofs_1d][dim];
       readField( stack, fields.m_elemsToNodes, fields.m_X, mesh_nodes );
       readField( stack, fields.m_elemsToNodes, fields.m_src, dofs_in );
 
       typename Stack::template Basis< num_dofs_1d, num_quads_1d > basis( stack );
-      /// Computation of the Jacobians
-      typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3, 3 > mesh_jacobians;
-      interpolateGradientAtQuadraturePoints( stack, basis, mesh_nodes, mesh_jacobians );
+      typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, dim > dofs_out;
+      loop3D( stack, num_dofs_1d, num_dofs_1d, num_dofs_1d,
+              [&]( localIndex x, localIndex y, localIndex z )
+      {
+        for (localIndex d = 0; d < dim; d++)
+        {
+          dofs_out( x, y, z, d ) = 0.0;
+        }
+      } );
+      // /// Computation of the Jacobians
+      // typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, dim, dim > mesh_jacobians;
+      // interpolateGradientAtQuadraturePoints( stack, basis, mesh_nodes, mesh_jacobians );
 
       /// Computation of the Gradient of the solution field
-      typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3, 3 > Gu;
-      interpolateGradientAtQuadraturePoints( stack, basis, dofs_in, Gu );
+      // typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, dim, dim > Gu;
+      // interpolateGradientAtQuadraturePoints( stack, basis, dofs_in, Gu );
 
       /// QFunction
-      forallQuadratureIndices( stack, [&]( auto const & quad_index )
+      // forallQuadratureIndices( stack, [&]( auto const & quad_index )
+      // forallQuadratureIndices( stack, [&]( localIndex const & qx, localIndex const & qy, localIndex const & qz )
+      // {
+      #pragma unroll
+      for (localIndex q = 0; q < num_quads_1d * num_quads_1d * num_quads_1d; q++)
       {
-        constexpr localIndex dim = 3;
+        int qx, qy, qz;
+        finiteElement::LagrangeBasis1::TensorProduct3D::multiIndex( q, qx, qy, qz );
         // Load quadrature point-local gradients and jacobians
         real64 grad_ref_u[ dim ][ dim ];
-        qLocalLoad( quad_index, Gu, grad_ref_u );
+        // interpolateGradientAtQuadraturePoint( stack, quad_index, basis, dofs_in, grad_ref_u );
+        interpolateGradientAtQuadraturePoint( stack, qx, qy, qz, basis, dofs_in, grad_ref_u );
+        // qLocalLoad( quad_index, Gu, grad_ref_u );
+        // real64 J[ dim ][ dim ] = { { 0.0 } };
+        // J[0][0] = 1.0;
+        // J[1][1] = 1.0;
+        // J[2][2] = 1.0;
         real64 J[ dim ][ dim ];
-        qLocalLoad( quad_index, mesh_jacobians, J );
+        // interpolateGradientAtQuadraturePoint( stack, quad_index, basis, mesh_nodes, J );
+        interpolateGradientAtQuadraturePoint( stack, qx, qy, qz, basis, mesh_nodes, J );
+        // qLocalLoad( quad_index, mesh_jacobians, J );
 
         // Compute D_q u_q = - w_q * det(J_q) * J_q^-1 * sigma ( J_q^-1, grad( u_q ) )
         real64 Jinv[ dim ][ dim ];
         real64 const detJ = computeInverseAndDeterminant( J, Jinv );
 
         real64 stress[ dim ][ dim ];
-        computeStress( stack, fields.m_constitutiveUpdate, 0, Jinv, grad_ref_u, stress );
+        computePhysicalGradient( Jinv, grad_ref_u, stress );
+        // computeStress( stack, fields.m_constitutiveUpdate, 0, Jinv, grad_ref_u, stress );
 
         // Apply - w_q * det(J_q) * J_q^-1
         real64 stress_ref[ dim ][ dim ];
@@ -192,12 +223,24 @@ public:
         real64 const weight = 1.0; //stack.weights( quad_index );
         applyQuadratureWeights( weight, detJ, stress_ref );
 
-        qLocalWrite( quad_index, stress_ref, Gu );
-      } );
+        // qLocalWrite( quad_index, stress_ref, Gu );
+        // applyGradientTestFunctions( stack, quad_index, basis, stress_ref, dofs_out );
+        applyGradientTestFunctions( stack, qx, qy, qz, basis, stress_ref, dofs_out );
+        // applyGradientTestFunctions( stack, quad_index, basis, grad_ref_u, dofs_out );
+      }
+      // } );
 
       /// Application of the test functions
-      typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, 3 > dofs_out;
-      applyGradientTestFunctions( stack, basis, Gu, dofs_out );
+      // typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d, dim > dofs_out;
+      // applyGradientTestFunctions( stack, basis, Gu, dofs_out ); // TODO: make a quad point version
+      // loop3D( stack, num_dofs_1d, num_dofs_1d, num_dofs_1d,
+      //         [&]( localIndex x, localIndex y, localIndex z )
+      // {
+      //   for (localIndex d = 0; d < dim; d++)
+      //   {
+      //     dofs_out( x, y, z, d ) = dofs_in( x, y, z, d ) + mesh_nodes( x, y, z, d );
+      //   }
+      // } );
 
       writeAddField( stack, fields.m_elemsToNodes, dofs_out, fields.m_dst );
     } );

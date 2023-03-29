@@ -55,7 +55,7 @@ void applyGradientTestFunctions(
   tensor::Static3dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d, 3 > const & q_values,
   tensor::Static3dThreadDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > & dofs )
 {
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Load in registers valuesfor (quad_x, quad_y, quad_z)
   // FIXME: not interesting for low order and if basis already in stack mem
@@ -149,7 +149,7 @@ void applyGradientTestFunctions(
   tensor::Static3dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp, 3 > const & q_values,
   tensor::Static3dThreadDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d, num_comp > & dofs )
 {
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Load in registers values for (quad_x, quad_y, quad_z)
   // FIXME: not interesting for low order and if basis already in stack mem

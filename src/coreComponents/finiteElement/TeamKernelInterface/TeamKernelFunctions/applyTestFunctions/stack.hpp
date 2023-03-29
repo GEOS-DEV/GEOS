@@ -58,7 +58,7 @@ void applyTestFunctions( StackVariables & stack,
                          tensor::StaticDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > & dofs )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
   tensor::StaticDTensor< num_dofs_1d, num_quads_1d, num_quads_1d > Bu;
@@ -174,7 +174,7 @@ void applyTestFunctions( StackVariables & stack,
                          tensor::StaticDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d, num_comp > & dofs )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   #pragma unroll
   for (localIndex comp = 0; comp < num_comp; comp++)

@@ -61,6 +61,30 @@ void applyGradientTestFunctions( StackVariables & stack,
                                     dofs );
 }
 
+template < typename StackVariables,
+           typename Basis,
+           typename QValues,
+           typename Dofs >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void applyGradientTestFunctions( StackVariables & stack,
+                                //  geosx::TensorIndex const & quad_index,
+  localIndex const & qx,
+  localIndex const & qy,
+  localIndex const & qz,
+                                 Basis const & basis,
+                                 QValues const & q_values,
+                                 Dofs& dofs )
+{
+  impl::applyGradientTestFunctions( stack,
+                                    // quad_index,
+                                    qx, qy, qz,
+                                    basis.getValuesAtQuadPts(),
+                                    basis.getGradientValuesAtQuadPts(),
+                                    q_values,
+                                    dofs );
+}
+
 } // namespace finiteElement
 
 } // namespace geosx

@@ -48,7 +48,7 @@ void computeGradGradLocalDiagonal( StackVariables & stack,
                                    real64 (& diag)[num_dofs_1d][num_dofs_1d][num_dofs_1d] )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   constexpr localIndex Dim = 3;
 
@@ -59,9 +59,9 @@ void computeGradGradLocalDiagonal( StackVariables & stack,
       // first tensor contraction, along z direction
       SharedTensor< num_quads_1d, num_quads_1d, num_dofs_1d > QQD( stack.shared_mem[0] );
 
-      loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+      RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
       {
-        loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+        RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
         {
           for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
           {
@@ -84,11 +84,11 @@ void computeGradGradLocalDiagonal( StackVariables & stack,
       // second tensor contraction, along y direction
       SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d > QDD( stack.shared_mem[1] );
 
-      loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+      RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
       {
         for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
         {
-          loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+          RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
           {
             QDD( quad_x, dof_y, dof_z ) = 0.0;
             for (int quad_y = 0; quad_y < num_quads_1d; ++quad_y)
@@ -108,9 +108,9 @@ void computeGradGradLocalDiagonal( StackVariables & stack,
       // third tensor contraction, along x direction
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
-        loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+        RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
         {
-          loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
+          RAJA::loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
           {
             for (int quad_x = 0; quad_x < num_quads_1d; ++quad_x)
             {

@@ -52,7 +52,7 @@ struct StackBasis
   { }
 
   GEOSX_HOST_DEVICE
-  StackBasis( LaunchContext & ctx )
+  StackBasis( RAJA::LaunchContext & ctx )
   {
     // basis: computation of the shape functions at quadrature points
     real64 const w = 0.57735026919; // 1.0/sqrt( 3 )
@@ -90,12 +90,6 @@ struct StackBasis
     return basis;
   }
 
-  GEOSX_HOST_DEVICE
-  real64 ( & getValuesAtQuadPts() )[num_dofs_1d][num_quads_1d]
-  {
-    return basis;
-  }
-
   // basis gradient accessor
   real64 basis_gradient[num_dofs_1d][num_quads_1d];
   GEOSX_HOST_DEVICE
@@ -103,9 +97,55 @@ struct StackBasis
   {
     return basis_gradient;
   }
+};
+
+
+template < >
+struct StackBasis< 2, 2 >
+{
+  template <typename Stack>
+  GEOSX_HOST_DEVICE
+  StackBasis( Stack & stack )
+    : StackBasis( stack.ctx )
+  { }
 
   GEOSX_HOST_DEVICE
-  real64 ( & getGradientValuesAtQuadPts() )[num_dofs_1d][num_quads_1d]
+  StackBasis( RAJA::LaunchContext & ctx )
+  { }
+
+  // basis accessor
+  static constexpr int num_dofs_1d = 2;
+  static constexpr int num_quads_1d = 2;
+
+  static constexpr real64 w = 0.57735026919;
+
+  static constexpr real64 basis[num_dofs_1d][num_quads_1d] =
+    { { LagrangeBasis<num_dofs_1d-1>::value(
+          0, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( 0 ) ),
+        LagrangeBasis<num_dofs_1d-1>::value(
+          1, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( 0 ) ) },
+      { LagrangeBasis<num_dofs_1d-1>::value(
+          0, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( 1 ) ),
+        LagrangeBasis<num_dofs_1d-1>::value(
+          1, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( 1 ) ) } };
+  GEOSX_HOST_DEVICE
+  real64 const ( & getValuesAtQuadPts() const )[num_dofs_1d][num_quads_1d]
+  {
+    return basis;
+  }
+
+  // basis gradient accessor
+  static constexpr real64 basis_gradient[num_dofs_1d][num_quads_1d] =
+    { { LagrangeBasis<num_dofs_1d-1>::gradient(
+          0, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( 0 ) ),
+        LagrangeBasis<num_dofs_1d-1>::gradient(
+          1, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( 0 ) ) },
+      { LagrangeBasis<num_dofs_1d-1>::gradient(
+          0, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( 1 ) ),
+        LagrangeBasis<num_dofs_1d-1>::gradient(
+          1, w * LagrangeBasis<num_quads_1d-1>::parentSupportCoord( 1 ) ) } };
+  GEOSX_HOST_DEVICE
+  real64 const ( & getGradientValuesAtQuadPts() const )[num_dofs_1d][num_quads_1d]
   {
     return basis_gradient;
   }

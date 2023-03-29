@@ -61,14 +61,14 @@ void applyTestFunctions( StackVariables & stack,
                          real64 (& dofs)[num_dofs_1d][num_dofs_1d][num_dofs_1d] )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
   
   // Contraction on the first dimension
   SharedTensor< num_dofs_1d, num_quads_1d, num_quads_1d > Bu( stack.shared_mem[0] );
 
-  loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+  RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
   {
-    loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
+    RAJA::loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
     {
       real64 res[num_quads_1d];
       #pragma unroll
@@ -99,9 +99,9 @@ void applyTestFunctions( StackVariables & stack,
   // Contraction on the second dimension
   SharedTensor< num_dofs_1d, num_dofs_1d, num_quads_1d > BBu( stack.shared_mem[1] );
 
-  loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
+  RAJA::loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
   {
-    loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+    RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
     {
       real64 res[num_quads_1d];
       #pragma unroll
@@ -130,9 +130,9 @@ void applyTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the third dimension
-  loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+  RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
   {
-    loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
+    RAJA::loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
     {
       // Cache values in registers to read them only once from shared
       real64 val[num_quads_1d];
@@ -179,14 +179,14 @@ void applyTestFunctions( StackVariables & stack,
                          real64 (& dofs)[num_dofs_1d][num_dofs_1d][num_dofs_1d][num_comp] )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
   
   // Contraction on the first dimension
   SharedTensor< num_dofs_1d, num_quads_1d, num_quads_1d, num_comp > Bu( stack.shared_mem[0] );
 
-  loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+  RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
   {
-    loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
+    RAJA::loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
     {
       real64 res[num_quads_1d][num_comp];
       #pragma unroll
@@ -229,9 +229,9 @@ void applyTestFunctions( StackVariables & stack,
   // Contraction on the second dimension
   SharedTensor< num_dofs_1d, num_dofs_1d, num_quads_1d, num_comp > BBu( stack.shared_mem[1] );
 
-  loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
+  RAJA::loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
   {
-    loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+    RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
     {
       real64 res[num_quads_1d][num_comp];
       #pragma unroll
@@ -272,9 +272,9 @@ void applyTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the third dimension
-  loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+  RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
   {
-    loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
+    RAJA::loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
     {
       // Cache values in registers to read them only once from shared
       real64 val[num_quads_1d][num_comp];

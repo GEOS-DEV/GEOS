@@ -44,11 +44,11 @@ void writeField( StackVariables & stack,
                  Field & field )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
-  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
+  RAJA::loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
   {
-    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
+    RAJA::loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
     {
       for (localIndex ind_z = 0; ind_z < stride_z; ind_z++)
       {
@@ -70,11 +70,11 @@ void writeField( StackVariables & stack,
                  Field & field )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
-  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
+  RAJA::loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
   {
-    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
+    RAJA::loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
     {
       for (localIndex ind_z = 0; ind_z < stride_z; ind_z++)
       {

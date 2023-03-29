@@ -168,35 +168,35 @@ public:
       interpolateGradientAtQuadraturePoints( stack, basis, dofs_in, Gu );
 
       /// QFunction
-      forallQuadratureIndices( stack, [&]( auto const & quad_index )
-      {
-        /// QFunction for Laplace operator
-        constexpr int dim = Stack::dim;
+      // forallQuadratureIndices( stack, [&]( auto const & quad_index )
+      // {
+      //   /// QFunction for Laplace operator
+      //   constexpr int dim = Stack::dim;
 
-        // Load q-local gradients
-        real64 grad_ref_u[ dim ];
-        qLocalLoad( quad_index, Gu, grad_ref_u );
+      //   // Load q-local gradients
+      //   real64 grad_ref_u[ dim ];
+      //   qLocalLoad( quad_index, Gu, grad_ref_u );
 
-        // load q-local jacobian
-        real64 J[ dim ][ dim ];
-        qLocalLoad( quad_index, Jac, J );
+      //   // load q-local jacobian
+      //   real64 J[ dim ][ dim ];
+      //   qLocalLoad( quad_index, Jac, J );
 
-        // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
-        real64 const weight = 1.0; // stack.weights( quad_index ); // FIXME
+      //   // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
+      //   real64 const weight = 1.0; // stack.weights( quad_index ); // FIXME
 
-        real64 Jinv[ dim ][ dim ];
-        real64 const detJ = computeInverseAndDeterminant( J, Jinv );
+      //   real64 Jinv[ dim ][ dim ];
+      //   real64 const detJ = computeInverseAndDeterminant( J, Jinv );
 
-        real64 grad_phys_u[ dim ];
-        computePhysicalGradient( Jinv, grad_ref_u, grad_phys_u );
+      //   real64 grad_phys_u[ dim ];
+      //   computePhysicalGradient( Jinv, grad_ref_u, grad_phys_u );
 
-        real64 Du[ dim ];
-        computeReferenceGradient( Jinv, grad_phys_u, Du );
+      //   real64 Du[ dim ];
+      //   computeReferenceGradient( Jinv, grad_phys_u, Du );
 
-        applyQuadratureWeights( weight, detJ, Du );
+      //   applyQuadratureWeights( weight, detJ, Du );
 
-        qLocalWrite( quad_index, Du, Gu );
-      } );
+      //   qLocalWrite( quad_index, Du, Gu );
+      // } );
 
       /// Application of the test functions
       typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d > dofs_out;
@@ -294,56 +294,56 @@ public:
 
     finiteElement::forallElements<KernelConf>( numElems, [=] GEOSX_HOST_DEVICE ( Stack & stack )
     {
-      typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3 > nodes;
-      readField( stack, fields.m_elemsToNodes, fields.m_X, nodes );
+      // typename Stack::template Tensor< real64, num_dofs_mesh_1d, num_dofs_mesh_1d, num_dofs_mesh_1d, 3 > nodes;
+      // readField( stack, fields.m_elemsToNodes, fields.m_X, nodes );
 
-      typename Stack::template Basis< num_dofs_mesh_1d, num_quads_1d > basis( stack );
-      /// Computation of the Jacobians
-      typename Stack::template Tensor< real64, num_quads_1d, num_quads_1d, num_quads_1d, 3, 3 > Jac;
-      interpolateGradientAtQuadraturePoints( stack, basis, nodes, Jac );
+      // typename Stack::template Basis< num_dofs_mesh_1d, num_quads_1d > basis( stack );
+      // /// Computation of the Jacobians
+      // typename Stack::template Tensor< real64, num_quads_1d, num_quads_1d, num_quads_1d, 3, 3 > Jac;
+      // interpolateGradientAtQuadraturePoints( stack, basis, nodes, Jac );
 
-      /// QFunction
-      forallQuadratureIndices( stack, [&]( auto const & quad_index )
-      {
-        /// QFunction for Laplace operator
-        constexpr int dim = Stack::dim;
+      // /// QFunction
+      // forallQuadratureIndices( stack, [&]( auto const & quad_index )
+      // {
+      //   /// QFunction for Laplace operator
+      //   constexpr int dim = Stack::dim;
 
-        // load q-local jacobian
-        real64 J[ dim ][ dim ];
-        qLocalLoad( quad_index, Jac, J );
+      //   // load q-local jacobian
+      //   real64 J[ dim ][ dim ];
+      //   qLocalLoad( quad_index, Jac, J );
 
-        // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
-        real64 const weight = 1.0; // stack.weights( quad_index ); // FIXME
+      //   // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
+      //   real64 const weight = 1.0; // stack.weights( quad_index ); // FIXME
 
-        real64 const detJ = determinant( J );
-        real64 const detJinv = 1.0 / detJ;
+      //   real64 const detJ = determinant( J );
+      //   real64 const detJinv = 1.0 / detJ;
 
-        real64 AdjJ[ dim ][ dim ];
-        adjugate( J, AdjJ );
+      //   real64 AdjJ[ dim ][ dim ];
+      //   adjugate( J, AdjJ );
 
-        real64 D[ dim ][ dim ];
-        D[0][0] = weight * detJinv * (AdjJ[0][0]*AdjJ[0][0] + AdjJ[0][1]*AdjJ[0][1] + AdjJ[0][2]*AdjJ[0][2]);
-        D[1][0] = weight * detJinv * (AdjJ[0][0]*AdjJ[1][0] + AdjJ[0][1]*AdjJ[1][1] + AdjJ[0][2]*AdjJ[1][2]);
-        D[2][0] = weight * detJinv * (AdjJ[0][0]*AdjJ[2][0] + AdjJ[0][1]*AdjJ[2][1] + AdjJ[0][2]*AdjJ[2][2]);
-        D[0][1] = D[1][0];
-        D[1][1] = weight * detJinv * (AdjJ[1][0]*AdjJ[1][0] + AdjJ[1][1]*AdjJ[1][1] + AdjJ[1][2]*AdjJ[1][2]);
-        D[2][1] = weight * detJinv * (AdjJ[1][0]*AdjJ[2][0] + AdjJ[1][1]*AdjJ[2][1] + AdjJ[1][2]*AdjJ[2][2]);
-        D[0][2] = D[2][0];
-        D[1][2] = D[2][1];
-        D[2][2] = weight * detJinv * (AdjJ[2][0]*AdjJ[2][0] + AdjJ[2][1]*AdjJ[2][1] + AdjJ[2][2]*AdjJ[2][2]);
+      //   real64 D[ dim ][ dim ];
+      //   D[0][0] = weight * detJinv * (AdjJ[0][0]*AdjJ[0][0] + AdjJ[0][1]*AdjJ[0][1] + AdjJ[0][2]*AdjJ[0][2]);
+      //   D[1][0] = weight * detJinv * (AdjJ[0][0]*AdjJ[1][0] + AdjJ[0][1]*AdjJ[1][1] + AdjJ[0][2]*AdjJ[1][2]);
+      //   D[2][0] = weight * detJinv * (AdjJ[0][0]*AdjJ[2][0] + AdjJ[0][1]*AdjJ[2][1] + AdjJ[0][2]*AdjJ[2][2]);
+      //   D[0][1] = D[1][0];
+      //   D[1][1] = weight * detJinv * (AdjJ[1][0]*AdjJ[1][0] + AdjJ[1][1]*AdjJ[1][1] + AdjJ[1][2]*AdjJ[1][2]);
+      //   D[2][1] = weight * detJinv * (AdjJ[1][0]*AdjJ[2][0] + AdjJ[1][1]*AdjJ[2][1] + AdjJ[1][2]*AdjJ[2][2]);
+      //   D[0][2] = D[2][0];
+      //   D[1][2] = D[2][1];
+      //   D[2][2] = weight * detJinv * (AdjJ[2][0]*AdjJ[2][0] + AdjJ[2][1]*AdjJ[2][1] + AdjJ[2][2]*AdjJ[2][2]);
 
-        qLocalWrite( quad_index, D, Jac );
-      } );
+      //   qLocalWrite( quad_index, D, Jac );
+      // } );
 
-      // Computation of the local diagonal
-      typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d > diag;
-      computeGradGradLocalDiagonal( stack,
-                                    basis.getValuesAtQuadPts(),
-                                    basis.getGradientValuesAtQuadPts(),
-                                    Jac,
-                                    diag );
+      // // Computation of the local diagonal
+      // typename Stack::template Tensor< real64, num_dofs_1d, num_dofs_1d, num_dofs_1d > diag;
+      // computeGradGradLocalDiagonal( stack,
+      //                               basis.getValuesAtQuadPts(),
+      //                               basis.getGradientValuesAtQuadPts(),
+      //                               Jac,
+      //                               diag );
 
-      writeAddField( stack, fields.m_elemsToNodes, diag, fields.m_diag );
+      // writeAddField( stack, fields.m_elemsToNodes, diag, fields.m_diag );
 
     } );
     return 0.0;

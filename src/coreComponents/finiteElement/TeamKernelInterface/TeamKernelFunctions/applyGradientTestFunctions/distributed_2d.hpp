@@ -56,7 +56,7 @@ void applyGradientTestFunctions(
   tensor::Static2dThreadDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > & dofs )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   SharedTensor< num_quads_1d, num_quads_1d, num_quads_1d, 3 > Du( stack.shared_mem[3] );
   #pragma unroll
@@ -65,9 +65,9 @@ void applyGradientTestFunctions(
     #pragma unroll
     for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
     {
-      loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+      RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
       {
-        loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+        RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
         {
           Du( quad_x, quad_y, quad_z, c ) = q_values( quad_x, quad_y, quad_z, c );
         } );
@@ -83,9 +83,9 @@ void applyGradientTestFunctions(
     Bqy( stack.shared_mem[1] ),
     Bqz( stack.shared_mem[2] );
 
-  loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+  RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
   {
-    loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
+    RAJA::loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
     {
       real64 gqx[ num_quads_1d ];
       real64 bqy[ num_quads_1d ];
@@ -132,9 +132,9 @@ void applyGradientTestFunctions(
     GBqy( stack.shared_mem[4] ),
     BBqz( stack.shared_mem[5] );
 
-  loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
+  RAJA::loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
   {
-    loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+    RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
     {
       real64 bgqx[num_quads_1d];
       real64 gbqy[num_quads_1d];
@@ -175,9 +175,9 @@ void applyGradientTestFunctions(
   ctx.teamSync();
 
   // Contraction on the third dimension
-  loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+  RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
   {
-    loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
+    RAJA::loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
     {
       // Cache values in registers to read them only once from shared
       real64 bgqx[num_quads_1d];
@@ -224,7 +224,7 @@ void applyGradientTestFunctions(
   tensor::Static2dThreadDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d, num_comp > & dofs )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
 
   SharedTensor< num_quads_1d, num_quads_1d, num_quads_1d >
@@ -240,9 +240,9 @@ void applyGradientTestFunctions(
       #pragma unroll
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
-        loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+        RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
         {
-          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+          RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
           {
             Dx_u( quad_x, quad_y, quad_z ) = q_values( quad_x, quad_y, quad_z, comp, 0 );
             Dy_u( quad_x, quad_y, quad_z ) = q_values( quad_x, quad_y, quad_z, comp, 1 );
@@ -260,9 +260,9 @@ void applyGradientTestFunctions(
       Bqy( stack.shared_mem[1] ),
       Bqz( stack.shared_mem[2] );
 
-    loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+    RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
     {
-      loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
+      RAJA::loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
       {
         real64 gqx[num_quads_1d];
         real64 bqy[num_quads_1d];
@@ -309,9 +309,9 @@ void applyGradientTestFunctions(
       GBqy( stack.shared_mem[4] ),
       BBqz( stack.shared_mem[5] );
 
-    loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
+    RAJA::loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
     {
-      loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+      RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
       {
         real64 bgqx[num_quads_1d];
         real64 gbqy[num_quads_1d];
@@ -352,9 +352,9 @@ void applyGradientTestFunctions(
     ctx.teamSync();
 
     // Contraction on the third dimension
-    loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+    RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
     {
-      loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
+      RAJA::loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
       {
         // Cache values in registers to read them only once from shared
         real64 bgqx[num_quads_1d];

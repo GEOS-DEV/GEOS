@@ -65,10 +65,10 @@ struct KernelConfiguration< ThreadingModel::Serial, num_threads_1d, batchSize >
   // Index inside a batch of elements
   localIndex batch_index;
   // RAJA launch context
-  LaunchContext & ctx;
+  RAJA::LaunchContext & ctx;
 
   GEOSX_HOST_DEVICE
-  KernelConfiguration( LaunchContext & ctx )
+  KernelConfiguration( RAJA::LaunchContext & ctx )
   : ctx( ctx )
   { }
 };
@@ -94,14 +94,14 @@ struct KernelConfiguration< ThreadingModel::Distributed1D, num_threads_1d, batch
   // Index inside a batch of elements
   localIndex batch_index;
   // RAJA launch context
-  LaunchContext & ctx;
+  RAJA::LaunchContext & ctx;
 
   GEOSX_HOST_DEVICE
-  KernelConfiguration( LaunchContext & ctx )
+  KernelConfiguration( RAJA::LaunchContext & ctx )
   : ctx( ctx )
   {
     using RAJA::RangeSegment;
-    loop<thread_x>( ctx, RangeSegment( 0, num_threads_1d ), [&]( localIndex const tid_x )
+    RAJA::loop<thread_x>( ctx, RangeSegment( 0, num_threads_1d ), [&]( localIndex const tid_x )
     {
       tidx = tid_x;
     } );
@@ -131,7 +131,7 @@ struct KernelConfiguration< ThreadingModel::Distributed2D, num_threads_1d, batch
   // Index inside a batch of elements
   localIndex batch_index;
   // RAJA launch context
-  LaunchContext & ctx;
+  RAJA::LaunchContext & ctx;
   // Shared memory buffers, using buffers allows to avoid using too much shared memory.
   static constexpr localIndex dim = 3;
   static constexpr localIndex buffer_size = num_threads_1d * num_threads_1d * num_threads_1d;
@@ -140,15 +140,15 @@ struct KernelConfiguration< ThreadingModel::Distributed2D, num_threads_1d, batch
 
 
   GEOSX_HOST_DEVICE
-  KernelConfiguration( LaunchContext & ctx )
+  KernelConfiguration( RAJA::LaunchContext & ctx )
   : ctx( ctx ), shared_mem( ctx )
   {
     using RAJA::RangeSegment;
-    loop<thread_x>( ctx, RangeSegment( 0, num_threads_1d ), [&]( localIndex const tid_x )
+    RAJA::loop<thread_x>( ctx, RangeSegment( 0, num_threads_1d ), [&]( localIndex const tid_x )
     {
       tidx = tid_x;
     } );
-    loop<thread_y>( ctx, RangeSegment( 0, num_threads_1d ), [&]( localIndex const tid_y )
+    RAJA::loop<thread_y>( ctx, RangeSegment( 0, num_threads_1d ), [&]( localIndex const tid_y )
     {
       tidy = tid_y;
     } );
@@ -180,7 +180,7 @@ struct KernelConfiguration< ThreadingModel::Distributed3D, num_threads_1d, batch
   // Index inside a batch of elements
   localIndex batch_index;
   // RAJA launch context
-  LaunchContext & ctx;
+  RAJA::LaunchContext & ctx;
   // Shared memory buffers, using buffers allows to avoid using too much shared memory.
   static constexpr localIndex dim = 3;
   static constexpr localIndex buffer_size = num_threads_1d * num_threads_1d * num_threads_1d * dim * dim;
@@ -188,11 +188,11 @@ struct KernelConfiguration< ThreadingModel::Distributed3D, num_threads_1d, batch
   geosx::stackVariables::SharedMemBuffers< buffer_size, num_buffers, batch_size > shared_mem;
 
   GEOSX_HOST_DEVICE
-  KernelConfiguration( LaunchContext & ctx )
+  KernelConfiguration( RAJA::LaunchContext & ctx )
   : ctx( ctx ), shared_mem( ctx )
   {
     using RAJA::RangeSegment;
-    loop<thread_x>( ctx, RangeSegment( 0, num_threads_x ), [&]( localIndex const tid )
+    RAJA::loop<thread_x>( ctx, RangeSegment( 0, num_threads_x ), [&]( localIndex const tid )
     {
       tidx = tid % num_threads_1d;
       tidy = ( tid % ( num_threads_1d * num_threads_1d ) ) / num_threads_1d;

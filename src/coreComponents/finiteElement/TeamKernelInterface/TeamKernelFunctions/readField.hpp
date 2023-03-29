@@ -45,11 +45,11 @@ void readField( StackVariables & stack,
                 real64 (& local_field)[stride_x][stride_y][stride_z] )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
-  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
+  RAJA::loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
   {
-    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
+    RAJA::loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
     {
       #pragma unroll
       for (localIndex ind_z = 0; ind_z < stride_z; ind_z++)
@@ -63,32 +63,44 @@ void readField( StackVariables & stack,
 }
 
 template < typename StackVariables,
+           typename EtoNMap,
            typename Field,
            localIndex stride_x, localIndex stride_y, localIndex stride_z, localIndex dim >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void readField( StackVariables & stack,
+                EtoNMap const & m_elemsToNodes,
                 Field & field,
                 real64 (& local_field)[stride_x][stride_y][stride_z][dim] )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
-  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
+  // RAJA::loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
+  // {
+  //   RAJA::loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
+  //   {
+  #pragma unroll
+  for (localIndex ind_x = 0; ind_x < stride_x; ind_x++)
   {
-    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
+    #pragma unroll
+    for (localIndex ind_y = 0; ind_y < stride_y; ind_y++)
     {
+      #pragma unroll
       for (localIndex ind_z = 0; ind_z < stride_z; ind_z++)
       {
         localIndex const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
-        localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
+        localIndex const global_node_index = m_elemsToNodes( stack.element_index, local_node_index );
+        #pragma unroll
         for (localIndex d = 0; d < dim; d++)
         {
           local_field[ ind_x ][ ind_y ][ ind_z ][ d ] = field( global_node_index, d );
         }
       }
-    });
-  });
+    }
+  }
+  //   });
+  // });
 }
 
 // Generic version

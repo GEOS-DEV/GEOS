@@ -24,10 +24,10 @@ set( solidBaseDispatch
                       #  ModifiedCamClay
                       #  DelftEgg
                       #  DruckerPrager
-                       ElasticIsotropic
-                       ElasticTransverseIsotropic
-                       ElasticIsotropicPressureDependent
-                       ElasticOrthotropic )
+                       ElasticIsotropic )
+                      #  ElasticTransverseIsotropic
+                      #  ElasticIsotropicPressureDependent
+                      #  ElasticOrthotropic )
 
 set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2 )
 #                            H1_Wedge_Lagrange1_Gauss6

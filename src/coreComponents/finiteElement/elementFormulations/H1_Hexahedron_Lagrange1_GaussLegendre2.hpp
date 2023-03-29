@@ -866,31 +866,6 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const qa,
       invJ[0][2] * var[4] + invJ[1][2] * var[3] + invJ[2][2] * var[2]}
   };
 
-  plusGradNajAij( qa, qb, qc, invJ, var, R );
-}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const qa,
-                                                             int const qb,
-                                                             int const qc,
-                                                             real64 const (&invJ)[3][3],
-                                                             real64 const (&var)[6],
-                                                             real64 (& R)[numNodes][3] )
-{
-  real64 const fullVar[3][3] = 
-  {
-    { invJ[0][0] * var[0] + invJ[1][0] * var[5] + invJ[2][0] * var[4],
-      invJ[0][1] * var[0] + invJ[1][1] * var[5] + invJ[2][1] * var[4],
-      invJ[0][2] * var[0] + invJ[1][2] * var[5] + invJ[2][2] * var[4]},
-    { invJ[0][0] * var[5] + invJ[1][0] * var[1] + invJ[2][0] * var[3],
-      invJ[0][1] * var[5] + invJ[1][1] * var[1] + invJ[2][1] * var[3],
-      invJ[0][2] * var[5] + invJ[1][2] * var[1] + invJ[2][2] * var[3]},
-    { invJ[0][0] * var[4] + invJ[1][0] * var[3] + invJ[2][0] * var[2],
-      invJ[0][1] * var[4] + invJ[1][1] * var[3] + invJ[2][1] * var[2],
-      invJ[0][2] * var[4] + invJ[1][2] * var[3] + invJ[2][2] * var[2]}
-  };
-
   supportLoop( qa, qb, qc,
                [] GEOSX_HOST_DEVICE
                  ( real64 const (&dNdXi)[3],

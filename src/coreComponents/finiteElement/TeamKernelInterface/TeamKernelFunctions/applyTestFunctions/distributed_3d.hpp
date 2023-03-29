@@ -60,7 +60,7 @@ void applyTestFunctions( StackVariables & stack,
                          tensor::Static3dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d > const & q_values,
                          tensor::Static3dThreadDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > & dofs )
 {
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   SharedTensor< num_quads_1d, num_quads_1d, num_quads_1d > Du( stack.shared_mem[0] );
   loop3D( stack, num_quads_1d, num_quads_1d, num_quads_1d,
@@ -146,7 +146,7 @@ void applyTestFunctions(
   tensor::Static3dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp > const & q_values,
   tensor::Static3dThreadDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d, num_comp > & dofs )
 {
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Load in registers values for (quad_x, quad_y, quad_z)
   // FIXME: not interesting for low order and if basis already in stack mem

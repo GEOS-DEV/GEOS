@@ -49,16 +49,16 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
                                             real64 (& q_values)[num_quads_1d][num_quads_1d][num_quads_1d][3] )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
   SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d >
     Bu( stack.shared_mem[0] ),
     Gu( stack.shared_mem[1] );
 
-  loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+  RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
   {
-    loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+    RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
     {
       real64 bu[num_dofs_1d];
       real64 gu[num_dofs_1d];
@@ -98,9 +98,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
     BGu( stack.shared_mem[3] ),
     GBu( stack.shared_mem[4] );
 
-  loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+  RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
   {
-    loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+    RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
     {
       real64 bbu[num_dofs_1d];
       real64 bgu[num_dofs_1d];
@@ -140,9 +140,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the third dimension
-  loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+  RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
   {
-    loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+    RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
     {
       // Cache values in registers to read them only once from shared
       real64 bbu[num_dofs_1d];
@@ -194,16 +194,16 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
                                             real64 (& q_values)[num_quads_1d][num_quads_1d][num_quads_1d][num_comp][3] )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
   SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d, num_comp >
     Bu( stack.shared_mem[0] ),
     Gu( stack.shared_mem[1] );
 
-  loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+  RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
   {
-    loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+    RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
     {
       real64 bu[num_dofs_1d][num_comp];
       real64 gu[num_dofs_1d][num_comp];
@@ -255,9 +255,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
     BGu( stack.shared_mem[3] ),
     GBu( stack.shared_mem[4] );
 
-  loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+  RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
   {
-    loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+    RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
     {
       real64 bbu[num_dofs_1d][num_comp];
       real64 bgu[num_dofs_1d][num_comp];
@@ -309,9 +309,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the third dimension
-  loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+  RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
   {
-    loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+    RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
     {
       // Cache values in registers to read them only once from shared
       real64 bbu[num_dofs_1d][num_comp];
@@ -590,15 +590,15 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
                                             tensor::Static2dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d, 3 > & q_values )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   SharedTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > u( stack.shared_mem[3] );
   #pragma unroll
   for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
   {
-    loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+    RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
     {
-      loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
+      RAJA::loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
       {
         u( dof_x, dof_y, dof_z ) = dofs( dof_x, dof_y, dof_z );
       } );
@@ -612,9 +612,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
     Bu( stack.shared_mem[0] ),
     Gu( stack.shared_mem[1] );
 
-  loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+  RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
   {
-    loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+    RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
     {
       real64 bu[num_dofs_1d];
       real64 gu[num_dofs_1d];
@@ -654,9 +654,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
     BGu( stack.shared_mem[3] ),
     GBu( stack.shared_mem[4] );
 
-  loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+  RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
   {
-    loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+    RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
     {
       real64 bbu[num_dofs_1d];
       real64 bgu[num_dofs_1d];
@@ -696,9 +696,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the third dimension
-  loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+  RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
   {
-    loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+    RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
     {
       // Cache values in registers to read them only once from shared
       real64 bbu[num_dofs_1d];
@@ -750,7 +750,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
                                             tensor::Static2dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp, 3 > & q_values )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   SharedTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > u( stack.shared_mem[3] );
   #pragma unroll
@@ -759,9 +759,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
     #pragma unroll
     for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
     {
-      loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+      RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
       {
-        loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
+        RAJA::loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
         {
           u( dof_x, dof_y, dof_z ) = dofs( dof_x, dof_y, dof_z, comp );
         } );
@@ -775,9 +775,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
       Bu( stack.shared_mem[0] ),
       Gu( stack.shared_mem[1] );
 
-    loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+    RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
     {
-      loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+      RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
       {
         real64 bu[num_dofs_1d];
         real64 gu[num_dofs_1d];
@@ -817,9 +817,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
       BGu( stack.shared_mem[3] ),
       GBu( stack.shared_mem[4] );
 
-    loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+    RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
     {
-      loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+      RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
       {
         real64 bbu[num_dofs_1d];
         real64 bgu[num_dofs_1d];
@@ -859,9 +859,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
     ctx.teamSync();
 
     // Contraction on the third dimension
-    loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+    RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
     {
-      loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+      RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
       {
         // Cache values in registers to read them only once from shared
         real64 bbu[num_dofs_1d];
@@ -912,7 +912,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
                                             tensor::Static3dThreadDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > const & dofs,
                                             tensor::Static3dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d, 3 > & q_values )
 {
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Load in registers values for (quad_x, quad_y, quad_z)
   // FIXME: not interesting for low order and if basis already in stack mem
@@ -1003,7 +1003,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
                                             tensor::Static3dThreadDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d, num_comp > const & dofs,
                                             tensor::Static3dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp, 3 > & q_values )
 {
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Load in registers values for (quad_x, quad_y, quad_z)
   // FIXME: not interesting for low order and if basis already in stack mem
@@ -1114,15 +1114,15 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
 //                                             real64 (& q_values)[2][2][2][num_comp][3] )
 // {
 //   using RAJA::RangeSegment;
-//   LaunchContext & ctx = stack.ctx;
+//   RAJA::LaunchContext & ctx = stack.ctx;
 //   constexpr localIndex num_dofs_1d = 2;
 //   constexpr localIndex num_quads_1d = 2;
 
 //   for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
 //   {
-//     loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+//     RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
 //     {
-//       loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+//       RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
 //       {
 //         real64 bbgu = 0.0;
 //         real64 bgbu = 0.0;
@@ -1161,9 +1161,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
 //     Bu( stack.shared_mem[0] ),
 //     Gu( stack.shared_mem[1] );
 
-//   loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
+//   RAJA::loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
 //   {
-//     loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+//     RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
 //     {
 //       real64 bu[num_dofs_1d][num_comp];
 //       real64 gu[num_dofs_1d][num_comp];
@@ -1208,9 +1208,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
 //     BGu( stack.shared_mem[3] ),
 //     GBu( stack.shared_mem[4] );
 
-//   loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+//   RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
 //   {
-//     loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+//     RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
 //     {
 //       real64 bbu[num_dofs_1d][num_comp];
 //       real64 bgu[num_dofs_1d][num_comp];
@@ -1255,9 +1255,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
 //   ctx.teamSync();
 
 //   // Contraction on the third dimension
-//   loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
+//   RAJA::loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
 //   {
-//     loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
+//     RAJA::loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
 //     {
 //       // Cache values in registers to read them only once from shared
 //       real64 bbu[num_dofs_1d][num_comp];
