@@ -23,6 +23,32 @@
 namespace geosx
 {
 
+std::string InputError::InsertExMsg( std::string const & originalMsg, std::string const & msgToInsert )
+{
+  std::string newMsg( originalMsg );
+
+  // we try to insert after the "***** Rank N: ", then wh try after "***** ", otherwise, we insert at the top.
+  size_t insertPos;
+  if( ( insertPos = newMsg.find( "***** Rank " ) ) != std::string::npos )
+  {
+    insertPos += 14;
+  }
+  else
+  {
+    if( ( insertPos = newMsg.find_last_of( "***** " ) ) != std::string::npos )
+    {
+      insertPos += 6;
+    }
+    else
+    {
+      insertPos = 0;
+    }
+  }
+  newMsg.insert( insertPos, msgToInsert );
+
+  return newMsg;
+}
+
 namespace logger
 {
 

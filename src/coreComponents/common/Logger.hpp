@@ -476,6 +476,21 @@ struct InputError : public std::runtime_error
   InputError( char const * const what ):
     std::runtime_error( what )
   {}
+
+  /**
+   * @brief Construct an InputError from an underlying exception.
+   * @param subException An exception to base this new one on.
+   * @param msgToInsert The error message. It will be inserted into the one inside of subException.
+   */
+  InputError( std::exception const & subException, std::string const & msgToInsert ):
+    std::runtime_error( InsertExMsg( subException.what(), msgToInsert ) )
+  {}
+
+private:
+  /**
+   * @brief Returns an exception message in which we insert another message.
+   */
+  static std::string InsertExMsg( std::string const & originalMsg, std::string const & msgToInsert );
 };
 
 /**

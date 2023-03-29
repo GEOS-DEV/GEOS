@@ -335,7 +335,7 @@ public:
     Group * const child = m_subGroups[ key ];
     GEOSX_THROW_IF( child == nullptr,
                     "Group " << getPath() << " has no child named " << key << std::endl <<
-                    "The children of " + getName() + " are: " << dumpChildrenNames(),
+                    ( numSubGroups()>0 ? "The children of " + getName() + " are: " + dumpChildrenNames() : getName() + " has no children." ),
                     std::domain_error );
     return dynamicCast< T & >( *child );
   }
@@ -349,7 +349,7 @@ public:
     Group const * const child = m_subGroups[ key ];
     GEOSX_THROW_IF( child == nullptr,
                     "Group " << getPath() << " has no child named " << key << std::endl <<
-                    "The children of " + getName() + " are: " << dumpChildrenNames(),
+                    ( numSubGroups()>0 ? "The children of " + getName() + " are: " + dumpChildrenNames() : getName() + " has no children." ),
                     std::domain_error );
     return dynamicCast< T const & >( *child );
   }
@@ -1065,7 +1065,7 @@ public:
     WrapperBase const * const wrapper = m_wrappers[ key ];
     GEOSX_THROW_IF( wrapper == nullptr,
                     "Group " << getPath() << " has no wrapper named " << key << std::endl <<
-                    "The wrappers of " + getName() + " are: " << dumpWrappersNames(),
+                    ( numWrappers()>0 ? "The wrappers of " + getName() + " are: " + dumpWrappersNames() : getName() + " has no wrappers." ),
                     std::domain_error );
     return *wrapper;
   }
@@ -1079,7 +1079,7 @@ public:
     WrapperBase * const wrapper = m_wrappers[ key ];
     GEOSX_THROW_IF( wrapper == nullptr,
                     "Group " << getPath() << " has no wrapper named " << key << std::endl <<
-                    "The wrappers of " + getName() + " are: " << dumpWrappersNames(),
+                    ( numSubGroups()>0 ? "The wrappers of " + getName() + " are: " + dumpWrappersNames() : getName() + " has no wrappers." ),
                     std::domain_error );
     return *wrapper;
   }

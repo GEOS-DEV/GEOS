@@ -193,11 +193,15 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
                             NODETYPE & node,
                             CALLBACK && cbfunc )
 {
-  array1d< string > namesInRepository;
+  std::vector< string > namesInRepository;
   parentGroup.forSubGroups< TYPE >( [&]( TYPE const & group )
   {
     namesInRepository.emplace_back( group.getName() );
   } );
+
+  GEOSX_THROW_IF( namesInRepository.empty(),
+                  GEOSX_FMT( "{1} doesn't have any children.", parentGroup.getName()),
+                  InputError );
 
   for( string const & inputEntry : stringutilities::tokenize( pathToken, " " ) )
   {
@@ -218,7 +222,7 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
     }
     GEOSX_THROW_IF( !foundMatch,
                     GEOSX_FMT( "{1} doesn't have a child named {0}.\n"
-                               "{1} have the following children: {2}",
+                               "{1} have the following children: {{ {2} }}",
                                inputEntry,
                                parentGroup.getName(),
                                stringutilities::join( namesInRepository, ", " ) ),

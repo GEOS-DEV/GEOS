@@ -103,9 +103,7 @@ void FieldSpecificationBase::setMeshObjectPath( Group const & meshBodies )
   }
   catch( InputError const & e )
   {
-    throw std::domain_error( "\n***** ERROR: " + getName() +
-                             " has a wrong objectPath. The following error have been thrown:" +
-                             e.what() );
+    throw InputError( e, getName() + " has a wrong objectPath: " + m_objectPath + "\n" );
   }
 }
 

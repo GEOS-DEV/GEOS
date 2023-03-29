@@ -191,13 +191,14 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           }
           else
           {
+            string targetTokensStr=stringutilities::join( targetTokens.begin(),
+                                                          targetTokens.begin()+pathLevel,
+                                                          '/' );
             GEOSX_THROW( targetTokens[pathLevel] << " not found in path " <<
                          objectPath << std::endl <<
-                         "Children available in " <<
-                         stringutilities::join( targetTokens.begin(),
-                                                targetTokens.begin()+pathLevel,
-                                                '/' ) <<
-                         ": " << targetGroup->dumpChildrenNames(),
+                         ( targetGroup->numSubGroups()>0 ?
+                           "Children available in " + targetTokensStr + ": " + targetGroup->dumpChildrenNames() :
+                           "No Children available in " + targetTokensStr ),
                          std::domain_error );
           }
         }
@@ -207,9 +208,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
   }
   catch( std::domain_error const & e )
   {
-    throw std::domain_error( "\n***** ERROR: " + getName() +
-                             " has a wrong objectPath. The following error have been thrown:" +
-                             e.what() );
+    throw InputError( e, getName() + " has a wrong objectPath: " + objectPath + "\n" );
   }
 }
 
