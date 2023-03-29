@@ -243,11 +243,11 @@ void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
   dz /= dx * dy;
 }
 
-void PerforationData::connectToWellElements( LineBlockABC const & wellGeometry,
+void PerforationData::connectToWellElements( LineBlockABC const & lineBlock,
                                              unordered_map< globalIndex, localIndex > const & globalToLocalWellElemMap,
                                              globalIndex elemOffsetGlobal )
 {
-  arrayView1d< globalIndex const > const & perfElemIndexGlobal = wellGeometry.getPerfElemIndex();
+  arrayView1d< globalIndex const > const & perfElemIndexGlobal = lineBlock.getPerfElemIndex();
 
   for( localIndex iperfLocal = 0; iperfLocal < size(); ++iperfLocal )
   {

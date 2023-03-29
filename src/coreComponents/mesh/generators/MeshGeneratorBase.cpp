@@ -54,20 +54,20 @@ CellBlockManagerABC & MeshGeneratorBase::generateMesh( Group & parent )
 void MeshGeneratorBase::generateWells( CellBlockManager & cellBlockManager )
 {
   forSubGroups< InternalWellGenerator >( [&]( InternalWellGenerator & wellGen ) {
-    LineBlock & wb = cellBlockManager.registerLineBlock( wellGen.getName() );
-    wb.setNumElements( wellGen.getNumElements() );
-    wb.setElemCoords( wellGen.getElemCoords() );
-    wb.setNextElemIndex( wellGen.getNextElemIndex() );
-    wb.setPrevElemIndices( wellGen.getPrevElemIndices() );
-    wb.setElemToNodesMap( wellGen.getElemToNodesMap() );
-    wb.setElemVolume( wellGen.getElemVolume() );
-    wb.setElementRadius( wellGen.getElementRadius() );
-    wb.setNumNodes( wellGen.getNumNodes() );
-    wb.setNodeCoords( wellGen.getNodeCoords() );
-    wb.setNumPerforations( wellGen.getNumPerforations() );
-    wb.setPerfCoords( wellGen.getPerfCoords() );
-    wb.setPerfTransmissibility( wellGen.getPerfTransmissibility() );
-    wb.setPerfElemIndex( wellGen.getPerfElemIndex() );
+    LineBlock & lb = cellBlockManager.registerLineBlock( wellGen.getName() );
+    lb.setNumElements( wellGen.getNumElements() );
+    lb.setElemCoords( wellGen.getElemCoords() );
+    lb.setNextElemIndex( wellGen.getNextElemIndex() );
+    lb.setPrevElemIndices( wellGen.getPrevElemIndices() );
+    lb.setElemToNodesMap( wellGen.getElemToNodesMap() );
+    lb.setElemVolume( wellGen.getElemVolume() );
+    lb.setElementRadius( wellGen.getElementRadius() );
+    lb.setNumNodes( wellGen.getNumNodes() );
+    lb.setNodeCoords( wellGen.getNodeCoords() );
+    lb.setNumPerforations( wellGen.getNumPerforations() );
+    lb.setPerfCoords( wellGen.getPerfCoords() );
+    lb.setPerfTransmissibility( wellGen.getPerfTransmissibility() );
+    lb.setPerfElemIndex( wellGen.getPerfElemIndex() );
   } );
 }
 }

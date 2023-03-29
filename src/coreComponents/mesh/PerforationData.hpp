@@ -203,11 +203,11 @@ public:
 
   /**
    * @brief Connect each perforation to a local wellbore element.
-   * @param[in] wellGeometry LineBlockABC containing the global well topology
+   * @param[in] lineBlock LineBlockABC containing the global well topology
    * @param[in] globalToLocalWellElementMap  global-to-local map of wellbore elements
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
-  void connectToWellElements( LineBlockABC const & wellGeometry,
+  void connectToWellElements( LineBlockABC const & lineBlock,
                               unordered_map< globalIndex, localIndex > const & globalToLocalWellElementMap,
                               globalIndex elemOffsetGlobal );
 

@@ -173,17 +173,17 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
 
     // get the global well geometry from the well generator
     string const generatorName = wellRegion.getWellGeneratorName();
-    LineBlockABC const & wellGeometry =
+    LineBlockABC const & lineBlock =
       cellBlockManager.getGroup< LineBlockABC >( generatorName );
 
     // generate the local data (well elements, nodes, perforations) on this well
     // note: each MPI rank knows the global info on the entire well (constructed earlier in InternalWellGenerator)
     // so we only need node and element offsets to construct the local-to-global maps in each wellElemSubRegion
-    wellRegion.generateWell( meshLevel, wellGeometry, nodeOffsetGlobal + wellNodeCount, elemOffsetGlobal + wellElemCount );
+    wellRegion.generateWell( meshLevel, lineBlock, nodeOffsetGlobal + wellNodeCount, elemOffsetGlobal + wellElemCount );
 
     // increment counters with global number of nodes and elements
-    wellElemCount += wellGeometry.numElements();
-    wellNodeCount += wellGeometry.numNodes();
+    wellElemCount += lineBlock.numElements();
+    wellNodeCount += lineBlock.numNodes();
 
     string const & subRegionName = wellRegion.getSubRegionName();
     WellElementSubRegion &
@@ -192,7 +192,7 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
 
     globalIndex const numWellElemsGlobal = MpiWrapper::sum( subRegion.size() );
 
-    GEOSX_ERROR_IF( numWellElemsGlobal != wellGeometry.numElements(),
+    GEOSX_ERROR_IF( numWellElemsGlobal != lineBlock.numElements(),
                     "Invalid partitioning in well " << subRegionName );
 
   } );
