@@ -21,7 +21,7 @@
 #define GEOSX_MESH_WELLELEMENTREGION_HPP_
 
 #include "mesh/ElementRegionBase.hpp"
-#include "mesh/generators/WellBlockABC.hpp"
+#include "mesh/generators/LineBlockABC.hpp"
 
 namespace geosx
 {
@@ -126,12 +126,12 @@ public:
   /**
    * @brief Build the local well elements and perforations from global well geometry.
    * @param[in] mesh the mesh object (single level only)
-   * @param[in] wellGeometry the WellBlockABC containing the global well topology
+   * @param[in] wellGeometry the LineBlockABC containing the global well topology
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
   void generateWell( MeshLevel & mesh,
-                     WellBlockABC const & wellGeometry,
+                     LineBlockABC const & wellGeometry,
                      globalIndex nodeOffsetGlobal,
                      globalIndex elemOffsetGlobal );
 

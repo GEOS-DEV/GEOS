@@ -15,7 +15,7 @@
 #ifndef GEOSX_WELLBLOCK_HPP
 #define GEOSX_WELLBLOCK_HPP
 
-#include "mesh/generators/WellBlockABC.hpp"
+#include "mesh/generators/LineBlockABC.hpp"
 #include "mesh/generators/InternalWellGenerator.hpp"
 
 
@@ -23,9 +23,9 @@ namespace geosx
 {
 
 /**
- * Implementation of the WellBlock responsible for modification/creation capabilities.
+ * Implementation of the LineBlock responsible for modification/creation capabilities.
  */
-class WellBlock : public WellBlockABC
+class LineBlock : public LineBlockABC
 {
 public:
   /**
@@ -33,7 +33,7 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  WellBlock( string const & name, Group * const parent );
+  LineBlock( string const & name, Group * const parent );
 
   /**
    * @name Getters / Setters

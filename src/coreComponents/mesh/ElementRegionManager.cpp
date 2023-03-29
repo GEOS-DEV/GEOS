@@ -26,7 +26,7 @@
 #include "mesh/MeshLevel.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "schema/schemaUtilities.hpp"
-#include "mesh/generators/WellBlockABC.hpp"
+#include "mesh/generators/LineBlockABC.hpp"
 
 namespace geosx
 {
@@ -173,8 +173,8 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
 
     // get the global well geometry from the well generator
     string const generatorName = wellRegion.getWellGeneratorName();
-    WellBlockABC const & wellGeometry =
-      cellBlockManager.getGroup< WellBlockABC >( generatorName );
+    LineBlockABC const & wellGeometry =
+      cellBlockManager.getGroup< LineBlockABC >( generatorName );
 
     // generate the local data (well elements, nodes, perforations) on this well
     // note: each MPI rank knows the global info on the entire well (constructed earlier in InternalWellGenerator)

@@ -31,7 +31,7 @@ namespace geosx
  * It's noteworthy that the WellblockABC is immutable oriented.
  * The derived implementations need to have the modification/creation capabilities.
  */
-class WellBlockABC : public dataRepository::Group
+class LineBlockABC : public dataRepository::Group
 {
 public:
 
@@ -49,7 +49,7 @@ public:
    * @param name The name of this Group.
    * @param parent The parent Group.
    */
-  WellBlockABC( string const & name,
+  LineBlockABC( string const & name,
                 Group * const parent )
     :
     Group( name, parent )

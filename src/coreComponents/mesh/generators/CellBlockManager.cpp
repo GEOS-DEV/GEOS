@@ -15,7 +15,7 @@
 #include "CellBlockManager.hpp"
 
 #include "mesh/generators/CellBlockUtilities.hpp"
-#include "mesh/generators/WellBlock.hpp"
+#include "mesh/generators/LineBlock.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 
 #include <algorithm>
@@ -626,7 +626,7 @@ Group & CellBlockManager::getFaceBlocks()
   return this->getGroup( viewKeyStruct::faceBlocks() );
 }
 
-Group & CellBlockManager::getWellBlocks()
+Group & CellBlockManager::getLineBlocks()
 {
   return this->getGroup( viewKeyStruct::wellBlocks() );
 }
@@ -688,9 +688,9 @@ FaceBlock & CellBlockManager::registerFaceBlock( string const & name )
   return this->getFaceBlocks().registerGroup< FaceBlock >( name );
 }
 
-WellBlock & CellBlockManager::registerWellBlock( string const & name )
+LineBlock & CellBlockManager::registerLineBlock( string const & name )
 {
-  return this->getWellBlocks().registerGroup< WellBlock >( name );
+  return this->getLineBlocks().registerGroup< LineBlock >( name );
 }
 
 array2d< real64, nodes::REFERENCE_POSITION_PERM > CellBlockManager::getNodePositions() const

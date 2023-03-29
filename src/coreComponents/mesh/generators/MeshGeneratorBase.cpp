@@ -54,7 +54,7 @@ CellBlockManagerABC & MeshGeneratorBase::generateMesh( Group & parent )
 void MeshGeneratorBase::generateWells( CellBlockManager & cellBlockManager )
 {
   forSubGroups< InternalWellGenerator >( [&]( InternalWellGenerator & wellGen ) {
-    WellBlock & wb = cellBlockManager.registerWellBlock( wellGen.getName() );
+    LineBlock & wb = cellBlockManager.registerLineBlock( wellGen.getName() );
     wb.setNumElements( wellGen.getNumElements() );
     wb.setElemCoords( wellGen.getElemCoords() );
     wb.setNextElemIndex( wellGen.getNextElemIndex() );

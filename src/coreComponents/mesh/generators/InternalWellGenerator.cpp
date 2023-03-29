@@ -26,7 +26,7 @@
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/PerforationData.hpp"
 #include "mesh/Perforation.hpp"
-#include "mesh/generators/WellBlockABC.hpp"
+#include "mesh/generators/LineBlockABC.hpp"
 
 namespace geosx
 {
@@ -366,8 +366,8 @@ void InternalWellGenerator::discretizePolyline()
       // 2) set the node properties
       globalIndex const iwellNodeTop    = iwelemCurrent;
       globalIndex const iwellNodeBottom = iwelemCurrent+1;
-      m_elemToNodesMap[iwelemCurrent][WellBlockABC::NodeLocation::TOP]    = iwellNodeTop;
-      m_elemToNodesMap[iwelemCurrent][WellBlockABC::NodeLocation::BOTTOM] = iwellNodeBottom;
+      m_elemToNodesMap[iwelemCurrent][LineBlockABC::NodeLocation::TOP]    = iwellNodeTop;
+      m_elemToNodesMap[iwelemCurrent][LineBlockABC::NodeLocation::BOTTOM] = iwellNodeBottom;
 
       real64 const scaleBottom = (iw + 1.0) / m_numElemsPerSegment;
       LvArray::tensorOps::copy< 3 >( m_nodeCoords[iwellNodeBottom], vPoly );
@@ -416,7 +416,7 @@ void InternalWellGenerator::connectPerforationsToWellElements()
     globalIndex iwelemBottom = m_numElems - 1;
 
     // check the validity of the perforation before starting
-    real64 const wellLength = m_nodeDistFromHead[m_elemToNodesMap[iwelemBottom][WellBlockABC::NodeLocation::BOTTOM]];
+    real64 const wellLength = m_nodeDistFromHead[m_elemToNodesMap[iwelemBottom][LineBlockABC::NodeLocation::BOTTOM]];
 
     GEOSX_THROW_IF( m_perfDistFromHead[iperf] > wellLength,
                     "Distance from perforation " << perf.getName() << " to head is larger than well polyline length for well " << getName() << "\n \n"
@@ -433,7 +433,7 @@ void InternalWellGenerator::connectPerforationsToWellElements()
       globalIndex iwelemMid =
         static_cast< globalIndex >(floor( static_cast< real64 >(iwelemTop + iwelemBottom) / 2.0 ));
       real64 const headToBottomDist =
-        m_nodeDistFromHead[m_elemToNodesMap[iwelemMid][WellBlockABC::NodeLocation::BOTTOM]];
+        m_nodeDistFromHead[m_elemToNodesMap[iwelemMid][LineBlockABC::NodeLocation::BOTTOM]];
 
       if( headToBottomDist < m_perfDistFromHead[iperf] )
       {
@@ -460,8 +460,8 @@ void InternalWellGenerator::connectPerforationsToWellElements()
     m_perfElemId[iperf] = iwelemMatched;
 
     // compute the physical location of the perforation
-    globalIndex const inodeTop    = m_elemToNodesMap[iwelemMatched][WellBlockABC::NodeLocation::TOP];
-    globalIndex const inodeBottom = m_elemToNodesMap[iwelemMatched][WellBlockABC::NodeLocation::BOTTOM];
+    globalIndex const inodeTop    = m_elemToNodesMap[iwelemMatched][LineBlockABC::NodeLocation::TOP];
+    globalIndex const inodeBottom = m_elemToNodesMap[iwelemMatched][LineBlockABC::NodeLocation::BOTTOM];
     real64 const elemLength       = m_nodeDistFromHead[inodeBottom] - m_nodeDistFromHead[inodeTop];
     real64 const topToPerfDist    = m_perfDistFromHead[iperf] - m_nodeDistFromHead[inodeTop];
 

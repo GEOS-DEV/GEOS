@@ -36,8 +36,8 @@ set( mesh_headers
      generators/CellBlockManager.hpp
      generators/CellBlockManagerABC.hpp
      generators/CellBlockUtilities.hpp
-     generators/WellBlock.hpp
-     generators/WellBlockABC.hpp
+     generators/LineBlock.hpp
+     generators/LineBlockABC.hpp
      generators/ExternalMeshGeneratorBase.hpp
      generators/FaceBlock.hpp
      generators/FaceBlockABC.hpp
@@ -97,7 +97,7 @@ set( mesh_sources
      generators/CellBlock.cpp
      generators/CellBlockManager.cpp
      generators/CellBlockUtilities.cpp
-     generators/WellBlock.cpp
+     generators/LineBlock.cpp
      generators/ExternalMeshGeneratorBase.cpp
      generators/FaceBlock.cpp
      generators/InternalMeshGenerator.cpp

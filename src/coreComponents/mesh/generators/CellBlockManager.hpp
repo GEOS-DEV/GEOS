@@ -23,8 +23,8 @@
 #include "mesh/generators/CellBlock.hpp"
 #include "mesh/generators/FaceBlock.hpp"
 #include "mesh/generators/InternalWellGenerator.hpp"
-#include "mesh/generators/WellBlock.hpp"
-#include "mesh/generators/WellBlockABC.hpp"
+#include "mesh/generators/LineBlock.hpp"
+#include "mesh/generators/LineBlockABC.hpp"
 #include "mesh/generators/PartitionDescriptor.hpp"
 
 namespace geosx
@@ -151,7 +151,7 @@ public:
 
   Group & getFaceBlocks() override;
 
-  Group & getWellBlocks() override;
+  Group & getLineBlocks() override;
 
   /**
    * @brief Registers and returns a cell block of name @p name.
@@ -172,7 +172,7 @@ public:
    * @param name The name of the created well block.
    * @return A reference to the new well block. The CellBlockManager owns this new instance.
    */
-  WellBlock & registerWellBlock( string const & name );
+  LineBlock & registerLineBlock( string const & name );
   /**
    * @brief Launch kernel function over all the sub-regions
    * @tparam LAMBDA type of the user-provided function

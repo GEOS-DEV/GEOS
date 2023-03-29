@@ -17,7 +17,7 @@
  */
 
 #include "mesh/Perforation.hpp"
-#include "mesh/generators/WellBlock.hpp"
+#include "mesh/generators/LineBlock.hpp"
 #include "mesh/generators/InternalWellGenerator.hpp"
 
 
@@ -25,11 +25,11 @@
 namespace geosx
 {
 
-WellBlock::WellBlock( string const & name, Group * const parent ):
-  WellBlockABC( name, parent )
+LineBlock::LineBlock( string const & name, Group * const parent ):
+  LineBlockABC( name, parent )
 {}
 
-void WellBlock::setPrevElemIndices( arrayView1d< arrayView1d< globalIndex const > const > prevElemIndices )
+void LineBlock::setPrevElemIndices( arrayView1d< arrayView1d< globalIndex const > const > prevElemIndices )
 {
   int size = prevElemIndices.size();
   m_prevElemId.resize( size );
