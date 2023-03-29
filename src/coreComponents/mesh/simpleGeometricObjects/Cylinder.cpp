@@ -35,7 +35,7 @@ Cylinder::Cylinder( const string & name, Group * const parent ):
 {
   registerWrapper( viewKeyStruct::point1String(), &m_point1 ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Center point the lower face of the cylinder" );
+    setDescription( "Center point of the lower face of the cylinder" );
 
   registerWrapper( viewKeyStruct::point2String(), &m_point2 ).
     setInputFlag( InputFlags::REQUIRED ).

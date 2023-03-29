@@ -1247,7 +1247,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 	<xsd:complexType name="CylinderType">
 		<!--innerRadius => Inner radius of the annulus-->
 		<xsd:attribute name="innerRadius" type="real64" default="-1" />
-		<!--lowerFaceCenter => Center point the lower face of the cylinder-->
+		<!--lowerFaceCenter => Center point of the lower face of the cylinder-->
 		<xsd:attribute name="lowerFaceCenter" type="R1Tensor" use="required" />
 		<!--radius => Radius of the cylinder, outer radius of the annulus-->
 		<xsd:attribute name="radius" type="real64" use="required" />
