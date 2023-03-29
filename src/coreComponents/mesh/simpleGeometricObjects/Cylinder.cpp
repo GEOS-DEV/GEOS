@@ -35,15 +35,15 @@ Cylinder::Cylinder( const string & name, Group * const parent ):
 {
   registerWrapper( viewKeyStruct::point1String(), &m_point1 ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Center point of one (upper or lower) face of the cylinder" );
+    setDescription( "Center point the lower face of the cylinder" );
 
   registerWrapper( viewKeyStruct::point2String(), &m_point2 ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Center point of the other face of the cylinder" );
+    setDescription( "Center point of the upper face of the cylinder" );
 
   registerWrapper( viewKeyStruct::radiusString(), &m_radius ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Radius of the cylinder" );
+    setDescription( "Radius of the cylinder, outer radius of the annulus" );
 
   registerWrapper( viewKeyStruct::innerRadiusString(), &m_innerRadius ).
     setApplyDefaultValue( -1 ).
