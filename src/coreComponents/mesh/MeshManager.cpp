@@ -110,12 +110,11 @@ void MeshManager::importFields( DomainPartition & domain )
 
     GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: importing field data from mesh dataset", generator.getName() ) );
 
-    FieldIdentifiers fieldsToBeSync;
-
-    auto const importFields = [&generator, &fieldsToBeSync]( ElementRegionBase const & region,
-                                                             ElementSubRegionBase & subRegion,
-                                                             MeshGeneratorBase::Block block,
-                                                             std::map< string, string > const & fieldsMapping )
+    auto const importFields = [&generator]( ElementRegionBase const & region,
+                                            ElementSubRegionBase & subRegion,
+                                            MeshGeneratorBase::Block block,
+                                            std::map< string, string > const & fieldsMapping,
+                                            FieldIdentifiers & fieldsToBeSync )
     {
       std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
       // Writing properties
@@ -129,22 +128,21 @@ void MeshManager::importFields( DomainPartition & domain )
           // Skip - the user may have not enabled a particular physics model/solver on this destination region.
           if( generator.getLogLevel() >= 1 )
           {
-            GEOSX_LOG_RANK_0( GEOSX_FMT( "Skipping import of {} -> {} on {}/{} (field not found)",
-                                         meshFieldName, geosxFieldName, region.getName(), subRegion.getName() ) );
+            GEOSX_LOG_RANK_0( "Skipping import of " << meshFieldName << " -> " << geosxFieldName <<
+                              " on " << region.getName() << "/" << subRegion.getName() << " (field not found)" );
           }
 
           continue;
         }
 
-        // Now that we know that the subRegion has this wrapper, we can add the geosxFieldName to the list of fields to
-        // synchronize
+        // Now that we know that the subRegion has this wrapper,
+        // we can add the geosxFieldName to the list of fields to synchronize
         fieldsToBeSync.addElementFields( { geosxFieldName }, { region.getName() } );
         WrapperBase & wrapper = subRegion.getWrapperBase( geosxFieldName );
         if( generator.getLogLevel() >= 1 )
         {
-          GEOSX_LOG_RANK_0( GEOSX_FMT( "Importing field {} -> {} on {}/{}",
-                                       meshFieldName, geosxFieldName,
-                                       region.getName(), subRegion.getName() ) );
+          GEOSX_LOG_RANK_0( "Importing field " << meshFieldName << " -> " << geosxFieldName <<
+                            " on " << region.getName() << "/" << subRegion.getName() );
         }
 
         bool const isMaterialField = materialWrapperNames.count( geosxFieldName ) > 0 && wrapper.numArrayDims() > 1;
@@ -155,13 +153,14 @@ void MeshManager::importFields( DomainPartition & domain )
     dataRepository::Group & meshLevels = domain.getMeshBody( generator.getName() ).getMeshLevels();
     meshLevels.forSubGroups< MeshLevel >( [&]( MeshLevel & meshLevel )
     {
+      FieldIdentifiers fieldsToBeSync;
       meshLevel.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >(
         [&]( localIndex,
              localIndex,
              ElementRegionBase const & region,
              CellElementSubRegion & subRegion )
       {
-        importFields( region, subRegion, MeshGeneratorBase::Block::VOLUMIC, generator.getVolumicFieldsMapping() );
+        importFields( region, subRegion, MeshGeneratorBase::Block::VOLUMIC, generator.getVolumicFieldsMapping(), fieldsToBeSync );
       } );
       meshLevel.getElemManager().forElementSubRegionsComplete< FaceElementSubRegion >(
         [&]( localIndex,
@@ -169,7 +168,7 @@ void MeshManager::importFields( DomainPartition & domain )
              ElementRegionBase const & region,
              FaceElementSubRegion & subRegion )
       {
-        importFields( region, subRegion, MeshGeneratorBase::Block::SURFACIC, generator.getSurfacicFieldsMapping() );
+        importFields( region, subRegion, MeshGeneratorBase::Block::SURFACIC, generator.getSurfacicFieldsMapping(), fieldsToBeSync );
       } );
       CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, meshLevel, domain.getNeighbors(), false ); // TODO Validate this.
     } );
