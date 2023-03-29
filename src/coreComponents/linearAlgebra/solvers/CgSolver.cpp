@@ -95,6 +95,8 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   m_residualNorms.clear();
   watch.zero();
 
+  watch.zero();
+
   integer & k = m_result.numIterations;
   for( k = 0; k <= m_params.krylov.maxIterations; ++k )
   {
@@ -202,7 +204,7 @@ void axpby( real64 alpha, const Vector & x, real64 beta, const Vector & y, Vecto
 template < typename Vector >
 real64 dot( const Vector & x, const Vector & y )
 {
-  RAJA::ReduceSum< parallelDeviceReduce, real64 > vsum(0.0);
+  RAJA::ReduceSum< RAJA::hip_reduce_atomic, real64 > vsum(0.0);
   arrayView1d< real64 const > const localX = x.values();
   arrayView1d< real64 const > const localY = y.values();
 
