@@ -353,6 +353,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
         getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
       permeabilityModel.scaleHorizontalPermeability( netToGross );
       porousSolid.scaleReferencePorosity( netToGross );
+      saveConvergedState( subRegion ); // necessary for a meaningful porosity update in sequential schemes
       updatePorosityAndPermeability( subRegion );
 
       SingleFluidBase const & fluid =
@@ -606,18 +607,10 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
       arrayView1d< real64 const > const & pres = subRegion.template getField< fields::flow::pressure >();
       arrayView1d< real64 const > const & initPres = subRegion.template getField< fields::flow::initialPressure >();
       arrayView1d< real64 > const & deltaPres = subRegion.template getField< fields::flow::deltaPressure >();
-      arrayView1d< real64 > const & pres_n = subRegion.template getField< fields::flow::pressure_n >();
 
-      pres_n.setValues< parallelDevicePolicy<> >( pres );
       singlePhaseBaseKernels::StatisticsKernel::
         saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
-
-      if( m_isThermal )
-      {
-        arrayView1d< real64 const > const & temp = subRegion.template getField< fields::flow::temperature >();
-        arrayView1d< real64 > const & temp_n = subRegion.template getField< fields::flow::temperature_n >();
-        temp_n.setValues< parallelDevicePolicy<> >( temp );
-      }
+      saveConvergedState( subRegion );
 
       arrayView1d< real64 > const & dVol = subRegion.template getField< fields::flow::deltaVolume >();
       dVol.zero();
@@ -644,6 +637,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
       CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
       porousSolid.saveConvergedState();
 
+      saveConvergedState( subRegion ); // necessary for a meaningful porosity update in sequential schemes
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
 
@@ -1168,17 +1162,7 @@ void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
     {
-      arrayView1d< real64 > const pres = subRegion.template getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const pres_n = subRegion.template getField< fields::flow::pressure_n >();
-      pres.setValues< parallelDevicePolicy<> >( pres_n );
-
-      if( m_isThermal )
-      {
-        arrayView1d< real64 > const temp = subRegion.template getField< fields::flow::temperature >();
-        arrayView1d< real64 const > const temp_n = subRegion.template getField< fields::flow::temperature_n >();
-        temp.setValues< parallelDevicePolicy<> >( temp_n );
-      }
-
+      saveConvergedState( subRegion );
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
 

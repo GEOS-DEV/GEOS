@@ -161,6 +161,16 @@ public:
   }
 
   /*
+   * @brief get the current solid density
+   * return a constant arrayView2d to solid density
+   */
+  arrayView2d< real64 const > const getDensity() const
+  {
+    return getBaseSolidModel().getDensity();
+  }
+
+
+  /*
    * @brief get the current biot coefficient
    * return a constant arrayView1d to biotCoefficient
    */

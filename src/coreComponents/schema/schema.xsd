@@ -514,6 +514,10 @@
 					<xsd:selector xpath="CompressibleSolidConstantPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="ConstitutiveCompressibleSolidExponentialDecayPermeabilityUniqueName">
+					<xsd:selector xpath="CompressibleSolidExponentialDecayPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="ConstitutiveCompressibleSolidParallelPlatesPermeabilityUniqueName">
 					<xsd:selector xpath="CompressibleSolidParallelPlatesPermeability" />
 					<xsd:field xpath="@name" />
@@ -572,6 +576,10 @@
 				</xsd:unique>
 				<xsd:unique name="ConstitutiveElasticTransverseIsotropicUniqueName">
 					<xsd:selector xpath="ElasticTransverseIsotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="ConstitutiveExponentialDecayPermeabilityUniqueName">
+					<xsd:selector xpath="ExponentialDecayPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="ConstitutiveExtendedDruckerPragerUniqueName">
@@ -1549,7 +1557,9 @@ the relative residual norm satisfies:
 	<xsd:complexType name="NonlinearSolverParametersType">
 		<!--allowNonConverged => Allow non-converged solution to be accepted. (i.e. exit from the Newton loop without achieving the desired tolerance)-->
 		<xsd:attribute name="allowNonConverged" type="integer" default="0" />
-		<!--couplingType => Type of coupling. Options are: Sequential and FullyImplicit-->
+		<!--couplingType => Type of coupling. Valid options:
+* FullyImplicit
+* Sequential-->
 		<xsd:attribute name="couplingType" type="geosx_NonlinearSolverParameters_CouplingType" default="FullyImplicit" />
 		<!--lineSearchAction => How the line search is to be used. Options are: 
  * None    - Do not use line search.
@@ -1580,6 +1590,10 @@ the relative residual norm satisfies:
 		<xsd:attribute name="newtonMinIter" type="integer" default="1" />
 		<!--newtonTol => The required tolerance in order to exit the Newton iteration loop.-->
 		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
+		<!--sequentialConvergenceCriterion => Criterion used to check outer-loop convergence in sequential schemes. Valid options:
+* ResidualNorm
+* NumberOfNonlinearIterations-->
+		<xsd:attribute name="sequentialConvergenceCriterion" type="geosx_NonlinearSolverParameters_SequentialConvergenceCriterion" default="ResidualNorm" />
 		<!--subcycling => Flag to decide whether to iterate between sequentially coupled solvers or not.-->
 		<xsd:attribute name="subcycling" type="integer" default="0" />
 		<!--timeStepCutFactor => Factor by which the time step will be cut if a timestep cut is required.-->
@@ -1610,6 +1624,11 @@ the relative residual norm satisfies:
 	<xsd:simpleType name="geosx_NonlinearSolverParameters_LineSearchInterpolationType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Linear|Parabolic" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geosx_NonlinearSolverParameters_SequentialConvergenceCriterion">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|ResidualNorm|NumberOfNonlinearIterations" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="FiniteVolumeType">
@@ -2998,6 +3017,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 	<xsd:complexType name="BiotPorosityType">
 		<!--defaultReferencePorosity => Default value of the reference porosity-->
 		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
+		<!--defaultThermalExpansionCoefficient => Default thermal expansion coefficient-->
+		<xsd:attribute name="defaultThermalExpansionCoefficient" type="real64" default="0" />
 		<!--grainBulkModulus => Grain bulk modulus-->
 		<xsd:attribute name="grainBulkModulus" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -3222,7 +3243,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-        <xsd:complexType name="CompressibleSolidExponentialDecayPermeabilityType">
+	<xsd:complexType name="CompressibleSolidExponentialDecayPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
@@ -3575,9 +3596,9 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ExponentialDecayPermeabilityType">
-		<!--empiricalConstant => An empirical constant.-->
+		<!--empiricalConstant => an empirical constant.-->
 		<xsd:attribute name="empiricalConstant" type="real64" use="required" />
-                <!--initialPermeability => Initial permeability of the fracture.-->
+		<!--initialPermeability =>  initial permeability of the fracture.-->
 		<xsd:attribute name="initialPermeability" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />

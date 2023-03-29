@@ -471,23 +471,14 @@ bool SolverBase::lineSearch( real64 const & time_n,
     updateState( domain );
 
     // re-assemble system
-    localMatrix.zero();
-    rhs.zero();
-
-    {
-      arrayView1d< real64 > const localRhs = rhs.open();
-      assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
-      applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
-      rhs.close();
-    }
-
-    if( getLogLevel() >= 1 && logger::internal::rank==0 )
-    {
-      std::cout << GEOSX_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
-    }
-
-    // get residual norm
-    residualNorm = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
+    residualNorm =
+      assembleResidualOnlyAndCalculateNorm( time_n,
+                                            dt,
+                                            domain,
+                                            dofManager,
+                                            localMatrix,
+                                            rhs,
+                                            GEOSX_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale ) );
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
@@ -570,24 +561,15 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
 
     // Keep the books on the function norms
     // re-assemble system
-    // TODO: add a flag to avoid a completely useless Jacobian computation: rhs is enough
-    localMatrix.zero();
-    rhs.zero();
+    residualNormT =
+      assembleResidualOnlyAndCalculateNorm( time_n,
+                                            dt,
+                                            domain,
+                                            dofManager,
+                                            localMatrix,
+                                            rhs,
+                                            GEOSX_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale ) );
 
-    {
-      arrayView1d< real64 > const localRhs = rhs.open();
-      assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
-      applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
-      rhs.close();
-    }
-
-    if( getLogLevel() >= 1 && logger::internal::rank==0 )
-    {
-      std::cout << GEOSX_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
-    }
-
-    // get residual norm
-    residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
     ffm = ffT;
     ffT = residualNormT*residualNormT;
     lineSearchIteration += 1;
@@ -602,6 +584,51 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
   lastResidual = residualNormT;
 
   return lineSearchSuccess;
+}
+
+real64 SolverBase::assembleResidualOnlyAndCalculateNorm( real64 const & time_n,
+                                                         real64 const & dt,
+                                                         DomainPartition & domain,
+                                                         DofManager const & dofManager,
+                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                         ParallelVector & rhs,
+                                                         string const logMessage )
+{
+  localMatrix.zero();
+  rhs.zero();
+
+  arrayView1d< real64 > const localRhs = rhs.open();
+
+  // The current implementation of this function is incomplete
+  // Ultimately, we want to modify the two calls below to only recompute the residual, and not the Jacobian matrix
+  // At that point, the localMatrix argument of this function will be removed
+
+  assembleSystem( time_n,
+                  dt,
+                  domain,
+                  dofManager,
+                  localMatrix,
+                  localRhs );
+
+  applyBoundaryConditions( time_n,
+                           dt,
+                           domain,
+                           dofManager,
+                           localMatrix,
+                           localRhs );
+
+  rhs.close();
+
+  if( getLogLevel() >= 1 && logger::internal::rank==0 && !logMessage.empty() )
+  {
+    std::cout << logMessage;
+  }
+
+  return calculateResidualNorm( time_n,
+                                dt,
+                                domain,
+                                dofManager,
+                                rhs.values() );
 }
 
 /**

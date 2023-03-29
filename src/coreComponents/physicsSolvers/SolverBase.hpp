@@ -178,10 +178,6 @@ public:
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
    * @param domain the domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param solution the solution vector
    * @return return the timestep that was achieved during the step.
    *
    * This function implements a nonlinear newton method for implicit problems. It requires that the
@@ -201,7 +197,7 @@ public:
    * @param cycleNumber the current cycle number
    * @param domain the domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
+   * @param localMatrix the system matrix
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
    * @param lastResidual (in) target value below which to reduce residual norm, (out) achieved residual norm
@@ -231,7 +227,7 @@ public:
    * @param cycleNumber the current cycle number
    * @param domain the domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
+   * @param localMatrix the system matrix
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
    * @param lastResidual (in) target value below which to reduce residual norm, (out) achieved residual norm
@@ -257,10 +253,6 @@ public:
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
    * @param domain the domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param solution the solution vector
    * @return return the timestep that was achieved during the step.
    *
    * This function implements a single linear step. Similar to the nonlinear step, however it
@@ -279,10 +271,6 @@ public:
    * @param time_n the time at the beginning of the step
    * @param dt the desired timestep
    * @param domain the domain partition
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param solution the solution vector
    *
    * This function should contain any step level initialization required to perform an implicit
    * step.
@@ -307,7 +295,7 @@ public:
    * @brief Set up the linear system (DOF indices and sparsity patterns)
    * @param domain the domain containing the mesh and fields
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
+   * @param localMatrix the system matrix
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
    *
@@ -328,7 +316,7 @@ public:
    * @param dt the desired timestep
    * @param domain the domain partition
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
+   * @param localMatrix the system matrix
    * @param rhs the system right-hand side vector
    * @return the residual for convergence evaluation
    *
@@ -351,12 +339,12 @@ public:
 
   /**
    * @brief apply boundary condition to system
-   * @param domain the domain partition
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param dofManager degree-of-freedom manager associated with the linear system
    * @param time the time at the beginning of the step
    * @param dt the desired timestep
+   * @param domain the domain partition
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the system matrix
+   * @param rhs the system right-hand side vector
    *
    * This function applies all boundary conditions to the linear system. This is essentially a
    * completion of the system assembly, but is separated for use in coupled solvers.
@@ -417,12 +405,38 @@ public:
                          arrayView1d< real64 const > const & localRhs );
 
   /**
+   * @brief function to assemble the rhs and return its norm
+   * @param time_n the time at the beginning of the step
+   * @param dt the desired timestep
+   * @param domain the domain partition
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the system matrix
+   * @param rhs the system right-hand side vector
+   * @param logMessage message output by the function
+   * @return the residual for convergence evaluation
+   *
+   * This function assembles the residual only and returns its norm
+   * This is useful in cases where we don't need to recompute the Jacobian matrix
+   * Use cases include line-search and outer-loop convergence check of sequential schemes
+   *
+   * @note This function can be used as is, but its implementation needs to be revisited to skip the Jacobian assembly
+   */
+  virtual real64
+  assembleResidualOnlyAndCalculateNorm( real64 const & time_n,
+                                        real64 const & dt,
+                                        DomainPartition & domain,
+                                        DofManager const & dofManager,
+                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        ParallelVector & rhs,
+                                        string const logMessage );
+
+
+  /**
    * @brief function to apply a linear system solver to the assembled system.
+   * @param dofManager degree-of-freedom manager associated with the linear system
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param solution the solver parameters to set the parameters of the linear system
    *
    * This function calls the linear solver package to perform a single linear solve on the block
    * system. The derived physics solver is required to specify the call, as no default is provided.

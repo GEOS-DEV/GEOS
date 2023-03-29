@@ -118,11 +118,11 @@ public:
     real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * biotCoefficient;
 
     porosity = porosity_n + biotSkeletonModulusInverse * pressure + biotCoefficient * biotCoefficient / bulkModulus * pressure
-               + porosityThermalExpansion * temperature
+               - porosityThermalExpansion * temperature
                + biotCoefficient * meanStressIncrement / bulkModulus;
 
     dPorosity_dPressure = biotSkeletonModulusInverse + biotCoefficient * biotCoefficient / bulkModulus;
-    dPorosity_dTemperature = porosityThermalExpansion;
+    dPorosity_dTemperature = -porosityThermalExpansion;
   }
 
   GEOSX_HOST_DEVICE
@@ -155,13 +155,6 @@ public:
     m_bulkModulus[k] = bulkModulus;
 
     m_biotCoefficient[k] = 1 - bulkModulus / m_grainBulkModulus;
-  }
-
-  GEOSX_HOST_DEVICE
-  void updateThermalExpansionCoefficient( localIndex const k,
-                                          real64 const thermalExpansionCoefficient ) const
-  {
-    m_thermalExpansionCoefficient[k] = thermalExpansionCoefficient;
   }
 
   GEOSX_HOST_DEVICE
@@ -200,11 +193,11 @@ public:
   {
     static constexpr char const *grainBulkModulusString() { return "grainBulkModulus"; }
 
-    static constexpr char const *thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; }
-
     static constexpr char const *meanStressIncrementString() { return "meanStressIncrement"; }
 
     static constexpr char const *solidBulkModulusString() { return "solidBulkModulus"; }
+
+    static constexpr char const *defaultThermalExpansionCoefficientString() { return "defaultThermalExpansionCoefficient"; }
   } viewKeys;
 
   virtual void initializeState() const override final;
@@ -242,11 +235,13 @@ protected:
 
   array1d< real64 > m_thermalExpansionCoefficient;
 
-  array2d< real64 > m_meanStressIncrement;
-
   array1d< real64 > m_bulkModulus;
 
+  array2d< real64 > m_meanStressIncrement;
+
   real64 m_grainBulkModulus;
+
+  real64 m_defaultThermalExpansionCoefficient;
 };
 
 }   /* namespace constitutive */
