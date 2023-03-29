@@ -28,6 +28,7 @@ set( physicsSolvers_headers
      fluidFlow/CompositionalMultiphaseHybridFVM.hpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp 
      fluidFlow/CompositionalMultiphaseUtilities.hpp
+        fluidFlow/CompositionalMultiphaseFVMUpwindUtilities.hpp
      fluidFlow/ReactiveCompositionalMultiphaseOBL.hpp
      fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp
      fluidFlow/ReactiveCompositionalMultiphaseOBLKernels.hpp

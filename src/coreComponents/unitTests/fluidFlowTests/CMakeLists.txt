@@ -2,12 +2,13 @@
 # Specify list of tests
 #
 
-set( gtest_geosx_tests
-     testSinglePhaseBaseKernels.cpp
-     testSinglePhaseFVMKernels.cpp
-     testThermalCompMultiphaseFlow.cpp
-     testThermalSinglePhaseFlow.cpp
-   )
+set(gtest_geosx_tests
+        testSinglePhaseBaseKernels.cpp
+        testSinglePhaseFVMKernels.cpp
+        testThermalCompMultiphaseFlow.cpp
+        testThermalSinglePhaseFlow.cpp
+        testCompFlowUpwind.cpp
+        )
 
 set( dependencyList gtest )
 
