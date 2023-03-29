@@ -131,12 +131,6 @@ public:
   globalIndex getNumElements() const { return m_numElems; }
 
   /**
-   * @brief Get the number of well elements per segment.
-   * @return the global number of elements
-   */
-  globalIndex getNumElementsPerSegment() const { return m_numElemsPerSegment; }
-
-  /**
    * @brief Getter to the Segment to PolyNode mapping
    * @return The Segment to PolyNode mapping as a 2D array
    */
