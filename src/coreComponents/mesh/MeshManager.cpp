@@ -160,19 +160,17 @@ void MeshManager::importFields( DomainPartition & domain )
              localIndex,
              ElementRegionBase const & region,
              CellElementSubRegion & subRegion )
-        {
-          importFields( region, subRegion, MeshGeneratorBase::Block::VOLUMIC, generator.getVolumicFieldsMapping() );
-        }
-      );
+      {
+        importFields( region, subRegion, MeshGeneratorBase::Block::VOLUMIC, generator.getVolumicFieldsMapping() );
+      } );
       meshLevel.getElemManager().forElementSubRegionsComplete< FaceElementSubRegion >(
         [&]( localIndex,
              localIndex,
              ElementRegionBase const & region,
              FaceElementSubRegion & subRegion )
-        {
-          importFields( region, subRegion, MeshGeneratorBase::Block::SURFACIC, generator.getSurfacicFieldsMapping() );
-        }
-      );
+      {
+        importFields( region, subRegion, MeshGeneratorBase::Block::SURFACIC, generator.getSurfacicFieldsMapping() );
+      } );
       CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, meshLevel, domain.getNeighbors(), false ); // TODO Validate this.
     } );
   } );
