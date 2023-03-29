@@ -127,10 +127,11 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, comm );
 }
 
-void VTKMeshGenerator::importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, WrapperBase & wrapper ) const
+void VTKMeshGenerator::importVolumicFieldOnArray( string const & cellBlockName,
+                                                  string const & meshFieldName,
+                                                  bool isMaterialField,
+                                                  dataRepository::WrapperBase & wrapper ) const
 {
-  GEOSX_ASSERT_MSG( m_vtkMesh, "Must call generateMesh() before importFields()" );
-
   for( auto const & typeRegions : m_cellMap )
   {
     // Restrict data import to 3D cells
@@ -156,6 +157,14 @@ void VTKMeshGenerator::importFieldsOnArray( string const & cellBlockName, string
     }
   }
 
+  GEOSX_ERROR( "Could not import field \"" << meshFieldName << "\" from cell block \"" << cellBlockName << "\"." );
+}
+
+
+void VTKMeshGenerator::importSurfacicFieldOnArray( string const & faceBlockName,
+                                                   string const & meshFieldName,
+                                                   dataRepository::WrapperBase & wrapper ) const
+{
   // If the field was not imported from cell blocks, we now look for it in the face blocks.
   // This surely can be improved by clearly stating which field should be on which block.
   // Note that there is no additional work w.r.t. the cells on which we want to import the fields,
@@ -171,7 +180,26 @@ void VTKMeshGenerator::importFieldsOnArray( string const & cellBlockName, string
     }
   }
 
-  GEOSX_ERROR( "Could not import field \"" << meshFieldName << "\" from cell block \"" << cellBlockName << "\"." );
+  GEOSX_ERROR( "Could not import field \"" << meshFieldName << "\" from face block \"" << faceBlockName << "\"." );
+}
+
+
+void VTKMeshGenerator::importFieldOnArray( Block block,
+                                           string const & blockName,
+                                           string const & meshFieldName,
+                                           bool isMaterialField,
+                                           dataRepository::WrapperBase & wrapper ) const
+{
+  GEOSX_ASSERT_MSG( m_vtkMesh, "Must call generateMesh() before importFields()" );
+
+  switch( block )
+  {
+    case MeshGeneratorBase::Block::VOLUMIC:
+      return importVolumicFieldOnArray( blockName, meshFieldName, isMaterialField, wrapper );
+    case MeshGeneratorBase::Block::SURFACIC:
+    case MeshGeneratorBase::Block::LINEIC:
+      return importSurfacicFieldOnArray( blockName, meshFieldName, wrapper );
+  }
 }
 
 void VTKMeshGenerator::freeResources()

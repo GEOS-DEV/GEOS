@@ -87,7 +87,11 @@ public:
    */
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  void importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, WrapperBase & wrapper ) const override;
+  void importFieldOnArray( Block block,
+                           string const & blockName,
+                           string const & meshFieldName,
+                           bool isMaterialField,
+                           dataRepository::WrapperBase & wrapper ) const override;
 
   virtual void freeResources() override;
 
@@ -105,6 +109,15 @@ private:
     constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
   };
   /// @endcond
+
+  void importVolumicFieldOnArray( string const & cellBlockName,
+                                  string const & meshFieldName,
+                                  bool isMaterialField,
+                                  dataRepository::WrapperBase & wrapper ) const;
+
+  void importSurfacicFieldOnArray( string const & faceBlockName,
+                                   string const & meshFieldName,
+                                   dataRepository::WrapperBase & wrapper ) const;
 
   /**
    * @brief The VTK mesh to be imported into GEOSX.
