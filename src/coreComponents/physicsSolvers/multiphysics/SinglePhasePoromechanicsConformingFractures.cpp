@@ -217,7 +217,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
                                     CellElementSubRegion >( mesh,
                                                             regionNames,
                                                             contactSolver()->getSolidSolver()->getDiscretizationName(),
-                                                            SinglePhasePoromechanicsSolver::viewKeyStruct::porousMaterialNamesString(),
+                                                            SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
                                                             kernelFactory );
 
     /// 2.a assemble Kut

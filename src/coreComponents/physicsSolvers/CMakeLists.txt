@@ -68,7 +68,7 @@ set( physicsSolvers_headers
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/HydrofractureSolverKernels.hpp
-     multiphysics/MultiphasePoromechanicsSolver.hpp
+     multiphysics/MultiphasePoromechanics.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
      multiphysics/PoromechanicsInitialization.hpp          
      multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp
@@ -78,11 +78,13 @@ set( physicsSolvers_headers
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp     
+     multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp
+     multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp     
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp	          
      multiphysics/SinglePhasePoromechanicsFluxKernels.hpp
-     multiphysics/SinglePhasePoromechanicsSolver.hpp
+     multiphysics/SinglePhasePoromechanics.hpp
      multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp
      multiphysics/SinglePhasePoromechanicsConformingFractures.hpp
      multiphysics/SinglePhaseReservoirAndWells.hpp
@@ -158,10 +160,10 @@ set( physicsSolvers_sources
      multiphysics/CoupledReservoirAndWellsBase.cpp
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
-     multiphysics/MultiphasePoromechanicsSolver.cpp
+     multiphysics/MultiphasePoromechanics.cpp
      multiphysics/PhaseFieldFractureSolver.cpp
      multiphysics/PoromechanicsInitialization.cpp
-     multiphysics/SinglePhasePoromechanicsSolver.cpp
+     multiphysics/SinglePhasePoromechanics.cpp
      multiphysics/SinglePhasePoromechanicsEmbeddedFractures.cpp
      multiphysics/SinglePhasePoromechanicsConformingFractures.cpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.cpp
