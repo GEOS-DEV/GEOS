@@ -31,10 +31,6 @@ namespace poromechanicsKernels
 /**
  * @brief Implements kernels for solving quasi-static multiphase poromechanics.
  * @copydoc geosx::finiteElement::ImplicitKernelBase
- * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
- *                            @p SUBREGION_TYPE.
- * @tparam UNUSED An unused parameter since we are assuming that the test and
- *                trial space have the same number of support points.
  *
  * ### MultiphasePoroelastic Description
  * Implements the KernelBase interface functions required for solving the
@@ -245,18 +241,12 @@ public:
   /**
    * @brief Helper function to compute the pore-volume constraint and its derivatives wrt primary variables
    * @param[in] k the element index
-   * @param[in] porosity the element porosity
-   * @param[in] dPorosity_dVolStrain the derivative of porosity wrt volumetric strain increment
-   * @param[in] dPorosity_dPressure the derivative of porosity wrt pressure
-   * @param[in] dPorosity_dTemperature the derivative of porosity wrt temperature
+   * @param[in] porosity_n the element porosity at the previous converged time step
    * @param[inout] stack the stack variables
    */
   GEOSX_HOST_DEVICE
   void computePoreVolumeConstraint( localIndex const k,
-                                    real64 const & porosity,
-                                    real64 const & dPorosity_dVolStrain,
-                                    real64 const & dPorosity_dPressure,
-                                    real64 const & dPorosity_dTemperature,
+                                    real64 const & porosity_n,
                                     StackVariables & stack ) const;
 
   /**
