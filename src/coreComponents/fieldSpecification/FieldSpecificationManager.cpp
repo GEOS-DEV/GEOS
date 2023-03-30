@@ -156,9 +156,10 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     // the flag is to handle the high-order cases in multi-level meshes 
     // the assumption is that the mesh object path is defined as for example "mesh/FE2/..."
     // and check if the name of the mesh-level is contained in such string of the objectPath
-    bool meshlevelcheckflag = ( ( mesh.getName() == MeshBody::groupStructKeys::baseDiscretizationString() ) && ( fs.getObjectPath().find("mesh") == std::string::npos ) ) ||
-                              ( ( mesh.getName() != MeshBody::groupStructKeys::baseDiscretizationString() ) 
-                                  && ( fs.getObjectPath().find(mesh.getName()) != std::string::npos ) && fs.initialCondition() ); 
+    bool meshlevelcheckflag =  ( ( mesh.getName() == MeshBody::groupStructKeys::baseDiscretizationString() ) 
+                                   && ( fs.getObjectPath().find("mesh") == std::string::npos ) ) 
+                               || ( ( mesh.getName() != MeshBody::groupStructKeys::baseDiscretizationString() ) 
+                                      && ( fs.getObjectPath().find(mesh.getName()) != std::string::npos ) && fs.initialCondition() ); 
 
     // Step 4: issue an error or a warning if the field was not found
 
