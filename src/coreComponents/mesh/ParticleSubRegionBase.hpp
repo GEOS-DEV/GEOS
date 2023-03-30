@@ -305,11 +305,11 @@ public:
 
   void erase( std::set< localIndex > const & indicesToErase );
 
-  void setNonGhostIndices();
+  void setActiveParticleIndices();
 
-  SortedArrayView< localIndex const > const nonGhostIndices()
+  SortedArrayView< localIndex const > const activeParticleIndices()
   {
-    return m_nonGhostIndices.toView();
+    return m_activeParticleIndices.toView();
   }
 
   void updateMaps();
@@ -350,7 +350,7 @@ protected:
   array3d< real64 > m_particleRVectors;
 
   /// Indices of particles that are not ghosts
-  SortedArray< localIndex > m_nonGhostIndices;
+  SortedArray< localIndex > m_activeParticleIndices;
 
   /// Neighbor list
   OrderedVariableToManyParticleRelation m_neighborList;
