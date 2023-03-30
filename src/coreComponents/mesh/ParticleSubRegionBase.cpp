@@ -129,28 +129,29 @@ void ParticleSubRegionBase::erase( std::set< localIndex > const & indicesToErase
     this->resize(newSize);
 
     // Reconstruct the list of non-ghost indices
-    this->setNonGhostIndices();
+    this->setActiveParticleIndices();
   }
 }
 
-void ParticleSubRegionBase::setNonGhostIndices()
+void ParticleSubRegionBase::setActiveParticleIndices()
 {
-  m_nonGhostIndices.move( LvArray::MemorySpace::host ); // TODO: Is this needed?
-  m_nonGhostIndices.clear();
-  forAll< serialPolicy >( this->size(), [&] GEOSX_HOST ( localIndex const p ) // This must be on host since we're dealing with a sorted array
+  m_activeParticleIndices.move( LvArray::MemorySpace::host ); // TODO: Is this needed?
+  m_activeParticleIndices.clear();
+  arrayView1d< int const > const particleRank = m_particleRank.toViewConst();
+  forAll< serialPolicy >( this->size(), [&, particleRank] GEOSX_HOST ( localIndex const p ) // This must be on host since we're dealing with a sorted array. Parallelize with atomics?
   {
-    if( m_particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) )
+    if( particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) )
     {
-      m_nonGhostIndices.insert( p );
+      m_activeParticleIndices.insert( p );
     }
   } );
 }
 
 void ParticleSubRegionBase::updateMaps()
 {
-  arrayView1d< globalIndex > const & localToGlobalMap = m_localToGlobalMap;
-  arrayView1d< globalIndex const > const & particleID = m_particleID;
-  forAll< parallelDevicePolicy<> >( this->size(), [=] GEOSX_HOST_DEVICE ( localIndex const p ) // TODO: change to device policy
+  arrayView1d< globalIndex > const localToGlobalMap = m_localToGlobalMap;
+  arrayView1d< globalIndex const > const particleID = m_particleID;
+  forAll< parallelHostPolicy >( this->size(), [=] GEOSX_HOST ( localIndex const p ) // TODO: must be on host
   {
     localToGlobalMap[p] = particleID[p];
   } );

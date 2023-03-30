@@ -501,11 +501,14 @@ public:
                                        real64 ( &Ddt )[6],
                                        real64 const ( &RotBeginning )[3][3],
                                        real64 const ( &RotEnd )[3][3],
-                                       real64 ( & stress )[6] ) const
+                                       real64 ( &stress )[6] ) const
   {
+    // Prepare strain increment for rotation
+    Ddt[3] *= 0.5;
+    Ddt[4] *= 0.5;
+    Ddt[5] *= 0.5;
+    
     // Rotate m_oldStress and Ddt from beginning-of-step configuration to reference configuration.
-    // Note that Ddt should not contain the factors of 2 on shear terms typically associated with Voigt
-    // notation. Including them at this stage would corrupt the rotation.
     real64 temp[6] = { 0 };
     real64 RotBeginningTranpose[3][3] = { {0} };    
     LvArray::tensorOps::transpose< 3, 3 >( RotBeginningTranpose, RotBeginning ); // We require the transpose since we're un-rotating

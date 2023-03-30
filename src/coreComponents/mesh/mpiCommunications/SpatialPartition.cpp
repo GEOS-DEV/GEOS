@@ -363,7 +363,7 @@ namespace geosx
     std::vector< localIndex > outOfDomainParticleLocalIndices;
     unsigned int nn = m_neighbors.size(); // Number of partition neighbors.
 
-    forAll< serialPolicy >( subRegion.size(), [&] GEOSX_HOST ( localIndex const pp )
+    forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank] GEOSX_HOST ( localIndex const pp )
     {
       bool inPartition = true;
       R1Tensor p_x;
@@ -442,9 +442,9 @@ namespace geosx
         // The corresponding local index for each item in the request list is stored here:
         particleLocalIndicesRequestedFromNeighbors[n].resize(ni);
 
-        forAll< serialPolicy >( ni, [&] GEOSX_HOST ( localIndex const k )
+        forAll< serialPolicy >( ni, [&, particleRank] GEOSX_HOST ( localIndex const k )
         {
-          int i = particleListIndicesRequestedFromNeighbors[n][k];
+          int const i = particleListIndicesRequestedFromNeighbors[n][k];
           outOfDomainParticleRequests[i] += 1;
           localIndex pp = outOfDomainParticleLocalIndices[i];
 
@@ -506,7 +506,7 @@ namespace geosx
     arrayView2d< real64 > const particleCenterAfter = subRegion.getParticleCenter();
     arrayView1d< int > const particleRankAfter = subRegion.getParticleRank();
     std::set< localIndex > indicesToErase;
-    forAll< serialPolicy >( subRegion.size(), [&] GEOSX_HOST ( localIndex const p )
+    forAll< serialPolicy >( subRegion.size(), [&, particleRankAfter, particleCenterAfter] GEOSX_HOST ( localIndex const p )
     {
       if( particleRankAfter[p] == -1 )
       {
@@ -567,7 +567,7 @@ namespace geosx
       std::vector< globalIndex > inDomainMasterParticleGlobalIndices;
       unsigned int nn = m_neighbors.size(); // Number of partition neighbors.
 
-      forAll< serialPolicy >( subRegion.size(), [&] GEOSX_HOST ( localIndex const p )
+      forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank, particleGlobalID] GEOSX_HOST ( localIndex const p )
       {
         bool inPartition = true;
         R1Tensor p_x;
@@ -630,7 +630,7 @@ namespace geosx
 
             // This particle should be a ghost on the current processor. See if it already exists here.
             bool alreadyHere = false;
-            forAll< serialPolicy >( subRegion.size(), [&] GEOSX_HOST ( localIndex const p )
+            forAll< serialPolicy >( subRegion.size(), [&, particleGlobalID, particleRank] GEOSX_HOST ( localIndex const p )
             {
               if( gI == particleGlobalID[p] )
               {
@@ -663,9 +663,10 @@ namespace geosx
       //     masters, the ghost rank will be overwritten.  At the end of this function, any ghosts that
       //     still have ghostRank=-1 are orphans and need to be deleted.
 
-      forAll< serialPolicy >( subRegion.size(), [&] GEOSX_HOST ( localIndex const p )
+      int partitionRank = this->m_rank;
+      forAll< parallelHostPolicy >( subRegion.size(), [=] GEOSX_HOST ( localIndex const p ) // TODO: Worth moving to device?
       {
-        if( particleRank[p] != this->m_rank )
+        if( particleRank[p] != partitionRank )
         {
           particleRank[p] = -1;
         }
@@ -695,7 +696,7 @@ namespace geosx
       
       {
         std::vector< array1d< localIndex > > particleLocalIndicesRequestedFromNeighbors(nn);
-
+        
         for( size_t n=0; n<nn; n++ )
         {
           // make a list of the local indices corresponding to the global indices in the request list for the current neighbor.
@@ -716,16 +717,16 @@ namespace geosx
 
       // (8) Delete any particles that have ghostRank=-1.  These will be ghosts from
       //     a previous step for which the master is no longer in the ghost domain,
-      std::set< localIndex > indicesToErase;
-      arrayView1d< localIndex > const particleRankNew = subRegion.getParticleRank();
-      forAll< serialPolicy >( subRegion.size(), [&] GEOSX_HOST ( localIndex const p )
-      {
-        if( particleRankNew[p] == -1 )
-        {
-          indicesToErase.insert(p);
-        }
-      } );
-      subRegion.erase(indicesToErase);
+      // std::set< localIndex > indicesToErase;
+      // arrayView1d< localIndex > const particleRankNew = subRegion.getParticleRank();
+      // forAll< serialPolicy >( subRegion.size(), [=, &indicesToErase] GEOSX_HOST ( localIndex const p ) // parallelize with atomics
+      // {
+      //   if( particleRankNew[p] == -1 )
+      //   {
+      //     indicesToErase.insert(p);
+      //   }
+      // } );
+      // subRegion.erase(indicesToErase);
 
     } );
   }
