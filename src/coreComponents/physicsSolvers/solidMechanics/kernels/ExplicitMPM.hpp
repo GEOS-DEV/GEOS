@@ -44,28 +44,36 @@ struct StateUpdateKernel
    * @param[out] particleStress the new particle stress, returned for plotting convenience
    */
   template< typename POLICY, typename CONSTITUTIVE_WRAPPER >
-  static void launch( SortedArrayView< localIndex const > const & indices,
+  static void launch( SortedArrayView< localIndex const > const indices,
                       CONSTITUTIVE_WRAPPER const & constitutiveWrapper,
                       real64 dt,
-                      arrayView3d< real64 const > const & deformationGradient,
-                      arrayView3d< real64 const > const & fDot,
-                      arrayView3d< real64 const > const & velocityGradient,
-                      arrayView2d< real64 > const & particleStress )
+                      arrayView3d< real64 const > const deformationGradient,
+                      arrayView3d< real64 const > const fDot,
+                      arrayView3d< real64 const > const velocityGradient,
+                      arrayView2d< real64 > const particleStress )
   {
+    arrayView3d< real64, solid::STRESS_USD > const oldStress = constitutiveWrapper.m_oldStress;
+    arrayView3d< real64, solid::STRESS_USD > const newStress = constitutiveWrapper.m_newStress;
+    
     // Perform constitutive call
     forAll< POLICY >( indices.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       // Particle index
       localIndex const p = indices[k];
+
+      // Copy the beginning-of-step particle stress into the constitutive model's m_oldStress - this fixes the MPI sync issue on Lassen for some reason
+      #if defined(GEOSX_USE_CUDA)
+      LvArray::tensorOps::copy< 6 >( oldStress[p][0] , particleStress[p] );
+      #endif
       
-      // Determine the strain increment (NOT Voigt notation)
+      // Determine the strain increment in Voigt notation
       real64 strainIncrement[6];
       strainIncrement[0] = velocityGradient[p][0][0] * dt;
       strainIncrement[1] = velocityGradient[p][1][1] * dt;
       strainIncrement[2] = velocityGradient[p][2][2] * dt;
-      strainIncrement[3] = 0.5 * (velocityGradient[p][1][2] + velocityGradient[p][2][1]) * dt;
-      strainIncrement[4] = 0.5 * (velocityGradient[p][0][2] + velocityGradient[p][2][0]) * dt;
-      strainIncrement[5] = 0.5 * (velocityGradient[p][0][1] + velocityGradient[p][1][0]) * dt;
+      strainIncrement[3] = (velocityGradient[p][1][2] + velocityGradient[p][2][1]) * dt;
+      strainIncrement[4] = (velocityGradient[p][0][2] + velocityGradient[p][2][0]) * dt;
+      strainIncrement[5] = (velocityGradient[p][0][1] + velocityGradient[p][1][0]) * dt;
 
       // Get old F by incrementing backwards
       real64 fOld[3][3] = { {0} };
@@ -80,15 +88,15 @@ struct StateUpdateKernel
       
       // Call stress update
       real64 stress[6] = { 0 };
-      constitutiveWrapper.hypoUpdate2_StressOnly( p,                        // particle local index
-                                                  0,                        // particles have 1 quadrature point
-                                                  dt,                       // time step size
-                                                  strainIncrement,          // particle strain increment
-                                                  rotBeginning,             // beginning-of-step rotation matrix
-                                                  rotEnd,                   // end-of-step rotation matrix
-                                                  stress );                 // final updated stress
-      
-      // Copy the updated stress into particleStress
+      constitutiveWrapper.hypoUpdate2_StressOnly( p,                 // particle local index
+                                                  0,                 // particles have 1 quadrature point
+                                                  dt,                // time step size
+                                                  strainIncrement,   // particle strain increment
+                                                  rotBeginning,      // beginning-of-step rotation matrix
+                                                  rotEnd,            // end-of-step rotation matrix
+                                                  stress );          // final updated stress
+
+      // Copy the updated stress into particleStress      
       LvArray::tensorOps::copy< 6 >( particleStress[p], stress );
 
       // Copy m_newStress into m_oldStress
