@@ -18,6 +18,7 @@
 #include "CellBlockUtilities.hpp"
 #include "dataRepository/Group.hpp"
 #include "PartitionDescriptor.hpp"
+#include "LineBlockABC.hpp"
 
 #include <map>
 
@@ -107,6 +108,14 @@ public:
    * @note It should probably be better not to expose a non-const accessor here.
    */
   virtual Group & getLineBlocks() = 0;
+
+  /**
+   * @brief Returns LineBlockABC corresponding to the given identifier
+   * @param name the name of the required LineBlockABC
+   * @return The LineBlockABC associated with the given name
+   *
+   */
+  virtual LineBlockABC const & getLineBlock( string name ) const = 0;
 
   /**
    * @brief Returns a group containing the cell blocks as CellBlockABC instances

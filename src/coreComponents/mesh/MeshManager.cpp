@@ -66,7 +66,8 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     meshBody.createMeshLevel( 0 );
     MeshLevel & meshLevel = meshBody.getBaseDiscretization();
 
-    CellBlockManagerABC & cellBlockManager =  meshGen.generateMesh( dynamic_cast< Group & >( meshBody ) );
+    meshGen.generateMesh( meshBody );
+    CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
     PartitionDescriptor const & partitionDescriptor = cellBlockManager.getPartitionDescriptor();
     real64 globalLength = cellBlockManager.getGlobalLength();

@@ -30,7 +30,7 @@ CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
 {
   this->registerGroup< Group >( viewKeyStruct::cellBlocks() );
   this->registerGroup< Group >( viewKeyStruct::faceBlocks() );
-  this->registerGroup< Group >( viewKeyStruct::wellBlocks() );
+  this->registerGroup< Group >( viewKeyStruct::lineBlocks() );
 }
 
 void CellBlockManager::resize( integer_array const & numElements,
@@ -628,7 +628,12 @@ Group & CellBlockManager::getFaceBlocks()
 
 Group & CellBlockManager::getLineBlocks()
 {
-  return this->getGroup( viewKeyStruct::wellBlocks() );
+  return this->getGroup( viewKeyStruct::lineBlocks() );
+}
+
+LineBlockABC const & CellBlockManager::getLineBlock( string name ) const
+{
+  return this->getGroup< LineBlockABC >( name );
 }
 
 localIndex CellBlockManager::numNodes() const

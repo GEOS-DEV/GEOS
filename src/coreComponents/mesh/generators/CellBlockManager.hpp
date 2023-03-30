@@ -153,6 +153,8 @@ public:
 
   Group & getLineBlocks() override;
 
+  LineBlockABC const & getLineBlock( string name ) const override;
+
   /**
    * @brief Registers and returns a cell block of name @p name.
    * @param name The name of the created cell block.
@@ -218,9 +220,9 @@ private:
     static constexpr char const * faceBlocks()
     { return "faceBlocks"; }
 
-    /// Well blocks key
-    static constexpr char const * wellBlocks()
-    { return "wellBlocks"; }
+    /// Line blocks key
+    static constexpr char const * lineBlocks()
+    { return "lineBlocks"; }
   };
 
   /**

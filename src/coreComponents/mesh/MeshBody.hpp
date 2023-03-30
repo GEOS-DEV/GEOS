@@ -20,7 +20,7 @@
 #define GEOSX_MESH_MESHBODY_HPP_
 
 #include "MeshLevel.hpp"
-
+#include "dataRepository/KeyNames.hpp"
 
 namespace geosx
 {
@@ -166,6 +166,10 @@ public:
     return m_globalLengthScale;
   }
 
+  CellBlockManagerABC const & getCellBlockManager() const
+  {
+    return this->getGroup< CellBlockManagerABC >( dataRepository::keys::cellManager );
+  }
   /**
    * @brief Data repository keys
    */
