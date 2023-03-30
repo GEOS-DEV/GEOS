@@ -967,7 +967,7 @@ void InternalMeshGenerator::generateCellBlockManager( CellBlockManager & cellBlo
   cellBlockManager.buildMaps();
 
   partitionDescriptor.setSpatialPartition( partition );
-  cellBlockManager.setPartitionDescriptorInternal( partitionDescriptor );
+  cellBlockManager.setPartitionDescriptor( partitionDescriptor );
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: total number of nodes = {}", getName(),
                                ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: total number of elems = {}", getName(),
