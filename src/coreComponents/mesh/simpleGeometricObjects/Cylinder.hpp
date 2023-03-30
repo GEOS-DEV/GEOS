@@ -72,8 +72,8 @@ public:
 
   struct viewKeyStruct
   {
-    static constexpr char const * point1String() { return "lowerFaceCenter"; }
-    static constexpr char const * point2String() { return "upperFaceCenter"; }
+    static constexpr char const * point1String() { return "firstFaceCenter"; }
+    static constexpr char const * point2String() { return "secondFaceCenter"; }
     static constexpr char const * radiusString() { return "radius"; }
     static constexpr char const * innerRadiusString() { return "innerRadius"; }
   };
@@ -82,13 +82,16 @@ public:
 
 private:
 
-  /// Center point of the lower face of the cylinder
+  /// Center point of the first face of the cylinder
   R1Tensor m_point1;
-  /// Center point of the upper face of the cylinder
+
+  /// Center point of the second face of the cylinder
   R1Tensor m_point2;
+
   /// Radius of the cylinder
   real64 m_radius = 0.0;
-  /// Inner radius of the cylinder
+
+  /// Inner radius of the annulus
   real64 m_innerRadius = 0.0;
 
 };

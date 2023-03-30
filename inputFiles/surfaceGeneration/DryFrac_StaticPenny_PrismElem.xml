@@ -42,8 +42,8 @@
   <Geometry>
     <Cylinder
       name="fracPlane"
-      lowerFaceCenter="{ 0.0, 0.0, -0.1 }"
-      upperFaceCenter="{ 0.0, 0.0, 0.1 }"
+      firstFaceCenter="{ 0.0, 0.0, -0.1 }"
+      secondFaceCenter="{ 0.0, 0.0, 0.1 }"
       radius="11"/>
 
     <Box
