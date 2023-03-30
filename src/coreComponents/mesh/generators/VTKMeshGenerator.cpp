@@ -73,7 +73,7 @@ void VTKMeshGenerator::generateCellBlockManager( CellBlockManager & cellBlockMan
 {
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
   GEOSX_MARK_FUNCTION;
-  PartitionDescriptor & partitionDescriptor = cellBlockManager.getPartitionDescriptorInternal();
+  PartitionDescriptor partitionDescriptor;
   partitionDescriptor.setHasMetisNeighborList( true );
   MPI_Comm const comm = MPI_COMM_GEOSX;
   vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();
@@ -91,7 +91,7 @@ void VTKMeshGenerator::generateCellBlockManager( CellBlockManager & cellBlockMan
     partitionDescriptor.setMetisNeighborList( neighbors.begin(), neighbors.end() );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  done!" );
   }
-
+  cellBlockManager.setPartitionDescriptor( partitionDescriptor );
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  preprocessing..." );
