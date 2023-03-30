@@ -186,21 +186,14 @@ public:
     this->getGroup( viewKeyStruct::cellBlocks() ).forSubGroups< CellBlock >( lambda );
   }
 
-  /**
-   * @brief Get a reference to the partition descriptor.
-   * @return a const reference to tu PartitionDescriptor.
-   */
   PartitionDescriptor const & getPartitionDescriptor() const override { return m_partitionDescriptor; }
 
   /**
-   * @brief Get a reference to the partition descriptor for modification.
-   * @return a reference to tu PartitionDescriptor.
+   * @brief Set a reference to the partition descriptor.
+   * @param The PartitionDescriptor
    */
-  PartitionDescriptor & getPartitionDescriptorInternal()  { return m_partitionDescriptor; }
-  /**
-   * @brief Getter for the global length
-   * @return the mesh global length
-   */
+  void setPartitionDescriptor( PartitionDescriptor const & partitionDescriptor ) { m_partitionDescriptor = partitionDescriptor; }
+
   real64 getGlobalLength() const override { return m_globalLength; }
   /**
    * @brief Setter for the global length

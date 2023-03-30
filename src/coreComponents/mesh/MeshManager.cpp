@@ -70,8 +70,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
     PartitionDescriptor const & partitionDescriptor = cellBlockManager.getPartitionDescriptor();
-    real64 globalLength = cellBlockManager.getGlobalLength();
-    meshBody.setGlobalLengthScale( globalLength );
+    meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
 
     //PartitionDescriptor & partitionDescriptor = cellBlockManager.getPartitionDescriptor();
     if( partitionDescriptor.hasMetisNeighborList() )
@@ -83,7 +82,6 @@ void MeshManager::generateMeshes( DomainPartition & domain )
       SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
       partition = partitionDescriptor.getSpatialPartition();
     }
-    meshBody.setGlobalLengthScale( globalLength );
   } );
 }
 
