@@ -43,7 +43,7 @@ Cylinder::Cylinder( const string & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::radiusString(), &m_radius ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Radius of the cylinder, outer radius of the annulus" );
+    setDescription( "Outer radius of the cylinder" );
 
   registerWrapper( viewKeyStruct::innerRadiusString(), &m_innerRadius ).
     setApplyDefaultValue( -1 ).

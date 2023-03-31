@@ -44,7 +44,7 @@
       name="fracPlane"
       firstFaceCenter="{ 0.0, 0.0, -0.1 }"
       secondFaceCenter="{ 0.0, 0.0, 0.1 }"
-      radius="11"/>
+      outerRadius="11"/>
 
     <Box
       name="core"

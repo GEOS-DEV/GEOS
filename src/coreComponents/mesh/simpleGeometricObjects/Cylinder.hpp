@@ -74,7 +74,7 @@ public:
   {
     static constexpr char const * point1String() { return "firstFaceCenter"; }
     static constexpr char const * point2String() { return "secondFaceCenter"; }
-    static constexpr char const * radiusString() { return "radius"; }
+    static constexpr char const * radiusString() { return "outerRadius"; }
     static constexpr char const * innerRadiusString() { return "innerRadius"; }
   };
 
@@ -88,7 +88,7 @@ private:
   /// Center point of the second face of the cylinder
   R1Tensor m_point2;
 
-  /// Radius of the cylinder
+  /// Outer radius of the cylinder
   real64 m_radius = 0.0;
 
   /// Inner radius of the annulus
