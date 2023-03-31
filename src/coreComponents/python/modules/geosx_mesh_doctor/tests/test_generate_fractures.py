@@ -29,15 +29,14 @@ def test_generate_fracture():
                       vtk_output=None,
                       vtk_fracture_output=None,
                       split_on_domain_boundary=True)
-    cell_frac_info, node_frac_info = find_involved_cells(mesh, options)
-    assert set(cell_frac_info.cell_to_faces.keys()) == {0, 1, 2, 3, 4, 5, 7, 8}
-    assert len(cell_frac_info.field_data) == 5
-    assert numpy.array_equal(node_frac_info.is_internal_fracture_node,
+    frac = find_involved_cells(mesh, options)
+    assert set(frac.cell_to_faces.keys()) == {0, 1, 2, 3, 4, 5, 7, 8}
+    assert numpy.array_equal(frac.is_internal_fracture_node,
                              numpy.array(([0, 1, 1, 0, 1, 1, 1, 0] + [0, 0, 1, 0] * 2) * 2, dtype=bool))
 
     connected_cells = __color_fracture_sides(mesh,
-                                             cell_frac_info.cell_to_faces,
-                                             node_frac_info.is_boundary_fracture_node)
+                                             frac.cell_to_faces,
+                                             frac.is_boundary_fracture_node)
     cc = set(map(frozenset, connected_cells))
     assert cc == {frozenset({0}), frozenset({1, 3, 4, 7}), frozenset({2, 5, 8})}
 
