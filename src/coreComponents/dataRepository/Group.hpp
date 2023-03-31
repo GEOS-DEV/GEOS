@@ -166,12 +166,12 @@ public:
   string dumpInputOptions() const;
 
   /**
-   * @brief @return a comma separated string containing all children name.
+   * @brief @return a comma separated string containing all sub groups name.
    */
-  string dumpChildrenNames() const;
+  string dumpSubGroupsNames() const;
 
   /**
-   * @brief @return a comma separated string containing all children name.
+   * @brief @return a comma separated string containing all wrappers name.
    */
   string dumpWrappersNames() const;
 
@@ -333,10 +333,12 @@ public:
   T & getGroup( KEY const & key )
   {
     Group * const child = m_subGroups[ key ];
-    GEOSX_THROW_IF( child == nullptr,
-                    "Group " << getPath() << " has no child named " << key << std::endl <<
-                    ( numSubGroups()>0 ? "The children of " + getName() + " are: " + dumpChildrenNames() : getName() + " has no children." ),
-                    std::domain_error );
+    if( child == nullptr )
+    {
+      GEOSX_THROW( "Group " << getPath() << " has no child named " << key << std::endl <<
+                   dumpSubGroupsNames(),
+                   std::domain_error );
+    }
     return dynamicCast< T & >( *child );
   }
 
@@ -347,10 +349,12 @@ public:
   T const & getGroup( KEY const & key ) const
   {
     Group const * const child = m_subGroups[ key ];
-    GEOSX_THROW_IF( child == nullptr,
-                    "Group " << getPath() << " has no child named " << key << std::endl <<
-                    ( numSubGroups()>0 ? "The children of " + getName() + " are: " + dumpChildrenNames() : getName() + " has no children." ),
-                    std::domain_error );
+    if( child == nullptr )
+    {
+      GEOSX_THROW( "Group " << getPath() << " has no child named " << key << std::endl <<
+                   dumpSubGroupsNames(),
+                   std::domain_error );
+    }
     return dynamicCast< T const & >( *child );
   }
 
@@ -395,6 +399,11 @@ public:
    * @return number of sub groups in this Group
    */
   localIndex numSubGroups() const { return m_subGroups.size(); }
+
+  /**
+   * @return An array containing all sub groups keys
+   */
+  std::vector< string > getSubGroupsNames() const;
 
   /**
    * @brief Check whether a sub-group exists.
@@ -1063,10 +1072,12 @@ public:
   WrapperBase const & getWrapperBase( KEY const & key ) const
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
-    GEOSX_THROW_IF( wrapper == nullptr,
-                    "Group " << getPath() << " has no wrapper named " << key << std::endl <<
-                    ( numWrappers()>0 ? "The wrappers of " + getName() + " are: " + dumpWrappersNames() : getName() + " has no wrappers." ),
-                    std::domain_error );
+    if( wrapper == nullptr )
+    {
+      GEOSX_THROW( "Group " << getPath() << " has no wrapper named " << key << std::endl <<
+                   dumpWrappersNames(),
+                   std::domain_error );
+    }
     return *wrapper;
   }
 
@@ -1077,10 +1088,12 @@ public:
   WrapperBase & getWrapperBase( KEY const & key )
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
-    GEOSX_THROW_IF( wrapper == nullptr,
-                    "Group " << getPath() << " has no wrapper named " << key << std::endl <<
-                    ( numSubGroups()>0 ? "The wrappers of " + getName() + " are: " + dumpWrappersNames() : getName() + " has no wrappers." ),
-                    std::domain_error );
+    if( wrapper == nullptr )
+    {
+      GEOSX_THROW( "Group " << getPath() << " has no wrapper named " << key << std::endl <<
+                   dumpWrappersNames(),
+                   std::domain_error );
+    }
     return *wrapper;
   }
 
@@ -1111,6 +1124,11 @@ public:
    */
   indexType numWrappers() const
   { return m_wrappers.size(); }
+
+  /**
+   * @return An array containing all wrappers keys
+   */
+  std::vector< string > getWrappersNames() const;
 
   ///@}
 

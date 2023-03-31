@@ -267,18 +267,30 @@ string Group::dumpInputOptions() const
   return rval;
 }
 
-string Group::dumpChildrenNames() const
+string Group::dumpSubGroupsNames() const
 {
-  std::vector< string > children;
-  forSubGroups( [&]( Group const & subGroup ){ children.push_back( subGroup.getName() ); } );
-  return "{ " + stringutilities::join( children, ", " ) + " }";
+  if( numSubGroups() == 0 )
+  {
+    return getName() + " has no children.";
+  }
+  else
+  {
+    return "The children of " + getName() + " are: " +
+           "{ " + stringutilities::join( getSubGroupsNames(), ", " ) + " }";
+  }
 }
 
 string Group::dumpWrappersNames() const
 {
-  std::vector< string > wrappers;
-  forWrappers( [&]( WrapperBase const & wrapper ){ wrappers.push_back( wrapper.getName() ); } );
-  return "{ " + stringutilities::join( wrappers, ", " ) + " }";
+  if( numWrappers() == 0 )
+  {
+    return getName() + " has no wrappers.";
+  }
+  else
+  {
+    return "The wrappers of " + getName() + " are: " +
+           "{ " + stringutilities::join( getWrappersNames(), ", " ) + " }";
+  }
 }
 
 void Group::deregisterGroup( string const & name )
@@ -665,6 +677,22 @@ localIndex Group::getSubGroupIndex( keyType const & key ) const
 PyTypeObject * Group::getPythonType() const
 { return geosx::python::getPyGroupType(); }
 #endif
+
+std::vector< string > Group::getSubGroupsNames() const
+{
+  std::vector< string > childrenNames;
+  childrenNames.reserve( numSubGroups() );
+  forSubGroups( [&]( Group const & subGroup ){ childrenNames.push_back( subGroup.getName() ); } );
+  return childrenNames;
+}
+
+std::vector< string > Group::getWrappersNames() const
+{
+  std::vector< string > wrappersNames;
+  wrappersNames.reserve( numWrappers() );
+  forWrappers( [&]( WrapperBase const & wrapper ){ wrappersNames.push_back( wrapper.getName() ); } );
+  return wrappersNames;
+}
 
 } /* end namespace dataRepository */
 } /* end namespace geosx  */

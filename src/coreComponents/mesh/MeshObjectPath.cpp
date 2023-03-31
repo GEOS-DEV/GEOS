@@ -200,7 +200,7 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
   } );
 
   GEOSX_THROW_IF( namesInRepository.empty(),
-                  GEOSX_FMT( "{1} doesn't have any children.", parentGroup.getName()),
+                  GEOSX_FMT( "{0} doesn't have any children.", parentGroup.getName()),
                   InputError );
 
   for( string const & inputEntry : stringutilities::tokenize( pathToken, " " ) )
@@ -221,10 +221,10 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
       }
     }
     GEOSX_THROW_IF( !foundMatch,
-                    GEOSX_FMT( "{1} doesn't have a child named {0}.\n"
-                               "{1} have the following children: {{ {2} }}",
-                               inputEntry,
+                    GEOSX_FMT( "{0} doesn't have a child named {1}.\n"
+                               "{0} have the following children: {{ {2} }}",
                                parentGroup.getName(),
+                               inputEntry,
                                stringutilities::join( namesInRepository, ", " ) ),
                     InputError );
   }

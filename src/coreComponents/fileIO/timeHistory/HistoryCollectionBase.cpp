@@ -191,14 +191,11 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           }
           else
           {
-            string targetTokensStr=stringutilities::join( targetTokens.begin(),
-                                                          targetTokens.begin()+pathLevel,
-                                                          '/' );
+            string const targetTokensStr = stringutilities::join( targetTokens.begin(),
+                                                                  targetTokens.begin()+pathLevel,
+                                                                  '/' );
             GEOSX_THROW( targetTokens[pathLevel] << " not found in path " <<
-                         objectPath << std::endl <<
-                         ( targetGroup->numSubGroups()>0 ?
-                           "Children available in " + targetTokensStr + ": " + targetGroup->dumpChildrenNames() :
-                           "No Children available in " + targetTokensStr ),
+                         objectPath << std::endl << targetGroup->dumpSubGroupsNames(),
                          std::domain_error );
           }
         }
