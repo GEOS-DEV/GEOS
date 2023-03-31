@@ -15,18 +15,20 @@ import numpy
 
 from vtkmodules.vtkCommonCore import (
     vtkIdList,
-    vtkIntArray,
     vtkPoints,
 )
 from vtkmodules.vtkCommonDataModel import (
     vtkCellArray,
+    vtkPolygon,
     vtkUnstructuredGrid,
+    VTK_POLYGON,
 )
 from vtkmodules.vtkFiltersGeometry import (
     vtkMarkBoundaryFilter,
 )
 from vtk.util.numpy_support import (
     vtk_to_numpy,
+    numpy_to_vtk,
 )
 
 import networkx
@@ -45,6 +47,7 @@ class Options:
     field_values: FrozenSet[int]
     split_on_domain_boundary: bool
     vtk_output: VtkOutput
+    vtk_fracture_output: VtkOutput
 
 
 @dataclass(frozen=True)
@@ -196,6 +199,49 @@ class FractureInfo:
         self.cell_to_faces: Dict[int, Iterable[int]] = cell_frac_info.cell_to_faces
         self.is_boundary_fracture_node: Sequence[bool] = node_frac_info.is_boundary_fracture_node
         self.is_internal_fracture_node: Sequence[bool] = node_frac_info.is_internal_fracture_node
+        self.__face_nodes: Iterable[Collection[int]] = None
+        self.__nodes: Collection[int] = None
+
+    @property
+    def face_nodes(self) -> Iterable[Collection[int]]:
+        """
+        For each face, the nodes that make the face.
+        The nodes numbering is the main mesh numbering.
+        """
+        if self.__face_nodes:
+            return self.__face_nodes
+        tmp = []
+        for c, fs in self.cell_to_faces.items():
+            cell = self.__mesh.GetCell(c)
+            for f in fs:
+                face = cell.GetFace(f)
+                point_ids = face.GetPointIds()
+                tmp.append(tuple(vtk_iter(point_ids)))
+        # The order of the nodes is important and must be kept, but the nodes may appear in different orders.
+        # So we must find a quick & dirty removal of those "duplicates".
+        result = []
+        inserted = set()
+        for pids in tmp:
+            h = frozenset(pids)
+            if h not in inserted:
+                inserted.add(h)
+                result.append(pids)
+        self.__face_nodes = tuple(result)
+        return self.__face_nodes
+
+    @property
+    def nodes(self) -> Collection[int]:
+        """
+        Returns all the nodes of the fractures.
+        The nodes numbering is the main mesh numbering.
+        """
+        if self.__nodes:
+            return self.__nodes
+        all_nodes = set((n for ns in self.face_nodes for n in ns))
+        self.__nodes = numpy.empty(len(all_nodes), dtype=int)
+        for i, n in enumerate(all_nodes):
+            self.__nodes[i] = n
+        return self.__nodes
 
 
 @dataclass(frozen=True)
@@ -206,6 +252,9 @@ class DuplicatedNodesInfo:
     # For each original node that has been duplicated (or more) as the key,
     # gets all the new numberings of the nodes.
     duplicated_nodes: Dict[int, Collection[int]]
+
+    def max_duplicated_nodes(self):
+        return max((len(ns) for ns in self.duplicated_nodes.values()))
 
 
 def __duplicate_fracture_nodes(mesh: vtkUnstructuredGrid,
@@ -440,9 +489,43 @@ def __find_boundary_nodes(mesh: vtkUnstructuredGrid) -> Sequence[int]:
     return vtk_to_numpy(is_boundary_point)
 
 
+def __generate_fracture_mesh(mesh: vtkUnstructuredGrid,
+                             fracture_info: FractureInfo,
+                             duplicated_nodes_info: DuplicatedNodesInfo) -> vtkUnstructuredGrid:
+    fracture_nodes = fracture_info.nodes
+    num_points = len(fracture_nodes)
+
+    points = vtkPoints()
+    points.SetNumberOfPoints(num_points)
+    tmp = {}  # Building the node mapping, from 3d mesh to 2d fracture.
+    for i, n in enumerate(fracture_nodes):
+        coords = mesh.GetPoint(n)
+        points.SetPoint(i, coords)
+        tmp[n] = i
+
+    polygons = vtkCellArray()
+    for ns in fracture_info.face_nodes:
+        polygon = vtkPolygon()
+        polygon.GetPointIds().SetNumberOfIds(len(ns))
+        for i, n in enumerate(ns):
+            polygon.GetPointIds().SetId(i, tmp[n])
+        polygons.InsertNextCell(polygon)
+
+    field = numpy.ones((num_points, duplicated_nodes_info.max_duplicated_nodes()), dtype=int) * -1
+    for i, n in enumerate(fracture_nodes):
+        for j, m in enumerate(duplicated_nodes_info.duplicated_nodes[n]):
+            field[i, j] = m
+    array = numpy_to_vtk(field)
+    array.SetName("duplicated_nodes")
+
+    fracture_mesh = vtkUnstructuredGrid()  # We could be using vtkPolyData, but it's note support by GEOSX for now.
+    fracture_mesh.SetPoints(points)
+    fracture_mesh.SetCells([VTK_POLYGON] * polygons.GetNumberOfCells(), polygons)
+    fracture_mesh.GetPointData().AddArray(array)
+    return fracture_mesh
 
 
-def __split_mesh_on_fracture(mesh, options: Options) -> vtkUnstructuredGrid:
+def __split_mesh_on_fracture(mesh, options: Options) -> Tuple[vtkUnstructuredGrid, vtkUnstructuredGrid]:
     fracture_info: FractureInfo = FractureInfo(mesh, options)
     connected_cells = __color_fracture_sides(mesh,
                                              fracture_info.cell_to_faces,
@@ -451,12 +534,14 @@ def __split_mesh_on_fracture(mesh, options: Options) -> vtkUnstructuredGrid:
                                                                     connected_cells,
                                                                     fracture_info.is_internal_fracture_node)
     __copy_fields(mesh, output_mesh, duplicated_nodes_info)
-    return output_mesh
+    fracture_mesh = __generate_fracture_mesh(mesh, fracture_info, duplicated_nodes_info)
+    return output_mesh, fracture_mesh
 
 
 def __check(mesh, options: Options) -> Result:
-    output_mesh = __split_mesh_on_fracture(mesh, options)
+    output_mesh, fracture_mesh = __split_mesh_on_fracture(mesh, options)
     vtk_utils.write_mesh(output_mesh, options.vtk_output)
+    vtk_utils.write_mesh(fracture_mesh, options.vtk_fracture_output)
     # TODO provide statistics about what was actually performed (size of the fracture, number of split nodes...).
     return Result(info="OK")
 

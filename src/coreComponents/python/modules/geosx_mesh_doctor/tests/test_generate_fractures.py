@@ -5,7 +5,7 @@ from vtk.util.numpy_support import (
     vtk_to_numpy,
 )
 
-from checks.generate_fractures import Options, __split_mesh_on_fracture, find_involved_cells, __color_fracture_sides
+from checks.generate_fractures import Options, __split_mesh_on_fracture, find_involved_cells, __color_fracture_sides, vtk_utils
 from test_utils import (
     build_rectilinear_blocks_mesh,
     XYZ,
@@ -27,6 +27,7 @@ def test_generate_fracture():
                       field="attribute",
                       field_values={0, 1, 2},
                       vtk_output=None,
+                      vtk_fracture_output=None,
                       split_on_domain_boundary=True)
     cell_frac_info, node_frac_info = find_involved_cells(mesh, options)
     assert set(cell_frac_info.cell_to_faces.keys()) == {0, 1, 2, 3, 4, 5, 7, 8}
@@ -40,9 +41,14 @@ def test_generate_fracture():
     cc = set(map(frozenset, connected_cells))
     assert cc == {frozenset({0}), frozenset({1, 3, 4, 7}), frozenset({2, 5, 8})}
 
-    output_mesh = __split_mesh_on_fracture(mesh, options)
+    output_mesh, fracture_mesh = __split_mesh_on_fracture(mesh, options)
     assert mesh.GetNumberOfCells() == output_mesh.GetNumberOfCells()
     assert mesh.GetNumberOfPoints() + 6 + 8 == output_mesh.GetNumberOfPoints()
+    assert fracture_mesh.GetNumberOfCells() == 5
+    assert fracture_mesh.GetNumberOfPoints() == 6 + 8
+    dup = fracture_mesh.GetPointData().GetArray("duplicated_nodes")
+    assert dup.GetNumberOfComponents() == 2
+    assert dup.GetNumberOfTuples() == fracture_mesh.GetNumberOfPoints()
 
     cell_data = output_mesh.GetCellData()
     assert cell_data.HasArray("attribute")
