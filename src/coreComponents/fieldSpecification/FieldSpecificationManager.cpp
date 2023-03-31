@@ -84,6 +84,14 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       isTargetSetCreated[setNames[i]] = 0;
     }
 
+    // We have to make sure that the meshLevel is in the target of the boundary conditions
+    // This is important for multi-level simulations, such as high-order wave propagation
+    MeshObjectPath const & objectPath = fs.getMeshObjectPaths();
+    if( !objectPath.containsMeshLevel( mesh ) )
+    {
+      return;
+    }
+
     // Step 2: apply the boundary condition
 
     fs.apply< dataRepository::Group >( mesh,
@@ -153,18 +161,10 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       }
     }
 
-    // the flag is to handle the high-order cases in multi-level meshes 
-    // the assumption is that the mesh object path is defined as for example "mesh/FE2/..."
-    // and check if the name of the mesh-level is contained in such string of the objectPath
-    bool meshlevelcheckflag =  ( ( mesh.getName() == MeshBody::groupStructKeys::baseDiscretizationString() ) 
-                                   && ( fs.getObjectPath().find("mesh") == std::string::npos ) ) 
-                               || ( ( mesh.getName() != MeshBody::groupStructKeys::baseDiscretizationString() ) 
-                                      && ( fs.getObjectPath().find(mesh.getName()) != std::string::npos ) && fs.initialCondition() ); 
-
     // Step 4: issue an error or a warning if the field was not found
 
     // if all sets are missing, we stop the simulation.
-    if( areAllSetsMissing && meshlevelcheckflag )
+    if( areAllSetsMissing )
     {
       // loop again over the map to collect the set names
       array1d< string > missingSetNames;
@@ -181,7 +181,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     // ideally we would just stop the simulation, but the SurfaceGenerator relies on this behavior
     for( auto const & mapEntry : isTargetSetEmpty )
     {
-      GEOSX_LOG_RANK_0_IF( ( mapEntry.second == 1 ) && meshlevelcheckflag, // target set is empty
+      GEOSX_LOG_RANK_0_IF( ( mapEntry.second == 1 ), // target set is empty
                            GEOSX_FMT( "\nWarning!"
                                       "\n{}: this FieldSpecification targets (an) empty set(s)"
                                       "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
@@ -189,7 +189,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                       fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath() ) );
     }
 
-    if ( ( isFieldNameFound == 0 ) && meshlevelcheckflag )
+    if( isFieldNameFound == 0 )
     {
       char const fieldNameNotFoundMessage[] =
         "\n{}: there is no {} named `{}` under the {} `{}`, check the XML input\n";
