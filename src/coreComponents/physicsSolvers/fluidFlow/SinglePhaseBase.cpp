@@ -1162,7 +1162,17 @@ void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
     {
-      saveConvergedState( subRegion );
+      arrayView1d< real64 > const pres = subRegion.template getField< fields::flow::pressure >();
+      arrayView1d< real64 const > const pres_n = subRegion.template getField< fields::flow::pressure_n >();
+      pres.setValues< parallelDevicePolicy<> >( pres_n );
+
+      if( m_isThermal )
+      {
+        arrayView1d< real64 > const temp = subRegion.template getField< fields::flow::temperature >();
+        arrayView1d< real64 const > const temp_n = subRegion.template getField< fields::flow::temperature_n >();
+        temp.setValues< parallelDevicePolicy<> >( temp_n );
+      }
+
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
 
