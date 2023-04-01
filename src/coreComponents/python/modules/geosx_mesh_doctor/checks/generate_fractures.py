@@ -61,21 +61,13 @@ class FractureNodesInfo:
     is_boundary_fracture_node: Sequence[bool]
 
 
-
-@dataclass(frozen=True)
-class FractureTmp:
-    cell_to_faces: Dict[int, Iterable[int]]
-    is_internal_fracture_node: Sequence[bool]
-    is_boundary_fracture_node: Sequence[bool]
-
-
-def __build_fracture_nodes(mesh: vtkUnstructuredGrid,
-                           cell_to_faces: Dict[int, Iterable[int]],
-                           split_on_domain_boundary: bool) -> FractureNodesInfo:
+def build_fracture_nodes(mesh: vtkUnstructuredGrid,
+                         cell_to_faces: Dict[int, Iterable[int]],
+                         split_on_domain_boundary: bool) -> FractureNodesInfo:
     """
-    Given the description of the fracture in @p cell_frac_info, computes the underlying nodes.
+    Given the description of the fracture in @p cell_to_faces, computes the underlying nodes.
     :param mesh: the vtk unstructured mesh
-    :param cell_frac_info: The geometrical mesh description of the fracture.
+    :param cell_to_faces: Cell (3d mesh numbering) to faces (index is local to the cell: 0-3 for a tet).
     :param split_on_domain_boundary: If a fracture touches the boundary of the domain, what should we do?
     :return: The fracture nodes information.
     """
@@ -134,7 +126,9 @@ def __build_fracture_nodes(mesh: vtkUnstructuredGrid,
                              is_boundary_fracture_node=is_boundary_fracture_node)
 
 
-def find_involved_cells(mesh: vtkUnstructuredGrid, options: Options) -> FractureTmp:
+def find_involved_cells(mesh: vtkUnstructuredGrid,
+                        field: str,
+                        field_values: FrozenSet[int]) -> Dict[int, Iterable[int]]:
     """
     To do the split, we need to find
         - all the cells that are touching the fracture,
@@ -144,10 +138,10 @@ def find_involved_cells(mesh: vtkUnstructuredGrid, options: Options) -> Fracture
     But a choice needs to be made when we are at the boundary of the simulation domain.
     """
     cell_data = mesh.GetCellData()
-    if cell_data.HasArray(options.field):
-        f = vtk_to_numpy(cell_data.GetArray(options.field))
+    if cell_data.HasArray(field):
+        f = vtk_to_numpy(cell_data.GetArray(field))
     else:
-        raise ValueError(f"Cell field {options.field} does not exist in mesh, nothing done")
+        raise ValueError(f"Cell field {field} does not exist in mesh, nothing done")
 
     cells_to_faces = defaultdict(list)
     is_fracture_node = numpy.zeros(mesh.GetNumberOfPoints(), dtype=bool)    # all False
@@ -157,7 +151,7 @@ def find_involved_cells(mesh: vtkUnstructuredGrid, options: Options) -> Fracture
     # we store the cell and its local face index: this is indeed part of the surface that we'll need to be split.
     neighbor_cell_ids = vtkIdList()
     for cell_id in range(mesh.GetNumberOfCells()):
-        if f[cell_id] not in options.field_values:    # No need to consider a cell if its field value is not in the target range.
+        if f[cell_id] not in field_values:    # No need to consider a cell if its field value is not in the target range.
             continue
         cell = mesh.GetCell(cell_id)
         for i in range(cell.GetNumberOfFaces()):
@@ -166,29 +160,20 @@ def find_involved_cells(mesh: vtkUnstructuredGrid, options: Options) -> Fracture
             assert neighbor_cell_ids.GetNumberOfIds() < 2
             for j in range(neighbor_cell_ids.GetNumberOfIds()):    # It's 0 or 1...
                 neighbor_cell_id = neighbor_cell_ids.GetId(j)
-                if f[neighbor_cell_id] != f[cell_id] and f[neighbor_cell_id] in options.field_values:
+                if f[neighbor_cell_id] != f[cell_id] and f[neighbor_cell_id] in field_values:
                     cells_to_faces[cell_id].append(i)
                     for k in range(face.GetNumberOfPoints()):
                         is_fracture_node[face.GetPointId(k)] = True
-
-    logging.warning("The fracture split feature is still work in progress.")
-    node_frac_info: FractureNodesInfo = __build_fracture_nodes(mesh, cells_to_faces, options.split_on_domain_boundary)
-    # TODO what should happen if the fracture face of a cell is not to be split at all?
-
-    logging.warning(cells_to_faces)
-    logging.warning(node_frac_info)
-    return FractureTmp(cell_to_faces=cells_to_faces,
-                       is_internal_fracture_node=node_frac_info.is_internal_fracture_node,
-                       is_boundary_fracture_node=node_frac_info.is_boundary_fracture_node)
+    return cells_to_faces
 
 
 class FractureInfo:
     def __init__(self, mesh: vtkUnstructuredGrid, options: Options):
         self.__mesh = mesh  # The original (non-split) mesh
-        tmp = find_involved_cells(self.__mesh, options)
-        self.cell_to_faces: Dict[int, Iterable[int]] = tmp.cell_to_faces
-        self.is_boundary_fracture_node: Sequence[bool] = tmp.is_boundary_fracture_node
-        self.is_internal_fracture_node: Sequence[bool] = tmp.is_internal_fracture_node
+        self.cell_to_faces: Dict[int, Iterable[int]] = find_involved_cells(self.__mesh, options.field, options.field_values)
+        node_frac_info = build_fracture_nodes(mesh, self.cell_to_faces, options.split_on_domain_boundary)
+        self.is_boundary_fracture_node: Sequence[bool] = node_frac_info.is_boundary_fracture_node
+        self.is_internal_fracture_node: Sequence[bool] = node_frac_info.is_internal_fracture_node
         self.__face_nodes: Iterable[Collection[int]] = ()
         self.__nodes: Collection[int] = ()
 
@@ -419,7 +404,8 @@ def __copy_fields(input_mesh: vtkUnstructuredGrid, output_mesh: vtkUnstructuredG
         output_mesh.GetPointData().AddArray(tmp)
 
 
-def __color_fracture_sides(mesh: vtkUnstructuredGrid, cell_to_faces:  Dict[int, Iterable[int]],
+def __color_fracture_sides(mesh: vtkUnstructuredGrid,
+                           cell_to_faces:  Dict[int, Iterable[int]],
                            is_boundary_fracture_node: Sequence[bool]) -> Iterable[Iterable[int]]:
     """
     Given all the cells that are in contact with the detected fracture,
@@ -516,15 +502,15 @@ def __generate_fracture_mesh(mesh: vtkUnstructuredGrid,
 
 
 def __split_mesh_on_fracture(mesh, options: Options) -> Tuple[vtkUnstructuredGrid, vtkUnstructuredGrid]:
-    fracture_info: FractureInfo = FractureInfo(mesh, options)
+    fracture: FractureInfo = FractureInfo(mesh, options)
     connected_cells = __color_fracture_sides(mesh,
-                                             fracture_info.cell_to_faces,
-                                             fracture_info.is_boundary_fracture_node)
+                                             fracture.cell_to_faces,
+                                             fracture.is_boundary_fracture_node)
     output_mesh, duplicated_nodes_info = __duplicate_fracture_nodes(mesh,
                                                                     connected_cells,
-                                                                    fracture_info.is_internal_fracture_node)
+                                                                    fracture.is_internal_fracture_node)
     __copy_fields(mesh, output_mesh, duplicated_nodes_info)
-    fracture_mesh = __generate_fracture_mesh(mesh, fracture_info, duplicated_nodes_info)
+    fracture_mesh = __generate_fracture_mesh(mesh, fracture, duplicated_nodes_info)
     return output_mesh, fracture_mesh
 
 

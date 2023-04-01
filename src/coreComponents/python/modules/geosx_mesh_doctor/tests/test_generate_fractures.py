@@ -5,7 +5,7 @@ from vtk.util.numpy_support import (
     vtk_to_numpy,
 )
 
-from checks.generate_fractures import Options, __split_mesh_on_fracture, find_involved_cells, __color_fracture_sides, vtk_utils
+from checks.generate_fractures import Options, __split_mesh_on_fracture, __color_fracture_sides, vtk_utils, FractureInfo
 from test_utils import (
     build_rectilinear_blocks_mesh,
     XYZ,
@@ -29,7 +29,7 @@ def test_generate_fracture():
                       vtk_output=None,
                       vtk_fracture_output=None,
                       split_on_domain_boundary=True)
-    frac = find_involved_cells(mesh, options)
+    frac = FractureInfo(mesh, options)
     assert set(frac.cell_to_faces.keys()) == {0, 1, 2, 3, 4, 5, 7, 8}
     assert numpy.array_equal(frac.is_internal_fracture_node,
                              numpy.array(([0, 1, 1, 0, 1, 1, 1, 0] + [0, 0, 1, 0] * 2) * 2, dtype=bool))
