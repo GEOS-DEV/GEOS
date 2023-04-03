@@ -355,6 +355,13 @@ public:
 
   template< int qa, int qb, int qc >
   GEOSX_HOST_DEVICE
+  static void parentGradient2( real64 const (&var1)[numNodes][3],
+                               real64 const (&var2)[numNodes],
+                               real64 ( &grad1 )[3][3],
+                               real64 ( &grad2 )[3] );
+
+  template< int qa, int qb, int qc >
+  GEOSX_HOST_DEVICE
   static void parentGradient( real64 const (&var1)[numNodes][3],
                               real64 ( &grad1 )[3][3] );
 
@@ -395,7 +402,17 @@ public:
                               real64 const (&var)[6],
                               real64 ( &R )[numNodes][3] );
 
+  template< int qa, int qb, int qc >
+  GEOSX_HOST_DEVICE
+  static void plusGradNajAij( real64 const (&invJ)[3][3],
+                              real64 const (&var)[3][3],
+                              real64 ( &R )[numNodes][3] );
 
+  template< int qa, int qb, int qc >
+  GEOSX_HOST_DEVICE
+  static void plusGradNajAij( real64 const (&invJ)[3][3],
+                              real64 const (&var)[3],
+                              real64 ( &R )[numNodes] );
   /**
    * @brief Calculates the isoparametric "Jacobian" transformation
    *   matrix/mapping from the parent space to the physical space.
@@ -912,6 +929,64 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( real64 const (&invJ
   }, fullVar, R );
 }
 
+template< int qa, int qb, int qc >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( real64 const (&invJ)[3][3],
+                                                             real64 const (&var)[3][3],
+                                                             real64 (& R)[numNodes][3] )
+{
+  real64 const fullVar[3][3] = 
+  {
+    { invJ[0][0] * var[0][0] + invJ[1][0] * var[1][0] + invJ[2][0] * var[2][0],
+      invJ[0][1] * var[0][0] + invJ[1][1] * var[1][0] + invJ[2][1] * var[2][0],
+      invJ[0][2] * var[0][0] + invJ[1][2] * var[1][0] + invJ[2][2] * var[2][0]},
+    { invJ[0][0] * var[0][1] + invJ[1][0] * var[1][1] + invJ[2][0] * var[2][1],
+      invJ[0][1] * var[0][1] + invJ[1][1] * var[1][1] + invJ[2][1] * var[2][1],
+      invJ[0][2] * var[0][1] + invJ[1][2] * var[1][1] + invJ[2][2] * var[2][1]},
+    { invJ[0][0] * var[0][2] + invJ[1][0] * var[1][2] + invJ[2][0] * var[2][2],
+      invJ[0][1] * var[0][2] + invJ[1][1] * var[1][2] + invJ[2][1] * var[2][2],
+      invJ[0][2] * var[0][2] + invJ[1][2] * var[1][2] + invJ[2][2] * var[2][2]}
+  };
+
+  supportLoop< qa, qb, qc > (
+               [] GEOSX_HOST_DEVICE
+                 ( real64 const (&dNdXi)[3],
+                 int const nodeIndex,
+                 real64 const (&var)[3][3],
+                 real64 (& R)[numNodes][3] )
+  {
+    R[ nodeIndex ][ 0 ] = R[ nodeIndex ][ 0 ] + var[ 0 ][ 0 ] * dNdXi[ 0 ] + var[ 0 ][ 1 ] * dNdXi[ 1 ] + var[ 0 ][ 2 ] * dNdXi[ 2 ];
+    R[ nodeIndex ][ 1 ] = R[ nodeIndex ][ 1 ] + var[ 1 ][ 0 ] * dNdXi[ 0 ] + var[ 1 ][ 1 ] * dNdXi[ 1 ] + var[ 1 ][ 2 ] * dNdXi[ 2 ];
+    R[ nodeIndex ][ 2 ] = R[ nodeIndex ][ 2 ] + var[ 2 ][ 0 ] * dNdXi[ 0 ] + var[ 2 ][ 1 ] * dNdXi[ 1 ] + var[ 2 ][ 2 ] * dNdXi[ 2 ];
+  }, fullVar, R );
+}
+
+template< int qa, int qb, int qc >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( real64 const (&invJ)[3][3],
+                                                             real64 const (&var)[3],
+                                                             real64 (& R)[numNodes] )
+{
+  real64 const fullVar[3] = 
+  {
+    invJ[0][0] * var[0] + invJ[1][0] * var[1] + invJ[2][0] * var[2],
+    invJ[0][1] * var[0] + invJ[1][1] * var[1] + invJ[2][1] * var[2],
+    invJ[0][2] * var[0] + invJ[1][2] * var[1] + invJ[2][2] * var[2]
+  };
+
+  supportLoop< qa, qb, qc > (
+               [] GEOSX_HOST_DEVICE
+                 ( real64 const (&dNdXi)[3],
+                 int const nodeIndex,
+                 real64 const (&var)[3],
+                 real64 (& R)[numNodes] )
+  {
+    R[ nodeIndex ] = R[ nodeIndex ] + var[ 0 ] * dNdXi[ 0 ] + var[ 1 ] * dNdXi[ 1 ] + var[ 2 ] * dNdXi[ 2 ];
+  }, fullVar, R );
+}
+
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const qa,
@@ -1012,6 +1087,58 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::parentGradient2( real64 const (&var
     }
   }, var1, var2, grad1, grad2 );
 }
+
+template< int qa, int qb, int qc >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Hexahedron_Lagrange1_GaussLegendre2::parentGradient2( real64 const (&var1)[numNodes][3],
+                                                              real64 const (&var2)[numNodes],
+                                                              real64 ( &grad1 )[3][3],
+                                                              real64 ( &grad2 )[3] )
+{
+  supportLoop<qa,qb,qc>( [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+                                                  int const nodeIndex,
+                                                  real64 const (&var1)[numNodes][3],
+                                                  real64 const (&var2)[numNodes],
+                                                  real64 (& grad1)[3][3],
+                                                  real64 (& grad2)[3] )
+  {
+    #pragma unroll
+    for( int i = 0; i < 3; ++i )
+    {
+      #pragma unroll
+      for( int k = 0; k < 3; ++k )
+      {
+        grad1[k][i] = grad1[k][i] + dNdXi[ i ] * var1[ nodeIndex ][k];
+      }
+      grad2[i] = grad2[i] + dNdXi[ i ] * var2[ nodeIndex ];
+    }
+  }, var1, var2, grad1, grad2 );
+}
+
+// template< int qa, int qb, int qc >
+// GEOSX_HOST_DEVICE
+// GEOSX_FORCE_INLINE
+// void H1_Hexahedron_Lagrange1_GaussLegendre2::parentGradient2( real64 const (&var1)[numNodes],
+//                                                               real64 const (&var2)[numNodes],
+//                                                               real64 ( &grad1 )[3],
+//                                                               real64 ( &grad2 )[3] )
+// {
+//   supportLoop<qa,qb,qc>( [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+//                                                   int const nodeIndex,
+//                                                   real64 const (&var1)[numNodes],
+//                                                   real64 const (&var2)[numNodes],
+//                                                   real64 (& grad1)[3],
+//                                                   real64 (& grad2)[3] )
+//   {
+//     #pragma unroll
+//     for( int i = 0; i < 3; ++i )
+//     {
+//         grad1[i] = grad1[i] + dNdXi[ i ] * var1[ nodeIndex ];
+//         grad2[i] = grad2[i] + dNdXi[ i ] * var2[ nodeIndex ];
+//     }
+//   }, var1, var2, grad1, grad2 );
+// }
 
 template< int qa, int qb, int qc >
 GEOSX_HOST_DEVICE

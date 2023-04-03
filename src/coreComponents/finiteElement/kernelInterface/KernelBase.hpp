@@ -382,6 +382,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
   FaceManager & faceManager = mesh.getFaceManager();
   ElementRegionManager & elementRegionManager = mesh.getElemManager();
 
+  std::cout << "k0" << std::endl;
   // Loop over all sub-regions in regions of type SUBREGION_TYPE, that are listed in the targetRegions array.
   elementRegionManager.forElementSubRegions< SUBREGION_TYPE >( targetRegions,
                                                                [&constitutiveStringName,
@@ -410,6 +411,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       constitutiveRelation = nullConstitutiveModel;
     }
 
+    std::cout << "k1" << std::endl;
     // Call the constitutive dispatch which converts the type of constitutive model into a compile time constant.
     constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::execute( *constitutiveRelation,
                                                                       [&maxResidualContribution,
@@ -423,9 +425,11 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                                                        numElems]
                                                                         ( auto & castedConstitutiveRelation )
     {
+      std::cout << "k1.0: " << finiteElementName << std::endl;
       FiniteElementBase &
       subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );
 
+      std::cout << "k1.1" << std::endl;
       finiteElement::FiniteElementDispatchHandler< SELECTED_FE_TYPES >::dispatch3D( subRegionFE,
                                                                                     [&maxResidualContribution,
                                                                                      &nodeManager,
@@ -437,6 +441,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                                                                      numElems,
                                                                                      &castedConstitutiveRelation] ( auto const finiteElement )
       {
+        std::cout << "k2" << std::endl;
         auto kernel = kernelFactory.createKernel( nodeManager,
                                                   edgeManager,
                                                   faceManager,

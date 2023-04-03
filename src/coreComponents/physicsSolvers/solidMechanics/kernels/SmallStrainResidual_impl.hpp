@@ -310,26 +310,27 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
       {
         gradVar[i][j] = gradVar[i][j] + parentGradVar[i][kk] * invJ[kk][j];
       }
+      gradVar[i][j] *= -detJ;
     }
   }
-  real64 strain[6] = {0};
-  strain[0] = gradVar[0][0];
-  strain[1] = gradVar[1][1];
-  strain[2] = gradVar[2][2];
-  strain[3] = gradVar[2][1] + gradVar[1][2];
-  strain[4] = gradVar[2][0] + gradVar[0][2];
-  strain[5] = gradVar[1][0] + gradVar[0][1];
+  // real64 strain[6] = {0};
+  // strain[0] = gradVar[0][0];
+  // strain[1] = gradVar[1][1];
+  // strain[2] = gradVar[2][2];
+  // strain[3] = gradVar[2][1] + gradVar[1][2];
+  // strain[4] = gradVar[2][0] + gradVar[0][2];
+  // strain[5] = gradVar[1][0] + gradVar[0][1];
 
 
-  real64 stressLocal[ 6 ] = {0};
-  m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, qa+2*qb+4*qc, strain, stressLocal );
+  // real64 stressLocal[ 6 ] = {0};
+  // m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, qa+2*qb+4*qc, strain, stressLocal );
 
-  for( localIndex c = 0; c < 6; ++c )
-  {
-    stressLocal[ c ] *= -detJ;
-  }
+  // for( localIndex c = 0; c < 6; ++c )
+  // {
+  //   stressLocal[ c ] *= -detJ;
+  // }
 
-  FE_TYPE::template plusGradNajAij< qa, qb, qc >( invJ, stressLocal, fLocal );
+  FE_TYPE::template plusGradNajAij< qa, qb, qc >( invJ, gradVar, fLocal );
 
 }
 
