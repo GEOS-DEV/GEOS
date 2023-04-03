@@ -490,7 +490,7 @@ private:
   /**
    * @brief Returns an exception message in which we insert another message.
    */
-  static std::string InsertExMsg( std::string const & originalMsg, std::string const & msgToInsert );
+  std::string InsertExMsg( std::string const & originalMsg, std::string const & msgToInsert );
 };
 
 /**
