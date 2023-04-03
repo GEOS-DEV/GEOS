@@ -149,6 +149,8 @@ public:
 
   Group & getCellBlocks() override;
 
+  Group const & getFaceBlocks() const override;
+
   Group & getFaceBlocks() override;
 
   LineBlockABC const & getLineBlock( string name ) const override;

@@ -33,14 +33,14 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
 CellElementRegion::~CellElementRegion()
 {}
 
-void CellElementRegion::generateMesh( Group & cellBlocks )
+void CellElementRegion::generateMesh( Group const & cellBlocks )
 {
   Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
 
   for( string const & cellBlockName : this->m_cellBlockNames )
   {
     CellElementSubRegion & subRegion = elementSubRegions.registerGroup< CellElementSubRegion >( cellBlockName );
-    CellBlockABC & source = cellBlocks.getGroup< CellBlockABC >( subRegion.getName() );
+    CellBlockABC const & source = cellBlocks.getGroup< CellBlockABC >( subRegion.getName() );
     subRegion.copyFromCellBlock( source );
   }
 }

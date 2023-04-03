@@ -113,7 +113,7 @@ public:
     }
   }
 
-  virtual void generateMesh( Group & cellBlocks ) override;
+  virtual void generateMesh( Group const & cellBlocks ) override;
 
   ///@}
 
