@@ -128,7 +128,7 @@ public:
    * @brief Get the global number of well elements.
    * @return the global number of elements
    */
-  globalIndex getNumElements() const { return m_numElems; }
+  globalIndex numElements() const { return m_numElems; }
 
   /**
    * @brief Getter to the Segment to PolyNode mapping
@@ -140,7 +140,7 @@ public:
    * @brief Get the number of nodes per well element
    * @return the number of nodes per well element
    */
-  globalIndex getNumNodesPerElement() const { return m_numNodesPerElem; }
+  globalIndex numNodesPerElement() const { return m_numNodesPerElem; }
 
   /**
    * @brief Get the Coordinates of the polyline nodes
@@ -205,7 +205,7 @@ public:
    * @brief Get the global number of well nodes.
    * @return the global number of nodes
    */
-  globalIndex getNumNodes() const { return m_numNodes; }
+  globalIndex numNodes() const { return m_numNodes; }
 
   /**
    * @brief Get the physical location of the centers of well elements.
@@ -221,7 +221,7 @@ public:
    * @brief Get the global number of perforations on this well.
    * @return the global number of elements
    */
-  globalIndex getNumPerforations() const { return m_numPerforations; }
+  globalIndex numPerforations() const { return m_numPerforations; }
 
   /**
    * @brief Get the locations of the perforations.

@@ -44,27 +44,27 @@ CellBlockManagerABC & MeshGeneratorBase::generateMesh( Group & parent )
 {
   CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
 
-  generateCellBlockManager( cellBlockManager );
+  fillCellBlockManager( cellBlockManager );
 
-  this->generateWells( cellBlockManager );
+  this->attachWellInfo( cellBlockManager );
 
   return cellBlockManager;
 }
 
-void MeshGeneratorBase::generateWells( CellBlockManager & cellBlockManager )
+void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
 {
   forSubGroups< InternalWellGenerator >( [&]( InternalWellGenerator & wellGen ) {
     LineBlock & lb = cellBlockManager.registerLineBlock( wellGen.getName() );
-    lb.setNumElements( wellGen.getNumElements() );
+    lb.setNumElements( wellGen.numElements() );
     lb.setElemCoords( wellGen.getElemCoords() );
     lb.setNextElemIndex( wellGen.getNextElemIndex() );
     lb.setPrevElemIndices( wellGen.getPrevElemIndices() );
     lb.setElemToNodesMap( wellGen.getElemToNodesMap() );
     lb.setElemVolume( wellGen.getElemVolume() );
     lb.setElementRadius( wellGen.getElementRadius() );
-    lb.setNumNodes( wellGen.getNumNodes() );
+    lb.setNumNodes( wellGen.numNodes() );
     lb.setNodeCoords( wellGen.getNodeCoords() );
-    lb.setNumPerforations( wellGen.getNumPerforations() );
+    lb.setNumPerforations( wellGen.numPerforations() );
     lb.setPerfCoords( wellGen.getPerfCoords() );
     lb.setPerfTransmissibility( wellGen.getPerfTransmissibility() );
     lb.setPerfElemIndex( wellGen.getPerfElemIndex() );

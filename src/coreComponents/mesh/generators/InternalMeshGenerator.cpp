@@ -543,7 +543,7 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
  * @param partition
  * @param domain
  */
-void InternalMeshGenerator::generateCellBlockManager( CellBlockManager & cellBlockManager )
+void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager )
 {
   GEOSX_MARK_FUNCTION;
   PartitionDescriptor partitionDescriptor;

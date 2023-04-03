@@ -71,7 +71,7 @@ public:
 
   /**
    * @brief Set the global indices mapping an element to the previous ones.
-   * @param prevElemId list providing the global indices of the previous elements for each element
+   * @param prevElemIndices list providing the global indices of the previous elements for each element
    */
   void setPrevElemIndices( arrayView1d< arrayView1d< globalIndex const > const > prevElemIndices );
 

@@ -536,7 +536,7 @@ void ProblemManager::generateMesh()
   // setup the base discretizations (hard code this for now)
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
-    CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+    CellBlockManagerABC & cellBlockManager = meshBody.getCellBlockManager();
 
     MeshLevel & baseMesh = meshBody.getBaseDiscretization();
     array1d< string > junk;
@@ -564,7 +564,7 @@ void ProblemManager::generateMesh()
         int const order = feDiscretization->getOrder();
         string const & discretizationName = feDiscretization->getName();
         arrayView1d< string const > const regionNames = discretizationPair.second;
-        CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+        CellBlockManagerABC & cellBlockManager = meshBody.getCellBlockManager();
 
         // create a high order MeshLevel
         if( order > 1 )
@@ -608,7 +608,7 @@ void ProblemManager::generateMesh()
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
 
-    meshBody.deregisterGroup( keys::cellManager );
+    meshBody.deregisterCellBlockManager();
 
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {

@@ -170,6 +170,15 @@ public:
   {
     return this->getGroup< CellBlockManagerABC >( dataRepository::keys::cellManager );
   }
+
+  /**
+   * @brief De register the CellBlockManager from this meshBody
+   */
+  void deregisterCellBlockManager()
+  {
+    this->deregisterGroup( dataRepository::keys::cellManager );
+  }
+
   /**
    * @brief Data repository keys
    */

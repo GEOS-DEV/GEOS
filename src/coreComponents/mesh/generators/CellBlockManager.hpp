@@ -151,8 +151,6 @@ public:
 
   Group & getFaceBlocks() override;
 
-  Group & getLineBlocks() override;
-
   LineBlockABC const & getLineBlock( string name ) const override;
 
   /**
@@ -190,18 +188,27 @@ public:
 
   /**
    * @brief Set a reference to the partition descriptor.
-   * @param The PartitionDescriptor
+   * @param partitionDescriptor The PartitionDescriptor
    */
   void setPartitionDescriptor( PartitionDescriptor const & partitionDescriptor ) { m_partitionDescriptor = partitionDescriptor; }
 
   real64 getGlobalLength() const override { return m_globalLength; }
   /**
    * @brief Setter for the global length
-   * @param the global length
+   * @param globalLength the global length
    */
   void setGlobalLength( real64 globalLength ) { m_globalLength = globalLength; }
 
 private:
+
+  /**
+   * @brief Returns a group containing the well blocks as @p LineBlockABC instances.
+   * @return Mutable reference to the well blocks group.
+   *
+   * @note It should probably be better not to expose a non-const accessor here.
+   */
+  Group & getLineBlocks();
+
 
   struct viewKeyStruct
   {

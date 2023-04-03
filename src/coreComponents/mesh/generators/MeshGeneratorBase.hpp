@@ -105,13 +105,13 @@ public:
   std::map< string, string > getFieldsMapping() const { return m_fieldsMapping; }
 private:
   /**
-   * @brief Generate the cellBlockManager object .
+   * @brief Fill the cellBlockManager object .
    * @param[in] cellBlockManager to fill with the mesh informations
    * @return The global length scale
    */
-  virtual void generateCellBlockManager( CellBlockManager & cellBlockManager ) = 0;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager ) = 0;
 
-  void generateWells( CellBlockManager & cellBlockManager );
+  void attachWellInfo( CellBlockManager & cellBlockManager );
 
 protected:
   /// Mesh to GEOSX field names mapping

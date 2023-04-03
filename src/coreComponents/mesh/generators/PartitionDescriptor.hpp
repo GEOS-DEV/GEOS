@@ -54,15 +54,11 @@ public:
    * @brief Sets the list of metis neighbor list.
    * @param metisNeighborList A reference to the Metis neighbor list.
    */
-  void setMetisNeighborList( std::set< int > const & metisNeighborList ) { m_metisNeighborList = metisNeighborList; }
-
-  /**
-   * @brief Sets the list of metis neighbor list.
-   * @param begin first iterator of the metis neighbor list.
-   * @parma end end iterator indicating the end of the metis neighbor list.
-   */
-  template< class InputIt >
-  void setMetisNeighborList( InputIt begin, InputIt end ) { m_metisNeighborList.insert( begin, end ); }
+  void setMetisNeighborList( std::vector< int > const & metisNeighborList ) {
+    for ( int i : metisNeighborList ) {
+      m_metisNeighborList.insert( i );
+    }
+  }
 
   /**
    * @brief indicate if the partition is described using a spatial partition.
@@ -72,7 +68,7 @@ public:
 
   /**
    * @brief Sets the boolean that indicates if the partition is described using a Metis Neighbor list.
-   * @param A boolean indicating if the parition is described using a spatial partition.
+   * @param hasSpatialPartition a boolean indicating if the parition is described using a spatial partition.
    */
   void setHasSpatialPartition( bool hasSpatialPartition ) { m_hasMetisNeighborList = !hasSpatialPartition; }
 

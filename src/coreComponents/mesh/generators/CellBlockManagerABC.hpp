@@ -102,14 +102,6 @@ public:
   virtual Group & getFaceBlocks() = 0;
 
   /**
-   * @brief Returns a group containing the well blocks as @p LineBlockABC instances.
-   * @return Mutable reference to the well blocks group.
-   *
-   * @note It should probably be better not to expose a non-const accessor here.
-   */
-  virtual Group & getLineBlocks() = 0;
-
-  /**
    * @brief Returns LineBlockABC corresponding to the given identifier
    * @param name the name of the required LineBlockABC
    * @return The LineBlockABC associated with the given name
