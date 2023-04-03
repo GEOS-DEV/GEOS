@@ -405,33 +405,6 @@ public:
                          arrayView1d< real64 const > const & localRhs );
 
   /**
-   * @brief function to assemble the rhs and return its norm
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param domain the domain partition
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param localMatrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param logMessage message output by the function
-   * @return the residual for convergence evaluation
-   *
-   * This function assembles the residual only and returns its norm
-   * This is useful in cases where we don't need to recompute the Jacobian matrix
-   * Use cases include line-search and outer-loop convergence check of sequential schemes
-   *
-   * @note This function can be used as is, but its implementation needs to be revisited to skip the Jacobian assembly
-   */
-  virtual real64
-  assembleResidualOnlyAndCalculateNorm( real64 const & time_n,
-                                        real64 const & dt,
-                                        DomainPartition & domain,
-                                        DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                        ParallelVector & rhs,
-                                        string const logMessage );
-
-
-  /**
    * @brief function to apply a linear system solver to the assembled system.
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param matrix the system matrix

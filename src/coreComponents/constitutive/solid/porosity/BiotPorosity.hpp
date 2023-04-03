@@ -82,13 +82,12 @@ public:
                                                real64 const & deltaPressure,
                                                real64 const & deltaTemperature,
                                                real64 const (&strainIncrement)[6],
-                                               real64 const & thermalExpansionCoefficient,
                                                real64 & dPorosity_dVolStrain,
                                                real64 & dPorosity_dPressure,
                                                real64 & dPorosity_dTemperature ) const
   {
     real64 const biotSkeletonModulusInverse = (m_biotCoefficient[k] - m_referencePorosity[k]) / m_grainBulkModulus;
-    real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * m_biotCoefficient[k];
+    real64 const porosityThermalExpansion = 3 * m_thermalExpansionCoefficient[k] * m_biotCoefficient[k];
 
     real64 const porosity = m_porosity_n[k][q]
                             + m_biotCoefficient[k] * LvArray::tensorOps::symTrace< 3 >( strainIncrement )
@@ -105,16 +104,17 @@ public:
   GEOSX_HOST_DEVICE
   void computePorosity( real64 const & pressure,
                         real64 const & temperature,
+                        real64 const & porosity_n,
+                        real64 const & referencePorosity,
                         real64 & porosity,
                         real64 & dPorosity_dPressure,
                         real64 & dPorosity_dTemperature,
                         real64 const & biotCoefficient,
                         real64 const & thermalExpansionCoefficient,
                         real64 const & meanStressIncrement,
-                        real64 const & bulkModulus,
-                        real64 const & porosity_n ) const
+                        real64 const & bulkModulus ) const
   {
-    real64 const biotSkeletonModulusInverse = (biotCoefficient - porosity_n) / m_grainBulkModulus;
+    real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / m_grainBulkModulus;
     real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * biotCoefficient;
 
     porosity = porosity_n + biotSkeletonModulusInverse * pressure + biotCoefficient * biotCoefficient / bulkModulus * pressure
@@ -138,14 +138,15 @@ public:
 
     computePorosity( deltaPressure,
                      deltaTemperature,
+                     m_porosity_n[k][q],
+                     m_referencePorosity[k],
                      m_newPorosity[k][q],
                      m_dPorosity_dPressure[k][q],
                      m_dPorosity_dTemperature[k][q],
                      m_biotCoefficient[k],
                      m_thermalExpansionCoefficient[k],
                      m_meanStressIncrement[k][q],
-                     m_bulkModulus[k],
-                     m_porosity_n[k][q] );
+                     m_bulkModulus[k] );
   }
 
   GEOSX_HOST_DEVICE

@@ -464,21 +464,45 @@ protected:
       {
         GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "  Iteration {:2}: outer-loop convergence check", iter+1 ) );
         real64 residualNorm = 0;
+
+        // loop over all the single-physics solvers
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
+
+          solver->getLocalMatrix().toViewConstSizes().zero();
+          solver->getSystemRhs().zero();
+          arrayView1d< real64 > const localRhs = solver->getSystemRhs().open();
+
+          // for each solver, we have to recompute the residual (and Jacobian, although not necessary)
+          solver->assembleSystem( time_n,
+                                  dt,
+                                  domain,
+                                  solver->getDofManager(),
+                                  solver->getLocalMatrix().toViewConstSizes(),
+                                  localRhs );
+          solver->applyBoundaryConditions( time_n,
+                                           dt,
+                                           domain,
+                                           solver->getDofManager(),
+                                           solver->getLocalMatrix().toViewConstSizes(),
+                                           localRhs );
+          solver->getSystemRhs().close();
+
+          // once this is done, we recompute the single-physics residual
           real64 const singlePhysicsNorm =
-            solver->assembleResidualOnlyAndCalculateNorm( time_n,
-                                                          dt,
-                                                          domain,
-                                                          solver->getDofManager(),
-                                                          solver->getLocalMatrix().toViewConstSizes(),
-                                                          solver->getSystemRhs(),
-                                                          "" );
+            solver->calculateResidualNorm( time_n,
+                                           dt,
+                                           domain,
+                                           solver->getDofManager(),
+                                           solver->getSystemRhs().values() );
           residualNorm += singlePhysicsNorm * singlePhysicsNorm;
         } );
+
+        // finally, we perform the convergence check on the multiphysics residual
         residualNorm = sqrt( residualNorm );
         GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
         isConverged = ( residualNorm < params.m_newtonTol );
+
       }
       else if( params.sequentialConvergenceCriterion() == NonlinearSolverParameters::SequentialConvergenceCriterion::NumberOfNonlinearIterations )
       {
@@ -508,8 +532,18 @@ protected:
   postProcessInput() override
   {
     setSubSolvers();
-  }
 
+    bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
+    bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;
+    GEOSX_THROW_IF( isSequential && usesLineSearch,
+                    GEOSX_FMT( "`{}`: line search is not supported by the coupled solver when {} is set to `{}`. Please set {} to `{}` to remove this error",
+                               getName(),
+                               NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
+                               EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential ),
+                               NonlinearSolverParameters::viewKeysStruct::lineSearchActionString(),
+                               EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
+                    InputError );
+  }
 
   void
   synchronizeNonLinearParameters()
