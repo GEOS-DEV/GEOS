@@ -260,6 +260,11 @@ void MultiphasePoromechanics::initializePostInitialConditionsPreSubGroups()
                        GEOSX_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
                                   catalogName(), getName(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
   isFlowThermal = m_isThermal;
+
+  if( m_isThermal )
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalMultiphasePoromechanics;
+  }
 }
 
 void MultiphasePoromechanics::initializePreSubGroups()
