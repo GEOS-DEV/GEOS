@@ -16,6 +16,7 @@
  */
 
 #include "mesh/utilities/ComputationalGeometry.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
 
 namespace geosx
 {
@@ -77,9 +78,48 @@ computeProjectors( localIndex const & cellIndex,
     }
   }
   // - loop over faces and perform computations on the boundary
+  real64 outFaceNormals[6][3];
+  std::ofstream fileFacesIntegrals;
+  std::ostringstream facesIntegrals (OutputBase::getOutputDirectory() + "facesIntegrals.csv", std::ostringstream::ate);
+  fileFacesIntegrals.open(facesIntegrals.str(), std::ios_base::app);
   for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
   {
     localIndex const faceIndex = elementToFaceMap[ cellIndex ][ numFace ];
+    outFaceNormals[numFace][0] = faceNormals[faceIndex][0];
+    outFaceNormals[numFace][1] = faceNormals[faceIndex][1];
+    outFaceNormals[numFace][2] = faceNormals[faceIndex][2];
+    real64 const faceCenter[3] { faceCenters[faceIndex][0],
+                                 faceCenters[faceIndex][1],
+                                 faceCenters[faceIndex][2] };
+    real64 signTestVector[3];
+    signTestVector[0] = faceCenters[faceIndex][0] - cellCenter[0];
+    signTestVector[1] = faceCenters[faceIndex][1] - cellCenter[1];
+    signTestVector[2] = faceCenters[faceIndex][2] - cellCenter[2];
+    if( signTestVector[0]*outFaceNormals[numFace][0] +
+        signTestVector[1]*outFaceNormals[numFace][1] +
+        signTestVector[2]*outFaceNormals[numFace][2] < 0 )
+    {
+      outFaceNormals[numFace][0] = -outFaceNormals[numFace][0];
+      outFaceNormals[numFace][1] = -outFaceNormals[numFace][1];
+      outFaceNormals[numFace][2] = -outFaceNormals[numFace][2];
+    }
+  }
+  std::ofstream fileFaceNormals;
+  fileFaceNormals.open(OutputBase::getOutputDirectory() + "faceNormals.csv", std::ios_base::app);
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    fileFaceNormals << cellIndex << ",";
+    for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
+    {
+      fileFaceNormals << std::setprecision(16) << outFaceNormals[numFace][i]*faceAreas[ elementToFaceMap[ cellIndex ][ numFace ] ] << ",";
+    }
+    fileFaceNormals << std::endl;
+  }
+  fileFaceNormals.close();
+  for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
+  {
+    localIndex const faceIndex = elementToFaceMap[ cellIndex ][ numFace ];
+    fileFacesIntegrals << faceIndex << ",";
     real64 const faceArea = faceAreas[ faceIndex ];
     localIndex const numFaceNodes = faceToNodeMap[ faceIndex ].size();
     localIndex faceToNodes[ MFN ];
@@ -111,6 +151,11 @@ computeProjectors( localIndex const & cellIndex,
                           cellCenter,
                           faceBasisIntegrals,
                           threeDMonomialIntegrals );
+    for( localIndex i = 0; i < numFaceNodes; ++i )
+    {
+      fileFacesIntegrals << faceBasisIntegrals[i]/faceArea << ",";
+    }
+    fileFacesIntegrals << "\n";
 
     real64 signTestVector[3];
     signTestVector[0] = faceCenters[faceIndex][0] - cellCenter[0];
@@ -151,6 +196,7 @@ computeProjectors( localIndex const & cellIndex,
       }
     }
   }
+  fileFacesIntegrals.close();
 
   // Compute non constant scaled monomials' integrals on the polyhedron.
   real64 monomInternalIntegrals[3] = { 0.0 };
@@ -224,6 +270,7 @@ computeProjectors( localIndex const & cellIndex,
                                              - cellCenter[ pos ]);
     }
   }
+
   for( localIndex numBasisFunction = 0; numBasisFunction < numCellPoints; ++numBasisFunction )
   {
     // - solve linear system to obtain dofs of piNabla proj wrt monomial basis
@@ -258,6 +305,17 @@ computeProjectors( localIndex const & cellIndex,
         piNablaDofs[3]*monomialVemDofs[ 2 ][ numVertex ];
     }
     piNablaVemDofsMinusIdentity[ numBasisFunction ][ numBasisFunction ] -= 1;
+  }
+  std::ofstream derivativesFile;
+  derivativesFile.open(OutputBase::getOutputDirectory() + "derivatives.csv",std::ios_base::app);
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    derivativesFile << cellIndex << ",";
+    for( localIndex numBasisFunction = 0; numBasisFunction < numCellPoints; ++numBasisFunction )
+    {
+      derivativesFile << basisDerivativesIntegralMean[numBasisFunction][i] << ",";
+    }
+    derivativesFile << std::endl;
   }
 
   // Compute stabilization matrix.
