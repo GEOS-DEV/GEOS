@@ -116,6 +116,8 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp
 	  interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp
+          interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp	  	  
+          interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanics.hpp	  
         )
 
     list( APPEND linearAlgebra_sources
