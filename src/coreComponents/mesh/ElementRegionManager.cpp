@@ -119,7 +119,7 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   }
 }
 
-void ElementRegionManager::generateMesh( CellBlockManagerABC & cellBlockManager )
+void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockManager )
 {
   this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
   {

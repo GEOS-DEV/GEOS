@@ -564,7 +564,7 @@ void ProblemManager::generateMesh()
         int const order = feDiscretization->getOrder();
         string const & discretizationName = feDiscretization->getName();
         arrayView1d< string const > const regionNames = discretizationPair.second;
-        CellBlockManagerABC & cellBlockManager = meshBody.getCellBlockManager();
+        CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
         // create a high order MeshLevel
         if( order > 1 )

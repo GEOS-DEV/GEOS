@@ -146,7 +146,7 @@ public:
    * @brief Generate the mesh.
    * @param [in,out] cellBlockManager Reference to the abstract cell block manager.
    */
-  void generateMesh( CellBlockManagerABC & cellBlockManager );
+  void generateMesh( CellBlockManagerABC const & cellBlockManager );
 
   /**
    * @brief Generate the wells.
