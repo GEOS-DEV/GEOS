@@ -111,25 +111,36 @@ MeshObjectPath::fillPathTokens( string const & path,
     {
       pathTokens.insert( pathTokens.begin(), "{*}" );
 
-      string existingMeshBodyAndLevel;
+      // searching if the mesh level exists
       bool levelNameFound = false;
       meshBodies.forSubGroups< MeshBody >( [&]( MeshBody const & meshBody )
       {
-        existingMeshBodyAndLevel += meshBody.getName() + ": ";
         meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
         {
-          existingMeshBodyAndLevel += meshLevel.getName() + ", ";
-          levelNameFound = ( unidentifiedName==meshLevel.getName() ) ? true : levelNameFound;
+          levelNameFound |= ( unidentifiedName==meshLevel.getName() );
         } );
-        existingMeshBodyAndLevel += "/n";
       } );
 
-      GEOSX_THROW_IF( !levelNameFound,
-                      GEOSX_FMT( "Path {} specifies an invalid MeshBody or MeshLevel. ",
-                                 "existing MeshBodies: {} /n",
-                                 path,
-                                 existingMeshBodyAndLevel ),
-                      InputError );
+      if( !levelNameFound )
+      {
+        string existingMeshBodiesAndLevels;
+        meshBodies.forSubGroups< MeshBody >( [&]( MeshBody const & meshBody )
+        {
+          std::vector< string > meshLevelsNames;
+          existingMeshBodiesAndLevels += "  MeshBody "+meshBody.getName() + ": { ";
+          meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
+          {
+            meshLevelsNames.push_back( meshLevel.getName() );
+          } );
+          existingMeshBodiesAndLevels += stringutilities::join( meshLevelsNames, ", " ) + " }\n";
+        } );
+
+        GEOSX_THROW( GEOSX_FMT( "Path {0} specifies an invalid MeshBody or MeshLevel. ",
+                                "existing MeshBodies: \n{1}\n",
+                                path,
+                                existingMeshBodiesAndLevels ),
+                     InputError );
+      }
       pathTokens.insert( pathTokens.begin()+1, unidentifiedName );
     }
   }
