@@ -95,6 +95,24 @@ TEST( testGroupPath, testGlobalPaths )
     Group const & group = problem.getGroupByPath( path );
     ASSERT_STREQ( path.c_str(), group.getPath().c_str() );
   }
+
+  // test for a wrong path given to getGroupByPath()
+  bool trowHappened = false;
+  try
+  {
+    problem.getGroupByPath( "/Mesh/mesh2" );
+  }
+  catch( const std::domain_error & e )
+  {
+    static constexpr auto expectedMsg = "***** Controlling expression (should be false): true\n"
+                                        "***** Rank 0: Group /Mesh has no child named mesh2\n"
+                                        "The children of Mesh are: { mesh1 }";
+    // checks if the exception contains the expected message
+    ASSERT_TRUE( string( e.what() ).find( expectedMsg ) != string::npos );
+    trowHappened = true;
+  }
+  // checks if the exception has been thrown as expected
+  ASSERT_TRUE( trowHappened );
 }
 
 int main( int argc, char * * argv )
