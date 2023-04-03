@@ -29,16 +29,16 @@ std::string InputError::InsertExMsg( std::string const & originalMsg, std::strin
 
   size_t insertPos = 0;
   // for readability purposes, we try to insert the message after the "***** Rank N: " or after "***** " instead of at the top.
-  static auto constexpr rankLogStartStr =  "***** Rank ";
-  static auto constexpr rankLogEndStr =  ": ";
-  static auto constexpr simpleLogStartStr =  "***** ";
-  if( ( insertPos = newMsg.find( rankLogStartStr ) ) != std::string::npos )
+  static auto constexpr rankLogStart =  "***** Rank ";
+  static auto constexpr rankLogEnd =  ": ";
+  static auto constexpr simpleLogStart =  "***** ";
+  if( ( insertPos = newMsg.find( rankLogStart ) ) != std::string::npos )
   {
-    insertPos = newMsg.find( rankLogEndStr, insertPos + strlen( rankLogStartStr ) ) + strlen( rankLogEndStr );
+    insertPos = newMsg.find( rankLogEnd, insertPos + strlen( rankLogStart ) ) + strlen( rankLogEnd );
   }
-  else if( ( insertPos = newMsg.find_last_of( simpleLogStartStr ) ) != std::string::npos )
+  else if( ( insertPos = newMsg.find_last_of( simpleLogStart ) ) != std::string::npos )
   {
-    insertPos += strlen( simpleLogStartStr );
+    insertPos += strlen( simpleLogStart );
   }
   newMsg.insert( insertPos, msgToInsert );
 
