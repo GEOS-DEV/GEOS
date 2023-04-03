@@ -69,7 +69,7 @@
 
 
   <Events
-    maxTime="1019.0">
+    maxTime="1013.0">
  
     <PeriodicEvent
       name="solverApplication0"
@@ -80,14 +80,14 @@
     <PeriodicEvent
       name="solverApplication1"
       beginTime="1000.0"
-      endTime="1015.5"
+      endTime="1012.0"
       forceDt="0.5"
       target="/Solvers/phasefieldPoroSolve"/>
 
     <PeriodicEvent
       name="solverApplication2"
-      beginTime="1015.5"
-      endTime="1019.0"
+      beginTime="1012.0"
+      endTime="1013.0"
       forceDt="0.02"
       target="/Solvers/phasefieldPoroSolve"/>
 
@@ -100,14 +100,14 @@
     <PeriodicEvent
       name="vtkOutput1"
       beginTime="1000.0"
-      endTime="1015.5"
+      endTime="1012.0"
       forceDt="0.5"
       target="/Outputs/VTKOutput"/>
     
     <PeriodicEvent
       name="vtkOutput2"
-      beginTime="1015.5"
-      endTime="1019.0"
+      beginTime="1012.0"
+      endTime="1013.0"
       forceDt="0.02"
       target="/Outputs/VTKOutput"/>
 
@@ -157,7 +157,7 @@
       degradationLowerLimit="1e-6"
       tensileStrength="5.5"
       compressiveStrength="40.0"
-      deltaCoefficient="6.85"/>
+      deltaCoefficient="3.31"/>
 
     <BiotPorosity
       name="concretePorosity"
@@ -187,7 +187,7 @@
       objectPath="ElementRegions/Region1"
       fieldName="concreteSolid_stress"
       component="0"
-      scale="-10.0"/>
+      scale="-9.0"/>
 
     <FieldSpecification 
       name="SH"
@@ -196,7 +196,7 @@
       objectPath="ElementRegions/Region1"
       fieldName="concreteSolid_stress"
       component="1"
-      scale="-12.0"/>
+      scale="-15.0"/>
 
     <FieldSpecification 
       name="Sv"
@@ -302,7 +302,7 @@
   <Outputs>
     <VTK
       name="VTKOutput"
-      plotFileRoot="phaseFieldPoro_nucleation_wellbore2dConcrete_L=0p5_r=4_b=0p8_10-12-0"/>
+      plotFileRoot="phaseFieldPoro_nucleation_wellbore2dConcrete_L=0p5_r=4_b=0p8_9-15-0-delta=3p31"/>
 
     <Restart
       name="restartOutput"/>
