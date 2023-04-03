@@ -536,7 +536,7 @@ void ProblemManager::generateMesh()
   // setup the base discretizations (hard code this for now)
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
-    CellBlockManagerABC & cellBlockManager = meshBody.getCellBlockManager();
+    CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
     MeshLevel & baseMesh = meshBody.getBaseDiscretization();
     array1d< string > junk;
@@ -698,7 +698,7 @@ ProblemManager::getDiscretizations() const
 }
 
 void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
-                                        CellBlockManagerABC & cellBlockManager,
+                                        CellBlockManagerABC const & cellBlockManager,
                                         Group const * const discretization,
                                         arrayView1d< string const > const & )
 {
