@@ -206,7 +206,6 @@ void ObjectManagerBase::constructGlobalToLocalMap()
 localIndex ObjectManagerBase::packSize( string_array const & wrapperNames,
                                         arrayView1d< localIndex const > const & packList,
                                         integer const recursive,
-                                        bool onDevice,
                                         parallelDeviceEvents & events ) const
 {
   buffer_unit_type * junk;
@@ -214,7 +213,6 @@ localIndex ObjectManagerBase::packSize( string_array const & wrapperNames,
                                   wrapperNames,
                                   packList,
                                   recursive,
-                                  onDevice,
                                   events );
 }
 
@@ -222,10 +220,9 @@ localIndex ObjectManagerBase::pack( buffer_unit_type * & buffer,
                                     string_array const & wrapperNames,
                                     arrayView1d< localIndex const > const & packList,
                                     integer const recursive,
-                                    bool onDevice,
                                     parallelDeviceEvents & events ) const
 {
-  return this->packImpl< true >( buffer, wrapperNames, packList, recursive, onDevice, events );
+  return this->packImpl< true >( buffer, wrapperNames, packList, recursive, events );
 }
 
 template< bool DO_PACKING >
@@ -233,7 +230,6 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
                                         string_array const & wrapperNames,
                                         arrayView1d< localIndex const > const & packList,
                                         integer const recursive,
-                                        bool onDevice,
                                         parallelDeviceEvents & events ) const
 {
   localIndex packedSize = 0;
@@ -289,7 +285,7 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
     for( WrapperBase const * wrapper: wrappers )
     {
       packedSize += bufferOps::Pack< DO_PACKING >( buffer, wrapper->getName() );
-      packedSize += wrapper->packByIndex< DO_PACKING >( buffer, packList, true, onDevice, events );
+      packedSize += wrapper->packByIndex< DO_PACKING >( buffer, packList, true, events );
     }
   }
 
@@ -300,7 +296,7 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
     for( auto const & keyGroupPair : this->getSubGroups() )
     {
       packedSize += bufferOps::Pack< DO_PACKING >( buffer, keyGroupPair.first );
-      packedSize += keyGroupPair.second->pack( buffer, wrapperNames, packList, recursive, onDevice, events );
+      packedSize += keyGroupPair.second->pack( buffer, wrapperNames, packList, recursive, events );
     }
   }
 
@@ -313,7 +309,6 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
 localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
                                       arrayView1d< localIndex > & packList,
                                       integer const recursive,
-                                      bool onDevice,
                                       parallelDeviceEvents & events )
 {
   localIndex unpackedSize = 0;
@@ -339,7 +334,7 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
     {
       string wrapperName;
       unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-      unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, onDevice, events );
+      unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, events );
     }
   }
 
@@ -357,7 +352,7 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
     {
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->getGroup( subGroupName ).unpack( buffer, packList, recursive, onDevice, events );
+      unpackedSize += this->getGroup( subGroupName ).unpack( buffer, packList, recursive, events );
     }
   }
 

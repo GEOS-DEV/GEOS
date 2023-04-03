@@ -288,7 +288,7 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
 
     fieldsToBeSync.addElementFields( fields, regionNames );
 
-    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors() );
   } );
 }
 

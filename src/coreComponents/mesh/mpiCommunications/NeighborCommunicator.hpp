@@ -220,19 +220,16 @@ public:
   void packCommBufferForSync( FieldIdentifiers const & fieldsToBeSync,
                               MeshLevel const & meshLevel,
                               int const commID,
-                              bool onDevice,
                               parallelDeviceEvents & events );
 
   int packCommSizeForSync( FieldIdentifiers const & fieldsToBeSync,
                            MeshLevel const & meshLevel,
                            int const commID,
-                           bool onDevice,
                            parallelDeviceEvents & events );
 
   void unpackBufferForSync( FieldIdentifiers const & fieldsToBeSync,
                             MeshLevel & meshLevel,
                             int const commID,
-                            bool onDevice,
                             parallelDeviceEvents & events );
 
   int neighborRank() const { return m_neighborRank; }

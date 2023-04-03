@@ -300,11 +300,11 @@ int ElementRegionManager::packImpl( buffer_unit_type * & buffer,
       arrayView1d< localIndex const > const elemList = packList[kReg][esr];
       if( DO_PACKING )
       {
-        packedSize += subRegion.pack( buffer, elemList, 0, false, events );
+        packedSize += subRegion.pack( buffer, elemList, 0, events );
       }
       else
       {
-        packedSize += subRegion.packSize( elemList, 0, false, events );
+        packedSize += subRegion.packSize( elemList, 0, events );
       }
     } );
   }
@@ -359,7 +359,7 @@ int ElementRegionManager::unpackImpl( buffer_unit_type const * & buffer,
       /// THIS IS WRONG??
       arrayView1d< localIndex > & elemList = packList[kReg][esr];
 
-      unpackedSize += subRegion.unpack( buffer, elemList, 0, false, events );
+      unpackedSize += subRegion.unpack( buffer, elemList, 0, events );
     } );
   }
 

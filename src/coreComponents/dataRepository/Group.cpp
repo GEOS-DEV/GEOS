@@ -330,7 +330,6 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
                             array1d< string > const & wrapperNames,
                             arrayView1d< localIndex const > const & packList,
                             integer const recursive,
-                            bool onDevice,
                             parallelDeviceEvents & events ) const
 {
   localIndex packedSize = 0;
@@ -365,11 +364,11 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
     packedSize += bufferOps::Pack< DO_PACKING >( buffer, wrapper->getName() );
     if( packList.empty() )
     {
-      packedSize += wrapper->pack< DO_PACKING >( buffer, true, onDevice, events );
+      packedSize += wrapper->pack< DO_PACKING >( buffer, true, events );
     }
     else
     {
-      packedSize += wrapper->packByIndex< DO_PACKING >( buffer, packList, true, onDevice, events );
+      packedSize += wrapper->packByIndex< DO_PACKING >( buffer, packList, true, events );
     }
   }
 
@@ -380,7 +379,7 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
     for( auto const & keyGroupPair : m_subGroups )
     {
       packedSize += bufferOps::Pack< DO_PACKING >( buffer, keyGroupPair.first );
-      packedSize += keyGroupPair.second->packImpl< DO_PACKING >( buffer, wrapperNames, packList, recursive, onDevice, events );
+      packedSize += keyGroupPair.second->packImpl< DO_PACKING >( buffer, wrapperNames, packList, recursive, events );
     }
   }
 
@@ -390,33 +389,30 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
 localIndex Group::packSize( array1d< string > const & wrapperNames,
                             arrayView1d< localIndex const > const & packList,
                             integer const recursive,
-                            bool onDevice,
                             parallelDeviceEvents & events ) const
 {
   buffer_unit_type * dummy;
-  return this->packImpl< false >( dummy, wrapperNames, packList, recursive, onDevice, events );
+  return this->packImpl< false >( dummy, wrapperNames, packList, recursive, events );
 }
 
 
 localIndex Group::packSize( arrayView1d< localIndex const > const & packList,
                             integer const recursive,
-                            bool onDevice,
                             parallelDeviceEvents & events ) const
 {
   std::vector< string > const tmp = mapKeys( m_wrappers );
   array1d< string > wrapperNames;
   wrapperNames.insert( 0, tmp.begin(), tmp.end() );
-  return this->packSize( wrapperNames, packList, recursive, onDevice, events );
+  return this->packSize( wrapperNames, packList, recursive, events );
 }
 
 
 localIndex Group::packSize( array1d< string > const & wrapperNames,
                             integer const recursive,
-                            bool onDevice,
                             parallelDeviceEvents & events ) const
 {
   arrayView1d< localIndex const > nullArray;
-  return packSize( wrapperNames, nullArray, recursive, onDevice, events );
+  return packSize( wrapperNames, nullArray, recursive, events );
 }
 
 
@@ -424,40 +420,36 @@ localIndex Group::pack( buffer_unit_type * & buffer,
                         array1d< string > const & wrapperNames,
                         arrayView1d< localIndex const > const & packList,
                         integer const recursive,
-                        bool onDevice,
                         parallelDeviceEvents & events ) const
 {
-  return this->packImpl< true >( buffer, wrapperNames, packList, recursive, onDevice, events );
+  return this->packImpl< true >( buffer, wrapperNames, packList, recursive, events );
 }
 
 
 localIndex Group::pack( buffer_unit_type * & buffer,
                         arrayView1d< localIndex const > const & packList,
                         integer const recursive,
-                        bool onDevice,
                         parallelDeviceEvents & events ) const
 {
   std::vector< string > const tmp = mapKeys( m_wrappers );
   array1d< string > wrapperNames;
   wrapperNames.insert( 0, tmp.begin(), tmp.end() );
-  return this->pack( buffer, wrapperNames, packList, recursive, onDevice, events );
+  return this->pack( buffer, wrapperNames, packList, recursive, events );
 }
 
 
 localIndex Group::pack( buffer_unit_type * & buffer,
                         array1d< string > const & wrapperNames,
                         integer const recursive,
-                        bool onDevice,
                         parallelDeviceEvents & events ) const
 {
   arrayView1d< localIndex const > nullArray;
-  return pack( buffer, wrapperNames, nullArray, recursive, onDevice, events );
+  return pack( buffer, wrapperNames, nullArray, recursive, events );
 }
 
 localIndex Group::unpack( buffer_unit_type const * & buffer,
                           arrayView1d< localIndex > & packList,
                           integer const recursive,
-                          bool onDevice,
                           parallelDeviceEvents & events )
 {
   localIndex unpackedSize = 0;
@@ -475,7 +467,7 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
   {
     string wrapperName;
     unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-    getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, onDevice, events );
+    getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, events );
   }
 
 
@@ -494,7 +486,7 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
       GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += getGroup( subGroupName ).unpack( buffer, packList, recursive, onDevice, events );
+      unpackedSize += getGroup( subGroupName ).unpack( buffer, packList, recursive, events );
     }
   }
 

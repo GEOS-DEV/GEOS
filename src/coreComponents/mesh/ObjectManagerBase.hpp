@@ -76,20 +76,17 @@ public:
   virtual localIndex packSize( string_array const & wrapperNames,
                                arrayView1d< localIndex const > const & packList,
                                integer const recursive,
-                               bool onDevice,
                                parallelDeviceEvents & events ) const override;
 
   virtual localIndex pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            arrayView1d< localIndex const > const & packList,
                            integer const recursive,
-                           bool onDevice,
                            parallelDeviceEvents & events ) const override;
 
   virtual localIndex unpack( buffer_unit_type const * & buffer,
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
-                             bool onDevice,
                              parallelDeviceEvents & events ) override;
 
   /**
@@ -239,8 +236,6 @@ private:
    * @param wrapperNames
    * @param packList The element we want packed.
    * @param recursive recursive pack or not.
-   * @param onDevice Whether to use device-based packing functions
-   *                  (buffer must be either pinned or a device pointer)
    * @return The packed size.
    */
   template< bool DO_PACKING >
@@ -248,7 +243,6 @@ private:
                        string_array const & wrapperNames,
                        arrayView1d< localIndex const > const & packList,
                        integer const recursive,
-                       bool onDevice,
                        parallelDeviceEvents & events ) const;
 
   /**

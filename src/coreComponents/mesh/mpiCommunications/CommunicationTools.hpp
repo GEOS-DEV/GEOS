@@ -72,48 +72,40 @@ public:
 
   void synchronizeFields( FieldIdentifiers const & fieldsToBeSync,
                           MeshLevel & mesh,
-                          std::vector< NeighborCommunicator > & allNeighbors,
-                          bool onDevice );
+                          std::vector< NeighborCommunicator > & allNeighbors );
 
   void synchronizePackSendRecvSizes( FieldIdentifiers const & fieldsToBeSync,
                                      MeshLevel & mesh,
                                      std::vector< NeighborCommunicator > & neighbors,
-                                     MPI_iCommData & icomm,
-                                     bool onDevice );
+                                     MPI_iCommData & icomm );
 
   void synchronizePackSendRecv( FieldIdentifiers const & fieldsToBeSync,
                                 MeshLevel & mesh,
                                 std::vector< NeighborCommunicator > & allNeighbors,
-                                MPI_iCommData & icomm,
-                                bool onDevice );
+                                MPI_iCommData & icomm );
 
   void asyncPack( FieldIdentifiers const & fieldsToBeSync,
                   MeshLevel & mesh,
                   std::vector< NeighborCommunicator > & neighbors,
                   MPI_iCommData & icomm,
-                  bool onDevice,
                   parallelDeviceEvents & events );
 
   void asyncSendRecv( std::vector< NeighborCommunicator > & neighbors,
                       MPI_iCommData & icomm,
-                      bool onDevice,
                       parallelDeviceEvents & events );
 
   void synchronizeUnpack( MeshLevel & mesh,
                           std::vector< NeighborCommunicator > & neighbors,
-                          MPI_iCommData & icomm,
-                          bool onDevice );
+                          MPI_iCommData & icomm );
 
   bool asyncUnpack( MeshLevel & mesh,
                     std::vector< NeighborCommunicator > & neighbors,
                     MPI_iCommData & icomm,
-                    bool onDevice,
                     parallelDeviceEvents & events );
 
   void finalizeUnpack( MeshLevel & mesh,
                        std::vector< NeighborCommunicator > & neighbors,
                        MPI_iCommData & icomm,
-                       bool onDevice,
                        parallelDeviceEvents & events );
 
 private:

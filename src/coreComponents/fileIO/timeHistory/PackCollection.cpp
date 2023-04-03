@@ -121,7 +121,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
 
   Group const * targetGrp = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetGrp->getWrapperBase( m_fieldName );
-  GEOSX_ERROR_IF( !targetField.isPackable( false ), "The object targeted for collection must be packable!" );
+  GEOSX_ERROR_IF( !targetField.isPackable( ), "The object targeted for collection must be packable in it's last modified memory space!" );
 
   // If no set or "all" is specified we retrieve the entire field.
   // If sets are specified we retrieve the field only from those sets.
@@ -273,13 +273,13 @@ void PackCollection::collect( DomainPartition const & domain,
   {
     if( ( ( m_onlyOnSetChange != 0 ) && m_setChanged ) || ( m_onlyOnSetChange == 0 ) )
     {
-      targetField.packByIndex< true >( buffer, m_setsIndices[collectionIdx], false, true, events );
+      targetField.packByIndex< true >( buffer, m_setsIndices[collectionIdx], false, events );
     }
   }
   // If we're not collecting from a set of indices, we're collecting the entire object.
   else if( !m_targetIsMeshObject && collectAll() )
   {
-    targetField.pack< true >( buffer, false, true, events );
+    targetField.pack< true >( buffer, false, events );
   }
   m_setChanged = false;
   GEOSX_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );

@@ -157,7 +157,7 @@ void MeshManager::importFields( DomainPartition & domain )
         }
       } );
 
-      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, meshLevel, domain.getNeighbors(), false );
+      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, meshLevel, domain.getNeighbors() );
     } );
     generator.freeResources();
   } );

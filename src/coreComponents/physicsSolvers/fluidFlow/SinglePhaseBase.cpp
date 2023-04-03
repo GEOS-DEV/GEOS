@@ -334,7 +334,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
     fieldsToBeSync.addElementFields( { fields::flow::pressure::key() },
                                      regionNames );
 
-    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors() );
 
     // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
     // They will be updated in applySystemSolution and ImplicitStepComplete, respectively

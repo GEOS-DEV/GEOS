@@ -226,8 +226,7 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
 
       CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                            domain.getMeshBody( 0 ).getBaseDiscretization(),
-                                                           domain.getNeighbors(),
-                                                           false );
+                                                           domain.getNeighbors() );
 
       this->updateState( domain );
 

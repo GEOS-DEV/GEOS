@@ -207,7 +207,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
   bufferSize += nodeManager.packUpDownMapsSize( newNodesToSend );
   bufferSize += elemManager.packUpDownMapsSize( newElemsToSend );
 
-  bufferSize += nodeManager.packSize( newNodesToSend, 0, false, sizeEvents );
+  bufferSize += nodeManager.packSize( newNodesToSend, 0, sizeEvents );
   bufferSize += elemManager.packSize( newElemsToSend );
 
   neighbor->resizeSendBuffer( commID, bufferSize );
@@ -224,7 +224,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
   packedSize += nodeManager.packUpDownMaps( sendBufferPtr, newNodesToSend );
   packedSize += elemManager.packUpDownMaps( sendBufferPtr, newElemsToSend );
 
-  packedSize += nodeManager.pack( sendBufferPtr, newNodesToSend, 0, false, packEvents );
+  packedSize += nodeManager.pack( sendBufferPtr, newNodesToSend, 0, packEvents );
   packedSize += elemManager.pack( sendBufferPtr, newElemsToSend );
 
   GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
@@ -266,7 +266,7 @@ void unpackNewToGhosts( NeighborCommunicator * const neighbor,
   nodeManager.unpackUpDownMaps( receiveBufferPtr, newGhostNodes, true, true );
   elemManager.unpackUpDownMaps( receiveBufferPtr, newGhostElems, true );
 
-  nodeManager.unpack( receiveBufferPtr, newGhostNodes, 0, false, events );
+  nodeManager.unpack( receiveBufferPtr, newGhostNodes, 0, events );
   elemManager.unpack( receiveBufferPtr, newGhostElems );
 
   waitAllDeviceEvents( events );

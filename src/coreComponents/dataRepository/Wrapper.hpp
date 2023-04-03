@@ -276,24 +276,39 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc WrapperBase::isPackable
-  virtual
-  bool isPackable( bool onDevice ) const override
+  template < typename U = T >
+  typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, bool >
+  isPackableImpl( ) const
   {
-    if( onDevice )
+    if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
-      // this isn't accurate if array/arraview return false for this, which I think they do
-      return bufferOps::can_memcpy< T >;
+      return bufferOps::is_packable< U >;
     }
     else
     {
-      return bufferOps::is_packable< T >;
+      return bufferOps::can_memcpy< U >;
     }
+  }
+
+  /// @copydoc WrapperBase::isPackable
+  template < typename U = T >
+  typename std::enable_if_t< ! traits::HasMemorySpaceFunctions< U >, bool >
+  isPackableImpl( ) const
+  {
+    return bufferOps::is_packable< U >;
+  }
+
+  /// @copydoc WrapperBase::isPackable
+  virtual
+  bool
+  isPackable( ) const override
+  {
+    return isPackableImpl( );
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc WrapperBase::unpack
-  virtual
-  localIndex unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) override final
+  localIndex unpackDeviceImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events )
   {
     localIndex unpackedSize = 0;
     if( withMetadata )
@@ -301,55 +316,123 @@ public:
       string name;
       unpackedSize += bufferOps::Unpack( buffer, name );
       GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
-    }
-    if( onDevice )
-    {
-      if( withMetadata )
-      {
-        unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView(), events );
-      }
-      else
-      {
-        unpackedSize += wrapperHelpers::UnpackDataDevice( buffer, referenceAsView(), events );
-      }
+      unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView(), events );
     }
     else
     {
-      unpackedSize += bufferOps::Unpack( buffer, *m_data );
+      unpackedSize += wrapperHelpers::UnpackDataDevice( buffer, referenceAsView(), events );
     }
     return unpackedSize;
   }
 
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc WrapperBase::unpackByIndex
-  virtual
-  localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) override final
+  /// @copydoc WrapperBase::unpack
+  localIndex unpackHostImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & )
   {
     localIndex unpackedSize = 0;
-
     if( withMetadata )
     {
       string name;
       unpackedSize += bufferOps::Unpack( buffer, name );
       GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
     }
-    if( onDevice )
+    unpackedSize += bufferOps::Unpack( buffer, *m_data );
+    return unpackedSize;
+  }
+
+  /// @copydoc WrapperBase::unpack
+  template < typename U = T >
+  typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, localIndex>
+  unpackImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events )
+  {
+    if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
-      if( withMetadata )
-      {
-        unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
-      }
-      else
-      {
-        unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
-      }
+      return unpackHostImpl( buffer, withMetadata, events );
     }
     else
     {
-      unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices );
+      return unpackDeviceImpl( buffer, withMetadata, events );
     }
+  }
 
+  /// @copydoc WrapperBase::unpack
+  template < typename U = T >
+  typename std::enable_if_t< ! traits::HasMemorySpaceFunctions< U >, localIndex>
+  unpackImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events )
+  {
+    return unpackHostImpl( buffer, withMetadata, events );
+  }
+
+  /// @copydoc WrapperBase::unpack
+  virtual
+  localIndex
+  unpack( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events ) override final
+  {
+    return unpackImpl( buffer, withMetadata, events );
+  }
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+  /// @copydoc WrapperBase::unpackByIndex
+  localIndex unpackByIndexHostImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & )
+  {
+    localIndex unpackedSize = 0;
+    if( withMetadata )
+    {
+      string name;
+      unpackedSize += bufferOps::Unpack( buffer, name );
+      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
+    }
+    unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices );
     return unpackedSize;
+  }
+
+  /// @copydoc WrapperBase::unpackByIndex
+  localIndex unpackByIndexDeviceImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events )
+  {
+    localIndex unpackedSize = 0;
+    if( withMetadata )
+    {
+      string name;
+      unpackedSize += bufferOps::Unpack( buffer, name );
+      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
+      unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
+    }
+    else
+    {
+        unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
+    }
+    return unpackedSize;
+  }
+
+  /// @copydoc WrapperBase::unpackByIndex
+  template < typename U = T >
+  typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, localIndex >
+  unpackByIndexImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events )
+  {
+    if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
+    {
+      return unpackByIndexHostImpl( buffer, unpackIndices, withMetadata, events );
+    }
+    else
+    {
+      return unpackByIndexDeviceImpl( buffer, unpackIndices, withMetadata, events );
+    }
+  }
+
+  /// @copydoc WrapperBase::unpackByIndex
+  template < typename U = T >
+  typename std::enable_if_t< ! traits::HasMemorySpaceFunctions< U >, localIndex >
+  unpackByIndexImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events )
+  {
+    return unpackByIndexHostImpl( buffer, unpackIndices, withMetadata, events );
+  }
+
+  /// @copydoc WrapperBase::unpackByIndex
+  virtual
+  localIndex
+  unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events ) override final
+  {
+    return unpackByIndexImpl( buffer, unpackIndices, withMetadata, events );
   }
 
   ///@}
@@ -811,89 +894,66 @@ public:
 
 private:
 
-  /**
-   * @brief Concrete implementation of the packing method.
-   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
-   * @param[in,out] buffer The buffer that will receive the packed data.
-   * @param[in] withMetadata Whether to pack string metadata with the underlying data.
-   * @param[in] onDevice Whether to use device-based packing functions
-   *                     (buffer must be either pinned or a device pointer)
-   * @param[out] events A collection of events to poll for completion of async
-   *                    packing kernels ( device packing is incomplete until all
-   *                    events are finalized )
-   * @return The packed size.
-   * @note The @p Impl suffix was used to prevent from a name conflict.
-   */
+
   template< bool DO_PACKING >
-  localIndex packImpl( buffer_unit_type * & buffer,
-                       bool withMetadata,
-                       bool onDevice,
-                       parallelDeviceEvents & events ) const
+  localIndex packDeviceImpl( buffer_unit_type * & buffer,
+                             bool withMetadata,
+                             parallelDeviceEvents & events ) const
   {
     localIndex packedSize = 0;
 
     if( withMetadata )
-    { packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() ); }
-    if( onDevice )
     {
-      if( withMetadata )
-      {
-        packedSize += wrapperHelpers::PackDevice< DO_PACKING >( buffer, reference(), events );
-      }
-      else
-      {
-        packedSize += wrapperHelpers::PackDataDevice< DO_PACKING >( buffer, reference(), events );
-      }
+      packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() );
+      packedSize += wrapperHelpers::PackDevice< DO_PACKING >( buffer, reference(), events );
     }
     else
     {
-      packedSize += bufferOps::Pack< DO_PACKING >( buffer, *m_data );
+      packedSize += wrapperHelpers::PackDataDevice< DO_PACKING >( buffer, reference(), events );
     }
 
     return packedSize;
   }
 
-  /**
-   * @brief Concrete implementation of the packing by index method.
-   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
-   * @param[in,out] buffer The buffer that will receive the packed data.
-   * @param[in] packList The element we want packed. If empty, no element will be packed.
-   * @param[in] withMetadata Whether to pack string metadata with the underlying data.
-   * @param[in] onDevice Whether to use device-based packing functions
-   *                     (buffer must be either pinned or a device pointer)
-   * @param[out] events A collection of events to poll for completion of async
-   *                    packing kernels ( device packing is incomplete until all
-   *                    events are finalized )
-   * @return The packed size.
-   */
   template< bool DO_PACKING >
-  localIndex packByIndexImpl( buffer_unit_type * & buffer,
-                              arrayView1d< localIndex const > const & packList,
-                              bool withMetadata,
-                              bool onDevice,
-                              parallelDeviceEvents & events ) const
+  localIndex packHostImpl( buffer_unit_type * & buffer,
+                           bool withMetadata,
+                           parallelDeviceEvents & ) const
   {
     localIndex packedSize = 0;
 
     if( withMetadata )
-    { packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() ); }
-    if( onDevice )
     {
-      if( withMetadata )
-      {
-        packedSize += wrapperHelpers::PackByIndexDevice< DO_PACKING >( buffer, reference(), packList, events );
-      }
-      else
-      {
-        packedSize += wrapperHelpers::PackDataByIndexDevice< DO_PACKING >( buffer, reference(), packList, events );
-      }
+      packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() );
+    }
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, *m_data );
+
+    return packedSize;
+  }
+
+  template< bool DO_PACKING, typename U = T >
+  typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, localIndex >
+  packImpl( buffer_unit_type * & buffer,
+            bool withMetadata,
+            parallelDeviceEvents & events ) const
+  {
+    if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
+    {
+      return packHostImpl< DO_PACKING >( buffer, withMetadata, events );
     }
     else
     {
-      packedSize += wrapperHelpers::PackByIndex< DO_PACKING >( buffer, *m_data, packList );
+      return packDeviceImpl< DO_PACKING >( buffer, withMetadata, events );
     }
+  }
 
-    return packedSize;
+  template< bool DO_PACKING, typename U = T >
+  typename std::enable_if_t< ! traits::HasMemorySpaceFunctions< U >, localIndex >
+  packImpl( buffer_unit_type * & buffer,
+            bool withMetadata,
+            parallelDeviceEvents & events ) const
+  {
+    return packHostImpl< DO_PACKING >( buffer, withMetadata, events );
   }
 
   /**
@@ -901,10 +961,75 @@ private:
    */
   localIndex packPrivate( buffer_unit_type * & buffer,
                           bool withMetadata,
-                          bool onDevice,
                           parallelDeviceEvents & events ) const override final
   {
-    return this->packImpl< true >( buffer, withMetadata, onDevice, events );
+    return this->packImpl< true >( buffer, withMetadata, events );
+  }
+
+
+  template< bool DO_PACKING >
+  localIndex packByIndexDeviceImpl( buffer_unit_type * & buffer,
+                                    arrayView1d< localIndex const > const & packList,
+                                    bool withMetadata,
+                                    parallelDeviceEvents & events ) const
+  {
+    localIndex packedSize = 0;
+
+    if( withMetadata )
+    {
+      packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() );
+      packedSize += wrapperHelpers::PackByIndexDevice< DO_PACKING >( buffer, reference(), packList, events );
+    }
+    else
+    {
+      packedSize += wrapperHelpers::PackDataByIndexDevice< DO_PACKING >( buffer, reference(), packList, events );
+    }
+
+    return packedSize;
+  }
+
+  template< bool DO_PACKING >
+  localIndex packByIndexHostImpl( buffer_unit_type * & buffer,
+                                  arrayView1d< localIndex const > const & packList,
+                                  bool withMetadata,
+                                  parallelDeviceEvents & ) const
+  {
+    localIndex packedSize = 0;
+
+    if( withMetadata )
+    {
+      packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() );
+    }
+    packedSize += wrapperHelpers::PackByIndex< DO_PACKING >( buffer, *m_data, packList );
+
+    return packedSize;
+  }
+
+  template< bool DO_PACKING, typename U = T >
+  typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, localIndex >
+  packByIndexImpl( buffer_unit_type * & buffer,
+                  arrayView1d< localIndex const > const & packList,
+                  bool withMetadata,
+                  parallelDeviceEvents & events ) const
+  {
+    if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
+    {
+      return packByIndexHostImpl< DO_PACKING >( buffer, packList, withMetadata, events );
+    }
+    else
+    {
+      return packByIndexDeviceImpl< DO_PACKING >( buffer, packList, withMetadata, events );
+    }
+  }
+
+  template< bool DO_PACKING, typename U = T >
+  typename std::enable_if_t< ! traits::HasMemorySpaceFunctions< U >, localIndex >
+  packByIndexImpl( buffer_unit_type * & buffer,
+                  arrayView1d< localIndex const > const & packList,
+                  bool withMetadata,
+                  parallelDeviceEvents & events ) const
+  {
+    return packByIndexHostImpl< DO_PACKING >( buffer, packList, withMetadata, events );
   }
 
   /**
@@ -913,21 +1038,19 @@ private:
   localIndex packByIndexPrivate( buffer_unit_type * & buffer,
                                  arrayView1d< localIndex const > const & packList,
                                  bool withMetadata,
-                                 bool onDevice,
                                  parallelDeviceEvents & events ) const override final
   {
-    return this->packByIndexImpl< true >( buffer, packList, withMetadata, onDevice, events );
+    return this->packByIndexImpl< true >( buffer, packList, withMetadata, events );
   }
 
   /**
    * @copydoc WrapperBase::packSizePrivate
    */
   localIndex packSizePrivate( bool withMetadata,
-                              bool onDevice,
                               parallelDeviceEvents & events ) const override final
   {
     buffer_unit_type * dummy;
-    return this->packImpl< false >( dummy, withMetadata, onDevice, events );
+    return this->packImpl< false >( dummy, withMetadata, events );
   }
 
   /**
@@ -935,11 +1058,10 @@ private:
    */
   localIndex packByIndexSizePrivate( arrayView1d< localIndex const > const & packList,
                                      bool withMetadata,
-                                     bool onDevice,
                                      parallelDeviceEvents & events ) const override final
   {
     buffer_unit_type * dummy;
-    return this->packByIndexImpl< false >( dummy, packList, withMetadata, onDevice, events );
+    return this->packByIndexImpl< false >( dummy, packList, withMetadata, events );
   }
 
   /// flag to indicate whether or not this wrapper is responsible for allocation/deallocation of the object at the

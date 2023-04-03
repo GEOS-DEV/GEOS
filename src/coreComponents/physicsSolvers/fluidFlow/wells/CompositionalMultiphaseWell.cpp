@@ -1430,8 +1430,7 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
-                                                         domain.getNeighbors(),
-                                                         true );
+                                                         domain.getNeighbors() );
   } );
 }
 
