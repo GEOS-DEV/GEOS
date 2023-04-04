@@ -248,7 +248,6 @@ public:
     GEOSX_MARK_FUNCTION;
 
     using POLICY = parallelDevicePolicy<>;
-    std::cout << "a" << std::endl;
 
     // Construct [x_BC,0]
     srcWithBC.zero();
@@ -258,7 +257,6 @@ public:
     arrayView1d< localIndex const > const localBCDofs = m_constrainedDofIndices.toViewConst();
     arrayView1d< real64 const > const localDiag = m_diagonal.toViewConst();
     arrayView1d< real64 const > const localRhsContributions = m_rhsContributions.toViewConst();
-    std::cout << "b" << std::endl;
     forAll< POLICY >( m_constrainedDofIndices.size(),
                       [ initSolution, localBC, localBCIndices, localBCDofs, localDiag, localRhsContributions ] GEOSX_HOST_DEVICE
                         ( localIndex const i )
@@ -276,7 +274,6 @@ public:
     
     // std::cout<<"LinearOperatorWithBC::computeConstrainedRHS - srcWithBC"<<std::endl;
     // std::cout<<srcWithBC<<std::endl;
-    std::cout << "c" << std::endl;
     m_unconstrained_op.apply( srcWithBC, rhs );
 
     // std::cout<<"LinearOperatorWithBC::computeConstrainedRHS - rhs"<<std::endl;
@@ -287,7 +284,6 @@ public:
 
     // D_GG x_BC
     arrayView1d< real64 > const localRhs = rhs.open();
-    std::cout << "d" << std::endl;
     forAll< POLICY >( m_constrainedDofIndices.size(),
                       [ localRhs, localBCIndices, localRhsContributions ] GEOSX_HOST_DEVICE
                         ( localIndex const i )

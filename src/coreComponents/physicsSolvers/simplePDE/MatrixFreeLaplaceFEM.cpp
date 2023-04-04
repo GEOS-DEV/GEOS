@@ -62,7 +62,6 @@ MatrixFreeLaplaceFEMOperator::
 
 void MatrixFreeLaplaceFEMOperator::apply( ParallelVector const & src, ParallelVector & dst ) const
 {
-  std::cout << "0.1" << std::endl;
   // dst.zero();
   arrayView1d< real64 const > const localSrc = src.values();
   arrayView1d< real64 > const localDst = dst.open();
@@ -73,7 +72,6 @@ void MatrixFreeLaplaceFEMOperator::apply( ParallelVector const & src, ParallelVe
     localDst[ i ] = 0.0;
   } );
 
-  std::cout << "0.2" << std::endl;
   for( auto const & target: m_meshTargets )
   {
     string const meshBodyName = target.first.first;
@@ -81,7 +79,6 @@ void MatrixFreeLaplaceFEMOperator::apply( ParallelVector const & src, ParallelVe
     arrayView1d< string const > const & regionNames = target.second.toViewConst();
     MeshBody & meshBody = m_meshBodies.template getGroup< MeshBody >( meshBodyName );
 
-    std::cout << "0.2.1" << std::endl;
     MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
     if( meshLevelPtr==nullptr )
     {
@@ -100,18 +97,16 @@ void MatrixFreeLaplaceFEMOperator::apply( ParallelVector const & src, ParallelVe
       //                                                         dummyString,
       //                                                         kernelFactory );
 
-      std::cout << "0.2.2" << std::endl;
       MFLaplaceFEMKernelsFactory kernelFactory( localSrc, localDst );
       string const dummyString = "dummy";
       finiteElement::
-        regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+        regionBasedKernelApplication< parallelDeviceAsyncPolicy< 32 >,
                                       constitutive::NullModel,
                                       CellElementSubRegion >( *meshLevelPtr,
                                                               regionNames,
                                                               m_finiteElementName,
                                                               dummyString,
                                                               kernelFactory );
-      std::cout << "0.2.3" << std::endl;
 
   }
   dst.close();
@@ -235,7 +230,6 @@ real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
                                          const int cycleNumber,
                                          DomainPartition & domain )
 {
-  std::cout << "SolverStep" << std::endl;
   setupSystem( domain,
                m_dofManager,
                m_localMatrix,
@@ -243,9 +237,7 @@ real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
                m_solution,
                false );
 
-  std::cout << "1" << std::endl;
   MatrixFreeLaplaceFEMOperator unconstrained_laplace( domain, getMeshTargets(), m_dofManager, this->getDiscretizationName() );
-  std::cout << "2" << std::endl;
   LinearOperatorWithBC< ParallelVector, FieldType > constrained_laplace( *this,
                                                               unconstrained_laplace,
                                                               domain,
@@ -256,17 +248,14 @@ real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
                                                                 DiagPolicy::
                                                                   DiagonalOne );
 
-  std::cout << "3" << std::endl;
   constrained_laplace.computeConstrainedRHS( m_rhs, m_solution );
   // MatrixFreePreconditionerIdentity< HypreInterface > identity( m_dofManager );
   auto & params = m_linearSolverParameters.get();
   params.isSymmetric = true;
   // CgSolver< ParallelVector > solver( params, constrained_laplace, identity );
-  std::cout << "4" << std::endl;
-  UnprecCgSolver< ParallelVector > solver( params, constrained_laplace );
+  UnprecCgSolver< ParallelVector > solver( params, unconstrained_laplace );
   // std::cout<< "residual m_rhs: " << m_rhs << std::endl;
 
-  std::cout << "5" << std::endl;
   solver.solve( m_rhs, m_solution );
   const real64 elapsed_seconds = solver.result().solveTime;
   std::cout << "solve time: " << elapsed_seconds << "s\n";
