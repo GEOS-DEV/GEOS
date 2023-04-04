@@ -13,43 +13,6 @@ __VERBOSE_KEY = "verbose"
 __QUIET_KEY = "quiet"
 
 
-@dataclass(frozen=True)
-class Arguments:
-    vtk_input_file: str
-    checks: OrderedDict()
-
-
-def parse_cli_option(s: str) -> Dict[str, str]:
-    """
-    Taking a CLI option string, and converts into a dict.
-    :param s: A string of options like "foo=bar:fizz=buzz".
-    :return: The corresponding {foo:bar, fizz:buzz} dict.
-    """
-    result = OrderedDict()
-    for opt in s.split(__OPTIONS_SEP):
-        k, v = opt.split(__KV_SEP)
-        result[k] = v
-    return result
-
-
-def validate_cli_options(check_name: str, valid_keys: Set[str], options: Dict[str, str]):
-    """
-    Checks the user input options and logs if an options is not recognized.
-    :param check_name: The key/name of the check.
-    :param valid_keys: The option keys that are valid for the considered check.
-    :param options: The user options.
-    :return: None
-    :todo: Deal with default options.
-    """
-    invalid_keys = set(options.keys()) - valid_keys
-    if invalid_keys:
-        if len(invalid_keys) == 1:
-            logging.warning(f"Key \"{invalid_keys.pop()}\" is not a valid option of \"{check_name}\". Ignoring it.")
-        else:
-            logging.warning(
-                f"Keys \"{', '.join(invalid_keys)}\" are not valid options of \"{check_name}\". Ignoring them.")
-
-
 def parse_and_set_verbosity(cli_args: List[str]) -> None:
     """
     Parse the verbosity flag only. And sets the logger's level accordingly.

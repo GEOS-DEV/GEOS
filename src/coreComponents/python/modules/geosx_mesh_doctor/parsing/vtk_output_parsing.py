@@ -41,12 +41,3 @@ def convert(parsed_options) -> VtkOutput:
     is_data_mode_binary: bool = parsed_options[__OUTPUT_BINARY_MODE] == __OUTPUT_BINARY_MODE_DEFAULT
     return VtkOutput(output=output,
                      is_data_mode_binary=is_data_mode_binary)
-
-
-def parse_cli_options(options: Dict[str, str]) -> VtkOutput:
-    output = options[__OUTPUT_FILE]
-    if options.get(__OUTPUT_BINARY_MODE) and os.path.splitext(output)[-1] == ".vtk":
-        logging.info("VTK data mode will be ignored for legacy file format \"vtk\".")
-    is_data_mode_binary = options.get(__OUTPUT_BINARY_MODE, __OUTPUT_BINARY_MODE_DEFAULT) == __OUTPUT_BINARY_MODE_DEFAULT
-    return VtkOutput(output=output,
-                     is_data_mode_binary=is_data_mode_binary)
