@@ -1,9 +1,9 @@
+import argparse
 import logging
-import textwrap
 
 from checks.non_conformal import Options, Result
 
-from . import cli_parsing, NON_CONFORMAL
+from . import NON_CONFORMAL
 
 __ANGLE_TOLERANCE = "angle_tolerance"
 __POINT_TOLERANCE = "point_tolerance"
@@ -14,31 +14,27 @@ __ANGLE_TOLERANCE_DEFAULT = 10.
 __ALL_KEYWORDS = {__ANGLE_TOLERANCE, __POINT_TOLERANCE, __FACE_TOLERANCE}
 
 
-def get_help():
-    msg = f"""\
-    Detects non conformal elements. [EXPERIMENTAL]
-    
-    {__ANGLE_TOLERANCE} [float]: angle tolerance in degrees. Defaults to {__ANGLE_TOLERANCE_DEFAULT}.
-    {__POINT_TOLERANCE} [float]: tolerance for two points to be considered collocated.
-    {__FACE_TOLERANCE} [float]: tolerance for two faces to be considered "touching".
-    """
-    return textwrap.dedent(msg)
+def convert(parsed_options) -> Options:
+    return Options(angle_tolerance=parsed_options[__ANGLE_TOLERANCE],
+                   point_tolerance=parsed_options[__POINT_TOLERANCE],
+                   face_tolerance=parsed_options[__FACE_TOLERANCE])
 
 
-def parse_cli_options(options_str: str) -> Options:
-    """
-    From the parsed cli options, return the converted options for collocated nodes check.
-    :param options_str: Parsed cli options.
-    :return: Options instance.
-    """
-    options = cli_parsing.parse_cli_option(options_str)
-    cli_parsing.validate_cli_options(NON_CONFORMAL, __ALL_KEYWORDS, options)
-    angle_tolerance = float(options.get(__ANGLE_TOLERANCE, __ANGLE_TOLERANCE_DEFAULT))
-    point_tolerance = float(options[__POINT_TOLERANCE])
-    face_tolerance = float(options[__FACE_TOLERANCE])
-    return Options(angle_tolerance=angle_tolerance,
-                   point_tolerance=point_tolerance,
-                   face_tolerance=face_tolerance)
+def fill_subparser(subparsers) -> argparse.ArgumentParser:
+    p: argparse.ArgumentParser = subparsers.add_parser(NON_CONFORMAL,
+                                                       help="Detects non conformal elements. [EXPERIMENTAL]")
+    p.add_argument('--' + __ANGLE_TOLERANCE,
+                   type=float,
+                   metavar=__ANGLE_TOLERANCE_DEFAULT,
+                   default=__ANGLE_TOLERANCE_DEFAULT,
+                   help=f"[float]: angle tolerance in degrees. Defaults to {__ANGLE_TOLERANCE_DEFAULT}")
+    p.add_argument('--' + __POINT_TOLERANCE,
+                   type=float,
+                   help=f"[float]: tolerance for two points to be considered collocated.")
+    p.add_argument('--' + __FACE_TOLERANCE,
+                   type=float,
+                   help=f"[float]: tolerance for two faces to be considered \"touching\".")
+    return p
 
 
 def display_results(options: Options, result: Result):

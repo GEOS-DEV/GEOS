@@ -57,7 +57,7 @@ def register() -> Tuple[argparse.ArgumentParser, Dict[str, Callable[[str, Any], 
                        #                    parsing.FIX_ELEMENTS_ORDERINGS,
                        #                    parsing.GENERATE_FRACTURES,
                        #                    parsing.GENERATE_GLOBAL_IDS,
-                       #                    parsing.NON_CONFORMAL,
+                       parsing.NON_CONFORMAL,
                        parsing.SELF_INTERSECTING_ELEMENTS,
                        parsing.SUPPORTED_ELEMENTS):
         closure_trick(check_name)
