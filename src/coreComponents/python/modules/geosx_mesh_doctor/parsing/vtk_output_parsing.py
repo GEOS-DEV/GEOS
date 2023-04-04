@@ -1,7 +1,6 @@
 import os.path
 import logging
 import textwrap
-from typing import Dict
 
 from checks.vtk_utils import VtkOutput
 
