@@ -64,7 +64,8 @@ def register() -> Tuple[argparse.ArgumentParser, Dict[str, Callable[[str, Any], 
     loaded_checks: Dict[str, Callable[[str, Any], Any]] = __load_checks()
     loaded_checks_helpers: Dict[str, CheckHelper] = dict()
     for check_name in loaded_checks.keys():
-        __HELPERS[check_name]().fill_subparser(subparsers)
-        loaded_checks_helpers[check_name] = __HELPERS[check_name]()
+        h = __HELPERS[check_name]()
+        h.fill_subparser(subparsers)
+        loaded_checks_helpers[check_name] = h
         logging.debug(f"Parsing for check \"{check_name}\" is loaded.")
     return parser, loaded_checks, loaded_checks_helpers
