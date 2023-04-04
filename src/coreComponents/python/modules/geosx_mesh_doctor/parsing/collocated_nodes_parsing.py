@@ -1,4 +1,3 @@
-import argparse
 import logging
 
 from checks.collocated_nodes import Options, Result
@@ -12,14 +11,13 @@ def convert(parsed_options) -> Options:
     return Options(parsed_options[__TOLERANCE])
 
 
-def fill_subparser(subparsers) -> argparse.ArgumentParser:
-    p: argparse.ArgumentParser = subparsers.add_parser(COLLOCATES_NODES,
-                                                       help="Checks if nodes are collocated.")
+def fill_subparser(subparsers) -> None:
+    p = subparsers.add_parser(COLLOCATES_NODES,
+                              help="Checks if nodes are collocated.")
     p.add_argument('--' + __TOLERANCE,
                    type=float,
                    required=True,
                    help="[float]: The absolute distance between two nodes for them to be considered collocated.")
-    return p
 
 
 def display_results(options: Options, result: Result):

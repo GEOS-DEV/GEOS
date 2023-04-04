@@ -1,4 +1,3 @@
-import argparse
 import logging
 
 from checks.generate_fractures import Options, Result
@@ -16,9 +15,9 @@ __SPLIT_ON_DOMAIN_BOUNDARY = "split_on_domain_boundary"
 __GENERATE_FIELD_DATA = "generate_field_data"
 
 
-def fill_subparser(subparsers) -> argparse.ArgumentParser:
-    p: argparse.ArgumentParser = subparsers.add_parser(GENERATE_FRACTURES,
-                                                       help="Splits the mesh to generate the faults and fractures. [EXPERIMENTAL]")
+def fill_subparser(subparsers) -> None:
+    p = subparsers.add_parser(GENERATE_FRACTURES,
+                              help="Splits the mesh to generate the faults and fractures. [EXPERIMENTAL]")
     p.add_argument('--' + __GENERATE_FIELD_DATA,
                    type=bool,
                    metavar="True",
@@ -42,7 +41,6 @@ def fill_subparser(subparsers) -> argparse.ArgumentParser:
                    nargs="+",
                    help=f"[list of integers]: If the \"{__FIELD_POLICY}\" {__POLICY} is selected, which changes of the field will be considered as a fracture.")
     vtk_output_parsing.fill_vtk_output_subparser(p)
-    return p
 
 
 def convert(parsed_options) -> Options:

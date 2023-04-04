@@ -1,4 +1,3 @@
-import argparse
 import logging
 
 from checks.non_conformal import Options, Result
@@ -20,9 +19,9 @@ def convert(parsed_options) -> Options:
                    face_tolerance=parsed_options[__FACE_TOLERANCE])
 
 
-def fill_subparser(subparsers) -> argparse.ArgumentParser:
-    p: argparse.ArgumentParser = subparsers.add_parser(NON_CONFORMAL,
-                                                       help="Detects non conformal elements. [EXPERIMENTAL]")
+def fill_subparser(subparsers) -> None:
+    p = subparsers.add_parser(NON_CONFORMAL,
+                              help="Detects non conformal elements. [EXPERIMENTAL]")
     p.add_argument('--' + __ANGLE_TOLERANCE,
                    type=float,
                    metavar=__ANGLE_TOLERANCE_DEFAULT,
@@ -34,7 +33,6 @@ def fill_subparser(subparsers) -> argparse.ArgumentParser:
     p.add_argument('--' + __FACE_TOLERANCE,
                    type=float,
                    help=f"[float]: tolerance for two faces to be considered \"touching\".")
-    return p
 
 
 def display_results(options: Options, result: Result):

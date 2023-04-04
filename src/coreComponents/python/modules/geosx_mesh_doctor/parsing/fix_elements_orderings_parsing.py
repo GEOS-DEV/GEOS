@@ -1,4 +1,3 @@
-import argparse
 import logging
 import random
 
@@ -38,9 +37,9 @@ __CELL_TYPE_SUPPORT_SIZE = {
 }
 
 
-def fill_subparser(subparsers) -> argparse.ArgumentParser:
-    p: argparse.ArgumentParser = subparsers.add_parser(FIX_ELEMENTS_ORDERINGS,
-                                                       help="Reorders the support nodes for the given cell types.")
+def fill_subparser(subparsers) -> None:
+    p = subparsers.add_parser(FIX_ELEMENTS_ORDERINGS,
+                              help="Reorders the support nodes for the given cell types.")
     for key, vtk_key in __CELL_TYPE_MAPPING.items():
         tmp = list(range(__CELL_TYPE_SUPPORT_SIZE[vtk_key]))
         random.Random(4).shuffle(tmp)
@@ -51,7 +50,6 @@ def fill_subparser(subparsers) -> argparse.ArgumentParser:
                        required=False,
                        help=f"[list of integers]: node permutation for \"{key}\".")
     vtk_output_parsing.fill_vtk_output_subparser(p)
-    return p
 
 
 def convert(parsed_options) -> Options:

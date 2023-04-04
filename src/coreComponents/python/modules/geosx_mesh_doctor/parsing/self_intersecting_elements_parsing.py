@@ -1,4 +1,3 @@
-import argparse
 import logging
 
 import numpy
@@ -20,16 +19,15 @@ def convert(parsed_options) -> Options:
     return Options(tolerance=tolerance)
 
 
-def fill_subparser(subparsers) -> argparse.ArgumentParser:
-    p: argparse.ArgumentParser = subparsers.add_parser(SELF_INTERSECTING_ELEMENTS,
-                                                       help="Checks if the faces of the elements are self intersecting.")
+def fill_subparser(subparsers) -> None:
+    p = subparsers.add_parser(SELF_INTERSECTING_ELEMENTS,
+                              help="Checks if the faces of the elements are self intersecting.")
     p.add_argument('--' + __TOLERANCE,
                    type=int,
                    required=False,
                    metavar=__TOLERANCE_DEFAULT,
                    default=__TOLERANCE_DEFAULT,
                    help=f"[float]: The tolerance in the computation. Defaults to machine precision {__TOLERANCE_DEFAULT}")
-    return p
 
 
 def display_results(options: Options, result: Result):

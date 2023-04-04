@@ -1,4 +1,3 @@
-import argparse
 import logging
 
 from checks.element_volumes import Options, Result
@@ -9,16 +8,15 @@ __MIN_VOLUME = "min"
 __MIN_VOLUME_DEFAULT = 0.
 
 
-def fill_subparser(subparsers) -> argparse.ArgumentParser:
-    p: argparse.ArgumentParser = subparsers.add_parser(ELEMENT_VOLUMES,
-                                                       help=f"Checks if the volumes of the elements are greater than \"{__MIN_VOLUME}\".")
+def fill_subparser(subparsers) -> None:
+    p = subparsers.add_parser(ELEMENT_VOLUMES,
+                              help=f"Checks if the volumes of the elements are greater than \"{__MIN_VOLUME}\".")
     p.add_argument('--' + __MIN_VOLUME,
                    type=float,
                    metavar=__MIN_VOLUME_DEFAULT,
                    default=__MIN_VOLUME_DEFAULT,
                    required=True,
                    help=f"[float]: The minimum acceptable volume. Defaults to {__MIN_VOLUME_DEFAULT}.")
-    return p
 
 
 def convert(parsed_options) -> Options:

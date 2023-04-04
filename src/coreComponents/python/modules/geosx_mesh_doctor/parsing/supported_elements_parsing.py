@@ -1,4 +1,3 @@
-import argparse
 import logging
 import multiprocessing
 
@@ -21,9 +20,9 @@ def convert(parsed_options) -> Options:
                    num_proc=parsed_options[__NUM_PROC])
 
 
-def fill_subparser(subparsers) -> argparse.ArgumentParser:
-    p: argparse.ArgumentParser = subparsers.add_parser(SUPPORTED_ELEMENTS,
-                                                       help="Check that all the elements of the mesh are supported by GEOSX.")
+def fill_subparser(subparsers) -> None:
+    p = subparsers.add_parser(SUPPORTED_ELEMENTS,
+                              help="Check that all the elements of the mesh are supported by GEOSX.")
     p.add_argument('--' + __CHUNK_SIZE,
                    type=int,
                    required=False,
@@ -36,7 +35,6 @@ def fill_subparser(subparsers) -> argparse.ArgumentParser:
                    metavar=__NUM_PROC_DEFAULT,
                    default=__NUM_PROC_DEFAULT,
                    help=f"[int]: Number of threads used for parallel processing. Defaults to {__NUM_PROC_DEFAULT}")
-    return p
 
 
 def display_results(options: Options, result: Result):
