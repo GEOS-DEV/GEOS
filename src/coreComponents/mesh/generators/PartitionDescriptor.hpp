@@ -13,7 +13,7 @@
  */
 
 /**
- * @file ParrtitionDescriptor.hpp
+ * @file PartitionDescriptor.hpp
  */
 
 #ifndef GEOSX_MESH_PARTITIONDESCRIPTOR_H_
