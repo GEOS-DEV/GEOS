@@ -53,7 +53,7 @@ def register() -> Tuple[argparse.ArgumentParser, Dict[str, Callable[[str, Any], 
         __CHECKS[check_name] = lambda: __load_module_check(cn)
     # Register the modules to load here.
     for check_name in (parsing.COLLOCATES_NODES,
-                       #                    parsing.ELEMENT_VOLUMES,
+                       parsing.ELEMENT_VOLUMES,
                        parsing.FIX_ELEMENTS_ORDERINGS,
                        parsing.GENERATE_FRACTURES,
                        parsing.GENERATE_GLOBAL_IDS,
