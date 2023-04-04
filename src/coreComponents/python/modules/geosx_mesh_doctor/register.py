@@ -46,7 +46,7 @@ def register() -> Tuple[argparse.ArgumentParser, Dict[str, Callable[[str, Any], 
     :return: The checks and the checks helpers.
     """
     parser = cli_parsing.init_parser()
-    subparsers = parser.add_subparsers(help="Sub-command help", dest="subparsers")
+    subparsers = parser.add_subparsers(help="Modules", dest="subparsers")
 
     def closure_trick(cn: str):
         __HELPERS[check_name] = lambda: __load_module_check_helper(cn)
@@ -61,15 +61,6 @@ def register() -> Tuple[argparse.ArgumentParser, Dict[str, Callable[[str, Any], 
                        parsing.SELF_INTERSECTING_ELEMENTS,
                        parsing.SUPPORTED_ELEMENTS):
         closure_trick(check_name)
-    # for check_name in (parsing.COLLOCATES_NODES,
-    #                    parsing.ELEMENT_VOLUMES,
-    #                    parsing.FIX_ELEMENTS_ORDERINGS,
-    #                    parsing.GENERATE_FRACTURES,
-    #                    parsing.GENERATE_GLOBAL_IDS,
-    #                    parsing.NON_CONFORMAL,
-    #                    parsing.SELF_INTERSECTING_ELEMENTS,
-    #                    parsing.SUPPORTED_ELEMENTS):
-    #     closure_trick(check_name)
     loaded_checks: Dict[str, Callable[[str, Any], Any]] = __load_checks()
     loaded_checks_helpers: Dict[str, CheckHelper] = dict()
     for check_name in loaded_checks.keys():

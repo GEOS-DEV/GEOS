@@ -26,7 +26,7 @@ def fill_subparser(subparsers) -> argparse.ArgumentParser:
                    help=f"[bool]: Whether we should generate the vtk field data that currently defines the fracture in GEOSX. Defaults to \"True\".")
     p.add_argument('--' + __POLICY,
                    type=str,
-                   metavar=",".join(__POLICIES),
+                   metavar=", ".join(__POLICIES),
                    required=True,
                    help=f"[string]: The criterion to define the surfaces that will be changed into fracture zones. Possible values are {', '.join(__POLICIES)}")
     p.add_argument('--' + __SPLIT_ON_DOMAIN_BOUNDARY,
@@ -40,7 +40,7 @@ def fill_subparser(subparsers) -> argparse.ArgumentParser:
     p.add_argument('--' + __FIELD_VALUES,
                    type=str,
                    nargs="+",
-                   help=f"[string]: If the \"{__FIELD_POLICY}\" {__POLICY} is selected, which changes of the field will be considered as a fracture.")
+                   help=f"[list of integers]: If the \"{__FIELD_POLICY}\" {__POLICY} is selected, which changes of the field will be considered as a fracture.")
     vtk_output_parsing.fill_vtk_output_subparser(p)
     return p
 
