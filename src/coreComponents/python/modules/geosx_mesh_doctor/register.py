@@ -54,7 +54,7 @@ def register() -> Tuple[argparse.ArgumentParser, Dict[str, Callable[[str, Any], 
     # Register the modules to load here.
     for check_name in (parsing.COLLOCATES_NODES,
                        #                    parsing.ELEMENT_VOLUMES,
-                       #                    parsing.FIX_ELEMENTS_ORDERINGS,
+                       parsing.FIX_ELEMENTS_ORDERINGS,
                        parsing.GENERATE_FRACTURES,
                        parsing.GENERATE_GLOBAL_IDS,
                        parsing.NON_CONFORMAL,
