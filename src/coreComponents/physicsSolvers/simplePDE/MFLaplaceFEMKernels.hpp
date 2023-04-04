@@ -294,6 +294,7 @@ public:
   real64 complete( localIndex const k,
                    real64 const (&fLocal) [ numNodesPerElem ] ) const
 {
+  #pragma unroll
   for( localIndex a = 0; a < numNodesPerElem; ++a )
   {
     localIndex const nodeIndex = m_elemsToNodes( k, a );
