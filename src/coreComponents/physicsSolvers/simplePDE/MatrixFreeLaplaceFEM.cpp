@@ -20,6 +20,7 @@
 #include "MatrixFreeLaplaceFEM.hpp"
 #include "LaplaceFEMKernels.hpp"
 #include "TeamLaplaceFEMKernels.hpp"
+#include "MFLaplaceFEMKernels.hpp"
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "mesh/MeshBody.hpp"
 #include "linearAlgebra/solvers/CgSolver.hpp"
@@ -61,9 +62,16 @@ MatrixFreeLaplaceFEMOperator::
 
 void MatrixFreeLaplaceFEMOperator::apply( ParallelVector const & src, ParallelVector & dst ) const
 {
-  dst.zero();
+  // dst.zero();
   arrayView1d< real64 const > const localSrc = src.values();
   arrayView1d< real64 > const localDst = dst.open();
+  // We do it by hand to avoid hypre call
+  using POLICY = parallelDeviceAsyncPolicy<>;
+  forAll< POLICY >( localDst.size(), [localDst] GEOSX_HOST_DEVICE ( localIndex const i )
+  {
+    localDst[ i ] = 0.0;
+  } );
+
   for( auto const & target: m_meshTargets )
   {
     string const meshBodyName = target.first.first;
@@ -77,11 +85,22 @@ void MatrixFreeLaplaceFEMOperator::apply( ParallelVector const & src, ParallelVe
       meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
     }
 
-      TeamLaplaceFEMKernelFactory2 kernelFactory( localSrc, localDst );
+      // TeamLaplaceFEMKernelFactory2 kernelFactory( localSrc, localDst );
 
+      // string const dummyString = "dummy";
+      // finiteElement::
+      //   regionBasedKernelApplication< team_launch_policy,
+      //                                 constitutive::NullModel,
+      //                                 CellElementSubRegion >( *meshLevelPtr,
+      //                                                         regionNames,
+      //                                                         m_finiteElementName,
+      //                                                         dummyString,
+      //                                                         kernelFactory );
+
+      MFLaplaceFEMKernelsFactory kernelFactory( localSrc, localDst );
       string const dummyString = "dummy";
       finiteElement::
-        regionBasedKernelApplication< team_launch_policy,
+        regionBasedKernelApplication< parallelDeviceAsyncPolicy< 32 >,
                                       constitutive::NullModel,
                                       CellElementSubRegion >( *meshLevelPtr,
                                                               regionNames,
@@ -228,14 +247,26 @@ real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
                                                               LinearOperatorWithBC< ParallelVector, FieldType >::
                                                                 DiagPolicy::
                                                                   DiagonalOne );
+
   constrained_laplace.computeConstrainedRHS( m_rhs, m_solution );
-  MatrixFreePreconditionerIdentity< HypreInterface > identity( m_dofManager );
+  // MatrixFreePreconditionerIdentity< HypreInterface > identity( m_dofManager );
   auto & params = m_linearSolverParameters.get();
   params.isSymmetric = true;
-  CgSolver< ParallelVector > solver( params, constrained_laplace, identity );
-  std::cout<< "residual m_rhs: " << m_rhs << std::endl;
+  // CgSolver< ParallelVector > solver( params, constrained_laplace, identity );
+  UnprecCgSolver< ParallelVector > solver( params, unconstrained_laplace );
+  // std::cout<< "residual m_rhs: " << m_rhs << std::endl;
+
   solver.solve( m_rhs, m_solution );
-  std::cout<< "solution m_solution: " << m_solution << std::endl;
+  const real64 elapsed_seconds = solver.result().solveTime;
+  std::cout << "solve time: " << elapsed_seconds << "s\n";
+  const integer num_iter = solver.result().numIterations;
+  const double time_per_iter = elapsed_seconds / num_iter;
+  std::cout << "Time per CG iteration: " << time_per_iter << "s\n";
+  const size_t num_dofs = m_dofManager.numLocalDofs();
+  std::cout << "Number of local dofs: " << num_dofs << "dofs\n";
+  std::cout << "Throughput: " << num_dofs/time_per_iter*1e-6 << "MDofs/s\n";
+  // std::cout<< "solution m_solution: " << m_solution << std::endl;
+
   applySystemSolution( m_dofManager, m_solution.values(), 1.0, domain );
   return dt;
 }

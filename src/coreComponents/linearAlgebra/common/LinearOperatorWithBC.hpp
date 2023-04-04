@@ -22,20 +22,19 @@
 namespace geosx
 {
 
-template< typename T >
+template< int USD >
 GEOSX_HOST_DEVICE
-inline real64 bcFieldValue( T const & field, 
+inline real64 bcFieldValue( arrayView2d<real64 const, USD> const & field, 
                             localIndex const index, 
                             int const component )
 {
   return field(index, component );
 } 
 
-template<>
 GEOSX_HOST_DEVICE
-inline real64 bcFieldValue<arrayView1d<real64 const>>( arrayView1d<real64 const> const & field, 
-                                                       localIndex const index, 
-                                                       int const )
+inline real64 bcFieldValue( arrayView1d<real64 const> const & field, 
+                            localIndex const index, 
+                            int const )
 {
   return field[index];
 }

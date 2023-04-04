@@ -26,7 +26,7 @@
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
-    <PeriodicEvent
+    <!--PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
       target="/Outputs/vtkOutput"/>
@@ -35,7 +35,7 @@
       name="restarts"
       timeFrequency="1.0"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"/-->
   </Events>
 
   <Constitutive>
