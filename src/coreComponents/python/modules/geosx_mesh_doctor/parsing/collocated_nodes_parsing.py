@@ -1,3 +1,4 @@
+import argparse
 import logging
 import textwrap
 
@@ -8,24 +9,18 @@ from . import cli_parsing, COLLOCATES_NODES
 __TOLERANCE = "tolerance"
 
 
-def get_help():
-    msg = f"""\
-    Checks if nodes are collocated.
-    
-    {__TOLERANCE} [float]: The absolute distance between two nodes for them to be considered collocated.
-    """
-    return textwrap.dedent(msg)
+def convert(parsed_options) -> Options:
+    return Options(parsed_options[__TOLERANCE])
 
 
-def parse_cli_options(options_str: str) -> Options:
-    """
-    From the parsed cli options, return the converted options for collocated nodes check.
-    :param options_str: Parsed cli options.
-    :return: Options instance.
-    """
-    options = cli_parsing.parse_cli_option(options_str)
-    cli_parsing.validate_cli_options(COLLOCATES_NODES, {__TOLERANCE}, options)
-    return Options(float(options[__TOLERANCE]))
+def fill_subparser(subparsers) -> argparse.ArgumentParser:
+    p: argparse.ArgumentParser = subparsers.add_parser(COLLOCATES_NODES,
+                                                       help="Checks if nodes are collocated.")
+    p.add_argument('--' + __TOLERANCE,
+                   type=float,
+                   required=True,
+                   help="[float]: The absolute distance between two nodes for them to be considered collocated.")
+    return p
 
 
 def display_results(options: Options, result: Result):

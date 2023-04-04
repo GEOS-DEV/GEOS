@@ -1,3 +1,4 @@
+import argparse
 from dataclasses import dataclass
 from typing import Callable, Any
 
@@ -14,6 +15,6 @@ SUPPORTED_ELEMENTS = "supported_elements"
 
 @dataclass(frozen=True)
 class CheckHelper:
-    parse_cli_options: Callable[[str], Any]
+    fill_subparser: Callable[[Any], argparse.ArgumentParser]
+    convert: Callable[[Any], Any]
     display_results: Callable[[Any, Any], None]
-    get_help: Callable[[None], str]

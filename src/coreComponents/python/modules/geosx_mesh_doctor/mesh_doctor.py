@@ -10,28 +10,25 @@ except AssertionError as e:
 import logging
 
 from parsing import CheckHelper
-from parsing.cli_parsing import parse, parse_and_set_verbosity
+from parsing.cli_parsing import parse_and_set_verbosity
 import register
 
 
 def main():
     logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s')
     parse_and_set_verbosity(sys.argv)
-    all_checks, all_checks_helpers = register.register()
-    args = parse(all_checks_helpers, sys.argv)
+    main_parser, all_checks, all_checks_helpers = register.register()
+    args = main_parser.parse_args(sys.argv[1:])
     logging.info(f"Checking mesh \"{args.vtk_input_file}\".")
-    for check_name, check_options in args.checks.items():
-        # If there is no option, this means that the check was not requested by the user
-        if not check_options:
-            continue
-        try:
-            check = all_checks[check_name]
-        except KeyError as e:
-            logging.critical(f"Check {check_name} is not a valid check.")
-            sys.exit(1)
-        helper: CheckHelper = all_checks_helpers[check_name]
-        result = check(args.vtk_input_file, check_options)
-        helper.display_results(check_options, result)
+    check_options = all_checks_helpers[args.subparsers].convert(vars(args))
+    try:
+        check = all_checks[args.subparsers]
+    except KeyError as e:
+        logging.critical(f"Check {args.subparsers} is not a valid check.")
+        sys.exit(1)
+    helper: CheckHelper = all_checks_helpers[args.subparsers]
+    result = check(args.vtk_input_file, check_options)
+    helper.display_results(check_options, result)
 
 
 if __name__ == '__main__':

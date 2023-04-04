@@ -2,10 +2,8 @@ import argparse
 from collections import OrderedDict
 from dataclasses import dataclass
 import logging
-import textwrap
 from typing import List, Dict, Set
 
-from . import CheckHelper
 
 __OPTIONS_SEP = ":"
 __KV_SEP = "="
@@ -70,63 +68,3 @@ def parse_and_set_verbosity(cli_args: List[str]) -> None:
         verbosity = logging.CRITICAL
     logging.getLogger().setLevel(verbosity)
     logging.info(f"Logger level set to \"{logging.getLevelName(verbosity)}\"")
-
-
-def parse(all_checks_helpers: Dict[str, CheckHelper], cli_args: List[str]) -> Arguments:
-    """
-    Parse the command line arguments and return the corresponding structure.
-    :param all_checks_helpers: All the checks
-    :param cli_args: The list of arguments (as strings)
-    :return: The struct
-    """
-    vtk_input_file_key = "vtk_input_file"
-
-    verbosity_flag = "v"
-
-    epilog_msg = f"""\
-    Note that checks are dynamically loaded.
-    An option may be missing because of an unloaded module.
-    Increase verbosity (-{verbosity_flag}, -{verbosity_flag * 2}) to get full information.
-    """
-    formatter = lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=8)
-    parser = argparse.ArgumentParser(description='Inspects meshes for GEOSX.',
-                                     epilog=textwrap.dedent(epilog_msg),
-                                     formatter_class=formatter)
-    misc_grp = parser.add_argument_group('main')
-    # Nothing will be done with this verbosity/quiet input.
-    # It's only here for the `--help` message.
-    # `parse_verbosity` does the real parsing instead.
-    misc_grp.add_argument('-' + verbosity_flag,
-                          action='count',
-                          default=2,
-                          dest=__VERBOSE_KEY,
-                          help="Use -v 'INFO', -vv for 'DEBUG'. Defaults to 'WARNING'.")
-    misc_grp.add_argument('-q',
-                          action='count',
-                          default=0,
-                          dest=__QUIET_KEY,
-                          help="Use -q to reduce the verbosity of the output.")
-    misc_grp.add_argument('-i',
-                          '--vtk-input-file',
-                          metavar='VTK_MESH_FILE',
-                          type=str,
-                          required=True,
-                          dest=vtk_input_file_key)
-    checks_grp = parser.add_argument_group('checks')
-    for check_name, check_helper in all_checks_helpers.items():
-        checks_grp.add_argument('--' + check_name,
-                                metavar='opt0' + __KV_SEP + 'val0' + __OPTIONS_SEP + 'opt1' + __KV_SEP + 'val1...',
-                                type=check_helper.parse_cli_options,
-                                dest=check_name,
-                                required=False,
-                                help=check_helper.get_help())
-    args = parser.parse_args(cli_args[1:])
-
-    args = vars(args)    # converting to `dict` allows to access keys by variable.
-    checks = OrderedDict()
-    for check_name in all_checks_helpers.keys():
-        options = args[check_name]
-        checks[check_name] = options
-        logging.debug(f"Check \"{check_name}\" was found with options \"{options}\".")
-
-    return Arguments(vtk_input_file=args[vtk_input_file_key], checks=checks)

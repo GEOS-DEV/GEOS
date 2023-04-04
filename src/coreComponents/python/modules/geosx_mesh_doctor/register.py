@@ -1,5 +1,7 @@
+import argparse
 import importlib
 import logging
+import textwrap
 from typing import Dict, Callable, Any, Tuple
 
 import parsing
@@ -17,9 +19,9 @@ def __load_module_check(module_name: str, check_fct="check"):
 
 def __load_module_check_helper(module_name: str, parsing_fct_suffix="_parsing"):
     module = importlib.import_module("parsing." + module_name + parsing_fct_suffix)
-    return CheckHelper(parse_cli_options=module.parse_cli_options,
-                       display_results=module.display_results,
-                       get_help=module.get_help)
+    return CheckHelper(fill_subparser=module.fill_subparser,
+                       convert=module.convert,
+                       display_results=module.display_results)
 
 
 def __load_checks() -> Dict[str, Callable[[str, Any], Any]]:
@@ -39,27 +41,73 @@ def __load_checks() -> Dict[str, Callable[[str, Any], Any]]:
     return loaded_checks
 
 
-def register() -> Tuple[Dict[str, Callable[[str, Any], Any]], Dict[str, CheckHelper]]:
+__VERBOSE_KEY = "verbose"
+__QUIET_KEY = "quiet"
+
+
+def __init_parser() -> argparse.ArgumentParser:
+    vtk_input_file_key = "vtk_input_file"
+
+    verbosity_flag = "v"
+
+    epilog_msg = f"""\
+        Note that checks are dynamically loaded.
+        An option may be missing because of an unloaded module.
+        Increase verbosity (-{verbosity_flag}, -{verbosity_flag * 2}) to get full information.
+        """
+    formatter = lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=8)
+    parser = argparse.ArgumentParser(description='Inspects meshes for GEOSX.',
+                                     epilog=textwrap.dedent(epilog_msg),
+                                     formatter_class=formatter)
+    # Nothing will be done with this verbosity/quiet input.
+    # It's only here for the `--help` message.
+    # `parse_verbosity` does the real parsing instead.
+    parser.add_argument('-' + verbosity_flag,
+                        action='count',
+                        default=2,
+                        dest=__VERBOSE_KEY,
+                        help="Use -v 'INFO', -vv for 'DEBUG'. Defaults to 'WARNING'.")
+    parser.add_argument('-q',
+                        action='count',
+                        default=0,
+                        dest=__QUIET_KEY,
+                        help="Use -q to reduce the verbosity of the output.")
+    parser.add_argument('-i',
+                        '--vtk-input-file',
+                        metavar='VTK_MESH_FILE',
+                        type=str,
+                        required=True,
+                        dest=vtk_input_file_key)
+    return parser
+
+
+def register() -> Tuple[argparse.ArgumentParser, Dict[str, Callable[[str, Any], Any]], Dict[str, CheckHelper]]:
     """
     Register all the parsing checks. Eventually initiate the registration of all the checks too.
     :return: The checks and the checks helpers.
     """
+    parser = __init_parser()
+    subparsers = parser.add_subparsers(help="Sub-command help", dest="subparsers")
+
     def closure_trick(cn: str):
         __HELPERS[check_name] = lambda: __load_module_check_helper(cn)
         __CHECKS[check_name] = lambda: __load_module_check(cn)
     # Register the modules to load here.
-    for check_name in (parsing.COLLOCATES_NODES,
-                       parsing.ELEMENT_VOLUMES,
-                       parsing.FIX_ELEMENTS_ORDERINGS,
-                       parsing.GENERATE_FRACTURES,
-                       parsing.GENERATE_GLOBAL_IDS,
-                       parsing.NON_CONFORMAL,
-                       parsing.SELF_INTERSECTING_ELEMENTS,
-                       parsing.SUPPORTED_ELEMENTS):
+    for check_name in (parsing.COLLOCATES_NODES, ):
         closure_trick(check_name)
+    # for check_name in (parsing.COLLOCATES_NODES,
+    #                    parsing.ELEMENT_VOLUMES,
+    #                    parsing.FIX_ELEMENTS_ORDERINGS,
+    #                    parsing.GENERATE_FRACTURES,
+    #                    parsing.GENERATE_GLOBAL_IDS,
+    #                    parsing.NON_CONFORMAL,
+    #                    parsing.SELF_INTERSECTING_ELEMENTS,
+    #                    parsing.SUPPORTED_ELEMENTS):
+    #     closure_trick(check_name)
     loaded_checks: Dict[str, Callable[[str, Any], Any]] = __load_checks()
     loaded_checks_helpers: Dict[str, CheckHelper] = dict()
     for check_name in loaded_checks.keys():
+        __HELPERS[check_name]().fill_subparser(subparsers)
         loaded_checks_helpers[check_name] = __HELPERS[check_name]()
         logging.debug(f"Parsing for check \"{check_name}\" is loaded.")
-    return loaded_checks, loaded_checks_helpers
+    return parser, loaded_checks, loaded_checks_helpers
