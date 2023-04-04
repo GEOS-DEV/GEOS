@@ -2,6 +2,7 @@ import argparse
 from collections import OrderedDict
 from dataclasses import dataclass
 import logging
+import textwrap
 from typing import List, Dict, Set
 
 
@@ -68,3 +69,39 @@ def parse_and_set_verbosity(cli_args: List[str]) -> None:
         verbosity = logging.CRITICAL
     logging.getLogger().setLevel(verbosity)
     logging.info(f"Logger level set to \"{logging.getLevelName(verbosity)}\"")
+
+
+def init_parser() -> argparse.ArgumentParser:
+    vtk_input_file_key = "vtk_input_file"
+
+    verbosity_flag = "v"
+
+    epilog_msg = f"""\
+        Note that checks are dynamically loaded.
+        An option may be missing because of an unloaded module.
+        Increase verbosity (-{verbosity_flag}, -{verbosity_flag * 2}) to get full information.
+        """
+    formatter = lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=8)
+    parser = argparse.ArgumentParser(description='Inspects meshes for GEOSX.',
+                                     epilog=textwrap.dedent(epilog_msg),
+                                     formatter_class=formatter)
+    # Nothing will be done with this verbosity/quiet input.
+    # It's only here for the `--help` message.
+    # `parse_verbosity` does the real parsing instead.
+    parser.add_argument('-' + verbosity_flag,
+                        action='count',
+                        default=2,
+                        dest=__VERBOSE_KEY,
+                        help="Use -v 'INFO', -vv for 'DEBUG'. Defaults to 'WARNING'.")
+    parser.add_argument('-q',
+                        action='count',
+                        default=0,
+                        dest=__QUIET_KEY,
+                        help="Use -q to reduce the verbosity of the output.")
+    parser.add_argument('-i',
+                        '--vtk-input-file',
+                        metavar='VTK_MESH_FILE',
+                        type=str,
+                        required=True,
+                        dest=vtk_input_file_key)
+    return parser
