@@ -174,6 +174,7 @@ class FractureInfo:
         node_frac_info = build_fracture_nodes(mesh, self.cell_to_faces, options.split_on_domain_boundary)
         self.is_boundary_fracture_node: Sequence[bool] = node_frac_info.is_boundary_fracture_node
         self.is_internal_fracture_node: Sequence[bool] = node_frac_info.is_internal_fracture_node
+        self.is_fracture_node: Sequence[bool] = numpy.logical_or(self.is_boundary_fracture_node, self.is_internal_fracture_node)
         self.__face_nodes: Iterable[Collection[int]] = ()
         self.__nodes: Collection[int] = ()
 
@@ -382,13 +383,13 @@ def __copy_fields(input_mesh: vtkUnstructuredGrid, output_mesh: vtkUnstructuredG
     input_cell_data = input_mesh.GetCellData()
     for i in range(input_cell_data.GetNumberOfArrays()):
         input_array = input_cell_data.GetArray(i)
-        logging.debug(f"Copying cell field {input_array.GetName()}")
+        logging.debug(f"Copying cell field \"{input_array.GetName()}\".")
         output_mesh.GetCellData().AddArray(input_array)
     # Copying the point data.
     input_point_data = input_mesh.GetPointData()
     for i in range(input_point_data.GetNumberOfArrays()):
         input_array = input_point_data.GetArray(i)
-        logging.debug(f"Copying point field {input_array.GetName()}")
+        logging.debug(f"Copying point field \"{input_array.GetName()}\"")
         tmp = input_array.NewInstance()
         tmp.SetName(input_array.GetName())
         tmp.SetNumberOfComponents(input_array.GetNumberOfComponents())
@@ -406,7 +407,7 @@ def __copy_fields(input_mesh: vtkUnstructuredGrid, output_mesh: vtkUnstructuredG
 
 def __color_fracture_sides(mesh: vtkUnstructuredGrid,
                            cell_to_faces:  Dict[int, Iterable[int]],
-                           is_boundary_fracture_node: Sequence[bool]) -> Iterable[Iterable[int]]:
+                           is_fracture_node: Sequence[bool]) -> Iterable[Iterable[int]]:
     """
     Given all the cells that are in contact with the detected fracture,
     we separate them into bucket of connected cells touching the fractures.
@@ -414,22 +415,20 @@ def __color_fracture_sides(mesh: vtkUnstructuredGrid,
     So they need to share the same nodes as they did before the split.
     :return: All the buckets connected fracture cells.
     """
-
-    def does_face_contain_boundary_node(_face_point_ids: Iterable[int]) -> bool:    # Small helper function.
+    def does_face_contain_boundary_node(_face_point_ids: Iterable[int]) -> bool:
         for face_point_id in _face_point_ids:
-            if is_boundary_fracture_node[face_point_id]:
+            if is_fracture_node[face_point_id]:
                 return True
         return False
 
-    face_node_set_to_cell = defaultdict(
-        list)    # For each face (defined by its node set), gives all the cells containing this face.
+    face_node_set_to_cell = defaultdict(set)  # For each face (defined by its node set), gives all the cells containing this face.
     for c, local_frac_f in cell_to_faces.items():
         cell = mesh.GetCell(c)
         for f in [i for i in range(cell.GetNumberOfFaces()) if i not in local_frac_f]:
             face = cell.GetFace(f)
             face_point_ids = frozenset(vtk_iter(face.GetPointIds()))
-            if not does_face_contain_boundary_node(face_point_ids):
-                face_node_set_to_cell[face_point_ids].append(c)
+            if does_face_contain_boundary_node(face_point_ids):
+                face_node_set_to_cell[face_point_ids].add(c)
 
     graph = networkx.Graph()
     # Let's add all the nodes first: all the cells are part of the graph.
@@ -439,7 +438,7 @@ def __color_fracture_sides(mesh: vtkUnstructuredGrid,
     for cells in face_node_set_to_cell.values():
         assert 0 < len(cells) < 3
         if len(cells) == 2:
-            graph.add_edge(cells[0], cells[1])
+            graph.add_edge(*cells)
 
     return tuple(networkx.connected_components(graph))
 
@@ -505,7 +504,7 @@ def __split_mesh_on_fracture(mesh, options: Options) -> Tuple[vtkUnstructuredGri
     fracture: FractureInfo = FractureInfo(mesh, options)
     connected_cells = __color_fracture_sides(mesh,
                                              fracture.cell_to_faces,
-                                             fracture.is_boundary_fracture_node)
+                                             fracture.is_fracture_node)
     output_mesh, duplicated_nodes_info = __duplicate_fracture_nodes(mesh,
                                                                     connected_cells,
                                                                     fracture.is_internal_fracture_node)

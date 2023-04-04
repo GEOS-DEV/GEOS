@@ -36,7 +36,7 @@ def test_generate_fracture():
 
     connected_cells = __color_fracture_sides(mesh,
                                              frac.cell_to_faces,
-                                             frac.is_boundary_fracture_node)
+                                             frac.is_fracture_node)
     cc = set(map(frozenset, connected_cells))
     assert cc == {frozenset({0}), frozenset({1, 3, 4, 7}), frozenset({2, 5, 8})}
 
