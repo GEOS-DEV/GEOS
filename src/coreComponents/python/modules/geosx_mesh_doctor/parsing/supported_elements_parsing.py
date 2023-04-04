@@ -1,10 +1,10 @@
+import argparse
 import logging
 import multiprocessing
-import textwrap
 
 from checks.supported_elements import Options, Result
 
-from . import cli_parsing, SUPPORTED_ELEMENTS
+from . import SUPPORTED_ELEMENTS
 
 __CHUNK_SIZE = "chunck_size"
 __NUM_PROC = "nproc"
@@ -16,27 +16,27 @@ __CHUNK_SIZE_DEFAULT = 1
 __NUM_PROC_DEFAULT = multiprocessing.cpu_count()
 
 
-def get_help():
-    msg = f"""\
-    Check that all the elements of the mesh are supported by GEOSX.
-    
-    {__CHUNK_SIZE} [int]: Defaults chunk size for parallel processing to {__CHUNK_SIZE_DEFAULT}.
-    {__NUM_PROC} [int]: Number of threads used for parallel processing. Defaults to {__NUM_PROC_DEFAULT}.
-    """
-    return textwrap.dedent(msg)
+def convert(parsed_options) -> Options:
+    return Options(chunk_size=parsed_options[__CHUNK_SIZE],
+                   num_proc=parsed_options[__NUM_PROC])
 
 
-def parse_cli_options(options_str: str) -> Options:
-    """
-    From the parsed cli options, return the converted options for collocated nodes check.
-    :param options_str: Parsed cli options.
-    :return: Options instance.
-    """
-    options = cli_parsing.parse_cli_option(options_str)
-    cli_parsing.validate_cli_options(SUPPORTED_ELEMENTS, __ALL_KEYWORDS, options)
-    chunk_size = int(options.get(__CHUNK_SIZE, __CHUNK_SIZE_DEFAULT))
-    num_proc = int(options.get(__NUM_PROC, __NUM_PROC_DEFAULT))
-    return Options(chunk_size=chunk_size, num_proc=num_proc)
+def fill_subparser(subparsers) -> argparse.ArgumentParser:
+    p: argparse.ArgumentParser = subparsers.add_parser(SUPPORTED_ELEMENTS,
+                                                       help="Check that all the elements of the mesh are supported by GEOSX.")
+    p.add_argument('--' + __CHUNK_SIZE,
+                   type=int,
+                   required=False,
+                   metavar=__CHUNK_SIZE_DEFAULT,
+                   default=__CHUNK_SIZE_DEFAULT,
+                   help=f"[int]: Defaults chunk size for parallel processing to {__CHUNK_SIZE_DEFAULT}")
+    p.add_argument('--' + __NUM_PROC,
+                   type=int,
+                   required=False,
+                   metavar=__NUM_PROC_DEFAULT,
+                   default=__NUM_PROC_DEFAULT,
+                   help=f"[int]: Number of threads used for parallel processing. Defaults to {__NUM_PROC_DEFAULT}")
+    return p
 
 
 def display_results(options: Options, result: Result):

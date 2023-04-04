@@ -52,7 +52,8 @@ def register() -> Tuple[argparse.ArgumentParser, Dict[str, Callable[[str, Any], 
         __HELPERS[check_name] = lambda: __load_module_check_helper(cn)
         __CHECKS[check_name] = lambda: __load_module_check(cn)
     # Register the modules to load here.
-    for check_name in (parsing.COLLOCATES_NODES, ):
+    for check_name in (parsing.COLLOCATES_NODES,
+                       parsing.SUPPORTED_ELEMENTS):
         closure_trick(check_name)
     # for check_name in (parsing.COLLOCATES_NODES,
     #                    parsing.ELEMENT_VOLUMES,
