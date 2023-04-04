@@ -35,6 +35,9 @@ HDFFile::HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, 
   {
     m_faplId = H5Pcreate( H5P_FILE_ACCESS );
     H5Pset_fapl_mpio( m_faplId, m_comm, MPI_INFO_NULL );
+    H5Pset_coll_metadata_write( m_faplId, 1 ); // set collective metadata write
+    H5Pset_all_coll_metadata_ops( m_faplId, 1 ); // set all metadata operations collective
+    H5Pset_dxpl_mpio( m_faplId, H5FD_MPIO_COLLECTIVE ); // set collective I/O
     m_filename = fnm + ".hdf5";
   }
   else
