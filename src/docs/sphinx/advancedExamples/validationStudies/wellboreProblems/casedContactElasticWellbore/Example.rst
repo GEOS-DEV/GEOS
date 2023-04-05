@@ -11,6 +11,10 @@ Problem description
 
 This example uses the ``LagrangianContact`` solver to handle a cased wellbore problem with imperfect contact interfaces. The completed wellbore is composed of a steel casing, a cement sheath and rock formation. Isotropic linear elastic behavior is assumed for all the three materials. The contact surfaces between these materials are supposed obey the Lagrangian contact law. 
 
+.. figure:: sketch.png
+   :align: center
+   :figclass: align-center
+
 With a radial compression loading, the imperfect contact intefaces behave just like the perfect one (see AdvancedExampleCasedElasticWellbore_). With a radial tension loading on the inner face of the wellbore, the casing is debonded from the cement layer. Analytical results of the radial displacement :math:`u_{r}`, in the casing is expressed as `(Hervé and Zaoui, 1995) <https://link.springer.com/chapter/10.1007%2F978-94-015-8494-4_55>`__ :
 
 .. math::
