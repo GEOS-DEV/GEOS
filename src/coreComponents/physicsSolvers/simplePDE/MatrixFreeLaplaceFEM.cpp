@@ -100,7 +100,7 @@ void MatrixFreeLaplaceFEMOperator::apply( ParallelVector const & src, ParallelVe
       MFLaplaceFEMKernelsFactory kernelFactory( localSrc, localDst );
       string const dummyString = "dummy";
       finiteElement::
-        regionBasedKernelApplication< parallelDeviceAsyncPolicy< 32 >,
+        regionBasedKernelApplication< parallelDeviceAsyncPolicy<>,
                                       constitutive::NullModel,
                                       CellElementSubRegion >( *meshLevelPtr,
                                                               regionNames,
