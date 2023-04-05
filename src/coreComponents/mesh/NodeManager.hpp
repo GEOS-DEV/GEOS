@@ -391,6 +391,7 @@ public:
    * @return reference position array
    */
   array2d< real64, nodes::REFERENCE_POSITION_PERM > & referencePosition() { return m_referencePosition; }
+  array2d< real32, nodes::REFERENCE_POSITION_PERM > & referencePosition32() { return m_referencePosition32; }
 
   /**
    * @brief Provide an immutable arrayView of the reference position. This table will contain all the node coordinates.
@@ -422,6 +423,7 @@ private:
   //START_SPHINX_REFPOS
   /// reference position of the nodes
   array2d< real64, nodes::REFERENCE_POSITION_PERM > m_referencePosition;
+  array2d< real32, nodes::REFERENCE_POSITION_PERM > m_referencePosition32;
   //END_SPHINX_REFPOS
 
   /// nodes-to-edges relation

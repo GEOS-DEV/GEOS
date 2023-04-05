@@ -404,7 +404,7 @@ struct PMLKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( SortedArrayView< localIndex const > const targetSet,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< real32 const > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 const > const p_n,
@@ -551,7 +551,7 @@ struct waveSpeedPMLKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( SortedArrayView< localIndex const > const targetSet,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< real32 const > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
           arrayView1d< real32 const > const velocity,
           real32 const (&xMin)[3],
@@ -687,10 +687,10 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ExplicitAcousticSEMLowMem : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                              CONSTITUTIVE_TYPE,
-                                                              FE_TYPE,
-                                                              1,
-                                                              1 >
+                                                                    CONSTITUTIVE_TYPE,
+                                                                    FE_TYPE,
+                                                                    1,
+                                                                    1 >
 {
 public:
 
@@ -725,17 +725,17 @@ public:
    *   elements to be processed during this kernel launch.
    */
   ExplicitAcousticSEMLowMem( NodeManager & nodeManager,
-                       EdgeManager const & edgeManager,
-                       FaceManager const & faceManager,
-                       localIndex const targetRegionIndex,
-                       SUBREGION_TYPE const & elementSubRegion,
-                       FE_TYPE const & finiteElementSpace,
-                       CONSTITUTIVE_TYPE & inputConstitutiveType,
-                       real64 const dt ):
+                             EdgeManager const & edgeManager,
+                             FaceManager const & faceManager,
+                             localIndex const targetRegionIndex,
+                             SUBREGION_TYPE const & elementSubRegion,
+                             FE_TYPE const & finiteElementSpace,
+                             CONSTITUTIVE_TYPE & inputConstitutiveType,
+                             real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_X( nodeManager.referencePosition() ),
+    m_X( nodeManager.referencePosition32() ),
     m_p_n( nodeManager.getField< fields::Pressure_n >() ),
     m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
     m_dt( dt )
@@ -785,6 +785,7 @@ public:
         stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
       }
     }
+
   }
 
   /**
@@ -809,8 +810,8 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
-
+  arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const m_X;
+  //array2d< real32 > m_X32;
   /// The array containing the nodal pressure array.
   arrayView1d< real32 const > const m_p_n;
 
@@ -827,7 +828,7 @@ protected:
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
 using ExplicitAcousticSEMLowMemFactory = finiteElement::KernelFactory< ExplicitAcousticSEMLowMem,
-                                                                 real64 >;
+                                                                       real64 >;
 
 
 } // namespace acousticWaveEquationSEMLowMemKernels
