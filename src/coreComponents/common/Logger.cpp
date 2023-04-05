@@ -19,11 +19,17 @@
 // Source includes
 #include "Logger.hpp"
 #include "Path.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 
 namespace geosx
 {
 
-std::string InputError::InsertExMsg( std::string const & originalMsg, std::string const & msgToInsert )
+/**
+ * @brief Insert an exception message in another one.
+ * @param originalMsg original exception message (i.e. thrown from LVARRAY_THROW or GEOSX_THROW)
+ * @param msgToInsert message to insert at the top of the originalMsg
+ */
+std::string InsertExMsg( std::string const & originalMsg, std::string const & msgToInsert )
 {
   std::string newMsg( originalMsg );
 
@@ -34,16 +40,20 @@ std::string InputError::InsertExMsg( std::string const & originalMsg, std::strin
   static auto constexpr simpleLogStart =  "***** ";
   if( ( insertPos = newMsg.find( rankLogStart ) ) != std::string::npos )
   {
-    insertPos = newMsg.find( rankLogEnd, insertPos + strlen( rankLogStart ) ) + strlen( rankLogEnd );
+    insertPos = newMsg.find( rankLogEnd, insertPos + stringutilities::cstrlen( rankLogStart ) )
+                + stringutilities::cstrlen( rankLogEnd );
   }
   else if( ( insertPos = newMsg.find_last_of( simpleLogStart ) ) != std::string::npos )
   {
-    insertPos += strlen( simpleLogStart );
+    insertPos += stringutilities::cstrlen( simpleLogStart );
   }
   newMsg.insert( insertPos, msgToInsert );
-
   return newMsg;
 }
+
+InputError::InputError( std::exception const & subException, std::string const & msgToInsert ):
+  std::runtime_error( InsertExMsg( subException.what(), msgToInsert ) )
+{}
 
 namespace logger
 {
