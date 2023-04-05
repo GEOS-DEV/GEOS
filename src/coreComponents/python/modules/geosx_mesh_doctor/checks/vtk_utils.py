@@ -47,19 +47,6 @@ def vtk_iter(l) -> Iterator[Any]:
             yield l.GetCellType(i)
 
 
-def get_cell_field_by_name(mesh, field_name):
-    """
-    Extracts a cell field by its name.
-    :param mesh: The input mesh.
-    :param field_name: The field name we're looking for.
-    :return: The field or None if not found.
-    """
-    cd = mesh.GetCellData()
-    for i in range(cd.GetNumberOfArrays()):
-        if cd.GetArrayName(i) == field_name:
-            return cd.GetArray(i)
-
-
 def __read_vtk(vtk_input_file: str) -> Union[vtkUnstructuredGrid, None]:
     reader = vtkUnstructuredGridReader()
     logging.info(f"Testing file format \"{vtk_input_file}\" using legacy format reader...")

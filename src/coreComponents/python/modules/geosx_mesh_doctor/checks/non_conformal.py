@@ -38,9 +38,6 @@ from vtk import reference as vtk_reference
 from .reorient_mesh import reorient_mesh
 
 from . import vtk_utils
-from .vtk_utils import (
-    get_cell_field_by_name,
-)
 
 from .vtk_polyhedron import (
     vtk_iter,
@@ -122,11 +119,11 @@ class BoundaryMesh:
         n.ComputeCellNormalsOn()
         n.SetInputData(boundary_mesh)
         n.Update()
-        normals = get_cell_field_by_name(n.GetOutput(), "Normals")
+        normals = n.GetOutput().GetCellData().GetArray("Normals")
         assert normals
         assert normals.GetNumberOfComponents() == 3
         assert normals.GetNumberOfTuples() == boundary_mesh.GetNumberOfCells()
-        original_cells = get_cell_field_by_name(boundary_mesh, original_cells_key)
+        original_cells = boundary_mesh.GetCellData().GetArray(original_cells_key)
         assert original_cells
         return boundary_mesh, normals, original_cells
 

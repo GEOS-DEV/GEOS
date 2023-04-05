@@ -59,7 +59,7 @@ def __check(mesh, options: Options) -> Result:
     f.Update()
     output = f.GetOutput()
 
-    validity = vtk_utils.get_cell_field_by_name(output, "ValidityState")  # Could not change name using the vtk interface.
+    validity = output.GetCellData().GetArray("ValidityState")  # Could not change name using the vtk interface.
     assert validity is not None
     validity = vtk_to_numpy(validity)
     for i, v in enumerate(validity):
