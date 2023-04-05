@@ -116,9 +116,11 @@ Boundary conditions
 Results and benchmark
 ---------------------------------
 
-The GEOSX results of displacement jump accross the casing-cement and cement-rock interfaces are shown in the figure below:
+The GEOSX results of displacement jump accross the casing-cement and cement-rock interfaces are shown in the figure below. We can observe an expected zero displacement jump at the cement-rock interface under a tension stress. The displacement jump at the casing-cement interface is homogenous. With a tension stress on the inner surface of the casing of 10 (MPa), the theoretical value of the displacement jump at the casing-cement interface is:
 
-
+.. figure:: displacementJump.png
+   :align: center
+   :figclass: align-center
 
 
 ------------------------------------------------------------------
