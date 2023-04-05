@@ -71,6 +71,12 @@ public:
       int const size = l2g.size();
       for( int j = 0, start = 0; j < size - 1; ++j )
       {
+        // This branching tests if cell indices is still continuous.
+        // If it's not the case, we store a range and start another one.
+        //
+        // The `else if` branch is here to properly define the last range.
+        //
+        // The `-1` offset value is a placeholder before the real value is computed (in the next block of code).
         if( l2g[j] + 1 != l2g[j + 1] )
         {
           m_ranges[{ l2g[start], l2g[j] + 1 }] = { i, -1 };
@@ -83,6 +89,10 @@ public:
       }
     }
 
+    // We hereafter compute the indices offsets,
+    // such that we're able to convert a global index into an index local to the cell block.
+    // The algorithm is more or less an accumulation,
+    // but we must be careful to count the local indices cell block by cell block.
     std::vector< int > cellBlockOffsets( numCellBlocks, 0 );
     for( std::pair< Range const, CellBlockInfo > & p: m_ranges )
     {
