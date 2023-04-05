@@ -202,6 +202,10 @@ MeshLevel::MeshLevel( string const & name,
       allNodes.insert( a );
     }
 
+    SortedArray< localIndex > & zposNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zpos" ) ).reference();
+    zposNodes = source.m_nodeManager->getSet("zpos");
+    m_faceManager->buildSets( *m_nodeManager );
+
   }
 
 

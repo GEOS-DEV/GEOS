@@ -87,7 +87,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     // We have to make sure that the meshLevel is in the target of the boundary conditions
     // This is important for multi-level simulations, such as high-order wave propagation
     MeshObjectPath const & objectPath = fs.getMeshObjectPaths();
-    if ( ( !objectPath.containsMeshLevel( mesh ) ) || ( !fs.initialCondition() ) )
+    if ( !objectPath.containsMeshLevel( mesh ) )
     {
       return;
     }
