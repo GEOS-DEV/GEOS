@@ -40,8 +40,6 @@ The corresponding integrated test is
 
   inputFiles/wellbore/CasedContactElasticWellbore_smoke.xml
 
-In this example, we would focus our attention on the ``Solvers``, ``Geometry``, ``Events``, ``Constitutive`` and ``Specifications`` tags.
-
 -----------------------------------------------------------
 Solvers
 -----------------------------------------------------------
@@ -116,12 +114,19 @@ Boundary conditions
 Results and benchmark
 ---------------------------------
 
-The GEOSX results of displacement jump accross the casing-cement and cement-rock interfaces are shown in the figure below. We can observe an expected zero displacement jump at the cement-rock interface under a tension stress. The displacement jump at the casing-cement interface is homogenous. With a tension stress on the inner surface of the casing of 10 (MPa), the theoretical value of the displacement jump at the casing-cement interface is:
+The GEOSX results of displacement jump accross the casing-cement and cement-rock interfaces are shown in the figure below: 
+
+.. figure:: displacementJump3D.png
+   :align: center
+   :figclass: align-center
+
+We can observe an expected zero displacement jump at the cement-rock interface under a tension stress. The displacement jump at the casing-cement interface is homogenous and varies with time because the tension stress on the inner surface of the casing varies with time as defined in the XML file. The validation of GEOSX results versus theoretical results is shown in the figure below:
 
 .. figure:: displacementJump.png
    :align: center
    :figclass: align-center
 
+.. plot:: elastic_casedWellbore_displacementJump.py
 
 ------------------------------------------------------------------
 To go further
