@@ -13,8 +13,8 @@
       radius="{ 0.1, 0.106, 0.133, 0.17 }"
       theta="{ 0, 90 }"
       zCoords="{ 0, 0.1 }"
-      nr="{ 3, 5, 5 }"
-      nt="{ 40 }"
+      nr="{ 2, 2, 2 }"
+      nt="{ 4 }"
       nz="{ 1 }"
       trajectory="{ { 0.0, 0.0, 0.0 },
                     { 0.0, 0.0, 0.1 } }"
@@ -47,60 +47,18 @@
 
   <Events maxTime="1.0">
 
-    <PeriodicEvent
-      name="stressHistoryCollection_casing"
-      endTime="1"
-      forceDt="0.1"
-      target="/Tasks/stressCollection_casing"/>
-    <PeriodicEvent
-      name="stressHistoryCollection_cement"
-      endTime="1"
-      forceDt="0.1"
-      target="/Tasks/stressCollection_cement"/>
-    <PeriodicEvent
-      name="stressHistoryCollection_rock"
-      endTime="1"
-      forceDt="0.1"
-      target="/Tasks/stressCollection_rock"/>
-    <PeriodicEvent
-      name="stressTimeHistoryOutput_casing"
-      endTime="1"
-      forceDt="0.1"
-      target="/Outputs/stressHistoryOutput_casing"/>
-    <PeriodicEvent
-      name="stressTimeHistoryOutput_cement"
-      endTime="1"
-      forceDt="0.1"
-      target="/Outputs/stressHistoryOutput_cement"/>
-    <PeriodicEvent
-      name="stressTimeHistoryOutput_rock"
-      endTime="1"
-      forceDt="0.1"
-      target="/Outputs/stressHistoryOutput_rock"/>
-
-    <PeriodicEvent
-      name="displacementHistoryCollection"
-      endTime="1"
-      forceDt="0.1"
-      target="/Tasks/displacementCollection"/>
-    <PeriodicEvent
-      name="displacementTimeHistoryOutput"
-      endTime="1"
-      forceDt="0.1"
-      target="/Outputs/displacementHistoryOutput"/>
-
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.1"
+      forceDt="1.0"
       target="/Solvers/lagrangiancontact"/>
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="0.1"
+      timeFrequency="1.0"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 

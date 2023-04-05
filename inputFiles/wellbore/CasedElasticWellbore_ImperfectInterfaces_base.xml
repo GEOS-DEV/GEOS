@@ -39,9 +39,7 @@
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
 
-
   </Solvers>
-
 
   <!-- SPHINX_FEDiscretization -->
   <NumericalMethods>
@@ -237,7 +235,7 @@
       filename="displacementHistory"/>
 
     <VTK name="vtkOutput"/>
-    <!--Restart
-      name="restartOutput"/-->
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 </Problem>
