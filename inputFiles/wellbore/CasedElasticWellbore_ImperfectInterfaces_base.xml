@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <Problem>
-
+  <!-- SPHINX_Solvers -->
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <LagrangianContact
@@ -40,28 +40,31 @@
       mpiCommOrder="1"/>
 
   </Solvers>
+  <!-- SPHINX_SolversEnd -->
 
-  <!-- SPHINX_FEDiscretization -->
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
         order="1"/>
     </FiniteElements>
-  
+
+  <!-- SPHINX_NumericalMethods -->   
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="TPFAstabilization"/>
     </FiniteVolume>
+  <!-- SPHINX_NumericalMethodsEnd -->
   </NumericalMethods>
-  <!-- SPHINX_FEDiscretizationEnd -->
-
+  
+  <!-- SPHINX_SurfaceElementRegion -->   
   <ElementRegions>
     <SurfaceElementRegion
       name="Fracture"
-      defaultAperture="0.001"
+      defaultAperture="0"
       materialList="{ fractureContact }"/>
-
+  <!-- SPHINX_SurfaceElementRegionEnd -->   
+ 
     <CellElementRegion
       name="casing"
       cellBlocks="{ casing }"
@@ -87,7 +90,8 @@
       frictionCoefficient="0.5"
       penaltyStiffness="1.0e8"
       apertureTableName="apertureTable"/>
-
+    <!-- SPHINX_MaterialEnd --> 
+  
     <ElasticIsotropic
       name="casing"
       defaultDensity="2700"
@@ -106,7 +110,6 @@
       defaultBulkModulus="5.5556e9"
       defaultShearModulus="4.16667e9"/>
 
-    <!-- SPHINX_MaterialEnd -->
   </Constitutive>
 
   <!-- SPHINX_BoundaryConditions -->
@@ -126,6 +129,7 @@
       objectPath="faceManager"
       fieldName="isFaceSeparable"
       scale="1"/>
+    <!-- SPHINX_BoundaryConditionsEnd -->
 
     <FieldSpecification
       name="rPosConstraint_x"
@@ -176,8 +180,6 @@
       setNames="{ rneg }"/>
 
   </FieldSpecifications>
-
-  <!-- SPHINX_BoundaryConditionsEnd -->
 
   <!-- SPHINX_TableFunction -->
   <Functions>

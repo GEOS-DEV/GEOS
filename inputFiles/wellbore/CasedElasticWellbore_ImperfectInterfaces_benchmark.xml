@@ -89,6 +89,7 @@
       forceDt="0.1"
       target="/Outputs/displacementHistoryOutput"/>
 
+    <!-- SPHINX_Events -->
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
@@ -103,6 +104,7 @@
       timeFrequency="0.1"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
+    <!-- SPHINX_EventsEnd -->
 
     <PeriodicEvent
       name="restarts"
