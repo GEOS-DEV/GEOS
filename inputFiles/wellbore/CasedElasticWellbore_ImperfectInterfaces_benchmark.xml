@@ -89,10 +89,24 @@
       forceDt="0.1"
       target="/Outputs/displacementHistoryOutput"/>
 
-    <!-- SPHINX_Events -->
+    <!-- SPHINX_EventDisplacementJumpHistoryCollection -->
+    <PeriodicEvent
+      name="displacementJumpHistoryCollection"
+      endTime="1"
+      forceDt="0.1"
+      target="/Tasks/displacementJumpCollection"/>
+    <PeriodicEvent
+      name="displacementJumpTimeHistoryOutput"
+      endTime="1"
+      forceDt="0.1"
+      target="/Outputs/displacementJumpHistoryOutput"/>
+    <!-- SPHINX_EventDisplacementJumpHistoryCollectionEnd -->
+
+    <!-- SPHINX_EventSurfaceGen -->
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
+    <!-- SPHINX_EventSurfaceGenEnd -->
 
     <PeriodicEvent
       name="solverApplications"
@@ -104,8 +118,7 @@
       timeFrequency="0.1"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
-    <!-- SPHINX_EventsEnd -->
-
+    
     <PeriodicEvent
       name="restarts"
       timeFrequency="0.5"

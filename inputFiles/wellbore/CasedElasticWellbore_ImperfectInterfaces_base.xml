@@ -1,6 +1,5 @@
 <?xml version="1.0" ?>
 <Problem>
-  <!-- SPHINX_Solvers -->
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <LagrangianContact
@@ -32,15 +31,16 @@
         krylovTol="1.0e-10"/>
     </SolidMechanicsLagrangianSSLE>
 
+    <!-- SPHINX_SolversSurfaceGenerator -->
     <SurfaceGenerator
       name="SurfaceGen"
       fractureRegion="Fracture"
       targetRegions="{ casing, cement, rock }"
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
-
+    <!-- SPHINX_SolversSurfaceGeneratorEnd -->
+ 
   </Solvers>
-  <!-- SPHINX_SolversEnd -->
 
   <NumericalMethods>
     <FiniteElements>
@@ -61,6 +61,7 @@
   <ElementRegions>
     <SurfaceElementRegion
       name="Fracture"
+      faceBlock="faceElementSubRegion"
       defaultAperture="0"
       materialList="{ fractureContact }"/>
   <!-- SPHINX_SurfaceElementRegionEnd -->   
@@ -83,14 +84,14 @@
   </ElementRegions>
 
   <Constitutive>
-    <!-- SPHINX_Material -->
+    <!-- SPHINX_MaterialContact -->
     <Coulomb
       name="fractureContact"
       cohesion="0"
       frictionCoefficient="0.5"
       penaltyStiffness="1.0e8"
       apertureTableName="apertureTable"/>
-    <!-- SPHINX_MaterialEnd --> 
+    <!-- SPHINX_MaterialContactEnd --> 
   
     <ElasticIsotropic
       name="casing"
@@ -214,6 +215,11 @@
       name="displacementCollection"
       objectPath="nodeManager"
       fieldName="totalDisplacement"/>
+
+    <PackCollection
+      name="displacementJumpCollection"
+      objectPath="ElementRegions/Fracture/faceElementSubRegion"
+      fieldName="displacementJump"/>
     
   </Tasks>
 
@@ -235,6 +241,11 @@
       name="displacementHistoryOutput"
       sources="{ /Tasks/displacementCollection }"
       filename="displacementHistory"/>
+
+    <TimeHistory
+      name="displacementJumpHistoryOutput"
+      sources="{ /Tasks/displacementJumpCollection }"
+      filename="displacementJumpHistory"/>
 
     <VTK name="vtkOutput"/>
     <Restart
