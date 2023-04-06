@@ -55,7 +55,7 @@ DuvautLionsSolid< SOLID_TYPE >::~DuvautLionsSolid() = default;
 
 
 
-// Register all DuvautLionsSolid model types. Uncomment the ones listed as needed. 
+// Register all DuvautLionsSolid model types. Uncomment the ones listed as needed.
 typedef DuvautLionsSolid< ElasticIsotropic > ViscoElasticIsotropic;
 //typedef DuvautLionsSolid< ElasticTransverseIsotropic > ViscoElasticTransverseIsotropic;
 //typedef DuvautLionsSolid< ElasticOrthotropic > ViscoElasticOrthotropic;

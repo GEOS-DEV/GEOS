@@ -46,11 +46,11 @@ public:
    * @brief Constructor
    */
   DuvautLionsSolidUpdates( SOLID_TYPE const & solidModel,
-                           real64 const & relaxationTime,      
+                           real64 const & relaxationTime,
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
                            arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                            const bool & disableInelasticity ):
-    SolidBaseUpdates( newStress, oldStress, disableInelasticity ),                       
+    SolidBaseUpdates( newStress, oldStress, disableInelasticity ),
     m_solidUpdate( solidModel.createKernelUpdates() ),
     m_relaxationTime( relaxationTime )
   {}
@@ -78,63 +78,62 @@ public:
 
 //TODO: modify implementation of smallStrainUpdate to use optimized stiffness -
 // this implementation uses full stiffness tensor
-GEOSX_HOST_DEVICE
-void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const & timeIncrement,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( &stress )[6],
-                                  DiscretizationOps & stiffness ) const
-{
-  smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
-}
-
-GEOSX_HOST_DEVICE
-void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const & timeIncrement,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( &stress )[6],
-                                  real64 ( &stiffness )[6][6] ) const override
-{
-  real64 trialStress[6];   // Trial stress (elastic predictor)
-  real64 elasticStiffness[6][6];  //Elastic stiffness
-  real64 timeRatio = 1 / (1 + timeIncrement / m_relaxationTime);
-
-  for( localIndex i=0; i<6; ++i )
+  GEOSX_HOST_DEVICE
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const & timeIncrement,
+                          real64 const ( &strainIncrement )[6],
+                          real64 ( & stress )[6],
+                          DiscretizationOps & stiffness ) const
   {
-    trialStress[i] = stress[i];
+    smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
   }
 
-  //Get trial stress and elastic stiffness by disabling inelasticity
- // m_solidUpdate.m_disableInelasticity = true;
-  m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, trialStress, elasticStiffness );
-
-  //Enable inelasticity to get the rate-independent update
-  //m_solidUpdate.m_disableInelasticity = false;
-  m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
-
-
-  for( localIndex i=0; i<6; ++i )
+  GEOSX_HOST_DEVICE
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const & timeIncrement,
+                          real64 const ( &strainIncrement )[6],
+                          real64 ( & stress )[6],
+                          real64 ( & stiffness )[6][6] ) const override
   {
-    stress[i] = timeRatio *  trialStress[i] + (1-timeRatio) * stress[i];
-    for( localIndex j=0; j<6; ++j )
+    real64 trialStress[6]; // Trial stress (elastic predictor)
+    real64 elasticStiffness[6][6]; //Elastic stiffness
+    real64 timeRatio = 1 / (1 + timeIncrement / m_relaxationTime);
+
+    for( localIndex i=0; i<6; ++i )
     {
-      stiffness[i][j] = timeRatio * elasticStiffness[i][j]  + (1 - timeRatio) * stiffness[i][j];
+      trialStress[i] = stress[i];
     }
+
+    //Get trial stress and elastic stiffness by disabling inelasticity
+    // m_solidUpdate.m_disableInelasticity = true;
+    m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, trialStress, elasticStiffness );
+
+    //Enable inelasticity to get the rate-independent update
+    //m_solidUpdate.m_disableInelasticity = false;
+    m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+
+
+    for( localIndex i=0; i<6; ++i )
+    {
+      stress[i] = timeRatio *  trialStress[i] + (1-timeRatio) * stress[i];
+      for( localIndex j=0; j<6; ++j )
+      {
+        stiffness[i][j] = timeRatio * elasticStiffness[i][j]  + (1 - timeRatio) * stiffness[i][j];
+      }
+    }
+
+    saveStress( k, q, stress );
+    viscousStateUpdate( k, q, timeRatio );
+    return;
   }
 
-  saveStress( k, q, stress );
-  viscousStateUpdate( k, q, timeRatio );
-  return;
-}     
-                            
 
 protected:
   typename SOLID_TYPE::KernelWrapper m_solidUpdate;
   real64 const m_relaxationTime;
 };
-
 
 
 
@@ -152,7 +151,7 @@ class DuvautLionsSolid : public SolidBase
 public:
 
 /// Alias for DuvautLionsSolidUpdates
-using KernelWrapper = DuvautLionsSolidUpdates< SOLID_TYPE >;
+  using KernelWrapper = DuvautLionsSolidUpdates< SOLID_TYPE >;
   /**
    * @brief Constructor
    * @param name Object name
@@ -210,8 +209,8 @@ using KernelWrapper = DuvautLionsSolidUpdates< SOLID_TYPE >;
 
   std::vector< string > getSubRelationNames() const override final
   {
-   std::vector< string > subRelationNames = { m_solidModelName };
-   return subRelationNames;
+    std::vector< string > subRelationNames = { m_solidModelName };
+    return subRelationNames;
   }
   // KernelWrapper createKernelUpdates() const
   // {
@@ -221,7 +220,7 @@ using KernelWrapper = DuvautLionsSolidUpdates< SOLID_TYPE >;
   //                         m_oldStress,
   //                         m_disableInelasticity );
   //  }
-  
+
 
   //START_SPHINX_INCLUDE_01
 protected:
@@ -230,7 +229,7 @@ protected:
   string m_solidModelName;
 
   real64 m_relaxationTime;
-  
+
   SOLID_TYPE const & getSolidModel() const
   { return this->getParent().template getGroup< SOLID_TYPE >( m_solidModelName ); }
   //END_SPHINX_INCLUDE_01
