@@ -629,9 +629,11 @@ private:
 
     // Define the component regexes:
     // Regex to match an unsigned int (123, etc.)
+    // TODO c++17: Move to static constexpr std::string_view
     string ru = "[\\d]+";
 
     // Regex to match an signed int (-123, 455, +789, etc.)
+    // TODO c++17: Move to static constexpr std::string_view
     string ri = "[+-]?[\\d]+";
 
     // Regex to match a float (1, +2.3, -.4, 5.6e7, 8E-9, etc.)
@@ -641,24 +643,31 @@ private:
     // [\\d]*  matches any number of numbers following the decimal
     // ([eE][-+]?[\\d]+|\\s*)  matches an optional scientific notation number
     // Note: the xsd regex implementation does not allow an empty branch, so use allow whitespace at the end
+    // TODO c++17: Move to static constexpr std::string_view
     string rr = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
 
     // Regex to match a string that can't be empty and does not contain any whitespaces nor the characters ,{}
+    // TODO c++17: Move to static constexpr std::string_view
     string rs = "[^,\\{\\}\\s]+\\s*";
 
     // Regex to match a string that does not contain any whitespaces nor the characters ,{}
+    // TODO c++17: Move to static constexpr std::string_view
     string rse = "[^,\\{\\}\\s]*\\s*";
 
     // Regex to match a path: a string that can't be empty and does not contain any space nor the characters *?<>|:",
-    string rp = "[^*?<>\\|:\";,\\s]+\\s*";//"[^*?\\&lt;\\&gt;\\|:\\&quot;,\\s]+\\s*";
+    // TODO c++17: Move to static constexpr std::string_view
+    string rp = "[^*?<>\\|:\";,\\s]+\\s*";
 
     // Regex to match a path: a string that does not contain any space nor the characters *?<>|:",
-    string rpe = "[^*?<>\\|:\";,\\s]*\\s*";//"[^*\\?&lt;\\&gt;\\|:\\&quot;,\\s]*\\s*";
+    // TODO c++17: Move to static constexpr std::string_view
+    string rpe = "[^*?<>\\|:\";,\\s]*\\s*";
 
     // Regex to match a R1Tensor
+    // TODO c++17: Move to static constexpr std::string_view
     string r1 = "\\s*\\{\\s*(" + rr + ",\\s*){2}" + rr + "\\s*\\}";
 
     // Regex to match a R2SymTensor
+    // TODO c++17: Move to static constexpr std::string_view
     string r2s = "\\s*\\{\\s*(" + rr + ",\\s*){5}" + rr + "\\s*\\}";
 
     // Build master list of regexes
