@@ -399,16 +399,20 @@ public:
 
   /**
    * @brief calculate the norm of the global system residual
-   * @param rhs the system right-hand side vector
-   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param time the time at the beginning of the step
+   * @param dt the desired timestep
    * @param domain the domain partition
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localRhs the system right-hand side vector
    * @return norm of the residual
    *
    * This function returns the norm of global residual vector, which is suitable for comparison with
    * a tolerance.
    */
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs );
 
@@ -590,6 +594,24 @@ public:
     static constexpr char const * solverStatisticsString() { return "SolverStatistics"; }
   };
 
+  /**
+   * @brief getter for the timestamp of the system setup
+   * @return the timestamp of the last time systemSetup was called
+   */
+  Timestamp getSystemSetupTimestamp() const { return m_systemSetupTimestamp; }
+
+  /**
+   * @brief getter for the timestamp of the mesh modification on the mesh levels
+   * @param[in] domain the domain partition (cannot be const because we use forDiscretizationsInMeshTargets inside the function)
+   * @return the timestamp of the last time at which one of the mesh levels was modified
+   */
+  Timestamp getMeshModificationTimestamp( DomainPartition & domain ) const;
+
+  /**
+   * @brief set the timestamp of the system setup
+   * @param[in] timestamp the new timestamp of system setup
+   */
+  void setSystemSetupTimestamp( Timestamp timestamp ) { m_systemSetupTimestamp = timestamp; }
 
   /**
    * @brief return the value of the gravity vector specified in PhysicsSolverManager
@@ -717,7 +739,6 @@ public:
   }
 protected:
 
-
   static real64 eisenstatWalker( real64 const newNewtonNorm,
                                  real64 const oldNewtonNorm,
                                  real64 const weakestTol );
@@ -778,6 +799,9 @@ protected:
 
   /// Solver statistics
   SolverStatistics m_solverStatistics;
+
+  /// Timestamp of the last call to setup system
+  Timestamp m_systemSetupTimestamp;
 
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 

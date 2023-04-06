@@ -7,15 +7,12 @@
       name="PhaseFieldSolve"
       solidSolverName="SolidMechSolve"
       damageSolverName="DamageSolve"
-      couplingTypeOption="FixedStress"
       logLevel="1"
-      subcycling="0"
-      discretization="FE1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="2"/>
       <LinearSolverParameters
-        logLevel="2"/>
+        logLevel="1"/>
     </PhaseFieldFracture>
 
     <SolidMechanicsLagrangianSSLE
@@ -23,8 +20,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region1 }"
-      >
+      targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="50"
         newtonTol="1.0e-12"/>
@@ -62,7 +58,7 @@
   </Mesh>
 
   <Events
-    maxTime="400.0">
+    maxTime="10.0">
     <!-- <SoloEvent name="siloOutput0"
                    target="/Outputs/SiloOutput"/> -->
     <!-- This event is applied every cycle, and overrides the
@@ -87,7 +83,7 @@
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="200.0"
+      timeFrequency="5.0"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>

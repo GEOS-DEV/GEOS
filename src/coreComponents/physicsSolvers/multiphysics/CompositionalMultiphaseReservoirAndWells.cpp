@@ -29,7 +29,7 @@
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/multiphysics/MultiphasePoromechanicsSolver.hpp"
+#include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 
 namespace geosx
 {
@@ -52,10 +52,10 @@ public:
   static string name() { return "CompositionalMultiphaseReservoir"; }
 };
 // Class specialization for a RESERVOIR_SOLVER set to MultiphasePoromechanics
-template<> class CompositionalCatalogNames< MultiphasePoromechanicsSolver >
+template<> class CompositionalCatalogNames< MultiphasePoromechanics >
 {
 public:
-  static string name() { return MultiphasePoromechanicsSolver::catalogName()+"Reservoir"; }
+  static string name() { return MultiphasePoromechanics::catalogName()+"Reservoir"; }
 };
 
 }
@@ -92,7 +92,7 @@ flowSolver() const
 
 template<>
 CompositionalMultiphaseBase const *
-CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsSolver >::
+CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics >::
 flowSolver() const
 {
   return this->reservoirSolver()->flowSolver();
@@ -115,7 +115,7 @@ setMGRStrategy()
 
 template<>
 void
-CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsSolver >::
+CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics >::
 setMGRStrategy()
 {
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM )
@@ -283,6 +283,8 @@ assembleCouplingTerms( real64 const time_n,
                                                                                MeshLevel const & mesh,
                                                                                arrayView1d< string const > const & regionNames )
   {
+    integer areWellsShut = 1;
+
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     integer constexpr MAX_NUM_COMP = MultiFluidBase::MAX_NUM_COMPONENTS;
@@ -313,6 +315,8 @@ assembleCouplingTerms( real64 const time_n,
       {
         return;
       }
+
+      areWellsShut = 0;
 
       PerforationData const * const perforationData = subRegion.getPerforationData();
 
@@ -433,13 +437,18 @@ assembleCouplingTerms( real64 const time_n,
         }
       }
     } );
+
+    // update dynamically the MGR recipe to optimize the linear solve if all wells are shut
+    areWellsShut = MpiWrapper::min( areWellsShut );
+    m_linearSolverParameters.get().mgr.areWellsShut = areWellsShut;
+
   } );
 }
 
 namespace
 {
 typedef CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > CompositionalMultiphaseFlowAndWells;
-typedef CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsSolver > CompositionalMultiphasePoromechanicsAndWells;
+typedef CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics > CompositionalMultiphasePoromechanicsAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseFlowAndWells, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphasePoromechanicsAndWells, string const &, Group * const )
 }

@@ -215,6 +215,7 @@ struct LinearSolverParameters
       singlePhaseHybridFVM,                      ///< hybrid finite volume single-phase flow
       singlePhaseReservoirHybridFVM,             ///< hybrid finite volume single-phase flow with wells
       singlePhasePoromechanics,                  ///< single phase poromechanics with finite volume single phase flow
+      thermalSinglePhasePoromechanics,           ///< thermal single phase poromechanics with finite volume single phase flow
       hybridSinglePhasePoromechanics,            ///< single phase poromechanics with hybrid finite volume single phase flow
       singlePhasePoromechanicsEmbeddedFractures, ///< single phase poromechanics with finite volume single phase flow and embedded fractures
       singlePhasePoromechanicsReservoirFVM,      ///< single phase poromechanics with finite volume single phase flow with wells
@@ -222,9 +223,11 @@ struct LinearSolverParameters
       compositionalMultiphaseHybridFVM,          ///< hybrid finite volume compositional multiphase flow
       compositionalMultiphaseReservoirFVM,       ///< finite volume compositional multiphase flow with wells
       compositionalMultiphaseReservoirHybridFVM, ///< hybrid finite volume compositional multiphase flow with wells
+      reactiveCompositionalMultiphaseOBL,        ///< finite volume reactive compositional flow with OBL
       thermalCompositionalMultiphaseFVM,         ///< finite volume thermal compositional multiphase flow
       multiphasePoromechanics,                   ///< multiphase poromechanics with finite volume compositional multiphase flow
       multiphasePoromechanicsReservoirFVM,       ///< multiphase poromechanics with finite volume compositional multiphase flow with wells
+      thermalMultiphasePoromechanics,            ///< thermal multiphase poromechanics with finite volume compositional multiphase flow
       hydrofracture,                             ///< hydrofracture
       lagrangianContactMechanics,                ///< Lagrangian contact mechanics
       solidMechanicsEmbeddedFractures            ///< Embedded fractures mechanics
@@ -233,6 +236,8 @@ struct LinearSolverParameters
     StrategyType strategy = StrategyType::invalid; ///< Predefined MGR solution strategy (solver specific)
     integer separateComponents = false;            ///< Apply a separate displacement component (SDC) filter before AMG construction
     string displacementFieldName;                  ///< Displacement field name need for SDC filter
+    integer areWellsShut = false;                   ///< Flag to let MGR know that wells are shut, and that jacobi can be applied to the
+                                                    ///< well block
   }
   mgr;                                             ///< Multigrid reduction (MGR) parameters
 
@@ -301,6 +306,7 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "singlePhaseHybridFVM",
               "singlePhaseReservoirHybridFVM",
               "singlePhasePoromechanics",
+              "thermalSinglePhasePoromechanics",
               "hybridSinglePhasePoromechanics",
               "singlePhasePoromechanicsEmbeddedFractures",
               "singlePhasePoromechanicsReservoirFVM",
@@ -308,9 +314,11 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "compositionalMultiphaseHybridFVM",
               "compositionalMultiphaseReservoirFVM",
               "compositionalMultiphaseReservoirHybridFVM",
+              "reactiveCompositionalMultiphaseOBL",
               "thermalCompositionalMultiphaseFVM",
               "multiphasePoromechanics",
               "multiphasePoromechanicsReservoirFVM",
+              "thermalMultiphasePoromechanics",
               "hydrofracture",
               "lagrangianContactMechanics",
               "solidMechanicsEmbeddedFractures" );

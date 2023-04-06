@@ -54,6 +54,14 @@ DECLARE_FIELD( dPorosity_dPressure,
                WRITE_AND_READ,
                "Derivative of rock porosity with respect to pressure" );
 
+DECLARE_FIELD( dPorosity_dTemperature,
+               "dPorosity_dTemperature",
+               array2d< real64 >,
+               0.0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of rock porosity with respect to temperature" );
+
 DECLARE_FIELD( initialPorosity,
                "initialPorosity",
                array2d< real64 >,

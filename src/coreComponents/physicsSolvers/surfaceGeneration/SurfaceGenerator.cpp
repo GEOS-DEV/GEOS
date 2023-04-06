@@ -32,6 +32,8 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGeneratorFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+
 
 #include <algorithm>
 
@@ -431,10 +433,11 @@ void SurfaceGenerator::postRestartInitialization()
       if( fluxApprox!=nullptr )
       {
         fluxApprox->addToFractureStencil( meshLevel, this->m_fractureRegionName, false );
-        fractureSubRegion.m_recalculateFractureConnectorEdges.clear();
-        fractureSubRegion.m_newFaceElements.clear();
       }
     }
+
+    fractureSubRegion.m_recalculateFractureConnectorEdges.clear();
+    fractureSubRegion.m_newFaceElements.clear();
   } );
 }
 
@@ -459,6 +462,13 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                              partition.numColor(),
                              0,
                              time_n + dt );
+
+    // if the mesh has been modified, this mesh level should increment its timestamp
+    if( MpiWrapper::max( rval ) > 0 )
+    {
+      meshLevel.modified();
+    }
+
   } );
 
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
@@ -478,15 +488,17 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       if( fluxApprox!=nullptr )
       {
         fluxApprox->addToFractureStencil( meshLevel, this->m_fractureRegionName, true );
-        FaceElementSubRegion & subRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
-        subRegion.m_recalculateFractureConnectorEdges.clear();
-        subRegion.m_newFaceElements.clear();
       }
     }
 
-    // Create set "all" on the faceElementSubregion
-    FaceElementSubRegion & fractureSubRegion  = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
+    FaceElementSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
+    fractureSubRegion.m_recalculateFractureConnectorEdges.clear();
+    fractureSubRegion.m_newFaceElements.clear();
 
+    // Recreate geometric sets
+    meshLevel.getNodeManager().buildGeometricSets( GeometricObjectManager::getInstance() );
+
+    // Create set "all" on the faceElementSubregion
     dataRepository::Group & setGroup =
       fractureSubRegion.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
 
@@ -498,6 +510,22 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
     {
       targetSet.insert( ei );
     } );
+
+    // Compute gravity coefficient for new elements so that gravity term is correctly computed
+    real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+
+    if( fractureSubRegion.hasField< fields::flow::gravityCoefficient >() )
+    {
+      arrayView2d< real64 const > const elemCenter = fractureSubRegion.getElementCenter();
+
+      arrayView1d< real64 > const gravityCoef = fractureSubRegion.getField< fields::flow::gravityCoefficient >();
+
+      forAll< parallelHostPolicy >( fractureSubRegion.size(), [=] ( localIndex const ei )
+      {
+        gravityCoef[ ei ] = LvArray::tensorOps::AiBi< 3 >( elemCenter[ ei ], gravVector );
+      } );
+    }
+
   } );
 
   return rval;

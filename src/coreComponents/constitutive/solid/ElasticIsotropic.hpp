@@ -44,16 +44,18 @@ public:
    * @brief Constructor
    * @param[in] bulkModulus  The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
+   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress    The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress    The ArrayView holding the old stress data for each quadrature point.
    * @param[in] disableInelasticity Flag to disable plasticity for inelastic models
    */
   ElasticIsotropicUpdates( arrayView1d< real64 const > const & bulkModulus,
                            arrayView1d< real64 const > const & shearModulus,
+                           arrayView1d< real64 const > const & thermalExpansionCoefficient,
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
                            arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                            const bool & disableInelasticity ):
-    SolidBaseUpdates( newStress, oldStress, disableInelasticity ),
+    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity ),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus )
   {}
@@ -175,6 +177,7 @@ protected:
 
   /// A reference to the ArrayView holding the shear modulus for each element.
   arrayView1d< real64 const > const m_shearModulus;
+
 };
 
 
@@ -452,6 +455,7 @@ public:
 
     /// string/key for shear modulus
     static constexpr char const * shearModulusString() { return "shearModulus"; }
+
   };
 
   /**
@@ -505,6 +509,7 @@ public:
     {
       return ElasticIsotropicUpdates( m_bulkModulus,
                                       m_shearModulus,
+                                      m_thermalExpansionCoefficient,
                                       m_newStress,
                                       m_oldStress,
                                       m_disableInelasticity );
@@ -513,6 +518,7 @@ public:
     {
       return ElasticIsotropicUpdates( m_bulkModulus,
                                       m_shearModulus,
+                                      m_thermalExpansionCoefficient,
                                       arrayView3d< real64, solid::STRESS_USD >(),
                                       arrayView3d< real64, solid::STRESS_USD >(),
                                       m_disableInelasticity );
@@ -533,6 +539,7 @@ public:
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
                           m_bulkModulus,
                           m_shearModulus,
+                          m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity );

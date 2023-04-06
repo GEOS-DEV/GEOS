@@ -104,6 +104,14 @@ DECLARE_FIELD( temperature_n,
                WRITE_AND_READ,
                "Temperature at the previous converged time step" );
 
+DECLARE_FIELD( initialTemperature,
+               "initialTemperature",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Initial temperature" );
+
 DECLARE_FIELD( netToGross,
                "netToGross",
                array1d< real64 >,
@@ -135,6 +143,14 @@ DECLARE_FIELD( hydraulicAperture,
                LEVEL_0,
                WRITE_AND_READ,
                "Hydraulic aperture" );
+
+DECLARE_FIELD( minimumHydraulicAperture,
+               "minimumHydraulicAperture",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "minimum value of the hydraulic aperture" );
 
 DECLARE_FIELD( gravityCoefficient,
                "gravityCoefficient",
