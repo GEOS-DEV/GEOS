@@ -64,7 +64,7 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
   if( collectAll() )
   {
     // If we collect all the data, then we have a unique field: "all".
-    // So it's safe to grab index 0.
+    // So its safe to grab index 0.
     localIndex const packCount = m_setsIndices[0].size() == 0 ? targetField.size() : m_setsIndices[0].size();
     return targetField.getHistoryMetadata( packCount );
   }
@@ -121,7 +121,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
 
   Group const * targetGrp = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetGrp->getWrapperBase( m_fieldName );
-  GEOSX_ERROR_IF( !targetField.isPackable( ), "The object targeted for collection must be packable in it's last modified memory space!" );
+  GEOSX_ERROR_IF( !targetField.isPackable( ), "The object targeted for collection must be packable in its last modified memory space!" );
 
   // If no set or "all" is specified we retrieve the entire field.
   // If sets are specified we retrieve the field only from those sets.
