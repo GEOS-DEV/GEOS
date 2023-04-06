@@ -29,7 +29,7 @@
       xCoords="{ -50, 50 }"
       yCoords="{ 0, 1000 }"
       zCoords="{ 0, 50 }"
-      nx="{ 3 }"
+      nx="{ 4 }"
       ny="{ 100 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
