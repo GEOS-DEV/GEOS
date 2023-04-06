@@ -84,7 +84,7 @@ UnpackPointerDevice( buffer_unit_type const * & buffer,
 }
 
 template< bool DO_PACKING, typename T, int NDIM, int USD >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 PackDataDevice( buffer_unit_type * & buffer,
                 ArrayView< T const, NDIM, USD > const & var,
                 parallelDeviceEvents & events )
@@ -106,7 +106,7 @@ PackDataDevice( buffer_unit_type * & buffer,
 }
 
 template< bool DO_PACKING, typename T, int NDIM, int USD >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 PackDevice( buffer_unit_type * & buffer,
             ArrayView< T const, NDIM, USD > const & var,
             parallelDeviceEvents & events )
@@ -118,7 +118,7 @@ PackDevice( buffer_unit_type * & buffer,
 }
 
 template< typename T, int NDIM, int USD >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 UnpackDataDevice( buffer_unit_type const * & buffer,
                   ArrayView< T, NDIM, USD > const & var,
                   parallelDeviceEvents & events )
@@ -134,7 +134,7 @@ UnpackDataDevice( buffer_unit_type const * & buffer,
 }
 
 template< typename T, int NDIM, int USD >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 UnpackDevice( buffer_unit_type const * & buffer,
               ArrayView< T, NDIM, USD > const & var,
               parallelDeviceEvents & events )
@@ -152,7 +152,7 @@ UnpackDevice( buffer_unit_type const * & buffer,
 }
 
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 PackDataByIndexDevice ( buffer_unit_type * & buffer,
                         ArrayView< T const, NDIM, USD > const & var,
                         const T_INDICES & indices,
@@ -182,7 +182,7 @@ PackDataByIndexDevice ( buffer_unit_type * & buffer,
 }
 
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 PackByIndexDevice ( buffer_unit_type * & buffer,
                     ArrayView< T const, NDIM, USD > const & var,
                     const T_INDICES & indices,
@@ -206,7 +206,7 @@ PackByIndexDevice ( buffer_unit_type * & buffer,
 }
 
 template< typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
                           ArrayView< T, NDIM, USD > const & var,
                           T_INDICES const & indices,
@@ -232,7 +232,7 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
 }
 
 template< typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 UnpackByIndexDevice ( buffer_unit_type const * & buffer,
                       ArrayView< T, NDIM, USD > const & var,
                       T_INDICES const & indices,

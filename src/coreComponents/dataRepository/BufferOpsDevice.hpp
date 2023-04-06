@@ -31,6 +31,14 @@ namespace geosx
 namespace bufferOps
 {
 
+template< typename T >
+constexpr bool is_device_packable_helper = std::is_arithmetic< T >::value ||
+                                   std::is_enum< T >::value ||
+                                   traits::is_tensorT< T >;
+
+template< typename T >
+constexpr bool is_device_packable = is_device_packable_helper< std::remove_const_t< std::remove_pointer_t< T > > >;
+
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
 GEOSX_HOST_DEVICE
@@ -49,7 +57,7 @@ UnpackPointerDevice( buffer_unit_type const * & buffer,
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 PackDevice( buffer_unit_type * & buffer,
             ArrayView< T const, NDIM, USD > const & var,
             parallelDeviceEvents & events );
@@ -68,7 +76,7 @@ PackDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 PackByIndexDevice( buffer_unit_type * & buffer,
                    ArrayView< T const, NDIM, USD > const & var,
                    T_INDICES const & indices,
@@ -88,7 +96,7 @@ PackByIndexDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
 
 //------------------------------------------------------------------------------
 template< typename T, int NDIM, int USD >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 UnpackDevice( buffer_unit_type const * & buffer,
               ArrayView< T, NDIM, USD > const & var,
               parallelDeviceEvents & events );
@@ -106,7 +114,7 @@ UnpackDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
 
 //------------------------------------------------------------------------------
 template< typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 UnpackByIndexDevice ( buffer_unit_type const * & buffer,
                       ArrayView< T, NDIM, USD > const & var,
                       T_INDICES const & indices,
@@ -145,7 +153,7 @@ UnpackDataPointerDevice( buffer_unit_type const * & buffer,
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 PackDataDevice( buffer_unit_type * & buffer,
                 ArrayView< T const, NDIM, USD > const & var,
                 parallelDeviceEvents & events );
@@ -164,7 +172,7 @@ PackDataDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 PackDataByIndexDevice ( buffer_unit_type * & buffer,
                         ArrayView< T const, NDIM, USD > const & var,
                         T_INDICES const & indices,
@@ -184,7 +192,7 @@ PackDataByIndexDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
 
 //------------------------------------------------------------------------------
 template< typename T, int NDIM, int USD >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 UnpackDataDevice( buffer_unit_type const * & buffer,
                   ArrayView< T, NDIM, USD > const & var,
                   parallelDeviceEvents & events );
@@ -202,7 +210,7 @@ UnpackDataDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
 
 //------------------------------------------------------------------------------
 template< typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
+typename std::enable_if< is_device_packable< T >, localIndex >::type
 UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
                           ArrayView< T, NDIM, USD > const & var,
                           T_INDICES const & indices,

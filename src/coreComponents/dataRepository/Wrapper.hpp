@@ -276,29 +276,6 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc WrapperBase::isPackable
-  template < typename U = T >
-  typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, bool >
-  isPackableImpl( ) const
-  {
-    if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
-    {
-      return bufferOps::is_packable< U >;
-    }
-    else
-    {
-      return bufferOps::can_memcpy< U >;
-    }
-  }
-
-  /// @copydoc WrapperBase::isPackable
-  template < typename U = T >
-  typename std::enable_if_t< ! traits::HasMemorySpaceFunctions< U >, bool >
-  isPackableImpl( ) const
-  {
-    return bufferOps::is_packable< U >;
-  }
-
-  /// @copydoc WrapperBase::isPackable
   virtual
   bool
   isPackable( ) const override
@@ -308,61 +285,6 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc WrapperBase::unpack
-  localIndex unpackDeviceImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events )
-  {
-    localIndex unpackedSize = 0;
-    if( withMetadata )
-    {
-      string name;
-      unpackedSize += bufferOps::Unpack( buffer, name );
-      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
-      unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView(), events );
-    }
-    else
-    {
-      unpackedSize += wrapperHelpers::UnpackDataDevice( buffer, referenceAsView(), events );
-    }
-    return unpackedSize;
-  }
-
-  /// @copydoc WrapperBase::unpack
-  localIndex unpackHostImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & )
-  {
-    localIndex unpackedSize = 0;
-    if( withMetadata )
-    {
-      string name;
-      unpackedSize += bufferOps::Unpack( buffer, name );
-      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
-    }
-    unpackedSize += bufferOps::Unpack( buffer, *m_data );
-    return unpackedSize;
-  }
-
-  /// @copydoc WrapperBase::unpack
-  template < typename U = T >
-  typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, localIndex>
-  unpackImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events )
-  {
-    if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
-    {
-      return unpackHostImpl( buffer, withMetadata, events );
-    }
-    else
-    {
-      return unpackDeviceImpl( buffer, withMetadata, events );
-    }
-  }
-
-  /// @copydoc WrapperBase::unpack
-  template < typename U = T >
-  typename std::enable_if_t< ! traits::HasMemorySpaceFunctions< U >, localIndex>
-  unpackImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events )
-  {
-    return unpackHostImpl( buffer, withMetadata, events );
-  }
-
-  /// @copydoc WrapperBase::unpack
   virtual
   localIndex
   unpack( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events ) override final
@@ -371,62 +293,6 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-  /// @copydoc WrapperBase::unpackByIndex
-  localIndex unpackByIndexHostImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & )
-  {
-    localIndex unpackedSize = 0;
-    if( withMetadata )
-    {
-      string name;
-      unpackedSize += bufferOps::Unpack( buffer, name );
-      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
-    }
-    unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices );
-    return unpackedSize;
-  }
-
-  /// @copydoc WrapperBase::unpackByIndex
-  localIndex unpackByIndexDeviceImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events )
-  {
-    localIndex unpackedSize = 0;
-    if( withMetadata )
-    {
-      string name;
-      unpackedSize += bufferOps::Unpack( buffer, name );
-      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
-      unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
-    }
-    else
-    {
-        unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
-    }
-    return unpackedSize;
-  }
-
-  /// @copydoc WrapperBase::unpackByIndex
-  template < typename U = T >
-  typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, localIndex >
-  unpackByIndexImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events )
-  {
-    if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
-    {
-      return unpackByIndexHostImpl( buffer, unpackIndices, withMetadata, events );
-    }
-    else
-    {
-      return unpackByIndexDeviceImpl( buffer, unpackIndices, withMetadata, events );
-    }
-  }
-
-  /// @copydoc WrapperBase::unpackByIndex
-  template < typename U = T >
-  typename std::enable_if_t< ! traits::HasMemorySpaceFunctions< U >, localIndex >
-  unpackByIndexImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events )
-  {
-    return unpackByIndexHostImpl( buffer, unpackIndices, withMetadata, events );
-  }
-
   /// @copydoc WrapperBase::unpackByIndex
   virtual
   localIndex
@@ -893,6 +759,129 @@ public:
 #endif
 
 private:
+
+  template < typename U = T >
+  typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, bool >
+  isPackableImpl( ) const
+  {
+    if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
+    {
+      return bufferOps::is_host_packable< U >;
+    }
+    else
+    {
+      return bufferOps::is_device_packable< U >;
+    }
+  }
+
+  template < typename U = T >
+  typename std::enable_if_t< ! traits::HasMemorySpaceFunctions< U >, bool >
+  isPackableImpl( ) const
+  {
+    return bufferOps::is_packable< U >;
+  }
+
+  localIndex unpackDeviceImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events )
+  {
+    localIndex unpackedSize = 0;
+    if( withMetadata )
+    {
+      string name;
+      unpackedSize += bufferOps::Unpack( buffer, name );
+      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
+      unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView(), events );
+    }
+    else
+    {
+      unpackedSize += wrapperHelpers::UnpackDataDevice( buffer, referenceAsView(), events );
+    }
+    return unpackedSize;
+  }
+
+  localIndex unpackHostImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & )
+  {
+    localIndex unpackedSize = 0;
+    if( withMetadata )
+    {
+      string name;
+      unpackedSize += bufferOps::Unpack( buffer, name );
+      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
+    }
+    unpackedSize += bufferOps::Unpack( buffer, *m_data );
+    return unpackedSize;
+  }
+
+  template < typename U = T >
+  typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, localIndex>
+  unpackImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events )
+  {
+    if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
+    {
+      return unpackHostImpl( buffer, withMetadata, events );
+    }
+    else
+    {
+      return unpackDeviceImpl( buffer, withMetadata, events );
+    }
+  }
+
+  template < typename U = T >
+  typename std::enable_if_t< ! traits::HasMemorySpaceFunctions< U >, localIndex>
+  unpackImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events )
+  {
+    return unpackHostImpl( buffer, withMetadata, events );
+  }
+
+  localIndex unpackByIndexHostImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & )
+  {
+    localIndex unpackedSize = 0;
+    if( withMetadata )
+    {
+      string name;
+      unpackedSize += bufferOps::Unpack( buffer, name );
+      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
+    }
+    unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices );
+    return unpackedSize;
+  }
+
+  localIndex unpackByIndexDeviceImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events )
+  {
+    localIndex unpackedSize = 0;
+    if( withMetadata )
+    {
+      string name;
+      unpackedSize += bufferOps::Unpack( buffer, name );
+      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
+      unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
+    }
+    else
+    {
+        unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
+    }
+    return unpackedSize;
+  }
+
+  template < typename U = T >
+  typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, localIndex >
+  unpackByIndexImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events )
+  {
+    if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
+    {
+      return unpackByIndexHostImpl( buffer, unpackIndices, withMetadata, events );
+    }
+    else
+    {
+      return unpackByIndexDeviceImpl( buffer, unpackIndices, withMetadata, events );
+    }
+  }
+
+  template < typename U = T >
+  typename std::enable_if_t< ! traits::HasMemorySpaceFunctions< U >, localIndex >
+  unpackByIndexImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events )
+  {
+    return unpackByIndexHostImpl( buffer, unpackIndices, withMetadata, events );
+  }
 
 
   template< bool DO_PACKING >
