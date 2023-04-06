@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import xml.etree.ElementTree as ElementTree
+#import xml.etree.ElementTree as ElementTree
 import numpy as np
 import h5py
 import analyticalResults

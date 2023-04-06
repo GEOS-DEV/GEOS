@@ -18,8 +18,7 @@ def analyticDisplacementJump(P0):
 		K_casing = 175e9
 		lambda_casing = K_casing - 2.0 / 3.0 * G_casing
 
-		# Analytical results
-		# Rigidity of the casing-cement-rock system
+		# Rigidity of the casing annulus
 		rigidity = np.array([
 			[2.0 * (lambda_casing + G_casing), -2.0 * G_casing / r_casing_in / r_casing_in],
 			[2.0 * (lambda_casing + G_casing), -2.0 * G_casing / r_casing_out / r_casing_out]
@@ -28,8 +27,9 @@ def analyticDisplacementJump(P0):
 		# Vector of force
 		force = np.array([P0, 0.0])
 
-		# Compute the coefficients describing the closed-form solutions of stress/strain
+		# Compute the coefficients describing the closed-form solutions of radial displacement
 		vectorCoefficientAB = np.dot(np.linalg.inv(rigidity), force)
+
 		coeffA_casing = vectorCoefficientAB[0]
 		coeffB_casing = vectorCoefficientAB[1]
 
