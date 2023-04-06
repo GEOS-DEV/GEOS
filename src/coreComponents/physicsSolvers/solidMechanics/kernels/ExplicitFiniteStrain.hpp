@@ -129,24 +129,6 @@ public:
                               StackVariables & stack ) const;
 
 
-<<<<<<< HEAD:src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
-    // chain rule: calculate dv/dx^(n+1/2) = dv/dX * dX/dx^(n+1/2)
-    LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( Ldt, dUhatdX, fInv );
-
-    // calculate gradient (end of step)
-    LvArray::tensorOps::copy< 3, 3 >( F, dUhatdX );
-    LvArray::tensorOps::add< 3, 3 >( F, dUdX );
-    LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
-    real64 const detF = LvArray::tensorOps::invert< 3 >( fInv, F );
-
-    real64 Rot[ 3 ][ 3 ];
-    real64 Dadt[ 6 ];
-    real64 timeIncrement;
-    HughesWinget( Rot, Dadt, Ldt );
-
-    real64 stress[ 6 ] = { };
-    m_constitutiveUpdate.hypoUpdate_StressOnly( k, q, timeIncrement, Dadt, Rot, stress );
-=======
   /**
    * @copydoc ExplicitSmallStrain::kernelLaunch
    */
@@ -156,7 +138,6 @@ public:
   kernelLaunch( localIndex const numElems,
                 KERNEL_TYPE const & kernelComponent );
 
->>>>>>> develop:src/coreComponents/physicsSolvers/solidMechanics/kernels/ExplicitFiniteStrain.hpp
 
 
 };

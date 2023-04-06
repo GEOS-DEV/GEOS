@@ -162,74 +162,7 @@ public:
   GEOSX_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
-<<<<<<< HEAD:src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
-                              StackVariables & stack ) const
-  {
-//#define USE_JACOBIAN
-#if !defined( USE_JACOBIAN )
-    real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
-    /// Macro to substitute in the shape function derivatives.
-    real64 strain[6] = {0};
-    real64 timeIncrement;
-    FE_TYPE::symmetricGradient( dNdX, stack.varLocal, strain );
-
-    real64 stressLocal[ 6 ] = {0};
-#if UPDATE_STRESS == 2
-    m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, timeIncrement, strain, stressLocal );
-#else
-    m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
-#endif
-
-    for( localIndex c = 0; c < 6; ++c )
-    {
-#if UPDATE_STRESS == 2
-      stressLocal[ c ] *= -detJ;
-#elif UPDATE_STRESS == 1
-      stressLocal[ c ] = -( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * detJ; // TODO: decide on
-                                                                                                     // initial stress
-                                                                                                     // strategy
-#else
-      stressLocal[ c ] *= -detJ;
-#endif
-    }
-
-    FE_TYPE::plusGradNajAij( dNdX, stressLocal, stack.fLocal );
-
-#else
-    real64 invJ[3][3];
-    real64 const detJ = FE_TYPE::inverseJacobianTransformation( q, stack.xLocal, invJ );
-
-    real64 strain[6] = {0};
-    real64 timeIncrement;
-    FE_TYPE::symmetricGradient( q, invJ, stack.varLocal, strain );
-
-    real64 stressLocal[ 6 ] = {0};
-#if UPDATE_STRESS == 2
-    m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, timeIncrement, strain, stressLocal );
-#else
-    m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
-#endif
-
-    for( localIndex c = 0; c < 6; ++c )
-    {
-#if UPDATE_STRESS == 2
-      stressLocal[ c ] *= detJ;
-#elif UPDATE_STRESS == 1
-      stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * DETJ; // TODO: decide on
-                                                                                                    // initial stress
-                                                                                                    // strategy
-#else
-      stressLocal[ c ] *= DETJ;
-#endif
-    }
-
-    FE_TYPE::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
-#endif
-  }
-=======
                               StackVariables & stack ) const;
->>>>>>> develop:src/coreComponents/physicsSolvers/solidMechanics/kernels/ExplicitSmallStrain.hpp
 
   /**
    * @copydoc geosx::finiteElement::KernelBase::complete

@@ -714,7 +714,6 @@
 					<xsd:selector xpath="VanGenuchtenCapillaryPressure" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-<<<<<<< HEAD
 				<xsd:unique name="ConstitutiveViscoDruckerPragerUniqueName">
 					<xsd:selector xpath="ViscoDruckerPrager" />
 					<xsd:field xpath="@name" />
@@ -725,10 +724,10 @@
 				</xsd:unique>
 				<xsd:unique name="ConstitutiveViscoModifiedCamClayUniqueName">
 					<xsd:selector xpath="ViscoModifiedCamClay" />
-=======
+                                        <xsd:field xpath="@name" />
+                                </xsd:unique>
 				<xsd:unique name="ConstitutiveWillisRichardsPermeabilityUniqueName">
 					<xsd:selector xpath="WillisRichardsPermeability" />
->>>>>>> develop
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
@@ -3013,13 +3012,10 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="ThermalCompressibleSinglePhaseFluid" type="ThermalCompressibleSinglePhaseFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
-<<<<<<< HEAD
 			<xsd:element name="ViscoDruckerPrager" type="ViscoDruckerPragerType" />
 			<xsd:element name="ViscoExtendedDruckerPrager" type="ViscoExtendedDruckerPragerType" />
 			<xsd:element name="ViscoModifiedCamClay" type="ViscoModifiedCamClayType" />
-=======
 			<xsd:element name="WillisRichardsPermeability" type="WillisRichardsPermeabilityType" />
->>>>>>> develop
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
@@ -4130,7 +4126,6 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-<<<<<<< HEAD
 	<xsd:complexType name="ViscoDruckerPragerType">
 		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
@@ -4200,7 +4195,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="defaultVirginCompressionIndex" type="real64" default="0.005" />
 		<!--relaxationTime => Relaxation time-->
 		<xsd:attribute name="relaxationTime" type="real64" use="required" />
-=======
+        </xsd:complexType>
 	<xsd:complexType name="WillisRichardsPermeabilityType">
 		<!--dilationCoefficient => Dilation coefficient (tan of dilation angle).-->
 		<xsd:attribute name="dilationCoefficient" type="real64" use="required" />
@@ -4208,7 +4203,6 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="maxFracAperture" type="real64" use="required" />
 		<!--refClosureStress => Effective normal stress causes 90% reduction in aperture.-->
 		<xsd:attribute name="refClosureStress" type="real64" use="required" />
->>>>>>> develop
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

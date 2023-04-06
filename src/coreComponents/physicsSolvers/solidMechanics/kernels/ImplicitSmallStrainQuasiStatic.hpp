@@ -205,44 +205,7 @@ public:
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack,
-<<<<<<< HEAD:src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
-                              STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
-  {
-    real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
-
-    real64 strainInc[6] = {0};
-    real64 timeIncrement;
-    real64 stress[6] = {0};
-
-    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
-
-    FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
-
-    m_constitutiveUpdate.smallStrainUpdate( k, q, timeIncrement, strainInc, stress, stiffness );
-
-    stressModifier( stress );
-    for( localIndex i=0; i<6; ++i )
-    {
-      stress[i] *= -detJ;
-    }
-
-    real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJ,
-                                     m_gravityVector[1] * m_density( k, q )* detJ,
-                                     m_gravityVector[2] * m_density( k, q )* detJ };
-
-    real64 N[numNodesPerElem];
-    FE_TYPE::calcN( q, N );
-    FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
-                                     stress,
-                                     N,
-                                     gravityForce,
-                                     reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
-    stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
-  }
-=======
                               STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const;
->>>>>>> develop:src/coreComponents/physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp
 
   /**
    * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
