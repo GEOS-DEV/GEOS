@@ -95,11 +95,7 @@ public:
                            MeshLevel const & patch );   
 
   void writeBasePressuresToPatch(MeshLevel & base,
-                                 MeshLevel & patch); 
-
-  localIndex closestFracElem(MeshLevel & base,
-                             MeshLevel & patch,
-                             localIndex patchElem);                                                                                                                                                                   
+                                 MeshLevel & patch);                                                                                                                                                                  
 
   real64 splitOperatorStep( real64 const & time_n,
                             real64 const & dt,

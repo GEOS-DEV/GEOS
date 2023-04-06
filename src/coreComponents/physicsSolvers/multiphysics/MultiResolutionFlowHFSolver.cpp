@@ -711,13 +711,45 @@ void MultiResolutionFlowHFSolver::writeBasePressuresToPatch(MeshLevel & base,
   localIndex rz=nz/Nz;
 
   //get fields from SinglePhaseFlow problem (or maybe multiphase later)
-  arrayView1d< real64 const > const baseMatrixPressure = baseMatrixSubRegion.getField< fields::flow::pressure >();
+  arrayView1d< real64 const > const baseMatrixPressure = baseMatrixSubRegion.getField< fields::flow::deltaPressure >();
 
   //get fields from SinglePhaseFlow problem (or maybe multiphase later)
-  arrayView1d< real64 const > const baseFracturePressure = baseFractureSubRegion.getField< fields::flow::pressure >();
+  arrayView1d< real64 const > const baseFracturePressure = baseFractureSubRegion.getField< fields::flow::deltaPressure >();
 
   //loop over patch subRegion and fill values for matrixPressure and fracturePressure
   //TODO: make this a regular for so that all ranks will loop over all elements?
+  //allgather fracture cell centers and pressure values - be careful with ghosts
+  //get cell centers of all fracture elements
+  arrayView2d< const real64 > allFracElemCenters = baseFractureSubRegion.getElementCenter();
+
+  array2d< real64 > toSend(baseFractureSubRegion.size(),4);
+  forAll< serialPolicy >(baseFractureSubRegion.size(), [&] (localIndex const k)
+  {
+
+    toSend[k][0] = allFracElemCenters[k][0];
+    toSend[k][1] = allFracElemCenters[k][1];
+    toSend[k][2] = allFracElemCenters[k][2];
+    toSend[k][3] = baseFracturePressure[k];
+
+  });
+  // Exchange the sizes of the data across all ranks.
+  array1d< int > dataSizes( MpiWrapper::commSize() );
+  MpiWrapper::allGather( LvArray::integerConversion< int >( toSend.size(0)*toSend.size(1) ), dataSizes, MPI_COMM_GEOSX );
+
+  int const totalDataSize = std::accumulate( dataSizes.begin(), dataSizes.end(), 0 );
+  //array1d<T> allData( totalDataSize );
+  array2d<real64> allData( totalDataSize/4, 4 );
+  std::vector< int > mpiDisplacements( MpiWrapper::commSize(), 0 );
+  std::partial_sum( dataSizes.begin(), dataSizes.end() - 1, mpiDisplacements.begin() + 1 );
+
+  MpiWrapper::allgatherv( toSend.data(), 
+                          toSend.size(0)*toSend.size(1), 
+                          allData.data(),
+                          dataSizes.data(), 
+                          mpiDisplacements.data(), 
+                          MPI_COMM_GEOSX );                         
+  arrayView2d< const real64 > patchElemCenters = patchElemManager.getRegion(0).getSubRegion< CellElementSubRegion >(0).getElementCenter();
+
   forAll< serialPolicy >( patchSubRegion.size(), [&] ( localIndex const k )
   {
     //convert patch element index to base - first convert patch to global index
@@ -725,66 +757,33 @@ void MultiResolutionFlowHFSolver::writeBasePressuresToPatch(MeshLevel & base,
     globalIndex baseK = fineToCoarseStructuredElemMap(K,Nx,Ny,Nz,rx,ry,rz);
     localIndex basek = baseMatrixSubRegion.globalToLocalMap().at(baseK);
     patchMatrixPressure[0][0][k] = baseMatrixPressure[basek];
-    patchFracturePressure[0][0][k] = baseFracturePressure[closestFracElem(base, patch, k)]; //TODO: needs to find closest fracture cell from base
+
+    R1Tensor patchElemCenter;
+    patchElemCenter[0] = patchElemCenters[k][0];
+    patchElemCenter[1] = patchElemCenters[k][1];
+    patchElemCenter[2] = patchElemCenters[k][2];
+    localIndex minIndex = 0;
+    real64 minDist = 1.0e20;
+    for(localIndex j=0; j<allData.size(0); j++)
+    {
+      R1Tensor currFracElemCenter;
+      currFracElemCenter[0] = allData[j][0];
+      currFracElemCenter[1] = allData[j][1];
+      currFracElemCenter[2] = allData[j][2];
+      
+      R1Tensor centerCopy = LVARRAY_TENSOROPS_INIT_LOCAL_3( patchElemCenter );
+      LvArray::tensorOps::subtract< 3 >( centerCopy, currFracElemCenter );
+      real64 dist = LvArray::tensorOps::l2Norm< 3 >( centerCopy );
+      if(dist < minDist){
+        minDist = dist;
+        minIndex = j;
+      }
+    }
+    patchFracturePressure[0][0][k] = allData[minIndex][3]; //TODO: needs to find closest fracture cell from base
   } );
       
 }
-
-//TODO: this search is not going to work in parallel
-localIndex MultiResolutionFlowHFSolver::closestFracElem(MeshLevel & base,
-                                                        MeshLevel & patch,
-                                                        localIndex patchElem)
-{
-  ElementRegionManager & baseElemManager = base.getElemManager();
-  ElementRegionManager const & patchElemManager = patch.getElemManager();
-  arrayView2d< const real64 > patchElemCenters = patchElemManager.getRegion(0).getSubRegion< CellElementSubRegion >(0).getElementCenter();
-
-  //Hard-coded region and subRegion
-  //ElementRegionBase const & baseFractureElementRegion = baseElemManager.getRegion( 1 );
-  //EmbeddedSurfaceSubRegion const & baseFractureSubRegion = baseFractureElementRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
-  MPI_Comm const & comm = MPI_COMM_GEOSX;
-  real64 rankMinDist = 1e20;
-  localIndex rankClosestElem = 2147483646;
-
-  R1Tensor patchElemCenter;
-  patchElemCenter[0] = patchElemCenters[patchElem][0];
-  patchElemCenter[1] = patchElemCenters[patchElem][1];
-  patchElemCenter[2] = patchElemCenters[patchElem][2];
-
-  baseElemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )
-  {
-
-    arrayView2d< const real64 > allElemCenters = embeddedSurfaceSubRegion.getElementCenter();
-    forAll< serialPolicy >( embeddedSurfaceSubRegion.size(), [&] ( localIndex const k )
-    {
-
-      R1Tensor fracElemCenter;
-      fracElemCenter[0] = allElemCenters[k][0];
-      fracElemCenter[1] = allElemCenters[k][1];
-      fracElemCenter[2] = allElemCenters[k][2]; 
-      R1Tensor elemVec = LVARRAY_TENSOROPS_INIT_LOCAL_3( patchElemCenter );
-
-      LvArray::tensorOps::subtract< 3 >( elemVec, fracElemCenter );
-      real64 dist = LvArray::tensorOps::l2Norm< 3 >( elemVec );
-      if( dist < rankMinDist )
-      {
-        rankMinDist = dist;
-        rankClosestElem = k;
-      }      
-    } );
-  } );
-
-  localIndex closestElem = 0;
-  real64 globalMin = MpiWrapper::min< real64 >( rankMinDist, comm );
-  if( std::abs( rankMinDist-globalMin )<1e-12 )
-  {
-    closestElem = rankClosestElem;
-  }
-  localIndex globalClosestElem = MpiWrapper::max< localIndex >( closestElem, comm );
-  return globalClosestElem;
-
-}                                                        
-
+                                         
 real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
                                                        real64 const & dt,
                                                        integer const cycleNumber,
