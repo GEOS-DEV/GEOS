@@ -123,6 +123,7 @@ quadraturePointKernel( localIndex const k,
 
   real64 strainInc[6] = {0};
   real64 totalStress[6] = {0};
+  real64 timeIncrement;
 
   typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
