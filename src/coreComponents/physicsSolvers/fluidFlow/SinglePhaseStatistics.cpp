@@ -127,20 +127,20 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
     real64 subRegionTotalPoreVol = 0.0;
 
     singlePhaseBaseKernels::StatisticsKernel::
-      launch< parallelDevicePolicy<> >( subRegion.size(),
-                                        elemGhostRank,
-                                        volume,
-                                        pres,
-                                        deltaPres,
-                                        refPorosity,
-                                        porosity,
-                                        subRegionMinPres,
-                                        subRegionAvgPresNumerator,
-                                        subRegionMaxPres,
-                                        subRegionMinDeltaPres,
-                                        subRegionMaxDeltaPres,
-                                        subRegionTotalUncompactedPoreVol,
-                                        subRegionTotalPoreVol );
+      launch( subRegion.size(),
+              elemGhostRank,
+              volume,
+              pres,
+              deltaPres,
+              refPorosity,
+              porosity,
+              subRegionMinPres,
+              subRegionAvgPresNumerator,
+              subRegionMaxPres,
+              subRegionMinDeltaPres,
+              subRegionMaxDeltaPres,
+              subRegionTotalUncompactedPoreVol,
+              subRegionTotalPoreVol );
 
     ElementRegionBase & region = elemManager.getRegion( subRegion.getParent().getParent().getName() );
     RegionStatistics & regionStatistics = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
