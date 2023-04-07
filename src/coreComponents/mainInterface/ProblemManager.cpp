@@ -723,14 +723,14 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   FaceManager & faceManager = meshLevel.getFaceManager();
   ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-  bool baseMeshLevel =  meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString();
+  bool isbaseMeshLevel =  meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString();
 
   elemManager.generateMesh( cellBlockManager );
-  nodeManager.setGeometricalRelations( cellBlockManager, elemManager, baseMeshLevel );
-  edgeManager.setGeometricalRelations( cellBlockManager, baseMeshLevel );
+  nodeManager.setGeometricalRelations( cellBlockManager, elemManager, isbaseMeshLevel );
+  edgeManager.setGeometricalRelations( cellBlockManager, isbaseMeshLevel );
   faceManager.setGeometricalRelations( cellBlockManager,
                                        elemManager,
-                                       nodeManager, baseMeshLevel );
+                                       nodeManager, isbaseMeshLevel );
   nodeManager.constructGlobalToLocalMap( cellBlockManager );
   // Edge, face and element region managers rely on the sets provided by the node manager.
   // This is why `nodeManager.buildSets` is called first.
@@ -754,7 +754,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
   {
     subRegion.setupRelatedObjectsInRelations( meshLevel );
-    if( baseMeshLevel )
+    if( isbaseMeshLevel )
     {
       subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
     }
