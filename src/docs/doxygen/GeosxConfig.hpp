@@ -130,7 +130,7 @@
 #define HDF5_VERSION 1.12.2
 
 /// Version information for Conduit
-#define Conduit_VERSION 0.8.6
+#define Conduit_VERSION 0.8.7
 
 /// Version information for RAJA
 #define RAJA_VERSION 2022.3.0
