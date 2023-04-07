@@ -42,12 +42,9 @@ SinglePhaseConstantThermalConductivity::deliverClone( string const & name,
   return SinglePhaseThermalConductivityBase::deliverClone( name, parent );
 }
 
-void SinglePhaseConstantThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                       localIndex const numConstitutivePointsPerParentIndex )
+void SinglePhaseConstantThermalConductivity::initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity ) const
 {
-  SinglePhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  for( localIndex ei = 0; ei < parent.size(); ++ei )
+  for( localIndex ei = 0; ei < initialPorosity.size(0); ++ei )
   {
     // NOTE: enforcing 1 quadrature point
     for( localIndex q = 0; q < 1; ++q )
@@ -56,7 +53,14 @@ void SinglePhaseConstantThermalConductivity::allocateConstitutiveData( dataRepos
       m_effectiveConductivity[ei][q][1] = m_thermalConductivityComponents[1];
       m_effectiveConductivity[ei][q][2] = m_thermalConductivityComponents[2];
     }
-  }
+  } 
+}
+
+
+void SinglePhaseConstantThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
+                                                                       localIndex const numConstitutivePointsPerParentIndex )
+{
+  SinglePhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 void SinglePhaseConstantThermalConductivity::postProcessInput()

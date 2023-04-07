@@ -75,6 +75,10 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  
+  virtual void initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity ) const override final;
+
+
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = SinglePhaseConstantThermalConductivityUpdate;
 
