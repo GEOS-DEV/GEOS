@@ -100,7 +100,7 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
   /// Macro to substitute in the shape function derivatives.
   real64 strain[6] = {0};
-  real64 timeIncrement;
+  real64 timeIncrement = 0.0;
   FE_TYPE::symmetricGradient( dNdX, stack.varLocal, strain );
 
   real64 stressLocal[ 6 ] = {0};

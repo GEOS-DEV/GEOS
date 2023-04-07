@@ -114,7 +114,7 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadrat
 
   real64 Rot[ 3 ][ 3 ];
   real64 Dadt[ 6 ];
-  real64 timeIncrement;
+  real64 timeIncrement = 0.0;
   HughesWinget( Rot, Dadt, Ldt );
 
   real64 stress[ 6 ] = { };

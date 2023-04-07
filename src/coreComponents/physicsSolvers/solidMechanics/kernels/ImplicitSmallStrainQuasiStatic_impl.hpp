@@ -117,7 +117,7 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
                                                                            stack.feStack, dNdX );
 
   real64 strainInc[6] = {0};
-  real64 timeIncrement;
+  real64 timeIncrement = 0.0;
   real64 stress[6] = {0};
 
   typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
