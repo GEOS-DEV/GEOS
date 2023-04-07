@@ -56,6 +56,26 @@ void SinglePhaseConstantThermalConductivity::initializeRockFluidState( arrayView
   } 
 }
 
+void SinglePhaseConstantThermalConductivity::update( arrayView2d< real64 const > const & initialPorosity ) const
+{
+  real64 thermalConductivityComponents[3];
+  for (int i = 0; i<3; ++i)
+  {
+    thermalConductivityComponents[i] = m_thermalConductivityComponents[i];
+  }
+  arrayView3d< real64 > const effectiveConductivity = m_effectiveConductivity;
+
+  forAll< parallelDevicePolicy<> > ( initialPorosity.size(0), [=] ( localIndex const ei )
+  {
+    // NOTE: enforcing 1 quadrature point
+    for( localIndex q = 0; q < 1; ++q )
+    {
+      effectiveConductivity[ei][q][0] = thermalConductivityComponents[0];
+      effectiveConductivity[ei][q][1] = thermalConductivityComponents[1];
+      effectiveConductivity[ei][q][2] = thermalConductivityComponents[2];
+    }
+  } );
+}
 
 void SinglePhaseConstantThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
                                                                        localIndex const numConstitutivePointsPerParentIndex )

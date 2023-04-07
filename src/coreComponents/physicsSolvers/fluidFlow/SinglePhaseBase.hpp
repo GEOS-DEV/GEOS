@@ -264,6 +264,12 @@ public:
   void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const;
 
   /**
+   * @brief Update thermal conductivity
+   * @param subRegion the group storing the required fields
+   */
+  void updateThermalConductivity( ElementSubRegionBase & subRegion ) const;
+
+  /**
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
