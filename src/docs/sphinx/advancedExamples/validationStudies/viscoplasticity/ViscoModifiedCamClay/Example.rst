@@ -9,7 +9,7 @@ Visco Modified CamClay model: Triaxial Driver versus Semi-Analytical Solution
 Problem description
 ------------------------------------------------------------------
 
-This example uses the Triaxial Driver to simulate a visco-elasto-plastic oedometric compression test of a Visco Modified CamClay solid. Oedometric condition with zero lateral strain together with loading/unloading axial strain periods are imposed. Semi analytical results for the mean and shear stress variations :math:`\Delta p` and :math:`\Delta q` can be established, considering the Perzyna approach, for the imposed oedometric boundary conditions as `(Runesson et al. 1999) <https://onlinelibrary.wiley.com/doi/abs/10.1002/(SICI)1099-1484(199901)4:1%3C75::AID-CFM60%3E3.0.CO;2-4>`__ :
+This example uses the Triaxial Driver to simulate a visco-elasto-plastic oedometric compression test of a Visco Modified CamClay solid. Oedometric condition with zero lateral strain together with loading/unloading axial strain periods are imposed. Semi-analytical results for the mean and shear stress variations :math:`\Delta p` and :math:`\Delta q` can be established, considering the Perzyna approach, for the imposed oedometric boundary conditions as `(Runesson et al. 1999) <https://onlinelibrary.wiley.com/doi/abs/10.1002/(SICI)1099-1484(199901)4:1%3C75::AID-CFM60%3E3.0.CO;2-4>`__ :
 
 .. math::
    \Delta p = K(\Delta\varepsilon_{V} - \Delta\lambda \frac{\partial G}{\partial p})
@@ -64,7 +64,7 @@ For this example, we focus on the ``Task`` and the ``Constitutive`` tags.
 Task
 ------------------------------------------------------------------
 
-The imposed axial strain loading/unloading periods, the lateral zero strain as well as the initial stress are defined in the ``Task`` block as 
+The imposed axial strain loading/unloading periods, the lateral zero strain, and the initial stress are defined in the ``Task`` block as:
 
 .. literalinclude:: ../../../../../../../inputFiles/triaxialDriver/triaxialDriver_ViscoModifiedCamClay.xml
     :language: xml
@@ -75,7 +75,7 @@ The imposed axial strain loading/unloading periods, the lateral zero strain as w
 Constitutive laws
 ------------------------------
 
-The elasto-visco-plastic parameters are defined as
+The elasto-visco-plastic parameters are defined as:
 
 
 .. literalinclude:: ../../../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml
