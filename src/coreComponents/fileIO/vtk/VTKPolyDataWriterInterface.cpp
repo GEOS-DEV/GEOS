@@ -908,12 +908,12 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
       {
         case SurfaceElementRegion::SurfaceSubRegionType::embeddedElement:
           {
-            auto const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+            auto const & subRegion = region.getUniqueSubRegion< EmbeddedSurfaceSubRegion >();
             return getEmbeddedSurface( subRegion, embSurfNodeManager );
           }
         case SurfaceElementRegion::SurfaceSubRegionType::faceElement:
           {
-            auto const & subRegion = region.getSubRegion< FaceElementSubRegion >( 0 );
+            auto const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
             return getSurface( subRegion, nodeManager );
           }
         default:
