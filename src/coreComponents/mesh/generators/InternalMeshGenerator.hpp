@@ -52,9 +52,14 @@ public:
 
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  void importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const override
+  void importFieldOnArray( Block block,
+                           string const & blockName,
+                           string const & meshFieldName,
+                           bool isMaterialField,
+                           dataRepository::WrapperBase & wrapper ) const override
   {
-    GEOSX_UNUSED_VAR( cellBlockName );
+    GEOSX_UNUSED_VAR( block );
+    GEOSX_UNUSED_VAR( blockName );
     GEOSX_UNUSED_VAR( meshFieldName );
     GEOSX_UNUSED_VAR( isMaterialField );
     GEOSX_UNUSED_VAR( wrapper );

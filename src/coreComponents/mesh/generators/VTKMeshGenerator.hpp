@@ -87,7 +87,11 @@ public:
    */
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  void importFieldsOnArray( string const & cellBlockName, string const & meshFieldNam, bool isMaterialField, WrapperBase & wrapper ) const override;
+  void importFieldOnArray( Block block,
+                           string const & blockName,
+                           string const & meshFieldName,
+                           bool isMaterialField,
+                           dataRepository::WrapperBase & wrapper ) const override;
 
   virtual void freeResources() override;
 
@@ -97,6 +101,7 @@ private:
   struct viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
+    constexpr static char const * mainBlockNameString() { return "mainBlockName"; }
     constexpr static char const * faceBlockNamesString() { return "faceBlocks"; }
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
@@ -104,6 +109,15 @@ private:
     constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
   };
   /// @endcond
+
+  void importVolumicFieldOnArray( string const & cellBlockName,
+                                  string const & meshFieldName,
+                                  bool isMaterialField,
+                                  dataRepository::WrapperBase & wrapper ) const;
+
+  void importSurfacicFieldOnArray( string const & faceBlockName,
+                                   string const & meshFieldName,
+                                   dataRepository::WrapperBase & wrapper ) const;
 
   /**
    * @brief The VTK mesh to be imported into GEOSX.
@@ -115,8 +129,14 @@ private:
   /// Name of VTK dataset attribute used to mark regions
   string m_attributeName;
 
-  /// Name of the face blocks to be imported
+  /// Name of the main block to be imported (for multi-block files).
+  string m_mainBlockName;
+
+  /// Name of the face blocks to be imported (for multi-block files).
   array1d< string > m_faceBlockNames;
+
+  /// Maps the face block name to its vtk mesh instance.
+  std::map< string, vtkSmartPointer< vtkDataSet > > m_faceBlockMeshes;
 
   /// Names of VTK nodesets to import
   string_array m_nodesetNames;
