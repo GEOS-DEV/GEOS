@@ -11,7 +11,7 @@ Problem description
 
 This example uses the Triaxial Driver to simulate an elasto-plastic triaxial compression test of a Drucker-Prager solid. Constant lateral confining stress together with loading/unloading axial strain periods are imposed. Imposed axial strain range are high enough for allowing plastic yield in both loading and unloading period. This complicated scenario is used for verifying the numerical convergence and accuracy of the Drucker-Prager constitutive model implemented in GEOS. 
 
-Semi analytical result for axial stress variation :math:`\Delta\sigma_{V}` and lateral strain variation :math:`\Delta\varepsilon_{V}` can be established for the imposed triaxial boundary conditions:
+Semi-analytical results for axial stress variations :math:`\Delta\sigma_{V}` and lateral strain variations :math:`\Delta\varepsilon_{V}` can be established for the imposed triaxial boundary conditions:
 
 .. math::
    \Delta\sigma_{V} = \Delta\varepsilon_{V} E_{ep}
@@ -27,13 +27,13 @@ where :math:`E_{ep}` and :math:`E^\prime_{ep}` are elasto-plastic Young moduli t
 .. math::
    \frac{1}{E^\prime_{ep}} = \frac{1}{2\mu} - \frac{b-3}{2h}
 
-These solutions are applied only when plastic yield condition is satisfied. The cohesion parameter defining the plastic yield surface is updated with stress change as
+These solutions are applied only when the plastic yield condition is satisfied. The cohesion parameter defining the plastic yield surface is updated with stress changes as
 
 .. math::
    \Delta a = \frac{b-3}{3}\Delta\sigma_{V}
 
 
-These solutions were established for a positive shear stress :math:`q = -(\sigma_{V} - \sigma_{H})` (negative sign convention for compression stress). For the case when the plastic yield occurs at a negative shear stress, we have
+These solutions were established for a positive shear stress :math:`q = -(\sigma_{V} - \sigma_{H})` (negative sign convention for compressional stress). For the case when the plastic yield occurs at a negative shear stress, we have:
 
 .. math::
    \frac{1}{E_{ep}} = \frac{1}{E} + \frac{(b^\prime+3)(b+3)}{9h}
@@ -82,7 +82,7 @@ For this example, we focus on the ``Task`` and the ``Constitutive`` tags.
 Task
 ------------------------------------------------------------------
 
-The imposed axial strain loading/unloading periods, the constant lateral confining stress as well as the initial stress are defined in the ``Task`` block as 
+The imposed axial strain loading/unloading periods, the constant lateral confining stress, and the initial stress are defined in the ``Task`` block as:
 
 .. literalinclude:: ../../../../../../../inputFiles/triaxialDriver/triaxialDriver_DruckerPrager.xml
     :language: xml
@@ -93,7 +93,7 @@ The imposed axial strain loading/unloading periods, the constant lateral confini
 Constitutive laws
 ------------------------------
 
-The elasto-plastic parameters are defined as
+The elasto-plastic parameters are defined as:
 
 
 .. literalinclude:: ../../../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml
@@ -108,7 +108,7 @@ All constitutive parameters such as density, viscosity, and bulk and shear modul
 A comparison between GEOS results and semi-analytical results
 --------------------------------------------------------------
 
-The simulation results are saved in a text file, named ``DruckerPragerResults.txt``. A perfect comparison between the results given by the TriaxialDriver solver in GEOS and the semi-analytical results presented above is shown below 
+The simulation results are saved in a text file, named ``DruckerPragerResults.txt``. A perfect comparison between the results given by the TriaxialDriver solver in GEOS and the semi-analytical results presented above is shown below.
 
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/viscoplasticity/DruckerPrager/TriaxialDriver_vs_SemiAnalytic_DruckerPrager.py
