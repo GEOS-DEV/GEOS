@@ -147,7 +147,7 @@ def main():
 		       mec='r',
 		       markersize=msize,
 		       alpha=malpha,
-		       label='Semi-Analytic', linewidth=6)
+		       label='Semi-Analytical', linewidth=6)
 	
 	ax[0].set_xlabel(r'Axial Strain (%)', size=fsize, weight="bold")
 	ax[0].set_ylabel(r'Axial Stress (kPa)', size=fsize, weight="bold")
@@ -170,7 +170,7 @@ def main():
 		       mec='r',
 		       markersize=msize,
 		       alpha=malpha,
-		       label='Semi-Analytic', linewidth=6)
+		       label='Semi-Analytical', linewidth=6)
 	ax[1].set_xlabel(r'Axial Strain (%)', size=fsize, weight="bold")
 	ax[1].set_ylabel(r'Radial stress (kPa)', size=fsize, weight="bold")
 	#ax[1].legend(loc='lower right', fontsize=fsize)
@@ -193,7 +193,7 @@ def main():
 		       mec='r',
 		       markersize=msize,
 		       alpha=malpha,
-		       label='Semi-Analytic', linewidth=6)
+		       label='Semi-Analytical', linewidth=6)
 	ax[2].set_xlabel(r'Mean stress (kPa)', size=fsize, weight="bold")
 	ax[2].set_ylabel(r'Deviatoric Stress (kPa)', size=fsize, weight="bold")
 	ax[2].legend(loc='lower right', fontsize=fsize)
