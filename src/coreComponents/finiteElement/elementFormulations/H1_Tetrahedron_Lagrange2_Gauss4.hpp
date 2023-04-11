@@ -30,10 +30,9 @@ namespace finiteElement
 
 /**
  * This class contains the kernel accessible functions specific to the
- * H1-conforming nodal linear tetrahedron finite element with a 1-point
+ * H1-conforming nodal quadratic tetrahedron finite element with a 4-point
  * Gaussian quadrature rule.
  *
- * NEED TO UPDATE FOR QUADRATIC
  *
  *          3                                =====  ==  ==  ==
  *           +                               Node   r   s   t
@@ -42,9 +41,12 @@ namespace finiteElement
  *           | \   \_           t            1      1   0   1
  *           |  +__  \_         |   s        2      0   1   0
  *           | /2  \__ \_       |  /         3      0   0   1
- *           |/       \__\      | /          =====  ==  ==  ==
- *           +------------+     *------r
- *          0              1
+ *           |/       \__\      | /          4      0.5 0   0
+ *           +------------+     *------r     5      0.5 0.5 0
+ *          0              1                 6      0   0.5 0
+ *                                           7      0   0   0.5
+ *                                           8      0.5 0   0.5
+ *                                           9      0   0.5 0.5
  *
  */
 class H1_Tetrahedron_Lagrange2_Gauss4 final : public FiniteElementBase
