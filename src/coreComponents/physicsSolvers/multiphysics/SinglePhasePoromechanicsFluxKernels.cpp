@@ -150,9 +150,9 @@ void EmbeddedSurfaceFluxKernel::
     stackArray2d< real64, MAX_NUM_FLUX_ELEMS * maxStencilSize * 4 > localFluxJacobian( numFluxElems, numDofs );
 
     // compute transmissibility
-    real64 transmissibility[SurfaceElementStencilWrapper::maxNumConnections][2];
-    real64 dTrans_dPres[SurfaceElementStencilWrapper::maxNumConnections][2];
-    real64 dTrans_dDispJump[SurfaceElementStencilWrapper::maxNumConnections][2][3];
+    real64 transmissibility[SurfaceElementStencilWrapper::maxNumConnections][2]{};
+    real64 dTrans_dPres[SurfaceElementStencilWrapper::maxNumConnections][2]{};
+    real64 dTrans_dDispJump[SurfaceElementStencilWrapper::maxNumConnections][2][3]{}; // make sure that this is initialized!
 
     stencilWrapper.computeWeights( iconn,
                                    permeability,
@@ -416,9 +416,9 @@ void FaceElementFluxKernel::
       stackArray2d< real64, maxNumFluxElems * maxStencilSize > dFlux_dAper( numFluxElems, stencilSize );
 
       // compute transmissibility
-      real64 transmissibility[SurfaceElementStencilWrapper::maxNumConnections][2];
-      real64 dTrans_dPres[SurfaceElementStencilWrapper::maxNumConnections][2];
-      real64 dTrans_dDispJump[SurfaceElementStencilWrapper::maxNumConnections][2][3];
+      real64 transmissibility[SurfaceElementStencilWrapper::maxNumConnections][2]{};
+      real64 dTrans_dPres[SurfaceElementStencilWrapper::maxNumConnections][2]{};
+      real64 dTrans_dDispJump[SurfaceElementStencilWrapper::maxNumConnections][2][3]{};
 
       stencilWrapper.computeWeights( iconn,
                                      permeability,

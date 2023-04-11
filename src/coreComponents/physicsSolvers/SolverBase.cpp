@@ -48,8 +48,8 @@ SolverBase::SolverBase( string const & name,
   // This enables logLevel filtering
   enableLogLevelInput();
 
-  // This sets a flag to indicate that this object increments time
-  this->setTimestepBehavior( 1 );
+  // This sets a flag to indicate that this object is going to select the time step size
+  this->setTimesteppingBehavior( ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize );
 
   registerWrapper( viewKeyStruct::cflFactorString(), &m_cflFactor ).
     setApplyDefaultValue( 0.5 ).
