@@ -20,8 +20,11 @@
 #include "SolidMechanicsConformingFractures.hpp"
 
 #include "common/TimingMacros.hpp"
+
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactSelector.hpp"
+
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
 {
@@ -106,6 +109,8 @@ void SolidMechanicsConformingFractures::implicitStepSetup( real64 const & time_n
                                                            real64 const & dt,
                                                            DomainPartition & domain )
 {
+  computeRotationMatrices( domain );
+
   m_solidSolver->implicitStepSetup( time_n, dt, domain );
 }
 
@@ -341,6 +346,76 @@ void SolidMechanicsConformingFractures::computeRotationMatrices( DomainPartition
       } );
     } );
   } );
+}
+
+void SolidMechanicsConformingFractures::computeFaceNodalArea( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                                                                  ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                                                                  localIndex const kf0,
+                                                                  array1d< real64 > & nodalArea ) const
+{
+  // I've tried to access the finiteElement::dispatch3D with
+  // finiteElement::FiniteElementBase const &
+  // fe = fractureSubRegion->getReference< finiteElement::FiniteElementBase >( surfaceGenerator->getDiscretizationName() );
+  // but it's either empty (unknown discretization) or for 3D only (e.g., hexahedra)
+  GEOSX_MARK_FUNCTION;
+
+  localIndex const TriangularPermutation[3] = { 0, 1, 2 };
+  localIndex const QuadrilateralPermutation[4] = { 0, 1, 3, 2 };
+
+  localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
+
+  nodalArea.resize( numNodesPerFace );
+  for( localIndex a = 0; a < numNodesPerFace; ++a )
+  {
+    nodalArea[a] = 0.0;
+  }
+  localIndex const * const permutation = ( numNodesPerFace == 3 ) ? TriangularPermutation : QuadrilateralPermutation;
+  if( numNodesPerFace == 3 )
+  {
+    real64 xLocal[3][3];
+    for( localIndex a = 0; a < numNodesPerFace; ++a )
+    {
+      for( localIndex j = 0; j < 3; ++j )
+      {
+        xLocal[a][j] = nodePosition[faceToNodeMap( kf0, permutation[a] )][j];
+      }
+    }
+    real64 N[3];
+    for( localIndex q=0; q<H1_TriangleFace_Lagrange1_Gauss1::numQuadraturePoints; ++q )
+    {
+      real64 const detJ = H1_TriangleFace_Lagrange1_Gauss1::transformedQuadratureWeight( q, xLocal );
+      H1_TriangleFace_Lagrange1_Gauss1::calcN( q, N );
+      for( localIndex a = 0; a < numNodesPerFace; ++a )
+      {
+        nodalArea[a] += detJ * N[permutation[a]];
+      }
+    }
+  }
+  else if( numNodesPerFace == 4 )
+  {
+    real64 xLocal[4][3];
+    for( localIndex a = 0; a < numNodesPerFace; ++a )
+    {
+      for( localIndex j = 0; j < 3; ++j )
+      {
+        xLocal[a][j] = nodePosition[faceToNodeMap( kf0, permutation[a] )][j];
+      }
+    }
+    real64 N[4];
+    for( localIndex q=0; q<H1_QuadrilateralFace_Lagrange1_GaussLegendre2::numQuadraturePoints; ++q )
+    {
+      real64 const detJ = H1_QuadrilateralFace_Lagrange1_GaussLegendre2::transformedQuadratureWeight( q, xLocal );
+      H1_QuadrilateralFace_Lagrange1_GaussLegendre2::calcN( q, N );
+      for( localIndex a = 0; a < numNodesPerFace; ++a )
+      {
+        nodalArea[a] += detJ * N[permutation[a]];
+      }
+    }
+  }
+  else
+  {
+    GEOSX_ERROR( "SolidMechanicsConformingFractures: face with " << numNodesPerFace << " nodes. Only triangles and quadrilaterals are supported." );
+  }
 }
 
 void SolidMechanicsConformingFractures::applySystemSolution( DofManager const & dofManager,

@@ -108,6 +108,13 @@ public:
   
   bool updateConfiguration( DomainPartition & domain ) override final;
 
+  enum ContactEnforcementMethod : integer
+  {
+    Penalty = 0,                 ///< penalty-based contact enforcement  
+    NodalLagrangeMultiplier = 1, ///< node-based Lagrange multipliers (node-to-node contact)
+    FaceLagrangeMultiplier = 2   ///< face-based Lagrange multipliers (currently implemented in LagrangianContactSolver)
+  };
+
 protected:
   virtual void postProcessInput() override final;
 
@@ -124,15 +131,9 @@ private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
-  enum ContactEnforcementMethod : integer
-  {
-    Penalty = 0,                 ///< penalty-based contact enforcement  
-    NodalLagrangeMultiplier = 1, ///< node-based Lagrange multipliers (node-to-node contact)
-    FaceLagrangeMultiplier = 2   ///< face-based Lagrange multipliers (currently implemented in LagrangianContactSolver)
-  };
-
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {
+    constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
     constexpr static char const * contactEnforcementMethodString() { return "contactEnforcementMethod"; }
 
   };
@@ -141,7 +142,7 @@ private:
 
 };
 
-ENUM_STRINGS( ContactEnforcementMethod, "Penalty", "NodalLagrangeMultiplier", "FaceLagrangeMultiplier" );
+ENUM_STRINGS( SolidMechanicsConformingFractures::ContactEnforcementMethod, "Penalty", "NodalLagrangeMultiplier", "FaceLagrangeMultiplier" );
 
 
 } /* namespace geosx */
