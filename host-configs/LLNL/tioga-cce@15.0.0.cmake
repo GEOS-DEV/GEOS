@@ -16,3 +16,6 @@ set( HYPRE_DIR "${GEOSX_TPL_DIR}/hypre" CACHE PATH "" )
 
 set( ENABLE_CALIPER ON CACHE BOOL "" FORCE )
 set( CALIPER_DIR "${GEOSX_TPL_DIR}/caliper" CACHE PATH "" )
+
+# haven't build I/O TPLs on tioga yet
+set( ENABLE_SILO OFF CACHE BOOL "" FORCE )

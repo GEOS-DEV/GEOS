@@ -717,7 +717,7 @@ if(DEFINED VTK_DIR)
     message( " ----> VTK_VERSION=${VTK_VERSION}")
 
     set( VTK_TARGETS
-        #  VTK::FiltersParallelDIY2
+         VTK::FiltersParallelDIY2
          VTK::IOLegacy
          VTK::IOParallelXML
          VTK::IOXML
@@ -729,11 +729,11 @@ if(DEFINED VTK_DIR)
 
         set_property(TARGET ${targetName}
                      APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
-                     ${includeDirs})
+                     ${includeDirs} )
     endforeach()
 
     set(ENABLE_VTK ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} vtk)
+    set(thirdPartyLibs ${thirdPartyLibs} VTK)
 else()
     if(ENABLE_VTK)
         message(WARNING "ENABLE_VTK is ON but VTK_DIR isn't defined.")
