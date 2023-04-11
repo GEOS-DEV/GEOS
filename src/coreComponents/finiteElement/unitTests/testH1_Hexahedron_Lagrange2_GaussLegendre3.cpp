@@ -43,31 +43,31 @@ void testKernelDriver()
 
   constexpr real64 xCoords[numNodes][3] = {
     { -1.1, -1.3, -1.1 },
-    { 0.1, -1.2, -1.15 }, 
+    { 0.1, -1.2, -1.15 },
     {  1.3, -1.1, -1.2 },
-    { -1.15, -0.1, -1.1 }, 
-    { 0.025, -0.025, -1.175 }, 
-    { 1.2, 0.05, -1.25 }, 
+    { -1.15, -0.1, -1.1 },
+    { 0.025, -0.025, -1.175 },
+    { 1.2, 0.05, -1.25 },
     { -1.2, 1.1, -1.1 },
-    { -0.05, 1.15, -1.2 }, 
+    { -0.05, 1.15, -1.2 },
     {  1.1, 1.2, -1.3 },
-    { -1.2, -1.25, 0.0 }, 
-    { 0.0, -1.225, 0.0 }, 
-    { 1.2, -1.2, 0.0 }, 
-    { -1.2, -0.05, 0.05 }, 
-    { -0.0125, -0.0375, 0.0 }, 
-    { 1.175, -0.025, -0.05 }, 
-    { -1.2, 1.15, 0.1 }, 
-    { -0.025, 1.15, 0.0 }, 
-    { 1.15, 1.15, -0.1 }, 
+    { -1.2, -1.25, 0.0 },
+    { 0.0, -1.225, 0.0 },
+    { 1.2, -1.2, 0.0 },
+    { -1.2, -0.05, 0.05 },
+    { -0.0125, -0.0375, 0.0 },
+    { 1.175, -0.025, -0.05 },
+    { -1.2, 1.15, 0.1 },
+    { -0.025, 1.15, 0.0 },
+    { 1.15, 1.15, -0.1 },
     { -1.3, -1.2, 1.1 },
-    { -0.1, -1.25, 1.15 }, 
+    { -0.1, -1.25, 1.15 },
     {  1.1, -1.3, 1.2 },
-    { -1.25, 0.0, 1.2 }, 
-    { -0.05, -0.05, 1.175 }, 
-    { 1.15, -0.1, 1.15 }, 
+    { -1.25, 0.0, 1.2 },
+    { -0.05, -0.05, 1.175 },
+    { 1.15, -0.1, 1.15 },
     { -1.2, 1.2, 1.3 },
-    { 0.0, 1.15, 1.2 }, 
+    { 0.0, 1.15, 1.2 },
     {  1.2, 1.1, 1.1 }
   };
 
@@ -124,13 +124,13 @@ void testKernelDriver()
     {-1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1},
     {-1, -1, -1, 0, 0, 0, 1, 1, 1, -1, -1, -1, 0, 0, 0, 1, 1, 1, -1, -1, -1, 0, 0, 0, 1, 1, 1},
     {-1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-  }; 
+  };
 
- constexpr real64 pCoordsLin[3][8] = {
+  constexpr real64 pCoordsLin[3][8] = {
     { -1, 1, -1, 1, -1, 1, -1, 1 },
-      { -1, -1, 1, 1, -1, -1, 1, 1 },
-      { -1, -1, -1, -1, 1, 1, 1, 1 }
-  }; 
+    { -1, -1, 1, 1, -1, -1, 1, 1 },
+    { -1, -1, -1, -1, 1, 1, 1, 1 }
+  };
 
   constexpr static real64 quadratureFactor = 0.774596669241483;
 
@@ -139,19 +139,20 @@ void testKernelDriver()
   {
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
-      real64 const xi[3] = { quadratureFactor*pCoords[0][q],
+      real64 const xi[3] = { quadratureFactor *pCoords[0][q],
                              quadratureFactor*pCoords[1][q],
                              quadratureFactor*pCoords[2][q] };
 
       for( localIndex a=0; a<numNodes; ++a )
-       {
+      {
 
         real64 N = 0.0;
         real64 xPoly = 0.0;
         real64 yPoly = 0.0;
         real64 zPoly = 0.0;
 
-        switch((int) pCoords[0][a]) {
+        switch((int) pCoords[0][a] )
+        {
           case -1:
             xPoly += 0.5*xi[0]*(xi[0]-1.0);
             break;
@@ -163,7 +164,8 @@ void testKernelDriver()
             break;
         }
 
-        switch((int) pCoords[1][a]) {
+        switch((int) pCoords[1][a] )
+        {
           case -1:
             yPoly += 0.5*xi[1]*(xi[1]-1.0);
             break;
@@ -175,7 +177,8 @@ void testKernelDriver()
             break;
         }
 
-        switch((int) pCoords[2][a]) {
+        switch((int) pCoords[2][a] )
+        {
           case -1:
             zPoly += 0.5*xi[2]*(xi[2]-1.0);
             break;
@@ -211,10 +214,10 @@ void testKernelDriver()
             J[i][j] = J[i][j] + xCoordsLin[a][i] * dNdXi[j];
           }
         }
-     }
+      }
 
-     real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
-     EXPECT_FLOAT_EQ( detJ, viewDetJ[q] );
+      real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
+      EXPECT_FLOAT_EQ( detJ, viewDetJ[q] );
 
       for( localIndex a=0; a<numNodes; ++a )
       {
@@ -226,7 +229,8 @@ void testKernelDriver()
         real64 zPoly = 0.0;
         real64 zDeriv = 0.0;
 
-        switch((int) pCoords[0][a]) {
+        switch((int) pCoords[0][a] )
+        {
           case -1:
             xPoly += 0.5*xi[0]*(xi[0]-1.0);
             xDeriv += xi[0] - 0.5;
@@ -241,7 +245,8 @@ void testKernelDriver()
             break;
         }
 
-        switch((int) pCoords[1][a]) {
+        switch((int) pCoords[1][a] )
+        {
           case -1:
             yPoly += 0.5*xi[1]*(xi[1]-1.0);
             yDeriv += xi[1] - 0.5;
@@ -256,7 +261,8 @@ void testKernelDriver()
             break;
         }
 
-        switch((int) pCoords[2][a]) {
+        switch((int) pCoords[2][a] )
+        {
           case -1:
             zPoly += 0.5*xi[2]*(xi[2]-1.0);
             zDeriv += xi[2] - 0.5;
@@ -271,7 +277,7 @@ void testKernelDriver()
             break;
         }
 
-        real64 dNdXi[3] = {xDeriv*yPoly*zPoly, xPoly*yDeriv*zPoly, xPoly*yPoly*zDeriv};
+        real64 dNdXi[3] = {xDeriv *yPoly *zPoly, xPoly*yDeriv*zPoly, xPoly*yPoly*zDeriv};
 
         real64 dNdX[3] = {0};
 

@@ -292,8 +292,8 @@ H1_Tetrahedron_Lagrange2_Gauss4::
   real64 const u = 1 - r - s - t;
 
   N[0] = u*(2.0*u - 1.0);
-  N[1] = r*(2.0*r - 1.0); 
-  N[2] = s*(2.0*s - 1.0); 
+  N[1] = r*(2.0*r - 1.0);
+  N[2] = s*(2.0*s - 1.0);
   N[3] = t*(2.0*t - 1.0);
   N[4] = 4.0*u*r;
   N[5] = 4.0*r*s;
@@ -313,11 +313,11 @@ H1_Tetrahedron_Lagrange2_Gauss4::
          real64 (& N)[numNodes] )
 {
 
-  real64 const quadPointCoords[4][3] = {{0.58541020, 0.13819660, 0.13819660}, 
-                                        {0.13819660, 0.58541020, 0.13819660}, 
-                                        {0.13819660, 0.13819660, 0.58541020}, 
-                                        {0.13819660, 0.13819660, 0.13819660}};    
-  
+  real64 const quadPointCoords[4][3] = {{0.58541020, 0.13819660, 0.13819660},
+    {0.13819660, 0.58541020, 0.13819660},
+    {0.13819660, 0.13819660, 0.58541020},
+    {0.13819660, 0.13819660, 0.13819660}};
+
   real64 const pointCoord[3] = {quadPointCoords[q][0], quadPointCoords[q][1], quadPointCoords[q][2]};
   calcN( pointCoord, N );
 }
@@ -342,18 +342,18 @@ H1_Tetrahedron_Lagrange2_Gauss4::
              real64 const (&X)[numNodes][3],
              real64 (& gradN)[numNodes][3] )
 {
-  
-  real64 const quadPointCoords[4][3] = {{0.58541020, 0.13819660, 0.13819660}, 
-                                        {0.13819660, 0.58541020, 0.13819660}, 
-                                        {0.13819660, 0.13819660, 0.58541020}, 
-                                        {0.13819660, 0.13819660, 0.13819660}};    
+
+  real64 const quadPointCoords[4][3] = {{0.58541020, 0.13819660, 0.13819660},
+    {0.13819660, 0.58541020, 0.13819660},
+    {0.13819660, 0.13819660, 0.58541020},
+    {0.13819660, 0.13819660, 0.13819660}};
 
   real64 r = quadPointCoords[q][0];
-  real64 s = quadPointCoords[q][1];   
-  real64 t = quadPointCoords[q][2];   
+  real64 s = quadPointCoords[q][1];
+  real64 t = quadPointCoords[q][2];
 
   real64 parametricGradient[numNodes][3];
-  
+
   parametricGradient[0][0] = 4.0*r + 4.0*s + 4.0*t - 3.0;
   parametricGradient[0][1] = 4.0*r + 4.0*s + 4.0*t - 3.0;
   parametricGradient[0][2] = 4.0*r + 4.0*s + 4.0*t - 3.0;
@@ -412,7 +412,7 @@ H1_Tetrahedron_Lagrange2_Gauss4::
 
   real64 const detJ_invert = LvArray::tensorOps::invert< 3 >( jacobian );
 
-  GEOSX_UNUSED_VAR(detJ_invert);
+  GEOSX_UNUSED_VAR( detJ_invert );
 
   real64 detJ = determinantJacobianTransformation( X );
 

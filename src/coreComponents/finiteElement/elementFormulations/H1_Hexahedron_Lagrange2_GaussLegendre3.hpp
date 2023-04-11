@@ -33,42 +33,42 @@ namespace finiteElement
 
 
 /**
-   * This class contains the kernel acessible functions specific to quadratic hexahedron
-   * finite element with Gauss quadrature rule.  
-   *
-   *                                                                  ____________________
-   *                                                                 |Node   xi0  xi1  xi2|
-   *                                                                 |=====  ===  ===  ===|
-   *                                                                 |  0    -1   -1   -1 |
-   *                                                                 |  1     0   -1   -1 |
-   *                                                                 |  2     1   -1   -1 |
-   *              24              25               26                |  3    -1    0   -1 |
-   *                o--------------o--------------o                  |  4     0    0   -1 |
-   *               /.                            /|                  |  5     1    0   -1 |
-   *              / .                           / |                  |  6    -1    1   -1 |
-   *          21 o  .           o 22        23 o  |                  |  7     0    1   -1 |
-   *            /   .                         /   |                  |  8     1    1   -1 |
-   *           /    .         19             /    |                  |  9    -1   -1    0 |
-   *       18 o--------------o--------------o 20  |                  | 10     0   -1    0 |
-   *          |     o              o        |     o                  | 11     1   -1    0 |
-   *          |     .15             16      |     |17                | 12    -1    0    0 |
-   *          |     .                       |     |                  | 13     0    0    0 |
-   *          |  o  .           o           |  o  |                  | 14     1    0    0 |
-   *          |   12.            13         |   14|                  | 15    -1    1    0 |
-   *          |     .                       |     |                  | 16     0    1    0 |
-   *        9 o     .        o 10           o 11  |                  | 17     1    1    0 |
-   *          |     o..............o........|.....o                  | 18    -1   -1    1 |
-   *          |    , 6              7       |    / 8                 | 19     0   -1    1 |
-   *          |   ,                         |   /                    | 20     1   -1    1 |
-   *          |  o              o           |  o         xi2         | 21    -1    0    1 |
-   *          | , 3              4          | / 5        |           | 22     0    0    1 |
-   *          |,                            |/           | / xi1     | 23     1    0    1 |
-   *          o--------------o--------------o            |/          | 24    -1    1    1 |
-   *         0                1              2           o----- xi0  | 25     0    1    1 |
-   *                                                                 | 26     1    1    1 |
-   *                                                                 |____________________|
-   *
-   */
+ * This class contains the kernel acessible functions specific to quadratic hexahedron
+ * finite element with Gauss quadrature rule.
+ *
+ *                                                                  ____________________
+ *                                                                 |Node   xi0  xi1  xi2|
+ *                                                                 |=====  ===  ===  ===|
+ *                                                                 |  0    -1   -1   -1 |
+ *                                                                 |  1     0   -1   -1 |
+ *                                                                 |  2     1   -1   -1 |
+ *              24              25               26                |  3    -1    0   -1 |
+ *                o--------------o--------------o                  |  4     0    0   -1 |
+ *               /.                            /|                  |  5     1    0   -1 |
+ *              / .                           / |                  |  6    -1    1   -1 |
+ *          21 o  .           o 22        23 o  |                  |  7     0    1   -1 |
+ *            /   .                         /   |                  |  8     1    1   -1 |
+ *           /    .         19             /    |                  |  9    -1   -1    0 |
+ *       18 o--------------o--------------o 20  |                  | 10     0   -1    0 |
+ *          |     o              o        |     o                  | 11     1   -1    0 |
+ *          |     .15             16      |     |17                | 12    -1    0    0 |
+ *          |     .                       |     |                  | 13     0    0    0 |
+ *          |  o  .           o           |  o  |                  | 14     1    0    0 |
+ *          |   12.            13         |   14|                  | 15    -1    1    0 |
+ *          |     .                       |     |                  | 16     0    1    0 |
+ *        9 o     .        o 10           o 11  |                  | 17     1    1    0 |
+ *          |     o..............o........|.....o                  | 18    -1   -1    1 |
+ *          |    , 6              7       |    / 8                 | 19     0   -1    1 |
+ *          |   ,                         |   /                    | 20     1   -1    1 |
+ *          |  o              o           |  o         xi2         | 21    -1    0    1 |
+ *          | , 3              4          | / 5        |           | 22     0    0    1 |
+ *          |,                            |/           | / xi1     | 23     1    0    1 |
+ *          o--------------o--------------o            |/          | 24    -1    1    1 |
+ *         0                1              2           o----- xi0  | 25     0    1    1 |
+ *                                                                 | 26     1    1    1 |
+ *                                                                 |____________________|
+ *
+ */
 
 class H1_Hexahedron_Lagrange2_GaussLegendre3 final : public FiniteElementBase
 {
@@ -380,7 +380,7 @@ private:
   constexpr static real64 parentVolume = parentLength*parentLength*parentLength;
 
   /// The weight of each quadrature point.
-  constexpr static real64 weight [3] = {5.0/9.0, 8.0/9.0, 5.0/9.0};
+  constexpr static real64 weight[3] = {5.0/9.0, 8.0/9.0, 5.0/9.0};
 
   /// The scaling factor specifying the location of the quadrature points
   /// relative to the origin
@@ -435,11 +435,11 @@ H1_Hexahedron_Lagrange2_GaussLegendre3::supportLoop( int const qa,
       for( int c=0; c<3; ++c )
       {
 
-        real64 const dNdXi[3] = { LagrangeBasis2::gradient(a, quadratureCoords[0]) * LagrangeBasis2::value(b, quadratureCoords[1]) * LagrangeBasis2::value(c, quadratureCoords[2]),
-                                  LagrangeBasis2::value(a, quadratureCoords[0]) * LagrangeBasis2::gradient(b, quadratureCoords[1]) * LagrangeBasis2::value(c, quadratureCoords[2]), 
-                                  LagrangeBasis2::value(a, quadratureCoords[0]) * LagrangeBasis2::value(b, quadratureCoords[1]) * LagrangeBasis2::gradient(c, quadratureCoords[2]), 
-                                 };
-        
+        real64 const dNdXi[3] = { LagrangeBasis2::gradient( a, quadratureCoords[0] ) * LagrangeBasis2::value( b, quadratureCoords[1] ) * LagrangeBasis2::value( c, quadratureCoords[2] ),
+                                  LagrangeBasis2::value( a, quadratureCoords[0] ) * LagrangeBasis2::gradient( b, quadratureCoords[1] ) * LagrangeBasis2::value( c, quadratureCoords[2] ),
+                                  LagrangeBasis2::value( a, quadratureCoords[0] ) * LagrangeBasis2::value( b, quadratureCoords[1] ) * LagrangeBasis2::gradient( c, quadratureCoords[2] ),
+        };
+
         localIndex const nodeIndex = LagrangeBasis2::TensorProduct3D::linearIndex( a, b, c );
 
         func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
@@ -576,7 +576,7 @@ H1_Hexahedron_Lagrange2_GaussLegendre3::
   jacobianTransformation( qa, qb, qc, X, J );
 
   //return LvArray::tensorOps::determinant< 3 >( J );
-  return LvArray::tensorOps::determinant< 3 >( J ) * weight[qa] * weight[qb] * weight[qc];  
+  return LvArray::tensorOps::determinant< 3 >( J ) * weight[qa] * weight[qb] * weight[qc];
 }
 
 
