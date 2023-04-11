@@ -4,6 +4,7 @@
 
 set( mesh_tests
      testMeshObjectPath.cpp
+     testComputationalGeometry.cpp
      testGeometricObjects.cpp
    )
 
