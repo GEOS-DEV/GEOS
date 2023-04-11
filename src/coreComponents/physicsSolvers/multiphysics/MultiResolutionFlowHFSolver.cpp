@@ -832,6 +832,7 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
   if(cycleNumber == 0){
       initializeCrackFront(base);
   }
+
   NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
   //although these iterations are not really Newton iterations, we will use this nomeclature to keep things consistent
   integer & iter = solverParams.m_numNewtonIterations;
@@ -844,9 +845,9 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     {
       // reset the states of all slave solvers if any of them has been reset
       //TODO: this is potentially a code duplication since resetStateToBeginningOfStep(domain) already calls the slaves
-      patchSolver.resetStateToBeginningOfStep( domain );
-      baseSolver.resetStateToBeginningOfStep( domain );
-      resetStateToBeginningOfStep( domain );
+      // patchSolver.resetStateToBeginningOfStep( domain );
+      // baseSolver.resetStateToBeginningOfStep( domain );
+      // resetStateToBeginningOfStep( domain );
     }
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", BaseSolver: " );
@@ -877,17 +878,6 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
       GEOSX_UNUSED_VAR( dtUseless );
     }
 
-    dtReturnTemporary = baseSolver.nonlinearImplicitStep( time_n,
-                                                          dtReturn,
-                                                          cycleNumber,
-                                                          domain );                                              
-
-    if( dtReturnTemporary < dtReturn )
-    {
-      iter = 0;
-      dtReturn = dtReturnTemporary;
-      continue;
-    }
     //test for convergence of MR scheme, based on changes to the fracture topology
     int added = m_addedFractureElements;
     added = MpiWrapper::sum(added);
@@ -899,6 +889,18 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
       break;  
     }
 
+    std::cout<<"base solver, time_n: "<<time_n<<" dt: "<<dtReturn<<" cycleNumber: "<<cycleNumber<<std::endl;
+    dtReturnTemporary = baseSolver.nonlinearImplicitStep( time_n,
+                                                          dtReturn,
+                                                          cycleNumber,
+                                                          domain );                                              
+
+    if( dtReturnTemporary < dtReturn )
+    {
+      iter = 0;
+      dtReturn = dtReturnTemporary;
+      continue;
+    }
 
     // if( baseSolver.getNonlinearSolverParameters().m_numNewtonIterations >= 1 && iter > 0 )
     // {
@@ -927,7 +929,8 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
                                                                        time_n,
                                                                        dtReturn,
                                                                        cycleNumber,
-                                                                       domain );                                            
+                                                                       domain );
+    isPatchConverged=true;                                                                                                               
                              
     // this->findPhaseFieldTip( m_patchTip, domain.getMeshBody( patchTarget.first ).getBaseDiscretization());
     if( time_n > 0 )

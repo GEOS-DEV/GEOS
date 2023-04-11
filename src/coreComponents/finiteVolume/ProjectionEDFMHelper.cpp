@@ -290,6 +290,7 @@ void ProjectionEDFMHelper::
   real64 projectionPointToFracCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fracCenter );
   LvArray::tensorOps::subtract< 3 >( projectionPointToFracCenter, projectionPoint );
   weights[1] = faceArea * LvArray::tensorOps::l2Norm< 3 >( projectionPointToFracCenter );
+
 }
 
 }  // end namespace geosx

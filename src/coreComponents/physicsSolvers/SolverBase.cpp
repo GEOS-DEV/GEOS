@@ -205,7 +205,7 @@ real64 SolverBase::solverStep( real64 const & time_n,
                                DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-
+  
   // Only build the sparsity pattern if the mesh has changed
   Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
 

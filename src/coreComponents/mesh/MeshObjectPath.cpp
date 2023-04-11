@@ -212,12 +212,13 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
 
       }
     }
-    GEOSX_ERROR_IF( !foundMatch,
-                    GEOSX_FMT( "Specified name ({0}) did not find a match with a object in group ({1}). "
-                               "Objects that are present in ({1}) are:\n{2}",
-                               inputEntry,
-                               parentGroup.getName(),
-                               stringutilities::join( namesInRepository, ", " ) ) );
+    std::cout<<"on MeshObjectPath.cpp, foundMatch = "<<foundMatch<<std::endl;
+    // GEOSX_ERROR_IF( !foundMatch,
+    //                 GEOSX_FMT( "Specified name ({0}) did not find a match with a object in group ({1}). "
+    //                            "Objects that are present in ({1}) are:\n{2}",
+    //                            inputEntry,
+    //                            parentGroup.getName(),
+    //                            stringutilities::join( namesInRepository, ", " ) ) );
   }
 }
 

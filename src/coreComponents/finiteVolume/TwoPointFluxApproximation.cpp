@@ -930,6 +930,7 @@ void TwoPointFluxApproximation::addEmbeddedFracturesToStencils( MeshLevel & mesh
 
   addFractureFractureConnectionsEDFM( mesh, embeddedSurfaceRegionName );
 
+  //TODO: add m_impermeableRock flag and put an if statement here
   addFractureMatrixConnectionsEDFM( mesh, embeddedSurfaceRegionName );
 
   if( m_useProjectionEmbeddedFractureMethod )
