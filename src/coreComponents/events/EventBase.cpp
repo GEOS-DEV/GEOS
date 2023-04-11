@@ -338,7 +338,7 @@ void EventBase::getExecutionOrder( array1d< integer > & eventCounters )
   ++eventCounters[0];
   if( m_target != nullptr )
   {
-    if( m_target->getTimestepBehavior() > 0 )
+    if( m_target->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize )
     {
       ++eventCounters[1];
     }

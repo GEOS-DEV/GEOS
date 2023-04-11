@@ -17,6 +17,8 @@
  */
 
 #include "PeriodicEvent.hpp"
+
+#include "common/Format.hpp"
 #include "functions/FunctionManager.hpp"
 
 namespace geosx
@@ -231,6 +233,22 @@ void PeriodicEvent::cleanup( real64 const time_n,
       subEvent.cleanup( time_n, cycleNumber, 0, 0, domain );
     } );
   }
+}
+
+void PeriodicEvent::validate() const
+{
+  GEOSX_THROW_IF( m_timeFrequency > 0 &&
+                  getEventTarget()->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
+                  GEOSX_FMT(
+                    "`{}`: This event targets an object that automatically selects the time step size. Therefore, `{}` cannot be used here. However, forcing a constant time step size can still be achived with `{}`.",
+                    getName(), viewKeyStruct::timeFrequencyString(), EventBase::viewKeyStruct::forceDtString() ),
+                  InputError );
+  GEOSX_THROW_IF( m_cycleFrequency != 1 &&
+                  getEventTarget()->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
+                  GEOSX_FMT(
+                    "`{}`: This event targets an object that automatically selects the time step size. Therefore, `{}` cannot be used here. However, forcing a constant time step size can still be achived with `{}`.",
+                    getName(), viewKeyStruct::cycleFrequencyString(), EventBase::viewKeyStruct::forceDtString() ),
+                  InputError );
 }
 
 REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, string const &, Group * const )
