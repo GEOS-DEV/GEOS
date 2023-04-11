@@ -594,13 +594,13 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                          parallelDevicePolicy< > >( targetSet,
-                                                                       time,
-                                                                       targetGroup,
-                                                                       m_fieldName,
-                                                                       dofManager.getKey( m_fieldName ),
-                                                                       dofManager.rankOffset(),
-                                                                       localMatrix,
-                                                                       localRhs );
+                                                                    time,
+                                                                    targetGroup,
+                                                                    m_fieldName,
+                                                                    dofManager.getKey( m_fieldName ),
+                                                                    dofManager.rankOffset(),
+                                                                    localMatrix,
+                                                                    localRhs );
     } );
 
     fsManager.applyFieldValue< serialPolicy >( time, mesh, viewKeyStruct::coeffNameString() );

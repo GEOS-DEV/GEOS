@@ -62,7 +62,7 @@
   finiteElement::H1_Wedge_VEM_Gauss1, \
   finiteElement::H1_Prism11_VEM_Gauss1
 
-#if ! defined( GEOSX_USE_HIP )
+#if !defined( GEOSX_USE_HIP )
 #define VEM_TYPES VEM_1_TYPES, VEM_2_TYPES
 #else
 #define VEM_TYPES VEM_1_TYPES
@@ -76,7 +76,7 @@
 
 #endif
 
-#if ! defined( GEOSX_USE_HIP )
+#if !defined( GEOSX_USE_HIP )
 // can only compile GL_FE_TYPES when not using cce+rocm
 #define ALL_FE_TYPES BASE_FE_TYPES, GL_FE_TYPES
 #else

@@ -150,17 +150,17 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
 
     // if( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic )
     // {
-      nodes.registerField< solidMechanics::velocity >( getName() ).
-        reference().resizeDimension< 1 >( 3 );
+    nodes.registerField< solidMechanics::velocity >( getName() ).
+      reference().resizeDimension< 1 >( 3 );
 
-      nodes.registerField< solidMechanics::acceleration >( getName() ).
-        reference().resizeDimension< 1 >( 3 );
+    nodes.registerField< solidMechanics::acceleration >( getName() ).
+      reference().resizeDimension< 1 >( 3 );
 
-      nodes.registerField< solidMechanics::velocityTilde >( getName() ).
-        reference().resizeDimension< 1 >( 3 );
+    nodes.registerField< solidMechanics::velocityTilde >( getName() ).
+      reference().resizeDimension< 1 >( 3 );
 
-      nodes.registerField< solidMechanics::uhatTilde >( getName() ).
-        reference().resizeDimension< 1 >( 3 );
+    nodes.registerField< solidMechanics::uhatTilde >( getName() ).
+      reference().resizeDimension< 1 >( 3 );
     // }
 
     nodes.registerField< solidMechanics::mass >( getName() );
@@ -668,13 +668,13 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                          parallelDevicePolicy<  > >( targetSet,
-                                                                       time,
-                                                                       targetGroup,
-                                                                       fieldName,
-                                                                       dofKey,
-                                                                       dofManager.rankOffset(),
-                                                                       localMatrix,
-                                                                       localRhs );
+                                                                     time,
+                                                                     targetGroup,
+                                                                     fieldName,
+                                                                     dofKey,
+                                                                     dofManager.rankOffset(),
+                                                                     localMatrix,
+                                                                     localRhs );
     } );
   } );
 }
@@ -1034,13 +1034,13 @@ SolidMechanicsLagrangianFEM::
       // TODO: fix use of dummy name
       bc.applyBoundaryConditionToSystem< FieldSpecificationAdd,
                                          parallelDevicePolicy<  > >( targetSet,
-                                                                       time_n + dt,
-                                                                       targetGroup,
-                                                                       solidMechanics::totalDisplacement::key(),
-                                                                       dofKey,
-                                                                       dofManager.rankOffset(),
-                                                                       localMatrix,
-                                                                       localRhs );
+                                                                     time_n + dt,
+                                                                     targetGroup,
+                                                                     solidMechanics::totalDisplacement::key(),
+                                                                     dofKey,
+                                                                     dofManager.rankOffset(),
+                                                                     localMatrix,
+                                                                     localRhs );
     } );
 
   } );
