@@ -988,6 +988,10 @@ void ProblemManager::applyInitialConditions()
   {
     meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
     {
+      if( !meshLevel.isShallowCopy() ) // to avoid messages printed three times
+      {
+        m_fieldSpecificationManager->validateBoundaryConditions( meshLevel );
+      }
       m_fieldSpecificationManager->applyInitialConditions( meshLevel );
     } );
   } );

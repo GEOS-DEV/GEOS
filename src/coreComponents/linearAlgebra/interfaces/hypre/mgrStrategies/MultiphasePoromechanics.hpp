@@ -66,8 +66,7 @@ public:
     m_labels[1].resize( m_numBlocks - 4 );
     std::iota( m_labels[1].begin(), m_labels[1].end(), 3 );
     // Level 2: eliminate the remaining reservoir densities
-    m_labels[2].resize( m_numBlocks - 5 );
-    std::iota( m_labels[2].begin(), m_labels[2].end(), 3 );
+    m_labels[2].push_back( 3 ); // pressure
 
     setupLabels();
 

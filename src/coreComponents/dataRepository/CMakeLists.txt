@@ -17,6 +17,7 @@ set( dataRepository_headers
      ObjectCatalog.hpp
      ReferenceWrapper.hpp
      RestartFlags.hpp
+     Utilities.hpp
      Wrapper.hpp
      WrapperBase.hpp
      wrapperHelpers.hpp
@@ -31,6 +32,7 @@ set( dataRepository_sources
      ConduitRestart.cpp
      ExecutableGroup.cpp
      Group.cpp
+     Utilities.cpp
      WrapperBase.cpp
      xmlWrapper.cpp
    )

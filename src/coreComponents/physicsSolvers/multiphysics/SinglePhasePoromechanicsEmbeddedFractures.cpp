@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsSolverEmbeddedFractures.cpp
+ * @file SinglePhasePoromechanicsEmbeddedFractures.cpp
  */
 
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
@@ -38,7 +38,7 @@ using namespace fields;
 
 SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
                                                                                       Group * const parent ):
-  SinglePhasePoromechanicsSolver( name, parent ),
+  SinglePhasePoromechanics( name, parent ),
   m_fracturesSolverName()
 {
   registerWrapper( viewKeyStruct::fracturesSolverNameString(), &m_fracturesSolverName ).
@@ -59,14 +59,14 @@ SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFrac
 
 void SinglePhasePoromechanicsEmbeddedFractures::postProcessInput()
 {
-  SinglePhasePoromechanicsSolver::postProcessInput();
+  SinglePhasePoromechanics::postProcessInput();
 
   m_fracturesSolver  = &this->getParent().getGroup< SolidMechanicsEmbeddedFractures >( m_fracturesSolverName );
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
-  SinglePhasePoromechanicsSolver::registerDataOnMesh( meshBodies );
+  SinglePhasePoromechanics::registerDataOnMesh( meshBodies );
 
   using namespace fields::contact;
 
@@ -520,15 +520,18 @@ void SinglePhasePoromechanicsEmbeddedFractures::resetStateToBeginningOfStep( Dom
   m_fracturesSolver->resetStateToBeginningOfStep( domain );
 }
 
-real64 SinglePhasePoromechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition const & domain,
+
+real64 SinglePhasePoromechanicsEmbeddedFractures::calculateResidualNorm( real64 const & time_n,
+                                                                         real64 const & dt,
+                                                                         DomainPartition const & domain,
                                                                          DofManager const & dofManager,
                                                                          arrayView1d< real64 const > const & localRhs )
 {
   // compute norm of momentum balance residual equations
-  real64 const momentumResidualNorm = m_fracturesSolver->calculateResidualNorm( domain, dofManager, localRhs );
+  real64 const momentumResidualNorm = m_fracturesSolver->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
 
   // compute norm of mass balance residual equations
-  real64 const massResidualNorm = flowSolver()->calculateResidualNorm( domain, dofManager, localRhs );
+  real64 const massResidualNorm = flowSolver()->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
 
   real64 const residual = sqrt( momentumResidualNorm * momentumResidualNorm + massResidualNorm * massResidualNorm );
 
@@ -549,7 +552,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::applySystemSolution( DofManager 
 void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
   /// 1. update the reservoir
-  SinglePhasePoromechanicsSolver::updateState( domain );
+  SinglePhasePoromechanics::updateState( domain );
 
   /// 2. update the fractures
   m_fracturesSolver->updateState( domain );

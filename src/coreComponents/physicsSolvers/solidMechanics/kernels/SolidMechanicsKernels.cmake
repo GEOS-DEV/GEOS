@@ -6,6 +6,7 @@ set( kernelPath "coreComponents/physicsSolvers/solidMechanics/kernels" )
 
 set( ExplicitSmallStrainPolicy "geosx::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
 set( ExplicitFiniteStrainPolicy "geosx::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
+set( FixedStressThermoPoroElasticPolicy "geosx::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
 set( ImplicitSmallStrainNewmarkPolicy "geosx::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
 set( ImplicitSmallStrainQuasiStaticPolicy "geosx::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
 
@@ -54,8 +55,8 @@ endif( )
 
   foreach( KERNELNAME ${kernelNames} )
     foreach( SUBREGION_TYPE  ${subregionList} )
-      foreach( CONSTITUTIVE_TYPE ${solidBaseDispatch} )
-        foreach( FE_TYPE ${finiteElementDispatch} )
+      foreach( FE_TYPE ${finiteElementDispatch} )
+        foreach( CONSTITUTIVE_TYPE ${solidBaseDispatch} )
 
         set( filename "${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/${KERNELNAME}_${SUBREGION_TYPE}_${CONSTITUTIVE_TYPE}_${FE_TYPE}.cpp" )
         string(REPLACE "<" "-" filename ${filename})
@@ -71,3 +72,30 @@ endif( )
       endforeach()
     endforeach()
   endforeach()
+
+  set( porousSolidDispatch PorousSolid<ElasticIsotropic> )
+
+  set( kernelNames SolidMechanicsFixedStressThermoPoroElasticKernels )
+
+
+  foreach( KERNELNAME ${kernelNames} )
+    foreach( SUBREGION_TYPE  ${subregionList} )
+      foreach( FE_TYPE ${finiteElementDispatch} )
+        foreach( CONSTITUTIVE_TYPE ${porousSolidDispatch} )
+
+        set( filename "${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/${KERNELNAME}_${SUBREGION_TYPE}_${CONSTITUTIVE_TYPE}_${FE_TYPE}.cpp" )
+        string(REPLACE "<" "-" filename ${filename})
+        string(REPLACE ">" "-" filename ${filename})
+        string(REPLACE "," "-" filename ${filename})
+        string(REPLACE " " "" filename ${filename})
+        message( " -- Generating file: ${filename}")
+        configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/SolidMechanicsFixedStressThermoPoroElasticKernels.cpp.template
+                        ${filename} )
+          list( APPEND physicsSolvers_sources ${filename} )
+
+        endforeach()
+      endforeach()
+    endforeach()
+  endforeach()
+
+

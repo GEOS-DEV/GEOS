@@ -72,6 +72,7 @@ set( constitutive_headers
      fluid/slurryFluidSelector.hpp
      permeability/CarmanKozenyPermeability.hpp
      permeability/ConstantPermeability.hpp
+     permeability/ExponentialDecayPermeability.hpp
      permeability/ParallelPlatesPermeability.hpp
      permeability/PermeabilityBase.hpp
      permeability/PermeabilityFields.hpp
@@ -192,6 +193,7 @@ set( constitutive_sources
      fluid/ThermalCompressibleSinglePhaseFluid.cpp
      permeability/CarmanKozenyPermeability.cpp
      permeability/ConstantPermeability.cpp
+     permeability/ExponentialDecayPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
      permeability/PermeabilityBase.cpp
      permeability/ProppantPermeability.cpp

@@ -202,6 +202,11 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
       std::swap( regionIndex[0], regionIndex[1] );
       std::swap( subRegionIndex[0], subRegionIndex[1] );
       std::swap( elementIndex[0], elementIndex[1] );
+      std::swap( stencilWeights[0], stencilWeights[1] );
+      std::swap( stencilStabilizationWeights[0], stencilStabilizationWeights[1] );
+      std::swap( cellToFaceVec[0][0], cellToFaceVec[1][0] );
+      std::swap( cellToFaceVec[0][1], cellToFaceVec[1][1] );
+      std::swap( cellToFaceVec[0][2], cellToFaceVec[1][2] );
     }
 
     stencil.add( 2,

@@ -996,6 +996,13 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
   edgeManager.enforceStateFieldConsistencyPostTopologyChange( modifiedObjects.modifiedEdges );
   faceManager.enforceStateFieldConsistencyPostTopologyChange( modifiedObjects.modifiedFaces );
 
+  MpiWrapper::waitAll( commData2.size(),
+                       commData2.mpiSendBufferSizeRequest(),
+                       commData2.mpiSendBufferSizeStatus() );
+
+  MpiWrapper::waitAll( commData2.size(),
+                       commData2.mpiSendBufferRequest(),
+                       commData2.mpiSendBufferSizeStatus() );
 
 }
 

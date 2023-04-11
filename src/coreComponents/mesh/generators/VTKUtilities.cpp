@@ -27,40 +27,36 @@
 #endif
 
 #include <vtkArrayDispatch.h>
-#include <vtkCellData.h>
-
-#include <vtkGenerateGlobalIds.h>
-#include <vtkPartitionedDataSet.h>
 #include <vtkBoundingBox.h>
+#include <vtkCellData.h>
 #include <vtkDataArray.h>
-#include <vtkRedistributeDataSetFilter.h>
-#include <vtkNew.h>
 #include <vtkDataSetReader.h>
-
-// vtk data formats
-#include <vtkStructuredPoints.h>
-#include <vtkStructuredGrid.h>
-#include <vtkRectilinearGrid.h>
+#include <vtkExtractCells.h>
+#include <vtkGenerateGlobalIds.h>
 #include <vtkImageData.h>
-
-// for legacy vtk import
-#include <vtkStructuredPointsReader.h>
-#include <vtkStructuredGridReader.h>
-#include <vtkUnstructuredGridReader.h>
+#include <vtkInformation.h>
+#include <vtkInformationStringKey.h>
+#include <vtkMultiBlockDataSet.h>
+#include <vtkNew.h>
+#include <vtkPartitionedDataSet.h>
+#include <vtkPointData.h>
+#include <vtkRectilinearGrid.h>
 #include <vtkRectilinearGridReader.h>
-// for vtu/pvtu import
-#include <vtkXMLPUnstructuredGridReader.h>
-#include <vtkXMLUnstructuredGridReader.h>
-// for vts/pvts import
-#include <vtkXMLStructuredGridReader.h>
-#include <vtkXMLPStructuredGridReader.h>
-// for vtr/pvtr import
-#include <vtkXMLRectilinearGridReader.h>
-#include <vtkXMLPRectilinearGridReader.h>
-// for vti/pvti import
+#include <vtkRedistributeDataSetFilter.h>
+#include <vtkStructuredGrid.h>
+#include <vtkStructuredGridReader.h>
+#include <vtkStructuredPoints.h>
+#include <vtkStructuredPointsReader.h>
+#include <vtkUnstructuredGridReader.h>
 #include <vtkXMLImageDataReader.h>
+#include <vtkXMLMultiBlockDataReader.h>
 #include <vtkXMLPImageDataReader.h>
-//#include <vtkImageDataToPointSet.h>
+#include <vtkXMLPRectilinearGridReader.h>
+#include <vtkXMLPStructuredGridReader.h>
+#include <vtkXMLPUnstructuredGridReader.h>
+#include <vtkXMLRectilinearGridReader.h>
+#include <vtkXMLStructuredGridReader.h>
+#include <vtkXMLUnstructuredGridReader.h>
 
 #ifdef GEOSX_USE_MPI
 #include <vtkMPIController.h>
@@ -69,9 +65,7 @@
 #include <vtkDummyController.h>
 #endif
 
-#include <vtkPointData.h>
-#include <vtkPartitionedDataSet.h>
-#include <vtkExtractCells.h>
+#include <numeric>
 
 namespace geosx
 {
@@ -84,6 +78,7 @@ namespace vtk
  */
 enum class VTKMeshExtension : integer
 {
+  vtm,  ///< XML multi-block container
   vtk,  ///< Legacy serial format
   vtu,  ///< XML serial vtkUnstructuredGrid (unstructured)
   vtr,  ///< XML serial vtkRectilinearGrid (structured)
@@ -97,6 +92,7 @@ enum class VTKMeshExtension : integer
 
 /// Strings for VTKMeshGenerator::VTKMeshExtension enumeration
 ENUM_STRINGS( VTKMeshExtension,
+              "vtm",
               "vtk",
               "vtu",
               "vtr",
@@ -376,7 +372,8 @@ VTKLegacyDatasetType getVTKLegacyDatasetType( vtkSmartPointer< vtkDataSetReader 
 }
 
 vtkSmartPointer< vtkDataSet >
-loadMesh( Path const & filePath )
+loadMesh( Path const & filePath,
+          string const & blockName )
 {
   string const extension = filePath.extension();
 
@@ -407,6 +404,38 @@ loadMesh( Path const & filePath )
 
   switch( EnumStrings< VTKMeshExtension >::fromString( extension ) )
   {
+    case VTKMeshExtension::vtm:
+    {
+      // The multi-block format is a container of multiple datasets (or even of other containers).
+      // We must navigate this multi-block to extract the relevant information.
+      auto reader = vtkSmartPointer< vtkXMLMultiBlockDataReader >::New();
+      reader->SetFileName( filePath.c_str() );
+      reader->Update();
+      vtkCompositeDataSet * compositeDataSet = reader->GetOutput();
+      if( !compositeDataSet->IsA( "vtkMultiBlockDataSet" ) )
+      {
+        GEOSX_ERROR( "Unsupported vtk multi-block format in file \"" << filePath << "\"" );
+      }
+      vtkMultiBlockDataSet * multiBlockDataSet = vtkMultiBlockDataSet::SafeDownCast( compositeDataSet );
+
+      // Looking for the _first_ block that matches the requested name.
+      // No check is performed to validate that there is not name duplication.
+      for( unsigned int i = 0; i < multiBlockDataSet->GetNumberOfBlocks(); ++i )
+      {
+        string const dataSetName = multiBlockDataSet->GetMetaData( i )->Get( multiBlockDataSet->NAME() );
+        if( dataSetName == blockName )
+        {
+          vtkDataObject * block = multiBlockDataSet->GetBlock( i );
+          if( block->IsA( "vtkDataSet" ) )
+          {
+            vtkSmartPointer< vtkDataSet > mesh = vtkDataSet::SafeDownCast( block );
+            return mesh;
+          }
+        }
+      }
+      GEOSX_ERROR( "Could not find mesh \"" << blockName << "\" in multi-block vtk file \"" << filePath << "\"" );
+      return {};
+    }
     case VTKMeshExtension::vtk:
     {
       VTKLegacyDatasetType const datasetType = getVTKLegacyDatasetType( vtkSmartPointer< vtkDataSetReader >::New(),
@@ -1586,6 +1615,16 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
   } );
 }
 
+
+void importRegularField( vtkDataArray * vtkArray,
+                         WrapperBase & wrapper )
+{
+  std::vector< vtkIdType > cellIds( wrapper.size() );
+  std::iota( cellIds.begin(), cellIds.end(), 0 );
+  return importRegularField( cellIds, vtkArray, wrapper );
+}
+
+
 void printMeshStatistics( vtkDataSet & mesh,
                           CellMapType const & cellMap,
                           MPI_Comm const comm )
@@ -1679,6 +1718,11 @@ findArrayForImport( vtkDataSet & mesh,
                   GEOSX_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
                              sourceName, curArray->GetDataTypeAsString() ) );
   return vtkDataArray::SafeDownCast( curArray );
+}
+
+bool hasArray( vtkDataSet & mesh, string const & sourceName )
+{
+  return mesh.GetCellData()->GetAbstractArray( sourceName.c_str() ) != nullptr;
 }
 
 /**
