@@ -19,14 +19,14 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEMBEDDEDFRACTURES_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEMBEDDEDFRACTURES_HPP_
 
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 
 namespace geosx
 {
 
 class SolidMechanicsEmbeddedFractures;
 
-class SinglePhasePoromechanicsEmbeddedFractures : public SinglePhasePoromechanicsSolver
+class SinglePhasePoromechanicsEmbeddedFractures : public SinglePhasePoromechanics
 {
 public:
   SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
@@ -75,7 +75,9 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time_n,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
@@ -117,7 +119,7 @@ public:
   virtual void updateState( DomainPartition & domain ) override final;
 
 
-  struct viewKeyStruct : SinglePhasePoromechanicsSolver::viewKeyStruct
+  struct viewKeyStruct : SinglePhasePoromechanics::viewKeyStruct
   {
     constexpr static char const * fracturesSolverNameString() { return "fracturesSolverName"; }
 

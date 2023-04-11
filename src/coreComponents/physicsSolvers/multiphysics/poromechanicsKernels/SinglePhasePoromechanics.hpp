@@ -30,10 +30,6 @@ namespace poromechanicsKernels
 /**
  * @brief Implements kernels for solving quasi-static single-phase poromechanics.
  * @copydoc geosx::finiteElement::ImplicitKernelBase
- * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
- *                            @p SUBREGION_TYPE.
- * @tparam UNUSED An unused parameter since we are assuming that the test and
- *                trial space have the same number of support points.
  *
  * ### SinglePhasePoroelastic Description
  * Implements the KernelBase interface functions required for solving the
