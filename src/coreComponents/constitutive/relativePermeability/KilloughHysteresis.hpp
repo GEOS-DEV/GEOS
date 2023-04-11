@@ -67,16 +67,16 @@ public:
    * point (Sextr) that is either the connate wetting saturation Swc or the maximum non wetting saturation Sgmax.
    *
    *     1 +-------------------------------+    1 +-------------------------------+
-   |                            *##|      |                  ##        ***|
-   |                          **## |      |                 ##       ***  |
-   |                        **###  |      |               ##       ***    |
-   |                      ***##    |      |              ##      ***      |
-   |                   ****###     |      |            ###    ****        |
-   |                **** ###       |      |          ###   ****           |
-   |            *****  ###         |      |        ### *****              |
-   |     + ****** +####            |      |  + ####*****  +               |
-         0 +-------------------------------+    0 +-------------------------------+
-               Scrd     Scri             Sextr     Sextr        Scri            Scrd
+   *       |                            *##|      |                  ##        ***|
+   *       |                          **## |      |                 ##       ***  |
+   *       |                        **###  |      |               ##       ***    |
+   *       |                      ***##    |      |              ##      ***      |
+   *       |                   ****###     |      |            ###    ****        |
+   *       |                **** ###       |      |          ###   ****           |
+   *       |            *****  ###         |      |        ### *****              |
+   *       |     + ****** +####            |      |  + ####*****  +               |
+   *     0 +-------------------------------+    0 +-------------------------------+
+   *                   Scrd     Scri             Sextr     Sextr        Scri            Scrd
    *        Fig. Left non wetting hysteresis for quadratic relperm / Right wetting hysteresis for quadratic relperm
    *
    * @param  m_extremumPhaseVolFraction represents either Swc or Sgmax depending if a wetting curve or nonwetting is described
@@ -96,6 +96,8 @@ public:
     real64 m_criticalImbibitionValue = -1.;
     real64 m_criticalDrainageValue = -1.;
 
+    bool m_isWetting = false;
+
     HysteresisCurve() = default;
 
     HysteresisCurve( real64 const & extremumPhaseVoFraction,
@@ -111,6 +113,11 @@ public:
                  criticalImbibitionValue,
                  criticalDrainagePhaseVolFraction,
                  criticalDrainageValue );
+
+      m_isWetting =  ((m_criticalDrainagePhaseVolFraction > m_extremumPhaseVolFraction) ?
+                      PhaseWettability::WETTING :
+                      PhaseWettability::NONWETTING) == PhaseWettability::WETTING;
+
     }
 
     void setPoints( real64 const & extremumPhaseVoFraction,
@@ -132,7 +139,7 @@ public:
     GEOSX_HOST_DEVICE
     inline bool isWetting() const
     {
-      return ((m_criticalDrainagePhaseVolFraction > m_extremumPhaseVolFraction) ? PhaseWettability::WETTING : PhaseWettability::NONWETTING) == PhaseWettability::WETTING;
+      return m_isWetting;
     }
 
 
