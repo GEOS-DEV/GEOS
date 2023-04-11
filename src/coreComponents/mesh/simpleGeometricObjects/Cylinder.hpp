@@ -68,29 +68,31 @@ public:
 
   bool isCoordInObject( real64 const ( &coord ) [3] ) const override final;
 
-
-private:
-
-  /// Center point of one (upper or lower) face of the cylinder
-  R1Tensor m_point1;
-  /// Center point of the other face of the cylinder
-  R1Tensor m_point2;
-  /// Radius of the cylinder
-  real64 m_radius = 0.0;
-
-  real64 m_innerRadius = 0.0;
-
   /// @cond DO_NOT_DOCUMENT
 
   struct viewKeyStruct
   {
-    static constexpr char const * point1String() { return "point1"; }
-    static constexpr char const * point2String() { return "point2"; }
-    static constexpr char const * radiusString() { return "radius"; }
+    static constexpr char const * point1String() { return "firstFaceCenter"; }
+    static constexpr char const * point2String() { return "secondFaceCenter"; }
+    static constexpr char const * radiusString() { return "outerRadius"; }
     static constexpr char const * innerRadiusString() { return "innerRadius"; }
   };
 
   /// @endcond
+
+private:
+
+  /// Center point of the first face of the cylinder
+  R1Tensor m_point1;
+
+  /// Center point of the second face of the cylinder
+  R1Tensor m_point2;
+
+  /// Outer radius of the cylinder
+  real64 m_radius = 0.0;
+
+  /// Inner radius of the annulus
+  real64 m_innerRadius = 0.0;
 
 };
 } /* namespace geosx */

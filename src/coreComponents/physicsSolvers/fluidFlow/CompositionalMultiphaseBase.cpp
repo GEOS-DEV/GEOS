@@ -232,7 +232,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       // these fields are always registered for the evaluation of the fluid properties
       subRegion.registerField< temperature >( getName() );
       subRegion.registerField< temperature_n >( getName() );
-
+      subRegion.registerField< initialTemperature >( getName() );
       subRegion.registerField< bcTemperature >( getName() ); // needed for the application of boundary conditions
 
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
@@ -794,8 +794,10 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     arrayView1d< real64 > const initPres = subRegion.getField< fields::flow::initialPressure >();
     arrayView1d< real64 > const temp = subRegion.template getField< fields::flow::temperature >();
     arrayView1d< real64 > const temp_n = subRegion.template getField< fields::flow::temperature_n >();
+    arrayView1d< real64 > const initTemp = subRegion.template getField< fields::flow::initialTemperature >();
     initPres.setValues< parallelDevicePolicy<> >( pres );
     temp_n.setValues< parallelDevicePolicy<> >( temp ); // to make sure temperature_n has a meaningful value in isothermal simulations
+    initTemp.setValues< parallelDevicePolicy<> >( temp ); // to make sure temperature_n has a meaningful value in isothermal simulations
   } );
 }
 
@@ -1331,14 +1333,15 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & )
   {
-    fsManager.apply< ElementSubRegionBase >( time + dt,
-                                             mesh,
-                                             FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                                             [&]( FieldSpecificationBase const & fs,
-                                                  string const & setName,
-                                                  SortedArrayView< localIndex const > const & targetSet,
-                                                  ElementSubRegionBase & subRegion,
-                                                  string const & )
+    fsManager.apply< ElementSubRegionBase,
+                     SourceFluxBoundaryCondition >( time + dt,
+                                                    mesh,
+                                                    SourceFluxBoundaryCondition::catalogName(),
+                                                    [&]( SourceFluxBoundaryCondition const & fs,
+                                                         string const & setName,
+                                                         SortedArrayView< localIndex const > const & targetSet,
+                                                         ElementSubRegionBase & subRegion,
+                                                         string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {

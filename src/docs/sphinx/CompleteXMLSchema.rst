@@ -8,6 +8,13 @@ Input Schema Definitions
 :download:`XML Schema <../../coreComponents/schema/docs/../schema.xsd>`
 
 
+.. _XML_AcousticFirstOrderSEM:
+
+Element: AcousticFirstOrderSEM
+==============================
+.. include:: ../../coreComponents/schema/docs/AcousticFirstOrderSEM.rst
+
+
 .. _XML_AcousticSEM:
 
 Element: AcousticSEM
@@ -204,6 +211,13 @@ Element: CompressibleSolidConstantPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPermeability.rst
 
 
+.. _XML_CompressibleSolidExponentialDecayPermeability:
+
+Element: CompressibleSolidExponentialDecayPermeability
+======================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidExponentialDecayPermeability.rst
+
+
 .. _XML_CompressibleSolidParallelPlatesPermeability:
 
 Element: CompressibleSolidParallelPlatesPermeability
@@ -356,6 +370,13 @@ Element: EmbeddedSurfaceGenerator
 Element: Events
 ===============
 .. include:: ../../coreComponents/schema/docs/Events.rst
+
+
+.. _XML_ExponentialDecayPermeability:
+
+Element: ExponentialDecayPermeability
+=====================================
+.. include:: ../../coreComponents/schema/docs/ExponentialDecayPermeability.rst
 
 
 .. _XML_ExtendedDruckerPrager:
@@ -1167,6 +1188,13 @@ Datastructure Definitions
 ********************************
 
 
+.. _DATASTRUCTURE_AcousticFirstOrderSEM:
+
+Datastructure: AcousticFirstOrderSEM
+====================================
+.. include:: ../../coreComponents/schema/docs/AcousticFirstOrderSEM_other.rst
+
+
 .. _DATASTRUCTURE_AcousticSEM:
 
 Datastructure: AcousticSEM
@@ -1363,6 +1391,13 @@ Datastructure: CompressibleSolidConstantPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPermeability_other.rst
 
 
+.. _DATASTRUCTURE_CompressibleSolidExponentialDecayPermeability:
+
+Datastructure: CompressibleSolidExponentialDecayPermeability
+====================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidExponentialDecayPermeability_other.rst
+
+
 .. _DATASTRUCTURE_CompressibleSolidParallelPlatesPermeability:
 
 Datastructure: CompressibleSolidParallelPlatesPermeability
@@ -1522,6 +1557,13 @@ Datastructure: EmbeddedSurfaceGenerator
 Datastructure: Events
 =====================
 .. include:: ../../coreComponents/schema/docs/Events_other.rst
+
+
+.. _DATASTRUCTURE_ExponentialDecayPermeability:
+
+Datastructure: ExponentialDecayPermeability
+===========================================
+.. include:: ../../coreComponents/schema/docs/ExponentialDecayPermeability_other.rst
 
 
 .. _DATASTRUCTURE_ExtendedDruckerPrager:

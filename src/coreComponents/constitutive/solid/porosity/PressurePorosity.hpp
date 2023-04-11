@@ -33,6 +33,7 @@ public:
   PressurePorosityUpdates( arrayView2d< real64 > const & newPorosity,
                            arrayView2d< real64 > const & porosity_n,
                            arrayView2d< real64 > const & dPorosity_dPressure,
+                           arrayView2d< real64 > const & dPorosity_dTemperature,
                            arrayView2d< real64 > const & initialPorosity,
                            arrayView1d< real64 > const & referencePorosity,
                            real64 const & referencePressure,
@@ -40,6 +41,7 @@ public:
     PorosityBaseUpdates( newPorosity,
                          porosity_n,
                          dPorosity_dPressure,
+                         dPorosity_dTemperature,
                          initialPorosity,
                          referencePorosity ),
     m_referencePressure( referencePressure ),
@@ -48,27 +50,35 @@ public:
 
   GEOSX_HOST_DEVICE
   void computePorosity( real64 const & pressure,
+                        real64 const & temperature,
                         real64 & porosity,
                         real64 & dPorosity_dPressure,
+                        real64 & dPorosity_dTemperature,
                         real64 const & referencePorosity ) const
   {
+    GEOSX_UNUSED_VAR( temperature );
 
     // TODO use full exponential.
 //    porosity            =  referencePorosity * exp( m_compressibility * (pressure - m_referencePressure) );
 //    dPorosity_dPressure =  m_compressibility * porosity;
     porosity = referencePorosity * ( m_compressibility * (pressure - m_referencePressure) + 1 );
     dPorosity_dPressure = m_compressibility * referencePorosity;
-
+    dPorosity_dTemperature = 0.0;
   }
 
   GEOSX_HOST_DEVICE
-  virtual void updateFromPressure( localIndex const k,
-                                   localIndex const q,
-                                   real64 const & pressure ) const override final
+  virtual void updateFromPressureAndTemperature( localIndex const k,
+                                                 localIndex const q,
+                                                 real64 const & pressure,
+                                                 real64 const & GEOSX_UNUSED_PARAM( pressure_n ),
+                                                 real64 const & temperature,
+                                                 real64 const & GEOSX_UNUSED_PARAM( temperature_n ) ) const override final
   {
     computePorosity( pressure,
+                     temperature,
                      m_newPorosity[k][q],
                      m_dPorosity_dPressure[k][q],
+                     m_dPorosity_dTemperature[k][q],
                      m_referencePorosity[k] );
   }
 
@@ -109,6 +119,7 @@ public:
     return KernelWrapper( m_newPorosity,
                           m_porosity_n,
                           m_dPorosity_dPressure,
+                          m_dPorosity_dTemperature,
                           m_initialPorosity,
                           m_referencePorosity,
                           m_referencePressure,

@@ -289,7 +289,9 @@ void ReactiveCompositionalMultiphaseOBL::registerDataOnMesh( Group & meshBodies 
   } );
 }
 
-real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( DomainPartition const & domain,
+real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time ),
+                                                                  real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                                                  DomainPartition const & domain,
                                                                   DofManager const & dofManager,
                                                                   arrayView1d< real64 const > const & localRhs )
 {
@@ -811,14 +813,15 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & )
   {
-    fsManager.apply< ElementSubRegionBase >( time + dt,
-                                             mesh,
-                                             FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                                             [&]( FieldSpecificationBase const & fs,
-                                                  string const & setName,
-                                                  SortedArrayView< localIndex const > const & targetSet,
-                                                  ElementSubRegionBase & subRegion,
-                                                  string const & )
+    fsManager.apply< ElementSubRegionBase,
+                     SourceFluxBoundaryCondition >( time + dt,
+                                                    mesh,
+                                                    SourceFluxBoundaryCondition::catalogName(),
+                                                    [&]( SourceFluxBoundaryCondition const & fs,
+                                                         string const & setName,
+                                                         SortedArrayView< localIndex const > const & targetSet,
+                                                         ElementSubRegionBase & subRegion,
+                                                         string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
