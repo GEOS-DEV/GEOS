@@ -32,7 +32,7 @@
 #include <type_traits>
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 
 namespace internal
