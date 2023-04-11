@@ -36,6 +36,7 @@ struct TableRelativePermeabilityHelpers
    * @param[out] phaseMinVolFrac the phase minimum volume fraction read from the table
    * @param[out] phaseMaxVolFrac the phase maximum volume fraction read from the table
    * @param[out] phaseRelPermMinEndPoint the end-point relative permeability
+   * @param[out] phaseRelPermMaxEndPoint the end-point relative permeability
    */
   static
   void validateRelativePermeabilityTable( TableFunction const & relPermTable, string const & fullConstitutiveName,

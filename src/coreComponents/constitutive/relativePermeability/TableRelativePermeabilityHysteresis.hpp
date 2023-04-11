@@ -20,7 +20,7 @@
 #define GEOSX_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP
 
 ///helper model class with data struct for curves and computing recipe for trapped and Land Coeff
-#include "constitutive/KilloughHysteresis.hpp"
+#include "constitutive/relativePermeability/KilloughHysteresis.hpp"
 
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
@@ -334,12 +334,12 @@ private:
 
   real64  getWettingPhaseMinVolumeFraction() const override
   {
-    return m_wettingCurve.oppositeBoundPhaseVolFraction;
+    return m_wettingCurve.m_extremumPhaseVolFraction;
   }
 
   real64 getNonWettingMinVolumeFraction() const override
   {
-    return m_nonWettingCurve.drainageExtremaPhaseVolFraction;
+    return m_nonWettingCurve.m_criticalDrainagePhaseVolFraction;
   }
 
 
@@ -486,11 +486,11 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   // if consistent, S should be equal to 1 - imbibitionPhaseMinVolNonWettingFraction for two-phase flow
   // (but wetting and nonwetting phase hysteresis are implemented in a decoupled fashion)
   real64 const S = phaseVolFraction;
-  real64 const Smxi = m_wettingCurve.imbibitionExtremaPhaseVolFraction;
-  real64 const Smxd = m_wettingCurve.drainageExtremaPhaseVolFraction;
+  real64 const Smxi = m_wettingCurve.m_criticalImbibitionPhaseVolFraction;
+  real64 const Smxd = m_wettingCurve.m_criticalDrainagePhaseVolFraction;
 
   // Swc is the common end min endpoint saturation for wetting curves
-  real64 const Swc = m_wettingCurve.oppositeBoundPhaseVolFraction;
+  real64 const Swc = m_wettingCurve.m_extremumPhaseVolFraction;
 
   using IPT = ImbibitionPhasePairPhaseType;
   if( S <= Swc )
@@ -500,12 +500,12 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   }
   else if( S >= Smxd )
   {
-    phaseRelPerm = m_wettingCurve.drainageExtremaSCALValue;
+    phaseRelPerm = m_wettingCurve.m_criticalDrainageValue;
     dPhaseRelPerm_dPhaseVolFrac = 0.0;
   }
   else
   {
-    real64 const krwei = m_wettingCurve.imbibitionExtremaSCALValue;
+    real64 const krwei = m_wettingCurve.m_criticalImbibitionValue;
     real64 const krwedAtSmxi = drainageRelPermKernelWrapper.compute( &Smxi );
 
     // Step 1: Compute the new end point
@@ -565,8 +565,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   //         using Land's method. The calculation includes the modifications from Jerauld. This is equation 2.162 from
   //         the IX technical description.
   real64 const S = phaseVolFraction;
-  real64 const Scri = m_nonWettingCurve.imbibitionExtremaPhaseVolFraction;
-  real64 const Smx = m_nonWettingCurve.oppositeBoundPhaseVolFraction;
+  real64 const Scri = m_nonWettingCurve.m_criticalImbibitionPhaseVolFraction;
+  real64 const Smx = m_nonWettingCurve.m_extremumPhaseVolFraction;
   real64 const Shy = (phaseMaxHistoricalVolFraction < Smx) ? phaseMaxHistoricalVolFraction : Smx; // to make sure that Shy < Smax
   real64 Scrt = 0;
 
@@ -585,7 +585,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   }
   else if( S >= Smx ) // S is above the max saturation, so we just skip the rest and set the relperm to the endpoint
   {
-    phaseRelPerm = m_nonWettingCurve.oppositeBoundSCALValue;
+    phaseRelPerm = m_nonWettingCurve.m_extremumValue;
     dPhaseRelPerm_dPhaseVolFrac = 0.0;
   }
   else
@@ -606,7 +606,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     real64 const krdAtShy = drainageRelPermKernelWrapper.compute( &Shy );
 
     // Step 5: evaluate the drainage relperm, krd(Smx), at the max drainage saturation, Smx.
-    real64 const krdAtSmx = m_nonWettingCurve.oppositeBoundSCALValue;
+    real64 const krdAtSmx = m_nonWettingCurve.m_extremumValue;
 
     // Step 6: apply the formula blending drainage and imbibition relperms from the Killough model.
     //         This equation 2.165 from the IX technical description.
@@ -638,7 +638,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   if( !m_phaseHasHysteresis[IPT::WETTING] ||
       phaseVolFraction[ipWetting] <= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer )
   {
-    phaseTrappedVolFrac[ipWetting] = LvArray::math::min( phaseVolFraction[ipWetting], m_wettingCurve.oppositeBoundPhaseVolFraction );
+    phaseTrappedVolFrac[ipWetting] = LvArray::math::min( phaseVolFraction[ipWetting], m_wettingCurve.m_extremumPhaseVolFraction );
     computeDrainageRelPerm( m_drainageRelPermKernelWrappers[TPT::WETTING],
                             phaseVolFraction[ipWetting],
                             phaseRelPerm[ipWetting],
@@ -659,8 +659,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
       phaseVolFraction[ipNonWetting] >= phaseMaxHistoricalVolFraction[ipNonWetting] - flowReversalBuffer )
   {
     // for reporting purposes, compute Sgcrt first
-    real64 const Shy = ( phaseVolFraction[ipNonWetting] < m_nonWettingCurve.oppositeBoundPhaseVolFraction )
-      ? phaseVolFraction[ipNonWetting] : m_nonWettingCurve.oppositeBoundPhaseVolFraction; // to make sure that Shy < Smax
+    real64 const Shy = ( phaseVolFraction[ipNonWetting] < m_nonWettingCurve.m_extremumPhaseVolFraction )
+      ? phaseVolFraction[ipNonWetting] : m_nonWettingCurve.m_extremumPhaseVolFraction; // to make sure that Shy < Smax
     real64 Scrt = 0;
     KilloughHysteresis::computeTrappedCriticalPhaseVolFraction( m_nonWettingCurve,
                                                                 Shy,
@@ -714,7 +714,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   if( !m_phaseHasHysteresis[IPT::WETTING] ||
       phaseVolFraction[ipWetting] <= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer )
   {
-    phaseTrappedVolFrac[ipWetting] = LvArray::math::min( m_wettingCurve.oppositeBoundPhaseVolFraction, phaseVolFraction[ipWetting] );
+    phaseTrappedVolFrac[ipWetting] = LvArray::math::min( m_wettingCurve.m_extremumPhaseVolFraction, phaseVolFraction[ipWetting] );
     computeDrainageRelPerm( m_drainageRelPermKernelWrappers[TPT::WETTING],
                             phaseVolFraction[ipWetting],
                             phaseRelPerm[ipWetting],
@@ -743,8 +743,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
       phaseVolFraction[ipNonWetting] >= phaseMaxHistoricalVolFraction[ipNonWetting] - flowReversalBuffer )
   {
     // 2.a) compute Sgcrt for reporting purposes
-    real64 const Shy = ( phaseVolFraction[ipNonWetting] < m_nonWettingCurve.oppositeBoundPhaseVolFraction)
-      ? phaseVolFraction[ipNonWetting] : m_nonWettingCurve.oppositeBoundPhaseVolFraction; // to make sure that Shy < Smax
+    real64 const Shy = ( phaseVolFraction[ipNonWetting] < m_nonWettingCurve.m_extremumPhaseVolFraction)
+      ? phaseVolFraction[ipNonWetting] : m_nonWettingCurve.m_extremumPhaseVolFraction; // to make sure that Shy < Smax
     real64 Scrt = 0;
     KilloughHysteresis::computeTrappedCriticalPhaseVolFraction( m_nonWettingCurve,
                                                                 Shy,
@@ -779,7 +779,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   // 3) Compute the "three-phase" oil relperm
 
   // use saturation-weighted interpolation
-  real64 const shiftedWettingVolFrac = (phaseVolFraction[ipWetting] - m_wettingCurve.oppositeBoundPhaseVolFraction);
+  real64 const shiftedWettingVolFrac = (phaseVolFraction[ipWetting] - m_wettingCurve.m_extremumPhaseVolFraction);
 
   relpermInterpolators::Baker::compute( shiftedWettingVolFrac,
                                         phaseVolFraction[ipNonWetting],

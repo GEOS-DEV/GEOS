@@ -709,8 +709,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
 
     // 4.3 Initialize/update the relative permeability model using the initial phase volume fraction
     //     This is needed to handle relative permeability hysteresis
-    //     Also, initialize the fluid model (to compute the initial total mass density, needed to compute the body force increment in
-    // coupled simulations)
+    //     Also, initialize the fluid model
     //
     // Note:
     // - This must be called after updatePhaseVolumeFraction

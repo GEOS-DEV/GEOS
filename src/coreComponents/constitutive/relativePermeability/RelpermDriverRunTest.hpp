@@ -104,12 +104,12 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
   {
     if( phaseHasHysteresis[ipNonWetting] )
     {
-      phaseMaxHistoricalVolFraction[0][ipNonWetting] = nonWettingCurve.oppositeBoundPhaseVolFraction;
+      phaseMaxHistoricalVolFraction[0][ipNonWetting] = nonWettingCurve.m_extremumPhaseVolFraction;
       GEOSX_LOG( GEOSX_FMT( "New max non-wetting phase historical phase volume fraction: {}", phaseMaxHistoricalVolFraction[0][ipNonWetting] ) );
     }
     if( phaseHasHysteresis[ipWetting] )
     {
-      phaseMinHistoricalVolFraction[0][ipWetting] = wettingCurve.oppositeBoundPhaseVolFraction;
+      phaseMinHistoricalVolFraction[0][ipWetting] = wettingCurve.m_extremumPhaseVolFraction;
       GEOSX_LOG( GEOSX_FMT( "New min wetting phase historical phase volume fraction: {}", phaseMinHistoricalVolFraction[0][ipWetting] ) );
     }
 
@@ -136,12 +136,12 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
   {
     if( phaseHasHysteresis[ipNonWetting] )
     {
-      phaseMaxHistoricalVolFraction[0][ipNonWetting] = nonWettingCurve.drainageExtremaPhaseVolFraction;
+      phaseMaxHistoricalVolFraction[0][ipNonWetting] = nonWettingCurve.m_criticalDrainagePhaseVolFraction;
       GEOSX_LOG( GEOSX_FMT( "New max non-wetting phase historical phase volume fraction: {}", phaseMaxHistoricalVolFraction[0][ipNonWetting] ) );
     }
     if( phaseHasHysteresis[ipWetting] )
     {
-      phaseMinHistoricalVolFraction[0][ipWetting] = wettingCurve.drainageExtremaPhaseVolFraction;
+      phaseMinHistoricalVolFraction[0][ipWetting] = wettingCurve.m_criticalDrainagePhaseVolFraction;
       GEOSX_LOG( GEOSX_FMT( "New min wetting phase historical phase volume fraction: {}", phaseMinHistoricalVolFraction[0][ipWetting] ) );
     }
   }

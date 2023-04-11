@@ -8,7 +8,7 @@ set( constitutive_headers
      ConstitutivePassThruHandler.hpp
      ExponentialRelation.hpp
      NullModel.hpp
-     KilloughHysteresis.hpp
+     relativePermeability/KilloughHysteresis.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/CapillaryPressureFields.hpp
@@ -143,7 +143,7 @@ set( constitutive_sources
      ConstitutiveBase.cpp
      ConstitutiveManager.cpp
      NullModel.cpp
-     KilloughHysteresis.cpp
+     relativePermeability/KilloughHysteresis.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/CapillaryPressureBase.cpp
      capillaryPressure/JFunctionCapillaryPressure.cpp               

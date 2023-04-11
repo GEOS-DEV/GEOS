@@ -13,7 +13,7 @@
  */
 
 /***
- *  @file KilloughHysteresis.cpp
+ *  @file KilloughHysteresis.hpp
  */
 
 #include "KilloughHysteresis.hpp"
@@ -50,8 +50,6 @@ void KilloughHysteresis::postProcessInput( real64 const & jerauldParam_a, real64
                   InputError );
 
 }
-
-
 
 
 
