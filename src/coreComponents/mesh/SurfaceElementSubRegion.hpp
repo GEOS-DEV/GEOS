@@ -148,6 +148,11 @@ public:
     return m_toEdgesRelation;
   }
 
+  using ElementSubRegionBase::numNodesPerElement;
+
+  localIndex numNodesPerElement( localIndex const k ) const final
+  { return m_toNodesRelation[k].size(); }
+
   /**
    * @brief Get the surface element to cells map.
    * @return The surface element to cells map

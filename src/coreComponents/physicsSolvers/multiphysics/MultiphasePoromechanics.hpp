@@ -193,7 +193,6 @@ private:
 
   /// Flag to indicate that the solver is going to perform stress initialization
   integer m_performStressInitialization;
-
 };
 
 ENUM_STRINGS( MultiphasePoromechanics::StabilizationType,

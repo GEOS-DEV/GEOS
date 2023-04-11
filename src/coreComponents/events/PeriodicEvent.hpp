@@ -102,6 +102,10 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
 
+  /**
+   * @copydoc EventBase::validate
+   */
+  virtual void validate() const override;
 
   /// A pointer to an optional function
   dataRepository::Group * m_functionTarget;
