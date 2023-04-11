@@ -61,13 +61,7 @@ public:
   // Aliasing public/protected members/methods of FlowSolverBase so we don't
   // have to use this->member etc.
   using BASE::m_numDofPerCell;
-  using BASE::m_fluxEstimate;
-
   using BASE::m_isThermal;
-
-
-  // Aliasing public/protected members/methods of SinglePhaseBase so we don't
-  // have to use this->member etc.
 
   /**
    * @brief main constructor for Group Objects
@@ -146,7 +140,9 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time_n,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 

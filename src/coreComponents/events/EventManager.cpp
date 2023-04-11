@@ -113,6 +113,7 @@ bool EventManager::run( DomainPartition & domain )
   {
     subEvent.getTargetReferences();
     subEvent.getExecutionOrder( eventCounters );
+    subEvent.validate();
   } );
 
   // Set the progress indicators
