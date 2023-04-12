@@ -68,7 +68,7 @@ DECLARE_FIELD( particleDeformationGradient,
                "particleDeformationGradient",
                array3d< real64 >,
                0,
-               NOPLOT,
+               LEVEL_1,
                WRITE_AND_READ,
                "ParticleDeformationGradient" );
 
@@ -129,6 +129,29 @@ DECLARE_FIELD( particleSurfaceFlag,
                WRITE_AND_READ,
                "An array that holds particle surface flags." );      
 
+DECLARE_FIELD( particleSphF,
+               "particleSphF",
+               array3d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "ParticleSphF" );
+
+DECLARE_FIELD( particleOverlap,
+               "particleOverlap",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "ParticleOverlap" );
+
+DECLARE_FIELD( particleReferencePosition,
+               "particleReferencePosition",
+               array2d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "ParticleReferencePosition" );
 }
 
 }

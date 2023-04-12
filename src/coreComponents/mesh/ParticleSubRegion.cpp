@@ -195,7 +195,7 @@ void ParticleSubRegion::cpdiDomainScaling( real64 lCrit,
     arraySlice1d< real64 > const r2 = particleRVectors[p][1];
     arraySlice1d< real64 > const r3 = particleRVectors[p][2];
 
-    if( planeStrain ) // 2D cpdi domain scaling
+    if( planeStrain == 1 ) // 2D cpdi domain scaling
     {
       // Initialize l-vectors.  Eq. 8a-d in the CPDI domain scaling paper.
       real64 l[2][3];
