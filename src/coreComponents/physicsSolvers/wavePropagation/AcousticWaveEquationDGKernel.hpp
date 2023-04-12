@@ -288,6 +288,8 @@ struct PressureComputation
               //Here we compute the fluxes part corresponding to the element itself (the (K,K) part seen in the latex document). We can both compute the "classical" flux part + the penalization one:
               //m_finiteElement.template computeFluxLocalTerm(q,xLocal,f [&] (int i, int j, real32 val)
               //PS: Not sure about how to include the normals so I'll just put "normals" (surely missing something with the gradient inside the flux matrix)
+              // Inside the matrix computation: we need the volumic Jacobian (its inverse) and the surface determinant. If fact due to the fact that we take the inverse of the jacobian 
+              // we will have the ratio surafce/volume.
               //{ 
                   //fp += 0.5* val *  p_n[k][i] + gamma[k]* val * p_n[k][i];
                   //flow[j] += fp*normals
@@ -313,22 +315,6 @@ struct PressureComputation
 
 
       }
-
-      //Source Injection
-      // for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
-      // {
-      //   if( sourceIsAccessible[isrc] == 1 )
-      //   {
-      //     if( sourceElem[isrc]==k )
-      //     {
-      //       for( localIndex i = 0; i < numNodesPerElem; ++i )
-      //       {
-      //         real32 const localIncrement2 = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/(mass[elemsToNodes[k][i]]);
-      //         RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[elemsToNodes[k][i]], localIncrement2 );
-      //       }
-      //     }
-      //   }
-      // }
 
     } );
 
