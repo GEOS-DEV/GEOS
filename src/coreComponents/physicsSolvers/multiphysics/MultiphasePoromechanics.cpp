@@ -13,18 +13,19 @@
  */
 
 /**
- * @file MultiphasePoromechanicsSolver.cpp
+ * @file MultiphasePoromechanics.cpp
  */
 
 #define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
-#include "MultiphasePoromechanicsSolver.hpp"
+#include "MultiphasePoromechanics.hpp"
 
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
@@ -36,9 +37,10 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
 
-MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & name,
-                                                              Group * const parent )
-  : Base( name, parent )
+MultiphasePoromechanics::MultiphasePoromechanics( const string & name,
+                                                  Group * const parent )
+  : Base( name, parent ),
+  m_isThermal( 0 )
 {
   registerWrapper( viewKeyStruct::stabilizationTypeString(), &m_stabilizationType ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -56,6 +58,11 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Constant multiplier of stabilization strength." );
 
+  registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether the problem is thermal or not. Set isThermal=\"1\" to enable the thermal coupling" );
+
   registerWrapper( viewKeyStruct::performStressInitializationString(), &m_performStressInitialization ).
     setApplyDefaultValue( false ).
     setInputFlag( InputFlags::FALSE ).
@@ -67,7 +74,7 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
-void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
+void MultiphasePoromechanics::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
@@ -96,20 +103,20 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void MultiphasePoromechanicsSolver::setupCoupling( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
-                                                   DofManager & dofManager ) const
+void MultiphasePoromechanics::setupCoupling( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+                                             DofManager & dofManager ) const
 {
   dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
                           CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
 }
 
-void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time ),
-                                                    real64 const dt,
-                                                    DomainPartition & domain,
-                                                    DofManager const & dofManager,
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                    arrayView1d< real64 > const & localRhs )
+void MultiphasePoromechanics::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time ),
+                                              real64 const dt,
+                                              DomainPartition & domain,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -128,19 +135,36 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
 
     string const flowDofKey = dofManager.getKey( CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString() );
 
-    poromechanicsMaxForce =
-      assemblyLaunch< constitutive::PorousSolidBase,
-                      poromechanicsKernels::MultiphasePoromechanicsKernelFactory >( mesh,
-                                                                                    dofManager,
-                                                                                    regionNames,
-                                                                                    viewKeyStruct::porousMaterialNamesString(),
-                                                                                    localMatrix,
-                                                                                    localRhs,
-                                                                                    flowDofKey,
-                                                                                    flowSolver()->numFluidComponents(),
-                                                                                    flowSolver()->numFluidPhases(),
-                                                                                    FlowSolverBase::viewKeyStruct::fluidNamesString() );
-
+    if( m_isThermal )
+    {
+      poromechanicsMaxForce =
+        assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
+                        thermalPoromechanicsKernels::ThermalMultiphasePoromechanicsKernelFactory >( mesh,
+                                                                                                    dofManager,
+                                                                                                    regionNames,
+                                                                                                    viewKeyStruct::porousMaterialNamesString(),
+                                                                                                    localMatrix,
+                                                                                                    localRhs,
+                                                                                                    flowDofKey,
+                                                                                                    flowSolver()->numFluidComponents(),
+                                                                                                    flowSolver()->numFluidPhases(),
+                                                                                                    FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    }
+    else
+    {
+      poromechanicsMaxForce =
+        assemblyLaunch< constitutive::PorousSolidBase,
+                        poromechanicsKernels::MultiphasePoromechanicsKernelFactory >( mesh,
+                                                                                      dofManager,
+                                                                                      regionNames,
+                                                                                      viewKeyStruct::porousMaterialNamesString(),
+                                                                                      localMatrix,
+                                                                                      localRhs,
+                                                                                      flowDofKey,
+                                                                                      flowSolver()->numFluidComponents(),
+                                                                                      flowSolver()->numFluidPhases(),
+                                                                                      FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    }
   } );
 
   // step 2: apply mechanics solver on its target regions not included in the poromechanics solver target regions
@@ -207,7 +231,7 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
   }
 }
 
-void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )
+void MultiphasePoromechanics::updateState( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -219,13 +243,38 @@ void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )
                                                                    CellElementSubRegion & subRegion )
     {
       flowSolver()->updateFluidState( subRegion );
+      if( m_isThermal )
+      {
+        flowSolver()->updateSolidInternalEnergyModel( subRegion );
+      }
     } );
   } );
 }
 
-void MultiphasePoromechanicsSolver::initializePreSubGroups()
+void MultiphasePoromechanics::initializePostInitialConditionsPreSubGroups()
+{
+  SolverBase::initializePostInitialConditionsPreSubGroups();
+
+  integer & isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
+  GEOSX_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
+                       GEOSX_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
+                                  catalogName(), getName(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
+  isFlowThermal = m_isThermal;
+
+  if( m_isThermal )
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalMultiphasePoromechanics;
+  }
+}
+
+void MultiphasePoromechanics::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
+
+  if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    solidMechanicsSolver()->turnOnFixedStressThermoPoroElasticityFlag();
+  }
 
   GEOSX_THROW_IF( m_stabilizationType == StabilizationType::Local,
                   catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",
@@ -249,7 +298,7 @@ void MultiphasePoromechanicsSolver::initializePreSubGroups()
   } );
 }
 
-void MultiphasePoromechanicsSolver::updateStabilizationParameters( DomainPartition & domain ) const
+void MultiphasePoromechanics::updateStabilizationParameters( DomainPartition & domain ) const
 {
   // Step 1: we loop over the regions where stabilization is active and collect their name
 
@@ -312,7 +361,26 @@ void MultiphasePoromechanicsSolver::updateStabilizationParameters( DomainPartiti
   } );
 }
 
+void MultiphasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
+{
+  GEOSX_MARK_FUNCTION;
+  if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            auto & subRegion )
+      {
+        flowSolver()->updatePorosityAndPermeability( subRegion );
+      } );
+    } );
+  }
+}
 
-REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoromechanicsSolver, string const &, Group * const )
+
+
+REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoromechanics, string const &, Group * const )
 
 } /* namespace geosx */

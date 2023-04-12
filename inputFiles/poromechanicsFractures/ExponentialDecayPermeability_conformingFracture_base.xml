@@ -11,7 +11,10 @@
       poromechanicsSolverName="singlePhasePoromechanicsSolver"
       logLevel="1">
       <NonlinearSolverParameters
-        maxTimeStepCuts="1"/>
+        maxTimeStepCuts="3"
+        newtonTol="1e0"
+        newtonMaxIter="10"
+        maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhasePoromechanicsConformingFractures>
@@ -21,7 +24,7 @@
       solidSolverName="matrixMechSolver"
       flowSolverName="flowSolver"
       logLevel="1"
-      targetRegions="{ Domain }">
+      targetRegions="{ Domain, Fracture }">
     </SinglePhasePoromechanics>
 
     <LagrangianContact
@@ -38,7 +41,7 @@
       name="matrixMechSolver"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Domain }"
+      targetRegions="{ Domain, Fracture }"
       logLevel="1"/>
 
     <SinglePhaseFVM
@@ -66,8 +69,8 @@
   <Geometry>
     <Box
       name="fracture"
-      xMin="{ -0.01, -1, -0.01 }"
-      xMax="{ 0.01,  1,  1.01 }"/>
+      xMin="{ -0.01, -0.5, -0.01 }"
+      xMax="{ 0.01,  0.5,  1.01 }"/>
   </Geometry>
 
   <NumericalMethods>
@@ -93,7 +96,7 @@
     <SurfaceElementRegion
       name="Fracture"
       faceBlock="FractureSubRegion"
-      materialList="{ water, fractureFilling, fractureContact }"
+      materialList="{ water, fractureFilling, fractureContact, rock}"
       defaultAperture="1e-3"/>
   </ElementRegions>
 
@@ -106,13 +109,13 @@
 
     <ElasticIsotropic
       name="rock"
-      defaultDensity="1"
-      defaultBulkModulus="5555555555.5556"
-      defaultShearModulus="4166666666.6667"/>
+      defaultDensity="2700"
+      defaultBulkModulus="16.66666666666666e9"
+      defaultShearModulus="1.0e10"/>
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
+      permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>
 
     <CompressibleSinglePhaseFluid
       name="water"
@@ -128,7 +131,7 @@
       grainBulkModulus="1.0e27"
       defaultReferencePorosity="0.2"/>
 
-    <CompressibleSolidParallelPlatesPermeability
+    <CompressibleSolidExponentialDecayPermeability
       name="fractureFilling"
       solidModelName="nullSolid"
       porosityModelName="fracturePorosity"
@@ -143,14 +146,16 @@
       referencePressure="0.0"
       compressibility="0.0"/>
 
-    <ParallelPlatesPermeability
-      name="fracturePerm"/>
-
+    <ExponentialDecayPermeability 
+      name="fracturePerm"
+      empiricalConstant="0.27e-6"
+      initialPermeability="{1.0e-12, 1.0e-12, 1.0e-12}"/>
+      
     <Coulomb
       name="fractureContact"
-      cohesion="0.0"
-      frictionCoefficient="0.577350269"
-      apertureTableName="apertureTable"/>
+      cohesion="40.0e6"
+      frictionCoefficient="0.01"
+      apertureTableName="aperTable"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -179,11 +184,46 @@
       scale="1.00"/>
 
     <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="pressure"
+      scale="1.0e3"/>
+
+    <FieldSpecification
       name="prescribedFracturePressure"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      scale="1.0e5"/>
+      scale="1.0e3"/>
+
+    <FieldSpecification
+      name="initial_sigmax"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rock_stress"
+      component="0"
+      scale="1.0e3"/>
+
+    <FieldSpecification
+      name="initial_sigmay"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rock_stress"
+      component="1"
+      scale="1.0e3"/>
+
+    <FieldSpecification
+      name="initial_sigmaz"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rock_stress"
+      component="2"
+      scale="1.0e3"/>
 
     <FieldSpecification
       name="xconstraint"
@@ -191,15 +231,7 @@
       fieldName="totalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ xneg, xpos }"/>
-
-    <FieldSpecification
-      name="yconstraint"
-      objectPath="nodeManager"
-      fieldName="totalDisplacement"
-      component="1"
-      scale="0.0"
-      setNames="{ xneg, xpos }"/>
+      setNames="{ xneg }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -207,34 +239,85 @@
       fieldName="totalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{ xneg, xpos }"/>
+      setNames="{ zneg, zpos }"/>
 
     <FieldSpecification
-      name="leftPressure"
+      name="NormalDisplacement"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="-1.0e-3"
+      setNames="{ xpos }"
+      functionName="timeFunction"/>
+
+    <FieldSpecification
+      name="boundaryPressure"
       objectPath="faceManager"
       fieldName="pressure"
       scale="0.0"
-      setNames="{ xneg }"/>
-
-    <FieldSpecification
-      name="rightPressure"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="0.0"
-      setNames="{ xpos }"/>
+      setNames="{ ypos, yneg }"/>    
   </FieldSpecifications>
 
   <Functions>
     <TableFunction
-      name="apertureTable"
-      coordinates="{ -1.0e-3, 0.0 }"
-      values="{ 1.0e-6, 1.0e-3 }"/>
+        name="aperTable"
+        coordinates="{ -1.0e-3, 0.0 }"
+        values="{ 1.0e-6, 1.0e-4 }"/> 
+
+    <TableFunction 
+        name="timeFunction"
+        inputVarNames="{time}"
+        coordinates="{0.0, 1000.0}"
+        values="{0.0, 1.0}" 
+    />  
   </Functions>
+
+  <Tasks>
+    <PackCollection
+      name="tractionCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="traction"/>
+
+    <PackCollection
+      name="displacementJumpCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="displacementJump"/>  
+
+    <PackCollection
+      name="fracPermeabilityCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="fracturePerm_permeability"/>  
+
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="pressure"/>           
+  </Tasks>
 
   <Outputs>
     <VTK
       name="vtkOutput"
       plotFileRoot="poroElastic_conformingFrac"/>
+
+   <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/tractionCollection}"
+      filename="traction_history" />
+      
+    <TimeHistory
+      name="timeHistoryOutput1"
+      sources="{/Tasks/displacementJumpCollection}"
+      filename="displacementJump_history" />
+
+    <TimeHistory
+      name="timeHistoryOutput2"
+      sources="{/Tasks/fracPermeabilityCollection}"
+      filename="fracPermeability_history" />
+
+    <TimeHistory
+      name="timeHistoryOutput3"
+      sources="{/Tasks/pressureCollection}"
+      filename="fracPressure_history" />
 
     <Restart
     name="restarts"/>  

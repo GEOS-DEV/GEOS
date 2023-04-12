@@ -26,6 +26,8 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 namespace geosx
@@ -217,6 +219,8 @@ public:
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
+  void turnOnFixedStressThermoPoroElasticityFlag();
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * cflFactorString() { return "cflFactor"; }
@@ -233,6 +237,7 @@ public:
     static constexpr char const * maxForceString() { return "maxForce"; }
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
+
     static constexpr char const * sendOrReceiveNodesString() { return "sendOrReceiveNodes";}
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
     static constexpr char const * targetNodesString() { return "targetNodes";}
@@ -284,6 +289,7 @@ protected:
   integer m_strainTheory;
   string m_contactRelationName;
   MPI_iCommData m_iComm;
+  integer m_fixedStressUpdateThermoPoroElasticityFlag;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
@@ -332,14 +338,28 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                   gravityVectorData,
                                   std::forward< PARAMS >( params )... );
 
-    m_maxForce = finiteElement::
-                   regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                                 CONSTITUTIVE_BASE,
-                                                 CellElementSubRegion >( mesh,
-                                                                         regionNames,
-                                                                         this->getDiscretizationName(),
-                                                                         viewKeyStruct::solidMaterialNamesString(),
-                                                                         kernelWrapper );
+    if( m_fixedStressUpdateThermoPoroElasticityFlag )
+    {
+      m_maxForce = finiteElement::
+                     regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                                   CONSTITUTIVE_BASE,
+                                                   CellElementSubRegion >( mesh,
+                                                                           regionNames,
+                                                                           this->getDiscretizationName(),
+                                                                           FlowSolverBase::viewKeyStruct::solidNamesString(),
+                                                                           kernelWrapper );
+    }
+    else
+    {
+      m_maxForce = finiteElement::
+                     regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                                   CONSTITUTIVE_BASE,
+                                                   CellElementSubRegion >( mesh,
+                                                                           regionNames,
+                                                                           this->getDiscretizationName(),
+                                                                           viewKeyStruct::solidMaterialNamesString(),
+                                                                           kernelWrapper );
+    }
   } );
 
 

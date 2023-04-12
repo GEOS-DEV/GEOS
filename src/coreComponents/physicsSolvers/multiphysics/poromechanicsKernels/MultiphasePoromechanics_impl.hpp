@@ -161,16 +161,13 @@ smallStrainUpdate( localIndex const k,
                                                        dSolidDensity_dPressure );
 
   // Step 2: compute the body force
-  if( m_gravityAcceleration > 0.0 )
-  {
-    computeBodyForce( k, q,
-                      porosity,
-                      dPorosity_dVolStrain,
-                      dPorosity_dPressure,
-                      dPorosity_dTemperature,
-                      dSolidDensity_dPressure,
-                      stack );
-  }
+  computeBodyForce( k, q,
+                    porosity,
+                    dPorosity_dVolStrain,
+                    dPorosity_dPressure,
+                    dPorosity_dTemperature,
+                    dSolidDensity_dPressure,
+                    stack );
 
   // Step 3: compute fluid mass increment
   computeFluidIncrement( k, q,
@@ -183,10 +180,7 @@ smallStrainUpdate( localIndex const k,
 
   // Step 4: compute pore volume constraint
   computePoreVolumeConstraint( k,
-                               porosity,
-                               dPorosity_dVolStrain,
-                               dPorosity_dPressure,
-                               dPorosity_dTemperature,
+                               porosity_n,
                                stack );
 }
 
@@ -367,15 +361,10 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 computePoreVolumeConstraint( localIndex const k,
-                             real64 const & porosity,
-                             real64 const & dPorosity_dVolStrain,
-                             real64 const & dPorosity_dPressure,
-                             real64 const & dPorosity_dTemperature,
+                             real64 const & porosity_n,
                              StackVariables & stack ) const
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
-
-  GEOSX_UNUSED_VAR( dPorosity_dVolStrain, dPorosity_dTemperature );
 
   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const phaseVolFrac = m_fluidPhaseVolFrac[k];
   arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dFluidPhaseVolFrac[k];
@@ -387,15 +376,14 @@ computePoreVolumeConstraint( localIndex const k,
   for( integer ip = 0; ip < m_numPhases; ++ip )
   {
     stack.poreVolConstraint -= phaseVolFrac( ip );
-    stack.dPoreVolConstraint_dPressure += -dPhaseVolFrac( ip, Deriv::dP ) * porosity
-                                          - phaseVolFrac( ip ) * dPorosity_dPressure;
+    stack.dPoreVolConstraint_dPressure -= dPhaseVolFrac( ip, Deriv::dP ) * porosity_n;
 
     for( integer jc = 0; jc < m_numComponents; ++jc )
     {
-      stack.dPoreVolConstraint_dComponents[0][jc] -= dPhaseVolFrac( ip, Deriv::dC+jc ) * porosity;
+      stack.dPoreVolConstraint_dComponents[0][jc] -= dPhaseVolFrac( ip, Deriv::dC+jc ) * porosity_n;
     }
   }
-  stack.poreVolConstraint *= porosity;
+  stack.poreVolConstraint *= porosity_n;
 }
 
 template< typename SUBREGION_TYPE,
@@ -425,16 +413,13 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
     stack.totalStress,
     -detJxW );
 
-  if( m_gravityAcceleration > 0.0 )
-  {
-    LinearFormUtilities::compute< displacementTestSpace,
-                                  DifferentialOperator::Identity >
-    (
-      stack.localResidualMomentum,
-      N,
-      stack.bodyForce,
-      detJxW );
-  }
+  LinearFormUtilities::compute< displacementTestSpace,
+                                DifferentialOperator::Identity >
+  (
+    stack.localResidualMomentum,
+    N,
+    stack.bodyForce,
+    detJxW );
 
   // Step 2: compute local linear momentum balance residual derivatives with respect to displacement
   BilinearFormUtilities::compute< displacementTestSpace,
@@ -448,19 +433,16 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
     dNdX,
     -detJxW );
 
-  if( m_gravityAcceleration > 0.0 )
-  {
-    BilinearFormUtilities::compute< displacementTestSpace,
-                                    displacementTrialSpace,
-                                    DifferentialOperator::Identity,
-                                    DifferentialOperator::Divergence >
-    (
-      stack.dLocalResidualMomentum_dDisplacement,
-      N,
-      stack.dBodyForce_dVolStrainIncrement,
-      dNdX,
-      detJxW );
-  }
+  BilinearFormUtilities::compute< displacementTestSpace,
+                                  displacementTrialSpace,
+                                  DifferentialOperator::Identity,
+                                  DifferentialOperator::Divergence >
+  (
+    stack.dLocalResidualMomentum_dDisplacement,
+    N,
+    stack.dBodyForce_dVolStrainIncrement,
+    dNdX,
+    detJxW );
 
   // Step 3: compute local linear momentum balance residual derivatives with respect to pressure
   BilinearFormUtilities::compute< displacementTestSpace,
@@ -474,34 +456,28 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
     1.0,
     -detJxW );
 
-  if( m_gravityAcceleration > 0.0 )
-  {
-    BilinearFormUtilities::compute< displacementTestSpace,
-                                    pressureTrialSpace,
-                                    DifferentialOperator::Identity,
-                                    DifferentialOperator::Identity >
-    (
-      stack.dLocalResidualMomentum_dPressure,
-      N,
-      stack.dBodyForce_dPressure,
-      1.0,
-      detJxW );
-  }
+  BilinearFormUtilities::compute< displacementTestSpace,
+                                  pressureTrialSpace,
+                                  DifferentialOperator::Identity,
+                                  DifferentialOperator::Identity >
+  (
+    stack.dLocalResidualMomentum_dPressure,
+    N,
+    stack.dBodyForce_dPressure,
+    1.0,
+    detJxW );
 
   // Step 4: compute local linear momentum balance residual derivatives with respect to components
-  if( m_gravityAcceleration > 0.0 )
-  {
-    BilinearFormUtilities::compute< displacementTestSpace,
-                                    FunctionSpace::P0,
-                                    DifferentialOperator::Identity,
-                                    DifferentialOperator::Identity >
-    (
-      stack.dLocalResidualMomentum_dComponents,
-      N,
-      stack.dBodyForce_dComponents,
-      1.0,
-      detJxW );
-  }
+  BilinearFormUtilities::compute< displacementTestSpace,
+                                  FunctionSpace::P0,
+                                  DifferentialOperator::Identity,
+                                  DifferentialOperator::Identity >
+  (
+    stack.dLocalResidualMomentum_dComponents,
+    N,
+    stack.dBodyForce_dComponents,
+    1.0,
+    detJxW );
 }
 
 template< typename SUBREGION_TYPE,

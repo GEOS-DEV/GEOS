@@ -13,12 +13,12 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsSolver.cpp
+ * @file SinglePhasePoromechanics.cpp
  */
 
 #define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
-#include "SinglePhasePoromechanicsSolver.hpp"
+#include "SinglePhasePoromechanics.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
@@ -38,15 +38,15 @@ using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
 
-SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & name,
-                                                                Group * const parent )
+SinglePhasePoromechanics::SinglePhasePoromechanics( const string & name,
+                                                    Group * const parent )
   : Base( name, parent ),
   m_isThermal( 0 )
 {
   this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating whether the problem is thermal or not." );
+    setDescription( "Flag indicating whether the problem is thermal or not. Set isThermal=\"1\" to enable the thermal coupling" );
 
   this->registerWrapper( viewKeyStruct::performStressInitializationString(), &m_performStressInitialization ).
     setApplyDefaultValue( false ).
@@ -59,7 +59,7 @@ SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & n
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
-void SinglePhasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
+void SinglePhasePoromechanics::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
@@ -82,17 +82,22 @@ void SinglePhasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void SinglePhasePoromechanicsSolver::setupCoupling( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
-                                                    DofManager & dofManager ) const
+void SinglePhasePoromechanics::setupCoupling( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+                                              DofManager & dofManager ) const
 {
   dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
                           SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
 }
 
-void SinglePhasePoromechanicsSolver::initializePreSubGroups()
+void SinglePhasePoromechanics::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
+
+  if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    solidMechanicsSolver()->turnOnFixedStressThermoPoroElasticityFlag();
+  }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -112,14 +117,15 @@ void SinglePhasePoromechanicsSolver::initializePreSubGroups()
                       InputError );
     } );
   } );
+
 }
 
-void SinglePhasePoromechanicsSolver::setupSystem( DomainPartition & domain,
-                                                  DofManager & dofManager,
-                                                  CRSMatrix< real64, globalIndex > & localMatrix,
-                                                  ParallelVector & rhs,
-                                                  ParallelVector & solution,
-                                                  bool const setSparsity )
+void SinglePhasePoromechanics::setupSystem( DomainPartition & domain,
+                                            DofManager & dofManager,
+                                            CRSMatrix< real64, globalIndex > & localMatrix,
+                                            ParallelVector & rhs,
+                                            ParallelVector & solution,
+                                            bool const setSparsity )
 {
   if( m_precond )
   {
@@ -135,26 +141,35 @@ void SinglePhasePoromechanicsSolver::setupSystem( DomainPartition & domain,
   }
 }
 
-void SinglePhasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups()
+void SinglePhasePoromechanics::initializePostInitialConditionsPreSubGroups()
 {
+  SolverBase::initializePostInitialConditionsPreSubGroups();
+
   integer & isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
   GEOSX_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
                        GEOSX_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
                                   catalogName(), getName(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
   isFlowThermal = m_isThermal;
 
-  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM )
+  if( m_isThermal )
   {
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::hybridSinglePhasePoromechanics;
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalSinglePhasePoromechanics;
+  }
+  else
+  {
+    if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM )
+    {
+      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::hybridSinglePhasePoromechanics;
+    }
   }
 }
 
-void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
-                                                     real64 const dt,
-                                                     DomainPartition & domain,
-                                                     DofManager const & dofManager,
-                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                     arrayView1d< real64 > const & localRhs )
+void SinglePhasePoromechanics::assembleSystem( real64 const time_n,
+                                               real64 const dt,
+                                               DomainPartition & domain,
+                                               DofManager const & dofManager,
+                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                               arrayView1d< real64 > const & localRhs )
 {
 
   GEOSX_MARK_FUNCTION;
@@ -177,7 +192,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
     if( m_isThermal )
     {
       poromechanicsMaxForce =
-        assemblyLaunch< constitutive::PorousSolidBase,
+        assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
                         thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory >( mesh,
                                                                                                      dofManager,
                                                                                                      regionNames,
@@ -208,7 +223,6 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                                                         MeshLevel & mesh,
                                                                                         arrayView1d< string const > const & regionNames )
   {
-
     // collect the target region of the mechanics solver not included in the poromechanics target regions
     array1d< string > filteredRegionNames;
     filteredRegionNames.reserve( regionNames.size() );
@@ -265,7 +279,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
 }
 
-void SinglePhasePoromechanicsSolver::createPreconditioner()
+void SinglePhasePoromechanics::createPreconditioner()
 {
   if( m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::block )
   {
@@ -292,7 +306,7 @@ void SinglePhasePoromechanicsSolver::createPreconditioner()
   }
 }
 
-void SinglePhasePoromechanicsSolver::updateState( DomainPartition & domain )
+void SinglePhasePoromechanics::updateState( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -314,6 +328,24 @@ void SinglePhasePoromechanicsSolver::updateState( DomainPartition & domain )
   } );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsSolver, string const &, Group * const )
+void SinglePhasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
+{
+  GEOSX_MARK_FUNCTION;
+  if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            auto & subRegion )
+      {
+        flowSolver()->updatePorosityAndPermeability( subRegion );
+      } );
+    } );
+  }
+}
+
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanics, string const &, Group * const )
 
 } /* namespace geosx */

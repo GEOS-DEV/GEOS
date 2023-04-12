@@ -19,18 +19,18 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
 
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/contact/LagrangianContactSolver.hpp"
 
 namespace geosx
 {
 
-class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< SinglePhasePoromechanicsSolver, LagrangianContactSolver >
+class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< SinglePhasePoromechanics, LagrangianContactSolver >
 {
 public:
 
-  using Base = CoupledSolver< SinglePhasePoromechanicsSolver, LagrangianContactSolver >;
+  using Base = CoupledSolver< SinglePhasePoromechanics, LagrangianContactSolver >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -77,7 +77,7 @@ public:
    * @brief accessor for the pointer to the poromechanics solver
    * @return a pointer to the flow solver
    */
-  SinglePhasePoromechanicsSolver * poromechanicsSolver() const
+  SinglePhasePoromechanics * poromechanicsSolver() const
   {
     return std::get< toUnderlying( SolverType::Poromechanics ) >( m_solvers );
   }
@@ -119,9 +119,25 @@ public:
 
   void initializePostInitialConditionsPostSubGroups() override final;
 
+  void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
+
   /**@}*/
 
 private:
+
+  void assembleCellBasedContributions( real64 const time_n,
+                                       real64 const dt,
+                                       DomainPartition & domain,
+                                       DofManager const & dofManager,
+                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       arrayView1d< real64 > const & localRhs );
+
+  virtual void assembleCouplingTerms( real64 const time_n,
+                                      real64 const dt,
+                                      DomainPartition const & domain,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< real64 > const & localRhs ) override final;
 
   void assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
                                                    arrayView1d< string const > const & regionNames,
@@ -176,7 +192,7 @@ private:
    *
    * @param domain
    */
-  void updateHydraulicAperture( DomainPartition & domain );
+  void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
 
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()

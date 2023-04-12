@@ -160,6 +160,11 @@ public:
     return std::numeric_limits< real64 >::max();
   }
 
+  /**
+   * @brief Helper function to validate the consistency of the event input
+   * @note We cannot use postProcessInput here because we can perform the validation only after the m_target pointer is set
+   */
+  virtual void validate() const {};
 
   /**
    * @brief Count the number of events/sub-events
