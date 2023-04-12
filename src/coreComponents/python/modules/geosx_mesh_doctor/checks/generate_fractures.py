@@ -395,10 +395,10 @@ def __copy_fields(input_mesh: vtkUnstructuredGrid, output_mesh: vtkUnstructuredG
         tmp.SetNumberOfComponents(input_array.GetNumberOfComponents())
         tmp.SetNumberOfTuples(output_mesh.GetNumberOfPoints())
         # Now copy data, taking into account the duplicated nodes.
-        for from_, to in duplicated_nodes_info.renumbered_nodes:
+        for from_, to in enumerate(duplicated_nodes_info.renumbered_nodes):
             if to != -1:
                 tmp.SetTuple(to, from_, input_array)
-        for from_, tos in duplicated_nodes_info.duplicated_nodes:
+        for from_, tos in duplicated_nodes_info.duplicated_nodes.items():
             # We duplicated the point information for duplicated nodes.
             for to in tos:
                 tmp.SetTuple(to, from_, input_array)
@@ -458,9 +458,9 @@ def __find_boundary_nodes(mesh: vtkUnstructuredGrid) -> Sequence[int]:
 
     output_mesh = f.GetOutputDataObject(0)
     point_data = output_mesh.GetPointData()
-    assert point_data.GetNumberOfArrays() == 1
-    assert point_data.GetArrayName(0) == "boundary points"
-    is_boundary_point = point_data.GetArray(0)
+    is_boundary_point = point_data.GetArray("boundary points")
+    assert is_boundary_point
+
     return vtk_to_numpy(is_boundary_point)
 
 
