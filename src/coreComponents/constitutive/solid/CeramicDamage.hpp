@@ -425,7 +425,7 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
   // Get the scaling associated with p1
   real64 dfdp1 = ((3.0 + damage * (-3.0 + mu)) * m_compressiveStrength + (-3.0 + damage * (3.0 + mu)) * Yt0) / (m_compressiveStrength + Yt0);
   real64 gamma1 = 1.0;
-  if( J2 > 0.0 )
+  if( J2 > 1e-32 )
   {
     real64 psi = fmin(2.0, fmax(0.5, 1.0 / (1.0 + dfdp1 / 3.0)));
     real64 theta = (1.0 / 3.0) * asin(fmin(1.0, fmax(-1.0, -0.5 * J3 * pow(3.0 / J2, 1.5))));
