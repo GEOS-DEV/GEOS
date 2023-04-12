@@ -41,7 +41,7 @@ def convert(parsed_options) -> Options:
                    zs=parsed_options[__Z],
                    nxs=parsed_options[__NX],
                    nys=parsed_options[__NY],
-                   nzs=parsed_options[__NX],
+                   nzs=parsed_options[__NZ],
                    fields=tuple(map(parse_fields, parsed_options[__FIELDS])))
 
 
