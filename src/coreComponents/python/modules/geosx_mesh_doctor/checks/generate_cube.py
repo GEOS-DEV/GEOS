@@ -96,7 +96,7 @@ def build_rectilinear_blocks_mesh(xyzs: Iterable[XYZ]) -> vtkUnstructuredGrid:
             for j in range(8):
                 new_cell.GetPointIds().SetId(j, offset + c.GetPointId(m[j]))
             cells.InsertNextCell(new_cell)
-        offset += 8 * rg.GetNumberOfCells()
+        offset += rg.GetNumberOfPoints()
 
     mesh = vtkUnstructuredGrid()
     mesh.SetPoints(points)

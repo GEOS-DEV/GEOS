@@ -493,7 +493,7 @@ def __generate_fracture_mesh(mesh: vtkUnstructuredGrid,
     array = numpy_to_vtk(field)
     array.SetName("duplicated_nodes")
 
-    fracture_mesh = vtkUnstructuredGrid()  # We could be using vtkPolyData, but it's note support by GEOSX for now.
+    fracture_mesh = vtkUnstructuredGrid()  # We could be using vtkPolyData, but it's not supported by GEOSX for now.
     fracture_mesh.SetPoints(points)
     fracture_mesh.SetCells([VTK_POLYGON] * polygons.GetNumberOfCells(), polygons)
     fracture_mesh.GetPointData().AddArray(array)
