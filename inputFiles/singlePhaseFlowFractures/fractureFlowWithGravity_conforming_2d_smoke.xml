@@ -2,64 +2,65 @@
 
 <Problem>
   <Solvers
-      gravityVector="{ 0.0, 0.0, -9.81 }">
+    gravityVector="{0,-9.81, 0}">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Region, Fracture }">
-    <NonlinearSolverParameters
-      newtonTol="1.0e-2"
-      newtonMaxIter="8"
-      allowNonConverged="1"/>
-    <LinearSolverParameters
-      directParallel="0"/>
+      targetRegions="{ Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-3"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        directParallel="0"/>
     </SinglePhaseFVM>
+
+    <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ Fracture }"
+      rockToughness="1e6"
+      mpiCommOrder="1"/>
   </Solvers>
 
   <Mesh>
-    <VTKMesh
-      surfacicFieldsToImport="{aperture}"
-      surfacicFieldsInGEOSX="{elementAperture}"
+    <InternalMesh
       name="mesh1"
-      useGlobalIds="1"
-      faceBlocks="{fracture}"
-      file="tShapedFracturedCube.vtm"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ -50, 50 }"
+      yCoords="{ 0, 1000 }"
+      zCoords="{ 0, 50 }"
+      nx="{ 4 }"
+      ny="{ 100 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
     <Box
-      name="left"
-      xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 1.01, 1.01, 1.01 }"/>
+    name="fracture"
+    xMin="{ -0.01, 9.99, -0.01 }"
+    xMax="{ 0.01, 990.01, 50.01 }"/>
 
     <Box
-      name="right"
-      xMin="{ 8.99, -0.01, -0.01 }"
-      xMax="{ 10.01, 1.01, 1.01 }"/>
-
-    <Box
-      name="bottom"
-      xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 10.01, 1.11, 1.01 }"/>
-
-    <Box
-      name="top"
-      xMin="{ -0.01, 8.99, -0.01 }"
-      xMax="{ 10.01, 10.01, 1.01 }"/>
-
-    <Box
-      name="source"
-      xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 0.01, 1.01, 1.01 }"/>
+    name="fractureTop"
+    xMin="{ -0.01, 979.99, -0.01 }"
+    xMax="{ 0.01, 990.01, 50.01 }"/>
   </Geometry>
 
   <Events
-    maxTime="50000">
+    maxTime="100.0">
+
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <SoloEvent
+      name="output1"
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1e3"
+      forceDt="100.0"
       target="/Solvers/SinglePhaseFlow"/>
 
     <PeriodicEvent
@@ -68,7 +69,7 @@
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="25000"
+      timeFrequency="100.0"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
@@ -82,13 +83,12 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Region"
-      cellBlocks="{ hexahedra, wedges }"
+      name="Domain"
+      cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
-      faceBlock="fracture"
       defaultAperture="1.0e-5"
       materialList="{ water, fractureFilling }"/>
   </ElementRegions>
@@ -99,7 +99,7 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      compressibility="5e-10"
+      compressibility="0.0"
       viscosibility="0.0"/>
 
     <CompressibleSolidParallelPlatesPermeability
@@ -119,13 +119,13 @@
 
     <PressurePorosity
       name="rockPorosity"
-      defaultReferencePorosity="0.01"
+      defaultReferencePorosity="0.05"
       referencePressure="0.0"
       compressibility="1.0e-9"/>
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 5.0e-19, 5.0e-19, 5.0e-19 }"/>
+      permeabilityComponents="{ 2.0e-13, 2.0e-13, 2.0e-13 }"/>
 
     <PressurePorosity
       name="fracturePorosity"
@@ -139,12 +139,12 @@
 
   <FieldSpecifications>
     <FieldSpecification
-      name="Porosity"
+      name="frac"
       initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region"
-      fieldName="rockPorosity_referencePorosity"
-      scale="0.01"/>
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
 
     <FieldSpecification
       name="fracPorosity"
@@ -155,31 +155,19 @@
       scale="1.00"/>
 
     <FieldSpecification
-      name="initialPressure"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region"
-      fieldName="pressure"
-      scale="0.0"/>
-
-    <FieldSpecification
-      name="source"
+      name="topPressure"
+      initialCondition="0"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      scale="2.0e6"
-      setNames="{ source }"/>
+      scale="1.0e6"
+      setNames="{ fractureTop }"/>
   </FieldSpecifications>
 
   <Outputs>
     <VTK
       name="vtkOutput"
-      format="ascii"
-      plotFileRoot="fractureFlow_conforming_2d_vtk_input-vtk"/>
-
-    <Silo
-      name="siloOutput"
-      plotFileRoot="fractureFlow_conforming_2d_vtk_input-silo"
-      plotLevel="2"/>
+      plotFileRoot="fractureFlow_Gravity"
+      plotLevel="1"/>
 
     <Restart
       name="restartOutput"/>
