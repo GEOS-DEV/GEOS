@@ -6,7 +6,7 @@ from vtk.util.numpy_support import (
 )
 
 from checks.generate_fractures import Options, __split_mesh_on_fracture, __color_fracture_sides, vtk_utils, FractureInfo
-from .test_utils import (
+from checks.generate_cube import (
     build_rectilinear_blocks_mesh,
     XYZ,
 )

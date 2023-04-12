@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from typing import List, Tuple
 import uuid
@@ -45,11 +46,17 @@ def __check(mesh, options: Options) -> Result:
     cs.Update()
 
     mq = vtkMeshQuality()
+    SUPPORTED_TYPES = [VTK_HEXAHEDRON, VTK_TETRA]
 
     mq.SetTetQualityMeasureToVolume()
-    mq.SetPyramidQualityMeasureToVolume()
-    mq.SetWedgeQualityMeasureToVolume()
     mq.SetHexQualityMeasureToVolume()
+    if hasattr(mq, "SetPyramidQualityMeasureToVolume"):  # This feature is quite recent
+        mq.SetPyramidQualityMeasureToVolume()
+        SUPPORTED_TYPES.append(VTK_PYRAMID)
+        mq.SetWedgeQualityMeasureToVolume()
+        SUPPORTED_TYPES.append(VTK_WEDGE)
+    else:
+        logging.debug("Your \"pyvtk\" version does not bring pyramid not wedge support with vtkMeshQuality. Using the fallback solution.")
 
     mq.SetInputData(mesh)
     mq.Update()
@@ -64,7 +71,7 @@ def __check(mesh, options: Options) -> Result:
     small_volumes: List[Tuple[int, float]] = []
     for i, pack in enumerate(zip(volume, quality)):
         v, q = pack
-        vol = q if mesh.GetCellType(i) in (VTK_HEXAHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_WEDGE) else v
+        vol = q if mesh.GetCellType(i) in SUPPORTED_TYPES else v
         if vol < options.min_volume:
             small_volumes.append((i, vol))
     return Result(element_volumes=small_volumes)

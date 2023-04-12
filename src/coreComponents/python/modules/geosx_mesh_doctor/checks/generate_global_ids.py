@@ -13,6 +13,8 @@ from .vtk_utils import (
 @dataclass(frozen=True)
 class Options:
     vtk_output: VtkOutput
+    generate_cells_global_ids: bool
+    generate_points_global_ids: bool
 
 
 @dataclass(frozen=True)
@@ -20,7 +22,9 @@ class Result:
     info: str
 
 
-def __build_global_ids(mesh) -> None:
+def __build_global_ids(mesh,
+                       generate_cells_global_ids: bool,
+                       generate_points_global_ids: bool) -> None:
     """
     Adds the global ids for cells and points in place into the mesh instance.
     :param mesh:
@@ -30,7 +34,7 @@ def __build_global_ids(mesh) -> None:
     # First for points...
     if mesh.GetPointData().GetGlobalIds():
         logging.error("Mesh already has globals ids for points; nothing done.")
-    else:
+    elif generate_points_global_ids:
         point_global_ids = vtkIdTypeArray()
         point_global_ids.SetName("GLOBAL_IDS_POINTS")
         point_global_ids.Allocate(mesh.GetNumberOfPoints())
@@ -40,7 +44,7 @@ def __build_global_ids(mesh) -> None:
     # ... then for cells.
     if mesh.GetCellData().GetGlobalIds():
         logging.error("Mesh already has globals ids for cells; nothing done.")
-    else:
+    elif generate_cells_global_ids:
         cells_global_ids = vtkIdTypeArray()
         cells_global_ids.SetName("GLOBAL_IDS_CELLS")
         cells_global_ids.Allocate(mesh.GetNumberOfCells())
@@ -50,7 +54,7 @@ def __build_global_ids(mesh) -> None:
 
 
 def __check(mesh, options: Options) -> Result:
-    __build_global_ids(mesh)
+    __build_global_ids(mesh, options.generate_cells_global_ids, options.generate_points_global_ids)
     vtk_utils.write_mesh(mesh, options.vtk_output)
     return Result(info=f"Mesh was written to {options.vtk_output.output}")
 

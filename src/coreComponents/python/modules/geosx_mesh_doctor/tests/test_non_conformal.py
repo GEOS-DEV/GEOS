@@ -1,7 +1,7 @@
 import numpy
 
 from checks.non_conformal import Options, __check
-from .test_utils import (
+from checks.generate_cube import (
     build_rectilinear_blocks_mesh,
     XYZ,
 )
