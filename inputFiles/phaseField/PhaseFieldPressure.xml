@@ -113,7 +113,7 @@
       defaultBulkModulus="3.6"
       defaultShearModulus="3.6"
       lengthScale="0.2"
-      criticalFractureEnergy="2.7"
+      defaultCriticalFractureEnergy="2.7"
       criticalStrainEnergy="0"/>
   </Constitutive>
 
@@ -173,7 +173,7 @@
 
     <FieldSpecification
       name="pointSource"
-      fieldName="damage"
+      fieldName="Damage"
       objectPath="nodeManager"
       scale="1.0"
       setNames="{ centerPoint }"/>

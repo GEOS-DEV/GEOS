@@ -845,9 +845,9 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     {
       // reset the states of all slave solvers if any of them has been reset
       //TODO: this is potentially a code duplication since resetStateToBeginningOfStep(domain) already calls the slaves
-      // patchSolver.resetStateToBeginningOfStep( domain );
-      // baseSolver.resetStateToBeginningOfStep( domain );
-      // resetStateToBeginningOfStep( domain );
+      patchSolver.resetStateToBeginningOfStep( domain );
+      baseSolver.resetStateToBeginningOfStep( domain );
+      resetStateToBeginningOfStep( domain );
     }
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", BaseSolver: " );
