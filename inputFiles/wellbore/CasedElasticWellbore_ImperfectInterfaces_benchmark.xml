@@ -45,59 +45,59 @@
   </Geometry>
   <!-- SPHINX_CementSheathInterfacesEnd -->
 
-  <Events maxTime="1.0">
+  <Events maxTime="2.0">
 
     <PeriodicEvent
       name="stressHistoryCollection_casing"
-      endTime="1"
+      endTime="2.0"
       forceDt="0.1"
       target="/Tasks/stressCollection_casing"/>
     <PeriodicEvent
       name="stressHistoryCollection_cement"
-      endTime="1"
+      endTime="2.0"
       forceDt="0.1"
       target="/Tasks/stressCollection_cement"/>
     <PeriodicEvent
       name="stressHistoryCollection_rock"
-      endTime="1"
+      endTime="2.0"
       forceDt="0.1"
       target="/Tasks/stressCollection_rock"/>
     <PeriodicEvent
       name="stressTimeHistoryOutput_casing"
-      endTime="1"
+      endTime="2.0"
       forceDt="0.1"
       target="/Outputs/stressHistoryOutput_casing"/>
     <PeriodicEvent
       name="stressTimeHistoryOutput_cement"
-      endTime="1"
+      endTime="2.0"
       forceDt="0.1"
       target="/Outputs/stressHistoryOutput_cement"/>
     <PeriodicEvent
       name="stressTimeHistoryOutput_rock"
-      endTime="1"
+      endTime="2.0"
       forceDt="0.1"
       target="/Outputs/stressHistoryOutput_rock"/>
 
     <PeriodicEvent
       name="displacementHistoryCollection"
-      endTime="1"
+      endTime="2.0"
       forceDt="0.1"
       target="/Tasks/displacementCollection"/>
     <PeriodicEvent
       name="displacementTimeHistoryOutput"
-      endTime="1"
+      endTime="2.0"
       forceDt="0.1"
       target="/Outputs/displacementHistoryOutput"/>
 
     <!-- SPHINX_EventDisplacementJumpHistoryCollection -->
     <PeriodicEvent
       name="displacementJumpHistoryCollection"
-      endTime="1"
+      endTime="2.0"
       forceDt="0.1"
       target="/Tasks/displacementJumpCollection"/>
     <PeriodicEvent
       name="displacementJumpTimeHistoryOutput"
-      endTime="1"
+      endTime="2.0"
       forceDt="0.1"
       target="/Outputs/displacementJumpHistoryOutput"/>
     <!-- SPHINX_EventDisplacementJumpHistoryCollectionEnd -->
@@ -115,15 +115,14 @@
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="0.1"
-      targetExactTimestep="1"
+      forceDt="0.1"
       target="/Outputs/vtkOutput"/>
     
-    <PeriodicEvent
+    <!--PeriodicEvent
       name="restarts"
-      timeFrequency="0.5"
+      timeFrequency="1.0"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"/-->
   </Events>
 
 

@@ -187,7 +187,7 @@
     <TableFunction
       name="ForceTimeFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 0.5, 1.0 }"
+      coordinates="{ 0.0, 0.5, 2.0 }"
       values="{ 0.0, -1.0, 1.0 }"/>
     <TableFunction
       name="apertureTable"

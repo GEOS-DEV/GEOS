@@ -1,5 +1,5 @@
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 #import xml.etree.ElementTree as ElementTree
 import numpy as np
@@ -18,12 +18,17 @@ def main():
 
 	nTime = time.shape[0]
 
-	displacementJump_normal = displacementJump[0:nTime, 0, 0]
-	
+	displacementJump_normal = displacementJump[0:nTime, 0, 0]	
 	
 	# Reference results
-	listTime = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-	listP0 = [0, -2e6, -4e6, -6e6, -8e6, -10e6, -6e6, -2e6, 2e6, 6e6, 10e6]
+	listTime = np.linspace(0, 0.5, 21, endpoint=False)
+	listP0 = np.linspace(0, -10e6, 21, endpoint=False)
+	listTime2 = np.linspace(0.5, 2.0, 21, endpoint=True)
+	listP02 = np.linspace(-10e6, 10e6, 21, endpoint=True)
+	for x in listTime2:
+		listTime = np.append(listTime, x)
+	for x in listP02:
+		listP0 = np.append(listP0, x)
 
 	list_displacementJump_anal = []
 	for P0 in listP0:
@@ -34,17 +39,17 @@ def main():
 	plt.plot( time,
 			  displacementJump_normal * 1e6,        # converted to um
 			  'k+',
-			  label='GEOSX')
+			  label='GEOS')
 
 	plt.plot( listTime,
 			  list_displacementJump_anal,
 			  'r-',
-			  label='Analytic')
+			  label='Analytical')
 	
 	plt.grid()
 	plt.ylabel(r'Normal displacement jump [$\mu$m]')
 	plt.xlabel('Time [s]')
-	plt.xlim(0, 1)
+	plt.xlim(0, 2)
 
 	plt.legend(loc='upper left')
 	plt.show()
