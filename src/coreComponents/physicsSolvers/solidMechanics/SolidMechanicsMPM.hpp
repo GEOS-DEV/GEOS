@@ -223,8 +223,8 @@ public:
 
   void computeContactForces( real64 const dt,
                              arrayView2d< real64 const > const & gridMass,
-                             arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( gridDamage ),
-                             arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( gridMaxDamage ),
+                             arrayView2d< real64 const > const & gridDamage,
+                             arrayView2d< real64 const > const & gridMaxDamage,
                              arrayView3d< real64 const > const & gridVelocity,
                              arrayView3d< real64 const > const & gridMomentum,
                              arrayView3d< real64 const > const & gridSurfaceNormal,
@@ -277,6 +277,12 @@ public:
                                    std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
                                    std::vector< real64 > & fp,                 // scalar field values (e.g. damage) at neighbor particles
                                    arraySlice1d< real64 > const result );
+  
+  void computeKernelVectorGradient( arraySlice1d< real64 const > const x,       // query point
+                                    std::vector< std::vector< real64 > > & xp,  // List of neighbor particle locations.
+                                    std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
+                                    std::vector< std::vector< real64 > > & fp,  // vector field values (e.g. velocity) at neighbor particles
+                                    arraySlice2d< real64 > const result );
 
   void computeDamageFieldGradient( ParticleManager & particleManager );
 
@@ -329,6 +335,19 @@ public:
 
   void printProfilingResults();
 
+  void computeSurfaceFlags( ParticleManager & particleManager );
+
+  void computeSphF( ParticleManager & particleManager );
+
+  void directionalOverlapCorrection( real64 dt, ParticleManager & particleManager );
+
+  int evaluateSeparabilityCriterion( localIndex const & A,
+                                     localIndex const & B,
+                                     real64 const & damageA,
+                                     real64 const & damageB,
+                                     real64 const & maxDamageA,
+                                     real64 const & maxDamageB );
+
 protected:
   virtual void postProcessInput() override final;
 
@@ -354,15 +373,20 @@ protected:
   int m_needsNeighborList;
   real64 m_neighborRadius;
   int m_binSizeMultiplier;
+
   int m_useDamageAsSurfaceFlag;
 
   int m_cpdiDomainScaling;
 
   real64 m_smallMass;
 
-  int m_numContactGroups, m_numContactFlags, m_numVelocityFields; // TODO: I think we only need m_numVelocityFields
+  int m_numContactGroups, m_numContactFlags, m_numVelocityFields;
+  real64 m_separabilityMinDamage;
+  int m_treatFullyDamagedAsSingleField;
+  int m_surfaceDetection;
   int m_damageFieldPartitioning;
-  int m_contactGapCorrection;
+  int m_contactGapCorrection;  
+  int m_directionalOverlapCorrection;
   real64 m_frictionCoefficient;
 
   int m_planeStrain;
