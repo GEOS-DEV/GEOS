@@ -126,4 +126,4 @@ DECLARE_FIELD( FreeSurfaceNodeIndicator,
 
 } /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticFirstOrderWaveEquationSEM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION__HPP_WAVESOLVERBASEFIELDS */

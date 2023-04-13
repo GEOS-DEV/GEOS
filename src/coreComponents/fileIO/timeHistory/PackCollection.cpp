@@ -282,7 +282,7 @@ void PackCollection::collect( DomainPartition const & domain,
     targetField.pack< true >( buffer, false, true, events );
   }
   m_setChanged = false;
-  GEOSX_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
+  GEOS_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
 }
 
 bool PackCollection::collectAll() const

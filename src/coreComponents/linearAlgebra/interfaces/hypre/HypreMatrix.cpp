@@ -150,7 +150,7 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
 {
   RAJA::ReduceMax< ReducePolicy< hypre::execPolicy >, localIndex > maxRowEntries( 0 );
   forAll< hypre::execPolicy >( localMatrix.numRows(),
-                               [localMatrix, maxRowEntries] GEOSX_HYPRE_DEVICE ( localIndex const row )
+                               [localMatrix, maxRowEntries] GEOS_HYPRE_DEVICE ( localIndex const row )
   {
     maxRowEntries.max( localMatrix.numNonZeros( row ) );
   } );
@@ -171,7 +171,7 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
                                [localMatrix, rankOffset,
                                 rowsView = rows.toView(),
                                 sizesView = sizes.toView(),
-                                offsetsView = offsets.toView()] GEOSX_HYPRE_DEVICE ( localIndex const row )
+                                offsetsView = offsets.toView()] GEOS_HYPRE_DEVICE ( localIndex const row )
   {
     rowsView[row] = LvArray::integerConversion< HYPRE_BigInt >( row + rankOffset );
     sizesView[row] = LvArray::integerConversion< HYPRE_Int >( localMatrix.numNonZeros( row ) );
@@ -182,7 +182,7 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
   localMatrix.move( hypre::memorySpace, false );
 
   open();
-  GEOSX_HYPRE_CHECK_DEVICE_ERRORS( "before HYPRE_IJMatrixAddToValues2" );
+  GEOS_HYPRE_CHECK_DEVICE_ERRORS( "before HYPRE_IJMatrixAddToValues2" );
   GEOS_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues2( m_ij_mat,
                                                      localMatrix.numRows(),
                                                      sizes.data(),
@@ -831,13 +831,13 @@ void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
   hypre::CSRData< true > const offd{ hypre_ParCSRMatrixOffd( unwrapped() ) };
   HYPRE_BigInt const * const colMap = hypre::getOffdColumnMap( unwrapped() );
 
-  auto const getComponent = [dofsPerNode] GEOSX_HYPRE_DEVICE ( auto const i )
+  auto const getComponent = [dofsPerNode] GEOS_HYPRE_DEVICE ( auto const i )
   {
     return LvArray::integerConversion< integer >( i % dofsPerNode );
   };
 
   forAll< hypre::execPolicy >( numLocalRows(), [diag, offd, tempMatView, getComponent,
-                                                firstLocalRow, firstLocalCol, colMap] GEOSX_HYPRE_DEVICE ( localIndex const localRow )
+                                                firstLocalRow, firstLocalCol, colMap] GEOS_HYPRE_DEVICE ( localIndex const localRow )
   {
     integer const rowComponent = getComponent( firstLocalRow + localRow );
     for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
@@ -888,9 +888,9 @@ void HypreMatrix::addEntries( HypreMatrix const & src,
         HYPRE_BigInt const * const src_colmap = hypre::getOffdColumnMap( src.unwrapped() );
         HYPRE_BigInt const * const dst_colmap = hypre::getOffdColumnMap( unwrapped() );
         hypre::addEntriesRestricted( hypre_ParCSRMatrixOffd( src.unwrapped() ),
-                                     [src_colmap] GEOSX_HYPRE_DEVICE ( auto i ) { return src_colmap[i]; },
+                                     [src_colmap] GEOS_HYPRE_DEVICE ( auto i ) { return src_colmap[i]; },
                                      hypre_ParCSRMatrixOffd( unwrapped() ),
-                                     [dst_colmap] GEOSX_HYPRE_DEVICE ( auto i ) { return dst_colmap[i]; },
+                                     [dst_colmap] GEOS_HYPRE_DEVICE ( auto i ) { return dst_colmap[i]; },
                                      scale );
       }
       break;
@@ -920,7 +920,7 @@ void HypreMatrix::addDiagonal( HypreVector const & src,
 
   if( isEqual( scale, 1.0 ) )
   {
-    forAll< hypre::execPolicy >( numLocalRows(), [=] GEOSX_HYPRE_DEVICE ( localIndex const localRow )
+    forAll< hypre::execPolicy >( numLocalRows(), [=] GEOS_HYPRE_DEVICE ( localIndex const localRow )
     {
       // Hypre stores diagonal element at the beginning of each row, we assume it's always present
       csr.values[csr.rowptr[localRow]] += values[localRow];
@@ -928,7 +928,7 @@ void HypreMatrix::addDiagonal( HypreVector const & src,
   }
   else
   {
-    forAll< hypre::execPolicy >( numLocalRows(), [=] GEOSX_HYPRE_DEVICE ( localIndex const localRow )
+    forAll< hypre::execPolicy >( numLocalRows(), [=] GEOS_HYPRE_DEVICE ( localIndex const localRow )
     {
       // Hypre stores diagonal element at the beginning of each row, we assume it's always present
       csr.values[csr.rowptr[localRow]] += scale * values[localRow];
@@ -955,7 +955,7 @@ localIndex HypreMatrix::maxRowLength() const
   HYPRE_Int const * const ia_offd = hypre_CSRMatrixI( hypre_ParCSRMatrixOffd( m_parcsr_mat ) );
 
   RAJA::ReduceMax< ReducePolicy< hypre::execPolicy >, localIndex > localMaxRowLength( 0 );
-  forAll< hypre::execPolicy >( numLocalRows(), [=] GEOSX_HYPRE_DEVICE ( localIndex const localRow )
+  forAll< hypre::execPolicy >( numLocalRows(), [=] GEOS_HYPRE_DEVICE ( localIndex const localRow )
   {
     localMaxRowLength.max( (ia_diag[localRow + 1] - ia_diag[localRow]) + (ia_offd[localRow + 1] - ia_offd[localRow] ) );
   } );
@@ -992,7 +992,7 @@ void HypreMatrix::getRowLengths( arrayView1d< localIndex > const & lengths ) con
   GEOS_LAI_ASSERT( assembled() );
   HYPRE_Int const * const ia_diag = hypre_CSRMatrixI( hypre_ParCSRMatrixDiag( m_parcsr_mat ) );
   HYPRE_Int const * const ia_offd = hypre_CSRMatrixI( hypre_ParCSRMatrixOffd( m_parcsr_mat ) );
-  forAll< hypre::execPolicy >( numLocalRows(), [=] GEOSX_HYPRE_DEVICE ( localIndex const localRow )
+  forAll< hypre::execPolicy >( numLocalRows(), [=] GEOS_HYPRE_DEVICE ( localIndex const localRow )
   {
     lengths[localRow] = (ia_diag[localRow + 1] - ia_diag[localRow]) + (ia_offd[localRow + 1] - ia_offd[localRow]);
   } );
@@ -1347,7 +1347,7 @@ real64 HypreMatrix::normInf() const
   hypre::CSRData< true > offd{ hypre_ParCSRMatrixOffd( m_parcsr_mat ) };
 
   RAJA::ReduceMax< ReducePolicy< hypre::execPolicy >, HYPRE_Real > maxRowAbsSum( 0.0 );
-  forAll< hypre::execPolicy >( numLocalRows(), [=] GEOSX_HYPRE_DEVICE ( localIndex const localRow )
+  forAll< hypre::execPolicy >( numLocalRows(), [=] GEOS_HYPRE_DEVICE ( localIndex const localRow )
   {
     HYPRE_Real rowAbsSum = 0.0;
     for( HYPRE_Int j = diag.rowptr[localRow]; j < diag.rowptr[localRow + 1]; ++j )

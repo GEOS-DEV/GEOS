@@ -75,15 +75,15 @@ namespace timingHelpers
 
 }
 /// Mark a scope with NVTX with name and color (only a local helper should not be used elsewhere)
-#  define GEOSX_NVTX_MARK_SCOPE_COLORED(name, color) timingHelpers::NVTXScopeTracer __FILE__ ## _ ## __LINE__ ## _ ## scopeTracer = timingHelpers::NVTXScopeTracer(name, color)
+#  define GEOS_NVTX_MARK_SCOPE_COLORED(name, color) timingHelpers::NVTXScopeTracer __FILE__ ## _ ## __LINE__ ## _ ## scopeTracer = timingHelpers::NVTXScopeTracer(name, color)
 /// Mark a scope with NVTX with a given name and color purple
-#  define GEOSX_NVTX_MARK_SCOPE(name) GEOSX_NVTX_MARK_SCOPE_COLORED(STRINGIZE_NX(name), timingHelpers::PURPLE)
+#  define GEOS_NVTX_MARK_SCOPE(name) GEOS_NVTX_MARK_SCOPE_COLORED(STRINGIZE_NX(name), timingHelpers::PURPLE)
 /// Mark a function with NVTX using function name and color blue
-#  define GEOSX_NVTX_MARK_FUNCTION GEOSX_NVTX_MARK_SCOPE_COLORED(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str(), timingHelpers::BLUE)
+#  define GEOS_NVTX_MARK_FUNCTION GEOS_NVTX_MARK_SCOPE_COLORED(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str(), timingHelpers::BLUE)
 #else
 /// @cond DO_NOT_DOCUMENT
-#  define GEOSX_NVTX_MARK_SCOPE(name)
-#  define GEOSX_NVTX_MARK_FUNCTION
+#  define GEOS_NVTX_MARK_SCOPE(name)
+#  define GEOS_NVTX_MARK_FUNCTION
 /// @endcond
 #endif /* USE_CUDA */
 
@@ -128,9 +128,9 @@ namespace timingHelpers
 #endif // GEOSX_USE_CALIPER
 
 /// Mark scope with both Caliper and NVTX if enabled
-#define GEOS_MARK_SCOPE(name) GEOS_CALIPER_MARK_SCOPE(name); GEOSX_NVTX_MARK_SCOPE(name)
+#define GEOS_MARK_SCOPE(name) GEOS_CALIPER_MARK_SCOPE(name); GEOS_NVTX_MARK_SCOPE(name)
 /// Mark function with both Caliper and NVTX if enabled
-#define GEOS_MARK_FUNCTION GEOS_CALIPER_MARK_FUNCTION; GEOSX_NVTX_MARK_FUNCTION
+#define GEOS_MARK_FUNCTION GEOS_CALIPER_MARK_FUNCTION; GEOS_NVTX_MARK_FUNCTION
 /// Mark the beginning of function, only useful when you don't want to or can't mark the whole function.
 #define GEOS_MARK_FUNCTION_BEGIN(name) GEOS_CALIPER_MARK_FUNCTION_BEGIN(name)
 /// Mark the end of function, only useful when you don't want to or can't mark the whole function.

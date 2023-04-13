@@ -874,7 +874,7 @@ void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
   GEOS_MARK_FUNCTION;
 
   // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
-  GEOSX_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events ) );
+  GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events ) );
   if( onDevice )
   {
     waitAllDeviceEvents( events );

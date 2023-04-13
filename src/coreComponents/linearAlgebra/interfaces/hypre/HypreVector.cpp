@@ -161,7 +161,7 @@ void HypreVector::reciprocal()
 {
   GEOS_LAI_ASSERT( ready() );
   arrayView1d< real64 > values = m_values.toView();
-  forAll< hypre::execPolicy >( localSize(), [values] GEOSX_HYPRE_DEVICE ( localIndex const i )
+  forAll< hypre::execPolicy >( localSize(), [values] GEOS_HYPRE_DEVICE ( localIndex const i )
   {
     values[i] = 1.0 / values[i];
   } );
@@ -236,7 +236,7 @@ void HypreVector::pointwiseProduct( HypreVector const & x,
   arrayView1d< real64 const > const my_values = m_values.toViewConst();
   arrayView1d< real64 const > const x_values = x.m_values.toViewConst();
   arrayView1d< real64 > const y_values = y.m_values.toView();
-  forAll< hypre::execPolicy >( localSize(), [y_values, my_values, x_values] GEOSX_HYPRE_DEVICE ( localIndex const i )
+  forAll< hypre::execPolicy >( localSize(), [y_values, my_values, x_values] GEOS_HYPRE_DEVICE ( localIndex const i )
   {
     y_values[i] = my_values[i] * x_values[i];
   } );
@@ -248,7 +248,7 @@ real64 HypreVector::norm1() const
 
   arrayView1d< real64 const > values = m_values.toViewConst();
   RAJA::ReduceSum< ReducePolicy< hypre::execPolicy >, real64 > localNorm( 0.0 );
-  forAll< hypre::execPolicy >( localSize(), [localNorm, values] GEOSX_HYPRE_DEVICE ( localIndex const i )
+  forAll< hypre::execPolicy >( localSize(), [localNorm, values] GEOS_HYPRE_DEVICE ( localIndex const i )
   {
     localNorm += LvArray::math::abs( values[i] );
   } );
@@ -267,7 +267,7 @@ real64 HypreVector::normInf() const
 
   arrayView1d< real64 const > values = m_values.toViewConst();
   RAJA::ReduceMax< ReducePolicy< hypre::execPolicy >, real64 > localNorm( 0.0 );
-  forAll< hypre::execPolicy >( localSize(), [localNorm, values] GEOSX_HYPRE_DEVICE ( localIndex const i )
+  forAll< hypre::execPolicy >( localSize(), [localNorm, values] GEOS_HYPRE_DEVICE ( localIndex const i )
   {
     localNorm.max( LvArray::math::abs( values[i] ) );
   } );

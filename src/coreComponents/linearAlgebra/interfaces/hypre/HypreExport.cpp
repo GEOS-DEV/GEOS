@@ -86,7 +86,7 @@ void exportArray( HYPRE_MemoryLocation const location,
   }
   else // src is on device
   {
-    forAll< hypre::execPolicy >( dst.size(), [dst, src] GEOSX_HYPRE_DEVICE ( localIndex const i )
+    forAll< hypre::execPolicy >( dst.size(), [dst, src] GEOS_HYPRE_DEVICE ( localIndex const i )
     {
       dst[i] = static_cast< U >( src[i] );
     } );
@@ -106,7 +106,7 @@ void exportArray( HYPRE_MemoryLocation const location,
   }
   else // dst is on device
   {
-    forAll< hypre::execPolicy >( src.size(), [dst, src] GEOSX_HYPRE_DEVICE ( localIndex const i )
+    forAll< hypre::execPolicy >( src.size(), [dst, src] GEOS_HYPRE_DEVICE ( localIndex const i )
     {
       dst[i] = static_cast< U >( src[i] );
     } );
@@ -155,7 +155,7 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
     }
 
     // Sort the values by column index after copying (some solvers expect this)
-    forAll< hypre::execPolicy >( numRow, [rowOffsets, colIndices, values] GEOSX_HYPRE_DEVICE ( HYPRE_Int const i )
+    forAll< hypre::execPolicy >( numRow, [rowOffsets, colIndices, values] GEOS_HYPRE_DEVICE ( HYPRE_Int const i )
     {
       using LvArray::sortedArrayManipulation::dualSort;
       dualSort( colIndices.data() + rowOffsets[i],

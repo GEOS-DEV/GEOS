@@ -24,7 +24,7 @@
 
 #include <numeric>
 
-#define GEOSX_PARMETIS_CHECK( call ) \
+#define GEOS_PARMETIS_CHECK( call ) \
   do { \
     auto const ierr = call; \
     GEOS_ERROR_IF_NE_MSG( ierr, METIS_OK, "Error in call to:\n" << #call ); \
@@ -52,7 +52,7 @@ meshToDual( ArrayOfArraysView< int64_t const, int64_t > const & elemToNodes,
   idx_t * adjncy;
 
   // Technical UB if ParMETIS writes into these arrays; in practice we discard them right after
-  GEOSX_PARMETIS_CHECK( ParMETIS_V3_Mesh2Dual( const_cast< idx_t * >( elemDist.data() ),
+  GEOS_PARMETIS_CHECK( ParMETIS_V3_Mesh2Dual( const_cast< idx_t * >( elemDist.data() ),
                                                const_cast< idx_t * >( elemToNodes.getOffsets() ),
                                                const_cast< idx_t * >( elemToNodes.getValues() ),
                                                &numflag, &ncommonnodes, &xadj, &adjncy, &comm ) );
@@ -99,7 +99,7 @@ partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
   real_t ubvec = 1.05;
 
   // Technical UB if ParMETIS writes into these arrays; in practice we discard them right after
-  GEOSX_PARMETIS_CHECK( ParMETIS_V3_PartKway( const_cast< idx_t * >( vertDist.data() ),
+  GEOS_PARMETIS_CHECK( ParMETIS_V3_PartKway( const_cast< idx_t * >( vertDist.data() ),
                                               const_cast< idx_t * >( graph.getOffsets() ),
                                               const_cast< idx_t * >( graph.getValues() ),
                                               nullptr, nullptr, &wgtflag,
@@ -108,7 +108,7 @@ partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
 
   for( int iter = 0; iter < numRefinements; ++iter )
   {
-    GEOSX_PARMETIS_CHECK( ParMETIS_V3_RefineKway( const_cast< idx_t * >( vertDist.data() ),
+    GEOS_PARMETIS_CHECK( ParMETIS_V3_RefineKway( const_cast< idx_t * >( vertDist.data() ),
                                                   const_cast< idx_t * >( graph.getOffsets() ),
                                                   const_cast< idx_t * >( graph.getValues() ),
                                                   nullptr, nullptr, &wgtflag,

@@ -30,10 +30,10 @@
 
 #ifdef GEOSX_USE_HYPRE_CUDA
 /// Host-device marker for custom hypre kernels
-#define GEOSX_HYPRE_DEVICE GEOS_DEVICE
+#define GEOS_HYPRE_DEVICE GEOS_DEVICE
 #else
 /// Host-device marker for custom hypre kernels
-#define GEOSX_HYPRE_DEVICE
+#define GEOS_HYPRE_DEVICE
 #endif
 
 namespace geos
@@ -150,7 +150,7 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
  * @brief Check for previous device errors and report with line information.
  * @param msg custom message to add
  */
-#define GEOSX_HYPRE_CHECK_DEVICE_ERRORS( msg ) ::geos::hypre::checkDeviceErrors( msg, __FILE__, __LINE__ )
+#define GEOS_HYPRE_CHECK_DEVICE_ERRORS( msg ) ::geos::hypre::checkDeviceErrors( msg, __FILE__, __LINE__ )
 
 static_assert( sizeof( HYPRE_BigInt ) == sizeof( geos::globalIndex ),
                "HYPRE_BigInt and geos::globalIndex must have the same size" );
