@@ -57,11 +57,11 @@ public:
      * @param[in] k Element index.
      * @return the shear modulus of element k
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     virtual real64 getShearModulus( localIndex const k ) const
     {
-      GEOSX_UNUSED_VAR( k );
-      GEOSX_ERROR( "getShearModulus() not implemented for this model" );
+      GEOS_UNUSED_VAR( k );
+      GEOS_ERROR( "getShearModulus() not implemented for this model" );
 
       return 0;
     }
@@ -74,7 +74,7 @@ public:
    */
   KernelWrapper createKernelUpdates( bool const includeState = false ) const
   {
-    GEOSX_UNUSED_VAR( includeState );
+    GEOS_UNUSED_VAR( includeState );
     return KernelWrapper();
   }
 };

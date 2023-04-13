@@ -54,7 +54,7 @@ using ArraySliceOrRef = typename ArraySliceOrRefHelper< T, DIM, USD >::type;
 template< typename T, int DIM, int USD, int USD_DC >
 struct MultiFluidVarSlice
 {
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   MultiFluidVarSlice( internal::ArraySliceOrRef< T, DIM, USD > inputValue,
                       internal::ArraySliceOrRef< T, DIM+1, USD_DC > inputDerivs ):
     value( inputValue ),
@@ -79,7 +79,7 @@ struct MultiFluidVarView
 
   using SliceType = MultiFluidVarSlice< T, NDIM - 2, USD - 2, USD_DC - 2 >;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   SliceType operator()( localIndex const k, localIndex const q ) const
   {
     return SliceType( value[k][q], derivs[k][q] );

@@ -45,7 +45,7 @@ PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
 void PhaseFieldFractureSolver::postProcessInput()
 {
   Base::postProcessInput();
-  GEOSX_WARNING_IF( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::FullyImplicit,
+  GEOS_WARNING_IF( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::FullyImplicit,
                     "FullyImplicit coupling not implemented for this solver. A sequential coupling approach will be used." );
   getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
 }

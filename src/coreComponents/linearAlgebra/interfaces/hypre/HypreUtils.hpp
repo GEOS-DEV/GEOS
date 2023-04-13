@@ -30,7 +30,7 @@
 
 #ifdef GEOSX_USE_HYPRE_CUDA
 /// Host-device marker for custom hypre kernels
-#define GEOSX_HYPRE_DEVICE GEOSX_DEVICE
+#define GEOSX_HYPRE_DEVICE GEOS_DEVICE
 #else
 /// Host-device marker for custom hypre kernels
 #define GEOSX_HYPRE_DEVICE
@@ -140,9 +140,9 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
 {
 #ifdef GEOSX_USE_HYPRE_CUDA
   cudaError_t const err = cudaGetLastError();
-  GEOSX_ERROR_IF( err != cudaSuccess, GEOSX_FMT( "Previous CUDA errors found: {} ({} at {}:{})", msg, cudaGetErrorString( err ), file, line ) );
+  GEOS_ERROR_IF( err != cudaSuccess, GEOSX_FMT( "Previous CUDA errors found: {} ({} at {}:{})", msg, cudaGetErrorString( err ), file, line ) );
 #else
-  GEOSX_UNUSED_VAR( msg, file, line );
+  GEOS_UNUSED_VAR( msg, file, line );
 #endif
 }
 

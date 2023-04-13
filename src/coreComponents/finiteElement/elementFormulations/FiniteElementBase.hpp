@@ -98,7 +98,7 @@ public:
     /**
      * Default constructor
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables()
     {}
   };
@@ -133,7 +133,7 @@ public:
                             SUBREGION_TYPE const & cellSubRegion,
                             MeshData< SUBREGION_TYPE > & meshData )
   {
-    GEOSX_UNUSED_VAR( nodeManager,
+    GEOS_UNUSED_VAR( nodeManager,
                       edgeManager,
                       faceManager,
                       cellSubRegion,
@@ -173,13 +173,13 @@ public:
    * @param stack Object that holds stack variables.
    */
   template< typename SUBREGION_TYPE >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   static void setupStack( localIndex const & cellIndex,
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack )
   {
-    GEOSX_UNUSED_VAR( cellIndex,
+    GEOS_UNUSED_VAR( cellIndex,
                       meshData,
                       stack );
 
@@ -194,7 +194,7 @@ public:
    * @param stack Object that holds stack variables.
    */
   template< typename LEAF, typename SUBREGION_TYPE >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const & cellIndex,
               typename LEAF::template MeshData< SUBREGION_TYPE > const & meshData,
               typename LEAF::StackVariables & stack ) const
@@ -206,14 +206,14 @@ public:
    * @brief Virtual getter for the number of quadrature points per element.
    * @return The number of quadrature points per element.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const = 0;
 
   /**
    * @brief Virtual getter for the number of support points per element.
    * @return The number of support points per element.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual localIndex getNumSupportPoints() const = 0;
 
   /**
@@ -232,7 +232,7 @@ public:
    * @return The function space.
    */
   template< int N >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   constexpr static PDEUtilities::FunctionSpace getFunctionSpace();
 
   /**
@@ -242,7 +242,7 @@ public:
    * @return The number of support points per element.
    */
   template< typename LEAF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numSupportPoints( typename LEAF::StackVariables const & stack ) const
   {
     return LEAF::getNumSupportPoints( stack );
@@ -254,7 +254,7 @@ public:
    * number of support points.
    * @return The number of maximum support points for this element.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual localIndex getMaxSupportPoints() const = 0;
 
   /**
@@ -269,7 +269,7 @@ public:
    * This function calls the function to calculate shape function gradients.
    */
   template< typename LEAF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 getGradN( localIndex const k,
                    localIndex const q,
                    real64 const (&X)[LEAF::maxSupportPoints][3],
@@ -288,7 +288,7 @@ public:
    * This function calls the function to calculate shape function gradients.
    */
   template< typename LEAF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 getGradN( localIndex const k,
                    localIndex const q,
                    real64 const (&X)[LEAF::maxSupportPoints][3],
@@ -307,7 +307,7 @@ public:
    * This function returns pre-calculated shape function gradients.
    */
   template< typename LEAF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 getGradN( localIndex const k,
                    localIndex const q,
                    int const X,
@@ -325,7 +325,7 @@ public:
    * This function returns pre-calculated shape function gradients.
    */
   template< typename LEAF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 getGradN( localIndex const k,
                    localIndex const q,
                    int const X,
@@ -344,15 +344,15 @@ public:
    * @param scaleFactor Scaling of the stabilization matrix.
    */
   template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS, bool UPPER >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   static void addGradGradStabilization( StackVariables const & stack,
                                         real64 ( & matrix )
                                         [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT]
                                         [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT],
                                         real64 const & scaleFactor )
   {
-    GEOSX_UNUSED_VAR( stack,
+    GEOS_UNUSED_VAR( stack,
                       matrix,
                       scaleFactor );
   }
@@ -368,7 +368,7 @@ public:
    * @param scaleFactor Optional scaling of the stabilization matrix. Defaults to 1.0.
    */
   template< typename LEAF, localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER = false >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void addGradGradStabilizationMatrix( typename LEAF::StackVariables const & stack,
                                        real64 ( & matrix )
                                        [LEAF::maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT]
@@ -396,17 +396,17 @@ public:
    * @param scaleFactor Scaling of the stabilization matrix.
    */
   template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   static void addEvaluatedGradGradStabilization( StackVariables const & stack,
                                                  real64 const ( &dofs )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
                                                  real64 ( & targetVector )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
                                                  real64 const scaleFactor )
   {
-    GEOSX_UNUSED_VAR( stack );
-    GEOSX_UNUSED_VAR( dofs );
-    GEOSX_UNUSED_VAR( targetVector );
-    GEOSX_UNUSED_VAR( scaleFactor );
+    GEOS_UNUSED_VAR( stack );
+    GEOS_UNUSED_VAR( dofs );
+    GEOS_UNUSED_VAR( targetVector );
+    GEOS_UNUSED_VAR( scaleFactor );
   }
 
   /**
@@ -423,8 +423,8 @@ public:
    * @param scaleFactor Optional scaling of the stabilization matrix. Defaults to 1.0.
    */
   template< typename LEAF, localIndex NUMDOFSPERTRIALSUPPORTPOINT >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void
   addEvaluatedGradGradStabilizationVector( typename LEAF::StackVariables const & stack,
                                            real64 const ( &dofs )[LEAF::maxSupportPoints]
@@ -465,7 +465,7 @@ public:
    *
    */
   template< int NUM_SUPPORT_POINTS >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static
   void value( real64 const (&N)[NUM_SUPPORT_POINTS],
               real64 const (&var)[NUM_SUPPORT_POINTS],
@@ -478,7 +478,7 @@ public:
    */
   template< int NUM_SUPPORT_POINTS,
             int NUM_COMPONENTS >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static
   void value( real64 const (&N)[NUM_SUPPORT_POINTS],
               real64 const (&var)[NUM_SUPPORT_POINTS][NUM_COMPONENTS],
@@ -511,7 +511,7 @@ public:
    */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void symmetricGradient( GRADIENT_TYPE const & gradN,
                                  real64 const (&var)[NUM_SUPPORT_POINTS][3],
                                  real64 ( &gradVar )[6] );
@@ -530,7 +530,7 @@ public:
    */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static real64 symmetricGradientTrace( GRADIENT_TYPE const & gradN,
                                         real64 const (&var)[NUM_SUPPORT_POINTS][3] );
 
@@ -552,7 +552,7 @@ public:
    */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void gradient( GRADIENT_TYPE const & gradN,
                         real64 const (&var)[NUM_SUPPORT_POINTS],
                         real64 ( &gradVar )[3] );
@@ -569,7 +569,7 @@ public:
    */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void gradient( GRADIENT_TYPE const & gradN,
                         real64 const (&var)[NUM_SUPPORT_POINTS][3],
                         real64 ( &gradVar )[3][3] );
@@ -595,7 +595,7 @@ public:
    */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
                                 GRADIENT_TYPE const & gradN,
                                 real64 const (&var)[NUM_SUPPORT_POINTS],
@@ -634,7 +634,7 @@ public:
    */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void plusGradNajAij( GRADIENT_TYPE const & gradN,
                               real64 const (&var_detJxW)[6],
                               real64 ( &R )[NUM_SUPPORT_POINTS][3] );
@@ -646,7 +646,7 @@ public:
    */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void plusGradNajAij( GRADIENT_TYPE const & gradN,
                               real64 const (&var_detJxW)[3][3],
                               real64 ( &R )[NUM_SUPPORT_POINTS][3] );
@@ -660,7 +660,7 @@ public:
    *   the tensor contraction.
    */
   template< int NUM_SUPPORT_POINTS >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void plusNaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
                         real64 const (&forcingTerm_detJxW)[3],
                         real64 ( &R )[NUM_SUPPORT_POINTS][3] );
@@ -684,7 +684,7 @@ public:
    */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void plusGradNajAijPlusNaFi( GRADIENT_TYPE const & gradN,
                                       real64 const (&var_detJxW)[3][3],
                                       real64 const (&N)[NUM_SUPPORT_POINTS],
@@ -698,7 +698,7 @@ public:
    */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void plusGradNajAijPlusNaFi( GRADIENT_TYPE const & gradN,
                                       real64 const (&var_detJxW)[6],
                                       real64 const (&N)[NUM_SUPPORT_POINTS],
@@ -712,13 +712,13 @@ public:
    */
   void setGradNView( arrayView4d< real64 const > const & source )
   {
-    GEOSX_ERROR_IF_NE_MSG( source.size( 1 ),
+    GEOS_ERROR_IF_NE_MSG( source.size( 1 ),
                            getNumQuadraturePoints(),
                            "2nd-dimension of gradN array does not match number of quadrature points" );
-    GEOSX_ERROR_IF_NE_MSG( source.size( 2 ),
+    GEOS_ERROR_IF_NE_MSG( source.size( 2 ),
                            getMaxSupportPoints(),
                            "3rd-dimension of gradN array does not match number of support points" );
-    GEOSX_ERROR_IF_NE_MSG( source.size( 3 ),
+    GEOS_ERROR_IF_NE_MSG( source.size( 3 ),
                            3,
                            "4th-dimension of gradN array does not match 3" );
 
@@ -731,7 +731,7 @@ public:
    */
   void setDetJView( arrayView2d< real64 const > const & source )
   {
-    GEOSX_ERROR_IF_NE_MSG( source.size( 1 ),
+    GEOS_ERROR_IF_NE_MSG( source.size( 1 ),
                            getNumQuadraturePoints(),
                            "2nd-dimension of gradN array does not match number of quadrature points" );
     m_viewDetJ = source;
@@ -774,7 +774,7 @@ protected:
 template<>
 struct FiniteElementBase::FunctionSpaceHelper< 1 >
 {
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   constexpr static PDEUtilities::FunctionSpace getFunctionSpace()
   {
     return PDEUtilities::FunctionSpace::H1;
@@ -784,7 +784,7 @@ struct FiniteElementBase::FunctionSpaceHelper< 1 >
 template<>
 struct FiniteElementBase::FunctionSpaceHelper< 3 >
 {
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   constexpr static PDEUtilities::FunctionSpace getFunctionSpace()
   {
     return PDEUtilities::FunctionSpace::H1vector;
@@ -792,46 +792,46 @@ struct FiniteElementBase::FunctionSpaceHelper< 3 >
 };
 
 template< int N >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 constexpr PDEUtilities::FunctionSpace FiniteElementBase::getFunctionSpace()
 {
   return FunctionSpaceHelper< N >::getFunctionSpace();
 }
 
 template< typename LEAF >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 FiniteElementBase::getGradN( localIndex const k,
                                     localIndex const q,
                                     real64 const (&X)[LEAF::maxSupportPoints][3],
                                     real64 (& gradN)[LEAF::maxSupportPoints][3] ) const
 {
-  GEOSX_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( k );
   return LEAF::calcGradN( q, X, gradN );
 }
 
 template< typename LEAF >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 FiniteElementBase::getGradN( localIndex const k,
                                     localIndex const q,
                                     real64 const (&X)[LEAF::maxSupportPoints][3],
                                     typename LEAF::StackVariables const & stack,
                                     real64 ( & gradN )[LEAF::maxSupportPoints][3] ) const
 {
-  GEOSX_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( k );
   return LEAF::calcGradN( q, X, stack, gradN );
 }
 
 template< typename LEAF >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 FiniteElementBase::getGradN( localIndex const k,
                                     localIndex const q,
                                     int const X,
                                     real64 (& gradN)[LEAF::maxSupportPoints][3] ) const
 {
-  GEOSX_UNUSED_VAR( X );
+  GEOS_UNUSED_VAR( X );
 
   LvArray::tensorOps::copy< LEAF::maxSupportPoints, 3 >( gradN, m_viewGradN[ k ][ q ] );
 
@@ -839,16 +839,16 @@ real64 FiniteElementBase::getGradN( localIndex const k,
 }
 
 template< typename LEAF >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 FiniteElementBase::getGradN( localIndex const k,
                                     localIndex const q,
                                     int const X,
                                     typename LEAF::StackVariables const & stack,
                                     real64 (& gradN)[LEAF::maxSupportPoints][3] ) const
 {
-  GEOSX_UNUSED_VAR( X );
-  GEOSX_UNUSED_VAR( stack );
+  GEOS_UNUSED_VAR( X );
+  GEOS_UNUSED_VAR( stack );
 
   LvArray::tensorOps::copy< LEAF::maxSupportPoints, 3 >( gradN, m_viewGradN[ k ][ q ] );
 
@@ -860,8 +860,8 @@ real64 FiniteElementBase::getGradN( localIndex const k,
 //*************************************************************************************************
 
 template< int NUM_SUPPORT_POINTS >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void FiniteElementBase::value( real64 const (&N)[NUM_SUPPORT_POINTS],
                                real64 const (&var)[NUM_SUPPORT_POINTS],
                                real64 & value )
@@ -871,8 +871,8 @@ void FiniteElementBase::value( real64 const (&N)[NUM_SUPPORT_POINTS],
 
 template< int NUM_SUPPORT_POINTS,
           int NUM_COMPONENTS >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void FiniteElementBase::value( real64 const (&N)[NUM_SUPPORT_POINTS],
                                real64 const (&var)[NUM_SUPPORT_POINTS][NUM_COMPONENTS],
                                real64 (& value)[NUM_COMPONENTS] )
@@ -888,8 +888,8 @@ void FiniteElementBase::value( real64 const (&N)[NUM_SUPPORT_POINTS],
 
 template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void FiniteElementBase::symmetricGradient( GRADIENT_TYPE const & gradN,
                                            real64 const (&var)[NUM_SUPPORT_POINTS][3],
                                            real64 (& gradVar)[6] )
@@ -914,8 +914,8 @@ void FiniteElementBase::symmetricGradient( GRADIENT_TYPE const & gradN,
 
 template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 FiniteElementBase::symmetricGradientTrace( GRADIENT_TYPE const & gradN,
                                                   real64 const (&var)[NUM_SUPPORT_POINTS][3] )
 {
@@ -930,8 +930,8 @@ real64 FiniteElementBase::symmetricGradientTrace( GRADIENT_TYPE const & gradN,
 
 template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void FiniteElementBase::gradient( GRADIENT_TYPE const & gradN,
                                   real64 const (&var)[NUM_SUPPORT_POINTS],
                                   real64 (& gradVar)[3] )
@@ -941,8 +941,8 @@ void FiniteElementBase::gradient( GRADIENT_TYPE const & gradN,
 
 template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void FiniteElementBase::gradient( GRADIENT_TYPE const & gradN,
                                   real64 const (&var)[NUM_SUPPORT_POINTS][3],
                                   real64 (& gradVar)[3][3] )
@@ -954,8 +954,8 @@ void FiniteElementBase::gradient( GRADIENT_TYPE const & gradN,
 
 template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void FiniteElementBase::valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
                                           GRADIENT_TYPE const & gradN,
                                           real64 const (&var)[NUM_SUPPORT_POINTS],
@@ -982,8 +982,8 @@ void FiniteElementBase::valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
 
 template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void FiniteElementBase::plusGradNajAij( GRADIENT_TYPE const & gradN,
                                         real64 const (&var_detJxW)[6],
                                         real64 (& R)[NUM_SUPPORT_POINTS][3] )
@@ -999,8 +999,8 @@ void FiniteElementBase::plusGradNajAij( GRADIENT_TYPE const & gradN,
 
 template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void FiniteElementBase::plusGradNajAij( GRADIENT_TYPE const & gradN,
                                         real64 const (&var_detJxW)[3][3],
                                         real64 (& R)[NUM_SUPPORT_POINTS][3] )
@@ -1012,8 +1012,8 @@ void FiniteElementBase::plusGradNajAij( GRADIENT_TYPE const & gradN,
 }
 
 template< int NUM_SUPPORT_POINTS >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void FiniteElementBase::plusNaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
                                   real64 const (&var_detJxW)[3],
                                   real64 ( & R )[NUM_SUPPORT_POINTS][3] )
@@ -1027,8 +1027,8 @@ void FiniteElementBase::plusNaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
 
 template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void FiniteElementBase::plusGradNajAijPlusNaFi( GRADIENT_TYPE const & gradN,
                                                 real64 const (&var_detJxW)[6],
                                                 real64 const (&N)[NUM_SUPPORT_POINTS],
@@ -1045,8 +1045,8 @@ void FiniteElementBase::plusGradNajAijPlusNaFi( GRADIENT_TYPE const & gradN,
 
 template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void FiniteElementBase::plusGradNajAijPlusNaFi( GRADIENT_TYPE const & gradN,
                                                 real64 const (&var_detJxW)[3][3],
                                                 real64 const (&N)[NUM_SUPPORT_POINTS],

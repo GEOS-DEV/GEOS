@@ -53,17 +53,17 @@ ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::ExplicitSmall
   m_dt( dt ),
   m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( elementListName ).toViewConst() )
 {
-  GEOSX_UNUSED_VAR( edgeManager );
-  GEOSX_UNUSED_VAR( faceManager );
-  GEOSX_UNUSED_VAR( targetRegionIndex );
+  GEOS_UNUSED_VAR( edgeManager );
+  GEOS_UNUSED_VAR( faceManager );
+  GEOS_UNUSED_VAR( targetRegionIndex );
 }
 
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
                                                                                StackVariables & stack ) const
 {
@@ -88,8 +88,8 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( l
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
                                                                                                localIndex const q,
                                                                                                StackVariables & stack ) const
@@ -158,8 +158,8 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
                                                                                     StackVariables const & stack ) const
 {
@@ -185,11 +185,11 @@ ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch(
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( numElems );
+  GEOS_UNUSED_VAR( numElems );
 
   localIndex const numProcElems = kernelComponent.m_elementList.size();
   forAll< POLICY >( numProcElems,
-                    [=] GEOSX_DEVICE ( localIndex const index )
+                    [=] GEOS_DEVICE ( localIndex const index )
   {
     localIndex const k = kernelComponent.m_elementList[ index ];
 

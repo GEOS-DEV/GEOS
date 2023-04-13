@@ -84,12 +84,12 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  GEOSX_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
+  GEOSX_THROW_IF_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
                   catalogName() << " " << getName() <<
                   ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
                   InputError );
 
-  GEOSX_THROW_IF( m_hasCapPressure,
+  GEOSX_THROW_IF_IF( m_hasCapPressure,
                   catalogName() << " " << getName() <<
                   ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
                   InputError );
@@ -110,7 +110,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
       dynamicCast< QuasiTPFAInnerProduct const * >( &mimeticInnerProductBase )  ||
       dynamicCast< SimpleInnerProduct const * >( &mimeticInnerProductBase ) )
   {
-    GEOSX_ERROR( "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM" );
+    GEOS_ERROR( "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM" );
   }
 
   m_lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * 1e-8;
@@ -136,12 +136,12 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     arrayView1d< real64 const > const & transMultiplier = faceManager.getField< fields::flow::transMultiplier >();
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
-    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
+    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const iface )
     {
       minVal.min( transMultiplier[iface] );
     } );
 
-    GEOSX_THROW_IF( minVal.get() <= 0.0,
+    GEOSX_THROW_IF_IF( minVal.get() <= 0.0,
                     catalogName() << " " << getName()
                                   << ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
                     std::runtime_error );
@@ -149,7 +149,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
+      GEOS_LOG_RANK_0( catalogName() << " " << getName() <<
                         "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n"
                                                                                   "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored" );
     } );
@@ -250,7 +250,7 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
 }
 
 
-void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                                   DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
@@ -470,7 +470,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
     globalIndex const rankOffset = dofManager.rankOffset();
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minFaceVal( 1.0 );
-    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
+    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const iface )
     {
       if( faceGhostRank[iface] < 0 && faceDofNumber[iface] >= 0 )
       {
@@ -556,7 +556,7 @@ void CompositionalMultiphaseHybridFVM::applyAquiferBC( real64 const time,
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
+  GEOS_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
 
 }
 
@@ -566,11 +566,11 @@ void CompositionalMultiphaseHybridFVM::saveAquiferConvergedState( real64 const &
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( time, dt, domain );
+  GEOS_UNUSED_VAR( time, dt, domain );
 }
 
 
-real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                                                 real64 const & dt,
                                                                 DomainPartition const & domain,
                                                                 DofManager const & dofManager,

@@ -52,7 +52,7 @@ public:
    * @details Reference: K-A Lie, An Introduction to Reservoir Simulation Using MATLAB/GNU Octave (2019)
    */
   template< localIndex NF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
            arrayView1d< real64 const > const & transMultiplier,
@@ -67,7 +67,7 @@ public:
 };
 
 template< localIndex NF >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 SimpleInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                              arrayView1d< real64 const > const & transMultiplier,

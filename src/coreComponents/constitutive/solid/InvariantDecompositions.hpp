@@ -58,8 +58,8 @@ namespace twoInvariant
  * @param[out] devStrain Deviatoric strain invariant
  * @param[out] deviator Unit orientation (tensor) for deviatoric part in "stress" Voight notation
  */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void strainDecomposition( real64 const ( &strain )[6],
                           real64 & volStrain,
                           real64 & devStrain,
@@ -108,8 +108,8 @@ void strainDecomposition( real64 const ( &strain )[6],
  * @param[out] devStress Deviatoric stress invariant (= von Mises stress)
  * @param[out] deviator Unit orientation (tensor) for deviatoric part in "stress" Voight notation
  */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void stressDecomposition( real64 const ( &stress )[6],
                           real64 & volStress,
                           real64 & devStress,
@@ -159,8 +159,8 @@ void stressDecomposition( real64 const ( &stress )[6],
  * @param[in] deviator Unit orientation (tensor) for deviatoric part in "stress" Voight notation
  * @param[out] strain Strain tensor in Voight notation
  */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void strainRecomposition( real64 const & volStrain,
                           real64 const & devStrain,
                           real64 const ( &deviator )[6],
@@ -186,8 +186,8 @@ void strainRecomposition( real64 const & volStrain,
  * @param[in] deviator Unit orientation (tensor) for deviatoric part in "stress" Voight notation
  * @param[out] stress Stress tensor in Voight notation
  */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void stressRecomposition( real64 const & volStress,
                           real64 const & devStress,
                           real64 const ( &deviator )[6],

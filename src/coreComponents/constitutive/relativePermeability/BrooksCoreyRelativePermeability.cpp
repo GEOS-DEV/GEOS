@@ -62,7 +62,7 @@ void BrooksCoreyRelativePermeability::postProcessInput()
 
   auto const checkInputSize = [&]( auto const & array, auto const & attribute )
   {
-    GEOSX_THROW_IF_NE_MSG( array.size(), m_phaseNames.size(),
+    GEOSX_THROW_IF_IF_NE_MSG( array.size(), m_phaseNames.size(),
                            GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
                            InputError );
   };
@@ -78,26 +78,26 @@ void BrooksCoreyRelativePermeability::postProcessInput()
       return GEOSX_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
     };
 
-    GEOSX_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
+    GEOSX_THROW_IF_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
                            errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
                            InputError );
-    GEOSX_THROW_IF_GT_MSG( m_phaseMinVolumeFraction[ip], 1.0,
+    GEOSX_THROW_IF_IF_GT_MSG( m_phaseMinVolumeFraction[ip], 1.0,
                            errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
                            InputError );
     m_volFracScale -= m_phaseMinVolumeFraction[ip];
 
-    GEOSX_THROW_IF_LT_MSG( m_phaseRelPermExponent[ip], 0.0,
+    GEOSX_THROW_IF_IF_LT_MSG( m_phaseRelPermExponent[ip], 0.0,
                            errorMsg( viewKeyStruct::phaseRelPermExponentString() ),
                            InputError );
-    GEOSX_THROW_IF_LT_MSG( m_phaseRelPermMaxValue[ip], 0.0,
+    GEOSX_THROW_IF_IF_LT_MSG( m_phaseRelPermMaxValue[ip], 0.0,
                            errorMsg( viewKeyStruct::phaseRelPermMaxValueString() ),
                            InputError );
-    GEOSX_THROW_IF_GT_MSG( m_phaseRelPermMaxValue[ip], 1.0,
+    GEOSX_THROW_IF_IF_GT_MSG( m_phaseRelPermMaxValue[ip], 1.0,
                            errorMsg( viewKeyStruct::phaseRelPermMaxValueString() ),
                            InputError );
   }
 
-  GEOSX_THROW_IF_LT_MSG( m_volFracScale, 0.0,
+  GEOSX_THROW_IF_IF_LT_MSG( m_volFracScale, 0.0,
                          GEOSX_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName() ),
                          InputError );
 }

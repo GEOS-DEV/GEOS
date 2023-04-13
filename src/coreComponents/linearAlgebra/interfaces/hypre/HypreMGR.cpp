@@ -49,7 +49,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
                             HyprePrecWrapper & precond,
                             HypreMGRData & mgrData )
 {
-  GEOSX_ERROR_IF( dofManager == nullptr, "MGR preconditioner requires a DofManager instance" );
+  GEOS_ERROR_IF( dofManager == nullptr, "MGR preconditioner requires a DofManager instance" );
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_MGRCreate( &precond.ptr ) );
 
@@ -63,11 +63,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
 
   if( params.logLevel >= 1 )
   {
-    GEOSX_LOG_RANK_0( numComponentsPerField );
+    GEOS_LOG_RANK_0( numComponentsPerField );
   }
   if( params.logLevel >= 2 )
   {
-    GEOSX_LOG_RANK_VAR( mgrData.pointMarkers );
+    GEOS_LOG_RANK_VAR( mgrData.pointMarkers );
   }
 
   switch( params.mgr.strategy )
@@ -169,7 +169,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     }
     default:
     {
-      GEOSX_ERROR( "Unsupported MGR strategy: " << params.mgr.strategy );
+      GEOS_ERROR( "Unsupported MGR strategy: " << params.mgr.strategy );
     }
   }
 

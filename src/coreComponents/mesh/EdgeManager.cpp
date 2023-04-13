@@ -239,7 +239,7 @@ localIndex EdgeManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
 localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           localIndex_array & packList,
                                           bool const overwriteUpMaps,
-                                          bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
+                                          bool const GEOS_UNUSED_PARAM( overwriteDownMaps ) )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -247,7 +247,7 @@ localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOSX_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString() );
+  GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
@@ -258,7 +258,7 @@ localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string faceListString;
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
-  GEOSX_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString() );
+  GEOS_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,

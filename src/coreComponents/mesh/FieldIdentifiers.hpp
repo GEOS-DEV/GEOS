@@ -119,7 +119,7 @@ public:
     }
     else
     {
-      GEOSX_ERROR( GEOSX_FMT( "Invalid key, {}, was provided. Location cannot be retrieved.", key ) );
+      GEOS_ERROR( GEOSX_FMT( "Invalid key, {}, was provided. Location cannot be retrieved.", key ) );
     }
   }
 
@@ -168,7 +168,7 @@ private:
       }
       case FieldLocation::Elem:
       {
-        GEOSX_ERROR( "An element located field also requires a region name to be specified." );
+        GEOS_ERROR( "An element located field also requires a region name to be specified." );
         break;
       }
     }

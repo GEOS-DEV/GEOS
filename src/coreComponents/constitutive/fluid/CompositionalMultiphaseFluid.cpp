@@ -95,7 +95,7 @@ void CompositionalMultiphaseFluid::postProcessInput()
 
   auto const checkInputSize = [&]( auto const & array, integer const expected, string const & attribute )
   {
-    GEOSX_THROW_IF_NE_MSG( array.size(), expected,
+    GEOSX_THROW_IF_IF_NE_MSG( array.size(), expected,
                            GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
                            InputError );
 

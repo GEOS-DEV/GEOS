@@ -367,7 +367,7 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
   // this is enforced in the InternalWellGenerator that currently merges two perforations
   // if they belong to the same well element. This is a temporary solution.
   // TODO: split the well elements that contain multiple perforations, so that no element is shared
-  GEOSX_THROW_IF( sharedElems.size() > 0,
+  GEOSX_THROW_IF_IF( sharedElems.size() > 0,
                   "Well " << wellGeometry.getName() << " contains shared well elements",
                   InputError );
 
@@ -519,7 +519,7 @@ void WellElementSubRegion::checkPartitioningValidity( InternalWellGenerator cons
       globalIndex const numBranches = prevElemIdsGlobal[iwelemGlobal].size();
       globalIndex const prevGlobal  = prevElemIdsGlobal[iwelemGlobal][numBranches-1];
 
-      GEOSX_THROW_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
+      GEOSX_THROW_IF_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
                       "The structure of well " << wellGeometry.getName() << " is invalid. " <<
                       " The main reason for this error is that there may be no perforation" <<
                       " in the bottom well element of the well, which is required to have" <<
@@ -874,8 +874,8 @@ localIndex WellElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer
 
 localIndex WellElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                                    localIndex_array & packList,
-                                                   bool const GEOSX_UNUSED_PARAM( overwriteUpMaps ),
-                                                   bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
+                                                   bool const GEOS_UNUSED_PARAM( overwriteUpMaps ),
+                                                   bool const GEOS_UNUSED_PARAM( overwriteDownMaps ) )
 {
   return bufferOps::Unpack( buffer,
                             nodeList().base().toView(),

@@ -101,11 +101,11 @@ void ElasticIsotropicPressureDependent::postProcessInput()
   }
   errorCheck += ")";
 
-  GEOSX_ERROR_IF( numConstantsSpecified != 2,
+  GEOS_ERROR_IF( numConstantsSpecified != 2,
                   "A specific pair of elastic constants is required: (Cr, G). " );
-  GEOSX_THROW_IF( m_defaultRecompressionIndex <= 0, "Non-positive recompression index detected " << m_defaultRecompressionIndex, InputError );
+  GEOSX_THROW_IF_IF( m_defaultRecompressionIndex <= 0, "Non-positive recompression index detected " << m_defaultRecompressionIndex, InputError );
   real64 poisson = conversions::bulkModAndShearMod::toPoissonRatio( -1 * m_defaultRefPressure / m_defaultRecompressionIndex, m_defaultShearModulus );
-  GEOSX_THROW_IF( poisson < 0,
+  GEOSX_THROW_IF_IF( poisson < 0,
                   "Elastic parameters lead to negative Poisson ratio at reference pressure ", InputError );
 
 

@@ -140,7 +140,7 @@ integer CO2BrineFluid< PHASE1, PHASE2, FLASH >::getWaterPhaseIndex() const
 template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::initializePreSubGroups()
 {
-  GEOSX_THROW_IF( this->catalogName() == CO2BrineEzrokhiThermalFluid::catalogName(),
+  GEOSX_THROW_IF_IF( this->catalogName() == CO2BrineEzrokhiThermalFluid::catalogName(),
                   GEOSX_FMT( "The `{}` model is disabled for now. Please use the other thermal CO2-brine model instead: `{}`",
                              CO2BrineEzrokhiThermalFluid::catalogName(),
                              CO2BrinePhillipsThermalFluid::catalogName() ),
@@ -152,13 +152,13 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
 {
   MultiFluidBase::postProcessInput();
 
-  GEOSX_THROW_IF_NE_MSG( numFluidPhases(), 2,
+  GEOSX_THROW_IF_IF_NE_MSG( numFluidPhases(), 2,
                          GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
                          InputError );
-  GEOSX_THROW_IF_NE_MSG( numFluidComponents(), 2,
+  GEOSX_THROW_IF_IF_NE_MSG( numFluidComponents(), 2,
                          GEOSX_FMT( "{}: invalid number of components", getFullName() ),
                          InputError );
-  GEOSX_THROW_IF_NE_MSG( m_phasePVTParaFiles.size(), 2,
+  GEOSX_THROW_IF_IF_NE_MSG( m_phasePVTParaFiles.size(), 2,
                          GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName() ),
                          InputError );
 
@@ -196,7 +196,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
 
       if( !strs.empty() )
       {
-        GEOSX_THROW_IF( strs.size() < 2,
+        GEOSX_THROW_IF_IF( strs.size() < 2,
                         GEOSX_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
                         InputError );
 
@@ -235,7 +235,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
         }
         else
         {
-          GEOSX_THROW( GEOSX_FMT( "{}: invalid PVT function type '{}'", getFullName(), strs[0] ), InputError );
+          GEOSX_THROW_IF( GEOSX_FMT( "{}: invalid PVT function type '{}'", getFullName(), strs[0] ), InputError );
         }
       }
     }
@@ -243,25 +243,25 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
   }
 
   // at this point, we have read the file and we check the consistency of non-thermal models
-  GEOSX_THROW_IF( phase1InputParams[PHASE1::InputParamOrder::DENSITY].empty(),
+  GEOSX_THROW_IF_IF( phase1InputParams[PHASE1::InputParamOrder::DENSITY].empty(),
                   GEOSX_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE1::Density::catalogName() ),
                   InputError );
-  GEOSX_THROW_IF( phase2InputParams[PHASE2::InputParamOrder::DENSITY].empty(),
+  GEOSX_THROW_IF_IF( phase2InputParams[PHASE2::InputParamOrder::DENSITY].empty(),
                   GEOSX_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE2::Density::catalogName() ),
                   InputError );
-  GEOSX_THROW_IF( phase1InputParams[PHASE1::InputParamOrder::VISCOSITY].empty(),
+  GEOSX_THROW_IF_IF( phase1InputParams[PHASE1::InputParamOrder::VISCOSITY].empty(),
                   GEOSX_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE1::Viscosity::catalogName() ),
                   InputError );
-  GEOSX_THROW_IF( phase2InputParams[PHASE2::InputParamOrder::VISCOSITY].empty(),
+  GEOSX_THROW_IF_IF( phase2InputParams[PHASE2::InputParamOrder::VISCOSITY].empty(),
                   GEOSX_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE2::Viscosity::catalogName() ),
                   InputError );
 
   // we also detect any inconsistency arising in the enthalpy models
-  GEOSX_THROW_IF( phase1InputParams[PHASE1::InputParamOrder::ENTHALPY].empty() &&
+  GEOSX_THROW_IF_IF( phase1InputParams[PHASE1::InputParamOrder::ENTHALPY].empty() &&
                   ( PHASE1::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
                   GEOSX_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE1::Enthalpy::catalogName() ),
                   InputError );
-  GEOSX_THROW_IF( phase2InputParams[PHASE2::InputParamOrder::ENTHALPY].empty() &&
+  GEOSX_THROW_IF_IF( phase2InputParams[PHASE2::InputParamOrder::ENTHALPY].empty() &&
                   ( PHASE2::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
                   GEOSX_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE2::Enthalpy::catalogName() ),
                   InputError );
@@ -280,7 +280,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
 
       if( !strs.empty() )
       {
-        GEOSX_THROW_IF( strs.size() < 2,
+        GEOSX_THROW_IF_IF( strs.size() < 2,
                         GEOSX_FMT( "{}: missing flash model in line '{}'", getFullName(), str ),
                         InputError );
 
@@ -297,14 +297,14 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
         }
         else
         {
-          GEOSX_THROW( GEOSX_FMT( "{}: invalid flash model type '{}'", getFullName(), strs[0] ), InputError );
+          GEOSX_THROW_IF( GEOSX_FMT( "{}: invalid flash model type '{}'", getFullName(), strs[0] ), InputError );
         }
       }
     }
     is.close();
   }
 
-  GEOSX_THROW_IF( m_flash == nullptr,
+  GEOSX_THROW_IF_IF( m_flash == nullptr,
                   GEOSX_FMT( "{}: flash model {} not found in input files", getFullName(), FLASH::catalogName() ),
                   InputError );
 }

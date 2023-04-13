@@ -113,7 +113,7 @@ public:
 public:
 
     /// Constructor.
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables()
     {}
@@ -172,7 +172,7 @@ public:
    * incremental displacement, and degree of freedom numbers are placed into
    * element local stack storage.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
@@ -185,7 +185,7 @@ public:
    * @param[in] q the quadrature point index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
                           localIndex const q,
                           StackVariables & stack ) const;
@@ -204,7 +204,7 @@ public:
    * @param[inout] bodyForceKernelOp the lambda function to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeBodyForce( localIndex const k,
                          localIndex const q,
                          real64 const & porosity,
@@ -229,7 +229,7 @@ public:
    * @param[inout] fluidIncrementKernelOp the lambda function to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFluidIncrement( localIndex const k,
                               localIndex const q,
                               real64 const & porosity,
@@ -246,7 +246,7 @@ public:
    * @param[in] porosity_n the element porosity at the previous converged time step
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computePoreVolumeConstraint( localIndex const k,
                                     real64 const & porosity_n,
                                     StackVariables & stack ) const;
@@ -263,7 +263,7 @@ public:
    *   totalStress = totalStress( strainIncrement, pressure)
    *   bodyForce   = bodyForce( strainIncrement, pressure)
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
                                      real64 const ( &dNdX )[numNodesPerElem][3],
                                      real64 const & detJxW,
@@ -280,12 +280,12 @@ public:
    *   fluidMass = fluidMass( strainIncrement, pressure)
    *   fluidMassFlux = fluidMassFlux( pressure)
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
                                       real64 const & detJxW,
                                       StackVariables & stack ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const;
@@ -293,7 +293,7 @@ public:
   /**
    * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
@@ -387,7 +387,7 @@ public:
    * @param[in] ei the element index
    * @param[in] q the quadrature point index
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei,
                 localIndex const q ) const
   {
@@ -414,7 +414,7 @@ public:
           localIndex const numQuad,
           KERNEL_TYPE const & kernelComponent )
   {
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       for( localIndex q = 0; q < numQuad; ++q )
       {

@@ -206,7 +206,7 @@ ReactiveMultiFluid::KernelWrapper::
                     arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
                     arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const
 {
-  GEOSX_UNUSED_VAR( pressure );
+  GEOS_UNUSED_VAR( pressure );
 
   // 2. solve for equilibrium
   m_equilibriumReactions.updateConcentrations( temperature,

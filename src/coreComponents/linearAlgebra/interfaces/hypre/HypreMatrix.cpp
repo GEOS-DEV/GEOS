@@ -941,7 +941,7 @@ void HypreMatrix::clampEntries( real64 const lo,
                                 bool const excludeDiag )
 {
   GEOSX_LAI_ASSERT( ready() );
-  GEOSX_ERROR_IF( excludeDiag && numGlobalRows() != numGlobalCols(), "excludeDiag = true, but matrix is not square" );
+  GEOS_ERROR_IF( excludeDiag && numGlobalRows() != numGlobalCols(), "excludeDiag = true, but matrix is not square" );
 
   hypre::clampMatrixEntries( hypre_ParCSRMatrixDiag( m_parcsr_mat ), lo, hi, excludeDiag );
   hypre::clampMatrixEntries( hypre_ParCSRMatrixOffd( m_parcsr_mat ), lo, hi, false );
@@ -968,7 +968,7 @@ localIndex HypreMatrix::rowLength( globalIndex const globalRowIndex ) const
   GEOSX_LAI_ASSERT( assembled() );
 
   localIndex const localRow = LvArray::integerConversion< localIndex >( globalRowIndex - ilower() );
-  GEOSX_ASSERT( 0 <= localRow && localRow < numLocalRows() );
+  GEOS_ASSERT( 0 <= localRow && localRow < numLocalRows() );
 
   HYPRE_Int const * const ia_diag = hypre_CSRMatrixI( hypre_ParCSRMatrixDiag( unwrapped() ) );
   HYPRE_Int const * const ia_offd = hypre_CSRMatrixI( hypre_ParCSRMatrixOffd( unwrapped() ) );
@@ -1284,7 +1284,7 @@ void HypreMatrix::write( string const & filename,
       if( rank == 0 )
       {
         std::ofstream os( filename );
-        GEOSX_ERROR_IF( !os, GEOSX_FMT( "Unable to open file for writing: {}", filename ) );
+        GEOS_ERROR_IF( !os, GEOSX_FMT( "Unable to open file for writing: {}", filename ) );
         os << "%%MatrixMarket matrix coordinate real general\n";
         os << GEOSX_FMT( "{} {} {}\n", numGlobalRows(), numGlobalCols(), numGlobalNonzeros() );
       }
@@ -1304,7 +1304,7 @@ void HypreMatrix::write( string const & filename,
         {
           hypre::CSRData< true > csr{ fullMatrix };
           std::ofstream os( filename, std::ios_base::app );
-          GEOSX_ERROR_IF( !os, GEOSX_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
+          GEOS_ERROR_IF( !os, GEOSX_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
           char str[64];
 
           for( HYPRE_Int i = 0; i < csr.nrow; i++ )
@@ -1325,7 +1325,7 @@ void HypreMatrix::write( string const & filename,
     }
     default:
     {
-      GEOSX_ERROR( "Unsupported matrix output format" );
+      GEOS_ERROR( "Unsupported matrix output format" );
     }
   }
 }

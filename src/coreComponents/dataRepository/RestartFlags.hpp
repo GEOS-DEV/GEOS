@@ -81,7 +81,7 @@ inline PlotLevel toPlotLevel( int const val )
     }
     default:
     {
-      GEOSX_ERROR( "Could not parse " << val << " into a PlotLevel." );
+      GEOS_ERROR( "Could not parse " << val << " into a PlotLevel." );
       return PlotLevel::NOPLOT;
     }
   }

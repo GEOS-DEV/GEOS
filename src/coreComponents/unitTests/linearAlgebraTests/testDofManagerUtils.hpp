@@ -41,9 +41,9 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
   xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlInput, strlen( xmlInput ) );
   if( !xmlResult )
   {
-    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+    GEOS_LOG_RANK_0( "XML parsed with errors!" );
+    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
   int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
@@ -127,7 +127,7 @@ struct testMeshHelper< FieldLocation::Face >
 
 template< int USD >
 localIndex size1( arrayView2d< localIndex const, USD > const & map,
-                  localIndex const GEOSX_UNUSED_PARAM( i0 ) )
+                  localIndex const GEOS_UNUSED_PARAM( i0 ) )
 {
   return map.size( 1 );
 }

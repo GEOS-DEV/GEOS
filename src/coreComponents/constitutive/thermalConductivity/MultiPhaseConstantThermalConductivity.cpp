@@ -61,7 +61,7 @@ void MultiPhaseConstantThermalConductivity::allocateConstitutiveData( dataReposi
 
 void MultiPhaseConstantThermalConductivity::postProcessInput()
 {
-  GEOSX_THROW_IF( m_thermalConductivityComponents[0] <= 0 ||
+  GEOSX_THROW_IF_IF( m_thermalConductivityComponents[0] <= 0 ||
                   m_thermalConductivityComponents[1] <= 0 ||
                   m_thermalConductivityComponents[2] <= 0,
                   GEOSX_FMT( "{}: the components of the thermal conductivity tensor must be strictly positive",

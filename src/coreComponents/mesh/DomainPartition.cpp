@@ -89,7 +89,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
     {
       int reorder = 0;
       MpiWrapper::cartCreate( MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm );
-      GEOSX_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
+      GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
     }
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
     int nsdof = 3;

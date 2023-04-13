@@ -66,7 +66,7 @@ public:
   {
 public:
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -79,7 +79,7 @@ public:
                           arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
                           real64 & totalDensity ) const override;
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -92,7 +92,7 @@ public:
                           PhaseComp::SliceType const phaseCompFraction,
                           FluidProp::SliceType const totalDensity ) const override;
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     virtual void update( localIndex const k,
                          localIndex const q,
                          real64 const pressure,
@@ -184,7 +184,7 @@ using ReactiveBrineThermal =
   ReactiveBrineFluid< PhaseModel< PVTProps::WaterDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy > >;
 
 template< typename PHASE >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 ReactiveBrineFluid< PHASE >::KernelWrapper::
   compute( real64 pressure,
@@ -258,7 +258,7 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
 }
 
 template< typename PHASE >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 ReactiveBrineFluid< PHASE >::KernelWrapper::
   compute( real64 const pressure,
@@ -331,7 +331,7 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
 }
 
 template< typename PHASE >
-GEOSX_HOST_DEVICE inline void
+GEOS_HOST_DEVICE inline void
 ReactiveBrineFluid< PHASE >::KernelWrapper::
   update( localIndex const k,
           localIndex const q,

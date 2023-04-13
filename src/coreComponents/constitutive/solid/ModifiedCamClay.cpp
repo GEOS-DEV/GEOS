@@ -90,9 +90,9 @@ void ModifiedCamClay::postProcessInput()
 {
   ElasticIsotropicPressureDependent::postProcessInput();
 
-  GEOSX_THROW_IF( m_defaultCslSlope <= 0, "Non-positive slope of critical state line detected", InputError );
-  GEOSX_THROW_IF( m_defaultVirginCompressionIndex <= 0, "Non-positive virgin compression index detected", InputError );
-  GEOSX_THROW_IF( m_defaultVirginCompressionIndex <= m_defaultRecompressionIndex, "Recompression index should exceed virgin recompression index", InputError );
+  GEOSX_THROW_IF_IF( m_defaultCslSlope <= 0, "Non-positive slope of critical state line detected", InputError );
+  GEOSX_THROW_IF_IF( m_defaultVirginCompressionIndex <= 0, "Non-positive virgin compression index detected", InputError );
+  GEOSX_THROW_IF_IF( m_defaultVirginCompressionIndex <= m_defaultRecompressionIndex, "Recompression index should exceed virgin recompression index", InputError );
 
   // set results as array default values
 
@@ -121,7 +121,7 @@ void ModifiedCamClay::saveConvergedState() const
   arrayView2d< real64 const > newPreConsolidationPressure = m_newPreConsolidationPressure;
   arrayView2d< real64 > oldPreConsolidationPressure = m_oldPreConsolidationPressure;
 
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQ; ++q )
     {

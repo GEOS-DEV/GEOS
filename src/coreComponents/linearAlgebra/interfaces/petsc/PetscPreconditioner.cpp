@@ -234,7 +234,7 @@ void createPetscAMG( LinearSolverParameters const & params,
 #endif
 }
 
-void createPetscDirect( LinearSolverParameters const & GEOSX_UNUSED_PARAM( params ), PC const precond )
+void createPetscDirect( LinearSolverParameters const & GEOS_UNUSED_PARAM( params ), PC const precond )
 {
   GEOSX_LAI_CHECK_ERROR( PCSetType( precond, PCLU ) );
   GEOSX_LAI_CHECK_ERROR( PCFactorSetMatSolverType( precond, MATSOLVERSUPERLU_DIST ) );
@@ -338,7 +338,7 @@ void PetscPreconditioner::setup( PetscMatrix const & mat )
       }
       default:
       {
-        GEOSX_ERROR( "Preconditioner type not supported in PETSc interface: " << m_params.preconditionerType );
+        GEOS_ERROR( "Preconditioner type not supported in PETSc interface: " << m_params.preconditionerType );
       }
     }
   }

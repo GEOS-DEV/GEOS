@@ -163,7 +163,7 @@ findName( InputRange const & input,
   using std::begin;
   using std::end;
   auto const it = std::find_first_of( begin( input ), end( input ), begin( expected ), end( expected ) );
-  GEOSX_THROW_IF( it == end( input ),
+  GEOSX_THROW_IF_IF( it == end( input ),
                   GEOSX_FMT( "Name '{}' not found in `{}`.\nExpected one of: {}.\nInput provided: {}.",
                              *begin( expected ), attribute,
                              stringutilities::join( begin( expected ), end( expected ), ", " ),
@@ -182,7 +182,7 @@ initializePropertyTable( string_array const & inputParameters,
                          PTTableCoordinates & tableCoords )
 
 {
-  GEOSX_THROW_IF( inputParameters.size() < 8,
+  GEOSX_THROW_IF_IF( inputParameters.size() < 8,
                   "Invalid property input!",
                   InputError );
 
@@ -192,7 +192,7 @@ initializePropertyTable( string_array const & inputParameters,
     real64 const PEnd = stod( inputParameters[3] );
     real64 const dP = stod( inputParameters[4] );
 
-    GEOSX_THROW_IF( PStart >= PEnd, "PStart must be strictly smaller than PEnd",
+    GEOSX_THROW_IF_IF( PStart >= PEnd, "PStart must be strictly smaller than PEnd",
                     InputError );
 
     constexpr real64 T_K = 273.15;
@@ -201,11 +201,11 @@ initializePropertyTable( string_array const & inputParameters,
     real64 const TEnd = stod( inputParameters[6] )- T_K;
     real64 const dT = stod( inputParameters[7] );
 
-    GEOSX_THROW_IF( TStart < 10, "Temperature must be in Kelvin and must be larger than 283.15 K",
+    GEOSX_THROW_IF_IF( TStart < 10, "Temperature must be in Kelvin and must be larger than 283.15 K",
                     InputError );
-    GEOSX_THROW_IF( TEnd > 350, "Temperature must be in Kelvin and must be smaller than 623.15 K",
+    GEOSX_THROW_IF_IF( TEnd > 350, "Temperature must be in Kelvin and must be smaller than 623.15 K",
                     InputError );
-    GEOSX_THROW_IF( TStart >= TEnd, "TStart must be strictly smaller than TEnd",
+    GEOSX_THROW_IF_IF( TStart >= TEnd, "TStart must be strictly smaller than TEnd",
                     InputError );
 
     for( real64 P = PStart; P <= PEnd; P += dP )
@@ -219,7 +219,7 @@ initializePropertyTable( string_array const & inputParameters,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( "Invalid property argument:" + string( e.what() ), InputError );
+    GEOSX_THROW_IF( "Invalid property argument:" + string( e.what() ), InputError );
   }
 }
 

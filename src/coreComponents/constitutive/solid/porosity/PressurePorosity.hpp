@@ -48,7 +48,7 @@ public:
     m_compressibility( compressibility )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computePorosity( real64 const & pressure,
                         real64 const & temperature,
                         real64 & porosity,
@@ -56,7 +56,7 @@ public:
                         real64 & dPorosity_dTemperature,
                         real64 const & referencePorosity ) const
   {
-    GEOSX_UNUSED_VAR( temperature );
+    GEOS_UNUSED_VAR( temperature );
 
     // TODO use full exponential.
 //    porosity            =  referencePorosity * exp( m_compressibility * (pressure - m_referencePressure) );
@@ -66,13 +66,13 @@ public:
     dPorosity_dTemperature = 0.0;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromPressureAndTemperature( localIndex const k,
                                                  localIndex const q,
                                                  real64 const & pressure,
-                                                 real64 const & GEOSX_UNUSED_PARAM( pressure_n ),
+                                                 real64 const & GEOS_UNUSED_PARAM( pressure_n ),
                                                  real64 const & temperature,
-                                                 real64 const & GEOSX_UNUSED_PARAM( temperature_n ) ) const override final
+                                                 real64 const & GEOS_UNUSED_PARAM( temperature_n ) ) const override final
   {
     computePorosity( pressure,
                      temperature,

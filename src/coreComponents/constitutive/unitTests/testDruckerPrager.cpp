@@ -76,9 +76,9 @@ void testDruckerPragerDriver()
                                                              inputStream.size() );
   if( !xmlResult )
   {
-    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+    GEOS_LOG_RANK_0( "XML parsed with errors!" );
+    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
@@ -111,7 +111,7 @@ void testDruckerPragerDriver()
 
   for( localIndex loadstep=0; loadstep < 50; ++loadstep )
   {
-    forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       real64 stress[6] = {0};
       real64 stiffness[6][6] = {{0}};
@@ -192,9 +192,9 @@ void testDruckerPragerExtendedDriver()
                                                              inputStream.size() );
   if( !xmlResult )
   {
-    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+    GEOS_LOG_RANK_0( "XML parsed with errors!" );
+    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
@@ -230,7 +230,7 @@ void testDruckerPragerExtendedDriver()
   //FILE* fp = fopen("pq.txt","w");
   for( localIndex loadstep=0; loadstep < 300; ++loadstep )
   {
-    forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       real64 stress[6] = {0};
       real64 stiffness[6][6] = {{0}};

@@ -202,7 +202,7 @@ public:
    */
   void updateProppantPackVolume( real64 const time_n, real64 const dt, DomainPartition & domain );
 
-  virtual void updateState ( DomainPartition & domain ) override final { GEOSX_UNUSED_VAR( domain ); };
+  virtual void updateState ( DomainPartition & domain ) override final { GEOS_UNUSED_VAR( domain ); };
 
   /**
    * @brief Function to update fluid and proppant properties

@@ -59,7 +59,7 @@ public:
    * @param[out] effectiveConductivity the cell effective conductivity
    * @param[out] dEffectiveConductivity_dPhaseVolFrac the cell derivative of effective conductivity wrt phase volume fractions
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & laggedPorosity,
                 arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
                 arraySlice1d< real64 const > const rockThermalConductivity,
@@ -84,7 +84,7 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const & laggedPorosity,

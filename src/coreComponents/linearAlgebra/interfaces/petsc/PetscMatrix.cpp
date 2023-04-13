@@ -225,7 +225,7 @@ void modifyMatrixRows( Mat mat,
   forAll< serialPolicy >( rowIndices.size(), [=, &cols, &vals]( localIndex const i )
   {
     PetscInt const globalRow = LvArray::integerConversion< PetscInt >( rowIndices[i] );
-    GEOSX_ASSERT( firstRow <= globalRow && globalRow < lastRow );
+    GEOS_ASSERT( firstRow <= globalRow && globalRow < lastRow );
 
     PetscInt numEntries;
     PetscInt const * colsPtr;
@@ -275,7 +275,7 @@ void PetscMatrix::set( real64 const value )
                                 arraySlice1d< PetscInt const > const cols,
                                 arraySlice1d< PetscScalar > const vals )
   {
-    GEOSX_UNUSED_VAR( globalRow, cols );
+    GEOS_UNUSED_VAR( globalRow, cols );
     std::fill( vals.begin(), vals.end(), value );
   } );
 }
@@ -804,7 +804,7 @@ void PetscMatrix::addEntries( PetscMatrix const & src,
     }
     case MatrixPatternOp::Restrict:
     {
-      GEOSX_ERROR( "Not implemented" );
+      GEOS_ERROR( "Not implemented" );
       break;
     }
   }
@@ -835,7 +835,7 @@ void PetscMatrix::clampEntries( real64 const lo,
                                 bool const excludeDiag )
 {
   GEOSX_LAI_ASSERT( ready() );
-  GEOSX_ERROR_IF( excludeDiag && numGlobalRows() != numGlobalCols(), "excludeDiag = true, but matrix is not square" );
+  GEOS_ERROR_IF( excludeDiag && numGlobalRows() != numGlobalCols(), "excludeDiag = true, but matrix is not square" );
 
   modifyMatrixRows( m_mat, [=]( PetscInt const globalRow,
                                 arraySlice1d< PetscInt const > const cols,
@@ -964,7 +964,7 @@ void rescaleRowsImpl( Mat mat,
                                           arraySlice1d< PetscInt const > const cols,
                                           arraySlice1d< PetscScalar > const vals )
   {
-    GEOSX_UNUSED_VAR( globalRow, cols );
+    GEOS_UNUSED_VAR( globalRow, cols );
     PetscScalar const scale = std::accumulate( vals.begin(), vals.end(), 0.0, reducer );
     std::transform( vals.begin(), vals.end(), vals.begin(), [scale]( double const v ){ return v / scale; } );
   } );
@@ -1172,7 +1172,7 @@ real64 PetscMatrix::normMax( arrayView1d< globalIndex const > const & rowIndices
   for( globalIndex const globalRow : rowIndices )
   {
     PetscInt const row = LvArray::integerConversion< PetscInt >( globalRow );
-    GEOSX_ASSERT( firstRow <= row && row < lastRow );
+    GEOS_ASSERT( firstRow <= row && row < lastRow );
     PetscInt numEntries;
     PetscReal const * vals;
     GEOSX_LAI_CHECK_ERROR( MatGetRow( m_mat, row, &numEntries, nullptr, &vals ) );
@@ -1228,7 +1228,7 @@ MPI_Comm PetscMatrix::comm() const
 void PetscMatrix::print( std::ostream & os ) const
 {
   GEOSX_LAI_ASSERT( ready() );
-  GEOSX_ERROR_IF( &os != &std::cout, "Only output to stdout currently supported" );
+  GEOS_ERROR_IF( &os != &std::cout, "Only output to stdout currently supported" );
   GEOSX_LAI_CHECK_ERROR( MatView( m_mat, PETSC_VIEWER_STDOUT_( comm() ) ) );
 }
 
@@ -1271,7 +1271,7 @@ void PetscMatrix::write( string const & filename,
     }
     break;
     default:
-      GEOSX_ERROR( "Unsupported matrix output format" );
+      GEOS_ERROR( "Unsupported matrix output format" );
   }
 
   if( ASCIIfile )

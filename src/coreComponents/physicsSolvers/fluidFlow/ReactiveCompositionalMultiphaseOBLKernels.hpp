@@ -90,7 +90,7 @@ void kernelLaunchSelectorCompSwitch( T numComps, LAMBDA && lambda )
     case 5:
     { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 5 >(), std::integral_constant< bool, ENABLE_ENERGY >()); return; }
     default:
-    { GEOSX_ERROR( "Unsupported number of components: " << numComps ); }
+    { GEOS_ERROR( "Unsupported number of components: " << numComps ); }
   }
 }
 
@@ -108,7 +108,7 @@ void kernelLaunchSelectorPhaseSwitch( T numPhases, T numComps, LAMBDA && lambda 
     case 3:
     { kernelLaunchSelectorCompSwitch< ENABLE_ENERGY, 3 >( numComps, lambda ); return; }
     default:
-    { GEOSX_ERROR( "Unsupported number of phases: " << numPhases ); }
+    { GEOS_ERROR( "Unsupported number of phases: " << numPhases ); }
   }
 }
 
@@ -166,7 +166,7 @@ public:
   launch( localIndex const numElems,
           KERNEL_TYPE const & kernelComponent )
   {
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       kernelComponent.compute( ei );
     } );
@@ -192,7 +192,7 @@ public:
    * @brief Compute the operator values and derivatives for an element
    * @param[in] ei the element index
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei ) const
   {
     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compFrac = m_compFrac[ei];
@@ -379,7 +379,7 @@ public:
    * @param[in] ei the element index
    * @return the ghost rank of the element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   integer elemGhostRank( localIndex const ei ) const
   { return m_elemGhostRank( ei ); }
 
@@ -389,7 +389,7 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
@@ -409,7 +409,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack ) const
   {
@@ -452,8 +452,8 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
-  void complete( localIndex const GEOSX_UNUSED_PARAM( ei ),
+  GEOS_HOST_DEVICE
+  void complete( localIndex const GEOS_UNUSED_PARAM( ei ),
                  StackVariables & stack ) const
   {
     // add contribution to residual and jacobian into component mass balance equations
@@ -483,7 +483,7 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( kernelComponent.elemGhostRank( ei ) >= 0 )
       {
@@ -819,7 +819,7 @@ public:
     /**
      * @brief Constructor for the stack variables
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables()
       : dofColIndices( maxNumElems * numDofs ),
       localFlux( numEqns ),
@@ -852,14 +852,14 @@ public:
    * @param[in] iconn the connection index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
     // The kernel is only designed for TPFA
-    GEOSX_ASSERT_EQ( maxNumElems, 2 );
-    GEOSX_ASSERT_EQ( maxNumConns, 1 );
-    GEOSX_ASSERT_EQ( maxStencilSize, 2 );
+    GEOS_ASSERT_EQ( maxNumElems, 2 );
+    GEOS_ASSERT_EQ( maxNumConns, 1 );
+    GEOS_ASSERT_EQ( maxStencilSize, 2 );
 
     // set degrees of freedom indices for this face
     for( integer i = 0; i < maxStencilSize; ++i )
@@ -878,7 +878,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -1069,7 +1069,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
@@ -1104,8 +1104,8 @@ public:
       {
         globalIndex const globalRow = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
         localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-        GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GE( m_localMatrix.numRows(), localRow + numEqns );
+        GEOS_ASSERT_GE( localRow, 0 );
+        GEOS_ASSERT_GE( m_localMatrix.numRows(), localRow + numEqns );
 
         for( integer id = 0; id < numDofs; ++id )
         {
@@ -1136,7 +1136,7 @@ public:
 
     if( numConnections )
     {
-      forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+      forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn )
       {
         typename KERNEL_TYPE::StackVariables stack;
 
@@ -1238,7 +1238,7 @@ struct ResidualNormKernel
   {
     RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localSum( 0.0 );
 
-    forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( ghostRank[ei] < 0 )
       {
@@ -1274,7 +1274,7 @@ struct ResidualDARTSL2NormKernel
     {
       RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localResSum( 0.0 ), localNormSum( 0.0 );
 
-      forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         if( ghostRank[ei] < 0 )
         {
@@ -1318,7 +1318,7 @@ struct SolutionCheckKernel
 
     RAJA::ReduceMin< ReducePolicy< POLICY >, integer > check( 1 );
 
-    forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( ghostRank[ei] < 0 )
       {

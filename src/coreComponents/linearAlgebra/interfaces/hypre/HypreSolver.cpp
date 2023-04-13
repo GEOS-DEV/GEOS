@@ -180,7 +180,7 @@ void createHypreKrylovSolver( LinearSolverParameters const & params,
     }
     default:
     {
-      GEOSX_ERROR( "Solver type not supported in hypre interface: " << params.solverType );
+      GEOS_ERROR( "Solver type not supported in hypre interface: " << params.solverType );
     }
   }
 }
@@ -265,7 +265,7 @@ void HypreSolver::solve( HypreVector const & rhs,
 
   if( m_params.logLevel >= 1 )
   {
-    GEOSX_LOG_RANK_0( "\t\tLinear Solver | " << m_result.status <<
+    GEOS_LOG_RANK_0( "\t\tLinear Solver | " << m_result.status <<
                       " | Iterations: " << m_result.numIterations <<
                       " | Final Rel Res: " << m_result.residualReduction <<
                       " | Make Restrictor Time: " << m_makeRestrictorTime <<

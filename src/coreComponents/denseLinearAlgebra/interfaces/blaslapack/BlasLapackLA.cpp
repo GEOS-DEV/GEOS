@@ -66,7 +66,7 @@ template< int USD >
 static real64 determinant( arraySlice2d< real64 const, USD > const & A )
 {
   // --- check that matrix is square
-  GEOSX_ASSERT_MSG( A.size( 0 ) == A.size( 1 ) && A.size( 0 ) > 0,
+  GEOS_ASSERT_MSG( A.size( 0 ) == A.size( 1 ) && A.size( 0 ) > 0,
                     "Matrix must be square with order greater than zero" );
 
   real64 det;
@@ -133,7 +133,7 @@ static real64 determinant( arraySlice2d< real64 const, USD > const & A )
       // LAPACK_ROW_MAJOR ordering.
       GEOSX_dgetrf( &NN, &NN, LUFactor.data(), &NN, IPIV.data(), &INFO );
 
-      GEOSX_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
+      GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
 
       det = 1.0;
       for( int i = 0; i < NN; ++i )
@@ -179,7 +179,7 @@ void matrixMatrixAdd( arraySlice2d< real64 const, USD > const & A,
                       real64 const alpha )
 {
 
-  GEOSX_ASSERT_MSG( A.size( 0 ) == B.size( 0 ) &&
+  GEOS_ASSERT_MSG( A.size( 0 ) == B.size( 0 ) &&
                     A.size( 1 ) == B.size( 1 ),
                     "Matrix dimensions not compatible for sum" );
 
@@ -204,7 +204,7 @@ void matrixRand( arraySlice2d< real64, USD > const & A,
 {
   int const IDIST = static_cast< int >(idist);
   int const NN = LvArray::integerConversion< int >( A.size() );
-  GEOSX_ASSERT_MSG( NN > 0, "The matrix cannot be empty" );
+  GEOS_ASSERT_MSG( NN > 0, "The matrix cannot be empty" );
   GEOSX_dlarnv( &IDIST, ISEED, &NN, A.dataIfContiguous() );
 }
 
@@ -212,7 +212,7 @@ template< int USD >
 void matrixCopy( arraySlice2d< real64 const, USD > const & A,
                  arraySlice2d< real64, USD > const & B )
 {
-  GEOSX_ASSERT_MSG( A.size( 0 ) == B.size( 0 ) &&
+  GEOS_ASSERT_MSG( A.size( 0 ) == B.size( 0 ) &&
                     A.size( 1 ) == B.size( 1 ),
                     "Matrix dimensions not compatible for copying" );
 
@@ -229,12 +229,12 @@ void matrixInverse( arraySlice2d< real64 const, USD > const & A,
 {
   // --- Check that source matrix is square
   int const NN = LvArray::integerConversion< int >( A.size( 0 ));
-  GEOSX_ASSERT_MSG( NN > 0 &&
+  GEOS_ASSERT_MSG( NN > 0 &&
                     NN == A.size( 1 ),
                     "Matrix must be square" );
 
   // --- Check that inverse matrix has appropriate dimension
-  GEOSX_ASSERT_MSG( Ainv.size( 0 ) == NN &&
+  GEOS_ASSERT_MSG( Ainv.size( 0 ) == NN &&
                     Ainv.size( 1 ) == NN,
                     "Inverse matrix has wrong dimensions" );
 
@@ -266,7 +266,7 @@ void matrixInverse( arraySlice2d< real64 const, USD > const & A,
     int INFO;
     GEOSX_dgetrf( &NN, &NN, Ainv.dataIfContiguous(), &NN, IPIV.data(), &INFO );
 
-    GEOSX_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
+    GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
 
     detA = 1.0;
     for( int i = 0; i < NN; ++i )
@@ -283,7 +283,7 @@ void matrixInverse( arraySlice2d< real64 const, USD > const & A,
   }
 
   // Check if matrix is singular
-  GEOSX_ASSERT_MSG( std::abs( detA ) > 0, "Matrix is singular" );
+  GEOS_ASSERT_MSG( std::abs( detA ) > 0, "Matrix is singular" );
 
   real64 oneOverDetA = 1. / detA;
 
@@ -334,7 +334,7 @@ void matrixInverse( arraySlice2d< real64 const, USD > const & A,
       int INFO;
       GEOSX_dgetri( &NN, Ainv.dataIfContiguous(), &NN, IPIV.data(), INV_WORK.data(), &NN, &INFO );
 
-      GEOSX_ASSERT_MSG( INFO == 0, "LAPACK dgetri error code: " << INFO );
+      GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetri error code: " << INFO );
 
       break;
     }
@@ -399,7 +399,7 @@ void BlasLapackLA::vectorVectorAdd( arraySlice1d< real64 const > const & X,
                                     arraySlice1d< real64 > const & Y,
                                     real64 const alpha )
 {
-  GEOSX_ASSERT_MSG( X.size() == Y.size(),
+  GEOS_ASSERT_MSG( X.size() == Y.size(),
                     "Vector dimensions not compatible for sum" );
 
   int const INCX = 1;
@@ -443,7 +443,7 @@ void BlasLapackLA::matrixScale( real64 const alpha, arraySlice2d< real64, Matrix
 real64 BlasLapackLA::vectorDot( arraySlice1d< real64 const > const & X,
                                 arraySlice1d< real64 const > const & Y )
 {
-  GEOSX_ASSERT_MSG( X.size() == Y.size(), "Vector dimensions not compatible for dot product" );
+  GEOS_ASSERT_MSG( X.size() == Y.size(), "Vector dimensions not compatible for dot product" );
   int const INCX = 1;
   int const INCY = 1;
   int const N = LvArray::integerConversion< int >( X.size() );
@@ -457,7 +457,7 @@ void BlasLapackLA::matrixVectorMultiply( arraySlice2d< real64 const, MatrixLayou
                                          real64 const alpha,
                                          real64 const beta )
 {
-  GEOSX_ASSERT_MSG( A.size( 1 ) == X.size() && A.size( 0 ) == Y.size(),
+  GEOS_ASSERT_MSG( A.size( 1 ) == X.size() && A.size( 0 ) == Y.size(),
                     "Matrix, source vector and destination vector not compatible" );
 
   int const M = LvArray::integerConversion< int >( A.size( 0 ) );
@@ -478,7 +478,7 @@ void BlasLapackLA::matrixTVectorMultiply( arraySlice2d< real64 const, MatrixLayo
                                           real64 const alpha,
                                           real64 const beta )
 {
-  GEOSX_ASSERT_MSG( A.size( 0 ) == X.size() && A.size( 1 ) == Y.size(),
+  GEOS_ASSERT_MSG( A.size( 0 ) == X.size() && A.size( 1 ) == Y.size(),
                     "Matrix, source vector and destination vector not compatible" );
 
   int const M = LvArray::integerConversion< int >( A.size( 1 ) );
@@ -500,7 +500,7 @@ void BlasLapackLA::matrixMatrixMultiply( arraySlice2d< real64 const, MatrixLayou
                                          real64 const beta )
 {
 
-  GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
+  GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
                     C.size( 1 ) == B.size( 1 ) &&
                     A.size( 1 ) == B.size( 0 ),
                     "Matrix dimensions not compatible for product" );
@@ -524,7 +524,7 @@ void BlasLapackLA::matrixTMatrixMultiply( arraySlice2d< real64 const, MatrixLayo
                                           real64 const beta )
 {
 
-  GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
+  GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
                     C.size( 1 ) == B.size( 1 ) &&
                     A.size( 0 ) == B.size( 0 ),
                     "Matrix dimensions not compatible for product" );
@@ -549,7 +549,7 @@ void BlasLapackLA::matrixMatrixTMultiply( arraySlice2d< real64 const, MatrixLayo
                                           real64 const beta )
 {
 
-  GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
+  GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
                     C.size( 1 ) == B.size( 0 ) &&
                     A.size( 1 ) == B.size( 1 ),
                     "Matrix dimensions not compatible for product" );
@@ -574,7 +574,7 @@ void BlasLapackLA::matrixTMatrixTMultiply( arraySlice2d< real64 const, MatrixLay
                                            real64 const beta )
 {
 
-  GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
+  GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
                     C.size( 1 ) == B.size( 0 ) &&
                     A.size( 0 ) == B.size( 1 ),
                     "Matrix dimensions not compatible for product" );
@@ -623,7 +623,7 @@ void BlasLapackLA::matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_
 void BlasLapackLA::vectorCopy( arraySlice1d< real64 const > const & X,
                                arraySlice1d< real64 > const & Y )
 {
-  GEOSX_ASSERT_MSG( X.size() == Y.size(),
+  GEOS_ASSERT_MSG( X.size() == Y.size(),
                     "Vector dimensions not compatible for copying" );
 
   int const INCX = 1;
@@ -647,15 +647,15 @@ void BlasLapackLA::matrixCopy( arraySlice2d< real64 const, MatrixLayout::COL_MAJ
 void BlasLapackLA::setRandomNumberGeneratorSeed( arraySlice1d< int const > const & seed )
 {
   // Error checking
-  GEOSX_ASSERT_MSG( seed.size() >= 4, "Seed array must have size at least four" );
+  GEOS_ASSERT_MSG( seed.size() >= 4, "Seed array must have size at least four" );
 
-  GEOSX_ASSERT_MSG( 0 <= seed( 0 ) && seed( 0 ) < 4096 &&
+  GEOS_ASSERT_MSG( 0 <= seed( 0 ) && seed( 0 ) < 4096 &&
                     0 <= seed( 1 ) && seed( 1 ) < 4096 &&
                     0 <= seed( 2 ) && seed( 2 ) < 4096 &&
                     0 <= seed( 3 ) && seed( 3 ) < 4096,
                     "Seed array integer entries must be in interval [0,4096)" );
 
-  GEOSX_ASSERT_MSG( seed( 3 ) % 2 > 0, "Seed array 4th element must be odd" );
+  GEOS_ASSERT_MSG( seed( 3 ) % 2 > 0, "Seed array 4th element must be odd" );
 
   for( int i = 0; i < 4; ++i )
   {
@@ -666,7 +666,7 @@ void BlasLapackLA::setRandomNumberGeneratorSeed( arraySlice1d< int const > const
 void BlasLapackLA::getRandomNumberGeneratorSeed( arraySlice1d< int > const & seed )
 {
   // Error checking
-  GEOSX_ASSERT_MSG( seed.size() >= 4, "Seed array must have size at least four" );
+  GEOS_ASSERT_MSG( seed.size() >= 4, "Seed array must have size at least four" );
   for( int i = 0; i < 4; ++i )
   {
     seed[i] = ISEED[i];
@@ -679,7 +679,7 @@ void BlasLapackLA::vectorRand( arraySlice1d< real64 > const & X,
 
   int IDIST = static_cast< int >(idist);
   int const N = LvArray::integerConversion< int >( X.size() );
-  GEOSX_ASSERT_MSG( N > 0, "The vector cannot be empty" );
+  GEOS_ASSERT_MSG( N > 0, "The vector cannot be empty" );
   GEOSX_dlarnv( &IDIST, ISEED, &N, X.dataIfContiguous());
 }
 
@@ -704,13 +704,13 @@ void BlasLapackLA::matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJO
                    ? LvArray::integerConversion< int >( A.size( 0 ) )
                    : LvArray::integerConversion< int >( A.size( 1 ) );
 
-  GEOSX_ASSERT_MSG( A.size( 0 ) == U.size( 0 ) && minDim == U.size( 1 ),
+  GEOS_ASSERT_MSG( A.size( 0 ) == U.size( 0 ) && minDim == U.size( 1 ),
                     "The matrices A and U have an incompatible size" );
 
-  GEOSX_ASSERT_MSG( minDim == VT.size( 0 ) && A.size( 1 ) == VT.size( 1 ),
+  GEOS_ASSERT_MSG( minDim == VT.size( 0 ) && A.size( 1 ) == VT.size( 1 ),
                     "The matrices A and V have an incompatible size" );
 
-  GEOSX_ASSERT_MSG( S.size() == minDim,
+  GEOS_ASSERT_MSG( S.size() == minDim,
                     "The matrix A and vector S have an incompatible size" );
 
   // make a copy of A, since dgesvd destroys contents
@@ -743,7 +743,7 @@ void BlasLapackLA::matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJO
                 S.dataIfContiguous(), U.dataIfContiguous(), &LDU, VT.dataIfContiguous(), &LDVT,
                 WORK.data(), &LWORK, &INFO );
 
-  GEOSX_ERROR_IF( INFO != 0, "The algorithm computing SVD failed to converge." );
+  GEOS_ERROR_IF( INFO != 0, "The algorithm computing SVD failed to converge." );
 }
 
 void BlasLapackLA::matrixSVD( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
@@ -786,10 +786,10 @@ void BlasLapackLA::matrixSVD( arraySlice2d< real64 const, MatrixLayout::ROW_MAJO
 void BlasLapackLA::matrixEigenvalues( MatColMajor< real64 const > const & A,
                                       Vec< std::complex< real64 > > const & lambda )
 {
-  GEOSX_ASSERT_MSG( A.size( 0 ) == A.size( 1 ),
+  GEOS_ASSERT_MSG( A.size( 0 ) == A.size( 1 ),
                     "The matrix A must be square" );
 
-  GEOSX_ASSERT_MSG( A.size( 0 ) == lambda.size(),
+  GEOS_ASSERT_MSG( A.size( 0 ) == lambda.size(),
                     "The matrix A and lambda have incompatible sizes" );
 
   // make a copy of A, since dgeev destroys contents
@@ -835,7 +835,7 @@ void BlasLapackLA::matrixEigenvalues( MatColMajor< real64 const > const & A,
     lambda[i] = std::complex< real64 >( WR[i], WI[i] );
   }
 
-  GEOSX_ERROR_IF( INFO != 0, "The algorithm computing eigenvalues failed to converge." );
+  GEOS_ERROR_IF( INFO != 0, "The algorithm computing eigenvalues failed to converge." );
 }
 
 void BlasLapackLA::matrixEigenvalues( MatRowMajor< real64 const > const & A,
@@ -861,15 +861,15 @@ void BlasLapackLA::solveLinearSystem( MatColMajor< real64 const > const & A,
 {
   // --- Check that source matrix is square
   int const NN = LvArray::integerConversion< int >( A.size( 0 ));
-  GEOSX_ASSERT_MSG( NN > 0 &&
+  GEOS_ASSERT_MSG( NN > 0 &&
                     NN == A.size( 1 ),
                     "Matrix must be square" );
 
   // --- Check that rhs and solution have appropriate dimension
-  GEOSX_ASSERT_MSG( rhs.size( 0 ) == NN,
+  GEOS_ASSERT_MSG( rhs.size( 0 ) == NN,
                     "right-hand-side vector has wrong dimensions" );
 
-  GEOSX_ASSERT_MSG( solution.size( 0 ) == NN,
+  GEOS_ASSERT_MSG( solution.size( 0 ) == NN,
                     "solution vector has wrong dimensions" );
 
   array1d< int > IPIV;
@@ -886,11 +886,11 @@ void BlasLapackLA::solveLinearSystem( MatColMajor< real64 const > const & A,
 
   GEOSX_dgetrf( &NN, &NN, ACOPY.data(), &NN, IPIV.data(), &INFO );
 
-  GEOSX_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
+  GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
 
   GEOSX_dgetrs( "N", &NN, &NRHS, ACOPY.data(), &NN, IPIV.data(), solution.dataIfContiguous(), &NN, &INFO );
 
-  GEOSX_ASSERT_MSG( INFO == 0, "LAPACK dgetrs error code: " << INFO );
+  GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrs error code: " << INFO );
 }
 
 void BlasLapackLA::solveLinearSystem( MatRowMajor< real64 const > const & A,

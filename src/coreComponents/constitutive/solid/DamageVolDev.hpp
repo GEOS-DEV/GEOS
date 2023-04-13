@@ -75,7 +75,7 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_disableInelasticity;
 
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
@@ -144,7 +144,7 @@ public:
   }
 
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual real64 getStrainEnergyDensity( localIndex const k,
                                          localIndex const q ) const override final
   {

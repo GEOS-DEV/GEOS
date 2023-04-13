@@ -111,14 +111,14 @@ void ChomboCoupler::write( double dt )
 
 void ChomboCoupler::read( bool usePressures )
 {
-  GEOSX_LOG_RANK_0( "Waiting for file existence: " << m_inputPath );
+  GEOS_LOG_RANK_0( "Waiting for file existence: " << m_inputPath );
   waitForFileExistence( m_comm, m_inputPath.data() );
 
-  GEOSX_LOG_RANK_0( "File found: " << m_inputPath );
+  GEOS_LOG_RANK_0( "File found: " << m_inputPath );
 
   if( usePressures )
   {
-    GEOSX_LOG_RANK_0( "Reading pressures..." );
+    GEOS_LOG_RANK_0( "Reading pressures..." );
 
     FaceManager & faces = m_mesh.getFaceManager();
     NodeManager & nodes = m_mesh.getNodeManager();
@@ -166,12 +166,12 @@ void ChomboCoupler::copyNodalData()
   fields::solidMechanics::arrayViewConst2dLayoutVelocity const & velocity =
     nodes.getField< fields::solidMechanics::velocity >();
 
-  GEOSX_ERROR_IF_NE( referencePos.size( 0 ), numNodes );
-  GEOSX_ERROR_IF_NE( referencePos.size( 1 ), 3 );
-  GEOSX_ERROR_IF_NE( displacement.size( 0 ), numNodes );
-  GEOSX_ERROR_IF_NE( displacement.size( 1 ), 3 );
-  GEOSX_ERROR_IF_NE( velocity.size( 0 ), numNodes );
-  GEOSX_ERROR_IF_NE( velocity.size( 1 ), 3 );
+  GEOS_ERROR_IF_NE( referencePos.size( 0 ), numNodes );
+  GEOS_ERROR_IF_NE( referencePos.size( 1 ), 3 );
+  GEOS_ERROR_IF_NE( displacement.size( 0 ), numNodes );
+  GEOS_ERROR_IF_NE( displacement.size( 1 ), 3 );
+  GEOS_ERROR_IF_NE( velocity.size( 0 ), numNodes );
+  GEOS_ERROR_IF_NE( velocity.size( 1 ), 3 );
 
   m_referencePositionCopy.resizeWithoutInitializationOrDestruction( numNodes, 3 );
   m_displacementCopy.resizeWithoutInitializationOrDestruction( numNodes, 3 );

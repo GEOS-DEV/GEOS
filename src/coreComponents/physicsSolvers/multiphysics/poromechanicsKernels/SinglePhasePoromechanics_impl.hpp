@@ -72,8 +72,8 @@ SinglePhasePoromechanics( NodeManager const & nodeManager,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 smallStrainUpdate( localIndex const k,
                    localIndex const q,
@@ -126,8 +126,8 @@ smallStrainUpdate( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 computeBodyForce( localIndex const k,
                   localIndex const q,
@@ -138,7 +138,7 @@ computeBodyForce( localIndex const k,
                   real64 const & dSolidDensity_dPressure,
                   StackVariables & stack ) const
 {
-  GEOSX_UNUSED_VAR( dPorosity_dTemperature );
+  GEOS_UNUSED_VAR( dPorosity_dTemperature );
 
   real64 const mixtureDensity = ( 1.0 - porosity ) * m_solidDensity( k, q ) + porosity * m_fluidDensity( k, q );
   real64 const dMixtureDens_dVolStrainIncrement = dPorosity_dVolStrain * ( -m_solidDensity( k, q ) + m_fluidDensity( k, q ) );
@@ -154,8 +154,8 @@ computeBodyForce( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 computeFluidIncrement( localIndex const k,
                        localIndex const q,
@@ -166,7 +166,7 @@ computeFluidIncrement( localIndex const k,
                        real64 const & dPorosity_dTemperature,
                        StackVariables & stack ) const
 {
-  GEOSX_UNUSED_VAR( dPorosity_dTemperature );
+  GEOS_UNUSED_VAR( dPorosity_dTemperature );
 
   stack.fluidMassIncrement = porosity * m_fluidDensity( k, q ) - porosity_n * m_fluidDensity_n( k, q );
   stack.dFluidMassIncrement_dVolStrainIncrement = dPorosity_dVolStrain * m_fluidDensity( k, q );
@@ -176,8 +176,8 @@ computeFluidIncrement( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
                               real64 const ( &dNdX )[numNodesPerElem][3],
@@ -257,8 +257,8 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
                                real64 const & detJxW,
@@ -307,8 +307,8 @@ assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 quadraturePointKernel( localIndex const k,
                        localIndex const q,
@@ -384,13 +384,13 @@ quadraturePointKernel( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 complete( localIndex const k,
           StackVariables & stack ) const
 {
-  GEOSX_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( k );
   real64 maxForce = 0;
   localIndex const numSupportPoints =
     m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
@@ -456,7 +456,7 @@ kernelLaunch( localIndex const numElems,
   RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
   forAll< POLICY >( numElems,
-                    [=] GEOSX_HOST_DEVICE ( localIndex const k )
+                    [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     typename KERNEL_TYPE::StackVariables stack;
 

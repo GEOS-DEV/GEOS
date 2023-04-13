@@ -50,7 +50,7 @@ public:
     CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >( solidModel, porosityModel, permModel )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void updateStateFromApertureAndProppantVolumeFraction( localIndex const k,
                                                          localIndex const q,
                                                          real64 const & oldHydraulicAperture,

@@ -55,7 +55,7 @@ void EzrokhiBrineViscosity::makeCoefficients( string_array const & inputPara )
 {
   // compute brine viscosity following Ezrokhi`s method (referenced in Eclipse TD, Aqueous phase properties)
   // Reference : Zaytsev, I.D. and Aseyev, G.G. Properties of Aqueous Solutions of Electrolytes, Boca Raton, Florida, USA CRC Press (1993).
-  GEOSX_THROW_IF_LT_MSG( inputPara.size(), 5,
+  GEOSX_THROW_IF_IF_LT_MSG( inputPara.size(), 5,
                          GEOSX_FMT( "{}: insufficient number of model parameters", m_functionName ),
                          InputError );
 
@@ -68,7 +68,7 @@ void EzrokhiBrineViscosity::makeCoefficients( string_array const & inputPara )
   }
   catch( std::invalid_argument const & e )
   {
-    GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
+    GEOSX_THROW_IF( GEOSX_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
   }
 }
 

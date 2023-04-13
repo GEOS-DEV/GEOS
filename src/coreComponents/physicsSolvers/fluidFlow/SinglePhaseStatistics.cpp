@@ -63,11 +63,11 @@ void SinglePhaseStatistics::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-bool SinglePhaseStatistics::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                     real64 const GEOSX_UNUSED_PARAM( dt ),
-                                     integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                                     integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                                     real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+bool SinglePhaseStatistics::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
+                                     real64 const GEOS_UNUSED_PARAM( dt ),
+                                     integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                     integer const GEOS_UNUSED_PARAM( eventCounter ),
+                                     real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                      DomainPartition & domain )
 {
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -184,13 +184,13 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
     regionStatistics.averagePressure = MpiWrapper::sum( regionStatistics.averagePressure );
     regionStatistics.averagePressure /= regionStatistics.totalUncompactedPoreVolume;
 
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Pressure (min, average, max): "
                                          << regionStatistics.minPressure << ", " << regionStatistics.averagePressure << ", " << regionStatistics.maxPressure << " Pa" );
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Delta pressure (min, max): "
                                          << regionStatistics.minDeltaPressure << ", " << regionStatistics.maxDeltaPressure << " Pa" );
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Total dynamic pore volume: " << regionStatistics.totalPoreVolume << " rm^3" );
 
   }

@@ -58,18 +58,18 @@ public:
   /// Deleted move assignment operator
   ApertureTableContactUpdates & operator=( ApertureTableContactUpdates && ) =  delete;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual real64 computeEffectiveAperture( real64 const aperture,
                                            real64 & dEffectiveAperture_dAperture ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual void computeTraction( arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 > const & tractionVector,
                                 arraySlice2d< real64 > const & dTractionVector_dJump ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   void addPressureToTraction( real64 const & pressure,
                               bool const isOpen,
@@ -162,7 +162,7 @@ protected:
 
 };
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 real64 ApertureTableContactUpdates::computeEffectiveAperture( real64 const aperture,
                                                               real64 & dEffectiveAperture_dAperture ) const
 {

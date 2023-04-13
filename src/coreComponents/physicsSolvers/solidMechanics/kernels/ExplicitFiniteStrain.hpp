@@ -101,7 +101,7 @@ public:
     /**
      * @brief constructor
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
             uLocal{ {0.0} }
@@ -116,14 +116,14 @@ public:
   /**
    * @copydoc ExplicitSmallStrain::setup
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
   /**
    * @copydoc ExplicitSmallStrain::quadraturePointKernel
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const;

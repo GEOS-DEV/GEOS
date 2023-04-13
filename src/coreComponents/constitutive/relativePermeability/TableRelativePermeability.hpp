@@ -74,14 +74,14 @@ public:
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac );
 
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     void computeTwoPhase( integer const ipWetting,
                           integer const ipNonWetting,
                           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                           arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     void computeThreePhase( integer const ipWetting,
                             integer const ipInter,
                             integer const ipNonWetting,
@@ -89,13 +89,13 @@ public:
                             arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                             arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                   arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
                   arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                   arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     virtual void update( localIndex const k,
                          localIndex const q,
                          arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override;
@@ -170,7 +170,7 @@ private:
 
 };
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 TableRelativePermeability::KernelWrapper::
   computeTwoPhase( integer const ipWetting,
@@ -195,7 +195,7 @@ TableRelativePermeability::KernelWrapper::
 
 
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 TableRelativePermeability::KernelWrapper::
   computeThreePhase( integer const ipWetting,
@@ -255,7 +255,7 @@ TableRelativePermeability::KernelWrapper::
 }
 
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 TableRelativePermeability::KernelWrapper::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
@@ -321,7 +321,7 @@ TableRelativePermeability::KernelWrapper::
 
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 TableRelativePermeability::KernelWrapper::
   update( localIndex const k,

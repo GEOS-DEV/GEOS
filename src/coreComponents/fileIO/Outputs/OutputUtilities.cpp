@@ -81,10 +81,10 @@ void checkFieldRegistration( ElementRegionManager const & elemManager,
 
   if( !notRegisteredFieldNames.empty() )
   {
-    GEOSX_LOG_RANK_0( "\n" << outputName << ": Warning! " << notRegisteredFieldNames.size() << " field name specified in `fieldNames` is/are not registered anywhere." );
+    GEOS_LOG_RANK_0( "\n" << outputName << ": Warning! " << notRegisteredFieldNames.size() << " field name specified in `fieldNames` is/are not registered anywhere." );
     for( string const & name : notRegisteredFieldNames )
     {
-      GEOSX_LOG_RANK_0( outputName << ": Warning! `" << name << "` is not registered anywhere and will not be displayed.\n" );
+      GEOS_LOG_RANK_0( outputName << ": Warning! `" << name << "` is not registered anywhere and will not be displayed.\n" );
     }
   }
 }

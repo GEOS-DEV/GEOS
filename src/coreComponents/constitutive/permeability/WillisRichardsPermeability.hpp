@@ -46,14 +46,14 @@ public:
     m_refClosureStress( refClosureStress )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const ( &dispJump )[3],
                 real64 const ( &traction )[3],
                 arraySlice1d< real64 > const & permeability,
                 arraySlice2d< real64 > const & dPerm_dDispJump,
                 arraySlice2d< real64 > const & dPerm_dTraction ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromApertureAndShearDisplacement( localIndex const k,
                                                        localIndex const q,
                                                        real64 const & oldHydraulicAperture,
@@ -62,7 +62,7 @@ public:
                                                        real64 const ( &dispJump )[3],
                                                        real64 const ( &traction )[3] ) const override final
   {
-    GEOSX_UNUSED_VAR( q, oldHydraulicAperture, newHydraulicAperture, pressure );
+    GEOS_UNUSED_VAR( q, oldHydraulicAperture, newHydraulicAperture, pressure );
 
     compute( dispJump,
              traction,
@@ -152,8 +152,8 @@ private:
 };
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void WillisRichardsPermeabilityUpdate::compute( real64 const ( &dispJump )[3],
                                                 real64 const ( &traction )[3],
                                                 arraySlice1d< real64 > const & permeability,

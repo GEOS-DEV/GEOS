@@ -122,19 +122,19 @@ void JFunctionCapillaryPressure::postProcessInput()
   CapillaryPressureBase::postProcessInput();
 
   integer const numPhases = m_phaseNames.size();
-  GEOSX_THROW_IF( numPhases != 2 && numPhases != 3,
+  GEOSX_THROW_IF_IF( numPhases != 2 && numPhases != 3,
                   GEOSX_FMT( "{}: the expected number of fluid phases is either two, or three",
                              getFullName() ),
                   InputError );
 
   if( numPhases == 2 )
   {
-    GEOSX_THROW_IF( m_wettingNonWettingJFuncTableName.empty(),
+    GEOSX_THROW_IF_IF( m_wettingNonWettingJFuncTableName.empty(),
                     GEOSX_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the J-function table for the pair (wetting phase, non-wetting phase)",
                                getFullName(),
                                viewKeyStruct::wettingNonWettingJFuncTableNameString() ),
                     InputError );
-    GEOSX_THROW_IF( m_wettingNonWettingSurfaceTension <= 0,
+    GEOSX_THROW_IF_IF( m_wettingNonWettingSurfaceTension <= 0,
                     GEOSX_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the surface tension for the pair (wetting phase, non-wetting phase)",
                                getFullName(),
                                viewKeyStruct::wettingNonWettingSurfaceTensionString() ),
@@ -142,7 +142,7 @@ void JFunctionCapillaryPressure::postProcessInput()
   }
   else if( numPhases == 3 )
   {
-    GEOSX_THROW_IF( m_wettingIntermediateJFuncTableName.empty() || m_nonWettingIntermediateJFuncTableName.empty(),
+    GEOSX_THROW_IF_IF( m_wettingIntermediateJFuncTableName.empty() || m_nonWettingIntermediateJFuncTableName.empty(),
                     GEOSX_FMT( "{}: for a three-phase flow simulation, we must use {} to specify the J-function table"
                                "for the pair (wetting phase, intermediate phase), "
                                "and {} to specify the J-function table for the pair (non-wetting phase, intermediate phase)",
@@ -150,7 +150,7 @@ void JFunctionCapillaryPressure::postProcessInput()
                                viewKeyStruct::wettingIntermediateJFuncTableNameString(),
                                viewKeyStruct::nonWettingIntermediateJFuncTableNameString()  ),
                     InputError );
-    GEOSX_THROW_IF( m_wettingIntermediateSurfaceTension <= 0 || m_nonWettingIntermediateSurfaceTension <= 0,
+    GEOSX_THROW_IF_IF( m_wettingIntermediateSurfaceTension <= 0 || m_nonWettingIntermediateSurfaceTension <= 0,
                     GEOSX_FMT( "{}: for a three-phase flow simulation, we must use {} to specify the surface tension"
                                "for the pair (wetting phase, intermediate phase), "
                                "and {} to specify the J-function table for the pair (non-wetting phase, intermediate phase)",
@@ -170,7 +170,7 @@ void JFunctionCapillaryPressure::initializePreSubGroups()
 
   if( numPhases == 2 )
   {
-    GEOSX_THROW_IF( !functionManager.hasGroup( m_wettingNonWettingJFuncTableName ),
+    GEOSX_THROW_IF_IF( !functionManager.hasGroup( m_wettingNonWettingJFuncTableName ),
                     GEOSX_FMT( "{}: the table function named {} could not be found",
                                getFullName(),
                                m_wettingNonWettingJFuncTableName ),
@@ -183,7 +183,7 @@ void JFunctionCapillaryPressure::initializePreSubGroups()
   }
   else if( numPhases == 3 )
   {
-    GEOSX_THROW_IF( !functionManager.hasGroup( m_wettingIntermediateJFuncTableName ),
+    GEOSX_THROW_IF_IF( !functionManager.hasGroup( m_wettingIntermediateJFuncTableName ),
                     GEOSX_FMT( "{}: the table function named {} could not be found",
                                getFullName(),
                                m_wettingIntermediateJFuncTableName ),
@@ -191,7 +191,7 @@ void JFunctionCapillaryPressure::initializePreSubGroups()
     TableFunction const & jFuncTableWI = functionManager.getGroup< TableFunction >( m_wettingIntermediateJFuncTableName );
     TableCapillaryPressureHelpers::validateCapillaryPressureTable( jFuncTableWI, getFullName(), false );
 
-    GEOSX_THROW_IF( !functionManager.hasGroup( m_nonWettingIntermediateJFuncTableName ),
+    GEOSX_THROW_IF_IF( !functionManager.hasGroup( m_nonWettingIntermediateJFuncTableName ),
                     GEOSX_FMT( "{}: the table function named {} could not be found",
                                getFullName(),
                                m_nonWettingIntermediateJFuncTableName ),
@@ -227,7 +227,7 @@ void JFunctionCapillaryPressure::saveConvergedRockState( arrayView2d< real64 con
 
   arrayView2d< real64 > jFuncMultiplier = m_jFuncMultiplier;
 
-  forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+  forAll< parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
     real64 permeability = 0;
     if( permeabilityDirection == PermeabilityDirection::XY )

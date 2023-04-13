@@ -48,8 +48,8 @@ struct Baker
    * The interpolation is based on the modified Baker method, also used as default in Eclipse
    * Reference: Eclipse technical description and PetroWiki
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   static void
   compute( real64 const & shiftedWaterVolFrac,
            real64 const & gasVolFrac,

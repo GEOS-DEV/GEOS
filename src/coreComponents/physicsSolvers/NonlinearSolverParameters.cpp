@@ -155,7 +155,7 @@ void NonlinearSolverParameters::postProcessInput()
 {
   if( m_timeStepDecreaseIterLimit <= m_timeStepIncreaseIterLimit )
   {
-    GEOSX_ERROR( " timeStepIncreaseIterLimit should be smaller than timeStepDecreaseIterLimit!!" );
+    GEOS_ERROR( " timeStepIncreaseIterLimit should be smaller than timeStepDecreaseIterLimit!!" );
   }
 }
 

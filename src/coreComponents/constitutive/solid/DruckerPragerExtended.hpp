@@ -91,22 +91,22 @@ public:
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   real64 ( &stiffness )[6][6] ) const override final;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
@@ -137,7 +137,7 @@ private:
   arrayView2d< real64 > const m_oldState;
 
   /// Hyperbolic model for friction hardening
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void hyperbolicModel( real64 const y1,
                         real64 const y2,
                         real64 const m,
@@ -160,8 +160,8 @@ private:
 };
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
                                                       localIndex const q,
                                                       real64 const ( &strainIncrement )[6],
@@ -319,8 +319,8 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
 }
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
                                                       localIndex const q,
                                                       real64 const ( &strainIncrement )[6],

@@ -93,7 +93,7 @@ public:
    */
   virtual real64 getTimestepRequest( real64 const time )
   {
-    GEOSX_UNUSED_VAR( time );
+    GEOS_UNUSED_VAR( time );
     return 1e99;
   }
 

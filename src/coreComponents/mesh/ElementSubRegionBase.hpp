@@ -94,7 +94,7 @@ public:
    *        the derived class (i.e., element-to-node map, element-to-face map, etc)
    * @param[in] clearIfUnmapped clearIfUnmapped
    */
-  virtual void fixUpDownMaps( bool const clearIfUnmapped ) { GEOSX_UNUSED_VAR( clearIfUnmapped ); }
+  virtual void fixUpDownMaps( bool const clearIfUnmapped ) { GEOS_UNUSED_VAR( clearIfUnmapped ); }
 
 
   /**
@@ -125,7 +125,7 @@ public:
    * @param[in] k cell index
    * @return number of nodes per element
    */
-  virtual localIndex numNodesPerElement( localIndex const k ) const { GEOSX_UNUSED_VAR( k ); return m_numNodesPerElement; }
+  virtual localIndex numNodesPerElement( localIndex const k ) const { GEOS_UNUSED_VAR( k ); return m_numNodesPerElement; }
 
   /**
    * @brief Get the number of faces per element.

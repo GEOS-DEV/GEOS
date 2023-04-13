@@ -441,7 +441,7 @@ private:
 
   template< typename U = T_PTR >
   typename std::enable_if< !std::is_same< U, T * >::value, void >::type
-  deleteValue( INDEX_TYPE GEOSX_UNUSED_PARAM( index ) )
+  deleteValue( INDEX_TYPE GEOS_UNUSED_PARAM( index ) )
   {}
 
   /// random access container that holds the values
@@ -516,7 +516,7 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
       }
       else if( typeid( source ) != typeid( m_values[index].second ) )
       {
-        GEOSX_ERROR( "MappedVector::insert(): Tried to insert existing key (" << keyName <<
+        GEOS_ERROR( "MappedVector::insert(): Tried to insert existing key (" << keyName <<
                      ") with a different type without overwrite flag\n " << " " << LvArray::system::demangleType( source ) <<
                      " != " << LvArray::system::demangleType( m_values[ index ].second ) );
       }

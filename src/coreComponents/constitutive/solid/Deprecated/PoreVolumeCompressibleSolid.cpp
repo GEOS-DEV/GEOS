@@ -77,7 +77,7 @@ void PoreVolumeCompressibleSolid::postProcessInput()
   if( m_compressibility < 0.0 )
   {
     string const message = "An invalid value of fluid bulk modulus (" + std::to_string( m_compressibility ) + ") is specified";
-    GEOSX_ERROR( message );
+    GEOS_ERROR( message );
   }
   m_poreVolumeRelation.setCoefficients( m_referencePressure, 1.0, m_compressibility );
 }
@@ -95,15 +95,15 @@ void PoreVolumeCompressibleSolid::stateUpdateBatchPressure( arrayView1d< real64 
   localIndex const numElems = m_poreVolumeMultiplier.size( 0 );
   localIndex const numQuad  = m_poreVolumeMultiplier.size( 1 );
 
-  GEOSX_ASSERT_EQ( pres.size(), numElems );
-  GEOSX_ASSERT_EQ( dPres.size(), numElems );
+  GEOS_ASSERT_EQ( pres.size(), numElems );
+  GEOS_ASSERT_EQ( dPres.size(), numElems );
 
   ExponentialRelation< real64, ExponentApproximationType::Linear > const relation = m_poreVolumeRelation;
 
   arrayView2d< real64 > const & pvmult = m_poreVolumeMultiplier;
   arrayView2d< real64 > const & dPVMult_dPres = m_dPVMult_dPressure;
 
-  forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {

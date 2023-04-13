@@ -35,7 +35,7 @@ namespace hybridFVMKernels
 struct CellConnectivity
 {
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static bool
   isNeighborFound( localIndex const (&localIds)[3],
                    localIndex const ifaceLoc,

@@ -178,7 +178,7 @@ inline
 typename std::enable_if< can_history_io< T >, HistoryMetadata >::type
 getHistoryMetadata( string const & name, ArrayView< T const, 1, 0 > const & arr, localIndex const numComps, localIndex sizeOverride = -1 )
 {
-  GEOSX_UNUSED_VAR( numComps );
+  GEOS_UNUSED_VAR( numComps );
   localIndex size = sizeOverride < 0 ? arr.size( ) : sizeOverride;
   return HistoryMetadata( name, size, std::type_index( typeid( T )));
 }
@@ -198,7 +198,7 @@ inline
 typename std::enable_if< can_history_io< T >, HistoryMetadata >::type
 getHistoryMetadata( string const & name, SortedArrayView< T const > const & arr, localIndex const numComps, localIndex sizeOverride = -1 )
 {
-  GEOSX_UNUSED_VAR( numComps );
+  GEOS_UNUSED_VAR( numComps );
   localIndex size = sizeOverride < 0 ? arr.size( ) : sizeOverride;
   return HistoryMetadata( name, size, std::type_index( typeid(T)));
 }
@@ -238,7 +238,7 @@ template< typename T >
 inline typename std::enable_if< can_history_io< T >, HistoryMetadata >::type
 getHistoryMetadata( string const & name, const T & type, localIndex const numComps, localIndex sizeOverride = -1 )
 {
-  GEOSX_UNUSED_VAR( type, numComps );
+  GEOS_UNUSED_VAR( type, numComps );
   localIndex size = sizeOverride < 0 ? 0 : sizeOverride;
   return HistoryMetadata( name, size, std::type_index( typeid(T)));
 }
@@ -256,8 +256,8 @@ template< typename T >
 inline typename std::enable_if< can_history_io_container< T > && !can_history_io< typename T::value_type >, HistoryMetadata >::type
 getHistoryMetadata( string const & name, const T & type, localIndex const numComps, localIndex sizeOverride )
 {
-  GEOSX_ERROR( "Trying to use time history output on an unsupported type." );
-  GEOSX_UNUSED_VAR( name, type, numComps, sizeOverride );
+  GEOS_ERROR( "Trying to use time history output on an unsupported type." );
+  GEOS_UNUSED_VAR( name, type, numComps, sizeOverride );
   return HistoryMetadata( );
 }
 
@@ -274,8 +274,8 @@ template< typename T >
 inline typename std::enable_if< !can_history_io_container< T > && !can_history_io< T >, HistoryMetadata >::type
 getHistoryMetadata( string const & name, const T & type, localIndex const numComps, localIndex sizeOverride )
 {
-  GEOSX_ERROR( "Trying to use time history output on an unsupported type." );
-  GEOSX_UNUSED_VAR( name, type, numComps, sizeOverride );
+  GEOS_ERROR( "Trying to use time history output on an unsupported type." );
+  GEOS_UNUSED_VAR( name, type, numComps, sizeOverride );
   return HistoryMetadata( );
 }
 

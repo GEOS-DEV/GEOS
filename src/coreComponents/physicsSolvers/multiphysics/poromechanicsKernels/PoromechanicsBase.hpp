@@ -116,7 +116,7 @@ public:
     m_pressure_n( elementSubRegion.template getField< fields::flow::pressure_n >() ),
     m_pressure( elementSubRegion.template getField< fields::flow::pressure >() )
   {
-    GEOSX_UNUSED_VAR( fluidModelKey );
+    GEOS_UNUSED_VAR( fluidModelKey );
   }
 
   //*****************************************************************************
@@ -134,7 +134,7 @@ public:
     static constexpr int numDispDofPerElem =  Base::StackVariables::maxNumRows;
 
     /// Constructor.
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
             xLocal(),
@@ -211,8 +211,8 @@ public:
    * incremental displacement, and degree of freedom numbers are placed into
    * element local stack storage.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -262,8 +262,8 @@ public:
    * @param[in] k Element index.
    * @return A parameter representative of the stiffness matrix dstress/dstrain
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   real64 computeStabilizationScaling( localIndex const k ) const
   {
     // TODO: generalize this to other constitutive models (currently we assume linear elasticity).

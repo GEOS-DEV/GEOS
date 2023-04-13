@@ -38,14 +38,14 @@ public:
    * @brief Get number of elements in this wrapper.
    * @return number of elements
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numElems() const { return m_density.size( 0 ); }
 
   /**
    * @brief Get number of gauss points per element.
    * @return number of gauss points per element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numGauss() const { return m_density.size( 1 ); };
 
 protected:
@@ -112,7 +112,7 @@ private:
    * @param[out] density fluid density
    * @param[out] viscosity fluid viscosity
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & viscosity ) const = 0;
@@ -125,7 +125,7 @@ private:
    * @param[out] viscosity fluid viscosity
    * @param[out] dViscosity_dPressure fluid viscosity derivative w.r.t. pressure
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & dDensity_dPressure,
@@ -149,7 +149,7 @@ private:
    * @param[out] dEnthalpy_dPressure fluid enthalpy derivative w.r.t. pressure
    * @param[out] dEnthalpy_dTemperature fluid enthalpy derivative w.r.t. temperature
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void compute( real64 const pressure,
                         real64 const temperature,
                         real64 & density,
@@ -171,7 +171,7 @@ private:
    * @param[in] q        gauss point index
    * @param[in] pressure the target pressure value
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure ) const = 0;
@@ -183,7 +183,7 @@ private:
    * @param[in] pressure    the target pressure value
    * @param[in] temperature the target temperature value
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,

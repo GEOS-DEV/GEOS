@@ -99,7 +99,7 @@ public:
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void evaluateYield( real64 const p,
                       real64 const q,
                       real64 const pc,
@@ -118,22 +118,22 @@ public:
 
 
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   real64 ( &stiffness )[6][6] ) const override final;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
@@ -164,8 +164,8 @@ private:
 };
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void DelftEggUpdates::evaluateYield( real64 const p,
                                      real64 const q,
                                      real64 const pc,
@@ -206,8 +206,8 @@ void DelftEggUpdates::evaluateYield( real64 const p,
 }
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void DelftEggUpdates::smallStrainUpdate( localIndex const k,
                                          localIndex const q,
                                          real64 const ( &strainIncrement )[6],
@@ -434,8 +434,8 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 }
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void DelftEggUpdates::smallStrainUpdate( localIndex const k,
                                          localIndex const q,
                                          real64 const ( &strainIncrement )[6],

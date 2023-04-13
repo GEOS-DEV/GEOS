@@ -38,7 +38,7 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
   GEOSX_MARK_FUNCTION;
 
   localIndex const N = acceleration.size( 0 );
-  forAll< parallelDevicePolicy<> >( N, [=] GEOSX_DEVICE ( localIndex const i )
+  forAll< parallelDevicePolicy<> >( N, [=] GEOS_DEVICE ( localIndex const i )
   {
     LvArray::tensorOps::scaledAdd< 3 >( velocity[ i ], acceleration[ i ], dt );
     LvArray::tensorOps::fill< 3 >( acceleration[ i ], 0 );
@@ -53,7 +53,7 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
 {
   GEOSX_MARK_FUNCTION;
 
-  forAll< parallelDevicePolicy<> >( indices.size(), [=] GEOSX_DEVICE ( localIndex const i )
+  forAll< parallelDevicePolicy<> >( indices.size(), [=] GEOS_DEVICE ( localIndex const i )
   {
     localIndex const a = indices[ i ];
     LvArray::tensorOps::scale< 3 >( acceleration[ a ], 1.0 / mass[ a ] );
@@ -69,7 +69,7 @@ inline void displacementUpdate( arrayView2d< real64 const, nodes::VELOCITY_USD >
   GEOSX_MARK_FUNCTION;
 
   localIndex const N = velocity.size( 0 );
-  forAll< parallelDevicePolicy<> >( N, [=] GEOSX_DEVICE ( localIndex const i )
+  forAll< parallelDevicePolicy<> >( N, [=] GEOS_DEVICE ( localIndex const i )
   {
     LvArray::tensorOps::scaledCopy< 3 >( uhat[ i ], velocity[ i ], dt );
     LvArray::tensorOps::add< 3 >( u[ i ], uhat[ i ] );

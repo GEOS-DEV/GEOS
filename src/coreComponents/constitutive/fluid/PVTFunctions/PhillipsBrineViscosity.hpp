@@ -48,7 +48,7 @@ public:
   {}
 
   template< int USD1 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -56,7 +56,7 @@ public:
                 bool useMass ) const;
 
   template< int USD1, int USD2, int USD3 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -126,14 +126,14 @@ private:
 };
 
 template< int USD1 >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
                                             real64 const & temperature,
                                             arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                             real64 & value,
                                             bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( pressure, phaseComposition, useMass );
+  GEOS_UNUSED_VAR( pressure, phaseComposition, useMass );
 
   // compute the viscosity of pure water as a function of temperature
   real64 const pureWaterVisc = m_waterViscosityTable.compute( &temperature );
@@ -143,7 +143,7 @@ void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
 }
 
 template< int USD1, int USD2, int USD3 >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
                                             real64 const & temperature,
                                             arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -152,7 +152,7 @@ void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
                                             arraySlice1d< real64, USD3 > const & dValue,
                                             bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( pressure,
+  GEOS_UNUSED_VAR( pressure,
                     phaseComposition,
                     dPhaseComposition,
                     useMass );

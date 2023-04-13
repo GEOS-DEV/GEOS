@@ -90,7 +90,7 @@ struct PrecomputeSourceAndReceiverKernel
           R2SymTensor const sourceMoment )
   {
 
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -245,7 +245,7 @@ struct MassMatrixKernel
           arrayView1d< real32 > const mass )
 
   {
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -311,7 +311,7 @@ struct DampingMatrixKernel
           arrayView1d< real32 > const dampingy,
           arrayView1d< real32 > const dampingz )
   {
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const f )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
     {
       // face on the domain boundary and not on free surface
       if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
@@ -440,9 +440,9 @@ public:
     m_velocityVs( elementSubRegion.template getField< fields::MediumVelocityVs >() ),
     m_dt( dt )
   {
-    GEOSX_UNUSED_VAR( edgeManager );
-    GEOSX_UNUSED_VAR( faceManager );
-    GEOSX_UNUSED_VAR( targetRegionIndex );
+    GEOS_UNUSED_VAR( edgeManager );
+    GEOS_UNUSED_VAR( faceManager );
+    GEOS_UNUSED_VAR( targetRegionIndex );
   }
 
 
@@ -457,7 +457,7 @@ public:
   struct StackVariables : Base::StackVariables
   {
 public:
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       xLocal()
     {}
@@ -474,8 +474,8 @@ public:
    *
    * Copies the primary variable, and position into the local stack array.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -499,8 +499,8 @@ public:
    * Calculates stiffness vector
    *
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const

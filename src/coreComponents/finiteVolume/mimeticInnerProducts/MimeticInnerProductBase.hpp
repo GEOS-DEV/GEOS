@@ -83,7 +83,7 @@ public:
    * When tParam = 6, we obtain the quasi-Raviart-Thomas inner product
    */
   template< localIndex NF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   computeParametricInnerProduct( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                                  arrayView1d< real64 const > const & transMultiplier,
@@ -99,7 +99,7 @@ public:
 };
 
 template< localIndex NF >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 MimeticInnerProductBase::computeParametricInnerProduct( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                                                         arrayView1d< real64 const > const & transMultiplier,

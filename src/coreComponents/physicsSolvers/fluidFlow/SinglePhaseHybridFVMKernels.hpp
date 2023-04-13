@@ -75,7 +75,7 @@ void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
     { lambda( std::integral_constant< T, 12 >() ); return;}
     case 13:
     { lambda( std::integral_constant< T, 13 >() ); return;}
-    default: GEOSX_ERROR( "Unknown numFacesInElem value: " << value );
+    default: GEOS_ERROR( "Unknown numFacesInElem value: " << value );
   }
 }
 
@@ -185,7 +185,7 @@ public:
   struct StackVariables
   {
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables()
       : transMatrix( NUM_FACE, NUM_FACE )
     {}
@@ -211,7 +211,7 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
@@ -229,7 +229,7 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeGradient( localIndex const ei,
                         StackVariables & stack ) const
   {
@@ -281,7 +281,7 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFluxDivergence( localIndex const ei,
                               StackVariables & stack ) const
   {
@@ -348,12 +348,12 @@ public:
    * @param[in] kernelOp the function used to customize the kernel
    */
   template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei,
                 StackVariables & stack,
                 FUNC && kernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
   {
-    GEOSX_UNUSED_VAR( ei, stack, kernelOp );
+    GEOS_UNUSED_VAR( ei, stack, kernelOp );
 
     real64 const perm[ 3 ] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
 
@@ -402,7 +402,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const ei,
                  StackVariables & stack ) const
   {
@@ -473,7 +473,7 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       typename KERNEL_TYPE::StackVariables stack;
 
@@ -671,7 +671,7 @@ public:
     m_density_n( singlePhaseFluidAccessors.get( fields::singlefluid::density_n {} ) )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeMassNormalizer( localIndex const kf,
                               real64 & massNormalizer,
                               real64 & multiplier ) const
@@ -698,7 +698,7 @@ public:
     multiplier *= m_dt / elemCounter / m_defaultViscosity;  // average dt * mobility at the previous converged time step
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const kf,
                             LinfStackVariables & stack ) const override
   {
@@ -713,7 +713,7 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const kf,
                           L2StackVariables & stack ) const override
   {

@@ -45,12 +45,12 @@ public:
     : MultiPhaseThermalConductivityBaseUpdate( effectiveConductivity, dEffectiveConductivity_dPhaseVolFrac )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const & laggedPorosity,
                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override
-  { GEOSX_UNUSED_VAR( k, q, laggedPorosity, phaseVolFraction ); }
+  { GEOS_UNUSED_VAR( k, q, laggedPorosity, phaseVolFraction ); }
 
 };
 

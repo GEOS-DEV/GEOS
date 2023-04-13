@@ -54,7 +54,7 @@ public:
   {}
 
   template< int USD1 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -62,7 +62,7 @@ public:
                 bool useMass ) const;
 
   template< int USD1, int USD2, int USD3 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -148,14 +148,14 @@ private:
 };
 
 template< int USD1 >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
                                            real64 const & temperature,
                                            arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                            real64 & value,
                                            bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( pressure, useMass );
+  GEOS_UNUSED_VAR( pressure, useMass );
   real64 const waterVisc = m_waterViscosityTable.compute( &temperature );
   // we have to convert molar component phase fraction (phaseComposition[m_CO2Index]) to mass fraction
   real64 const massPhaseCompositionCO2 = phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index] /
@@ -168,7 +168,7 @@ void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
 }
 
 template< int USD1, int USD2, int USD3 >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
                                            real64 const & temperature,
                                            arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -177,7 +177,7 @@ void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
                                            arraySlice1d< real64, USD3 > const & dValue,
                                            bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( pressure, useMass );
+  GEOS_UNUSED_VAR( pressure, useMass );
 
   using Deriv = multifluid::DerivativeOffset;
 

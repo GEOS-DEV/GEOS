@@ -224,7 +224,7 @@ public:
     constexpr char key[] = "duplicated_nodes";
 
     vtkIntArray const * duplicatedNodes = vtkIntArray::FastDownCast( faceMesh->GetPointData()->GetArray( key ) );
-    GEOSX_ERROR_IF( duplicatedNodes == nullptr, "Could not find valid field \"" << key << "\" for fracture \"" << faceBlockName << "\"." );
+    GEOS_ERROR_IF( duplicatedNodes == nullptr, "Could not find valid field \"" << key << "\" for fracture \"" << faceBlockName << "\"." );
 
     vtkIdType const numTuples = duplicatedNodes->GetNumberOfTuples();
     int const numComponents = duplicatedNodes->GetNumberOfComponents();
@@ -310,7 +310,7 @@ ArrayOfArrays< localIndex > computeFace2dToElems2d( vtkPolyData * edges,
   {
     vtkCell * c = edges->GetCell( i );
     vtkIdList * edgePointIds = c->GetPointIds();
-    GEOSX_ASSERT( edgePointIds->GetNumberOfIds() == 2 );
+    GEOS_ASSERT( edgePointIds->GetNumberOfIds() == 2 );
     std::pair< vtkIdType, vtkIdType > const minMax = std::minmax( edgePointIds->GetId( 0 ), edgePointIds->GetId( 1 ) );
     face2dIds[minMax] = i;
   }
@@ -323,7 +323,7 @@ ArrayOfArrays< localIndex > computeFace2dToElems2d( vtkPolyData * edges,
     {
       vtkCell * e = c->GetEdge( j );
       vtkIdList * edgePointIds = e->GetPointIds();
-      GEOSX_ASSERT( edgePointIds->GetNumberOfIds() == 2 );
+      GEOS_ASSERT( edgePointIds->GetNumberOfIds() == 2 );
       std::pair< vtkIdType, vtkIdType > const minMax = std::minmax( edgePointIds->GetId( 0 ), edgePointIds->GetId( 1 ) );
       face2dToElems2d.emplaceBack( LvArray::integerConversion< localIndex >( face2dIds.at( minMax ) ), i );
     }

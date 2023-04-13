@@ -127,7 +127,7 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
   hypre_CSRMatrix * const localMatrix = m_targetRank < 0
                                       ? hypre_MergeDiagAndOffd( mat.unwrapped() )
                                       : hypre_ParCSRMatrixToCSRMatrixAll( mat.unwrapped() );
-  GEOSX_ERROR_IF( rank == m_targetRank && !localMatrix, "HypreExport: matrix is empty on target rank" );
+  GEOS_ERROR_IF( rank == m_targetRank && !localMatrix, "HypreExport: matrix is empty on target rank" );
 
   if( m_targetRank < 0 || m_targetRank == rank )
   {
@@ -176,7 +176,7 @@ void HypreExport::exportVector( HypreVector const & vec,
   hypre_Vector * const localVector = m_targetRank < 0
                                    ? hypre_ParVectorLocalVector( vec.unwrapped() )
                                    : (hypre_Vector *)hypre::parVectorToVectorAll( vec.unwrapped() );
-  GEOSX_ERROR_IF( rank == m_targetRank && !localVector, "HypreExport: vector is empty on target rank" );
+  GEOS_ERROR_IF( rank == m_targetRank && !localVector, "HypreExport: vector is empty on target rank" );
 
   if( m_targetRank < 0 || m_targetRank == rank )
   {

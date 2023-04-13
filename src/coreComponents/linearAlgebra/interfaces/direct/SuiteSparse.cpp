@@ -133,7 +133,7 @@ void factorize( SuiteSparseData & data, LinearSolverParameters const & params )
   {
     umfpack_dl_report_info( data.control, data.info );
     umfpack_dl_report_status( data.control, status );
-    GEOSX_ERROR( "SuiteSparse: umfpack_dl_symbolic failed." );
+    GEOS_ERROR( "SuiteSparse: umfpack_dl_symbolic failed." );
   }
 
   // print the symbolic factorization
@@ -155,7 +155,7 @@ void factorize( SuiteSparseData & data, LinearSolverParameters const & params )
   {
     umfpack_dl_report_info( data.control, data.info );
     umfpack_dl_report_status( data.control, status );
-    GEOSX_ERROR( "SuiteSparse: umfpack_dl_numeric failed." );
+    GEOS_ERROR( "SuiteSparse: umfpack_dl_numeric failed." );
   }
 
   // print the numeric factorization
@@ -273,7 +273,7 @@ void SuiteSparse< LAI >::solve( Vector const & rhs,
       {
         if( m_params.logLevel > 0 )
         {
-          GEOSX_WARNING( "SuiteSparse: failed to reduce residual below tolerance.\n"
+          GEOS_WARNING( "SuiteSparse: failed to reduce residual below tolerance.\n"
                          "Condition number estimate: " << condEst );
         }
         m_result.status = LinearSolverResult::Status::Breakdown;
@@ -283,7 +283,7 @@ void SuiteSparse< LAI >::solve( Vector const & rhs,
 
   if( m_params.logLevel >= 1 )
   {
-    GEOSX_LOG_RANK_0( "\t\tLinear Solver | " << m_result.status <<
+    GEOS_LOG_RANK_0( "\t\tLinear Solver | " << m_result.status <<
                       " | Iterations: " << m_result.numIterations <<
                       " | Final Rel Res: " << m_result.residualReduction <<
                       " | Setup Time: " << m_result.setupTime << " s" <<
@@ -325,7 +325,7 @@ void SuiteSparse< LAI >::doSolve( Vector const & b, Vector & x, bool transpose )
     {
       umfpack_dl_report_info( m_data->control, m_data->info );
       umfpack_dl_report_status( m_data->control, status );
-      GEOSX_ERROR( "SuiteSparse interface: umfpack_dl_solve failed." );
+      GEOS_ERROR( "SuiteSparse interface: umfpack_dl_solve failed." );
     }
   }
 

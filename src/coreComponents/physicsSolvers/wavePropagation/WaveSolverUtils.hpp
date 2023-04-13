@@ -28,7 +28,7 @@ namespace geos
 struct WaveSolverUtils
 {
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static real32 evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
   {
     real32 const o_tpeak = 1.0/f0;
@@ -59,7 +59,7 @@ struct WaveSolverUtils
       }
       break;
       default:
-        GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
+        GEOS_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
     }
 
     return pulse;
@@ -85,7 +85,7 @@ struct WaveSolverUtils
 
     if( nsamplesSeismoTrace > 0 )
     {
-      forAll< WaveSolverBase::EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
+      forAll< WaveSolverBase::EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ircv )
       {
         if( receiverIsLocal[ircv] == 1 )
         {
@@ -148,7 +148,7 @@ struct WaveSolverUtils
 
     if( nsamplesSeismoTrace > 0 )
     {
-      forAll< WaveSolverBase::EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
+      forAll< WaveSolverBase::EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ircv )
       {
         if( receiverIsLocal[ircv] == 1 )
         {
@@ -208,7 +208,7 @@ struct WaveSolverUtils
    * @return true if coords is inside the element
    */
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static bool
   locateSourceElement( real64 const numFacesPerElem,
                        real64 const (&elemCenter)[3],
@@ -261,7 +261,7 @@ struct WaveSolverUtils
  * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
  */
   template< typename FE_TYPE >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
                                         arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,

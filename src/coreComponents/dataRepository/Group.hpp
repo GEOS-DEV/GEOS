@@ -323,7 +323,7 @@ public:
   T & getGroup( KEY const & key )
   {
     Group * const child = m_subGroups[ key ];
-    GEOSX_THROW_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOSX_THROW_IF_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
     return dynamicCast< T & >( *child );
   }
 
@@ -334,7 +334,7 @@ public:
   T const & getGroup( KEY const & key ) const
   {
     Group const * const child = m_subGroups[ key ];
-    GEOSX_THROW_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOSX_THROW_IF_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
     return dynamicCast< T const & >( *child );
   }
 
@@ -839,9 +839,9 @@ public:
                                     xmlWrapper::xmlNode schemaParent,
                                     integer documentationType )
   {
-    GEOSX_UNUSED_VAR( schemaRoot );
-    GEOSX_UNUSED_VAR( schemaParent );
-    GEOSX_UNUSED_VAR( documentationType );
+    GEOS_UNUSED_VAR( schemaRoot );
+    GEOS_UNUSED_VAR( schemaParent );
+    GEOS_UNUSED_VAR( documentationType );
   }
 
   ///@}
@@ -866,7 +866,7 @@ public:
    */
   virtual void registerDataOnMesh( Group & meshBodies )
   {
-    GEOSX_UNUSED_VAR( meshBodies );
+    GEOS_UNUSED_VAR( meshBodies );
   }
 
   ///@}
@@ -1047,7 +1047,7 @@ public:
   WrapperBase const & getWrapperBase( KEY const & key ) const
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
-    GEOSX_THROW_IF( wrapper == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOSX_THROW_IF_IF( wrapper == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
     return *wrapper;
   }
 
@@ -1058,7 +1058,7 @@ public:
   WrapperBase & getWrapperBase( KEY const & key )
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
-    GEOSX_THROW_IF( wrapper == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOSX_THROW_IF_IF( wrapper == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
     return *wrapper;
   }
 
@@ -1182,7 +1182,7 @@ public:
    * @throw A std::domain_error if the Wrapper does not exist.
    */
   template< typename T, typename LOOKUP_TYPE >
-  GEOSX_DECLTYPE_AUTO_RETURN
+  GEOS_DECLTYPE_AUTO_RETURN
   getReference( LOOKUP_TYPE const & lookup ) const
   { return getWrapper< T >( lookup ).reference(); }
 
@@ -1255,7 +1255,7 @@ public:
    */
   Group & getParent()
   {
-    GEOSX_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    GEOSX_THROW_IF_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
     return *m_parent;
   }
 
@@ -1264,7 +1264,7 @@ public:
    */
   Group const & getParent() const
   {
-    GEOSX_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    GEOSX_THROW_IF_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
     return *m_parent;
   }
 
@@ -1333,8 +1333,8 @@ public:
    */
   virtual bool registerCallback( void * func, const std::type_info & funcType )
   {
-    GEOSX_UNUSED_VAR( func );
-    GEOSX_UNUSED_VAR( funcType );
+    GEOS_UNUSED_VAR( func );
+    GEOS_UNUSED_VAR( funcType );
     return false;
   }
 

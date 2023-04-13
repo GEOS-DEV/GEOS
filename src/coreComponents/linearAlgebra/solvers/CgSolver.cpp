@@ -48,7 +48,7 @@ CgSolver< VECTOR >::CgSolver( LinearSolverParameters params,
                               LinearOperator< Vector > const & M )
   : KrylovSolver< VECTOR >( std::move( params ), A, M )
 {
-  GEOSX_ERROR_IF( !m_params.isSymmetric, "Cannot use CG solver with a non-symmetric system" );
+  GEOS_ERROR_IF( !m_params.isSymmetric, "Cannot use CG solver with a non-symmetric system" );
 }
 
 // ----------------------------

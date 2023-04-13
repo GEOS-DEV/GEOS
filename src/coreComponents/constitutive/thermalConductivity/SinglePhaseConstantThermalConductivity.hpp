@@ -43,11 +43,11 @@ public:
     : SinglePhaseThermalConductivityBaseUpdate( effectiveConductivity )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const & laggedPorosity ) const override
-  { GEOSX_UNUSED_VAR( k, q, laggedPorosity ); }
+  { GEOS_UNUSED_VAR( k, q, laggedPorosity ); }
 
 };
 

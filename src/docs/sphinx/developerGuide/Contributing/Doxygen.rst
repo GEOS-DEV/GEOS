@@ -107,12 +107,12 @@ The following rules and conventions are used. Some are stricter than others.
 
 #. For hierarchies with virtual inheritance, document base virtual interfaces rather than overriding implementations.
 
-#. Documented functions cannot use `GEOSX_UNUSED_ARG()` in their declarations.
+#. Documented functions cannot use `GEOS_UNUSED_ARG()` in their declarations.
 
-#. For empty virtual base implementations that use `GEOSX_UNUSED_ARG(x)` to remove compiler warnings, use one of two options:
+#. For empty virtual base implementations that use `GEOS_UNUSED_ARG(x)` to remove compiler warnings, use one of two options:
 
-   * move empty definition away (e.g. out of class body) and keep `GEOSX_UNUSED_ARG(x)` in definition only;
-   * put `GEOSX_UNUSED_VAR(x)` into the inline empty body.
+   * move empty definition away (e.g. out of class body) and keep `GEOS_UNUSED_ARG(x)` in definition only;
+   * put `GEOS_UNUSED_VAR(x)` into the inline empty body.
 
 #. For large classes, logically group functions using member groups via `///@{` and `///@}` and give them group names
    and descriptions (if needed) via a `@name` comment block. Typical groups may include:

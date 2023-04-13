@@ -47,7 +47,7 @@ std::string getAbsolutePath( std::string const & path )
   }();
 
   char const * const cwd = getcwd( buf, PATH_MAX ) ? buf : "";
-  GEOSX_THROW( GEOSX_FMT( "Could not resolve absolute path for: {}.\n"
+  GEOSX_THROW_IF( GEOSX_FMT( "Could not resolve absolute path for: {}.\n"
                           "The following error occurred: {}.\n"
                           "Current working directory is: {}.\n",
                           path, reason, cwd ),
@@ -111,7 +111,7 @@ void makeDirectory( std::string const & path )
 {
   constexpr mode_t mode = 0770; // user and group rwx permissions
   int const err = mkdir( path.c_str(), mode );
-  GEOSX_THROW_IF( err && ( errno != EEXIST ), "Failed to create directory: " << path, std::runtime_error );
+  GEOSX_THROW_IF_IF( err && ( errno != EEXIST ), "Failed to create directory: " << path, std::runtime_error );
 }
 
 void makeDirsForPath( std::string const & path )

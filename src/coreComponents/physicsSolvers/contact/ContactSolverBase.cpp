@@ -177,7 +177,7 @@ void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & d
     {
       computeFractureStateStatistics( mesh, numStick, numSlip, numOpen );
 
-      GEOSX_LOG_RANK_0( GEOSX_FMT( "  Number of element for each fracture state:"
+      GEOS_LOG_RANK_0( GEOSX_FMT( "  Number of element for each fracture state:"
                                    " stick: {:12} | slip:  {:12} | open:  {:12}",
                                    numStick, numSlip, numOpen ) );
     } );
@@ -204,13 +204,13 @@ void ContactSolverBase::applyBoundaryConditions( real64 const time,
   }
 }
 
-real64 ContactSolverBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+real64 ContactSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                         real64 const & dt,
-                                        const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                        DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+                                        const int GEOS_UNUSED_PARAM( cycleNumber ),
+                                        DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOSX_MARK_FUNCTION;
-  GEOSX_ERROR( "ExplicitStep non available for contact solvers." );
+  GEOS_ERROR( "ExplicitStep non available for contact solvers." );
   return dt;
 }
 

@@ -228,7 +228,7 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string temp;
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::edgeListString(), "" );
+  GEOS_ERROR_IF( temp != viewKeyStruct::edgeListString(), "" );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,
                                      packList,
@@ -238,7 +238,7 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                      overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::faceListString(), "" );
+  GEOS_ERROR_IF( temp != viewKeyStruct::faceListString(), "" );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
                                      packList,
@@ -248,7 +248,7 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                      overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::elementListString(), "" );
+  GEOS_ERROR_IF( temp != viewKeyStruct::elementListString(), "" );
   unPackedSize += bufferOps::Unpack( buffer,
                                      this->m_toElements,
                                      packList,

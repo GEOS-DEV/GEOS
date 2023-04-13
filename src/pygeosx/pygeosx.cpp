@@ -88,7 +88,7 @@ PyObject * init( PyObject * const pyArgv, bool const performSetup, long const py
     g_alreadyInitialized = true;
 
     // Verify that the ranks match, there is no recovering from this if incorrect.
-    GEOSX_ERROR_IF_NE( pythonMPIRank, MpiWrapper::commRank() );
+    GEOS_ERROR_IF_NE( pythonMPIRank, MpiWrapper::commRank() );
   }
 
   try
@@ -135,7 +135,7 @@ static constexpr char const * initializeDocString =
   "    The ProblemManager.";
 PyObject * initialize( PyObject * self, PyObject * args ) noexcept
 {
-  GEOSX_UNUSED_VAR( self );
+  GEOS_UNUSED_VAR( self );
 
   PYTHON_ERROR_IF( g_alreadyInitialized, PyExc_RuntimeError, "You have already called initialize, call reinitialize.", nullptr );
 
@@ -165,7 +165,7 @@ static constexpr char const * reinitDocString =
   "    The ProblemManager.";
 PyObject * reinit( PyObject * self, PyObject * args ) noexcept
 {
-  GEOSX_UNUSED_VAR( self );
+  GEOS_UNUSED_VAR( self );
 
   PyObject * list;
   if( !PyArg_ParseTuple( args, "O", &list ) )
@@ -186,7 +186,7 @@ static constexpr char const * applyInitialConditionsDocString =
   "None\n";
 PyObject * applyInitialConditions( PyObject * self, PyObject * args ) noexcept
 {
-  GEOSX_UNUSED_VAR( self, args );
+  GEOS_UNUSED_VAR( self, args );
 
   PYTHON_ERROR_IF( g_state == nullptr, PyExc_RuntimeError, "state must be initialized", nullptr );
 
@@ -215,7 +215,7 @@ static constexpr char const * runDocString =
   "simulation still has steps left to run the value is ``READY_TO_RUN``.";
 PyObject * run( PyObject * self, PyObject * args ) noexcept
 {
-  GEOSX_UNUSED_VAR( self, args );
+  GEOS_UNUSED_VAR( self, args );
 
   PYTHON_ERROR_IF( g_state == nullptr, PyExc_RuntimeError, "state must be initialized", nullptr );
 
@@ -242,7 +242,7 @@ static constexpr char const * finalizeDocString =
   "None\n";
 PyObject * finalize( PyObject * self, PyObject * args ) noexcept
 {
-  GEOSX_UNUSED_VAR( self, args );
+  GEOS_UNUSED_VAR( self, args );
 
   if( g_state == nullptr )
   {

@@ -48,7 +48,7 @@ public:
    * @param[inout] transMatrix the output
    */
   template< localIndex NF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
            arrayView1d< real64 const > const & transMultiplier,
@@ -63,7 +63,7 @@ public:
 };
 
 template< localIndex NF >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 TPFAInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                            arrayView1d< real64 const > const & transMultiplier,
@@ -75,7 +75,7 @@ TPFAInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_
                            real64 const & lengthTolerance,
                            arraySlice2d< real64 > const & transMatrix )
 {
-  GEOSX_UNUSED_VAR( elemVolume );
+  GEOS_UNUSED_VAR( elemVolume );
 
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
   real64 const weightTolerance = 1e-30 * lengthTolerance;

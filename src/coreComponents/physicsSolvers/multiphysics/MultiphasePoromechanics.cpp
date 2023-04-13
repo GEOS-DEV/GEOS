@@ -110,7 +110,7 @@ void MultiphasePoromechanics::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void MultiphasePoromechanics::setupCoupling( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+void MultiphasePoromechanics::setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                              DofManager & dofManager ) const
 {
   dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
@@ -118,7 +118,7 @@ void MultiphasePoromechanics::setupCoupling( DomainPartition const & GEOSX_UNUSE
                           DofManager::Connector::Elem );
 }
 
-void MultiphasePoromechanics::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time ),
+void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
                                               real64 const dt,
                                               DomainPartition & domain,
                                               DofManager const & dofManager,
@@ -263,7 +263,7 @@ void MultiphasePoromechanics::initializePostInitialConditionsPreSubGroups()
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
   integer & isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
-  GEOSX_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
+  GEOS_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
                        GEOSX_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
                                   catalogName(), getName(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
   isFlowThermal = m_isThermal;
@@ -283,7 +283,7 @@ void MultiphasePoromechanics::initializePreSubGroups()
     solidMechanicsSolver()->turnOnFixedStressThermoPoromechanicsFlag();
   }
 
-  GEOSX_THROW_IF( m_stabilizationType == StabilizationType::Local,
+  GEOSX_THROW_IF_IF( m_stabilizationType == StabilizationType::Local,
                   catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",
                   InputError );
 
@@ -300,7 +300,7 @@ void MultiphasePoromechanics::initializePreSubGroups()
     {
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      GEOSX_ERROR_IF( porousName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+      GEOS_ERROR_IF( porousName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
 
       if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
       {
@@ -361,7 +361,7 @@ void MultiphasePoromechanics::updateStabilizationParameters( DomainPartition & d
                                                            biotCoefficient,
                                                            stabilizationMultiplier,
                                                            macroElementIndex,
-                                                           elementStabConstant] GEOSX_HOST_DEVICE ( localIndex const ei )
+                                                           elementStabConstant] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         real64 const bM = bulkModulus[ei];
         real64 const sM = shearModulus[ei];

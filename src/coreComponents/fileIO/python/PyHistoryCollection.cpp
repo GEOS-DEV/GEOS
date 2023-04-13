@@ -34,7 +34,7 @@ struct PyHistoryCollection
 
 static PyObject * PyHistoryCollection_new( PyTypeObject *type, PyObject *args, PyObject *kwds )
 {
-  GEOSX_UNUSED_VAR( args, kwds );
+  GEOS_UNUSED_VAR( args, kwds );
   PyHistoryCollection *self;
 
   self = (PyHistoryCollection *)type->tp_alloc( type, 0 );

@@ -83,7 +83,7 @@ mimeticInnerProductDispatch( MimeticInnerProductBase const & input,
   }
   else
   {
-    GEOSX_ERROR( "mimeticInnerProductDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
+    GEOS_ERROR( "mimeticInnerProductDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
   }
 }
 
@@ -120,7 +120,7 @@ mimeticInnerProductDispatch( MimeticInnerProductBase & input,
   }
   else
   {
-    GEOSX_ERROR( "mimeticInnerProductDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
+    GEOS_ERROR( "mimeticInnerProductDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
   }
 }
 
@@ -147,7 +147,7 @@ mimeticInnerProductReducedDispatch( MimeticInnerProductBase const & input,
   }
   else
   {
-    GEOSX_ERROR( "mimeticInnerProductReducedDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
+    GEOS_ERROR( "mimeticInnerProductReducedDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
   }
 }
 
@@ -174,7 +174,7 @@ mimeticInnerProductReducedDispatch( MimeticInnerProductBase & input,
   }
   else
   {
-    GEOSX_ERROR( "mimeticInnerProductReducedDispatch() is not supported for input of " << LvArray::system::demangleType( input ) );
+    GEOS_ERROR( "mimeticInnerProductReducedDispatch() is not supported for input of " << LvArray::system::demangleType( input ) );
   }
 }
 

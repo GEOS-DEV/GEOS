@@ -62,7 +62,7 @@ public:
    * @brief Compute the phase volume fractions in an element
    * @param[in] ei the element index
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei ) const
   {
     using Deriv = multifluid::DerivativeOffset;
@@ -204,7 +204,7 @@ public:
   {
 public:
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables()
       : Base::StackVariables()
     {}
@@ -241,7 +241,7 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
@@ -270,7 +270,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack ) const
   {
@@ -351,7 +351,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeVolumeBalance( localIndex const ei,
                              StackVariables & stack ) const
   {
@@ -359,7 +359,7 @@ public:
 
     Base::computeVolumeBalance( ei, stack, [&] ( real64 const & oneMinusPhaseVolFraction )
     {
-      GEOSX_UNUSED_VAR( oneMinusPhaseVolFraction );
+      GEOS_UNUSED_VAR( oneMinusPhaseVolFraction );
 
       arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
@@ -370,7 +370,7 @@ public:
     } );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const ei,
                  StackVariables & stack ) const
   {
@@ -460,7 +460,7 @@ struct FluidUpdateKernel
           arrayView1d< real64 const > const & temp,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
@@ -477,7 +477,7 @@ struct FluidUpdateKernel
           arrayView1d< real64 const > const & temp,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
@@ -499,7 +499,7 @@ struct SolidInternalEnergyUpdateKernel
           SOLID_INTERNAL_ENERGY_WRAPPER const & solidInternalEnergyWrapper,
           arrayView1d< real64 const > const & temp )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       solidInternalEnergyWrapper.update( k, temp[k] );
     } );
@@ -563,7 +563,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeScalingFactor( localIndex const ei,
                              StackVariables & stack ) const
   {
@@ -697,7 +697,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeSolutionCheck( localIndex const ei,
                              StackVariables & stack ) const
   {
@@ -803,7 +803,7 @@ public:
     m_solidInternalEnergy_n( solidInternalEnergy.getInternalEnergy_n() )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeMassEnergyNormalizers( localIndex const ei,
                                      real64 & massNormalizer,
                                      real64 & energyNormalizer ) const
@@ -819,7 +819,7 @@ public:
     energyNormalizer = LvArray::math::max( minNormalizer, LvArray::math::abs( energyNormalizer ) );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const ei,
                             LinfStackVariables & stack ) const override
   {
@@ -855,7 +855,7 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const ei,
                           L2StackVariables & stack ) const override
   {

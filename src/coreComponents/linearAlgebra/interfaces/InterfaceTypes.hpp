@@ -37,7 +37,7 @@ namespace geos
 {
 
 /// Alias for current interface
-using LAInterface = GEOSX_CONCAT( GEOSX_LA_INTERFACE, Interface );
+using LAInterface = GEOS_CONCAT( GEOSX_LA_INTERFACE, Interface );
 
 /// Alias for ParallelMatrix
 using ParallelMatrix = LAInterface::ParallelMatrix;

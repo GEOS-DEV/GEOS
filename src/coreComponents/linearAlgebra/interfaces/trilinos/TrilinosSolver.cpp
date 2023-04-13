@@ -58,7 +58,7 @@ void createTrilinosKrylovSolver( LinearSolverParameters const & params, AztecOO 
     }
     default:
     {
-      GEOSX_ERROR( "Solver type not supported in Trilinos interface: " << params.solverType );
+      GEOS_ERROR( "Solver type not supported in Trilinos interface: " << params.solverType );
     }
   }
 
@@ -156,7 +156,7 @@ void TrilinosSolver::solve( EpetraVector const & rhs,
 
   if( m_params.logLevel >= 1 )
   {
-    GEOSX_LOG_RANK_0( "\t\tLinear Solver | " << m_result.status <<
+    GEOS_LOG_RANK_0( "\t\tLinear Solver | " << m_result.status <<
                       " | Iterations: " << m_result.numIterations <<
                       " | Final Rel Res: " << m_result.residualReduction <<
                       " | Setup Time: " << m_result.setupTime << " s" <<

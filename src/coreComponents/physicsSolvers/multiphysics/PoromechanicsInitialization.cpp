@@ -89,7 +89,7 @@ postProcessInput()
   ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
   PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
 
-  GEOSX_THROW_IF( !physicsSolverManager.hasGroup( m_poromechanicsSolverName ),
+  GEOSX_THROW_IF_IF( !physicsSolverManager.hasGroup( m_poromechanicsSolverName ),
                   GEOSX_FMT( "Task {}: physics solver named {} not found",
                              getName(), m_poromechanicsSolverName ),
                   InputError );
@@ -101,21 +101,21 @@ template< typename POROMECHANICS_SOLVER >
 bool
 PoromechanicsInitialization< POROMECHANICS_SOLVER >::
 execute( real64 const time_n,
-         real64 const GEOSX_UNUSED_PARAM( dt ),
-         integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-         integer const GEOSX_UNUSED_PARAM( eventCounter ),
-         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-         DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+         real64 const GEOS_UNUSED_PARAM( dt ),
+         integer const GEOS_UNUSED_PARAM( cycleNumber ),
+         integer const GEOS_UNUSED_PARAM( eventCounter ),
+         real64 const GEOS_UNUSED_PARAM( eventProgress ),
+         DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   if( m_performStressInitialization )
   {
-    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Task `{}`: at time {}s, physics solver `{}` is set to perform stress initialization during the next time step(s)",
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Task `{}`: at time {}s, physics solver `{}` is set to perform stress initialization during the next time step(s)",
                                           getName(), time_n, m_poromechanicsSolverName ) );
     m_poromechanicsSolver->setStressInitialization( true );
   }
   else
   {
-    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Task `{}`: at time {}s, physics solver `{}` has completed stress initialization",
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Task `{}`: at time {}s, physics solver `{}` has completed stress initialization",
                                           getName(), time_n, m_poromechanicsSolverName ) );
     m_poromechanicsSolver->setStressInitialization( false );
   }

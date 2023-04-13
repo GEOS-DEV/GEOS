@@ -122,7 +122,7 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    GEOSX_UNUSED_VAR( setSparsity );
+    GEOS_UNUSED_VAR( setSparsity );
 
     dofManager.setDomain( domain );
 
@@ -236,9 +236,9 @@ public:
           arrayView1d< localIndex const > const resElemIndex =
             perforationData.getField< fields::perforation::reservoirElementIndex >();
 
-          forAll< serialPolicy >( perforationData.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+          forAll< serialPolicy >( perforationData.size(), [=] GEOS_HOST_DEVICE ( localIndex const iperf )
           {
-            GEOSX_LOG_RANK( GEOSX_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
+            GEOS_LOG_RANK( GEOSX_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
                                        perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
                                        elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][0],
                                        elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][1],

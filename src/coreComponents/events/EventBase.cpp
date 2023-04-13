@@ -120,7 +120,7 @@ EventBase::CatalogInterface::CatalogType & EventBase::getCatalog()
 
 Group * EventBase::createChild( string const & childKey, string const & childName )
 {
-  GEOSX_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
+  GEOS_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
   std::unique_ptr< EventBase > event = EventBase::CatalogInterface::factory( childKey, childName, this );
   return &this->registerGroup< EventBase >( childName, std::move( event ) );
 }
@@ -233,7 +233,7 @@ bool EventBase::execute( real64 const time_n,
     EventBase * subEvent = static_cast< EventBase * >( this->getSubGroups()[m_currentSubEvent] );
 
     // Print debug information for logLevel >= 1
-    GEOSX_LOG_LEVEL_RANK_0( 1,
+    GEOS_LOG_LEVEL_RANK_0( 1,
                             "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->getCurrentEventDtRequest() << ", forecast=" <<
                             subEvent->getForecast() );
 

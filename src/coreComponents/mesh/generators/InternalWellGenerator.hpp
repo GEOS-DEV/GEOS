@@ -109,11 +109,11 @@ public:
                            bool isMaterialField,
                            dataRepository::WrapperBase & wrapper ) const override
   {
-    GEOSX_UNUSED_VAR( block );
-    GEOSX_UNUSED_VAR( blockName );
-    GEOSX_UNUSED_VAR( meshFieldName );
-    GEOSX_UNUSED_VAR( isMaterialField );
-    GEOSX_UNUSED_VAR( wrapper );
+    GEOS_UNUSED_VAR( block );
+    GEOS_UNUSED_VAR( blockName );
+    GEOS_UNUSED_VAR( meshFieldName );
+    GEOS_UNUSED_VAR( isMaterialField );
+    GEOS_UNUSED_VAR( wrapper );
   }
 
   ///@}

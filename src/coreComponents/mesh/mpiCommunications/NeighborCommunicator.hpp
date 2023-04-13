@@ -24,8 +24,8 @@
 
 namespace geos
 {
-inline int CommTag( int const GEOSX_UNUSED_PARAM( senderRank ),
-                    int const GEOSX_UNUSED_PARAM( receiverRank ),
+inline int CommTag( int const GEOS_UNUSED_PARAM( senderRank ),
+                    int const GEOS_UNUSED_PARAM( receiverRank ),
                     int const comm )
 {
 //  int m_size;

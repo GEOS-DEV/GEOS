@@ -39,18 +39,18 @@ public:
   {}
 
   template< int USD1 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
                 real64 & value,
                 bool useMass ) const
   {
-    GEOSX_UNUSED_VAR( pressure, temperature, phaseComposition, value, useMass );
+    GEOS_UNUSED_VAR( pressure, temperature, phaseComposition, value, useMass );
   }
 
   template< int USD1, int USD2, int USD3 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -59,7 +59,7 @@ public:
                 arraySlice1d< real64, USD3 > const & dValue,
                 bool useMass ) const
   {
-    GEOSX_UNUSED_VAR( pressure, temperature,
+    GEOS_UNUSED_VAR( pressure, temperature,
                       phaseComposition, dPhaseComposition,
                       value, dValue,
                       useMass );
@@ -85,7 +85,7 @@ public:
                        componentNames,
                        componentMolarWeight )
   {
-    GEOSX_UNUSED_VAR( inputPara );
+    GEOS_UNUSED_VAR( inputPara );
   }
 
   virtual ~NoOpPVTFunction() override = default;

@@ -270,7 +270,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
 
   // poll for pack completion here
   waitAllDeviceEvents( packEvents );
-  GEOSX_ERROR_IF( bufferSize != packedSize,
+  GEOS_ERROR_IF( bufferSize != packedSize,
                   "Allocated Buffer Size ("<<bufferSize<<") is not equal to packed buffer size("<<packedSize<<")" );
 
 
@@ -589,7 +589,7 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator * const neighbor,
   packedSize += edgeManager.packParentChildMaps( sendBufferPtr, modEdgesToSend );
   packedSize += faceManager.packParentChildMaps( sendBufferPtr, modFacesToSend );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 
   waitAllDeviceEvents( packEvents );
 }

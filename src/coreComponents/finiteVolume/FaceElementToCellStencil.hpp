@@ -57,8 +57,8 @@ public:
    * @brief Give the number of stencil entries.
    * @return The number of stencil entries
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   localIndex size() const
   {
     return m_elementRegionIndices.size( 0 );
@@ -69,11 +69,11 @@ public:
    * @param[in] index the index of which the stencil size is request
    * @return The number of stencil entries for the provided index
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   constexpr localIndex stencilSize( localIndex index ) const
   {
-    GEOSX_UNUSED_VAR( index );
+    GEOS_UNUSED_VAR( index );
     return maxStencilSize;
   }
 
@@ -82,11 +82,11 @@ public:
    * @param[in] index of the stencil entry for which to query the size
    * @return the number of points.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   constexpr localIndex numPointsInFlux( localIndex index ) const
   {
-    GEOSX_UNUSED_VAR( index );
+    GEOS_UNUSED_VAR( index );
     return maxNumPointsInFlux;
   }
 
@@ -98,7 +98,7 @@ public:
    * @param[out] weight view weights
    * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
@@ -113,7 +113,7 @@ public:
    * @param[out] weight view weights
    * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        real64 ( &weight )[1][2],
                        real64 ( &dWeight_dVar )[1][2] ) const;
@@ -128,7 +128,7 @@ public:
    * @param[out] dWeight_dVar1 derivative of the weigths w.r.t to the variable 1
    * @param[out] dWeight_dVar2 derivative of the weigths w.r.t to the variable 2
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
@@ -142,10 +142,10 @@ public:
    * @param[in] iconn connection index
    * @param[out] stabilizationWeight view weights
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeStabilizationWeights( localIndex iconn,
                                     real64 ( & stabilizationWeight )[1][2] ) const
-  { GEOSX_UNUSED_VAR( iconn, stabilizationWeight ); }
+  { GEOS_UNUSED_VAR( iconn, stabilizationWeight ); }
 
 private:
 
@@ -221,7 +221,7 @@ public:
    */
   constexpr localIndex stencilSize( localIndex index ) const
   {
-    GEOSX_UNUSED_VAR( index );
+    GEOS_UNUSED_VAR( index );
     return maxStencilSize;
   }
 
@@ -232,7 +232,7 @@ private:
   array1d< real64 > m_transMultiplier;
 };
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void FaceElementToCellStencilWrapper::
   computeWeights( localIndex const iconn,
                   CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
@@ -258,7 +258,7 @@ inline void FaceElementToCellStencilWrapper::
   dWeight_dVar[0][1] = 0.0;
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 FaceElementToCellStencilWrapper
   ::computeWeights( localIndex iconn,
@@ -276,7 +276,7 @@ FaceElementToCellStencilWrapper
   dWeight_dVar[0][1] = 0.0;
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 FaceElementToCellStencilWrapper::
   computeWeights( localIndex const iconn,

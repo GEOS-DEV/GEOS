@@ -131,7 +131,7 @@ public:
     /**
      * Default constructor
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       dispEqnRowIndices{ 0 },
       dispColIndices{ 0 },
@@ -207,13 +207,13 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    GEOSX_UNUSED_VAR( numElems );
+    GEOS_UNUSED_VAR( numElems );
 
     // Define a RAJA reduction variable to get the maximum residual contribution.
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
     forAll< POLICY >( kernelComponent.m_fracturedElems.size(),
-                      [=] GEOSX_HOST_DEVICE ( localIndex const i )
+                      [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex k = kernelComponent.m_fracturedElems[i];
       typename KERNEL_TYPE::StackVariables stack;
@@ -230,8 +230,8 @@ public:
   }
   //END_kernelLauncher
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const

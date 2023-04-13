@@ -50,7 +50,7 @@ public:
     CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >( solidModel, porosityModel, permModel )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateStateFromPressureAndTemperature( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & pressure,
@@ -63,7 +63,7 @@ public:
     m_permUpdate.updateFromPorosity( k, q, porosity );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void updateStateFromPressureAndAperture( localIndex const k,
                                            localIndex const q,
                                            real64 const & pressure,
@@ -74,7 +74,7 @@ public:
     m_permUpdate.updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void updateStateFromPressureApertureJumpAndTraction( localIndex const k,
                                                        localIndex const q,
                                                        real64 const & pressure,

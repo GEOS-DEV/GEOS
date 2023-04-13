@@ -33,7 +33,7 @@ struct PyHistoryOutput
 
 static PyObject * PyHistoryOutput_new( PyTypeObject *type, PyObject *args, PyObject *kwds )
 {
-  GEOSX_UNUSED_VAR( args, kwds );
+  GEOS_UNUSED_VAR( args, kwds );
   PyHistoryOutput *self;
 
   self = (PyHistoryOutput *)type->tp_alloc( type, 0 );
@@ -132,7 +132,7 @@ static PyObject * reinit( PyHistoryOutput * self, PyObject *args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
-  GEOSX_UNUSED_VAR( args );
+  GEOS_UNUSED_VAR( args );
 
   self->group->reinit();
 

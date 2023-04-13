@@ -26,7 +26,7 @@ namespace finiteElement
  */
 template< localIndex MCN, localIndex MFN >
 template< typename SUBREGION_TYPE >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
 computeProjectors( localIndex const & cellIndex,
                    InputNodeCoords const & nodesCoords,
@@ -277,7 +277,7 @@ computeProjectors( localIndex const & cellIndex,
 }
 
 template< localIndex MCN, localIndex MFN >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
 computeFaceIntegrals( InputNodeCoords const & nodesCoords,
                       localIndex const (&faceToNodes)[MFN],

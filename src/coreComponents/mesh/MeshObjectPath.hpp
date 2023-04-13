@@ -296,7 +296,7 @@ void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string
           }
           else
           {
-            GEOSX_ERROR( "You shouldn't be here" );
+            GEOS_ERROR( "You shouldn't be here" );
           }
         }
       }

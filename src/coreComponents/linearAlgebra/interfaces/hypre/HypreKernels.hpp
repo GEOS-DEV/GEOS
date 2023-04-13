@@ -126,7 +126,7 @@ void rescaleMatrixRows( hypre_ParCSRMatrix * const mat,
   forAll< execPolicy >( rowIndices.size(), [diag, offd, reducer, rowIndices, firstLocalRow] GEOSX_HYPRE_DEVICE ( localIndex const i )
   {
     HYPRE_Int const localRow = LvArray::integerConversion< HYPRE_Int >( rowIndices[i] - firstLocalRow );
-    GEOSX_ASSERT( 0 <= localRow && localRow < diag.nrow );
+    GEOS_ASSERT( 0 <= localRow && localRow < diag.nrow );
 
     HYPRE_Real scale = 0.0;
     for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
@@ -141,7 +141,7 @@ void rescaleMatrixRows( hypre_ParCSRMatrix * const mat,
       }
     }
 
-    GEOSX_ASSERT_MSG( !isZero( scale ), "Zero row sum in row " << rowIndices[i] );
+    GEOS_ASSERT_MSG( !isZero( scale ), "Zero row sum in row " << rowIndices[i] );
     scale = 1.0 / scale;
     for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
     {

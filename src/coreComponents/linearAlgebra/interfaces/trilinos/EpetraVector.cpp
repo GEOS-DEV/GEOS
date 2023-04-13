@@ -246,7 +246,7 @@ void EpetraVector::write( string const & filename,
       break;
     }
     default:
-      GEOSX_ERROR( "Unsupported vector output format" );
+      GEOS_ERROR( "Unsupported vector output format" );
   }
 }
 

@@ -42,7 +42,7 @@ namespace meshMapUtilities
  * @param map reference to the map
  */
 template< typename T, int USD >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline localIndex size0( arrayView2d< T, USD > const & map )
 {
   return map.size( 0 );
@@ -54,7 +54,7 @@ inline localIndex size0( arrayView2d< T, USD > const & map )
  * @param map reference to the map
  */
 template< typename T >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline localIndex size0( ArrayOfArraysView< T > const & map )
 {
   return map.size();
@@ -66,7 +66,7 @@ inline localIndex size0( ArrayOfArraysView< T > const & map )
  * @param map reference to the map
  */
 template< typename T >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline localIndex size0( ArrayOfSetsView< T > const & map )
 {
   return map.size();
@@ -128,7 +128,7 @@ void transformCellBlockToRegionMap( arrayView2d< localIndex const > const & bloc
                                     ToCellRelation< ArrayOfArrays< localIndex > > const & srcMap,
                                     ToElementRelation< ArrayOfArrays< localIndex > > & dstMap )
 {
-  GEOSX_ASSERT_EQ( blockToSubRegion.size( 1 ), 2 );
+  GEOS_ASSERT_EQ( blockToSubRegion.size( 1 ), 2 );
   localIndex const numObjects = srcMap.toCellIndex.size();
 
   localIndex const * offsets = srcMap.toCellIndex.toViewConst().getOffsets();
@@ -173,7 +173,7 @@ void transformCellBlockToRegionMap( arrayView2d< localIndex const > const & bloc
                                     ToCellRelation< array2d< localIndex, PERM1 > > const & srcMap,
                                     ToElementRelation< array2d< localIndex, PERM2 > > & dstMap )
 {
-  GEOSX_ASSERT_EQ( blockToSubRegion.size( 1 ), 2 );
+  GEOS_ASSERT_EQ( blockToSubRegion.size( 1 ), 2 );
   localIndex const numObjects = srcMap.toCellIndex.size( 0 );
   localIndex const maxCellsPerObject = srcMap.toCellIndex.size( 1 );
 

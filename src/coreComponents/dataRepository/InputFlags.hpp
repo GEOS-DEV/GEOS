@@ -71,7 +71,7 @@ inline InputFlags IntToInputFlag( int const val )
     }
     default:
     {
-      GEOSX_ERROR( "Invalid integer conversion to InputFlag" );
+      GEOS_ERROR( "Invalid integer conversion to InputFlag" );
     }
   }
   return rval;

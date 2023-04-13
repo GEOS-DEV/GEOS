@@ -38,8 +38,8 @@ namespace singlePhaseBaseKernels
 
 struct MobilityKernel
 {
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   static void
   compute( real64 const & dens,
            real64 const & dDens_dPres,
@@ -52,8 +52,8 @@ struct MobilityKernel
     dMob_dPres = dDens_dPres / visc - mob / visc * dVisc_dPres;
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   static void
   compute( real64 const & dens,
            real64 const & visc,
@@ -71,7 +71,7 @@ struct MobilityKernel
                       arrayView1d< real64 > const & mob,
                       arrayView1d< real64 > const & dMob_dPres )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       compute( dens[a][0],
                dDens_dPres[a][0],
@@ -88,7 +88,7 @@ struct MobilityKernel
                       arrayView2d< real64 const > const & visc,
                       arrayView1d< real64 > const & mob )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       compute( dens[a][0],
                visc[a][0],
@@ -107,7 +107,7 @@ struct MobilityKernel
 struct NoOpFunc
 {
   template< typename ... Ts >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   constexpr void
   operator()( Ts && ... ) const {}
 };
@@ -201,7 +201,7 @@ public:
    * @param[in] ei the element index
    * @return the ghost rank of the element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   integer elemGhostRank( localIndex const ei ) const
   { return m_elemGhostRank( ei ); }
 
@@ -211,7 +211,7 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
@@ -236,7 +236,7 @@ public:
    * @param[in] kernelOp the function used to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack,
                             FUNC && kernelOp = NoOpFunc{} ) const
@@ -256,8 +256,8 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
-  void complete( localIndex const GEOSX_UNUSED_PARAM( ei ),
+  GEOS_HOST_DEVICE
+  void complete( localIndex const GEOS_UNUSED_PARAM( ei ),
                  StackVariables & stack ) const
   {
     // add contribution to global residual and jacobian (no need for atomics here)
@@ -283,7 +283,7 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( kernelComponent.elemGhostRank( ei ) >= 0 )
       {
@@ -374,7 +374,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeAccumulation( localIndex const ei,
                             Base::StackVariables & stack ) const
   {
@@ -491,7 +491,7 @@ public:
     m_density_n( fluid.density_n() )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const ei,
                             LinfStackVariables & stack ) const override
   {
@@ -503,7 +503,7 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const ei,
                           L2StackVariables & stack ) const override
   {
@@ -588,7 +588,7 @@ struct SolutionCheckKernel
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, localIndex > minVal( 1 );
 
-    forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( ghostRank[ei] < 0 && dofNumber[ei] >= 0 )
       {
@@ -619,7 +619,7 @@ struct StatisticsKernel
                      arrayView1d< real64 const > const & initPres,
                      arrayView1d< real64 > const & deltaPres )
   {
-    forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       deltaPres[ei] = pres[ei] - initPres[ei];
     } );
@@ -652,7 +652,7 @@ struct StatisticsKernel
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalUncompactedPoreVol( 0.0 );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalPoreVol( 0.0 );
 
-    forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( elemGhostRank[ei] >= 0 )
       {

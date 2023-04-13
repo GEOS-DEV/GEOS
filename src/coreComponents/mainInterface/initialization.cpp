@@ -39,7 +39,7 @@ struct Arg : public option::Arg
    */
   static option::ArgStatus unknown( option::Option const & option, bool )
   {
-    GEOSX_LOG_RANK( "Unknown option: " << option.name );
+    GEOS_LOG_RANK( "Unknown option: " << option.name );
     return option::ARG_ILLEGAL;
   }
 
@@ -55,7 +55,7 @@ struct Arg : public option::Arg
       return option::ARG_OK;
     }
 
-    GEOSX_LOG_RANK( "Error: " << option.name << " requires a non-empty argument!" );
+    GEOS_LOG_RANK( "Error: " << option.name << " requires a non-empty argument!" );
     return option::ARG_ILLEGAL;
   }
 
@@ -73,7 +73,7 @@ struct Arg : public option::Arg
       return option::ARG_OK;
     }
 
-    GEOSX_LOG_RANK( "Error: " << option.name << " requires a long-int argument!" );
+    GEOS_LOG_RANK( "Error: " << option.name << " requires a long-int argument!" );
     return option::ARG_ILLEGAL;
   }
 };
@@ -144,7 +144,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       throw NotAnError();
     }
 
-    GEOSX_THROW( "Bad command line arguments.", InputError );
+    GEOSX_THROW_IF( "Bad command line arguments.", InputError );
   }
 
   // Iterate over the remaining inputs
@@ -232,7 +232,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       {
         // we should store this in commandLineOptions and sleep in main
         integer const duration = std::stoi( opt.arg );
-        GEOSX_LOG_RANK_0( "Paused for " << duration << " s" );
+        GEOS_LOG_RANK_0( "Paused for " << duration << " s" );
         std::this_thread::sleep_for( std::chrono::seconds( duration ) );
       }
       break;

@@ -200,7 +200,7 @@ private:
     {
       subRegionNames.push_back( sr.getName() );
     } );
-    GEOSX_ERROR_IF( subRegionNames.size() != 1,
+    GEOS_ERROR_IF( subRegionNames.size() != 1,
                     "Surface region \"" << getName() << "\" should have one unique sub region. \"" << subRegionNames.size() << "\" found." );
     return subRegionNames.front();
   }

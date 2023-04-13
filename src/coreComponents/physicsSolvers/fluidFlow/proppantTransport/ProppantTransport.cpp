@@ -141,14 +141,14 @@ void ProppantTransport::setConstitutiveNames( ElementSubRegionBase & subRegion )
 {
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
-  GEOSX_THROW_IF( fluidName.empty(),
+  GEOSX_THROW_IF_IF( fluidName.empty(),
                   GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                   InputError );
 
   subRegion.registerWrapper< string >( viewKeyStruct::proppantNamesString() );
   string & proppantName = subRegion.getReference< string >( viewKeyStruct::proppantNamesString() );
   proppantName = getConstitutiveName< ParticleFluidBase >( subRegion );
-  GEOSX_THROW_IF( proppantName.empty(),
+  GEOSX_THROW_IF_IF( proppantName.empty(),
                   GEOSX_FMT( "Proppant model not found on subregion {}", subRegion.getName() ),
                   InputError );
 
@@ -290,7 +290,7 @@ void ProppantTransport::updateProppantMobility( ObjectManagerBase & dataGroup )
   real64 const minAperture = m_minAperture;
   real64 const maxProppantConcentration = m_maxProppantConcentration;
 
-  forAll< parallelDevicePolicy<> >( dataGroup.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+  forAll< parallelDevicePolicy<> >( dataGroup.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
   {
     isProppantMobile[a] = aperture[a] > minAperture && conc[a] < maxProppantConcentration;
   } );
@@ -339,7 +339,7 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
         getConstitutiveModel< SlurryFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
       arrayView3d< real64 const > const componentDens = fluid.componentDensity();
       arrayView2d< real64 > const componentDens_n = subRegion.getField< fields::proppant::componentDensity_n >();
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         for( localIndex c = 0; c < numComponents; ++c )
         {
@@ -352,7 +352,7 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
 }
 
 void ProppantTransport::preStepUpdate( real64 const & time,
-                                       real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                       real64 const & GEOS_UNUSED_PARAM( dt ),
                                        DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -384,7 +384,7 @@ void ProppantTransport::preStepUpdate( real64 const & time,
       arrayView1d< real64 > const excessPackVolume = subRegion.getField< fields::proppant::proppantExcessPackVolume >();
       arrayView2d< real64 > const cellBasedFlux = subRegion.getField< fields::proppant::cellBasedFlux >();
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         for( localIndex c = 0; c < m_numComponents; ++c )
         {
@@ -424,7 +424,7 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
       arrayView1d< real64 > const & packVolFrac = subRegion.getField< fields::proppant::proppantPackVolumeFraction >();
       arrayView1d< real64 > const & proppantConc = subRegion.getField< fields::proppant::proppantConcentration >();
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         if( proppantConc[ei] >= maxProppantConcentration || packVolFrac[ei] >= 1.0 )
         {
@@ -440,8 +440,8 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
   }
 }
 
-void ProppantTransport::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                           real64 const & GEOSX_UNUSED_PARAM( dt ),
+void ProppantTransport::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                           real64 const & GEOS_UNUSED_PARAM( dt ),
                                            DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -464,8 +464,8 @@ void ProppantTransport::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( ti
   } );
 }
 
-void ProppantTransport::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
+void ProppantTransport::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                              real64 const & GEOS_UNUSED_PARAM( dt ),
                                               DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -484,7 +484,7 @@ void ProppantTransport::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM(
   } );
 }
 
-void ProppantTransport::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+void ProppantTransport::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                    DofManager & dofManager ) const
 {
 
@@ -587,7 +587,7 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
 }
 
 
-void ProppantTransport::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void ProppantTransport::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
                                            real64 const dt,
                                            DomainPartition const & domain,
                                            DofManager const & dofManager,
@@ -726,7 +726,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
       {
 
         string const & subRegionName = subRegion.getName();
-        GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0, "Conflicting proppant boundary conditions on set " << setName );
+        GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0, "Conflicting proppant boundary conditions on set " << setName );
         bcStatusMap[subRegionName][setName].resize( m_numComponents );
         bcStatusMap[subRegionName][setName].setValues< serialPolicy >( false );
 
@@ -745,8 +745,8 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
         string const & subRegionName = subRegion.getName();
         localIndex const comp = fs.getComponent();
 
-        GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0, "Proppant boundary condition not prescribed on set '" << setName << "'" );
-        GEOSX_ERROR_IF( bcStatusMap[subRegionName][setName][comp], "Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
+        GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0, "Proppant boundary condition not prescribed on set '" << setName << "'" );
+        GEOS_ERROR_IF( bcStatusMap[subRegionName][setName][comp], "Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
         bcStatusMap[subRegionName][setName][comp] = true;
 
         fs.applyFieldValue< FieldSpecificationEqual >( targetSet,
@@ -764,14 +764,14 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
           for( localIndex ic = 0; ic < m_numComponents; ++ic )
           {
             bcConsistent &= bcStatusEntryInner.second[ic];
-            GEOSX_WARNING_IF( !bcConsistent, "Composition boundary condition not applied to component " << ic
+            GEOS_WARNING_IF( !bcConsistent, "Composition boundary condition not applied to component " << ic
                                                                                                         << " on region '" << bcStatusEntryOuter.first << "',"
                                                                                                         << " set '" << bcStatusEntryInner.first << "'" );
           }
         }
       }
 
-      GEOSX_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
+      GEOS_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
 
       fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                                mesh,
@@ -791,7 +791,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
         arrayView2d< real64 const > const bcCompConc =
           subRegion.getReference< array2d< real64 > >( fields::proppant::bcComponentConcentration::key() );
 
-        forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+        forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
         {
           localIndex const ei = targetSet[a];
           if( ghostRank[ei] >= 0 )
@@ -818,8 +818,8 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
 }
 
 real64
-ProppantTransport::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
+ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                          real64 const & GEOS_UNUSED_PARAM( dt ),
                                           DomainPartition const & domain,
                                           DofManager const & dofManager,
                                           arrayView1d< real64 const > const & localRhs )
@@ -965,7 +965,7 @@ void ProppantTransport::resetStateToBeginningOfStep( DomainPartition & domain )
 
 
 
-void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void ProppantTransport::updateCellBasedFlux( real64 const GEOS_UNUSED_PARAM( time_n ),
                                              DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -1016,7 +1016,7 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
   } );
 }
 
-void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void ProppantTransport::updateProppantPackVolume( real64 const GEOS_UNUSED_PARAM( time_n ),
                                                   real64 const dt,
                                                   DomainPartition & domain )
 {

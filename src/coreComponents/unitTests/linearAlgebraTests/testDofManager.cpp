@@ -252,7 +252,7 @@ void DofManagerIndicesTest::test( std::vector< FieldDesc > const & fields )
       }
       default:
       {
-        GEOSX_ERROR( "Unsupported" );
+        GEOS_ERROR( "Unsupported" );
       }
     }
     std::sort( dofNumbers.begin(), dofNumbers.end() );
@@ -572,7 +572,7 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
       }
       break;
       default:
-        GEOSX_ERROR( "Unsupported" );
+        GEOS_ERROR( "Unsupported" );
     }
     numLocalDof += numLocalObj * f.components;
     numCompTotal += f.components;
@@ -596,7 +596,7 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
 
   for( FieldDesc const & f : fields )
   {
-    GEOSX_LOG_RANK( "rankOffset = "<<dofManager.rankOffset() );
+    GEOS_LOG_RANK( "rankOffset = "<<dofManager.rankOffset() );
     f.makePattern( domain,
                    dofManager.getKey( f.name ),
                    getRegions( domain, f.regions ),

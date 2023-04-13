@@ -61,13 +61,13 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override
   {
-    GEOSX_UNUSED_VAR( time_n );
-    GEOSX_UNUSED_VAR( dt );
-    GEOSX_UNUSED_VAR( cycleNumber );
-    GEOSX_UNUSED_VAR( eventCounter );
-    GEOSX_UNUSED_VAR( eventProgress );
-    GEOSX_UNUSED_VAR( domain );
-    GEOSX_ERROR( "NOT IMPLEMENTED" );
+    GEOS_UNUSED_VAR( time_n );
+    GEOS_UNUSED_VAR( dt );
+    GEOS_UNUSED_VAR( cycleNumber );
+    GEOS_UNUSED_VAR( eventCounter );
+    GEOS_UNUSED_VAR( eventProgress );
+    GEOS_UNUSED_VAR( domain );
+    GEOS_ERROR( "NOT IMPLEMENTED" );
     return false;
   }
 

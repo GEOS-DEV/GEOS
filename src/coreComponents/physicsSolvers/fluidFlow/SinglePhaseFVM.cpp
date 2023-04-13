@@ -67,7 +67,7 @@ void SinglePhaseFVM< BASE >::initializePreSubGroups()
 
   if( !fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
-    GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with SinglePhaseFVM" );
+    GEOS_ERROR( "A discretization deriving from FluxApproximationBase must be selected with SinglePhaseFVM" );
   }
 }
 
@@ -106,8 +106,8 @@ void SinglePhaseFVM< BASE >::setupSystem( DomainPartition & domain,
 }
 
 template< typename BASE >
-real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                      real64 const & GEOSX_UNUSED_PARAM( dt ),
+real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                      real64 const & GEOS_UNUSED_PARAM( dt ),
                                                       DomainPartition const & domain,
                                                       DofManager const & dofManager,
                                                       arrayView1d< real64 const > const & localRhs )
@@ -293,7 +293,7 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
 }
 
 template< >
-void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
                                                            real64 const dt,
                                                            DomainPartition const & domain,
                                                            DofManager const & dofManager,
@@ -350,7 +350,7 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UN
 
 
 template<>
-void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
                                                                    real64 const dt,
                                                                    DomainPartition const & domain,
                                                                    DofManager const & dofManager,
@@ -406,7 +406,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
 
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
                                                            real64 const dt,
                                                            DomainPartition const & domain,
                                                            DofManager const & dofManager,
@@ -470,7 +470,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
 }
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
                                                          real64 const dt,
                                                          DomainPartition const & domain,
                                                          DofManager const & dofManager,
@@ -599,7 +599,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
+        GEOS_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
                                      this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
                                      fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
       }
@@ -632,7 +632,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
+        GEOS_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
                                      this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
                                      fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
       }
@@ -699,12 +699,12 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 }
 
 template<>
-void SinglePhaseFVM< SinglePhaseProppantBase >::applyAquiferBC( real64 const GEOSX_UNUSED_PARAM( time ),
-                                                                real64 const GEOSX_UNUSED_PARAM( dt ),
-                                                                DomainPartition & GEOSX_UNUSED_PARAM( domain ),
-                                                                DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                                                CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
-                                                                arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) ) const
+void SinglePhaseFVM< SinglePhaseProppantBase >::applyAquiferBC( real64 const GEOS_UNUSED_PARAM( time ),
+                                                                real64 const GEOS_UNUSED_PARAM( dt ),
+                                                                DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                                                DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                                                CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                                                arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) const
 {
   // Aquifer does not make sense for proppant flow in fractures
 }

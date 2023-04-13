@@ -42,12 +42,12 @@ public:
     m_sphericity( sphericity )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & porosity,
                 arraySlice1d< real64 > const & permeability,
                 arraySlice1d< real64 > const & dPerm_dPorosity ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromPorosity( localIndex const k,
                                    localIndex const q,
                                    real64 const & porosity ) const override
@@ -124,8 +124,8 @@ private:
 };
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void CarmanKozenyPermeabilityUpdate::compute( real64 const & porosity,
                                               arraySlice1d< real64 > const & permeability,
                                               arraySlice1d< real64 > const & dPerm_dPorosity ) const

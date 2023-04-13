@@ -76,7 +76,7 @@ static constexpr char const * PyGroup_groupsDocString =
   "    A list containing each subgroup.";
 static PyObject * PyGroup_groups( PyGroup * const self, PyObject * const args ) noexcept
 {
-  GEOSX_UNUSED_VAR( args );
+  GEOS_UNUSED_VAR( args );
 
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
@@ -118,7 +118,7 @@ static constexpr char const * PyGroup_wrappersDocString =
   "    A list containing each wrapper.";
 static PyObject * PyGroup_wrappers( PyGroup * const self, PyObject * const args ) noexcept
 {
-  GEOSX_UNUSED_VAR( args );
+  GEOS_UNUSED_VAR( args );
 
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );

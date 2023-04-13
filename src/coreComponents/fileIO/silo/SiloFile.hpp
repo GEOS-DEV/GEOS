@@ -804,7 +804,7 @@ template<> inline real64 CastField( R1Tensor const & field, int const i )
  */
 template<> inline int CastField< int, int >( const int & field, int const dummy )
 {
-  GEOSX_UNUSED_VAR( dummy );
+  GEOS_UNUSED_VAR( dummy );
   return field;
 }
 
@@ -817,7 +817,7 @@ template<> inline int CastField< int, int >( const int & field, int const dummy 
  */
 template<> inline long int CastField< long int, long int >( const long int & field, int const dummy )
 {
-  GEOSX_UNUSED_VAR( dummy );
+  GEOS_UNUSED_VAR( dummy );
   return field;
 }
 
@@ -830,7 +830,7 @@ template<> inline long int CastField< long int, long int >( const long int & fie
  */
 template<> inline int CastField< int, long int >( const long int & field, int const dummy )
 {
-  GEOSX_UNUSED_VAR( dummy );
+  GEOS_UNUSED_VAR( dummy );
   return LvArray::integerConversion< int >( field );
 }
 
@@ -843,7 +843,7 @@ template<> inline int CastField< int, long int >( const long int & field, int co
  */
 template<> inline long long int CastField< long long int, long long int >( const long long int & field, int const dummy )
 {
-  GEOSX_UNUSED_VAR( dummy );
+  GEOS_UNUSED_VAR( dummy );
   return field;
 }
 
@@ -856,7 +856,7 @@ template<> inline long long int CastField< long long int, long long int >( const
  */
 template<> inline int CastField< int, long long int >( const long long int & field, int const dummy )
 {
-  GEOSX_UNUSED_VAR( dummy );
+  GEOS_UNUSED_VAR( dummy );
   return LvArray::integerConversion< int >( field );
 }
 
@@ -869,7 +869,7 @@ template<> inline int CastField< int, long long int >( const long long int & fie
  */
 template<> inline real64 CastField< real64, real64 >( const real64 & field, int const dummy )
 {
-  GEOSX_UNUSED_VAR( dummy );
+  GEOS_UNUSED_VAR( dummy );
   return field;
 }
 
@@ -882,7 +882,7 @@ template<> inline real64 CastField< real64, real64 >( const real64 & field, int 
  */
 template<> inline float CastField< float, real64 >( const real64 & field, int const dummy )
 {
-  GEOSX_UNUSED_VAR( dummy );
+  GEOS_UNUSED_VAR( dummy );
   return static_cast< float >(field);
 }
 

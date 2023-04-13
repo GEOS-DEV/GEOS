@@ -174,8 +174,8 @@ void pushStatsIntoAdiak( string const & name, T const value )
   adiak::value( name + " min", MpiWrapper::min( value ) );
   adiak::value( name + " max", MpiWrapper::max( value ) );
 #else
-  GEOSX_UNUSED_VAR( name );
-  GEOSX_UNUSED_VAR( value );
+  GEOS_UNUSED_VAR( name );
+  GEOS_UNUSED_VAR( value );
 #endif
 }
 

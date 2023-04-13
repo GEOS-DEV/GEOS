@@ -243,7 +243,7 @@ bool dispatchViaTable( TypeList< Ts... > const types,
   auto const it = typeIndexMap.find( type );
   if( it != typeIndexMap.end() )
   {
-    GEOSX_ASSERT_GT( sizeof...( Ts ), it->second ); // sanity check
+    GEOS_ASSERT_GT( sizeof...( Ts ), it->second ); // sanity check
     handlers[ it->second ]( std::forward< LAMBDA >( lambda ) );
     return true;
   }
@@ -275,7 +275,7 @@ bool dispatch( TypeList< Ts... > const types,
   bool const success = internal::dispatchViaTable( types, type, std::forward< LAMBDA >( lambda ) );
   if( !success && errorIfTypeNotFound )
   {
-    GEOSX_ERROR( "Type " << LvArray::system::demangle( type.name() ) << " was not dispatched.\n" <<
+    GEOS_ERROR( "Type " << LvArray::system::demangle( type.name() ) << " was not dispatched.\n" <<
                  "Check the stack trace below and revise the type list passed to dispatch().\n" <<
                  "If you are unsure about this error, please report it to GEOSX issue tracker." );
   }

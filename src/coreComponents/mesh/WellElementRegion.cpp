@@ -64,7 +64,7 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
   subRegion.connectPerforationsToMeshElements( mesh, wellGeometry );
 
   globalIndex const matchedPerforations = MpiWrapper::sum( perforationData->size() );
-  GEOSX_THROW_IF( matchedPerforations != numPerforationsGlobal,
+  GEOSX_THROW_IF_IF( matchedPerforations != numPerforationsGlobal,
                   "Invalid mapping perforation-to-element in well " << wellGeometry.getName() << "." <<
                   " This happens when GEOSX cannot match a perforation with a reservoir element." <<
                   " There are two common reasons for this error:\n" <<
@@ -114,11 +114,11 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
   {
     if( allRankTopElem[irank] >= 0 )
     {
-      GEOSX_ASSERT( topRank < 0 );
+      GEOS_ASSERT( topRank < 0 );
       topRank = irank;
     }
   }
-  GEOSX_ASSERT( topRank >= 0 );
+  GEOS_ASSERT( topRank >= 0 );
   subRegion.setTopRank( topRank );
 
 

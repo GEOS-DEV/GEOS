@@ -43,19 +43,19 @@ CommunicationTools::CommunicationTools()
     m_freeCommIDs.insert( i );
   }
 
-  GEOSX_ERROR_IF( m_instance != nullptr, "Only one CommunicationTools can exist at a time." );
+  GEOS_ERROR_IF( m_instance != nullptr, "Only one CommunicationTools can exist at a time." );
   m_instance = this;
 }
 
 CommunicationTools::~CommunicationTools()
 {
-  GEOSX_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
+  GEOS_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
   m_instance = nullptr;
 }
 
 CommunicationTools & CommunicationTools::getInstance()
 {
-  GEOSX_ERROR_IF( m_instance == nullptr,
+  GEOS_ERROR_IF( m_instance == nullptr,
                   "CommunicationTools has not been constructed, or is already been destructed." );
   return *m_instance;
 }
@@ -285,7 +285,7 @@ void CommunicationTools::assignNewGlobalIndices( ObjectManagerBase & object,
   localIndex nIndicesAssigned = 0;
   for( localIndex const newLocalIndex : indexList )
   {
-    GEOSX_ERROR_IF( localToGlobal[newLocalIndex] != -1,
+    GEOS_ERROR_IF( localToGlobal[newLocalIndex] != -1,
                     "Local object " << newLocalIndex << " should be new but already has a global index "
                                     << localToGlobal[newLocalIndex] );
 
@@ -322,7 +322,7 @@ CommunicationTools::assignNewGlobalIndices( ElementRegionManager & elementManage
 
     for( localIndex const newLocalIndex : indexList )
     {
-      GEOSX_ERROR_IF( localToGlobal[newLocalIndex] != -1,
+      GEOS_ERROR_IF( localToGlobal[newLocalIndex] != -1,
                       "Local object " << newLocalIndex << " should be new but already has a global index "
                                       << localToGlobal[newLocalIndex] );
 
@@ -435,7 +435,7 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
       if( ghostRank[ recvIdx ] != neighborRank )
       {
         error = true;
-        GEOSX_LOG_RANK( "Receiving " << recvIdx << " from " << neighborRank <<
+        GEOS_LOG_RANK( "Receiving " << recvIdx << " from " << neighborRank <<
                         " but ghostRank[ " << recvIdx << " ] is " << ghostRank[ recvIdx ] );
       }
     }
@@ -446,7 +446,7 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
       if( ghostRank[ sendIdx ] != -1 )
       {
         error = true;
-        GEOSX_LOG_RANK( "Sending " << sendIdx << " to " << neighborRank <<
+        GEOS_LOG_RANK( "Sending " << sendIdx << " to " << neighborRank <<
                         " but ghostRank[ " << sendIdx << " ] is " << ghostRank[ sendIdx ] );
       }
     }
@@ -455,12 +455,12 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
     if( !nonLocalGhosts.empty() )
     {
       error = true;
-      GEOSX_LOG_RANK( "Expected to send 0 non local ghosts to rank " << neighborRank <<
+      GEOS_LOG_RANK( "Expected to send 0 non local ghosts to rank " << neighborRank <<
                       " but sending " << nonLocalGhosts.size() );
     }
   }
 
-  GEOSX_ERROR_IF( error, "Encountered a ghosting inconsistency in " << objectManager.getName() );
+  GEOS_ERROR_IF( error, "Encountered a ghosting inconsistency in " << objectManager.getName() );
 }
 
 /**
@@ -476,7 +476,7 @@ void removeFromCommList( std::vector< localIndex > const & indicesToRemove, arra
   } );
 
   localIndex const nRemoved = commIndices.end() - itr;
-  GEOSX_ERROR_IF_NE( nRemoved, localIndex( indicesToRemove.size() ) );
+  GEOS_ERROR_IF_NE( nRemoved, localIndex( indicesToRemove.size() ) );
   commIndices.resize( commIndices.size() - nRemoved );
 }
 

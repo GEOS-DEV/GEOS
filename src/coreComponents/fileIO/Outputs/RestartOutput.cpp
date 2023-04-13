@@ -32,12 +32,12 @@ RestartOutput::RestartOutput( string const & name,
 RestartOutput::~RestartOutput()
 {}
 
-bool RestartOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                             real64 const GEOSX_UNUSED_PARAM( dt ),
+bool RestartOutput::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
+                             real64 const GEOS_UNUSED_PARAM( dt ),
                              integer const cycleNumber,
-                             integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                             real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                             DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+                             integer const GEOS_UNUSED_PARAM( eventCounter ),
+                             real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                             DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOSX_MARK_FUNCTION;
 

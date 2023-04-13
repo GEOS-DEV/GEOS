@@ -68,7 +68,7 @@ void Box::postProcessInput()
   m_strikeAngle += 90; // Counterclockwise from x-axis
   if( std::fabs( m_strikeAngle ) > 1e-20 )
   {
-    GEOSX_ERROR_IF( (m_max[0]-m_min[0]) < (m_max[1]-m_min[1]),
+    GEOS_ERROR_IF( (m_max[0]-m_min[0]) < (m_max[1]-m_min[1]),
                     "Error: When a strike angle is specified, the box is supposed to represent a plane normal to the "
                     "y direction. This box seems to be too thick." );
 

@@ -163,7 +163,7 @@ MeshLevel::MeshLevel( string const & name,
       numInternalFaceNodes += numNonEdgeNodesPerFace;
     else
     {
-      GEOSX_ERROR( "need more support for face geometry" );
+      GEOS_ERROR( "need more support for face geometry" );
     }
   }
 

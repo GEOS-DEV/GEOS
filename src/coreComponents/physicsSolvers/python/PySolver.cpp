@@ -30,7 +30,7 @@ struct PySolver
 
 static PyObject * PySolver_new( PyTypeObject *type, PyObject *args, PyObject *kwds )
 {
-  GEOSX_UNUSED_VAR( args, kwds );
+  GEOS_UNUSED_VAR( args, kwds );
   PySolver *self;
 
   self = (PySolver *)type->tp_alloc( type, 0 );
@@ -88,7 +88,7 @@ static PyObject * reinit( PySolver * self, PyObject *args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
-  GEOSX_UNUSED_VAR( args );
+  GEOS_UNUSED_VAR( args );
 
   self->group->reinit();
 
@@ -99,7 +99,7 @@ static PyObject * cleanup( PySolver * self, PyObject *args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
-  GEOSX_UNUSED_VAR( args );
+  GEOS_UNUSED_VAR( args );
 
   double time;
   if( !PyArg_ParseTuple( args, "d", &time ) )

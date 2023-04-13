@@ -131,7 +131,7 @@ void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartiti
         subRegion.getField< contact::deltaDispJump >();
 
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const kfe )
       {
         for( localIndex i = 0; i < 3; ++i )
         {
@@ -171,7 +171,7 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
     arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(),
-                                      [=] GEOSX_HOST_DEVICE ( localIndex const k )
+                                      [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       LvArray::tensorOps::copy< 3 >( oldDispJump[k], dispJump[k] );
     } );
@@ -224,7 +224,7 @@ void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
   if( !m_useStaticCondensation )
   {
 
-    GEOSX_UNUSED_VAR( setSparsity );
+    GEOS_UNUSED_VAR( setSparsity );
 
     dofManager.setDomain( domain );
     setupDofs( domain, dofManager );
@@ -331,7 +331,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                      SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                      kernelFactory );
 
-      GEOSX_UNUSED_VAR( maxTraction );
+      GEOS_UNUSED_VAR( maxTraction );
 
     }
     else
@@ -352,7 +352,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                      SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                      kernelFactory );
 
-      GEOSX_UNUSED_VAR( maxTraction );
+      GEOS_UNUSED_VAR( maxTraction );
 
 
     }
@@ -586,7 +586,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
         arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
         forAll< parallelDevicePolicy<> >( subRegion.size(),
-                                          [localRhs, localSum, dofNumber, rankOffset, ghostRank] GEOSX_HOST_DEVICE ( localIndex const k )
+                                          [localRhs, localSum, dofNumber, rankOffset, ghostRank] GEOS_HOST_DEVICE ( localIndex const k )
         {
           if( ghostRank[k] < 0 )
           {
@@ -722,7 +722,7 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
                                                    SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                    kernelFactory );
 
-    GEOSX_UNUSED_VAR( maxTraction );
+    GEOS_UNUSED_VAR( maxTraction );
   } );
 }
 

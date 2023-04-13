@@ -367,7 +367,7 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
                                                componentMolarWeight );
     }
   }
-  GEOSX_ERROR_IF( pvtFunction == nullptr,
+  GEOS_ERROR_IF( pvtFunction == nullptr,
                   "Could not find " << key << " in " << filename );
 
   return pvtFunction;
@@ -408,7 +408,7 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
                                               componentMolarWeight );
     }
   }
-  GEOSX_ERROR_IF( flashModel == nullptr,
+  GEOS_ERROR_IF( flashModel == nullptr,
                   "Could not find " << key << " in " << filename );
 
   return flashModel;

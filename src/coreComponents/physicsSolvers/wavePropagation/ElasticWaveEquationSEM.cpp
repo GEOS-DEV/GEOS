@@ -125,7 +125,7 @@ localIndex ElasticWaveEquationSEM::getNumNodesPerElem()
 
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOSX_THROW_IF( feDiscretization == nullptr,
+  GEOSX_THROW_IF_IF( feDiscretization == nullptr,
                   getName() << ": FE discretization not found: " << m_discretizationName,
                   InputError );
 
@@ -229,10 +229,10 @@ void ElasticWaveEquationSEM::postProcessInput()
 
   WaveSolverBase::postProcessInput();
 
-  GEOSX_ERROR_IF( m_sourceCoordinates.size( 1 ) != 3,
+  GEOS_ERROR_IF( m_sourceCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the sources" );
 
-  GEOSX_ERROR_IF( m_receiverCoordinates.size( 1 ) != 3,
+  GEOS_ERROR_IF( m_receiverCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the receivers" );
 
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
@@ -247,7 +247,7 @@ void ElasticWaveEquationSEM::postProcessInput()
     }
   }
 
-  GEOSX_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+  GEOSX_THROW_IF_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -328,7 +328,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
                                                                                         CellElementSubRegion & elementSubRegion )
   {
 
-    GEOSX_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
+    GEOSX_THROW_IF_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
                     "Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
                     InputError );
 
@@ -409,7 +409,7 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                            MPI_COMM_GEOSX );
 
-    forAll< EXEC_POLICY >( numReceiversGlobal, [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
+    forAll< EXEC_POLICY >( numReceiversGlobal, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
     {
       if( receiverIsLocal[ircv] == 1 )
       {
@@ -454,7 +454,7 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
   /// the remaining x-component contains DAS data, the other components are set to zero
   m_displacementXNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
   arrayView2d< real32 > const dasReceiver = m_displacementXNp1AtReceivers.toView();
-  forAll< EXEC_POLICY >( numReceiversGlobal, [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
+  forAll< EXEC_POLICY >( numReceiversGlobal, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
   {
     if( receiverIsLocal[ircv] == 1 )
     {
@@ -486,8 +486,8 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumb
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  GEOSX_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
-  forAll< EXEC_POLICY >( m_sourceConstantsx.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
+  GEOSX_THROW_IF_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
+  forAll< EXEC_POLICY >( m_sourceConstantsx.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
     {
@@ -664,7 +664,7 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
     }
     else
     {
-      GEOSX_ERROR( "This option is not supported yet" );
+      GEOS_ERROR( "This option is not supported yet" );
     }
   } );
 }
@@ -675,7 +675,7 @@ real64 ElasticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                     real64 const & dt,
                                                     integer cycleNumber,
                                                     DomainPartition & domain,
-                                                    bool GEOSX_UNUSED_PARAM( computeGradient ) )
+                                                    bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
@@ -687,9 +687,9 @@ real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                      real64 const & dt,
                                                      integer cycleNumber,
                                                      DomainPartition & domain,
-                                                     bool GEOSX_UNUSED_PARAM( computeGradient ) )
+                                                     bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
-  GEOSX_ERROR( "Backward propagation for the elastic wave propagator not yet implemented" );
+  GEOS_ERROR( "Backward propagation for the elastic wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
 }
@@ -701,9 +701,9 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
+  GEOS_UNUSED_VAR( time_n, dt, cycleNumber );
 
-  GEOSX_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
+  GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -754,7 +754,7 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
 
     real64 const dt2 = dt*dt;
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       if( freeSurfaceNodeIndicator[a] != 1 )
       {
@@ -795,7 +795,7 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     computeAllSeismoTraces( time_n, dt, uy_np1, uy_n, uYReceivers );
     computeAllSeismoTraces( time_n, dt, uz_np1, uz_n, uZReceivers );
 
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       ux_nm1[a] = ux_n[a];
       uy_nm1[a] = uy_n[a];
@@ -886,12 +886,12 @@ void ElasticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
 
 void ElasticWaveEquationSEM::initializePML()
 {
-  GEOSX_ERROR( "PML for the elastic wave propagator not yet implemented" );
+  GEOS_ERROR( "PML for the elastic wave propagator not yet implemented" );
 }
 
 void ElasticWaveEquationSEM::applyPML( real64 const, DomainPartition & )
 {
-  GEOSX_ERROR( "PML for the elastic wave propagator not yet implemented" );
+  GEOS_ERROR( "PML for the elastic wave propagator not yet implemented" );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, ElasticWaveEquationSEM, string const &, dataRepository::Group * const )

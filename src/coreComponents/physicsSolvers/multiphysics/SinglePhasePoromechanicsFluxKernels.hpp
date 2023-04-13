@@ -87,7 +87,7 @@ struct EmbeddedSurfaceFluxKernel
    *
    */
   template< localIndex MAX_NUM_CONNECTIONS >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
@@ -211,7 +211,7 @@ struct FaceElementFluxKernel
    *
    */
   template< localIndex MAX_NUM_CONNECTIONS >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,

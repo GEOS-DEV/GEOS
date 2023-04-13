@@ -39,7 +39,7 @@ struct FluidUpdateKernel
                       arrayView2d< real64 const > const & cellBasedFlux,
                       arrayView1d< integer const > const & isProppantBoundaryElement )
   {
-    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
 
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )

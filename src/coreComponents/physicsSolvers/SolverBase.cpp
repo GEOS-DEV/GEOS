@@ -114,7 +114,7 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
 
     if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
     {
-      GEOSX_ERROR_IF( meshBodies.numSubGroups() != 1,
+      GEOS_ERROR_IF( meshBodies.numSubGroups() != 1,
                       "No MeshBody information is specified in SolverBase::meshTargets, but there are multiple MeshBody objects" );
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( 0 );
       string const meshBodyName = meshBody.getName();
@@ -128,7 +128,7 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
     else if( targetTokens.size()==2 )
     {
       string const meshBodyName = targetTokens[0];
-      GEOSX_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
+      GEOS_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
                       "MeshBody ("<<meshBodyName<<") is specified in targetRegions, but does not exist." );
 
       string const meshLevelName = m_discretizationName;
@@ -141,7 +141,7 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
     }
     else
     {
-      GEOSX_ERROR( "Invalid specification of targetRegions" );
+      GEOS_ERROR( "Invalid specification of targetRegions" );
     }
   }
 }
@@ -170,7 +170,7 @@ void SolverBase::registerDataOnMesh( Group & meshBodies )
 
 
 
-Group * SolverBase::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * SolverBase::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
@@ -184,7 +184,7 @@ SolverBase::CatalogInterface::CatalogType & SolverBase::getCatalog()
 localIndex SolverBase::targetRegionIndex( string const & regionName ) const
 {
   auto const pos = std::find( m_targetRegionNames.begin(), m_targetRegionNames.end(), regionName );
-  GEOSX_ERROR_IF( pos == m_targetRegionNames.end(), GEOSX_FMT( "Region {} is not a target of solver {}", regionName, getName() ) );
+  GEOS_ERROR_IF( pos == m_targetRegionNames.end(), GEOSX_FMT( "Region {} is not a target of solver {}", regionName, getName() ) );
   return std::distance( m_targetRegionNames.begin(), pos );
 }
 
@@ -229,8 +229,8 @@ real64 SolverBase::solverStep( real64 const & time_n,
 bool SolverBase::execute( real64 const time_n,
                           real64 const dt,
                           integer const cycleNumber,
-                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                          real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                          integer const GEOS_UNUSED_PARAM( eventCounter ),
+                          real64 const GEOS_UNUSED_PARAM( eventProgress ),
                           DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -267,11 +267,11 @@ bool SolverBase::execute( real64 const time_n,
 
     if( getLogLevel() >= 1 && dtRemaining > 0.0 )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: sub-step = {}, accepted dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, dtRemaining ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: sub-step = {}, accepted dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, dtRemaining ) );
     }
   }
 
-  GEOSX_ERROR_IF( dtRemaining > 0.0, "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps." );
+  GEOS_ERROR_IF( dtRemaining > 0.0, "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps." );
 
   // Decide what to do with the next Dt for the event running the solver.
   m_nextDt = setNextDt( nextDt, domain );
@@ -291,12 +291,12 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
     integer const iterIncreaseLimit = m_nonlinearSolverParameters.timeStepIncreaseIterLimit();
     if( nextDtNewton > currentDt )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Newton solver converged in less than {} iterations, time-step required will be increased.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Newton solver converged in less than {} iterations, time-step required will be increased.",
                                             getName(), iterIncreaseLimit ) );
     }
     else if( nextDtNewton < currentDt )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Newton solver converged in more than {} iterations, time-step required will be decreased.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Newton solver converged in more than {} iterations, time-step required will be decreased.",
                                             getName(), iterDecreaseLimit ) );
     }
   }
@@ -304,12 +304,12 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
   {
     if( nextDtStateChange > currentDt )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Time-step required will be increased based on state change.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Time-step required will be increased based on state change.",
                                             getName() ) );
     }
     else if( nextDtStateChange < currentDt )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Time-step required will be decreased based on state change.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Time-step required will be decreased based on state change.",
                                             getName() ) );
     }
   }
@@ -320,7 +320,7 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
 real64 SolverBase::setNextDtBasedOnStateChange( real64 const & currentDt,
                                                 DomainPartition & domain )
 {
-  GEOSX_UNUSED_VAR( currentDt, domain );
+  GEOS_UNUSED_VAR( currentDt, domain );
   return LvArray::NumericLimits< real64 >::max; // i.e., not implemented
 }
 
@@ -350,7 +350,7 @@ real64 SolverBase::setNextDtBasedOnNewtonIter( real64 const & currentDt )
 
 real64 SolverBase::linearImplicitStep( real64 const & time_n,
                                        real64 const & dt,
-                                       integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                                       integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                        DomainPartition & domain )
 {
   // call setup for physics solver. Pre step allocations etc.
@@ -428,7 +428,7 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
 
 bool SolverBase::lineSearch( real64 const & time_n,
                              real64 const & dt,
-                             integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                             integer const GEOS_UNUSED_PARAM( cycleNumber ),
                              DomainPartition & domain,
                              DofManager const & dofManager,
                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -461,7 +461,7 @@ bool SolverBase::lineSearch( real64 const & time_n,
 
     if( !checkSystemSolution( domain, dofManager, solution.values(), localScaleFactor ) )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "        Line search {}, solution check failed", lineSearchIteration ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "        Line search {}, solution check failed", lineSearchIteration ) );
       continue;
     }
 
@@ -509,7 +509,7 @@ bool SolverBase::lineSearch( real64 const & time_n,
 
 bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
                                                        real64 const & dt,
-                                                       integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                                                       integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                                        DomainPartition & domain,
                                                        DofManager const & dofManager,
                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -557,7 +557,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
 
     if( !checkSystemSolution( domain, dofManager, solution.values(), deltaLocalScaleFactor ) )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search " << lineSearchIteration << ", solution check failed" );
+      GEOS_LOG_LEVEL_RANK_0( 1, "        Line search " << lineSearchIteration << ", solution check failed" );
       continue;
     }
 
@@ -712,9 +712,9 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
           // increment the solver statistics for reporting purposes
           m_solverStatistics.logOuterLoopIteration();
 
-          GEOSX_LOG_LEVEL_RANK_0( 1, "   " );
-          GEOSX_LOG_LEVEL_RANK_0( 1, "---------- Configuration did not converge. Testing new configuration. ----------" );
-          GEOSX_LOG_LEVEL_RANK_0( 1, "   " );
+          GEOS_LOG_LEVEL_RANK_0( 1, "   " );
+          GEOS_LOG_LEVEL_RANK_0( 1, "---------- Configuration did not converge. Testing new configuration. ----------" );
+          GEOS_LOG_LEVEL_RANK_0( 1, "   " );
         }
       }
       else if( !attemptedSimplestConfiguration )
@@ -743,7 +743,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     {
       // cut timestep, go back to beginning of step and restart the Newton loop
       stepDt *= dtCutFactor;
-      GEOSX_LOG_LEVEL_RANK_0 ( 1, GEOSX_FMT( "New dt = {}", stepDt ) );
+      GEOS_LOG_LEVEL_RANK_0 ( 1, GEOSX_FMT( "New dt = {}", stepDt ) );
 
       // notify the solver statistics counter that this is a time step cut
       m_solverStatistics.logTimeStepCut();
@@ -752,15 +752,15 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
   if( !isConfigurationLoopConverged )
   {
-    GEOSX_LOG_RANK_0( "Convergence not achieved." );
+    GEOS_LOG_RANK_0( "Convergence not achieved." );
 
     if( allowNonConverged )
     {
-      GEOSX_LOG_RANK_0( "The accepted solution may be inaccurate." );
+      GEOS_LOG_RANK_0( "The accepted solution may be inaccurate." );
     }
     else
     {
-      GEOSX_ERROR( "Nonconverged solutions not allowed. Terminating..." );
+      GEOS_ERROR( "Nonconverged solutions not allowed. Terminating..." );
     }
   }
 
@@ -788,7 +788,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
-    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
 
     // zero out matrix/rhs before assembly
     m_localMatrix.zero();
@@ -828,10 +828,10 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     real64 residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
 
 
-    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
     if( newtonIter > 0 )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Last LinSolve(iter,res) = ( {:3}, {:4.2e} ) ; ",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Last LinSolve(iter,res) = ( {:3}, {:4.2e} ) ; ",
                                             m_linearSolverResult.numIterations,
                                             m_linearSolverResult.residualReduction ) );
     }
@@ -849,7 +849,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     if( residualNorm > m_nonlinearSolverParameters.m_maxAllowedResidualNorm )
     {
       string const maxAllowedResidualNormString = NonlinearSolverParameters::viewKeysStruct::maxAllowedResidualNormString();
-      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
                                             maxAllowedResidualNormString,
                                             m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
       isNewtonConverged = false;
@@ -894,12 +894,12 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       {
         if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Attempt )
         {
-          GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Accepting iteration." );
+          GEOS_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Accepting iteration." );
         }
         else if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Require )
         {
           // if line search failed, then break out of the main Newton loop. Timestep will be cut.
-          GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Exiting Newton Loop." );
+          GEOS_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Exiting Newton Loop." );
           break;
         }
       }
@@ -939,7 +939,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
     {
       // TODO try chopping (similar to line search)
-      GEOSX_LOG_RANK_0( "    Solution check failed. Newton loop terminated." );
+      GEOS_LOG_RANK_0( "    Solution check failed. Newton loop terminated." );
       break;
     }
 
@@ -955,26 +955,26 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
   return isNewtonConverged;
 }
 
-real64 SolverBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                 real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                 integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                                 DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+real64 SolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                 real64 const & GEOS_UNUSED_PARAM( dt ),
+                                 integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                 DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOSX_THROW( "SolverBase::ExplicitStep called!. Should be overridden.", std::runtime_error );
+  GEOSX_THROW_IF( "SolverBase::ExplicitStep called!. Should be overridden.", std::runtime_error );
   return 0;
 }
 
-void SolverBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                    real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                    DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void SolverBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                    real64 const & GEOS_UNUSED_PARAM( dt ),
+                                    DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOSX_THROW( "SolverBase::ImplicitStepSetup called!. Should be overridden.", std::runtime_error );
+  GEOSX_THROW_IF( "SolverBase::ImplicitStepSetup called!. Should be overridden.", std::runtime_error );
 }
 
-void SolverBase::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
-                            DofManager & GEOSX_UNUSED_PARAM( dofManager ) ) const
+void SolverBase::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+                            DofManager & GEOS_UNUSED_PARAM( dofManager ) ) const
 {
-  GEOSX_ERROR( "SolverBase::setupDofs called!. Should be overridden." );
+  GEOS_ERROR( "SolverBase::setupDofs called!. Should be overridden." );
 }
 
 void SolverBase::setupSystem( DomainPartition & domain,
@@ -1006,24 +1006,24 @@ void SolverBase::setupSystem( DomainPartition & domain,
   solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 }
 
-void SolverBase::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time ),
-                                 real64 const GEOSX_UNUSED_PARAM( dt ),
-                                 DomainPartition & GEOSX_UNUSED_PARAM( domain ),
-                                 DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                 CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
-                                 arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) )
+void SolverBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
+                                 real64 const GEOS_UNUSED_PARAM( dt ),
+                                 DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                 DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                 CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                 arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
-  GEOSX_ERROR( "SolverBase::Assemble called!. Should be overridden." );
+  GEOS_ERROR( "SolverBase::Assemble called!. Should be overridden." );
 }
 
-void SolverBase::applyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time ),
-                                          real64 const GEOSX_UNUSED_PARAM( dt ),
-                                          DomainPartition & GEOSX_UNUSED_PARAM( domain ),
-                                          DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                          CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
-                                          arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) )
+void SolverBase::applyBoundaryConditions( real64 const GEOS_UNUSED_PARAM( time ),
+                                          real64 const GEOS_UNUSED_PARAM( dt ),
+                                          DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                          DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                          CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                          arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
-  GEOSX_ERROR( "SolverBase::applyBoundaryConditions called!. Should be overridden." );
+  GEOS_ERROR( "SolverBase::applyBoundaryConditions called!. Should be overridden." );
 }
 
 namespace
@@ -1042,7 +1042,7 @@ namespace
  */
 template< typename T >
 void debugOutputLAObject( T const & obj,
-                          real64 const & GEOSX_UNUSED_PARAM( time ),
+                          real64 const & GEOS_UNUSED_PARAM( time ),
                           integer const cycleNumber,
                           integer const nonlinearIteration,
                           string const & filePrefix,
@@ -1053,15 +1053,15 @@ void debugOutputLAObject( T const & obj,
   if( toScreen )
   {
     string const frame( screenName.size() + 1, '=' );
-    GEOSX_LOG_RANK_0( frame << "\n" << screenName << ":\n" << frame );
-    GEOSX_LOG( obj );
+    GEOS_LOG_RANK_0( frame << "\n" << screenName << ":\n" << frame );
+    GEOS_LOG( obj );
   }
 
   if( toFile )
   {
     string const filename = GEOSX_FMT( "{}_{:06}_{:02}.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
     obj.write( filename, LAIOutputFormat::MATRIX_MARKET );
-    GEOSX_LOG_RANK_0( screenName << " written to " << filename );
+    GEOS_LOG_RANK_0( screenName << " written to " << filename );
   }
 }
 
@@ -1108,13 +1108,13 @@ void SolverBase::debugOutputSolution( real64 const & time,
 }
 
 real64
-SolverBase::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time ),
-                                   real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                   DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
-                                   DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                   arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( localRhs ) )
+SolverBase::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
+                                   real64 const & GEOS_UNUSED_PARAM( dt ),
+                                   DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+                                   DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                   arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
-  GEOSX_ERROR( "SolverBase::calculateResidualNorm called!. Should be overridden." );
+  GEOS_ERROR( "SolverBase::calculateResidualNorm called!. Should be overridden." );
   return 0;
 }
 
@@ -1148,80 +1148,80 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
 
   if( params.stopIfError )
   {
-    GEOSX_ERROR_IF( m_linearSolverResult.breakdown(), "Linear solution breakdown -> simulation STOP" );
+    GEOS_ERROR_IF( m_linearSolverResult.breakdown(), "Linear solution breakdown -> simulation STOP" );
   }
   else
   {
-    GEOSX_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed" );
+    GEOS_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed" );
   }
 }
 
-bool SolverBase::checkSystemSolution( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
-                                      DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                      arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( localSolution ),
-                                      real64 const GEOSX_UNUSED_PARAM( scalingFactor ) )
+bool SolverBase::checkSystemSolution( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+                                      DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                      arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
+                                      real64 const GEOS_UNUSED_PARAM( scalingFactor ) )
 {
   return true;
 }
 
-real64 SolverBase::scalingForSystemSolution( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
-                                             DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                             arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( localSolution ) )
+real64 SolverBase::scalingForSystemSolution( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+                                             DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ) )
 {
   return 1.0;
 }
 
-void SolverBase::applySystemSolution( DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                      arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( localSolution ),
-                                      real64 const GEOSX_UNUSED_PARAM( scalingFactor ),
-                                      DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void SolverBase::applySystemSolution( DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                      arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
+                                      real64 const GEOS_UNUSED_PARAM( scalingFactor ),
+                                      DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOSX_ERROR( "SolverBase::applySystemSolution called!. Should be overridden." );
+  GEOS_ERROR( "SolverBase::applySystemSolution called!. Should be overridden." );
 }
 
-void SolverBase::updateState( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void SolverBase::updateState( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOSX_ERROR( "SolverBase::updateState called!. Should be overridden." );
+  GEOS_ERROR( "SolverBase::updateState called!. Should be overridden." );
 }
 
-bool SolverBase::updateConfiguration( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+bool SolverBase::updateConfiguration( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   return true;
 }
 
-void SolverBase::outputConfigurationStatistics( DomainPartition const & GEOSX_UNUSED_PARAM( domain ) ) const
+void SolverBase::outputConfigurationStatistics( DomainPartition const & GEOS_UNUSED_PARAM( domain ) ) const
 {
   // For most solvers there is nothing to do.
 }
 
-void SolverBase::resetConfigurationToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void SolverBase::resetConfigurationToBeginningOfStep( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   // For most solvers there is nothing to do.
 }
 
-void SolverBase::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void SolverBase::resetStateToBeginningOfStep( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOSX_ERROR( "SolverBase::ResetStateToBeginningOfStep called!. Should be overridden." );
+  GEOS_ERROR( "SolverBase::ResetStateToBeginningOfStep called!. Should be overridden." );
 }
 
-bool SolverBase::resetConfigurationToDefault( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) const
+bool SolverBase::resetConfigurationToDefault( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
 {
   // for most solvers it just breaks the loop.
   return true;
 }
 
-void SolverBase::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
-                                       real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                       DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void SolverBase::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time ),
+                                       real64 const & GEOS_UNUSED_PARAM( dt ),
+                                       DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOSX_ERROR( "SolverBase::ImplicitStepComplete called!. Should be overridden." );
+  GEOS_ERROR( "SolverBase::ImplicitStepComplete called!. Should be overridden." );
 }
 
-void SolverBase::cleanup( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                          integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                          real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                          DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void SolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
+                          integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                          integer const GEOS_UNUSED_PARAM( eventCounter ),
+                          real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                          DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   m_solverStatistics.outputStatistics();
 }

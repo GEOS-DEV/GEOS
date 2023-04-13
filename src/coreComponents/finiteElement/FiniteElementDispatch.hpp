@@ -83,25 +83,25 @@ struct FiniteElementDispatchHandler<>
   template< typename LAMBDA >
   static void
   dispatch3D( FiniteElementBase const & input,
-              LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
+              LAMBDA && GEOS_UNUSED_PARAM( lambda ) )
   {
-    GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
+    GEOS_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
   }
 
   template< typename LAMBDA >
   static void
   dispatch3D( FiniteElementBase & input,
-              LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
+              LAMBDA && GEOS_UNUSED_PARAM( lambda ) )
   {
-    GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
+    GEOS_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
   }
 
   template< typename LAMBDA >
   static void
   dispatch2D( FiniteElementBase const & input,
-              LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
+              LAMBDA && GEOS_UNUSED_PARAM( lambda ) )
   {
-    GEOSX_ERROR( "finiteElement::dispatch2D() is not implemented for input of: "<<LvArray::system::demangleType( &input ) );
+    GEOS_ERROR( "finiteElement::dispatch2D() is not implemented for input of: "<<LvArray::system::demangleType( &input ) );
   }
 };
 
@@ -184,7 +184,7 @@ dispatchlowOrder3D( FiniteElementBase const & input,
   }
   else
   {
-    GEOSX_ERROR( "finiteElement::dispatchlowOrder3D() is not implemented for input of "<<LvArray::system::demangleType( &input ) );
+    GEOS_ERROR( "finiteElement::dispatchlowOrder3D() is not implemented for input of "<<LvArray::system::demangleType( &input ) );
   }
 }
 

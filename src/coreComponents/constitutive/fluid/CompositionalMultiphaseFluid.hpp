@@ -64,7 +64,7 @@ public:
   {
 public:
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -77,7 +77,7 @@ public:
                           arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
                           real64 & totalDensity ) const override;
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -90,7 +90,7 @@ public:
                           PhaseComp::SliceType const phaseCompFraction,
                           FluidProp::SliceType const totalDensity ) const override;
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     virtual void update( localIndex const k,
                          localIndex const q,
                          real64 const pressure,
@@ -153,7 +153,7 @@ private:
 
 };
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 CompositionalMultiphaseFluid::KernelWrapper::
   compute( real64 const pressure,
@@ -168,9 +168,9 @@ CompositionalMultiphaseFluid::KernelWrapper::
            arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFrac,
            real64 & totalDens ) const
 {
-  GEOSX_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
+  GEOS_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
 #if defined(__CUDA_ARCH__)
-  GEOSX_ERROR( "This function cannot be used on GPU" );
+  GEOS_ERROR( "This function cannot be used on GPU" );
 #else
 
   integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
@@ -199,7 +199,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
 
   m_fluid.Update( pressure, temperature, compMoleFrac );
 
-  GEOSX_WARNING_IF( !m_fluid.hasSucceeded(),
+  GEOS_WARNING_IF( !m_fluid.hasSucceeded(),
                     "Phase equilibrium calculations not converged" );
 
   pvt::MultiphaseSystemProperties const & props = m_fluid.getMultiphaseSystemProperties();
@@ -253,7 +253,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
 #endif
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 CompositionalMultiphaseFluid::KernelWrapper::
   compute( real64 const pressure,
@@ -268,9 +268,9 @@ CompositionalMultiphaseFluid::KernelWrapper::
            PhaseComp::SliceType const phaseCompFraction,
            FluidProp::SliceType const totalDensity ) const
 {
-  GEOSX_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
+  GEOS_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
 #if defined(__CUDA_ARCH__)
-  GEOSX_ERROR( "This function cannot be used on GPU" );
+  GEOS_ERROR( "This function cannot be used on GPU" );
 #else
 
   using Deriv = multifluid::DerivativeOffset;
@@ -304,7 +304,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
 
   m_fluid.Update( pressure, temperature, compMoleFrac );
 
-  GEOSX_WARNING_IF( !m_fluid.hasSucceeded(),
+  GEOS_WARNING_IF( !m_fluid.hasSucceeded(),
                     "Phase equilibrium calculations not converged" );
 
   pvt::MultiphaseSystemProperties const & props = m_fluid.getMultiphaseSystemProperties();
@@ -394,7 +394,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
 #endif
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 CompositionalMultiphaseFluid::KernelWrapper::
   update( localIndex const k,

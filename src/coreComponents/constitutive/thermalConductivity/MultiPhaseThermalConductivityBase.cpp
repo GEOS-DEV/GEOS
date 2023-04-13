@@ -44,10 +44,10 @@ void MultiPhaseThermalConductivityBase::postProcessInput()
   ConstitutiveBase::postProcessInput();
 
   integer const numPhases = numFluidPhases();
-  GEOSX_THROW_IF_LT_MSG( numPhases, 2,
+  GEOSX_THROW_IF_IF_LT_MSG( numPhases, 2,
                          GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
                          InputError );
-  GEOSX_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
+  GEOSX_THROW_IF_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
                          GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
                          InputError );
 

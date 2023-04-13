@@ -47,7 +47,7 @@ public:
   {}
 
   template< int USD1 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -55,7 +55,7 @@ public:
                 bool useMass ) const;
 
   template< int USD1, int USD2, int USD3 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -121,14 +121,14 @@ private:
 };
 
 template< int USD1 >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void CO2EnthalpyUpdate::compute( real64 const & pressure,
                                  real64 const & temperature,
                                  arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                  real64 & value,
                                  bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( phaseComposition );
+  GEOS_UNUSED_VAR( phaseComposition );
   real64 const input[2] = { pressure, temperature };
 
 
@@ -141,7 +141,7 @@ void CO2EnthalpyUpdate::compute( real64 const & pressure,
 }
 
 template< int USD1, int USD2, int USD3 >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void CO2EnthalpyUpdate::compute( real64 const & pressure,
                                  real64 const & temperature,
                                  arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -150,7 +150,7 @@ void CO2EnthalpyUpdate::compute( real64 const & pressure,
                                  arraySlice1d< real64, USD3 > const & dValue,
                                  bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( phaseComposition, dPhaseComposition );
+  GEOS_UNUSED_VAR( phaseComposition, dPhaseComposition );
 
   using Deriv = multifluid::DerivativeOffset;
 

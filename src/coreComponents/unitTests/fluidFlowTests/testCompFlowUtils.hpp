@@ -170,7 +170,7 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
                             real64 const eps,
                             CRSMatrixView< real64, globalIndex const > const & jacobian )
 {
-  forAll< parallelDevicePolicy<> >( residual.size(), [=] GEOSX_HOST_DEVICE ( localIndex const row )
+  forAll< parallelDevicePolicy<> >( residual.size(), [=] GEOS_HOST_DEVICE ( localIndex const row )
   {
     real64 const dRdX = ( residual[row] - residualOrig[row] ) / eps;
     if( fabs( dRdX ) > 0.0 )
@@ -186,9 +186,9 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlInput, strlen( xmlInput ) );
   if( !xmlResult )
   {
-    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+    GEOS_LOG_RANK_0( "XML parsed with errors!" );
+    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
   int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );

@@ -80,7 +80,7 @@ MeshObjectPath::fillPathTokens( string const & path,
 
   int objectIndex = findObjectIndex();
 
-  GEOSX_ERROR_IF( objectIndex==-1,
+  GEOS_ERROR_IF( objectIndex==-1,
                   GEOSX_FMT( "Path ({}) does not contain a valid object type. "
                              "Must contain one of ({},{},{},{})",
                              path,
@@ -123,7 +123,7 @@ MeshObjectPath::fillPathTokens( string const & path,
         existingMeshBodyAndLevel += "/n";
       } );
 
-      GEOSX_ERROR_IF( !levelNameFound,
+      GEOS_ERROR_IF( !levelNameFound,
                       GEOSX_FMT( "Path ({}) specifies an invalid MeshBody or MeshLevel. ",
                                  "existing MeshBodies: MeshLevels /n",
                                  path,
@@ -136,10 +136,10 @@ MeshObjectPath::fillPathTokens( string const & path,
   objectIndex = findObjectIndex();
   size_t targetTokenLength = pathTokens.size();
 
-  GEOSX_ERROR_IF_NE_MSG( objectIndex, 2,
+  GEOS_ERROR_IF_NE_MSG( objectIndex, 2,
                          "Filling of MeshBody and/or MeshLevel in path has failed. Object Index should be 2" );
 
-  GEOSX_ERROR_IF( targetTokenLength < 2,
+  GEOS_ERROR_IF( targetTokenLength < 2,
                   "Filling of MeshBody and/or MeshLevel in path has failed. targetTokenLength should be greater than 2" );
 
   // now we need to fill in any missing region/subregion specifications.
@@ -212,7 +212,7 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
 
       }
     }
-    GEOSX_ERROR_IF( !foundMatch,
+    GEOS_ERROR_IF( !foundMatch,
                     GEOSX_FMT( "Specified name ({0}) did not find a match with a object in group ({1}). "
                                "Objects that are present in ({1}) are:\n{2}",
                                inputEntry,

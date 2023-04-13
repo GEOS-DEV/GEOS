@@ -66,7 +66,7 @@ void TableFunction::readFile( string const & filename, array1d< real64 > & targe
   }
   catch( std::runtime_error const & e )
   {
-    GEOSX_THROW( GEOSX_FMT( "{} {}: {}", catalogName(), getName(), e.what() ), InputError );
+    GEOSX_THROW_IF( GEOSX_FMT( "{} {}: {}", catalogName(), getName(), e.what() ), InputError );
   }
 }
 
@@ -83,7 +83,7 @@ void TableFunction::setTableCoordinates( array1d< real64_array > const & coordin
   {
     for( localIndex j = 1; j < coordinates[i].size(); ++j )
     {
-      GEOSX_THROW_IF( coordinates[i][j] - coordinates[i][j-1] <= 0,
+      GEOSX_THROW_IF_IF( coordinates[i][j] - coordinates[i][j-1] <= 0,
                       GEOSX_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
                                  catalogName(), getName(), i ),
                       InputError );
@@ -111,7 +111,7 @@ void TableFunction::initializeFunction()
   {
     // 1D Table
     m_coordinates.appendArray( m_tableCoordinates1D.begin(), m_tableCoordinates1D.end() );
-    GEOSX_THROW_IF_NE_MSG( m_tableCoordinates1D.size(), m_values.size(),
+    GEOSX_THROW_IF_IF_NE_MSG( m_tableCoordinates1D.size(), m_values.size(),
                            GEOSX_FMT( "{} {}: 1D table function coordinates and values must have the same length",
                                       catalogName(), getName() ),
                            InputError );
@@ -144,7 +144,7 @@ void TableFunction::reInitializeFunction()
     increment *= m_coordinates.sizeOfArray( ii );
     for( localIndex j = 1; j < m_coordinates[ii].size(); ++j )
     {
-      GEOSX_THROW_IF( m_coordinates[ii][j] - m_coordinates[ii][j-1] <= 0,
+      GEOSX_THROW_IF_IF( m_coordinates[ii][j] - m_coordinates[ii][j-1] <= 0,
                       GEOSX_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
                                  catalogName(), getName(), ii ),
                       InputError );
@@ -152,7 +152,7 @@ void TableFunction::reInitializeFunction()
   }
   if( m_coordinates.size() > 0 && !m_values.empty() ) // coordinates and values have been set
   {
-    GEOSX_THROW_IF_NE_MSG( increment, m_values.size(),
+    GEOSX_THROW_IF_IF_NE_MSG( increment, m_values.size(),
                            GEOSX_FMT( "{} {}: number of values does not match total number of table coordinates",
                                       catalogName(), getName() ),
                            InputError );

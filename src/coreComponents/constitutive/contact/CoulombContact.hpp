@@ -70,12 +70,12 @@ public:
    * @param[out] dLimitTangentialTractionNorm_dTraction the derivative of the limit tangential traction norm wrt normal traction
    * @return the limit tangential traction norm
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
                                                      real64 & dLimitTangentialTractionNorm_dTraction ) const override final;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual void computeTraction( localIndex const k,
                                 arraySlice1d< real64 const > const & oldDispJump,
@@ -84,7 +84,7 @@ public:
                                 arraySlice1d< real64 > const & tractionVector,
                                 arraySlice2d< real64 > const & dTractionVector_dJump ) const override final;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual void updateFractureState( localIndex const k,
                                     arraySlice1d< real64 const > const & dispJump,
@@ -197,7 +197,7 @@ private:
 };
 
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 real64 CoulombContactUpdates::computeLimitTangentialTractionNorm( real64 const & normalTraction,
                                                                   real64 & dLimitTangentialTractionNorm_dTraction ) const
 {
@@ -206,7 +206,7 @@ real64 CoulombContactUpdates::computeLimitTangentialTractionNorm( real64 const &
 }
 
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void CoulombContactUpdates::computeTraction( localIndex const k,
                                                     arraySlice1d< real64 const > const & oldDispJump,
                                                     arraySlice1d< real64 const > const & dispJump,
@@ -289,7 +289,7 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
   }
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void CoulombContactUpdates::updateFractureState( localIndex const k,
                                                         arraySlice1d< real64 const > const & dispJump,
                                                         arraySlice1d< real64 const > const & tractionVector,

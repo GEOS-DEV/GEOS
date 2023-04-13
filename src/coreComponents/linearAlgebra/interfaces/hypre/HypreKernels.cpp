@@ -33,7 +33,7 @@ HYPRE_BigInt const * getOffdColumnMap( hypre_ParCSRMatrix const * const mat )
 void scaleMatrixValues( hypre_CSRMatrix * const mat,
                         real64 const factor )
 {
-  GEOSX_ASSERT( mat != nullptr );
+  GEOS_ASSERT( mat != nullptr );
   if( hypre_CSRMatrixNumCols( mat ) == 0 )
   {
     return;
@@ -52,7 +52,7 @@ void scaleMatrixValues( hypre_CSRMatrix * const mat,
 void scaleMatrixRows( hypre_CSRMatrix * const mat,
                       hypre_Vector const * const vec )
 {
-  GEOSX_ASSERT( mat != nullptr );
+  GEOS_ASSERT( mat != nullptr );
   if( hypre_CSRMatrixNumCols( mat ) == 0 )
   {
     return;
@@ -79,7 +79,7 @@ void clampMatrixEntries( hypre_CSRMatrix * const mat,
                          real64 const hi,
                          bool const skip_diag )
 {
-  GEOSX_ASSERT( mat != nullptr );
+  GEOS_ASSERT( mat != nullptr );
   if( hypre_CSRMatrixNumCols( mat ) == 0 )
   {
     return;
@@ -98,7 +98,7 @@ void clampMatrixEntries( hypre_CSRMatrix * const mat,
 
 real64 computeMaxNorm( hypre_CSRMatrix const * const mat )
 {
-  GEOSX_ASSERT( mat != nullptr );
+  GEOS_ASSERT( mat != nullptr );
   if( hypre_CSRMatrixNumCols( mat ) == 0 )
   {
     return 0;
@@ -117,7 +117,7 @@ real64 computeMaxNorm( hypre_CSRMatrix const * const mat,
                        arrayView1d< globalIndex const > const & rowIndices,
                        globalIndex const firstLocalRow )
 {
-  GEOSX_ASSERT( mat != nullptr );
+  GEOS_ASSERT( mat != nullptr );
   if( hypre_CSRMatrixNumCols( mat ) == 0 )
   {
     return 0;
@@ -131,7 +131,7 @@ real64 computeMaxNorm( hypre_CSRMatrix const * const mat,
   forAll< execPolicy >( rowIndices.size(), [=] GEOSX_HYPRE_DEVICE ( localIndex const i )
   {
     localIndex const localRow = rowIndices[i] - firstLocalRow;
-    GEOSX_ASSERT( 0 <= localRow && localRow < numRows );
+    GEOS_ASSERT( 0 <= localRow && localRow < numRows );
     for( HYPRE_Int j = csr.rowptr[localRow]; j < csr.rowptr[localRow + 1]; ++j )
     {
       maxAbsElement.max( LvArray::math::abs( csr.values[j] ) );

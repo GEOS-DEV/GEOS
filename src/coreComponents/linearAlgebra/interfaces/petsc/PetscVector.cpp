@@ -295,7 +295,7 @@ void PetscVector::print( std::ostream & os ) const
   }
   else
   {
-    GEOSX_ERROR( "Output to a generic stream not implemented" );
+    GEOS_ERROR( "Output to a generic stream not implemented" );
   }
 }
 
@@ -325,7 +325,7 @@ void PetscVector::write( string const & filename,
     }
     default:
     {
-      GEOSX_ERROR( "Unsupported vector output format" );
+      GEOS_ERROR( "Unsupported vector output format" );
     }
   }
 

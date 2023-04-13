@@ -64,7 +64,7 @@ void convertRigidBodyModes( arrayView1d< HypreVector > const & nearNullKernel,
     }
     else
     {
-      GEOSX_ERROR( "Hypre preconditioner: rigid body modes can be either 3 or 6. Current number: " << nearNullKernel.size() );
+      GEOS_ERROR( "Hypre preconditioner: rigid body modes can be either 3 or 6. Current number: " << nearNullKernel.size() );
     }
     localIndex const numRotations = LvArray::integerConversion< HYPRE_Int >( nearNullKernel.size() - dim );
     nullSpacePointer.resize( numRotations );
@@ -201,7 +201,7 @@ void createAMG( LinearSolverParameters const & params,
     }
     default:
     {
-      GEOSX_ERROR( "Unsupported Hypre/AMG smoothing direction: " << params.amg.preOrPostSmoothing );
+      GEOS_ERROR( "Unsupported Hypre/AMG smoothing direction: " << params.amg.preOrPostSmoothing );
     }
   }
 
@@ -319,7 +319,7 @@ void HyprePreconditioner::create( DofManager const * const dofManager )
     }
     default:
     {
-      GEOSX_ERROR( "Preconditioner type not supported in hypre interface: " << m_params.preconditionerType );
+      GEOS_ERROR( "Preconditioner type not supported in hypre interface: " << m_params.preconditionerType );
     }
   }
 }

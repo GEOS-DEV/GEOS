@@ -101,7 +101,7 @@ void ElasticIsotropic::postProcessInput()
   }
   errorCheck += ")";
 
-  GEOSX_ERROR_IF( numConstantsSpecified != 2,
+  GEOS_ERROR_IF( numConstantsSpecified != 2,
                   "A specific pair of elastic constants is required. Either (K,G), (K,E), (G,E), (K,nu), (G,nu) or (E,nu). "<<
                   "You have specified "<<errorCheck );
 
@@ -137,7 +137,7 @@ void ElasticIsotropic::postProcessInput()
   }
   else
   {
-    GEOSX_ERROR( "Invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
+    GEOS_ERROR( "Invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
   }
 
   // set results as array default values

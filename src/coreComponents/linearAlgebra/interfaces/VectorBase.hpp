@@ -91,7 +91,7 @@ protected:
    */
   virtual void create( localIndex const localSize, MPI_Comm const & comm )
   {
-    GEOSX_UNUSED_VAR( comm );
+    GEOS_UNUSED_VAR( comm );
     GEOSX_LAI_ASSERT( closed() );
     GEOSX_LAI_ASSERT_GE( localSize, 0 );
     reset();

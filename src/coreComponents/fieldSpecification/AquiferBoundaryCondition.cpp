@@ -114,7 +114,7 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
 
 void AquiferBoundaryCondition::postProcessInput()
 {
-  GEOSX_THROW_IF_LE_MSG( m_permeability, 0.0,
+  GEOSX_THROW_IF_IF_LE_MSG( m_permeability, 0.0,
                          getCatalogName() << " " << getName() << ": the aquifer permeability cannot be equal to zero or negative",
                          InputError );
 
@@ -125,12 +125,12 @@ void AquiferBoundaryCondition::postProcessInput()
   else
   {
     FunctionManager const & functionManager = FunctionManager::getInstance();
-    GEOSX_THROW_IF( !functionManager.hasGroup( m_pressureInfluenceFunctionName ),
+    GEOSX_THROW_IF_IF( !functionManager.hasGroup( m_pressureInfluenceFunctionName ),
                     getCatalogName() << " " << getName() << ": the pressure influence table " << m_pressureInfluenceFunctionName << " could not be found",
                     InputError );
 
     TableFunction const & pressureInfluenceFunction = functionManager.getGroup< TableFunction >( m_pressureInfluenceFunctionName );
-    GEOSX_THROW_IF( pressureInfluenceFunction.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
+    GEOSX_THROW_IF_IF( pressureInfluenceFunction.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
                     getCatalogName() << " " << getName() << ": The interpolation method for the pressure influence function table "
                                      << pressureInfluenceFunction.getName() << " should be TableFunction::InterpolationType::Linear",
                     InputError );
@@ -139,15 +139,15 @@ void AquiferBoundaryCondition::postProcessInput()
   computeTimeConstant();
   computeInfluxConstant();
 
-  GEOSX_THROW_IF_LE_MSG( m_timeConstant, 0.0,
+  GEOSX_THROW_IF_IF_LE_MSG( m_timeConstant, 0.0,
                          getCatalogName() << " " << getName() << ": the aquifer time constant is equal to zero or negative, the simulation cannot procede",
                          InputError );
 
-  GEOSX_THROW_IF_LE_MSG( m_influxConstant, 0.0,
+  GEOSX_THROW_IF_IF_LE_MSG( m_influxConstant, 0.0,
                          getCatalogName() << " " << getName() << ": the aquifer influx constant is equal to zero or negative, the simulation cannot procede",
                          InputError );
 
-  GEOSX_THROW_IF_NE_MSG( m_phaseComponentFraction.size(), m_phaseComponentNames.size(),
+  GEOSX_THROW_IF_IF_NE_MSG( m_phaseComponentFraction.size(), m_phaseComponentNames.size(),
                          getCatalogName() << " " << getName() << ": the sizes of "
                                           << viewKeyStruct::aquiferWaterPhaseComponentFractionString() << " and " << viewKeyStruct::aquiferWaterPhaseComponentNamesString()
                                           << " are inconsistent",
@@ -262,7 +262,7 @@ void AquiferBoundaryCondition::setupDefaultPressureInfluenceFunction()
 
 void AquiferBoundaryCondition::setGravityVector( R1Tensor const & gravityVector )
 {
-  GEOSX_LOG_RANK_0_IF( ( !isZero( gravityVector[0] ) || !isZero( gravityVector[1] ) ),
+  GEOS_LOG_RANK_0_IF( ( !isZero( gravityVector[0] ) || !isZero( gravityVector[1] ) ),
                        catalogName() << " " << getName() <<
                        "The gravity vector specified in this simulation (" << gravityVector[0] << " " << gravityVector[1] << " " << gravityVector[2] <<
                        ") is not aligned with the z-axis. \n" <<

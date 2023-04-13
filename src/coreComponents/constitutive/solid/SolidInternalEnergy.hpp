@@ -45,7 +45,7 @@ public:
     m_referenceInternalEnergy( referenceInternalEnergy )
   {}
 
-  GEOSX_DEVICE
+  GEOS_DEVICE
   void update( localIndex const k,
                real64 const & temperature ) const
   {
@@ -54,7 +54,7 @@ public:
              m_dInternalEnergy_dTemperature[k][0] );
   }
 
-  GEOSX_DEVICE
+  GEOS_DEVICE
   void compute( real64 const & temperature,
                 real64 & internalEnergy,
                 real64 & dInternalEnergy_dTemperature ) const

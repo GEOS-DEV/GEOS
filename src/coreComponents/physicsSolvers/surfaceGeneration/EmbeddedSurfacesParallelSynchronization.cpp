@@ -86,7 +86,7 @@ void packNewNodes( NeighborCommunicator * const neighbor,
 
   packedSize += nodeManager.packNewNodesGlobalMaps( sendBufferPtr, newNodesToSend );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 }
 
 void unpackNewNodes( NeighborCommunicator * const neighbor,
@@ -227,7 +227,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
   packedSize += nodeManager.pack( sendBufferPtr, newNodesToSend, 0, false, packEvents );
   packedSize += elemManager.pack( sendBufferPtr, newElemsToSend );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 }
 
 void unpackNewToGhosts( NeighborCommunicator * const neighbor,
@@ -337,7 +337,7 @@ void packFracturedToGhosts( NeighborCommunicator * const neighbor,
 
   packedSize += elemManager.packFracturedElements( sendBufferPtr, elemsToSend, fractureRegionName );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 }
 
 void unpackFracturedToGhosts( NeighborCommunicator * const neighbor,

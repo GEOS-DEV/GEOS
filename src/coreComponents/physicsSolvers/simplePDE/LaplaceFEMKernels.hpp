@@ -127,7 +127,7 @@ public:
     /**
      * @brief Constructor
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
             xLocal(),
@@ -155,8 +155,8 @@ public:
    * primaryField, and degree of freedom numbers are placed into element local
    * stack storage.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -186,8 +186,8 @@ public:
   /**
    * @copydoc geos::finiteElement::ImplicitKernelBase::quadraturePointKernel
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
@@ -211,12 +211,12 @@ public:
    * the primary field and map the element local Jacobian/Residual to the
    * global matrix/vector.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( k );
     real64 maxForce = 0;
 
     for( localIndex a = 0; a < stack.numRows; ++a )

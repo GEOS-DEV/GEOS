@@ -162,8 +162,8 @@ localIndex CellElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer
 
 localIndex CellElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                                    localIndex_array & packList,
-                                                   bool const GEOSX_UNUSED_PARAM( overwriteUpMaps ),
-                                                   bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
+                                                   bool const GEOS_UNUSED_PARAM( overwriteUpMaps ),
+                                                   bool const GEOS_UNUSED_PARAM( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
   unPackedSize += bufferOps::Unpack( buffer,
@@ -243,7 +243,7 @@ localIndex CellElementSubRegion::unpackFracturedElements( buffer_unit_type const
 
   string toEmbSurfString;
   unPackedSize += bufferOps::Unpack( buffer, toEmbSurfString );
-  GEOSX_ERROR_IF_NE( toEmbSurfString, viewKeyStruct::toEmbSurfString() );
+  GEOS_ERROR_IF_NE( toEmbSurfString, viewKeyStruct::toEmbSurfString() );
 
   // only here to use that packing function
   map< localIndex, array1d< globalIndex > > unmappedGlobalIndices;
@@ -257,7 +257,7 @@ localIndex CellElementSubRegion::unpackFracturedElements( buffer_unit_type const
 
   string fracturedCellsString;
   unPackedSize += bufferOps::Unpack( buffer, fracturedCellsString );
-  GEOSX_ERROR_IF_NE( fracturedCellsString, viewKeyStruct::fracturedCellsString() );
+  GEOS_ERROR_IF_NE( fracturedCellsString, viewKeyStruct::fracturedCellsString() );
 
   SortedArray< globalIndex > junk;
   unPackedSize += bufferOps::Unpack( buffer,
@@ -389,18 +389,18 @@ void CellElementSubRegion::
     }
     default:
     {
-      GEOSX_ERROR( GEOSX_FMT( "Volume calculation not supported for element type {} in subregion {}",
+      GEOS_ERROR( GEOSX_FMT( "Volume calculation not supported for element type {} in subregion {}",
                               m_elementType, getName() ) );
     }
   }
 
-  GEOSX_ERROR_IF( m_elementVolume[k] <= 0.0,
+  GEOS_ERROR_IF( m_elementVolume[k] <= 0.0,
                   GEOSX_FMT( "Negative volume for element {} type {} in subregion {}",
                              k, m_elementType, getName() ) );
 }
 
 void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                                FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) )
+                                                                FaceManager const & GEOS_UNUSED_PARAM( faceManager ) )
 {
   GEOSX_MARK_FUNCTION;
 

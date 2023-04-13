@@ -201,7 +201,7 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
 
     updatePrimarySpeciesConcentrations( solution, primarySpeciesConcentration );
   }
-  GEOSX_ERROR_IF( !converged, "Equilibrium reactions did not converge." );
+  GEOS_ERROR_IF( !converged, "Equilibrium reactions did not converge." );
 }
 
 // function to compute the derivative of the concentration of secondary species with respect to the concentration of the primary species.
@@ -214,7 +214,7 @@ void EquilibriumReactions::KernelWrapper::computeSeondarySpeciesConcAndDerivativ
                                                                                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConectration,
                                                                                    arraySlice2d< real64 > const & dLog10SecConc_dLog10PrimaryConc ) const
 {
-  GEOSX_UNUSED_VAR( temperature );
+  GEOS_UNUSED_VAR( temperature );
 
   // Compute d(concentration of dependent species)/d(concentration of basis species)
   for( int iSec = 0; iSec < m_numSecondarySpecies; iSec++ )
@@ -250,7 +250,7 @@ void EquilibriumReactions::KernelWrapper::computeTotalConcAndDerivative( real64 
 
 
 {
-  GEOSX_UNUSED_VAR( temperature );
+  GEOS_UNUSED_VAR( temperature );
 
   // This function computes the total concentration and its derivative with respect to log10(basis species concentrations).
   for( int iPri = 0; iPri < m_numPrimarySpecies; iPri++ )

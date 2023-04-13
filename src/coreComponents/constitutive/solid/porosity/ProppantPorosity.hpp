@@ -46,14 +46,14 @@ public:
     m_maxProppantConcentration( maxProppantConcentration )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computePorosity( real64 const & proppantPackVolumeFraction,
                         real64 & porosity ) const
   {
     porosity = 1.0 - m_maxProppantConcentration * proppantPackVolumeFraction;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void updateFromProppantVolumeFraction( localIndex const k,
                                          localIndex const q,
                                          real64 const & proppantPackVolumeFraction ) const

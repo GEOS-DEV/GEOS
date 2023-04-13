@@ -40,7 +40,7 @@ void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValu
 
   // Read the head
   ss >> std::ws;
-  GEOSX_THROW_IF_NE_MSG( ss.peek(), '{', errorMsg( "Missing opening brace" ), InputError );
+  GEOSX_THROW_IF_IF_NE_MSG( ss.peek(), '{', errorMsg( "Missing opening brace" ), InputError );
   ss.ignore(); // skip the opening brace
 
   // Read the values
@@ -48,23 +48,23 @@ void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValu
   int count = 0;
   while( ss >> value )
   {
-    GEOSX_THROW_IF_GE_MSG( count, SIZE, errorMsg( "Too many values" ), InputError );
+    GEOSX_THROW_IF_IF_GE_MSG( count, SIZE, errorMsg( "Too many values" ), InputError );
     target[count++] = value;
     ss >> std::ws;
     if( count < SIZE )
     {
-      GEOSX_THROW_IF_NE_MSG( ss.peek(), ',', errorMsg( ss.peek() == '}' ? "Not enough values" : "Missing comma separator" ), InputError );
+      GEOSX_THROW_IF_IF_NE_MSG( ss.peek(), ',', errorMsg( ss.peek() == '}' ? "Not enough values" : "Missing comma separator" ), InputError );
       ss.ignore(); // skip the comma
     }
   }
-  GEOSX_THROW_IF_LT_MSG( count, SIZE, errorMsg( "Not enough values" ), InputError );
+  GEOSX_THROW_IF_IF_LT_MSG( count, SIZE, errorMsg( "Not enough values" ), InputError );
   ss.clear();
 
   // Read the tail
-  GEOSX_THROW_IF_NE_MSG( ss.peek(), '}', errorMsg( "Missing closing brace" ), InputError );
+  GEOSX_THROW_IF_IF_NE_MSG( ss.peek(), '}', errorMsg( "Missing closing brace" ), InputError );
   ss.ignore(); // skip the closing brace
   ss >> std::ws;
-  GEOSX_THROW_IF( ss.peek() != std::char_traits< char >::eof(), errorMsg( "Unparsed characters" ), InputError );
+  GEOSX_THROW_IF_IF( ss.peek() != std::char_traits< char >::eof(), errorMsg( "Unparsed characters" ), InputError );
 }
 
 template void stringToInputVariable( Tensor< real32, 3 > & target, string const & inputValue );
@@ -73,7 +73,7 @@ template void stringToInputVariable( Tensor< real64, 6 > & target, string const 
 
 void addIncludedXML( xmlNode & targetNode, int const level )
 {
-  GEOSX_THROW_IF( level > 100, "XML include level limit reached, please check input for include loops", InputError );
+  GEOSX_THROW_IF_IF( level > 100, "XML include level limit reached, please check input for include loops", InputError );
 
   xmlNode const rootNode = targetNode.root();
   string const currentFilePath = rootNode.child( filePathString ).attribute( filePathString ).value();
@@ -86,12 +86,12 @@ void addIncludedXML( xmlNode & targetNode, int const level )
       // Extract the file name and construct full includedDirPath
       string const includedFilePath = [&]()
       {
-        GEOSX_THROW_IF_NE_MSG( string( fileNode.name() ), includedFileTag,
+        GEOSX_THROW_IF_IF_NE_MSG( string( fileNode.name() ), includedFileTag,
                                GEOSX_FMT( "<{}> must only contain <{}> tags", includedListTag, includedFileTag ),
                                InputError );
         xmlAttribute const nameAttr = fileNode.attribute( "name" );
         string const fileName = nameAttr.value();
-        GEOSX_THROW_IF( !nameAttr || fileName.empty(),
+        GEOSX_THROW_IF_IF( !nameAttr || fileName.empty(),
                         GEOSX_FMT( "<{}> tag must have a non-empty 'name' attribute", includedFileTag ),
                         InputError );
         return isAbsolutePath( fileName ) ? fileName : joinPath( splitPath( currentFilePath ).first, fileName );
@@ -99,7 +99,7 @@ void addIncludedXML( xmlNode & targetNode, int const level )
 
       xmlDocument includedXmlDocument;
       xmlResult const result = includedXmlDocument.load_file( includedFilePath.c_str() );
-      GEOSX_THROW_IF( !result, GEOSX_FMT( "Errors found while parsing included XML file {}\nDescription: {}\nOffset: {}",
+      GEOSX_THROW_IF_IF( !result, GEOSX_FMT( "Errors found while parsing included XML file {}\nDescription: {}\nOffset: {}",
                                           includedFilePath, result.description(), result.offset ), InputError );
 
       // All included files must contain a root node that must match the target node.
@@ -107,7 +107,7 @@ void addIncludedXML( xmlNode & targetNode, int const level )
       // We then proceed to merge each nested node from included file with the one in main.
 
       xmlNode includedRootNode = includedXmlDocument.first_child();
-      GEOSX_THROW_IF_NE_MSG( string( includedRootNode.name() ), string( targetNode.name() ),
+      GEOSX_THROW_IF_IF_NE_MSG( string( includedRootNode.name() ), string( targetNode.name() ),
                              "Included document root does not match the including XML node", InputError );
 
       // Process potential includes in the included file to allow nesting

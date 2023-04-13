@@ -29,21 +29,21 @@ FieldSpecificationManager::FieldSpecificationManager( string const & name, Group
 {
   setInputFlags( InputFlags::OPTIONAL );
 
-  GEOSX_ERROR_IF( m_instance != nullptr, "Only one FieldSpecificationManager can exist at a time." );
+  GEOS_ERROR_IF( m_instance != nullptr, "Only one FieldSpecificationManager can exist at a time." );
   m_instance = this;
 
 }
 
 FieldSpecificationManager::~FieldSpecificationManager()
 {
-  GEOSX_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
+  GEOS_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
   m_instance = nullptr;
 }
 
 
 FieldSpecificationManager & FieldSpecificationManager::getInstance()
 {
-  GEOSX_ERROR_IF( m_instance == nullptr,
+  GEOS_ERROR_IF( m_instance == nullptr,
                   "FieldSpecificationManager has not been constructed, or is already been destructed." );
   return *m_instance;
 }
@@ -164,7 +164,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       {
         missingSetNames.emplace_back( mapEntry.first );
       }
-      GEOSX_THROW( GEOSX_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`, check the XML input\n",
+      GEOSX_THROW_IF( GEOSX_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`, check the XML input\n",
                               fs.getName(), fmt::join( missingSetNames, ", " ), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() ),
                    InputError );
     }
@@ -173,7 +173,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     // ideally we would just stop the simulation, but the SurfaceGenerator relies on this behavior
     for( auto const & mapEntry : isTargetSetEmpty )
     {
-      GEOSX_LOG_RANK_0_IF( mapEntry.second == 1, // target set is empty
+      GEOS_LOG_RANK_0_IF( mapEntry.second == 1, // target set is empty
                            GEOSX_FMT( "\nWarning!"
                                       "\n{}: this FieldSpecification targets (an) empty set(s)"
                                       "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
@@ -191,11 +191,11 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                    FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath(), fs.getFieldName() );
       if( areAllSetsEmpty )
       {
-        GEOSX_LOG_RANK_0( errorMsg );
+        GEOS_LOG_RANK_0( errorMsg );
       }
       else
       {
-        GEOSX_THROW( errorMsg, InputError );
+        GEOSX_THROW_IF( errorMsg, InputError );
       }
     }
   } );

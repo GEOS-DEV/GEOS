@@ -101,7 +101,7 @@ struct DamageInterpolationKernel
                           arrayView1d< real64 const > const nodalDamage,
                           arrayView2d< real64 > damageFieldOnMaterial )
   {
-    forAll< parallelDevicePolicy<> >( m_numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< parallelDevicePolicy<> >( m_numElems, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
       constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;

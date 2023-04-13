@@ -63,7 +63,7 @@ void ReactiveMultiFluid::postProcessInput()
 {
   MultiFluidBase::postProcessInput();
 
-  GEOSX_THROW_IF_NE_MSG( numFluidPhases(), 1,
+  GEOSX_THROW_IF_IF_NE_MSG( numFluidPhases(), 1,
                          GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
                          InputError );
 

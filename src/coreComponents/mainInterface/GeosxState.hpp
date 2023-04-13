@@ -150,7 +150,7 @@ public:
    */
   CommandLineOptions const & getCommandLineOptions()
   {
-    GEOSX_ERROR_IF( m_commandLineOptions == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_commandLineOptions == nullptr, "Not initialized." );
     return *m_commandLineOptions;
   }
 
@@ -160,7 +160,7 @@ public:
    */
   conduit::Node & getRootConduitNode()
   {
-    GEOSX_ERROR_IF( m_rootNode == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_rootNode == nullptr, "Not initialized." );
     return *m_rootNode;
   }
 
@@ -170,7 +170,7 @@ public:
    */
   ProblemManager & getProblemManager()
   {
-    GEOSX_ERROR_IF( m_problemManager == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_problemManager == nullptr, "Not initialized." );
     return *m_problemManager;
   }
 
@@ -200,7 +200,7 @@ public:
    */
   CommunicationTools & getCommunicationTools()
   {
-    GEOSX_ERROR_IF( m_commTools == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_commTools == nullptr, "Not initialized." );
     return *m_commTools;
   }
 

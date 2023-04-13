@@ -101,7 +101,7 @@ using parallelDeviceAtomic = parallelHostAtomic;
 void RAJA_INLINE parallelDeviceSync() { parallelHostSync( ); }
 
 template< typename POLICY, typename RESOURCE, typename LAMBDA >
-RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOSX_UNUSED_PARAM( stream ), const localIndex end, LAMBDA && body )
+RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOS_UNUSED_PARAM( stream ), const localIndex end, LAMBDA && body )
 {
   RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, end ), std::forward< LAMBDA >( body ) );
   return parallelDeviceEvent();

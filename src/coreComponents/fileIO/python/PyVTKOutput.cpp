@@ -31,7 +31,7 @@ struct PyVTKOutput
 
 static PyObject * PyVTKOutput_new( PyTypeObject *type, PyObject *args, PyObject *kwds )
 {
-  GEOSX_UNUSED_VAR( args, kwds );
+  GEOS_UNUSED_VAR( args, kwds );
   PyVTKOutput *self;
 
   self = (PyVTKOutput *)type->tp_alloc( type, 0 );
@@ -168,7 +168,7 @@ static PyObject * reinit( PyVTKOutput * self, PyObject *args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
-  GEOSX_UNUSED_VAR( args );
+  GEOS_UNUSED_VAR( args );
 
   self->group->reinit();
 

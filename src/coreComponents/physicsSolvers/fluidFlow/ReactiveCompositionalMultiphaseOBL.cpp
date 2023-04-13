@@ -126,7 +126,7 @@ void ReactiveCompositionalMultiphaseOBL::initializePreSubGroups()
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   if( !fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
-    GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with ReactiveCompositionalMultiphaseOBL" );
+    GEOS_ERROR( "A discretization deriving from FluxApproximationBase must be selected with ReactiveCompositionalMultiphaseOBL" );
   }
 
 }
@@ -150,8 +150,8 @@ void ReactiveCompositionalMultiphaseOBL::implicitStepComplete( real64 const & ti
                                                                real64 const & dt,
                                                                DomainPartition & domain )
 {
-  GEOSX_UNUSED_VAR( time );
-  GEOSX_UNUSED_VAR( dt );
+  GEOS_UNUSED_VAR( time );
+  GEOS_UNUSED_VAR( dt );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -166,7 +166,7 @@ void ReactiveCompositionalMultiphaseOBL::implicitStepComplete( real64 const & ti
       arrayView2d< real64, compflow::USD_COMP > const compFrac =
         subRegion.getField< fields::flow::globalCompFraction >();
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         compFrac[ei][numComp-1] = 1.0;
         for( integer ic = 0; ic < numComp - 1; ++ic )
@@ -188,10 +188,10 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
   // need to override to skip the check for fluidModel, which is enabled in FlowSolverBase
   SolverBase::postProcessInput();
 
-  GEOSX_THROW_IF_GT_MSG( m_maxCompFracChange, 1.0,
+  GEOSX_THROW_IF_IF_GT_MSG( m_maxCompFracChange, 1.0,
                          GEOSX_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0", m_maxCompFracChange ),
                          InputError );
-  GEOSX_THROW_IF_LT_MSG( m_maxCompFracChange, 0.0,
+  GEOSX_THROW_IF_IF_LT_MSG( m_maxCompFracChange, 0.0,
                          GEOSX_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0", m_maxCompFracChange ),
                          InputError );
 
@@ -203,11 +203,11 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
 
   m_numOBLOperators = COMPUTE_NUM_OPS( m_numPhases, m_numComponents, m_enableEnergyBalance );
 
-  GEOSX_THROW_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->numDims(),
+  GEOSX_THROW_IF_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->numDims(),
                          GEOSX_FMT( "The number of degrees of freedom per element used in solver - {} - and in operator table - {} - should match", m_numDofPerCell, m_OBLOperatorsTable->numDims()),
                          InputError );
 
-  GEOSX_THROW_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->numOps(),
+  GEOSX_THROW_IF_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->numOps(),
                          GEOSX_FMT( "The number of operators per element used in solver - {} - and in operator table - {} - should match", m_numOBLOperators, m_OBLOperatorsTable->numOps()),
                          InputError );
 
@@ -289,14 +289,14 @@ void ReactiveCompositionalMultiphaseOBL::registerDataOnMesh( Group & meshBodies 
   } );
 }
 
-real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time ),
-                                                                  real64 const & GEOSX_UNUSED_PARAM( dt ),
+real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
+                                                                  real64 const & GEOS_UNUSED_PARAM( dt ),
                                                                   DomainPartition const & domain,
                                                                   DofManager const & dofManager,
                                                                   arrayView1d< real64 const > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-  GEOSX_UNUSED_VAR( localRhs );
+  GEOS_UNUSED_VAR( localRhs );
 
   real64 localResidualNorm = 0.0;
 
@@ -354,7 +354,7 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const &
 
   real64 const residual = m_useDARTSL2Norm ? MpiWrapper::max( localResidualNorm ) : std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rflow ) = ( {:4.2e} ) ;", residual ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rflow ) = ( {:4.2e} ) ;", residual ) );
 
   return residual;
 }
@@ -395,7 +395,7 @@ real64 ReactiveCompositionalMultiphaseOBL::scalingForSystemSolution( DomainParti
 
       RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
 
-      forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         if( elemGhostRank[ei] < 0 )
         {
@@ -573,7 +573,7 @@ void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGr
       arrayView1d< real64 > const referencePoreVolume =  subRegion.getField< fields::flow::referencePoreVolume >();
       arrayView1d< real64 > const referencePorosity =  subRegion.getField< fields::flow::referencePorosity >();
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         if( elemGhostRank[ei] >= 0 )
         {
@@ -590,8 +590,8 @@ void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGr
 }
 
 void
-ReactiveCompositionalMultiphaseOBL::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                       real64 const & GEOSX_UNUSED_PARAM( dt ),
+ReactiveCompositionalMultiphaseOBL::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                       real64 const & GEOS_UNUSED_PARAM( dt ),
                                                        DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -642,7 +642,7 @@ ReactiveCompositionalMultiphaseOBL::implicitStepSetup( real64 const & GEOSX_UNUS
   } );
 }
 
-void ReactiveCompositionalMultiphaseOBL::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void ReactiveCompositionalMultiphaseOBL::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
                                                          real64 const dt,
                                                          DomainPartition & domain,
                                                          DofManager const & dofManager,
@@ -826,7 +826,7 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
+        GEOS_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
                                      getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
@@ -857,7 +857,7 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
                                                            localMatrix,
                                                            dofArray.toView(),
                                                            rhsContributionArrayView,
-                                                           [] GEOSX_HOST_DEVICE ( localIndex const )
+                                                           [] GEOS_HOST_DEVICE ( localIndex const )
       {
         return 0.0;
       } );
@@ -875,7 +875,7 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
                                                            fluidComponentId,
                                                            dofNumber,
                                                            rhsContributionArrayView,
-                                                           localRhs] GEOSX_HOST_DEVICE ( localIndex const a )
+                                                           localRhs] GEOS_HOST_DEVICE ( localIndex const a )
       {
         // we need to filter out ghosts here, because targetSet may contain them
         localIndex const ei = targetSet[a];
@@ -929,7 +929,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
       if( subRegionSetMap.count( setName ) > 0 )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
+        GEOS_WARNING( GEOSX_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
       }
       subRegionSetMap[setName].setNumComp( numCompWithEnergy );
     } );
@@ -953,12 +953,12 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
       if( subRegionSetMap.count( setName ) == 0 )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
+        GEOS_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
       }
       if( comp < 0 || comp >= numComp )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
+        GEOS_WARNING( GEOSX_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
         return; // can't check next part with invalid component id
       }
 
@@ -966,7 +966,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
       if( compMask[comp] )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Conflicting composition[{}] boundary conditions on set {}/{}/{}", comp, regionName, subRegionName, setName ) );
+        GEOS_WARNING( GEOSX_FMT( "Conflicting composition[{}] boundary conditions on set {}/{}/{}", comp, regionName, subRegionName, setName ) );
       }
       compMask.set( comp );
     } );
@@ -991,7 +991,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
         if( subRegionSetMap.count( setName ) == 0 )
         {
           bcConsistent = false;
-          GEOSX_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
+          GEOS_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
         }
 
         ComponentMask< MAX_NC > & compMask = subRegionSetMap[setName];
@@ -999,7 +999,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
         if( compMask[numComp] )
         {
           bcConsistent = false;
-          GEOSX_WARNING( GEOSX_FMT( "Conflicting temperature boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
+          GEOS_WARNING( GEOSX_FMT( "Conflicting temperature boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
         }
         compMask.set( numComp );
       } );
@@ -1018,7 +1018,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
             if( !compMask[ic] )
             {
               bcConsistent = false;
-              GEOSX_WARNING( GEOSX_FMT( "Boundary condition not applied to composition[{}] on set {}/{}/{}",
+              GEOS_WARNING( GEOSX_FMT( "Boundary condition not applied to composition[{}] on set {}/{}/{}",
                                         ic, regionEntry.first, subRegionEntry.first, setEntry.first ) );
             }
           }
@@ -1042,7 +1042,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateDirichletBC( domain, time + dt );
-    GEOSX_ERROR_IF( !bcConsistent, GEOSX_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
+    GEOS_ERROR_IF( !bcConsistent, GEOSX_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -1065,7 +1065,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
+        GEOS_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
                                      getName(), time+dt, FieldSpecificationBase::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
@@ -1105,7 +1105,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
+        GEOS_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
                                      getName(), time+dt, FieldSpecificationBase::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
@@ -1144,7 +1144,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       integer const numComp = m_numComponents;
       integer const enableEnergyBalance = m_enableEnergyBalance;
 
-      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         localIndex const ei = targetSet[a];
         if( ghostRank[ei] >= 0 )
@@ -1210,7 +1210,7 @@ void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariables( DomainPartition &
       arrayView2d< real64, compflow::USD_COMP > const compFrac =
         subRegion.template getField< fields::flow::globalCompFraction >();
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         bool isScalingRequired = false;
 

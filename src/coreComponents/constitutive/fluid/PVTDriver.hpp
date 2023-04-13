@@ -41,12 +41,12 @@ public:
 
   void postProcessInput() override;
 
-  virtual bool execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                        real64 const GEOSX_UNUSED_PARAM( dt ),
-                        integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                        DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
+  virtual bool execute( real64 const GEOS_UNUSED_PARAM( time_n ),
+                        real64 const GEOS_UNUSED_PARAM( dt ),
+                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                        integer const GEOS_UNUSED_PARAM( eventCounter ),
+                        real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                        DomainPartition & GEOS_UNUSED_PARAM( domain ) ) override;
 
   /**
    * @brief Run test using loading protocol in table

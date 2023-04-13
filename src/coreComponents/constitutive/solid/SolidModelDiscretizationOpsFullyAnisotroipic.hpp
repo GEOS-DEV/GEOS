@@ -32,34 +32,34 @@ struct SolidModelDiscretizationOpsFullyAnisotroipic : public SolidModelDiscretiz
 {
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void BTDB( BASIS_GRADIENT const & gradN,
              real64 const & detJxW,
              real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
 
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void upperBTDB( BASIS_GRADIENT const & gradN,
                   real64 const & detJxW,
                   real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
 
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void diagBTDB( BASIS_GRADIENT const & gradN,
                  real64 const & detJxW,
                  real64 ( &diagElementStiffness )[NUM_SUPPORT_POINTS*3] );
 
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void diagRowSumBTDB( BASIS_GRADIENT const & gradN,
                        real64 const & detJxW,
                        real64 ( &diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] );
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void scaleParams( real64 const scale )
   {
     LvArray::tensorOps::scale< 6, 6 >( m_c, scale );
@@ -72,8 +72,8 @@ struct SolidModelDiscretizationOpsFullyAnisotroipic : public SolidModelDiscretiz
 
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SolidModelDiscretizationOpsFullyAnisotroipic::BTDB( BASIS_GRADIENT const & gradN,
                                                          real64 const & detJxW,
                                                          real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
@@ -131,8 +131,8 @@ void SolidModelDiscretizationOpsFullyAnisotroipic::BTDB( BASIS_GRADIENT const & 
 
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SolidModelDiscretizationOpsFullyAnisotroipic::upperBTDB( BASIS_GRADIENT const & gradN,
                                                               real64 const & detJxW,
                                                               real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
@@ -190,8 +190,8 @@ void SolidModelDiscretizationOpsFullyAnisotroipic::upperBTDB( BASIS_GRADIENT con
 
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SolidModelDiscretizationOpsFullyAnisotroipic::diagBTDB( BASIS_GRADIENT const & gradN,
                                                              real64 const & detJxW,
                                                              real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS *3] )
@@ -220,8 +220,8 @@ void SolidModelDiscretizationOpsFullyAnisotroipic::diagBTDB( BASIS_GRADIENT cons
 
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SolidModelDiscretizationOpsFullyAnisotroipic::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
                                                                    real64 const & detJxW,
                                                                    real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] )

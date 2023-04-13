@@ -29,7 +29,7 @@
   {                                         \
     if( m_params.logLevel >= 1 )            \
     {                                       \
-      GEOSX_LOG_RANK_0( "Breakdown in " << methodName() << ": " << #VAR << " = " << VAR ); \
+      GEOS_LOG_RANK_0( "Breakdown in " << methodName() << ": " << #VAR << " = " << VAR ); \
     }                                       \
     m_result.status = LinearSolverResult::Status::Breakdown; \
     break;                                  \

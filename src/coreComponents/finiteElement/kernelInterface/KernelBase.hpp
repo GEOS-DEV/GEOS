@@ -148,13 +148,13 @@ public:
    * The operations typically found in setup are thing such as the collection
    * of global data into local stack storage.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( stack );
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( stack );
   }
 
   /**
@@ -173,15 +173,15 @@ public:
    * state of the constitutive model is updated if required by the physics
    * package.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( stack );
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( stack );
   }
 
   /**
@@ -198,13 +198,13 @@ public:
    * The operations typically found in complete are the mapping of the local
    * Jacobian and Residual into the global Jacobian and Residual.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( stack );
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( stack );
     return 0;
   }
 
@@ -235,7 +235,7 @@ public:
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
     forAll< POLICY >( numElems,
-                      [=] GEOSX_HOST_DEVICE ( localIndex const k )
+                      [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       typename KERNEL_TYPE::StackVariables stack;
 

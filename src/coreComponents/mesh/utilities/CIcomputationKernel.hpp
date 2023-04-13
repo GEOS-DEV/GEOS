@@ -79,7 +79,7 @@ public:
 public:
 
     /// Constructor.
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       xLocal(),
       samplingPointCoord()
@@ -106,7 +106,7 @@ public:
   {
     GEOSX_MARK_FUNCTION;
     forAll< POLICY >( kernelComponent.m_fracturedElems.size(),
-                      [=] GEOSX_HOST_DEVICE ( localIndex const i )
+                      [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
 
       localIndex k = kernelComponent.m_fracturedElems[i];
@@ -131,7 +131,7 @@ public:
  * @param k embedded surface index.
  * @param stack stack variables
  */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -153,7 +153,7 @@ public:
    * @param point the coordinates of a point inside the cell element
    * @return the distance
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 computeDistance( localIndex const k,
                           real64 const (&point)[3] ) const
   {
@@ -170,7 +170,7 @@ public:
    * @param np sampling point linear index
    * @param stack stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void samplingPointCoord( integer const np,
                            StackVariables & stack ) const
   {
@@ -200,7 +200,7 @@ public:
    * @param k embedded surface element index
    * @param averageDistance the average distance
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setConnectivityIndex( localIndex const k,
                              real64 const averageDistance ) const
   {

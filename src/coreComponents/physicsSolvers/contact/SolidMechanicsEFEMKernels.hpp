@@ -131,7 +131,7 @@ public:
     /**
      * Default constructor
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
             jumpEqnRowIndices{ 0 },
@@ -166,8 +166,8 @@ public:
    * @brief Copy global values from primary field to a local stack array.
    * @copydoc ::geos::finiteElement::ImplicitKernelBase::setup
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -205,12 +205,12 @@ public:
   /**
    * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( k );
     real64 maxForce = 0;
     constexpr int nUdof = numNodesPerElem*3;
 
@@ -303,7 +303,7 @@ struct StateUpdateKernel
           arrayView3d< real64 > const & dFractureTraction_dJump,
           arrayView1d< integer const > const & fractureState )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       contactWrapper.computeTraction( k, oldJump[k], jump[k],
                                       fractureState[k],

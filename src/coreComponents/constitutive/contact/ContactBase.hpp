@@ -70,7 +70,7 @@ public:
    * @param[out] dHydraulicAperture_dAperture the derivative of the effective aperture wrt aperture
    * @return The hydraulic aperture that is always > 0
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual real64 computeHydraulicAperture( real64 const aperture,
                                            real64 & dHydraulicAperture_dAperture ) const;
@@ -83,7 +83,7 @@ public:
    * @param[out] tractionVector the traction vector
    * @param[out] dTractionVector_dJump the derivative of the traction vector wrt displacement jump
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual void computeTraction( localIndex const k,
                                 arraySlice1d< real64 const > const & oldDispJump,
@@ -91,7 +91,7 @@ public:
                                 integer const & fractureState,
                                 arraySlice1d< real64 > const & tractionVector,
                                 arraySlice2d< real64 > const & dTractionVector_dJump ) const
-  {GEOSX_UNUSED_VAR( k, oldDispJump, dispJump, tractionVector, dTractionVector_dJump, fractureState );}
+  {GEOS_UNUSED_VAR( k, oldDispJump, dispJump, tractionVector, dTractionVector_dJump, fractureState );}
 
   /**
    * @brief Evaluate the traction vector and its derivatives wrt to pressure and jump
@@ -99,13 +99,13 @@ public:
    * @param[in] tractionVector the traction vector
    * @param[out] fractureState the fracture state
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual void updateFractureState( localIndex const k,
                                     arraySlice1d< real64 const > const & dispJump,
                                     arraySlice1d< real64 const > const & tractionVector,
                                     integer & fractureState ) const
-  { GEOSX_UNUSED_VAR( k, dispJump, tractionVector, fractureState ); }
+  { GEOS_UNUSED_VAR( k, dispJump, tractionVector, fractureState ); }
 
   /**
    * @brief Update the traction with the pressure term
@@ -115,7 +115,7 @@ public:
    * @param[out] dTraction_dPressure the derivative of the fist component of traction wrt pressure
    * @return the updated traction
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual void addPressureToTraction( real64 const & pressure,
                                       arraySlice1d< real64 >const & tractionVector,
@@ -127,11 +127,11 @@ public:
    * @param[out] dLimitTangentialTractionNorm_dTraction the derivative of the limit tangential traction norm wrt normal traction
    * @return the limit tangential traction norm
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
                                                      real64 & dLimitTangentialTractionNorm_dTraction ) const
-  { GEOSX_UNUSED_VAR( normalTraction, dLimitTangentialTractionNorm_dTraction ); return 0; };
+  { GEOS_UNUSED_VAR( normalTraction, dLimitTangentialTractionNorm_dTraction ); return 0; };
 
 protected:
 
@@ -244,14 +244,14 @@ protected:
   TableFunction const * m_apertureTable;
 };
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
                                                      real64 & dHydraulicAperture_dAperture ) const
 {
   return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void ContactBaseUpdates::addPressureToTraction( real64 const & pressure,
                                                 arraySlice1d< real64 > const & tractionVector,
                                                 real64 & dTraction_dPressure ) const

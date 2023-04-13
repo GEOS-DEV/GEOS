@@ -117,7 +117,7 @@ public:
   struct StackVariables : Base::StackVariables
   {
 public:
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       fLocal{ { 0.0} },
       varLocal{ {0.0} },
@@ -146,7 +146,7 @@ public:
    *
    * Copies the primary variable, and position into the local stack array.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
@@ -159,7 +159,7 @@ public:
    * the stress divergence, rather than using the dedicated component function
    * to allow for some variable reuse.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const;
@@ -170,7 +170,7 @@ public:
    * ### ExplicitSmallStrain Description
    * Performs the distribution of the nodal force out to the rank local arrays.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 complete( localIndex const k,
                    StackVariables const & stack ) const;
 

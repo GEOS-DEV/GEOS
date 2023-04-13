@@ -90,7 +90,7 @@ void PetscExport::exportCRS( PetscMatrix const & mat,
     PetscInt const * ja;
     PetscBool status;
     GEOSX_LAI_CHECK_ERROR( MatGetRowIJ( localMatrix, 0, PETSC_FALSE, PETSC_FALSE, &numRows, &ia, &ja, &status ) );
-    GEOSX_ERROR_IF( !status, "PetscExtract: MatGetRowIJ reported an error" );
+    GEOS_ERROR_IF( !status, "PetscExtract: MatGetRowIJ reported an error" );
 
     real64 const * va;
     GEOSX_LAI_CHECK_ERROR( MatSeqAIJGetArrayRead( localMatrix, &va ) );

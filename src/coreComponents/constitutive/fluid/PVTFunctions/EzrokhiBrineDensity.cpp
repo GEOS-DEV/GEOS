@@ -58,7 +58,7 @@ void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )
   // Reference : Zaytsev, I.D. and Aseyev, G.G. Properties of Aqueous Solutions of Electrolytes, Boca Raton, Florida, USA CRC Press (1993).
 
   m_waterCompressibility = 4.5e-10; // Pa-1
-  GEOSX_THROW_IF_LT_MSG( inputPara.size(), 5,
+  GEOSX_THROW_IF_IF_LT_MSG( inputPara.size(), 5,
                          GEOSX_FMT( "{}: insufficient number of model parameters", m_functionName ),
                          InputError );
 
@@ -71,7 +71,7 @@ void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )
   }
   catch( std::invalid_argument const & e )
   {
-    GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
+    GEOSX_THROW_IF( GEOSX_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
   }
 }
 

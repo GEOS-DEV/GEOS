@@ -34,7 +34,7 @@ KrylovSolver< VECTOR >::KrylovSolver( LinearSolverParameters params,
   m_operator( matrix ),
   m_precond( precond )
 {
-  GEOSX_ERROR_IF_LE_MSG( m_params.krylov.maxIterations, 0, "Krylov solver: max number of iteration must be positive." );
+  GEOS_ERROR_IF_LE_MSG( m_params.krylov.maxIterations, 0, "Krylov solver: max number of iteration must be positive." );
   GEOSX_LAI_ASSERT_EQ( m_operator.numLocalRows(), m_operator.numLocalCols() );
   GEOSX_LAI_ASSERT_EQ( m_operator.numLocalRows(), m_precond.numLocalRows() );
   GEOSX_LAI_ASSERT_EQ( m_operator.numLocalCols(), m_precond.numLocalCols() );
@@ -69,7 +69,7 @@ KrylovSolver< VECTOR >::create( LinearSolverParameters const & parameters,
     }
     default:
     {
-      GEOSX_ERROR( "Unsupported linear solver type: " << parameters.solverType );
+      GEOS_ERROR( "Unsupported linear solver type: " << parameters.solverType );
     }
   }
   return {};
@@ -78,11 +78,11 @@ KrylovSolver< VECTOR >::create( LinearSolverParameters const & parameters,
 template< typename VECTOR >
 void KrylovSolver< VECTOR >::logProgress() const
 {
-  GEOSX_ASSERT( !m_residualNorms.empty() );
+  GEOS_ASSERT( !m_residualNorms.empty() );
   if( m_params.logLevel >= 2 )
   {
     real64 const relNorm = m_residualNorms[0] > 0.0 ? m_residualNorms.back() / m_residualNorms[0] : 0.0;
-    GEOSX_LOG_RANK_0( GEOSX_FMT( "[{}] iteration {}: residual = {:e}", methodName(), m_result.numIterations, relNorm ) );
+    GEOS_LOG_RANK_0( GEOSX_FMT( "[{}] iteration {}: residual = {:e}", methodName(), m_result.numIterations, relNorm ) );
   }
 }
 
@@ -91,7 +91,7 @@ void KrylovSolver< VECTOR >::logResult() const
 {
   if( m_params.logLevel >= 1 )
   {
-    GEOSX_LOG_RANK_0( GEOSX_FMT( "[{}] {} in {} iterations ({:.3f} s)", methodName(),
+    GEOS_LOG_RANK_0( GEOSX_FMT( "[{}] {} in {} iterations ({:.3f} s)", methodName(),
                                  m_result.success() ? "converged" : "failed to converge",
                                  m_result.numIterations, m_result.solveTime ) );
   }

@@ -222,7 +222,7 @@ ObjectManagerBase const & getObjectManager( FieldLocation const loc,
   {
     manager = &getObjectManager< decltype(LOC)::value >( mesh );
   } );
-  GEOSX_ASSERT( manager != nullptr );
+  GEOS_ASSERT( manager != nullptr );
   return *manager;
 }
 
@@ -608,7 +608,7 @@ localIndex countMeshObjects( FieldLocation const location,
     FieldLocation constexpr LOC = decltype(loc)::value;
     count = countMeshObjects< LOC, VISIT_GHOSTS, SUBREGIONTYPES... >( mesh, regions );
   } );
-  GEOSX_ERROR_IF( !success, "Invalid location type: " << static_cast< int >( location ) );
+  GEOS_ERROR_IF( !success, "Invalid location type: " << static_cast< int >( location ) );
   return count;
 }
 
@@ -630,7 +630,7 @@ struct ArrayHelper
   create( MeshLevel & mesh,
           string const & key,
           string const & description,
-          REGIONS_CONTAINER const & GEOSX_UNUSED_PARAM( regions ) )
+          REGIONS_CONTAINER const & GEOS_UNUSED_PARAM( regions ) )
   {
     ObjectManagerBase & baseManager = getObjectManager< LOC >( mesh );
     baseManager.registerWrapper< ArrayType >( key ).
@@ -659,7 +659,7 @@ struct ArrayHelper
   static void
   remove( MeshLevel & mesh,
           string const & key,
-          REGIONS_CONTAINER const & GEOSX_UNUSED_PARAM( regions ) )
+          REGIONS_CONTAINER const & GEOS_UNUSED_PARAM( regions ) )
   {
     getObjectManager< LOC >( mesh ).deregisterWrapper( key );
   }

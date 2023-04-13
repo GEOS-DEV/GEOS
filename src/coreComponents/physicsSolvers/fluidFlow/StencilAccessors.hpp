@@ -66,7 +66,7 @@ public:
   {
     forEachArgInTuple( std::tuple< TRAITS ... >{}, [&]( auto t, auto idx )
     {
-      GEOSX_UNUSED_VAR( t );
+      GEOS_UNUSED_VAR( t );
       using TRAIT = TYPEOFREF( t );
 
       auto & acc = std::get< idx() >( m_accessors );
@@ -111,7 +111,7 @@ public:
   {
     forEachArgInTuple( std::tuple< TRAITS ... >{}, [&]( auto t, auto idx )
     {
-      GEOSX_UNUSED_VAR( t );
+      GEOS_UNUSED_VAR( t );
       using TRAIT = TYPEOFREF( t );
 
       auto & acc = std::get< idx() >( m_accessors );

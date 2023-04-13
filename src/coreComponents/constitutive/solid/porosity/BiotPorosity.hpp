@@ -34,14 +34,14 @@ public:
    * @brief Get number of elements in this wrapper.
    * @return number of elements
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numElems() const { return m_newPorosity.size( 0 ); }
 
   /**
    * @brief Get number of gauss points per element.
    * @return number of gauss points per element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numGauss() const { return m_newPorosity.size( 1 ); }
 
   BiotPorosityUpdates( arrayView2d< real64 > const & newPorosity,
@@ -67,16 +67,16 @@ public:
     m_grainBulkModulus( grainBulkModulus )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 getBiotCoefficient( localIndex const k ) const { return m_biotCoefficient[k]; }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 getGrainBulkModulus() const { return m_grainBulkModulus; }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 dGrainDensity_dPressure() const { return 1.0 / m_grainBulkModulus; }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void updateFromPressureTemperatureAndStrain( localIndex const k,
                                                localIndex const q,
                                                real64 const & deltaPressure,
@@ -101,7 +101,7 @@ public:
     savePorosity( k, q, porosity, biotSkeletonModulusInverse );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computePorosity( real64 const & pressure,
                         real64 const & temperature,
                         real64 const & porosity_n,
@@ -125,7 +125,7 @@ public:
     dPorosity_dTemperature = -porosityThermalExpansion;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromPressureAndTemperature( localIndex const k,
                                                  localIndex const q,
                                                  real64 const & pressure,
@@ -149,7 +149,7 @@ public:
                      m_bulkModulus[k] );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void updateBiotCoefficient( localIndex const k,
                               real64 const bulkModulus ) const
   {
@@ -158,7 +158,7 @@ public:
     m_biotCoefficient[k] = 1 - bulkModulus / m_grainBulkModulus;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void updateTotalMeanStressIncrement( localIndex const k,
                                        localIndex const q,
                                        real64 const & totalMeanStressIncrement ) const

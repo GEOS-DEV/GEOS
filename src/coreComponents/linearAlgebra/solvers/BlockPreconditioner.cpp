@@ -143,7 +143,7 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
     }
     default:
     {
-      GEOSX_ERROR( "BlockPreconditioner: unsupported Schur complement option" );
+      GEOS_ERROR( "BlockPreconditioner: unsupported Schur complement option" );
     }
   }
 }

@@ -53,7 +53,7 @@ void testKernelDriver()
   };
 
   forAll< POLICY >( 1,
-                    [=] GEOSX_HOST_DEVICE ( localIndex const )
+                    [=] GEOS_HOST_DEVICE ( localIndex const )
   {
 
     for( localIndex q=0; q<numQuadraturePoints; ++q )
@@ -68,7 +68,7 @@ void testKernelDriver()
   } );
 
   forAll< POLICY >( 1,
-                    [=] GEOSX_HOST_DEVICE ( localIndex const )
+                    [=] GEOS_HOST_DEVICE ( localIndex const )
   {
 
     for( localIndex q=0; q<numQuadraturePoints; ++q )

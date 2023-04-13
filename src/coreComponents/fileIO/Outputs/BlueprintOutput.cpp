@@ -46,7 +46,7 @@ string toBlueprintShape( ElementType const elementType )
     case ElementType::Hexahedron: return "hex";
     default:
     {
-      GEOSX_ERROR( "No Blueprint type for element type: " << elementType );
+      GEOS_ERROR( "No Blueprint type for element type: " << elementType );
       return {};
     }
   }
@@ -92,7 +92,7 @@ void reorderElementToNodeMap( CellElementSubRegion const & subRegion, conduit::N
   localIndex const numNodesPerElem = elemToNodeMap.size( 1 );
 
   std::vector< int > const vtkOrdering = getBlueprintNodeOrdering( subRegion.getElementType() );
-  GEOSX_ERROR_IF_NE( localIndex( vtkOrdering.size() ), numNodesPerElem );
+  GEOS_ERROR_IF_NE( localIndex( vtkOrdering.size() ), numNodesPerElem );
 
   constexpr int conduitTypeID = dataRepository::conduitTypeInfo< localIndex >::id;
   conduit::DataType const dtype( conduitTypeID, elemToNodeMap.size() );
@@ -159,7 +159,7 @@ bool BlueprintOutput::execute( real64 const time,
 
   /// Verify that the mesh conforms to the Blueprint.
   conduit::Node info;
-  GEOSX_ASSERT_MSG( conduit::blueprint::verify( "mesh", meshRoot, info ), info.to_json() );
+  GEOS_ASSERT_MSG( conduit::blueprint::verify( "mesh", meshRoot, info ), info.to_json() );
 
   /// Generate the Blueprint index.
   conduit::Node fileRoot;
@@ -168,7 +168,7 @@ bool BlueprintOutput::execute( real64 const time,
 
   /// Verify that the index conforms to the Blueprint.
   info.reset();
-  GEOSX_ASSERT_MSG( conduit::blueprint::mesh::index::verify( index, info ), info.to_json() );
+  GEOS_ASSERT_MSG( conduit::blueprint::mesh::index::verify( index, info ), info.to_json() );
 
   /// Write out the root index file, then write out the mesh.
   string const completePath = GEOSX_FMT( "{}/blueprintFiles/cycle_{:07}", OutputBase::getOutputDirectory(), cycle );

@@ -91,7 +91,7 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
 
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
-      GEOSX_ERROR_IF( fluidName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
+      GEOS_ERROR_IF( fluidName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
 
     } );
   } );
@@ -129,17 +129,17 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
   WellControls::Control const currentControl = wellControls.getControl();
   real64 const targetTotalRate = wellControls.getTargetTotalRate( time_n + dt );
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time_n + dt );
-  GEOSX_THROW_IF( currentControl == WellControls::Control::PHASEVOLRATE,
+  GEOSX_THROW_IF_IF( currentControl == WellControls::Control::PHASEVOLRATE,
                   "WellControls named " << wellControls.getName() <<
                   ": Phase rate control is not available for SinglePhaseWell",
                   InputError );
   // The user always provides positive rates, but these rates are later multiplied by -1 internally for producers
-  GEOSX_THROW_IF( ( ( wellControls.isInjector() && targetTotalRate < 0.0 ) ||
+  GEOSX_THROW_IF_IF( ( ( wellControls.isInjector() && targetTotalRate < 0.0 ) ||
                     ( wellControls.isProducer() && targetTotalRate > 0.0) ),
                   "WellControls named " << wellControls.getName() <<
                   ": Target total rate cannot be negative",
                   InputError );
-  GEOSX_THROW_IF( !isZero( targetPhaseRate ),
+  GEOSX_THROW_IF_IF( !isZero( targetPhaseRate ),
                   "WellControls named " << wellControls.getName() <<
                   ": Target phase rate cannot be used for SinglePhaseWell",
                   InputError );
@@ -199,7 +199,7 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
 
   if( logLevel >= 2 )
   {
-    GEOSX_LOG_RANK( GEOSX_FMT( "{}: The BHP (at the specified reference elevation) is {} Pa",
+    GEOS_LOG_RANK( GEOSX_FMT( "{}: The BHP (at the specified reference elevation) is {} Pa",
                                wellControlsName, currentBHP ) );
   }
 
@@ -275,7 +275,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
         fluidWrapper.update( iwelemRef, 0, surfacePres );
         if( logLevel >= 2 )
         {
-          GEOSX_LOG_RANK( GEOSX_FMT( "{}: surface density computed with P_surface = {} Pa",
+          GEOS_LOG_RANK( GEOSX_FMT( "{}: surface density computed with P_surface = {} Pa",
                                      wellControlsName, surfacePres ) );
         }
       }
@@ -292,7 +292,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
 
       if( logLevel >= 2 && useSurfaceConditions )
       {
-        GEOSX_LOG_RANK( GEOSX_FMT( "{}: The total fluid density at surface conditions is {} kg/sm3. \n"
+        GEOS_LOG_RANK( GEOSX_FMT( "{}: The total fluid density at surface conditions is {} kg/sm3. \n"
                                    "The total rate is {} kg/s, which corresponds to a total surface volumetric rate of {} sm3/s",
                                    wellControlsName, dens[iwelemRef][0],
                                    currentVolRate, currentVolRate ) );
@@ -416,7 +416,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
   } );
 }
 
-void SinglePhaseWell::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void SinglePhaseWell::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
                                          real64 const dt,
                                          DomainPartition const & domain,
                                          DofManager const & dofManager,
@@ -531,13 +531,13 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
         if( wellControls.getControl() == WellControls::Control::BHP )
         {
           wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( timeAtEndOfStep ) );
-          GEOSX_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
+          GEOS_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
                                                          << " from BHP constraint to rate constraint" );
         }
         else
         {
           wellControls.switchToBHPControl( wellControls.getTargetBHP( timeAtEndOfStep ) );
-          GEOSX_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
+          GEOS_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
                                                          << " from rate constraint to BHP constraint" );
         }
       }
@@ -594,10 +594,10 @@ void SinglePhaseWell::assembleAccumulationTerms( DomainPartition const & domain,
 
 }
 
-void SinglePhaseWell::assembleVolumeBalanceTerms( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
-                                                  DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                                  CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
-                                                  arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) )
+void SinglePhaseWell::assembleVolumeBalanceTerms( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+                                                  DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                                  CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                                  arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
   // not implemented for single phase flow
 }
@@ -644,7 +644,7 @@ void SinglePhaseWell::shutDownWell( real64 const time_n,
       arrayView1d< real64 const > const connRate =
         subRegion.getField< fields::well::connectionRate >();
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         if( ghostRank[ei] >= 0 )
         {
@@ -1025,7 +1025,7 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
       }
       if( !wellControls.isWellOpen( time_n + dt ) )
       {
-        GEOSX_LOG( GEOSX_FMT( "{}: well is shut", wellControlsName ) );
+        GEOS_LOG( GEOSX_FMT( "{}: well is shut", wellControlsName ) );
         return;
       }
 
@@ -1048,9 +1048,9 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
         string const unitKey = useSurfaceConditions ? "s" : "r";
 
         real64 const currentTotalRate = connRate[iwelemRef];
-        GEOSX_LOG( GEOSX_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
+        GEOS_LOG( GEOSX_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
                               wellControlsName, currentBHP ) );
-        GEOSX_LOG( GEOSX_FMT( "{}: Total rate: {} kg/s; total {} volumetric rate: {} {}m3/s",
+        GEOS_LOG( GEOSX_FMT( "{}: Total rate: {} kg/s; total {} volumetric rate: {} {}m3/s",
                               wellControlsName, currentTotalRate, conditionKey, currentTotalVolRate, unitKey ) );
       } );
     } );

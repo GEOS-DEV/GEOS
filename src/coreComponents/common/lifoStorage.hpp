@@ -373,7 +373,7 @@ public:
 #endif
   {
 #ifndef GEOSX_USE_CUDA
-    GEOSX_UNUSED_VAR( numberOfBuffersToStoreOnDevice );
+    GEOS_UNUSED_VAR( numberOfBuffersToStoreOnDevice );
 #endif
     m_worker[0] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 0 );
     m_worker[1] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 1 );
@@ -411,7 +411,7 @@ public:
     //To be sure 2 pushes are not mixed
     pushWait();
     int id = m_bufferCount++;
-    GEOSX_ERROR_IF( m_hostDeque.capacity() == 0,
+    GEOS_ERROR_IF( m_hostDeque.capacity() == 0,
                     "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
 
 #ifdef GEOSX_USE_CUDA
@@ -700,10 +700,10 @@ private:
       makeDirsForPath( dirName );
 
     std::ofstream wf( fileName, std::ios::out | std::ios::binary );
-    GEOSX_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
+    GEOS_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
                     "Could not open file "<< fileName << " for writting" );
     wf.write( (const char *)d, m_bufferSize );
-    GEOSX_ERROR_IF( wf.bad() || wf.fail(),
+    GEOS_ERROR_IF( wf.bad() || wf.fail(),
                     "An error occured while writting "<< fileName );
     wf.close();
   }
@@ -719,7 +719,7 @@ private:
     LIFO_MARK_FUNCTION;
     std::string fileName = GEOSX_FMT( "{}_{:08}.dat", m_name, id );
     std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-    GEOSX_ERROR_IF( !wf,
+    GEOS_ERROR_IF( !wf,
                     "Could not open file "<< fileName << " for reading" );
     wf.read( (char *)d, m_bufferSize );
     wf.close();

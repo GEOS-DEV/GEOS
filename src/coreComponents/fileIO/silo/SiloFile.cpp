@@ -1280,7 +1280,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
           auto const sourceArray = sourceWrapper.reference().toViewConst();
 
           localIndex const offset = counter * targetArray.strides()[0];
-          GEOSX_ERROR_IF_GT( sourceArray.size(), targetArray.size() - offset );
+          GEOS_ERROR_IF_GT( sourceArray.size(), targetArray.size() - offset );
 
           for( localIndex i = 0; i < sourceArray.size(); ++i )
           {
@@ -1373,7 +1373,7 @@ static int toSiloShapeType( ElementType const elementType )
     case ElementType::Polyhedron:    return DB_ZONETYPE_POLYHEDRON;
     default:
     {
-      GEOSX_ERROR( "Unsupported element type: " << elementType );
+      GEOS_ERROR( "Unsupported element type: " << elementType );
     }
   }
   return -1;
@@ -2013,9 +2013,9 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
                                     int const centering,
                                     int const cycleNum,
                                     real64 const problemTime,
-                                    bool const GEOSX_UNUSED_PARAM( isRestart ),
+                                    bool const GEOS_UNUSED_PARAM( isRestart ),
                                     string const & multiRoot,
-                                    const localIndex_array & GEOSX_UNUSED_PARAM( mask ) )
+                                    const localIndex_array & GEOS_UNUSED_PARAM( mask ) )
 {
 
   // iterate over all entries in the member map
@@ -2192,7 +2192,7 @@ void SiloFile::writeDataField( string const & meshName,
     {
       castedField[i].resize( nels );
       vars[i] = static_cast< void * >( (castedField[i]).data() );
-      forAll< serialPolicy >( nels, [=, &castedField] GEOSX_HOST ( localIndex const k )
+      forAll< serialPolicy >( nels, [=, &castedField] GEOS_HOST ( localIndex const k )
         {
           castedField[i][k] = siloFileUtilities::CastField< OUTTYPE >( field[k], i );
         } );
@@ -2247,11 +2247,11 @@ void SiloFile::writeDataField( string const & meshName,
     {
       if( err < -1 )
       {
-        GEOSX_ERROR( "unhandled case in SiloFile::WriteDataField A\n" );
+        GEOS_ERROR( "unhandled case in SiloFile::WriteDataField A\n" );
       }
       else
       {
-        GEOSX_ERROR( "unhandled failure in adding variable during SiloFile::WriteDataField\n" );
+        GEOS_ERROR( "unhandled failure in adding variable during SiloFile::WriteDataField\n" );
       }
     }
   }
@@ -2516,11 +2516,11 @@ void SiloFile::writeDataField( string const & meshName,
     {
       if( err < -1 )
       {
-        GEOSX_ERROR( "unhandled case in SiloFile::WriteDataField A\n" );
+        GEOS_ERROR( "unhandled case in SiloFile::WriteDataField A\n" );
       }
       else
       {
-        GEOSX_ERROR( "unhandled failure in adding variable during SiloFile::WriteDataField\n" );
+        GEOS_ERROR( "unhandled failure in adding variable during SiloFile::WriteDataField\n" );
       }
     }
   }
@@ -2804,11 +2804,11 @@ void SiloFile::writeMaterialDataField( string const & meshName,
     {
       if( err < -1 )
       {
-        GEOSX_ERROR( "unhandled case in SiloFile::WriteDataField A\n" );
+        GEOS_ERROR( "unhandled case in SiloFile::WriteDataField A\n" );
       }
       else
       {
-        GEOSX_ERROR( "unhandled failure in adding variable during SiloFile::WriteDataField\n" );
+        GEOS_ERROR( "unhandled failure in adding variable during SiloFile::WriteDataField\n" );
       }
     }
   }
@@ -2841,7 +2841,7 @@ void SiloFile::writeMaterialDataField( string const & meshName,
     else
     {
       vartype = DB_UCDVAR;
-//      GEOSX_ERROR("unhandled case in SiloFile::WriteDataField B\n");
+//      GEOS_ERROR("unhandled case in SiloFile::WriteDataField B\n");
     }
 
     writeMultiXXXX( vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,

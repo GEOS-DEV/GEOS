@@ -68,7 +68,7 @@ public:
    * @brief Get Biot coefficient
    * @return Biot coefficient
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 getBiotCoefficient() const
   {
     return m_biotCoefficient;

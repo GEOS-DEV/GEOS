@@ -353,7 +353,7 @@ void HypreVector::write( string const & filename,
       if( rank == 0 )
       {
         std::ofstream os( filename );
-        GEOSX_ERROR_IF( !os, GEOSX_FMT( "Unable to open file for writing: {}", filename ) );
+        GEOS_ERROR_IF( !os, GEOSX_FMT( "Unable to open file for writing: {}", filename ) );
         os << "%%MatrixMarket matrix array real general\n";
         os << GEOSX_FMT( "{} {}\n", globalSize(), 1 );
       }
@@ -371,7 +371,7 @@ void HypreVector::write( string const & filename,
         if( MpiWrapper::commRank( comm() ) == printRank )
         {
           std::ofstream os( filename, std::ios_base::app );
-          GEOSX_ERROR_IF( !os, GEOSX_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
+          GEOS_ERROR_IF( !os, GEOSX_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
           char str[32];
 
           HYPRE_Real const * const data = hypre_VectorData( fullVector );
@@ -391,7 +391,7 @@ void HypreVector::write( string const & filename,
     }
     default:
     {
-      GEOSX_ERROR( "Unsupported vector output format" );
+      GEOS_ERROR( "Unsupported vector output format" );
     }
   }
 }

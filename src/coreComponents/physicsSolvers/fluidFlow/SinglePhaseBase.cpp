@@ -126,7 +126,7 @@ void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) c
 {
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
-  GEOSX_ERROR_IF( fluidName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( fluidName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
 
   if( m_isThermal )
   {
@@ -138,7 +138,7 @@ void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) c
                                          reference();
 
     thermalConductivityName = getConstitutiveName< SinglePhaseThermalConductivityBase >( subRegion );
-    GEOSX_THROW_IF( thermalConductivityName.empty(),
+    GEOSX_THROW_IF_IF( thermalConductivityName.empty(),
                     GEOSX_FMT( "Thermal conductivity model not found on subregion {}", subRegion.getName() ),
                     InputError );
   }
@@ -169,7 +169,7 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
     {
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
-      GEOSX_THROW_IF( fluidName.empty(),
+      GEOSX_THROW_IF_IF( fluidName.empty(),
                       GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                       InputError );
 
@@ -178,11 +178,11 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
         string const fluidModelName = castedFluid.catalogName();
-        GEOSX_THROW_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
+        GEOSX_THROW_IF_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
                         GEOSX_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is not for thermal fluid",
                                    getName(), fluid.getName() ),
                         InputError );
-        GEOSX_THROW_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
+        GEOSX_THROW_IF_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
                         GEOSX_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid `{}`, but the solver option is incompatible with the fluid model",
                                    getName(), fluid.getName() ),
                         InputError );
@@ -437,7 +437,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     equilCounter++;
 
     // check that the gravity vector is aligned with the z-axis
-    GEOSX_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
+    GEOSX_THROW_IF_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
                     catalogName() << " " << getName() <<
                     ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
                     ") is not aligned with the z-axis. \n"
@@ -499,7 +499,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 : 1;
 
     real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
-    GEOSX_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
+    GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
                          SinglePhaseBase::catalogName() << " " << getName()
                                                         << ": By looking at the elevation of the cell centers in this model, GEOSX found that "
                                                         << "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " << globalMaxElevation[equilIndex] << "\n"
@@ -554,7 +554,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
                                            elevationValues.toNestedView(),
                                            pressureValues.toView() );
 
-      GEOSX_THROW_IF( !equilHasConverged,
+      GEOSX_THROW_IF_IF( !equilHasConverged,
                       SinglePhaseBase::catalogName() << " " << getName()
                                                      << ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
                       std::runtime_error );
@@ -578,7 +578,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
-    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
@@ -587,14 +587,14 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     } );
 
     // For single phase flow, just issue a warning, because the simulation can proceed with a negative pressure
-    GEOSX_WARNING_IF( minPressure.get() <= 0.0,
+    GEOS_WARNING_IF( minPressure.get() <= 0.0,
                       GEOSX_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
                                  minPressure.get(), region.getName(), subRegion.getName() ) );
   } );
 }
 
-void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                         real64 const & GEOSX_UNUSED_PARAM( dt ),
+void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                         real64 const & GEOS_UNUSED_PARAM( dt ),
                                          DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -673,7 +673,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
       arrayView1d< real64 const > const dVol = subRegion.getField< fields::flow::deltaVolume >();
       arrayView1d< real64 > const vol = subRegion.getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         vol[ei] += dVol[ei];
       } );
@@ -709,7 +709,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
         getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
       arrayView2d< real64 const > const density_n = fluid.density_n();
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         if( elemGhostRank[ei] < 0 )
         {
@@ -866,7 +866,7 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
     if( fs.getLogLevel() >= 1 && isFirstNonlinearIteration )
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
+      GEOS_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
                                    solverName, time_n+dt, FieldSpecificationBase::catalogName(),
                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
     }
@@ -886,7 +886,7 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
     arrayView1d< real64 const > const field =
       subRegion.getReference< array1d< real64 > >( fieldKey );
 
-    forAll< parallelDevicePolicy<> >( lset.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< parallelDevicePolicy<> >( lset.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       localIndex const ei = lset[a];
       if( ghostRank[ei] >= 0 )
@@ -1000,7 +1000,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
+        GEOS_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
                                      getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
@@ -1031,7 +1031,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                            localMatrix,
                                                            dofArray.toView(),
                                                            rhsContributionArrayView,
-                                                           [] GEOSX_HOST_DEVICE ( localIndex const )
+                                                           [] GEOS_HOST_DEVICE ( localIndex const )
       {
         return 0.0;
       } );
@@ -1047,7 +1047,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                            ghostRank,
                                                            dofNumber,
                                                            rhsContributionArrayView,
-                                                           localRhs] GEOSX_HOST_DEVICE ( localIndex const a )
+                                                           localRhs] GEOS_HOST_DEVICE ( localIndex const a )
       {
         // we need to filter out ghosts here, because targetSet may contain them
         localIndex const ei = targetSet[a];
@@ -1073,7 +1073,7 @@ void SinglePhaseBase::keepFlowVariablesConstantDuringInitStep( real64 const time
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( time, dt );
+  GEOS_UNUSED_VAR( time, dt );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -1093,7 +1093,7 @@ void SinglePhaseBase::keepFlowVariablesConstantDuringInitStep( real64 const time
       arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
 
       integer const isThermal = m_isThermal;
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         if( ghostRank[ei] >= 0 )
         {

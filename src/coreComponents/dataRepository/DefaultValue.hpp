@@ -111,7 +111,7 @@ struct Helper< T, std::enable_if_t< traits::HasAlias_value_type< T > &&
 
 template< typename T >
 std::enable_if_t< !Helper< T >::has_default_value, std::ostream & >
-operator<<( std::ostream & stream, Helper< T > const & GEOSX_UNUSED_PARAM( value ) )
+operator<<( std::ostream & stream, Helper< T > const & GEOS_UNUSED_PARAM( value ) )
 {
   return stream;
 }

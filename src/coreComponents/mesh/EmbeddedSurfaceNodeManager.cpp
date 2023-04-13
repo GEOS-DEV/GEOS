@@ -243,11 +243,11 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOSX_ERROR_IF( groupName != this->getName(), "EmbeddedSurfaceNodeManager::unpackGlobalMaps(): group names do not match" );
+  GEOS_ERROR_IF( groupName != this->getName(), "EmbeddedSurfaceNodeManager::unpackGlobalMaps(): group names do not match" );
 
   string localToGlobalString;
   unpackedSize += bufferOps::Unpack( buffer, localToGlobalString );
-  GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString(), "ObjectManagerBase::unpack(): label incorrect" );
+  GEOS_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString(), "ObjectManagerBase::unpack(): label incorrect" );
 
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   int sendingRank;
@@ -278,7 +278,7 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
     arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & referencePosition = referencePositionData.toView();
     string referencePositionString;
     unpackedSize += bufferOps::Unpack( buffer, referencePositionString );
-    GEOSX_ERROR_IF( referencePositionString != viewKeyStruct::referencePositionString(), "EmbeddedSurfaceNodeManager::unpackGlobalMaps(): label incorrect" );
+    GEOS_ERROR_IF( referencePositionString != viewKeyStruct::referencePositionString(), "EmbeddedSurfaceNodeManager::unpackGlobalMaps(): label incorrect" );
     unpackedSize += bufferOps::UnpackByIndex( buffer, referencePosition, indicesOnBuffer );
 
     localIndex numNewIndices = 0;
@@ -337,7 +337,7 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
 
         ++numNewIndices;
 
-        GEOSX_ERROR_IF( packList.size() != 0,
+        GEOS_ERROR_IF( packList.size() != 0,
                         "EmbeddedSurfaceNodeManager::unpackGlobalMaps(): packList specified, "
                         "but a new globalIndex is unpacked" );
       }
@@ -408,7 +408,7 @@ localIndex EmbeddedSurfaceNodeManager::unpackUpDownMaps( buffer_unit_type const 
   string temp;
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::elementListString(), "" );
+  GEOS_ERROR_IF( temp != viewKeyStruct::elementListString(), "" );
   unPackedSize += bufferOps::Unpack( buffer,
                                      this->m_toElements,
                                      packList,

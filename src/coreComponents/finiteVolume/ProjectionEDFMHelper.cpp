@@ -198,7 +198,7 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex const faceIdx,
   {
     return false;
   }
-  GEOSX_ERROR_IF( efracElements.size() > 1, "pEDFM with fracture intersections is not supported yet." );
+  GEOS_ERROR_IF( efracElements.size() > 1, "pEDFM with fracture intersections is not supported yet." );
 
   localIndex const fracElement = efracElements[0];
   arraySlice1d< real64 const > const n = fractureSubRegion.getNormalVector( fracElement );

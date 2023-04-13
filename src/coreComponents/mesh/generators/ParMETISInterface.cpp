@@ -27,7 +27,7 @@
 #define GEOSX_PARMETIS_CHECK( call ) \
   do { \
     auto const ierr = call; \
-    GEOSX_ERROR_IF_NE_MSG( ierr, METIS_OK, "Error in call to:\n" << #call ); \
+    GEOS_ERROR_IF_NE_MSG( ierr, METIS_OK, "Error in call to:\n" << #call ); \
   } while( false )
 
 namespace geos

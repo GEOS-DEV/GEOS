@@ -48,10 +48,10 @@ HaltEvent::~HaltEvent()
 {}
 
 
-void HaltEvent::estimateEventTiming( real64 const GEOSX_UNUSED_PARAM( time ),
-                                     real64 const GEOSX_UNUSED_PARAM( dt ),
-                                     integer const GEOSX_UNUSED_PARAM( cycle ),
-                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ))
+void HaltEvent::estimateEventTiming( real64 const GEOS_UNUSED_PARAM( time ),
+                                     real64 const GEOS_UNUSED_PARAM( dt ),
+                                     integer const GEOS_UNUSED_PARAM( cycle ),
+                                     DomainPartition & GEOS_UNUSED_PARAM( domain ))
 {
   // Check run time
   timeval tim;

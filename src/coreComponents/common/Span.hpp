@@ -170,7 +170,7 @@ public:
    */
   T & front() const
   {
-    GEOSX_ASSERT_GT( m_size, 0 );
+    GEOS_ASSERT_GT( m_size, 0 );
     return m_data[0];
   }
 
@@ -180,7 +180,7 @@ public:
    */
   T & back() const
   {
-    GEOSX_ASSERT_GT( m_size, 0 );
+    GEOS_ASSERT_GT( m_size, 0 );
     return m_data[m_size-1];
   }
 
@@ -191,7 +191,7 @@ public:
    */
   T & operator[]( size_type const i ) const
   {
-    GEOSX_ASSERT_GT( m_size, i );
+    GEOS_ASSERT_GT( m_size, i );
     return m_data[i];
   }
 
@@ -201,7 +201,7 @@ public:
    */
   Span< element_type > first( size_type const count ) const
   {
-    GEOSX_ASSERT_GE( m_size, count );
+    GEOS_ASSERT_GE( m_size, count );
     return { m_data, count };
   }
 
@@ -211,7 +211,7 @@ public:
    */
   Span< element_type > last( size_type const count ) const
   {
-    GEOSX_ASSERT_GE( m_size, count );
+    GEOS_ASSERT_GE( m_size, count );
     return { m_data + (m_size - count), count };
   }
 
@@ -222,7 +222,7 @@ public:
    */
   Span< element_type > subspan( size_type const offset, size_type const count ) const
   {
-    GEOSX_ASSERT_GE( m_size, offset + count );
+    GEOS_ASSERT_GE( m_size, offset + count );
     return { m_data + offset, count };
   }
 

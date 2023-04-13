@@ -70,7 +70,7 @@ public:
    */
   constexpr localIndex numPointsInFlux( localIndex index ) const
   {
-    GEOSX_UNUSED_VAR( index );
+    GEOS_UNUSED_VAR( index );
     return maxNumPointsInFlux;
   }
 

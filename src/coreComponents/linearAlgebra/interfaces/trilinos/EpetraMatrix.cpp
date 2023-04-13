@@ -705,7 +705,7 @@ void EpetraMatrix::clampEntries( real64 const lo,
                                  bool const excludeDiag )
 {
   GEOSX_LAI_ASSERT( ready() );
-  GEOSX_ERROR_IF( excludeDiag && numGlobalRows() != numGlobalCols(), "excludeDiag = true, but matrix is not square" );
+  GEOS_ERROR_IF( excludeDiag && numGlobalRows() != numGlobalCols(), "excludeDiag = true, but matrix is not square" );
 
   globalIndex const firstRow = ilower();
   forAll< parallelHostPolicy >( numLocalRows(), [&]( localIndex const localRow )
@@ -829,7 +829,7 @@ void rescaleRowsImpl( Epetra_CrsMatrix & mat,
   forAll< parallelHostPolicy >( rowIndices.size(), [=, &mat]( localIndex const i )
   {
     int const localRow = LvArray::integerConversion< int >( rowIndices[i] - firstLocalRow );
-    GEOSX_ASSERT( 0 <= localRow && localRow < mat.NumMyRows() );
+    GEOS_ASSERT( 0 <= localRow && localRow < mat.NumMyRows() );
     rescaleRow( mat, localRow, reducer );
   } );
 }
@@ -997,7 +997,7 @@ real64 EpetraMatrix::normMax( arrayView1d< globalIndex const > const & rowIndice
   forAll< parallelHostPolicy >( rowIndices.size(), [=]( int const i )
   {
     int const localRow = LvArray::integerConversion< int >( rowIndices[i] - firstLocalRow );
-    GEOSX_ASSERT( 0 <= localRow && localRow < numLocalRows() );
+    GEOS_ASSERT( 0 <= localRow && localRow < numLocalRows() );
     int numEntries;
     double * values;
     m_matrix->ExtractMyRowView( localRow, numEntries, values );
@@ -1074,7 +1074,7 @@ void EpetraMatrix::write( string const & filename,
       break;
     }
     default:
-      GEOSX_ERROR( "Unsupported matrix output format" );
+      GEOS_ERROR( "Unsupported matrix output format" );
   }
 }
 

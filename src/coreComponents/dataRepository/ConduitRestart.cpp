@@ -65,19 +65,19 @@ string readRootNode( string const & rootPath )
     conduit::relay::io::load( rootPath + ".root", "hdf5", node );
 
     int const nFiles = node.child( "number_of_files" ).value();
-    GEOSX_THROW_IF_NE( nFiles, MpiWrapper::commSize(), InputError );
+    GEOSX_THROW_IF_IF_NE( nFiles, MpiWrapper::commSize(), InputError );
 
     string const filePattern = node.child( "file_pattern" ).as_string();
     string const rootDirName = splitPath( rootPath ).first;
 
     rankFilePattern = rootDirName + "/" + filePattern;
-    GEOSX_LOG_RANK_VAR( rankFilePattern );
+    GEOS_LOG_RANK_VAR( rankFilePattern );
   }
 
   MpiWrapper::broadcast( rankFilePattern, 0 );
 
   char buffer[ 1024 ];
-  GEOSX_ERROR_IF_GE( std::snprintf( buffer, 1024, rankFilePattern.data(), MpiWrapper::commRank() ), 1024 );
+  GEOS_ERROR_IF_GE( std::snprintf( buffer, 1024, rankFilePattern.data(), MpiWrapper::commRank() ), 1024 );
   return buffer;
 }
 
@@ -87,7 +87,7 @@ void writeTree( string const & path, conduit::Node & root )
 
   conduit::Node rootFileNode;
   string const filePathForRank = writeRootFile( rootFileNode, path );
-  GEOSX_LOG_RANK( "Writing out restart file at " << filePathForRank );
+  GEOS_LOG_RANK( "Writing out restart file at " << filePathForRank );
   conduit::relay::io::save( root, filePathForRank, "hdf5" );
 }
 
@@ -95,7 +95,7 @@ void loadTree( string const & path, conduit::Node & root )
 {
   GEOSX_MARK_FUNCTION;
   string const filePathForRank = readRootNode( path );
-  GEOSX_LOG_RANK( "Reading in restart file at " << filePathForRank );
+  GEOS_LOG_RANK( "Reading in restart file at " << filePathForRank );
   conduit::relay::io::load( filePathForRank, "hdf5", root );
 }
 

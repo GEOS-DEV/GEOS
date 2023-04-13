@@ -143,7 +143,7 @@ ProblemManager::~ProblemManager()
 {}
 
 
-Group * ProblemManager::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
 { return nullptr; }
 
 
@@ -224,7 +224,7 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
 
     std::vector< string > dir_contents = readDirectory( dirname );
 
-    GEOSX_THROW_IF( dir_contents.empty(),
+    GEOSX_THROW_IF_IF( dir_contents.empty(),
                     "Directory gotten from " << restartFileName << " " << dirname << " is empty.",
                     InputError );
 
@@ -242,7 +242,7 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
       }
     }
 
-    GEOSX_THROW_IF( !match_found,
+    GEOSX_THROW_IF_IF( !match_found,
                     "No matches found for pattern " << basename << " in directory " << dirname << ".",
                     InputError );
 
@@ -256,7 +256,7 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
 void ProblemManager::generateDocumentation()
 {
   // Documentation output
-  GEOSX_LOG_RANK_0( "Trying to generate schema..." );
+  GEOS_LOG_RANK_0( "Trying to generate schema..." );
   Group & commandLine = getGroup< Group >( groupKeys.commandLine );
   string const & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
 
@@ -380,7 +380,7 @@ void ProblemManager::parseInputFile()
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult const xmlResult = xmlDocument.load_file( inputFileName.c_str() );
-  GEOSX_THROW_IF( !xmlResult, GEOSX_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
+  GEOSX_THROW_IF_IF( !xmlResult, GEOSX_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
                                          inputFileName, xmlResult.description(), xmlResult.offset ), InputError );
 
   // Add path information to the file
@@ -396,7 +396,7 @@ void ProblemManager::parseInputString( string const & xmlString )
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlString.c_str(), xmlString.length() );
-  GEOSX_THROW_IF( !xmlResult, GEOSX_FMT( "Errors found while parsing XML string\nDescription: {}\nOffset: {}",
+  GEOSX_THROW_IF_IF( !xmlResult, GEOSX_FMT( "Errors found while parsing XML string\nDescription: {}\nOffset: {}",
                                          xmlResult.description(), xmlResult.offset ), InputError );
 
   // Parse the results
@@ -715,7 +715,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
 
     if( feDisc==nullptr && fvsDisc==nullptr && fvhDisc==nullptr )
     {
-      GEOSX_ERROR( "Group expected to cast to a discretization object." );
+      GEOS_ERROR( "Group expected to cast to a discretization object." );
     }
   }
 
@@ -889,7 +889,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     string const regionName = std::get< 2 >( key );
     string const subRegionName = std::get< 3 >( key );
 
-    GEOSX_LOG_RANK_0( "regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = "<<
+    GEOS_LOG_RANK_0( "regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = "<<
                       meshBodyName<<", "<<meshLevelName<<", "<<regionName<<", "<<subRegionName );
 
 
@@ -907,7 +907,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
       for( auto & materialName : materialList )
       {
         constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, numQuadraturePoints );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
+        GEOS_LOG_RANK_0( GEOSX_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
                                      meshBodyName,
                                      meshLevelName,
                                      regionName,
@@ -942,7 +942,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
 //                                                                                                        meshLevel.getName(),
 //                                                                                                        regionName,
 //                                                                                                        subRegionName ) );
-//        GEOSX_ERROR_IF( rqIter == regionQuadratures.end(),
+//        GEOS_ERROR_IF( rqIter == regionQuadratures.end(),
 //                        GEOSX_FMT( "{}/{}/{}/{} does not have a discretization associated with it.",
 //                                   meshBody.getName(),
 //                                   meshLevel.getName(),

@@ -64,7 +64,7 @@ void ExternalMeshGeneratorBase::postProcessInput()
                                                   string const & fromKey,
                                                   string const & toKey )
   {
-    GEOSX_THROW_IF_NE_MSG( from.size(), to.size(),
+    GEOSX_THROW_IF_IF_NE_MSG( from.size(), to.size(),
                            "Mesh '" << meshName << "': attributes '" << fromKey << "' and '" << toKey << "' must contain the same number of values.",
                            InputError );
   };
@@ -76,7 +76,7 @@ void ExternalMeshGeneratorBase::postProcessInput()
     std::set< string > const tmp{ v.begin(), v.end() };
     bool const hasDuplicates = tmp.size() != LvArray::integerConversion< std::size_t >( v.size() );
 
-    GEOSX_THROW_IF( hasDuplicates,
+    GEOSX_THROW_IF_IF( hasDuplicates,
                     "Mesh '" << meshName << "': '" << stringutilities::join( v, ", " ) << "' already present in list of fields to import.",
                     InputError );
   };

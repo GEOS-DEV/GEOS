@@ -75,7 +75,7 @@ void SolidInternalEnergy::saveConvergedState() const
   arrayView2d< real64 const > internalEnergy   = m_internalEnergy;
   arrayView2d< real64 >       internalEnergy_n = m_internalEnergy_n;
 
-  forAll< parallelDevicePolicy<> >( internalEnergy.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( internalEnergy.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     internalEnergy_n[k][0] = internalEnergy[k][0];
   } );

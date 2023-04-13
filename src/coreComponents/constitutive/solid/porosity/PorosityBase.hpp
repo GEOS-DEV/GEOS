@@ -34,14 +34,14 @@ public:
    * @brief Get number of elements in this wrapper.
    * @return number of elements
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numElems() const { return m_newPorosity.size( 0 ); }
 
   /**
    * @brief Get number of gauss points per element.
    * @return number of gauss points per element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numGauss() const { return m_newPorosity.size( 1 ); }
 
   PorosityBaseUpdates( arrayView2d< real64 > const & newPorosity,
@@ -68,8 +68,8 @@ public:
    * @param[in] porosity porosity to be saved to m_newPorosity[k][q]
    * @param[in] dPorosity_dPressure porosity derivative w.r.t pressure to be saved to m_dPorosity_dPressure[k][q]
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void savePorosity( localIndex const k,
                      localIndex const q,
                      real64 const & porosity,
@@ -90,8 +90,8 @@ public:
    * @param[in] dPorosity_dPressure porosity derivative w.r.t pressure to be saved to m_dPorosity_dPressure[k][q]
    * @param[in] dPorosity_dTemperature porosity derivative w.r.t temperature to be saved to m_dPorosity_dTemperature[k][q]
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void savePorosity( localIndex const k,
                      localIndex const q,
                      real64 const & porosity,
@@ -103,8 +103,8 @@ public:
     m_dPorosity_dTemperature[k][q] = dPorosity_dTemperature;
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   real64 getPorosity( localIndex const k,
                       localIndex const q ) const
   {
@@ -112,23 +112,23 @@ public:
   }
 
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   real64 getPorosity_n( localIndex const k,
                         localIndex const q ) const
   {
     return m_porosity_n[k][q];
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   real64 getInitialPorosity( localIndex const k,
                              localIndex const q ) const
   {
     return m_initialPorosity[k][q];
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromPressureAndTemperature( localIndex const k,
                                                  localIndex const q,
                                                  real64 const & pressure,
@@ -136,8 +136,8 @@ public:
                                                  real64 const & temperature,
                                                  real64 const & temperature_n ) const
   {
-    GEOSX_UNUSED_VAR( k, q, pressure, pressure_n, temperature, temperature_n );
-    GEOSX_ERROR( "updateFromPressureAndTemperature is not implemented for porosityBase." );
+    GEOS_UNUSED_VAR( k, q, pressure, pressure_n, temperature, temperature_n );
+    GEOS_ERROR( "updateFromPressureAndTemperature is not implemented for porosityBase." );
   }
 
 protected:
@@ -246,7 +246,7 @@ public:
 
   virtual arrayView1d< real64 const > const getBiotCoefficient() const
   {
-    GEOSX_ERROR( "getBiotPorosity() not implemented for this model" );
+    GEOS_ERROR( "getBiotPorosity() not implemented for this model" );
 
     array1d< real64 > out;
     return out.toViewConst();

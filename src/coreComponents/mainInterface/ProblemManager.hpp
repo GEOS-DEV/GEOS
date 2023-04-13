@@ -272,7 +272,7 @@ public:
    */
   FunctionManager & getFunctionManager()
   {
-    GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
     return *m_functionManager;
   }
 
@@ -282,7 +282,7 @@ public:
    */
   FunctionManager const & getFunctionManager() const
   {
-    GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
     return *m_functionManager;
   }
 
@@ -292,7 +292,7 @@ public:
    */
   FieldSpecificationManager & getFieldSpecificationManager()
   {
-    GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
     return *m_fieldSpecificationManager;
   }
 
@@ -302,7 +302,7 @@ public:
    */
   FieldSpecificationManager const & getFieldSpecificationManager() const
   {
-    GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
     return *m_fieldSpecificationManager;
   }
 

@@ -78,7 +78,7 @@ public:
   virtual void updateState( DomainPartition & domain ) override final;
 
   virtual void
-    resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
+    resetStateToBeginningOfStep( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) override;
 
   virtual void
   implicitStepComplete( real64 const & time,

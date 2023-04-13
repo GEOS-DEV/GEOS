@@ -79,7 +79,7 @@ void SinglePhasePoromechanicsConformingFractures::setupSystem( DomainPartition &
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( setSparsity );
+  GEOS_UNUSED_VAR( setSparsity );
 
   /// 1. Add all coupling terms handled directly by the DofManager
   dofManager.setDomain( domain );
@@ -186,7 +186,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
                                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                                   arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_UNUSED_VAR( time_n, dt );
+  GEOS_UNUSED_VAR( time_n, dt );
 
   /// 3. assemble Force Residual w.r.t. pressure and Fluix mass residual w.r.t. displacement
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -236,7 +236,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCouplingTerms( real64 
                                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                          arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_UNUSED_VAR( time_n, dt );
+  GEOS_UNUSED_VAR( time_n, dt );
   // These 2 steps need to occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
@@ -250,7 +250,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCouplingTerms( real64 
 
 void SinglePhasePoromechanicsConformingFractures::
   setUpDflux_dApertureMatrix( DomainPartition & domain,
-                              DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                              DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                               CRSMatrix< real64, globalIndex > & localMatrix )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -401,10 +401,10 @@ void SinglePhasePoromechanicsConformingFractures::
     FaceElementSubRegion const & fractureSubRegion =
       fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
-    GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( flow::pressure::key() ), "The fracture subregion must contain pressure field." );
+    GEOS_ERROR_IF( !fractureSubRegion.hasWrapper( flow::pressure::key() ), "The fracture subregion must contain pressure field." );
 
     arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
-    GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
+    GEOS_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
     arrayView1d< globalIndex const > const &
     presDofNumber = fractureSubRegion.getReference< globalIndex_array >( presDofKey );
@@ -560,7 +560,7 @@ void SinglePhasePoromechanicsConformingFractures::
                                                       arrayView1d< string const > const & regionNames,
                                                       DofManager const & dofManager,
                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                      arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) )
+                                                      arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
   GEOSX_MARK_FUNCTION;
 

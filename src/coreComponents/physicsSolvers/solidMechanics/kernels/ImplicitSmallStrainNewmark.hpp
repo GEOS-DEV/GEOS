@@ -115,7 +115,7 @@ public:
     using Base::StackVariables::maxNumCols;
 
     /// Constructor.
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
             dRdU_InertiaMassDamping{ {0.0} },
@@ -142,7 +142,7 @@ public:
    * predictor, and the incremental displacement predictor are placed into
    * element local stack storage.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
@@ -152,7 +152,7 @@ public:
    * The ImplcitNewmark kernel adds the calculation of the inertia damping,
    * jacobian and residual contributions.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const;
@@ -163,7 +163,7 @@ public:
    * The ImplicitNewmark implementation adds residual and jacobian
    * contributions from  stiffness based damping.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 

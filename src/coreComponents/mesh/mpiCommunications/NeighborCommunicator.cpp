@@ -98,7 +98,7 @@ void NeighborCommunicator::mpiISendReceiveBuffers( int const commID,
 }
 
 
-void NeighborCommunicator::mpiWaitAll( int const GEOSX_UNUSED_PARAM( commID ),
+void NeighborCommunicator::mpiWaitAll( int const GEOS_UNUSED_PARAM( commID ),
                                        MPI_Request & mpiSendRequest,
                                        MPI_Status & mpiSendStatus,
                                        MPI_Request & mpiRecvRequest,
@@ -230,7 +230,7 @@ inline int PackGhosts( buffer_unit_type * sendBufferPtr,
   return packedSize;
 }
 
-void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( contactActive ),
+void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( contactActive ),
                                                  integer const depth,
                                                  MeshLevel & mesh,
                                                  int const commID,
@@ -287,7 +287,7 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( 
                                      faceManager, faceAdjacencyList,
                                      elemManager, elemAdjacencyList );
 
-  GEOSX_ERROR_IF_NE( bufferSize, packedSize );
+  GEOS_ERROR_IF_NE( bufferSize, packedSize );
 
   this->postSend( commID, mpiSendRequest );
 }
@@ -338,7 +338,7 @@ void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
   unpackedSize += elemManager.unpack( receiveBufferPtr, elementAdjacencyReceiveList );
   waitAllDeviceEvents( events );
 
-  GEOSX_ERROR_IF_NE( receiveBuff.size(), unpackedSize );
+  GEOS_ERROR_IF_NE( receiveBuff.size(), unpackedSize );
 
 }
 
@@ -434,7 +434,7 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
                                            localToGlobal.toSliceConst() );
   } );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 
   this->postSend( commID, mpiSendRequest );
 }
@@ -592,7 +592,7 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
     }
   }
 
-  GEOSX_ERROR_IF_NE( bufferSize, packedSize );
+  GEOS_ERROR_IF_NE( bufferSize, packedSize );
 }
 
 

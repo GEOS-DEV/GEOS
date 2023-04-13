@@ -105,7 +105,7 @@ public:
                                               faceManager,
                                               elementSubRegion,
                                               m_meshData );
-    GEOSX_UNUSED_VAR( targetRegionIndex );
+    GEOS_UNUSED_VAR( targetRegionIndex );
   }
 
 
@@ -124,7 +124,7 @@ public:
     /**
      * Default constructor
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       localRowDofIndex{ 0 },
       localColDofIndex{ 0 },
@@ -166,8 +166,8 @@ public:
    * @note This seems like a waste of register space. We should do this in
    *       complete() unless we actually need these dof somewhere else in the kernel.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void setup( localIndex const k,
               StackVariables & stack ) const
   {

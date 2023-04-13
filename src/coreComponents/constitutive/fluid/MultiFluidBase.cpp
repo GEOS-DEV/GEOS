@@ -156,19 +156,19 @@ void MultiFluidBase::postProcessInput()
   integer const numComp = numFluidComponents();
   integer const numPhase = numFluidPhases();
 
-  GEOSX_THROW_IF_LT_MSG( numComp, 1,
+  GEOSX_THROW_IF_IF_LT_MSG( numComp, 1,
                          GEOSX_FMT( "{}: invalid number of components", getFullName() ),
                          InputError );
-  GEOSX_THROW_IF_GT_MSG( numComp, MAX_NUM_COMPONENTS,
+  GEOSX_THROW_IF_IF_GT_MSG( numComp, MAX_NUM_COMPONENTS,
                          GEOSX_FMT( "{}: invalid number of components", getFullName() ),
                          InputError );
-  GEOSX_THROW_IF_LT_MSG( numPhase, 1,
+  GEOSX_THROW_IF_IF_LT_MSG( numPhase, 1,
                          GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
                          InputError );
-  GEOSX_THROW_IF_GT_MSG( numPhase, MAX_NUM_PHASES,
+  GEOSX_THROW_IF_IF_GT_MSG( numPhase, MAX_NUM_PHASES,
                          GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
                          InputError );
-  GEOSX_THROW_IF_NE_MSG( m_componentMolarWeight.size(), numComp,
+  GEOSX_THROW_IF_IF_NE_MSG( m_componentMolarWeight.size(), numComp,
                          GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentMolarWeightString() ),
                          InputError );
 
@@ -204,7 +204,7 @@ void MultiFluidBase::saveConvergedState() const
   arrayView3d< real64, multifluid::USD_PHASE > const phaseInternalEnergy_n = m_phaseInternalEnergy_n.toView();
   arrayView4d< real64, multifluid::USD_PHASE_COMP > const phaseCompFraction_n = m_phaseCompFraction_n.toView();
 
-  forAll< parallelDevicePolicy<> >( numElem, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( numElem, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numGauss; ++q )
     {

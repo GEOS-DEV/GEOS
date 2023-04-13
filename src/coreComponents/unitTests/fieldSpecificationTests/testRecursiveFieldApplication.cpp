@@ -177,7 +177,7 @@ TEST( FieldSpecification, Recursive )
       real64 const & value = field0[er][esr][ei];
       // This `value < x || value > x` is there because of compiler warning (converted to error)
       // making floating points comparisons using `==` impossible even for integers...
-      GEOSX_ERROR_IF( value< 1. || value > 1., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
+      GEOS_ERROR_IF( value< 1. || value > 1., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
     } );
   } );
 
@@ -187,20 +187,20 @@ TEST( FieldSpecification, Recursive )
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
       real64 const & value = field1[0][esr][ei];
-      GEOSX_ERROR_IF( value< 2. || value > 2., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
+      GEOS_ERROR_IF( value< 2. || value > 2., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
     } );
   } );
 
   forAll< serialPolicy >( nbHexReg0, [=] ( localIndex const ei )
   {
     real64 const & value = field2[0][0][ei];
-    GEOSX_ERROR_IF( value< 3. || value > 3., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
+    GEOS_ERROR_IF( value< 3. || value > 3., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
   } );
 
   forAll< serialPolicy >( nbTetReg1, [=] ( localIndex const ei )
   {
     real64 const & value = field3[1][1][ei];
-    GEOSX_ERROR_IF( value< 4. || value > 4., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
+    GEOS_ERROR_IF( value< 4. || value > 4., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
   } );
 }
 
