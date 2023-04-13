@@ -52,7 +52,7 @@ def main():
 	plt.xlim(0, 2)
 
 	plt.legend(loc='upper left')
-	plt.savefig('displacementJump.png')
+	plt.show()
 
 if __name__ == "__main__":
 	main()

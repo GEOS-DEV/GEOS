@@ -141,13 +141,6 @@ As expected, we observe a zero-displacement jump at the cement-rock interface un
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedContactElasticWellbore/elastic_casedWellbore_displacementJump.py
 
-.. _CasedElasticWellboreInterfacesDisplacementJumpVsTimeFig:
-.. figure:: displacementJump.png
-   :align: center
-   :width: 600
-   :figclass: align-center
-
-   Displacement jump versus time at the casing-cement interface
 
 ------------------------------------------------------------------
 To go further
