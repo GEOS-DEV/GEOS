@@ -333,12 +333,11 @@ public:
   T & getGroup( KEY const & key )
   {
     Group * const child = m_subGroups[ key ];
-    if( child == nullptr )
-    {
-      GEOSX_THROW( "Group " << getPath() << " has no child named " << key << std::endl <<
-                   dumpSubGroupsNames(),
-                   std::domain_error );
-    }
+    GEOSX_THROW_IF( child == nullptr,
+                    "Group " << getPath() << " has no child named " << key << std::endl
+                             << dumpSubGroupsNames(),
+                    std::domain_error );
+
     return dynamicCast< T & >( *child );
   }
 
@@ -349,12 +348,11 @@ public:
   T const & getGroup( KEY const & key ) const
   {
     Group const * const child = m_subGroups[ key ];
-    if( child == nullptr )
-    {
-      GEOSX_THROW( "Group " << getPath() << " has no child named " << key << std::endl <<
-                   dumpSubGroupsNames(),
-                   std::domain_error );
-    }
+    GEOSX_THROW_IF( child == nullptr,
+                    "Group " << getPath() << " has no child named " << key << std::endl
+                             << dumpSubGroupsNames(),
+                    std::domain_error );
+
     return dynamicCast< T const & >( *child );
   }
 
@@ -1072,12 +1070,11 @@ public:
   WrapperBase const & getWrapperBase( KEY const & key ) const
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
-    if( wrapper == nullptr )
-    {
-      GEOSX_THROW( "Group " << getPath() << " has no wrapper named " << key << std::endl <<
-                   dumpWrappersNames(),
-                   std::domain_error );
-    }
+    GEOSX_THROW_IF( wrapper == nullptr,
+                    "Group " << getPath() << " has no wrapper named " << key << std::endl
+                             << dumpWrappersNames(),
+                    std::domain_error );
+
     return *wrapper;
   }
 
@@ -1088,12 +1085,11 @@ public:
   WrapperBase & getWrapperBase( KEY const & key )
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
-    if( wrapper == nullptr )
-    {
-      GEOSX_THROW( "Group " << getPath() << " has no wrapper named " << key << std::endl <<
-                   dumpWrappersNames(),
-                   std::domain_error );
-    }
+    GEOSX_THROW_IF( wrapper == nullptr,
+                    "Group " << getPath() << " has no wrapper named " << key << std::endl
+                             << dumpWrappersNames(),
+                    std::domain_error );
+
     return *wrapper;
   }
 
