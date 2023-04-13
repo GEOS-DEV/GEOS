@@ -26,12 +26,12 @@
 namespace geosx
 {
 
-class SinglePhasePoromechanics : public CoupledSolver< SolidMechanicsLagrangianFEM,
-                                                       SinglePhaseBase >
+class SinglePhasePoromechanics : public CoupledSolver< SinglePhaseBase,
+                                                       SolidMechanicsLagrangianFEM >
 {
 public:
 
-  using Base = CoupledSolver< SolidMechanicsLagrangianFEM, SinglePhaseBase >;
+  using Base = CoupledSolver< SinglePhaseBase, SolidMechanicsLagrangianFEM >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -40,8 +40,8 @@ public:
 
   enum class SolverType : integer
   {
-    SolidMechanics = 0,
-    Flow = 1
+    Flow = 0,
+    SolidMechanics = 1
   };
 
   /// String used to form the solverName used to register solvers in CoupledSolver
@@ -140,6 +140,12 @@ protected:
   virtual void initializePreSubGroups() override;
 
 private:
+
+  /**
+   * @brief Helper function to recompute the bulk density
+   * @param[in] subRegion the element subRegion
+   */
+  void updateBulkDensity( ElementSubRegionBase & subRegion );
 
   void createPreconditioner();
 

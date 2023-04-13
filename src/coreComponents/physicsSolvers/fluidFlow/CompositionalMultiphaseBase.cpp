@@ -693,6 +693,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
     permeabilityModel.scaleHorizontalPermeability( netToGross );
     porousSolid.scaleReferencePorosity( netToGross );
+    saveConvergedState( subRegion ); // necessary for a meaningful porosity update in sequential schemes
     updatePorosityAndPermeability( subRegion );
     updatePhaseVolumeFraction( subRegion );
 
@@ -1081,7 +1082,7 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
       CoupledSolidBase const & porousSolid =
         getConstitutiveModel< CoupledSolidBase >( subRegion,
                                                   subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-
+      saveConvergedState( subRegion ); // necessary for a meaningful porosity update in sequential schemes
       updatePorosityAndPermeability( subRegion );
 
       porousSolid.initializeState();
@@ -1124,26 +1125,9 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARA
         subRegion.template getField< fields::flow::initialPressure >();
       arrayView1d< real64 > const & deltaPres =
         subRegion.template getField< fields::flow::deltaPressure >();
-      arrayView1d< real64 > const & pres_n =
-        subRegion.template getField< fields::flow::pressure_n >();
-      pres_n.setValues< parallelDevicePolicy<> >( pres );
       isothermalCompositionalMultiphaseBaseKernels::StatisticsKernel::
         saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
-
-      arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-        subRegion.template getField< fields::flow::globalCompDensity >();
-      arrayView2d< real64, compflow::USD_COMP > const & compDens_n =
-        subRegion.template getField< fields::flow::globalCompDensity_n >();
-      compDens_n.setValues< parallelDevicePolicy<> >( compDens );
-
-      if( m_isThermal )
-      {
-        arrayView1d< real64 const > const & temp =
-          subRegion.template getField< fields::flow::temperature >();
-        arrayView1d< real64 > const & temp_n =
-          subRegion.template getField< fields::flow::temperature_n >();
-        temp_n.setValues< parallelDevicePolicy<> >( temp );
-      }
+      saveConvergedState( subRegion );
 
       // update porosity, permeability
       updatePorosityAndPermeability( subRegion );
@@ -2050,6 +2034,17 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       }
     } );
   } );
+}
+
+void CompositionalMultiphaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
+{
+  FlowSolverBase::saveConvergedState( subRegion );
+
+  arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
+    subRegion.template getField< fields::flow::globalCompDensity >();
+  arrayView2d< real64, compflow::USD_COMP > const & compDens_n =
+    subRegion.template getField< fields::flow::globalCompDensity_n >();
+  compDens_n.setValues< parallelDevicePolicy<> >( compDens );
 }
 
 void CompositionalMultiphaseBase::updateState( DomainPartition & domain )

@@ -23,7 +23,7 @@
 #include "kernels/ImplicitSmallStrainQuasiStatic.hpp"
 #include "kernels/ExplicitSmallStrain.hpp"
 #include "kernels/ExplicitFiniteStrain.hpp"
-#include "kernels/FixedStressThermoPoroElasticKernel.hpp"
+#include "kernels/FixedStressThermoPoromechanics.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -59,7 +59,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
   m_iComm( CommunicationTools::getInstance().getCommID() ),
-  m_fixedStressUpdateThermoPoroElasticityFlag( 0 )
+  m_fixedStressUpdateThermoPoromechanicsFlag( 0 )
 {
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
@@ -964,14 +964,14 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   localMatrix.zero();
   localRhs.zero();
 
-  if( m_fixedStressUpdateThermoPoroElasticityFlag )
+  if( m_fixedStressUpdateThermoPoromechanicsFlag )
   {
     GEOSX_UNUSED_VAR( dt );
-    assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: chage once there is a cmake solution
-                    solidMechanicsLagrangianFEMKernels::FixedStressThermoPoroElasticFactory >( domain,
-                                                                                               dofManager,
-                                                                                               localMatrix,
-                                                                                               localRhs );
+    assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
+                    solidMechanicsLagrangianFEMKernels::FixedStressThermoPoromechanicsFactory >( domain,
+                                                                                                 dofManager,
+                                                                                                 localMatrix,
+                                                                                                 localRhs );
   }
   else
   {
@@ -1331,9 +1331,9 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
   return 1.0;
 }
 
-void SolidMechanicsLagrangianFEM::turnOnFixedStressThermoPoroElasticityFlag()
+void SolidMechanicsLagrangianFEM::turnOnFixedStressThermoPoromechanicsFlag()
 {
-  m_fixedStressUpdateThermoPoroElasticityFlag = 1;
+  m_fixedStressUpdateThermoPoromechanicsFlag = 1;
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::Group * const )

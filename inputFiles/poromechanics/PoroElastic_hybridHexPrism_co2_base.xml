@@ -1,39 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers>
-
-    <MultiphasePoromechanics
-      name="multiphasePoroelasticity"
-      solidSolverName="linearElasticity"
-      flowSolverName="twoPhaseFlow"
-      logLevel="1"
-      initialDt="1e11"
-      targetRegions="{ reservoir }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-8"
-        lineSearchAction="None"
-        newtonMaxIter="40"/>
-      <LinearSolverParameters
-        directParallel="0"/>
-    </MultiphasePoromechanics>
-
-    <SolidMechanicsLagrangianSSLE
-      name="linearElasticity"
-      timeIntegrationOption="QuasiStatic"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ reservoir }"/>
-
-    <CompositionalMultiphaseFVM
-      name="twoPhaseFlow"
-      logLevel="1"
-      discretization="fluidTPFA"
-      targetRegions="{ reservoir }"
-      temperature="357.5"
-      useMass="1"/>
-
-  </Solvers>
 
   <Mesh>
 

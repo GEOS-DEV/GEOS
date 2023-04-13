@@ -28,12 +28,14 @@
 namespace geosx
 {
 
-class MultiphasePoromechanics : public CoupledSolver< SolidMechanicsLagrangianFEM,
-                                                      CompositionalMultiphaseBase >
+// Note that in the current implementation, the order of the templates in CoupledSolver< ... > matters
+// We put CompositionalMultiphaseBase first to start with a flow solve in the sequential option
+class MultiphasePoromechanics : public CoupledSolver< CompositionalMultiphaseBase,
+                                                      SolidMechanicsLagrangianFEM >
 {
 public:
 
-  using Base = CoupledSolver< SolidMechanicsLagrangianFEM, CompositionalMultiphaseBase >;
+  using Base = CoupledSolver< CompositionalMultiphaseBase, SolidMechanicsLagrangianFEM >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -42,8 +44,8 @@ public:
 
   enum class SolverType : integer
   {
-    SolidMechanics = 0,
-    Flow = 1
+    Flow = 0,
+    SolidMechanics = 1
   };
 
   /// String used to form the solverName used to register solvers in CoupledSolver
@@ -159,6 +161,12 @@ protected:
   };
 
 private:
+
+  /**
+   * @brief Helper function to recompute the bulk density
+   * @param[in] subRegion the element subRegion
+   */
+  void updateBulkDensity( ElementSubRegionBase & subRegion );
 
   template< typename CONSTITUTIVE_BASE,
             typename KERNEL_WRAPPER,

@@ -1,6 +1,6 @@
 
 
-#include "physicsSolvers/solidMechanics/kernels/FixedStressThermoPoroElasticKernel_impl.hpp"
+#include "physicsSolvers/solidMechanics/kernels/FixedStressThermoPoromechanics_impl.hpp"
 #include "policies.hpp"
 
 
@@ -18,7 +18,7 @@ using namespace constitutive;
 using namespace finiteElement;
 namespace solidMechanicsLagrangianFEMKernels
 {
-  INSTANTIATION( FixedStressThermoPoroElastic )
+  INSTANTIATION( FixedStressThermoPoromechanics )
 }
 }
 
