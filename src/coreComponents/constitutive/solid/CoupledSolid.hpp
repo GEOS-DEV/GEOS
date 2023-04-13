@@ -17,8 +17,8 @@
  * @file CoupledSolid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_
 
 #include "constitutive/solid/CoupledSolidBase.hpp"
 
@@ -208,4 +208,4 @@ void CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::initializePreSubGroups()
 }
 } /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_ */

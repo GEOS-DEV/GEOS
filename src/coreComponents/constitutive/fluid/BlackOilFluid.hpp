@@ -16,8 +16,8 @@
  * @file BlackOilFluid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
 
 #include "constitutive/fluid/BlackOilFluidBase.hpp"
 #include "constitutive/fluid/PVTOData.hpp"
@@ -1123,4 +1123,4 @@ BlackOilFluid::KernelWrapper::
 
 } // namespace geos
 
-#endif // GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
+#endif // GEOS_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_

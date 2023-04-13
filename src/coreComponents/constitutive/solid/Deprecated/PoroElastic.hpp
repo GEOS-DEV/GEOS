@@ -17,8 +17,8 @@
  * @file PoroElastic.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_POROELASTIC_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_POROELASTIC_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_POROELASTIC_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_POROELASTIC_HPP_
 
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
@@ -205,4 +205,4 @@ protected:
 }
 } /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_POROELASTIC_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_POROELASTIC_HPP_ */

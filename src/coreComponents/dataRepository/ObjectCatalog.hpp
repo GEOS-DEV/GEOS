@@ -1,5 +1,5 @@
-#ifndef GEOSX_DATAREPOSITORY_OBJECTCATALOG_HPP_
-#define GEOSX_DATAREPOSITORY_OBJECTCATALOG_HPP_
+#ifndef GEOS_DATAREPOSITORY_OBJECTCATALOG_HPP_
+#define GEOS_DATAREPOSITORY_OBJECTCATALOG_HPP_
 /*
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
@@ -705,4 +705,4 @@ public:
 #define REGISTER_CATALOG_ENTRY0( BaseType, DerivedType ) \
   namespace { geos::dataRepository::CatalogEntryConstructor< BaseType, DerivedType > catEntry_ ## DerivedType; }
 
-#endif /* GEOSX_DATAREPOSITORY_OBJECTCATALOG_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_OBJECTCATALOG_HPP_ */

@@ -22,8 +22,8 @@
  * A collection of timing-related macros that wrap Caliper.
  */
 
-#ifndef GEOSX_COMMON_TIMINGMACROS_HPP_
-#define GEOSX_COMMON_TIMINGMACROS_HPP_
+#ifndef GEOS_COMMON_TIMINGMACROS_HPP_
+#define GEOS_COMMON_TIMINGMACROS_HPP_
 
 #include "common/GeosxConfig.hpp"
 #include "GeosxMacros.hpp"
@@ -154,4 +154,4 @@ namespace timingHelpers
 #define GEOS_GET_TIME( time )
 #endif
 
-#endif // GEOSX_COMMON_TIMINGMACROS_HPP_
+#endif // GEOS_COMMON_TIMINGMACROS_HPP_

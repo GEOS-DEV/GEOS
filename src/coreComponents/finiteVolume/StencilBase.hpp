@@ -16,8 +16,8 @@
  * @file CellElementStencilTPFA.hpp
  */
 
-#ifndef GEOSX_FINITEVOLUME_STENCILBASE_HPP_
-#define GEOSX_FINITEVOLUME_STENCILBASE_HPP_
+#ifndef GEOS_FINITEVOLUME_STENCILBASE_HPP_
+#define GEOS_FINITEVOLUME_STENCILBASE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -297,4 +297,4 @@ void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::move( LvArray::MemorySpace const
 
 } /* namespace geos */
 
-#endif /* GEOSX_FINITEVOLUME_STENCILBASE_HPP_ */
+#endif /* GEOS_FINITEVOLUME_STENCILBASE_HPP_ */

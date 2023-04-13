@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_UTILITIES_STRUCTUREDGRIDUTILITIES_HPP
-#define GEOSX_MESH_UTILITIES_STRUCTUREDGRIDUTILITIES_HPP
+#ifndef GEOS_MESH_UTILITIES_STRUCTUREDGRIDUTILITIES_HPP
+#define GEOS_MESH_UTILITIES_STRUCTUREDGRIDUTILITIES_HPP
 
 /**
  * @file StructuredGridUtilities.hpp
@@ -92,4 +92,4 @@ void map_index< 3 >( const int index,
 
 } /* namespace structuredGrid */
 
-#endif /* GEOSX_MESH_UTILITIES_STRUCTUREDGRIDUTILITIES_HPP */
+#endif /* GEOS_MESH_UTILITIES_STRUCTUREDGRIDUTILITIES_HPP */

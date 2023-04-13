@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_
-#define GEOSX_MESH_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_
+#ifndef GEOS_MESH_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_
+#define GEOS_MESH_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_
 
 
 #include "PartitionBase.hpp"
@@ -106,4 +106,4 @@ private:
 };
 
 }
-#endif /* GEOSX_MESH_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_ */
+#endif /* GEOS_MESH_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_ */

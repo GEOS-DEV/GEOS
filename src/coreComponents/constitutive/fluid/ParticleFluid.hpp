@@ -16,8 +16,8 @@
  * @file ParticleFluid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "constitutive/fluid/ParticleFluidBase.hpp"
@@ -338,4 +338,4 @@ void ParticleFluidUpdate::compute( real64 const proppantConcentration,
 
 } /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_ */

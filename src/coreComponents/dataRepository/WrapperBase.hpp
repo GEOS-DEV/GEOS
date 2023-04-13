@@ -14,8 +14,8 @@
 
 /** @file */
 
-#ifndef GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_
-#define GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_
+#ifndef GEOS_DATAREPOSITORY_WRAPPERBASE_HPP_
+#define GEOS_DATAREPOSITORY_WRAPPERBASE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -711,4 +711,4 @@ private:
 } /// namespace dataRepository
 } /// namespace geos
 
-#endif /* GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_WRAPPERBASE_HPP_ */

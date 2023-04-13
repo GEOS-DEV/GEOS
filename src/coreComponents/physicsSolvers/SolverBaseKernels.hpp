@@ -16,8 +16,8 @@
  * @file SolverBaseKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLVERBASEKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_SOLVERBASEKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_SOLVERBASEKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_SOLVERBASEKERNELS_HPP
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/DataTypes.hpp"

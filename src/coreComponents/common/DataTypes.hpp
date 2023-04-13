@@ -19,8 +19,8 @@
  * use of the data types.
  */
 
-#ifndef GEOSX_COMMON_DATATYPES_HPP
-#define GEOSX_COMMON_DATATYPES_HPP
+#ifndef GEOS_COMMON_DATATYPES_HPP
+#define GEOS_COMMON_DATATYPES_HPP
 
 // Source includes
 #include "common/GeosxConfig.hpp"
@@ -742,4 +742,4 @@ struct TypeName
 
 
 
-#endif /* GEOSX_COMMON_DATATYPES_HPP */
+#endif /* GEOS_COMMON_DATATYPES_HPP */

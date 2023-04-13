@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef GEOSX_MESH_SURFACEELEMENTREGION_HPP_
-#define GEOSX_MESH_SURFACEELEMENTREGION_HPP_
+#ifndef GEOS_MESH_SURFACEELEMENTREGION_HPP_
+#define GEOS_MESH_SURFACEELEMENTREGION_HPP_
 
 #include "ElementRegionBase.hpp"
 #include "codingUtilities/EnumStrings.hpp"

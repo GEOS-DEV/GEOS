@@ -16,8 +16,8 @@
  * @file MeshForLoopInterface.hpp
  */
 
-#ifndef GEOSX_MESH_MESHFORLOOPINTERFACE_HPP
-#define GEOSX_MESH_MESHFORLOOPINTERFACE_HPP
+#ifndef GEOS_MESH_MESHFORLOOPINTERFACE_HPP
+#define GEOS_MESH_MESHFORLOOPINTERFACE_HPP
 
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
@@ -94,4 +94,4 @@ minLocOverElemsInMesh( MeshLevel const & mesh, LAMBDA && lambda )
 
 } // namespace geos
 
-#endif // GEOSX_MESH_MESHFORLOOPINTERFACE_HPP
+#endif // GEOS_MESH_MESHFORLOOPINTERFACE_HPP

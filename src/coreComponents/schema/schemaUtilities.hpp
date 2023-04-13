@@ -16,8 +16,8 @@
  * @file schemaUtilities.hpp
  */
 
-#ifndef GEOSX_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_
-#define GEOSX_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_
+#ifndef GEOS_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_
+#define GEOS_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_
 
 #include "dataRepository/xmlWrapper.hpp"
 #include "common/DataTypes.hpp"
@@ -70,4 +70,4 @@ void SchemaConstruction( dataRepository::Group & group,
 } /// namespace schemaUtilities
 } /// namespace geos
 
-#endif /* GEOSX_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_ */
+#endif /* GEOS_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_ */

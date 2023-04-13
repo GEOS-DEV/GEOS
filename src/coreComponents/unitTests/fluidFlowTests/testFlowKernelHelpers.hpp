@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_TESTFLOWKERNELHELPERS_HPP
-#define GEOSX_TESTFLOWKERNELHELPERS_HPP
+#ifndef GEOS_TESTFLOWKERNELHELPERS_HPP
+#define GEOS_TESTFLOWKERNELHELPERS_HPP
 
 #include "common/DataTypes.hpp"
 
@@ -201,4 +201,4 @@ struct AccessorHelper< true >
 
 } // namespace geos
 
-#endif //GEOSX_TESTFLOWKERNELHELPERS_HPP
+#endif //GEOS_TESTFLOWKERNELHELPERS_HPP

@@ -15,8 +15,8 @@
 /**
  * @file multiFluidSelector.hpp
  */
-#ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/fluid/DeadOilFluid.hpp"
@@ -72,4 +72,4 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
 
 } // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_

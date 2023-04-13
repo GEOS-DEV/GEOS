@@ -15,8 +15,8 @@
  * @file MpiWrapper.hpp
  */
 
-#ifndef GEOSX_COMMON_MPIWRAPPER_HPP_
-#define GEOSX_COMMON_MPIWRAPPER_HPP_
+#ifndef GEOS_COMMON_MPIWRAPPER_HPP_
+#define GEOS_COMMON_MPIWRAPPER_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/Span.hpp"
@@ -1032,4 +1032,4 @@ void MpiWrapper::max( Span< T const > src, Span< T > dst, MPI_Comm comm )
 
 } /* namespace geos */
 
-#endif /* GEOSX_COMMON_MPIWRAPPER_HPP_ */
+#endif /* GEOS_COMMON_MPIWRAPPER_HPP_ */

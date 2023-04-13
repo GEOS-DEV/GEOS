@@ -16,8 +16,8 @@
  * @file FrictionlessContact.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CONTACT_FRICTIONLESSCONTACT_HPP_
-#define GEOSX_CONSTITUTIVE_CONTACT_FRICTIONLESSCONTACT_HPP_
+#ifndef GEOS_CONSTITUTIVE_CONTACT_FRICTIONLESSCONTACT_HPP_
+#define GEOS_CONSTITUTIVE_CONTACT_FRICTIONLESSCONTACT_HPP_
 
 #include "constitutive/contact/ContactBase.hpp"
 
@@ -180,4 +180,4 @@ inline void FrictionlessContactUpdates::updateFractureState( localIndex const k,
 
 } /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_CONTACT_FRICTIONLESSCONTACT_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_CONTACT_FRICTIONLESSCONTACT_HPP_ */

@@ -16,8 +16,8 @@
  * @file traits.hpp
  */
 
-#ifndef GEOSX_CODINGUTILITIES_TRAITS_HPP_
-#define GEOSX_CODINGUTILITIES_TRAITS_HPP_
+#ifndef GEOS_CODINGUTILITIES_TRAITS_HPP_
+#define GEOS_CODINGUTILITIES_TRAITS_HPP_
 
 // Source includes
 #include "common/DataTypes.hpp"
@@ -251,4 +251,4 @@ using add_const_if_t = typename add_const_if< T, COND >::type;
 
 } /* namespace geos */
 
-#endif /* GEOSX_CODINGUTILITIES_TRAITS_HPP_ */
+#endif /* GEOS_CODINGUTILITIES_TRAITS_HPP_ */

@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
-#define GEOSX_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
+#define GEOS_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
@@ -293,4 +293,4 @@ ENUM_STRINGS( NonlinearSolverParameters::SequentialConvergenceCriterion,
 
 } /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_ */

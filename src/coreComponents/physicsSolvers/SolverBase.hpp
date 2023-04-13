@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLVERBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLVERBASE_HPP_
 
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
@@ -848,4 +848,4 @@ BASETYPE & SolverBase::getConstitutiveModel( dataRepository::Group & dataGroup, 
 } // namespace geos
 
 
-#endif /* GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_SOLVERBASE_HPP_ */

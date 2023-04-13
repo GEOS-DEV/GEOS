@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_
 
 #include "linearAlgebra/common/common.hpp"
 #include "linearAlgebra/common/LinearOperator.hpp"
@@ -169,4 +169,4 @@ private:
 
 }
 
-#endif //GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_
+#endif //GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_

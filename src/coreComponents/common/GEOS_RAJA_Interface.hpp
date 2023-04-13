@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_RAJAINTERFACE_RAJAINTERFACE_HPP
-#define GEOSX_RAJAINTERFACE_RAJAINTERFACE_HPP
+#ifndef GEOS_RAJAINTERFACE_RAJAINTERFACE_HPP
+#define GEOS_RAJAINTERFACE_RAJAINTERFACE_HPP
 
 // Source includes
 #include "common/DataTypes.hpp"
@@ -185,4 +185,4 @@ RAJA_INLINE void forRange( INDEX const begin, INDEX const end, LAMBDA && body )
 
 } // namespace geos
 
-#endif // GEOSX_RAJAINTERFACE_RAJAINTERFACE_HPP
+#endif // GEOS_RAJAINTERFACE_RAJAINTERFACE_HPP

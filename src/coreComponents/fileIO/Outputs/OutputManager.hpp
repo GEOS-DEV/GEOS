@@ -16,8 +16,8 @@
  * @file OutputManager.hpp
  */
 
-#ifndef GEOSX_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_
-#define GEOSX_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_
+#ifndef GEOS_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_
+#define GEOS_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 
@@ -62,4 +62,4 @@ public:
 
 } /* namespace geos */
 
-#endif /* GEOSX_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_ */
+#endif /* GEOS_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_ */

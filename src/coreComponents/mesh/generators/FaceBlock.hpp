@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FACEBLOCK_HPP
-#define GEOSX_FACEBLOCK_HPP
+#ifndef GEOS_FACEBLOCK_HPP
+#define GEOS_FACEBLOCK_HPP
 
 #include "FaceBlockABC.hpp"
 

@@ -16,8 +16,8 @@
  * @file ElementType.hpp
  */
 
-#ifndef GEOSX_MESH_ELEMENTTYPE_HPP
-#define GEOSX_MESH_ELEMENTTYPE_HPP
+#ifndef GEOS_MESH_ELEMENTTYPE_HPP
+#define GEOS_MESH_ELEMENTTYPE_HPP
 
 #include "codingUtilities/EnumStrings.hpp"
 
@@ -111,4 +111,4 @@ ENUM_STRINGS( ElementType,
 
 } // namespace geos
 
-#endif //GEOSX_MESH_ELEMENTTYPE_HPP
+#endif //GEOS_MESH_ELEMENTTYPE_HPP

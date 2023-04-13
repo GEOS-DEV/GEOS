@@ -16,8 +16,8 @@
  * @file ReferenceWrapper.hpp
  * This file contains the class definition of ReferenceWrapper.
  */
-#ifndef GEOSX_DATAREPOSITORY_REFERENCEWRAPPER_HPP_
-#define GEOSX_DATAREPOSITORY_REFERENCEWRAPPER_HPP_
+#ifndef GEOS_DATAREPOSITORY_REFERENCEWRAPPER_HPP_
+#define GEOS_DATAREPOSITORY_REFERENCEWRAPPER_HPP_
 
 // System includes
 #include <type_traits>
@@ -275,4 +275,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* GEOSX_DATAREPOSITORY_REFERENCEWRAPPER_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_REFERENCEWRAPPER_HPP_ */

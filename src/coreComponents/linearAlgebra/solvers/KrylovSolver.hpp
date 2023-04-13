@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
 
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
 #include "linearAlgebra/utilities/BlockVector.hpp"
@@ -221,4 +221,4 @@ protected:
 
 } //namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
+#endif //GEOS_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_

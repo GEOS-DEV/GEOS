@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FILEIO_VTK_VTKPVDWRITER_HPP_
-#define GEOSX_FILEIO_VTK_VTKPVDWRITER_HPP_
+#ifndef GEOS_FILEIO_VTK_VTKPVDWRITER_HPP_
+#define GEOS_FILEIO_VTK_VTKPVDWRITER_HPP_
 
 #include "dataRepository/xmlWrapper.hpp"
 

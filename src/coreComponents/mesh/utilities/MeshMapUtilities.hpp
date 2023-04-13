@@ -15,8 +15,8 @@
 /**
  * @file MeshMapUtilities.hpp
  */
-#ifndef GEOSX_MESH_UTILITIES_MESHMAPUTILITIES_HPP
-#define GEOSX_MESH_UTILITIES_MESHMAPUTILITIES_HPP
+#ifndef GEOS_MESH_UTILITIES_MESHMAPUTILITIES_HPP
+#define GEOS_MESH_UTILITIES_MESHMAPUTILITIES_HPP
 
 #include "common/DataTypes.hpp"
 #include "mesh/ElementRegionManager.hpp"
@@ -213,4 +213,4 @@ void transformCellBlockToRegionMap( arrayView2d< localIndex const > const & bloc
 
 } // namespace geos
 
-#endif //GEOSX_MESH_UTILITIES_MESHMAPUTILITIES_HPP
+#endif //GEOS_MESH_UTILITIES_MESHMAPUTILITIES_HPP

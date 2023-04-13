@@ -17,8 +17,8 @@
  * @file CoupledSolid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLIDBASE_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLIDBASE_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLIDBASE_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLIDBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
@@ -247,4 +247,4 @@ private:
 
 }
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_ */

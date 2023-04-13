@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_TESTCOMPFLOWUTILS_HPP
-#define GEOSX_TESTCOMPFLOWUTILS_HPP
+#ifndef GEOS_TESTCOMPFLOWUTILS_HPP
+#define GEOS_TESTCOMPFLOWUTILS_HPP
 
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -781,4 +781,4 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
 
 } // namespace geos
 
-#endif //GEOSX_TESTCOMPFLOWUTILS_HPP
+#endif //GEOS_TESTCOMPFLOWUTILS_HPP

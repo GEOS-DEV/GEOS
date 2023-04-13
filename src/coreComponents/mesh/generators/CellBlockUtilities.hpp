@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
-#define GEOSX_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
+#ifndef GEOS_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
+#define GEOS_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
 
 #include "mesh/ElementType.hpp"
 #include "common/DataTypes.hpp"
@@ -124,4 +124,4 @@ computeUniqueValueOffsets( ArrayOfArraysView< T const > const & sortedLists, COM
 
 }
 
-#endif // GEOSX_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
+#endif // GEOS_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_

@@ -16,8 +16,8 @@
  * @file ElementSubRegionBase.hpp
  */
 
-#ifndef GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
-#define GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
+#ifndef GEOS_MESH_ELEMENTSUBREGIONBASE_HPP_
+#define GEOS_MESH_ELEMENTSUBREGIONBASE_HPP_
 
 #include "mesh/ElementType.hpp"
 #include "mesh/ObjectManagerBase.hpp"
@@ -292,4 +292,4 @@ protected:
 
 } /* namespace geos */
 
-#endif /* GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_ */
+#endif /* GEOS_MESH_ELEMENTSUBREGIONBASE_HPP_ */

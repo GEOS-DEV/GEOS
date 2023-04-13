@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
-#define GEOSX_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
+#define GEOS_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 
@@ -55,4 +55,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_ */

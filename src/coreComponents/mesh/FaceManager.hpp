@@ -16,8 +16,8 @@
  * @file FaceManager.hpp
  */
 
-#ifndef GEOSX_MESH_FACEMANAGER_HPP_
-#define GEOSX_MESH_FACEMANAGER_HPP_
+#ifndef GEOS_MESH_FACEMANAGER_HPP_
+#define GEOS_MESH_FACEMANAGER_HPP_
 
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"

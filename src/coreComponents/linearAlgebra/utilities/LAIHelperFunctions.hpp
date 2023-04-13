@@ -16,8 +16,8 @@
  * @file LAIHelperFunctions.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
-#define GEOSX_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
@@ -349,4 +349,4 @@ void computeRigidBodyModes( MeshLevel const & mesh,
 
 } // geosx namespace
 
-#endif /*GEOSX_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_*/

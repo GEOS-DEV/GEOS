@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
-#define GEOSX_DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
+#ifndef GEOS_DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
+#define GEOS_DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"

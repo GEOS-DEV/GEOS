@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_
-#define GEOSX_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_
+#ifndef GEOS_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_
+#define GEOS_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_
 
 #include "common/DataTypes.hpp"
 #include "mesh/MeshLevel.hpp"
@@ -90,4 +90,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* GEOSX_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_ */
+#endif /* GEOS_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_ */

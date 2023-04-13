@@ -16,8 +16,8 @@
  * @file FiniteElementDispatch.hpp
  */
 
-#ifndef GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
-#define GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
+#ifndef GEOS_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
+#define GEOS_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
 
 #include "elementFormulations/ConformingVirtualElementOrder1.hpp"
 #include "elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
@@ -194,4 +194,4 @@ dispatchlowOrder3D( FiniteElementBase const & input,
 
 
 
-#endif /* GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_ */
+#endif /* GEOS_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_ */

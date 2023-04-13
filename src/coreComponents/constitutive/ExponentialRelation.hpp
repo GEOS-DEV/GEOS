@@ -16,8 +16,8 @@
  * @file ExponentialRelations.hpp
  */
 
-#ifndef GEOSX_CONSITUTIVE_EXPONENTIALRELATION_HPP_
-#define GEOSX_CONSITUTIVE_EXPONENTIALRELATION_HPP_
+#ifndef GEOS_CONSITUTIVE_EXPONENTIALRELATION_HPP_
+#define GEOS_CONSITUTIVE_EXPONENTIALRELATION_HPP_
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/EnumStrings.hpp"
@@ -530,4 +530,4 @@ void makeExponentialRelation( ExponentApproximationType type,
 
 } // namespace geos
 
-#endif // GEOSX_CONSITUTIVE_EXPONENTIALRELATION_HPP_
+#endif // GEOS_CONSITUTIVE_EXPONENTIALRELATION_HPP_

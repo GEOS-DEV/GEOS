@@ -16,8 +16,8 @@
  * @file InterObjectRelation.hpp
  */
 
-#ifndef GEOSX_MESH_INTEROBJECTRELATION_HPP_
-#define GEOSX_MESH_INTEROBJECTRELATION_HPP_
+#ifndef GEOS_MESH_INTEROBJECTRELATION_HPP_
+#define GEOS_MESH_INTEROBJECTRELATION_HPP_
 
 
 #include <map>
@@ -112,4 +112,4 @@ private:
 typedef InterObjectRelation< array2d< localIndex > > FixedOneToManyRelation;
 }
 
-#endif /* GEOSX_MESH_INTEROBJECTRELATION_HPP_ */
+#endif /* GEOS_MESH_INTEROBJECTRELATION_HPP_ */

@@ -16,8 +16,8 @@
  * @file Arnoldi.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_ARNOLDI_HPP_
-#define GEOSX_LINEARALGEBRA_UTILITIES_ARNOLDI_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_ARNOLDI_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_ARNOLDI_HPP_
 
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 #include "common/LinearOperator.hpp"
@@ -82,4 +82,4 @@ real64 ArnoldiLargestEigenvalue( LinearOperator< VECTOR > const & op, localIndex
 
 } // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_UTILITIES_ARNOLDI_HPP_
+#endif //GEOS_LINEARALGEBRA_UTILITIES_ARNOLDI_HPP_

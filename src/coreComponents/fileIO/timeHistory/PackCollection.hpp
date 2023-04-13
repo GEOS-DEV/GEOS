@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
-#define GEOSX_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
+#ifndef GEOS_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
+#define GEOS_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
 
 #include "mesh/DomainPartition.hpp"
 #include "HistoryCollectionBase.hpp"

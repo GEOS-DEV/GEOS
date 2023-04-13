@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MAININTERFACE_INITIALIZATION_HPP_
-#define GEOSX_MAININTERFACE_INITIALIZATION_HPP_
+#ifndef GEOS_MAININTERFACE_INITIALIZATION_HPP_
+#define GEOS_MAININTERFACE_INITIALIZATION_HPP_
 
 // Source includes
 #include "common/initializeEnvironment.hpp"
@@ -48,4 +48,4 @@ void basicCleanup();
 
 } // namespace geos
 
-#endif // GEOSX_MAININTERFACE_INITIALIZATION_HPP_
+#endif // GEOS_MAININTERFACE_INITIALIZATION_HPP_

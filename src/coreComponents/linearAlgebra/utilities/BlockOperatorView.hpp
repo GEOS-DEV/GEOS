@@ -16,8 +16,8 @@
  * @file BlockOperatorView.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_
-#define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_
 
 #include "codingUtilities/SFINAE_Macros.hpp"
 #include "linearAlgebra/common/LinearOperator.hpp"
@@ -342,4 +342,4 @@ auto BlockOperatorView< VECTOR, OPERATOR >::computeColSize( FUNC func ) const ->
 }// end geosx namespace
 
 
-#endif /*GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_*/

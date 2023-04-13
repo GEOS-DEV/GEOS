@@ -18,8 +18,8 @@
  * @brief Overrides the SSLE constitutive updates to account for a damage varible and a volumtric-deviatoric split.
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGEVOLDEV_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_DAMAGEVOLDEV_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_DAMAGEVOLDEV_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_DAMAGEVOLDEV_HPP_
 #include "Damage.hpp"
 #include "InvariantDecompositions.hpp"
 #include "SolidBase.hpp"
@@ -202,4 +202,4 @@ public:
 }
 } /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_DAMAGEVOLDEV_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_DAMAGEVOLDEV_HPP_ */

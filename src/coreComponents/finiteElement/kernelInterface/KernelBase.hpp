@@ -17,8 +17,8 @@
  * @file KernelBase.hpp
  */
 
-#ifndef GEOSX_FINITEELEMENT_KERNELBASE_HPP_
-#define GEOSX_FINITEELEMENT_KERNELBASE_HPP_
+#ifndef GEOS_FINITEELEMENT_KERNELBASE_HPP_
+#define GEOS_FINITEELEMENT_KERNELBASE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -471,4 +471,4 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
 
 
-#endif /* GEOSX_FINITEELEMENT_KERNELBASE_HPP_ */
+#endif /* GEOS_FINITEELEMENT_KERNELBASE_HPP_ */

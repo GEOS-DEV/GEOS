@@ -16,8 +16,8 @@
  * @file ReactiveBrineFluid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_REACTIVEBRINEFLUID_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_REACTIVEBRINEFLUID_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_REACTIVEBRINEFLUID_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_REACTIVEBRINEFLUID_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "constitutive/fluid/ReactiveMultiFluid.hpp"
@@ -382,4 +382,4 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
 
 } // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_REACTIVEBRINEFLUID_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_REACTIVEBRINEFLUID_HPP_

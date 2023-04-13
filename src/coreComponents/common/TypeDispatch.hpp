@@ -18,8 +18,8 @@
  * Collection of tools to help dispatch templated functions on types
  */
 
-#ifndef GEOSX_COMMON_TYPEDISPATCH_HPP
-#define GEOSX_COMMON_TYPEDISPATCH_HPP
+#ifndef GEOS_COMMON_TYPEDISPATCH_HPP
+#define GEOS_COMMON_TYPEDISPATCH_HPP
 
 #include "common/DataTypes.hpp"
 
@@ -286,4 +286,4 @@ bool dispatch( TypeList< Ts... > const types,
 
 } // namespace geos
 
-#endif //GEOSX_COMMON_TYPEDISPATCH_HPP
+#endif //GEOS_COMMON_TYPEDISPATCH_HPP

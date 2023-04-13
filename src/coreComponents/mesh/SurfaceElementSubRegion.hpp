@@ -16,8 +16,8 @@
  * @file SurfaceElementSubRegion.hpp
  */
 
-#ifndef GEOSX_MESH_SURFACEELEMENTSUBREGION_HPP_
-#define GEOSX_MESH_SURFACEELEMENTSUBREGION_HPP_
+#ifndef GEOS_MESH_SURFACEELEMENTSUBREGION_HPP_
+#define GEOS_MESH_SURFACEELEMENTSUBREGION_HPP_
 
 #include "ElementSubRegionBase.hpp"
 #include "InterObjectRelation.hpp"

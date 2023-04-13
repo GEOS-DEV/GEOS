@@ -16,8 +16,8 @@
  * @file ChomboIO.hpp
  */
 
-#ifndef GEOSX_FILEIO_OUTPUTS_CHOMBOIO_HPP_
-#define GEOSX_FILEIO_OUTPUTS_CHOMBOIO_HPP_
+#ifndef GEOS_FILEIO_OUTPUTS_CHOMBOIO_HPP_
+#define GEOS_FILEIO_OUTPUTS_CHOMBOIO_HPP_
 
 #include "OutputBase.hpp"
 #include "fileIO/coupling/ChomboCoupler.hpp"
@@ -100,4 +100,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* GEOSX_FILEIO_OUTPUTS_CHOMBOIO_HPP_ */
+#endif /* GEOS_FILEIO_OUTPUTS_CHOMBOIO_HPP_ */

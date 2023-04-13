@@ -16,8 +16,8 @@
  * @file MeshObjectPath.hpp
  */
 
-#ifndef GEOSX_MESH_MESHOBJECTPATH_HPP_
-#define GEOSX_MESH_MESHOBJECTPATH_HPP_
+#ifndef GEOS_MESH_MESHOBJECTPATH_HPP_
+#define GEOS_MESH_MESHOBJECTPATH_HPP_
 
 
 #include "codingUtilities/EnumStrings.hpp"
@@ -366,4 +366,4 @@ void MeshObjectPath::forObjectsInPath( MeshLevel & meshLevel,
 
 } /* namespace geos */
 
-#endif /* GEOSX_MESH_MESHOBJECTPATH_HPP_ */
+#endif /* GEOS_MESH_MESHOBJECTPATH_HPP_ */

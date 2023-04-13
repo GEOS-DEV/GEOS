@@ -17,8 +17,8 @@
  * @file ProppantSolid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_PROPPANTSOLID_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_PROPPANTSOLID_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_PROPPANTSOLID_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_PROPPANTSOLID_HPP_
 
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/NullModel.hpp"
@@ -141,4 +141,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_PROPPANTSOLID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_PROPPANTSOLID_HPP_ */

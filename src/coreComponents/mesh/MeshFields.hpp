@@ -16,8 +16,8 @@
  * @file MeshFields.hpp
  */
 
-#ifndef GEOSX_MESH_FIELDS_HPP_
-#define GEOSX_MESH_FIELDS_HPP_
+#ifndef GEOS_MESH_FIELDS_HPP_
+#define GEOS_MESH_FIELDS_HPP_
 
 #include "codingUtilities/traits.hpp"
 #include "dataRepository/RestartFlags.hpp"
@@ -150,4 +150,4 @@ DECLARE_FIELD( ruptureTime,
 } // namespace fields
 } // namespace geos
 
-#endif /* GEOSX_MESH_FIELDS_HPP_ */
+#endif /* GEOS_MESH_FIELDS_HPP_ */

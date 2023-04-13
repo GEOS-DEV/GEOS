@@ -15,8 +15,8 @@
 /**
  * @file EpetraUtils.hpp
  */
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -75,4 +75,4 @@ inline long long const * toEpetraLongLong( globalIndex const * const index )
 
 } // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_
+#endif //GEOS_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_

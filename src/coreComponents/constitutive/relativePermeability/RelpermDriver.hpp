@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_RELPERMDRIVER_HPP_
-#define GEOSX_RELPERMDRIVER_HPP_
+#ifndef GEOS_RELPERMDRIVER_HPP_
+#define GEOS_RELPERMDRIVER_HPP_
 
 #include "events/tasks/TaskBase.hpp"
 #include "constitutive/relativePermeability/TableRelativePermeabilityHysteresis.hpp"
@@ -119,4 +119,4 @@ private:
 
 }
 
-#endif //GEOSX_RELPERMDRIVER_HPP_
+#endif //GEOS_RELPERMDRIVER_HPP_

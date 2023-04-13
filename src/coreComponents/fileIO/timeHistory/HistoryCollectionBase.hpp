@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_HISTORYCOLLECTIONBASE_HPP
-#define GEOSX_HISTORYCOLLECTIONBASE_HPP
+#ifndef GEOS_HISTORYCOLLECTIONBASE_HPP
+#define GEOS_HISTORYCOLLECTIONBASE_HPP
 
 #include "HistoryCollection.hpp"
 

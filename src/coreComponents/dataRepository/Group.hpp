@@ -17,8 +17,8 @@
  * @file Group.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_GROUP_HPP_
-#define GEOSX_DATAREPOSITORY_GROUP_HPP_
+#ifndef GEOS_DATAREPOSITORY_GROUP_HPP_
+#define GEOS_DATAREPOSITORY_GROUP_HPP_
 
 #include "InputFlags.hpp"
 #include "ObjectCatalog.hpp"
@@ -1593,4 +1593,4 @@ Wrapper< T > & Group::registerWrapper( string const & name,
 } /* end namespace dataRepository */
 } /* end namespace geos */
 
-#endif /* GEOSX_DATAREPOSITORY_GROUP_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_GROUP_HPP_ */

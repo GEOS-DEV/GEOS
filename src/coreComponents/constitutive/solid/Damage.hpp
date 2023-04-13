@@ -39,8 +39,8 @@
  *
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_DAMAGE_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 
 #include "constitutive/solid/SolidBase.hpp"
 #include "InvariantDecompositions.hpp"
@@ -351,4 +351,4 @@ protected:
 }
 } /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_DAMAGE_HPP_ */

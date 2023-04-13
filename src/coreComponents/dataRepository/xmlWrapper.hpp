@@ -16,8 +16,8 @@
  * @file xmlWrapper.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_
-#define GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_
+#ifndef GEOS_DATAREPOSITORY_XMLWRAPPER_HPP_
+#define GEOS_DATAREPOSITORY_XMLWRAPPER_HPP_
 
 // Source includes
 #include "common/DataTypes.hpp"
@@ -306,4 +306,4 @@ readAttributeAsType( T & rval,
 
 } /* namespace geos */
 
-#endif /*GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_ */
+#endif /*GEOS_DATAREPOSITORY_XMLWRAPPER_HPP_ */

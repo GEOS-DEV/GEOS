@@ -15,8 +15,8 @@
 /**
  * @file OutputBase.hpp
  */
-#ifndef GEOSX_FILEIO_OUTPUTS_OUTPUTBASE_HPP_
-#define GEOSX_FILEIO_OUTPUTS_OUTPUTBASE_HPP_
+#ifndef GEOS_FILEIO_OUTPUTS_OUTPUTBASE_HPP_
+#define GEOS_FILEIO_OUTPUTS_OUTPUTBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
@@ -117,4 +117,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* GEOSX_FILEIO_OUTPUTS_OUTPUTBASE_HPP_ */
+#endif /* GEOS_FILEIO_OUTPUTS_OUTPUTBASE_HPP_ */

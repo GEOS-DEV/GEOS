@@ -16,8 +16,8 @@
  * @file VanGenuchtenBakerRelativePermeability.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_VANGENUCHTENBAKERRELATIVEPERMEABILITY_HPP
-#define GEOSX_CONSTITUTIVE_VANGENUCHTENBAKERRELATIVEPERMEABILITY_HPP
+#ifndef GEOS_CONSTITUTIVE_VANGENUCHTENBAKERRELATIVEPERMEABILITY_HPP
+#define GEOS_CONSTITUTIVE_VANGENUCHTENBAKERRELATIVEPERMEABILITY_HPP
 
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
@@ -325,4 +325,4 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
 
 } // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_VANGENUCHTENBAKERRELATIVEPERMEABILITY_HPP
+#endif //GEOS_CONSTITUTIVE_VANGENUCHTENBAKERRELATIVEPERMEABILITY_HPP

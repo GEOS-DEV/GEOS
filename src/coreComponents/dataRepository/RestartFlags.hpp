@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_DATAREPOSITORY_RESTARTFLAGS_HPP_
-#define GEOSX_DATAREPOSITORY_RESTARTFLAGS_HPP_
+#ifndef GEOS_DATAREPOSITORY_RESTARTFLAGS_HPP_
+#define GEOS_DATAREPOSITORY_RESTARTFLAGS_HPP_
 
 /**
  * @file RestartFlags.hpp
@@ -115,4 +115,4 @@ std::ostream & operator<<( std::ostream & os, PlotLevel const & plotLevel )
 } /// namespace dataRepository
 } /// namespace geos
 
-#endif  /* GEOSX_DATAREPOSITORY_RESTARTFLAGS_HPP_ */
+#endif  /* GEOS_DATAREPOSITORY_RESTARTFLAGS_HPP_ */

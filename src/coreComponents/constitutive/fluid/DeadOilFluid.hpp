@@ -16,8 +16,8 @@
  * @file DeadOilFluid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_
 
 #include "constitutive/fluid/BlackOilFluidBase.hpp"
 
@@ -460,4 +460,4 @@ DeadOilFluid::KernelWrapper::
 
 } //namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_

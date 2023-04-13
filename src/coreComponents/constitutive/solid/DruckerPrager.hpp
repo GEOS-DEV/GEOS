@@ -16,8 +16,8 @@
  *  @file DruckerPrager.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
+#ifndef GEOS_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
+#define GEOS_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
 
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
@@ -466,4 +466,4 @@ protected:
 
 } /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP_ */

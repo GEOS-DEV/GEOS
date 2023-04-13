@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_
 
 #include "linearAlgebra/common/LinearOperator.hpp"
 #include "linearAlgebra/common/PreconditionerBase.hpp"
@@ -111,4 +111,4 @@ private:
 
 }
 
-#endif //GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_
+#endif //GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_

@@ -16,8 +16,8 @@
  * @file HypreKernels.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREKERNELS_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREKERNELS_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREKERNELS_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_HYPREKERNELS_HPP_
 
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/traits.hpp"
@@ -272,4 +272,4 @@ void addEntriesRestricted( hypre_CSRMatrix const * const src_mat,
 } // namespace hypre
 } // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_INTERFACES_HYPREKERNELS_HPP_
+#endif //GEOS_LINEARALGEBRA_INTERFACES_HYPREKERNELS_HPP_

@@ -14,8 +14,8 @@
 
 
 
-#ifndef GEOSX_DATAREPOSITORY_BUFFEROPS_HPP_
-#define GEOSX_DATAREPOSITORY_BUFFEROPS_HPP_
+#ifndef GEOS_DATAREPOSITORY_BUFFEROPS_HPP_
+#define GEOS_DATAREPOSITORY_BUFFEROPS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -645,4 +645,4 @@ Unpack( buffer_unit_type const * & buffer,
 
 #include "BufferOps_inline.hpp"
 
-#endif /* GEOSX_DATAREPOSITORY_BUFFEROPS_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_BUFFEROPS_HPP_ */

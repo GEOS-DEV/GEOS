@@ -16,8 +16,8 @@
  * @file SiloOutput.hpp
  */
 
-#ifndef GEOSX_FILEIO_OUTPUTS_SILOOUTPUT_HPP_
-#define GEOSX_FILEIO_OUTPUTS_SILOOUTPUT_HPP_
+#ifndef GEOS_FILEIO_OUTPUTS_SILOOUTPUT_HPP_
+#define GEOS_FILEIO_OUTPUTS_SILOOUTPUT_HPP_
 
 #include "OutputBase.hpp"
 
@@ -106,4 +106,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* GEOSX_FILEIO_OUTPUTS_SILOOUTPUT_HPP_ */
+#endif /* GEOS_FILEIO_OUTPUTS_SILOOUTPUT_HPP_ */

@@ -16,8 +16,8 @@
  * @file Span.hpp
  */
 
-#ifndef GEOSX_COMMON_SPAN_HPP
-#define GEOSX_COMMON_SPAN_HPP
+#ifndef GEOS_COMMON_SPAN_HPP
+#define GEOS_COMMON_SPAN_HPP
 
 #include "codingUtilities/traits.hpp"
 #include "common/Logger.hpp"
@@ -238,4 +238,4 @@ private:
 
 }
 
-#endif //GEOSX_COMMON_SPAN_HPP
+#endif //GEOS_COMMON_SPAN_HPP

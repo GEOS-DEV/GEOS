@@ -16,8 +16,8 @@
  * File: Interpolation.hpp
  */
 
-#ifndef GEOSX_MATH_EXTRAPOLATION_HPP_
-#define GEOSX_MATH_EXTRAPOLATION_HPP_
+#ifndef GEOS_MATH_EXTRAPOLATION_HPP_
+#define GEOS_MATH_EXTRAPOLATION_HPP_
 
 
 namespace geos
@@ -71,4 +71,4 @@ T logExtrapolation( T const x1,
 
 }
 
-#endif // GEOSX_MATH_EXTRAPOLATION_HPP_
+#endif // GEOS_MATH_EXTRAPOLATION_HPP_

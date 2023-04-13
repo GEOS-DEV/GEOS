@@ -16,8 +16,8 @@
  * @file DofManagerHelpers.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_DOFMANAGERHELPERS_HPP
-#define GEOSX_LINEARALGEBRA_DOFMANAGERHELPERS_HPP
+#ifndef GEOS_LINEARALGEBRA_DOFMANAGERHELPERS_HPP
+#define GEOS_LINEARALGEBRA_DOFMANAGERHELPERS_HPP
 
 #include "mesh/utilities/MeshMapUtilities.hpp"
 
@@ -733,4 +733,4 @@ struct ArrayHelper< T, FieldLocation::Elem >
 
 } // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_DOFMANAGERHELPERS_HPP
+#endif //GEOS_LINEARALGEBRA_DOFMANAGERHELPERS_HPP

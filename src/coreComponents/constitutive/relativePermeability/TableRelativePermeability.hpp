@@ -16,8 +16,8 @@
  * @file TableRelativePermeability.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_TABLERELATIVEPERMEABILITY_HPP
-#define GEOSX_CONSTITUTIVE_TABLERELATIVEPERMEABILITY_HPP
+#ifndef GEOS_CONSTITUTIVE_TABLERELATIVEPERMEABILITY_HPP
+#define GEOS_CONSTITUTIVE_TABLERELATIVEPERMEABILITY_HPP
 
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
@@ -339,4 +339,4 @@ TableRelativePermeability::KernelWrapper::
 
 } // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_TABLERELATIVEPERMEABILITY_HPP
+#endif //GEOS_CONSTITUTIVE_TABLERELATIVEPERMEABILITY_HPP

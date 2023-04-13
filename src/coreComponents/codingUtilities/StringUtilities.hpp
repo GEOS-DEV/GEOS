@@ -16,8 +16,8 @@
  * @file StringUtilities.hpp
  */
 
-#ifndef GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
-#define GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
+#ifndef GEOS_CODINGUTILITIES_STRINGUTILITIES_HPP_
+#define GEOS_CODINGUTILITIES_STRINGUTILITIES_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -210,4 +210,4 @@ string toMetricPrefixString( T const & value );
 } // namespace stringutilities
 } // namespace geos
 
-#endif /* GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_ */
+#endif /* GEOS_CODINGUTILITIES_STRINGUTILITIES_HPP_ */

@@ -16,8 +16,8 @@
  * @file VTKMeshGeneratorTools.hpp
  */
 
-#ifndef GEOSX_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_
-#define GEOSX_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_
+#ifndef GEOS_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_
+#define GEOS_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_
 
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
@@ -62,4 +62,4 @@ exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm );
 } // namespace vtk
 } // namespace geos
 
-#endif //GEOSX_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_
+#endif //GEOS_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_

@@ -15,8 +15,8 @@
 /**
  * @file LinearSolverBase.hpp
  */
-#ifndef GEOSX_LINEARSOLVERBASE_HPP
-#define GEOSX_LINEARSOLVERBASE_HPP
+#ifndef GEOS_LINEARSOLVERBASE_HPP
+#define GEOS_LINEARSOLVERBASE_HPP
 
 #include "PreconditionerBase.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
@@ -86,4 +86,4 @@ protected:
 
 }
 
-#endif //GEOSX_LINEARSOLVERBASE_HPP
+#endif //GEOS_LINEARSOLVERBASE_HPP

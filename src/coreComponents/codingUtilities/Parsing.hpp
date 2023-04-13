@@ -16,8 +16,8 @@
  * @file Parsing.hpp
  */
 
-#ifndef GEOSX_CODINGUTILITIES_PARSING_HPP_
-#define GEOSX_CODINGUTILITIES_PARSING_HPP_
+#ifndef GEOS_CODINGUTILITIES_PARSING_HPP_
+#define GEOS_CODINGUTILITIES_PARSING_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -143,4 +143,4 @@ void parseFile( string const & filename,
 
 } // namespace geos
 
-#endif //GEOSX_CODINGUTILITIES_PARSING_HPP_
+#endif //GEOS_CODINGUTILITIES_PARSING_HPP_

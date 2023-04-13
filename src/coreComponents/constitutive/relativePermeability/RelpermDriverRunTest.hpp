@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_RELPERMDRIVERRUNTEST_HPP_
-#define GEOSX_RELPERMDRIVERRUNTEST_HPP_
+#ifndef GEOS_RELPERMDRIVERRUNTEST_HPP_
+#define GEOS_RELPERMDRIVERRUNTEST_HPP_
 
 #include "constitutive/relativePermeability/RelpermDriver.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
@@ -242,4 +242,4 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 }
 
 
-#endif //GEOSX_RELPERMDRIVERRUNTEST_HPP_
+#endif //GEOS_RELPERMDRIVERRUNTEST_HPP_

@@ -16,8 +16,8 @@
  * @file PetscUtils.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCUTILS_HPP
-#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCUTILS_HPP
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_PETSCUTILS_HPP
+#define GEOS_LINEARALGEBRA_INTERFACES_PETSCUTILS_HPP
 
 #include "common/DataTypes.hpp"
 
@@ -64,4 +64,4 @@ inline PetscInt const * toPetscInt( globalIndex const * const index )
 
 } // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_INTERFACES_PETSCUTILS_HPP
+#endif //GEOS_LINEARALGEBRA_INTERFACES_PETSCUTILS_HPP

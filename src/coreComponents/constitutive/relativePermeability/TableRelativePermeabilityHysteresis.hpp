@@ -16,8 +16,8 @@
  * @file TableRelativePermeabilityHysteresis.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP
-#define GEOSX_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP
+#ifndef GEOS_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP
+#define GEOS_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP
 
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
@@ -1046,4 +1046,4 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 
 } // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP
+#endif //GEOS_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP

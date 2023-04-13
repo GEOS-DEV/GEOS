@@ -15,8 +15,8 @@
 /**
  * @file slurryFluidSelector.hpp
  */
-#ifndef GEOSX_CONSTITUTIVE_FLUID_SLURRYFLUIDSELECTOR_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_SLURRYFLUIDSELECTOR_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_SLURRYFLUIDSELECTOR_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_SLURRYFLUIDSELECTOR_HPP_
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/fluid/ProppantSlurryFluid.hpp"
@@ -45,4 +45,4 @@ void constitutiveUpdatePassThru( SlurryFluidBase & fluid,
 
 } // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_SLURRYFLUIDSELECTOR_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_SLURRYFLUIDSELECTOR_HPP_

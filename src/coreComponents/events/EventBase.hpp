@@ -16,8 +16,8 @@
  * @file EventBase.hpp
  */
 
-#ifndef GEOSX_EVENTS_EVENTSBASE_HPP_
-#define GEOSX_EVENTS_EVENTSBASE_HPP_
+#ifndef GEOS_EVENTS_EVENTSBASE_HPP_
+#define GEOS_EVENTS_EVENTSBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
@@ -350,4 +350,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* GEOSX_EVENTS_EVENTSBASE_HPP_ */
+#endif /* GEOS_EVENTS_EVENTSBASE_HPP_ */

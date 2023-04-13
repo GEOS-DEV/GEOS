@@ -16,8 +16,8 @@
  * @file layouts.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_LAYOUTS_HPP
-#define GEOSX_CONSTITUTIVE_FLUID_LAYOUTS_HPP
+#ifndef GEOS_CONSTITUTIVE_FLUID_LAYOUTS_HPP
+#define GEOS_CONSTITUTIVE_FLUID_LAYOUTS_HPP
 
 #include "common/DataTypes.hpp"
 #include "common/GeosxConfig.hpp"
@@ -98,4 +98,4 @@ static constexpr int USD_FLUID_DC = LvArray::typeManipulation::getStrideOneDimen
 } // namespace constitutive
 } // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_LAYOUTS_HPP
+#endif //GEOS_CONSTITUTIVE_FLUID_LAYOUTS_HPP

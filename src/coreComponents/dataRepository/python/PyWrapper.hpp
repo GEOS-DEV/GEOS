@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PYTHON_PYWRAPPER_HPP_
-#define GEOSX_PYTHON_PYWRAPPER_HPP_
+#ifndef GEOS_PYTHON_PYWRAPPER_HPP_
+#define GEOS_PYTHON_PYWRAPPER_HPP_
 
 // Source includes
 #include "dataRepository/WrapperBase.hpp"

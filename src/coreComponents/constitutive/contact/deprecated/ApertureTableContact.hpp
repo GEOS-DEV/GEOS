@@ -16,8 +16,8 @@
  * @file ApertureTableContact.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_
-#define GEOSX_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_
+#ifndef GEOS_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_
+#define GEOS_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_
 
 #include "constitutive/contact/ContactBase.hpp"
 #include "functions/TableFunction.hpp"
@@ -174,4 +174,4 @@ real64 ApertureTableContactUpdates::computeEffectiveAperture( real64 const apert
 
 } /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_ */

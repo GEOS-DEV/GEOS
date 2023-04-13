@@ -16,8 +16,8 @@
  * @file ExecutableGroup.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
-#define GEOSX_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
+#ifndef GEOS_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
+#define GEOS_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/DataTypes.hpp"
@@ -132,4 +132,4 @@ ENUM_STRINGS( ExecutableGroup::TimesteppingBehavior,
 }
 
 
-#endif /* GEOSX_DATAREPOSITORY_EXECUTABLEGROUP_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_EXECUTABLEGROUP_HPP_ */

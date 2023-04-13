@@ -13,8 +13,8 @@
  */
 
 
-#ifndef GEOSX_MESH_CELLELEMENTSUBREGION_HPP_
-#define GEOSX_MESH_CELLELEMENTSUBREGION_HPP_
+#ifndef GEOS_MESH_CELLELEMENTSUBREGION_HPP_
+#define GEOS_MESH_CELLELEMENTSUBREGION_HPP_
 
 #include "mesh/generators/CellBlockABC.hpp"
 #include "mesh/NodeManager.hpp"
@@ -406,4 +406,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* GEOSX_MESH_CELLELEMENTSUBREGION_HPP_ */
+#endif /* GEOS_MESH_CELLELEMENTSUBREGION_HPP_ */

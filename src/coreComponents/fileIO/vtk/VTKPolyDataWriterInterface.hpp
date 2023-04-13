@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FILEIO_VTK_VTKPOLYDATAWRITERINTERFACE_HPP_
-#define GEOSX_FILEIO_VTK_VTKPOLYDATAWRITERINTERFACE_HPP_
+#ifndef GEOS_FILEIO_VTK_VTKPOLYDATAWRITERINTERFACE_HPP_
+#define GEOS_FILEIO_VTK_VTKPOLYDATAWRITERINTERFACE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/WrapperBase.hpp"

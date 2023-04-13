@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_COMMON_PATH_HPP
-#define GEOSX_COMMON_PATH_HPP
+#ifndef GEOS_COMMON_PATH_HPP
+#define GEOS_COMMON_PATH_HPP
 
 // System includes
 #include <string>

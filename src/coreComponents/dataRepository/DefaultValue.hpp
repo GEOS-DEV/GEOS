@@ -16,8 +16,8 @@
  * @file DefaultValue.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_
-#define GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_
+#ifndef GEOS_DATAREPOSITORY_DEFAULTVALUE_HPP_
+#define GEOS_DATAREPOSITORY_DEFAULTVALUE_HPP_
 
 // Source includes
 #include "common/DataTypes.hpp"
@@ -136,4 +136,4 @@ using DefaultValue = internal::Helper< T >;
 } // namespace geos
 
 
-#endif /* GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_DEFAULTVALUE_HPP_ */

@@ -17,8 +17,8 @@
  * @file ConstitutivePassThru.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
-#define GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
+#ifndef GEOS_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
+#define GEOS_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
 
 #include "ConstitutivePassThruHandler.hpp"
 #include "NullModel.hpp"
@@ -298,4 +298,4 @@ struct ConstitutivePassThru< CoupledSolidBase >
 
 } /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_ */

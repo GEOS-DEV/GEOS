@@ -16,8 +16,8 @@
  * @file VTKUtilities.hpp
  */
 
-#ifndef GEOSX_MESH_GENERATORS_VTKUTILITIES_HPP
-#define GEOSX_MESH_GENERATORS_VTKUTILITIES_HPP
+#ifndef GEOS_MESH_GENERATORS_VTKUTILITIES_HPP
+#define GEOS_MESH_GENERATORS_VTKUTILITIES_HPP
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
@@ -234,4 +234,4 @@ void writeSurfaces( integer const logLevel,
 
 } // namespace geos
 
-#endif /* GEOSX_MESH_GENERATORS_VTKUTILITIES_HPP */
+#endif /* GEOS_MESH_GENERATORS_VTKUTILITIES_HPP */

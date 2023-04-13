@@ -16,8 +16,8 @@
  * @file InternalMeshGenerator.hpp
  */
 
-#ifndef GEOSX_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
-#define GEOSX_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
+#ifndef GEOS_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
+#define GEOS_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "mesh/generators/MeshGeneratorBase.hpp"
@@ -384,4 +384,4 @@ public:
 
 } /* namespace geos */
 
-#endif /* GEOSX_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP */
+#endif /* GEOS_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP */

@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_COMMON_FORMAT_HPP_
-#define GEOSX_COMMON_FORMAT_HPP_
+#ifndef GEOS_COMMON_FORMAT_HPP_
+#define GEOS_COMMON_FORMAT_HPP_
 
 #if __cplusplus < 202002L
 #define GEOSX_USE_FMT
@@ -43,4 +43,4 @@
  */
 #define GEOS_FMT_TO( iter, size, msg, ... ) *GEOS_FMT_NS::format_to_n( iter, size - 1, msg, __VA_ARGS__ ).out = '\0'
 
-#endif //GEOSX_COMMON_FORMAT_HPP_
+#endif //GEOS_COMMON_FORMAT_HPP_

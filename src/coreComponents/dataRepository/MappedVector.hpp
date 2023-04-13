@@ -16,8 +16,8 @@
  * @file MappedVector.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_MAPPEDVECTOR_HPP_
-#define GEOSX_DATAREPOSITORY_MAPPEDVECTOR_HPP_
+#ifndef GEOS_DATAREPOSITORY_MAPPEDVECTOR_HPP_
+#define GEOS_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 
 // Source includes
 #include "KeyIndexT.hpp"
@@ -531,4 +531,4 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
 }
 }
 
-#endif /* GEOSX_DATAREPOSITORY_MAPPEDVECTOR_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_MAPPEDVECTOR_HPP_ */

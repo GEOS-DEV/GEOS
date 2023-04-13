@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_WELLELEMENTSUBREGION_HPP_
-#define GEOSX_MESH_WELLELEMENTSUBREGION_HPP_
+#ifndef GEOS_MESH_WELLELEMENTSUBREGION_HPP_
+#define GEOS_MESH_WELLELEMENTSUBREGION_HPP_
 
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/InterObjectRelation.hpp"
@@ -457,4 +457,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* GEOSX_MESH_WELLELEMENTSUBREGION_HPP_ */
+#endif /* GEOS_MESH_WELLELEMENTSUBREGION_HPP_ */

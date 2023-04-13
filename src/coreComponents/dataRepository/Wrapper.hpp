@@ -16,8 +16,8 @@
  * @file Wrapper.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_WRAPPER_HPP_
-#define GEOSX_DATAREPOSITORY_WRAPPER_HPP_
+#ifndef GEOS_DATAREPOSITORY_WRAPPER_HPP_
+#define GEOS_DATAREPOSITORY_WRAPPER_HPP_
 
 // Source inclues
 #include "wrapperHelpers.hpp"
@@ -978,4 +978,4 @@ private:
 //  TV_ttf_display_type<T>(this);
 //}
 
-#endif /* GEOSX_DATAREPOSITORY_WRAPPER_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_WRAPPER_HPP_ */

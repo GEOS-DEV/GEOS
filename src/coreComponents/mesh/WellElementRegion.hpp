@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef GEOSX_MESH_WELLELEMENTREGION_HPP_
-#define GEOSX_MESH_WELLELEMENTREGION_HPP_
+#ifndef GEOS_MESH_WELLELEMENTREGION_HPP_
+#define GEOS_MESH_WELLELEMENTREGION_HPP_
 
 #include "mesh/ElementRegionBase.hpp"
 #include "mesh/generators/InternalWellGenerator.hpp"
@@ -171,4 +171,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* GEOSX_MESH_WELLELEMENTREGION_HPP_ */
+#endif /* GEOS_MESH_WELLELEMENTREGION_HPP_ */

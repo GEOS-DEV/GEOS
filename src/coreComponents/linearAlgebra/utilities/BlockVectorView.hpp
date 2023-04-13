@@ -16,8 +16,8 @@
  * @file BlockVectorView.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORVIEW_HPP_
-#define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORVIEW_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_BLOCKVECTORVIEW_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_BLOCKVECTORVIEW_HPP_
 
 #include "common/common.hpp"
 #include "linearAlgebra/common/common.hpp"
@@ -408,4 +408,4 @@ std::ostream & operator<<( std::ostream & os,
 } // end geosx namespace
 
 
-#endif /* GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORVIEW_HPP_ */
+#endif /* GEOS_LINEARALGEBRA_UTILITIES_BLOCKVECTORVIEW_HPP_ */

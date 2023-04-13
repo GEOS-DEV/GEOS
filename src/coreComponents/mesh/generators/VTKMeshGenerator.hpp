@@ -16,8 +16,8 @@
  * @file VTKMeshGenerator.hpp
  */
 
-#ifndef GEOSX_MESH_GENERATORS_VTKMESHGENERATOR_HPP
-#define GEOSX_MESH_GENERATORS_VTKMESHGENERATOR_HPP
+#ifndef GEOS_MESH_GENERATORS_VTKMESHGENERATOR_HPP
+#define GEOS_MESH_GENERATORS_VTKMESHGENERATOR_HPP
 
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
@@ -156,4 +156,4 @@ private:
 
 } // namespace geos
 
-#endif /* GEOSX_MESH_GENERATORS_VTKMESHGENERATOR_HPP */
+#endif /* GEOS_MESH_GENERATORS_VTKMESHGENERATOR_HPP */

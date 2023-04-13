@@ -16,8 +16,8 @@
  * @file Logger.hpp
  */
 
-#ifndef GEOSX_COMMON_LOGGER_HPP
-#define GEOSX_COMMON_LOGGER_HPP
+#ifndef GEOS_COMMON_LOGGER_HPP
+#define GEOS_COMMON_LOGGER_HPP
 
 // Source incldes
 #include "common/GeosxConfig.hpp"
@@ -527,4 +527,4 @@ void FinalizeLogger();
 
 } // namespace geos
 
-#endif /* GEOSX_COMMON_LOGGER_HPP */
+#endif /* GEOS_COMMON_LOGGER_HPP */

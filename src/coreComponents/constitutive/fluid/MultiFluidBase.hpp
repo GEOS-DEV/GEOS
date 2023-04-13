@@ -16,8 +16,8 @@
  * @file MultiFluidBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP_
 
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
@@ -1026,4 +1026,4 @@ MultiFluidBase::KernelWrapper::
 
 } //namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP_

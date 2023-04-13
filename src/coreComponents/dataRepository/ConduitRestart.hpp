@@ -16,8 +16,8 @@
  * @file ConduitRestart.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_CONDUITRESTART_HPP_
-#define GEOSX_DATAREPOSITORY_CONDUITRESTART_HPP_
+#ifndef GEOS_DATAREPOSITORY_CONDUITRESTART_HPP_
+#define GEOS_DATAREPOSITORY_CONDUITRESTART_HPP_
 
 // Source includes
 #include "common/GeosxConfig.hpp"
@@ -99,4 +99,4 @@ void loadTree( string const & path, conduit::Node & root );
 
 /// @endcond
 
-#endif /* GEOSX_DATAREPOSITORY_CONDUITRESTART_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_CONDUITRESTART_HPP_ */

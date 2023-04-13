@@ -16,8 +16,8 @@
  * @file ConstitutiveManager.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
-#define GEOSX_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
+#ifndef GEOS_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
+#define GEOS_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
@@ -121,4 +121,4 @@ ConstitutiveManager::getConstitutiveData( string const & name,
 }
 } /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_ */

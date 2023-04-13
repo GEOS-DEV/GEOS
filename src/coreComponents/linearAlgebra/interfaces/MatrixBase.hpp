@@ -16,8 +16,8 @@
  * @file MatrixBase.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_
 
 #include "linearAlgebra/common/common.hpp"
 #include "linearAlgebra/common/LinearOperator.hpp"
@@ -965,4 +965,4 @@ protected:
 
 } // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_
+#endif //GEOS_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_

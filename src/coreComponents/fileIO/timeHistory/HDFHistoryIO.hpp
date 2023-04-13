@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FILEIO_TIMEHISTORY_HDFFILE_HPP_
-#define GEOSX_FILEIO_TIMEHISTORY_HDFFILE_HPP_
+#ifndef GEOS_FILEIO_TIMEHISTORY_HDFFILE_HPP_
+#define GEOS_FILEIO_TIMEHISTORY_HDFFILE_HPP_
 
 
 #include "dataRepository/HistoryDataSpec.hpp"

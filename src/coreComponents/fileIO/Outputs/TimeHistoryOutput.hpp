@@ -16,8 +16,8 @@
  * @file TimeHistoryOutput.hpp
  */
 
-#ifndef GEOSX_FILEIO_OUTPUTS_HISTORYOUTPUT_HPP_
-#define GEOSX_FILEIO_OUTPUTS_HISTORYOUTPUT_HPP_
+#ifndef GEOS_FILEIO_OUTPUTS_HISTORYOUTPUT_HPP_
+#define GEOS_FILEIO_OUTPUTS_HISTORYOUTPUT_HPP_
 
 #include "OutputBase.hpp"
 #include "fileIO/timeHistory/HistoryCollection.hpp"

@@ -17,8 +17,8 @@
  * @file SolidBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "LvArray/src/tensorOps.hpp"
@@ -788,4 +788,4 @@ protected:
 } // namespace constitutive
 } // namespace geos
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_ */

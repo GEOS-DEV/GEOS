@@ -21,8 +21,8 @@
 #include "common/GeosxConfig.hpp"
 #include "LvArray/src/Macros.hpp"
 
-#ifndef GEOSX_COMMON_GEOSXMACROS_HPP_
-#define GEOSX_COMMON_GEOSXMACROS_HPP_
+#ifndef GEOS_COMMON_GEOSXMACROS_HPP_
+#define GEOS_COMMON_GEOSXMACROS_HPP_
 
 /**
  * @name Host-device markers
@@ -106,4 +106,4 @@ void i_g_n_o_r_e( ARGS const & ... ) {}
 /// Macro to concatenate two tokens (user level)
 #define GEOS_CONCAT( A, B ) GEOS_CONCAT_IMPL( A, B )
 
-#endif // GEOSX_COMMON_GEOSXMACROS_HPP_
+#endif // GEOS_COMMON_GEOSXMACROS_HPP_

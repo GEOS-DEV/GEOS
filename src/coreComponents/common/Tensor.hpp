@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_COMMON_TENSOR_HPP_
-#define GEOSX_COMMON_TENSOR_HPP_
+#ifndef GEOS_COMMON_TENSOR_HPP_
+#define GEOS_COMMON_TENSOR_HPP_
 
 #include "GeosxMacros.hpp"
 
@@ -146,4 +146,4 @@ private:
 
 }
 
-#endif //GEOSX_COMMON_TENSOR_HPP_
+#endif //GEOS_COMMON_TENSOR_HPP_

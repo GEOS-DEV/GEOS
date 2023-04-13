@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_GENERATORS_PRISMUTILITIES_HPP_
-#define GEOSX_MESH_GENERATORS_PRISMUTILITIES_HPP_
+#ifndef GEOS_MESH_GENERATORS_PRISMUTILITIES_HPP_
+#define GEOS_MESH_GENERATORS_PRISMUTILITIES_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/Span.hpp"
@@ -96,4 +96,4 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
 
 }
 
-#endif // GEOSX_MESH_GENERATORS_PRISMUTILITIES_HPP_
+#endif // GEOS_MESH_GENERATORS_PRISMUTILITIES_HPP_

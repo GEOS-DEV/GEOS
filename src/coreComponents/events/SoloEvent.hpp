@@ -16,8 +16,8 @@
  * @file SoloEvent.hpp
  */
 
-#ifndef GEOSX_EVENTS_SOLOEVENT_HPP_
-#define GEOSX_EVENTS_SOLOEVENT_HPP_
+#ifndef GEOS_EVENTS_SOLOEVENT_HPP_
+#define GEOS_EVENTS_SOLOEVENT_HPP_
 
 #include "events/EventBase.hpp"
 
@@ -83,4 +83,4 @@ public:
 
 } /* namespace geos */
 
-#endif /* GEOSX_EVENTS_SOLOEVENT_HPP_ */
+#endif /* GEOS_EVENTS_SOLOEVENT_HPP_ */

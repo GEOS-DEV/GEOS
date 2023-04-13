@@ -21,8 +21,8 @@
  * of these strings, like stream insertion/extraction operators.
  */
 
-#ifndef GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP
-#define GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP
+#ifndef GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
+#define GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
 
 #include "StringUtilities.hpp"
 #include "common/DataTypes.hpp"
@@ -181,4 +181,4 @@ struct TypeRegex< ENUM, std::enable_if_t< internal::HasEnumStrings< ENUM > > >
 
 } // namespace geos
 
-#endif //GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP
+#endif //GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP

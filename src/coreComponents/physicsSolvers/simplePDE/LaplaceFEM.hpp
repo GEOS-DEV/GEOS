@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
-#define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
+#define GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
 
 #include "physicsSolvers/simplePDE/LaplaceBaseH1.hpp"  // a base class shared by all Laplace solvers
 
@@ -76,4 +76,4 @@ public:
 };
 } /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_ */

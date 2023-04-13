@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_TESTSINGLEFLOWUTILS_HPP
-#define GEOSX_TESTSINGLEFLOWUTILS_HPP
+#ifndef GEOS_TESTSINGLEFLOWUTILS_HPP
+#define GEOS_TESTSINGLEFLOWUTILS_HPP
 
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -322,4 +322,4 @@ void fillCellCenteredNumericalJacobian( SINGLE_PHASE_SOLVER & solver,
 
 } // namespace geos
 
-#endif //GEOSX_TESTSINGLEFLOWUTILS_HPP
+#endif //GEOS_TESTSINGLEFLOWUTILS_HPP

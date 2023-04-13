@@ -16,8 +16,8 @@
  * @file FieldSpecificationOps.hpp
  */
 
-#ifndef GEOSX_COMMON_FIELDSPECIFICATIONOPS_HPP
-#define GEOSX_COMMON_FIELDSPECIFICATIONOPS_HPP
+#ifndef GEOS_COMMON_FIELDSPECIFICATIONOPS_HPP
+#define GEOS_COMMON_FIELDSPECIFICATIONOPS_HPP
 
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
@@ -682,4 +682,4 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
 
 } //namespace geos
 
-#endif //GEOSX_COMMON_FIELDSPECIFICATIONOPS_HPP
+#endif //GEOS_COMMON_FIELDSPECIFICATIONOPS_HPP

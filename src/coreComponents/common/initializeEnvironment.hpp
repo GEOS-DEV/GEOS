@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_COMMON_INITIALIZEENVIRONMENT_HPP_
-#define GEOSX_COMMON_INITIALIZEENVIRONMENT_HPP_
+#ifndef GEOS_COMMON_INITIALIZEENVIRONMENT_HPP_
+#define GEOS_COMMON_INITIALIZEENVIRONMENT_HPP_
 
 // Source includes
 #include "DataTypes.hpp"
@@ -181,4 +181,4 @@ void pushStatsIntoAdiak( string const & name, T const value )
 
 } // namespace geos
 
-#endif // GEOSX_COMMON_INITIALIZEENVIRONMENT_HPP_
+#endif // GEOS_COMMON_INITIALIZEENVIRONMENT_HPP_

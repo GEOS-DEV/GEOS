@@ -15,8 +15,8 @@
 /**
  * @file ConstitutivePassThruHandler.hpp
  */
-#ifndef GEOSX_CONSTITUTIVEPASSTHRUHANDLER_HPP
-#define GEOSX_CONSTITUTIVEPASSTHRUHANDLER_HPP
+#ifndef GEOS_CONSTITUTIVEPASSTHRUHANDLER_HPP
+#define GEOS_CONSTITUTIVEPASSTHRUHANDLER_HPP
 
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
@@ -77,4 +77,4 @@ struct ConstitutivePassThruHandler< TYPE, TYPES... >
 
 } //namespace geos
 
-#endif //GEOSX_CONSTITUTIVEPASSTHRUHANDLER_HPP
+#endif //GEOS_CONSTITUTIVEPASSTHRUHANDLER_HPP

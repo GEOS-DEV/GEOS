@@ -16,8 +16,8 @@
  * @file ToElementRelation.hpp
  */
 
-#ifndef GEOSX_MESH_TOELEMENTRELATION_HPP_
-#define GEOSX_MESH_TOELEMENTRELATION_HPP_
+#ifndef GEOS_MESH_TOELEMENTRELATION_HPP_
+#define GEOS_MESH_TOELEMENTRELATION_HPP_
 
 #include "InterObjectRelation.hpp"
 
@@ -141,4 +141,4 @@ void insert( OrderedVariableToManyElementRelation & relation,
 
 } /* namespace geos */
 
-#endif /* GEOSX_MESH_TOELEMENTRELATION_HPP_ */
+#endif /* GEOS_MESH_TOELEMENTRELATION_HPP_ */

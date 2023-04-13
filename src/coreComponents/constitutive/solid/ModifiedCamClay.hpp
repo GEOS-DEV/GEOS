@@ -16,8 +16,8 @@
  *  @file ModifiedCamClay.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_MODIFIEDCAMCLAY_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_MODIFIEDCAMCLAY_HPP
+#ifndef GEOS_CONSTITUTIVE_SOLID_MODIFIEDCAMCLAY_HPP
+#define GEOS_CONSTITUTIVE_SOLID_MODIFIEDCAMCLAY_HPP
 
 #include "ElasticIsotropicPressureDependent.hpp"
 #include "InvariantDecompositions.hpp"
@@ -582,4 +582,4 @@ protected:
 
 } /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_MODIFIEDCAMCLAY_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_MODIFIEDCAMCLAY_HPP_ */

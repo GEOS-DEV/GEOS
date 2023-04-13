@@ -16,8 +16,8 @@
  * @file TableFunction.hpp
  */
 
-#ifndef GEOSX_FUNCTIONS_TABLEFUNCTION_HPP_
-#define GEOSX_FUNCTIONS_TABLEFUNCTION_HPP_
+#ifndef GEOS_FUNCTIONS_TABLEFUNCTION_HPP_
+#define GEOS_FUNCTIONS_TABLEFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
 
@@ -617,4 +617,4 @@ ENUM_STRINGS( TableFunction::InterpolationType,
 
 } /* namespace geos */
 
-#endif /* GEOSX_FUNCTIONS_TABLEFUNCTION_HPP_ */
+#endif /* GEOS_FUNCTIONS_TABLEFUNCTION_HPP_ */

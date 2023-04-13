@@ -16,8 +16,8 @@
  * @file DataLayouts.hpp
  */
 
-#ifndef GEOSX_COMMON_DATALAYOUTS_HPP_
-#define GEOSX_COMMON_DATALAYOUTS_HPP_
+#ifndef GEOS_COMMON_DATALAYOUTS_HPP_
+#define GEOS_COMMON_DATALAYOUTS_HPP_
 
 #include "common/GeosxConfig.hpp"
 
@@ -233,4 +233,4 @@ static constexpr int USD_OBL_DER = LvArray::typeManipulation::getStrideOneDimens
 
 } // namespace geos
 
-#endif // GEOSX_COMMON_DATALAYOUTS_HPP_
+#endif // GEOS_COMMON_DATALAYOUTS_HPP_

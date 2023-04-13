@@ -16,8 +16,8 @@
  * @file SiloFile.hpp
  */
 
-#ifndef GEOSX_FILEIO_SILO_SILOFILE_HPP_
-#define GEOSX_FILEIO_SILO_SILOFILE_HPP_
+#ifndef GEOS_FILEIO_SILO_SILOFILE_HPP_
+#define GEOS_FILEIO_SILO_SILOFILE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "constitutive/solid/SolidBase.hpp"
@@ -905,4 +905,4 @@ void SetVariableNames( string const & fieldName, string_array & varnamestring, c
 
 
 }
-#endif /* GEOSX_FILEIO_SILO_SILOFILE_HPP_ */
+#endif /* GEOS_FILEIO_SILO_SILOFILE_HPP_ */

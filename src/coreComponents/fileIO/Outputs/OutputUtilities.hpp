@@ -16,8 +16,8 @@
  * @file OutputUtilities.hpp
  */
 
-#ifndef GEOSX_FILEIO_OUTPUTS_OUTPUTUTILITIES_HPP_
-#define GEOSX_FILEIO_OUTPUTS_OUTPUTUTILITIES_HPP_
+#ifndef GEOS_FILEIO_OUTPUTS_OUTPUTUTILITIES_HPP_
+#define GEOS_FILEIO_OUTPUTS_OUTPUTUTILITIES_HPP_
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/RestartFlags.hpp"
@@ -64,4 +64,4 @@ bool isFieldPlotEnabled( dataRepository::PlotLevel const wrapperPlotLevel,
 
 } /* namespace geos */
 
-#endif /* GEOSX_FILEIO_OUTPUTS_OUTPUTILITIES_HPP_ */
+#endif /* GEOS_FILEIO_OUTPUTS_OUTPUTILITIES_HPP_ */

@@ -16,8 +16,8 @@
  * File: Interpolation.hpp
  */
 
-#ifndef GEOSX_MATH_INTERPOLATION_HPP_
-#define GEOSX_MATH_INTERPOLATION_HPP_
+#ifndef GEOS_MATH_INTERPOLATION_HPP_
+#define GEOS_MATH_INTERPOLATION_HPP_
 
 
 namespace geos
@@ -163,4 +163,4 @@ void linearInterpolation( arrayView1d< T const > const & xIn,
 
 }
 
-#endif // GEOSX_MATH_INTERPOLATION_HPP_
+#endif // GEOS_MATH_INTERPOLATION_HPP_

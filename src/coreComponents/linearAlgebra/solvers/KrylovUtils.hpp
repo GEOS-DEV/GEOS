@@ -15,8 +15,8 @@
 /**
  * @file KrylovUtils.hpp
  */
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVUTILS_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVUTILS_HPP_
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_KRYLOVUTILS_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_KRYLOVUTILS_HPP_
 
 #include "codingUtilities/Utilities.hpp"
 
@@ -35,4 +35,4 @@
     break;                                  \
   }                                         \
 
-#endif //GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVUTILS_HPP_
+#endif //GEOS_LINEARALGEBRA_SOLVERS_KRYLOVUTILS_HPP_
