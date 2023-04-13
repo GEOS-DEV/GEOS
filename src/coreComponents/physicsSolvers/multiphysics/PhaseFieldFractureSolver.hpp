@@ -24,7 +24,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class PhaseFieldFractureSolver : public CoupledSolver< SolidMechanicsLagrangianFEM, PhaseFieldDamageFEM >
@@ -127,6 +127,6 @@ struct DamageInterpolationKernel
   localIndex m_numElems;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDFRACTURESOLVER_HPP_ */

@@ -20,7 +20,7 @@
 #define GEOSX_MATH_EXTRAPOLATION_HPP_
 
 
-namespace geosx
+namespace geos
 {
 
 namespace extrapolation

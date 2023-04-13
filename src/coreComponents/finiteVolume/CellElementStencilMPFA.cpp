@@ -19,7 +19,7 @@
 
 #include "CellElementStencilMPFA.hpp"
 
-namespace geosx
+namespace geos
 {
 
 void CellElementStencilMPFA::reserve( localIndex const size )
@@ -47,4 +47,4 @@ void CellElementStencilMPFA::add( localIndex const numPts,
   m_connectorIndices[connectorIndex] = m_elementRegionIndices.size()-1;
 }
 
-} /* namespace geosx */
+} /* namespace geos */

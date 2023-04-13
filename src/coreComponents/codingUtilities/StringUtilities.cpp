@@ -23,7 +23,7 @@
 #include <cstdlib>
 #include <cmath>
 
-namespace geosx
+namespace geos
 {
 namespace stringutilities
 {

@@ -25,7 +25,7 @@
 #include "mesh/CellElementSubRegion.hpp"
 
 
-using namespace geosx;
+using namespace geos;
 
 constexpr double maxCoordInX = 1.0;
 constexpr double maxCoordInY = 2.0;
@@ -518,11 +518,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  GeosxState state( geosx::basicSetup( argc, argv ) );
+  GeosxState state( geos::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

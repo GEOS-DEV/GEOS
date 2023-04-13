@@ -24,7 +24,7 @@
 #include "linearAlgebra/utilities/BlockOperator.hpp"
 #include "linearAlgebra/utilities/BlockVector.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -220,6 +220,6 @@ private:
   mutable BlockVector< Vector > m_sol;
 };
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_SOLVERS_BLOCKPRECONDITIONER_HPP_

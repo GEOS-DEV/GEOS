@@ -23,7 +23,7 @@
 
 #include <petsc.h>
 
-namespace geosx
+namespace geos
 {
 
 PetscExport::PetscExport() = default;
@@ -185,4 +185,4 @@ INST_PETSC_EXPORT_CRS( long long, long long );
 
 #undef INST_PETSC_EXPORT_CRS
 
-} // namespace geosx
+} // namespace geos

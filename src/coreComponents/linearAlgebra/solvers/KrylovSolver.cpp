@@ -22,7 +22,7 @@
 #include "linearAlgebra/solvers/GmresSolver.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 template< typename VECTOR >

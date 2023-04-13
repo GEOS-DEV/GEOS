@@ -23,7 +23,7 @@
 #include "ElementRegionBase.hpp"
 #include "codingUtilities/EnumStrings.hpp"
 
-namespace geosx
+namespace geos
 {
 
 
@@ -222,6 +222,6 @@ ENUM_STRINGS( SurfaceElementRegion::SurfaceSubRegionType,
               "faceElement",
               "embeddedElement" );
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* CORECOMPONENTS_MESH_SurfaceElementRegion_HPP_ */

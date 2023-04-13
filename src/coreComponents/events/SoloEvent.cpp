@@ -18,7 +18,7 @@
 
 #include "SoloEvent.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -108,4 +108,4 @@ real64 SoloEvent::getEventTypeDtRequest( real64 const time )
 
 
 REGISTER_CATALOG_ENTRY( EventBase, SoloEvent, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalSinglePhaseBaseKernels
@@ -635,6 +635,6 @@ public:
 
 } // namespace thermalSinglePhaseBaseKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP

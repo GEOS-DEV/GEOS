@@ -23,7 +23,7 @@
 
 #include "constitutive/fluid/layouts.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -125,6 +125,6 @@ private:
 
 } // end namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_CHEMICALREACTIONS_REQUILIBRIUMREACTIONS_HPP_

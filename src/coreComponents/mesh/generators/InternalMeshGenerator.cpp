@@ -32,7 +32,7 @@
 
 #include <cmath>
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -1005,4 +1005,4 @@ InternalMeshGenerator::
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

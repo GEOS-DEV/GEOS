@@ -19,7 +19,7 @@
 #include "CapillaryPressureBase.hpp"
 #include "CapillaryPressureFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -110,4 +110,4 @@ void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group & pa
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

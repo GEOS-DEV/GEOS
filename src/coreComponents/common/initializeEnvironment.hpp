@@ -30,7 +30,7 @@ class ConfigManager;
 }
 #endif
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -179,6 +179,6 @@ void pushStatsIntoAdiak( string const & name, T const value )
 #endif
 }
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_COMMON_INITIALIZEENVIRONMENT_HPP_

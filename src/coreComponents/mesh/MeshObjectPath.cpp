@@ -21,7 +21,7 @@
 
 #include <fnmatch.h>
 
-namespace geosx
+namespace geos
 {
 
 namespace
@@ -293,4 +293,4 @@ void MeshObjectPath::printPermutations() const
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */

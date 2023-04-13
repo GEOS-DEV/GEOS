@@ -24,7 +24,7 @@
 
 #include <set>
 
-namespace geosx
+namespace geos
 {
 
 class ElementRegionManager;
@@ -62,6 +62,6 @@ bool isFieldPlotEnabled( dataRepository::PlotLevel const wrapperPlotLevel,
 
 } /* namespace outputUtilities */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FILEIO_OUTPUTS_OUTPUTILITIES_HPP_ */

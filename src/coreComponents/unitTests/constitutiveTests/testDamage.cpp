@@ -20,8 +20,8 @@
 
 #include "dataRepository/xmlWrapper.hpp"
 
-using namespace geosx;
-using namespace ::geosx::constitutive;
+using namespace geos;
+using namespace ::geos::constitutive;
 
 TEST( DamageTests, testDamageSpectral )
 {

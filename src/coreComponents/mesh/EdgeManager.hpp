@@ -26,7 +26,7 @@
 #include "LvArray/src/tensorOps.hpp"
 
 
-namespace geosx
+namespace geos
 {
 class FaceManager;
 class NodeManager;

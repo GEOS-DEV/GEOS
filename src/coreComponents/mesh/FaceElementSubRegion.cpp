@@ -25,7 +25,7 @@
 #include "LvArray/src/tensorOps.hpp"
 #include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -325,4 +325,4 @@ void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & f
   }
 }
 
-} /* namespace geosx */
+} /* namespace geos */

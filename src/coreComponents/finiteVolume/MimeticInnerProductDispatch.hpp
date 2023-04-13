@@ -27,7 +27,7 @@
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
 #include "LvArray/src/system.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace mimeticInnerProduct
 {
@@ -181,6 +181,6 @@ mimeticInnerProductReducedDispatch( MimeticInnerProductBase & input,
 
 } // end namespace mimeticInnerProduct
 
-} // end namespace geosx
+} // end namespace geos
 
 #endif /* GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTDISPATCH_HPP_ */

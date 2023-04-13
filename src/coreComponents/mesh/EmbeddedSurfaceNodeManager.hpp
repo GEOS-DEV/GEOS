@@ -23,7 +23,7 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "ToElementRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class EdgeManager;

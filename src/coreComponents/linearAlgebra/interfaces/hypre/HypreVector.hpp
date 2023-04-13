@@ -37,7 +37,7 @@ struct hypre_ParVector_struct;
 
 ///@}
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -211,6 +211,6 @@ private:
 
 };
 
-}// end namespace geosx
+}// end namespace geos
 
 #endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREVECTOR_HPP_*/

@@ -24,7 +24,7 @@
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "ToElementRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class FaceManager;
@@ -380,7 +380,7 @@ public:
    * In particular, any mismatch like @a (e.g.) <tt>n -> (e0, e1, ...)</tt> and
    * <tt>n -> (er1, er0, ...)</tt> will probably result in a bug.
    * @warning @p e, @p er or @p esr will equal -1 if undefined.
-   * @see geosx::FaceManager::elementList that shares the same kind of pattern.
+   * @see geos::FaceManager::elementList that shares the same kind of pattern.
    */
   ArrayOfArrays< localIndex > & elementList() { return m_toElements.m_toElementIndex; }
 

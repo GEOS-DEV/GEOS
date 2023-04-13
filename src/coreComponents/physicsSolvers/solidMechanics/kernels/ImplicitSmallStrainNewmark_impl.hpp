@@ -22,7 +22,7 @@
 #include "ImplicitSmallStrainNewmark.hpp"
 #include "ImplicitSmallStrainQuasiStatic_impl.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsLagrangianFEMKernels
@@ -191,6 +191,6 @@ ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernel
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINNEWMARK_IMPL_HPP_

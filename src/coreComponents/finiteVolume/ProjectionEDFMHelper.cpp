@@ -6,7 +6,7 @@
 
 #include <limits>  // numeric_limits
 
-namespace geosx
+namespace geos
 {
 
 ProjectionEDFMHelper::ProjectionEDFMHelper( MeshLevel const & mesh,
@@ -292,4 +292,4 @@ void ProjectionEDFMHelper::
   weights[1] = faceArea * LvArray::tensorOps::l2Norm< 3 >( projectionPointToFracCenter );
 }
 
-}  // end namespace geosx
+}  // end namespace geos

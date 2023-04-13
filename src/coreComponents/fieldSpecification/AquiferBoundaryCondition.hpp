@@ -23,7 +23,7 @@
 #include "FieldSpecificationBase.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -383,6 +383,6 @@ AquiferBoundaryCondition::KernelWrapper::
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FIELDSPECIFICATION_AQUIFERBOUNDARYCONDITION_HPP */

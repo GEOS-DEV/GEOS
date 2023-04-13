@@ -30,7 +30,7 @@
 
 #include <limits>
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -845,7 +845,7 @@ BASETYPE & SolverBase::getConstitutiveModel( dataRepository::Group & dataGroup, 
   return constitutiveModels.getGroup< BASETYPE >( key );
 }
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif /* GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_ */

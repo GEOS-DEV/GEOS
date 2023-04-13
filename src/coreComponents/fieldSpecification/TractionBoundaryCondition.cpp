@@ -20,7 +20,7 @@
 
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -222,4 +222,4 @@ void TractionBoundaryCondition::launch( real64 const time,
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, TractionBoundaryCondition, string const &, Group * const )
 
 
-} /* namespace geosx */
+} /* namespace geos */

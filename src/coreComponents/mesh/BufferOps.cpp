@@ -19,7 +19,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "ElementRegionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace bufferOps
 {

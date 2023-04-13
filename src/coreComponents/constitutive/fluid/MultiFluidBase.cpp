@@ -20,7 +20,7 @@
 #include "MultiFluidBase.hpp"
 #include "MultiFluidFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -228,4 +228,4 @@ void MultiFluidBase::saveConvergedState() const
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

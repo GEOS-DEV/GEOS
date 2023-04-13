@@ -23,7 +23,7 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/contact/ContactFields.hpp"
 
-namespace geosx
+namespace geos
 {
 class SolidMechanicsLagrangianFEM;
 
@@ -113,6 +113,6 @@ protected:
   };
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_ */

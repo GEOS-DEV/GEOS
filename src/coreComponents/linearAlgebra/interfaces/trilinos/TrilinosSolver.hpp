@@ -27,7 +27,7 @@
 
 class AztecOO;
 
-namespace geosx
+namespace geos
 {
 
 /**

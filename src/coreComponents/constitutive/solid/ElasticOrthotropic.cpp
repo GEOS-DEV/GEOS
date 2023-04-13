@@ -18,7 +18,7 @@
 
 #include "ElasticOrthotropic.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 namespace constitutive
@@ -264,4 +264,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticOrthotropic, string const &, Gr
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

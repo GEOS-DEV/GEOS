@@ -20,7 +20,7 @@
 #include <chrono>
 
 
-using namespace geosx;
+using namespace geos;
 using namespace finiteElement;
 
 

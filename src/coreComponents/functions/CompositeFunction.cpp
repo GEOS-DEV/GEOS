@@ -15,7 +15,7 @@
 #include "FunctionManager.hpp"
 #include "CompositeFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -120,4 +120,4 @@ real64 CompositeFunction::evaluate( real64 const * const input ) const
 
 REGISTER_CATALOG_ENTRY( FunctionBase, CompositeFunction, string const &, Group * const )
 
-} // namespace geosx
+} // namespace geos

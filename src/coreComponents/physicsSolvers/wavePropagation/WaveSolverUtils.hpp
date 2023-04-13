@@ -22,7 +22,7 @@
 
 #include "WaveSolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 struct WaveSolverUtils
@@ -291,6 +291,6 @@ struct WaveSolverUtils
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_ */

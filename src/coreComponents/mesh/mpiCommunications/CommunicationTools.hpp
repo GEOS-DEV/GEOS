@@ -28,7 +28,7 @@
 
 #include <set>
 
-namespace geosx
+namespace geos
 {
 
 
@@ -125,6 +125,6 @@ private:
 
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_MPICOMMUNICATIONS_COMMUNICATIONTOOLS_HPP_ */

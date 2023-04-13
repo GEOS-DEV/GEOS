@@ -20,7 +20,7 @@
 
 #include "mesh/ElementSubRegionBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -117,4 +117,4 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

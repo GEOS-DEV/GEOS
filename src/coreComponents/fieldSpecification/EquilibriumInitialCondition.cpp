@@ -20,7 +20,7 @@
 
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -215,4 +215,4 @@ void EquilibriumInitialCondition::initializePreSubGroups()
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, EquilibriumInitialCondition, string const &, Group * const )
 
 
-} /* namespace geosx */
+} /* namespace geos */

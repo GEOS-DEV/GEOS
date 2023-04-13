@@ -51,7 +51,7 @@
 #include <vector>
 #include <regex>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -996,4 +996,4 @@ void ProblemManager::readRestartOverwrite()
   this->postRestartInitializationRecursive();
 }
 
-} /* namespace geosx */
+} /* namespace geos */

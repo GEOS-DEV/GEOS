@@ -22,7 +22,7 @@
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsLagrangianFEMKernels
@@ -30,7 +30,7 @@ namespace solidMechanicsLagrangianFEMKernels
 
 /**
  * @brief Implements kernels for solving quasi-static equilibrium.
- * @copydoc geosx::finiteElement::ImplicitKernelBase
+ * @copydoc geos::finiteElement::ImplicitKernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
  * @tparam UNUSED An unused parameter since we are assuming that the test and
@@ -40,7 +40,7 @@ namespace solidMechanicsLagrangianFEMKernels
  * Implements the KernelBase interface functions required for solving the
  * quasi-static equilibrium equations using one of the
  * "finite element kernel application" functions such as
- * geosx::finiteElement::RegionBasedKernelApplication.
+ * geos::finiteElement::RegionBasedKernelApplication.
  *
  * In this implementation, the template parameter @p NUM_NODES_PER_ELEM is used
  * in place of both @p NUM_TEST_SUPPORT_POINTS_PER_ELEM and
@@ -88,7 +88,7 @@ public:
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param inputGravityVector The gravity vector.
    */
   ImplicitSmallStrainQuasiStatic( NodeManager const & nodeManager,
@@ -107,7 +107,7 @@ public:
   //*****************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   * @copydoc geos::finiteElement::ImplicitKernelBase::StackVariables
    *
    * Adds a stack array for the displacement, incremental displacement, and the
    * constitutive stiffness.
@@ -147,7 +147,7 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
+   * @copydoc ::geos::finiteElement::ImplicitKernelBase::setup
    *
    * For the QuasiStatic implementation, global values from the displacement,
    * incremental displacement, and degree of freedom numbers are placed into
@@ -191,7 +191,7 @@ public:
   };
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
+   * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    * @tparam STRESS_MODIFIER Type of optional functor to allow for the
    * modification of stress prior to integration.
    * @param stressModifier An optional functor to allow for the modification
@@ -208,7 +208,7 @@ public:
                               STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const;
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+   * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -216,7 +216,7 @@ public:
                    StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::kernelLaunch
+   * @copydoc geos::finiteElement::KernelBase::kernelLaunch
    */
   template< typename POLICY,
             typename KERNEL_TYPE >
@@ -265,7 +265,7 @@ using QuasiStaticFactory = finiteElement::KernelFactory< ImplicitSmallStrainQuas
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 

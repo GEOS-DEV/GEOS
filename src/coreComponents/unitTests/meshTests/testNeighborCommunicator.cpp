@@ -31,7 +31,7 @@
 #include <ctime>
 #include <cstdlib>
 
-using namespace geosx;
+using namespace geos;
 
 #ifndef GTEST_SKIP
 #define GTEST_SKIP() return
@@ -125,8 +125,8 @@ TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
 int main( int ac, char * av[] )
 {
   ::testing::InitGoogleTest( &ac, av );
-  geosx::basicSetup( ac, av );
+  geos::basicSetup( ac, av );
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
+  geos::basicCleanup();
   return result;
 }

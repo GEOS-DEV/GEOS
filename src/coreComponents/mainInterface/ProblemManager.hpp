@@ -22,7 +22,7 @@
 
 #include "events/EventManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class PhysicsSolverManager;
@@ -368,6 +368,6 @@ private:
   FieldSpecificationManager * m_fieldSpecificationManager;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MAININTERFACE_PROBLEMMANAGER_HPP_ */

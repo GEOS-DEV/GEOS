@@ -27,7 +27,7 @@
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -624,4 +624,4 @@ void AcousticFirstOrderWaveEquationSEM::applyPML( real64 const, DomainPartition 
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticFirstOrderWaveEquationSEM, string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

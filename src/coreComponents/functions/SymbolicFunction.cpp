@@ -19,7 +19,7 @@
 #include "SymbolicFunction.hpp"
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -126,4 +126,4 @@ void SymbolicFunction::initializeFunction()
 
 REGISTER_CATALOG_ENTRY( FunctionBase, SymbolicFunction, string const &, Group * const )
 
-} // namespace geosx
+} // namespace geos

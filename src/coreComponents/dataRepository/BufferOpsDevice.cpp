@@ -14,7 +14,7 @@
 
 #include "BufferOpsDevice.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace bufferOps
@@ -344,4 +344,4 @@ DECLARE_PACK_UNPACK_UP_TO_3D( R1Tensor );
 
 } // namespace bufferOps
 
-} // namespace geosx
+} // namespace geos

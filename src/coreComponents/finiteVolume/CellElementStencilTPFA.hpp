@@ -21,7 +21,7 @@
 
 #include "StencilBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -340,6 +340,6 @@ CellElementStencilTPFAWrapper::
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FINITEVOLUME_CELLELEMENTSTENCILTPFA_HPP_ */

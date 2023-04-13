@@ -17,7 +17,7 @@
 
 #include "FaceBlockABC.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

@@ -22,7 +22,7 @@
 
 #include "HydrofractureSolverKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace hydrofractureSolverKernels
@@ -254,6 +254,6 @@ struct FluidMassResidualDerivativeAssemblyKernel
 
 } /* namespace hydrofractureSolverKernels */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVERKERNELS_HPP_

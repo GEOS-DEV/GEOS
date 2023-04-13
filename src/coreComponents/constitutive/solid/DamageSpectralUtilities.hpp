@@ -30,7 +30,7 @@
 #include <iostream>
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
-namespace geosx
+namespace geos
 {
 
 //get the positive part only of tensor T using spectral split

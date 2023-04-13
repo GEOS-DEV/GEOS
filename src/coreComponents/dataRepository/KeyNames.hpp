@@ -21,7 +21,7 @@
 
 #include <string>
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {

@@ -35,7 +35,7 @@
 
 #define SELECTED_FE_TYPES SEM_FE_TYPES
 
-namespace geosx
+namespace geos
 {
 
 class WaveSolverBase : public SolverBase
@@ -280,6 +280,6 @@ protected:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_ */

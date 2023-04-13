@@ -34,7 +34,7 @@
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 namespace compositionalMultiphaseHybridFVMKernels
@@ -1217,6 +1217,6 @@ void kernelLaunchSelector( integer numFacesInElem, integer numComps, integer num
 
 } // namespace compositionalMultiphaseHybridFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP

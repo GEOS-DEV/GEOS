@@ -21,7 +21,7 @@
 
 #include "constitutive/fluid/SlurryFluidBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -509,6 +509,6 @@ ProppantSlurryFluidUpdate::
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_FLUID_PROPPANTSLURRYFLUID_HPP_ */

@@ -22,7 +22,7 @@
 
 #include "physicsSolvers/surfaceGeneration/EmbeddedSurfaceGenerator.hpp"
 
-namespace geosx
+namespace geos
 {
 class MeshLevel;
 class NeighborCommunicator;
@@ -38,6 +38,6 @@ void sychronizeTopology( MeshLevel & mesh,
                          string const fractureRegionName );
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_EMBEDDEDSURFACESPARALLELSYNCHRONIZATION_HPP_ */

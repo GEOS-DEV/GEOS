@@ -23,7 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "LvArray/src/limits.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -387,6 +387,6 @@ struct NoOpFunc
 };
 
 
-} // namespace geosx
+} // namespace geos
 
 #endif /* GEOSX_CODINGUTILITIES_UTILITIES_H_ */

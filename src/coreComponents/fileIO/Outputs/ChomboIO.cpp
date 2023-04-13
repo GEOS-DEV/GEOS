@@ -24,7 +24,7 @@
 #include <fstream>
 #include <chrono>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -98,4 +98,4 @@ bool ChomboIO::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 }
 
 REGISTER_CATALOG_ENTRY( OutputBase, ChomboIO, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

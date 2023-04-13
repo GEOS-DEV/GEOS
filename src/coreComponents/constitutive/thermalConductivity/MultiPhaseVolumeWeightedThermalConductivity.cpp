@@ -21,7 +21,7 @@
 #include "ThermalConductivityFields.hpp"
 #include "MultiPhaseThermalConductivityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -116,4 +116,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, MultiPhaseVolumeWeightedThermalConduct
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

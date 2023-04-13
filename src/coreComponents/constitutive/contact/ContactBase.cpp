@@ -20,7 +20,7 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -150,4 +150,4 @@ ContactBaseUpdates ContactBase::createKernelWrapper() const
 
 } /* end namespace constitutive */
 
-} /* end namespace geosx */
+} /* end namespace geos */

@@ -28,7 +28,7 @@
 
 #include <_hypre_parcsr_mv.h>
 
-namespace geosx
+namespace geos
 {
 namespace hypre
 {
@@ -270,6 +270,6 @@ void addEntriesRestricted( hypre_CSRMatrix const * const src_mat,
 /// @endcond
 
 } // namespace hypre
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_INTERFACES_HYPREKERNELS_HPP_

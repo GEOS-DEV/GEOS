@@ -24,7 +24,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshLevel.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -96,6 +96,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FIELDSTATISTICSBASE_HPP_ */

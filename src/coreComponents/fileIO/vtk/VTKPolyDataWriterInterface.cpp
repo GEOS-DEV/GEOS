@@ -36,7 +36,7 @@
 // System includes
 #include <unordered_set>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -1143,4 +1143,4 @@ bool VTKPolyDataWriterInterface::isFieldPlotEnabled( dataRepository::WrapperBase
 }
 
 } // namespace vtk
-} // namespace geosx
+} // namespace geos

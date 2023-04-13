@@ -23,7 +23,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -273,7 +273,7 @@ private:
 
 };
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELL_HPP_

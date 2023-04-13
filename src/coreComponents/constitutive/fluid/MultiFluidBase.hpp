@@ -24,7 +24,7 @@
 #include "constitutive/fluid/layouts.hpp"
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -1024,6 +1024,6 @@ MultiFluidBase::KernelWrapper::
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP_

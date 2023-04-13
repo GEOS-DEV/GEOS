@@ -38,7 +38,7 @@
 
 
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 using namespace constitutive;
@@ -425,4 +425,4 @@ REGISTER_CATALOG_ENTRY( SolverBase,
                         EmbeddedSurfaceGenerator,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

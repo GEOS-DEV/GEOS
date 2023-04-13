@@ -20,7 +20,7 @@
 
 // TODO make this not dependent on this header...need better key implementation
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 using namespace finiteElement;
@@ -225,4 +225,4 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
 
 REGISTER_CATALOG_ENTRY( Group, FiniteElementDiscretization, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

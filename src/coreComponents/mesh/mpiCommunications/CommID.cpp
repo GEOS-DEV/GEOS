@@ -18,7 +18,7 @@
 
 #include <set>
 
-namespace geosx
+namespace geos
 {
 
 CommID::CommID( std::set< int > & freeIDs ):
@@ -45,4 +45,4 @@ CommID::~CommID()
   m_id = -1;
 }
 
-} /* namespace geosx */
+} /* namespace geos */

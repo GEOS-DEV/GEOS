@@ -22,7 +22,7 @@
 
 #include <functional>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -35,7 +35,7 @@ using namespace dataRepository;
 class HistoryCollection : public TaskBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  /// @copydoc geos::dataRepository::Group::Group(string const & name, Group * const parent)
   HistoryCollection( string const & name, Group * parent ):
     TaskBase( name, parent )
   {}

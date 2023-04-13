@@ -20,7 +20,7 @@
 
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -303,4 +303,4 @@ AquiferBoundaryCondition::KernelWrapper AquiferBoundaryCondition::createKernelWr
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, AquiferBoundaryCondition, string const &, Group * const )
 
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -21,7 +21,7 @@
 
 #include "dataRepository/ObjectCatalog.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -109,6 +109,6 @@ protected:
 
 } // end namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONBASE_HPP_

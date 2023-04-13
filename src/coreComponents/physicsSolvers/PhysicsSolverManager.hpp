@@ -22,7 +22,7 @@ namespace pugi
 class xml_node;
 }
 
-namespace geosx
+namespace geos
 {
 class SolverBase;
 
@@ -53,6 +53,6 @@ private:
   R1Tensor m_gravityVector;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_ */

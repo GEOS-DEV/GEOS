@@ -30,7 +30,7 @@
 
 using namespace LvArray;
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -327,6 +327,6 @@ public:
 
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_DAMAGESPECTRAL_HPP_ */

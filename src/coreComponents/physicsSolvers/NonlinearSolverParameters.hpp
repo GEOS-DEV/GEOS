@@ -19,7 +19,7 @@
 #include "dataRepository/Group.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -291,6 +291,6 @@ ENUM_STRINGS( NonlinearSolverParameters::SequentialConvergenceCriterion,
               "ResidualNorm",
               "NumberOfNonlinearIterations" );
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_ */

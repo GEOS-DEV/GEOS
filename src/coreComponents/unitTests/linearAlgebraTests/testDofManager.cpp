@@ -32,9 +32,9 @@
 
 #include <memory>
 
-using namespace geosx;
-using namespace geosx::testing;
-using namespace geosx::dataRepository;
+using namespace geos;
+using namespace geos::testing;
+using namespace geos::dataRepository;
 
 char const * xmlInput =
   "<Problem>"
@@ -72,7 +72,7 @@ protected:
     domain( state.getProblemManager().getDomainPartition() ),
     dofManager( "test" )
   {
-    geosx::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
+    geos::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
     dofManager.setDomain( domain );
   }
 
@@ -100,7 +100,7 @@ void collectLocalDofNumbers( DomainPartition const & domain,
     MeshLevel const & meshLevel = meshBody.getMeshLevel( regions.meshLevelName );
 
     ObjectManagerBase const & manager = meshLevel.getGroup< ObjectManagerBase >
-                                          ( geosx::testing::internal::testMeshHelper< LOC >::managerKey() );
+                                          ( geos::testing::internal::testMeshHelper< LOC >::managerKey() );
     arrayView1d< globalIndex const > dofIndex = manager.getReference< array1d< globalIndex > >( dofIndexKey );
 
     forLocalObjects< LOC >( meshLevel, regions.regionNames, [&]( localIndex const idx )
@@ -1106,6 +1106,6 @@ TEST( DofManagerRegions, aggregateInitialization )
 
 int main( int argc, char * * argv )
 {
-  geosx::testing::LinearAlgebraTestScope scope( argc, argv );
+  geos::testing::LinearAlgebraTestScope scope( argc, argv );
   return RUN_ALL_TESTS();
 }

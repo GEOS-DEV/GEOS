@@ -21,7 +21,7 @@
 
 #include "linearAlgebra/utilities/BlockOperatorView.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -114,6 +114,6 @@ BlockOperator< VECTOR, OPERATOR >::BlockOperator( BlockOperator && rhs )
   setPointers();
 }
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATOR_HPP_

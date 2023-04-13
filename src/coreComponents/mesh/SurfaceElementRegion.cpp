@@ -21,7 +21,7 @@
 #include "SurfaceElementRegion.hpp"
 
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -219,4 +219,4 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, SurfaceElementRegion, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

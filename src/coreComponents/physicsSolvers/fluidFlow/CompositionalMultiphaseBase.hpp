@@ -26,7 +26,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 //START_SPHINX_INCLUDE_00
@@ -487,6 +487,6 @@ void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
 }
 
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_

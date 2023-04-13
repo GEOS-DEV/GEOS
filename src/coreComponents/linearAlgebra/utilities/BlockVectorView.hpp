@@ -22,7 +22,7 @@
 #include "common/common.hpp"
 #include "linearAlgebra/common/common.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

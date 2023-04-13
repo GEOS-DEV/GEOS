@@ -24,7 +24,7 @@
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalSinglePhaseFVMKernels
@@ -825,6 +825,6 @@ public:
 
 } // namespace thermalSinglePhaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP

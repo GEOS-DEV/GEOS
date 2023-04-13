@@ -27,7 +27,7 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -281,6 +281,6 @@ FieldSpecificationManager::
   } );
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_ */

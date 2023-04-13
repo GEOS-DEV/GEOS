@@ -33,7 +33,7 @@
 #include <algorithm>
 #include <sstream>
 
-namespace geosx
+namespace geos
 {
 
 
@@ -304,6 +304,6 @@ readAttributeAsType( T & rval,
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /*GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_ */

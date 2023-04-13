@@ -21,7 +21,7 @@
 
 #include "StencilBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -224,6 +224,6 @@ BoundaryStencilWrapper::
   LvArray::tensorOps::scale< 3 >( dWeight_dCoef, mult );
 }
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_FINITEVOLUME_BOUNDARYSTENCIL_HPP_

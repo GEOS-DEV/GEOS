@@ -23,7 +23,7 @@
 #include <gtest/gtest.h>
 
 using namespace LvArray;
-using namespace geosx;
+using namespace geos;
 
 //START_SPHINX_BASE
 class Base
@@ -120,11 +120,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::basicSetup( argc, argv );
+  geos::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

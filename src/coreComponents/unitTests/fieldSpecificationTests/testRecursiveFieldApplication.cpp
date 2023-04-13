@@ -26,9 +26,9 @@
 // TPL includes
 #include <gtest/gtest.h>
 
-using namespace geosx;
-using namespace geosx::constitutive;
-using namespace geosx::dataRepository;
+using namespace geos;
+using namespace geos::constitutive;
+using namespace geos::dataRepository;
 
 
 void RegisterAndApplyField( DomainPartition & domain,
@@ -82,19 +82,19 @@ TEST( FieldSpecification, Recursive )
     CellBlockManager & cellBlockManager = domain.registerGroup< CellBlockManager >( keys::cellManager );
 
     CellBlock & reg0Hex = cellBlockManager.registerCellBlock( "reg0hex" );
-    reg0Hex.setElementType( geosx::ElementType::Hexahedron );
+    reg0Hex.setElementType( geos::ElementType::Hexahedron );
     reg0Hex.resize( nbHexReg0 );
 
     CellBlock & reg0Tet = cellBlockManager.registerCellBlock( "reg0tet" );
-    reg0Tet.setElementType( geosx::ElementType::Tetrahedron );
+    reg0Tet.setElementType( geos::ElementType::Tetrahedron );
     reg0Tet.resize( nbTetReg0 );
 
     CellBlock & reg1Hex = cellBlockManager.registerCellBlock( "reg1hex" );
-    reg1Hex.setElementType( geosx::ElementType::Hexahedron );
+    reg1Hex.setElementType( geos::ElementType::Hexahedron );
     reg1Hex.resize( nbHexReg1 );
 
     CellBlock & reg1Tet = cellBlockManager.registerCellBlock( "reg1tet" );
-    reg1Tet.setElementType( geosx::ElementType::Tetrahedron );
+    reg1Tet.setElementType( geos::ElementType::Tetrahedron );
     reg1Tet.resize( nbTetReg1 );
 
     reg0.addCellBlockName( reg0Hex.getName() );

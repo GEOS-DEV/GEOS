@@ -25,7 +25,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace fluxKernelsHelper
@@ -188,6 +188,6 @@ struct AquiferBCKernel
 
 } // namespace fluxKernelsHelper
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_FLUXKERNELSHELPER_HPP

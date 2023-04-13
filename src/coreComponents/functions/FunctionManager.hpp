@@ -23,7 +23,7 @@
 
 #include "dataRepository/Group.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -34,7 +34,7 @@ namespace geosx
 class FunctionManager : public dataRepository::Group
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   FunctionManager( const string & name,
                    dataRepository::Group * const parent );
 
@@ -71,6 +71,6 @@ private:
   static FunctionManager * m_instance;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FUNCTIONS_FUNCTIONMANAGER_HPP_ */

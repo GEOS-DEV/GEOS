@@ -24,7 +24,7 @@
 #include <unordered_set>
 #include <unordered_map>
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {

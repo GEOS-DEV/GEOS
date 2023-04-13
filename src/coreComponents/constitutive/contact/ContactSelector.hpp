@@ -23,7 +23,7 @@
 #include "constitutive/contact/CoulombContact.hpp"
 #include "constitutive/contact/FrictionlessContact.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -47,6 +47,6 @@ void constitutiveUpdatePassThru( ContactBase & contact,
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif // GEOSX_CONSTITUTIVE_CONTACT_CONTACTSELECTOR_HPP_

@@ -21,7 +21,7 @@
 
 #include "ContactBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -322,6 +322,6 @@ inline void CoulombContactUpdates::updateFractureState( localIndex const k,
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_CONTACT_COULOMBCONTACT_HPP_ */

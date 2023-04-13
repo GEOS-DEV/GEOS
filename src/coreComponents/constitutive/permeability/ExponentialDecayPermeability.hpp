@@ -22,7 +22,7 @@
 #include "constitutive/permeability/PermeabilityBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -173,6 +173,6 @@ void ExponentialDecayPermeabilityUpdate::compute( real64 const ( &traction )[3],
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif //GEOSX_CONSTITUTIVE_PERMEABILITY_FRACTUREPERMEABILITY_HPP_

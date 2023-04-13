@@ -43,7 +43,7 @@
 
 #include <cfenv>
 
-namespace geosx
+namespace geos
 {
 
 
@@ -299,4 +299,4 @@ void cleanupEnvironment()
 }
 
 
-} // namespace geosx
+} // namespace geos

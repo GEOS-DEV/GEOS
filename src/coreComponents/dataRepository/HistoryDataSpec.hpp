@@ -23,7 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "LvArray/src/Array.hpp"
 
-namespace geosx
+namespace geos
 {
 /// A constexpr bool to determine wether a type is compatible with the history collected and IO operations.
 template< typename T >

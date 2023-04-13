@@ -20,7 +20,7 @@
 #include <sstream>
 #include <vector>
 
-namespace geosx
+namespace geos
 {
 /*!
  * @brief Class describing a file Path
@@ -205,7 +205,7 @@ void makeDirectory( std::string const & path );
  */
 void makeDirsForPath( std::string const & path );
 
-} /* end namespace geosx */
+} /* end namespace geos */
 
 
 #endif

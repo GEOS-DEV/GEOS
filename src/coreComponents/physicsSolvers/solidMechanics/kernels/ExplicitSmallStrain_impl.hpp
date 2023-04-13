@@ -23,7 +23,7 @@
 #include "ExplicitSmallStrain.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /// Namespace to contain the solid mechanics kernels.
@@ -210,6 +210,6 @@ ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch(
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITSMALLTRAIN_IMPL_HPP_

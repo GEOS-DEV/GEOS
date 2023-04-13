@@ -24,7 +24,7 @@
 #pragma GCC optimize "O0"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 namespace proppantTransportKernels
@@ -1311,4 +1311,4 @@ void ProppantPackVolumeKernel::
 
 } // namespace proppantTransportKernels
 
-} // namespace geosx
+} // namespace geos

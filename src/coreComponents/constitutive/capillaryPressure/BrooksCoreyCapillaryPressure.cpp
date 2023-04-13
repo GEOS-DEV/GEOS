@@ -18,7 +18,7 @@
 
 #include "BrooksCoreyCapillaryPressure.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -125,4 +125,4 @@ BrooksCoreyCapillaryPressure::createKernelWrapper()
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyCapillaryPressure, string const &, Group * const )
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

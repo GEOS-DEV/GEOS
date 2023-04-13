@@ -29,7 +29,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace coupledReservoirAndWellsInternal
@@ -299,6 +299,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_ */

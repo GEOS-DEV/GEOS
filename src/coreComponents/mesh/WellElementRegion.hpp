@@ -23,7 +23,7 @@
 #include "mesh/ElementRegionBase.hpp"
 #include "mesh/generators/InternalWellGenerator.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class MeshLevel;
@@ -169,6 +169,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_WELLELEMENTREGION_HPP_ */

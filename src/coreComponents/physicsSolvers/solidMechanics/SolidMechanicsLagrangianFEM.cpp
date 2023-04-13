@@ -40,7 +40,7 @@
 #include "mesh/CellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;

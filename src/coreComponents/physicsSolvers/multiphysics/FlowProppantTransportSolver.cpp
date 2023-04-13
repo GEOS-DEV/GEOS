@@ -23,7 +23,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransport.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -141,4 +141,4 @@ real64 FlowProppantTransportSolver::sequentiallyCoupledSolverStep( real64 const 
 
 REGISTER_CATALOG_ENTRY( SolverBase, FlowProppantTransportSolver, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

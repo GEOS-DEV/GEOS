@@ -22,7 +22,7 @@
 
 #include "FieldSpecificationBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -57,6 +57,6 @@ public:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FIELDSPECIFICATION_SOURCEFLUXBOUNDARYCONDITION_HPP_ */

@@ -24,7 +24,7 @@
 #include "mesh/DomainPartition.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 struct NewObjectLists
@@ -125,6 +125,6 @@ private:
   int m_mpiCommOrder;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_ */

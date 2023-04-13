@@ -18,7 +18,7 @@
 #include "linearAlgebra/common/LinearOperator.hpp"
 #include "linearAlgebra/common/PreconditionerBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

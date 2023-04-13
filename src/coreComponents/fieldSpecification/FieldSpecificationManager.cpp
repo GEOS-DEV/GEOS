@@ -17,7 +17,7 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 FieldSpecificationManager * FieldSpecificationManager::m_instance = nullptr;
@@ -220,4 +220,4 @@ void FieldSpecificationManager::applyInitialConditions( MeshLevel & mesh ) const
   } );
 }
 
-} /* namespace geosx */
+} /* namespace geos */

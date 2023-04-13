@@ -21,7 +21,7 @@
 #include "mesh/generators/CellBlockABC.hpp"
 #include "mesh/ElementType.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

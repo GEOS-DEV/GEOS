@@ -18,7 +18,7 @@
 
 #include "FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 FunctionManager * FunctionManager::m_instance = nullptr;
@@ -67,4 +67,4 @@ void FunctionManager::expandObjectCatalogs()
   }
 }
 
-} // end of namespace geosx
+} // end of namespace geos

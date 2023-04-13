@@ -1,6 +1,6 @@
 #include "PackCollection.hpp"
 
-namespace geosx
+namespace geos
 {
 PackCollection::PackCollection ( string const & name, Group * parent )
   : HistoryCollectionBase( name, parent )

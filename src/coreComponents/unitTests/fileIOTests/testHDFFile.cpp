@@ -5,7 +5,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
+using namespace geos;
 
 TEST( testHDFIO, HDFFile )
 {
@@ -117,8 +117,8 @@ TEST( testHDFIO, IdxArrayHistory )
 int main( int ac, char * av[] )
 {
   ::testing::InitGoogleTest( &ac, av );
-  geosx::basicSetup( ac, av );
+  geos::basicSetup( ac, av );
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
+  geos::basicCleanup();
   return result;
 }

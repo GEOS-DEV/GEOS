@@ -22,7 +22,7 @@ class OrderedVariableToManyElementRelation;
 class FixedToManyElementRelation;
 class ElementRegionManager;
 
-namespace geosx
+namespace geos
 {
 namespace bufferOps
 {

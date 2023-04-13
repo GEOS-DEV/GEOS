@@ -23,7 +23,7 @@
 #include "linearAlgebra/interfaces/hypre/HyprePreconditioner.hpp"
 #include "common/LinearSolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class DofManager;

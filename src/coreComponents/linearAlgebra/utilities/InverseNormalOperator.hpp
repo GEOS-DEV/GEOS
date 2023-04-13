@@ -22,7 +22,7 @@
 #include "common/PreconditionerBase.hpp"
 #include "common/traits.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace internal
@@ -190,6 +190,6 @@ private:
   TransposeInverse m_transposeInverse;
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_UTILITIES_INVERSENORMALOPERATOR_HPP_

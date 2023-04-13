@@ -18,7 +18,7 @@
 #include "linearAlgebra/common/common.hpp"
 #include "linearAlgebra/common/LinearOperator.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class DofManager;

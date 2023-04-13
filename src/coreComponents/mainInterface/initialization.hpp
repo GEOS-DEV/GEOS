@@ -18,7 +18,7 @@
 // Source includes
 #include "common/initializeEnvironment.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -46,6 +46,6 @@ void basicCleanup();
 
 
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_MAININTERFACE_INITIALIZATION_HPP_

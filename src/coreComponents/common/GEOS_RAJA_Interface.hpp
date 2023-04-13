@@ -26,7 +26,7 @@
 
 #define GEOSX_ASYNC_WAIT( UPPER, NANOSLEEP, TEST ) while( !TEST ) { }
 
-namespace geosx
+namespace geos
 {
 
 using serialPolicy = RAJA::loop_exec;
@@ -183,6 +183,6 @@ RAJA_INLINE void forRange( INDEX const begin, INDEX const end, LAMBDA && body )
   RAJA::forall< POLICY >( RAJA::TypedRangeSegment< INDEX >( begin, end ), std::forward< LAMBDA >( body ) );
 }
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_RAJAINTERFACE_RAJAINTERFACE_HPP

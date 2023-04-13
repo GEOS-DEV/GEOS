@@ -22,7 +22,7 @@
 #include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 class SolverBase;
 
@@ -83,6 +83,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_MESHMANAGER_HPP_ */

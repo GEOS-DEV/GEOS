@@ -21,7 +21,7 @@
 
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /// Forward declaration
@@ -115,6 +115,6 @@ private:
   MPI_Comm m_subComm = MPI_COMM_NULL;
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_INTERFACES_HYPREEXPORT_HPP_

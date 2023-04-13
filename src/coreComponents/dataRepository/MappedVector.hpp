@@ -28,7 +28,7 @@
 // System includes
 #include <vector>
 
-namespace geosx
+namespace geos
 {
 /**
  * @class MappedVector

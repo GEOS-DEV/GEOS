@@ -26,7 +26,7 @@
 
 #include <memory>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -79,6 +79,6 @@ struct HypreInterface
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREINTERFACE_HPP_*/

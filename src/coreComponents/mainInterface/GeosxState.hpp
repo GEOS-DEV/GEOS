@@ -42,7 +42,7 @@ class ConfigManager;
 #endif
 
 
-namespace geosx
+namespace geos
 {
 
 // Forward declarations.
@@ -253,6 +253,6 @@ private:
  */
 GeosxState & getGlobalState();
 
-} // namespace geosx
+} // namespace geos
 
 #endif /* GEOSX_MAININTERFACE_GEOSXSTATE_HPP_ */

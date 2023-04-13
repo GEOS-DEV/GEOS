@@ -22,7 +22,7 @@
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace poromechanicsKernels
@@ -30,13 +30,13 @@ namespace poromechanicsKernels
 
 /**
  * @brief Implements kernels for solving quasi-static single-phase poromechanics.
- * @copydoc geosx::finiteElement::ImplicitKernelBase
+ * @copydoc geos::finiteElement::ImplicitKernelBase
  *
  * ### SinglePhasePoroelastic Description
  * Implements the KernelBase interface functions required for solving the
  * quasi-static single-phase poromechanics problem using one of the
  * "finite element kernel application" functions such as
- * geosx::finiteElement::RegionBasedKernelApplication.
+ * geos::finiteElement::RegionBasedKernelApplication.
  *
  */
 template< typename SUBREGION_TYPE,
@@ -76,7 +76,7 @@ public:
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param gravityVector The gravity vector.
    */
   SinglePhasePoromechanics( NodeManager const & nodeManager,
@@ -97,7 +97,7 @@ public:
   //*****************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   * @copydoc geos::finiteElement::ImplicitKernelBase::StackVariables
    *
    * Adds a stack array for the displacement, incremental displacement, and the
    * constitutive stiffness.
@@ -226,7 +226,7 @@ public:
                               StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+   * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
   GEOSX_HOST_DEVICE
   real64 complete( localIndex const k,
@@ -234,7 +234,7 @@ public:
 
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::kernelLaunch
+   * @copydoc geos::finiteElement::KernelBase::kernelLaunch
    *
    * ### SinglePhasePoromechancis Description
    * Copy of the KernelBase::kernelLaunch function
@@ -372,7 +372,7 @@ public:
 
 } // namespace poromechanicsKernels
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICS_HPP_

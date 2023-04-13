@@ -22,7 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace ptscotch
 {
@@ -40,6 +40,6 @@ partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
            MPI_Comm comm );
 
 } // namespace ptscotch
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_MESH_GENERATORS_PTSCOTCHINTERFACE_HPP_

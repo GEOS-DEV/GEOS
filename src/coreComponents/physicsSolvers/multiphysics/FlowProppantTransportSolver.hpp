@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class ProppantTransport;
@@ -111,6 +111,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVER_HPP_ */

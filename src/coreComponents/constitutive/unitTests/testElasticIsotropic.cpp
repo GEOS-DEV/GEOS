@@ -21,8 +21,8 @@
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
-using namespace geosx;
-using namespace ::geosx::constitutive;
+using namespace geos;
+using namespace ::geos::constitutive;
 
 TEST( ElasticIsotropicTests, testAllocation )
 {

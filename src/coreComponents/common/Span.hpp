@@ -26,7 +26,7 @@
 #include <iterator>
 #include <type_traits>
 
-namespace geosx
+namespace geos
 {
 
 /**

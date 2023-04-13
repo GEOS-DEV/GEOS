@@ -30,7 +30,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -347,8 +347,8 @@ void MultiphasePoromechanics::updateStabilizationParameters( DomainPartition & d
       arrayView1d< integer > const macroElementIndex = subRegion.getField< fields::flow::macroElementIndex >();
       arrayView1d< real64 > const elementStabConstant = subRegion.getField< fields::flow::elementStabConstant >();
 
-      geosx::constitutive::CoupledSolidBase const & porousSolid =
-        getConstitutiveModel< geosx::constitutive::CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() ) );
+      geos::constitutive::CoupledSolidBase const & porousSolid =
+        getConstitutiveModel< geos::constitutive::CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() ) );
 
       arrayView1d< real64 const > const bulkModulus = porousSolid.getBulkModulus();
       arrayView1d< real64 const > const shearModulus = porousSolid.getShearModulus();
@@ -423,4 +423,4 @@ void MultiphasePoromechanics::updateBulkDensity( ElementSubRegionBase & subRegio
 
 REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoromechanics, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

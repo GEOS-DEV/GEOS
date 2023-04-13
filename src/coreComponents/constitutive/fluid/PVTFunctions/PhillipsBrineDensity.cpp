@@ -20,7 +20,7 @@
 
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -144,4 +144,4 @@ REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineDensity, string const &, s
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

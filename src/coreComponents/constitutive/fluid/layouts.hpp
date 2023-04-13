@@ -25,7 +25,7 @@
 #include "LvArray/src/typeManipulation.hpp"
 #include "RAJA/RAJA.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -96,6 +96,6 @@ static constexpr int USD_FLUID_DC = LvArray::typeManipulation::getStrideOneDimen
 
 } // namespace multifluid
 } // namespace constitutive
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_LAYOUTS_HPP

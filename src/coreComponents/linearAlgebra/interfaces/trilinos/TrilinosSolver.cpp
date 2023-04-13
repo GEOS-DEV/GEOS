@@ -30,7 +30,7 @@
 
 #include <memory>
 
-namespace geosx
+namespace geos
 {
 
 namespace

@@ -26,7 +26,7 @@
 
 #include <memory>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -77,6 +77,6 @@ struct TrilinosInterface
   using ParallelVector = EpetraVector;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSINTERFACE_HPP_ */

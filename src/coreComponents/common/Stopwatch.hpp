@@ -21,7 +21,7 @@
 
 #include <chrono>
 
-namespace geosx
+namespace geos
 {
 
 /**

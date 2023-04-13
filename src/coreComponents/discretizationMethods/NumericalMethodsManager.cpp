@@ -19,7 +19,7 @@
 #include "NumericalMethodsManager.hpp"
 
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -45,4 +45,4 @@ Group * NumericalMethodsManager::createChild( string const & GEOSX_UNUSED_PARAM(
 
 
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -22,7 +22,7 @@
 #include "dataRepository/Group.hpp"
 #include "TaskBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -32,12 +32,12 @@ namespace geosx
 class TasksManager : public dataRepository::Group
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group
+  /// @copydoc geos::dataRepository::Group::Group
   TasksManager( string const & name, Group * const parent );
   /// Destructor
   virtual ~TasksManager() override;
 
-  /// @copydoc geosx::dataRepository::Group::createChild
+  /// @copydoc geos::dataRepository::Group::createChild
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
@@ -48,6 +48,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif

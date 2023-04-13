@@ -22,7 +22,7 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "constitutive/fluid/ParticleFluidBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -336,6 +336,6 @@ void ParticleFluidUpdate::compute( real64 const proppantConcentration,
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_ */

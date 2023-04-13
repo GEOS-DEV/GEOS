@@ -7,7 +7,7 @@
 
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 
-namespace geosx
+namespace geos
 {
 class MeshLevel;
 class NeighborCommunicator;

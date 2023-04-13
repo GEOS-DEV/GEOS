@@ -20,7 +20,7 @@
 #include "LaplaceFEM.hpp"
 #include "LaplaceFEMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -178,4 +178,4 @@ void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
 //START_SPHINX_INCLUDE_REGISTER
 REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, string const &, Group * const )
 //END_SPHINX_INCLUDE_REGISTER
-} /* namespace geosx */
+} /* namespace geos */

@@ -24,7 +24,7 @@
 #include <iomanip>
 #include <sstream>
 
-namespace geosx
+namespace geos
 {
 namespace stringutilities
 {
@@ -208,6 +208,6 @@ template< typename T >
 string toMetricPrefixString( T const & value );
 
 } // namespace stringutilities
-} // namespace geosx
+} // namespace geos
 
 #endif /* GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_ */

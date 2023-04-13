@@ -21,7 +21,7 @@
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -75,6 +75,6 @@ struct ConstitutivePassThruHandler< TYPE, TYPES... >
 
 }//namespace constitutive
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_CONSTITUTIVEPASSTHRUHANDLER_HPP

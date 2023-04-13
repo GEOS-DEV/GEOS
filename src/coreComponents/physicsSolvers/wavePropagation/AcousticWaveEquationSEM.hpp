@@ -24,7 +24,7 @@
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class AcousticWaveEquationSEM : public WaveSolverBase
@@ -323,6 +323,6 @@ DECLARE_FIELD( AuxiliaryVar4PML,
                "PML scalar auxiliary variable 4." );
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_ */

@@ -67,7 +67,7 @@
 
 #include <numeric>
 
-namespace geosx
+namespace geos
 {
 
 namespace vtk
@@ -655,7 +655,7 @@ redistributeMesh( vtkDataSet & loadedMesh,
  * @param cell The vtk cell VTK_POLYHEDRON
  * @return The geosx element type associated to VTK_POLYHEDRON
  */
-geosx::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
+geos::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
 {
   GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input for polyhedronType() must be a VTK_POLYHEDRON." );
 
@@ -679,27 +679,27 @@ geosx::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
 
   if( numTriangles == 4 && numFaces == 4 )
   {
-    return geosx::ElementType::Tetrahedron;
+    return geos::ElementType::Tetrahedron;
   }
 
   if( numQuads == 6 && numFaces == 6 )
   {
-    return geosx::ElementType::Hexahedron;
+    return geos::ElementType::Hexahedron;
   }
 
   if( numTriangles == 2 && numQuads == 3 && numFaces == 5 )
   {
-    return geosx::ElementType::Wedge;
+    return geos::ElementType::Wedge;
   }
 
   if( numTriangles == 4 && numQuads == 1 && numFaces == 5 )
   {
-    return geosx::ElementType::Pyramid;
+    return geos::ElementType::Pyramid;
   }
 
   if( numFaces - numQuads != 2 )
   {
-    return geosx::ElementType::Polyhedron;
+    return geos::ElementType::Polyhedron;
   }
 
   // Check if the polyhedron is a prism
@@ -728,19 +728,19 @@ geosx::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
 
   if( quadsPoints != noQuadsPoints )
   {
-    return geosx::ElementType::Polyhedron;
+    return geos::ElementType::Polyhedron;
   }
 
   // The polyhedron is a prism
   switch( numQuads )
   {
-    case 5:  return geosx::ElementType::Prism5;
-    case 6:  return geosx::ElementType::Prism6;
-    case 7:  return geosx::ElementType::Prism7;
-    case 8:  return geosx::ElementType::Prism8;
-    case 9:  return geosx::ElementType::Prism9;
-    case 10: return geosx::ElementType::Prism10;
-    case 11: return geosx::ElementType::Prism11;
+    case 5:  return geos::ElementType::Prism5;
+    case 6:  return geos::ElementType::Prism6;
+    case 7:  return geos::ElementType::Prism7;
+    case 8:  return geos::ElementType::Prism8;
+    case 9:  return geos::ElementType::Prism9;
+    case 10: return geos::ElementType::Prism10;
+    case 11: return geos::ElementType::Prism11;
     default:
     {
       GEOSX_ERROR( "Prism with " << numQuads << " sides is not supported." );
@@ -1783,8 +1783,8 @@ real64 writeNodes( integer const logLevel,
                    vtkDataSet & mesh,
                    string_array & nodesetNames,
                    CellBlockManager & cellBlockManager,
-                   const geosx::R1Tensor & translate,
-                   const geosx::R1Tensor & scale )
+                   const geos::R1Tensor & translate,
+                   const geos::R1Tensor & scale )
 {
   localIndex const numPts = LvArray::integerConversion< localIndex >( mesh.GetNumberOfPoints() );
   cellBlockManager.setNumNodes( numPts );
@@ -1845,7 +1845,7 @@ real64 writeNodes( integer const logLevel,
 
 void writeCells( integer const logLevel,
                  vtkDataSet & mesh,
-                 const geosx::vtk::CellMapType & cellMap,
+                 const geos::vtk::CellMapType & cellMap,
                  CellBlockManager & cellBlockManager )
 {
   // Creates a new cell block for each region and for each type of cell.
@@ -1877,7 +1877,7 @@ void writeCells( integer const logLevel,
 
 void writeSurfaces( integer const logLevel,
                     vtkDataSet & mesh,
-                    const geosx::vtk::CellMapType & cellMap,
+                    const geos::vtk::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager )
 {
   if( cellMap.count( ElementType::Polygon ) == 0 )
@@ -1908,4 +1908,4 @@ void writeSurfaces( integer const logLevel,
 }
 
 
-} // namespace geosx
+} // namespace geos

@@ -27,7 +27,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -258,4 +258,4 @@ WellControls & WellSolverBase::getWellControls( WellElementSubRegion const & sub
 WellControls const & WellSolverBase::getWellControls( WellElementSubRegion const & subRegion ) const
 { return this->getGroup< WellControls >( subRegion.getWellControlsName() ); }
 
-} // namespace geosx
+} // namespace geos

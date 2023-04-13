@@ -38,7 +38,7 @@
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace singlePhaseHybridFVMKernels
 {
@@ -820,6 +820,6 @@ public:
 
 } // namespace singlePhaseHybridFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP

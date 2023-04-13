@@ -23,7 +23,7 @@
 #include "linearAlgebra/solvers/KrylovUtils.hpp"
 #include "denseLinearAlgebra/common/layouts.hpp"
 
-namespace geosx
+namespace geos
 {
 
 template< typename VECTOR >
@@ -217,4 +217,4 @@ template class GmresSolver< PetscInterface::ParallelVector >;
 template class GmresSolver< BlockVectorView< PetscInterface::ParallelVector > >;
 #endif
 
-} // namespace geosx
+} // namespace geos

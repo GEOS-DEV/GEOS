@@ -21,14 +21,14 @@
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
 using namespace constitutive;
 
-RelpermDriver::RelpermDriver( const geosx::string & name,
-                              geosx::dataRepository::Group * const parent )
+RelpermDriver::RelpermDriver( const geos::string & name,
+                              geos::dataRepository::Group * const parent )
   :
   TaskBase( name, parent )
 {
@@ -97,12 +97,12 @@ void RelpermDriver::postProcessInput()
 }
 
 
-bool RelpermDriver::execute( const geosx::real64 GEOSX_UNUSED_PARAM( time_n ),
-                             const geosx::real64 GEOSX_UNUSED_PARAM( dt ),
-                             const geosx::integer GEOSX_UNUSED_PARAM( cycleNumber ),
-                             const geosx::integer GEOSX_UNUSED_PARAM( eventCounter ),
-                             const geosx::real64 GEOSX_UNUSED_PARAM( eventProgress ),
-                             geosx::DomainPartition &
+bool RelpermDriver::execute( const geos::real64 GEOSX_UNUSED_PARAM( time_n ),
+                             const geos::real64 GEOSX_UNUSED_PARAM( dt ),
+                             const geos::integer GEOSX_UNUSED_PARAM( cycleNumber ),
+                             const geos::integer GEOSX_UNUSED_PARAM( eventCounter ),
+                             const geos::real64 GEOSX_UNUSED_PARAM( eventProgress ),
+                             geos::DomainPartition &
                              GEOSX_UNUSED_PARAM( domain ) )
 {
   // this code only makes sense in serial

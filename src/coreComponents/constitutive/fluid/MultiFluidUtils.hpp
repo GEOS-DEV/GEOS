@@ -20,7 +20,7 @@
 
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -117,6 +117,6 @@ struct MultiFluidVar
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDUTILS_HPP_

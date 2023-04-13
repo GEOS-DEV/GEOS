@@ -19,7 +19,7 @@
 
 #include "CoupledReservoirAndWellsBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace coupledReservoirAndWellsInternal
@@ -157,4 +157,4 @@ bool validateWellPerforations( SolverBase const * const reservoirSolver,
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -218,7 +218,7 @@ commented afterwards.
 
   #include "physicsSolvers/simplePDE/LaplaceFEM.hpp"
 
-  namespace geosx
+  namespace geos
   {
 
   class LaplaceDiffFEM : public LaplaceFEM

@@ -30,7 +30,7 @@
 
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -366,6 +366,6 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
   applyContactConstraint( dofManager, domain, localMatrix, localRhs );
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_ */

@@ -18,7 +18,7 @@
 
 #include "ExecutableGroup.hpp"
 
-namespace geosx
+namespace geos
 {
 
 void ExecutableGroup::signalToPrepareForExecution( real64 const GEOSX_UNUSED_PARAM( time_n ),

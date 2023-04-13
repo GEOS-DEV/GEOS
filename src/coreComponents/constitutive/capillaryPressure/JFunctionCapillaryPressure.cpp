@@ -22,7 +22,7 @@
 #include "constitutive/capillaryPressure/TableCapillaryPressureHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -333,4 +333,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, JFunctionCapillaryPressure, std::strin
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

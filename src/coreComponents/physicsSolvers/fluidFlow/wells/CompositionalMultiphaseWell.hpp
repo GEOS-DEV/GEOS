@@ -25,7 +25,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -387,7 +387,7 @@ private:
 
 };
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_

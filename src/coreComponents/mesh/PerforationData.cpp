@@ -23,7 +23,7 @@
 #include "mesh/PerforationFields.hpp"
 #include "utilities/ComputationalGeometry.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -259,4 +259,4 @@ void PerforationData::connectToWellElements( InternalWellGenerator const & wellG
 
 }
 
-} //namespace geosx
+} //namespace geos

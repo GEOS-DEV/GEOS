@@ -39,7 +39,7 @@ class Node;
 }
 
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -709,6 +709,6 @@ private:
 };
 
 } /// namespace dataRepository
-} /// namespace geosx
+} /// namespace geos
 
 #endif /* GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_ */

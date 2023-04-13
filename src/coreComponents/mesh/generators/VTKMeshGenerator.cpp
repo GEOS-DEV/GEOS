@@ -26,7 +26,7 @@
 #include "common/DataLayouts.hpp"
 #include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -211,4 +211,4 @@ void VTKMeshGenerator::freeResources()
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, VTKMeshGenerator, string const &, Group * const )
 
-} // namespace geosx
+} // namespace geos

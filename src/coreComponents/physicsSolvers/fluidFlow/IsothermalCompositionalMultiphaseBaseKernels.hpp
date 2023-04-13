@@ -33,7 +33,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace isothermalCompositionalMultiphaseBaseKernels
@@ -2022,7 +2022,7 @@ void KernelLaunchSelector2( integer const numComp, integer const numPhase, ARGS 
 
 } // namespace isothermalCompositionalMultiphaseBaseKernels
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP

@@ -38,7 +38,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhaseFVMKernels
@@ -1286,6 +1286,6 @@ struct AquiferBCKernel
 
 } // namespace singlePhaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP

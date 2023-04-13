@@ -26,7 +26,7 @@
 #include "BufferOps.hpp"
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -348,4 +348,4 @@ localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * 
   return unPackedSize;
 }
 
-} /* namespace geosx */
+} /* namespace geos */

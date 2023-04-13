@@ -19,7 +19,7 @@
 
 #include "SolidBase.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -108,4 +108,4 @@ void SolidBase::saveConvergedState() const
 
 
 } /* namespace constitutive */
-} /* namespace geosx */
+} /* namespace geos */

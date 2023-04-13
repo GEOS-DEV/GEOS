@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class SolidMechanicsEmbeddedFractures;
@@ -142,6 +142,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEMBEDDEDFRACTURES_HPP_ */

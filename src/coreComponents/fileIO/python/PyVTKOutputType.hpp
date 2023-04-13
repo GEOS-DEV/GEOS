@@ -4,7 +4,7 @@
 #include "LvArray/src/python/pythonForwardDeclarations.hpp"
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace python
 {
@@ -12,6 +12,6 @@ namespace python
 PyTypeObject * getPyVTKOutputType();
 
 } // namespace python
-} // namespace geosx
+} // namespace geos
 
 #endif

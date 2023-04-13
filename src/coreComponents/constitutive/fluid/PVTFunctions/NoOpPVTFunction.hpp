@@ -21,7 +21,7 @@
 
 #include "PVTFunctionBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -117,6 +117,6 @@ public:
 
 } // end namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_NOOPPVTFUNCTION_HPP_

@@ -27,7 +27,7 @@
 
 #include <memory>
 
-namespace geosx
+namespace geos
 {
 
 /// Forward declaration for SuiteSparse data struct

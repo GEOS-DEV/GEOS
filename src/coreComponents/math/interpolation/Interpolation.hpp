@@ -20,7 +20,7 @@
 #define GEOSX_MATH_INTERPOLATION_HPP_
 
 
-namespace geosx
+namespace geos
 {
 
 namespace interpolation

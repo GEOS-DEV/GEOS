@@ -27,7 +27,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "WaveSolverUtils.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -896,4 +896,4 @@ void ElasticWaveEquationSEM::applyPML( real64 const, DomainPartition & )
 
 REGISTER_CATALOG_ENTRY( SolverBase, ElasticWaveEquationSEM, string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

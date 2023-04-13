@@ -23,7 +23,7 @@
 #include "common/MpiWrapper.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -355,6 +355,6 @@ protected:
   array1d< real64 > m_values;
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_INTERFACES_VECTORBASE_HPP_

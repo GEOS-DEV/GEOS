@@ -24,7 +24,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository

@@ -73,7 +73,7 @@ Module Classes
 
 .. py:class:: pygeosx.Group
 
-  Python interface to geosx::dataRepository::Group.
+  Python interface to geos::dataRepository::Group.
 
   Used to get access to other groups, and ultimately to get wrappers
   and convert them into Python views of C++ objects.
@@ -114,7 +114,7 @@ Module Classes
 
 .. py:class:: pygeosx.Wrapper
 
-  Python interface to geosx::dataRepository::WrapperBase.
+  Python interface to geos::dataRepository::WrapperBase.
 
   Wraps a generic C++ object. Use ``repr`` to get a description of the type.
 

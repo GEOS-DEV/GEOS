@@ -21,7 +21,7 @@
 
 #include "constitutive/contact/ContactBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -178,6 +178,6 @@ inline void FrictionlessContactUpdates::updateFractureState( localIndex const k,
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_CONTACT_FRICTIONLESSCONTACT_HPP_ */

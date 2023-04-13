@@ -38,7 +38,7 @@
 /**
  * namespace to encapsulate GEOSX
  */
-namespace geosx
+namespace geos
 {
 
 /**
@@ -1591,6 +1591,6 @@ Wrapper< T > & Group::registerWrapper( string const & name,
 }
 
 } /* end namespace dataRepository */
-} /* end namespace geosx */
+} /* end namespace geos */
 
 #endif /* GEOSX_DATAREPOSITORY_GROUP_HPP_ */

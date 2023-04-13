@@ -50,7 +50,7 @@
 
 #include <umfpack.h>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -59,7 +59,7 @@ namespace geosx
 using SSlong = SuiteSparse_long;
 
 static_assert( std::is_same< double, real64 >::value,
-               "SuiteSparse real and geosx::real64 must be the same type" );
+               "SuiteSparse real and geos::real64 must be the same type" );
 
 struct SuiteSparseData
 {

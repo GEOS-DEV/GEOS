@@ -20,7 +20,7 @@
 
 #include <cmath>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -133,4 +133,4 @@ VanGenuchtenCapillaryPressure::createKernelWrapper()
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenCapillaryPressure, string const &, Group * const )
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

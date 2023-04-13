@@ -32,7 +32,7 @@
 #include "functions/FunctionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 class Function;
 

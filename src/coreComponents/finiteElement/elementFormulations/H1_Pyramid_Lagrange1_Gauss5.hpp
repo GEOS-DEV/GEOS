@@ -23,7 +23,7 @@
 #include "LagrangeBasis1.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace finiteElement
 {

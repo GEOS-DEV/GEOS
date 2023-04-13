@@ -21,7 +21,7 @@
 #include "constitutive/fluid/PVTFunctions/PureWaterProperties.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -88,4 +88,4 @@ REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineViscosity, string const &,
 
 } // namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos

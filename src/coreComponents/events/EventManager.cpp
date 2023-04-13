@@ -22,7 +22,7 @@
 #include "events/EventBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -218,4 +218,4 @@ bool EventManager::run( DomainPartition & domain )
   return false;
 }
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -32,7 +32,7 @@
 #include <type_traits>
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 
 namespace internal
@@ -179,6 +179,6 @@ struct TypeRegex< ENUM, std::enable_if_t< internal::HasEnumStrings< ENUM > > >
   }
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP

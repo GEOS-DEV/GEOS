@@ -28,7 +28,7 @@
 
 #include <_hypre_utilities.h>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -179,6 +179,6 @@ void createMGR( LinearSolverParameters const & params,
 
 } // namespace hypre
 
-} // namespace geosx
+} // namespace geos
 
 #endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSTRATEGIES_HPP_*/

@@ -33,7 +33,7 @@
 #include <numeric>
 #include <functional>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -1608,4 +1608,4 @@ MAKE_DOFMANAGER_METHOD_INST( HypreInterface )
 MAKE_DOFMANAGER_METHOD_INST( PetscInterface )
 #endif
 
-} // namespace geosx
+} // namespace geos

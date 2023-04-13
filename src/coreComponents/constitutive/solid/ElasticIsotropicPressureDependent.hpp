@@ -26,7 +26,7 @@
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -576,6 +576,6 @@ protected:
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_ELASTICISOTROPICPRESSUREDEPENDENT_HPP_ */

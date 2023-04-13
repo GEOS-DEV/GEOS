@@ -23,7 +23,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -368,6 +368,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_

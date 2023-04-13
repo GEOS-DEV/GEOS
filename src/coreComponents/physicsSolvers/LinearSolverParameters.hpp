@@ -22,7 +22,7 @@
 #include "dataRepository/Group.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -128,6 +128,6 @@ private:
 
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_LINEARSOLVERPARAMETERS_HPP_

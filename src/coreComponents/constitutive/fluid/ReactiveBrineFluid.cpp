@@ -20,7 +20,7 @@
 #include "constitutive/fluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -272,4 +272,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveBrineThermal, string const &, 
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos

@@ -22,7 +22,7 @@
 
 #include "dataRepository/Group.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -145,6 +145,6 @@ private:
 
 };
 
-} //namespace geosx
+} //namespace geos
 
 #endif // GEOSX_PHYSICSSOLVERS_SOLVERSTATISTICS_HPP

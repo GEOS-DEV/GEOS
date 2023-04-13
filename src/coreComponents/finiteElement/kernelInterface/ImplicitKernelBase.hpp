@@ -23,7 +23,7 @@
 
 
 
-namespace geosx
+namespace geos
 {
 
 namespace finiteElement
@@ -35,7 +35,7 @@ namespace finiteElement
 /**
  * @class ImplicitKernelBase
  * @brief Define the base interface for implicit finite element kernels.
- * @copydoc geosx::finiteElement::KernelBase
+ * @copydoc geos::finiteElement::KernelBase
  *
  * ### ImplicitKernelBase Description
  * Provides a common base for kernels that require the assembly of a system of
@@ -54,7 +54,7 @@ class ImplicitKernelBase : public KernelBase< SUBREGION_TYPE,
                                               NUM_DOF_PER_TRIAL_SP >
 {
 public:
-  /// Alias for the base class. (i.e. #geosx::finiteElement::KernelBase)
+  /// Alias for the base class. (i.e. #geos::finiteElement::KernelBase)
   using Base = KernelBase< SUBREGION_TYPE,
                            CONSTITUTIVE_TYPE,
                            FE_TYPE,
@@ -79,7 +79,7 @@ public:
    * @param rankOffset dof index offset of current rank
    * @param inputMatrix Reference to the Jacobian matrix.
    * @param inputRhs Reference to the RHS vector.
-   * @copydoc geosx::finiteElement::KernelBase::KernelBase
+   * @copydoc geos::finiteElement::KernelBase::KernelBase
    */
   ImplicitKernelBase( NodeManager const & nodeManager,
                       EdgeManager const & edgeManager,
@@ -156,7 +156,7 @@ public:
   //***************************************************************************
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::setup
+   * @copydoc geos::finiteElement::KernelBase::setup
    *
    * ### ImplicitKernelBase::setup() Description
    *

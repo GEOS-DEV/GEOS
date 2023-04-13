@@ -20,7 +20,7 @@
 #include "constitutive/fluid/PVTFunctions/PureWaterProperties.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -57,4 +57,4 @@ REGISTER_CATALOG_ENTRY( PVTFunctionBase, WaterDensity, string const &, string_ar
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

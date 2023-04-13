@@ -45,7 +45,7 @@
 #include "constitutive/solid/SolidBase.hpp"
 #include "InvariantDecompositions.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -349,6 +349,6 @@ protected:
 };
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_ */

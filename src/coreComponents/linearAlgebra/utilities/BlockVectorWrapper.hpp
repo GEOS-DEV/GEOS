@@ -22,7 +22,7 @@
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
 #include "common/common.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -79,6 +79,6 @@ public:
   }
 };
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORWRAPPER_HPP_

@@ -20,7 +20,7 @@
 
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -74,4 +74,4 @@ TableCapillaryPressureHelpers::validateCapillaryPressureTable( TableFunction con
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

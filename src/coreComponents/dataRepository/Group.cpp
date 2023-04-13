@@ -22,7 +22,7 @@
 #include "python/PyGroupType.hpp"
 #endif
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -647,8 +647,8 @@ localIndex Group::getSubGroupIndex( keyType const & key ) const
 
 #if defined(GEOSX_USE_PYGEOSX)
 PyTypeObject * Group::getPythonType() const
-{ return geosx::python::getPyGroupType(); }
+{ return geos::python::getPyGroupType(); }
 #endif
 
 } /* end namespace dataRepository */
-} /* end namespace geosx  */
+} /* end namespace geos  */

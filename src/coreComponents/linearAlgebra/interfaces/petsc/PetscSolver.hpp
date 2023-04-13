@@ -26,7 +26,7 @@
 /// Forward declare PETSC's solver struct
 extern "C" struct _p_KSP;
 
-namespace geosx
+namespace geos
 {
 
 /**

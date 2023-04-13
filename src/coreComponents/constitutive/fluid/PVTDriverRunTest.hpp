@@ -21,7 +21,7 @@
 
 #include "PVTDriver.hpp"
 
-namespace geosx
+namespace geos
 {
 
 template< typename FLUID_TYPE >

@@ -21,7 +21,7 @@
 
 #include "dataRepository/Group.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -131,6 +131,6 @@ private:
 
 };
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_MESH_PERFORATION_HPP

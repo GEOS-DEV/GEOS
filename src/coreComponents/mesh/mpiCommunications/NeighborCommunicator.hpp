@@ -22,7 +22,7 @@
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "LvArray/src/limits.hpp"
 
-namespace geosx
+namespace geos
 {
 inline int CommTag( int const GEOSX_UNUSED_PARAM( senderRank ),
                     int const GEOSX_UNUSED_PARAM( receiverRank ),
@@ -333,6 +333,6 @@ void NeighborCommunicator::mpiISendReceiveData( array1d< T > const & sendBuffer,
                    mpiComm );
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_ */

@@ -25,7 +25,7 @@
 #include <umpire/ResourceManager.hpp>
 #include <umpire/TypedAllocator.hpp>
 
-namespace geosx
+namespace geos
 {
 /**
  * @brief Set the current desired behaviour of the BufferAllocator

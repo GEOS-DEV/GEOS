@@ -22,7 +22,7 @@
 #include "constitutive/contact/ContactBase.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace poromechanicsEFEMKernels
@@ -30,7 +30,7 @@ namespace poromechanicsEFEMKernels
 
 /**
  * @brief Implements kernels for solving quasi-static single-phase poromechanics.
- * @copydoc geosx::finiteElement::ImplicitKernelBase
+ * @copydoc geos::finiteElement::ImplicitKernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
  * @tparam UNUSED An unused parameter since we are assuming that the test and
@@ -40,7 +40,7 @@ namespace poromechanicsEFEMKernels
  * Implements the KernelBase interface functions required for solving the
  * quasi-static single-phase poromechanics problem using one of the
  * "finite element kernel application" functions such as
- * geosx::finiteElement::RegionBasedKernelApplication.
+ * geos::finiteElement::RegionBasedKernelApplication.
  *
  */
 template< typename SUBREGION_TYPE,
@@ -98,7 +98,7 @@ public:
   //*****************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   * @copydoc geos::finiteElement::ImplicitKernelBase::StackVariables
    *
    * Adds a stack array for the displacement, incremental displacement, and the
    * constitutive stiffness.
@@ -209,7 +209,7 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
+   * @copydoc ::geos::finiteElement::ImplicitKernelBase::setup
    *
    * For the SinglePhasePoromechanicsEFEM implementation, global values from the displacement,
    * incremental displacement, and degree of freedom numbers are placed into
@@ -225,7 +225,7 @@ public:
                               StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+   * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
   GEOSX_HOST_DEVICE
   real64 complete( localIndex const k,
@@ -371,6 +371,6 @@ struct StateUpdateKernel
 
 } // namespace poromechanicsEFEMKernels
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_HPP_

@@ -24,7 +24,7 @@
 #include "dataRepository/Group.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -396,6 +396,6 @@ ENUM_STRINGS( WellControls::Control,
               "uninitialized" );
 
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP

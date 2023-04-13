@@ -22,7 +22,7 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 
 struct ModifiedObjectLists
@@ -576,6 +576,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_SURFACEGENERATOR_HPP_ */

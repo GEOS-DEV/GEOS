@@ -19,7 +19,7 @@
 #include "functions/FunctionManager.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -324,4 +324,4 @@ BlackOilFluidBase::KernelWrapper::
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

@@ -27,7 +27,7 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace poromechanicsEFEMKernels
@@ -371,6 +371,6 @@ complete( localIndex const k,
 
 } // namespace poromechanicsEFEMKernels
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_

@@ -22,7 +22,7 @@
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -320,6 +320,6 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_RELPERM_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP

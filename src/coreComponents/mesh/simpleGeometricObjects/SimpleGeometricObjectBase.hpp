@@ -25,7 +25,7 @@
 
 class Function;
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {

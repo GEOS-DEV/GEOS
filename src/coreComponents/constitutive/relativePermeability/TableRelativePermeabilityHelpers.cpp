@@ -20,7 +20,7 @@
 
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -80,4 +80,4 @@ TableRelativePermeabilityHelpers::validateRelativePermeabilityTable( TableFuncti
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

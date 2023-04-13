@@ -41,7 +41,7 @@
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace isothermalCompositionalMultiphaseFVMKernels
@@ -1696,7 +1696,7 @@ struct AquiferBCKernel
 
 } // namespace isothermalCompositionalMultiphaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP

@@ -32,7 +32,7 @@
 #include <cfenv>
 #include <numeric>
 
-namespace geosx
+namespace geos
 {
 
 PetscMatrix::PetscMatrix()

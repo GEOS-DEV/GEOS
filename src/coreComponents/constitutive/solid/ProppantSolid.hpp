@@ -23,7 +23,7 @@
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/NullModel.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -139,6 +139,6 @@ private:
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_PROPPANTSOLID_HPP_ */

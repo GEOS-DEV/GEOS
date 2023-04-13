@@ -21,7 +21,7 @@
 #include "fileIO/python/PyHistoryCollectionType.hpp"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -32,7 +32,7 @@ namespace geosx
 class HistoryCollectionBase : public HistoryCollection
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  /// @copydoc geos::dataRepository::Group::Group(string const & name, Group * const parent)
   HistoryCollectionBase( string const & name, Group * parent ):
     HistoryCollection( name, parent ),
     m_targetIsMeshObject( false ),

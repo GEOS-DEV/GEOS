@@ -26,7 +26,7 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace LAIHelperFunctions
 {

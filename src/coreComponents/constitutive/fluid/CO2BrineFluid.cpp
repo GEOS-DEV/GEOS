@@ -20,7 +20,7 @@
 #include "constitutive/fluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -338,7 +338,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
                  PHASE1 const & phase1,
                  PHASE2 const & phase2,
                  FLASH const & flash,
-                 arrayView1d< geosx::real64 const > componentMolarWeight,
+                 arrayView1d< geos::real64 const > componentMolarWeight,
                  bool const useMass,
                  bool const isThermal,
                  PhaseProp::ViewType phaseFraction,
@@ -389,4 +389,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, CO2BrineEzrokhiThermalFluid, string co
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos

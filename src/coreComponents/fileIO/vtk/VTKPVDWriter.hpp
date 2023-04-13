@@ -17,7 +17,7 @@
 
 #include "dataRepository/xmlWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace vtk
 {

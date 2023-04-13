@@ -25,14 +25,14 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace testing
 {
 
-using namespace geosx::constitutive;
-using namespace geosx::constitutive::multifluid;
+using namespace geos::constitutive;
+using namespace geos::constitutive::multifluid;
 
 void checkDerivative( real64 const valueEps,
                       real64 const value,
@@ -779,6 +779,6 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
 
 } // namespace testing
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_TESTCOMPFLOWUTILS_HPP

@@ -22,7 +22,7 @@
 
 #include "SimpleGeometricObjectBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -109,6 +109,6 @@ private:
   /// @endcond
 
 };
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_BOX_HPP_ */

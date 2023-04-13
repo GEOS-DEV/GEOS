@@ -64,7 +64,7 @@
     static constexpr char const * description = DESCRIPTION; \
   }
 
-namespace geosx
+namespace geos
 {
 /**
  * A scope for field traits.
@@ -148,6 +148,6 @@ DECLARE_FIELD( ruptureTime,
 
 
 } // namespace fields
-} // namespace geosx
+} // namespace geos
 
 #endif /* GEOSX_MESH_FIELDS_HPP_ */

@@ -29,7 +29,7 @@
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "utilities/ComputationalGeometry.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 

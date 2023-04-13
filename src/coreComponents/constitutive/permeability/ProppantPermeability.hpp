@@ -22,7 +22,7 @@
 #include "constitutive/permeability/PermeabilityBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -169,7 +169,7 @@ private:
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
 #endif //GEOSX_CONSTITUTIVE_PERMEABILITY_PROPPANTPERMEABILITY_HPP_

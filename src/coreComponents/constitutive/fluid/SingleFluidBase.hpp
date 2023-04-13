@@ -21,7 +21,7 @@
 
 #include "constitutive/ConstitutiveBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -288,6 +288,6 @@ protected:
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_SINGLEFLUIDBASE_HPP

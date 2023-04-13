@@ -18,7 +18,7 @@
 
 #include <mathpresso/mathpresso.h>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -29,7 +29,7 @@ namespace geosx
 class SymbolicFunction : public FunctionBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   SymbolicFunction( const string & name,
                     dataRepository::Group * const parent );
 
@@ -102,6 +102,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FUNCTIONS_SYMBOLICFUNCTION_HPP_ */

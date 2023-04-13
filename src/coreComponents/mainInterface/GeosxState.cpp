@@ -29,7 +29,7 @@
 // System includes
 #include <ostream>
 
-namespace geosx
+namespace geos
 {
 
 GeosxState * currentGlobalState = nullptr;
@@ -222,4 +222,4 @@ FieldSpecificationManager & GeosxState::getFieldSpecificationManager()
 FunctionManager & GeosxState::getFunctionManager()
 { return getProblemManager().getFunctionManager(); }
 
-} // namespace geosx
+} // namespace geos

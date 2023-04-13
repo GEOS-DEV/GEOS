@@ -20,7 +20,7 @@
 
 #include "SlurryFluidFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -135,4 +135,4 @@ void SlurryFluidBase::allocateConstitutiveData( Group & parent,
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos

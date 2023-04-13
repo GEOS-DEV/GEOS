@@ -37,7 +37,7 @@
 #include <chrono>
 
 
-namespace geosx
+namespace geos
 {
 
 std::unique_ptr< GeosxState > g_state;
@@ -254,20 +254,20 @@ PyObject * finalize( PyObject * self, PyObject * args ) noexcept
   Py_RETURN_NONE;
 }
 
-} // namespace geosx
+} // namespace geos
 
 
 /**
- * Add geosx::State enums to the given module. Return the module, or nullptr on failure
+ * Add geos::State enums to the given module. Return the module, or nullptr on failure
  */
 
 static bool addConstants( PyObject * module )
 {
   std::array< std::pair< long, char const * >, 4 > const constants = { {
-    { static_cast< long >( geosx::State::COMPLETED ), "COMPLETED" },
-    { static_cast< long >( geosx::State::INITIALIZED ), "INITIALIZED" },
-    { static_cast< long >( geosx::State::UNINITIALIZED ), "UNINITIALIZED" },
-    { static_cast< long >( geosx::State::READY_TO_RUN ), "READY_TO_RUN" }
+    { static_cast< long >( geos::State::COMPLETED ), "COMPLETED" },
+    { static_cast< long >( geos::State::INITIALIZED ), "INITIALIZED" },
+    { static_cast< long >( geos::State::UNINITIALIZED ), "UNINITIALIZED" },
+    { static_cast< long >( geos::State::READY_TO_RUN ), "READY_TO_RUN" }
   } };
 
   for( std::pair< long, char const * > const & pair : constants )
@@ -323,11 +323,11 @@ BEGIN_ALLOW_DESIGNATED_INITIALIZERS
  */
 
 static PyMethodDef pygeosxFuncs[] = {
-  { "initialize", geosx::initialize, METH_VARARGS, geosx::initializeDocString },
-  { "reinit", geosx::reinit, METH_VARARGS, geosx::reinitDocString },
-  { "apply_initial_conditions", geosx::applyInitialConditions, METH_NOARGS, geosx::applyInitialConditionsDocString },
-  { "run", geosx::run, METH_NOARGS, geosx::runDocString },
-  { "_finalize", geosx::finalize, METH_NOARGS, geosx::finalizeDocString },
+  { "initialize", geos::initialize, METH_VARARGS, geos::initializeDocString },
+  { "reinit", geos::reinit, METH_VARARGS, geos::reinitDocString },
+  { "apply_initial_conditions", geos::applyInitialConditions, METH_NOARGS, geos::applyInitialConditionsDocString },
+  { "run", geos::run, METH_NOARGS, geos::runDocString },
+  { "_finalize", geos::finalize, METH_NOARGS, geos::finalizeDocString },
   { nullptr, nullptr, 0, nullptr }        /* Sentinel */
 };
 
@@ -378,32 +378,32 @@ PyInit_pygeosx()
     return nullptr;
   }
 
-  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyGroupType(), "Group" ) )
+  if( !LvArray::python::addTypeToModule( module, geos::python::getPyGroupType(), "Group" ) )
   {
     return nullptr;
   }
 
-  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyWrapperType(), "Wrapper" ) )
+  if( !LvArray::python::addTypeToModule( module, geos::python::getPyWrapperType(), "Wrapper" ) )
   {
     return nullptr;
   }
 
-  if( !LvArray::python::addTypeToModule( module, geosx::python::getPySolverType(), "Solver" ) )
+  if( !LvArray::python::addTypeToModule( module, geos::python::getPySolverType(), "Solver" ) )
   {
     return nullptr;
   }
 
-  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyHistoryCollectionType(), "HistoryCollection" ) )
+  if( !LvArray::python::addTypeToModule( module, geos::python::getPyHistoryCollectionType(), "HistoryCollection" ) )
   {
     return nullptr;
   }
 
-  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyHistoryOutputType(), "HistoryOutput" ) )
+  if( !LvArray::python::addTypeToModule( module, geos::python::getPyHistoryOutputType(), "HistoryOutput" ) )
   {
     return nullptr;
   }
 
-  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyVTKOutputType(), "VTKOutput" ) )
+  if( !LvArray::python::addTypeToModule( module, geos::python::getPyVTKOutputType(), "VTKOutput" ) )
   {
     return nullptr;
   }

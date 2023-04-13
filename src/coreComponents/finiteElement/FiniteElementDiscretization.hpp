@@ -27,7 +27,7 @@
 #include "FiniteElementDispatch.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 // TODO remove when these quantities are placed inside the FiniteElementBase
@@ -164,6 +164,6 @@ FiniteElementDiscretization::
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_ */

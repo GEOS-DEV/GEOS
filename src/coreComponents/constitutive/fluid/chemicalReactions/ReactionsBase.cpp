@@ -20,7 +20,7 @@
 
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -148,4 +148,4 @@ void ReactionsBase::KernelWrapper::computeIonicStrength( arraySlice1d< real64 co
 
 } // namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos

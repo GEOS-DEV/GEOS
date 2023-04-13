@@ -23,7 +23,7 @@
 #include "physicsSolvers/multiphysics/CoupledReservoirAndWellsBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
 
-namespace geosx
+namespace geos
 {
 
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >
@@ -81,6 +81,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASERESERVOIRANDWELLS_HPP_ */

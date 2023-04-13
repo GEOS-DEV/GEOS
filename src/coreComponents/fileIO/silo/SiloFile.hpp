@@ -35,7 +35,7 @@ struct _PMPIO_baton_t;
 /// Type alias for _PMPIO_baton_t struct
 typedef _PMPIO_baton_t PMPIO_baton_t;
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;

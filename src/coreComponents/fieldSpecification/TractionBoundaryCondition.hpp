@@ -23,7 +23,7 @@
 #include "FieldSpecificationBase.hpp"
 #include "mesh/FaceManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class TableFunction;
@@ -133,6 +133,6 @@ ENUM_STRINGS( TractionBoundaryCondition::TractionType,
               "normal",
               "stress" );
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FIELDSPECIFICATION_TRACTIONBOUNDARYCONDITION_HPP */

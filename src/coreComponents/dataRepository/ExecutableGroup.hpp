@@ -24,7 +24,7 @@
 #include "Group.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;

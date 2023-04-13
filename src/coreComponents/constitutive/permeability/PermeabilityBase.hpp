@@ -23,7 +23,7 @@
 
 #include "constitutive/ExponentialRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -151,7 +151,7 @@ protected:
 
 }/* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
 #endif //GEOSX_CONSTITUTIVE_PERMEABILITY_PERMEABILITYBASE_HPP_

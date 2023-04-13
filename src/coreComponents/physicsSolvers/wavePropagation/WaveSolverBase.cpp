@@ -27,7 +27,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -359,4 +359,4 @@ localIndex WaveSolverBase::getNumNodesPerElem()
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */

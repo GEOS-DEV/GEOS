@@ -25,7 +25,7 @@
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsLagrangianFEMKernels
@@ -118,4 +118,4 @@ struct ExplicitKernel
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos

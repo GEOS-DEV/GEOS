@@ -22,7 +22,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "functions/MultivariableTableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -348,7 +348,7 @@ private:
 };
 
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBL_HPP_

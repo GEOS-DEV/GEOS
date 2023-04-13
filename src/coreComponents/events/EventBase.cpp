@@ -22,7 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -368,4 +368,4 @@ void EventBase::setProgressIndicator( array1d< integer > & eventCounters )
   } );
 }
 
-} /* namespace geosx */
+} /* namespace geos */

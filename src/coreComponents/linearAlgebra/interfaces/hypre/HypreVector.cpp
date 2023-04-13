@@ -25,7 +25,7 @@
 
 #include <iomanip>
 
-namespace geosx
+namespace geos
 {
 
 HypreVector::HypreVector()
@@ -407,4 +407,4 @@ MPI_Comm HypreVector::comm() const
   return hypre_ParVectorComm( m_vec );
 }
 
-} // end namespace geosx
+} // end namespace geos

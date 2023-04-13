@@ -12,7 +12,7 @@
 #define VERIFY_INITIALIZED( self ) \
   PYTHON_ERROR_IF( self->group == nullptr, PyExc_RuntimeError, "The PySolver is not initialized.", nullptr )
 
-namespace geosx
+namespace geos
 {
 namespace python
 {
@@ -22,9 +22,9 @@ struct PySolver
   PyObject_HEAD
 
   static constexpr char const * docString =
-    "A Python interface to geosx::SolverBase.";
+    "A Python interface to geos::SolverBase.";
 
-  geosx::SolverBase * group;
+  geos::SolverBase * group;
 };
 
 
@@ -74,7 +74,7 @@ static PyObject * execute( PySolver * self, PyObject * args )
     return nullptr;
   }
 
-  geosx::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   int cycleNumber = int(round( time/dt ));
 
@@ -107,7 +107,7 @@ static PyObject * cleanup( PySolver * self, PyObject *args )
     return nullptr;
   }
 
-  geosx::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
   self->group->cleanup( time, 0, 0, 0.0, domain );
 
   Py_RETURN_NONE;

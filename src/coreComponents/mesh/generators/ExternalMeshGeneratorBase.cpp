@@ -14,7 +14,7 @@
 
 #include "ExternalMeshGeneratorBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -99,4 +99,4 @@ void ExternalMeshGeneratorBase::postProcessInput()
   MeshGeneratorBase::m_surfacicFields = buildMapping( m_surfacicFieldsToImport.toViewConst(), m_surfacicFieldsInGEOSX.toViewConst() );
 }
 
-} // namespace geosx
+} // namespace geos

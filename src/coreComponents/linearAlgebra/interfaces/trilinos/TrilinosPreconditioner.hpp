@@ -27,7 +27,7 @@
 
 class Epetra_Operator;
 
-namespace geosx
+namespace geos
 {
 
 /**

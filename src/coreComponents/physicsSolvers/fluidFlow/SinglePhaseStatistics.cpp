@@ -25,7 +25,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -200,4 +200,4 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         SinglePhaseStatistics,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

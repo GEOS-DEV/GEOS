@@ -20,7 +20,7 @@
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "LvArray/src/sortedArrayManipulation.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -156,4 +156,4 @@ BlackOilTables::buildAllTables( localIndex const ipOil,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

@@ -24,7 +24,7 @@
 #include "LvArray/src/Array.hpp"
 #include "RAJA/RAJA.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -231,6 +231,6 @@ static constexpr int USD_OBL_DER = LvArray::typeManipulation::getStrideOneDimens
 
 } // namespace compflow
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_COMMON_DATALAYOUTS_HPP_

@@ -24,7 +24,7 @@
 #include "dataRepository/Group.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -51,7 +51,7 @@ public:
   /// Maximum total number of independent variables (including components of multidimensional variables)
   static constexpr int MAX_VARS = 4;
 
-  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   FunctionBase( const string & name,
                 dataRepository::Group * const parent );
 
@@ -215,6 +215,6 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
     result[i] = static_cast< LEAF const * >( this )->evaluate( input );
   } );
 }
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FUNCTIONS_FUNCTIONBASE_HPP_ */

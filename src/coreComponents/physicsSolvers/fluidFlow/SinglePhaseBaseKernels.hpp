@@ -28,7 +28,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhaseBaseKernels
@@ -859,6 +859,6 @@ struct HydrostaticPressureKernel
 
 } // namespace singlePhaseBaseKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASEKERNELS_HPP

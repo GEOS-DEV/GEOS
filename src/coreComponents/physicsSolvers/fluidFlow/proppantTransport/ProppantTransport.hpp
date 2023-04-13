@@ -23,7 +23,7 @@
 #include "constitutive/fluid/ParticleFluidBase.hpp"
 #include "constitutive/fluid/SlurryFluidBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -247,6 +247,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_

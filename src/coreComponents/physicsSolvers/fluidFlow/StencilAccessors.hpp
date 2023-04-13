@@ -25,7 +25,7 @@
 
 #include <tuple>
 
-namespace geosx
+namespace geos
 {
 
 /**

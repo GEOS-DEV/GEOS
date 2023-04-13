@@ -29,7 +29,7 @@
 #include <conduit_blueprint.hpp>
 #include <conduit_relay.hpp>
 
-namespace geosx
+namespace geos
 {
 namespace internal
 {
@@ -309,4 +309,4 @@ void BlueprintOutput::writeOutConstitutiveData( dataRepository::Group const & co
 
 REGISTER_CATALOG_ENTRY( OutputBase, BlueprintOutput, string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

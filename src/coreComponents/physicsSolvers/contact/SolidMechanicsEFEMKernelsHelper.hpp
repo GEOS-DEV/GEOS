@@ -28,7 +28,7 @@
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsEFEMKernelsHelper

@@ -24,7 +24,7 @@
 
 #include <type_traits>
 
-namespace geosx
+namespace geos
 {
 
 template< typename T >
@@ -641,7 +641,7 @@ Unpack( buffer_unit_type const * & buffer,
 #endif /* GEOSX_USE_ARRAY_BOUNDS_CHECK */
 
 } /* namespace bufferOps */
-} /* namespace geosx */
+} /* namespace geos */
 
 #include "BufferOps_inline.hpp"
 

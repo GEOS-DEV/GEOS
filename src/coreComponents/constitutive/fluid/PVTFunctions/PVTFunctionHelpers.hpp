@@ -21,7 +21,7 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONHELPERS_HPP
 #define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONHELPERS_HPP
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -229,7 +229,7 @@ initializePropertyTable( string_array const & inputParameters,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif

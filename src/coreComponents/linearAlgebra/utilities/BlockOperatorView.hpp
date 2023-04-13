@@ -25,7 +25,7 @@
 #include "common/traits.hpp"
 #include "linearAlgebra/common/common.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

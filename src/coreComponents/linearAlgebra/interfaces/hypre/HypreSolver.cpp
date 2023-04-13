@@ -27,7 +27,7 @@
 #include <_hypre_IJ_mv.h>
 #include <krylov.h>
 
-namespace geosx
+namespace geos
 {
 
 /**

@@ -26,7 +26,7 @@
 #include <map>
 #include <utility>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -167,7 +167,7 @@ CompositionalMultiphaseFluid::deliverClone( string const & name,
 CompositionalMultiphaseFluid::KernelWrapper::
   KernelWrapper( pvt::MultiphaseSystem & fluid,
                  arrayView1d< pvt::PHASE_TYPE > const & phaseTypes,
-                 arrayView1d< geosx::real64 const > const & componentMolarWeight,
+                 arrayView1d< geos::real64 const > const & componentMolarWeight,
                  bool useMass,
                  PhaseProp::ViewType phaseFraction,
                  PhaseProp::ViewType phaseDensity,
@@ -212,4 +212,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluid, string c
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

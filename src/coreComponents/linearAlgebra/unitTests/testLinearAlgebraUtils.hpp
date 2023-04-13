@@ -29,7 +29,7 @@
 
 #include <gtest/gtest.h>
 
-namespace geosx
+namespace geos
 {
 namespace testing
 {
@@ -44,14 +44,14 @@ public:
   LinearAlgebraTestScope( int argc, char * * argv )
   {
     ::testing::InitGoogleTest( &argc, argv );
-    geosx::setupEnvironment( argc, argv );
+    geos::setupEnvironment( argc, argv );
     setupLAI();
   }
 
   ~LinearAlgebraTestScope()
   {
     finalizeLAI();
-    geosx::cleanupEnvironment();
+    geos::cleanupEnvironment();
   }
 };
 
@@ -465,6 +465,6 @@ void compute2DElasticityOperator( MPI_Comm const comm,
 ///@}
 
 } // namespace testing
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP_

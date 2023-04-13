@@ -27,7 +27,7 @@
 #include <Epetra_Vector.h>
 #include <Epetra_Import.h>
 
-namespace geosx
+namespace geos
 {
 
 EpetraExport::EpetraExport() = default;
@@ -140,4 +140,4 @@ INST_EPETRA_EXPORT_CRS( long long, long long );
 
 #undef INST_EPETRA_EXPORT_CRS
 
-} // namespace geosx
+} // namespace geos

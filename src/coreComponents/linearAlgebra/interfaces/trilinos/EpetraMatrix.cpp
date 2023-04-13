@@ -32,7 +32,7 @@
 
 #include <numeric>
 
-namespace geosx
+namespace geos
 {
 
 EpetraMatrix::EpetraMatrix()

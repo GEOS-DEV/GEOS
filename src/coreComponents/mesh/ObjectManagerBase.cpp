@@ -22,7 +22,7 @@
 #include "mesh/MeshFields.hpp"
 #include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -1031,4 +1031,4 @@ void ObjectManagerBase::moveSets( LvArray::MemorySpace const targetSpace )
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */

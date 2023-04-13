@@ -22,7 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -190,7 +190,7 @@ inline bool operator>=( InputFlags const left, InputFlags const right )
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
 

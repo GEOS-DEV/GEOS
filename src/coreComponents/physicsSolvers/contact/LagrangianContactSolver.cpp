@@ -48,7 +48,7 @@
 #pragma GCC optimize "O0"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -1883,4 +1883,4 @@ real64 LagrangianContactSolver::setNextDt( real64 const & currentDt,
 
 REGISTER_CATALOG_ENTRY( SolverBase, LagrangianContactSolver, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -26,7 +26,7 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -107,4 +107,4 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldFractureSolver, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

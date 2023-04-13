@@ -19,7 +19,7 @@
 #include "dataRepository/Group.hpp"
 #include "EventBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -137,6 +137,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_EVENTS_EVENTMANAGER_HPP_ */

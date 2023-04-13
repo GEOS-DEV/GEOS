@@ -18,7 +18,7 @@
 // Source includes
 #include "dataRepository/WrapperBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace python
 {
@@ -34,6 +34,6 @@ PyObject * createNewPyWrapper( dataRepository::WrapperBase & wrapper );
 PyTypeObject * getPyWrapperType();
 
 } // namespace python
-} // namespace geosx
+} // namespace geos
 
 #endif

@@ -21,7 +21,7 @@
 #include "functions/FunctionManager.hpp"
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -306,4 +306,4 @@ void EquilibriumReactions::KernelWrapper::setInitialGuess( arraySlice1d< real64 
 
 } // namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos

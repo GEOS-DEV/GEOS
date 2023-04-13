@@ -24,7 +24,7 @@
 #include "InvariantDecompositions.hpp"
 #include "SolidBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -200,6 +200,6 @@ public:
 
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_DAMAGEVOLDEV_HPP_ */

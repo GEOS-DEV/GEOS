@@ -18,7 +18,7 @@
 #include "common/DataTypes.hpp"
 #include "common/Span.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

@@ -26,7 +26,7 @@
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -352,6 +352,6 @@ private:
 
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_ */

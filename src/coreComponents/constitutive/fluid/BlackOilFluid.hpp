@@ -23,7 +23,7 @@
 #include "constitutive/fluid/PVTOData.hpp"
 #include "math/interpolation/Interpolation.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -1104,7 +1104,7 @@ BlackOilFluid::KernelWrapper::
           localIndex const q,
           real64 const pressure,
           real64 const temperature,
-          arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
+          arraySlice1d< geos::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
   compute( pressure,
            temperature,
@@ -1121,6 +1121,6 @@ BlackOilFluid::KernelWrapper::
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_

@@ -22,7 +22,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "mainInterface/ProblemManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -120,4 +120,4 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         SolidMechanicsStateReset,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

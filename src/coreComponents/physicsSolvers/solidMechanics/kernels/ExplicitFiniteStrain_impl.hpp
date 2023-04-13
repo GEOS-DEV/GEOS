@@ -23,7 +23,7 @@
 #include "ExplicitSmallStrain_impl.hpp"
 #include "finiteElement/Kinematics.h"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsLagrangianFEMKernels
@@ -144,6 +144,6 @@ ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITFINITESTRAIN_IMPL_HPP_

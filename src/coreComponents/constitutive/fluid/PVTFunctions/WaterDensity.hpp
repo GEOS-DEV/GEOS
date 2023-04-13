@@ -25,7 +25,7 @@
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -148,6 +148,6 @@ void WaterDensityUpdate::compute( real64 const & pressure,
 
 } // end namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_WATERDENSITY_HPP_

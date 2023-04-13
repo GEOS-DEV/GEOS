@@ -22,7 +22,7 @@
 
 #include <petscksp.h>
 
-namespace geosx
+namespace geos
 {
 
 namespace

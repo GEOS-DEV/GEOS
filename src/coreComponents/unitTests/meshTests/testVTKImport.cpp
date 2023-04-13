@@ -29,9 +29,9 @@
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
-using namespace geosx;
-using namespace geosx::testing;
-using namespace geosx::dataRepository;
+using namespace geos;
+using namespace geos::testing;
+using namespace geos::dataRepository;
 
 template< class V >
 void TestMeshImport( string const & meshFilePath, V const & validate )
@@ -402,11 +402,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
+  geos::GeosxState state( geos::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

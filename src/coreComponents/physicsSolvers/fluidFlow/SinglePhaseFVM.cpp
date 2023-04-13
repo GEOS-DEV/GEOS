@@ -41,7 +41,7 @@
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
  */
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -786,4 +786,4 @@ typedef SinglePhaseFVM< SinglePhaseProppantBase > Proppant;
 REGISTER_CATALOG_ENTRY( SolverBase, NoProppant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( SolverBase, Proppant, string const &, Group * const )
 }
-} /* namespace geosx */
+} /* namespace geos */

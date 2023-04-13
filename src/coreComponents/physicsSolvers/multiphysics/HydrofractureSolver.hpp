@@ -24,7 +24,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class HydrofractureSolver : public CoupledSolver< SolidMechanicsLagrangianFEM,
@@ -220,6 +220,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_ */

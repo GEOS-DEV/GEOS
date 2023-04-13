@@ -21,7 +21,7 @@
 
 #include "constitutive/fluid/BlackOilFluidBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -441,7 +441,7 @@ DeadOilFluid::KernelWrapper::
           localIndex const q,
           real64 const pressure,
           real64 const temperature,
-          arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
+          arraySlice1d< geos::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
   compute( pressure,
            temperature,
@@ -458,6 +458,6 @@ DeadOilFluid::KernelWrapper::
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_

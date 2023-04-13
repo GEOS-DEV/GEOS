@@ -35,7 +35,7 @@
 #include "physicsSolvers/contact/SolidMechanicsEFEMStaticCondensationKernels.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMJumpUpdateKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -834,4 +834,4 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsEmbeddedFractures, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

@@ -26,7 +26,7 @@
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
 #include "linearAlgebra/solvers/KrylovUtils.hpp"
 
-namespace geosx
+namespace geos
 {
 
 // BEGIN_RST_NARRATIVE CGsolver.rst
@@ -151,4 +151,4 @@ template class CgSolver< PetscInterface::ParallelVector >;
 template class CgSolver< BlockVectorView< PetscInterface::ParallelVector > >;
 #endif
 
-} //namespace geosx
+} //namespace geos

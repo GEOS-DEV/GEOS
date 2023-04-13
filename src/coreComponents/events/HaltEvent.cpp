@@ -19,7 +19,7 @@
  * @file HaltEvent.cpp
  */
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -81,4 +81,4 @@ void HaltEvent::estimateEventTiming( real64 const GEOSX_UNUSED_PARAM( time ),
 
 
 REGISTER_CATALOG_ENTRY( EventBase, HaltEvent, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

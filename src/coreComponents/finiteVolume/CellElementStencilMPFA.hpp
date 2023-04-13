@@ -21,7 +21,7 @@
 
 #include "StencilBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -76,6 +76,6 @@ public:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FINITEVOLUME_CELLELEMENTSTENCILMPFA_HPP_ */

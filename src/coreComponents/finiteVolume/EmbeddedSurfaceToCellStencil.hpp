@@ -21,7 +21,7 @@
 
 #include "StencilBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -283,6 +283,6 @@ EmbeddedSurfaceToCellStencilWrapper::
   dWeight_dVar2[0][0] = ( dt0_dVar2 * t1 * sumOfTrans - dt0_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
   dWeight_dVar2[0][1] = ( t0 * dt1_dVar2 * sumOfTrans - dt1_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
 }
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FINITEVOLUME_EMBEDDEDSURFACETOCELLSTENCIL_HPP_ */

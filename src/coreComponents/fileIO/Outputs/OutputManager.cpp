@@ -19,7 +19,7 @@
 #include "OutputManager.hpp"
 #include "SiloOutput.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -53,4 +53,4 @@ void OutputManager::expandObjectCatalogs()
   }
 }
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -8,7 +8,7 @@
 #include "LvArray/src/output.hpp"
 
 #include <gtest/gtest.h>
-using namespace geosx;
+using namespace geos;
 
 TEST( DamageUtilities, PositivePartOfTensor )
 {

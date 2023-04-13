@@ -26,7 +26,7 @@ class vtkUnstructuredGrid;
 class vtkPointData;
 class vtkCellData;
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -318,6 +318,6 @@ private:
 };
 
 } // namespace vtk
-} // namespace geosx
+} // namespace geos
 
 #endif

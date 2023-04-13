@@ -21,7 +21,7 @@
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/fluid/ProppantSlurryFluid.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -43,6 +43,6 @@ void constitutiveUpdatePassThru( SlurryFluidBase & fluid,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_SLURRYFLUIDSELECTOR_HPP_

@@ -28,7 +28,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -775,4 +775,4 @@ void SinglePhasePoromechanicsConformingFractures::outputConfigurationStatistics(
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsConformingFractures, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

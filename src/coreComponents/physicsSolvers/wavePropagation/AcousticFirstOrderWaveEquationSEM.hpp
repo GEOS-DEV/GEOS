@@ -24,7 +24,7 @@
 #include "WaveSolverUtils.hpp"
 #include "WaveSolverBaseFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class AcousticFirstOrderWaveEquationSEM : public WaveSolverBase
@@ -198,6 +198,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticFirstOrderWaveEquationSEM_HPP_ */

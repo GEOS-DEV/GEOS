@@ -27,7 +27,7 @@
 
 #include <memory>
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -146,8 +146,8 @@ protected:
 
     void convertMoleFractionToMolarity( real64 const totalDensity,
                                         real64 const totalMolecularWeight,
-                                        arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition,
-                                        arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration ) const;
+                                        arraySlice1d< geos::real64 const, compflow::USD_COMP - 1 > const & composition,
+                                        arraySlice1d< geos::real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration ) const;
 
     friend class ReactiveMultiFluid;
     /// Reaction related terms
@@ -226,8 +226,8 @@ inline void
 ReactiveMultiFluid::KernelWrapper::
   convertMoleFractionToMolarity( real64 const totalDensity,
                                  real64 const totalMolecularWeight,
-                                 arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition,
-                                 arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration ) const
+                                 arraySlice1d< geos::real64 const, compflow::USD_COMP - 1 > const & composition,
+                                 arraySlice1d< geos::real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration ) const
 {
   // 1. Convert from mole fraction to molarity ( mol/L )
   real64 const conversionFactor = totalDensity / totalMolecularWeight * 1e-3;  //conversion to L instead of cubic meters
@@ -239,6 +239,6 @@ ReactiveMultiFluid::KernelWrapper::
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_REACTIVEMULTIFLUID_HPP

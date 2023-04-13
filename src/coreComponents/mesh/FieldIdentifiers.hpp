@@ -22,7 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 /**
  * @brief Enum defining the possible location of a field on the mesh.
@@ -198,6 +198,6 @@ private:
   }
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_ */

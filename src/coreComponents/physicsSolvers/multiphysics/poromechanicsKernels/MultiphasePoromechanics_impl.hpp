@@ -26,7 +26,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace poromechanicsKernels
@@ -97,7 +97,7 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
 
 /**
  * @brief Copy global values from primary field to a local stack array.
- * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
+ * @copydoc ::geos::finiteElement::ImplicitKernelBase::setup
  *
  * For the MultiphasePoromechanics implementation, global values from the displacement,
  * incremental displacement, and degree of freedom numbers are placed into
@@ -616,7 +616,7 @@ quadraturePointKernel( localIndex const k,
 }
 
 /**
- * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+ * @copydoc geos::finiteElement::ImplicitKernelBase::complete
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
@@ -745,6 +745,6 @@ kernelLaunch( localIndex const numElems,
 
 } // namespace poromechanicsKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_IMPL_HPP_

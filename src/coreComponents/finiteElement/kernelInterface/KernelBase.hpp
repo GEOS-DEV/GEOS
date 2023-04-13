@@ -35,7 +35,7 @@
 #define SELECTED_FE_TYPES BASE_FE_TYPES
 #endif
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -74,7 +74,7 @@ namespace finiteElement
  * a value of 1. In contrast, when solving a solid mechanics problem, with
  * vector displacement as the primary variable at the support point, these
  * will have a value of 3. Note that the interface provided by
- * geosx::finiteElement::RegionBasedKernelApplication will construct a
+ * geos::finiteElement::RegionBasedKernelApplication will construct a
  * kernel assuming only the first 4 template arguments.
  */
 template< typename SUBREGION_TYPE,
@@ -360,7 +360,7 @@ private:
  * @return The maximum contribution to the residual, which may be used to scale the residual.
  *
  * @details Loops over all regions Applies/Launches a kernel specified by the @p KERNEL_TEMPLATE through
- * #::geosx::finiteElement::KernelBase::kernelLaunch().
+ * #::geos::finiteElement::KernelBase::kernelLaunch().
  */
 template< typename POLICY,
           typename CONSTITUTIVE_BASE,
@@ -467,7 +467,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 //END_regionBasedKernelApplication
 
 } // namespace finiteElement
-} // namespace geosx
+} // namespace geos
 
 
 

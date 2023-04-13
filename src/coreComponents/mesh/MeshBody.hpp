@@ -22,7 +22,7 @@
 #include "MeshLevel.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 class MeshLevel;
@@ -196,6 +196,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_MESHBODY_HPP_ */

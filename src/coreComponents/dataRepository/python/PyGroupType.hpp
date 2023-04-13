@@ -3,7 +3,7 @@
 
 #include "LvArray/src/python/pythonForwardDeclarations.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace python
 {

@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PHASEMODEL_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_PHASEMODEL_HPP_
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -138,6 +138,6 @@ struct PhaseModel
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_PHASEMODEL_HPP_

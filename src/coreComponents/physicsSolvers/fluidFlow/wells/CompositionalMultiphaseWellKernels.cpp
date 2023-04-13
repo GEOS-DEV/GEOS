@@ -22,7 +22,7 @@
 // TODO: move keys to WellControls
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace compositionalMultiphaseWellKernels
@@ -1767,4 +1767,4 @@ RateInitializationKernel::
 
 } // end namespace compositionalMultiphaseWellKernels
 
-} // end namespace geosx
+} // end namespace geos

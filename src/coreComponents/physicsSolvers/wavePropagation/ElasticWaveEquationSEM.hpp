@@ -24,7 +24,7 @@
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class ElasticWaveEquationSEM : public WaveSolverBase
@@ -432,6 +432,6 @@ DECLARE_FIELD( FreeSurfaceNodeIndicator,
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASSTICWAVEEQUATIONSEM_HPP_ */

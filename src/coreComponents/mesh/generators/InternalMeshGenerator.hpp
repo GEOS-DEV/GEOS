@@ -22,7 +22,7 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "mesh/generators/MeshGeneratorBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class SpatialPartition;
@@ -382,6 +382,6 @@ public:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP */

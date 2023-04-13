@@ -36,7 +36,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace compositionalMultiphaseWellKernels
@@ -951,6 +951,6 @@ public:
 
 } // end namespace compositionalMultiphaseWellKernels
 
-} // end namespace geosx
+} // end namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP

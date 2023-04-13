@@ -25,7 +25,7 @@
 #include <random>
 
 // Put everything under the geosx namespace.
-namespace geosx
+namespace geos
 {
 
 // Random device and random number generator seed integer array used

@@ -31,7 +31,7 @@
 #include "_hypre_utilities.hpp"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 void HypreInterface::initialize()
@@ -82,13 +82,13 @@ HypreInterface::createSolver( LinearSolverParameters params )
 }
 
 std::unique_ptr< PreconditionerBase< HypreInterface > >
-geosx::HypreInterface::createPreconditioner( LinearSolverParameters params )
+geos::HypreInterface::createPreconditioner( LinearSolverParameters params )
 {
   return std::make_unique< HyprePreconditioner >( std::move( params ) );
 }
 
 std::unique_ptr< PreconditionerBase< HypreInterface > >
-geosx::HypreInterface::createPreconditioner( LinearSolverParameters params,
+geos::HypreInterface::createPreconditioner( LinearSolverParameters params,
                                              array1d< HypreVector > const & nearNullKernel )
 {
   return std::make_unique< HyprePreconditioner >( std::move( params ), nearNullKernel );

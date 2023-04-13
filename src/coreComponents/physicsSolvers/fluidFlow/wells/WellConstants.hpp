@@ -19,7 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTANTS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTANTS_HPP
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -35,6 +35,6 @@ struct WellConstants
   static constexpr real64 defaultInjectorBHP = 1.01325e8;
 };
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTANTS_HPP

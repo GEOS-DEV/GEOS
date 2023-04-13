@@ -25,7 +25,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalPoromechanicsKernels
@@ -649,6 +649,6 @@ kernelLaunch( localIndex const numElems,
 
 } // namespace thermalporomechanicsKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALMULTIPHASEPOROMECHANICS_IMPL_HPP_

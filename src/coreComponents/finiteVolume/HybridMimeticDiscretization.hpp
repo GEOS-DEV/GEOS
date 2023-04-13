@@ -22,7 +22,7 @@
 #include "dataRepository/Group.hpp"
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

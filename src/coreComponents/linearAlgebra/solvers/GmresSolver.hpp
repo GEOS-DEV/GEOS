@@ -21,7 +21,7 @@
 
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -101,6 +101,6 @@ protected:
   bool mutable m_kspaceInitialized;
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_SOLVERS_GMRESSOLVER_HPP_

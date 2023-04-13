@@ -26,7 +26,7 @@
 #include "mesh/MeshBody.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class SiloFile;
@@ -289,6 +289,6 @@ private:
   std::vector< NeighborCommunicator > m_neighbors;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_DOMAINPARTITION_HPP_ */

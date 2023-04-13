@@ -25,7 +25,7 @@
 #include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -464,6 +464,6 @@ protected:
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP_ */

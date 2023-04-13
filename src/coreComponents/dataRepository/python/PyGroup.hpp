@@ -21,7 +21,7 @@
 
 #include "PyWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace python
 {
@@ -33,6 +33,6 @@ PyObject * createNewPyGroup( dataRepository::Group & group );
 
 
 } // namespace python
-} // namespace geosx
+} // namespace geos
 
 #endif

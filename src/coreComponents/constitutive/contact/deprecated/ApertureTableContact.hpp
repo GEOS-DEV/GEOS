@@ -22,7 +22,7 @@
 #include "constitutive/contact/ContactBase.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -172,6 +172,6 @@ real64 ApertureTableContactUpdates::computeEffectiveAperture( real64 const apert
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_ */

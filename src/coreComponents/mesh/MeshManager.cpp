@@ -22,7 +22,7 @@
 
 #include <unordered_set>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -180,4 +180,4 @@ void MeshManager::importFields( DomainPartition & domain )
   } );
 }
 
-} /* namespace geosx */
+} /* namespace geos */

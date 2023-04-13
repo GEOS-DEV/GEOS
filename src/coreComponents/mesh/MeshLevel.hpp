@@ -25,7 +25,7 @@
 #include "ElementRegionManager.hpp"
 #include "FaceManager.hpp"
 
-namespace geosx
+namespace geos
 {
 class ElementRegionManager;
 
@@ -285,6 +285,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_MESHLEVEL_HPP_ */

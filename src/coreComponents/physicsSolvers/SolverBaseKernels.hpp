@@ -23,7 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solverBaseKernels
@@ -342,6 +342,6 @@ ENUM_STRINGS( NormType,
 
 } // namespace solverBaseKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_SOLVERBASEKERNELS

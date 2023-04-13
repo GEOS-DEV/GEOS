@@ -19,7 +19,7 @@
 
 #include "PerfectlyMatchedLayer.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -124,4 +124,4 @@ void PerfectlyMatchedLayer::postProcessInput()
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, PerfectlyMatchedLayer, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

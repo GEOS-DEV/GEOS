@@ -22,7 +22,7 @@
 
 #include "events/EventBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -80,6 +80,6 @@ public:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_EVENTS_HALTEVENT_HPP_ */

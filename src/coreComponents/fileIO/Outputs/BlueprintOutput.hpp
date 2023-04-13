@@ -21,7 +21,7 @@
 
 #include "fileIO/Outputs/OutputBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 // Forward declarations
@@ -131,6 +131,6 @@ private:
 };
 
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_FILEIO_OUTPUTS_BLUEPRINTOUTPUT_HPP_

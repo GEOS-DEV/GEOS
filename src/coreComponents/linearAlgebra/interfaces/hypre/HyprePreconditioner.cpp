@@ -30,7 +30,7 @@
 
 #include <cfenv>
 
-namespace geosx
+namespace geos
 {
 
 /**

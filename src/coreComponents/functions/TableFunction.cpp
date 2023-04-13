@@ -22,7 +22,7 @@
 
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -185,4 +185,4 @@ TableFunction::KernelWrapper::KernelWrapper( InterpolationType const interpolati
 
 REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, string const &, Group * const )
 
-} // end of namespace geosx
+} // end of namespace geos

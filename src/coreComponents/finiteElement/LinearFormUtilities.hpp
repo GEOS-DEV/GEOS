@@ -21,7 +21,7 @@
 
 #include "finiteElement/PDEUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace LinearFormUtilities
@@ -183,6 +183,6 @@ static void compute( VECTOR && vector,
 
 } // namespace LinearFormUtilities
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_FINITEELEMENT_LINEARFORMUTILITIES_HPP_

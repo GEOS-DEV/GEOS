@@ -24,7 +24,7 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -615,6 +615,6 @@ ENUM_STRINGS( TableFunction::InterpolationType,
               "upper",
               "lower" );
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FUNCTIONS_TABLEFUNCTION_HPP_ */

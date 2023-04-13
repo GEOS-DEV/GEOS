@@ -21,7 +21,7 @@
 #include "common/DataTypes.hpp"
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -234,4 +234,4 @@ void MultivariableTableFunction::initializeFunction()
 
 REGISTER_CATALOG_ENTRY( FunctionBase, MultivariableTableFunction, string const &, Group * const )
 
-} // end of namespace geosx
+} // end of namespace geos

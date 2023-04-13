@@ -23,7 +23,7 @@
 #include <_hypre_parcsr_mv.h>
 #include <_hypre_parcsr_ls.h>
 
-namespace geosx
+namespace geos
 {
 
 namespace hypre
@@ -160,4 +160,4 @@ HYPRE_Int relaxationDestroy( HYPRE_Solver solver )
 
 } // namespace hypre
 
-} // namespace geosx
+} // namespace geos

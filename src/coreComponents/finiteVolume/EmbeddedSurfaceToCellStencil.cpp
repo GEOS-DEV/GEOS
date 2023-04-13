@@ -18,7 +18,7 @@
 
 #include "EmbeddedSurfaceToCellStencil.hpp"
 
-namespace geosx
+namespace geos
 {
 
 void EmbeddedSurfaceToCellStencil::move( LvArray::MemorySpace const space )
@@ -72,4 +72,4 @@ EmbeddedSurfaceToCellStencilWrapper::
                         weights )
 {}
 
-} /* namespace geosx */
+} /* namespace geos */

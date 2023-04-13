@@ -22,7 +22,7 @@
 
 #include "SimpleGeometricObjectBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -95,7 +95,7 @@ private:
   real64 m_innerRadius = 0.0;
 
 };
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_CYLINDER_HPP_
         */

@@ -29,7 +29,7 @@
 
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 
 namespace internal
@@ -453,7 +453,7 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
                                               vtkSmartPointer< vtkDataSet > mesh,
                                               DuplicatedNodes const & duplicatedNodes,
                                               ArrayOfArraysView< localIndex const > faceToNodes,
-                                              geosx::internal::ElementToFace const & elemToFaces )
+                                              geos::internal::ElementToFace const & elemToFaces )
 {
   // First, we'll only consider the boundary cells,
   // since only boundary cells can be involved in this kind of computations.
@@ -603,7 +603,7 @@ vtkSmartPointer< vtkDataSet > importFractureNetwork( Path const & filePath,
                                                      CellBlockManager & cellBlockManager )
 {
   ArrayOfArrays< localIndex > const faceToNodes = cellBlockManager.getFaceToNodes();
-  geosx::internal::ElementToFace const elemToFaces( cellBlockManager.getCellBlocks() );
+  geos::internal::ElementToFace const elemToFaces( cellBlockManager.getCellBlocks() );
   ArrayOfArrays< localIndex > const nodeToEdges = cellBlockManager.getNodeToEdges();
 
   vtkSmartPointer< vtkDataSet > faceMesh = vtk::loadMesh( filePath, faceBlockName );

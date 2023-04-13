@@ -17,7 +17,7 @@
 
 #include "GeosxMacros.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

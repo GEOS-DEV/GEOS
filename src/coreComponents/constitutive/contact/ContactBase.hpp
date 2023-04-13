@@ -24,7 +24,7 @@
 #include "physicsSolvers/contact/ContactFields.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -263,6 +263,6 @@ void ContactBaseUpdates::addPressureToTraction( real64 const & pressure,
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_CONTACT_CONTACTBASE_HPP_ */

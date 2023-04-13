@@ -22,7 +22,7 @@
 #include "OutputBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -33,7 +33,7 @@ namespace geosx
 class SiloOutput : public OutputBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  /// @copydoc geos::dataRepository::Group::Group(string const & name, Group * const parent)
   SiloOutput( string const & name,
               Group * const parent );
 
@@ -104,6 +104,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FILEIO_OUTPUTS_SILOOUTPUT_HPP_ */

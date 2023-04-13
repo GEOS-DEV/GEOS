@@ -19,7 +19,7 @@
 #include "RestartOutput.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -56,4 +56,4 @@ bool RestartOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
 
 REGISTER_CATALOG_ENTRY( OutputBase, RestartOutput, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

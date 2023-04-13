@@ -12,7 +12,7 @@
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -1008,4 +1008,4 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
 
 
 
-} /* namespace geosx */
+} /* namespace geos */

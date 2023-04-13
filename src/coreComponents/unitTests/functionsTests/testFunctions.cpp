@@ -28,7 +28,7 @@
 
 #include <random>
 
-using namespace geosx;
+using namespace geos;
 
 char const * multivariableTableFileContent =
   "4 34\n"
@@ -107,7 +107,7 @@ void checkDirectionalDerivative( real64 const (&input)[4],
   perturbedInput[direction] += dInput;
   perturbedVal = kernelWrapper.compute( perturbedInput, perturbedDerivatives );
 
-  geosx::testing::checkRelativeError( derivatives[direction], (perturbedVal-val)/dInput, relTol, geosx::testing::DEFAULT_ABS_TOL );
+  geos::testing::checkRelativeError( derivatives[direction], (perturbedVal-val)/dInput, relTol, geos::testing::DEFAULT_ABS_TOL );
 }
 
 TEST( FunctionTests, 1DTable )
@@ -904,11 +904,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
+  geos::GeosxState state( geos::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

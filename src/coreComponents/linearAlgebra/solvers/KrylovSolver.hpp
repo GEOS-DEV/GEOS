@@ -21,7 +21,7 @@
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -219,6 +219,6 @@ protected:
   mutable array1d< real64 > m_residualNorms;
 };
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_

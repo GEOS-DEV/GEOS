@@ -21,7 +21,7 @@
 
 #include "mesh/generators/MeshGeneratorBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -78,6 +78,6 @@ protected:
   array1d< string > m_surfacicFieldsInGEOSX;
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_MESH_GENERATORS_EXTERNALMESHGENERATORBASE_HPP

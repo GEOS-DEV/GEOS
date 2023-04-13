@@ -19,7 +19,7 @@
 #include "BoundedPlane.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -163,4 +163,4 @@ bool BoundedPlane::isCoordInObject( real64 const ( &coord ) [3] ) const
 
 REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, BoundedPlane, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

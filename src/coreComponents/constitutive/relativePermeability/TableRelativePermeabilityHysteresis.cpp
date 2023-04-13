@@ -23,7 +23,7 @@
 #include "functions/FunctionManager.hpp"
 #include "constitutive/relativePermeability/RelpermDriver.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -674,4 +674,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, TableRelativePermeabilityHysteresis, s
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

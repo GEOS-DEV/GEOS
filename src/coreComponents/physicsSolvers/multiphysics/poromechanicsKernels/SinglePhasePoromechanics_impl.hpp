@@ -26,7 +26,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace poromechanicsKernels
@@ -473,6 +473,6 @@ kernelLaunch( localIndex const numElems,
 
 } // namespace poromechanicsKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICS_IMPL_HPP_

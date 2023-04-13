@@ -21,7 +21,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace PDEUtilities
@@ -58,6 +58,6 @@ ENUM_STRINGS( FunctionSpace,
 
 } // namespace PDEUtilities
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_FINITEELEMENT_PDEUTILITIES_HPP_

@@ -28,7 +28,7 @@
 #include "constitutive/fluid/CompositionalMultiphaseFluid.hpp"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -70,6 +70,6 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_

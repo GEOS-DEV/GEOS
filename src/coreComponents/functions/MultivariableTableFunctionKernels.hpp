@@ -19,7 +19,7 @@
 #ifndef GEOSX_FUNCTIONS_MULTIVARIABLETABLEFUNCTIONKERNELS_HPP_
 #define GEOSX_FUNCTIONS_MULTIVARIABLETABLEFUNCTIONKERNELS_HPP_
 
-namespace geosx
+namespace geos
 {
 
 
@@ -386,6 +386,6 @@ protected:
   arrayView1d< real64 > m_derivatives;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FUNCTIONS_MULTIVARIABLETABLEFUNCTIONKERNELS_HPP_ */

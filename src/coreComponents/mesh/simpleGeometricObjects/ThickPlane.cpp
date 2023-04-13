@@ -19,7 +19,7 @@
 #include "ThickPlane.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -70,4 +70,4 @@ bool ThickPlane::isCoordInObject( real64 const ( &coord ) [3] ) const
 
 REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, ThickPlane, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

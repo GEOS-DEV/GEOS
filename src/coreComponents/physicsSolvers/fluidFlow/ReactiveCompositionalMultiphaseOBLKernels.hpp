@@ -33,7 +33,7 @@
 
 
 
-namespace geosx
+namespace geos
 {
 
 namespace reactiveCompositionalMultiphaseOBLKernels
@@ -1364,7 +1364,7 @@ struct SolutionCheckKernel
 
 } // namespace ReactiveCompositionalMultiphaseOBLKernels
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBLKERNELS_HPP

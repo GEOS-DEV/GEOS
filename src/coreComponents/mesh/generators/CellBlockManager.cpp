@@ -19,7 +19,7 @@
 
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 

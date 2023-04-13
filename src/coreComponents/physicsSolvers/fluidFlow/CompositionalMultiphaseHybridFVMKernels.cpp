@@ -26,7 +26,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/HybridFVMHelperKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace compositionalMultiphaseHybridFVMKernels
@@ -1685,4 +1685,4 @@ INST_FluxKernel( 6, 5, 3, mimeticInnerProduct::BdVLMInnerProduct const );
 
 } // namespace compositionalMultiphaseHybridFVMKernels
 
-} // namespace geosx
+} // namespace geos

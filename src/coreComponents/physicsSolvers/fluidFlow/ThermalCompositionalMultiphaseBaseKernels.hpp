@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalCompositionalMultiphaseBaseKernels
@@ -967,7 +967,7 @@ public:
 
 } // namespace thermalCompositionalMultiphaseBaseKernels
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP

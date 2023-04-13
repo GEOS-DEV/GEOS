@@ -20,7 +20,7 @@
 
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -88,6 +88,6 @@ private:
   array2d< real64 > m_velocityCopy;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_ */

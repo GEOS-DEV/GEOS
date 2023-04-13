@@ -22,7 +22,7 @@
 
 #include "constitutive/solid/CoupledSolidBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -206,6 +206,6 @@ void CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::initializePreSubGroups()
 }
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_ */

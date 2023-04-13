@@ -22,7 +22,7 @@
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -90,4 +90,4 @@ REGISTER_CATALOG_ENTRY( PVTFunctionBase, EzrokhiBrineViscosity, string const &, 
 
 } // namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos

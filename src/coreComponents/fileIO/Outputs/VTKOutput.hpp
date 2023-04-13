@@ -23,7 +23,7 @@
 #include "fileIO/vtk/VTKPolyDataWriterInterface.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -33,7 +33,7 @@ class VTKOutput : public OutputBase
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  /// @copydoc geos::dataRepository::Group::Group(string const & name, Group * const parent)
   VTKOutput( string const & name, Group * const parent );
 
   /// Destructor
@@ -131,6 +131,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FILEIO_OUTPUTS_VTKOUTPUT_HPP_ */

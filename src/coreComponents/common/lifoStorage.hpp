@@ -30,7 +30,7 @@
 #define LIFO_MARK_SCOPE( a )  if( std::getenv( "LIFO_TRACE_ON" ) != NULL ) { GEOSX_MARK_SCOPE( a ); }
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -421,7 +421,7 @@ public:
 
       if( m_maxNumberOfBuffers - id > (int)m_deviceDeque.capacity() )
       {
-        LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
+        LIFO_MARK_SCOPE( geos::lifoStorage< T >::pushAddTasks );
         // This buffer will go to host memory, and maybe on disk
         std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this, id ) );
         {
@@ -439,7 +439,7 @@ public:
 
         if( m_maxNumberOfBuffers - pushId > (int)m_hostDeque.capacity() )
         {
-          LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
+          LIFO_MARK_SCOPE( geos::lifoStorage< T >::pushAddTasks );
           // This buffer will go to host memory, and maybe on disk
           std::packaged_task< void() > t2( std::bind( &lifoStorage< T >::hostToDisk, this, pushId ) );
           {
@@ -513,7 +513,7 @@ public:
 
       if( id >= (int)m_deviceDeque.capacity() )
       {
-        LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
+        LIFO_MARK_SCOPE( geos::lifoStorage< T >::popAddTasks );
         // Trigger pull one buffer from host, and maybe from disk
         std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this, id - m_deviceDeque.capacity() ) );
         {
@@ -531,7 +531,7 @@ public:
 
         if( popId >= (int)m_hostDeque.capacity() )
         {
-          LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
+          LIFO_MARK_SCOPE( geos::lifoStorage< T >::popAddTasks );
           // Trigger pull one buffer from host, and maybe from disk
           std::packaged_task< void() > task2( std::bind( &lifoStorage< T >::diskToHost, this, popId  - m_hostDeque.capacity() ) );
           {

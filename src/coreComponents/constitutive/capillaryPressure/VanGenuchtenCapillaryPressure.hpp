@@ -21,7 +21,7 @@
 
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -228,6 +228,6 @@ VanGenuchtenCapillaryPressureUpdate::
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_VANGENUCHTENCAPILLARYPRESSURE_HPP

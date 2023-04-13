@@ -34,7 +34,7 @@ extern "C" struct _p_Vec;
 
 ///@}
 
-namespace geosx
+namespace geos
 {
 
 /**

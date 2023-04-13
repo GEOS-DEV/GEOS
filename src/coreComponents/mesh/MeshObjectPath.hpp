@@ -23,7 +23,7 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "MeshLevel.hpp"
 
-namespace geosx
+namespace geos
 {
 class MeshBody;
 class MeshLevel;
@@ -215,11 +215,11 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #include "MeshBody.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -364,6 +364,6 @@ void MeshObjectPath::forObjectsInPath( MeshLevel & meshLevel,
 
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_MESHOBJECTPATH_HPP_ */

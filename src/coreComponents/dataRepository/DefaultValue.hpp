@@ -23,7 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "codingUtilities/traits.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -133,7 +133,7 @@ template< typename T >
 using DefaultValue = internal::Helper< T >;
 
 } // namespace dataRepository
-} // namespace geosx
+} // namespace geos
 
 
 #endif /* GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_ */

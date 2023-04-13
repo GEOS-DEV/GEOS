@@ -21,7 +21,7 @@
 
 #include "PorosityBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -120,7 +120,7 @@ private:
 
 }/* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
 #endif //GEOSX_CONSTITUTIVE_POROSITY_PROPPANTPOROSITY_HPP_

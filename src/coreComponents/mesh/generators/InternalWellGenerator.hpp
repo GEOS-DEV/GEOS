@@ -22,7 +22,7 @@
 
 #include "MeshGeneratorBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

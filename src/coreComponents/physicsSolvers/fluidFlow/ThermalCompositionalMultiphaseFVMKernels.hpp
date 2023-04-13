@@ -24,7 +24,7 @@
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivityFields.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalCompositionalMultiphaseFVMKernels
@@ -1112,7 +1112,7 @@ public:
 
 } // namespace thermalCompositionalMultiphaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP

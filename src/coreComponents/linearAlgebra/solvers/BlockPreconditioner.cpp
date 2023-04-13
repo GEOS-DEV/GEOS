@@ -23,7 +23,7 @@
 
 #include <numeric>
 
-namespace geosx
+namespace geos
 {
 
 template< typename LAI >

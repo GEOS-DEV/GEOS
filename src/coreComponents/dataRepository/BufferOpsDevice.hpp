@@ -25,7 +25,7 @@
 
 #include <type_traits>
 
-namespace geosx
+namespace geos
 {
 
 namespace bufferOps
@@ -221,6 +221,6 @@ UnpackDataByIndexDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer )
 }
 
 } // namespace bufferOps
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_DATAREPOSITORY_BUFFEROPSDEVICE_H_

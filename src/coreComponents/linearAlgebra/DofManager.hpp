@@ -25,7 +25,7 @@
 
 #include <numeric>
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -591,6 +591,6 @@ private:
   bool m_reordered = false;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /*GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_*/

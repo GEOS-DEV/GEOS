@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/SolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;

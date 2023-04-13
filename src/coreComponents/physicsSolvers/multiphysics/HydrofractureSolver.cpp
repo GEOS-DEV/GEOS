@@ -24,7 +24,7 @@
 #include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -845,4 +845,4 @@ void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

@@ -21,7 +21,7 @@
 
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

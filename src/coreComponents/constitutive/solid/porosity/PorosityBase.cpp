@@ -19,7 +19,7 @@
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/porosity/PorosityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -97,4 +97,4 @@ void PorosityBase::initializeState() const
 }
 
 }
-} /* namespace geosx */
+} /* namespace geos */

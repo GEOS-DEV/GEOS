@@ -26,7 +26,7 @@
 #include "mesh/ToElementRelation.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;

@@ -24,7 +24,7 @@
 
 #include <type_traits>
 
-namespace geosx
+namespace geos
 {
 
 namespace bufferOps
@@ -1795,6 +1795,6 @@ Unpack( buffer_unit_type const * & buffer, MAP_TYPE & map, T_INDICES const & unp
 }
 
 } /* namespace bufferOps */
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif

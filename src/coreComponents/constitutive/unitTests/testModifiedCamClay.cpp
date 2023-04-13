@@ -20,8 +20,8 @@
 #include "dataRepository/xmlWrapper.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-using namespace geosx;
-using namespace ::geosx::constitutive;
+using namespace geos;
+using namespace ::geos::constitutive;
 
 
 struct StrainData
@@ -171,7 +171,7 @@ void testModifiedCamClayDriver()
 #ifdef USE_CUDA
 TEST( ModifiedCamClayTests, testModifiedCamClayDevice )
 {
-  testModifiedCamClayDriver< geosx::parallelDevicePolicy< > >();
+  testModifiedCamClayDriver< geos::parallelDevicePolicy< > >();
 }
 #endif
 TEST( ModifiedCamClayTests, testModifiedCamClayHost )

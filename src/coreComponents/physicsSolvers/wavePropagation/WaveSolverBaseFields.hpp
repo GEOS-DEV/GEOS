@@ -23,7 +23,7 @@
 #include "common/DataLayouts.hpp"
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace fields
@@ -124,6 +124,6 @@ DECLARE_FIELD( FreeSurfaceNodeIndicator,
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticFirstOrderWaveEquationSEM_HPP_ */

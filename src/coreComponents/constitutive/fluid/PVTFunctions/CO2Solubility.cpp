@@ -22,7 +22,7 @@
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -295,4 +295,4 @@ REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, string_ar
 
 } // namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos

@@ -24,7 +24,7 @@
 #include "mesh/ToElementRelation.hpp"
 #include "mesh/generators/InternalWellGenerator.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -267,6 +267,6 @@ private:
 
 };
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_MESH_PERFORATIONDATA_HPP

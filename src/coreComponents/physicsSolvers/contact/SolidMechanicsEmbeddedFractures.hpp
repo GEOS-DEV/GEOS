@@ -22,7 +22,7 @@
 
 #include "physicsSolvers/contact/ContactSolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace constitutive;
 
@@ -132,6 +132,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_ */

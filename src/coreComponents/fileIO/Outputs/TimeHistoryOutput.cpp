@@ -20,7 +20,7 @@
 #include "fileIO/python/PyHistoryOutputType.hpp"
 #endif
 
-namespace geosx
+namespace geos
 {
 TimeHistoryOutput::TimeHistoryOutput( string const & name,
                                       Group * const parent ):

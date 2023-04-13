@@ -94,7 +94,7 @@ struct MPI_Status
 #endif
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -1030,6 +1030,6 @@ void MpiWrapper::max( Span< T const > src, Span< T > dst, MPI_Comm comm )
   MpiWrapper::reduce( src, dst, Reduction::Max, comm );
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_COMMON_MPIWRAPPER_HPP_ */

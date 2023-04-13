@@ -22,7 +22,7 @@
 #include "constitutive/relativePermeability/layouts.hpp"
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace fields

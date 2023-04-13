@@ -21,7 +21,7 @@
 #include "LvArray/src/output.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 WellElementSubRegion::WellElementSubRegion( string const & name, Group * const parent ):

@@ -19,7 +19,7 @@
  * @file RestartFlags.hpp
  */
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -113,6 +113,6 @@ std::ostream & operator<<( std::ostream & os, PlotLevel const & plotLevel )
 { return os << static_cast< int >( plotLevel ); }
 
 } /// namespace dataRepository
-} /// namespace geosx
+} /// namespace geos
 
 #endif  /* GEOSX_DATAREPOSITORY_RESTARTFLAGS_HPP_ */

@@ -15,7 +15,7 @@
   PYTHON_ERROR_IF( self->group == nullptr, PyExc_RuntimeError, "The PyHistoryOutput is not initialized.", nullptr )
 
 
-namespace geosx
+namespace geos
 {
 namespace python
 {
@@ -27,7 +27,7 @@ struct PyHistoryOutput
   static constexpr char const * docString =
     "A Python interface to TimeHistoryOutput.";
 
-  geosx::TimeHistoryOutput * group;
+  geos::TimeHistoryOutput * group;
 };
 
 
@@ -79,7 +79,7 @@ static PyObject * output( PyHistoryOutput * self, PyObject * args )
     return nullptr;
   }
 
-  geosx::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   int cycleNumber = int(round( time/dt ));
   try

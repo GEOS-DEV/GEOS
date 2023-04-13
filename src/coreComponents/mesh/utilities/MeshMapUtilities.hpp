@@ -22,7 +22,7 @@
 #include "mesh/ElementRegionManager.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -211,6 +211,6 @@ void transformCellBlockToRegionMap( arrayView2d< localIndex const > const & bloc
 
 } // namespace meshMapUtilities
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_MESH_UTILITIES_MESHMAPUTILITIES_HPP

@@ -22,7 +22,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
+using namespace geos;
 
 /** ---------------------- Helpers ---------------------- **/
 
@@ -378,6 +378,6 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, VectorTest, PetscInterface, );
 
 int main( int argc, char * * argv )
 {
-  geosx::testing::LinearAlgebraTestScope scope( argc, argv );
+  geos::testing::LinearAlgebraTestScope scope( argc, argv );
   return RUN_ALL_TESTS();
 }

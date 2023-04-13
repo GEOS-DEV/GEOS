@@ -18,7 +18,7 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

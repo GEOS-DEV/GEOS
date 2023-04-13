@@ -23,7 +23,7 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class NodeManager;
@@ -290,6 +290,6 @@ protected:
   }
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_ */

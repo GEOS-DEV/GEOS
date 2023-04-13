@@ -21,7 +21,7 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "EmbeddedSurfaceSubRegion.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class FaceManager;

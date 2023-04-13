@@ -24,7 +24,7 @@
 
 #include <vtkDataSet.h>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -154,6 +154,6 @@ private:
   vtk::CellMapType m_cellMap;
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif /* GEOSX_MESH_GENERATORS_VTKMESHGENERATOR_HPP */

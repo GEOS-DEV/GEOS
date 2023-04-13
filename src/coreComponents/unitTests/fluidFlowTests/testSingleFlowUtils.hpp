@@ -25,13 +25,13 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace testing
 {
 
-using namespace geosx::constitutive;
+using namespace geos::constitutive;
 
 void checkDerivative( real64 const valueEps,
                       real64 const value,
@@ -320,6 +320,6 @@ void fillCellCenteredNumericalJacobian( SINGLE_PHASE_SOLVER & solver,
 
 } // namespace testing
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_TESTSINGLEFLOWUTILS_HPP

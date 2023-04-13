@@ -18,7 +18,7 @@
 
 #include "SolverStatistics.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -152,4 +152,4 @@ void SolverStatistics::outputStatistics() const
     }
   }
 }
-} // namespace geosx
+} // namespace geos

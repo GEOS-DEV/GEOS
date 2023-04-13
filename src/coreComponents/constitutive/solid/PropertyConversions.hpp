@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP
 #define GEOSX_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -237,6 +237,6 @@ real64 toBulkMod( real64 const & G, real64 const & E )
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP */

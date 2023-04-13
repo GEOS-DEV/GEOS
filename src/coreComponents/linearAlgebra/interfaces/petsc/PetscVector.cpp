@@ -23,7 +23,7 @@
 
 #include <petscvec.h>
 
-namespace geosx
+namespace geos
 {
 
 PetscVector::PetscVector()

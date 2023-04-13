@@ -40,7 +40,7 @@
 
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -665,4 +665,4 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, string const &,
                         Group * const )
-} // namespace geosx
+} // namespace geos

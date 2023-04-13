@@ -27,7 +27,7 @@ extern "C" struct _p_IS;
 /// VecScatter struct forward declaration
 extern "C" struct _p_VecScatter;
 
-namespace geosx
+namespace geos
 {
 
 /// Forward declaration
@@ -130,6 +130,6 @@ private:
   VecScatter m_scatter{};
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_INTERFACES_PETSCEXPORT_HPP_

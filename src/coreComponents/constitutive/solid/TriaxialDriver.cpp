@@ -19,7 +19,7 @@
 #include "TriaxialDriver.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 using namespace constitutive;
@@ -581,4 +581,4 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         TriaxialDriver,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

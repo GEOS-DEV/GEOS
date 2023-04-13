@@ -38,7 +38,7 @@
 #pragma GCC optimize "O0"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;

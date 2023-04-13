@@ -33,7 +33,7 @@
 #include "mesh/EdgeManager.hpp"
 #include "mesh/FaceManager.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace finiteElement
 {

@@ -30,7 +30,7 @@
 #include <iomanip>
 #include <numeric>
 
-namespace geosx
+namespace geos
 {
 
 // Helper function that performs the following sequence of IJMatrix
@@ -1421,4 +1421,4 @@ MPI_Comm HypreMatrix::comm() const
   return hypre_IJMatrixComm( m_ij_mat );
 }
 
-}// end namespace geosx
+}// end namespace geos

@@ -22,7 +22,7 @@
 #include "common/MpiWrapper.hpp"
 #include "dataRepository/KeyNames.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -171,4 +171,4 @@ string buildMultipleInputXML( string_array const & inputFileList,
 
 } /* namespace xmlWrapper */
 
-} /* namespace geosx */
+} /* namespace geos */

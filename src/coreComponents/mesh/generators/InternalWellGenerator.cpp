@@ -27,7 +27,7 @@
 #include "mesh/PerforationData.hpp"
 #include "mesh/Perforation.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 

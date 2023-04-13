@@ -21,7 +21,7 @@
 #include "constitutive/fluid/PVTFunctions/CO2EOSSolver.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -296,4 +296,4 @@ REGISTER_CATALOG_ENTRY( PVTFunctionBase, SpanWagnerCO2Density, string const &, s
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

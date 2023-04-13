@@ -28,7 +28,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "WaveSolverUtils.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -1240,4 +1240,4 @@ void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticWaveEquationSEM, string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

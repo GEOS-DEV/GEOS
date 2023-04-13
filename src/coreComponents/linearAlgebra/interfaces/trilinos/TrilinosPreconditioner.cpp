@@ -26,7 +26,7 @@
 #include <ml_MultiLevelPreconditioner.h>
 #include <Ifpack.h>
 
-namespace geosx
+namespace geos
 {
 
 TrilinosPreconditioner::TrilinosPreconditioner( LinearSolverParameters params )

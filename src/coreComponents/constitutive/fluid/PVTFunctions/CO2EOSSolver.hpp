@@ -21,7 +21,7 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2EOSSOLVER_HPP
 #define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2EOSSOLVER_HPP
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -80,7 +80,7 @@ public:
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif

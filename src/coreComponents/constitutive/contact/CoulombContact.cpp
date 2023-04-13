@@ -18,7 +18,7 @@
 
 #include "CoulombContact.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -83,4 +83,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, CoulombContact, string const &, Group 
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

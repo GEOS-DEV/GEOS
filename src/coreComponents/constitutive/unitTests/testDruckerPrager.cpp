@@ -22,8 +22,8 @@
 #include "dataRepository/xmlWrapper.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-using namespace geosx;
-using namespace ::geosx::constitutive;
+using namespace geos;
+using namespace ::geos::constitutive;
 
 
 struct StrainData
@@ -149,7 +149,7 @@ void testDruckerPragerDriver()
 #ifdef USE_CUDA
 TEST( DruckerPragerTests, testDruckerPragerHost )
 {
-  testDruckerPragerDriver< geosx::parallelDevicePolicy< > >();
+  testDruckerPragerDriver< geos::parallelDevicePolicy< > >();
 }
 #endif
 TEST( DruckerPragerTests, testDruckerPragerHost )
@@ -270,7 +270,7 @@ void testDruckerPragerExtendedDriver()
 #ifdef USE_CUDA
 TEST( DruckerPragerTests, testDruckerPragerExtendedDevice )
 {
-  testDruckerPragerExtendedDriver< geosx::parallelDevicePolicy< > >();
+  testDruckerPragerExtendedDriver< geos::parallelDevicePolicy< > >();
 }
 #endif
 TEST( DruckerPragerTests, testDruckerPragerExtendedHost )

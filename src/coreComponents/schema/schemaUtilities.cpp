@@ -28,7 +28,7 @@
 /// System includes
 #include <regex>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -302,4 +302,4 @@ void SchemaConstruction( Group & group,
 }
 
 } /// namespace schemaUtilities
-} /// namespace geosx
+} /// namespace geos

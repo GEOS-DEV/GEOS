@@ -21,7 +21,7 @@
 #include "common/MpiWrapper.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -131,4 +131,4 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, WellElementRegion, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

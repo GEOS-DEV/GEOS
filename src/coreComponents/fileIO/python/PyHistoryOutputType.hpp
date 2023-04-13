@@ -3,7 +3,7 @@
 
 #include "LvArray/src/python/pythonForwardDeclarations.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace python
 {
@@ -11,6 +11,6 @@ namespace python
 PyTypeObject * getPyHistoryOutputType();
 
 } // namespace python
-} // namespace geosx
+} // namespace geos
 
 #endif

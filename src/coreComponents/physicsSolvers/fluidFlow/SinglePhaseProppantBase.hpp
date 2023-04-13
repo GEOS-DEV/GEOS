@@ -21,7 +21,7 @@
 
 #include "SinglePhaseBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class SinglePhaseProppantBase : public SinglePhaseBase

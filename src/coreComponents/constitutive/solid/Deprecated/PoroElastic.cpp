@@ -25,7 +25,7 @@
 #include "DruckerPragerExtended.hpp"
 #include "ModifiedCamClay.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -137,4 +137,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroModifiedCamClay, string const &, G
 
 
 }
-} /* namespace geosx */
+} /* namespace geos */

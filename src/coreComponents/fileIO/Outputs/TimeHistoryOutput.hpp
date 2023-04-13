@@ -26,7 +26,7 @@
 
 #include "LvArray/src/Array.hpp" // just for collector
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -37,7 +37,7 @@ namespace geosx
 class TimeHistoryOutput : public OutputBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  /// @copydoc geos::dataRepository::Group::Group(string const & name, Group * const parent)
   TimeHistoryOutput( string const & name,
                      Group * const parent );
 

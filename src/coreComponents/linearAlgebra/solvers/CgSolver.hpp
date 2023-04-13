@@ -21,7 +21,7 @@
 
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

@@ -23,7 +23,7 @@
 
 #include <vector>
 
-namespace geosx
+namespace geos
 {
 
 /**

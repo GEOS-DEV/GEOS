@@ -21,7 +21,7 @@
 
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace compositionalMultiphaseUtilities
@@ -185,6 +185,6 @@ void shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numRowsIn
 
 } // namespace compositionalMultiphaseUtilities
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEUTILITIES_HPP_

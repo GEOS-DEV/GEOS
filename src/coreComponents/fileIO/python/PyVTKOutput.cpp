@@ -13,7 +13,7 @@
 #define VERIFY_INITIALIZED( self ) \
   PYTHON_ERROR_IF( self->group == nullptr, PyExc_RuntimeError, "The PyVTKOutput is not initialized.", nullptr )
 
-namespace geosx
+namespace geos
 {
 namespace python
 {
@@ -25,7 +25,7 @@ struct PyVTKOutput
   static constexpr char const * docString =
     "A Python interface to VTKOutput.";
 
-  geosx::VTKOutput * group;
+  geos::VTKOutput * group;
 };
 
 
@@ -77,7 +77,7 @@ static PyObject * output( PyVTKOutput * self, PyObject * args )
     return nullptr;
   }
 
-  geosx::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   int cycleNumber = int(round( time/dt ));
   try

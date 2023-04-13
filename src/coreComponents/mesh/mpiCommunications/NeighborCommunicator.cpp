@@ -24,7 +24,7 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/MeshLevel.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -653,4 +653,4 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
 
 
 
-} /* namespace geosx */
+} /* namespace geos */

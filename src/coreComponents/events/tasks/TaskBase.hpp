@@ -24,7 +24,7 @@
 
 #include "dataRepository/ExecutableGroup.hpp"
 #include "common/DataTypes.hpp"
-namespace geosx
+namespace geos
 {
 
 /**
@@ -34,7 +34,7 @@ namespace geosx
 class TaskBase : public ExecutableGroup
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  /// @copydoc geos::dataRepository::Group::Group(string const & name, Group * const parent)
   explicit TaskBase( string const & name,
                      Group * const parent );
   virtual ~TaskBase( ) override;
@@ -53,7 +53,7 @@ public:
    */
   static CatalogInterface::CatalogType & getCatalog();
 
-  /// @copydoc geosx::ExecutableGroup::execute
+  /// @copydoc geos::ExecutableGroup::execute
   virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
@@ -71,7 +71,7 @@ public:
     return false;
   }
 
-  /// @copydoc geosx::dataRepository::Group::postProcessInput( )
+  /// @copydoc geos::dataRepository::Group::postProcessInput( )
   void postProcessInput() override;
 };
 

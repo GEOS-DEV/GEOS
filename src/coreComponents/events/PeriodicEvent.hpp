@@ -21,7 +21,7 @@
 
 #include "events/EventBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -33,7 +33,7 @@ class PeriodicEvent : public EventBase
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   PeriodicEvent( const string & name,
                  Group * const parent );
 
@@ -154,6 +154,6 @@ public:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_EVENTS_PERIODICEVENT_HPP_ */

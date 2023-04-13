@@ -23,7 +23,7 @@
 
 #include <complex>
 
-namespace geosx
+namespace geos
 {
 
 /**

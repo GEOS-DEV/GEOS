@@ -23,7 +23,7 @@
 #include <map>
 #include "mesh/ObjectManagerBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

@@ -21,7 +21,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -109,6 +109,6 @@ ENUM_STRINGS( ElementType,
               "HendecagonalPrism",
               "Polyhedron" );
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_MESH_ELEMENTTYPE_HPP

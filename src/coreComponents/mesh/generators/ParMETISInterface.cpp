@@ -30,7 +30,7 @@
     GEOSX_ERROR_IF_NE_MSG( ierr, METIS_OK, "Error in call to:\n" << #call ); \
   } while( false )
 
-namespace geosx
+namespace geos
 {
 namespace parmetis
 {
@@ -120,4 +120,4 @@ partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
 }
 
 } // namespace parmetis
-} // namespace geosx
+} // namespace geos

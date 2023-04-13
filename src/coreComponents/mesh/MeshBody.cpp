@@ -19,7 +19,7 @@
 #include "MeshBody.hpp"
 #include "MeshLevel.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -79,4 +79,4 @@ string MeshBody::intToMeshLevelString( localIndex const meshLevel )
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */

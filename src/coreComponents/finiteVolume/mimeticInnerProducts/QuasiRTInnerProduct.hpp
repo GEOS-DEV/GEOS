@@ -21,7 +21,7 @@
 
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace mimeticInnerProduct
 {
@@ -91,6 +91,6 @@ QuasiRTInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITI
 
 } // end namespace mimeticInnerProduct
 
-} // end namespace geosx
+} // end namespace geos
 
 #endif //GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_QUASIRTINNERPRODUCT_HPP_

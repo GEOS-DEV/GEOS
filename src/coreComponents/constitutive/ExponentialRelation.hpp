@@ -24,7 +24,7 @@
 
 #include <cmath>
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -528,6 +528,6 @@ void makeExponentialRelation( ExponentApproximationType type,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_CONSITUTIVE_EXPONENTIALRELATION_HPP_

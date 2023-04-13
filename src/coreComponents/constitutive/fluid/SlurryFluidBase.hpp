@@ -21,7 +21,7 @@
 
 #include "constitutive/fluid/SingleFluidBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -349,6 +349,6 @@ private:
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_SLURRYFLUIDBASE_HPP_

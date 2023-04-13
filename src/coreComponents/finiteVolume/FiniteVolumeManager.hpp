@@ -22,7 +22,7 @@
 
 #include "dataRepository/Group.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -87,7 +87,7 @@ private:
 
 };
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif //GEOSX_FINITEVOLUME_FINITEVOLUMEMANAGER_HPP_

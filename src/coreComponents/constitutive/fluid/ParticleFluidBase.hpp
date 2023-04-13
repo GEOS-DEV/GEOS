@@ -21,7 +21,7 @@
 
 #include "constitutive/ConstitutiveBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -185,6 +185,6 @@ private:
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDBASE_HPP_

@@ -22,7 +22,7 @@
 #include "constitutive/permeability/PermeabilityBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -147,7 +147,7 @@ void CarmanKozenyPermeabilityUpdate::compute( real64 const & porosity,
 
 }/* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
 #endif //GEOSX_CONSTITUTIVE_PERMEABILITY_CARMANKOZENYPERMEABILITY_HPP_

@@ -15,7 +15,7 @@
 #include "version.hpp"
 #include "mainInterface/GeosxVersion.hpp"
 
-namespace geosx
+namespace geos
 {
 
 string getVersion()

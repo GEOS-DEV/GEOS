@@ -19,7 +19,7 @@
 #include "mesh/InterObjectRelation.hpp"
 #include "mesh/PerforationData.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -455,6 +455,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_WELLELEMENTSUBREGION_HPP_ */

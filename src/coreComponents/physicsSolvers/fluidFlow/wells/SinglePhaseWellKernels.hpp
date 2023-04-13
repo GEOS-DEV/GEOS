@@ -29,7 +29,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhaseWellKernels
@@ -493,6 +493,6 @@ struct SolutionCheckKernel
 
 } // end namespace singlePhaseWellKernels
 
-} // end namespace geosx
+} // end namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP

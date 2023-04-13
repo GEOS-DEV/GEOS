@@ -21,7 +21,7 @@
 
 #include "fileIO/Outputs/OutputBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -77,6 +77,6 @@ public:
 };
 
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_FILEIO_OUTPUTS_PYTHONOUTPUT_HPP_

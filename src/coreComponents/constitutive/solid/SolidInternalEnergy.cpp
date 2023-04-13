@@ -18,7 +18,7 @@
 
 #include "SolidInternalEnergy.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -85,4 +85,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, SolidInternalEnergy, string const &, G
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

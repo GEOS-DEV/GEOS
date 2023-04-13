@@ -21,7 +21,7 @@
 // TODO: move keys to WellControls
 #include "SinglePhaseWell.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhaseWellKernels
@@ -699,4 +699,4 @@ RateInitializationKernel::
 
 } // end namespace singlePhaseWellKernels
 
-} // end namespace geosx
+} // end namespace geos

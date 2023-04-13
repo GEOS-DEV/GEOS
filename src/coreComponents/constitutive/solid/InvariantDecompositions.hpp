@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_INVARIANTDECOMPOSITIONS_HPP
 #define GEOSX_CONSTITUTIVE_SOLID_INVARIANTDECOMPOSITIONS_HPP
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -208,6 +208,6 @@ void stressRecomposition( real64 const & volStress,
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_INVARIANTDECOMPOSITIONS_HPP */

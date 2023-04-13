@@ -26,7 +26,7 @@
 
 
 
-namespace geosx
+namespace geos
 {
 namespace finiteElement
 {

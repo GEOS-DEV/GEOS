@@ -21,7 +21,7 @@
 
 #include "SolidModelDiscretizationOps.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -285,6 +285,6 @@ void SolidModelDiscretizationOpsOrthotropic::diagRowSumBTDB( BASIS_GRADIENT cons
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIZATIONOPSORTHOTROPIC_HPP_ */

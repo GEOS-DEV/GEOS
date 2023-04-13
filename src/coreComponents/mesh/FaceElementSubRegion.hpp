@@ -22,7 +22,7 @@
 #include "SurfaceElementSubRegion.hpp"
 #include "mesh/generators/FaceBlockABC.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -274,6 +274,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_FACEELEMENTSUBREGION_HPP_ */

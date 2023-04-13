@@ -21,7 +21,7 @@
 
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -96,6 +96,6 @@ protected:
 
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif /*GEOSX_LINEARALGEBRA_SOLVERS_BICGSTABSOLVER_HPP_ */

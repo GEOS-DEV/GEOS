@@ -26,7 +26,7 @@
 
 #include <memory>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -77,6 +77,6 @@ struct PetscInterface
   using ParallelVector = PetscVector;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /*GEOSX_LINEARALGEBRA_INTERFACES_PETSCINTERFACE_HPP_*/

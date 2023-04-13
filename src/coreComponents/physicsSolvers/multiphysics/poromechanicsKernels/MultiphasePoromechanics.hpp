@@ -24,7 +24,7 @@
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace poromechanicsKernels
@@ -32,13 +32,13 @@ namespace poromechanicsKernels
 
 /**
  * @brief Implements kernels for solving quasi-static multiphase poromechanics.
- * @copydoc geosx::finiteElement::ImplicitKernelBase
+ * @copydoc geos::finiteElement::ImplicitKernelBase
  *
  * ### MultiphasePoroelastic Description
  * Implements the KernelBase interface functions required for solving the
  * quasi-static multiphase poromechanics problem using one of the
  * "finite element kernel application" functions such as
- * geosx::finiteElement::RegionBasedKernelApplication.
+ * geos::finiteElement::RegionBasedKernelApplication.
  *
  */
 template< typename SUBREGION_TYPE,
@@ -80,7 +80,7 @@ public:
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param gravityVector The gravity vector.
    */
   MultiphasePoromechanics( NodeManager const & nodeManager,
@@ -103,7 +103,7 @@ public:
   //*****************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   * @copydoc geos::finiteElement::ImplicitKernelBase::StackVariables
    *
    * Adds a stack array for the displacement, incremental displacement, and the
    * constitutive stiffness.
@@ -166,7 +166,7 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
+   * @copydoc ::geos::finiteElement::ImplicitKernelBase::setup
    *
    * For the MultiphasePoromechanics implementation, global values from the displacement,
    * incremental displacement, and degree of freedom numbers are placed into
@@ -291,14 +291,14 @@ public:
                               StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+   * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
   GEOSX_HOST_DEVICE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::kernelLaunch
+   * @copydoc geos::finiteElement::KernelBase::kernelLaunch
    *
    * ### MultiphasePoromechanics Description
    * Copy of the KernelBase::keranelLaunch function
@@ -477,6 +477,6 @@ public:
 
 } // namespace poromechanicsKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_HPP_

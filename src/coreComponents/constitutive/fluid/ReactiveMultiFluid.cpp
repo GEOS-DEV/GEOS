@@ -19,7 +19,7 @@
 #include "ReactiveMultiFluidFields.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -93,4 +93,4 @@ void ReactiveMultiFluid::createChemicalReactions()
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos

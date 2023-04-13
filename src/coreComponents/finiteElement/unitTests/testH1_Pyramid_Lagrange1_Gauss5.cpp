@@ -23,7 +23,7 @@
 
 #include <chrono>
 
-using namespace geosx;
+using namespace geos;
 using namespace finiteElement;
 
 
@@ -169,7 +169,7 @@ void testKernelDriver()
 #ifdef USE_CUDA
 TEST( FiniteElementShapeFunctions, testKernelCuda )
 {
-  testKernelDriver< geosx::parallelDevicePolicy< 32 > >();
+  testKernelDriver< geos::parallelDevicePolicy< 32 > >();
 }
 #endif
 TEST( FiniteElementShapeFunctions, testKernelHost )
@@ -179,7 +179,7 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
 
 
 
-using namespace geosx;
+using namespace geos;
 int main( int argc, char * argv[] )
 {
   ::testing::InitGoogleTest( &argc, argv );

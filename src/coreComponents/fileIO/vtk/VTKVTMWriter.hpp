@@ -17,7 +17,7 @@
 
 #include "dataRepository/xmlWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace vtk
 {
@@ -64,6 +64,6 @@ private:
 };
 
 } // namespace vtk
-} // namespace geosx
+} // namespace geos
 
 #endif

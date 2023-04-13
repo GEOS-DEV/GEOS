@@ -18,7 +18,7 @@
 
 #include "DruckerPragerExtended.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 namespace constitutive
@@ -176,4 +176,4 @@ void DruckerPragerExtended::saveConvergedState() const
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPragerExtended, string const &, Group * const )
 }
-} /* namespace geosx */
+} /* namespace geos */

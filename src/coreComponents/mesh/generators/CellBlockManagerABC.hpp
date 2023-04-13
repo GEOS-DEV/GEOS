@@ -20,7 +20,7 @@
 
 #include <map>
 
-namespace geosx
+namespace geos
 {
 
 /**

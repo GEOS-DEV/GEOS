@@ -29,21 +29,21 @@
 
 #include <superlu_ddefs.h>
 
-namespace geosx
+namespace geos
 {
 
 // Check matching requirements on index/value types between GEOSX and SuperLU_Dist
 
 #if !defined(GEOSX_USE_HYPRE_CUDA)
 static_assert( sizeof( int_t ) == sizeof( globalIndex ),
-               "SuperLU_Dist int_t and geosx::globalIndex must have the same size" );
+               "SuperLU_Dist int_t and geos::globalIndex must have the same size" );
 
 static_assert( std::is_signed< int_t >::value == std::is_signed< globalIndex >::value,
-               "SuperLU_Dist int_t and geosx::globalIndex must both be signed or unsigned" );
+               "SuperLU_Dist int_t and geos::globalIndex must both be signed or unsigned" );
 #endif
 
 static_assert( std::is_same< double, real64 >::value,
-               "SuperLU_Dist real and geosx::real64 must be the same type" );
+               "SuperLU_Dist real and geos::real64 must be the same type" );
 
 namespace
 {
@@ -448,4 +448,4 @@ template class SuperLUDist< HypreInterface >;
 template class SuperLUDist< PetscInterface >;
 #endif
 
-} // namespace geosx
+} // namespace geos

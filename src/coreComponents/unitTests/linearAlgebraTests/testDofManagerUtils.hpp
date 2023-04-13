@@ -24,7 +24,7 @@
 
 #include <gtest/gtest.h>
 
-namespace geosx
+namespace geos
 {
 
 namespace testing
@@ -604,6 +604,6 @@ void makeSparsityFlux( DomainPartition const & domain,
 }
 
 } // namespace testing
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_UNITTESTS_TESTDOFMANAGERUTILS_HPP_

@@ -23,7 +23,7 @@
 #include "WaveSolverUtils.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /// Namespace to contain the elastic wave kernels.
@@ -236,7 +236,7 @@ struct MassMatrixKernel
    * @param[out] mass diagonal of the mass matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
-  //std::enable_if_t< geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
+  //std::enable_if_t< geos::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
   void
   launch( localIndex const size,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
@@ -295,7 +295,7 @@ struct DampingMatrixKernel
    * @param[out] damping diagonal of the damping matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
-  //std::enable_if_t< geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
+  //std::enable_if_t< geos::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
   void
   launch( localIndex const size,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
@@ -364,14 +364,14 @@ struct DampingMatrixKernel
 /**
  * @brief Implements kernels for solving the elastic wave equations
  *   explicit central FD method and SEM
- * @copydoc geosx::finiteElement::KernelBase
+ * @copydoc geos::finiteElement::KernelBase
  * @tparam SUBREGION_TYPE The type of subregion that the kernel will act on.
  *
  * ### ElasticWaveEquationSEMKernel Description
  * Implements the KernelBase interface functions required for solving
  * the acoustic wave equations using the
  * "finite element kernel application" functions such as
- * geosx::finiteElement::RegionBasedKernelApplication.
+ * geos::finiteElement::RegionBasedKernelApplication.
  *
  * The number of degrees of freedom per support point for both
  * the test and trial spaces are specified as `1`.
@@ -410,7 +410,7 @@ public:
 //*****************************************************************************
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::KernelBase::KernelBase
+   * @copydoc geos::finiteElement::KernelBase::KernelBase
    * @param nodeManager Reference to the NodeManager object.
    * @param edgeManager Reference to the EdgeManager object.
    * @param faceManager Reference to the FaceManager object.
@@ -449,7 +449,7 @@ public:
 
   //*****************************************************************************
   /**
-   * @copydoc geosx::finiteElement::KernelBase::StackVariables
+   * @copydoc geos::finiteElement::KernelBase::StackVariables
    *
    * ### ExplicitElasticSEM Description
    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
@@ -470,7 +470,7 @@ public:
 
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::setup
+   * @copydoc geos::finiteElement::KernelBase::setup
    *
    * Copies the primary variable, and position into the local stack array.
    */
@@ -493,7 +493,7 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
+   * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    *
    * ### ExplicitElasticSEM Description
    * Calculates stiffness vector
@@ -573,6 +573,6 @@ using ExplicitElasticSEMFactory = finiteElement::KernelFactory< ExplicitElasticS
 
 } // namespace ElasticWaveEquationSEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEMKERNEL_HPP_

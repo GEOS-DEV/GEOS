@@ -25,7 +25,7 @@
 #include <Epetra_Map.h>
 #include <EpetraExt_MultiVectorOut.h>
 
-namespace geosx
+namespace geos
 {
 
 EpetraVector::EpetraVector()

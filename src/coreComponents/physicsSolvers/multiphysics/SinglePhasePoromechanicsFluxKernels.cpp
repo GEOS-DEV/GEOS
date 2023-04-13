@@ -20,7 +20,7 @@
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
 #include "SinglePhasePoromechanicsFluxKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhasePoromechanicsFluxKernels
@@ -662,4 +662,4 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
 
 }// namespace singlePhaseFVMKernels
 
-} // namespace geosx
+} // namespace geos

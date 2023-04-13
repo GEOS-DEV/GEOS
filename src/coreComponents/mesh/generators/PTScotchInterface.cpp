@@ -31,7 +31,7 @@ static_assert( std::is_same< int64_t, SCOTCH_Num >::value,
     GEOSX_ERROR_IF_NE_MSG( ierr, 0, "Error in call to:\n" << #call ); \
   } while( false )
 
-namespace geosx
+namespace geos
 {
 namespace ptscotch
 {
@@ -88,4 +88,4 @@ partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
 }
 
 } // namespace ptscotch
-} // namespace geosx
+} // namespace geos

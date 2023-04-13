@@ -19,7 +19,7 @@
 #include "BiotPorosity.hpp"
 #include "PorosityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -93,4 +93,4 @@ void BiotPorosity::initializeState() const
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BiotPorosity, string const &, Group * const )
 } /* namespace constitutive */
-} /* namespace geosx */
+} /* namespace geos */

@@ -21,7 +21,7 @@
 
 #include "dataRepository/Group.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class FiniteElementDiscretizationManager : public dataRepository::Group
@@ -38,6 +38,6 @@ public:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FINITEELEMENT_FINITEELEMENTSPACEMANAGER_HPP_ */

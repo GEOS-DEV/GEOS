@@ -29,7 +29,7 @@ struct stabledt
   double m_maxdt;
 };
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -176,6 +176,6 @@ private:
   PhaseFieldDamageFEM();
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGE_HPP_ */

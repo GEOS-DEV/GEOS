@@ -28,7 +28,7 @@
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace computationalGeometry
 {
@@ -561,6 +561,6 @@ real64 prismVolume( real64 const (&X)[2*N][3] )
 }
 
 } /* namespace computationalGeometry */
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_UTILITIES_COMPUTATIONALGEOMETRY_HPP_ */

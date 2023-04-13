@@ -24,13 +24,13 @@
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 //*****************************************************************************
 /**
  * @brief Implements kernels for solving Laplace's equation.
- * @copydoc geosx::finiteElement::KernelBase
+ * @copydoc geos::finiteElement::KernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
  * @tparam UNUSED An unused parameter since we are assuming that the test and
@@ -39,7 +39,7 @@ namespace geosx
  * ### LaplaceFEMKernel Description
  * Implements the KernelBase interface functions required for solving Laplace's
  * equation using on of the finite element kernel application functions such as
- * geosx::finiteElement::RegionBasedKernelApplication.
+ * geos::finiteElement::RegionBasedKernelApplication.
  *
  * In this implementation, the template parameter @p NUM_NODES_PER_ELEM is used
  * in place of both @p NUM_TEST_SUPPORT_POINTS_PER_ELEM and
@@ -82,7 +82,7 @@ public:
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param fieldName The name of the primary field
    *                  (i.e. Temperature, Pressure, etc.)
    */
@@ -116,7 +116,7 @@ public:
   //***************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   * @copydoc geos::finiteElement::ImplicitKernelBase::StackVariables
    *
    * Adds a stack array for the primary field.
    */
@@ -149,7 +149,7 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::setup
+   * @copydoc geos::finiteElement::ImplicitKernelBase::setup
    *
    * For the LaplaceFEMKernel implementation, global values from the
    * primaryField, and degree of freedom numbers are placed into element local
@@ -184,7 +184,7 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::quadraturePointKernel
+   * @copydoc geos::finiteElement::ImplicitKernelBase::quadraturePointKernel
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -205,7 +205,7 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+   * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    *
    * Form element residual from the fully formed element Jacobian dotted with
    * the primary field and map the element local Jacobian/Residual to the
@@ -260,7 +260,7 @@ using LaplaceFEMKernelFactory = finiteElement::KernelFactory< LaplaceFEMKernel,
                                                               arrayView1d< real64 > const,
                                                               string const >;
 
-} // namespace geosx
+} // namespace geos
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 

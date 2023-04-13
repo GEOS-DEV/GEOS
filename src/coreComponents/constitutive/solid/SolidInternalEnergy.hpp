@@ -22,7 +22,7 @@
 
 #include "constitutive/ConstitutiveBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -165,6 +165,6 @@ private:
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_SOLIDINTERNALENERGY_HPP_ */

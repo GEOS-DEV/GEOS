@@ -4,7 +4,7 @@
 
 #include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

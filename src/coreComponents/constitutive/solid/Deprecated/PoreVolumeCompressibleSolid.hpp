@@ -23,7 +23,7 @@
 
 #include "constitutive/ExponentialRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -79,7 +79,7 @@ private:
 
 }/* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
 #endif //GEOSX_CONSTITUTIVE_SOLID_POREVOLUMECOMPRESSIBLESOLID_HPP_

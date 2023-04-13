@@ -24,13 +24,13 @@
 // TPL includes
 #include "gtest/gtest.h"
 
-using namespace geosx;
+using namespace geos;
 using namespace finiteElement;
-using namespace geosx::testing;
+using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
-constexpr real64 absTol = geosx::testing::DEFAULT_ABS_TOL;
-constexpr real64 relTol = geosx::testing::DEFAULT_REL_TOL*10;
+constexpr real64 absTol = geos::testing::DEFAULT_ABS_TOL;
+constexpr real64 relTol = geos::testing::DEFAULT_REL_TOL*10;
 
 template< typename VEM >
 GEOSX_HOST_DEVICE
@@ -366,8 +366,8 @@ TEST( ConformingVirtualElementOrder1, wedges )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  g_commandLineOptions = *geosx::basicSetup( argc, argv );
+  g_commandLineOptions = *geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
+  geos::basicCleanup();
   return result;
 }

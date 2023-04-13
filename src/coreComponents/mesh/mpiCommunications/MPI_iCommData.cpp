@@ -14,7 +14,7 @@
 
 #include "MPI_iCommData.hpp"
 
-namespace geosx
+namespace geos
 {
 
 MPI_iCommData::MPI_iCommData( int const inputCommID ):
@@ -81,4 +81,4 @@ void MPI_iCommData::resize( localIndex numMessages )
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -20,7 +20,7 @@
 #include "layouts.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;

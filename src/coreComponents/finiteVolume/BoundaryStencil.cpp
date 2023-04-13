@@ -18,7 +18,7 @@
 
 #include "BoundaryStencil.hpp"
 
-namespace geosx
+namespace geos
 {
 
 BoundaryStencil::BoundaryStencil()
@@ -91,4 +91,4 @@ BoundaryStencilWrapper::
   m_weightMultiplier( weightMultiplier )
 {}
 
-} // namespace geosx
+} // namespace geos

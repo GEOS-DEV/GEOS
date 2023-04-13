@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalPoromechanicsKernels
@@ -29,7 +29,7 @@ namespace thermalPoromechanicsKernels
 
 /**
  * @brief Implements kernels for solving quasi-static thermal single-phase poromechanics.
- * @copydoc geosx::finiteElement::ImplicitKernelBase
+ * @copydoc geos::finiteElement::ImplicitKernelBase
  *
  */
 template< typename SUBREGION_TYPE,
@@ -72,7 +72,7 @@ public:
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param gravityVector The gravity vector.
    */
   ThermalSinglePhasePoromechanics( NodeManager const & nodeManager,
@@ -93,7 +93,7 @@ public:
   //*****************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   * @copydoc geos::finiteElement::ImplicitKernelBase::StackVariables
    *
    * Adds a stack array for the displacement, incremental displacement, and the
    * constitutive stiffness.
@@ -153,7 +153,7 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
+   * @copydoc ::geos::finiteElement::ImplicitKernelBase::setup
    */
   GEOSX_HOST_DEVICE
   void setup( localIndex const k,
@@ -254,14 +254,14 @@ public:
                               StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+   * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
   GEOSX_HOST_DEVICE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::kernelLaunch
+   * @copydoc geos::finiteElement::KernelBase::kernelLaunch
    *
    * ### SinglePhasePoromechancis Description
    * Copy of the KernelBase::kernelLaunch function
@@ -306,6 +306,6 @@ using ThermalSinglePhasePoromechanicsKernelFactory =
 
 } // namespace thermalPoromechanicsKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICS_HPP_

@@ -62,7 +62,7 @@
   finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp  \
   finiteElement::H1_TriangleFace_Lagrange1_Gauss1.hpp
 
-namespace geosx
+namespace geos
 {
 namespace finiteElement
 {
@@ -190,7 +190,7 @@ dispatchlowOrder3D( FiniteElementBase const & input,
 
 } // namespace finiteElement
 
-} // namespace geosx
+} // namespace geos
 
 
 

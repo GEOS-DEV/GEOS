@@ -21,7 +21,7 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -127,4 +127,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, ApertureTableContact, string const &, 
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

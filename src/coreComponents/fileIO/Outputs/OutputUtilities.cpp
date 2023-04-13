@@ -25,7 +25,7 @@
 #include <algorithm>
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -116,4 +116,4 @@ bool isFieldPlotEnabled( PlotLevel const wrapperPlotLevel,
 
 } /* namespace outputUtilities */
 
-} /* namespace geosx */
+} /* namespace geos */

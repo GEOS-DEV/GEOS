@@ -23,7 +23,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/MeshLevel.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace hybridFVMKernels
@@ -88,6 +88,6 @@ struct CellConnectivity
 
 } // namespace hybridFVMUpwindingKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVMUPWINDINGHELPERKERNELS_HPP

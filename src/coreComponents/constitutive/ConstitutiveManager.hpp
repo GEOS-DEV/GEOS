@@ -23,7 +23,7 @@
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "ConstitutiveBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -119,6 +119,6 @@ ConstitutiveManager::getConstitutiveData( string const & name,
 // }
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_ */

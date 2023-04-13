@@ -25,7 +25,7 @@
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -274,6 +274,6 @@ void PhillipsBrineDensityUpdate::compute( real64 const & pressure,
 
 } // end namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINECO2DENSITY_HPP_

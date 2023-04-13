@@ -46,7 +46,7 @@
 #include "permeability/WillisRichardsPermeability.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -296,6 +296,6 @@ struct ConstitutivePassThru< CoupledSolidBase >
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_ */

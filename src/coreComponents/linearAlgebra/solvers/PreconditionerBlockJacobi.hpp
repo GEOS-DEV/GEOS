@@ -19,7 +19,7 @@
 #include "linearAlgebra/common/PreconditionerBase.hpp"
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

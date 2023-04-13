@@ -21,7 +21,7 @@
 
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -114,6 +114,6 @@ struct Baker
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITYINTERPOLATORS_HPP

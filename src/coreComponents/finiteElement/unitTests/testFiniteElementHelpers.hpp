@@ -4,7 +4,7 @@
 #include "common/DataTypes.hpp"
 #include <cstdlib>
 
-namespace geosx
+namespace geos
 {
 inline real64 rando( real64 const min,
                      real64 const max )

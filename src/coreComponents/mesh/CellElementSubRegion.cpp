@@ -19,7 +19,7 @@
 #include "mesh/MeshLevel.hpp"
 #include "mesh/generators/CellBlockUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 using namespace constitutive;
@@ -290,7 +290,7 @@ localIndex CellElementSubRegion::getFaceNodes( localIndex const elementIndex,
                                                localIndex const localFaceIndex,
                                                Span< localIndex > const nodeIndices ) const
 {
-  return geosx::getFaceNodes( m_elementType, elementIndex, localFaceIndex, m_toNodesRelation, nodeIndices );
+  return geos::getFaceNodes( m_elementType, elementIndex, localFaceIndex, m_toNodesRelation, nodeIndices );
 }
 
 void CellElementSubRegion::
@@ -421,4 +421,4 @@ void CellElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mes
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementSubRegion, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -24,7 +24,7 @@
 #include "constitutive/capillaryPressure/layouts.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -193,6 +193,6 @@ protected:
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP

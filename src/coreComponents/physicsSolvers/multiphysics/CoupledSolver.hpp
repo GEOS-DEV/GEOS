@@ -24,7 +24,7 @@
 
 #include <tuple>
 
-namespace geosx
+namespace geos
 {
 
 template< typename ... SOLVERS >
@@ -564,6 +564,6 @@ protected:
   std::array< string, sizeof...( SOLVERS ) > m_names;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_ */

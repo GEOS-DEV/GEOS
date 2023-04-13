@@ -23,7 +23,7 @@
 #include "FieldSpecificationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -168,6 +168,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FIELDSPECIFICATION_PERFECTLYMATCHEDLAYER_HPP_ */

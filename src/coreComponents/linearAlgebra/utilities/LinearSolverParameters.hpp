@@ -21,7 +21,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -366,6 +366,6 @@ ENUM_STRINGS( LinearSolverParameters::AMG::NullSpaceType,
               "constantModes",
               "rigidBodyModes" );
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /*GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_ */

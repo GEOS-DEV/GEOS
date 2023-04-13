@@ -27,7 +27,7 @@
 
 #include "mesh/generators/CellBlockUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -295,4 +295,4 @@ void EdgeManager::depopulateUpMaps( std::set< localIndex > const & receivedEdges
 }
 
 
-} /// namespace geosx
+} /// namespace geos

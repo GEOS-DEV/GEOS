@@ -23,7 +23,7 @@
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -185,4 +185,4 @@ void FluxApproximationBase::setCoeffName( string const & name )
 }
 
 
-} //namespace geosx
+} //namespace geos

@@ -23,7 +23,7 @@
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "mainInterface/ProblemManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -132,4 +132,4 @@ REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsInitialization, string 
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsInitialization, string const &, Group * const )
 }
 
-} /* namespace geosx */
+} /* namespace geos */

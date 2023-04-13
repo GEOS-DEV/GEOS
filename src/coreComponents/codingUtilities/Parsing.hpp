@@ -23,7 +23,7 @@
 
 #include <fstream>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -141,6 +141,6 @@ void parseFile( string const & filename,
                   std::runtime_error );
 }
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CODINGUTILITIES_PARSING_HPP_

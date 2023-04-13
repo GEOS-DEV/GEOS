@@ -18,7 +18,7 @@
 
 #include "SurfaceElementStencil.hpp"
 
-namespace geosx
+namespace geos
 {
 
 void SurfaceElementStencil::move( LvArray::MemorySpace const space )
@@ -114,4 +114,4 @@ SurfaceElementStencilWrapper::
   m_meanPermCoefficient( meanPermCoefficient )
 {}
 
-} /* namespace geosx */
+} /* namespace geos */

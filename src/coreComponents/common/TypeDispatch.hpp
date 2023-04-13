@@ -27,7 +27,7 @@
 
 #include <unordered_map>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -122,7 +122,7 @@ struct ArrayType;
 template< typename T, typename NDIM, typename LAYOUT >
 struct ArrayType< camp::list< T, camp::list< NDIM, LAYOUT > > >
 {
-  using type = ::geosx::Array< T, NDIM::value, LAYOUT >;
+  using type = ::geos::Array< T, NDIM::value, LAYOUT >;
 };
 
 // Helper to apply a template to all types in a list
@@ -166,7 +166,7 @@ template< typename ... Ls >
 using Join = typename camp::join< Ls ... >::type;
 
 /**
- * @brief Construct a list of GEOSX multidimensional array types (geosx::Array), containing all
+ * @brief Construct a list of GEOSX multidimensional array types (geos::Array), containing all
  *        value types in type list @p TYPES and all dimensionalities in list of integral constants @p NDIMS.
  */
 template< typename TYPES, typename NDIMS >
@@ -284,6 +284,6 @@ bool dispatch( TypeList< Ts... > const types,
 
 } // namespace types
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_COMMON_TYPEDISPATCH_HPP

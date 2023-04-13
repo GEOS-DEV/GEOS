@@ -22,7 +22,7 @@
 // System includes
 #include <type_traits>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -273,6 +273,6 @@ private:
 
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_DATAREPOSITORY_REFERENCEWRAPPER_HPP_ */

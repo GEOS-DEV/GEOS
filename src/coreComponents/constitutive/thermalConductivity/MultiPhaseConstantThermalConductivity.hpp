@@ -22,7 +22,7 @@
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivityBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -109,7 +109,7 @@ private:
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif //GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_

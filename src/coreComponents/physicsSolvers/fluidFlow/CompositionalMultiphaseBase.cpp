@@ -46,7 +46,7 @@
 #pragma GCC optimize "O0"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -2070,4 +2070,4 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
   } );
 }
 
-} // namespace geosx
+} // namespace geos

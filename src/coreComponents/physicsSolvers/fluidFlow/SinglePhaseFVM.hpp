@@ -22,7 +22,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseProppantBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 
@@ -211,6 +211,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVM_HPP_

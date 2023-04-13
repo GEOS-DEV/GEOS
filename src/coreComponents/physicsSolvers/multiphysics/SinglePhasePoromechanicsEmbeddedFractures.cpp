@@ -29,7 +29,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -630,4 +630,4 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsEmbeddedFractures, std::string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

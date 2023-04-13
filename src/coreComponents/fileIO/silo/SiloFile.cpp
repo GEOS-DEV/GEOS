@@ -68,7 +68,7 @@ int MPI_Recv( void * buf, int, MPI_Datatype, int, int,
 /// forward declaration of NodeManagerT for use as a template argument
 class NodeManager;
 
-namespace geosx
+namespace geos
 {
 
 /**

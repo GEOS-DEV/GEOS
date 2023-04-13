@@ -42,7 +42,7 @@
     static_assert( sizeof( T ) % sizeOfConduitType == 0, #T " cannot be made made up of " #CONDUIT_TYPE "." ); \
   }
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -95,7 +95,7 @@ void writeTree( string const & path, conduit::Node & root );
 void loadTree( string const & path, conduit::Node & root );
 
 } // namespace dataRepository
-} // namespace geosx
+} // namespace geos
 
 /// @endcond
 

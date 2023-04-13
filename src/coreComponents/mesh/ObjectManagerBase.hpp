@@ -23,7 +23,7 @@
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/NeighborData.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -288,7 +288,7 @@ public:
   void moveSets( LvArray::MemorySpace const targetSpace );
 
   /**
-   * @copydoc geosx::dataRepository::Group::resize(indexType const)
+   * @copydoc geos::dataRepository::Group::resize(indexType const)
    * @return Always 0, whatever the new size is.
    */
   localIndex resize( localIndex const newSize,
@@ -1068,12 +1068,12 @@ void ObjectManagerBase::fixUpDownMaps( ArrayOfSets< localIndex > & relation,
   unmappedIndices.clear();
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
 /**
  * @brief Alias to ObjectManagerBase
  */
-typedef geosx::ObjectManagerBase ObjectDataStructureBaseT;
+typedef geos::ObjectManagerBase ObjectDataStructureBaseT;
 
 #endif /* GEOSX_MESH_OBJECTMANAGERBASE_HPP_ */

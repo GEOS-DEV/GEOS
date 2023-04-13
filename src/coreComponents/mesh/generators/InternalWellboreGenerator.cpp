@@ -21,7 +21,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -506,4 +506,4 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellboreGenerator, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

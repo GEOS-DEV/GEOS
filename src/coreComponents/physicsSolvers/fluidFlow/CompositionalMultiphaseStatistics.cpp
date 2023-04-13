@@ -33,7 +33,7 @@
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -555,4 +555,4 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         CompositionalMultiphaseStatistics,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

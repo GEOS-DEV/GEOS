@@ -37,7 +37,7 @@ extern "C" struct _p_MatNullSpace;
 
 ///@}
 
-namespace geosx
+namespace geos
 {
 
 /**

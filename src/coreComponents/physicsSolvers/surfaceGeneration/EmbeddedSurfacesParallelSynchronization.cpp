@@ -26,7 +26,7 @@
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 namespace  embeddedSurfacesParallelSynchronization
@@ -621,4 +621,4 @@ void sychronizeTopology( MeshLevel & mesh,
 
 } /* embeddedSurfacesParallelSynchronization */
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -21,7 +21,7 @@
 
 #include "finiteElement/PDEUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace BilinearFormUtilities
@@ -371,6 +371,6 @@ static void compute( MATRIX && matrix,
 
 } // namespace BilinearFormUtilities
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_FINITEELEMENT_BILINEARFORMUTILITIES_HPP_

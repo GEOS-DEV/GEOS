@@ -27,7 +27,7 @@
 #include "functions/TableFunction.hpp"
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -115,6 +115,6 @@ private:
   static constexpr real64 m_baselineTol = 1e-3; ///< Comparison tolerance for baseline results
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_CONSTITUTIVE_FLUID_PVTDRIVER_HPP_ */

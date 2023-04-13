@@ -19,7 +19,7 @@
 
 #include "CellElementStencilTPFA.hpp"
 
-namespace geosx
+namespace geos
 {
 
 CellElementStencilTPFA::CellElementStencilTPFA()
@@ -119,4 +119,4 @@ CellElementStencilTPFAWrapper::
   m_geometricStabilizationCoef( geometricStabilizationCoef )
 {}
 
-} /* namespace geosx */
+} /* namespace geos */

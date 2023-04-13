@@ -38,7 +38,7 @@ extern "C" struct _p_Mat;
 
 ///@}
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -408,6 +408,6 @@ private:
 
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif /*GEOSX_LINEARALGEBRA_INTERFACES_PETSCSPARSEMATRIX_HPP_*/

@@ -21,7 +21,7 @@
 
 #include "mesh/utilities/MeshMapUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 
 // unnamed namespace to avoid needless external linkage
@@ -731,6 +731,6 @@ struct ArrayHelper< T, FieldLocation::Elem >
 
 } // namespace
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_DOFMANAGERHELPERS_HPP

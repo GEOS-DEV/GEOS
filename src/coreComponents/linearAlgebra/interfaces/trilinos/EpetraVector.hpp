@@ -23,7 +23,7 @@
 
 class Epetra_Vector;
 
-namespace geosx
+namespace geos
 {
 
 /**

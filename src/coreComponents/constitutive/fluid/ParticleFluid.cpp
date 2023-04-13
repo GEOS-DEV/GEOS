@@ -18,7 +18,7 @@
 
 #include "ParticleFluid.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -129,4 +129,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, ParticleFluid, string const &, Group *
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

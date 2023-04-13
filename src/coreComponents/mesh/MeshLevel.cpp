@@ -23,7 +23,7 @@
 #include "NodeManager.hpp"
 #include "FaceManager.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -716,4 +716,4 @@ bool MeshLevel::isShallowCopyOf( MeshLevel const & comparisonLevel ) const
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */

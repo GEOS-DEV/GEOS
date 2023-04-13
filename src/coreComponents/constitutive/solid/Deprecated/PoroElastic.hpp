@@ -23,7 +23,7 @@
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -203,6 +203,6 @@ protected:
 };
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_POROELASTIC_HPP_ */

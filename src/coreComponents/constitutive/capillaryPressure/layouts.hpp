@@ -24,7 +24,7 @@
 #include "LvArray/src/typeManipulation.hpp"
 #include "RAJA/RAJA.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -54,6 +54,6 @@ static constexpr int USD_CAPPRES_DS = LvArray::typeManipulation::getStrideOneDim
 
 } // namespace relperm
 } // namespace constitutive
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_LAYOUTS_HPP

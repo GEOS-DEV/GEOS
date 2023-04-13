@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace stabilizedCompositionalMultiphaseFVMKernels
@@ -366,7 +366,7 @@ public:
 
 } // namespace stabilizedCompositionalMultiphaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP

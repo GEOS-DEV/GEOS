@@ -27,7 +27,7 @@
 
 
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -245,4 +245,4 @@ void DomainPartition::addNeighbors( const unsigned int idim,
   }
 }
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -20,7 +20,7 @@
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/PrismUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 
 static localIndex getFaceNodesHex( localIndex const faceNum,

@@ -37,7 +37,7 @@
 
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -4568,4 +4568,4 @@ REGISTER_CATALOG_ENTRY( SolverBase,
                         SurfaceGenerator,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -23,7 +23,7 @@
 
 #include "common/GeosxConfig.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -47,6 +47,6 @@ void constitutiveUpdatePassThru( ReactiveMultiFluid & fluid,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_REACTIVEFLUIDSELECTOR_HPP_

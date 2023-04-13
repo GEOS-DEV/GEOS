@@ -23,7 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -680,6 +680,6 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
 
 };
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_COMMON_FIELDSPECIFICATIONOPS_HPP

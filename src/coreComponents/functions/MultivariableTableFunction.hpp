@@ -24,7 +24,7 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -228,6 +228,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FUNCTIONS_MULTIVARIABLETABLEFUNCTION_HPP_ */

@@ -22,7 +22,7 @@
 #include "functions/TableFunction.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 using namespace constitutive;
@@ -353,4 +353,4 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         ReactiveFluidDriver,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

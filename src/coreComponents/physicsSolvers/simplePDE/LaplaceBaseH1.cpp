@@ -22,7 +22,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -227,4 +227,4 @@ void LaplaceBaseH1::
 void LaplaceBaseH1::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
-} // namespace geosx
+} // namespace geos

@@ -17,7 +17,7 @@
 
 #include "mesh/utilities/ComputationalGeometry.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace finiteElement
 {

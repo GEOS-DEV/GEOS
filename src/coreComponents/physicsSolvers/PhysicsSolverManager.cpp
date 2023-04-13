@@ -20,7 +20,7 @@
 
 #include "SolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -66,4 +66,4 @@ void PhysicsSolverManager::expandObjectCatalogs()
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -26,7 +26,7 @@
 class Epetra_Map;
 class Epetra_Import;
 
-namespace geosx
+namespace geos
 {
 
 /// Forward declaration
@@ -123,6 +123,6 @@ private:
   std::unique_ptr< Epetra_Import > m_serialImport;
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_INTERFACES_EPETRAEXPORT_HPP_

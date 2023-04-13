@@ -25,7 +25,7 @@
 
 
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -1032,7 +1032,7 @@ inline void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
-          arraySlice1d< geosx::real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const
+          arraySlice1d< geos::real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const
 {
   compute( phaseVolFraction,
            m_phaseMaxHistoricalVolFraction[k],
@@ -1044,6 +1044,6 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP

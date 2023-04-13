@@ -23,7 +23,7 @@
 #include "ElementSubRegionBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 class MeshLevel;
@@ -404,6 +404,6 @@ private:
                                         arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_CELLELEMENTSUBREGION_HPP_ */

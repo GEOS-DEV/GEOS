@@ -18,7 +18,7 @@
 
 #include "FaceElementToCellStencil.hpp"
 
-namespace geosx
+namespace geos
 {
 
 FaceElementToCellStencil::FaceElementToCellStencil()
@@ -109,4 +109,4 @@ FaceElementToCellStencilWrapper::
   m_transMultiplier( transMultiplier )
 {}
 
-} /* namespace geosx */
+} /* namespace geos */

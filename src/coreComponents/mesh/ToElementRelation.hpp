@@ -21,7 +21,7 @@
 
 #include "InterObjectRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class ElementRegionManager;
@@ -139,6 +139,6 @@ void insert( OrderedVariableToManyElementRelation & relation,
 
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_TOELEMENTRELATION_HPP_ */

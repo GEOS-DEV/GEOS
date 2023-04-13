@@ -20,7 +20,7 @@
 
 #include "common/LinearOperator.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -113,6 +113,6 @@ private:
   Matrix const & m_matrix;
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_NORMALOPERATOR_HPP_

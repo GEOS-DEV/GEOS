@@ -21,7 +21,7 @@
 
 #include "finiteVolume/FluxApproximationBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

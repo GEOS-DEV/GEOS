@@ -22,7 +22,7 @@
 #include "constitutive/fluid/CompressibleSinglePhaseFluid.hpp"
 #include "constitutive/fluid/ThermalCompressibleSinglePhaseFluid.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -46,6 +46,6 @@ void constitutiveUpdatePassThru( SingleFluidBase & fluid,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_SINGLEPHASESELECTOR_HPP_

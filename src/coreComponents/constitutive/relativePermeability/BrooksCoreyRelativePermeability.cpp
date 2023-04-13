@@ -20,7 +20,7 @@
 
 #include <cmath>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -121,4 +121,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyRelativePermeability, strin
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

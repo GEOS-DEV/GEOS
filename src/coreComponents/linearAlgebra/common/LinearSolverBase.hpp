@@ -23,7 +23,7 @@
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "common/Stopwatch.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

@@ -24,7 +24,7 @@
 #include "LvArray/src/tensorOps.hpp"
 #include "SolidModelDiscretizationOpsOrthotropic.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -812,6 +812,6 @@ protected:
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_ELASTICORTHOTROPIC_HPP_ */

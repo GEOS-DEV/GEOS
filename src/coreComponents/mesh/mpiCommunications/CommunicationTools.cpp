@@ -28,7 +28,7 @@
 
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 
 
@@ -912,4 +912,4 @@ void CommunicationTools::synchronizeFields( FieldIdentifiers const & fieldsToBeS
   synchronizeUnpack( mesh, neighbors, icomm, onDevice );
 }
 
-} /* namespace geosx */
+} /* namespace geos */

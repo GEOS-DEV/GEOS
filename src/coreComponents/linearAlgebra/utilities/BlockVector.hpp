@@ -21,7 +21,7 @@
 
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -151,6 +151,6 @@ private:
   array1d< VECTOR > m_vectorStorage;
 };
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTOR_HPP_

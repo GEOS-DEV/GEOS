@@ -37,7 +37,7 @@
 
 #include <memory>
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -556,7 +556,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
           localIndex const q,
           real64 const pressure,
           real64 const temperature,
-          arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
+          arraySlice1d< geos::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
   compute( pressure,
            temperature,
@@ -574,6 +574,6 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_

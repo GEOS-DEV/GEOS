@@ -24,7 +24,7 @@
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsLagrangianFEMKernels
@@ -222,6 +222,6 @@ FixedStressThermoPoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::ke
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROMECHANICS_IMPL_HPP_

@@ -24,7 +24,7 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -248,7 +248,7 @@ inline void
 JFunctionCapillaryPressure::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
-          arraySlice1d< geosx::real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const
+          arraySlice1d< geos::real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const
 {
   compute( phaseVolFraction,
            m_jFuncMultiplier[k],
@@ -266,6 +266,6 @@ ENUM_STRINGS( JFunctionCapillaryPressure::PermeabilityDirection,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_JFUNCTIONCAPILLARYPRESSURE_HPP

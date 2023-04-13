@@ -21,7 +21,7 @@
 #include "Logger.hpp"
 #include "LvArray/src/system.hpp"
 
-namespace geosx
+namespace geos
 {
 #ifdef GEOSX_USE_MPI
 MPI_Comm MPI_COMM_GEOSX;

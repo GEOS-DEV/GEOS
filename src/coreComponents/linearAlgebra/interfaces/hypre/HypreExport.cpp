@@ -26,7 +26,7 @@
 #include <_hypre_parcsr_mv.h>
 #include <_hypre_IJ_mv.h>
 
-namespace geosx
+namespace geos
 {
 
 HypreExport::HypreExport() = default;
@@ -256,4 +256,4 @@ INST_HYPRE_EXPORT_CRS( long long, long long );
 
 #undef INST_HYPRE_EXPORT_CRS
 
-} // namespace geosx
+} // namespace geos

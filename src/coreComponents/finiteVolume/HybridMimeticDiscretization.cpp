@@ -27,7 +27,7 @@
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;

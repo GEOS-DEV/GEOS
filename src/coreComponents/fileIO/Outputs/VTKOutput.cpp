@@ -23,7 +23,7 @@
 #include "fileIO/python/PyVTKOutputType.hpp"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -142,4 +142,4 @@ PyTypeObject * VTKOutput::getPythonType() const
 #endif
 
 REGISTER_CATALOG_ENTRY( OutputBase, VTKOutput, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

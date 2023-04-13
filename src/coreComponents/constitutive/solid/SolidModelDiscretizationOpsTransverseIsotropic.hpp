@@ -21,7 +21,7 @@
 
 #include "SolidModelDiscretizationOps.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {

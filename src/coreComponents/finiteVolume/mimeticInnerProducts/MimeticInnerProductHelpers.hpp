@@ -19,7 +19,7 @@
 #ifndef GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTHELPERS_HPP
 #define GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTHELPERS_HPP
 
-namespace geosx
+namespace geos
 {
 namespace mimeticInnerProduct
 {
@@ -165,6 +165,6 @@ struct MimeticInnerProductHelpers
 
 } // namespace mimeticInnerProduct
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTHELPERS_HPP

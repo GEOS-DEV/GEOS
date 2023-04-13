@@ -23,7 +23,7 @@
 #include "constitutive/fluid/PVTFunctions/CO2Enthalpy.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -221,4 +221,4 @@ REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineEnthalpy, string const &, string_a
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

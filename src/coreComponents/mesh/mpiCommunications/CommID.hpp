@@ -21,7 +21,7 @@
 
 #include <set>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -70,6 +70,6 @@ private:
   int m_id = -1;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_MPICOMMUNICATIONS_COMMID_HPP_ */

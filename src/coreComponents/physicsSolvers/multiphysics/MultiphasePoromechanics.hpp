@@ -25,7 +25,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 // Note that in the current implementation, the order of the templates in CoupledSolver< ... > matters
@@ -238,6 +238,6 @@ real64 MultiphasePoromechanics::assemblyLaunch( MeshLevel & mesh,
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_ */

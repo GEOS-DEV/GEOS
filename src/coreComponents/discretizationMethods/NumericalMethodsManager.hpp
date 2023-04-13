@@ -23,7 +23,7 @@
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -100,6 +100,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_DISCRETIZATIONMETHODS_NUMERICALMETHODSMANAGER_HPP_ */

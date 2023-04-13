@@ -28,7 +28,7 @@
 #include "SurfaceElementRegion.hpp"
 #include "WellElementRegion.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class MeshManager;

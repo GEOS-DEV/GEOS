@@ -15,7 +15,7 @@
   PYTHON_ERROR_IF( self->group == nullptr, PyExc_RuntimeError, "The PyHistoryCollection is not initialized.", nullptr )
 
 
-namespace geosx
+namespace geos
 {
 namespace python
 {
@@ -28,7 +28,7 @@ struct PyHistoryCollection
   static constexpr char const * docString =
     "A Python interface to HistoryCollection.";
 
-  geosx::HistoryCollection * group;
+  geos::HistoryCollection * group;
 };
 
 
@@ -81,7 +81,7 @@ static PyObject * collect( PyHistoryCollection * self, PyObject * args )
     return nullptr;
   }
 
-  geosx::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   int cycleNumber = int(round( time/dt ));
   try

@@ -24,7 +24,7 @@
 #include <optionparser.h>
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -290,4 +290,4 @@ void basicCleanup()
 
 
 
-} // namespace geosx
+} // namespace geos

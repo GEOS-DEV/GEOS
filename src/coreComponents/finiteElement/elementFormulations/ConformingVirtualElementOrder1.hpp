@@ -22,7 +22,7 @@
 #include "FiniteElementBase.hpp"
 #include "codingUtilities/traits.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace finiteElement
 {

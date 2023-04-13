@@ -21,7 +21,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhaseProppantBaseKernels
@@ -58,6 +58,6 @@ struct FluidUpdateKernel
 
 } // namespace singlePhaseProppantBaseKernels
 
-} //namespace geosx
+} //namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEPROPPANTBASEKERNELS_HPP_

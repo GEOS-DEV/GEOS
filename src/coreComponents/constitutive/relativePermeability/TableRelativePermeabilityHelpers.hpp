@@ -21,7 +21,7 @@
 
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -48,6 +48,6 @@ struct TableRelativePermeabilityHelpers
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_TABLECAPILLARYPRESSUREHELPERS_HPP

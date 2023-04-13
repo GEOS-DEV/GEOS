@@ -18,7 +18,7 @@
 
 #include "PoreVolumeCompressibleSolid.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -114,4 +114,4 @@ void PoreVolumeCompressibleSolid::stateUpdateBatchPressure( arrayView1d< real64 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoreVolumeCompressibleSolid, string const &, Group * const )
 }
-} /* namespace geosx */
+} /* namespace geos */

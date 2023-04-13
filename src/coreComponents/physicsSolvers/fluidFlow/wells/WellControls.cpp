@@ -21,7 +21,7 @@
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -420,4 +420,4 @@ bool WellControls::isWellOpen( real64 const & currentTime ) const
   return isOpen;
 }
 
-} //namespace geosx
+} //namespace geos

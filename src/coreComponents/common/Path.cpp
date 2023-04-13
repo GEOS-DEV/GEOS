@@ -21,7 +21,7 @@
 #include <dirent.h>
 #include <vector>
 
-namespace geosx
+namespace geos
 {
 
 std::string getAbsolutePath( std::string const & path )
@@ -125,4 +125,4 @@ void makeDirsForPath( std::string const & path )
   while( pos != std::string::npos );
 }
 
-} /* end namespace geosx */
+} /* end namespace geos */

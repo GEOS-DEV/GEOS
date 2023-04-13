@@ -25,7 +25,7 @@
 
 #include <memory>
 
-namespace geosx
+namespace geos
 {
 
 /// Forward-declared struct that hosts pointers to preconditioner functions

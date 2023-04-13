@@ -19,7 +19,7 @@
 #include "Perforation.hpp"
 #include "dataRepository/InputFlags.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -52,4 +52,4 @@ void Perforation::postProcessInput()
 Perforation::~Perforation()
 {}
 
-} //namespace geosx
+} //namespace geos

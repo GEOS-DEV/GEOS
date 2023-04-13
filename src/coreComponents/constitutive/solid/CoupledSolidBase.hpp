@@ -26,7 +26,7 @@
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {

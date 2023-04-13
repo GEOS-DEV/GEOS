@@ -18,7 +18,7 @@
 
 #include "HypreKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace hypre
 {
@@ -141,4 +141,4 @@ real64 computeMaxNorm( hypre_CSRMatrix const * const mat,
 }
 
 } // namespace hypre
-} // namespace geosx
+} // namespace geos

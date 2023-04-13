@@ -41,7 +41,7 @@ extern "C" struct hypre_ParCSRMatrix_struct;
 
 ///@}
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -428,6 +428,6 @@ private:
 
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_*/

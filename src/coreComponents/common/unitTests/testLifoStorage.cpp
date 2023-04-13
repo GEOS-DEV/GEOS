@@ -62,7 +62,7 @@ struct RAJAHelper< RAJA::cuda_exec< N > >
 
 #endif
 
-using namespace geosx;
+using namespace geos;
 
 
 template< typename POLICY >

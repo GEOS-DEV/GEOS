@@ -23,7 +23,7 @@
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -326,7 +326,7 @@ inline void
 TableRelativePermeability::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
-          arraySlice1d< geosx::real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const
+          arraySlice1d< geos::real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const
 {
   compute( phaseVolFraction,
            m_phaseTrappedVolFrac[k][q],
@@ -337,6 +337,6 @@ TableRelativePermeability::KernelWrapper::
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_TABLERELATIVEPERMEABILITY_HPP

@@ -24,7 +24,7 @@
 #include "constitutive/fluid/layouts.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -178,6 +178,6 @@ void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
 
 } // end namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PHILLIPSBRINEVISCOSITY_HPP_

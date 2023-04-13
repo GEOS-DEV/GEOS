@@ -24,7 +24,7 @@
 
 #include <cstdint>
 
-namespace geosx
+namespace geos
 {
 
 namespace internal

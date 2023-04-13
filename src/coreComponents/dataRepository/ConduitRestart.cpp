@@ -25,7 +25,7 @@
 // TPL includes
 #include <conduit_relay.hpp>
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -100,4 +100,4 @@ void loadTree( string const & path, conduit::Node & root )
 }
 
 } /* end namespace dataRepository */
-} /* end namespace geosx */
+} /* end namespace geos */

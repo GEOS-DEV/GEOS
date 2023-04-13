@@ -23,7 +23,7 @@
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductHelpers.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace mimeticInnerProduct
 {
@@ -208,7 +208,7 @@ BdVLMInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
 
 } // end namespace mimeticInnerProduct
 
-} // end namespace geosx
+} // end namespace geos
 
 
 #endif //GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_BDVLMINNERPRODUCT_HPP_

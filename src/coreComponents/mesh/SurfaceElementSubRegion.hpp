@@ -25,7 +25,7 @@
 #include "EdgeManager.hpp"
 #include "CellElementSubRegion.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -254,6 +254,6 @@ protected:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_MESH_SURFACEELEMENTSUBREGION_HPP_ */

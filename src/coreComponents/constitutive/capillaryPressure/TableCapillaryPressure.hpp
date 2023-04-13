@@ -23,7 +23,7 @@
 
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -177,7 +177,7 @@ inline void
 TableCapillaryPressure::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
-          arraySlice1d< geosx::real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const
+          arraySlice1d< geos::real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const
 {
   compute( phaseVolFraction,
            m_phaseCapPressure[k][q],
@@ -186,6 +186,6 @@ TableCapillaryPressure::KernelWrapper::
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_TABLECAPILLARYPRESSURE_HPP

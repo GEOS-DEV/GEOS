@@ -24,7 +24,7 @@
 
 
 
-namespace geosx
+namespace geos
 {
 
 /// Namespace to contain the first order acoustic wave kernels.
@@ -579,6 +579,6 @@ struct PressureComputation
 
 } // namespace AcousticFirstOrderWaveEquationSEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticFirstOrderWaveEquationSEMKERNEL_HPP_

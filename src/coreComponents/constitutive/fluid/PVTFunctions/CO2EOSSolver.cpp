@@ -19,7 +19,7 @@
 #include "constitutive/fluid/PVTFunctions/CO2EOSSolver.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -153,4 +153,4 @@ CO2EOSSolver::solve( string const & name,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

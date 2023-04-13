@@ -20,7 +20,7 @@
 
 /// Get the positive value of a module b
 #define POSITIVE_MODULO( a, b ) ( ( ( a ) % ( b ) ) + b ) % ( b )
-namespace geosx
+namespace geos
 {
 template< typename T, typename INDEX_TYPE >
 /// Implement a double ended queue with fixed number of fixed size buffer to be stored

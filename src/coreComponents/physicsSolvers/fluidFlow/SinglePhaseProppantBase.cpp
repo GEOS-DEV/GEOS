@@ -31,7 +31,7 @@
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseProppantBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;

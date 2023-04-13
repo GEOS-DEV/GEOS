@@ -35,12 +35,12 @@
   } while( false )
 
 #define SKIP_TEST_IN_SERIAL( REASON ) \
-  SKIP_TEST_IF( geosx::MpiWrapper::commSize() == 1, REASON )
+  SKIP_TEST_IF( geos::MpiWrapper::commSize() == 1, REASON )
 
 #define SKIP_TEST_IN_PARALLEL( REASON ) \
-  SKIP_TEST_IF( geosx::MpiWrapper::commSize() != 1, REASON )
+  SKIP_TEST_IF( geos::MpiWrapper::commSize() != 1, REASON )
 
-namespace geosx
+namespace geos
 {
 
 namespace testing
@@ -218,6 +218,6 @@ void compareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & mat
 
 } // namespace testing
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP_

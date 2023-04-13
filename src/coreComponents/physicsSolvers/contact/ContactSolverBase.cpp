@@ -31,7 +31,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -231,4 +231,4 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
   } );
 }
 
-} /* namespace geosx */
+} /* namespace geos */

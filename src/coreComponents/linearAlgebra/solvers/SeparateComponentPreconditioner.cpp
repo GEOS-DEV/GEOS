@@ -21,7 +21,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
-namespace geosx
+namespace geos
 {
 
 template< typename LAI >

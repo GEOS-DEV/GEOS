@@ -22,7 +22,7 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalPoromechanicsKernels
@@ -486,6 +486,6 @@ kernelLaunch( localIndex const numElems,
 
 } // namespace thermalPoromechanicsKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICS_HPP_

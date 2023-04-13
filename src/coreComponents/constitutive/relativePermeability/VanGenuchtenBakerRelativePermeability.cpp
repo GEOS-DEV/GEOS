@@ -20,7 +20,7 @@
 
 #include <cmath>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -177,4 +177,4 @@ VanGenuchtenBakerRelativePermeability::createKernelWrapper()
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenBakerRelativePermeability, string const &, Group * const )
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

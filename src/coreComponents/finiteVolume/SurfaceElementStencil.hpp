@@ -21,7 +21,7 @@
 
 #include "StencilBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /// @cond DO_NOT_DOCUMENT
@@ -596,6 +596,6 @@ SurfaceElementStencilWrapper::
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FINITEVOLUME_SURFACEELEMENTSTENCIL_HPP_ */

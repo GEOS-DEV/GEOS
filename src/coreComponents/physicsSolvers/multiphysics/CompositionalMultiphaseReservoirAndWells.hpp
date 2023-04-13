@@ -23,7 +23,7 @@
 #include "physicsSolvers/multiphysics/CoupledReservoirAndWellsBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 
-namespace geosx
+namespace geos
 {
 
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
@@ -82,6 +82,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COMPOSITIONALMULTIPHASERESERVOIRANDWELLS_HPP_ */

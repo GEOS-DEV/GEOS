@@ -22,7 +22,7 @@
 // System includes
 #include <chrono>
 
-using namespace geosx;
+using namespace geos;
 
 
 int main( int argc, char *argv[] )

@@ -21,7 +21,7 @@
 
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace mimeticInnerProduct
 {
@@ -130,7 +130,7 @@ TPFAInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_
 
 } // end namespace mimeticInnerProduct
 
-} // end namespace geosx
+} // end namespace geos
 
 
 #endif //GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_TPFAINNERPRODUCT_HPP_

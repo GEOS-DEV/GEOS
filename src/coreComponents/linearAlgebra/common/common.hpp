@@ -130,7 +130,7 @@
     GEOSX_ERROR_IF_GT_MSG( 0, ierr, "Error in call to " << #call ); \
   } while( false )
 
-namespace geosx
+namespace geos
 {
 
 /**

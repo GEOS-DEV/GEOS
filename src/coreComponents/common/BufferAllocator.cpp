@@ -2,7 +2,7 @@
 #include "DataTypes.hpp"
 
 #ifdef GEOSX_USE_CHAI
-namespace geosx
+namespace geos
 {
 
 bool prefer_pinned_buffer = true;

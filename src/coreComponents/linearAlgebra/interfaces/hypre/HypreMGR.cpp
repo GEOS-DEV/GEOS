@@ -41,7 +41,7 @@
 
 #include "LvArray/src/output.hpp"
 
-namespace geosx
+namespace geos
 {
 
 void hypre::mgr::createMGR( LinearSolverParameters const & params,
@@ -183,4 +183,4 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
 
 }
 
-} // namespace geosx
+} // namespace geos

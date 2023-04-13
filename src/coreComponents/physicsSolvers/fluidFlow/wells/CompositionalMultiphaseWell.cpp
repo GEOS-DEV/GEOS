@@ -46,7 +46,7 @@
 #pragma GCC optimize "O0"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -1845,4 +1845,4 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseWell, string const &, Group * const )
-} // namespace geosx
+} // namespace geos

@@ -33,7 +33,7 @@
 #include "linearAlgebra/interfaces/petsc/PetscInterface.hpp"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 /// Alias for current interface

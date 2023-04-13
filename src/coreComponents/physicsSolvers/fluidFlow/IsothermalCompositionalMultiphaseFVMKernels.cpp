@@ -25,7 +25,7 @@
 #include "finiteVolume/FaceElementToCellStencil.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace isothermalCompositionalMultiphaseFVMKernels
@@ -697,4 +697,4 @@ INST_AquiferBCKernel( 5 );
 
 } // namespace isothermalCompositionalMultiphaseFVMKernels
 
-} // namespace geosx
+} // namespace geos

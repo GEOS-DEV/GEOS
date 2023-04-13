@@ -26,7 +26,7 @@
 #include <sstream>
 
 
-namespace geosx
+namespace geos
 {
 
 // Forward declarations
@@ -68,6 +68,6 @@ void SchemaConstruction( dataRepository::Group & group,
                          integer documentationType );
 
 } /// namespace schemaUtilities
-} /// namespace geosx
+} /// namespace geos
 
 #endif /* GEOSX_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_ */

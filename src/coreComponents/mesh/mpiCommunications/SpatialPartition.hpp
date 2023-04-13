@@ -21,7 +21,7 @@
 #include <map>
 
 constexpr int nsdof = 3;
-namespace geosx
+namespace geos
 {
 
 /**

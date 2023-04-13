@@ -14,7 +14,7 @@
 
 #include "MeshGeneratorBase.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 

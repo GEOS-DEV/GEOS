@@ -23,7 +23,7 @@
 #include "WaveSolverUtils.hpp"
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /// Namespace to contain the acoustic wave kernels.
@@ -669,14 +669,14 @@ struct waveSpeedPMLKernel
 /**
  * @brief Implements kernels for solving the acoustic wave equations
  *   explicit central FD method and SEM
- * @copydoc geosx::finiteElement::KernelBase
+ * @copydoc geos::finiteElement::KernelBase
  * @tparam SUBREGION_TYPE The type of subregion that the kernel will act on.
  *
  * ### AcousticWaveEquationSEMKernel Description
  * Implements the KernelBase interface functions required for solving
  * the acoustic wave equations using the
  * "finite element kernel application" functions such as
- * geosx::finiteElement::RegionBasedKernelApplication.
+ * geos::finiteElement::RegionBasedKernelApplication.
  *
  * The number of degrees of freedom per support point for both
  * the test and trial spaces are specified as `1`.
@@ -716,7 +716,7 @@ public:
 //*****************************************************************************
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::KernelBase::KernelBase
+   * @copydoc geos::finiteElement::KernelBase::KernelBase
    * @param nodeManager Reference to the NodeManager object.
    * @param edgeManager Reference to the EdgeManager object.
    * @param faceManager Reference to the FaceManager object.
@@ -747,7 +747,7 @@ public:
 
   //*****************************************************************************
   /**
-   * @copydoc geosx::finiteElement::KernelBase::StackVariables
+   * @copydoc geos::finiteElement::KernelBase::StackVariables
    *
    * ### ExplicitAcousticSEM Description
    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
@@ -767,7 +767,7 @@ public:
 
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::setup
+   * @copydoc geos::finiteElement::KernelBase::setup
    *
    * Copies the primary variable, and position into the local stack array.
    */
@@ -788,7 +788,7 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
+   * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    *
    * ### ExplicitAcousticSEM Description
    * Calculates stiffness vector
@@ -832,6 +832,6 @@ using ExplicitAcousticSEMFactory = finiteElement::KernelFactory< ExplicitAcousti
 
 } // namespace acousticWaveEquationSEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_

@@ -40,7 +40,7 @@
 #include <cstdlib>
 #include <type_traits>
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -266,7 +266,7 @@ public:
   virtual
   HistoryMetadata getHistoryMetadata( localIndex const packCount = -1 ) const override final
   {
-    return geosx::getHistoryMetadata( getName(), referenceAsView( ), numArrayComp(), packCount );
+    return geos::getHistoryMetadata( getName(), referenceAsView( ), numArrayComp(), packCount );
   }
 
   /**
@@ -960,20 +960,20 @@ private:
 
 }
 
-} // end of namespace geosx
+} // end of namespace geos
 
 // Do not remove the following commented code since it's used for debugging with TotalView.
 //template< typename T >
-//int TV_ttf_display_type( geosx::dataRepository::Wrapper<T> const * wrapper)
+//int TV_ttf_display_type( geos::dataRepository::Wrapper<T> const * wrapper)
 //{
 //  std::cout<<"Executing "<<wrapper->totalviewTypeName()<<"::TV_ttf_display_type()"<<std::endl;
 //  return TV_ttf_format_raw;
 //}
 //
-//template int TV_ttf_display_type( geosx::dataRepository::Wrapper<int> const * wrapper );
+//template int TV_ttf_display_type( geos::dataRepository::Wrapper<int> const * wrapper );
 //
 //template< typename T >
-//void geosx::dataRepository::Wrapper<T>::tvTemplateInstantiation()
+//void geos::dataRepository::Wrapper<T>::tvTemplateInstantiation()
 //{
 //  TV_ttf_display_type<T>(this);
 //}

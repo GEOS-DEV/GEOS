@@ -25,7 +25,7 @@
 #include "python/PySolverType.hpp"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -1260,4 +1260,4 @@ PyTypeObject * SolverBase::getPythonType() const
 { return python::getPySolverType(); }
 #endif
 
-} // namespace geosx
+} // namespace geos

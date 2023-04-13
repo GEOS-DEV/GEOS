@@ -23,7 +23,7 @@
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductHelpers.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace mimeticInnerProduct
 {
@@ -223,6 +223,6 @@ MimeticInnerProductBase::computeParametricInnerProduct( arrayView2d< real64 cons
 
 } // end namespace mimeticInnerProduct
 
-} // end namespace geosx
+} // end namespace geos
 
 #endif //GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTBASE_HPP_

@@ -21,7 +21,7 @@
 
 #include "linearAlgebra/utilities/BlockOperatorView.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -85,6 +85,6 @@ public:
   }
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORWRAPPER_HPP_

@@ -16,7 +16,7 @@
 
 #include "mesh/generators/CellBlockUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -147,7 +147,7 @@ localIndex CellBlock::getFaceNodes( localIndex const cellIndex,
                                     localIndex const faceNum,
                                     Span< localIndex > const nodesInFaces ) const
 {
-  return geosx::getFaceNodes( m_elementType,
+  return geos::getFaceNodes( m_elementType,
                               cellIndex,
                               faceNum,
                               m_elementsToNodes,

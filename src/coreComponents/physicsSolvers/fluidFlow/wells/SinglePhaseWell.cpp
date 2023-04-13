@@ -35,7 +35,7 @@
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -1059,4 +1059,4 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
 
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseWell, string const &, Group * const )
-}// namespace geosx
+}// namespace geos

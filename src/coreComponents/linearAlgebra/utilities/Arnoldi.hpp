@@ -22,7 +22,7 @@
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 #include "common/LinearOperator.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -80,6 +80,6 @@ real64 ArnoldiLargestEigenvalue( LinearOperator< VECTOR > const & op, localIndex
   return lambdaMax;
 }
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_UTILITIES_ARNOLDI_HPP_

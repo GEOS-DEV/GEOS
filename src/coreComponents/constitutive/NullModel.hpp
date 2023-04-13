@@ -17,7 +17,7 @@
 
 #include "ConstitutiveBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -29,7 +29,7 @@ class NullModel : public constitutive::ConstitutiveBase
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group
+  /// @copydoc geos::dataRepository::Group::Group
   NullModel( string const & name,
              Group * const parent );
 
@@ -80,6 +80,6 @@ public:
 };
 
 } // constitutive
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_CONSTITUTIVE_NULLMODEL_HPP_ */

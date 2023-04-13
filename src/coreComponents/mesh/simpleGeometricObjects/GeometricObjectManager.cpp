@@ -20,7 +20,7 @@
 
 #include "SimpleGeometricObjectBase.hpp"
 
-namespace geosx
+namespace geos
 {
 GeometricObjectManager * GeometricObjectManager::m_instance = nullptr;
 
@@ -68,4 +68,4 @@ void GeometricObjectManager::expandObjectCatalogs()
 
 
 
-} /* namespace geosx */
+} /* namespace geos */

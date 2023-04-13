@@ -18,7 +18,7 @@
 #include "events/tasks/TaskBase.hpp"
 #include "constitutive/relativePermeability/TableRelativePermeabilityHysteresis.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class RelpermDriver : public TaskBase

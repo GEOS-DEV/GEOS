@@ -21,7 +21,7 @@
 
 #include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace hypre
@@ -103,6 +103,6 @@ public:
 
 } // namespace hypre
 
-} // namespace geosx
+} // namespace geos
 
 #endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEHYBRIDFVM_HPP_*/

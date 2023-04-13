@@ -18,7 +18,7 @@
 
 #include "ModifiedCamClay.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 namespace constitutive
@@ -133,4 +133,4 @@ void ModifiedCamClay::saveConvergedState() const
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ModifiedCamClay, std::string const &, Group * const )
 }
-} /* namespace geosx */
+} /* namespace geos */

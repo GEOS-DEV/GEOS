@@ -23,7 +23,7 @@
 #include "Box.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -102,4 +102,4 @@ bool Box::isCoordInObject( real64 const ( &coord ) [3] ) const
 
 REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Box, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

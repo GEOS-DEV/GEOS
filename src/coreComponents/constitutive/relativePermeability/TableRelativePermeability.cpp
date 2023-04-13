@@ -20,7 +20,7 @@
 #include "constitutive/relativePermeability/TableRelativePermeabilityHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -287,4 +287,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, TableRelativePermeability, std::string
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

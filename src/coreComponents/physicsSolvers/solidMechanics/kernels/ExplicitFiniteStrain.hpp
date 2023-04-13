@@ -22,7 +22,7 @@
 #include "ExplicitSmallStrain.hpp"
 #include "finiteElement/Kinematics.h"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsLagrangianFEMKernels
@@ -148,6 +148,6 @@ using ExplicitFiniteStrainFactory = finiteElement::KernelFactory< ExplicitFinite
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITFINITESTRAIN_HPP_

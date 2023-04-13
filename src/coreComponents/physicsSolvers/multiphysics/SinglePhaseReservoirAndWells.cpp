@@ -28,7 +28,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -371,4 +371,4 @@ REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFlowAndWells, string const &, Gro
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsAndWells, string const &, Group * const )
 }
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -49,7 +49,7 @@
 #define BASEHOLDSCATALOG 1
 #endif
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -697,12 +697,12 @@ public:
  * generation of a CatalogEntry<BaseType,ClassName,...> prior to main().
  */
 #define REGISTER_CATALOG_ENTRY( BaseType, DerivedType, ... ) \
-  namespace { geosx::dataRepository::CatalogEntryConstructor< BaseType, DerivedType, __VA_ARGS__ > catEntry_ ## DerivedType; }
+  namespace { geos::dataRepository::CatalogEntryConstructor< BaseType, DerivedType, __VA_ARGS__ > catEntry_ ## DerivedType; }
 
 /**
  * @brief Same as REGISTER_CATALOG_ENTRY, but for classes with no-argument constructors.
  */
 #define REGISTER_CATALOG_ENTRY0( BaseType, DerivedType ) \
-  namespace { geosx::dataRepository::CatalogEntryConstructor< BaseType, DerivedType > catEntry_ ## DerivedType; }
+  namespace { geos::dataRepository::CatalogEntryConstructor< BaseType, DerivedType > catEntry_ ## DerivedType; }
 
 #endif /* GEOSX_DATAREPOSITORY_OBJECTCATALOG_HPP_ */

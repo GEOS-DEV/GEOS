@@ -18,7 +18,7 @@
 
 #include "ElasticIsotropic.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 namespace constitutive
@@ -150,4 +150,4 @@ void ElasticIsotropic::postProcessInput()
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticIsotropic, string const &, Group * const )
 }
-} /* namespace geosx */
+} /* namespace geos */

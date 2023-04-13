@@ -4,7 +4,7 @@
 #include "common/DataTypes.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class MeshLevel;
@@ -207,7 +207,7 @@ private:
 
 };
 
-}  // end namespace geosx
+}  // end namespace geos
 
 
 #endif // __PROJECTIONEDFMHELPER_H_

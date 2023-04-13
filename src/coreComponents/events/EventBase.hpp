@@ -23,7 +23,7 @@
 #include "dataRepository/ExecutableGroup.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -348,6 +348,6 @@ private:
   ExecutableGroup * m_target;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_EVENTS_EVENTSBASE_HPP_ */

@@ -24,7 +24,7 @@
 #include <tuple>
 #include <cstdio>
 
-namespace geosx
+namespace geos
 {
 
 ChomboCoupler::ChomboCoupler( MPI_Comm const comm, const string & outputPath, const string & inputPath, MeshLevel & mesh ):
@@ -189,4 +189,4 @@ void ChomboCoupler::copyNodalData()
 }
 
 
-} // namespace geosx
+} // namespace geos

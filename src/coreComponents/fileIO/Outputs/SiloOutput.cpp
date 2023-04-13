@@ -22,7 +22,7 @@
 #include "fileIO/silo/SiloFile.hpp"
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -146,4 +146,4 @@ bool SiloOutput::execute( real64 const time_n,
 
 
 REGISTER_CATALOG_ENTRY( OutputBase, SiloOutput, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

@@ -47,7 +47,7 @@
 #include <unordered_set>
 #endif
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -839,7 +839,7 @@ createPythonObject( T & )
 
 } // namespace wrapperHelpers
 } // namespace dataRepository
-} // namespace geosx
+} // namespace geos
 
 #undef RESTART_TYPE_LOGGING
 

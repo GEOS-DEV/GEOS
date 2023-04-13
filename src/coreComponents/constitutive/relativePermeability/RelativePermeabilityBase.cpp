@@ -19,7 +19,7 @@
 #include "RelativePermeabilityBase.hpp"
 #include "RelativePermeabilityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -160,4 +160,4 @@ std::tuple< integer, integer > RelativePermeabilityBase::wettingAndNonWettingPha
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

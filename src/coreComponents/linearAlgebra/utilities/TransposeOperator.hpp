@@ -21,7 +21,7 @@
 
 #include "linearAlgebra/common/LinearOperator.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

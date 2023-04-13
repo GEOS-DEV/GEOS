@@ -25,7 +25,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhasePoromechanicsFluxKernels
@@ -235,6 +235,6 @@ struct FaceElementFluxKernel
 
 } // namespace singlePhasePoromechanicsFluxKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSFLUXKERNELS_HPP

@@ -43,7 +43,7 @@
 #include "physicsSolvers/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -1184,4 +1184,4 @@ void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
   } );
 }
 
-} /* namespace geosx */
+} /* namespace geos */

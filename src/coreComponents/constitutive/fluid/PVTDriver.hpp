@@ -21,7 +21,7 @@
 
 #include "events/tasks/TaskBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -102,6 +102,6 @@ private:
   static constexpr real64 m_baselineTol = 1e-3; ///< Comparison tolerance for baseline results
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_FLUID_PVTDRIVER_HPP_ */

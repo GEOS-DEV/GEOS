@@ -17,7 +17,7 @@
 
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace detail
@@ -199,6 +199,6 @@ struct AccessorHelper< true >
   }
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_TESTFLOWKERNELHELPERS_HPP

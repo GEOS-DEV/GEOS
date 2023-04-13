@@ -23,7 +23,7 @@
 #include "linearAlgebra/common/LinearOperator.hpp"
 #include "LvArray/src/output.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class DofManager;
@@ -963,6 +963,6 @@ protected:
 
 };
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_

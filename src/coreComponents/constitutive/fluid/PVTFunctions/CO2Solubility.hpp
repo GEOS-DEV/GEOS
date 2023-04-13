@@ -26,7 +26,7 @@
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -335,6 +335,6 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 
 } // end namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2SOLUBILITY_HPP_

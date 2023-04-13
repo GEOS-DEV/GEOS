@@ -19,7 +19,7 @@
 #include "physicsSolvers/SolverBase.hpp"  // an abstraction class shared by all physics solvers
 #include "fieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
 
-namespace geosx
+namespace geos
 {
 
 // Like most physics solvers, the Laplace solver derives from a generic SolverBase class.
@@ -140,6 +140,6 @@ ENUM_STRINGS( LaplaceBaseH1::TimeIntegrationOption,
               "ImplicitTransient" );
 //END_SPHINX_INCLUDE_REGENUM
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP */

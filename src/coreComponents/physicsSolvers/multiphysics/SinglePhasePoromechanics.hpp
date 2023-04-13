@@ -23,7 +23,7 @@
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class SinglePhasePoromechanics : public CoupledSolver< SinglePhaseBase,
@@ -205,6 +205,6 @@ real64 SinglePhasePoromechanics::assemblyLaunch( MeshLevel & mesh,
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_ */

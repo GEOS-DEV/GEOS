@@ -23,7 +23,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -295,6 +295,6 @@ void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::move( LvArray::MemorySpace const
   m_weights.move( space, true );
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_FINITEVOLUME_STENCILBASE_HPP_ */

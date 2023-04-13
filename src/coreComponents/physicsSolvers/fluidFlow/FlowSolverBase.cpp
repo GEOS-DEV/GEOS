@@ -33,7 +33,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -541,4 +541,4 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
 }
 
 
-} // namespace geosx
+} // namespace geos
