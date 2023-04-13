@@ -55,7 +55,6 @@ public:
     m_relaxationTime( relaxationTime )
   {}
 
-  // using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps;
   using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps; // TODO: typo in anistropic (fix in DiscOps PR)
 
   using UPDATE_BASE::smallStrainUpdate;
@@ -88,13 +87,10 @@ public:
       return;
     }
 
-    //Get trial stress and elastic stiffness by disabling inelasticity
-    // m_solidUpdate.m_disableInelasticity = true;
 
     UPDATE_BASE::smallStrainUpdate_ElasticOnly( k, q, timeIncrement, strainIncrement, trialStress, elasticStiffness );
 
-    //Enable inelasticity to get the rate-independent update
-    //m_solidUpdate.m_disableInelasticity = false;
+
     UPDATE_BASE::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
 

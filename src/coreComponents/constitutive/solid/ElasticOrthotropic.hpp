@@ -296,7 +296,6 @@ void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
                                                    real64 ( & stress )[6],
                                                    real64 ( & stiffness )[6][6] ) const
 {
-  GEOSX_UNUSED_VAR( timeIncrement );
   smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   getElasticStiffness( k, q, stiffness );
 }
@@ -311,7 +310,6 @@ void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
                                                    real64 ( & stress )[6],
                                                    DiscretizationOps & stiffness ) const
 {
-  GEOSX_UNUSED_VAR( timeIncrement );
   smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   stiffness.m_c11 = m_c11[k];
   stiffness.m_c12 = m_c12[k];

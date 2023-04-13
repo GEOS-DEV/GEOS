@@ -166,7 +166,6 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               real64 ( & stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
-  GEOSX_UNUSED_VAR( timeIncrement );
   ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
   if( m_disableInelasticity )
@@ -323,7 +322,6 @@ void DruckerPragerUpdates::smallStrainUpdate_ElasticOnly( localIndex const k,
                                                           real64 ( & stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
-  GEOSX_UNUSED_VAR( timeIncrement );
   ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
   return;
 }

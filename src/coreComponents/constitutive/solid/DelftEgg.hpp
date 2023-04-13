@@ -219,7 +219,6 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 {
 
   // Rename variables for easier implementation
-  GEOSX_UNUSED_VAR( timeIncrement );
   real64 const oldPc  = m_oldPreConsolidationPressure[k][q];   //pre-consolidation pressure
   real64 const mu     = m_shearModulus[k];
   real64 const bulkModulus     = m_bulkModulus[k];

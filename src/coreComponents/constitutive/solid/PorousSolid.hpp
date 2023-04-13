@@ -84,7 +84,6 @@ public:
                                        real64 & dPorosity_dTemperature,
                                        real64 & dSolidDensity_dPressure ) const
   {
-    GEOSX_UNUSED_VAR( timeIncrement );
     // Compute total stress increment and its derivative
     computeTotalStress( k,
                         q,

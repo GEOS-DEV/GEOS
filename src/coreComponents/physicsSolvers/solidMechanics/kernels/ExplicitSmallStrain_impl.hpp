@@ -130,7 +130,7 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   real64 const detJ = FE_TYPE::inverseJacobianTransformation( q, stack.xLocal, invJ );
 
   real64 strain[6] = {0};
-  real64 timeIncrement;
+  real64 timeIncrement = 0.0;
   FE_TYPE::symmetricGradient( q, invJ, stack.varLocal, strain );
 
   real64 stressLocal[ 6 ] = {0};
