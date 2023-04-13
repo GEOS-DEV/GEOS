@@ -86,6 +86,7 @@ set( physicsSolvers_headers
      multiphysics/SinglePhasePoromechanicsFluxKernels.hpp
      multiphysics/SinglePhasePoromechanics.hpp
      multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp
+     multiphysics/SinglePhasePoromechanicsEmbeddedFracturesKernels.hpp
      multiphysics/SinglePhasePoromechanicsConformingFractures.hpp
      multiphysics/SinglePhaseReservoirAndWells.hpp
      simplePDE/LaplaceBaseH1.hpp

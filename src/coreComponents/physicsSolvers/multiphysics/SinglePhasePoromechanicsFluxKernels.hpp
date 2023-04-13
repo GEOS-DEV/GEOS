@@ -24,12 +24,87 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
+
 
 namespace geosx
 {
 
 namespace singlePhasePoromechanicsFluxKernels
 {
+
+
+template< integer NUM_DOF, typename STENCILWRAPPER >
+class EmbeddedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF, STENCILWRAPPER >
+{
+ public:
+
+  /**
+   * @brief The type for element-based data. Consists entirely of ArrayView's.
+   *
+   * Can be converted from ElementRegionManager::ElementViewConstAccessor
+   * by calling .toView() or .toViewConst() on an accessor instance
+   */
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  using AbstractBase = singlePhaseFVMKernels::FaceBasedAssemblyKernelBase;
+  using DofNumberAccessor = AbstractBase::DofNumberAccessor;
+  using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
+  using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
+  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
+
+  using AbstractBase::m_dt;
+  using AbstractBase::m_rankOffset;
+  using AbstractBase::m_dofNumber;
+  using AbstractBase::m_gravCoef;
+  using AbstractBase::m_mob;
+  using AbstractBase::m_dens;
+
+  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF, STENCILWRAPPER >;
+  using Base::numDof;
+  using Base::numEqn;
+  using Base::maxNumElems;
+  using Base::maxNumConns;
+  using Base::maxStencilSize;
+  using Base::m_stencilWrapper;
+  using Base::m_seri;
+  using Base::m_sesri;
+  using Base::m_sei;
+
+  EmbeddedAssemblyKernel( globalIndex const rankOffset,
+                          STENCILWRAPPER const & stencilWrapper,
+                          DofNumberAccessor const & dofNumberAccessor,
+                          SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
+                          ThermalSinglePhaseFlowAccessors const & thermalSinglePhaseFlowAccessors,
+                          SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
+                          ThermalSinglePhaseFluidAccessors const & thermalSinglePhaseFluidAccessors,
+                          PermeabilityAccessors const & permeabilityAccessors,
+                          ThermalConductivityAccessors const & thermalConductivityAccessors,
+                          real64 const & dt,
+                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          arrayView1d< real64 > const & localRhs )
+    : Base( rankOffset,
+            stencilWrapper,
+            dofNumberAccessor,
+            singlePhaseFlowAccessors,
+            singlePhaseFluidAccessors,
+            permeabilityAccessors,
+            dt,
+            localMatrix,
+            localRhs ),
+    m_dispJumpDofNumber( dofNumberAccessor.toNestedViewConst() ),
+    m_dPerm_dDispJump( thermalSinglePhaseFlowAccessors.get( fields::flow::temperature {} ) )
+  {} 
+
+ private:
+    
+    ElementViewConst< arrayView1d< globalIndex const > > const m_dispJumpDofNumber;
+
+    ElementViewConst< arrayView4d< real64 const > > const m_dPerm_dDispJump;
+};
+
+
 /******************************** EmbeddedSurfaceFluxKernel ********************************/
 
 struct EmbeddedSurfaceFluxKernel

@@ -36,7 +36,9 @@
 #include "physicsSolvers/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalSinglePhaseFVMKernels.hpp"
+
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsFluxKernels.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsEmbeddedFracturesKernels.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -420,7 +422,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  string const & pressureDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
+  string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel const & mesh,
@@ -428,42 +430,67 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
-    pressureDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( pressureDofKey );
-    pressureDofNumber.setName( this->getName() + "/accessors/" + pressureDofKey );
-
-    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
-    jumpDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( jumpDofKey );
-    jumpDofNumber.setName( this->getName() + "/accessors/" + jumpDofKey );
-
-    ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > dPerm_dDispJump =
-      elemManager.constructMaterialArrayViewAccessor< PermeabilityBase, real64, 4 >( fields::permeability::dPerm_dDispJump::key() );
-
-    fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
+    fluxApprox.forStencils< CellElementStencilTPFA, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
-      typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
-      typename FluxKernel::PermeabilityAccessors permAccessors( elemManager, this->getName() );
+      if( m_isThermal )
+      {
+        thermalSinglePhaseFVMKernels::
+          FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                     dofKey,
+                                                                                     getName(),
+                                                                                     mesh.getElemManager(),
+                                                                                     stencilWrapper,
+                                                                                     dt,
+                                                                                     localMatrix.toViewConstSizes(),
+                                                                                     localRhs.toView() );
+      }
+      else
+      {
+        singlePhaseFVMKernels::
+          FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                     dofKey,
+                                                                                     getName(),
+                                                                                     mesh.getElemManager(),
+                                                                                     stencilWrapper,
+                                                                                     dt,
+                                                                                     localMatrix.toViewConstSizes(),
+                                                                                     localRhs.toView() );
+      }
+    } );
+    
+    // Eventually, EmbeddedSurfaceToCellStencil should be moved here to account for the permeability of the fracture in the matrix-frac connection
+    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
+    {
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      EmbeddedSurfaceFluxKernel::launch( stencilWrapper,
-                                         dt,
-                                         dofManager.rankOffset(),
-                                         pressureDofNumber.toNestedViewConst(),
-                                         jumpDofNumber.toNestedViewConst(),
-                                         flowAccessors.get< fields::ghostRank >(),
-                                         flowAccessors.get< fields::flow::pressure >(),
-                                         flowAccessors.get< fields::flow::gravityCoefficient >(),
-                                         fluidAccessors.get< fields::singlefluid::density >(),
-                                         fluidAccessors.get< fields::singlefluid::dDensity_dPressure >(),
-                                         flowAccessors.get< fields::flow::mobility >(),
-                                         flowAccessors.get< fields::flow::dMobility_dPressure >(),
-                                         permAccessors.get< fields::permeability::permeability >(),
-                                         permAccessors.get< fields::permeability::dPerm_dPressure >(),
-                                         dPerm_dDispJump.toNestedViewConst(),
-                                         localMatrix,
-                                         localRhs );
+      if( m_isThermal )
+      {
+      //   thermalSinglePhasePoromechanicsEmbeddedFractureKernels::
+      //     ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+      //                                                                                     dofKey,
+      //                                                                                     jumpDofKey,
+      //                                                                                     getName(),
+      //                                                                                     mesh.getElemManager(),
+      //                                                                                     stencilWrapper,
+      //                                                                                     dt,
+      //                                                                                     localMatrix.toViewConstSizes(),
+      //                                                                                     localRhs.toView() );
+      // }
+      else
+      {
+        singlePhasePoromechanicsEmbeddedFracturesKernels::
+          ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                          dofKey,
+                                                                                          jumpDofKey,
+                                                                                          getName(),
+                                                                                          mesh.getElemManager(),
+                                                                                          stencilWrapper,
+                                                                                          dt,
+                                                                                          localMatrix.toViewConstSizes(),
+                                                                                          localRhs.toView() );
+      }
     } );
   } );
 
