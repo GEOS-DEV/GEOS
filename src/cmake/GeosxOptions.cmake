@@ -44,6 +44,8 @@ option( ENABLE_HYPRE "Enables HYPRE" ON )
 option( ENABLE_PETSC "Enables PETSC" OFF )
 option( ENABLE_SUITESPARSE "Enables SUITESPARSE" ON )
 
+option( ENABLE_HYPRE_MIXINT "Enables mixed int32/int64 local/global" ON )
+
 set( HYPRE_DEVICE_OPTIONS CPU CUDA HIP )
 if( NOT ENABLE_HYPRE_DEVICE )
   set( ENABLE_HYPRE_DEVICE CPU )
