@@ -3,7 +3,7 @@
 
 using ExplicitSmallStrainPolicy = @ExplicitSmallStrainPolicy@;
 using ExplicitFiniteStrainPolicy = @ExplicitFiniteStrainPolicy@;
-using FixedStressThermoPoroElasticPolicy = @FixedStressThermoPoroElasticPolicy@;
+using FixedStressThermoPoromechanicsPolicy = @FixedStressThermoPoromechanicsPolicy@;
 using ImplicitSmallStrainNewmarkPolicy = @ImplicitSmallStrainNewmarkPolicy@;
 using ImplicitSmallStrainQuasiStaticPolicy = @ImplicitSmallStrainQuasiStaticPolicy@;
 

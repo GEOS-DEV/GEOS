@@ -156,6 +156,21 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
   }
 }
 
+void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
+{
+  arrayView1d< real64 const > const pres = subRegion.template getField< fields::flow::pressure >();
+  arrayView1d< real64 > const pres_n = subRegion.template getField< fields::flow::pressure_n >();
+  pres_n.setValues< parallelDevicePolicy<> >( pres );
+
+  if( subRegion.hasField< fields::flow::temperature >() &&
+      subRegion.hasField< fields::flow::temperature_n >() )
+  {
+    arrayView1d< real64 const > const temp = subRegion.template getField< fields::flow::temperature >();
+    arrayView1d< real64 > const temp_n = subRegion.template getField< fields::flow::temperature_n >();
+    temp_n.setValues< parallelDevicePolicy<> >( temp );
+  }
+}
+
 void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
 {
   SolverBase::setConstitutiveNamesCallSuper( subRegion );
