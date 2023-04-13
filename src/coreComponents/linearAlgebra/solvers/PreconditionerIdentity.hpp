@@ -50,8 +50,8 @@ public:
   virtual void apply( Vector const & src,
                       Vector & dst ) const override
   {
-    GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
-    GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
+    GEOS_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
+    GEOS_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
     dst.copy( src );
   }
 };

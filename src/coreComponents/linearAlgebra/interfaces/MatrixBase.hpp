@@ -605,11 +605,11 @@ protected:
                             Matrix const & P,
                             Matrix & dst ) const
   {
-    GEOSX_LAI_ASSERT( ready() );
-    GEOSX_LAI_ASSERT( R.ready() );
-    GEOSX_LAI_ASSERT( P.ready() );
-    GEOSX_LAI_ASSERT_EQ( numGlobalRows(), R.numGlobalCols() );
-    GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
+    GEOS_LAI_ASSERT( ready() );
+    GEOS_LAI_ASSERT( R.ready() );
+    GEOS_LAI_ASSERT( P.ready() );
+    GEOS_LAI_ASSERT_EQ( numGlobalRows(), R.numGlobalCols() );
+    GEOS_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
 
     Matrix AP;
     multiply( P, AP );
@@ -624,10 +624,10 @@ protected:
   virtual void multiplyPtAP( Matrix const & P,
                              Matrix & dst ) const
   {
-    GEOSX_LAI_ASSERT( ready() );
-    GEOSX_LAI_ASSERT( P.ready() );
-    GEOSX_LAI_ASSERT_EQ( numGlobalRows(), P.numGlobalRows() );
-    GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
+    GEOS_LAI_ASSERT( ready() );
+    GEOS_LAI_ASSERT( P.ready() );
+    GEOS_LAI_ASSERT_EQ( numGlobalRows(), P.numGlobalRows() );
+    GEOS_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
 
     Matrix AP;
     multiply( P, AP );

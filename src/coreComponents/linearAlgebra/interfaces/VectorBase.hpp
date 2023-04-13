@@ -92,8 +92,8 @@ protected:
   virtual void create( localIndex const localSize, MPI_Comm const & comm )
   {
     GEOS_UNUSED_VAR( comm );
-    GEOSX_LAI_ASSERT( closed() );
-    GEOSX_LAI_ASSERT_GE( localSize, 0 );
+    GEOS_LAI_ASSERT( closed() );
+    GEOS_LAI_ASSERT_GE( localSize, 0 );
     reset();
 
     // Ideally, resizing to the same size should be a no-op.
@@ -127,7 +127,7 @@ protected:
    */
   virtual arrayView1d< real64 > open()
   {
-    GEOSX_LAI_ASSERT( ready() );
+    GEOS_LAI_ASSERT( ready() );
     m_closed = false;
     return m_values.toView();
   }
@@ -303,7 +303,7 @@ protected:
    */
   arrayView1d< real64 const > values() const
   {
-    GEOSX_LAI_ASSERT( ready() );
+    GEOS_LAI_ASSERT( ready() );
     return m_values.toViewConst();
   }
 

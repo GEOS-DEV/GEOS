@@ -71,15 +71,15 @@ void createHypreGMRES( LinearSolverParameters const & params,
                        MPI_Comm const comm,
                        HypreSolverWrapper & solver )
 {
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESCreate( comm, &solver.ptr ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetMaxIter( solver.ptr, params.krylov.maxIterations ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetKDim( solver.ptr, params.krylov.maxRestart ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetTol( solver.ptr, params.krylov.relTolerance ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESCreate( comm, &solver.ptr ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetMaxIter( solver.ptr, params.krylov.maxIterations ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetKDim( solver.ptr, params.krylov.maxRestart ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetTol( solver.ptr, params.krylov.relTolerance ) );
 
   // Default for now
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetPrintLevel( solver.ptr, params.logLevel ) ); // print iteration info
-  //GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetPrintLevel( solver, 0 ) ); // print iteration info
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetLogging( solver.ptr, 1 ) ); /* needed to get run info later */
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetPrintLevel( solver.ptr, params.logLevel ) ); // print iteration info
+  //GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetPrintLevel( solver, 0 ) ); // print iteration info
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetLogging( solver.ptr, 1 ) ); /* needed to get run info later */
 
   solver.setPrecond = HYPRE_ParCSRGMRESSetPrecond;
   solver.setup = HYPRE_ParCSRGMRESSetup;
@@ -93,15 +93,15 @@ void createHypreFlexGMRES( LinearSolverParameters const & params,
                            MPI_Comm const comm,
                            HypreSolverWrapper & solver )
 {
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESCreate( comm, &solver.ptr ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetMaxIter( solver.ptr, params.krylov.maxIterations ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetKDim( solver.ptr, params.krylov.maxRestart ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetTol( solver.ptr, params.krylov.relTolerance ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESCreate( comm, &solver.ptr ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetMaxIter( solver.ptr, params.krylov.maxIterations ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetKDim( solver.ptr, params.krylov.maxRestart ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetTol( solver.ptr, params.krylov.relTolerance ) );
 
   // Default for now
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetPrintLevel( solver.ptr, params.logLevel ) ); // print iteration info
-  //GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetPrintLevel( solver, 0 ) ); // print iteration info
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetLogging( solver.ptr, 1 ) ); /* needed to get run info later */
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetPrintLevel( solver.ptr, params.logLevel ) ); // print iteration info
+  //GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetPrintLevel( solver, 0 ) ); // print iteration info
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetLogging( solver.ptr, 1 ) ); /* needed to get run info later */
 
   solver.setPrecond = HYPRE_ParCSRFlexGMRESSetPrecond;
   solver.setup = HYPRE_ParCSRFlexGMRESSetup;
@@ -115,13 +115,13 @@ void createHypreBiCGSTAB( LinearSolverParameters const & params,
                           MPI_Comm const comm,
                           HypreSolverWrapper & solver )
 {
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABCreate( comm, &solver.ptr ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetMaxIter( solver.ptr, params.krylov.maxIterations ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetTol( solver.ptr, params.krylov.relTolerance ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABCreate( comm, &solver.ptr ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetMaxIter( solver.ptr, params.krylov.maxIterations ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetTol( solver.ptr, params.krylov.relTolerance ) );
 
   // Default for now
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetPrintLevel( solver.ptr, params.logLevel ) ); // print iteration info
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetLogging( solver.ptr, 1 ) ); // needed to get run info later
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetPrintLevel( solver.ptr, params.logLevel ) ); // print iteration info
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetLogging( solver.ptr, 1 ) ); // needed to get run info later
 
   solver.setPrecond = HYPRE_ParCSRBiCGSTABSetPrecond;
   solver.setup = HYPRE_ParCSRBiCGSTABSetup;
@@ -135,14 +135,14 @@ void createHypreCG( LinearSolverParameters const & params,
                     MPI_Comm const comm,
                     HypreSolverWrapper & solver )
 {
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRPCGCreate( comm, &solver.ptr ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_PCGSetMaxIter( solver.ptr, params.krylov.maxIterations ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_PCGSetTol( solver.ptr, params.krylov.relTolerance ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRPCGCreate( comm, &solver.ptr ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_PCGSetMaxIter( solver.ptr, params.krylov.maxIterations ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_PCGSetTol( solver.ptr, params.krylov.relTolerance ) );
 
   // Default for now
-  GEOSX_LAI_CHECK_ERROR( HYPRE_PCGSetPrintLevel( solver.ptr, params.logLevel ) ); /* print the iteration info */
-  GEOSX_LAI_CHECK_ERROR( HYPRE_PCGSetLogging( solver.ptr, 1 ) );    /* needed to get run info later */
-  GEOSX_LAI_CHECK_ERROR( HYPRE_PCGSetTwoNorm( solver.ptr, 1 ) );    /* use the two norm as the stopping criteria */
+  GEOS_LAI_CHECK_ERROR( HYPRE_PCGSetPrintLevel( solver.ptr, params.logLevel ) ); /* print the iteration info */
+  GEOS_LAI_CHECK_ERROR( HYPRE_PCGSetLogging( solver.ptr, 1 ) );    /* needed to get run info later */
+  GEOS_LAI_CHECK_ERROR( HYPRE_PCGSetTwoNorm( solver.ptr, 1 ) );    /* use the two norm as the stopping criteria */
 
   solver.setPrecond = HYPRE_ParCSRPCGSetPrecond;
   solver.setup = HYPRE_ParCSRPCGSetup;
@@ -202,7 +202,7 @@ void HypreSolver::setup( HypreMatrix const & mat )
   createHypreKrylovSolver( m_params, mat.comm(), *m_solver );
 
   // Set the preconditioner
-  GEOSX_LAI_CHECK_ERROR( m_solver->setPrecond( m_solver->ptr,
+  GEOS_LAI_CHECK_ERROR( m_solver->setPrecond( m_solver->ptr,
                                                m_precond.unwrapped().solve,
                                                hypre::dummySetup,
                                                m_precond.unwrapped().ptr ) );
@@ -210,7 +210,7 @@ void HypreSolver::setup( HypreMatrix const & mat )
   // Setup the solver (need a dummy vector for rhs/sol to avoid hypre segfaulting in setup)
   HypreVector dummy;
   dummy.create( mat.numLocalRows(), mat.comm() );
-  GEOSX_LAI_CHECK_ERROR( m_solver->setup( m_solver->ptr,
+  GEOS_LAI_CHECK_ERROR( m_solver->setup( m_solver->ptr,
                                           mat.unwrapped(),
                                           dummy.unwrapped(),
                                           dummy.unwrapped() ) );
@@ -219,9 +219,9 @@ void HypreSolver::setup( HypreMatrix const & mat )
 int HypreSolver::doSolve( HypreVector const & rhs,
                           HypreVector & sol ) const
 {
-  GEOSX_LAI_ASSERT( ready() );
-  GEOSX_LAI_ASSERT( sol.ready() );
-  GEOSX_LAI_ASSERT( rhs.ready() );
+  GEOS_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( sol.ready() );
+  GEOS_LAI_ASSERT( rhs.ready() );
   HYPRE_Int const result = m_solver->solve( m_solver->ptr, matrix().unwrapped(), rhs.unwrapped(), sol.unwrapped() );
   sol.touch();
   return result;
@@ -253,14 +253,14 @@ void HypreSolver::solve( HypreVector const & rhs,
   }
 
   // Clear error code to avoid GEOSX from crashing if Krylov method did not converge
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ClearAllErrors() );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ClearAllErrors() );
 
   // Get final residual norm
-  GEOSX_LAI_CHECK_ERROR( m_solver->getFinalNorm( m_solver->ptr, &m_result.residualReduction ) );
+  GEOS_LAI_CHECK_ERROR( m_solver->getFinalNorm( m_solver->ptr, &m_result.residualReduction ) );
 
   // Get number of iterations
   HYPRE_Int numIter;
-  GEOSX_LAI_CHECK_ERROR( m_solver->getNumIter( m_solver->ptr, &numIter ) );
+  GEOS_LAI_CHECK_ERROR( m_solver->getNumIter( m_solver->ptr, &numIter ) );
   m_result.numIterations = numIter;
 
   if( m_params.logLevel >= 1 )
@@ -281,7 +281,7 @@ void HypreSolver::clear()
   Base::clear();
   if( m_solver )
   {
-    GEOSX_LAI_CHECK_ERROR( m_solver->destroy( m_solver->ptr ) );
+    GEOS_LAI_CHECK_ERROR( m_solver->destroy( m_solver->ptr ) );
     m_solver = nullptr;
   }
   m_solver.reset();

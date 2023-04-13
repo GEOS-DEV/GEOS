@@ -42,18 +42,18 @@ void createTrilinosKrylovSolver( LinearSolverParameters const & params, AztecOO 
   {
     case LinearSolverParameters::SolverType::gmres:
     {
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_gmres ) );
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_kspace, params.krylov.maxRestart ) );
+      GEOS_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_gmres ) );
+      GEOS_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_kspace, params.krylov.maxRestart ) );
       break;
     }
     case LinearSolverParameters::SolverType::bicgstab:
     {
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_bicgstab ) );
+      GEOS_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_bicgstab ) );
       break;
     }
     case LinearSolverParameters::SolverType::cg:
     {
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_cg ) );
+      GEOS_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_cg ) );
       break;
     }
     default:
@@ -63,26 +63,26 @@ void createTrilinosKrylovSolver( LinearSolverParameters const & params, AztecOO 
   }
 
   // Ask for a convergence normalized by the right hand side
-  GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_conv, AZ_rhs ) );
+  GEOS_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_conv, AZ_rhs ) );
 
   // Control output
   switch( params.logLevel )
   {
     case 1:
     {
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_output, AZ_summary ) );
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_diagnostics, AZ_all ) );
+      GEOS_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_output, AZ_summary ) );
+      GEOS_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_diagnostics, AZ_all ) );
       break;
     }
     case 2:
     {
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_output, AZ_all ) );
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_diagnostics, AZ_all ) );
+      GEOS_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_output, AZ_all ) );
+      GEOS_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_diagnostics, AZ_all ) );
       break;
     }
     default:
     {
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_output, AZ_none ) );
+      GEOS_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_output, AZ_none ) );
     }
   }
 }
@@ -107,20 +107,20 @@ void TrilinosSolver::setup( EpetraMatrix const & mat )
   m_precond.setup( mat );
 
   // HACK: Epetra is not const-correct, so we need the cast. The matrix is not actually modified.
-  GEOSX_LAI_CHECK_ERROR( m_solver->SetUserMatrix( &const_cast< Epetra_FECrsMatrix & >( mat.unwrapped() ) ) );
-  GEOSX_LAI_CHECK_ERROR( m_solver->SetPrecOperator( &m_precond.unwrapped() ) );
+  GEOS_LAI_CHECK_ERROR( m_solver->SetUserMatrix( &const_cast< Epetra_FECrsMatrix & >( mat.unwrapped() ) ) );
+  GEOS_LAI_CHECK_ERROR( m_solver->SetPrecOperator( &m_precond.unwrapped() ) );
 }
 
 int TrilinosSolver::doSolve( EpetraVector const & rhs,
                              EpetraVector & sol ) const
 {
-  GEOSX_LAI_ASSERT( ready() );
-  GEOSX_LAI_ASSERT( sol.ready() );
-  GEOSX_LAI_ASSERT( rhs.ready() );
+  GEOS_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( sol.ready() );
+  GEOS_LAI_ASSERT( rhs.ready() );
 
   // HACK: Epetra is not const-correct, so we need the cast. The vector is not actually modified.
-  GEOSX_LAI_CHECK_ERROR( m_solver->SetRHS( &const_cast< Epetra_Vector & >( rhs.unwrapped() ) ) );
-  GEOSX_LAI_CHECK_ERROR( m_solver->SetLHS( &sol.unwrapped() ) );
+  GEOS_LAI_CHECK_ERROR( m_solver->SetRHS( &const_cast< Epetra_Vector & >( rhs.unwrapped() ) ) );
+  GEOS_LAI_CHECK_ERROR( m_solver->SetLHS( &sol.unwrapped() ) );
   int const result = m_solver->Iterate( m_params.krylov.maxIterations, m_params.krylov.relTolerance );
   sol.touch();
   return result;

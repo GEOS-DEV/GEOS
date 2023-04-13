@@ -51,8 +51,8 @@ public:
    */
   virtual void setup( Matrix const & mat )
   {
-    GEOSX_LAI_ASSERT( mat.ready() );
-    GEOSX_LAI_ASSERT_MSG( mat.numLocalRows() == mat.numLocalCols(), "Matrix must be square" );
+    GEOS_LAI_ASSERT( mat.ready() );
+    GEOS_LAI_ASSERT_MSG( mat.numLocalRows() == mat.numLocalCols(), "Matrix must be square" );
     m_mat = &mat;
   }
 
@@ -135,7 +135,7 @@ public:
    */
   Matrix const & matrix() const
   {
-    GEOSX_LAI_ASSERT( ready() );
+    GEOS_LAI_ASSERT( ready() );
     return *m_mat;
   }
 

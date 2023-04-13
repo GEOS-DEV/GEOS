@@ -68,7 +68,7 @@ Unpack( buffer_unit_type const * & buffer, T * const GEOS_RESTRICT var, INDEX_TY
 
   GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
                     expectedLength << " != " << length );
-  GEOSX_DEBUG_VAR( expectedLength );
+  GEOS_DEBUG_VAR( expectedLength );
 
   memcpy( var, buffer, length * sizeof(T) );
   sizeOfUnpackedChars += length * sizeof(T);
@@ -458,7 +458,7 @@ UnpackPointer( buffer_unit_type const * & buffer,
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
   GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
                     expectedLength << " != " << length );
-  GEOSX_DEBUG_VAR( expectedLength );
+  GEOS_DEBUG_VAR( expectedLength );
   memcpy( var, buffer, length * sizeof(T) );
   sizeOfUnpackedChars += length * sizeof(T);
   buffer += length * sizeof(T);
@@ -474,7 +474,7 @@ UnpackPointer( buffer_unit_type const * & buffer,
   INDEX_TYPE length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
   GEOS_ASSERT_EQ( length, expectedLength );
-  GEOSX_DEBUG_VAR( expectedLength );
+  GEOS_DEBUG_VAR( expectedLength );
 
   for( INDEX_TYPE a=0; a<length; ++a )
   {
@@ -492,7 +492,7 @@ UnpackArray( buffer_unit_type const * & buffer,
 {
   INDEX_TYPE length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
-  GEOSX_DEBUG_VAR( expectedLength );
+  GEOS_DEBUG_VAR( expectedLength );
   GEOS_ASSERT_EQ( length, expectedLength );
 
   T const * const GEOS_RESTRICT buffer_T = reinterpret_cast< T const * >( buffer );
@@ -514,7 +514,7 @@ UnpackArray( buffer_unit_type const * & buffer,
 {
   INDEX_TYPE length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
-  GEOSX_DEBUG_VAR( expectedLength );
+  GEOS_DEBUG_VAR( expectedLength );
   GEOS_ASSERT_EQ( length, expectedLength );
 
   for( INDEX_TYPE a=0; a<length; ++a )
@@ -647,7 +647,7 @@ Unpack( buffer_unit_type const * & buffer,
 {
   INDEX_TYPE length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
-  GEOSX_DEBUG_VAR( expectedLength );
+  GEOS_DEBUG_VAR( expectedLength );
   GEOS_ASSERT_EQ( length, expectedLength );
 
   T const * const GEOS_RESTRICT buffer_T = reinterpret_cast< T const * >( buffer );
@@ -670,7 +670,7 @@ Unpack( buffer_unit_type const * & buffer,
 {
   INDEX_TYPE length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
-  GEOSX_DEBUG_VAR( expectedLength );
+  GEOS_DEBUG_VAR( expectedLength );
   GEOS_ASSERT_EQ( length, expectedLength );
 
   for( INDEX_TYPE a=0; a<length; ++a )
@@ -1032,7 +1032,7 @@ Unpack( buffer_unit_type const * & buffer,
   sizeOfUnpackedChars += Unpack( buffer, length );
 
   GEOS_ASSERT_EQ( length, expectedLength );
-  GEOSX_DEBUG_VAR( expectedLength );
+  GEOS_DEBUG_VAR( expectedLength );
 
   unmappedGlobalIndices.resize( length );
   unmappedGlobalIndices.setValues< serialPolicy >( unmappedLocalIndexValue );

@@ -35,9 +35,9 @@ KrylovSolver< VECTOR >::KrylovSolver( LinearSolverParameters params,
   m_precond( precond )
 {
   GEOS_ERROR_IF_LE_MSG( m_params.krylov.maxIterations, 0, "Krylov solver: max number of iteration must be positive." );
-  GEOSX_LAI_ASSERT_EQ( m_operator.numLocalRows(), m_operator.numLocalCols() );
-  GEOSX_LAI_ASSERT_EQ( m_operator.numLocalRows(), m_precond.numLocalRows() );
-  GEOSX_LAI_ASSERT_EQ( m_operator.numLocalCols(), m_precond.numLocalCols() );
+  GEOS_LAI_ASSERT_EQ( m_operator.numLocalRows(), m_operator.numLocalCols() );
+  GEOS_LAI_ASSERT_EQ( m_operator.numLocalRows(), m_precond.numLocalRows() );
+  GEOS_LAI_ASSERT_EQ( m_operator.numLocalCols(), m_precond.numLocalCols() );
   m_residualNorms.reserve( m_params.krylov.maxIterations + 1 );
 }
 

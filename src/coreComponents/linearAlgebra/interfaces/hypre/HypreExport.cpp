@@ -134,9 +134,9 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
     HYPRE_Int const numRow = hypre_CSRMatrixNumRows( localMatrix );
     HYPRE_Int const numNz  = hypre_CSRMatrixNumNonzeros( localMatrix );
 
-    GEOSX_LAI_ASSERT_EQ( rowOffsets.size(), numRow + 1 );
-    GEOSX_LAI_ASSERT_EQ( colIndices.size(), numNz );
-    GEOSX_LAI_ASSERT_EQ( values.size(), numNz );
+    GEOS_LAI_ASSERT_EQ( rowOffsets.size(), numRow + 1 );
+    GEOS_LAI_ASSERT_EQ( colIndices.size(), numNz );
+    GEOS_LAI_ASSERT_EQ( values.size(), numNz );
 
     HYPRE_MemoryLocation const location = hypre_CSRMatrixMemoryLocation( localMatrix );
 
@@ -164,7 +164,7 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
     } );
   }
 
-  GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( localMatrix ) );
+  GEOS_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( localMatrix ) );
 }
 
 void HypreExport::exportVector( HypreVector const & vec,
@@ -180,7 +180,7 @@ void HypreExport::exportVector( HypreVector const & vec,
 
   if( m_targetRank < 0 || m_targetRank == rank )
   {
-    GEOSX_LAI_ASSERT_EQ( values.size(), hypre_VectorSize( localVector ) );
+    GEOS_LAI_ASSERT_EQ( values.size(), hypre_VectorSize( localVector ) );
     exportArray( hypre_VectorMemoryLocation( localVector ),
                  hypre_VectorData( localVector ),
                  values );
@@ -188,7 +188,7 @@ void HypreExport::exportVector( HypreVector const & vec,
 
   if( m_targetRank >= 0 )
   {
-    GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( localVector ) );
+    GEOS_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( localVector ) );
   }
 }
 
@@ -201,7 +201,7 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
     hypre_Vector * wrapperVector{};
     if( MpiWrapper::commRank( vec.comm() ) == m_targetRank )
     {
-      GEOSX_LAI_ASSERT_EQ( values.size(), vec.globalSize() );
+      GEOS_LAI_ASSERT_EQ( values.size(), vec.globalSize() );
       values.move( LvArray::MemorySpace::host, false );
 
       // HACK: create a hypre vector that points to local data; we have to use const_cast,
@@ -224,8 +224,8 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
                    hypre_VectorMemoryLocation( localVector ),
                    hypre_ParVectorMemoryLocation( parVector ) );
 
-    GEOSX_LAI_CHECK_ERROR( hypre_ParVectorDestroy( parVector ) );
-    GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( wrapperVector ) );
+    GEOS_LAI_CHECK_ERROR( hypre_ParVectorDestroy( parVector ) );
+    GEOS_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( wrapperVector ) );
   }
   else
   {

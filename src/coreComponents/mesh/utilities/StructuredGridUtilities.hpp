@@ -61,7 +61,7 @@ void map_index< 1 >( const int index,
                      std::vector< int > & indices )
 {
   GEOS_ASSERT_GT( nnx, index );
-  GEOSX_DEBUG_VAR( nnx );
+  GEOS_DEBUG_VAR( nnx );
   indices[0] = index;
 }
 

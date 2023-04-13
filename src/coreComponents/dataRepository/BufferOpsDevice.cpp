@@ -78,7 +78,7 @@ UnpackPointerDevice( buffer_unit_type const * & buffer,
   memcpy( &length, buffer, sizeof( localIndex ) );
   buffer += sizeof( localIndex );
   GEOS_ASSERT_EQ( length, expectedLength );
-  GEOSX_DEBUG_VAR( expectedLength );
+  GEOS_DEBUG_VAR( expectedLength );
   sizeOfUnpackedChars += UnpackPointerDataDevice( buffer, var, length );
   return sizeOfUnpackedChars;
 }

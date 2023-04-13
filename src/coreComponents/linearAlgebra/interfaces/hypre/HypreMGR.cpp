@@ -51,12 +51,12 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
 {
   GEOS_ERROR_IF( dofManager == nullptr, "MGR preconditioner requires a DofManager instance" );
 
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRCreate( &precond.ptr ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRCreate( &precond.ptr ) );
 
   // Hypre's parameters to use MGR as a preconditioner
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, 0.0 ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.logLevel ) ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, 0.0 ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.logLevel ) ) );
 
   array1d< int > const numComponentsPerField = dofManager->numComponentsPerField();
   dofManager->getLocalDofComponentLabels( mgrData.pointMarkers );
@@ -173,7 +173,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     }
   }
 
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseSolver( precond.ptr,
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseSolver( precond.ptr,
                                                    mgrData.coarseSolver.solve,
                                                    mgrData.coarseSolver.setup,
                                                    mgrData.coarseSolver.ptr ) );

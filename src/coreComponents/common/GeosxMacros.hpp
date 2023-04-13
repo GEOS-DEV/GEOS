@@ -78,7 +78,7 @@ void i_g_n_o_r_e( ARGS const & ... ) {}
 #define GEOS_UNUSED_VAR( ... ) i_g_n_o_r_e( __VA_ARGS__ )
 
 /// Mark a debug variable and silence compiler warnings.
-#define GEOSX_DEBUG_VAR( ... ) GEOS_UNUSED_VAR( __VA_ARGS__ )
+#define GEOS_DEBUG_VAR( ... ) GEOS_UNUSED_VAR( __VA_ARGS__ )
 
 ///@}
 

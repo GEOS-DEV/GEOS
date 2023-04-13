@@ -215,7 +215,7 @@ public:
    */
   OPERATOR const & block( localIndex const blockRowIndex, localIndex const blockColIndex ) const
   {
-    GEOSX_LAI_ASSERT( m_operators( blockRowIndex, blockColIndex ) != nullptr );
+    GEOS_LAI_ASSERT( m_operators( blockRowIndex, blockColIndex ) != nullptr );
     return *m_operators( blockRowIndex, blockColIndex );
   }
 
@@ -224,7 +224,7 @@ public:
    */
   OPERATOR & block( localIndex const blockRowIndex, localIndex const blockColIndex )
   {
-    GEOSX_LAI_ASSERT( m_operators( blockRowIndex, blockColIndex ) != nullptr );
+    GEOS_LAI_ASSERT( m_operators( blockRowIndex, blockColIndex ) != nullptr );
     return *m_operators( blockRowIndex, blockColIndex );
   }
 
@@ -256,8 +256,8 @@ protected:
   BlockOperatorView( localIndex const nRows, localIndex const nCols )
     : m_operators( nRows, nCols )
   {
-    GEOSX_LAI_ASSERT_GT( nRows, 0 );
-    GEOSX_LAI_ASSERT_GT( nCols, 0 );
+    GEOS_LAI_ASSERT_GT( nRows, 0 );
+    GEOS_LAI_ASSERT_GT( nCols, 0 );
   }
 
   /**
@@ -280,10 +280,10 @@ protected:
    */
   void setPointer( localIndex const blockRowIndex, localIndex const blockColIndex, OPERATOR * op )
   {
-    GEOSX_LAI_ASSERT_GE( blockRowIndex, 0 );
-    GEOSX_LAI_ASSERT_GT( numBlockRows(), blockRowIndex );
-    GEOSX_LAI_ASSERT_GE( blockColIndex, 0 );
-    GEOSX_LAI_ASSERT_GT( numBlockCols(), blockColIndex );
+    GEOS_LAI_ASSERT_GE( blockRowIndex, 0 );
+    GEOS_LAI_ASSERT_GT( numBlockRows(), blockRowIndex );
+    GEOS_LAI_ASSERT_GE( blockColIndex, 0 );
+    GEOS_LAI_ASSERT_GT( numBlockCols(), blockColIndex );
     m_operators( blockRowIndex, blockColIndex ) = op;
   }
 

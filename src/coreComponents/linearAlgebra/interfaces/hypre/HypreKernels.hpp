@@ -213,12 +213,12 @@ void addEntriesRestricted( hypre_CSRMatrix const * const src_mat,
                            DST_COLMAP const dst_colmap,
                            real64 const scale )
 {
-  GEOSX_LAI_ASSERT( src_mat != nullptr );
-  GEOSX_LAI_ASSERT( dst_mat != nullptr );
+  GEOS_LAI_ASSERT( src_mat != nullptr );
+  GEOS_LAI_ASSERT( dst_mat != nullptr );
 
   CSRData< true > src{ src_mat };
   CSRData< false > dst{ dst_mat };
-  GEOSX_LAI_ASSERT_EQ( src.nrow, dst.nrow );
+  GEOS_LAI_ASSERT_EQ( src.nrow, dst.nrow );
 
   if( src.ncol == 0 || isZero( scale ) )
   {

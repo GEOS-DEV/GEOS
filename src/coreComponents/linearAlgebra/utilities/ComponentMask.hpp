@@ -46,19 +46,19 @@ struct ComponentMaskType
 /**
  * @brief Macro for declaring a specialization of ComponentMaskTypeImpl template.
  */
-#define GEOSX_LAI_COMPONENTMASK_DECL( N ) \
+#define GEOS_LAI_COMPONENTMASK_DECL( N ) \
   template<> \
   struct ComponentMaskType< N > \
   { \
     using type = std::uint ## N ## _t; \
   }
 
-GEOSX_LAI_COMPONENTMASK_DECL( 8 );
-GEOSX_LAI_COMPONENTMASK_DECL( 16 );
-GEOSX_LAI_COMPONENTMASK_DECL( 32 );
-GEOSX_LAI_COMPONENTMASK_DECL( 64 );
+GEOS_LAI_COMPONENTMASK_DECL( 8 );
+GEOS_LAI_COMPONENTMASK_DECL( 16 );
+GEOS_LAI_COMPONENTMASK_DECL( 32 );
+GEOS_LAI_COMPONENTMASK_DECL( 64 );
 
-#undef GEOSX_LAI_COMPONENTMASK_DECL
+#undef GEOS_LAI_COMPONENTMASK_DECL
 
 constexpr std::uint32_t roundToNextPowerOfTwo( std::uint32_t v )
 {

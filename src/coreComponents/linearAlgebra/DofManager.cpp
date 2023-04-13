@@ -1293,7 +1293,7 @@ void DofManager::addFieldToVector( arrayView1d< real64 > const & localVector,
 
 void DofManager::reorderByRank()
 {
-  GEOSX_LAI_ASSERT( !m_reordered );
+  GEOS_LAI_ASSERT( !m_reordered );
 
   for( FieldDescription & field : m_fields )
   {

@@ -294,11 +294,11 @@ void SuiteSparse< LAI >::solve( Vector const & rhs,
 template< typename LAI >
 void SuiteSparse< LAI >::doSolve( Vector const & b, Vector & x, bool transpose ) const
 {
-  GEOSX_LAI_ASSERT( ready() );
-  GEOSX_LAI_ASSERT( b.ready() );
-  GEOSX_LAI_ASSERT( x.ready() );
-  GEOSX_LAI_ASSERT_EQ( b.localSize(), x.localSize() );
-  GEOSX_LAI_ASSERT_EQ( b.localSize(), matrix().numLocalRows() );
+  GEOS_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( b.ready() );
+  GEOS_LAI_ASSERT( x.ready() );
+  GEOS_LAI_ASSERT_EQ( b.localSize(), x.localSize() );
+  GEOS_LAI_ASSERT_EQ( b.localSize(), matrix().numLocalRows() );
 
   m_export->exportVector( b, m_data->rhs );
 
@@ -335,7 +335,7 @@ void SuiteSparse< LAI >::doSolve( Vector const & b, Vector & x, bool transpose )
 template< typename LAI >
 real64 SuiteSparse< LAI >::estimateConditionNumberBasic() const
 {
-  GEOSX_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( ready() );
   if( m_condEst >= 0.0 )
   {
     return m_condEst; // used cached result, possibly more accurate
@@ -354,7 +354,7 @@ real64 SuiteSparse< LAI >::estimateConditionNumberBasic() const
 template< typename LAI >
 real64 SuiteSparse< LAI >::estimateConditionNumberAdvanced() const
 {
-  GEOSX_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( ready() );
   localIndex constexpr numIterations = 4;
 
   NormalOperator< LAI > const normalOperator( matrix() );

@@ -85,7 +85,7 @@ public:
    */
   Matrix const & separateComponentMatrix() const
   {
-    GEOSX_LAI_ASSERT( Base::ready() );
+    GEOS_LAI_ASSERT( Base::ready() );
     return m_matSC;
   }
 

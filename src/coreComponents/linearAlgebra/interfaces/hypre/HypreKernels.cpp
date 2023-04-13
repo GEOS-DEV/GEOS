@@ -125,7 +125,7 @@ real64 computeMaxNorm( hypre_CSRMatrix const * const mat,
 
   CSRData< true > const csr{ mat };
   HYPRE_Int const numRows = hypre_CSRMatrixNumRows( mat );
-  GEOSX_DEBUG_VAR( numRows );
+  GEOS_DEBUG_VAR( numRows );
 
   RAJA::ReduceMax< ReducePolicy< execPolicy >, real64 > maxAbsElement( 0.0 );
   forAll< execPolicy >( rowIndices.size(), [=] GEOSX_HYPRE_DEVICE ( localIndex const i )

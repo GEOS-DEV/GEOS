@@ -67,8 +67,8 @@ inline void logOutputType( string const & typeString, string const & msg )
     GEOS_LOG( msg << typeString );
   }
 #else
-  GEOSX_DEBUG_VAR( typeString );
-  GEOSX_DEBUG_VAR( msg );
+  GEOS_DEBUG_VAR( typeString );
+  GEOS_DEBUG_VAR( msg );
 #endif
 }
 

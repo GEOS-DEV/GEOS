@@ -65,7 +65,7 @@ colperm_t const & getColPermType( LinearSolverParameters::Direct::ColPerm const 
     { LinearSolverParameters::Direct::ColPerm::parmetis, PARMETIS },
   };
 
-  GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist columns permutation option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist columns permutation option: " << value );
   return optionMap.at( value );
 }
 
@@ -82,7 +82,7 @@ rowperm_t const & getRowPermType( LinearSolverParameters::Direct::RowPerm const 
     { LinearSolverParameters::Direct::RowPerm::mc64, LargeDiag_MC64 },
   };
 
-  GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist rows permutation option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist rows permutation option: " << value );
   return optionMap.at( value );
 }
 
@@ -211,11 +211,11 @@ template< typename LAI >
 void SuperLUDist< LAI >::apply( Vector const & src,
                                 Vector & dst ) const
 {
-  GEOSX_LAI_ASSERT( ready() );
-  GEOSX_LAI_ASSERT( src.ready() );
-  GEOSX_LAI_ASSERT( dst.ready() );
-  GEOSX_LAI_ASSERT_EQ( src.localSize(), dst.localSize() );
-  GEOSX_LAI_ASSERT_EQ( src.localSize(), matrix().numLocalRows() );
+  GEOS_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( src.ready() );
+  GEOS_LAI_ASSERT( dst.ready() );
+  GEOS_LAI_ASSERT_EQ( src.localSize(), dst.localSize() );
+  GEOS_LAI_ASSERT_EQ( src.localSize(), matrix().numLocalRows() );
 
   // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
@@ -243,9 +243,9 @@ void SuperLUDist< LAI >::apply( Vector const & src,
            &m_data->stat,
            &info );
 
-  GEOSX_LAI_ASSERT_EQ( info, 0 );
-  GEOSX_LAI_ASSERT( !std::isnan( berr ) );
-  GEOSX_LAI_ASSERT( !std::isinf( berr ) );
+  GEOS_LAI_ASSERT_EQ( info, 0 );
+  GEOS_LAI_ASSERT( !std::isnan( berr ) );
+  GEOS_LAI_ASSERT( !std::isinf( berr ) );
 
   // Import the solution back into the vector
   vecExport.importVector( m_data->rhs, dst );
@@ -363,13 +363,13 @@ void SuperLUDist< LAI >::factorize()
     PStatPrint( &m_data->options, &m_data->stat, &m_data->grid );
   }
 
-  GEOSX_LAI_ASSERT_EQ( info, 0 );
+  GEOS_LAI_ASSERT_EQ( info, 0 );
 }
 
 template< typename LAI >
 real64 SuperLUDist< LAI >::estimateConditionNumberBasic() const
 {
-  GEOSX_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( ready() );
   if( m_condEst >= 0 )
   {
     return m_condEst; // used cached result, possibly more accurate
@@ -420,7 +420,7 @@ real64 SuperLUDist< LAI >::estimateConditionNumberBasic() const
 template< typename LAI >
 real64 SuperLUDist< LAI >::estimateConditionNumberAdvanced() const
 {
-  GEOSX_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( ready() );
   localIndex constexpr numIterations = 4;
 
   NormalOperator< LAI > const normalOperator( matrix() );
