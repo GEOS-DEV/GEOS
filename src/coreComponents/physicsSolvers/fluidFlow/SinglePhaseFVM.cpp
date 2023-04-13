@@ -38,7 +38,7 @@
 #include "physicsSolvers/fluidFlow/ThermalSinglePhaseFVMKernels.hpp"
 
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsFluxKernels.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsEmbeddedFracturesKernels.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
