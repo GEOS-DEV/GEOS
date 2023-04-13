@@ -699,12 +699,12 @@ localIndex numArrayComp( T const & GEOSX_UNUSED_PARAM( var ) )
 }
 
 template< bool DO_PACKING, typename T, typename IDX >
-inline std::enable_if_t< bufferOps::is_packable_by_index< T >, localIndex >
+inline std::enable_if_t< bufferOps::is_host_packable_by_index< T >, localIndex >
 PackByIndex( buffer_unit_type * & buffer, T & var, IDX & idx )
 { return bufferOps::PackByIndex< DO_PACKING >( buffer, var, idx ); }
 
 template< bool DO_PACKING, typename T, typename IDX >
-inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
+inline std::enable_if_t< !bufferOps::is_host_packable_by_index< T >, localIndex >
 PackByIndex( buffer_unit_type * &, T &, IDX & )
 {
   GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") by index. Operation not supported." );
@@ -712,12 +712,12 @@ PackByIndex( buffer_unit_type * &, T &, IDX & )
 }
 
 template< typename T, typename IDX >
-inline std::enable_if_t< bufferOps::is_packable_by_index< T >, localIndex >
+inline std::enable_if_t< bufferOps::is_host_packable_by_index< T >, localIndex >
 UnpackByIndex( buffer_unit_type const * & buffer, T & var, IDX & idx )
 { return bufferOps::UnpackByIndex( buffer, var, idx ); }
 
 template< typename T, typename IDX >
-inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
+inline std::enable_if_t< !bufferOps::is_host_packable_by_index< T >, localIndex >
 UnpackByIndex( buffer_unit_type const * &, T &, IDX & )
 {
   GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index. Operation not supported." );

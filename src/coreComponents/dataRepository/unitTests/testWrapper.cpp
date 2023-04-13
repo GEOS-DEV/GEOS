@@ -109,6 +109,58 @@ public:
     }
   }
 
+  void testIsPackable( bool value )
+  {
+    EXPECT_EQ( m_wrapper.isPackable(), value );
+    EXPECT_EQ( m_wrapperBase.isPackable(), value );
+  }
+
+  void testPackSize( localIndex value )
+  {
+    buffer_unit_type * null = NULL;
+    if( m_wrapper.isPackable() )
+    {
+      parallelDeviceEvents events;
+      EXPECT_EQ( m_wrapper.pack< false >( null, false, events ), value );
+    }
+    if( m_wrapperBase.isPackable() )
+    {
+      EXPECT_EQ( m_wrapperBase.pack< false >( null, false, events ), value );
+    }
+  }
+
+  void testPackByIndexSize( localIndex value )
+  {
+    buffer_unit_type * null = NULL; 
+    array1d< localIndex > indices(8);
+    for( int ii = 0 ; ii < 8; ++ii )
+    {
+      indices[ii] = ii * 2;
+    }
+    if( m_wrapper.isPackable() )
+    {
+      EXPECT_EQ( m_wrapper.packByIndex< false >( null, indices.toView(), false, events ), value );
+    }
+    if( m_wrapperBase.isPackable() )
+    {
+      EXPECT_EQ( m_wrapperBase.packByIndex< false >( null, indices.toView(), false, events ), value );
+    }
+  }
+
+  void testPack( localIndex size, buffer_unit_type * value )
+  {
+    buffer_unit_type * null = NULL;
+    if( m_wrapper.isPackable() )
+    {
+      parallelDeviceEvents events;
+      EXPECT_EQ( m_wrapper.pack< false >( null, false, events ), value );
+    }
+    if( m_wrapperBase.isPackable() )
+    {
+      EXPECT_EQ( m_wrapperBase.pack< false >( null, false, events ), value );
+    }
+  }
+
 private:
   conduit::Node m_node;
   Group m_group;

@@ -31,13 +31,34 @@ namespace geosx
 namespace bufferOps
 {
 
-template< typename T >
-constexpr bool is_device_packable_helper = std::is_arithmetic< T >::value ||
-                                   std::is_enum< T >::value ||
-                                   traits::is_tensorT< T >;
 
 template< typename T >
-constexpr bool is_device_packable = is_device_packable_helper< std::remove_const_t< std::remove_pointer_t< T > > >;
+constexpr bool is_noncontainer_device_packable = std::is_arithmetic< T >::value ||
+                                                 std::is_enum< T >::value ||
+                                                 traits::is_tensorT< T >;
+
+// Forward decl so we can use this for contained types
+template< typename T >
+struct is_device_packable_helper;
+
+template< typename >
+constexpr bool is_device_packable_array = false;
+
+template< typename T, int NDIM, int USD >
+constexpr bool is_device_packable_array< ArrayView< T, NDIM, USD > > = is_device_packable_helper< T >::value;
+
+template< typename T >
+struct is_device_packable_helper
+{
+  static constexpr bool value = is_noncontainer_device_packable< T > || is_device_packable_array < T >;
+};
+
+
+template< typename T >
+constexpr bool is_device_packable = is_device_packable_helper< std::remove_const_t< std::remove_pointer_t< T > > >::value;
+
+template< typename T >
+constexpr bool is_device_packable_by_index = is_device_packable_array< T >;
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >

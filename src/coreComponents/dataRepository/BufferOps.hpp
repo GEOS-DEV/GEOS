@@ -143,7 +143,7 @@ Pack( buffer_unit_type * & buffer,
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename MAP_TYPE >
-typename std::enable_if< is_packable_map< MAP_TYPE >, localIndex >::type
+typename std::enable_if< is_host_packable_map< MAP_TYPE >, localIndex >::type
 Pack( buffer_unit_type * & buffer,
       MAP_TYPE const & var );
 
@@ -277,7 +277,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 
 //------------------------------------------------------------------------------
 template< typename MAP_TYPE >
-typename std::enable_if< is_packable_map< MAP_TYPE >, localIndex >::type
+typename std::enable_if< is_host_packable_map< MAP_TYPE >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
         MAP_TYPE & map );
 
@@ -543,12 +543,12 @@ Unpack( buffer_unit_type const * & buffer,
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename MAP_TYPE >
-typename std::enable_if< is_packable_map< MAP_TYPE >, localIndex >::type
+typename std::enable_if< is_host_packable_map< MAP_TYPE >, localIndex >::type
 Pack( buffer_unit_type * & buffer, MAP_TYPE const & var );
 
 //------------------------------------------------------------------------------
 template< typename MAP_TYPE >
-typename std::enable_if< is_packable_map< MAP_TYPE >, localIndex >::type
+typename std::enable_if< is_host_packable_map< MAP_TYPE >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer, MAP_TYPE & map );
 
 //------------------------------------------------------------------------------

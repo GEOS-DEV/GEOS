@@ -284,6 +284,16 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
+  /// @copydoc WrapperBase::isPackableByIndex
+  virtual
+  bool
+  isPackableByIndex( ) const override
+  {
+    return isPackableByIndexImpl( );
+  }
+
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc WrapperBase::unpack
   virtual
   localIndex
@@ -764,6 +774,7 @@ private:
   typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, bool >
   isPackableImpl( ) const
   {
+    static_assert(std::is_same<T, U>::value, "should only be instantiated for the wrapped type!");
     if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
       return bufferOps::is_host_packable< U >;
@@ -778,7 +789,31 @@ private:
   typename std::enable_if_t< ! traits::HasMemorySpaceFunctions< U >, bool >
   isPackableImpl( ) const
   {
-    return bufferOps::is_packable< U >;
+    static_assert(std::is_same<T, U>::value, "should only be instantiated for the wrapped type!");
+    return bufferOps::is_host_packable< U >;
+  }
+
+    template < typename U = T >
+  typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, bool >
+  isPackableByIndexImpl( ) const
+  {
+    static_assert(std::is_same<T, U>::value, "should only be instantiated for the wrapped type!");
+    if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
+    {
+      return bufferOps::is_host_packable_by_index< U >;
+    }
+    else
+    {
+      return bufferOps::is_device_packable_by_index< U >;
+    }
+  }
+
+  template < typename U = T >
+  typename std::enable_if_t< ! traits::HasMemorySpaceFunctions< U >, bool >
+  isPackableByIndexImpl( ) const
+  {
+    static_assert(std::is_same<T, U>::value, "should only be instantiated for the wrapped type!");
+    return bufferOps::is_host_packable_by_index< U >;
   }
 
   localIndex unpackDeviceImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events )
@@ -815,6 +850,7 @@ private:
   typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, localIndex>
   unpackImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events )
   {
+    static_assert(std::is_same<T, U>::value, "should only be instantiated for the wrapped type!");
     if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
       return unpackHostImpl( buffer, withMetadata, events );
@@ -829,6 +865,7 @@ private:
   typename std::enable_if_t< ! traits::HasMemorySpaceFunctions< U >, localIndex>
   unpackImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events )
   {
+    static_assert(std::is_same<T, U>::value, "should only be instantiated for the wrapped type!");
     return unpackHostImpl( buffer, withMetadata, events );
   }
 
@@ -866,6 +903,7 @@ private:
   typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, localIndex >
   unpackByIndexImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events )
   {
+    static_assert(std::is_same<T, U>::value, "should only be instantiated for the wrapped type!");
     if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
       return unpackByIndexHostImpl( buffer, unpackIndices, withMetadata, events );
@@ -880,6 +918,7 @@ private:
   typename std::enable_if_t< ! traits::HasMemorySpaceFunctions< U >, localIndex >
   unpackByIndexImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events )
   {
+    static_assert(std::is_same<T, U>::value, "should only be instantiated for the wrapped type!");
     return unpackByIndexHostImpl( buffer, unpackIndices, withMetadata, events );
   }
 
@@ -1001,6 +1040,7 @@ private:
                   bool withMetadata,
                   parallelDeviceEvents & events ) const
   {
+    static_assert(std::is_same<T, U>::value, "should only be instantiated for the wrapped type!");
     if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
       return packByIndexHostImpl< DO_PACKING >( buffer, packList, withMetadata, events );
@@ -1018,6 +1058,7 @@ private:
                   bool withMetadata,
                   parallelDeviceEvents & events ) const
   {
+    static_assert(std::is_same<T, U>::value, "should only be instantiated for the wrapped type!");
     return packByIndexHostImpl< DO_PACKING >( buffer, packList, withMetadata, events );
   }
 

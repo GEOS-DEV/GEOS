@@ -258,6 +258,12 @@ public:
   virtual bool isPackable( ) const = 0;
 
   /**
+   * @brief Check whether wrapped type can be packed by index into a buffer on host or device.
+   * @return @p true if @p T is packable and supports indexing, @p false otherwise
+   */
+  virtual bool isPackableByIndex( ) const = 0;
+
+  /**
    * @brief Concrete implementation of the packing method.
    * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
    * @param[in,out] buffer The buffer that will receive the packed data.
