@@ -1076,4 +1076,4 @@ void FiniteElementBase::plusGradNajAijPlusNaFi( GRADIENT_TYPE const & gradN,
   using FiniteElementBase::plusNaFi;                 \
   using FiniteElementBase::plusGradNajAijPlusNaFi;
 
-#endif //GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_FINITEELEMENTBASE
+#endif //GEOS_FINITEELEMENT_ELEMENTFORMULATIONS_FINITEELEMENTBASE_HPP_

@@ -16,8 +16,8 @@
  * @file CO2BrineFluid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
@@ -576,4 +576,4 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
 
 } // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_

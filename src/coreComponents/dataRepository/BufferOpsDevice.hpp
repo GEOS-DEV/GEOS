@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_DATAREPOSITORY_BUFFEROPSDEVICE_H_
-#define GEOSX_DATAREPOSITORY_BUFFEROPSDEVICE_H_
+#ifndef GEOS_DATAREPOSITORY_BUFFEROPSDEVICE_H_
+#define GEOS_DATAREPOSITORY_BUFFEROPSDEVICE_H_
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -223,4 +223,4 @@ UnpackDataByIndexDevice( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
 } // namespace bufferOps
 } // namespace geos
 
-#endif // GEOSX_DATAREPOSITORY_BUFFEROPSDEVICE_H_
+#endif // GEOS_DATAREPOSITORY_BUFFEROPSDEVICE_H_

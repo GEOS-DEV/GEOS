@@ -16,8 +16,8 @@
  * @file Utilities.hpp
  */
 
-#ifndef GEOSX_CODINGUTILITIES_UTILITIES_H_
-#define GEOSX_CODINGUTILITIES_UTILITIES_H_
+#ifndef GEOS_CODINGUTILITIES_UTILITIES_H_
+#define GEOS_CODINGUTILITIES_UTILITIES_H_
 
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
@@ -389,4 +389,4 @@ struct NoOpFunc
 
 } // namespace geos
 
-#endif /* GEOSX_CODINGUTILITIES_UTILITIES_H_ */
+#endif /* GEOS_CODINGUTILITIES_UTILITIES_H_ */
