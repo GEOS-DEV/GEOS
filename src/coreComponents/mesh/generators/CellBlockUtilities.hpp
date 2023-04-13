@@ -44,6 +44,17 @@ struct ToCellRelation
     toCellIndex( toCellIndex_ )
   { }
 
+  /**
+   * @brief Constructor from moved values.
+   * @param toBlockIndex_ Map containing a list of cell block indices for each object
+   * @param toCellIndex_ Map containing cell indices, same shape as above
+   */
+  ToCellRelation( T && toBlockIndex_,
+                  T && toCellIndex_ )
+    : toBlockIndex( toBlockIndex_ ),
+    toCellIndex( toCellIndex_ )
+  { }
+
   ToCellRelation() = default;
 };
 
