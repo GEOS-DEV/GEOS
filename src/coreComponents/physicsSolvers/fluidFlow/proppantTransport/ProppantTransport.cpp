@@ -141,14 +141,14 @@ void ProppantTransport::setConstitutiveNames( ElementSubRegionBase & subRegion )
 {
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
-  GEOSX_THROW_IF_IF( fluidName.empty(),
+  GEOS_THROW_IF( fluidName.empty(),
                   GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                   InputError );
 
   subRegion.registerWrapper< string >( viewKeyStruct::proppantNamesString() );
   string & proppantName = subRegion.getReference< string >( viewKeyStruct::proppantNamesString() );
   proppantName = getConstitutiveName< ParticleFluidBase >( subRegion );
-  GEOSX_THROW_IF_IF( proppantName.empty(),
+  GEOS_THROW_IF( proppantName.empty(),
                   GEOS_FMT( "Proppant model not found on subregion {}", subRegion.getName() ),
                   InputError );
 

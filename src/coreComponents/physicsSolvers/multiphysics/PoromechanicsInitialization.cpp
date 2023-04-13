@@ -89,7 +89,7 @@ postProcessInput()
   ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
   PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
 
-  GEOSX_THROW_IF_IF( !physicsSolverManager.hasGroup( m_poromechanicsSolverName ),
+  GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_poromechanicsSolverName ),
                   GEOS_FMT( "Task {}: physics solver named {} not found",
                              getName(), m_poromechanicsSolverName ),
                   InputError );

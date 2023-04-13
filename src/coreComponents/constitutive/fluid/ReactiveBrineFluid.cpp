@@ -114,10 +114,10 @@ void ReactiveBrineFluid< PHASE > ::postProcessInput()
 {
   ReactiveMultiFluid::postProcessInput();
 
-  GEOSX_THROW_IF_IF_NE_MSG( numFluidPhases(), 1,
+  GEOS_THROW_IF_NE_MSG( numFluidPhases(), 1,
                          GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                          InputError );
-  GEOSX_THROW_IF_IF_NE_MSG( m_phasePVTParaFiles.size(), 1,
+  GEOS_THROW_IF_NE_MSG( m_phasePVTParaFiles.size(), 1,
                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName() ),
                          InputError );
 
@@ -144,7 +144,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
 
       if( !strs.empty() )
       {
-        GEOSX_THROW_IF_IF( strs.size() < 2,
+        GEOS_THROW_IF( strs.size() < 2,
                         GEOS_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
                         InputError );
 
@@ -171,7 +171,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
         }
         else
         {
-          GEOSX_THROW_IF( GEOS_FMT( "{}: invalid PVT function type '{}'", getFullName(), strs[0] ), InputError );
+          GEOS_THROW( GEOS_FMT( "{}: invalid PVT function type '{}'", getFullName(), strs[0] ), InputError );
         }
       }
     }
@@ -179,14 +179,14 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
   }
 
   // at this point, we have read the file and we check the consistency of non-thermal models
-  GEOSX_THROW_IF_IF( phase1InputParams[PHASE::InputParamOrder::DENSITY].empty(),
+  GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::DENSITY].empty(),
                   GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Density::catalogName() ),
                   InputError );
-  GEOSX_THROW_IF_IF( phase1InputParams[PHASE::InputParamOrder::VISCOSITY].empty(),
+  GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::VISCOSITY].empty(),
                   GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Viscosity::catalogName() ),
                   InputError );
   // we also detect any inconsistency arising in the enthalpy models
-  GEOSX_THROW_IF_IF( phase1InputParams[PHASE::InputParamOrder::ENTHALPY].empty() &&
+  GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::ENTHALPY].empty() &&
                   ( PHASE::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
                   GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
                   InputError );

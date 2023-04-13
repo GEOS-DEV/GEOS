@@ -98,7 +98,7 @@ void CompressibleSinglePhaseFluid::postProcessInput()
 
   auto const checkNonnegative = [&]( real64 const value, auto const & attribute )
   {
-    GEOSX_THROW_IF_IF_LT_MSG( value, 0.0,
+    GEOS_THROW_IF_LT_MSG( value, 0.0,
                            GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
                            InputError );
   };
@@ -107,7 +107,7 @@ void CompressibleSinglePhaseFluid::postProcessInput()
 
   auto const checkPositive = [&]( real64 const value, auto const & attribute )
   {
-    GEOSX_THROW_IF_IF_LE_MSG( value, 0.0,
+    GEOS_THROW_IF_LE_MSG( value, 0.0,
                            GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
                            InputError );
   };
@@ -117,7 +117,7 @@ void CompressibleSinglePhaseFluid::postProcessInput()
   // Due to the way update wrapper is currently implemented, we can only support one model type
   auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
   {
-    GEOSX_THROW_IF_IF_NE_MSG( value, ExponentApproximationType::Linear,
+    GEOS_THROW_IF_NE_MSG( value, ExponentApproximationType::Linear,
                            GEOS_FMT( "{}: invalid model type in attribute '{}' (only linear currently supported)", getFullName(), attribute ),
                            InputError );
   };

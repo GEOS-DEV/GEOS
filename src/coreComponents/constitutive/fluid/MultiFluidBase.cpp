@@ -156,19 +156,19 @@ void MultiFluidBase::postProcessInput()
   integer const numComp = numFluidComponents();
   integer const numPhase = numFluidPhases();
 
-  GEOSX_THROW_IF_IF_LT_MSG( numComp, 1,
+  GEOS_THROW_IF_LT_MSG( numComp, 1,
                          GEOS_FMT( "{}: invalid number of components", getFullName() ),
                          InputError );
-  GEOSX_THROW_IF_IF_GT_MSG( numComp, MAX_NUM_COMPONENTS,
+  GEOS_THROW_IF_GT_MSG( numComp, MAX_NUM_COMPONENTS,
                          GEOS_FMT( "{}: invalid number of components", getFullName() ),
                          InputError );
-  GEOSX_THROW_IF_IF_LT_MSG( numPhase, 1,
+  GEOS_THROW_IF_LT_MSG( numPhase, 1,
                          GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                          InputError );
-  GEOSX_THROW_IF_IF_GT_MSG( numPhase, MAX_NUM_PHASES,
+  GEOS_THROW_IF_GT_MSG( numPhase, MAX_NUM_PHASES,
                          GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                          InputError );
-  GEOSX_THROW_IF_IF_NE_MSG( m_componentMolarWeight.size(), numComp,
+  GEOS_THROW_IF_NE_MSG( m_componentMolarWeight.size(), numComp,
                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentMolarWeightString() ),
                          InputError );
 

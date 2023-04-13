@@ -283,7 +283,7 @@ void MultiphasePoromechanics::initializePreSubGroups()
     solidMechanicsSolver()->turnOnFixedStressThermoPoromechanicsFlag();
   }
 
-  GEOSX_THROW_IF_IF( m_stabilizationType == StabilizationType::Local,
+  GEOS_THROW_IF( m_stabilizationType == StabilizationType::Local,
                   catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",
                   InputError );
 

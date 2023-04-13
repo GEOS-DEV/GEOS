@@ -33,13 +33,13 @@ TableCapillaryPressureHelpers::validateCapillaryPressureTable( TableFunction con
 {
   ArrayOfArraysView< real64 const > coords = capPresTable.getCoordinates();
 
-  GEOSX_THROW_IF_IF_NE_MSG( capPresTable.getInterpolationMethod(), TableFunction::InterpolationType::Linear,
+  GEOS_THROW_IF_NE_MSG( capPresTable.getInterpolationMethod(), TableFunction::InterpolationType::Linear,
                          GEOS_FMT( "{}: in table '{}' interpolation method must be linear", fullConstitutiveName, capPresTable.getName() ),
                          InputError );
-  GEOSX_THROW_IF_IF_NE_MSG( capPresTable.numDimensions(), 1,
+  GEOS_THROW_IF_NE_MSG( capPresTable.numDimensions(), 1,
                          GEOS_FMT( "{}: table '{}' must have a single independent coordinate", fullConstitutiveName, capPresTable.getName() ),
                          InputError );
-  GEOSX_THROW_IF_IF_LT_MSG( coords.sizeOfArray( 0 ), 2,
+  GEOS_THROW_IF_LT_MSG( coords.sizeOfArray( 0 ), 2,
                          GEOS_FMT( "{}: table `{}` must contain at least two values", fullConstitutiveName, capPresTable.getName() ),
                          InputError );
 
@@ -49,7 +49,7 @@ TableCapillaryPressureHelpers::validateCapillaryPressureTable( TableFunction con
   for( localIndex i = 1; i < coords.sizeOfArray( 0 ); ++i )
   {
     // check phase volume fraction
-    GEOSX_THROW_IF_IF( phaseVolFrac[i] < 0 || phaseVolFrac[i] > 1,
+    GEOS_THROW_IF( phaseVolFrac[i] < 0 || phaseVolFrac[i] > 1,
                     GEOS_FMT( "{}: in table '{}' values must be between 0 and 1", fullConstitutiveName, capPresTable.getName() ),
                     InputError );
 
@@ -58,13 +58,13 @@ TableCapillaryPressureHelpers::validateCapillaryPressureTable( TableFunction con
     // check the monotonicity of the capillary pressure table
     if( capPresMustBeIncreasing )
     {
-      GEOSX_THROW_IF_IF( !isZero( capPres[i] ) && (capPres[i] - capPres[i-1]) < -1e-15,
+      GEOS_THROW_IF( !isZero( capPres[i] ) && (capPres[i] - capPres[i-1]) < -1e-15,
                       GEOS_FMT( "{}: in table '{}' values must be strictly increasing (i.e. |Delta Pc| > 1e-15 between two non-zero values)", fullConstitutiveName, capPresTable.getName() ),
                       InputError );
     }
     else
     {
-      GEOSX_THROW_IF_IF( !isZero( capPres[i] ) && (capPres[i] - capPres[i-1]) > 1e-15,
+      GEOS_THROW_IF( !isZero( capPres[i] ) && (capPres[i] - capPres[i-1]) > 1e-15,
                       GEOS_FMT( "{}: in table '{}' values must be strictly decreasing  (i.e. |Delta Pc| > 1e-15 between two non-zero values)", fullConstitutiveName, capPresTable.getName() ),
                       InputError );
     }

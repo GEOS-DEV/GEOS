@@ -149,7 +149,7 @@ bool validateWellPerforations( SolverBase const * const reservoirSolver,
 
   localIndex const hasBadPerforations = MpiWrapper::max( badPerforation.first.empty() ? 0 : 1 );
 
-  GEOSX_THROW_IF_IF( !badPerforation.first.empty(),
+  GEOS_THROW_IF( !badPerforation.first.empty(),
                   GEOS_FMT( "The well {} has a connection to the region {} which is not targeted by the solver", badPerforation.first, badPerforation.second ),
                   std::runtime_error );
   return hasBadPerforations == 0;

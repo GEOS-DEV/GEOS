@@ -123,7 +123,7 @@ bool ReactiveFluidDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 {
   // this code only makes sense in serial
 
-  GEOSX_THROW_IF_IF( MpiWrapper::commRank() > 0, "ReactiveFluidDriver should only be run in serial", std::runtime_error );
+  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "ReactiveFluidDriver should only be run in serial", std::runtime_error );
 
   // get the fluid out of the constitutive manager.
   // for the moment it is of type MultiFluidBase.
@@ -301,7 +301,7 @@ void ReactiveFluidDriver::compareWithBaseline()
   // open baseline file
 
   std::ifstream file( m_baselineFile.c_str() );
-  GEOSX_THROW_IF_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+  GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
 
   // discard file header
 
@@ -323,11 +323,11 @@ void ReactiveFluidDriver::compareWithBaseline()
   {
     for( integer col=0; col < m_table.size( 1 ); ++col )
     {
-      GEOSX_THROW_IF_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
       file >> value;
 
       error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
-      GEOSX_THROW_IF_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
+      GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
                                                                                           << " (row " << row+m_numColumns << " with header)"
                                                                                           << " and column " << col+1, std::runtime_error );
     }
@@ -336,7 +336,7 @@ void ReactiveFluidDriver::compareWithBaseline()
   // check we actually reached the end of the baseline file
 
   file >> value;
-  GEOSX_THROW_IF_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
 
   // success
 

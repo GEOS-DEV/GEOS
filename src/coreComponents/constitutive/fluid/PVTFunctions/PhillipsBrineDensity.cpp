@@ -79,7 +79,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
 
   // initialize salinity
-  GEOSX_THROW_IF_IF_LT_MSG( inputParams.size(), 9,
+  GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
                          GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
                          InputError );
   real64 salinity;
@@ -89,7 +89,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   }
   catch( std::invalid_argument const & e )
   {
-    GEOSX_THROW_IF( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
   }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );

@@ -153,7 +153,7 @@ bool GeosxState::initializeDataRepository()
   GEOSX_MARK_FUNCTION;
   Timer timer( m_initTime );
 
-  GEOSX_THROW_IF_IF_NE( m_state, State::UNINITIALIZED, std::logic_error );
+  GEOS_THROW_IF_NE( m_state, State::UNINITIALIZED, std::logic_error );
 
   getProblemManager().parseCommandLineInput();
 
@@ -183,7 +183,7 @@ void GeosxState::applyInitialConditions()
   GEOSX_MARK_FUNCTION;
   Timer timer( m_initTime );
 
-  GEOSX_THROW_IF_IF_NE( m_state, State::INITIALIZED, std::logic_error );
+  GEOS_THROW_IF_NE( m_state, State::INITIALIZED, std::logic_error );
 
   getProblemManager().applyInitialConditions();
 
@@ -202,7 +202,7 @@ void GeosxState::run()
   GEOSX_MARK_FUNCTION;
   Timer timer( m_runTime );
 
-  GEOSX_THROW_IF_IF_NE( m_state, State::READY_TO_RUN, std::logic_error );
+  GEOS_THROW_IF_NE( m_state, State::READY_TO_RUN, std::logic_error );
 
   if( !getProblemManager().runSimulation() )
   {

@@ -138,7 +138,7 @@ void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) c
                                          reference();
 
     thermalConductivityName = getConstitutiveName< SinglePhaseThermalConductivityBase >( subRegion );
-    GEOSX_THROW_IF_IF( thermalConductivityName.empty(),
+    GEOS_THROW_IF( thermalConductivityName.empty(),
                     GEOS_FMT( "Thermal conductivity model not found on subregion {}", subRegion.getName() ),
                     InputError );
   }
@@ -169,7 +169,7 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
     {
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
-      GEOSX_THROW_IF_IF( fluidName.empty(),
+      GEOS_THROW_IF( fluidName.empty(),
                       GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                       InputError );
 
@@ -178,11 +178,11 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
         string const fluidModelName = castedFluid.catalogName();
-        GEOSX_THROW_IF_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
+        GEOS_THROW_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
                         GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is not for thermal fluid",
                                    getName(), fluid.getName() ),
                         InputError );
-        GEOSX_THROW_IF_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
+        GEOS_THROW_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
                         GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid `{}`, but the solver option is incompatible with the fluid model",
                                    getName(), fluid.getName() ),
                         InputError );
@@ -437,7 +437,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     equilCounter++;
 
     // check that the gravity vector is aligned with the z-axis
-    GEOSX_THROW_IF_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
+    GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
                     catalogName() << " " << getName() <<
                     ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
                     ") is not aligned with the z-axis. \n"
@@ -554,7 +554,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
                                            elevationValues.toNestedView(),
                                            pressureValues.toView() );
 
-      GEOSX_THROW_IF_IF( !equilHasConverged,
+      GEOS_THROW_IF( !equilHasConverged,
                       SinglePhaseBase::catalogName() << " " << getName()
                                                      << ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
                       std::runtime_error );

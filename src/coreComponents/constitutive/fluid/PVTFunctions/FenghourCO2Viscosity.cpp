@@ -105,7 +105,7 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW_IF( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
   }
 
   localIndex const nP = tableCoords.nPressures();

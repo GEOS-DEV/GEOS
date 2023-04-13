@@ -54,10 +54,10 @@ void RelativePermeabilityBase::postProcessInput()
   ConstitutiveBase::postProcessInput();
 
   integer const numPhases = numFluidPhases();
-  GEOSX_THROW_IF_IF_LT_MSG( numPhases, 2,
+  GEOS_THROW_IF_LT_MSG( numPhases, 2,
                          GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                          InputError );
-  GEOSX_THROW_IF_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
+  GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
                          GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                          InputError );
 

@@ -139,7 +139,7 @@ CO2EOSSolver::solve( string const & name,
     }
   }
 
-  GEOSX_THROW_IF_IF( !newtonHasConverged,
+  GEOS_THROW_IF( !newtonHasConverged,
                   name << ": Newton's method failed to converge for pair "
                        << "( pressure = " << pres*presMultiplierForReporting << " Pa, temperature = " << temp+273.15 << " K) :"
                        << " final residual = " << res << ", final update = " << update << ", tolerance = " << tolerance,

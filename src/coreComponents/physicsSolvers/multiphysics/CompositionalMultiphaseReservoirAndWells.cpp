@@ -140,7 +140,7 @@ initializePreSubGroups()
 
   bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );;
   bool const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
-  GEOSX_THROW_IF_IF( useMassFlow != useMassWell,
+  GEOS_THROW_IF( useMassFlow != useMassWell,
                   GEOS_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
                              this->getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
                              Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),

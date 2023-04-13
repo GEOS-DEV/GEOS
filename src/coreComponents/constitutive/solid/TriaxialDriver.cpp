@@ -74,7 +74,7 @@ TriaxialDriver::~TriaxialDriver()
 void TriaxialDriver::postProcessInput()
 {
 
-  GEOSX_THROW_IF_IF( m_mode != "stressControl" && m_mode != "strainControl" && m_mode != "mixedControl",
+  GEOS_THROW_IF( m_mode != "stressControl" && m_mode != "strainControl" && m_mode != "mixedControl",
                   "Test mode \'" << m_mode << "\' not recognized.",
                   InputError );
 
@@ -146,11 +146,11 @@ void TriaxialDriver::postProcessInput()
   // double check the initial stress value is consistent with any function values that
   // may overwrite it.
 
-  GEOSX_THROW_IF_IF( !isEqual( m_initialStress, m_table( 0, SIG0 ), 1e-6 ),
+  GEOS_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG0 ), 1e-6 ),
                   "Initial stress values indicated by initialStress and axialFunction(time=0) appear inconsistent",
                   InputError );
 
-  GEOSX_THROW_IF_IF( !isEqual( m_initialStress, m_table( 0, SIG1 ), 1e-6 ),
+  GEOS_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG1 ), 1e-6 ),
                   "Initial stress values indicated by initialStress and radialFunction(time=0) appear inconsistent",
                   InputError );
 }
@@ -381,7 +381,7 @@ bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 {
   // this code only makes sense in serial
 
-  GEOSX_THROW_IF_IF( MpiWrapper::commRank() > 0, "Triaxial Driver should only be run in serial", std::runtime_error );
+  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "Triaxial Driver should only be run in serial", std::runtime_error );
 
   // get the solid out of the constitutive manager.
   // for the moment it is of type SolidBase.
@@ -526,7 +526,7 @@ void TriaxialDriver::compareWithBaseline()
   // open baseline file
 
   std::ifstream file( m_baselineFile.c_str() );
-  GEOSX_THROW_IF_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+  GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
 
   // discard file header
 
@@ -548,13 +548,13 @@ void TriaxialDriver::compareWithBaseline()
   {
     for( integer col=0; col < m_table.size( 1 ); ++col )
     {
-      GEOSX_THROW_IF_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
       file >> value;
 
       if( col < ITER ) // only compare "real" data columns
       {
         error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
-        GEOSX_THROW_IF_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
+        GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
                                                                                             << " (row " << row+10 << " with header)"
                                                                                             << " and column " << col+1, std::runtime_error );
       }
@@ -564,7 +564,7 @@ void TriaxialDriver::compareWithBaseline()
   // check we actually reached the end of the baseline file
 
   file >> value;
-  GEOSX_THROW_IF_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
 
   // success
 

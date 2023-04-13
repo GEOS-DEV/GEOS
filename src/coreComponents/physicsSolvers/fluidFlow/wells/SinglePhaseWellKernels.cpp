@@ -654,7 +654,7 @@ PresInitializationKernel::
   } );
 
 
-  GEOSX_THROW_IF_IF( foundNegativePressure.get() == 1,
+  GEOS_THROW_IF( foundNegativePressure.get() == 1,
                   "Invalid well initialization: negative pressure was found",
                   InputError );
 }

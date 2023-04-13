@@ -73,7 +73,7 @@ void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( data
 
 void MultiPhaseVolumeWeightedThermalConductivity::postProcessInput()
 {
-  GEOSX_THROW_IF_IF( m_rockThermalConductivityComponents[0] <= 0 ||
+  GEOS_THROW_IF( m_rockThermalConductivityComponents[0] <= 0 ||
                   m_rockThermalConductivityComponents[1] <= 0 ||
                   m_rockThermalConductivityComponents[2] <= 0,
                   GEOS_FMT( "{}: the components of the rock thermal conductivity tensor must be strictly positive",
@@ -82,7 +82,7 @@ void MultiPhaseVolumeWeightedThermalConductivity::postProcessInput()
 
   for( integer ip = 0; ip < numFluidPhases(); ++ip )
   {
-    GEOSX_THROW_IF_IF( m_phaseThermalConductivity[ip] <= 0,
+    GEOS_THROW_IF( m_phaseThermalConductivity[ip] <= 0,
                     GEOS_FMT( "{}: the phase thermal conductivity for phase {} must be strictly positive",
                                getFullName(), ip ),
                     InputError );

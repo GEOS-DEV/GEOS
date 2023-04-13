@@ -188,10 +188,10 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
   // need to override to skip the check for fluidModel, which is enabled in FlowSolverBase
   SolverBase::postProcessInput();
 
-  GEOSX_THROW_IF_IF_GT_MSG( m_maxCompFracChange, 1.0,
+  GEOS_THROW_IF_GT_MSG( m_maxCompFracChange, 1.0,
                          GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0", m_maxCompFracChange ),
                          InputError );
-  GEOSX_THROW_IF_IF_LT_MSG( m_maxCompFracChange, 0.0,
+  GEOS_THROW_IF_LT_MSG( m_maxCompFracChange, 0.0,
                          GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0", m_maxCompFracChange ),
                          InputError );
 
@@ -203,11 +203,11 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
 
   m_numOBLOperators = COMPUTE_NUM_OPS( m_numPhases, m_numComponents, m_enableEnergyBalance );
 
-  GEOSX_THROW_IF_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->numDims(),
+  GEOS_THROW_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->numDims(),
                          GEOS_FMT( "The number of degrees of freedom per element used in solver - {} - and in operator table - {} - should match", m_numDofPerCell, m_OBLOperatorsTable->numDims()),
                          InputError );
 
-  GEOSX_THROW_IF_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->numOps(),
+  GEOS_THROW_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->numOps(),
                          GEOS_FMT( "The number of operators per element used in solver - {} - and in operator table - {} - should match", m_numOBLOperators, m_OBLOperatorsTable->numOps()),
                          InputError );
 

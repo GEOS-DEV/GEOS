@@ -208,7 +208,7 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
                                          reference();
 
     solidInternalEnergyName = getConstitutiveName< SolidInternalEnergy >( subRegion );
-    GEOSX_THROW_IF_IF( solidInternalEnergyName.empty(),
+    GEOS_THROW_IF( solidInternalEnergyName.empty(),
                     GEOS_FMT( "Solid internal energy model not found on subregion {}", subRegion.getName() ),
                     InputError );
   }

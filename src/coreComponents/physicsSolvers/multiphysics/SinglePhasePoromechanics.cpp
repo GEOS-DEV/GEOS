@@ -120,7 +120,7 @@ void SinglePhasePoromechanics::initializePreSubGroups()
     {
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      GEOSX_THROW_IF_IF( porousName.empty(),
+      GEOS_THROW_IF( porousName.empty(),
                       GEOS_FMT( "{} {} : Solid model not found on subregion {}", catalogName(), getName(), subRegion.getName() ),
                       InputError );
 

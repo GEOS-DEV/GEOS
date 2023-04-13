@@ -77,7 +77,7 @@ void ThermalCompressibleSinglePhaseFluid::postProcessInput()
 
   auto const checkNonnegative = [&]( real64 const value, auto const & attribute )
   {
-    GEOSX_THROW_IF_IF_LT_MSG( value, 0.0,
+    GEOS_THROW_IF_LT_MSG( value, 0.0,
                            GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
                            InputError );
   };
@@ -89,7 +89,7 @@ void ThermalCompressibleSinglePhaseFluid::postProcessInput()
   // Due to the way update wrapper is currently implemented, we can only support one model type
   auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
   {
-    GEOSX_THROW_IF_IF( value != ExponentApproximationType::Linear && value != ExponentApproximationType::Full,
+    GEOS_THROW_IF( value != ExponentApproximationType::Linear && value != ExponentApproximationType::Full,
                     GEOS_FMT( "{}: invalid model type in attribute '{}' (only linear or fully exponential currently supported)", getFullName(), attribute ),
                     InputError );
   };

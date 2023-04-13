@@ -199,7 +199,7 @@ void WaveSolverBase::postProcessInput()
   {
     counter++;
   } );
-  GEOSX_THROW_IF_IF( counter > 1,
+  GEOS_THROW_IF( counter > 1,
                   "One single PML field specification is allowed",
                   InputError );
 
@@ -225,11 +225,11 @@ void WaveSolverBase::postProcessInput()
 
   }
 
-  GEOSX_THROW_IF_IF( m_sourceCoordinates.size( 1 ) != 3,
+  GEOS_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the sources",
                   InputError );
 
-  GEOSX_THROW_IF_IF( m_receiverCoordinates.size( 1 ) != 3,
+  GEOS_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the receivers",
                   InputError );
 
@@ -245,7 +245,7 @@ void WaveSolverBase::postProcessInput()
     }
   }
 
-  GEOSX_THROW_IF_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+  GEOS_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -326,7 +326,7 @@ localIndex WaveSolverBase::getNumNodesPerElem()
 
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOSX_THROW_IF_IF( feDiscretization == nullptr,
+  GEOS_THROW_IF( feDiscretization == nullptr,
                   getName() << ": FE discretization not found: " << m_discretizationName,
                   InputError );
 

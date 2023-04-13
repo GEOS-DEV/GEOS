@@ -536,12 +536,12 @@ redistributeByCellGraph( vtkDataSet & mesh,
         GEOS_WARNING_IF( numRefinements > 0, "Partition refinement is not supported by 'ptscotch' partitioning method" );
         return ptscotch::partition( graph.toViewConst(), numProcs, comm );
 #else
-        GEOSX_THROW_IF( "GEOSX must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method", InputError );
+        GEOS_THROW( "GEOSX must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method", InputError );
 #endif
       }
       default:
       {
-        GEOSX_THROW_IF( "Unknown partition method", InputError );
+        GEOS_THROW( "Unknown partition method", InputError );
       }
     }
   }();
@@ -1688,7 +1688,7 @@ findArraysForImport( vtkDataSet & mesh,
   for( string const & sourceName : srcFieldNames )
   {
     vtkAbstractArray * const curArray = cellData.GetAbstractArray( sourceName.c_str() );
-    GEOSX_THROW_IF_IF( curArray == nullptr,
+    GEOS_THROW_IF( curArray == nullptr,
                     GEOS_FMT( "Source field '{}' not found in dataset", sourceName ),
                     InputError );
 
@@ -1709,7 +1709,7 @@ findArrayForImport( vtkDataSet & mesh,
   vtkCellData & cellData = *mesh.GetCellData();
 
   vtkAbstractArray * const curArray = cellData.GetAbstractArray( sourceName.c_str() );
-  GEOSX_THROW_IF_IF( curArray == nullptr,
+  GEOS_THROW_IF( curArray == nullptr,
                   GEOS_FMT( "Source field '{}' not found in dataset", sourceName ),
                   InputError );
 
@@ -1763,7 +1763,7 @@ void importNodesets( integer const logLevel,
     GEOS_LOG_RANK_0_IF( logLevel >= 2, "    " + nodesetNames[i] );
 
     vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( nodesetNames[i].c_str() );
-    GEOSX_THROW_IF_IF( curArray == nullptr,
+    GEOS_THROW_IF( curArray == nullptr,
                     GEOS_FMT( "Target nodeset '{}' not found in mesh", nodesetNames[i] ),
                     InputError );
     vtkTypeInt64Array const & nodesetMask = *vtkTypeInt64Array::FastDownCast( curArray );

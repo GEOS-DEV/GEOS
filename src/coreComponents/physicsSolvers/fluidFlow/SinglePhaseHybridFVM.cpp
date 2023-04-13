@@ -75,7 +75,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
 {
   SinglePhaseBase::initializePreSubGroups();
 
-  GEOSX_THROW_IF_IF( m_isThermal,
+  GEOS_THROW_IF( m_isThermal,
                   GEOS_FMT( "{} {}: The thermal option is not supported by SinglePhaseHybridFVM",
                              catalogName(), getName() ),
                   InputError );
@@ -84,7 +84,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  GEOSX_THROW_IF_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
+  GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
                   catalogName() << " " << getName() <<
                   ": the HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
                   InputError );
@@ -122,7 +122,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
       minVal.min( transMultiplier[iface] );
     } );
 
-    GEOSX_THROW_IF_IF_LE_MSG( minVal.get(), 0.0,
+    GEOS_THROW_IF_LE_MSG( minVal.get(), 0.0,
                            catalogName() << " " << getName() <<
                            "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
                            std::runtime_error );

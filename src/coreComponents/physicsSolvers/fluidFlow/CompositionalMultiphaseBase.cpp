@@ -213,7 +213,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 
           string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
           capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
-          GEOSX_THROW_IF_IF( capPresName.empty(),
+          GEOS_THROW_IF( capPresName.empty(),
                           GEOS_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
                           InputError );
         }
@@ -287,7 +287,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
 {
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
-  GEOSX_THROW_IF_IF( fluidName.empty(),
+  GEOS_THROW_IF( fluidName.empty(),
                   GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                   InputError );
 
@@ -300,7 +300,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
 
   relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
 
-  GEOSX_THROW_IF_IF( relPermName.empty(),
+  GEOS_THROW_IF( relPermName.empty(),
                   GEOS_FMT( "Relative permeability model not found on subregion {}", subRegion.getName() ),
                   InputError );
 
@@ -314,7 +314,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
                                  setDescription( "Name of the capillary pressure constitutive model to use" ).
                                  reference();
     capPressureName = getConstitutiveName< CapillaryPressureBase >( subRegion );
-    GEOSX_THROW_IF_IF( capPressureName.empty(),
+    GEOS_THROW_IF( capPressureName.empty(),
                     GEOS_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
                     InputError );
   }
@@ -329,7 +329,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
                                          reference();
 
     thermalConductivityName = getConstitutiveName< MultiPhaseThermalConductivityBase >( subRegion );
-    GEOSX_THROW_IF_IF( thermalConductivityName.empty(),
+    GEOS_THROW_IF( thermalConductivityName.empty(),
                     GEOS_FMT( "Thermal conductivity model not found on subregion {}", subRegion.getName() ),
                     InputError );
   }
@@ -342,13 +342,13 @@ namespace
 template< typename MODEL1_TYPE, typename MODEL2_TYPE >
 void compareMultiphaseModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
-  GEOSX_THROW_IF_IF_NE_MSG( lhs.numFluidPhases(), rhs.numFluidPhases(),
+  GEOS_THROW_IF_NE_MSG( lhs.numFluidPhases(), rhs.numFluidPhases(),
                          GEOS_FMT( "Mismatch in number of phases between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                          InputError );
 
   for( integer ip = 0; ip < lhs.numFluidPhases(); ++ip )
   {
-    GEOSX_THROW_IF_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
+    GEOS_THROW_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
                            GEOS_FMT( "Mismatch in phase names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                            InputError );
   }
@@ -357,13 +357,13 @@ void compareMultiphaseModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 template< typename MODEL1_TYPE, typename MODEL2_TYPE >
 void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
-  GEOSX_THROW_IF_IF_NE_MSG( lhs.numFluidComponents(), rhs.numFluidComponents(),
+  GEOS_THROW_IF_NE_MSG( lhs.numFluidComponents(), rhs.numFluidComponents(),
                          GEOS_FMT( "Mismatch in number of components between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                          InputError );
 
   for( integer ic = 0; ic < lhs.numFluidComponents(); ++ic )
   {
-    GEOSX_THROW_IF_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
+    GEOS_THROW_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
                            GEOS_FMT( "Mismatch in component names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                            InputError );
   }
@@ -459,11 +459,11 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
         bool const isFluidModelThermal = castedFluid.isThermal();
-        GEOSX_THROW_IF_IF( m_isThermal && !isFluidModelThermal,
+        GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
                         GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is incompatible with the thermal option",
                                    getName(), fluid.getName() ),
                         InputError );
-        GEOSX_THROW_IF_IF( !m_isThermal && isFluidModelThermal,
+        GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
                         GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model `{}`, but the solver options are incompatible with the thermal option",
                                    getName(), fluid.getName() ),
                         InputError );
@@ -825,7 +825,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
     equilCounter++;
 
     // check that the gravity vector is aligned with the z-axis
-    GEOSX_THROW_IF_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
+    GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
                     catalogName() << " " << getName() <<
                     ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
                     ") is not aligned with the z-axis. \n"
@@ -932,13 +932,13 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
       arrayView1d< string const > componentNames = fs.getComponentNames();
-      GEOSX_THROW_IF_IF( fluid.componentNames().size() != componentNames.size(),
+      GEOS_THROW_IF( fluid.componentNames().size() != componentNames.size(),
                       "Mismatch in number of components between constitutive model "
                       << fluid.getName() << " and the Equilibrium initial condition " << fs.getName(),
                       InputError );
       for( integer ic = 0; ic < fluid.numFluidComponents(); ++ic )
       {
-        GEOSX_THROW_IF_IF( fluid.componentNames()[ic] != componentNames[ic],
+        GEOS_THROW_IF( fluid.componentNames()[ic] != componentNames[ic],
                         "Mismatch in component names between constitutive model "
                         << fluid.getName() << " and the Equilibrium initial condition " << fs.getName(),
                         InputError );
@@ -947,7 +947,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       // Note: for now, we assume that the reservoir is in a single-phase state at initialization
       arrayView1d< string const > phaseNames = fluid.phaseNames();
       auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
-      GEOSX_THROW_IF_IF( itPhaseNames == std::end( phaseNames ),
+      GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
                       CompositionalMultiphaseBase::catalogName() << " " << getName() << ": phase name " << initPhaseName
                                                                  << " not found in the phases of " << fluid.getName(),
                       InputError );
@@ -981,7 +981,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
                                                elevationValues.toNestedView(),
                                                pressureValues.toView() );
 
-        GEOSX_THROW_IF_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
+        GEOS_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
                         CompositionalMultiphaseBase::catalogName() << " " << getName()
                                                                    << ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n"
                                                                    << "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n"

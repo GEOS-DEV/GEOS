@@ -65,7 +65,7 @@ string readRootNode( string const & rootPath )
     conduit::relay::io::load( rootPath + ".root", "hdf5", node );
 
     int const nFiles = node.child( "number_of_files" ).value();
-    GEOSX_THROW_IF_IF_NE( nFiles, MpiWrapper::commSize(), InputError );
+    GEOS_THROW_IF_NE( nFiles, MpiWrapper::commSize(), InputError );
 
     string const filePattern = node.child( "file_pattern" ).as_string();
     string const rootDirName = splitPath( rootPath ).first;

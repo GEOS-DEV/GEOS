@@ -84,12 +84,12 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  GEOSX_THROW_IF_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
+  GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
                   catalogName() << " " << getName() <<
                   ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
                   InputError );
 
-  GEOSX_THROW_IF_IF( m_hasCapPressure,
+  GEOS_THROW_IF( m_hasCapPressure,
                   catalogName() << " " << getName() <<
                   ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
                   InputError );
@@ -141,7 +141,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
       minVal.min( transMultiplier[iface] );
     } );
 
-    GEOSX_THROW_IF_IF( minVal.get() <= 0.0,
+    GEOS_THROW_IF( minVal.get() <= 0.0,
                     catalogName() << " " << getName()
                                   << ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
                     std::runtime_error );

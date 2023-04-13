@@ -224,7 +224,7 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
 
     std::vector< string > dir_contents = readDirectory( dirname );
 
-    GEOSX_THROW_IF_IF( dir_contents.empty(),
+    GEOS_THROW_IF( dir_contents.empty(),
                     "Directory gotten from " << restartFileName << " " << dirname << " is empty.",
                     InputError );
 
@@ -242,7 +242,7 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
       }
     }
 
-    GEOSX_THROW_IF_IF( !match_found,
+    GEOS_THROW_IF( !match_found,
                     "No matches found for pattern " << basename << " in directory " << dirname << ".",
                     InputError );
 
@@ -380,7 +380,7 @@ void ProblemManager::parseInputFile()
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult const xmlResult = xmlDocument.load_file( inputFileName.c_str() );
-  GEOSX_THROW_IF_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
+  GEOS_THROW_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
                                          inputFileName, xmlResult.description(), xmlResult.offset ), InputError );
 
   // Add path information to the file
@@ -396,7 +396,7 @@ void ProblemManager::parseInputString( string const & xmlString )
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlString.c_str(), xmlString.length() );
-  GEOSX_THROW_IF_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML string\nDescription: {}\nOffset: {}",
+  GEOS_THROW_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML string\nDescription: {}\nOffset: {}",
                                          xmlResult.description(), xmlResult.offset ), InputError );
 
   // Parse the results

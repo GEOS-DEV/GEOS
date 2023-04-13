@@ -120,7 +120,7 @@ stringToInputVariable( T & target, string const & value )
 {
   std::istringstream ss( value );
   ss >> target;
-  GEOSX_THROW_IF_IF( ss.fail() || !ss.eof(),
+  GEOS_THROW_IF( ss.fail() || !ss.eof(),
                   "Error detected while parsing string: \"" << value << "\"",
                   InputError );
 }
@@ -200,7 +200,7 @@ template< typename T, typename U >
 std::enable_if_t< !internal::canParseVariable< T >, bool >
 readAttributeAsType( T &, string const & name, xmlNode const &, U const & )
 {
-  GEOSX_THROW_IF( "Cannot parse key with name ("<<name<<") with the given type " << LvArray::system::demangleType< T >(), InputError );
+  GEOS_THROW( "Cannot parse key with name ("<<name<<") with the given type " << LvArray::system::demangleType< T >(), InputError );
 }
 
 /**

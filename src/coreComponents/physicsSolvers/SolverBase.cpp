@@ -960,7 +960,7 @@ real64 SolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                  integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOSX_THROW_IF( "SolverBase::ExplicitStep called!. Should be overridden.", std::runtime_error );
+  GEOS_THROW( "SolverBase::ExplicitStep called!. Should be overridden.", std::runtime_error );
   return 0;
 }
 
@@ -968,7 +968,7 @@ void SolverBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                     real64 const & GEOS_UNUSED_PARAM( dt ),
                                     DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOSX_THROW_IF( "SolverBase::ImplicitStepSetup called!. Should be overridden.", std::runtime_error );
+  GEOS_THROW( "SolverBase::ImplicitStepSetup called!. Should be overridden.", std::runtime_error );
 }
 
 void SolverBase::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),

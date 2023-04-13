@@ -125,7 +125,7 @@ localIndex ElasticWaveEquationSEM::getNumNodesPerElem()
 
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOSX_THROW_IF_IF( feDiscretization == nullptr,
+  GEOS_THROW_IF( feDiscretization == nullptr,
                   getName() << ": FE discretization not found: " << m_discretizationName,
                   InputError );
 
@@ -247,7 +247,7 @@ void ElasticWaveEquationSEM::postProcessInput()
     }
   }
 
-  GEOSX_THROW_IF_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+  GEOS_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -328,7 +328,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
                                                                                         CellElementSubRegion & elementSubRegion )
   {
 
-    GEOSX_THROW_IF_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
+    GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
                     "Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
                     InputError );
 
@@ -486,7 +486,7 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumb
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  GEOSX_THROW_IF_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
+  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
   forAll< EXEC_POLICY >( m_sourceConstantsx.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )

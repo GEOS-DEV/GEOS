@@ -144,7 +144,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       throw NotAnError();
     }
 
-    GEOSX_THROW_IF( "Bad command line arguments.", InputError );
+    GEOS_THROW( "Bad command line arguments.", InputError );
   }
 
   // Iterate over the remaining inputs

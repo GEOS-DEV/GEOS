@@ -149,7 +149,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     if( dx <= 0 || dy <= 0 || dz <= 0 )
     {
       WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
-      GEOSX_THROW_IF( "The reservoir element dimensions (dx, dy, and dz) should be positive in " << wellRegion.getWellGeneratorName(),
+      GEOS_THROW( "The reservoir element dimensions (dx, dy, and dz) should be positive in " << wellRegion.getWellGeneratorName(),
                    InputError );
     }
 
@@ -199,7 +199,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     if( rEq < wellElemRadius[wellElemIndex] )
     {
       WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
-      GEOSX_THROW_IF( "The equivalent radius r_eq = " << rEq <<
+      GEOS_THROW( "The equivalent radius r_eq = " << rEq <<
                    " is smaller than the well radius (r = " << wellElemRadius[wellElemIndex] <<
                    ") in " << wellRegion.getWellGeneratorName(),
                    InputError );
@@ -211,7 +211,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     if( m_wellTransmissibility[iperf] <= 0 )
     {
       WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
-      GEOSX_THROW_IF( "The well index is negative or equal to zero in " << wellRegion.getWellGeneratorName(),
+      GEOS_THROW( "The well index is negative or equal to zero in " << wellRegion.getWellGeneratorName(),
                    InputError );
     }
   }

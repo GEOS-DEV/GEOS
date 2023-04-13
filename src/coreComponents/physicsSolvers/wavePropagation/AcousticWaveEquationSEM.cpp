@@ -92,7 +92,7 @@ localIndex AcousticWaveEquationSEM::getNumNodesPerElem()
 
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOSX_THROW_IF_IF( feDiscretization == nullptr,
+  GEOS_THROW_IF( feDiscretization == nullptr,
                   getName() << ": FE discretization not found: " << m_discretizationName,
                   InputError );
 
@@ -196,11 +196,11 @@ void AcousticWaveEquationSEM::postProcessInput()
 {
 
   WaveSolverBase::postProcessInput();
-  GEOSX_THROW_IF_IF( m_sourceCoordinates.size( 1 ) != 3,
+  GEOS_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the sources",
                   InputError );
 
-  GEOSX_THROW_IF_IF( m_receiverCoordinates.size( 1 ) != 3,
+  GEOS_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the receivers",
                   InputError );
 
@@ -216,7 +216,7 @@ void AcousticWaveEquationSEM::postProcessInput()
     }
   }
 
-  GEOSX_THROW_IF_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+  GEOS_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -285,7 +285,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
-    GEOSX_THROW_IF_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
+    GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
                     "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
                     InputError );
 
@@ -339,7 +339,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  GEOSX_THROW_IF_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
+  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
@@ -918,12 +918,12 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
         // S_IROTH | S_IWOTH );
 
         std::ofstream wf( fileName, std::ios::out | std::ios::binary );
-        GEOSX_THROW_IF_IF( !wf,
+        GEOS_THROW_IF( !wf,
                         "Could not open file "<< fileName << " for writting",
                         InputError );
         wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
         wf.close( );
-        GEOSX_THROW_IF_IF( !wf.good(),
+        GEOS_THROW_IF( !wf.good(),
                         "An error occured while writting "<< fileName,
                         InputError );
       }
@@ -978,7 +978,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
         std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
         std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-        GEOSX_THROW_IF_IF( !wf,
+        GEOS_THROW_IF( !wf,
                         "Could not open file "<< fileName << " for reading",
                         InputError );
         //std::string fileName = GEOS_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );

@@ -196,7 +196,7 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
-    GEOSX_THROW_IF_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
+    GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
                     "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
                     InputError );
 
@@ -254,7 +254,7 @@ void AcousticFirstOrderWaveEquationSEM::addSourceToRightHandSide( integer const 
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  GEOSX_THROW_IF_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
+  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )

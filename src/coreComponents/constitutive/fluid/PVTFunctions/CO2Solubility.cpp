@@ -209,7 +209,7 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
 
   // initialize salinity and tolerance
-  GEOSX_THROW_IF_IF_LT_MSG( inputParams.size(), 9,
+  GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
                          GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
                          InputError );
 
@@ -225,7 +225,7 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW_IF( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
   }
 
   array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
@@ -257,10 +257,10 @@ CO2Solubility::CO2Solubility( string const & name,
                   componentNames,
                   componentMolarWeight )
 {
-  GEOSX_THROW_IF_IF_NE_MSG( phaseNames.size(), 2,
+  GEOS_THROW_IF_NE_MSG( phaseNames.size(), 2,
                          "The CO2Solubility model is a two-phase model",
                          InputError );
-  GEOSX_THROW_IF_IF_NE_MSG( componentNames.size(), 2,
+  GEOS_THROW_IF_NE_MSG( componentNames.size(), 2,
                          "The CO2Solubility model is a two-component model",
                          InputError );
 

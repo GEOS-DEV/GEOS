@@ -88,7 +88,7 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
 void EquilibriumInitialCondition::postProcessInput()
 {
 
-  GEOSX_THROW_IF_IF( ( m_temperatureVsElevationTableName.empty() != m_componentFractionVsElevationTableNames.empty() ),
+  GEOS_THROW_IF( ( m_temperatureVsElevationTableName.empty() != m_componentFractionVsElevationTableNames.empty() ),
                   getCatalogName() << " " << getName()
                                    << ": both " <<
                   viewKeyStruct::componentFractionVsElevationTableNamesString() << " and " <<
@@ -99,15 +99,15 @@ void EquilibriumInitialCondition::postProcessInput()
 
   if( !m_componentFractionVsElevationTableNames.empty() )
   {
-    GEOSX_THROW_IF_IF( m_componentFractionVsElevationTableNames.size() <= 1,
+    GEOS_THROW_IF( m_componentFractionVsElevationTableNames.size() <= 1,
                     getCatalogName() << " " << getName() << ": at least two component names must be specified in "
                                      << viewKeyStruct::componentNamesString(),
                     InputError );
-    GEOSX_THROW_IF_IF( m_componentFractionVsElevationTableNames.size() != m_componentNames.size(),
+    GEOS_THROW_IF( m_componentFractionVsElevationTableNames.size() != m_componentNames.size(),
                     getCatalogName() << " " << getName() << ": mismatch between the size of "
                                      << viewKeyStruct::componentNamesString() << " and " << viewKeyStruct::componentFractionVsElevationTableNamesString(),
                     InputError );
-    GEOSX_THROW_IF_IF( m_componentNames.size() >= 2 && m_initPhaseName.empty(),
+    GEOS_THROW_IF( m_componentNames.size() >= 2 && m_initPhaseName.empty(),
                     getCatalogName() << " " << getName() << ": for now, the keyword: " << viewKeyStruct::initPhaseNameString()
                                      << " must be filled for a multiphase simulation",
                     InputError );
@@ -115,12 +115,12 @@ void EquilibriumInitialCondition::postProcessInput()
     array1d< localIndex > tableSizes( m_componentNames.size() );
     for( localIndex ic = 0; ic < m_componentNames.size(); ++ic )
     {
-      GEOSX_THROW_IF_IF( m_componentFractionVsElevationTableNames[ic].empty(),
+      GEOS_THROW_IF( m_componentFractionVsElevationTableNames[ic].empty(),
                       getCatalogName() << " " << getName()
                                        << ": the component fraction vs elevation table name is missing for component " << ic,
                       InputError );
 
-      GEOSX_THROW_IF_IF( !m_componentFractionVsElevationTableNames[ic].empty() &&
+      GEOS_THROW_IF( !m_componentFractionVsElevationTableNames[ic].empty() &&
                       !functionManager.hasGroup( m_componentFractionVsElevationTableNames[ic] ),
                       getCatalogName() << " " << getName()
                                        << ": the component fraction vs elevation table " << m_componentFractionVsElevationTableNames[ic]
@@ -128,7 +128,7 @@ void EquilibriumInitialCondition::postProcessInput()
                       InputError );
 
       TableFunction const & compFracTable = functionManager.getGroup< TableFunction >( m_componentFractionVsElevationTableNames[ic] );
-      GEOSX_THROW_IF_IF( compFracTable.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
+      GEOS_THROW_IF( compFracTable.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
                       getCatalogName() << " " << getName() << ": the interpolation method for the component fraction vs elevation table "
                                        << compFracTable.getName() << " should be TableFunction::InterpolationType::Linear",
                       InputError );
@@ -139,12 +139,12 @@ void EquilibriumInitialCondition::postProcessInput()
   if( !m_temperatureVsElevationTableName.empty() )
   {
 
-    GEOSX_THROW_IF_IF( !functionManager.hasGroup( m_temperatureVsElevationTableName ),
+    GEOS_THROW_IF( !functionManager.hasGroup( m_temperatureVsElevationTableName ),
                     getCatalogName() << " " << getName() << ": the temperature vs elevation table " << m_temperatureVsElevationTableName << " could not be found",
                     InputError );
 
     TableFunction const & tempTable = functionManager.getGroup< TableFunction >( m_temperatureVsElevationTableName );
-    GEOSX_THROW_IF_IF( tempTable.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
+    GEOS_THROW_IF( tempTable.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
                     getCatalogName() << " " << getName() << ": The interpolation method for the temperature vs elevation table "
                                      << tempTable.getName() << " should be TableFunction::InterpolationType::Linear",
                     InputError );
@@ -164,7 +164,7 @@ void EquilibriumInitialCondition::initializePreSubGroups()
     {
       TableFunction const & compFracTable = functionManager.getGroup< TableFunction >( m_componentFractionVsElevationTableNames[ic] );
       arrayView1d< real64 const > compFracValues = compFracTable.getValues();
-      GEOSX_THROW_IF_IF( compFracValues.size() <= 1,
+      GEOS_THROW_IF( compFracValues.size() <= 1,
                       getCatalogName() << " " << getName() << ": the component fraction vs elevation table "
                                        << compFracTable.getName() << " must contain at least two values",
                       InputError );
@@ -172,7 +172,7 @@ void EquilibriumInitialCondition::initializePreSubGroups()
       tableSizes[ic] = compFracValues.size();
       if( ic >= 1 )
       {
-        GEOSX_THROW_IF_IF( tableSizes[ic] != tableSizes[ic-1],
+        GEOS_THROW_IF( tableSizes[ic] != tableSizes[ic-1],
                         getCatalogName() << " " << getName()
                                          << ": all the component fraction vs elevation tables must contain the same number of values",
                         InputError );
@@ -194,7 +194,7 @@ void EquilibriumInitialCondition::initializePreSubGroups()
 
         if( ic >= 1 )
         {
-          GEOSX_THROW_IF_IF( !isZero( elevation[ic][i] - elevation[ic-1][i] ),
+          GEOS_THROW_IF( !isZero( elevation[ic][i] - elevation[ic-1][i] ),
                           getCatalogName() << " " << getName()
                                            << ": the elevation values must be the same in all the component vs elevation tables",
                           InputError );
@@ -202,7 +202,7 @@ void EquilibriumInitialCondition::initializePreSubGroups()
 
         if( ic == m_componentNames.size() - 1 )
         {
-          GEOSX_THROW_IF_IF( !isZero( sumCompFrac[i] - 1 ),
+          GEOS_THROW_IF( !isZero( sumCompFrac[i] - 1 ),
                           getCatalogName() << " " << getName()
                                            << ": at a given elevation, the component fraction sum must be equal to one",
                           InputError );

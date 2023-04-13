@@ -46,7 +46,7 @@ PhillipsBrineViscosity::PhillipsBrineViscosity( string const & name,
 
 void PhillipsBrineViscosity::makeCoefficients( string_array const & inputPara )
 {
-  GEOSX_THROW_IF_IF_LT_MSG( inputPara.size(), 3,
+  GEOS_THROW_IF_LT_MSG( inputPara.size(), 3,
                          GEOS_FMT( "{}: insufficient number of model parameters", m_functionName ),
                          InputError );
 
@@ -57,7 +57,7 @@ void PhillipsBrineViscosity::makeCoefficients( string_array const & inputPara )
   }
   catch( std::invalid_argument const & e )
   {
-    GEOSX_THROW_IF( GEOS_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
+    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
   }
 
   // these coefficients come from Phillips et al. (1981), equation (1), pages 5-6

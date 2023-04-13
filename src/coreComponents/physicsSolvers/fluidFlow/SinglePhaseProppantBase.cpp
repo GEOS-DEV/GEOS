@@ -84,7 +84,7 @@ void SinglePhaseProppantBase::validateConstitutiveModels( DomainPartition & doma
     {
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
-      GEOSX_THROW_IF_IF( fluidName.empty(),
+      GEOS_THROW_IF( fluidName.empty(),
                       GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                       InputError );
     } );

@@ -34,10 +34,10 @@ DeadOilFluid::DeadOilFluid( string const & name,
 
 void DeadOilFluid::readInputDataFromPVTFiles()
 {
-  GEOSX_THROW_IF_IF_NE_MSG( m_tableFiles.size(), numFluidPhases(),
+  GEOS_THROW_IF_NE_MSG( m_tableFiles.size(), numFluidPhases(),
                          GEOS_FMT( "{}: the number of table files must be equal to the number of phases", getFullName() ),
                          InputError );
-  GEOSX_THROW_IF_IF( m_formationVolFactorTableNames.size() > 0.0 || m_viscosityTableNames.size() > 0.0,
+  GEOS_THROW_IF( m_formationVolFactorTableNames.size() > 0.0 || m_viscosityTableNames.size() > 0.0,
                   GEOS_FMT( "{}: input is redundant (both TableFunction names and pvt files)", getFullName() ),
                   InputError );
 
@@ -60,7 +60,7 @@ void DeadOilFluid::readInputDataFromPVTFiles()
 
 void DeadOilFluid::readInputDataFromTableFunctions()
 {
-  GEOSX_THROW_IF_IF( !m_tableFiles.empty(),
+  GEOS_THROW_IF( !m_tableFiles.empty(),
                   GEOS_FMT( "{}: input is redundant (both TableFunction names and pvt files)", getFullName() ),
                   InputError );
 
@@ -74,7 +74,7 @@ void DeadOilFluid::readInputDataFromTableFunctions()
   {
     auto const errorIfPositiveValue = [&]( real64 const value, auto const & attribute )
     {
-      GEOSX_THROW_IF_IF_GT_MSG( value, 0.0,
+      GEOS_THROW_IF_GT_MSG( value, 0.0,
                              GEOS_FMT( "{}: if water is absent, attribute '{}' is not redundant", getFullName(), attribute ),
                              InputError );
     };
@@ -85,10 +85,10 @@ void DeadOilFluid::readInputDataFromTableFunctions()
   }
 
   integer const numExpectedTables = (ipGas >= 0) ? 2 : 1;
-  GEOSX_THROW_IF_IF_NE_MSG( m_formationVolFactorTableNames.size(), numExpectedTables,
+  GEOS_THROW_IF_NE_MSG( m_formationVolFactorTableNames.size(), numExpectedTables,
                          GEOS_FMT( "{}: one formation volume factor table must be provided for each hydrocarbon phase", getFullName() ),
                          InputError );
-  GEOSX_THROW_IF_IF_NE_MSG( m_viscosityTableNames.size(), numExpectedTables,
+  GEOS_THROW_IF_NE_MSG( m_viscosityTableNames.size(), numExpectedTables,
                          GEOS_FMT( "{}: one viscosity table must be provided for each hydrocarbon phase", getFullName() ),
                          InputError );
 
@@ -103,10 +103,10 @@ void DeadOilFluid::readInputDataFromTableFunctions()
   FunctionManager const & functionManager = FunctionManager::getInstance();
   for( integer iph = 0; iph < m_hydrocarbonPhaseOrder.size(); ++iph )
   {
-    GEOSX_THROW_IF_IF( !functionManager.hasGroup( m_formationVolFactorTableNames[iph] ),
+    GEOS_THROW_IF( !functionManager.hasGroup( m_formationVolFactorTableNames[iph] ),
                     GEOS_FMT( "{}: formation volume factor table '{}' not found", getFullName(), m_formationVolFactorTableNames[iph] ),
                     InputError );
-    GEOSX_THROW_IF_IF( !functionManager.hasGroup( m_viscosityTableNames[iph] ),
+    GEOS_THROW_IF( !functionManager.hasGroup( m_viscosityTableNames[iph] ),
                     GEOS_FMT( "{}: viscosity table '{}' not found", getFullName(), m_viscosityTableNames[iph] ),
                     InputError );
   }
