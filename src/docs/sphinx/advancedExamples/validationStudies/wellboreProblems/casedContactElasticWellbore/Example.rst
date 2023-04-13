@@ -2,14 +2,14 @@
 
 
 ###############################################
-Cased Elastic Wellbore with Impefect Interfaces
+Cased Elastic Wellbore with Imperfect Interfaces
 ###############################################
 
 ------------------------------------------------------------------
 Problem description
 ------------------------------------------------------------------
 
-This example uses the ``LagrangianContact`` solver to handle a cased wellbore problem with imperfect contact interfaces. The completed wellbore is composed of a steel casing, a cement sheath, and rock formation. All the three materials are assumed to exhibit isotropic linear elastic behavior. The contact surfaces between these materials follow the Lagrangian contact law. 
+This example uses the ``LagrangianContact`` solver to handle a cased wellbore problem with imperfect contact interfaces. The completed wellbore is composed of a steel casing, a cement sheath, and rock formation. All the three materials are assumed to exhibit isotropic linear elastic behavior. The contact surfaces between these materials are simulated using a Lagrangian contact model. 
 
 .. _problemSketchCasedElasticWellboreInterfacesFig:
 .. figure:: sketch.png
@@ -19,18 +19,18 @@ This example uses the ``LagrangianContact`` solver to handle a cased wellbore pr
 
    A cased wellbore with imperfect casing-cement and cement-rock interfaces 
 
-Under a radial compression loading, the imperfect contact intefaces behave like the perfect ones (see :ref:`AdvancedExampleCasedElasticWellbore`). When a radial tension loading on the inner face of the wellbore, the casing debonds from the cement layer. Analytical results of the radial displacement :math:`u_{r}` in the casing is expressed as `(Hervé and Zaoui, 1995) <https://link.springer.com/chapter/10.1007%2F978-94-015-8494-4_55>`__ :
+Under a compressional loading in the radial direction, the imperfect contact interfaces behave like the perfect ones (see :ref:`AdvancedExampleCasedElasticWellbore`). When a radial tension acting on the inner face of the wellbore, the casing debonds from the cement layer. Analytical results of the radial displacement :math:`u_{r}` in the casing is expressed as `(Hervé and Zaoui, 1995) <https://link.springer.com/chapter/10.1007%2F978-94-015-8494-4_55>`__ :
 
 .. math::
    u_{r} = Ar - \frac{B}{r}
 
-where :math:`r` is the radial coordinate, :math:`A` and :math:`B` are constants that are obtained by solving the boundary conditions, as detailed in the post-processing script. The outer face of the casing as well as the inner face of the cement layer are free of stress because of the debonding at the casing-cement interface. Therefore, the displacement jump at the cement-rock interface is nil, and the displacement jump accross the casing-cement interface is equal to :math:`u_r(r=r_{out_casing})`, where :math:`r_{out_casing}` is the outer raidus of the casing. 
+where :math:`r` is the radial coordinate, :math:`A` and :math:`B` are constants that are obtained by solving the boundary conditions, as detailed in the post-processing script. The outer face of the casing as well as the inner face of the cement layer are free of stress because of the debonding at the casing-cement interface. Therefore, the displacement jump at the cement-rock interface is nil, and the displacement jump across the casing-cement interface is equal to :math:`u_r(r=r_{out_casing})`, where :math:`r_{out_casing}` is the outer radius of the casing. 
 
 
 **Input file**
 
 This benchmark example does not use any external input files and everything required is
-contained within two GEOSX XML files located at:
+contained within two GEOS XML files located at:
 
 .. code-block:: console
 
@@ -112,7 +112,7 @@ The imperfect contact surfaces between casing, cement, and rock layers are defin
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/CasedElasticWellbore_ImperfectInterfaces_base.xml
   :language: xml
   :start-after: <!-- SPHINX_SurfaceElementRegion -->
-  :end-before: <!-- SPHINX_SurfaceElementRegion -->
+  :end-before: <!-- SPHINX_SurfaceElementRegionEnd -->
 
 Here, the ``faceBlock`` name, ``faceElementSubRegion``, is needed to define ``Tasks`` for collecting displacement jumps across the contact surfaces. The ``defaultAperture`` defined in this block is the default hydraulic aperture that should not be confused with the mechanical aperture. For this purely mechanical problem, the default hydraulic aperture parameter is omitted. The fracture material given in the ``materialList`` is defined as follows:
 
@@ -127,7 +127,7 @@ For this purely mechanical problem, without fluid flow and shearing stress actin
 Results and benchmark
 ---------------------------------
 
-The GEOSX results of displacement jump across the casing-cement and cement-rock interfaces are shown in the figure below: 
+The GEOS results of displacement jump across the casing-cement and cement-rock interfaces are shown in the figure below: 
 
 .. _CasedElasticWellboreInterfacesDisplacementJump3DFig:
 .. figure:: displacementJump3D.png
@@ -137,7 +137,7 @@ The GEOSX results of displacement jump across the casing-cement and cement-rock 
 
    Displacement jumps across the casing-cement and cement-rock interfaces
 
-We can observe an expected zero displacement jump at the cement-rock interface under a tension stress on the inner surface of the casing. This is because the applied stress does not cause any strain on the cement and rock layers after the debonding occurs at the casing-cement interface. The displacement jump at the casing-cement interface is homogeneous and varies over time because the tension stress on the inner surface of the casing varies with time as defined in the XML file. A perfect comparison of GEOSX results versus theoretical results is shown in the figure below:
+As expected, we observe a zero-displacement jump at the cement-rock interface under a tension stress on the inner surface of the casing. Indeed, the stress applied here does not cause any strain on the cement and rock layers after debonding has occurred at the casing-cement interface. The displacement jump at the casing-cement interface is homogeneous and varies over time because the tension stress on the inner surface of the casing varies with time, as defined in the XML file. A perfect comparison between GEOS results and theoretical results is shown in the figure below:
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedContactElasticWellbore/elastic_casedWellbore_displacementJump.py
 
