@@ -643,8 +643,8 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
     arrayView2d< real32 > const uzReceivers   = m_displacementzNp1AtReceivers.toView();
 
     computeAllSeismoTraces( time_n, dt, ux_np1, ux_np1, uxReceivers );
-    computeAllSeismoTraces( time_n, dt, uy_np1, uy_np1, uxReceivers );
-    computeAllSeismoTraces( time_n, dt, uz_np1, uz_np1, uxReceivers );
+    computeAllSeismoTraces( time_n, dt, uy_np1, uy_np1, uyReceivers );
+    computeAllSeismoTraces( time_n, dt, uz_np1, uz_np1, uzReceivers );
 
     // increment m_indexSeismoTrace
     while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
@@ -707,8 +707,8 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
     arrayView2d< real32 > const uzReceivers   = m_displacementzNp1AtReceivers.toView();
 
     computeAllSeismoTraces( time_n, 0, ux_np1, ux_np1, uxReceivers );
-    computeAllSeismoTraces( time_n, 0, uy_np1, uy_np1, uxReceivers );
-    computeAllSeismoTraces( time_n, 0, uz_np1, uz_np1, uxReceivers );
+    computeAllSeismoTraces( time_n, 0, uy_np1, uy_np1, uyReceivers );
+    computeAllSeismoTraces( time_n, 0, uz_np1, uz_np1, uzReceivers );
 
   } );
 
