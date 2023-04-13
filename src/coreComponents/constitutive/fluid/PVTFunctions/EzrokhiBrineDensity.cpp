@@ -59,7 +59,7 @@ void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )
 
   m_waterCompressibility = 4.5e-10; // Pa-1
   GEOSX_THROW_IF_IF_LT_MSG( inputPara.size(), 5,
-                         GEOSX_FMT( "{}: insufficient number of model parameters", m_functionName ),
+                         GEOS_FMT( "{}: insufficient number of model parameters", m_functionName ),
                          InputError );
 
   try
@@ -71,7 +71,7 @@ void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )
   }
   catch( std::invalid_argument const & e )
   {
-    GEOSX_THROW_IF( GEOSX_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
+    GEOSX_THROW_IF( GEOS_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
   }
 }
 

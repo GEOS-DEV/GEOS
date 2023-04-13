@@ -242,7 +242,7 @@ void CompositionalMultiphaseWell::setConstitutiveNames( ElementSubRegionBase & s
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
   GEOSX_THROW_IF_IF( fluidName.empty(),
-                  GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                  GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                   InputError );
 
   string & relPermName = subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
@@ -255,7 +255,7 @@ void CompositionalMultiphaseWell::setConstitutiveNames( ElementSubRegionBase & s
   relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
 
   GEOSX_THROW_IF_IF( relPermName.empty(),
-                  GEOSX_FMT( "Relative permeability model not found on subregion {}", subRegion.getName() ),
+                  GEOS_FMT( "Relative permeability model not found on subregion {}", subRegion.getName() ),
                   InputError );
 
 }
@@ -266,13 +266,13 @@ template< typename MODEL1_TYPE, typename MODEL2_TYPE >
 void compareMultiphaseModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
   GEOSX_THROW_IF_IF_NE_MSG( lhs.numFluidPhases(), rhs.numFluidPhases(),
-                         GEOSX_FMT( "Mismatch in number of phases between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                         GEOS_FMT( "Mismatch in number of phases between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                          InputError );
 
   for( integer ip = 0; ip < lhs.numFluidPhases(); ++ip )
   {
     GEOSX_THROW_IF_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
-                           GEOSX_FMT( "Mismatch in phase names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                           GEOS_FMT( "Mismatch in phase names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                            InputError );
   }
 }
@@ -281,13 +281,13 @@ template< typename MODEL1_TYPE, typename MODEL2_TYPE >
 void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
   GEOSX_THROW_IF_IF_NE_MSG( lhs.numFluidComponents(), rhs.numFluidComponents(),
-                         GEOSX_FMT( "Mismatch in number of components between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                         GEOS_FMT( "Mismatch in number of components between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                          InputError );
 
   for( integer ic = 0; ic < lhs.numFluidComponents(); ++ic )
   {
     GEOSX_THROW_IF_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
-                           GEOSX_FMT( "Mismatch in component names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                           GEOS_FMT( "Mismatch in component names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                            InputError );
   }
 }
@@ -431,13 +431,13 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
       GEOSX_THROW_IF_IF( fluidName.empty(),
-                      GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                      GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                       InputError );
 
       string & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
       GEOSX_THROW_IF_IF( relPermName.empty(),
-                      GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                      GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                       InputError );
 
       validateInjectionStreams( subRegion );
@@ -540,7 +540,7 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
 
   if( logLevel >= 2 )
   {
-    GEOS_LOG_RANK( GEOSX_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
+    GEOS_LOG_RANK( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
                                wellControlsName, currentBHP ) );
   }
 
@@ -663,7 +663,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         fluidWrapper.update( iwelemRef, 0, surfacePres, surfaceTemp, compFrac[iwelemRef] );
         if( logLevel >= 2 )
         {
-          GEOS_LOG_RANK( GEOSX_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
+          GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
                                      wellControlsName, surfacePres, surfaceTemp ) );
         }
       }
@@ -699,7 +699,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
       if( logLevel >= 2 && useSurfaceConditions )
       {
-        GEOS_LOG_RANK( GEOSX_FMT( "{}: The total fluid density at surface conditions is {} {}/sm3. \n"
+        GEOS_LOG_RANK( GEOS_FMT( "{}: The total fluid density at surface conditions is {} {}/sm3. \n"
                                    "The total rate is {} {}/s, which corresponds to a total surface volumetric rate of {} sm3/s",
                                    wellControlsName, totalDens[iwelemRef][0], massUnit,
                                    currentTotalRate, massUnit, currentTotalVolRate ) );
@@ -738,7 +738,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
         if( logLevel >= 2 && useSurfaceConditions )
         {
-          GEOS_LOG_RANK( GEOSX_FMT( "{}: The density of phase {} at surface conditions is {} {}/sm3. \n"
+          GEOS_LOG_RANK( GEOS_FMT( "{}: The density of phase {} at surface conditions is {} {}/sm3. \n"
                                      "The phase surface volumetric rate is {} sm3/s",
                                      wellControlsName, ip, phaseDens[iwelemRef][0][ip], massUnit, currentPhaseVolRate[ip] ) );
         }
@@ -1180,7 +1180,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
   }
   return residualNorm;
 }
@@ -1801,7 +1801,7 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
       }
       if( !wellControls.isWellOpen( time_n + dt ) )
       {
-        GEOS_LOG( GEOSX_FMT( "{}: well is shut", wellControlsName ) );
+        GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
         return;
       }
 
@@ -1829,13 +1829,13 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
         string const unitKey = useSurfaceConditions ? "s" : "r";
 
         real64 const currentTotalRate = connRate[iwelemRef];
-        GEOS_LOG( GEOSX_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
+        GEOS_LOG( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
                               wellControlsName, currentBHP ) );
-        GEOS_LOG( GEOSX_FMT( "{}: Total rate: {} {}/s; total {} volumetric rate: {} {}m3/s",
+        GEOS_LOG( GEOS_FMT( "{}: Total rate: {} {}/s; total {} volumetric rate: {} {}m3/s",
                               wellControlsName, currentTotalRate, massUnit, conditionKey, currentTotalVolRate, unitKey ) );
         for( integer ip = 0; ip < numPhase; ++ip )
         {
-          GEOS_LOG( GEOSX_FMT( "{}: Phase {} {} volumetric rate: {} {}m3/s",
+          GEOS_LOG( GEOS_FMT( "{}: Phase {} {} volumetric rate: {} {}m3/s",
                                 wellControlsName, ip, conditionKey, currentPhaseVolRate[ip], unitKey ) );
         }
 

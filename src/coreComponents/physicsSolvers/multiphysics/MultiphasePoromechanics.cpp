@@ -264,7 +264,7 @@ void MultiphasePoromechanics::initializePostInitialConditionsPreSubGroups()
 
   integer & isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
   GEOS_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
-                       GEOSX_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
+                       GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
                                   catalogName(), getName(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
   isFlowThermal = m_isThermal;
 
@@ -300,7 +300,7 @@ void MultiphasePoromechanics::initializePreSubGroups()
     {
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      GEOS_ERROR_IF( porousName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+      GEOS_ERROR_IF( porousName.empty(), GEOS_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
 
       if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
       {

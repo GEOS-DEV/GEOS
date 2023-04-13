@@ -386,7 +386,7 @@ void WellControls::postProcessInput()
   if( m_statusTableName.empty())
   {
     // All well controls without a specified status function will use the same "Open" status function.
-    m_statusTableName = GEOSX_FMT( "{0}_OpenStatus_table", dataRepository::keys::wellControls );
+    m_statusTableName = GEOS_FMT( "{0}_OpenStatus_table", dataRepository::keys::wellControls );
     FunctionManager & functionManager = FunctionManager::getInstance();
     m_statusTable = functionManager.getGroupPointer< TableFunction const >( m_statusTableName );
     if( m_statusTable==nullptr )

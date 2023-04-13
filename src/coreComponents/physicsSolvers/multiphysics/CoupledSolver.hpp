@@ -80,7 +80,7 @@ public:
       using SolverType = TYPEOFPTR( SolverPtr {} );
       solver = this->getParent().template getGroupPointer< SolverType >( m_names[idx()] );
       GEOSX_THROW_IF_IF( solver == nullptr,
-                      GEOSX_FMT( "Could not find solver '{}' of type {}",
+                      GEOS_FMT( "Could not find solver '{}' of type {}",
                                  m_names[idx()], LvArray::system::demangleType< SolverType >() ),
                       InputError );
     } );
@@ -399,7 +399,7 @@ protected:
       // Solve the subproblems nonlinearly
       forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
       {
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "  Iteration {:2}: {}", iter+1, solver->getName() ) );
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Iteration {:2}: {}", iter+1, solver->getName() ) );
         dtReturnTemporary = solver->nonlinearImplicitStep( time_n,
                                                            dtReturn,
                                                            cycleNumber,
@@ -462,7 +462,7 @@ protected:
     {
       if( params.sequentialConvergenceCriterion() == NonlinearSolverParameters::SequentialConvergenceCriterion::ResidualNorm )
       {
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "  Iteration {:2}: outer-loop convergence check", iter+1 ) );
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Iteration {:2}: outer-loop convergence check", iter+1 ) );
         real64 residualNorm = 0;
 
         // loop over all the single-physics solvers
@@ -500,7 +500,7 @@ protected:
 
         // finally, we perform the convergence check on the multiphysics residual
         residualNorm = sqrt( residualNorm );
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
         isConverged = ( residualNorm < params.m_newtonTol );
 
       }
@@ -536,7 +536,7 @@ protected:
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;
     GEOSX_THROW_IF_IF( isSequential && usesLineSearch,
-                    GEOSX_FMT( "`{}`: line search is not supported by the coupled solver when {} is set to `{}`. Please set {} to `{}` to remove this error",
+                    GEOS_FMT( "`{}`: line search is not supported by the coupled solver when {} is set to `{}`. Please set {} to `{}` to remove this error",
                                getName(),
                                NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
                                EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential ),

@@ -91,7 +91,7 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
 
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
-      GEOS_ERROR_IF( fluidName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
+      GEOS_ERROR_IF( fluidName.empty(), GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
 
     } );
   } );
@@ -199,7 +199,7 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
 
   if( logLevel >= 2 )
   {
-    GEOS_LOG_RANK( GEOSX_FMT( "{}: The BHP (at the specified reference elevation) is {} Pa",
+    GEOS_LOG_RANK( GEOS_FMT( "{}: The BHP (at the specified reference elevation) is {} Pa",
                                wellControlsName, currentBHP ) );
   }
 
@@ -275,7 +275,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
         fluidWrapper.update( iwelemRef, 0, surfacePres );
         if( logLevel >= 2 )
         {
-          GEOS_LOG_RANK( GEOSX_FMT( "{}: surface density computed with P_surface = {} Pa",
+          GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa",
                                      wellControlsName, surfacePres ) );
         }
       }
@@ -292,7 +292,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
 
       if( logLevel >= 2 && useSurfaceConditions )
       {
-        GEOS_LOG_RANK( GEOSX_FMT( "{}: The total fluid density at surface conditions is {} kg/sm3. \n"
+        GEOS_LOG_RANK( GEOS_FMT( "{}: The total fluid density at surface conditions is {} kg/sm3. \n"
                                    "The total rate is {} kg/s, which corresponds to a total surface volumetric rate of {} sm3/s",
                                    wellControlsName, dens[iwelemRef][0],
                                    currentVolRate, currentVolRate ) );
@@ -823,7 +823,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
   }
   return residualNorm;
 }
@@ -1025,7 +1025,7 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
       }
       if( !wellControls.isWellOpen( time_n + dt ) )
       {
-        GEOS_LOG( GEOSX_FMT( "{}: well is shut", wellControlsName ) );
+        GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
         return;
       }
 
@@ -1048,9 +1048,9 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
         string const unitKey = useSurfaceConditions ? "s" : "r";
 
         real64 const currentTotalRate = connRate[iwelemRef];
-        GEOS_LOG( GEOSX_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
+        GEOS_LOG( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
                               wellControlsName, currentBHP ) );
-        GEOS_LOG( GEOSX_FMT( "{}: Total rate: {} kg/s; total {} volumetric rate: {} {}m3/s",
+        GEOS_LOG( GEOS_FMT( "{}: Total rate: {} kg/s; total {} volumetric rate: {} {}m3/s",
                               wellControlsName, currentTotalRate, conditionKey, currentTotalVolRate, unitKey ) );
       } );
     } );

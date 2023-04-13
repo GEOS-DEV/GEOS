@@ -124,7 +124,7 @@ void HydrofractureSolver::initializePreSubGroups()
     {
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      GEOS_ERROR_IF( porousName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+      GEOS_ERROR_IF( porousName.empty(), GEOS_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
     } );
   } );
 }

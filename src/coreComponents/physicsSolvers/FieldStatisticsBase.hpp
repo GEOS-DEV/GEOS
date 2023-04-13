@@ -80,7 +80,7 @@ protected:
 
     m_solver = physicsSolverManager.getGroupPointer< SOLVER >( m_solverName );
     GEOSX_THROW_IF_IF( m_solver == nullptr,
-                    GEOSX_FMT( "Could not find solver '{}' of type {}",
+                    GEOS_FMT( "Could not find solver '{}' of type {}",
                                m_solverName, LvArray::system::demangleType< SOLVER >() ),
                     InputError );
   }

@@ -52,7 +52,7 @@ string writeRootFile( conduit::Node & root, string const & rootPath )
   }
 
   MpiWrapper::barrier( MPI_COMM_GEOSX );
-  return GEOSX_FMT( "{}/rank_{:07}.hdf5", completeRootPath.data(), MpiWrapper::commRank() );
+  return GEOS_FMT( "{}/rank_{:07}.hdf5", completeRootPath.data(), MpiWrapper::commRank() );
 }
 
 

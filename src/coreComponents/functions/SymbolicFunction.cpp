@@ -67,7 +67,7 @@ public:
     string const s = m_stream.str();
     if( !s.empty() )
     {
-      GEOS_LOG_RANK_0( GEOSX_FMT( "{} '{}': JIT compiler produced the following output:\n{}",
+      GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': JIT compiler produced the following output:\n{}",
                                    SymbolicFunction::catalogName(), m_name, s ) );
     }
   }
@@ -82,17 +82,17 @@ public:
     {
       case kMessageError:
       {
-        m_stream << GEOSX_FMT( "[ERROR]: {} (line {}, column {})\n", message, line, column );
+        m_stream << GEOS_FMT( "[ERROR]: {} (line {}, column {})\n", message, line, column );
         break;
       }
       case kMessageWarning:
       {
-        m_stream << GEOSX_FMT( "[WARNING]: {} (line {}, column {})\n", message, line, column );
+        m_stream << GEOS_FMT( "[WARNING]: {} (line {}, column {})\n", message, line, column );
         break;
       }
       default:
       {
-        m_stream << GEOSX_FMT( "[OTHER]\n{}", message );
+        m_stream << GEOS_FMT( "[OTHER]\n{}", message );
         break;
       }
     }

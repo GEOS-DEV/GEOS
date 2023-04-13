@@ -311,7 +311,7 @@ void HypreVector::print( std::ostream & os ) const
 
   if( myRank == 0 )
   {
-    GEOSX_FMT_TO( str, sizeof( str ), headFormat, "MPI_Process", "GlobalRowID", "Value" );
+    GEOS_FMT_TO( str, sizeof( str ), headFormat, "MPI_Process", "GlobalRowID", "Value" );
     os << str;
   }
 
@@ -324,7 +324,7 @@ void HypreVector::print( std::ostream & os ) const
       globalIndex const firstRowID = ilower();
       forAll< serialPolicy >( localSize(), [&, data]( localIndex const i )
       {
-        GEOSX_FMT_TO( str, sizeof( str ), lineFormat,
+        GEOS_FMT_TO( str, sizeof( str ), lineFormat,
                       rank,
                       firstRowID + i,
                       data[i] );
@@ -353,9 +353,9 @@ void HypreVector::write( string const & filename,
       if( rank == 0 )
       {
         std::ofstream os( filename );
-        GEOS_ERROR_IF( !os, GEOSX_FMT( "Unable to open file for writing: {}", filename ) );
+        GEOS_ERROR_IF( !os, GEOS_FMT( "Unable to open file for writing: {}", filename ) );
         os << "%%MatrixMarket matrix array real general\n";
-        os << GEOSX_FMT( "{} {}\n", globalSize(), 1 );
+        os << GEOS_FMT( "{} {}\n", globalSize(), 1 );
       }
 
       if( globalSize() > 0 )
@@ -371,7 +371,7 @@ void HypreVector::write( string const & filename,
         if( MpiWrapper::commRank( comm() ) == printRank )
         {
           std::ofstream os( filename, std::ios_base::app );
-          GEOS_ERROR_IF( !os, GEOSX_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
+          GEOS_ERROR_IF( !os, GEOS_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
           char str[32];
 
           HYPRE_Real const * const data = hypre_VectorData( fullVector );
@@ -379,7 +379,7 @@ void HypreVector::write( string const & filename,
 
           for( HYPRE_Int i = 0; i < size; i++ )
           {
-            GEOSX_FMT_TO( str, sizeof( str ), "{:>28.16e}\n", data[i] );
+            GEOS_FMT_TO( str, sizeof( str ), "{:>28.16e}\n", data[i] );
             os << str;
           }
         }

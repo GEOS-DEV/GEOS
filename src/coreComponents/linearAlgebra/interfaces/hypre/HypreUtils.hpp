@@ -140,7 +140,7 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
 {
 #ifdef GEOSX_USE_HYPRE_CUDA
   cudaError_t const err = cudaGetLastError();
-  GEOS_ERROR_IF( err != cudaSuccess, GEOSX_FMT( "Previous CUDA errors found: {} ({} at {}:{})", msg, cudaGetErrorString( err ), file, line ) );
+  GEOS_ERROR_IF( err != cudaSuccess, GEOS_FMT( "Previous CUDA errors found: {} ({} at {}:{})", msg, cudaGetErrorString( err ), file, line ) );
 #else
   GEOS_UNUSED_VAR( msg, file, line );
 #endif

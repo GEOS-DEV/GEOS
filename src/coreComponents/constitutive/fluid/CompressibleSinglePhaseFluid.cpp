@@ -99,7 +99,7 @@ void CompressibleSinglePhaseFluid::postProcessInput()
   auto const checkNonnegative = [&]( real64 const value, auto const & attribute )
   {
     GEOSX_THROW_IF_IF_LT_MSG( value, 0.0,
-                           GEOSX_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
+                           GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
                            InputError );
   };
   checkNonnegative( m_compressibility, viewKeyStruct::compressibilityString() );
@@ -108,7 +108,7 @@ void CompressibleSinglePhaseFluid::postProcessInput()
   auto const checkPositive = [&]( real64 const value, auto const & attribute )
   {
     GEOSX_THROW_IF_IF_LE_MSG( value, 0.0,
-                           GEOSX_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
+                           GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
                            InputError );
   };
   checkPositive( m_referenceDensity, viewKeyStruct::referenceDensityString() );
@@ -118,7 +118,7 @@ void CompressibleSinglePhaseFluid::postProcessInput()
   auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
   {
     GEOSX_THROW_IF_IF_NE_MSG( value, ExponentApproximationType::Linear,
-                           GEOSX_FMT( "{}: invalid model type in attribute '{}' (only linear currently supported)", getFullName(), attribute ),
+                           GEOS_FMT( "{}: invalid model type in attribute '{}' (only linear currently supported)", getFullName(), attribute ),
                            InputError );
   };
   checkModelType( m_densityModelType, viewKeyStruct::densityModelTypeString() );

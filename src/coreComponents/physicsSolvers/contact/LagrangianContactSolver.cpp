@@ -138,7 +138,7 @@ void LagrangianContactSolver::setConstitutiveNames( ElementSubRegionBase & subRe
 
   string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
   contactRelationName = this->m_contactRelationName;
-  GEOS_ERROR_IF( contactRelationName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( contactRelationName.empty(), GEOS_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
 }
 
 
@@ -703,7 +703,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & GEOS_UNUSE
     // Add 0 just to match Matlab code results
     globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
   }
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rdisplacement, Rtraction, Rtotal ) = ( {:15.6e}, {:15.6e}, {:15.6e} );",
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( Rdisplacement, Rtraction, Rtotal ) = ( {:15.6e}, {:15.6e}, {:15.6e} );",
                                         globalResidualNorm[0],
                                         globalResidualNorm[1],
                                         globalResidualNorm[2] ) );

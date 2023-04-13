@@ -217,7 +217,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
 
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",
+      std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",
                               FlowSolverBase::coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] );
     }
   }
@@ -235,7 +235,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
 
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm );
+      std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm );
     }
   }
   return residualNorm;
@@ -599,7 +599,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOS_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
+        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
                                      this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
                                      fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
       }
@@ -632,7 +632,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOS_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
+        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
                                      this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
                                      fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
       }

@@ -380,7 +380,7 @@ void ProblemManager::parseInputFile()
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult const xmlResult = xmlDocument.load_file( inputFileName.c_str() );
-  GEOSX_THROW_IF_IF( !xmlResult, GEOSX_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
+  GEOSX_THROW_IF_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
                                          inputFileName, xmlResult.description(), xmlResult.offset ), InputError );
 
   // Add path information to the file
@@ -396,7 +396,7 @@ void ProblemManager::parseInputString( string const & xmlString )
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlString.c_str(), xmlString.length() );
-  GEOSX_THROW_IF_IF( !xmlResult, GEOSX_FMT( "Errors found while parsing XML string\nDescription: {}\nOffset: {}",
+  GEOSX_THROW_IF_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML string\nDescription: {}\nOffset: {}",
                                          xmlResult.description(), xmlResult.offset ), InputError );
 
   // Parse the results
@@ -907,7 +907,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
       for( auto & materialName : materialList )
       {
         constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, numQuadraturePoints );
-        GEOS_LOG_RANK_0( GEOSX_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
+        GEOS_LOG_RANK_0( GEOS_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
                                      meshBodyName,
                                      meshLevelName,
                                      regionName,
@@ -943,7 +943,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
 //                                                                                                        regionName,
 //                                                                                                        subRegionName ) );
 //        GEOS_ERROR_IF( rqIter == regionQuadratures.end(),
-//                        GEOSX_FMT( "{}/{}/{}/{} does not have a discretization associated with it.",
+//                        GEOS_FMT( "{}/{}/{}/{} does not have a discretization associated with it.",
 //                                   meshBody.getName(),
 //                                   meshLevel.getName(),
 //                                   regionName,

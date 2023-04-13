@@ -82,7 +82,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();
   vtkMultiProcessController::SetGlobalController( controller );
 
-  GEOS_LOG_RANK_0( GEOSX_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
   {
     GEOS_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
     vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath, m_mainBlockName );
@@ -95,7 +95,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
     GEOS_LOG_LEVEL_RANK_0( 2, "  done!" );
   }
 
-  GEOS_LOG_RANK_0( GEOSX_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );
 
   MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( this->getName() );
   meshBody.createMeshLevel( 0 );

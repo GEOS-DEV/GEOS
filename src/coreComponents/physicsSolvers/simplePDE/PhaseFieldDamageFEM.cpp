@@ -116,7 +116,7 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 
       string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidModelNamesString() );
       solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
-      GEOS_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+      GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
 
     } );
   } );
@@ -565,7 +565,7 @@ PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( ti
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
-    std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residual );
+    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residual );
   }
 
   return residual;

@@ -187,7 +187,7 @@ void BlackOilFluidBase::postProcessInput()
   auto const checkInputSize = [&]( auto const & array, auto const & attribute )
   {
     GEOSX_THROW_IF_IF_NE_MSG( array.size(), m_phaseNames.size(),
-                           GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
+                           GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
                            InputError );
   };
   checkInputSize( m_surfacePhaseMassDensity, viewKeyStruct::surfacePhaseMassDensitiesString() );
@@ -216,7 +216,7 @@ void BlackOilFluidBase::createAllKernelWrappers()
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
   GEOSX_THROW_IF_IF( m_hydrocarbonPhaseOrder.size() != 1 && m_hydrocarbonPhaseOrder.size() != 2,
-                  GEOSX_FMT( "{}: the number of hydrocarbon phases must be 1 (oil) or 2 (oil+gas)", getFullName() ),
+                  GEOS_FMT( "{}: the number of hydrocarbon phases must be 1 (oil) or 2 (oil+gas)", getFullName() ),
                   InputError );
 
   if( m_formationVolFactorTables.empty() && m_viscosityTables.empty() )
@@ -243,10 +243,10 @@ void BlackOilFluidBase::validateTable( TableFunction const & table,
 {
   arrayView1d< real64 const > const property = table.getValues();
   GEOSX_THROW_IF_IF_NE_MSG( table.getInterpolationMethod(), TableFunction::InterpolationType::Linear,
-                         GEOSX_FMT( "{}: in table '{}' interpolation method must be linear", getFullName(), table.getName() ),
+                         GEOS_FMT( "{}: in table '{}' interpolation method must be linear", getFullName(), table.getName() ),
                          InputError );
   GEOSX_THROW_IF_IF_LT_MSG( property.size(), 2,
-                         GEOSX_FMT( "{}: table '{}' must contain at least two values", getFullName(), table.getName() ),
+                         GEOS_FMT( "{}: table '{}' must contain at least two values", getFullName(), table.getName() ),
                          InputError );
 
   // we don't check the first interval, as the first value may be used to specify surface conditions
@@ -254,7 +254,7 @@ void BlackOilFluidBase::validateTable( TableFunction const & table,
   for( localIndex i = 3; i < property.size(); ++i )
   {
     GEOSX_THROW_IF_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
-                    GEOSX_FMT( "{}: in table '{}', viscosity values must be monotone", getFullName(), table.getName() ),
+                    GEOS_FMT( "{}: in table '{}', viscosity values must be monotone", getFullName(), table.getName() ),
                     InputError );
   }
 
@@ -262,10 +262,10 @@ void BlackOilFluidBase::validateTable( TableFunction const & table,
   for( localIndex i = 2; i < property.size(); ++i )
   {
     GEOS_LOG_RANK_0_IF( ( property[i] - property[i-1] < 0 ) && warningIfDecreasing,
-                         GEOSX_FMT( "{}: Warning! in table '{}', values must be increasing as a function of pressure, please check your PVT tables",
+                         GEOS_FMT( "{}: Warning! in table '{}', values must be increasing as a function of pressure, please check your PVT tables",
                                     getFullName(), table.getName() ) );
     GEOS_LOG_RANK_0_IF( ( property[i] - property[i-1] > 0 ) && !warningIfDecreasing,
-                         GEOSX_FMT( "{}: Warning! In table '{}', values must be decreasing as a function of pressure, please check your PVT tables",
+                         GEOS_FMT( "{}: Warning! In table '{}', values must be decreasing as a function of pressure, please check your PVT tables",
                                     getFullName(), table.getName() ) );
   }
 }
@@ -276,7 +276,7 @@ void BlackOilFluidBase::validateWaterParams() const
   auto const checkPositiveValue = [&]( real64 const value, auto const & attribute )
   {
     GEOSX_THROW_IF_IF_LE_MSG( value, 0.0,
-                           GEOSX_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
+                           GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
                            InputError );
   };
   checkPositiveValue( m_waterParams.referencePressure, viewKeyStruct::waterRefPressureString() );

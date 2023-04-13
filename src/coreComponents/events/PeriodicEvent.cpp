@@ -239,13 +239,13 @@ void PeriodicEvent::validate() const
 {
   GEOSX_THROW_IF_IF( m_timeFrequency > 0 &&
                   getEventTarget()->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
-                  GEOSX_FMT(
+                  GEOS_FMT(
                     "`{}`: This event targets an object that automatically selects the time step size. Therefore, `{}` cannot be used here. However, forcing a constant time step size can still be achived with `{}`.",
                     getName(), viewKeyStruct::timeFrequencyString(), EventBase::viewKeyStruct::forceDtString() ),
                   InputError );
   GEOSX_THROW_IF_IF( m_cycleFrequency != 1 &&
                   getEventTarget()->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
-                  GEOSX_FMT(
+                  GEOS_FMT(
                     "`{}`: This event targets an object that automatically selects the time step size. Therefore, `{}` cannot be used here. However, forcing a constant time step size can still be achived with `{}`.",
                     getName(), viewKeyStruct::cycleFrequencyString(), EventBase::viewKeyStruct::forceDtString() ),
                   InputError );

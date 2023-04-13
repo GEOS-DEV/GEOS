@@ -118,7 +118,7 @@ protected:
 
   void testParseFile() const
   {
-    std::string const fname = GEOSX_FMT( "testParsing_{}_input", typeid(T).name() );
+    std::string const fname = GEOS_FMT( "testParsing_{}_input", typeid(T).name() );
     std::ofstream os( fname );
     os << input;
     os.close();
@@ -132,7 +132,7 @@ protected:
 
   void testParseFileInvalid() const
   {
-    std::string const fname = GEOSX_FMT( "testParsing_{}_input_invalid", typeid(T).name() );
+    std::string const fname = GEOS_FMT( "testParsing_{}_input_invalid", typeid(T).name() );
     std::ofstream os( fname );
     os << input;
     os.close();

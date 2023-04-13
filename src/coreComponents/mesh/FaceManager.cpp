@@ -208,7 +208,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
 
     if( er < 0 || esr < 0 || ei < 0 )
     {
-      GEOS_ERROR( GEOSX_FMT( "Face {} is connected to an invalid element ({}/{}/{}).", faceIndex, er, esr, ei ) );
+      GEOS_ERROR( GEOS_FMT( "Face {} is connected to an invalid element ({}/{}/{}).", faceIndex, er, esr, ei ) );
     }
 
     sortFaceNodes( X, elemCenter[er][esr][ei], facesToNodes[faceIndex] );

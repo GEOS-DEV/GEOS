@@ -88,7 +88,7 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
   }
   else
   {
-    GEOS_ERROR( GEOSX_FMT( "Invalid local face index for element of type Prism{}: {}", N, faceNum ) );
+    GEOS_ERROR( GEOS_FMT( "Invalid local face index for element of type Prism{}: {}", N, faceNum ) );
     return 0;
   }
 

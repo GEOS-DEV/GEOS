@@ -126,7 +126,7 @@ void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) c
 {
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
-  GEOS_ERROR_IF( fluidName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( fluidName.empty(), GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
 
   if( m_isThermal )
   {
@@ -139,7 +139,7 @@ void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) c
 
     thermalConductivityName = getConstitutiveName< SinglePhaseThermalConductivityBase >( subRegion );
     GEOSX_THROW_IF_IF( thermalConductivityName.empty(),
-                    GEOSX_FMT( "Thermal conductivity model not found on subregion {}", subRegion.getName() ),
+                    GEOS_FMT( "Thermal conductivity model not found on subregion {}", subRegion.getName() ),
                     InputError );
   }
 }
@@ -170,7 +170,7 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
       GEOSX_THROW_IF_IF( fluidName.empty(),
-                      GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                      GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                       InputError );
 
       SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
@@ -179,11 +179,11 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
       {
         string const fluidModelName = castedFluid.catalogName();
         GEOSX_THROW_IF_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
-                        GEOSX_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is not for thermal fluid",
+                        GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is not for thermal fluid",
                                    getName(), fluid.getName() ),
                         InputError );
         GEOSX_THROW_IF_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
-                        GEOSX_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid `{}`, but the solver option is incompatible with the fluid model",
+                        GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid `{}`, but the solver option is incompatible with the fluid model",
                                    getName(), fluid.getName() ),
                         InputError );
       } );
@@ -588,7 +588,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     // For single phase flow, just issue a warning, because the simulation can proceed with a negative pressure
     GEOS_WARNING_IF( minPressure.get() <= 0.0,
-                      GEOSX_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
+                      GEOS_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
                                  minPressure.get(), region.getName(), subRegion.getName() ) );
   } );
 }
@@ -866,7 +866,7 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
     if( fs.getLogLevel() >= 1 && isFirstNonlinearIteration )
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-      GEOS_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
+      GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
                                    solverName, time_n+dt, FieldSpecificationBase::catalogName(),
                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
     }
@@ -1000,7 +1000,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
+        GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
                                      getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }

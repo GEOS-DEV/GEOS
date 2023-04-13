@@ -238,7 +238,7 @@ public:
 
           forAll< serialPolicy >( perforationData.size(), [=] GEOS_HOST_DEVICE ( localIndex const iperf )
           {
-            GEOS_LOG_RANK( GEOSX_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
+            GEOS_LOG_RANK( GEOS_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
                                        perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
                                        elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][0],
                                        elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][1],

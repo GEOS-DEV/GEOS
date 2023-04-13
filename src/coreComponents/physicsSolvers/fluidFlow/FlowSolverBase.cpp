@@ -187,7 +187,7 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
 
   string & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
-  GEOS_ERROR_IF( solidName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( solidName.empty(), GEOS_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
 
   subRegion.registerWrapper< string >( viewKeyStruct::permeabilityNamesString() ).
     setPlotLevel( PlotLevel::NOPLOT ).
@@ -196,7 +196,7 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
 
   string & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
   permName = getConstitutiveName< PermeabilityBase >( subRegion );
-  GEOS_ERROR_IF( permName.empty(), GEOSX_FMT( "Permeability model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( permName.empty(), GEOS_FMT( "Permeability model not found on subregion {}", subRegion.getName() ) );
 
   if( m_isThermal )
   {
@@ -209,7 +209,7 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
 
     solidInternalEnergyName = getConstitutiveName< SolidInternalEnergy >( subRegion );
     GEOSX_THROW_IF_IF( solidInternalEnergyName.empty(),
-                    GEOSX_FMT( "Solid internal energy model not found on subregion {}", subRegion.getName() ),
+                    GEOS_FMT( "Solid internal energy model not found on subregion {}", subRegion.getName() ),
                     InputError );
   }
 }
@@ -532,7 +532,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
 
     if( bc.getLogLevel() >= 1 )
     {
-      GEOS_LOG_RANK_0( GEOSX_FMT( string( "FlowSolverBase {}: at time {}s, " )
+      GEOS_LOG_RANK_0( GEOS_FMT( string( "FlowSolverBase {}: at time {}s, " )
                                    + string( "the <{}> boundary condition '{}' produces a flux of {} kg (or moles if useMass=0). " ),
                                    getName(), time+dt, AquiferBoundaryCondition::catalogName(), bc.getName(), dt * globalSumFluxes[aquiferIndex] ) );
     }

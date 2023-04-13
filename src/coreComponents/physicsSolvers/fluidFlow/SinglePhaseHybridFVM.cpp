@@ -76,7 +76,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
   SinglePhaseBase::initializePreSubGroups();
 
   GEOSX_THROW_IF_IF( m_isThermal,
-                  GEOSX_FMT( "{} {}: The thermal option is not supported by SinglePhaseHybridFVM",
+                  GEOS_FMT( "{} {}: The thermal option is not supported by SinglePhaseHybridFVM",
                              catalogName(), getName() ),
                   InputError );
 
@@ -366,7 +366,7 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
+        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
                                      this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
                                      fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
       }
@@ -561,7 +561,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
   }
 
   return residualNorm;

@@ -69,7 +69,7 @@ void SinglePhaseProppantBase::setConstitutiveNames( ElementSubRegionBase & subRe
 {
   string & fluidMaterialName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidMaterialName = SolverBase::getConstitutiveName< SlurryFluidBase >( subRegion );
-  GEOS_ERROR_IF( fluidMaterialName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( fluidMaterialName.empty(), GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
 }
 
 void SinglePhaseProppantBase::validateConstitutiveModels( DomainPartition & domain ) const
@@ -85,7 +85,7 @@ void SinglePhaseProppantBase::validateConstitutiveModels( DomainPartition & doma
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
       GEOSX_THROW_IF_IF( fluidName.empty(),
-                      GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                      GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                       InputError );
     } );
   } );

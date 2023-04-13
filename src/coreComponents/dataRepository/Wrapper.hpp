@@ -618,7 +618,7 @@ public:
                                                                      targetNode,
                                                                      inputFlag == InputFlags::REQUIRED );
         GEOSX_THROW_IF_IF( !m_successfulReadFromInput,
-                        GEOSX_FMT( "XML Node '{}' with name='{}' is missing required attribute '{}'."
+                        GEOS_FMT( "XML Node '{}' with name='{}' is missing required attribute '{}'."
                                    "Available options are:\n{}\nFor more details, please refer to documentation at:\n"
                                    "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
                                    targetNode.path(), targetNode.attribute( "name" ).value(), getName(), dumpInputOptions( true ) ),

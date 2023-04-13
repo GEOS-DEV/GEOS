@@ -389,13 +389,13 @@ void CellElementSubRegion::
     }
     default:
     {
-      GEOS_ERROR( GEOSX_FMT( "Volume calculation not supported for element type {} in subregion {}",
+      GEOS_ERROR( GEOS_FMT( "Volume calculation not supported for element type {} in subregion {}",
                               m_elementType, getName() ) );
     }
   }
 
   GEOS_ERROR_IF( m_elementVolume[k] <= 0.0,
-                  GEOSX_FMT( "Negative volume for element {} type {} in subregion {}",
+                  GEOS_FMT( "Negative volume for element {} type {} in subregion {}",
                              k, m_elementType, getName() ) );
 }
 

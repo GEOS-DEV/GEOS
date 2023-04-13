@@ -81,7 +81,7 @@ MeshObjectPath::fillPathTokens( string const & path,
   int objectIndex = findObjectIndex();
 
   GEOS_ERROR_IF( objectIndex==-1,
-                  GEOSX_FMT( "Path ({}) does not contain a valid object type. "
+                  GEOS_FMT( "Path ({}) does not contain a valid object type. "
                              "Must contain one of ({},{},{},{})",
                              path,
                              MeshLevel::groupStructKeys::nodeManagerString(),
@@ -124,7 +124,7 @@ MeshObjectPath::fillPathTokens( string const & path,
       } );
 
       GEOS_ERROR_IF( !levelNameFound,
-                      GEOSX_FMT( "Path ({}) specifies an invalid MeshBody or MeshLevel. ",
+                      GEOS_FMT( "Path ({}) specifies an invalid MeshBody or MeshLevel. ",
                                  "existing MeshBodies: MeshLevels /n",
                                  path,
                                  existingMeshBodyAndLevel ) );
@@ -213,7 +213,7 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
       }
     }
     GEOS_ERROR_IF( !foundMatch,
-                    GEOSX_FMT( "Specified name ({0}) did not find a match with a object in group ({1}). "
+                    GEOS_FMT( "Specified name ({0}) did not find a match with a object in group ({1}). "
                                "Objects that are present in ({1}) are:\n{2}",
                                inputEntry,
                                parentGroup.getName(),

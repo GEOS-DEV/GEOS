@@ -119,7 +119,7 @@ public:
     }
     else
     {
-      GEOS_ERROR( GEOSX_FMT( "Invalid key, {}, was provided. Location cannot be retrieved.", key ) );
+      GEOS_ERROR( GEOS_FMT( "Invalid key, {}, was provided. Location cannot be retrieved.", key ) );
     }
   }
 

@@ -119,7 +119,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
       } );
 
       GEOS_ERROR_IF( !bodyFound,
-                      GEOSX_FMT( "MeshBody ({}) is specified, but not found.",
+                      GEOS_FMT( "MeshBody ({}) is specified, but not found.",
                                  targetTokens[0] ) );
     }
 
@@ -150,7 +150,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
         } );
 
         GEOS_ERROR_IF( !levelFound,
-                        GEOSX_FMT( "MeshLevel ({}) is specified, but not found.",
+                        GEOS_FMT( "MeshLevel ({}) is specified, but not found.",
                                    targetTokens[1] ) );
       }
     }

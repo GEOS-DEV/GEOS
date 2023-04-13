@@ -1663,15 +1663,15 @@ void printMeshStatistics( vtkDataSet & mesh,
   if( rank == 0 )
   {
     int const widthGlobal = static_cast< int >( std::log10( std::max( numGlobalElems, numGlobalNodes ) ) + 1 );
-    GEOS_LOG( GEOSX_FMT( "Number of nodes: {:>{}}", numGlobalNodes, widthGlobal ) );
-    GEOS_LOG( GEOSX_FMT( "  Number of elems: {:>{}}", numGlobalElems, widthGlobal ) );
+    GEOS_LOG( GEOS_FMT( "Number of nodes: {:>{}}", numGlobalNodes, widthGlobal ) );
+    GEOS_LOG( GEOS_FMT( "  Number of elems: {:>{}}", numGlobalElems, widthGlobal ) );
     for( auto const & typeCount: elemCounts )
     {
-      GEOS_LOG( GEOSX_FMT( "{:>17}: {:>{}}", toString( typeCount.first ), typeCount.second, widthGlobal ) );
+      GEOS_LOG( GEOS_FMT( "{:>17}: {:>{}}", toString( typeCount.first ), typeCount.second, widthGlobal ) );
     }
 
     int const widthLocal = static_cast< int >( std::log10( maxLocalElems ) + 1 );
-    GEOS_LOG( GEOSX_FMT( "Load balancing: {1:>{0}} {2:>{0}} {3:>{0}}\n"
+    GEOS_LOG( GEOS_FMT( "Load balancing: {1:>{0}} {2:>{0}} {3:>{0}}\n"
                           "(element/rank): {4:>{0}} {5:>{0}} {6:>{0}}",
                           widthLocal, "min", "avg", "max",
                           minLocalElems, avgLocalElems, maxLocalElems ) );
@@ -1689,12 +1689,12 @@ findArraysForImport( vtkDataSet & mesh,
   {
     vtkAbstractArray * const curArray = cellData.GetAbstractArray( sourceName.c_str() );
     GEOSX_THROW_IF_IF( curArray == nullptr,
-                    GEOSX_FMT( "Source field '{}' not found in dataset", sourceName ),
+                    GEOS_FMT( "Source field '{}' not found in dataset", sourceName ),
                     InputError );
 
     int const dataType = curArray->GetDataType();
     GEOS_ERROR_IF( dataType != VTK_FLOAT && dataType != VTK_DOUBLE,
-                    GEOSX_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
+                    GEOS_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
                                sourceName, curArray->GetDataTypeAsString() ) );
     arrays.push_back( vtkDataArray::SafeDownCast( curArray ) );
   }
@@ -1710,12 +1710,12 @@ findArrayForImport( vtkDataSet & mesh,
 
   vtkAbstractArray * const curArray = cellData.GetAbstractArray( sourceName.c_str() );
   GEOSX_THROW_IF_IF( curArray == nullptr,
-                  GEOSX_FMT( "Source field '{}' not found in dataset", sourceName ),
+                  GEOS_FMT( "Source field '{}' not found in dataset", sourceName ),
                   InputError );
 
   int const dataType = curArray->GetDataType();
   GEOS_ERROR_IF( dataType != VTK_FLOAT && dataType != VTK_DOUBLE,
-                  GEOSX_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
+                  GEOS_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
                              sourceName, curArray->GetDataTypeAsString() ) );
   return vtkDataArray::SafeDownCast( curArray );
 }
@@ -1764,7 +1764,7 @@ void importNodesets( integer const logLevel,
 
     vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( nodesetNames[i].c_str() );
     GEOSX_THROW_IF_IF( curArray == nullptr,
-                    GEOSX_FMT( "Target nodeset '{}' not found in mesh", nodesetNames[i] ),
+                    GEOS_FMT( "Target nodeset '{}' not found in mesh", nodesetNames[i] ),
                     InputError );
     vtkTypeInt64Array const & nodesetMask = *vtkTypeInt64Array::FastDownCast( curArray );
 
@@ -1809,7 +1809,7 @@ real64 writeNodes( integer const logLevel,
     // TODO: remove this check once the input mesh is cleaned of duplicate points via a filter
     //       and make launch policy parallel again
     GEOS_ERROR_IF( nodeGlobalIds.count( pointGlobalID ) > 0,
-                    GEOSX_FMT( "Duplicate point detected: globalID = {}\n"
+                    GEOS_FMT( "Duplicate point detected: globalID = {}\n"
                                "Consider cleaning the dataset in Paraview using 'Clean to grid' filter.\n"
                                "Make sure partitionRefinement is set to 1 or higher (this may help).",
                                pointGlobalID ) );

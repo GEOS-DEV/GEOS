@@ -68,7 +68,7 @@ void VanGenuchtenCapillaryPressure::postProcessInput()
   auto const checkInputSize = [&]( auto const & array, auto const & attribute )
   {
     GEOSX_THROW_IF_IF_NE_MSG( array.size(), m_phaseNames.size(),
-                           GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
+                           GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
                            InputError );
   };
   checkInputSize( m_phaseMinVolumeFraction, viewKeyStruct::phaseMinVolumeFractionString() );
@@ -80,7 +80,7 @@ void VanGenuchtenCapillaryPressure::postProcessInput()
   {
     auto const errorMsg = [&]( auto const & attribute )
     {
-      return GEOSX_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
+      return GEOS_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
     };
 
     GEOSX_THROW_IF_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
@@ -112,7 +112,7 @@ void VanGenuchtenCapillaryPressure::postProcessInput()
   }
 
   GEOSX_THROW_IF_IF_LT_MSG( m_volFracScale, 0.0,
-                         GEOSX_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName() ),
+                         GEOS_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName() ),
                          InputError );
 }
 

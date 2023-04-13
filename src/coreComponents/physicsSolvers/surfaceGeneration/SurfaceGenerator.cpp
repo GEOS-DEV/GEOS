@@ -3299,7 +3299,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
   }
   else
   {
-    GEOS_ERROR( GEOSX_FMT( "Error! Edge {} has two external faces, but the parent-child relationship is wrong.", edgeID ) );
+    GEOS_ERROR( GEOS_FMT( "Error! Edge {} has two external faces, but the parent-child relationship is wrong.", edgeID ) );
   }
 
   trailFaceID = faceParentIndex[faceInvolved[0]]==-1 ? faceInvolved[0] : faceParentIndex[faceInvolved[0]];

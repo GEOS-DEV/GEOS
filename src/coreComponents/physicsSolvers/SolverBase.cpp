@@ -184,7 +184,7 @@ SolverBase::CatalogInterface::CatalogType & SolverBase::getCatalog()
 localIndex SolverBase::targetRegionIndex( string const & regionName ) const
 {
   auto const pos = std::find( m_targetRegionNames.begin(), m_targetRegionNames.end(), regionName );
-  GEOS_ERROR_IF( pos == m_targetRegionNames.end(), GEOSX_FMT( "Region {} is not a target of solver {}", regionName, getName() ) );
+  GEOS_ERROR_IF( pos == m_targetRegionNames.end(), GEOS_FMT( "Region {} is not a target of solver {}", regionName, getName() ) );
   return std::distance( m_targetRegionNames.begin(), pos );
 }
 
@@ -267,7 +267,7 @@ bool SolverBase::execute( real64 const time_n,
 
     if( getLogLevel() >= 1 && dtRemaining > 0.0 )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: sub-step = {}, accepted dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, dtRemaining ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: sub-step = {}, accepted dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, dtRemaining ) );
     }
   }
 
@@ -291,12 +291,12 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
     integer const iterIncreaseLimit = m_nonlinearSolverParameters.timeStepIncreaseIterLimit();
     if( nextDtNewton > currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Newton solver converged in less than {} iterations, time-step required will be increased.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Newton solver converged in less than {} iterations, time-step required will be increased.",
                                             getName(), iterIncreaseLimit ) );
     }
     else if( nextDtNewton < currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Newton solver converged in more than {} iterations, time-step required will be decreased.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Newton solver converged in more than {} iterations, time-step required will be decreased.",
                                             getName(), iterDecreaseLimit ) );
     }
   }
@@ -304,12 +304,12 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
   {
     if( nextDtStateChange > currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Time-step required will be increased based on state change.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be increased based on state change.",
                                             getName() ) );
     }
     else if( nextDtStateChange < currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Time-step required will be decreased based on state change.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be decreased based on state change.",
                                             getName() ) );
     }
   }
@@ -461,7 +461,7 @@ bool SolverBase::lineSearch( real64 const & time_n,
 
     if( !checkSystemSolution( domain, dofManager, solution.values(), localScaleFactor ) )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "        Line search {}, solution check failed", lineSearchIteration ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        Line search {}, solution check failed", lineSearchIteration ) );
       continue;
     }
 
@@ -483,7 +483,7 @@ bool SolverBase::lineSearch( real64 const & time_n,
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
-      std::cout << GEOSX_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
+      std::cout << GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }
 
     // get residual norm
@@ -583,7 +583,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
-      std::cout << GEOSX_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
+      std::cout << GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }
 
     // get residual norm
@@ -743,7 +743,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     {
       // cut timestep, go back to beginning of step and restart the Newton loop
       stepDt *= dtCutFactor;
-      GEOS_LOG_LEVEL_RANK_0 ( 1, GEOSX_FMT( "New dt = {}", stepDt ) );
+      GEOS_LOG_LEVEL_RANK_0 ( 1, GEOS_FMT( "New dt = {}", stepDt ) );
 
       // notify the solver statistics counter that this is a time step cut
       m_solverStatistics.logTimeStepCut();
@@ -788,7 +788,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
 
     // zero out matrix/rhs before assembly
     m_localMatrix.zero();
@@ -828,10 +828,10 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     real64 residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
 
 
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
     if( newtonIter > 0 )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Last LinSolve(iter,res) = ( {:3}, {:4.2e} ) ; ",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    Last LinSolve(iter,res) = ( {:3}, {:4.2e} ) ; ",
                                             m_linearSolverResult.numIterations,
                                             m_linearSolverResult.residualReduction ) );
     }
@@ -849,7 +849,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     if( residualNorm > m_nonlinearSolverParameters.m_maxAllowedResidualNorm )
     {
       string const maxAllowedResidualNormString = NonlinearSolverParameters::viewKeysStruct::maxAllowedResidualNormString();
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
                                             maxAllowedResidualNormString,
                                             m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
       isNewtonConverged = false;
@@ -1059,7 +1059,7 @@ void debugOutputLAObject( T const & obj,
 
   if( toFile )
   {
-    string const filename = GEOSX_FMT( "{}_{:06}_{:02}.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
+    string const filename = GEOS_FMT( "{}_{:06}_{:02}.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
     obj.write( filename, LAIOutputFormat::MATRIX_MARKET );
     GEOS_LOG_RANK_0( screenName << " written to " << filename );
   }

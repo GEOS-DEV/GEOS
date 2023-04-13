@@ -214,7 +214,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
           string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
           capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
           GEOSX_THROW_IF_IF( capPresName.empty(),
-                          GEOSX_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
+                          GEOS_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
                           InputError );
         }
       }
@@ -288,7 +288,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
   GEOSX_THROW_IF_IF( fluidName.empty(),
-                  GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                  GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                   InputError );
 
   string & relPermName = subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
@@ -301,7 +301,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
   relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
 
   GEOSX_THROW_IF_IF( relPermName.empty(),
-                  GEOSX_FMT( "Relative permeability model not found on subregion {}", subRegion.getName() ),
+                  GEOS_FMT( "Relative permeability model not found on subregion {}", subRegion.getName() ),
                   InputError );
 
 
@@ -315,7 +315,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
                                  reference();
     capPressureName = getConstitutiveName< CapillaryPressureBase >( subRegion );
     GEOSX_THROW_IF_IF( capPressureName.empty(),
-                    GEOSX_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
+                    GEOS_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
                     InputError );
   }
 
@@ -330,7 +330,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
 
     thermalConductivityName = getConstitutiveName< MultiPhaseThermalConductivityBase >( subRegion );
     GEOSX_THROW_IF_IF( thermalConductivityName.empty(),
-                    GEOSX_FMT( "Thermal conductivity model not found on subregion {}", subRegion.getName() ),
+                    GEOS_FMT( "Thermal conductivity model not found on subregion {}", subRegion.getName() ),
                     InputError );
   }
 }
@@ -343,13 +343,13 @@ template< typename MODEL1_TYPE, typename MODEL2_TYPE >
 void compareMultiphaseModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
   GEOSX_THROW_IF_IF_NE_MSG( lhs.numFluidPhases(), rhs.numFluidPhases(),
-                         GEOSX_FMT( "Mismatch in number of phases between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                         GEOS_FMT( "Mismatch in number of phases between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                          InputError );
 
   for( integer ip = 0; ip < lhs.numFluidPhases(); ++ip )
   {
     GEOSX_THROW_IF_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
-                           GEOSX_FMT( "Mismatch in phase names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                           GEOS_FMT( "Mismatch in phase names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                            InputError );
   }
 }
@@ -358,13 +358,13 @@ template< typename MODEL1_TYPE, typename MODEL2_TYPE >
 void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
   GEOSX_THROW_IF_IF_NE_MSG( lhs.numFluidComponents(), rhs.numFluidComponents(),
-                         GEOSX_FMT( "Mismatch in number of components between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                         GEOS_FMT( "Mismatch in number of components between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                          InputError );
 
   for( integer ic = 0; ic < lhs.numFluidComponents(); ++ic )
   {
     GEOSX_THROW_IF_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
-                           GEOSX_FMT( "Mismatch in component names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                           GEOS_FMT( "Mismatch in component names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                            InputError );
   }
 }
@@ -460,11 +460,11 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
       {
         bool const isFluidModelThermal = castedFluid.isThermal();
         GEOSX_THROW_IF_IF( m_isThermal && !isFluidModelThermal,
-                        GEOSX_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is incompatible with the thermal option",
+                        GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is incompatible with the thermal option",
                                    getName(), fluid.getName() ),
                         InputError );
         GEOSX_THROW_IF_IF( !m_isThermal && isFluidModelThermal,
-                        GEOSX_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model `{}`, but the solver options are incompatible with the thermal option",
+                        GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model `{}`, but the solver options are incompatible with the thermal option",
                                    getName(), fluid.getName() ),
                         InputError );
       } );
@@ -1045,7 +1045,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       } );
 
       GEOS_ERROR_IF( minPressure.get() < 0.0,
-                      GEOSX_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
+                      GEOS_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
                                  minPressure.get(), region.getName(), subRegion.getName() ) );
     } );
   } );
@@ -1330,7 +1330,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
+        GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
                                      getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
@@ -1444,7 +1444,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
       if( subRegionSetMap.count( setName ) > 0 )
       {
         bcConsistent = false;
-        GEOS_WARNING( GEOSX_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
+        GEOS_WARNING( GEOS_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
       }
       subRegionSetMap[setName].setNumComp( m_numComponents );
     } );
@@ -1469,7 +1469,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
         if( tempSubRegionSetMap.count( setName ) > 0 )
         {
           bcConsistent = false;
-          GEOS_WARNING( GEOSX_FMT( "Conflicting temperature boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
+          GEOS_WARNING( GEOS_FMT( "Conflicting temperature boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
         }
         tempSubRegionSetMap.insert( setName );
       } );
@@ -1494,7 +1494,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
       if( subRegionSetMap.count( setName ) == 0 )
       {
         bcConsistent = false;
-        GEOS_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
+        GEOS_WARNING( GEOS_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
       }
       if( m_isThermal )
       {
@@ -1502,13 +1502,13 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
         if( tempSubRegionSetMap.count( setName ) == 0 )
         {
           bcConsistent = false;
-          GEOS_WARNING( GEOSX_FMT( "Temperature boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
+          GEOS_WARNING( GEOS_FMT( "Temperature boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
         }
       }
       if( comp < 0 || comp >= m_numComponents )
       {
         bcConsistent = false;
-        GEOS_WARNING( GEOSX_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
+        GEOS_WARNING( GEOS_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
         return; // can't check next part with invalid component id
       }
 
@@ -1516,7 +1516,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
       if( compMask[comp] )
       {
         bcConsistent = false;
-        GEOS_WARNING( GEOSX_FMT( "Conflicting composition[{}] boundary conditions on set {}/{}/{}", comp, regionName, subRegionName, setName ) );
+        GEOS_WARNING( GEOS_FMT( "Conflicting composition[{}] boundary conditions on set {}/{}/{}", comp, regionName, subRegionName, setName ) );
       }
       compMask.set( comp );
     } );
@@ -1535,7 +1535,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
             if( !compMask[ic] )
             {
               bcConsistent = false;
-              GEOS_WARNING( GEOSX_FMT( "Boundary condition not applied to composition[{}] on set {}/{}/{}",
+              GEOS_WARNING( GEOS_FMT( "Boundary condition not applied to composition[{}] on set {}/{}/{}",
                                         ic, regionEntry.first, subRegionEntry.first, setEntry.first ) );
             }
           }
@@ -1560,7 +1560,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent, GEOSX_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
+    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();

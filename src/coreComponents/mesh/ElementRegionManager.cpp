@@ -666,9 +666,9 @@ ElementRegionManager::getCellBlockToSubRegionMap( CellBlockManagerABC const & ce
   {
     localIndex const blockIndex = cellBlocks.getIndex( subRegion.getName() );
     GEOS_ERROR_IF( blockIndex == Group::subGroupMap::KeyIndex::invalid_index,
-                    GEOSX_FMT( "Cell block not found for subregion {}/{}", region.getName(), subRegion.getName() ) );
+                    GEOS_FMT( "Cell block not found for subregion {}/{}", region.getName(), subRegion.getName() ) );
     GEOS_ERROR_IF( blockMap( blockIndex, 1 ) != -1,
-                    GEOSX_FMT( "Cell block {} mapped to more than one subregion", subRegion.getName() ) );
+                    GEOS_FMT( "Cell block {} mapped to more than one subregion", subRegion.getName() ) );
 
     blockMap( blockIndex, 0 ) = er;
     blockMap( blockIndex, 1 ) = esr;

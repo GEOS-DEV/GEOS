@@ -47,7 +47,7 @@ std::string getAbsolutePath( std::string const & path )
   }();
 
   char const * const cwd = getcwd( buf, PATH_MAX ) ? buf : "";
-  GEOSX_THROW_IF( GEOSX_FMT( "Could not resolve absolute path for: {}.\n"
+  GEOSX_THROW_IF( GEOS_FMT( "Could not resolve absolute path for: {}.\n"
                           "The following error occurred: {}.\n"
                           "Current working directory is: {}.\n",
                           path, reason, cwd ),

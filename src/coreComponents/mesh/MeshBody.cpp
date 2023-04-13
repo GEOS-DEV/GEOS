@@ -75,7 +75,7 @@ void MeshBody::setGlobalLengthScale( real64 scale )
 
 string MeshBody::intToMeshLevelString( localIndex const meshLevel )
 {
-  return GEOSX_FMT( "Level{}", meshLevel );
+  return GEOS_FMT( "Level{}", meshLevel );
 }
 
 

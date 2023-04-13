@@ -223,7 +223,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW_IF( GEOSX_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    GEOSX_THROW_IF( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
   }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );

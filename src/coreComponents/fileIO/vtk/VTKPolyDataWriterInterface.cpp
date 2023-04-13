@@ -314,7 +314,7 @@ getSurface( FaceElementSubRegion const & subRegion,
       case 8: return VTK_HEXAHEDRON;
       default:
       {
-        GEOS_ERROR( GEOSX_FMT( "Elements with {} nodes can't be output in the subregion {}",
+        GEOS_ERROR( GEOS_FMT( "Elements with {} nodes can't be output in the subregion {}",
                                 subRegion.numNodesPerElement(), subRegion.getName() ) );
         return VTK_POLYGON;
       }
@@ -936,13 +936,13 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
 
 static string getCycleSubFolder( integer const cycle )
 {
-  return GEOSX_FMT( "{:06d}", cycle );
+  return GEOS_FMT( "{:06d}", cycle );
 }
 
 static string getRankFileName( integer const rank )
 {
   int const width = static_cast< int >( std::log10( MpiWrapper::commSize() ) ) + 1;
-  return GEOSX_FMT( "rank_{:>0{}}", rank, width );
+  return GEOS_FMT( "rank_{:>0{}}", rank, width );
 }
 
 void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,

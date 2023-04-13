@@ -77,7 +77,7 @@ string WrapperBase::dumpInputOptions( bool const outputHeader ) const
 
   if( getInputFlag() == InputFlags::OPTIONAL || getInputFlag() == InputFlags::REQUIRED )
   {
-    rval.append( GEOSX_FMT( "  | {:20} | {:9} | {} \n", getName(), InputFlagToString( getInputFlag() ), getDescription() ) );
+    rval.append( GEOS_FMT( "  | {:20} | {:9} | {} \n", getName(), InputFlagToString( getInputFlag() ), getDescription() ) );
   }
 
   return rval;

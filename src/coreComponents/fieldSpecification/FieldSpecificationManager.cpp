@@ -164,7 +164,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       {
         missingSetNames.emplace_back( mapEntry.first );
       }
-      GEOSX_THROW_IF( GEOSX_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`, check the XML input\n",
+      GEOSX_THROW_IF( GEOS_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`, check the XML input\n",
                               fs.getName(), fmt::join( missingSetNames, ", " ), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() ),
                    InputError );
     }
@@ -174,7 +174,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     for( auto const & mapEntry : isTargetSetEmpty )
     {
       GEOS_LOG_RANK_0_IF( mapEntry.second == 1, // target set is empty
-                           GEOSX_FMT( "\nWarning!"
+                           GEOS_FMT( "\nWarning!"
                                       "\n{}: this FieldSpecification targets (an) empty set(s)"
                                       "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
                                       fs.getName(), mapEntry.first,
@@ -186,7 +186,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       char const fieldNameNotFoundMessage[] =
         "\n{}: there is no {} named `{}` under the {} `{}`, check the XML input\n";
       string const errorMsg =
-        GEOSX_FMT( fieldNameNotFoundMessage,
+        GEOS_FMT( fieldNameNotFoundMessage,
                    fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(), fs.getFieldName(),
                    FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath(), fs.getFieldName() );
       if( areAllSetsEmpty )

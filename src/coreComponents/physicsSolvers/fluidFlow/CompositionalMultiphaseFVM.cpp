@@ -306,7 +306,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
 
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",
+      std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",
                               coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] );
     }
   }
@@ -324,7 +324,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
 
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+      std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
     }
   }
   return residualNorm;
@@ -570,7 +570,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
       if( bcPresCompStatusMap.count( setName ) > 0 )
       {
         bcConsistent = false;
-        GEOS_WARNING( GEOSX_FMT( "Conflicting pressure boundary conditions on set {}", setName ) );
+        GEOS_WARNING( GEOS_FMT( "Conflicting pressure boundary conditions on set {}", setName ) );
       }
       bcPresCompStatusMap[setName].setNumComp( m_numComponents );
     } );
@@ -589,7 +589,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
       if( bcTempStatusMap.count( setName ) > 0 )
       {
         bcConsistent = false;
-        GEOS_WARNING( GEOSX_FMT( "Conflicting temperature boundary conditions on set {}", setName ) );
+        GEOS_WARNING( GEOS_FMT( "Conflicting temperature boundary conditions on set {}", setName ) );
       }
       bcTempStatusMap.insert( setName );
 
@@ -597,7 +597,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
       if( bcPresCompStatusMap.count( setName ) == 0 )
       {
         bcConsistent = false;
-        GEOS_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}", setName ) );
+        GEOS_WARNING( GEOS_FMT( "Pressure boundary condition not prescribed on set {}", setName ) );
       }
     } );
 
@@ -617,18 +617,18 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
       if( bcPresCompStatusMap.count( setName ) == 0 )
       {
         bcConsistent = false;
-        GEOS_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}", setName ) );
+        GEOS_WARNING( GEOS_FMT( "Pressure boundary condition not prescribed on set {}", setName ) );
       }
       if( bcTempStatusMap.count( setName ) == 0 )
       {
         bcConsistent = false;
-        GEOS_WARNING( GEOSX_FMT( "Temperature boundary condition not prescribed on set {}. \n"
+        GEOS_WARNING( GEOS_FMT( "Temperature boundary condition not prescribed on set {}. \n"
                                   "Note that for face boundary conditions, you must provide a temperature", setName ) );
       }
       if( comp < 0 || comp >= m_numComponents )
       {
         bcConsistent = false;
-        GEOS_WARNING( GEOSX_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
+        GEOS_WARNING( GEOS_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
         return; // can't check next part with invalid component id
       }
 
@@ -636,7 +636,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
       if( compMask[comp] )
       {
         bcConsistent = false;
-        GEOS_WARNING( GEOSX_FMT( "Conflicting composition[{}] boundary conditions on set {}", comp, setName ) );
+        GEOS_WARNING( GEOS_FMT( "Conflicting composition[{}] boundary conditions on set {}", comp, setName ) );
       }
       compMask.set( comp );
     } );
@@ -650,7 +650,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
         if( !compMask[ic] )
         {
           bcConsistent = false;
-          GEOS_WARNING( GEOSX_FMT( "Boundary condition not applied to composition[{}] on set {}", ic, setEntry.first ) );
+          GEOS_WARNING( GEOS_FMT( "Boundary condition not applied to composition[{}] on set {}", ic, setEntry.first ) );
         }
       }
     }
@@ -682,7 +682,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateFaceDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent, GEOSX_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
+    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -821,7 +821,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       if( bc.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOS_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
+        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
                                      getName(), time+dt, AquiferBoundaryCondition::catalogName(),
                                      bc.getName(), setName, faceManager.getName(), bc.getScale(), numTargetFaces ) );
       }

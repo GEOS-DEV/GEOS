@@ -210,7 +210,7 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
 
   // initialize salinity and tolerance
   GEOSX_THROW_IF_IF_LT_MSG( inputParams.size(), 9,
-                         GEOSX_FMT( "{}: insufficient number of model parameters", functionName ),
+                         GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
                          InputError );
 
   real64 tolerance = 1e-9;
@@ -225,7 +225,7 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW_IF( GEOSX_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    GEOSX_THROW_IF( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
   }
 
   array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );

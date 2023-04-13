@@ -189,10 +189,10 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
   SolverBase::postProcessInput();
 
   GEOSX_THROW_IF_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                         GEOSX_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0", m_maxCompFracChange ),
+                         GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0", m_maxCompFracChange ),
                          InputError );
   GEOSX_THROW_IF_IF_LT_MSG( m_maxCompFracChange, 0.0,
-                         GEOSX_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0", m_maxCompFracChange ),
+                         GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0", m_maxCompFracChange ),
                          InputError );
 
   m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, FunctionManager::getInstance());
@@ -204,11 +204,11 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
   m_numOBLOperators = COMPUTE_NUM_OPS( m_numPhases, m_numComponents, m_enableEnergyBalance );
 
   GEOSX_THROW_IF_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->numDims(),
-                         GEOSX_FMT( "The number of degrees of freedom per element used in solver - {} - and in operator table - {} - should match", m_numDofPerCell, m_OBLOperatorsTable->numDims()),
+                         GEOS_FMT( "The number of degrees of freedom per element used in solver - {} - and in operator table - {} - should match", m_numDofPerCell, m_OBLOperatorsTable->numDims()),
                          InputError );
 
   GEOSX_THROW_IF_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->numOps(),
-                         GEOSX_FMT( "The number of operators per element used in solver - {} - and in operator table - {} - should match", m_numOBLOperators, m_OBLOperatorsTable->numOps()),
+                         GEOS_FMT( "The number of operators per element used in solver - {} - and in operator table - {} - should match", m_numOBLOperators, m_OBLOperatorsTable->numOps()),
                          InputError );
 
 }
@@ -354,7 +354,7 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const &
 
   real64 const residual = m_useDARTSL2Norm ? MpiWrapper::max( localResidualNorm ) : std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rflow ) = ( {:4.2e} ) ;", residual ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( Rflow ) = ( {:4.2e} ) ;", residual ) );
 
   return residual;
 }
@@ -826,7 +826,7 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
+        GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
                                      getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
@@ -929,7 +929,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
       if( subRegionSetMap.count( setName ) > 0 )
       {
         bcConsistent = false;
-        GEOS_WARNING( GEOSX_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
+        GEOS_WARNING( GEOS_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
       }
       subRegionSetMap[setName].setNumComp( numCompWithEnergy );
     } );
@@ -953,12 +953,12 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
       if( subRegionSetMap.count( setName ) == 0 )
       {
         bcConsistent = false;
-        GEOS_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
+        GEOS_WARNING( GEOS_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
       }
       if( comp < 0 || comp >= numComp )
       {
         bcConsistent = false;
-        GEOS_WARNING( GEOSX_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
+        GEOS_WARNING( GEOS_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
         return; // can't check next part with invalid component id
       }
 
@@ -966,7 +966,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
       if( compMask[comp] )
       {
         bcConsistent = false;
-        GEOS_WARNING( GEOSX_FMT( "Conflicting composition[{}] boundary conditions on set {}/{}/{}", comp, regionName, subRegionName, setName ) );
+        GEOS_WARNING( GEOS_FMT( "Conflicting composition[{}] boundary conditions on set {}/{}/{}", comp, regionName, subRegionName, setName ) );
       }
       compMask.set( comp );
     } );
@@ -991,7 +991,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
         if( subRegionSetMap.count( setName ) == 0 )
         {
           bcConsistent = false;
-          GEOS_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
+          GEOS_WARNING( GEOS_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
         }
 
         ComponentMask< MAX_NC > & compMask = subRegionSetMap[setName];
@@ -999,7 +999,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
         if( compMask[numComp] )
         {
           bcConsistent = false;
-          GEOS_WARNING( GEOSX_FMT( "Conflicting temperature boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
+          GEOS_WARNING( GEOS_FMT( "Conflicting temperature boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
         }
         compMask.set( numComp );
       } );
@@ -1018,7 +1018,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
             if( !compMask[ic] )
             {
               bcConsistent = false;
-              GEOS_WARNING( GEOSX_FMT( "Boundary condition not applied to composition[{}] on set {}/{}/{}",
+              GEOS_WARNING( GEOS_FMT( "Boundary condition not applied to composition[{}] on set {}/{}/{}",
                                         ic, regionEntry.first, subRegionEntry.first, setEntry.first ) );
             }
           }
@@ -1042,7 +1042,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateDirichletBC( domain, time + dt );
-    GEOS_ERROR_IF( !bcConsistent, GEOSX_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
+    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -1065,7 +1065,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
+        GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
                                      getName(), time+dt, FieldSpecificationBase::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
@@ -1105,7 +1105,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
+        GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
                                      getName(), time+dt, FieldSpecificationBase::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }

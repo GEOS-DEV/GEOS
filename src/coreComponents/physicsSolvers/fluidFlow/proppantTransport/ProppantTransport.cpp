@@ -142,14 +142,14 @@ void ProppantTransport::setConstitutiveNames( ElementSubRegionBase & subRegion )
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
   GEOSX_THROW_IF_IF( fluidName.empty(),
-                  GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                  GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                   InputError );
 
   subRegion.registerWrapper< string >( viewKeyStruct::proppantNamesString() );
   string & proppantName = subRegion.getReference< string >( viewKeyStruct::proppantNamesString() );
   proppantName = getConstitutiveName< ParticleFluidBase >( subRegion );
   GEOSX_THROW_IF_IF( proppantName.empty(),
-                  GEOSX_FMT( "Proppant model not found on subregion {}", subRegion.getName() ),
+                  GEOS_FMT( "Proppant model not found on subregion {}", subRegion.getName() ),
                   InputError );
 
 }
@@ -889,7 +889,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", ProppantTransport::coupledSolverAttributePrefix(), residualNorm );
+    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", ProppantTransport::coupledSolverAttributePrefix(), residualNorm );
   }
 
   return residualNorm;

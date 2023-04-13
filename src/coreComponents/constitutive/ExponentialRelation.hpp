@@ -286,7 +286,7 @@ public:
   GEOS_HOST_DEVICE
   ExponentialRelation( T x0, T y0, T alpha )
   {
-    GEOS_ERROR_IF( VAR != 2, GEOSX_FMT( "The constructor is inconsistent with the number of variables {}", VAR ) );
+    GEOS_ERROR_IF( VAR != 2, GEOS_FMT( "The constructor is inconsistent with the number of variables {}", VAR ) );
 
     setCoefficients( x0, y0, alpha );
   }
@@ -302,7 +302,7 @@ public:
   GEOS_HOST_DEVICE
   ExponentialRelation( T x0, T w0, T y0, T alpha, T beta )
   {
-    GEOS_ERROR_IF( VAR != 3, GEOSX_FMT( "The constructor is inconsistent with the number of variables {}", VAR ) );
+    GEOS_ERROR_IF( VAR != 3, GEOS_FMT( "The constructor is inconsistent with the number of variables {}", VAR ) );
 
     setCoefficients( x0, w0, y0, alpha, beta );
   }

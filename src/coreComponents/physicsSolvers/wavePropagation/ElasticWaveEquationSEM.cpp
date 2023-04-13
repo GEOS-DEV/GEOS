@@ -440,7 +440,7 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
     {
       if( receiverIsLocal[ircv] == 1 )
       {
-        std::ofstream f( GEOSX_FMT( "dasTraceReceiver{:03}.txt", ircv ), std::ios::app );
+        std::ofstream f( GEOS_FMT( "dasTraceReceiver{:03}.txt", ircv ), std::ios::app );
         for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
         {
           f<< iSample << " " << zCompRcv[iSample][ircv] << std::endl;

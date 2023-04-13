@@ -164,7 +164,7 @@ findName( InputRange const & input,
   using std::end;
   auto const it = std::find_first_of( begin( input ), end( input ), begin( expected ), end( expected ) );
   GEOSX_THROW_IF_IF( it == end( input ),
-                  GEOSX_FMT( "Name '{}' not found in `{}`.\nExpected one of: {}.\nInput provided: {}.",
+                  GEOS_FMT( "Name '{}' not found in `{}`.\nExpected one of: {}.\nInput provided: {}.",
                              *begin( expected ), attribute,
                              stringutilities::join( begin( expected ), end( expected ), ", " ),
                              stringutilities::join( begin( input ), end( input ) ) ),

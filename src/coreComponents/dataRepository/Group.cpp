@@ -159,7 +159,7 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     {
       // Make sure child names are not duplicated
       GEOS_ERROR_IF( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end(),
-                      GEOSX_FMT( "Error: An XML block cannot contain children with duplicated names ({}/{}). ",
+                      GEOS_FMT( "Error: An XML block cannot contain children with duplicated names ({}/{}). ",
                                  getPath(), childName ) );
       childNames.emplace_back( childName );
     }
@@ -199,7 +199,7 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
     if( attributeName != "name" && attributeName != "xmlns:xsi" && attributeName != "xsi:noNamespaceSchemaLocation" )
     {
       GEOSX_THROW_IF_IF( processedAttributes.count( attributeName ) == 0,
-                      GEOSX_FMT( "XML Node '{}' with name='{}' contains unused attribute '{}'.\n"
+                      GEOS_FMT( "XML Node '{}' with name='{}' contains unused attribute '{}'.\n"
                                  "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
                                  "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
                                  targetNode.path(), targetNode.attribute( "name" ).value(), attributeName, dumpInputOptions() ),

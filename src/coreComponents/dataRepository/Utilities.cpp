@@ -128,7 +128,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
       {
         indentChars += 3;
         outputLine += "|--{:.<" + std::to_string( 83-indentChars ) + "} {:>9s}    {:>9s}    {:>9s}";
-        GEOS_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
+        GEOS_LOG_RANK_0( GEOS_FMT( outputLine.c_str(),
                                      "[" + group.getName() + "]",
                                      stringutilities::toMetricPrefixString( groupAllocations[0] ) + 'B',
                                      stringutilities::toMetricPrefixString( groupAllocations[1] ) + 'B',
@@ -137,7 +137,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
       else  // ...but we still need to output the group name to have a valid tree.
       {
         outputLine += "|--[{:<}]";
-        GEOS_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
+        GEOS_LOG_RANK_0( GEOS_FMT( outputLine.c_str(),
                                      group.getName() ) );
       }
     }
@@ -158,7 +158,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
           }
           indentChars += 5;
           outputLine += "| - {:.<" + std::to_string( 83-indentChars ) + "} {:>9s}    {:>9s}    {:>9s}";
-          GEOS_LOG_RANK_0( GEOSX_FMT( outputLine.c_str(),
+          GEOS_LOG_RANK_0( GEOS_FMT( outputLine.c_str(),
                                        view.second->getName(),
                                        stringutilities::toMetricPrefixString( allocationReductions( viewCount, 0 ) ) + 'B',
                                        stringutilities::toMetricPrefixString( allocationReductions( viewCount, 1 ) ) + 'B',

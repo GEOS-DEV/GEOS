@@ -78,7 +78,7 @@ void ThermalCompressibleSinglePhaseFluid::postProcessInput()
   auto const checkNonnegative = [&]( real64 const value, auto const & attribute )
   {
     GEOSX_THROW_IF_IF_LT_MSG( value, 0.0,
-                           GEOSX_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
+                           GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
                            InputError );
   };
 
@@ -90,7 +90,7 @@ void ThermalCompressibleSinglePhaseFluid::postProcessInput()
   auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
   {
     GEOSX_THROW_IF_IF( value != ExponentApproximationType::Linear && value != ExponentApproximationType::Full,
-                    GEOSX_FMT( "{}: invalid model type in attribute '{}' (only linear or fully exponential currently supported)", getFullName(), attribute ),
+                    GEOS_FMT( "{}: invalid model type in attribute '{}' (only linear or fully exponential currently supported)", getFullName(), attribute ),
                     InputError );
   };
   checkModelType( m_internalEnergyModelType, viewKeyStruct::internalEnergyModelTypeString() );

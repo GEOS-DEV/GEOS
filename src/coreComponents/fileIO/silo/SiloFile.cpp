@@ -354,15 +354,15 @@ void SiloFile::waitForBatonWrite( int const domainNumber,
   if( isRestart )
   {
     // The integrated test repo does not use the eventProgress indicator, so skip it for now
-    m_baseFileName = GEOSX_FMT( "{}_{:06}", m_restartFileRoot, cycleNum );
-    m_fileName = GEOSX_FMT( "{}_{:06}.{:03}", m_restartFileRoot, cycleNum, groupRank );
+    m_baseFileName = GEOS_FMT( "{}_{:06}", m_restartFileRoot, cycleNum );
+    m_fileName = GEOS_FMT( "{}_{:06}.{:03}", m_restartFileRoot, cycleNum, groupRank );
   }
   else
   {
-    m_baseFileName = GEOSX_FMT( "{}_{:06}{:02}", m_plotFileRoot, cycleNum, eventCounter );
-    m_fileName = GEOSX_FMT( "{}_{:06}{:02}.{:03}", m_plotFileRoot.c_str(), cycleNum, eventCounter, groupRank );
+    m_baseFileName = GEOS_FMT( "{}_{:06}{:02}", m_plotFileRoot, cycleNum, eventCounter );
+    m_fileName = GEOS_FMT( "{}_{:06}{:02}.{:03}", m_plotFileRoot.c_str(), cycleNum, eventCounter, groupRank );
   }
-  string const dirName = GEOSX_FMT( "domain_{:05}", domainNumber );
+  string const dirName = GEOS_FMT( "domain_{:05}", domainNumber );
 
   string const dataFileFullPath = joinPath( m_siloDirectory, m_siloDataSubDirectory, m_fileName );
   m_dbFilePtr = static_cast< DBfile * >( PMPIO_WaitForBaton( m_baton, dataFileFullPath.c_str(), dirName.c_str() ) );
@@ -394,15 +394,15 @@ void SiloFile::waitForBaton( int const domainNumber, string const & restartFileN
   {
     if( m_siloDirectory.empty() )
     {
-      m_fileName = GEOSX_FMT( "{}.{:03}", restartFileName, groupRank );
+      m_fileName = GEOS_FMT( "{}.{:03}", restartFileName, groupRank );
     }
     else
     {
-      m_fileName = GEOSX_FMT( "{}/{}.{:03}", m_siloDirectory, restartFileName, groupRank );
+      m_fileName = GEOS_FMT( "{}/{}.{:03}", m_siloDirectory, restartFileName, groupRank );
     }
   }
 
-  string const dirName = GEOSX_FMT( "domain_{:05}", domainNumber );
+  string const dirName = GEOS_FMT( "domain_{:05}", domainNumber );
 
   m_dbFilePtr = (DBfile *) PMPIO_WaitForBaton( m_baton, m_fileName.c_str(), dirName.c_str() );
 }
@@ -832,7 +832,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
         int groupRank = PMPIO_GroupRank( m_baton, i );
 
         /* this mesh block is another file */
-        vBlockNames[i] = GEOSX_FMT( "{}/{}.{:03}:/domain_{:05}/{}", m_siloDataSubDirectory, m_baseFileName, groupRank, i, name );
+        vBlockNames[i] = GEOS_FMT( "{}/{}.{:03}:/domain_{:05}/{}", m_siloDataSubDirectory, m_baseFileName, groupRank, i, name );
         BlockNames[i] = const_cast< char * >( vBlockNames[i].c_str() );
       }
 
@@ -2131,7 +2131,7 @@ void SiloFile::writeMultiXXXX( const DBObjectType type,
 
   for( int i = 0; i < size; ++i )
   {
-    vBlockNames[i] = GEOSX_FMT( "{}/{}.{:03}:/domain_{:05}{}/{}", m_siloDataSubDirectory, m_baseFileName, groupRank( i ), i, multiRootString, name );
+    vBlockNames[i] = GEOS_FMT( "{}/{}.{:03}:/domain_{:05}{}/{}", m_siloDataSubDirectory, m_baseFileName, groupRank( i ), i, multiRootString, name );
     BlockNames[i] = const_cast< char * >( vBlockNames[i].c_str() );
     blockTypes[i] = type;
   }

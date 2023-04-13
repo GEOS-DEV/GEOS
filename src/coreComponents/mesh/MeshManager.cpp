@@ -108,7 +108,7 @@ void MeshManager::importFields( DomainPartition & domain )
     if( !domain.hasMeshBody( generator.getName() ) )
       return;
 
-    GEOS_LOG_RANK_0( GEOSX_FMT( "{}: importing field data from mesh dataset", generator.getName() ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: importing field data from mesh dataset", generator.getName() ) );
 
     auto const importFields = [&generator]( ElementRegionBase const & region,
                                             ElementSubRegionBase & subRegion,

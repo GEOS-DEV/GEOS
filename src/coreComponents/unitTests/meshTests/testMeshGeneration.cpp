@@ -78,7 +78,7 @@ protected:
 
   static void SetUpTestCase()
   {
-    string const inputStream = GEOSX_FMT(
+    string const inputStream = GEOS_FMT(
       "<Problem>"
       "  <Mesh>"
       "    <InternalMesh"

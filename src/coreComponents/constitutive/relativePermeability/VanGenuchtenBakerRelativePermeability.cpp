@@ -72,13 +72,13 @@ void VanGenuchtenBakerRelativePermeability::postProcessInput()
   RelativePermeabilityBase::postProcessInput();
 
   GEOSX_THROW_IF_IF( m_phaseOrder[PhaseType::OIL] < 0,
-                  GEOSX_FMT( "{}: reference oil phase has not been defined and must be included in model", getFullName() ),
+                  GEOS_FMT( "{}: reference oil phase has not been defined and must be included in model", getFullName() ),
                   InputError );
 
   auto const checkInputSize = [&]( auto const & array, localIndex const expected, auto const & attribute )
   {
     GEOSX_THROW_IF_IF_NE_MSG( array.size(), expected,
-                           GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
+                           GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
                            InputError );
   };
   checkInputSize( m_phaseMinVolumeFraction, numFluidPhases(), viewKeyStruct::phaseMinVolumeFractionString() );
@@ -100,7 +100,7 @@ void VanGenuchtenBakerRelativePermeability::postProcessInput()
   {
     auto const errorMsg = [&]( auto const & attribute )
     {
-      return GEOSX_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
+      return GEOS_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
     };
     GEOSX_THROW_IF_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
                            errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
@@ -112,14 +112,14 @@ void VanGenuchtenBakerRelativePermeability::postProcessInput()
   }
 
   GEOSX_THROW_IF_IF_LT_MSG( m_volFracScale, 0.0,
-                         GEOSX_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName() ),
+                         GEOS_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName() ),
                          InputError );
 
   for( integer ip = 0; ip < 2; ++ip )
   {
     auto const errorMsg = [&]( auto const & attribute )
     {
-      return GEOSX_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
+      return GEOS_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
     };
     if( m_phaseOrder[PhaseType::WATER] >= 0 )
     {

@@ -35,7 +35,7 @@ void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValu
   std::istringstream ss( inputValue );
   auto const errorMsg = [&]( auto const & msg )
   {
-    return GEOSX_FMT( "{} for Tensor<{}> at position {} in input: {}", msg, SIZE, ss.tellg(), inputValue );
+    return GEOS_FMT( "{} for Tensor<{}> at position {} in input: {}", msg, SIZE, ss.tellg(), inputValue );
   };
 
   // Read the head
@@ -87,19 +87,19 @@ void addIncludedXML( xmlNode & targetNode, int const level )
       string const includedFilePath = [&]()
       {
         GEOSX_THROW_IF_IF_NE_MSG( string( fileNode.name() ), includedFileTag,
-                               GEOSX_FMT( "<{}> must only contain <{}> tags", includedListTag, includedFileTag ),
+                               GEOS_FMT( "<{}> must only contain <{}> tags", includedListTag, includedFileTag ),
                                InputError );
         xmlAttribute const nameAttr = fileNode.attribute( "name" );
         string const fileName = nameAttr.value();
         GEOSX_THROW_IF_IF( !nameAttr || fileName.empty(),
-                        GEOSX_FMT( "<{}> tag must have a non-empty 'name' attribute", includedFileTag ),
+                        GEOS_FMT( "<{}> tag must have a non-empty 'name' attribute", includedFileTag ),
                         InputError );
         return isAbsolutePath( fileName ) ? fileName : joinPath( splitPath( currentFilePath ).first, fileName );
       }();
 
       xmlDocument includedXmlDocument;
       xmlResult const result = includedXmlDocument.load_file( includedFilePath.c_str() );
-      GEOSX_THROW_IF_IF( !result, GEOSX_FMT( "Errors found while parsing included XML file {}\nDescription: {}\nOffset: {}",
+      GEOSX_THROW_IF_IF( !result, GEOS_FMT( "Errors found while parsing included XML file {}\nDescription: {}\nOffset: {}",
                                           includedFilePath, result.description(), result.offset ), InputError );
 
       // All included files must contain a root node that must match the target node.

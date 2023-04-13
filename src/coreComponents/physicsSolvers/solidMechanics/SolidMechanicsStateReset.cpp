@@ -60,7 +60,7 @@ void SolidMechanicsStateReset::postProcessInput()
   PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
 
   GEOSX_THROW_IF_IF( !physicsSolverManager.hasGroup( m_solidSolverName ),
-                  GEOSX_FMT( "Task {}: physics solver named {} not found",
+                  GEOS_FMT( "Task {}: physics solver named {} not found",
                              getName(), m_solidSolverName ),
                   InputError );
 
@@ -81,7 +81,7 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
     // Option 1: zero out velocity, incremental displacement, and displacement
     if( m_resetDisplacements )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Task `{}`: at time {}s, physics solver `{}` is resetting total displacement and velocity to zero",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` is resetting total displacement and velocity to zero",
                                             getName(), time_n, m_solidSolverName ) );
 
       NodeManager & nodeManager = mesh.getNodeManager();
@@ -103,7 +103,7 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
       string const & solidMaterialName = subRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString() );
       Group & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 
-      GEOS_LOG_LEVEL_RANK_0( 2, GEOSX_FMT( "Task `{}`: at time {}s, solid model `{}` is setting inelastic behavior to `{}` on subRegion `{}`. ",
+      GEOS_LOG_LEVEL_RANK_0( 2, GEOS_FMT( "Task `{}`: at time {}s, solid model `{}` is setting inelastic behavior to `{}` on subRegion `{}`. ",
                                             getName(), time_n, solidMaterialName,
                                             m_disableInelasticity ? "OFF" : "ON",
                                             subRegion.getName() ) );

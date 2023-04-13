@@ -1220,7 +1220,7 @@ void HypreMatrix::print( std::ostream & os ) const
 
   if( myRank == 0 )
   {
-    GEOSX_FMT_TO( str, sizeof( str ), headFormat, "MPI_Process", "GlobalRowID", "GlobalColID", "Value" );
+    GEOS_FMT_TO( str, sizeof( str ), headFormat, "MPI_Process", "GlobalRowID", "GlobalColID", "Value" );
     os << str;
   }
 
@@ -1240,7 +1240,7 @@ void HypreMatrix::print( std::ostream & os ) const
       {
         for( HYPRE_Int k = diag.rowptr[i]; k < diag.rowptr[i + 1]; ++k )
         {
-          GEOSX_FMT_TO( str, sizeof( str ), lineFormat,
+          GEOS_FMT_TO( str, sizeof( str ), lineFormat,
                         rank,
                         firstRowID + i,
                         firstDiagColID + diag.colind[k],
@@ -1251,7 +1251,7 @@ void HypreMatrix::print( std::ostream & os ) const
         {
           for( HYPRE_Int k = offd.rowptr[i]; k < offd.rowptr[i + 1]; ++k )
           {
-            GEOSX_FMT_TO( str, sizeof( str ), lineFormat,
+            GEOS_FMT_TO( str, sizeof( str ), lineFormat,
                           rank,
                           firstRowID + i,
                           colMapOffd[offd.colind[k]],
@@ -1284,9 +1284,9 @@ void HypreMatrix::write( string const & filename,
       if( rank == 0 )
       {
         std::ofstream os( filename );
-        GEOS_ERROR_IF( !os, GEOSX_FMT( "Unable to open file for writing: {}", filename ) );
+        GEOS_ERROR_IF( !os, GEOS_FMT( "Unable to open file for writing: {}", filename ) );
         os << "%%MatrixMarket matrix coordinate real general\n";
-        os << GEOSX_FMT( "{} {} {}\n", numGlobalRows(), numGlobalCols(), numGlobalNonzeros() );
+        os << GEOS_FMT( "{} {} {}\n", numGlobalRows(), numGlobalCols(), numGlobalNonzeros() );
       }
 
       // Write matrix values
@@ -1304,7 +1304,7 @@ void HypreMatrix::write( string const & filename,
         {
           hypre::CSRData< true > csr{ fullMatrix };
           std::ofstream os( filename, std::ios_base::app );
-          GEOS_ERROR_IF( !os, GEOSX_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
+          GEOS_ERROR_IF( !os, GEOS_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
           char str[64];
 
           for( HYPRE_Int i = 0; i < csr.nrow; i++ )
@@ -1312,7 +1312,7 @@ void HypreMatrix::write( string const & filename,
             for( HYPRE_Int k = csr.rowptr[i]; k < csr.rowptr[i + 1]; k++ )
             {
               // MatrixMarket row/col indices are 1-based
-              GEOSX_FMT_TO( str, sizeof( str ), "{} {} {:>28.16e}\n", i + 1, csr.colind[k] + 1, csr.values[k] );
+              GEOS_FMT_TO( str, sizeof( str ), "{} {} {:>28.16e}\n", i + 1, csr.colind[k] + 1, csr.values[k] );
               os << str;
             }
           }

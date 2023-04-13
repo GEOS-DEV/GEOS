@@ -80,7 +80,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
 
   // initialize salinity
   GEOSX_THROW_IF_IF_LT_MSG( inputParams.size(), 9,
-                         GEOSX_FMT( "{}: insufficient number of model parameters", functionName ),
+                         GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
                          InputError );
   real64 salinity;
   try
@@ -89,7 +89,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   }
   catch( std::invalid_argument const & e )
   {
-    GEOSX_THROW_IF( GEOSX_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    GEOSX_THROW_IF( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
   }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );

@@ -82,7 +82,7 @@ void KrylovSolver< VECTOR >::logProgress() const
   if( m_params.logLevel >= 2 )
   {
     real64 const relNorm = m_residualNorms[0] > 0.0 ? m_residualNorms.back() / m_residualNorms[0] : 0.0;
-    GEOS_LOG_RANK_0( GEOSX_FMT( "[{}] iteration {}: residual = {:e}", methodName(), m_result.numIterations, relNorm ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "[{}] iteration {}: residual = {:e}", methodName(), m_result.numIterations, relNorm ) );
   }
 }
 
@@ -91,7 +91,7 @@ void KrylovSolver< VECTOR >::logResult() const
 {
   if( m_params.logLevel >= 1 )
   {
-    GEOS_LOG_RANK_0( GEOSX_FMT( "[{}] {} in {} iterations ({:.3f} s)", methodName(),
+    GEOS_LOG_RANK_0( GEOS_FMT( "[{}] {} in {} iterations ({:.3f} s)", methodName(),
                                  m_result.success() ? "converged" : "failed to converge",
                                  m_result.numIterations, m_result.solveTime ) );
   }
