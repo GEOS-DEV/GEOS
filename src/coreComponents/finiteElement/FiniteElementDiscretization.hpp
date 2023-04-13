@@ -114,7 +114,7 @@ FiniteElementDiscretization::
                                    typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData,
                                    FE_TYPE & finiteElement ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // do not precompute shape functions in case of SEM formulation (not needed)
   if( m_formulation == "SEM" )

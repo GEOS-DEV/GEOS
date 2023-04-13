@@ -150,7 +150,7 @@ GeosxState::~GeosxState()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool GeosxState::initializeDataRepository()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   Timer timer( m_initTime );
 
   GEOS_THROW_IF_NE( m_state, State::UNINITIALIZED, std::logic_error );
@@ -180,7 +180,7 @@ bool GeosxState::initializeDataRepository()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void GeosxState::applyInitialConditions()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   Timer timer( m_initTime );
 
   GEOS_THROW_IF_NE( m_state, State::INITIALIZED, std::logic_error );
@@ -199,7 +199,7 @@ void GeosxState::applyInitialConditions()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void GeosxState::run()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   Timer timer( m_runTime );
 
   GEOS_THROW_IF_NE( m_state, State::READY_TO_RUN, std::logic_error );

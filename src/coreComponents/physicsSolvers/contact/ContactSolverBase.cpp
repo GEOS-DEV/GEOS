@@ -191,7 +191,7 @@ void ContactSolverBase::applyBoundaryConditions( real64 const time,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   if( m_setupSolidSolverDofs )
   {
@@ -209,7 +209,7 @@ real64 ContactSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n
                                         const int GEOS_UNUSED_PARAM( cycleNumber ),
                                         DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   GEOS_ERROR( "ExplicitStep non available for contact solvers." );
   return dt;
 }

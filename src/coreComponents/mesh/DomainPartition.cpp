@@ -76,7 +76,7 @@ void DomainPartition::initializationOrder( string_array & order )
 
 void DomainPartition::setupCommunications( bool use_nonblocking )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
 #if defined(GEOSX_USE_MPI)
   if( m_metisNeighborList.empty() )

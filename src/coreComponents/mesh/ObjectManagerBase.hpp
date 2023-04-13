@@ -965,7 +965,7 @@ void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, array1d< globalIndex > > & unmappedIndices,
                                        bool const )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   bool allValuesMapped = true;
   unordered_map< globalIndex, localIndex > const & globalToLocal = relation.relatedObjectGlobalToLocal();
@@ -1001,7 +1001,7 @@ void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, SortedArray< globalIndex > > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   unordered_map< globalIndex, localIndex > const & globalToLocal = relation.RelatedObjectGlobalToLocal();
   for( map< localIndex, SortedArray< globalIndex > >::iterator iter = unmappedIndices.begin();
@@ -1038,7 +1038,7 @@ void ObjectManagerBase::fixUpDownMaps( ArrayOfSets< localIndex > & relation,
                                        map< localIndex, SortedArray< globalIndex > > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   for( map< localIndex, SortedArray< globalIndex > >::iterator iter = unmappedIndices.begin();
        iter != unmappedIndices.end();

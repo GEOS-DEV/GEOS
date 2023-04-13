@@ -436,7 +436,7 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
 
 void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition const & domain ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
   MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
@@ -492,7 +492,7 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
 
 void CompositionalMultiphaseBase::updateComponentFraction( ObjectManagerBase & dataGroup ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   isothermalCompositionalMultiphaseBaseKernels::
     ComponentFractionKernelFactory::
@@ -503,7 +503,7 @@ void CompositionalMultiphaseBase::updateComponentFraction( ObjectManagerBase & d
 
 void CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase & dataGroup ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
@@ -530,7 +530,7 @@ void CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase &
 
 void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
   arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
@@ -558,7 +558,7 @@ void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
 
 void CompositionalMultiphaseBase::updateRelPermModel( ObjectManagerBase & dataGroup ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
     dataGroup.getField< fields::flow::phaseVolumeFraction >();
@@ -580,7 +580,7 @@ void CompositionalMultiphaseBase::updateRelPermModel( ObjectManagerBase & dataGr
 
 void CompositionalMultiphaseBase::updateCapPressureModel( ObjectManagerBase & dataGroup ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   if( m_hasCapPressure )
   {
@@ -623,7 +623,7 @@ void CompositionalMultiphaseBase::updateSolidInternalEnergyModel( ObjectManagerB
 
 void CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subRegion ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   updateComponentFraction( subRegion );
   updateFluidModel( subRegion );
@@ -637,7 +637,7 @@ void CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subRegio
 void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
                                                         arrayView1d< string const > const & regionNames )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   integer const numComp = m_numComponents;
 
@@ -1053,7 +1053,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
 void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
@@ -1163,7 +1163,7 @@ void CompositionalMultiphaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   assembleAccumulationAndVolumeBalanceTerms( domain,
                                              dofManager,
@@ -1182,7 +1182,7 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
                                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                              arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -1238,7 +1238,7 @@ void CompositionalMultiphaseBase::applyBoundaryConditions( real64 const time_n,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   if( m_keepFlowVariablesConstantDuringInitStep )
   {
@@ -1278,7 +1278,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                      arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -1554,7 +1554,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Only validate BC at the beginning of Newton loop
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
@@ -1726,7 +1726,7 @@ void CompositionalMultiphaseBase::keepFlowVariablesConstantDuringInitStep( real6
                                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                            arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( time, dt );
 
@@ -1800,7 +1800,7 @@ void CompositionalMultiphaseBase::keepFlowVariablesConstantDuringInitStep( real6
 
 void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   using namespace isothermalCompositionalMultiphaseBaseKernels;
 
@@ -1922,7 +1922,7 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
 
 void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,

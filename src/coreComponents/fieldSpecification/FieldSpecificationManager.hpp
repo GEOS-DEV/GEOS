@@ -99,7 +99,7 @@ public:
                         MeshLevel & mesh,
                         string const & fieldName ) const
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
     applyFieldValue< POLICY >( time, mesh, fieldName,
                                [&]( FieldSpecificationBase const &,
@@ -213,7 +213,7 @@ public:
               string const & fieldName,
               LAMBDA && lambda ) const
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
     string const meshBodyName = mesh.getParent().getParent().getName();
     string const meshLevelName = mesh.getName();
@@ -243,7 +243,7 @@ FieldSpecificationManager::
                    string const & fieldName,
                    LAMBDA && lambda ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   apply( time, mesh, fieldName,
          [&]( FieldSpecificationBase const & fs,
@@ -266,7 +266,7 @@ FieldSpecificationManager::
                    PRELAMBDA && preLambda,
                    POSTLAMBDA && postLambda ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   apply( time, mesh, fieldName,
          [&]( FieldSpecificationBase const & fs,

@@ -296,7 +296,7 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 
 void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition const & domain ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
   CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
@@ -470,7 +470,7 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
 
 void CompositionalMultiphaseWell::updateComponentFraction( WellElementSubRegion & subRegion ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   isothermalCompositionalMultiphaseBaseKernels::
     ComponentFractionKernelFactory::
@@ -481,7 +481,7 @@ void CompositionalMultiphaseWell::updateComponentFraction( WellElementSubRegion 
 
 void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // the rank that owns the reference well element is responsible for the calculations below.
   if( !subRegion.isLocallyOwned() )
@@ -548,7 +548,7 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
 
 void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubRegion & subRegion )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // the rank that owns the reference well element is responsible for the calculations below.
   if( !subRegion.isLocallyOwned() )
@@ -750,7 +750,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
 void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRegion )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const & pres = subRegion.getField< fields::well::pressure >();
   arrayView1d< real64 const > const & temp = subRegion.getField< fields::well::temperature >();
@@ -777,7 +777,7 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
 
 void CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegion & subRegion ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
@@ -792,7 +792,7 @@ void CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegio
 
 void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion & subRegion ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
@@ -826,7 +826,7 @@ void CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & s
 
 void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   integer const numComp = m_numComponents;
   integer const numPhase = m_numPhases;
@@ -945,7 +945,7 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const GEOS_UNUSED_PA
                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                      arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // loop over the wells
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -996,7 +996,7 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                              arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
@@ -1070,7 +1070,7 @@ void CompositionalMultiphaseWell::assembleVolumeBalanceTerms( DomainPartition co
                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                               arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
@@ -1122,7 +1122,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
                                                     DofManager const & dofManager,
                                                     arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   real64 localResidualNorm = 0.0;
 
@@ -1190,7 +1190,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & d
                                                        DofManager const & dofManager,
                                                        arrayView1d< real64 const > const & localSolution )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
   bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
@@ -1239,7 +1239,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain
                                                   arrayView1d< real64 const > const & localSolution,
                                                   real64 const scalingFactor )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
   integer localCheck = 1;
@@ -1277,7 +1277,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain
 
 void CompositionalMultiphaseWell::computePerforationRates( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -1520,7 +1520,7 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                              arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
@@ -1619,7 +1619,7 @@ void CompositionalMultiphaseWell::shutDownWell( real64 const time_n,
                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                 arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
 

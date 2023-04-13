@@ -524,7 +524,7 @@ localIndex buildEdgeMaps( localIndex const numNodes,
                           ArrayOfArrays< localIndex > & edgeToFaceMap,
                           array2d< localIndex > & edgeToNodeMap )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   ArrayOfArrays< EdgeBuilder > const edgesByLowestNode =
     createEdgesByLowestNode( numNodes, faceToNodeMap );

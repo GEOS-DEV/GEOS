@@ -181,7 +181,7 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
 void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
                                                  DofManager & dofManager ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   m_solidSolver->setupDofs( domain, dofManager );
 
   if( !m_useStaticCondensation )
@@ -219,7 +219,7 @@ void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
                                                    ParallelVector & solution,
                                                    bool const setSparsity )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   if( !m_useStaticCondensation )
   {
@@ -281,7 +281,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                       arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   m_solidSolver->assembleSystem( time,
                                  dt,
@@ -555,7 +555,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
                                                                DofManager const & dofManager,
                                                                arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Matrix residual
   real64 const solidResidualNorm = m_solidSolver->calculateResidualNorm( time, dt, domain, dofManager, localRhs );
@@ -649,7 +649,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
                                                            real64 const scalingFactor,
                                                            DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   m_solidSolver->applySystemSolution( dofManager,
                                       localSolution,

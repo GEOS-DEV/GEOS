@@ -82,7 +82,7 @@ bool SinglePhaseStatistics::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
                                                      arrayView1d< string const > const & regionNames ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Step 1: initialize the average/min/max quantities
   ElementRegionManager & elemManager = mesh.getElemManager();

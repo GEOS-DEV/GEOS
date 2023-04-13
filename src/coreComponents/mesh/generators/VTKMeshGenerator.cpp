@@ -76,7 +76,7 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
 void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 {
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   MPI_Comm const comm = MPI_COMM_GEOSX;
   vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();

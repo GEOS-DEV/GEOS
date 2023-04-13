@@ -120,7 +120,7 @@ public:
                ParallelVector & solution,
                bool const setSparsity = true ) override
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
     GEOS_UNUSED_VAR( setSparsity );
 

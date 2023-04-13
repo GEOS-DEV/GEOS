@@ -79,7 +79,7 @@ bool SolidMechanicsStatistics::execute( real64 const GEOS_UNUSED_PARAM( time_n )
 
 void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Step 1: increment the min/max quantities
 

@@ -192,7 +192,7 @@ ObjectManagerBase::constructGlobalListOfBoundaryObjects() const
 
 void ObjectManagerBase::constructGlobalToLocalMap()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   m_globalToLocalMap.clear();
   localIndex const N = size();
@@ -582,7 +582,7 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
                                                 localIndex_array & packList,
                                                 integer const recursive )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
   localIndex unpackedSize = 0;

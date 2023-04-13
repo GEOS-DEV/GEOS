@@ -65,7 +65,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
                                               NodeManager const & compositionObject,
                                               std::vector< NeighborCommunicator > & neighbors )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   arrayView1d< integer > const & ghostRank = object.ghostRank();
   ghostRank.setValues< serialPolicy >( -2 );
 
@@ -341,7 +341,7 @@ CommunicationTools::
   findMatchedPartitionBoundaryObjects( ObjectManagerBase & objectManager,
                                        std::vector< NeighborCommunicator > & allNeighbors )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   arrayView1d< integer > const & domainBoundaryIndicator = objectManager.getDomainBoundaryIndicator();
 
   array1d< globalIndex > const globalPartitionBoundaryObjectsIndices = objectManager.constructGlobalListOfBoundaryObjects();
@@ -623,7 +623,7 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
                                       std::vector< NeighborCommunicator > & neighbors,
                                       bool const unorderedComms )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   MPI_iCommData commData( getCommID() );
   commData.resize( neighbors.size() );
 
@@ -745,7 +745,7 @@ void CommunicationTools::synchronizePackSendRecvSizes( FieldIdentifiers const & 
                                                        MPI_iCommData & icomm,
                                                        bool onDevice )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   icomm.setFieldsToBeSync( fieldsToBeSync );
   icomm.resize( neighbors.size() );
 
@@ -773,7 +773,7 @@ void CommunicationTools::asyncPack( FieldIdentifiers const & fieldsToBeSync,
                                     bool onDevice,
                                     parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   for( NeighborCommunicator & neighbor : neighbors )
   {
     neighbor.packCommBufferForSync( fieldsToBeSync, mesh, icomm.commID(), onDevice, events );
@@ -785,7 +785,7 @@ void CommunicationTools::asyncSendRecv( std::vector< NeighborCommunicator > & ne
                                         bool onDevice,
                                         parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   if( onDevice )
   {
     waitAllDeviceEvents( events );
@@ -817,7 +817,7 @@ void CommunicationTools::synchronizePackSendRecv( FieldIdentifiers const & field
                                                   MPI_iCommData & icomm,
                                                   bool onDevice )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   parallelDeviceEvents events;
   asyncPack( fieldsToBeSync, mesh, neighbors, icomm, onDevice, events );
   asyncSendRecv( neighbors, icomm, onDevice, events );
@@ -830,7 +830,7 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
                                       bool onDevice,
                                       parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   int recvCount = 0;
   std::vector< int > neighborIndices;
@@ -871,7 +871,7 @@ void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
                                          bool onDevice,
                                          parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
   GEOSX_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events ) );
@@ -895,7 +895,7 @@ void CommunicationTools::synchronizeUnpack( MeshLevel & mesh,
                                             MPI_iCommData & icomm,
                                             bool onDevice )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   parallelDeviceEvents events;
   finalizeUnpack( mesh, neighbors, icomm, onDevice, events );
 }

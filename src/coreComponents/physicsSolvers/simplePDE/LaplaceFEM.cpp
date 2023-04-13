@@ -95,7 +95,7 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
                               ParallelVector & solution,
                               bool const setSparsity )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

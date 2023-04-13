@@ -188,7 +188,7 @@ void SinglePhasePoromechanics::assembleSystem( real64 const time_n,
                                                arrayView1d< real64 > const & localRhs )
 {
 
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   real64 poromechanicsMaxForce = 0.0;
   real64 mechanicsMaxForce = 0.0;
@@ -346,7 +346,7 @@ void SinglePhasePoromechanics::updateState( DomainPartition & domain )
 
 void SinglePhasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,

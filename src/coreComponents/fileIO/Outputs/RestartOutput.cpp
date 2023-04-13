@@ -39,7 +39,7 @@ bool RestartOutput::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
                              real64 const GEOS_UNUSED_PARAM( eventProgress ),
                              DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   Group & rootGroup = this->getGroupByPath( "/Problem" );
 

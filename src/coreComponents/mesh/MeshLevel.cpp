@@ -112,7 +112,7 @@ MeshLevel::MeshLevel( string const & name,
   MeshLevel( name, parent )
 {
 
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   localIndex const numBasisSupportPoints = order+1;
 
 
@@ -630,7 +630,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 
 void MeshLevel::generateSets()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager const & nodeManager = *m_nodeManager;
 

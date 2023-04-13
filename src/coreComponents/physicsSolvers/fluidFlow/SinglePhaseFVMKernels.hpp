@@ -544,7 +544,7 @@ public:
   launch( localIndex const numConnections,
           KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
     forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn )
     {

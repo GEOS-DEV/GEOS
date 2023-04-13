@@ -102,7 +102,7 @@ void FluxApproximationBase::initializePreSubGroups()
 
 void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();

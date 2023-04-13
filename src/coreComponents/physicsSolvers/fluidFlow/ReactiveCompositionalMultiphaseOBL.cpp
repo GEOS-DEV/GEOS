@@ -295,7 +295,7 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const &
                                                                   DofManager const & dofManager,
                                                                   arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( localRhs );
 
   real64 localResidualNorm = 0.0;
@@ -364,7 +364,7 @@ real64 ReactiveCompositionalMultiphaseOBL::scalingForSystemSolution( DomainParti
                                                                      DofManager const & dofManager,
                                                                      arrayView1d< real64 const > const & localSolution )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // check if we want to rescale the Newton update
   if( m_maxCompFracChange >= 1.0 )
@@ -438,7 +438,7 @@ bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition co
                                                               arrayView1d< real64 const > const & localSolution,
                                                               real64 const scalingFactor )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   localIndex localCheck = 1;
@@ -486,7 +486,7 @@ void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const &
                                                               real64 const scalingFactor,
                                                               DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
 
@@ -542,7 +542,7 @@ void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const &
 
 void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGroups()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
@@ -649,7 +649,7 @@ void ReactiveCompositionalMultiphaseOBL::assembleSystem( real64 const GEOS_UNUSE
                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                          arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   assembleAccumulationTerms( dt,
                              domain,
@@ -672,7 +672,7 @@ void ReactiveCompositionalMultiphaseOBL::assembleAccumulationTerms( real64 const
                                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                     arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -706,7 +706,7 @@ void ReactiveCompositionalMultiphaseOBL::assembleFluxTerms( real64 const dt,
                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                             arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -747,7 +747,7 @@ void ReactiveCompositionalMultiphaseOBL::applyBoundaryConditions( real64 const t
                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                   arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // apply pressure boundary conditions.
   applyDirichletBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
@@ -773,7 +773,7 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                             arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -1036,7 +1036,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Only validate BC at the beginning of Newton loop
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
@@ -1259,7 +1259,7 @@ void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariables( DomainPartition &
 
 void ReactiveCompositionalMultiphaseOBL::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -1304,7 +1304,7 @@ void ReactiveCompositionalMultiphaseOBL::resetStateToBeginningOfStep( DomainPart
 
 void ReactiveCompositionalMultiphaseOBL::updateOBLOperators( ObjectManagerBase & dataGroup ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   OBLOperatorsKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numPhases,

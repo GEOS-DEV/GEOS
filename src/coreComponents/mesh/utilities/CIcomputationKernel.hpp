@@ -104,7 +104,7 @@ public:
   static
   void launchCIComputationKernel( KERNEL_TYPE & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
     forAll< POLICY >( kernelComponent.m_fracturedElems.size(),
                       [=] GEOS_HOST_DEVICE ( localIndex const i )
     {

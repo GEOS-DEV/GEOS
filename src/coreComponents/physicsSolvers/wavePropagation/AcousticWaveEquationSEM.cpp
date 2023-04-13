@@ -500,7 +500,7 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition &
 
 void AcousticWaveEquationSEM::initializePML()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   registerWrapper< parametersPML >( viewKeyStruct::parametersPMLString() ).
     setInputFlag( InputFlags::FALSE ).
@@ -754,7 +754,7 @@ void AcousticWaveEquationSEM::initializePML()
 
 void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   parametersPML const & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
@@ -904,7 +904,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
       }
       else
       {
-        GEOSX_MARK_SCOPE ( DirectWrite );
+        GEOS_MARK_SCOPE ( DirectWrite );
         p_dt2.move( MemorySpace::host, false );
         int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
         std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
@@ -973,7 +973,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       }
       else
       {
-        GEOSX_MARK_SCOPE ( DirectRead );
+        GEOS_MARK_SCOPE ( DirectRead );
 
         int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
         std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
@@ -999,7 +999,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
         constexpr localIndex numNodesPerElem = 8;
 
-        GEOSX_MARK_SCOPE ( updatePartialGradient );
+        GEOS_MARK_SCOPE ( updatePartialGradient );
         forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const eltIdx )
         {
           for( localIndex i = 0; i < numNodesPerElem; ++i )
@@ -1026,7 +1026,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                       integer cycleNumber,
                                                       DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
@@ -1068,7 +1068,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     if( !usePML )
     {
-      GEOSX_MARK_SCOPE ( updateP );
+      GEOS_MARK_SCOPE ( updateP );
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
@@ -1102,7 +1102,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       /// Compute (divV) and (B.pressureGrad - C.auxUGrad) vectors for the PML region
       applyPML( time_n, domain );
 
-      GEOSX_MARK_SCOPE ( updatePWithPML );
+      GEOS_MARK_SCOPE ( updatePWithPML );
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         if( freeSurfaceNodeIndicator[a] != 1 )

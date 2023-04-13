@@ -158,7 +158,7 @@ void SinglePhaseBase::initializeAquiferBC() const
 
 void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -239,7 +239,7 @@ void SinglePhaseBase::initializePreSubGroups()
 
 void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
   arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
@@ -274,7 +274,7 @@ void SinglePhaseBase::updateFluidState( ObjectManagerBase & subRegion ) const
 
 void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // output
 
@@ -319,7 +319,7 @@ void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup ) const
 
 void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
@@ -657,7 +657,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
                                             real64 const & dt,
                                             DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // note: we have to save the aquifer state **before** updating the pressure,
   // otherwise the aquifer flux is saved with the wrong pressure time level
@@ -736,7 +736,7 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                       arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   assembleAccumulationTerms( domain,
                              dofManager,
@@ -756,7 +756,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -811,7 +811,7 @@ void SinglePhaseBase::applyBoundaryConditions( real64 time_n,
                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   if( m_keepFlowVariablesConstantDuringInitStep )
   {
@@ -919,7 +919,7 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                         arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -948,7 +948,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                          arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -1071,7 +1071,7 @@ void SinglePhaseBase::keepFlowVariablesConstantDuringInitStep( real64 const time
                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( time, dt );
 

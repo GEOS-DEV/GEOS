@@ -183,7 +183,7 @@ real64
 ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch( localIndex const numElems,
                                                                                  KERNEL_TYPE const & kernelComponent )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( numElems );
 

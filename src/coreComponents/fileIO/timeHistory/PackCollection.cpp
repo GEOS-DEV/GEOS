@@ -262,7 +262,7 @@ void PackCollection::collect( DomainPartition const & domain,
                               localIndex const collectionIdx,
                               buffer_unit_type * & buffer )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   GEOS_ERROR_IF( collectionIdx < 0 || collectionIdx >= numCollectors(), "Attempting to collection from an invalid collection index!" );
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );

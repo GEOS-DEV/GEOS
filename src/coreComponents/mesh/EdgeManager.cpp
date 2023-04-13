@@ -56,7 +56,7 @@ void EdgeManager::resize( localIndex const newSize )
 
 void EdgeManager::buildSets( NodeManager const & nodeManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Make sets from node sets.
   auto const & nodeSets = nodeManager.sets().wrappers();
@@ -95,7 +95,7 @@ void EdgeManager::buildEdges( localIndex const numNodes,
 
 void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   resize( cellBlockManager.numEdges() );
 
@@ -169,7 +169,7 @@ void EdgeManager::setIsExternal( FaceManager const & faceManager )
 ArrayOfSets< globalIndex >
 EdgeManager::extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex const numEdges = size();
 
@@ -241,7 +241,7 @@ localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           bool const overwriteUpMaps,
                                           bool const GEOS_UNUSED_PARAM( overwriteDownMaps ) )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex unPackedSize = 0;
 

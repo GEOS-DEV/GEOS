@@ -92,7 +92,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -152,7 +152,7 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                               arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -197,7 +197,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
                                                           DofManager const & dofManager,
                                                           arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   integer constexpr numNorm = 2; // mass balance and energy balance
   array1d< real64 > localResidualNorm;
@@ -334,7 +334,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
                                                              DofManager const & dofManager,
                                                              arrayView1d< real64 const > const & localSolution )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
   bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
@@ -392,7 +392,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
                                                       arrayView1d< real64 const > const & localSolution,
                                                       real64 const scalingFactor )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   integer localCheck = 1;
@@ -440,7 +440,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
                                                       real64 const scalingFactor,
                                                       DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
   DofManager::CompMask componentMask( m_numDofPerCell, 1, m_numComponents+1 );
@@ -492,7 +492,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
 
 void CompositionalMultiphaseFVM::updatePhaseMobility( ObjectManagerBase & dataGroup ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // note that the phase mobility computed here also includes phase density
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -530,7 +530,7 @@ void CompositionalMultiphaseFVM::applyBoundaryConditions( real64 time_n,
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   CompositionalMultiphaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
   if( !m_keepFlowVariablesConstantDuringInitStep )
   {
@@ -676,7 +676,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                        arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Only validate BC at the beginning of Newton loop
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
@@ -785,7 +785,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 

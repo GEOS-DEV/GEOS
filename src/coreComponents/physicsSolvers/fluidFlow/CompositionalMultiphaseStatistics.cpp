@@ -158,7 +158,7 @@ bool CompositionalMultiphaseStatistics::execute( real64 const GEOS_UNUSED_PARAM(
 void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mesh,
                                                                  arrayView1d< string const > const & regionNames ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   integer const numPhases = m_solver->numFluidPhases();
   integer const numComps = m_solver->numFluidComponents();
@@ -400,7 +400,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
 void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
                                                            DomainPartition & domain ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   integer const numPhases = m_solver->numFluidPhases();
   integer const numComps = m_solver->numFluidComponents();

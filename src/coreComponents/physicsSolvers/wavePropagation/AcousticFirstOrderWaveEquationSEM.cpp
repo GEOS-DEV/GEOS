@@ -432,7 +432,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
                                                                 integer const cycleNumber,
                                                                 DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( time_n, dt, cycleNumber );
 

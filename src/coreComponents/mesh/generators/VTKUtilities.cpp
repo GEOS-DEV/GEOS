@@ -482,7 +482,7 @@ loadMesh( Path const & filePath,
 vtkSmartPointer< vtkDataSet >
 generateGlobalIDs( vtkDataSet & mesh )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   vtkNew< vtkGenerateGlobalIds > generator;
   generator->SetInputDataObject( &mesh );
@@ -505,7 +505,7 @@ redistributeByCellGraph( vtkDataSet & mesh,
                          MPI_Comm const comm,
                          int const numRefinements )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   int64_t const numElems = mesh.GetNumberOfCells();
   int64_t const numProcs = MpiWrapper::commSize( comm );
@@ -558,7 +558,7 @@ redistributeByCellGraph( vtkDataSet & mesh,
 vtkSmartPointer< vtkDataSet >
 redistributeByKdTree( vtkDataSet & mesh )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Use a VTK filter which employs a kd-tree partition internally
   vtkNew< vtkRedistributeDataSetFilter > rdsf;
@@ -600,7 +600,7 @@ redistributeMesh( vtkDataSet & loadedMesh,
                   int const partitionRefinement,
                   int const useGlobalIds )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Generate global IDs for vertices and cells, if needed
   vtkSmartPointer< vtkDataSet > mesh;

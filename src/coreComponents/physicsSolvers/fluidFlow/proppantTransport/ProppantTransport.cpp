@@ -211,7 +211,7 @@ void ProppantTransport::resizeFractureFields( MeshLevel & mesh, arrayView1d< str
 
 void ProppantTransport::updateFluidModel( ObjectManagerBase & dataGroup )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres  = dataGroup.getField< fields::flow::pressure >();
 
@@ -230,7 +230,7 @@ void ProppantTransport::updateFluidModel( ObjectManagerBase & dataGroup )
 
 void ProppantTransport::updateComponentDensity( ObjectManagerBase & dataGroup )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres  = dataGroup.getField< fields::flow::pressure >();
 
@@ -250,7 +250,7 @@ void ProppantTransport::updateComponentDensity( ObjectManagerBase & dataGroup )
 
 void ProppantTransport::updateProppantModel( ObjectManagerBase & dataGroup )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const proppantConc  = dataGroup.getField< fields::proppant::proppantConcentration >();
 
@@ -281,7 +281,7 @@ void ProppantTransport::updateProppantModel( ObjectManagerBase & dataGroup )
 
 void ProppantTransport::updateProppantMobility( ObjectManagerBase & dataGroup )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const conc = dataGroup.getField< fields::proppant::proppantConcentration >();
   arrayView1d< real64 const > const aperture = dataGroup.getReference< array1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementApertureString() );
@@ -299,7 +299,7 @@ void ProppantTransport::updateProppantMobility( ObjectManagerBase & dataGroup )
 
 void ProppantTransport::updateState( ObjectManagerBase & dataGroup )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   updateFluidModel( dataGroup );
   updateProppantModel( dataGroup );
@@ -307,7 +307,7 @@ void ProppantTransport::updateState( ObjectManagerBase & dataGroup )
 
 void ProppantTransport::initializePostInitialConditionsPreSubGroups()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
@@ -355,7 +355,7 @@ void ProppantTransport::preStepUpdate( real64 const & time,
                                        real64 const & GEOS_UNUSED_PARAM( dt ),
                                        DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -404,7 +404,7 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
                                         real64 const & dt_return,
                                         DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -444,7 +444,7 @@ void ProppantTransport::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( tim
                                            real64 const & GEOS_UNUSED_PARAM( dt ),
                                            DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -468,7 +468,7 @@ void ProppantTransport::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( 
                                               real64 const & GEOS_UNUSED_PARAM( dt ),
                                               DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -512,7 +512,7 @@ void ProppantTransport::assembleSystem( real64 const time,
                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                         arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   assembleAccumulationTerms( dt,
                              domain,
@@ -534,7 +534,7 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const dofKey = dofManager.getKey( fields::proppant::proppantConcentration::key() );
 
@@ -594,7 +594,7 @@ void ProppantTransport::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   R1Tensor downVector = gravityVector();
   LvArray::tensorOps::normalize< 3 >( downVector );
@@ -672,7 +672,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   string const dofKey = dofManager.getKey( fields::proppant::proppantConcentration::key() );
@@ -824,7 +824,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
                                           DofManager const & dofManager,
                                           arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   real64 localResidualNorm = 0.0;
   real64 localResidualNormalizer = 0.0;
@@ -968,7 +968,7 @@ void ProppantTransport::resetStateToBeginningOfStep( DomainPartition & domain )
 void ProppantTransport::updateCellBasedFlux( real64 const GEOS_UNUSED_PARAM( time_n ),
                                              DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   R1Tensor downVector = gravityVector();
   LvArray::tensorOps::normalize< 3 >( downVector );
@@ -1020,7 +1020,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOS_UNUSED_PARAM
                                                   real64 const dt,
                                                   DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   R1Tensor downVector = gravityVector();
   LvArray::tensorOps::normalize< 3 >( downVector );

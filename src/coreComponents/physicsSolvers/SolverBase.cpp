@@ -204,7 +204,7 @@ real64 SolverBase::solverStep( real64 const & time_n,
                                const integer cycleNumber,
                                DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Only build the sparsity pattern if the mesh has changed
   Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
@@ -233,7 +233,7 @@ bool SolverBase::execute( real64 const time_n,
                           real64 const GEOS_UNUSED_PARAM( eventProgress ),
                           DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   real64 dtRemaining = dt;
   real64 nextDt = dt;
 
@@ -656,7 +656,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
                                           integer const cycleNumber,
                                           DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   // dt may be cut during the course of this step, so we are keeping a local
   // value to track the achieved dt for this step.
   real64 stepDt = dt;
@@ -984,7 +984,7 @@ void SolverBase::setupSystem( DomainPartition & domain,
                               ParallelVector & solution,
                               bool const setSparsity )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   dofManager.setDomain( domain );
 
@@ -1123,7 +1123,7 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
                                     ParallelVector & rhs,
                                     ParallelVector & solution )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   rhs.scale( -1.0 );
   solution.zero();

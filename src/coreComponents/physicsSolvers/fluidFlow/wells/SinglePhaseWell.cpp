@@ -147,7 +147,7 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
 
 void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // the rank that owns the reference well element is responsible for the calculations below.
   if( !subRegion.isLocallyOwned() )
@@ -207,7 +207,7 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
 
 void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegion )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // the rank that owns the reference well element is responsible for the calculations below.
   if( !subRegion.isLocallyOwned() )
@@ -303,7 +303,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
 
 void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres = subRegion.getField< fields::well::pressure >();
   arrayView1d< real64 const > const temp = subRegion.getField< fields::well::temperature >();
@@ -335,7 +335,7 @@ void SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
 
 void SinglePhaseWell::initializeWells( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // loop over the wells
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -423,7 +423,7 @@ void SinglePhaseWell::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n 
                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                          arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
 
   // loop over the wells
@@ -469,7 +469,7 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
@@ -551,7 +551,7 @@ void SinglePhaseWell::assembleAccumulationTerms( DomainPartition const & domain,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
@@ -609,7 +609,7 @@ void SinglePhaseWell::shutDownWell( real64 const time_n,
                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                     arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
@@ -681,7 +681,7 @@ void SinglePhaseWell::shutDownWell( real64 const time_n,
 
 void SinglePhaseWell::computePerforationRates( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -768,7 +768,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
                                         DofManager const & dofManager,
                                         arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   real64 localResidualNorm = 0.0;
 
@@ -833,7 +833,7 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition const & domain,
                                            arrayView1d< real64 const > const & localSolution,
                                            real64 const scalingFactor )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex localCheck = 1;
   string const wellDofKey = dofManager.getKey( wellElementDofName() );

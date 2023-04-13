@@ -699,7 +699,7 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                      integer const cycleNumber,
                                                      DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( time_n, dt, cycleNumber );
 

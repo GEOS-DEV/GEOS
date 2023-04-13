@@ -219,7 +219,7 @@ public:
               int const cycleNumber,
               DomainPartition & domain ) override final
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
     if( getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::FullyImplicit )
     {
@@ -349,7 +349,7 @@ protected:
                                                 int const cycleNumber,
                                                 DomainPartition & domain )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
     real64 dtReturn = dt;
 

@@ -298,7 +298,7 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh,
 
 void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
   arrayView1d< real64 const > const & pressure_n = subRegion.getField< fields::flow::pressure_n >();
@@ -320,7 +320,7 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
 
 void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
 
@@ -445,7 +445,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
                                                 real64 const & dt,
                                                 DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();

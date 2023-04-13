@@ -125,7 +125,7 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   real64 poromechanicsMaxForce = 0.0;
   real64 mechanicsMaxForce = 0.0;
@@ -377,7 +377,7 @@ void MultiphasePoromechanics::updateStabilizationParameters( DomainPartition & d
 
 void MultiphasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,

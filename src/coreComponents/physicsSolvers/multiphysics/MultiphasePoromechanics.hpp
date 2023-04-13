@@ -211,7 +211,7 @@ real64 MultiphasePoromechanics::assemblyLaunch( MeshLevel & mesh,
                                                 arrayView1d< real64 > const & localRhs,
                                                 PARAMS && ... params )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager const & nodeManager = mesh.getNodeManager();
 

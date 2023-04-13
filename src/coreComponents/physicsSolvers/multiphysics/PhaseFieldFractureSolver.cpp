@@ -53,7 +53,7 @@ void PhaseFieldFractureSolver::postProcessInput()
 void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
 
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   if( solverType ==  static_cast< integer >( SolverType::Damage ) )
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

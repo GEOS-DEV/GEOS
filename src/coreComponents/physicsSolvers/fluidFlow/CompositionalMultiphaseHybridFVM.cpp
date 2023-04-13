@@ -55,7 +55,7 @@ CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::s
 
 void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group & meshBodies )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // 1) Register the elem-centered data
   CompositionalMultiphaseBase::registerDataOnMesh( meshBodies );
@@ -97,7 +97,7 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
 
 void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -228,7 +228,7 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
                                                           real64 const & dt,
                                                           DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // setup the elem-centered fields
   CompositionalMultiphaseBase::implicitStepSetup( time_n, dt, domain );
@@ -253,7 +253,7 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
 void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                                   DofManager & dofManager ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // setup the connectivity of elem fields
   // we need Connectivity::Face because of the two-point upwinding
@@ -291,7 +291,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -420,7 +420,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
                                                                    DofManager const & dofManager,
                                                                    arrayView1d< real64 const > const & localSolution )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
   bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
@@ -501,7 +501,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
                                                             arrayView1d< real64 const > const & localSolution,
                                                             real64 const scalingFactor )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   integer localCheck = 1;
@@ -540,7 +540,7 @@ void CompositionalMultiphaseHybridFVM::applyBoundaryConditions( real64 const tim
                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                 arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   CompositionalMultiphaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
@@ -554,7 +554,7 @@ void CompositionalMultiphaseHybridFVM::applyAquiferBC( real64 const time,
                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                        arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
 
@@ -564,7 +564,7 @@ void CompositionalMultiphaseHybridFVM::saveAquiferConvergedState( real64 const &
                                                                   real64 const & dt,
                                                                   DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( time, dt, domain );
 }
@@ -576,7 +576,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
                                                                 DofManager const & dofManager,
                                                                 arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   real64 localResidualNorm = 0.0;
   real64 localResidualNormalizer = 0.0;
@@ -706,7 +706,7 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
                                                             real64 const scalingFactor,
                                                             DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // 1. apply the elem-based update
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
@@ -762,7 +762,7 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
 
 void CompositionalMultiphaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // 1. Reset the cell-centered fields
   CompositionalMultiphaseBase::resetStateToBeginningOfStep( domain );
@@ -784,7 +784,7 @@ void CompositionalMultiphaseHybridFVM::resetStateToBeginningOfStep( DomainPartit
 
 void CompositionalMultiphaseHybridFVM::updatePhaseMobility( ObjectManagerBase & dataGroup ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   MultiFluidBase const & fluid =
     getConstitutiveModel< MultiFluidBase >( dataGroup,

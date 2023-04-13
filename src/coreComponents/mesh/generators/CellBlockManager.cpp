@@ -596,7 +596,7 @@ void fillElementToEdgesOfCellBlocks( ArrayOfArraysView< localIndex const > const
 
 void CellBlockManager::buildFaceMaps()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FaceBuilder const faceBuilder =
     createLowestNodeToFaces( m_numNodes, this->getCellBlocks() );
@@ -636,7 +636,7 @@ void CellBlockManager::buildNodeToEdges()
 
 void CellBlockManager::buildMaps()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   buildFaceMaps();
   m_numEdges = buildEdgeMaps( m_numNodes,

@@ -545,7 +545,7 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
  */
 void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( this->getName() );
 

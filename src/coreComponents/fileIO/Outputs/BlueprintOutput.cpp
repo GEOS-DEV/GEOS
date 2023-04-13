@@ -85,7 +85,7 @@ static std::vector< int > getBlueprintNodeOrdering( ElementType const elementTyp
  */
 void reorderElementToNodeMap( CellElementSubRegion const & subRegion, conduit::Node & connectivity )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
   localIndex const numElems = elemToNodeMap.size( 0 );
@@ -134,7 +134,7 @@ bool BlueprintOutput::execute( real64 const time,
                                real64 const,
                                DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
 
@@ -184,7 +184,7 @@ void BlueprintOutput::addNodalData( NodeManager const & nodeManager,
                                     conduit::Node & topologies,
                                     conduit::Node & fields )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   /// Populate the coordset group
   coordset[ "type" ] = "explicit";
@@ -227,7 +227,7 @@ void BlueprintOutput::addElementData( ElementRegionManager const & elemRegionMan
                                       conduit::Node & fields,
                                       dataRepository::Group & averagedElementData )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   elemRegionManager.forElementSubRegionsComplete< CellElementSubRegion >(
     [&] ( localIndex, localIndex, ElementRegionBase const & region, CellElementSubRegion const & subRegion )
@@ -264,7 +264,7 @@ void BlueprintOutput::writeOutWrappersAsFields( Group const & group,
                                                 string const & topology,
                                                 string const & prefix )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   group.forWrappers( [&] ( dataRepository::WrapperBase const & wrapper )
   {
@@ -290,7 +290,7 @@ void BlueprintOutput::writeOutConstitutiveData( dataRepository::Group const & co
                                                 string const & topology,
                                                 dataRepository::Group & averagedSubRegionData )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   Group & averagedConstitutiveData = averagedSubRegionData.registerGroup( constitutiveModel.getName() );
 

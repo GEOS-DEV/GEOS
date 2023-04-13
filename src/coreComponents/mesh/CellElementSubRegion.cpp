@@ -402,7 +402,7 @@ void CellElementSubRegion::
 void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                                 FaceManager const & GEOS_UNUSED_PARAM( faceManager ) )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
 

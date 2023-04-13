@@ -48,7 +48,7 @@ void SinglePhasePoromechanicsConformingFractures::initializePostInitialCondition
 void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition const & domain,
                                                                  DofManager & dofManager ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   /// We need to add 2 coupling terms:
   // 1. Poroemechanical coupling in the bulk
@@ -77,7 +77,7 @@ void SinglePhasePoromechanicsConformingFractures::setupSystem( DomainPartition &
                                                                ParallelVector & solution,
                                                                bool const setSparsity )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( setSparsity );
 
@@ -148,7 +148,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
                                                                   arrayView1d< real64 > const & localRhs )
 {
 
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   contactSolver()->synchronizeFractureState( domain );
 
@@ -312,7 +312,7 @@ void SinglePhasePoromechanicsConformingFractures::
                                   DofManager const & dofManager,
                                   arrayView1d< localIndex > const & rowLengths ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &, //  meshBodyName,
                                                                 MeshLevel const & mesh,
@@ -374,7 +374,7 @@ void SinglePhasePoromechanicsConformingFractures::
                                       DofManager const & dofManager,
                                       SparsityPatternView< globalIndex > const & pattern ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
@@ -467,7 +467,7 @@ void SinglePhasePoromechanicsConformingFractures::
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
@@ -562,7 +562,7 @@ void SinglePhasePoromechanicsConformingFractures::
                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                       arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();

@@ -92,7 +92,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
 
 void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   SinglePhaseBase::initializePostInitialConditionsPreSubGroups();
 
@@ -141,7 +141,7 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
                                               real64 const & dt,
                                               DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // setup the cell-centered fields
   SinglePhaseBase::implicitStepSetup( time_n, dt, domain );
@@ -201,7 +201,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( ti
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -305,7 +305,7 @@ void SinglePhaseHybridFVM::applyBoundaryConditions( real64 const time_n,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   SinglePhaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
   if( !m_keepFlowVariablesConstantDuringInitStep )
@@ -330,7 +330,7 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -418,7 +418,7 @@ void SinglePhaseHybridFVM::applyAquiferBC( real64 const time,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
 }
@@ -427,7 +427,7 @@ void SinglePhaseHybridFVM::saveAquiferConvergedState( real64 const & time,
                                                       real64 const & dt,
                                                       DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( time, dt, domain );
 }
@@ -439,7 +439,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
                                                     DofManager const & dofManager,
                                                     arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   real64 localResidualNorm = 0.0;
   real64 localResidualNormalizer = 0.0;

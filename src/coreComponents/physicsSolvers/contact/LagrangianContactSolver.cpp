@@ -273,7 +273,7 @@ LagrangianContactSolver::~LagrangianContactSolver()
 
 void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -517,7 +517,7 @@ void LagrangianContactSolver::computeFaceDisplacementJump( DomainPartition & dom
 void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
                                          DofManager & dofManager ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   if( m_setupSolidSolverDofs )
   {
     m_solidSolver->setupDofs( domain, dofManager );
@@ -572,7 +572,7 @@ void LagrangianContactSolver::assembleSystem( real64 const time,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   synchronizeFractureState( domain );
 
@@ -600,7 +600,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & GEOS_UNUSE
                                                        DofManager const & dofManager,
                                                        arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   real64 momentumR2 = 0.0;
   real64 contactR2 = 0.0;
 
@@ -783,7 +783,7 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
 
 void LagrangianContactSolver::computeRotationMatrices( DomainPartition & domain ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -825,7 +825,7 @@ void LagrangianContactSolver::computeFaceNodalArea( arrayView2d< real64 const, n
   // finiteElement::FiniteElementBase const &
   // fe = fractureSubRegion->getReference< finiteElement::FiniteElementBase >( surfaceGenerator->getDiscretizationName() );
   // but it's either empty (unknown discretization) or for 3D only (e.g., hexahedra)
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex const TriangularPermutation[3] = { 0, 1, 2 };
   localIndex const QuadrilateralPermutation[4] = { 0, 1, 3, 2 };
@@ -893,7 +893,7 @@ void LagrangianContactSolver::
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
@@ -1026,7 +1026,7 @@ void LagrangianContactSolver::
                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                 arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -1265,7 +1265,7 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                      arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
@@ -1676,7 +1676,7 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
                                                    real64 const scalingFactor,
                                                    DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   if( m_setupSolidSolverDofs )
   {
@@ -1721,7 +1721,7 @@ void LagrangianContactSolver::updateState( DomainPartition & domain )
 
 bool LagrangianContactSolver::resetConfigurationToDefault( DomainPartition & domain ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   using namespace fields::contact;
 
@@ -1752,7 +1752,7 @@ bool LagrangianContactSolver::resetConfigurationToDefault( DomainPartition & dom
 
 bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   using namespace fields::contact;
 

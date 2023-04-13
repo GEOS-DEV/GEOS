@@ -321,7 +321,7 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
 void HydrofractureSolver::setupCoupling( DomainPartition const & domain,
                                          DofManager & dofManager ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
 
   string const solidDiscretizationName = solidMechanicsSolver()->getDiscretizationName();
@@ -365,7 +365,7 @@ void HydrofractureSolver::setupSystem( DomainPartition & domain,
                                        ParallelVector & solution,
                                        bool const setSparsity )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( setSparsity );
 
@@ -421,7 +421,7 @@ void HydrofractureSolver::addFluxApertureCouplingNNZ( DomainPartition & domain,
                                                       DofManager & dofManager,
                                                       arrayView1d< localIndex > const & rowLengths ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
 
@@ -480,7 +480,7 @@ void HydrofractureSolver::addFluxApertureCouplingSparsityPattern( DomainPartitio
                                                                   DofManager & dofManager,
                                                                   SparsityPatternView< globalIndex > const & pattern ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
 
@@ -554,7 +554,7 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   solidMechanicsSolver()->assembleSystem( time,
                                           dt,
@@ -587,7 +587,7 @@ HydrofractureSolver::
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
 
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -688,7 +688,7 @@ HydrofractureSolver::
   assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & domain,
                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const presDofKey = m_dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
   string const dispDofKey = m_dofManager.getKey( solidMechanics::totalDisplacement::key() );

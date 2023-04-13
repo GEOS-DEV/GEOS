@@ -450,7 +450,7 @@ SinglePhasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 kernelLaunch( localIndex const numElems,
               KERNEL_TYPE const & kernelComponent )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Define a RAJA reduction variable to get the maximum residual contribution.
   RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );

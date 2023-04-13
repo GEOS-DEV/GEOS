@@ -163,7 +163,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
                             DofManager const & dofManager,
                             SparsityPatternView< globalIndex > const & pattern ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,

@@ -9,7 +9,7 @@ using namespace geos;
 
 TEST( testHDFIO, HDFFile )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   HDFFile file( "empty", true, false, MPI_COMM_GEOSX );
   hid_t file_id = H5Fcreate( "empty", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
   H5Fclose( file_id );

@@ -103,7 +103,7 @@ void EventManager::expandObjectCatalogs()
 
 bool EventManager::run( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   integer exitFlag = 0;
 

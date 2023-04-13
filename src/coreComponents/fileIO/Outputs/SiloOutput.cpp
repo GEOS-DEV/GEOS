@@ -113,7 +113,7 @@ bool SiloOutput::execute( real64 const time_n,
                           real64 const eventProgress,
                           DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   SiloFile silo;
 

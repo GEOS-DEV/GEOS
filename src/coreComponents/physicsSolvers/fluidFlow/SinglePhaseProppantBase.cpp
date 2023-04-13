@@ -104,7 +104,7 @@ SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( con
 
 void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
   arrayView1d< real64 const > const proppantConcentration = dataGroup.getField< fields::proppant::proppantConcentration >();
@@ -130,7 +130,7 @@ void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup ) 
 
 void SinglePhaseProppantBase::updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const proppantPackVolumeFraction = subRegion.getField< fields::proppant::proppantPackVolumeFraction >();
 

@@ -149,7 +149,7 @@ Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey 
 
 void ProblemManager::problemSetup()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   postProcessInputRecursive();
 
   generateMesh();
@@ -520,7 +520,7 @@ void ProblemManager::initializationOrder( string_array & order )
 
 void ProblemManager::generateMesh()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   DomainPartition & domain = getDomainPartition();
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
@@ -625,7 +625,7 @@ void ProblemManager::generateMesh()
 
 void ProblemManager::importFields()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   DomainPartition & domain = getDomainPartition();
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
   meshManager.importFields( domain );

@@ -201,7 +201,7 @@ void ElementRegionManager::generateWells( MeshManager & meshManager,
 
 void ElementRegionManager::buildSets( NodeManager const & nodeManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   dataRepository::Group const & nodeSets = nodeManager.sets();
 

@@ -92,7 +92,7 @@ void assembleCompatibilityOperator( real64 ( & compMatrix )[3][6],
                                     integer ( & heavisideFun )[NUM_NODES],
                                     real64 ( & dNdX )[NUM_NODES][3] )
 {
-  //GEOSX_MARK_FUNCTION;
+  //GEOS_MARK_FUNCTION;
 
   // Fill in compatibility operator
 

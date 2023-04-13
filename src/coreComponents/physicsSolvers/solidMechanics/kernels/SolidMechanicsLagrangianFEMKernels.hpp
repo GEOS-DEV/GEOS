@@ -35,7 +35,7 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
                             arrayView2d< real64, nodes::VELOCITY_USD > const & velocity,
                             real64 const dt )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex const N = acceleration.size( 0 );
   forAll< parallelDevicePolicy<> >( N, [=] GEOS_DEVICE ( localIndex const i )
@@ -51,7 +51,7 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
                             real64 const dt,
                             SortedArrayView< localIndex const > const & indices )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forAll< parallelDevicePolicy<> >( indices.size(), [=] GEOS_DEVICE ( localIndex const i )
   {
@@ -66,7 +66,7 @@ inline void displacementUpdate( arrayView2d< real64 const, nodes::VELOCITY_USD >
                                 arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u,
                                 real64 const dt )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex const N = velocity.size( 0 );
   forAll< parallelDevicePolicy<> >( N, [=] GEOS_DEVICE ( localIndex const i )
@@ -92,7 +92,7 @@ struct ExplicitKernel
                              arrayView3d< real64 const, solid::STRESS_USD > const & stress,
                              real64 ( & force )[ 3 ] )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
     localIndex const & a = targetNode;
 
     //Compute Quadrature

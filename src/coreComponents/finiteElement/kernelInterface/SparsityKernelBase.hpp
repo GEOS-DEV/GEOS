@@ -147,7 +147,7 @@ public:
   kernelLaunch( localIndex const numElems,
                 KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
     // launch the kernel
     forAll< POLICY >( numElems,
@@ -284,7 +284,7 @@ real64 fillSparsity( MeshLevel & mesh,
                      globalIndex const rankOffset,
                      SparsityPattern< globalIndex > & inputSparsityPattern )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   SparsityKernelFactory< KERNEL_TEMPLATE > KernelFactory( inputDofNumber, rankOffset, inputSparsityPattern );
 

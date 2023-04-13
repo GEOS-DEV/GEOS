@@ -102,7 +102,7 @@ std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const
 
 void MeshManager::importFields( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   forSubGroups< MeshGeneratorBase >( [&domain]( MeshGeneratorBase const & generator )
   {
     if( !domain.hasMeshBody( generator.getName() ) )

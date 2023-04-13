@@ -149,7 +149,7 @@ bool TimeHistoryOutput::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   localIndex newBuffered = m_io.front()->getBufferedCount( );
   for( auto & th_io : m_io )
   {

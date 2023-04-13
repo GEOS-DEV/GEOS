@@ -238,7 +238,7 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( c
                                                  MPI_Request & mpiSendSizeRequest,
                                                  MPI_Request & mpiSendRequest )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   this->postSizeRecv( commID,
                       mpiRecvSizeRequest ); // post recv for buffer size from neighbor.
@@ -295,7 +295,7 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( c
 void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
                                          int const commID )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager & nodeManager = mesh.getNodeManager();
   EdgeManager & edgeManager = mesh.getEdgeManager();
@@ -349,7 +349,7 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
                                                     MPI_Request & mpiSendRequest
                                                     )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   this->postSizeRecv( commID,
                       mpiRecvSizeRequest );
@@ -442,7 +442,7 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
 void NeighborCommunicator::unpackAndRebuildSyncLists( MeshLevel & mesh,
                                                       int const commID )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager & nodeManager = mesh.getNodeManager();
   EdgeManager & edgeManager = mesh.getEdgeManager();
@@ -489,7 +489,7 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
                                                bool onDevice,
                                                parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager const & nodeManager = mesh.getNodeManager();
   EdgeManager const & edgeManager = mesh.getEdgeManager();
@@ -543,7 +543,7 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
                                                   bool onDevice,
                                                   parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager const & nodeManager = mesh.getNodeManager();
   EdgeManager const & edgeManager = mesh.getEdgeManager();
@@ -602,7 +602,7 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
                                                 bool onDevice,
                                                 parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   buffer_type const & receiveBuff = receiveBuffer( commID );
   buffer_unit_type const * receiveBufferPtr = receiveBuff.data();

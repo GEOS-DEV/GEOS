@@ -91,7 +91,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsP
 void SinglePhasePoromechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
                                                            DofManager & dofManager ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   m_fracturesSolver->setupDofs( domain, dofManager );
   flowSolver()->setupDofs( domain, dofManager );
 
@@ -131,7 +131,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & d
 {
   // Add missing couplings ( matrix pressure with displacement jump and jump - displacement )
 
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( setSparsity );
 
@@ -398,7 +398,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                                                                 arrayView1d< real64 > const & localRhs )
 {
 
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   //updateState( domain );
 

@@ -95,7 +95,7 @@ void SinglePhaseFVM< BASE >::setupSystem( DomainPartition & domain,
                                           ParallelVector & solution,
                                           bool const setSparsity )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   BASE::setupSystem( domain,
                      dofManager,
                      localMatrix,
@@ -112,7 +112,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
                                                       DofManager const & dofManager,
                                                       arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   integer constexpr numNorm = 2; // mass balance and energy balance
   array1d< real64 > localResidualNorm;
@@ -300,7 +300,7 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOS_UNU
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -357,7 +357,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                    arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -414,7 +414,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOS_UNU
                                                            arrayView1d< real64 > const & localRhs,
                                                            string const & jumpDofKey )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -478,7 +478,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
                                                          arrayView1d< real64 > const & localRhs,
                                                          CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -539,7 +539,7 @@ SinglePhaseFVM< BASE >::applyBoundaryConditions( real64 const time_n,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   BASE::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
   if( !BASE::m_keepFlowVariablesConstantDuringInitStep )
@@ -566,7 +566,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -717,7 +717,7 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                         arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 

@@ -264,7 +264,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
                                                             real64 const dt,
                                                             std::string const & elementListName )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   real64 rval = 0;
   if( m_strainTheory==0 )
   {
@@ -442,7 +442,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
                                                 const int cycleNumber,
                                                 DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   real64 dtReturn = dt;
 
   SolverBase * const surfaceGenerator = this->getParent().getGroupPointer< SolverBase >( "SurfaceGen" );
@@ -512,7 +512,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                                   const int GEOS_UNUSED_PARAM( cycleNumber ),
                                                   DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   #define USE_PHYSICS_LOOP
 
@@ -643,7 +643,7 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   string const dofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
 
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
@@ -879,7 +879,7 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
 void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                              DofManager & dofManager ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   dofManager.addField( solidMechanics::totalDisplacement::key(),
                        FieldLocation::Node,
                        3,
@@ -898,7 +898,7 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
                                                ParallelVector & solution,
                                                bool const setSparsity )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
   SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
@@ -959,7 +959,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localMatrix.zero();
   localRhs.zero();
@@ -1010,7 +1010,7 @@ SolidMechanicsLagrangianFEM::
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1063,7 +1063,7 @@ SolidMechanicsLagrangianFEM::
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   real64 totalResidualNorm = 0.0;
 
@@ -1150,7 +1150,7 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                                   real64 const scalingFactor,
                                                   DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   dofManager.addVectorToField( localSolution,
                                solidMechanics::totalDisplacement::key(),
                                solidMechanics::incrementalDisplacement::key(),
@@ -1181,7 +1181,7 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
 
 void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
@@ -1211,7 +1211,7 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   if( m_contactRelationName != viewKeyStruct::noContactRelationNameString() )
   {
@@ -1324,7 +1324,7 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
                                                        DofManager const & dofManager,
                                                        arrayView1d< real64 const > const & localSolution )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( domain, dofManager, localSolution );
 

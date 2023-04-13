@@ -62,7 +62,7 @@ void EmbeddedSurfaceNodeManager::resize( localIndex const newSize )
 
 void EmbeddedSurfaceNodeManager::setEdgeMaps( EdgeManager const & embSurfEdgeManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView2d< localIndex const > const edgeToNodeMap = embSurfEdgeManager.nodeList();
 
@@ -78,7 +78,7 @@ void EmbeddedSurfaceNodeManager::setEdgeMaps( EdgeManager const & embSurfEdgeMan
 
 void EmbeddedSurfaceNodeManager::setElementMaps( ElementRegionManager const & elementRegionManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   ArrayOfArrays< localIndex > & toElementRegionList = m_toElements.m_toElementRegion;
   ArrayOfArrays< localIndex > & toElementSubRegionList = m_toElements.m_toElementSubRegion;
@@ -238,7 +238,7 @@ localIndex EmbeddedSurfaceNodeManager::packNewNodesGlobalMapsImpl( buffer_unit_t
 localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_type const * & buffer,
                                                                  localIndex_array & packList )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex unpackedSize = 0;
   string groupName;

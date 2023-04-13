@@ -229,7 +229,7 @@ public:
   kernelLaunch( localIndex const numElems,
                 KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
     // Define a RAJA reduction variable to get the maximum residual contribution.
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
@@ -373,7 +373,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                      string const & constitutiveStringName,
                                      KERNEL_FACTORY & kernelFactory )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   // save the maximum residual contribution for scaling residuals for convergence criteria.
   real64 maxResidualContribution = 0;
 

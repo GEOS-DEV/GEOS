@@ -77,7 +77,7 @@ void NodeManager::constructGlobalToLocalMap( CellBlockManagerABC const & cellBlo
 void NodeManager::buildSets( CellBlockManagerABC const & cellBlockManager,
                              GeometricObjectManager const & geometries )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Let's first copy the sets from the cell block manager.
   for( const auto & nameArray: cellBlockManager.getNodeSets() )
@@ -133,7 +133,7 @@ void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
 void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                            ElementRegionManager const & elemRegionManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   resize( cellBlockManager.numNodes() );
 
@@ -222,7 +222,7 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           bool const overwriteUpMaps,
                                           bool const )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex unPackedSize = 0;
 

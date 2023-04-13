@@ -167,7 +167,7 @@ real64 PhaseFieldDamageFEM::solverStep( real64 const & time_n,
                                         const int cycleNumber,
                                         DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   real64 dtReturn = dt;
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
   {
@@ -203,7 +203,7 @@ void PhaseFieldDamageFEM::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM
 void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                      DofManager & dofManager ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   dofManager.addField( m_fieldName,
                        FieldLocation::Node,
                        1,
@@ -222,7 +222,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -428,7 +428,7 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
                                                real64 const scalingFactor,
                                                DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   dofManager.addVectorToField( localSolution, m_fieldName, m_fieldName, scalingFactor );
 
@@ -460,7 +460,7 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
   CRSMatrixView< real64, globalIndex const > const & localMatrix,
   arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   applyDirichletBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 
   // Apply the crack irreversibility constraint
@@ -504,7 +504,7 @@ PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( ti
                                             DofManager const & dofManager,
                                             arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
 
@@ -612,7 +612,7 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

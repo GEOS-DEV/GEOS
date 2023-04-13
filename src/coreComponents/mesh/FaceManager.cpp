@@ -76,7 +76,7 @@ void FaceManager::resize( localIndex const newSize )
 
 void FaceManager::buildSets( NodeManager const & nodeManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // First create the sets
   auto const & nodeSets = nodeManager.sets().wrappers();
@@ -116,7 +116,7 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
                                            ElementRegionManager const & elemRegionManager,
                                            NodeManager const & nodeManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   resize( cellBlockManager.numFaces() );
 
@@ -174,7 +174,7 @@ void FaceManager::setIsExternal()
 void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
                                     ElementRegionManager const & elemManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView2d< localIndex const > const facesToElementRegions = elementRegionList();
   arrayView2d< localIndex const > const facesToElementSubRegions = elementSubRegionList();
@@ -309,7 +309,7 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
 ArrayOfSets< globalIndex >
 FaceManager::extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex const numFaces = size();
 
@@ -395,7 +395,7 @@ localIndex FaceManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           bool const overwriteUpMaps,
                                           bool const GEOS_UNUSED_PARAM( overwriteDownMaps ) )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex unPackedSize = 0;
 

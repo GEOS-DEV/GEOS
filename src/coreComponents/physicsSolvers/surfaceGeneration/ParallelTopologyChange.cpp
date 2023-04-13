@@ -283,7 +283,7 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
 //                                          array1d<array1d< std::set<localIndex> > > & allModifiedElements,
                                                      ModifiedObjectLists & receivedObjects )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager & nodeManager = mesh->getNodeManager();
   EdgeManager & edgeManager = mesh->getEdgeManager();

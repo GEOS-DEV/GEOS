@@ -539,7 +539,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
                                         bool const prefrac,
                                         real64 const time_np1 )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   m_faceElemsRupturedThisSolve.clear();
   NodeManager & nodeManager = mesh.getNodeManager();
