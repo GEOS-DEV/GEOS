@@ -30,40 +30,40 @@
 extern "C"
 {
 
-#define GEOSX_dasum FORTRAN_MANGLE( dasum )
-double GEOSX_dasum( int const * N,
+#define GEOS_dasum FORTRAN_MANGLE( dasum )
+double GEOS_dasum( int const * N,
                     double const * DX,
                     int const * INCX );
 
-#define GEOSX_daxpy FORTRAN_MANGLE( daxpy )
-void GEOSX_daxpy( int const * N,
+#define GEOS_daxpy FORTRAN_MANGLE( daxpy )
+void GEOS_daxpy( int const * N,
                   double const * DA,
                   double const * DX,
                   int const * INCX,
                   double * DY,
                   int const * INCY );
 
-#define GEOSX_dcopy FORTRAN_MANGLE( dcopy )
-void GEOSX_dcopy( int const * N,
+#define GEOS_dcopy FORTRAN_MANGLE( dcopy )
+void GEOS_dcopy( int const * N,
                   double const * DX,
                   int const * INCX,
                   double * DY,
                   int const * INCY );
 
-#define GEOSX_ddot FORTRAN_MANGLE( ddot )
-double GEOSX_ddot( int const * N,
+#define GEOS_ddot FORTRAN_MANGLE( ddot )
+double GEOS_ddot( int const * N,
                    double const * DX,
                    int const * INCX,
                    double const * DY,
                    int const * INCY );
 
-#define GEOSX_idamax FORTRAN_MANGLE( idamax )
-int GEOSX_idamax( int const * N,
+#define GEOS_idamax FORTRAN_MANGLE( idamax )
+int GEOS_idamax( int const * N,
                   double const * DX,
                   int const * INCX );
 
-#define GEOSX_dgemm FORTRAN_MANGLE( dgemm )
-void GEOSX_dgemm( char const * TRANSA,
+#define GEOS_dgemm FORTRAN_MANGLE( dgemm )
+void GEOS_dgemm( char const * TRANSA,
                   char const * TRANSB,
                   int const * M,
                   int const * N,
@@ -77,16 +77,16 @@ void GEOSX_dgemm( char const * TRANSA,
                   double * C,
                   int const * LDC );
 
-#define GEOSX_dgetrf FORTRAN_MANGLE( dgetrf )
-void GEOSX_dgetrf( int const * M,
+#define GEOS_dgetrf FORTRAN_MANGLE( dgetrf )
+void GEOS_dgetrf( int const * M,
                    int const * N,
                    double * A,
                    int const * LDA,
                    int * IPIV,
                    int * INFO );
 
-#define GEOSX_dgetri FORTRAN_MANGLE( dgetri )
-void GEOSX_dgetri( int const * N,
+#define GEOS_dgetri FORTRAN_MANGLE( dgetri )
+void GEOS_dgetri( int const * N,
                    double * A,
                    int const * LDA,
                    int const * IPIV,
@@ -94,33 +94,33 @@ void GEOSX_dgetri( int const * N,
                    int const * LWORK,
                    int * INFO );
 
-#define GEOSX_dlange FORTRAN_MANGLE( dlange )
-double GEOSX_dlange( char const * NORM,
+#define GEOS_dlange FORTRAN_MANGLE( dlange )
+double GEOS_dlange( char const * NORM,
                      int const * M,
                      int const * N,
                      double const * A,
                      int const * LDA,
                      double * WORK );
 
-#define GEOSX_dlarnv FORTRAN_MANGLE( dlarnv )
-void GEOSX_dlarnv( int const * IDIST,
+#define GEOS_dlarnv FORTRAN_MANGLE( dlarnv )
+void GEOS_dlarnv( int const * IDIST,
                    int * ISEED,
                    int const * N,
                    double * X );
 
-#define GEOSX_dnrm2 FORTRAN_MANGLE( dnrm2 )
-double GEOSX_dnrm2( int const * N,
+#define GEOS_dnrm2 FORTRAN_MANGLE( dnrm2 )
+double GEOS_dnrm2( int const * N,
                     double const * X,
                     int const * INCX );
 
-#define GEOSX_dscal FORTRAN_MANGLE( dscal )
-void GEOSX_dscal( int const * N,
+#define GEOS_dscal FORTRAN_MANGLE( dscal )
+void GEOS_dscal( int const * N,
                   double const * DA,
                   double * DX,
                   int const * INCX );
 
-#define GEOSX_dgesvd FORTRAN_MANGLE( dgesvd )
-void GEOSX_dgesvd( char const * JOBU,
+#define GEOS_dgesvd FORTRAN_MANGLE( dgesvd )
+void GEOS_dgesvd( char const * JOBU,
                    char const * JOBVT,
                    int const * M,
                    int const * N,
@@ -135,8 +135,8 @@ void GEOSX_dgesvd( char const * JOBU,
                    int const * LWORK,
                    int * INFO );
 
-#define GEOSX_dgeev FORTRAN_MANGLE( dgeev )
-void GEOSX_dgeev( char const * JOBVL,
+#define GEOS_dgeev FORTRAN_MANGLE( dgeev )
+void GEOS_dgeev( char const * JOBVL,
                   char const * JOBVR,
                   int const * N,
                   double * A,
@@ -151,8 +151,8 @@ void GEOSX_dgeev( char const * JOBVL,
                   int * LWORK,
                   int * INFO );
 
-#define GEOSX_dgetrs FORTRAN_MANGLE( dgetrs )
-void GEOSX_dgetrs( char const * TRANS,
+#define GEOS_dgetrs FORTRAN_MANGLE( dgetrs )
+void GEOS_dgetrs( char const * TRANS,
                    int const * N,
                    int const * NRHS,
                    double * A,
