@@ -219,7 +219,7 @@ public:
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
-  void turnOnFixedStressThermoPoroElasticityFlag();
+  void turnOnFixedStressThermoPoromechanicsFlag();
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -289,7 +289,7 @@ protected:
   integer m_strainTheory;
   string m_contactRelationName;
   MPI_iCommData m_iComm;
-  integer m_fixedStressUpdateThermoPoroElasticityFlag;
+  integer m_fixedStressUpdateThermoPoromechanicsFlag;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
@@ -338,7 +338,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                   gravityVectorData,
                                   std::forward< PARAMS >( params )... );
 
-    if( m_fixedStressUpdateThermoPoroElasticityFlag )
+    if( m_fixedStressUpdateThermoPoromechanicsFlag )
     {
       m_maxForce = finiteElement::
                      regionBasedKernelApplication< parallelDevicePolicy< 32 >,

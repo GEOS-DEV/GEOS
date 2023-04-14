@@ -12,6 +12,13 @@ There are multiple options to use the exposed docker images.
   Depending on your choice, please read their documentation carefully so you can add their own requirements on top the TPL images that are already available.
 - Another option is to develop directly inside the container (*i.e.* not remotely).
   Install your favorite development inside the image (be mindful of X display issues), connect to the running container and start hacking!
+- It is also possible to develop directly in the cloud using `GitHub codespaces <https://docs.github.com/en/codespaces>`_.
+  This product will let you buy a machine in the cloud with an environment already configured to build and run ``geos``.
+  To make it work, create a branch and/or fork the repository, then select the version of the TPL you need by replacing the `DEFINE_ME` token in this `Dockerfile <https://github.com/GEOSX/GEOS/blob/develop/.devcontainer/Dockerfile>`_ before creating your ``codespace`` instance.
+  (You may most probably stick to the ``GEOSX_TPL_TAG`` of the ``.travis.yml`` file).
+  *Then clone the submodules*.
+  You do not need to run the ``scripts/config-build.py`` scripts since ``cmake`` and ``vscode`` are already configured.
+  Last, run ``cmake`` through the ``vscode`` interface and start hacking!
 
 You must first `install docker <https://docs.docker.com/get-docker/>`_ on your machine.
 Note that there now exists a `rootless install <https://docs.docker.com/engine/security/rootless/>`_ that may help you in case you are not granted extended permissions on your environment.

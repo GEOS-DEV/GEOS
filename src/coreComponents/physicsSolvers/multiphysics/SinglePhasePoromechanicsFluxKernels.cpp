@@ -79,9 +79,9 @@ void FaceElementFluxKernel::
       stackArray2d< real64, maxNumFluxElems * maxStencilSize > dFlux_dAper( numFluxElems, stencilSize );
 
       // compute transmissibility
-      real64 transmissibility[SurfaceElementStencilWrapper::maxNumConnections][2];
-      real64 dTrans_dPres[SurfaceElementStencilWrapper::maxNumConnections][2];
-      real64 dTrans_dDispJump[SurfaceElementStencilWrapper::maxNumConnections][2][3];
+      real64 transmissibility[SurfaceElementStencilWrapper::maxNumConnections][2]{};
+      real64 dTrans_dPres[SurfaceElementStencilWrapper::maxNumConnections][2]{};
+      real64 dTrans_dDispJump[SurfaceElementStencilWrapper::maxNumConnections][2][3]{};
 
       stencilWrapper.computeWeights( iconn,
                                      permeability,

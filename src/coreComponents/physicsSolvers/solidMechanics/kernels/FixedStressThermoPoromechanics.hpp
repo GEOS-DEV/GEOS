@@ -13,16 +13,13 @@
  */
 
 /**
- * @file SolidMechanicsFixedStressThermoPoroElasticKernel.hpp
+ * @file FixedStressThermoPoromechanics.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROELASTIC_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROELASTIC_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROMECHANICS_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROMECHANICS_HPP_
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 namespace geosx
 {
@@ -38,7 +35,7 @@ namespace solidMechanicsLagrangianFEMKernels
  * @tparam UNUSED An unused parameter since we are assuming that the test and
  *                trial space have the same number of support points.
  *
- * ### FixedStressThermoPoroElastic Description
+ * ### FixedStressThermoPoromechanics Description
  * Implements the KernelBase interface functions required for using the
  * effective stress for the integration of the stress divergence. This is
  * templated on one of the "finite element kernel application" functions
@@ -47,7 +44,7 @@ namespace solidMechanicsLagrangianFEMKernels
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class FixedStressThermoPoroElastic :
+class FixedStressThermoPoromechanics :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
                                             FE_TYPE,
@@ -82,18 +79,18 @@ public:
    * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param inputGravityVector The gravity vector.
    */
-  FixedStressThermoPoroElastic( NodeManager const & nodeManager,
-                                EdgeManager const & edgeManager,
-                                FaceManager const & faceManager,
-                                localIndex const targetRegionIndex,
-                                SUBREGION_TYPE const & elementSubRegion,
-                                FE_TYPE const & finiteElementSpace,
-                                CONSTITUTIVE_TYPE & inputConstitutiveType,
-                                arrayView1d< globalIndex const > const inputDofNumber,
-                                globalIndex const rankOffset,
-                                CRSMatrixView< real64, globalIndex const > const inputMatrix,
-                                arrayView1d< real64 > const inputRhs,
-                                real64 const (&inputGravityVector)[3] );
+  FixedStressThermoPoromechanics( NodeManager const & nodeManager,
+                                  EdgeManager const & edgeManager,
+                                  FaceManager const & faceManager,
+                                  localIndex const targetRegionIndex,
+                                  SUBREGION_TYPE const & elementSubRegion,
+                                  FE_TYPE const & finiteElementSpace,
+                                  CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                  arrayView1d< globalIndex const > const inputDofNumber,
+                                  globalIndex const rankOffset,
+                                  CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                  arrayView1d< real64 > const inputRhs,
+                                  real64 const (&inputGravityVector)[3] );
 
   //*****************************************************************************
   /**
@@ -140,7 +137,7 @@ public:
    * @brief Copy global values from primary field to a local stack array.
    * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
    *
-   * For the FixedStressThermoPoroElastic implementation, global values from the displacement,
+   * For the FixedStressThermoPoromechanics implementation, global values from the displacement,
    * incremental displacement, and degree of freedom numbers are placed into
    * element local stack storage.
    */
@@ -189,8 +186,8 @@ protected:
   /// The gravity vector.
   real64 const m_gravityVector[3];
 
-  /// The rank global densities
-  arrayView2d< real64 const > const m_density;
+  /// The rank global bulk densities
+  arrayView2d< real64 const > const m_bulkDensity;
 
   /// The rank-global fluid pressure arrays.
   arrayView1d< real64 const > const m_pressure_n;
@@ -218,13 +215,13 @@ protected:
   }
 };
 
-/// The factory used to construct a FixedStressThermoPoroElastic kernel.
-using FixedStressThermoPoroElasticFactory = finiteElement::KernelFactory< FixedStressThermoPoroElastic,
-                                                                          arrayView1d< globalIndex const > const,
-                                                                          globalIndex,
-                                                                          CRSMatrixView< real64, globalIndex const > const,
-                                                                          arrayView1d< real64 > const,
-                                                                          real64 const (&)[3] >;
+/// The factory used to construct a FixedStressThermoPoromechanics kernel.
+using FixedStressThermoPoromechanicsFactory = finiteElement::KernelFactory< FixedStressThermoPoromechanics,
+                                                                            arrayView1d< globalIndex const > const,
+                                                                            globalIndex,
+                                                                            CRSMatrixView< real64, globalIndex const > const,
+                                                                            arrayView1d< real64 > const,
+                                                                            real64 const (&)[3] >;
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
@@ -232,4 +229,4 @@ using FixedStressThermoPoroElasticFactory = finiteElement::KernelFactory< FixedS
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
-#endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROELASTIC_HPP_
+#endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROMECHANICS_HPP_

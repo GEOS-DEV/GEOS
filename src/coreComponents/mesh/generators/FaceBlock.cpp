@@ -67,32 +67,32 @@ void FaceBlock::setNum2DFaces( localIndex num2DFaces )
   m_num2dFaces = num2DFaces;
 }
 
-void FaceBlock::set2dElemToNodes( ArrayOfArrays< localIndex > _2dElemToNodes )
+void FaceBlock::set2dElemToNodes( ArrayOfArrays< localIndex > && _2dElemToNodes )
 {
   m_2dElemToNodes = _2dElemToNodes;
 }
 
-void FaceBlock::set2dElemToEdges( ArrayOfArrays< localIndex > _2dElemToEdges )
+void FaceBlock::set2dElemToEdges( ArrayOfArrays< localIndex > && _2dElemToEdges )
 {
   m_2dElemToEdges = _2dElemToEdges;
 }
 
-void FaceBlock::set2dElemToFaces( array2d< localIndex > _2dElemToFaces )
+void FaceBlock::set2dElemToFaces( array2d< localIndex > && _2dElemToFaces )
 {
   m_2dElemToFaces = _2dElemToFaces;
 }
 
-void FaceBlock::set2dFaceTo2dElems( ArrayOfArrays< localIndex > _2dFaceTo2dElems )
+void FaceBlock::set2dFaceTo2dElems( ArrayOfArrays< localIndex > && _2dFaceTo2dElems )
 {
   m_2dFaceTo2dElems = _2dFaceTo2dElems;
 }
 
-void FaceBlock::set2dFaceToEdge( array1d< localIndex > _2dFaceToEdge )
+void FaceBlock::set2dFaceToEdge( array1d< localIndex > && _2dFaceToEdge )
 {
   m_2dFaceToEdge = _2dFaceToEdge;
 }
 
-void FaceBlock::set2dElemToElems( ToCellRelation< array2d< localIndex > > _2dElemToElems )
+void FaceBlock::set2dElemToElems( ToCellRelation< array2d< localIndex > > && _2dElemToElems )
 {
   m_2dElemToElems = _2dElemToElems;
 }

@@ -70,6 +70,7 @@ set( physicsSolvers_headers
      multiphysics/HydrofractureSolverKernels.hpp
      multiphysics/MultiphasePoromechanics.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
+     multiphysics/PoromechanicsFields.hpp
      multiphysics/PoromechanicsInitialization.hpp          
      multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp
      multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp
@@ -102,6 +103,8 @@ set( physicsSolvers_headers
      solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp
      solidMechanics/kernels/ExplicitSmallStrain.hpp
      solidMechanics/kernels/ExplicitSmallStrain_impl.hpp
+     solidMechanics/kernels/FixedStressThermoPoromechanics.hpp
+     solidMechanics/kernels/FixedStressThermoPoromechanics_impl.hpp     
      solidMechanics/kernels/ImplicitSmallStrainNewmark.hpp
      solidMechanics/kernels/ImplicitSmallStrainNewmark_impl.hpp
      solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp
