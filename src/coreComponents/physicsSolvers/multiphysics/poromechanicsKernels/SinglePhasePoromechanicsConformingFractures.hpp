@@ -29,6 +29,7 @@ namespace singlePhasePoromechanicsConformingFracturesKernels
 {
 
 using namespace fluxKernelsHelper;
+using namespace constitutive;
 
 template< integer NUM_DOF >
 class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF, SurfaceElementStencilWrapper >
@@ -48,10 +49,9 @@ public:
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
-  using PermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
-                                                          fields::permeability::permeability,
-                                                          fields::permeability::dPerm_dPressure,
-                                                          fields::permeability::dPerm_dDispJump >;
+  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
+  using FracturePermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
+                                                                  fields::permeability::dPerm_dDispJump >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
@@ -77,28 +77,27 @@ public:
   using Base::m_sei;
 
   ConnectorBasedAssemblyKernel( globalIndex const rankOffset,
-                                STENCILWRAPPER const & stencilWrapper,
+                                SurfaceElementStencilWrapper const & stencilWrapper,
                                 DofNumberAccessor const & flowDofNumberAccessor,
                                 SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                                ThermalSinglePhaseFlowAccessors const & thermalSinglePhaseFlowAccessors,
                                 SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                                ThermalSinglePhaseFluidAccessors const & thermalSinglePhaseFluidAccessors,
                                 PermeabilityAccessors const & permeabilityAccessors,
-                                ThermalConductivityAccessors const & thermalConductivityAccessors,
+                                FracturePermeabilityAccessors const & fracturePermeabilityAccessors,
                                 real64 const & dt,
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs,
                                 CRSMatrixView< real64, localIndex const > const & dR_dAper )
     : Base( rankOffset,
             stencilWrapper,
-            dofNumberAccessor,
+            flowDofNumberAccessor,
             singlePhaseFlowAccessors,
             singlePhaseFluidAccessors,
             permeabilityAccessors,
             dt,
             localMatrix,
             localRhs ),
-    m_dR_dAper( dR_dAper )
+    m_dR_dAper( dR_dAper ),
+    m_dPerm_dDispJump( fracturePermeabilityAccessors.get( fields::permeability::dPerm_dDispJump {} ) )
   {}
 
 
@@ -117,11 +116,39 @@ public:
      */
     GEOSX_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
-      : Base::StackVariables( size, numElems )
+      : Base::StackVariables( size, numElems ),
+    localColIndices( numElems ),
+    dFlux_dAperture( numElems, size )
     {}
 
-    /// Derivatives of transmissibility with respect to pressure
+    stackArray1d< localIndex, maxNumElems > localColIndices;
+
+    stackArray2d< real64, maxNumElems * maxStencilSize > dFlux_dAperture;
+
+    /// Derivatives of transmissibility with respect to the dispJump
+    real64 dTrans_dDispJump[maxNumConns][2][3]{};
   };
+
+  /**
+   * @brief Performs the setup phase for the kernel.
+   * @param[in] iconn the connection index
+   * @param[in] stack the stack variables
+   */
+  GEOSX_HOST_DEVICE
+  void setup( localIndex const iconn,
+              StackVariables & stack ) const
+  {
+    // set degrees of freedom indices for this face
+    for( integer i = 0; i < stack.stencilSize; ++i )
+    {
+      globalIndex const offset = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
+      for( integer jdof = 0; jdof < numDof; ++jdof )
+      {
+        stack.dofColIndices[i * numDof + jdof] = offset + jdof;
+      }
+      stack.localColIndices[ i ] = m_sei( iconn, i );
+    }
+  }
 
   /**
    * @brief Compute the local flux contributions to the residual and Jacobian
@@ -138,7 +165,7 @@ public:
 
   {
 
-    stencilWrapper.computeWeights( iconn, 
+    m_stencilWrapper.computeWeights( iconn, 
                                    m_permeability,
                                    m_dPerm_dPres,
                                    m_dPerm_dDispJump,
@@ -157,10 +184,10 @@ public:
         real64 dFlux_dTrans = 0.0;
         real64 const trans[2] = { stack.transmissibility[connectionIndex][0], stack.transmissibility[connectionIndex][1] };
         real64 const dTrans[2] = { stack.dTrans_dPres[connectionIndex][0], stack.dTrans_dPres[connectionIndex][1] };
-        real64 const dFlux_dP[2] = { 0.0, 0.0 };
-        localIndex const regionIndex[2]    = {m_seri[k[0]], m_seri[k[1]]};
-        localIndex const subRegionIndex[2] = {m_sesri[k[0]], m_sesri[k[1]]};
-        localIndex const elementIndex[2]   = {m_sei[k[0]], m_sei[k[1]]};
+        real64 dFlux_dP[2] = { 0.0, 0.0 };
+        localIndex const regionIndex[2]    = {m_seri[iconn][k[0]], m_seri[iconn][k[1]]};
+        localIndex const subRegionIndex[2] = {m_sesri[iconn][k[0]], m_sesri[iconn][k[1]]};
+        localIndex const elementIndex[2]   = {m_sei[iconn][k[0]], m_sei[iconn][k[1]]};
 
         computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
                                 trans,
@@ -180,8 +207,8 @@ public:
         stack.localFlux[k[1]] -= m_dt * fluxVal;
 
         real64 dFlux_dAper[2] = {0.0, 0.0};
-        dFlux_dAper[0] =  m_dt * dFlux_dTrans * dTrans_dDispJump[connectionIndex][0][0];
-        dFlux_dAper[1] = -m_dt * dFlux_dTrans * dTrans_dDispJump[connectionIndex][1][0];
+        dFlux_dAper[0] =  m_dt * dFlux_dTrans * stack.dTrans_dDispJump[connectionIndex][0][0];
+        dFlux_dAper[1] = -m_dt * dFlux_dTrans * stack.dTrans_dDispJump[connectionIndex][1][0];
 
         stack.localFluxJacobian[k[0]][k[0]] += dFlux_dP[0] * m_dt;
         stack.localFluxJacobian[k[0]][k[1]] += dFlux_dP[1] * m_dt;
@@ -215,9 +242,12 @@ public:
     Base::complete( iconn, stack, [&] ( integer const i,
                                         localIndex const localRow )
     {
-      m_dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( m_sei( iconn, i ),
+
+      localIndex const row = LvArray::integerConversion< localIndex >( m_sei( iconn, i ) );
+
+      m_dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( row,
                                                                stack.localColIndices.data(),
-                                                               stack.dFlux_dAper[i].dataIfContiguous(),
+                                                               stack.dFlux_dAperture[i].dataIfContiguous(),
                                                                stack.stencilSize );
       // call the lambda to assemble additional terms, such as thermal terms
       kernelOp( i, localRow );
@@ -228,6 +258,7 @@ private:
 
   CRSMatrixView< real64, localIndex const > m_dR_dAper;
 
+  ElementViewConst< arrayView4d< real64 const > > const m_dPerm_dDispJump;
 };
 
 
@@ -255,8 +286,7 @@ public:
   template< typename POLICY >
   static void
   createAndLaunch( globalIndex const rankOffset,
-                   string const & pressureDofKey,
-                   string const & dispJumpDofKey,
+                   string const & dofKey,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    SurfaceElementStencilWrapper const & stencilWrapper,
@@ -268,16 +298,17 @@ public:
     integer constexpr NUM_DOF = 1; // pressure
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > flowDofNumberAccessor =
-      elemManager.constructArrayViewAccessor< globalIndex, 1 >( pressureDofKey );
-    dofNumberAccessor.setName( solverName + "/accessors/" + pressureDofKey );
+      elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+    flowDofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using kernelType = ConnectorBasedAssemblyKernel< NUM_DOF, SurfaceElementStencilWrapper >;
+    using kernelType = ConnectorBasedAssemblyKernel< NUM_DOF >;
     typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
+    typename kernelType::FracturePermeabilityAccessors fracPermAccessors( elemManager, solverName );
 
     kernelType kernel( rankOffset, stencilWrapper, flowDofNumberAccessor,
-                       flowAccessors, fluidAccessors, permAccessors,
+                       flowAccessors, fluidAccessors, permAccessors, fracPermAccessors,
                        dt, localMatrix, localRhs, dR_dAper );
 
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );

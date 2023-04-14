@@ -50,7 +50,7 @@ public:
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors; 
-  using EDFMPermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
+  using FracturePermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
                                                               fields::permeability::dPerm_dDispJump >;
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
@@ -85,7 +85,7 @@ public:
                                 SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
                                 SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
                                 PermeabilityAccessors const & permeabilityAccessors,
-                                EDFMPermeabilityAccessors const & edfmPermeabilityAccessors,
+                                FracturePermeabilityAccessors const & edfmPermeabilityAccessors,
                                 real64 const & dt,
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs )
@@ -121,7 +121,7 @@ public:
       : Base::StackVariables( size, numElems )
     {}
 
-    /// Derivatives of transmissibility with respect to pressure
+    /// Derivatives of transmissibility with respect to the dispJump
     real64 dTrans_dDispJump[maxNumConns][2][3]{};
   };
 
@@ -281,7 +281,7 @@ public:
     typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
-    typename kernelType::EDFMPermeabilityAccessors edfmPermAccessors( elemManager, solverName );
+    typename kernelType::FracturePermeabilityAccessors edfmPermAccessors( elemManager, solverName );
 
 
     kernelType kernel( rankOffset, stencilWrapper, 
