@@ -8,7 +8,7 @@ Elasto-Plastic Near-Well Deformation
 
 **Context**
 
-The main goal of this example is to learn how to use the internal wellbore mesh generator and an elasto-plastic model to handle wellbore problems in GEOSX. The Extended Drucker-Prager model (see :ref:`DruckerPragerExtended`) is applied to solve for elastoplastic deformation within the vicinity of a vertical wellbore. For the presented example, an analytical solution is employed to verify the accuracy of the numerical results. The resulting model can be used as a base for more complex analysis (e.g., wellbore drilling, fluid injection and storage scenarios). 
+The main goal of this example is to learn how to use the internal wellbore mesh generator and an elasto-plastic model to handle wellbore problems in GEOS. The Extended Drucker-Prager model (see :ref:`DruckerPragerExtended`) is applied to solve for elastoplastic deformation within the vicinity of a vertical wellbore. For the presented example, an analytical solution is employed to verify the accuracy of the numerical results. The resulting model can be used as a base for more complex analysis (e.g., wellbore drilling, fluid injection and storage scenarios). 
 
 
 **Objectives**
@@ -50,7 +50,7 @@ We simulate a drained wellbore problem subjected to isotropic horizontal stress 
    Sketch of the wellbore problem `(Chen and Abousleiman, 2017)  <https://www.sciencedirect.com/science/article/pii/S1365160917301090>`__
 
 
-To simulate this phenomenon, the strain hardening Extended Drucker-Prager model with an associated plastic flow rule in GEOSX is used in this example. Displacement and stress fields around the wellbore are numerically calculated. These numerical predictions are then compared with the corresponding analytical solutions `(Chen and Abousleiman, 2017)  <https://www.sciencedirect.com/science/article/pii/S1365160917301090>`__ from the literature. 
+To simulate this phenomenon, the strain hardening Extended Drucker-Prager model with an associated plastic flow rule in GEOS is used in this example. Displacement and stress fields around the wellbore are numerically calculated. These numerical predictions are then compared with the corresponding analytical solutions `(Chen and Abousleiman, 2017)  <https://www.sciencedirect.com/science/article/pii/S1365160917301090>`__ from the literature. 
 
 
 
@@ -164,11 +164,11 @@ You may note :
  - All initial value fields must have ``initialCondition`` field set to ``1``;
  - The ``setName`` field points to the previously defined box to apply the fields;
  - ``nodeManager`` and ``faceManager`` in the ``objectPath`` indicate that the boundary conditions are applied to the element nodes and faces, respectively;
- - ``fieldName`` is the name of the field registered in GEOSX;
+ - ``fieldName`` is the name of the field registered in GEOS;
  - Component ``0``, ``1``, and ``2`` refer to the x, y, and z direction, respectively;
  - And the non-zero values given by ``Scale`` indicate the magnitude of the loading; 
  - Some shorthand, such as ``xneg`` and ``xpos``, are used as the locations where the boundary conditions are applied in the computational domain. For instance, ``xneg`` means the portion of the computational domain located at the left-most in the x-axis, while ``xpos`` refers to the portion located at the right-most area in the x-axis. Similar shorthand include ``ypos``, ``yneg``, ``zpos``, and ``zneg``;
- - The mud pressure loading has a negative value due to the negative sign convention for compressive stress in GEOSX.
+ - The mud pressure loading has a negative value due to the negative sign convention for compressive stress in GEOS.
 
  
 The parameters used in the simulation are summarized in the following table.
@@ -201,7 +201,7 @@ The parameters used in the simulation are summarized in the following table.
 Inspecting results
 ---------------------------------
 
-In the above example, we requested silo-format output files. We can therefore import these into VisIt and use python scripts to visualize the outcome. Below figure shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of normal stress components, stress path, the supporting wellbore pressure and wellbore size. It is clear that the GEOSX predictions are in excellent agreement with the analytical results. 
+In the above example, we requested silo-format output files. We can therefore import these into VisIt and use python scripts to visualize the outcome. Below figure shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of normal stress components, stress path, the supporting wellbore pressure and wellbore size. It is clear that the GEOS predictions are in excellent agreement with the analytical results. 
 
 
 .. _problemVerificationEDPWellboreFig:
@@ -210,7 +210,7 @@ In the above example, we requested silo-format output files. We can therefore im
    :width: 1000
    :figclass: align-center
 
-   Comparing GEOSX results with analytical solutions
+   Comparing GEOS results with analytical solutions
 
 
 For the same wellbore problem, using different constitutive models (plastic vs. elastic), obviously, distinct differences in rock deformation and distribution of resultant stresses is also observed and highlighted.  

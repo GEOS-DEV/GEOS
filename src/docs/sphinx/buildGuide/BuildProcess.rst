@@ -1,6 +1,6 @@
 .. _BuildProcess:
 
-Building GEOSX
+Building GEOS
 ==============
 
 Build steps
@@ -8,7 +8,7 @@ Build steps
 
 - Create a host-config file that sets all system-specific CMake variables.
   Take a look at `host-config examples <https://github.com/GEOS-DEV/GEOS/blob/develop/host-configs>`_.
-  We recommend the same host-config is used for both TPL and GEOSX builds.
+  We recommend the same host-config is used for both TPL and GEOS builds.
   In particular, certain options (such as ``ENABLE_MPI`` or ``ENABLE_CUDA``) need to match between the two.
 
 - Provide paths to all enabled TPLs.
@@ -71,7 +71,7 @@ Option                          Default   Explanation
 ``ENABLE_DOCS``                 ``ON``    Build documentation (Sphinx and Doxygen)
 ``ENABLE_WARNINGS_AS_ERRORS``   ``ON``    Treat all warnings as errors
 ``ENABLE_PVTPackage``           ``ON``    Enable PVTPackage library (required for compositional flow runs)
-``ENABLE_TOTALVIEW_OUTPUT``     ``OFF``   Enables TotalView debugger custom view of GEOSX data structures
+``ENABLE_TOTALVIEW_OUTPUT``     ``OFF``   Enables TotalView debugger custom view of GEOS data structures
 ``GEOSX_ENABLE_FPE``            ``ON``    Enable floating point exception trapping
 ``GEOSX_LA_INTERFACE``          ``Hypre`` Choiсe of Linear Algebra backend (Hypre/Petsc/Trilinos)
 ``GEOSX_BUILD_OBJ_LIBS``        ``ON``    Use CMake Object Libraries build

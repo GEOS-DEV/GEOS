@@ -4,14 +4,14 @@
 Git Workflow
 **************************************
 
-The GEOSX project is hosted on github `here <https://github.com/GEOS-DEV>`__.
-For instructions on how to clone and build GEOSX, please refer to the :ref:`QuickStart`.
+The GEOS project is hosted on github `here <https://github.com/GEOS-DEV>`__.
+For instructions on how to clone and build GEOS, please refer to the :ref:`QuickStart`.
 Consider consulting `https://try.github.io/ <https://try.github.io/>`_ for practical references on how to use git.
 
 Git Credentials
 =======================================
 
-Those who want to contribute to GEOSX should setup SSH keys for authentication, and connect
+Those who want to contribute to GEOS should setup SSH keys for authentication, and connect
 to github through SSH as discussed `in this article <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_.
 Before going further, you should `test your ssh connection <https://help.github.com/en/github/authenticating-to-github/testing-your-ssh-connection>`_.
 If it fails (perhaps because of your institution's proxy),
@@ -31,25 +31,25 @@ the code through SSH.  The following steps clone the repository into ``your_geos
    git submodule init
    git submodule update
 
-If all goes well, you should have a complete copy of the GEOSX source at this point.
+If all goes well, you should have a complete copy of the GEOS source at this point.
 The most common errors people encounter here have to do with Github not recognizing
 their authentication settings.
 
 Branching Model
 ===============
-The branching model used in GEOSX is a modified
+The branching model used in GEOS is a modified
 `Gitflow <https://nvie.com/posts/a-successful-git-branching-model/>`_ approach,
 with some modifications to the merging strategy, and the treatment of release
 branches, and hotfix branches.
 
-In GEOSX, there are two main branches, ``release`` and ``develop``.
+In GEOS, there are two main branches, ``release`` and ``develop``.
 The ``develop`` branch serves as the main branch for the development of new
 features.
 The ``release`` branch serves as the "stable release" branch.
 The remaining branch types are described in the following subsections.
 
 .. note::
-   The early commits in GEOSX (up to version 0.2) used a pure
+   The early commits in GEOS (up to version 0.2) used a pure
    `Gitflow <https://nvie.com/posts/a-successful-git-branching-model/>`_
    approach for merging feature branches into develop.
    This was done without cleaning the commit history in each feature
@@ -188,7 +188,7 @@ An example lifecycle diagram for hotfix branchs:
 
 Documentation Branches
 ----------------------
-A ``docs`` branch is focused on writing and improving the documentation for GEOSX.
+A ``docs`` branch is focused on writing and improving the documentation for GEOS.
 The use of the ``docs`` branch name root applies to both sphinx documentation
 and doxygen documentation.
 The ``docs`` branch follows the same naming conventions as described in the :ref:`Feature_Branches`
@@ -399,9 +399,9 @@ create a pull request using the same process discussed above in :ref:`Submitting
 Resolving Submodule Changes in Primary Branch PRs
 =================================================
 
-When you conduct work on a submodule during work on a primary GEOSX
+When you conduct work on a submodule during work on a primary GEOS
 branch with an open PR, the merging procedure requires that the submodule referenced
-by the GEOSX PR branch be consistent with the submodule in the main branch of the project.
+by the GEOS PR branch be consistent with the submodule in the main branch of the project.
 This is checked and enforced via TravisCI.
 
 Thus, in order to merge a PR that includes modifications to submodules, the various PRs for

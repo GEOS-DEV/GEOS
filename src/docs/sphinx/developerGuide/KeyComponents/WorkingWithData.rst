@@ -1,10 +1,10 @@
 .. _WorkingWithData:
 
 #####################################
-Working with data in GEOSX
+Working with data in GEOS
 #####################################
 
-In ``GEOSX``, data is typically registered in the :ref:`dataRepository`.
+In ``GEOS``, data is typically registered in the :ref:`dataRepository`.
 This allows for the writing/reading of data to/from restart and plot files.
 Any object that derives from :ref:`Group` may have data registered on it
 through the methods described in :ref:`Group`.
@@ -16,7 +16,7 @@ will not be registered with the :ref:`dataRepository`.
 
 Working with data on the Mesh objects
 =====================================
-The mesh objects in ``GEOSX`` such as the ``FaceManager`` or ``NodeManager``,
+The mesh objects in ``GEOS`` such as the ``FaceManager`` or ``NodeManager``,
 are derived from ``ObjectManagerBase``, which in turn derives from :ref:`Group`.
 The important distinction is that ``ObjectManagerBase`` contains various members
 that are useful when defining mesh object managers.

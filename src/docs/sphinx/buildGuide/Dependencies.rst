@@ -3,7 +3,7 @@
 Third-party dependencies
 ========================
 
-GEOSX makes use of multiple third-party libraries (TPLs) and tools, some of which are mandatory and some optional.
+GEOS makes use of multiple third-party libraries (TPLs) and tools, some of which are mandatory and some optional.
 We only test against specific versions, and sometimes even require development snapshots (specific git commits).
 Not all of these guarantee backwards compatibility, so we strongly recommend building with these specific versions.
 
@@ -16,7 +16,7 @@ Some of these libraries may have their own system prerequisites.
 Libraries
 ~~~~~~~~~
 
-The following libraries are linked to by GEOSX:
+The following libraries are linked to by GEOS:
 
 ============= ========== =========================== ============================= =====================================
 Name          Version    Enable option               Path variable                 Description
@@ -42,7 +42,7 @@ VTK_          9.0.0-rc3  :code:`ENABLE_VTK`          :code:`VTK_DIR`            
 Tools
 ~~~~~~~~~
 
-The following tools are used as part of the build process to support GEOSX development:
+The following tools are used as part of the build process to support GEOS development:
 
 ============= ========== =========================== ============================= =====================================
 Name          Version    Enable option               Path variable                 Description
@@ -75,7 +75,7 @@ uncrustify_   401a409    :code:`ENABLE_UNCRUSTIFY`   :code:`UNCRUSTIFY_EXECUTABL
 .. _GoogleBenchmark : https://github.com/google/benchmark
 .. _BLT : https://github.com/LLNL/blt
 
-Some other dependencies (GoogleTest_, GoogleBenchmark_) are provided through BLT_ build system which is embedded in GEOSX source.
+Some other dependencies (GoogleTest_, GoogleBenchmark_) are provided through BLT_ build system which is embedded in GEOS source.
 No actions are needed to build them.
 
 If you would like to create a Docker image with all dependencies, take a look at

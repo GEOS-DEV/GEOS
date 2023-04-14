@@ -22,7 +22,7 @@ Generating the documentation
 
   .. code-block:: sh
 
-   GEOSX/build-your-platform-release/html/docs/sphinx
+   GEOS/build-your-platform-release/html/docs/sphinx
 
 which contains all the html files generated.
 

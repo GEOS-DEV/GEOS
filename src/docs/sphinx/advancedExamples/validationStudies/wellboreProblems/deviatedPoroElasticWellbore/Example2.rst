@@ -15,7 +15,7 @@ This example deals with the problem of drilling a deviated poro-elastic wellbore
 **Input file**
 
 Everything required is
-contained within two GEOSX xml files that are located at:
+contained within two GEOS xml files that are located at:
 
 .. code-block:: console
 
@@ -46,7 +46,7 @@ Pore pressure distribution after 78 s injection is shown in the figure below:
    :figclass: align-center
 
 
-A good agreement between the GEOSX results and the corresponding analytical solutions `(Abousleiman and Cui, 1998) <https://www.sciencedirect.com/science/article/pii/S0020768398001012>`__ is shown in the figure below:
+A good agreement between the GEOS results and the corresponding analytical solutions `(Abousleiman and Cui, 1998) <https://www.sciencedirect.com/science/article/pii/S0020768398001012>`__ is shown in the figure below:
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/deviatedPoroElasticWellbore/deviatedPoroElasticWellboreExample2Figure.py
 

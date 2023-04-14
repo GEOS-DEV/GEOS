@@ -17,7 +17,7 @@ There are two ways to access Doxygen documentation.
 Build locally
 ------------------------------------
 
-Prior to configuring a GEOSX build, have Doxygen installed:
+Prior to configuring a GEOS build, have Doxygen installed:
 
   .. code-block:: sh
 
@@ -27,7 +27,7 @@ Prior to configuring a GEOSX build, have Doxygen installed:
 
   Eventually, doxygen (version 1.8.13) is provided within the `thirdPartyLibs` repository.
 
-Configure GEOSX and go the build directory:
+Configure GEOS and go the build directory:
 
   .. code-block:: sh
 
@@ -54,7 +54,7 @@ Open in browser:
 On readthedocs
 ------------------------------------
 
-Go to `GEOSX documentation <https://geosx-geosx.readthedocs-hosted.com/>`__, select the version of interest, and follow
+Go to `GEOS documentation <https://geosx-geosx.readthedocs-hosted.com/>`__, select the version of interest, and follow
 the Doxygen link at the left-hand-side.
 
 Guidelines

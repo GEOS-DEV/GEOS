@@ -15,7 +15,7 @@ At the end of this example you will know:
 
 **Input file**
 
-This example uses no external input files and everything required is contained within GEOSX input files.
+This example uses no external input files and everything required is contained within GEOS input files.
 
 The xml input files for the case with EmbeddedFractures solver are located at:
 
@@ -48,7 +48,7 @@ Description of the case
 We compute the displacement field induced by the presence of a pressurized fracture,
 of length :math:`L_f`, in a porous medium.
 
-GEOSX will calculate the displacement field in the porous matrix and the displacement
+GEOS will calculate the displacement field in the porous matrix and the displacement
 jump at the fracture surface.
 We will use the analytical solution for the fracture aperture, :math:`w_n` (normal component of the
 jump), to verify the numerical results
@@ -75,7 +75,7 @@ define two solvers:
  - a ``SolidMechanicsEmbeddedFractures`` solver, called ``mechSolve``
  - a small-strain Lagrangian mechanics solver, of type ``SolidMechanicsLagrangianSSLE`` called here ``matrixSolver`` (see: :ref:`SolidMechanicsLagrangianFEM`)
 
-Note that the ``name`` attribute of these solvers is chosen by the user and is not imposed by GEOSX. 
+Note that the ``name`` attribute of these solvers is chosen by the user and is not imposed by GEOS. 
 It is important to make sure that the ``solidSolverName`` specified in the embedded fractures solver corresponds to the
 small-strain Lagrangian solver used in the matrix.
 
@@ -189,7 +189,7 @@ The parameters used in the simulation are summarized in the following table.
   | :math:`p_f`    | Fracture pressure     | [MPa]            | -2.0              |
   +----------------+-----------------------+------------------+-------------------+
 
-Note that the internal fracture pressure has a negative value, due to the negative sign convention for compressive stresses in GEOSX. 
+Note that the internal fracture pressure has a negative value, due to the negative sign convention for compressive stresses in GEOS. 
 
 Material properties and boundary conditions are specified in the ``Constitutive`` and ``FieldSpecifications`` sections.
 
@@ -257,14 +257,14 @@ In this example, a task is specified to output fracture aperture (normal opening
 
 
 These tasks are triggered using the ``Event`` manager with a ``PeriodicEvent`` defined for these recurring tasks. 
-GEOSX writes output files named after the string defined in the ``filename`` keyword and formatted as HDF5 files. 
+GEOS writes output files named after the string defined in the ``filename`` keyword and formatted as HDF5 files. 
 The ``TimeHistory`` file contains the collected time history information from each specified time history collector.
 This information includes datasets for the simulation time, element center defined in the local coordinate system, and the time history information. 
 A Python script is used to read and plot any specified subset of the time history data for verification and visualization. 
 
 
 ---------------------------------
-Running GEOSX
+Running GEOS
 ---------------------------------
 
 To run these three cases, use the following commands:

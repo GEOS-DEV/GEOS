@@ -4,7 +4,7 @@
 ====================================================================
 
 For development purposes, you may want to use the publicly available docker images instead of compiling them yourself.
-While this is possible and this page will help you in through this journey, please note that *this is not officially supported by the GEOSX team that reserves the right to modify its workflow or delete elements on which you may have build your own workflow*.
+While this is possible and this page will help you in through this journey, please note that *this is not officially supported by the GEOS team that reserves the right to modify its workflow or delete elements on which you may have build your own workflow*.
 
 There are multiple options to use the exposed docker images.
 
@@ -37,7 +37,7 @@ You'll have to add extra tools.
 
 The following `example` is for our ``ubuntu`` flavors.
 You'll notice the arguments ``IMG``, ``VERSION``, ``ORG``.
-While surely overkill for most cases, if you develop in GEOSX on a regular basis you'll appreciate being able to switch containers easily.
+While surely overkill for most cases, if you develop in GEOS on a regular basis you'll appreciate being able to switch containers easily.
 For example, simply create the image ``remote-dev-ubuntu20.04-gcc9:212-910`` by running
 
 .. code-block:: console
