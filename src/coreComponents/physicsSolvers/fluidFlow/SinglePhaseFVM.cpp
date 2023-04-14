@@ -439,7 +439,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
         thermalSinglePhaseFVMKernels::
           FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                      dofKey,
-                                                                                     getName(),
+                                                                                     this->getName(),
                                                                                      mesh.getElemManager(),
                                                                                      stencilWrapper,
                                                                                      dt,
@@ -451,7 +451,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
         singlePhaseFVMKernels::
           FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                      dofKey,
-                                                                                     getName(),
+                                                                                     this->getName(),
                                                                                      mesh.getElemManager(),
                                                                                      stencilWrapper,
                                                                                      dt,
@@ -477,14 +477,14 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
       //                                                                                     dt,
       //                                                                                     localMatrix.toViewConstSizes(),
       //                                                                                     localRhs.toView() );
-      // }
+      }
       else
       {
         singlePhasePoromechanicsEmbeddedFracturesKernels::
           ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                           dofKey,
                                                                                           jumpDofKey,
-                                                                                          getName(),
+                                                                                          this->getName(),
                                                                                           mesh.getElemManager(),
                                                                                           stencilWrapper,
                                                                                           dt,
@@ -526,7 +526,37 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
     ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > dPerm_dDispJump =
       elemManager.constructMaterialArrayViewAccessor< PermeabilityBase, real64, 4 >( fields::permeability::dPerm_dDispJump::key() );
 
-    fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
+    fluxApprox.forStencils< CellElementStencilTPFA, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
+    {
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+      if( m_isThermal )
+      {
+        thermalSinglePhaseFVMKernels::
+          FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                     dofKey,
+                                                                                     this->getName(),
+                                                                                     mesh.getElemManager(),
+                                                                                     stencilWrapper,
+                                                                                     dt,
+                                                                                     localMatrix.toViewConstSizes(),
+                                                                                     localRhs.toView() );
+      }
+      else
+      {
+        singlePhaseFVMKernels::
+          FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                     dofKey,
+                                                                                     this->getName(),
+                                                                                     mesh.getElemManager(),
+                                                                                     stencilWrapper,
+                                                                                     dt,
+                                                                                     localMatrix.toViewConstSizes(),
+                                                                                     localRhs.toView() );
+      }
+    } );
+
+    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 

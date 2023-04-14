@@ -138,7 +138,7 @@ public:
 
   {
 
-    stencilWrapper.computeWeights( iconn,git add 
+    stencilWrapper.computeWeights( iconn, 
                                    m_permeability,
                                    m_dPerm_dPres,
                                    m_dPerm_dDispJump,
@@ -176,17 +176,17 @@ public:
                                 dFlux_dTrans );
 
         // populate local flux vector and derivatives
-        stack.localFlux[k[0]] += dt * fluxVal;
-        stack.localFlux[k[1]] -= dt * fluxVal;
+        stack.localFlux[k[0]] += m_dt * fluxVal;
+        stack.localFlux[k[1]] -= m_dt * fluxVal;
 
         real64 dFlux_dAper[2] = {0.0, 0.0};
-        dFlux_dAper[0] =  dt * dFlux_dTrans * dTrans_dDispJump[connectionIndex][0][0];
-        dFlux_dAper[1] = -dt * dFlux_dTrans * dTrans_dDispJump[connectionIndex][1][0];
+        dFlux_dAper[0] =  m_dt * dFlux_dTrans * dTrans_dDispJump[connectionIndex][0][0];
+        dFlux_dAper[1] = -m_dt * dFlux_dTrans * dTrans_dDispJump[connectionIndex][1][0];
 
-        stack.localFluxJacobian[k[0]][k[0]] += dFlux_dP[0] * dt;
-        stack.localFluxJacobian[k[0]][k[1]] += dFlux_dP[1] * dt;
-        stack.localFluxJacobian[k[1]][k[0]] -= dFlux_dP[0] * dt;
-        stack.localFluxJacobian[k[1]][k[1]] -= dFlux_dP[1] * dt;
+        stack.localFluxJacobian[k[0]][k[0]] += dFlux_dP[0] * m_dt;
+        stack.localFluxJacobian[k[0]][k[1]] += dFlux_dP[1] * m_dt;
+        stack.localFluxJacobian[k[1]][k[0]] -= dFlux_dP[0] * m_dt;
+        stack.localFluxJacobian[k[1]][k[1]] -= dFlux_dP[1] * m_dt;
 
         stack.dFlux_dAperture[k[0]][k[0]] += dFlux_dAper[0];
         stack.dFlux_dAperture[k[0]][k[1]] += dFlux_dAper[1];
@@ -197,6 +197,31 @@ public:
         connectionIndex++;
       }
     }
+  }
+
+  /**
+   * @brief Performs the complete phase for the kernel.
+   * @param[in] iconn the connection index
+   * @param[inout] stack the stack variables
+   */
+  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
+  GEOSX_HOST_DEVICE
+  void complete( localIndex const iconn,
+                 StackVariables & stack,
+                 FUNC && kernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
+  {
+    // Call Base::complete to assemble the mass balance equations
+    // In the lambda, fill the dR_dAper matrix
+    Base::complete( iconn, stack, [&] ( integer const i,
+                                        localIndex const localRow )
+    {
+      m_dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( m_sei( iconn, i ),
+                                                               stack.localColIndices.data(),
+                                                               stack.dFlux_dAper[i].dataIfContiguous(),
+                                                               stack.stencilSize );
+      // call the lambda to assemble additional terms, such as thermal terms
+      kernelOp( i, localRow );
+    } );
   }
 
 private:

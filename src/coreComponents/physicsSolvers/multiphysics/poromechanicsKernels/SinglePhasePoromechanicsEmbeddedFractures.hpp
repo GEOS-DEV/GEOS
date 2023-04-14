@@ -29,6 +29,7 @@ namespace singlePhasePoromechanicsEmbeddedFracturesKernels
 {
 
 using namespace fluxKernelsHelper;
+using namespace constitutive;
 
 template< integer NUM_DOF >
 class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF, SurfaceElementStencilWrapper >
@@ -48,10 +49,9 @@ public:
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
-  using PermeabilityAccessors = AbstractBase::SinglePhaseFluidAccessors; 
+  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors; 
   using EDFMPermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
                                                               fields::permeability::dPerm_dDispJump >;
-
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
   using AbstractBase::m_dofNumber;
@@ -79,7 +79,7 @@ public:
   static constexpr integer numEqn = numDof - 3;
 
   ConnectorBasedAssemblyKernel( globalIndex const rankOffset,
-                                STENCILWRAPPER const & stencilWrapper,
+                                SurfaceElementStencilWrapper const & stencilWrapper,
                                 DofNumberAccessor const & flowDofNumberAccessor,
                                 DofNumberAccessor const & dispDofNumberAccessor,
                                 SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
@@ -91,7 +91,7 @@ public:
                                 arrayView1d< real64 > const & localRhs )
     : Base( rankOffset,
             stencilWrapper,
-            dofNumberAccessor,
+            flowDofNumberAccessor,
             singlePhaseFlowAccessors,
             singlePhaseFluidAccessors,
             permeabilityAccessors,
@@ -138,10 +138,10 @@ public:
     for( integer i = 0; i < stack.stencilSize; ++i )
     {
       localIndex localDofIndex = numDof * i;
-      dofColIndices[ localDofIndex ]     = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
-      dofColIndices[ localDofIndex + 1 ] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
-      dofColIndices[ localDofIndex + 2 ] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] + 1;
-      dofColIndices[ localDofIndex + 3 ] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] + 2;
+      stack.dofColIndices[ localDofIndex ]     = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
+      stack.dofColIndices[ localDofIndex + 1 ] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
+      stack.dofColIndices[ localDofIndex + 2 ] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] + 1;
+      stack.dofColIndices[ localDofIndex + 3 ] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] + 2;
     }
   }
 
@@ -160,7 +160,7 @@ public:
 
   {
 
-    stencilWrapper.computeWeights( iconn,
+    m_stencilWrapper.computeWeights( iconn,
                                    m_permeability,
                                    m_dPerm_dPres,
                                    m_dPerm_dDispJump,
@@ -203,8 +203,8 @@ public:
     real64 dFlux_dDispJump[2][3] = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
     for( localIndex i=0; i < 3; i++ )
     {
-      dFlux_dDispJump[0][i] = m_dt * dFlux_dTrans * dTrans_dDispJump[0][0][i];
-      dFlux_dDispJump[1][i] = -m_dt * dFlux_dTrans * dTrans_dDispJump[0][1][i];
+      dFlux_dDispJump[0][i] = m_dt * dFlux_dTrans * stack.dTrans_dDispJump[0][0][i];
+      dFlux_dDispJump[1][i] = -m_dt * dFlux_dTrans * stack.dTrans_dDispJump[0][1][i];
     }
     for( localIndex ke = 0; ke < 2; ++ke )
     {
@@ -255,14 +255,14 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename STENCILWRAPPER >
+  template< typename POLICY >
   static void
   createAndLaunch( globalIndex const rankOffset,
                    string const & pressureDofKey,
                    string const & dispJumpDofKey,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
-                   STENCILWRAPPER const & stencilWrapper,
+                   SurfaceElementStencilWrapper const & stencilWrapper,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
@@ -271,13 +271,13 @@ public:
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > pressureDofNumberAccessor =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( pressureDofKey );
-    dofNumberAccessor.setName( solverName + "/accessors/" + pressureDofKey );
+    pressureDofNumberAccessor.setName( solverName + "/accessors/" + pressureDofKey );
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dispJumpDofNumberAccessor =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dispJumpDofKey );
-    dofNumberAccessor.setName( solverName + "/accessors/" + dispJumpDofKey );
+    dispJumpDofNumberAccessor.setName( solverName + "/accessors/" + dispJumpDofKey );
 
-    using kernelType = ConnectorBasedAssemblyKernel< NUM_DOF, STENCILWRAPPER >;
+    using kernelType = ConnectorBasedAssemblyKernel< NUM_DOF >;
     typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
@@ -286,7 +286,7 @@ public:
 
     kernelType kernel( rankOffset, stencilWrapper, 
                        pressureDofNumberAccessor, dispJumpDofNumberAccessor,
-                       flowAccessors, fluidAccessors, permAccessors,edfmPermAccessors
+                       flowAccessors, fluidAccessors, permAccessors, edfmPermAccessors,
                        dt, localMatrix, localRhs );
 
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
