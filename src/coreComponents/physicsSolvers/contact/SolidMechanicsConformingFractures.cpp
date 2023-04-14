@@ -47,15 +47,37 @@ SolidMechanicsConformingFractures::SolidMechanicsConformingFractures( const stri
 
 void SolidMechanicsConformingFractures::registerDataOnMesh( Group & meshBodies )
 {
+  // Matteo: Do we need element-based fields added inside?
   ContactSolverBase::registerDataOnMesh( meshBodies );
 
   using namespace fields::contact;
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                    MeshLevel & mesh,
+                                                    MeshLevel & meshLevel,
                                                     arrayView1d< string const > const & regionNames )
   {
-    ElementRegionManager & elemManager = mesh.getElemManager();
+    NodeManager & nodes = meshLevel.getNodeManager();
+
+    nodes.registerField< contact::traction > ( getName() ).
+      reference().resizeDimension< 1 >( 3 );
+    
+    nodes.registerField< contact::deltaTraction > ( getName() ).
+      reference().resizeDimension< 1 >( 3 );
+
+    nodes.registerField< contact::dispJump > ( getName() ).
+      reference().resizeDimension< 1 >( 3 );
+
+    nodes.registerField< contact::oldDispJump > ( getName() ).
+      reference().resizeDimension< 1 >( 3 );
+
+    nodes.registerField< contact::dTraction_dJump >( getName() ).
+        reference().resizeDimension< 1, 2 >( 3, 3 );
+
+    nodes.registerField< contact::fractureState >( getName() );
+
+    nodes.registerField< contact::oldFractureState >( getName() );
+
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&] ( localIndex const,
                                                                                  SurfaceElementSubRegion & subRegion )
     {
@@ -66,7 +88,9 @@ void SolidMechanicsConformingFractures::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName()).
         setDescription( "An array that holds the rotation matrices on the fracture." ).
         reference().resizeDimension< 1, 2 >( 3, 3 );
+
     } );
+
   } );
 }
 
@@ -96,6 +120,8 @@ void SolidMechanicsConformingFractures::setupSystem( DomainPartition & domain,
                                                      ParallelVector & solution,
                                                      bool const setSparsity )
 {
+  GEOSX_MARK_FUNCTION;
+
   if( m_precond )
   {
     m_precond->clear();
@@ -124,10 +150,10 @@ void SolidMechanicsConformingFractures::implicitStepComplete( real64 const & tim
   }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
+                                                                MeshLevel & meshLevel,
                                                                 arrayView1d< string const > const & )
   {
-    mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
       arrayView2d< real64 > const & oldDispJump = subRegion.getField< contact::oldDispJump >();
@@ -178,45 +204,41 @@ void SolidMechanicsConformingFractures::resetStateToBeginningOfStep( DomainParti
   m_solidSolver->resetStateToBeginningOfStep( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
+                                                                MeshLevel & meshLevel,
                                                                 arrayView1d< string const > const & )
   {
-    ElementRegionManager & elemManager = mesh.getElemManager();
+    NodeManager & nodes = meshLevel.getNodeManager();
 
-    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    arrayView2d< real64 > const & traction = nodes.getField< contact::traction >();
+    arrayView2d< real64 > const & deltaTraction = nodes.getField< contact::deltaTraction >();
+    arrayView2d< real64 > const & dispJump = nodes.getField< contact::dispJump >();
+    arrayView2d< real64 const > const & oldDispJump = nodes.getField< contact::oldDispJump >();
+    arrayView1d< integer > const & fractureState = nodes.getField< contact::fractureState >();
+    arrayView1d< integer const > const & oldFractureState = nodes.getField< contact::oldFractureState >();
+
+    forAll< parallelHostPolicy >( nodes.size(), [=] ( localIndex const kn )
     {
-      arrayView2d< real64 > const & traction = subRegion.getField< contact::traction >();
-      arrayView2d< real64 > const & deltaTraction = subRegion.getField< contact::deltaTraction >();
-      arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
-      arrayView2d< real64 const > const & oldDispJump = subRegion.getField< contact::oldDispJump >();
-
-      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
-      arrayView1d< integer const > const & oldFractureState = subRegion.getField< contact::oldFractureState >();
-
-      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
-      {
         for( localIndex i = 0; i < 3; ++i )
         {
-          traction[kfe][i] -= deltaTraction[kfe][i];
-          deltaTraction[kfe][i] = 0.0;
-
-          dispJump[kfe][i] = oldDispJump[kfe][i];
+          traction[kn][i] -= deltaTraction[kn][i];
+          deltaTraction[kn][i] = 0.0;
+          dispJump[kn][i] = oldDispJump[kn][i];
         }
-        fractureState[kfe] = oldFractureState[kfe];
-      } );
+        fractureState[kn] = oldFractureState[kn];
     } );
   } );
 }
 
 void SolidMechanicsConformingFractures::computeFaceDisplacementJump( DomainPartition & domain ) const
 {
+  // TODO: rewrite for node-based dispJump
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
+                                                                MeshLevel & meshLevel,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    NodeManager const & nodeManager = mesh.getNodeManager();
-    FaceManager & faceManager = mesh.getFaceManager();
-    ElementRegionManager & elemManager = mesh.getElemManager();
+    NodeManager const & nodeManager = meshLevel.getNodeManager();
+    FaceManager & faceManager = meshLevel.getFaceManager();
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
 
     // Get the coordinates for all nodes
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
@@ -275,6 +297,45 @@ void SolidMechanicsConformingFractures::setupDofs( DomainPartition const & domai
   {
     m_solidSolver->setupDofs( domain, dofManager );
   }
+
+  map< std::pair< string, string >, array1d< string > > meshTargets;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+                                                                MeshLevel const & meshLevel,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    array1d< string > regions;
+    ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
+                                                                    [&]( localIndex const,
+                                                                         SurfaceElementRegion const & region )
+    {
+      regions.emplace_back( region.getName() );
+    } );
+    meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
+  } );
+
+  if (m_contactEnforcementMethod == ContactEnforcementMethod::Penalty)
+  {
+    dofManager.addField( solidMechanics::totalDisplacement::key(),
+                          FieldLocation::Node,
+                          3,
+                          meshTargets );
+
+    dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
+                            solidMechanics::totalDisplacement::key(),
+                            DofManager::Connector::Elem,
+                            meshTargets );
+
+    // dofManager.addField(  contact::dispJump::key(),
+    //                       FieldLocation::Node,
+    //                       3,
+    //                       meshTargets );
+
+    // dofManager.addCoupling( contact::dispJump::key(),
+    //                         contact::dispJump::key(),
+    //                         DofManager::Connector::Elem,
+    //                         meshTargets );
+  }
 }
 
 void SolidMechanicsConformingFractures::assembleSystem( real64 const time,
@@ -296,8 +357,52 @@ void SolidMechanicsConformingFractures::assembleSystem( real64 const time,
                                  localRhs );
 
   /// ALEKS: I would call here the functions to assemble contact constraints
+  if (m_contactEnforcementMethod == ContactEnforcementMethod::Penalty)
+  {
+    assemblePenalizedContact(time, dt, domain, dofManager, localMatrix, localRhs);
+  }
+  /*else if (m_contactEnforcementMethod == ContactEnforcementMethod::NodalLagrangeMultiplier)
+  {
+    assembleNodalLagrangeMultiplierContact();
+  }
+  else if (m_contactEnforcementMethod == ContactEnforcementMethod::FaceLagrangeMultiplier)
+  {
+    assembleFaceLagrangeMultiplierContact();
+  }*/
+
 }
 
+void SolidMechanicsConformingFractures::assemblePenalizedContact( real64 const time,
+                                                                  real64 const dt,
+                                                                  DomainPartition & domain,
+                                                                  DofManager const & dofManager,
+                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                  arrayView1d< real64 > const & localRhs )
+{
+  GEOSX_MARK_FUNCTION;
+
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & meshLevel,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    //FaceManager const & faceManager = meshLevel.getFaceManager();
+    //NodeManager const & nodeManager = meshLevel.getNodeManager();
+    //ElementRegionManager const & elemManager = meshLevel.getElemManager();
+
+    //ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+
+    //string const & tracDofKey = dofManager.getKey( contact::traction::key() );
+    //string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+
+    //arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+    //globalIndex const rankOffset = dofManager.rankOffset();
+
+    // Get the coordinates for all nodes
+    //arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+
+  });
+}
 
 real64 SolidMechanicsConformingFractures::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time ),
                                                                  real64 const & GEOSX_UNUSED_PARAM( dt ),
@@ -317,11 +422,11 @@ void SolidMechanicsConformingFractures::computeRotationMatrices( DomainPartition
 
   GEOSX_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
+                                                                MeshLevel & meshLevel,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    FaceManager const & faceManager = mesh.getFaceManager();
-    ElementRegionManager & elemManager = mesh.getElemManager();
+    FaceManager const & faceManager = meshLevel.getFaceManager();
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
 
     arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
 
@@ -431,7 +536,7 @@ void SolidMechanicsConformingFractures::applySystemSolution( DofManager const & 
   }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
+                                                                MeshLevel & meshLevel,
                                                                 arrayView1d< string const > const & )
   {
     FieldIdentifiers fieldsToBeSync;
@@ -440,7 +545,7 @@ void SolidMechanicsConformingFractures::applySystemSolution( DofManager const & 
                                      { getFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                         mesh,
+                                                         meshLevel,
                                                          domain.getNeighbors(),
                                                          true );
   } );
@@ -448,7 +553,7 @@ void SolidMechanicsConformingFractures::applySystemSolution( DofManager const & 
 
 void SolidMechanicsConformingFractures::updateState( DomainPartition & domain )
 {
-  computeFaceDisplacementJump( domain );
+  //computeFaceDisplacementJump( domain );
 }
 
 bool SolidMechanicsConformingFractures::resetConfigurationToDefault( DomainPartition & domain ) const
@@ -458,24 +563,17 @@ bool SolidMechanicsConformingFractures::resetConfigurationToDefault( DomainParti
   using namespace fields::contact;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
+                                                                MeshLevel & meshLevel,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    ElementRegionManager & elemManager = mesh.getElemManager();
+    NodeManager & nodes = meshLevel.getNodeManager();
+    arrayView1d< integer > const & fractureState = nodes.getField< contact::fractureState >();
 
-    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                FaceElementSubRegion & subRegion )
+    forAll< parallelHostPolicy >( nodes.size(), [=] ( localIndex const kn )
     {
-      if( subRegion.hasField< contact::traction >() )
+      if( fractureState[kn] != FractureState::Open )
       {
-        arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
-        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
-        {
-          if( fractureState[kfe] != FractureState::Open )
-          {
-            fractureState[kfe] = FractureState::Stick;
-          }
-        } );
+        fractureState[kn] = FractureState::Stick;
       }
     } );
   } );
@@ -491,7 +589,7 @@ bool SolidMechanicsConformingFractures::updateConfiguration( DomainPartition & d
   int hasConfigurationConverged = true;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
+                                                                MeshLevel & meshLevel,
                                                                 arrayView1d< string const > const & regionNames )
   {} );
   // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
