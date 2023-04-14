@@ -92,5 +92,5 @@ If you want to run the benchmarks on your local branch and compare the results w
 .. note::
   A future version of the script will be able to pull timing results straight from the ``.cali`` files so that if you have access to the NightlyTests_ timing files you won't need to run the benchmarks on develop. Furthermore it will be able to provide more detailed information than just initialization and run times.
 
-.. _NightlyTests: https://github.com/GEOSX/NightlyTests
+.. _NightlyTests: https://github.com/GEOS-DEV/NightlyTests
 .. _Spot: https://lc.llnl.gov/spot2/?sf=/usr/gapps/GEOSX/timingFiles

@@ -7,7 +7,7 @@ Build steps
 ---------------------
 
 - Create a host-config file that sets all system-specific CMake variables.
-  Take a look at `host-config examples <https://github.com/GEOSX/GEOSX/blob/develop/host-configs>`_.
+  Take a look at `host-config examples <https://github.com/GEOS-DEV/GEOS/blob/develop/host-configs>`_.
   We recommend the same host-config is used for both TPL and GEOSX builds.
   In particular, certain options (such as ``ENABLE_MPI`` or ``ENABLE_CUDA``) need to match between the two.
 
@@ -19,7 +19,7 @@ Build steps
 
     .. code-block:: cmake
 
-       include("/path/to/GEOSX/host-configs/tpls.cmake")
+       include("/path/to/GEOS/host-configs/tpls.cmake")
 
     which will set all the individual TPL paths for you.
 
@@ -27,7 +27,7 @@ Build steps
 
   .. code-block:: console
 
-     cd GEOSX
+     cd GEOS
      python scripts/config-build.py --hostconfig=/path/to/host-config.cmake --buildtype=Release --installpath=/path/to/install/dir
 
   where
@@ -59,7 +59,7 @@ Configuration options
 
 Below is a list of CMake configuration options, in addition to TPL options above.
 Some options, when enabled, require additional settings (e.g. ``ENABLE_CUDA``).
-Please see `host-config examples <https://github.com/GEOSX/GEOSX/blob/develop/host-configs>`_.
+Please see `host-config examples <https://github.com/GEOS-DEV/GEOS/blob/develop/host-configs>`_.
 
 =============================== ========= ==============================================================================
 Option                          Default   Explanation

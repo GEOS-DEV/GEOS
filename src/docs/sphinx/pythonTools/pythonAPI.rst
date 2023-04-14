@@ -29,7 +29,7 @@ Alternatively, these packages can be installed manually into a python environmen
 
 .. code-block:: bash
 
-    cd GEOSX/src/coreComponents/python/modules/geosx_mesh_tools_package
+    cd GEOS/src/coreComponents/python/modules/geosx_mesh_tools_package
     pip install --upgrade .
 
     cd ../geosx_xml_tools_package

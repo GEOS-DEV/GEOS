@@ -31,7 +31,7 @@ Configure GEOSX and go the build directory:
 
   .. code-block:: sh
 
-   cd GEOSX/build-your-platform-release
+   cd GEOS/build-your-platform-release
 
 Build doxygen docs only:
 

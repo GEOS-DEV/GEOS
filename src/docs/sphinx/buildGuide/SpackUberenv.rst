@@ -13,7 +13,7 @@ Building the dependencies can be as simple as running
 
 This will create a directory ``uberenv_libs`` in the current working directory, clone Spack into ``uberenv_libs/spack`` and install the dependencies into ``uberenv_libs/system_dependent_path``. It will then spit out a host-config file in the current directory which you can use to build GEOSX. While the above command **should** work on every system, it should never be used. Invoked as such, Spack will ignore any system libraries you have installed and will go down a rabbit hole building dependencies. Furthermore this does not allow you to choose the compiler to build. Both of these are easily solved by creating a directory with a ``packages.yaml`` and a ``compilers.yaml``.
 
-To prevent this from happening you'll need to create a directory with a ``packages.yaml`` file and a ``compilers.yaml`` file. You can find working examples for commonly used systems in `scripts/uberenv/spack_configs <https://github.com/GEOSX/GEOSX/tree/develop/scripts/uberenv/spack_configs>`_. It is worth noting that each LC system type has two such directories, for example there is a ``toss_3_x85_54_ib`` and ``toss_3_x85_54_ib_python`` directory. This is because when building ``pygeosx`` Python needs to be built from scratch, and as such cannot be listed in ``packages.yaml``. However, when not building ``pygeosx`` other dependencies depend on python, but an existing system version works just fine, so it can be put in ``packages.yaml`` to prevent Spack from building it.
+To prevent this from happening you'll need to create a directory with a ``packages.yaml`` file and a ``compilers.yaml`` file. You can find working examples for commonly used systems in `scripts/uberenv/spack_configs <https://github.com/GEOS-DEV/GEOS/tree/develop/scripts/uberenv/spack_configs>`_. It is worth noting that each LC system type has two such directories, for example there is a ``toss_3_x85_54_ib`` and ``toss_3_x85_54_ib_python`` directory. This is because when building ``pygeosx`` Python needs to be built from scratch, and as such cannot be listed in ``packages.yaml``. However, when not building ``pygeosx`` other dependencies depend on python, but an existing system version works just fine, so it can be put in ``packages.yaml`` to prevent Spack from building it.
 
 Once you have these files setup you can run Uberenv again and instruct it to use them with. If for instance you added Clang 10.0.1 to the ``compilers.yaml`` file the your command would look something like this:
 
@@ -27,7 +27,7 @@ Once you have these files setup you can run Uberenv again and instruct it to use
 Build Configuration
 -------------------
 
-The GEOSX Spack package has a lot of options for controlling which dependencies you would like to build and how you'd like them built. The GEOSX Spack package file is at ```scripts/uberenv/packages/geosx/package.py <https://github.com/GEOSX/GEOSX/tree/develop/scripts/uberenv/packages/geosx/package.py>`_.`` The variants for the package are as follows
+The GEOSX Spack package has a lot of options for controlling which dependencies you would like to build and how you'd like them built. The GEOSX Spack package file is at ```scripts/uberenv/packages/geosx/package.py <https://github.com/GEOS-DEV/GEOS/tree/develop/scripts/uberenv/packages/geosx/package.py>`_.`` The variants for the package are as follows
 
 .. literalinclude:: ../../../../scripts/uberenv/packages/geosx/package.py
    :language: python

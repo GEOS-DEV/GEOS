@@ -14,7 +14,7 @@ There are multiple options to use the exposed docker images.
   Install your favorite development inside the image (be mindful of X display issues), connect to the running container and start hacking!
 - It is also possible to develop directly in the cloud using `GitHub codespaces <https://docs.github.com/en/codespaces>`_.
   This product will let you buy a machine in the cloud with an environment already configured to build and run ``geos``.
-  To make it work, create a branch and/or fork the repository, then select the version of the TPL you need by replacing the `DEFINE_ME` token in this `Dockerfile <https://github.com/GEOSX/GEOS/blob/develop/.devcontainer/Dockerfile>`_ before creating your ``codespace`` instance.
+  To make it work, create a branch and/or fork the repository, then select the version of the TPL you need by replacing the `DEFINE_ME` token in this `Dockerfile <https://github.com/GEOS-DEV/GEOS/blob/develop/.devcontainer/Dockerfile>`_ before creating your ``codespace`` instance.
   (You may most probably stick to the ``GEOSX_TPL_TAG`` of the ``.travis.yml`` file).
   *Then clone the submodules*.
   You do not need to run the ``scripts/config-build.py`` scripts since ``cmake`` and ``vscode`` are already configured.

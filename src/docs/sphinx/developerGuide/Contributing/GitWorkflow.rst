@@ -4,7 +4,7 @@
 Git Workflow
 **************************************
 
-The GEOSX project is hosted on github `here <https://github.com/GEOSX>`__.
+The GEOSX project is hosted on github `here <https://github.com/GEOS-DEV>`__.
 For instructions on how to clone and build GEOSX, please refer to the :ref:`QuickStart`.
 Consider consulting `https://try.github.io/ <https://try.github.io/>`_ for practical references on how to use git.
 
@@ -25,7 +25,7 @@ the code through SSH.  The following steps clone the repository into ``your_geos
 
 .. code-block:: console
 
-   git clone git@github.com:GEOSX/GEOSX.git your_geosx_dir
+   git clone git@github.com:GEOS-DEV/GEOS.git your_geosx_dir
    cd your_geosx_dir
    git lfs install
    git submodule init
@@ -291,7 +291,7 @@ current with ``develop``.
 Submitting a Pull Request
 ======================================
 Once you have created your branch and pushed changes to Github, you can create a
-`Pull Request <https://github.com/GEOSX/GEOSX/pulls>`_ on Github.
+`Pull Request <https://github.com/GEOS-DEV/GEOS/pulls>`_ on Github.
 The PR creates a central place to review and discuss the ongoing work on the branch.
 Creating a pull request early in the development process is preferred as it allows
 for developers to collaborate on the branch more readily.

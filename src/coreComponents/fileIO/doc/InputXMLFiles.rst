@@ -68,7 +68,7 @@ The optional `xmlns:xsi` and `xsi:noNamespaceSchemaLocation` attributes in the P
         xsi:noNamespaceSchemaLocation="/path/to/schema.xsd" />
 
 The schema contains a list of xml blocks and attributes that are supported by GEOSX, indicates whether a given object is optional or required, and defines the format of the object (string, floating point number, etc.).
-A copy of the schema is included in the GEOSX source code (/path/to/GEOSX/src/coreComponents/schema/schema.xsd).
+A copy of the schema is included in the GEOSX source code (/path/to/GEOS/src/coreComponents/schema/schema.xsd).
 It can also be generated using GEOSX: ``geosx -s schema.xsd``
 
 Many text editors can use the schema to help in the construction of an xml file and to indicate whether it is valid.
@@ -133,7 +133,7 @@ After installing this extension, you can associate GEOSX format xml files by add
 
             {
                 "pattern": "**.xml",
-                "systemId": "/path/to/GEOSX/src/coreComponents/schema/schema.xsd"
+                "systemId": "/path/to/GEOS/src/coreComponents/schema/schema.xsd"
             }
         ]
     }

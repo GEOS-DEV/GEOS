@@ -368,7 +368,7 @@ To go further
 
 This concludes the example on setting up an immiscible two-phase flow simulation in a channelized permeability field.
 For any feedback on this example, please submit
-a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+a `GitHub issue on the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.
 
 **For more details**
 

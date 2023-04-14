@@ -435,7 +435,7 @@ To go further
 
 This concludes the example on setting up a Dead-Oil simulation in the Egg model.
 For any feedback on this example, please submit
-a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+a `GitHub issue on the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.
 
 **For more details**
 

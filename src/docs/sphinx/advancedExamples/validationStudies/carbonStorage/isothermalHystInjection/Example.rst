@@ -37,7 +37,7 @@ presented in
 `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__.
 
 The setup is illustrated in the figure below.
-The mesh can be found in `GEOSXDATA <https://github.com/GEOSX/GEOSXDATA>`__ and
+The mesh can be found in `GEOSXDATA <https://github.com/GEOS-DEV/GEOSDATA>`__ and
 was provided for the benchmark. It discretizes the widely-used `Johansen` reservoir,
 which consists in a tilted reservoir with a main fault.
 The model domain has the following dimensions: 9600 x 8900 x [90-140] m.
@@ -324,7 +324,7 @@ To go further
 
 **Feedback on this example**
 
-For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.
 
 
 

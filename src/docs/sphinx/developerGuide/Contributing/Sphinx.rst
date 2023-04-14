@@ -15,7 +15,7 @@ Generating the documentation
 
  .. code-block:: sh
 
-  cd GEOSX/build-your-platform-release
+  cd GEOS/build-your-platform-release
   make geosx_docs
 
 - That will create a new folder

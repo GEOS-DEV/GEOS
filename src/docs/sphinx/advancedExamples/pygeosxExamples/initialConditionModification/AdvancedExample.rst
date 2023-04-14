@@ -103,7 +103,7 @@ To do so, you can run the following:
 
 .. code-block:: console
 
-   cd GEOSX/[build_dir]/lib/PYGEOSX/bin
+   cd GEOS/[build_dir]/lib/PYGEOSX/bin
    pip install --upgrade ../../../../src/coreComponents/python/modules/pygeosx_tools_package/
 
 To run the code, you will call the pygeosx run script with python, and supply the typical geosx command-line arguments and any parallel arguments.
@@ -127,7 +127,7 @@ To go further
 
 **Feedback on this example**
 
-For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.
 
 **For more details**
 

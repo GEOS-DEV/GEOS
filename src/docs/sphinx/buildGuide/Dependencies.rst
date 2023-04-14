@@ -79,20 +79,20 @@ Some other dependencies (GoogleTest_, GoogleBenchmark_) are provided through BLT
 No actions are needed to build them.
 
 If you would like to create a Docker image with all dependencies, take a look at
-`Dockerfiles <https://github.com/GEOSX/thirdPartyLibs/tree/master/docker>`_
+`Dockerfiles <https://github.com/GEOS-DEV/thirdPartyLibs/tree/master/docker>`_
 that are used in our CI process.
 
 Building bundled dependencies
 -----------------------------
 
-To simplify the process of building TPLs, we provide a git repository `thirdPartyLibs <https://github.com/GEOSX/thirdPartyLibs>`_.
+To simplify the process of building TPLs, we provide a git repository `thirdPartyLibs <https://github.com/GEOS-DEV/thirdPartyLibs>`_.
 It contains source copies of exact TPL versions required and is updated periodically.
 It also contains a CMake script for building all TPLs in a single command.
 
 The recommended steps to build TPLs are:
 
 - Create a host-config file that sets all system-specific CMake variables (compiler and library paths, configuration flags, etc.)
-  Take a look at `host-config examples <https://github.com/GEOSX/GEOSX/blob/develop/host-configs>`_.
+  Take a look at `host-config examples <https://github.com/GEOS-DEV/GEOS/blob/develop/host-configs>`_.
 - Configure via ``config-build.py`` script:
 
   .. code-block:: console
@@ -137,4 +137,4 @@ You may also install each individual TPL separately, either manually or through 
 This is a more difficult route, since you are responsible for configuring dependencies in a compatible manner.
 Again, we strongly recommend using the exact versions listed above, to avoid possible build problems.
 
-You may look at `our TPL CMake script <https://github.com/GEOSX/thirdPartyLibs/blob/master/CMakeLists.txt>`_ to see how we configure TPL builds.
+You may look at `our TPL CMake script <https://github.com/GEOS-DEV/thirdPartyLibs/blob/master/CMakeLists.txt>`_ to see how we configure TPL builds.

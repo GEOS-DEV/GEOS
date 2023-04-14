@@ -65,7 +65,7 @@ If you run into problems during the installation, we recommend the following fiv
 #. If you encounter problems building one of the third-party libraries we depend on, check out their support pages.
    They may be able to help you more directly than we can.
 
-#. Still stuck? Check out our `issues tracker <https://github.com/GEOSX/GEOSX/issues>`_, searching current or closed issues that may address your problem.
+#. Still stuck? Check out our `issues tracker <https://github.com/GEOS-DEV/GEOS/issues>`_, searching current or closed issues that may address your problem.
    Perhaps someone has had an identical issue, or something close.  The issue tracker has a convenient search bar where you can search for relevant keywords.
    Remember to remove the default ``is:open`` keyword to search both open and closed issues.
 
@@ -82,18 +82,18 @@ Repository Organization
 
 The source for GEOSX and related tools are hosted on `Github <https://github.com>`_.
 We use `Git workflows <https://git-scm.com>`_ to version control our code and manage the entire development process.
-On Github, we have a `GEOSX Organization <https://github.com/GEOSX>`_ that hosts several related repositories.
+On Github, we have a `GEOSX Organization <https://github.com/GEOS-DEV>`_ that hosts several related repositories.
 
 You should sign up for a free Github account, particularly if you are interested in posting issues to our issue tracker and communicating with the developers.
-The main repository of interest is obviously GEOSX itself: `GEOSX <https://github.com/GEOSX/GEOSX>`_
+The main repository of interest is obviously GEOSX itself: `GEOSX <https://github.com/GEOS-DEV/GEOS>`_
 
 We also rely on two types of dependencies: first-party and third-party.
 First-party dependencies are projects directly associated with the GEOSX effort, but kept in separate repositories because they form stand-alone tools.
-For example, there is an equation-of-state package called `PVTPackage <https://github.com/GEOSX/PVTPackage>`_ or the streamlined CMake-based foundation  `BTL <https://github.com/LLNL/blt`_.
+For example, there is an equation-of-state package called `PVTPackage <https://github.com/GEOS-DEV/PVTPackage>`_ or the streamlined CMake-based foundation  `BTL <https://github.com/LLNL/blt`_.
 These packages are handled as `Git Submodules <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_, which provides a transparent way of coordinating multiple code development projects.
 Most users will never have to worry that these modules are in fact separate projects from GEOSX.
 
-We also rely on several open-source Third-Party Libraries (TPLs) (see `thirdPartyLibs <https://github.com/GEOSX/thirdPartyLibs>`_).
+We also rely on several open-source Third-Party Libraries (TPLs) (see `thirdPartyLibs <https://github.com/GEOS-DEV/thirdPartyLibs>`_).
 These are well-respected projects developed externally to GEOSX.
 We have found, however, that many compilation issues stem from version incompatibilities between different packages.
 To address this, we provide a mirror of these TPLs, with version combinations we know play nicely together.
@@ -169,8 +169,8 @@ Developers who will be working with the integratedTests repository should skip t
 
 .. code-block:: sh
 
-   git clone https://github.com/GEOSX/GEOSX.git
-   cd GEOSX
+   git clone https://github.com/GEOS-DEV/GEOS.git
+   cd GEOS
    git lfs install
    git submodule init
    git submodule deinit integratedTests
@@ -188,7 +188,7 @@ This submodule is not required for building GEOSX. If you see an error message h
 
 .. code-block:: sh
 
-   cd GEOSX
+   cd GEOS
    git submodule update --init src/cmake/blt
    git submodule update --init src/coreComponents/LvArray
    git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
@@ -199,7 +199,7 @@ Once we have grabbed GEOSX, we do the same for the thirdPartyLibs repository.  F
 
 .. code-block:: sh
 
-   git clone https://github.com/GEOSX/thirdPartyLibs.git
+   git clone https://github.com/GEOS-DEV/thirdPartyLibs.git
    cd thirdPartyLibs
    git lfs install
    git pull
@@ -215,8 +215,8 @@ Again, if all goes well you should now have a copy of all necessary TPL packages
 If you are using an older version, you may need to add ``git lfs pull`` after ``git pull`` in the above procedures.
 
 #. You can adapt the commands if you use an ssh connection instead.
-The clone ``https://github.com/GEOSX/GEOSX.git`` becomes ``git clone git@github.com:GEOSX/GEOSX.git``.
-You may also be willing to insert your credentials in the command line (less secure) ``git clone https://${USER}:${TOKEN}@github.com/GEOSX/GEOSX.git``.
+The clone ``https://github.com/GEOS-DEV/GEOS.git`` becomes ``git clone git@github.com:GEOS-DEV/GEOS.git``.
+You may also be willing to insert your credentials in the command line (less secure) ``git clone https://${USER}:${TOKEN}@github.com/GEOS-DEV/GEOS.git``.
 
 Configuration
 ================
@@ -243,7 +243,7 @@ You should browse them to see if any are close to your needs:
 
 .. code-block:: sh
 
-   cd GEOSX/host-configs
+   cd GEOS/host-configs
 
 We maintain host configs (ending in ``.cmake``) for HPC systems at various institutions, as well as ones for common personal systems.
 If you cannot find one that matches your needs, we suggest beginning with one of the shorter ones and modifying as needed.
@@ -317,7 +317,7 @@ The TPLS will then be built in a build directory named consistently with your ho
 .. code-block:: sh
 
    cd thirdPartyLibs
-   python scripts/config-build.py -hc ../GEOSX/host-configs/your-platform.cmake -bt Release
+   python scripts/config-build.py -hc ../GEOS/host-configs/your-platform.cmake -bt Release
    cd build-your-platform-release
    make
 
@@ -329,7 +329,7 @@ Again, the ``config-build.py`` sets up cmake for you, so the process is very sim
 
 .. code-block:: sh
 
-   cd ../../GEOSX
+   cd ../../GEOS
    python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release
    cd build-your-platform-release
    make -j4
@@ -411,7 +411,7 @@ You can run them in the build folder you just created.
 
 .. code-block:: sh
 
-  cd GEOSX/build-your-platform-release
+  cd GEOS/build-your-platform-release
   ctest -V
 
 This will run a large suite of simple tests that check various components of the code.

@@ -24,7 +24,7 @@ comprehensive resource, but probably not the place to start.
 
 High quality documentation is a critical component of a successful code.  If
 you have suggestions for improving the guides below, please post an issue on our
-`issue tracker <https://github.com/GEOSX/GEOSX/issues>`_.
+`issue tracker <https://github.com/GEOS-DEV/GEOS/issues>`_.
 
 .. toctree::
    :maxdepth: 2
