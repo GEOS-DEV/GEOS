@@ -48,17 +48,21 @@ public:
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
-  using PermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
-                                                          fields::permeability::permeability,
-                                                          fields::permeability::dPerm_dPressure,
-                                                          fields::permeability::dPerm_dDispJump >;
+  using PermeabilityAccessors = AbstractBase::SinglePhaseFluidAccessors; 
+  using EDFMPermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
+                                                              fields::permeability::dPerm_dDispJump >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
   using AbstractBase::m_dofNumber;
+  using AbstractBase::m_permeability;
+  using AbstractBase::m_dPerm_dPres;
   using AbstractBase::m_gravCoef;
+  using AbstractBase::m_pres;
   using AbstractBase::m_mob;
+  using AbstractBase::m_dMob_dPres;
   using AbstractBase::m_dens;
+  using AbstractBase::m_dDens_dPres;
 
   using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF, SurfaceElementStencilWrapper >;
   using Base::numDof;
@@ -79,11 +83,9 @@ public:
                                 DofNumberAccessor const & flowDofNumberAccessor,
                                 DofNumberAccessor const & dispDofNumberAccessor,
                                 SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                                ThermalSinglePhaseFlowAccessors const & thermalSinglePhaseFlowAccessors,
                                 SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                                ThermalSinglePhaseFluidAccessors const & thermalSinglePhaseFluidAccessors,
                                 PermeabilityAccessors const & permeabilityAccessors,
-                                ThermalConductivityAccessors const & thermalConductivityAccessors,
+                                EDFMPermeabilityAccessors const & edfmPermeabilityAccessors,
                                 real64 const & dt,
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs )
@@ -97,7 +99,7 @@ public:
             localMatrix,
             localRhs ),
     m_dispJumpDofNumber( dispDofNumberAccessor.toNestedViewConst() ),
-    m_dPerm_dDispJump( thermalSinglePhaseFlowAccessors.get( fields::flow::temperature {} ) )
+    m_dPerm_dDispJump( edfmPermeabilityAccessors.get( fields::permeability::dPerm_dDispJump {} ) )
   {}
 
 
@@ -182,12 +184,12 @@ public:
     computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
                             trans,
                             dTrans,
-                            pres,
-                            gravCoef,
-                            dens,
-                            dDens_dPres,
-                            mob,
-                            dMob_dPres,
+                            m_pres,
+                            m_gravCoef,
+                            m_dens,
+                            m_dDens_dPres,
+                            m_mob,
+                            m_dMob_dPres,
                             fluxVal,
                             dFlux_dP,
                             dFlux_dTrans );
@@ -279,9 +281,12 @@ public:
     typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
+    typename kernelType::EDFMPermeabilityAccessors edfmPermAccessors( elemManager, solverName );
 
-    kernelType kernel( rankOffset, stencilWrapper, pressureDofNumberAccessor,
-                       flowAccessors, fluidAccessors, permAccessors,
+
+    kernelType kernel( rankOffset, stencilWrapper, 
+                       pressureDofNumberAccessor, dispJumpDofNumberAccessor,
+                       flowAccessors, fluidAccessors, permAccessors,edfmPermAccessors
                        dt, localMatrix, localRhs );
 
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
