@@ -86,6 +86,14 @@ DECLARE_FIELD( biotCoefficient,
                WRITE_AND_READ,
                "Biot coefficient" );
 
+DECLARE_FIELD( thermalExpansionCoefficient,
+               "thermalExpansionCoefficient",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Thermal expansion coefficient" );
+
 }
 
 }

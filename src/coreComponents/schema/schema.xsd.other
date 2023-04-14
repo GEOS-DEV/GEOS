@@ -1775,11 +1775,13 @@
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ExponentialDecayPermeabilityType">
-		<!--dPerm_dPressure => Derivative of fault permeability w.r.t. pressure.-->
+		<!--dPerm_dDispJump => Derivative of rock permeability with respect to displacement jump-->
+		<xsd:attribute name="dPerm_dDispJump" type="real64_array4d" />
+		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
-                <!--dPerm_dTraction => Derivative of fault permeability w.r.t. fracture traction.-->
+		<!--dPerm_dTraction => Derivative of rock permeability with respect to the traction vector-->
 		<xsd:attribute name="dPerm_dTraction" type="real64_array4d" />
-		<!--permeability => Fault permeability-->
+		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="ExtendedDruckerPragerType">

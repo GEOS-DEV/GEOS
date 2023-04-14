@@ -6,7 +6,7 @@ set( physicsSolvers_headers
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
-     SolverBaseKernels.hpp	
+     SolverBaseKernels.hpp
      SolverStatistics.hpp
      FieldStatisticsBase.hpp
      contact/ContactSolverBase.hpp
@@ -71,6 +71,8 @@ set( physicsSolvers_headers
      multiphysics/MultiphasePoromechanics.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
      multiphysics/PoromechanicsInitialization.hpp
+     multiphysics/PoromechanicsFields.hpp
+     multiphysics/PoromechanicsInitialization.hpp
      multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp
      multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp
      multiphysics/poromechanicsKernels/PoromechanicsBase.hpp
@@ -78,11 +80,11 @@ set( physicsSolvers_headers
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp     
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp
      multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp
-     multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp     
+     multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp
-     multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp	          
+     multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.hpp
      multiphysics/SinglePhasePoromechanics.hpp
      multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp
@@ -101,6 +103,8 @@ set( physicsSolvers_headers
      solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp
      solidMechanics/kernels/ExplicitSmallStrain.hpp
      solidMechanics/kernels/ExplicitSmallStrain_impl.hpp
+     solidMechanics/kernels/FixedStressThermoPoromechanics.hpp
+     solidMechanics/kernels/FixedStressThermoPoromechanics_impl.hpp
      solidMechanics/kernels/ImplicitSmallStrainNewmark.hpp
      solidMechanics/kernels/ImplicitSmallStrainNewmark_impl.hpp
      solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp
